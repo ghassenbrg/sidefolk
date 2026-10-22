@@ -19,8 +19,100 @@ import {
   parseAgentEvent,
 } from "../electron/agents.js";
 import type { Item } from "../shared/types.js";
+import { applyActions, extractActions } from "../electron/actions.js";
+import { visibleAgentText } from "../shared/protocol.js";
 
 const now = new Date(2026, 9, 22, 14, 0);
+test("casual reminder requests work without a model call or exact syntax", () => {
+  for (const input of [
+    "can u remind to check my phone in 5 min from now",
+    "could you please remind me to check my phone in 5 minutes?",
+    "please remind me in 5 minutes to check my phone",
+    "hey Pip, can you remind me to check my phone in 5 min",
+    "set a reminder to check my phone in 5 minutes",
+    "give me a nudge to check my phone in 5 minutes",
+  ]) {
+    assert.deepEqual(
+      interpret(input, now),
+      {
+        type: "reminder",
+        title: "check my phone",
+        dueAt: now.getTime() + 300_000,
+      },
+      input,
+    );
+  }
+});
+test("questions, negation, quotes, and unrelated dated messages do not create reminders", () => {
+  for (const input of [
+    "can you remind me how to restart my phone?",
+    "do not remind me to call Alex tomorrow",
+    'explain the phrase "remind me tomorrow"',
+    '"remind me to check my phone in 5 minutes"',
+  ])
+    assert.equal(interpret(input, now).type, "chat", input);
+  assert.equal(
+    interpret("tell me about tomorrow’s weather", now, "water the plants").type,
+    "chat",
+  );
+});
+test("ambiguous reminders use semantic fallback instead of saving placeholder titles", () => {
+  assert.equal(interpret("remind me of that in 5 minutes", now).type, "chat");
+  assert.equal(interpret("remind me in 5 minutes", now).type, "chat");
+});
+test("validated semantic actions create real reminders anchored to request time", () => {
+  const state = initialState();
+  const reply =
+    'On it. <SIDEFOLK_ACTIONS>[{"type":"reminder.create","title":"check my phone","when":"in 5 minutes"}]</SIDEFOLK_ACTIONS>';
+  const parsed = extractActions(reply);
+  assert.equal(parsed.error, undefined);
+  const result = applyActions(
+    state,
+    parsed.actions,
+    now.getTime(),
+    now.getTime() + 10_000,
+  );
+  assert.equal(state.items.length, 1);
+  assert.equal(state.items[0].dueAt, now.getTime() + 300_000);
+  assert.match(result.confirmations[0], /in 5 minutes/);
+  assert.equal(visibleAgentText(reply), "On it.");
+});
+test("invalid and partial agent actions never save a task", () => {
+  for (const payload of [
+    '[{"type":"terminal.run","command":"rm -rf anything"}]',
+    '[{"type":"reminder.create","title":"this","when":"tomorrow"}]',
+    '[{"type":"reminder.create","title":"call Alex","when":"tomorrow","extra":true}]',
+    "not json",
+  ])
+    assert.ok(
+      extractActions(`<SIDEFOLK_ACTIONS>${payload}</SIDEFOLK_ACTIONS>`).error,
+    );
+  assert.ok(extractActions("<SIDEFOLK_ACTIONS>[").error);
+  assert.equal(visibleAgentText("Working <SIDEFOLK_ACTIONS>[{"), "Working");
+  const state = initialState();
+  const result = applyActions(
+    state,
+    [
+      { type: "todo.create", title: "coffee" },
+      { type: "reminder.create", title: "call Alex", when: "yesterday" },
+    ],
+    now.getTime(),
+    now.getTime(),
+  );
+  assert.ok(result.error);
+  assert.equal(state.items.length, 0, "batch validation must be atomic");
+});
+test("duplicate actions execute once and unsupported output is not treated as an action", () => {
+  const state = initialState();
+  const action = {
+    type: "reminder.create" as const,
+    title: "call Alex",
+    when: "in 5 minutes",
+  };
+  applyActions(state, [action, action], now.getTime(), now.getTime());
+  assert.equal(state.items.length, 1);
+  assert.equal(extractActions("I have scheduled something").present, false);
+});
 test("natural reminders preserve the task and resolve future dates", () => {
   const result = interpret(
     "remind me to send the proposal tomorrow at 3pm",

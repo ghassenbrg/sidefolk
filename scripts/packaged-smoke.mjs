@@ -21,11 +21,15 @@ try {
   const page = await app.firstWindow();
   await page.getByRole("heading", { name: "Meet Pip" }).waitFor();
   assert.equal(await app.evaluate(({ app }) => app.isPackaged), true);
-  if (process.argv.includes("--live")) {
+  if (process.argv.includes("--live") || process.argv.includes("--reminder")) {
+    const reminder = process.argv.includes("--reminder");
+    const requestedAt = Date.now();
     await page
       .getByRole("textbox", { name: "Message your companion" })
       .fill(
-        "Reply with one short friendly sentence confirming you are connected. Do not use tools.",
+        reminder
+          ? "I’d appreciate a little tap on the shoulder in seven minutes so I remember to check my phone."
+          : "Reply with one short friendly sentence confirming you are connected. Do not use tools.",
       );
     await page
       .getByRole("button", { name: "Send message", exact: true })
@@ -46,6 +50,16 @@ try {
     assert.ok(session.remoteId, JSON.stringify(session.messages));
     assert.equal(snapshot.usage.turns, 1);
     assert.ok(!session.messages.at(-1).text.includes("hit a snag"));
+    if (reminder) {
+      assert.equal(snapshot.items.length, 1, JSON.stringify(session.messages));
+      assert.equal(snapshot.items[0].kind, "reminder");
+      assert.match(snapshot.items[0].title, /phone/i);
+      assert.ok(
+        Math.abs(snapshot.items[0].dueAt - requestedAt - 420_000) < 5000,
+      );
+      assert.match(session.messages.at(-1).text, /I’ll remind you/);
+      assert.ok(!session.messages.at(-1).text.includes("SIDEFOLK_ACTIONS"));
+    }
     await page.screenshot({
       path: join(root, "output/playwright/agent-connected.png"),
     });

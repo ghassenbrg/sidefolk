@@ -18,6 +18,12 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { z } from "zod";
 import { Store } from "./store.js";
 import { interpret } from "../shared/intents.js";
+import { visibleAgentText } from "../shared/protocol.js";
+import {
+  applyActions,
+  extractActions,
+  reminderConfirmation,
+} from "./actions.js";
 import {
   settingsSchema,
   skillSchema,
@@ -187,6 +193,7 @@ function tick() {
   if (result.changed) publish();
 }
 async function sendChat(text: string) {
+  const requestedAt = Date.now();
   if (agent)
     throw new Error(
       "Your companion is working. Stop the current turn or wait for it to finish.",
@@ -202,7 +209,7 @@ async function sendChat(text: string) {
     session.title = text.slice(0, 44);
   const intent = interpret(
     text,
-    new Date(),
+    new Date(requestedAt),
     store.state.pendingReminder?.title,
   );
   if (intent.type === "todo" || intent.type === "reminder") {
@@ -220,7 +227,7 @@ async function sendChat(text: string) {
       "assistant",
       intent.type === "todo"
         ? `On your list: ${intent.title}. One less thing to keep in your head.`
-        : `I’ll remind you ${new Date(intent.dueAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}: ${intent.title}.`,
+        : reminderConfirmation({ title: intent.title, dueAt: intent.dueAt }),
     );
   } else if (intent.type === "clarify") {
     store.state.pendingReminder = { title: intent.title };
@@ -329,7 +336,10 @@ async function sendChat(text: string) {
         },
         (error) => {
           const result = extractMemories(agent?.text ?? "");
-          if (result.text) store.addMessage("assistant", result.text);
+          const proposed = extractActions(agent?.text ?? "");
+          const visible = visibleAgentText(result.text);
+          if (!proposed.present && visible)
+            store.addMessage("assistant", visible);
           if (error || stoppedAgent)
             store.addMessage(
               "assistant",
@@ -339,7 +349,16 @@ async function sendChat(text: string) {
             );
           if (!error && !stoppedAgent) {
             session.contextHash = contextHash;
-            if (!result.text)
+            if (proposed.present) {
+              const applied = proposed.error
+                ? { error: proposed.error, confirmations: [] }
+                : applyActions(store.state, proposed.actions, requestedAt);
+              store.addMessage(
+                "assistant",
+                applied.error ?? applied.confirmations.join("\n"),
+              );
+            }
+            if (!visible && !proposed.present)
               store.addMessage(
                 "assistant",
                 "The agent finished without a text response. Try a more specific request.",

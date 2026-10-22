@@ -62,6 +62,19 @@ try {
     .getByRole("button", { name: "Your companion", exact: true })
     .click();
   await page.getByRole("heading", { name: "Meet Mochi" }).waitFor();
+  const requestedAt = Date.now();
+  await send("can u remind to check my phone in 5 min from now");
+  await page
+    .getByRole("button", { name: "Complete check my phone", exact: true })
+    .waitFor();
+  const casual = await page.evaluate(() => window.sidefolk.snapshot());
+  const phone = casual.items.find((i) => i.title === "check my phone");
+  assert.ok(phone && Math.abs(phone.dueAt - requestedAt - 300_000) < 3000);
+  assert.equal(
+    casual.usage.turns,
+    0,
+    "casual wording should not spend model tokens",
+  );
   await send("remind me to stretch in 5 seconds");
   await page
     .getByRole("button", { name: "Complete stretch", exact: true })

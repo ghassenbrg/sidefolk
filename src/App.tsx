@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import type { Item, Memory, Settings, Skill, Snapshot } from "../shared/types";
 import { api } from "./api";
+import { visibleAgentText } from "../shared/protocol";
 import Pet from "./components/Pet";
 
 type Page = "home" | "memory" | "skills" | "workshop" | "settings";
@@ -532,7 +533,7 @@ function Chat({
               </div>
               {state.agent.text && (
                 <div className="message-text">
-                  {state.agent.text.replace(/<SIDEFOLK_MEMORY>[\s\S]*/, "")}
+                  {visibleAgentText(state.agent.text)}
                 </div>
               )}
             </div>

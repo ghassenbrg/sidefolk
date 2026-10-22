@@ -27,7 +27,7 @@ Create an unpacked desktop application with `npm run package`. On Apple Silicon 
 
 - **A real 3D pet.** Name it and choose sage, peach, or lilac. Click to make it bounce. “Let pet roam” opens a draggable, transparent, always-on-top desktop window. The pet reacts to working, reminder, and quiet states.
 - **Codex or Claude behind the scenes.** Connect the installed CLI, use its existing login, and resume Sidefolk-owned sessions across launches. Switching providers keeps shared memory and skills. Each provider retains its own native history.
-- **Natural reminders.** “Remind me to send the proposal tomorrow at 3pm.” Date-only requests use 9am. “Later” asks for a time instead of guessing. Snooze, complete, reopen, and delete reminders.
+- **Natural reminders.** “Can u remind to check my phone in 5 min from now” works directly; there is no required command phrase. Common wording stays local. For contextual or less direct wording, the agent proposes an action in its existing response; the app validates and saves it before confirming success. Date-only requests use 9am. Missing times get a short question. Snooze, complete, reopen, and delete reminders.
 - **Local todos.** “Add buy coffee to my todos.” “Show my unfinished tasks.”
 - **Shared memory.** “Remember that I prefer pnpm.” Add, edit, and forget notes in Memory. Agent responses can propose new preferences; only accepted suggestions enter shared context.
 - **Editable skills.** Reusable instructions shape the companion across providers. Enabled skills share a 3,000-character budget and are sent only on a new session or when changed.
@@ -50,6 +50,8 @@ References: [Codex non-interactive sessions](https://learn.chatgpt.com/docs/non-
 ## Keep it light
 
 No AI loop runs in the background. Animations, scheduling, todo actions, naming, and memory CRUD are local. Local-only mode works with no model or account at all.
+
+The agent can create reminders and todos through a bounded app-action protocol even when project tools are disabled. Relative time is anchored to the original request, invalid or past dates are rejected, repeated actions within a response are deduplicated, and failed/stopped turns execute no actions. The app executes at most three validated actions per response. This adds no separate intent-classification model call. Local-only mode handles common wording; semantic and contextual fallback needs an agent.
 
 Economy mode requests low reasoning effort and concise replies, with compact native instructions and global catalogs disabled. Native session resume avoids replaying the app's whole transcript. Up to four relevant confirmed memory snippets (300 characters each) are included per request. Unchanged skills/persona are not resent. Memory suggestions arrive in the existing response, with no extraction model call. Agent turns have a five-minute limit and a Stop button.
 
@@ -78,7 +80,7 @@ node scripts/packaged-smoke.mjs --live # Opt-in: one real Codex turn in the .app
 
 Desktop screenshots go into ignored `output/playwright/`. `SIDEFOLK_DATA_DIR` overrides the data directory for isolated testing.
 
-Verified locally on macOS Apple Silicon: production build, 14 core tests, full desktop flow (including restart), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
+Verified locally on macOS Apple Silicon: production build, 20 core tests, full desktop flow (including restart and casual reminders), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
 
 ## Next iterations
 
