@@ -99,9 +99,11 @@ export function interpret(
       return { type: "clarify", title };
     }
   }
-  const todo = text.match(
-    /^(?:add\s+|todo\s*:?\s*|to-do\s*:?\s*)(.+?)(?:\s+to\s+(?:my\s+)?(?:todos?|to-do(?:\s+list)?|list))?$/i,
-  );
+  const todo =
+    text.match(/^(?:todo\s*:?\s*|to-do\s*:?\s*)(.+)$/i) ??
+    text.match(
+      /^add\s+(.+?)\s+to\s+(?:my\s+)?(?:todos?|to-do(?:\s+list)?|list)$/i,
+    );
   if (todo) return { type: "todo", title: todo[1].trim() };
   return { type: "chat" };
 }

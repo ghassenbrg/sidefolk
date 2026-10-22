@@ -8,6 +8,7 @@ import { initialState } from "../dist-electron/electron/store.js";
 const root = resolve(import.meta.dirname, "..");
 const data = mkdtempSync(join(tmpdir(), "sidefolk-packaged-"));
 const fixture = initialState();
+fixture.setupComplete = true;
 fixture.settings.petShortcut = "Control+Alt+Shift+F18";
 writeFileSync(join(data, "sidefolk.json"), JSON.stringify(fixture));
 const env = { ...process.env, SIDEFOLK_DATA_DIR: data };
@@ -46,6 +47,26 @@ try {
       startup.settings.petShortcut,
     ),
     true,
+  );
+  await page.evaluate(() => window.sidefolk.openQuick());
+  let quick;
+  for (let i = 0; i < 100; i++) {
+    quick = app.windows().find((p) => p.url().endsWith("#quick"));
+    if (quick) break;
+    await page.waitForTimeout(50);
+  }
+  assert.ok(quick, "packaged Quick Ask should open");
+  await quick
+    .getByRole("textbox", { name: "Message your companion" })
+    .waitFor();
+  await quick.getByRole("button", { name: "Open full workspace" }).click();
+  assert.equal(
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .find((w) => w.getTitle() === "Sidefolk Quick Ask")
+        .isVisible(),
+    ),
+    false,
   );
   if (process.argv.includes("--live") || process.argv.includes("--reminder")) {
     const reminder = process.argv.includes("--reminder");

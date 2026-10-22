@@ -356,3 +356,82 @@ test("legacy companions gain appearance defaults without changing identity or me
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("generic add requests stay with the agent rather than creating unrelated todos", () => {
+  for (const text of [
+    "add dark mode to my app",
+    "add a new endpoint",
+    "add two numbers",
+  ])
+    assert.equal(interpret(text).type, "chat");
+  assert.deepEqual(interpret("add buy coffee to my list"), {
+    type: "todo",
+    title: "buy coffee",
+  });
+  assert.deepEqual(interpret("todo: buy coffee"), {
+    type: "todo",
+    title: "buy coffee",
+  });
+});
+test("project tools require a currently connected matching workspace", async () => {
+  const { projectToolsAllowed } = await import("../shared/safety.js");
+  assert.equal(projectToolsAllowed(undefined, "/old-project"), false);
+  assert.equal(projectToolsAllowed("/new-project", "/old-project"), false);
+  assert.equal(projectToolsAllowed("/project", "/project"), true);
+});
+test("external links reject executable schemes and credential-bearing URLs", async () => {
+  const { externalWebUrl } = await import("../shared/safety.js");
+  assert.equal(
+    externalWebUrl("https://example.com/docs"),
+    "https://example.com/docs",
+  );
+  for (const value of [
+    "javascript:alert(1)",
+    "file:///etc/passwd",
+    "https://user:password@example.com",
+    "data:text/html,hello",
+  ])
+    assert.throws(() => externalWebUrl(value));
+});
+
+test("script review rejects changed or newly added lifecycle hooks", async () => {
+  const { scriptReviewMatches } = await import("../shared/safety.js");
+  const original = { build: "tsc", prebuild: "echo ready" };
+  assert.equal(scriptReviewMatches(original, { ...original }, "build"), true);
+  assert.equal(
+    scriptReviewMatches(
+      original,
+      { ...original, prebuild: "different command" },
+      "build",
+    ),
+    false,
+  );
+  assert.equal(
+    scriptReviewMatches(
+      original,
+      { ...original, postbuild: "new command" },
+      "build",
+    ),
+    false,
+  );
+});
+
+test("structurally valid data with a missing active session is preserved for recovery", () => {
+  const directory = mkdtempSync(join(tmpdir(), "sidefolk-session-recovery-"));
+  try {
+    const broken = initialState();
+    broken.activeSessionId = "missing";
+    const file = join(directory, "sidefolk.json");
+    writeFileSync(file, JSON.stringify(broken));
+    const restored = new Store(file);
+    assert.ok(restored.warning);
+    assert.ok(
+      restored.state.sessions.some(
+        (s) => s.id === restored.state.activeSessionId,
+      ),
+    );
+    assert.ok(readdirSync(directory).some((n) => n.includes(".recovery-")));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

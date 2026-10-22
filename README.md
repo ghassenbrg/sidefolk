@@ -2,7 +2,7 @@
 
 A little desktop company, powered by real AI agents. Name your pet, give it something to remember, or work on a project together.
 
-**Local desktop MVP · Electron + React + Three.js · macOS tested**
+**Local macOS release candidate · Electron + React · unsigned build**
 
 ## Run it
 
@@ -22,6 +22,16 @@ npm start
 ```
 
 Create an unpacked desktop application with `npm run package`. On Apple Silicon the app appears under `release/Sidefolk-darwin-arm64/Sidefolk.app`. This is an unsigned local build.
+
+## The everyday workflow
+
+1. Open **Quick Ask** with **⌘⇧J** (Ctrl+Shift+J on other platforms), the pet’s **Talk** button, or the menu bar.
+2. Ask for a reminder, a to-do, or help. A saved task gets an explicit receipt with **Edit**, so you can correct the title or time in place.
+3. Press **Escape** to return to your work. The full workspace is for reviewing tasks, conversations, and preferences.
+
+First launch provides a short setup with your companion’s name, installed CLI detection, and a local-only option. CLI presence does not prove login, quota, or connectivity. Existing installations keep their data and skip onboarding; **Settings → Review setup** opens it again. **Connect AI** in Quick Ask goes directly to Settings.
+
+Drafts survive navigation within a window. Failed requests offer **Edit & retry**; retries are always initiated by you. Task deletion asks for confirmation. Markdown links open in the default browser after HTTP(S) validation. Notification clicks take you to Tasks. Settings includes a test notification and JSON backup export. The backup contains personal data and is not encrypted; an import UI is not included yet.
 
 ## Meet your companion
 
@@ -69,7 +79,7 @@ In the local smoke check, initial Codex input fell from 24,561 tokens with the o
 
 The usage panel shows reported input, cached, and output tokens. Providers account for cache tokens differently; the totals are not a billing estimate. CLI system prompts, native skills, growing conversation history, and tool results still consume context. Start a fresh conversation when appropriate. Economy mode is a reduction strategy, not a hard token cap.
 
-The 3D scene caps resolution at 1.5× and invalidates at 24 fps. Hidden documents stop animation invalidation. Reduced-motion mode updates once per second. Geometry is generated in code; no external 3D assets or network font requests are needed.
+Quick Ask and 2D characters do not load the 3D engine. It is loaded on demand only when a 3D pet is rendered. The 3D scene caps resolution at 1.5× and invalidates at 24 fps. Hidden documents stop animation invalidation. Reduced-motion mode updates once per second. Geometry is generated in code; no external 3D assets or network font requests are needed.
 
 ## Data and privacy
 
@@ -82,6 +92,8 @@ Confirmed memory and conversation text are sent to the selected provider when an
 ```sh
 npm test                # Scheduling, local routing, storage, agent protocol, context budgets
 npm run build           # Typecheck, Electron compilation, renderer production build
+npm run test:product    # Setup → Quick Ask → editable receipt → dismissal → restart
+npm run test:design     # Pet gallery, accessories, compact layouts
 npm run test:desktop    # Real Electron UI test using disposable data; no AI calls
 npm run test:agents     # Opt-in LIVE check: two short model calls per provider
 npm run test:packaged   # Open/check the packaged macOS app without AI calls
@@ -90,7 +102,7 @@ node scripts/packaged-smoke.mjs --live # Opt-in: one real Codex turn in the .app
 
 Desktop screenshots go into ignored `output/playwright/`. `SIDEFOLK_DATA_DIR` overrides the data directory for isolated testing.
 
-Verified locally on macOS Apple Silicon: production build, 23 core tests, full desktop flow (including restart and casual reminders), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
+Verified locally on macOS Apple Silicon: production build, 29 core tests, full desktop flow (including restart and casual reminders), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
 
 ## Next iterations
 
@@ -111,3 +123,9 @@ Open **Pet studio** to preview Moonbun, Miso, Ember, Pebble, Fern, or Boo in ill
 The charcoal/lilac workspace includes a full Tasks view with filters, search, direct reminder/to-do creation, Markdown chat replies, copy-message controls, and **⌘K / Ctrl+K** quick actions. The desktop summon shortcut remains **⌘⇧Space** by default on macOS. Settings can change it.
 
 `npm run test:design` runs the real Electron UI against disposable data: gallery selections, accessories, 2D reactions, all 3D previews, persistence, direct reminders, rejected past reminders, dialogs, quick actions, compact layouts, and desktop appearance synchronization. It makes no AI calls. Current desktop validation targets macOS; other operating systems need native packaging and validation.
+
+## Product audit and release gates
+
+See [the product audit](docs/PRODUCT_AUDIT.md) for evidence, fixes, and remaining release requirements. The primary loop is summon → ask → verify the result → return to work. The setup illustration is generated artwork; its [asset and exact prompt](docs/WELCOME_ART.md) are recorded separately from the interactive character code.
+
+This build is suitable for further local macOS testing. Public distribution still requires code signing/notarization, an update/installer strategy, and broader accessibility/platform validation. No auto-update or OS-backed scheduling is implied by this release. No live agent credentials are checked by onboarding.

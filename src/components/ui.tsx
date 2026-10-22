@@ -1,3 +1,4 @@
+import { api } from "../api";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -67,7 +68,18 @@ export function MarkdownMessage({ text }: { text: string }) {
       remarkPlugins={[remarkGfm]}
       skipHtml
       components={{
-        a: ({ children }) => <span className="message-link">{children}</span>,
+        a: ({ children, href }) => (
+          <a
+            className="message-link"
+            href={href}
+            onClick={(e) => {
+              e.preventDefault();
+              if (href) void api.openLink(href).catch(() => {});
+            }}
+          >
+            {children}
+          </a>
+        ),
         img: ({ alt }) => (
           <span className="message-image-alt">{alt || "Image reference"}</span>
         ),

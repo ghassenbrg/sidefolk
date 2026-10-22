@@ -13,6 +13,7 @@ import { DEFAULT_PET_SHORTCUT } from "../shared/desktop.js";
 export function initialState(): AppState {
   return {
     version: 1,
+    setupComplete: false,
     settings: {
       petName: "Pip",
       color: "sage",

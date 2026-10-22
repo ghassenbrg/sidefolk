@@ -7,6 +7,7 @@ import { initialState } from "../dist-electron/electron/store.js";
 const root = resolve(import.meta.dirname, ".."),
   data = mkdtempSync(join(tmpdir(), "sidefolk-design-")),
   fixture = initialState();
+fixture.setupComplete = true;
 fixture.settings.petShortcut = "Control+Alt+Shift+F17";
 fixture.settings.provider = "local";
 fixture.settings.petVisible = false;

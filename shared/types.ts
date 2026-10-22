@@ -45,6 +45,8 @@ export type NewItem = z.infer<typeof newItemSchema>;
 export const messageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
+  itemIds: z.array(z.string()).optional(),
+  failed: z.boolean().optional(),
   text: z.string(),
   createdAt: z.number(),
 });
@@ -78,26 +80,48 @@ export const sessionSchema = z.object({
     .default({ input: 0, cached: 0, output: 0 }),
 });
 export type AgentSession = z.infer<typeof sessionSchema>;
-export const stateSchema = z.object({
-  version: z.literal(1),
-  settings: settingsSchema,
-  items: z.array(itemSchema),
-  sessions: z.array(sessionSchema),
-  activeSessionId: z.string(),
-  memories: z.array(memorySchema),
-  skills: z.array(skillSchema),
-  usage: z.object({
-    turns: z.number(),
-    input: z.number(),
-    cached: z.number(),
-    output: z.number(),
-  }),
-  pendingReminder: z.object({ title: z.string() }).nullable(),
-  petPosition: z
-    .object({ x: z.number().finite(), y: z.number().finite() })
-    .nullable()
-    .default(null),
-});
+export const stateSchema = z
+  .object({
+    version: z.literal(1),
+    setupComplete: z.boolean().default(true),
+    settings: settingsSchema,
+    items: z.array(itemSchema),
+    sessions: z.array(sessionSchema),
+    activeSessionId: z.string(),
+    memories: z.array(memorySchema),
+    skills: z.array(skillSchema),
+    usage: z.object({
+      turns: z.number(),
+      input: z.number(),
+      cached: z.number(),
+      output: z.number(),
+    }),
+    pendingReminder: z.object({ title: z.string() }).nullable(),
+    petPosition: z
+      .object({ x: z.number().finite(), y: z.number().finite() })
+      .nullable()
+      .default(null),
+  })
+  .superRefine((state, ctx) => {
+    if (
+      !state.sessions.length ||
+      !state.sessions.some((session) => session.id === state.activeSessionId)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "The active conversation is missing",
+        path: ["activeSessionId"],
+      });
+    if (
+      new Set(state.sessions.map((session) => session.id)).size !==
+      state.sessions.length
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Duplicate conversation IDs",
+        path: ["sessions"],
+      });
+  });
 export type AppState = z.infer<typeof stateSchema>;
 export type Project = {
   path: string;
@@ -123,6 +147,7 @@ export type Snapshot = AppState & {
   job: Job | null;
   agent: AgentRun | null;
   storageWarning?: string;
+  quickShortcutRegistered: boolean;
   shortcutRegistered: boolean;
   shortcutError?: string;
 };
@@ -136,6 +161,13 @@ export type Intent =
   | { type: "chat" };
 export interface SidefolkAPI {
   snapshot(): Promise<Snapshot>;
+  finishSetup(settings: Settings): Promise<void>;
+  openQuick(): Promise<void>;
+  closeQuick(): Promise<void>;
+  openLink(url: string): Promise<void>;
+  testNotification(): Promise<void>;
+  exportBackup(): Promise<string | null>;
+  updateItem(id: string, item: NewItem): Promise<void>;
   chat(text: string): Promise<void>;
   settings(settings: Settings): Promise<void>;
   item(
@@ -146,7 +178,10 @@ export interface SidefolkAPI {
   chooseProject(): Promise<void>;
   runScript(name: string): Promise<void>;
   stopJob(): Promise<void>;
-  openHome(): Promise<void>;
+  openHome(page?: "home" | "settings" | "tasks"): Promise<void>;
+  onNavigate(
+    listener: (page: "home" | "settings" | "tasks") => void,
+  ): () => void;
   petInteractive(value: boolean): Promise<void>;
   petControl(action: "show" | "hide" | "toggle" | "summon"): Promise<void>;
   checkAgents(): Promise<Record<string, string>>;

@@ -44,49 +44,49 @@ import { api } from "./api";
 import { visibleAgentText } from "../shared/protocol";
 import { shortcutLabel } from "../shared/desktop";
 import Pet from "./components/Pet";
+import { Setup, ReliabilitySettings } from "./components/Setup";
 import { PetGallery } from "./components/PetGallery";
 import { Modal, MarkdownMessage, CopyButton } from "./components/ui";
-import { UpcomingTasks, TasksPanel, TaskComposer } from "./components/Tasks";
+import {
+  ActionReceipt,
+  UpcomingTasks,
+  TasksPanel,
+  TaskComposer,
+} from "./components/Tasks";
 
 type Page =
   "home" | "pets" | "tasks" | "memory" | "skills" | "workshop" | "settings";
 const nav: { id: Page; label: string; icon: typeof Home }[] = [
-  { id: "pets", label: "Pet studio", icon: WandSparkles },
   { id: "home", label: "Companion", icon: MessageCircle },
   { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "workshop", label: "Workshop", icon: Terminal },
   { id: "memory", label: "Memory", icon: Brain },
   { id: "skills", label: "Skills", icon: Sparkles },
-  { id: "workshop", label: "Workshop", icon: Terminal },
+  { id: "pets", label: "Pet studio", icon: WandSparkles },
 ];
 const titles: Record<Page, [string, string]> = {
-  pets: [
-    "Find your kind of company.",
-    "Six little personalities. Two dimensions to explore. One companion that’s yours.",
-  ],
   home: [
-    "What’s on your mind?",
-    "Ideas, reminders, or your next big thing. I’m here for it.",
+    "Your companion",
+    "Ask for help, capture a reminder, or pick up where you left off.",
   ],
   tasks: [
-    "A little less to keep in your head.",
-    "Your reminders and to-dos, all in one place.",
+    "Your tasks",
+    "Reminders and to-dos. Edit, snooze, or mark them done.",
   ],
   memory: [
-    "It’s the little things that make you, you.",
-    "A shared memory that feels personal. Always yours to edit.",
+    "Memory",
+    "Preferences your companion can use. You decide what stays.",
   ],
-  skills: [
-    "Teach me your kind of magic.",
-    "Small instructions. A companion that works your way.",
-  ],
+  skills: ["How I should help", "Reusable instructions for your agent."],
   workshop: [
-    "Good things are made together.",
-    "Connect a project and turn an idea into something real.",
+    "Project workspace",
+    "Connect a folder when you want help with a project.",
   ],
-  settings: [
-    "Make this space your own.",
-    "Your companion, your agent, your rhythm.",
+  pets: [
+    "Make it your companion",
+    "Choose a look. Your name and memories stay the same.",
   ],
+  settings: ["Settings", "Connection, desktop behavior, and your data."],
 };
 const compact = (n: number) =>
   Intl.NumberFormat(undefined, {
@@ -106,10 +106,16 @@ export default function App() {
   const [state, setState] = useState<Snapshot | null>(null),
     [page, setPage] = useState<Page>("home"),
     [error, setError] = useState("");
+  const [reviewSetup, setReviewSetup] = useState(false);
   const [taskComposer, setTaskComposer] = useState(false),
     [palette, setPalette] = useState(false),
     [query, setQuery] = useState("");
+  useEffect(() => {
+    if (!api) return;
+    return api.onNavigate((target) => setPage(target));
+  }, []);
   const floating = location.hash === "#pet";
+  const quickMode = location.hash === "#quick";
   const act: Act = async (fn) => {
     try {
       await fn();
@@ -151,7 +157,19 @@ export default function App() {
   useEffect(() => {
     if (floating) return;
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (
+        quickMode &&
+        e.key === "Escape" &&
+        !document.querySelector("dialog[open]")
+      ) {
+        void api.closeQuick();
+        return;
+      }
+      if (
+        !quickMode &&
+        (e.metaKey || e.ctrlKey) &&
+        e.key.toLowerCase() === "k"
+      ) {
         e.preventDefault();
         setPalette((p) => !p);
       }
@@ -215,6 +233,53 @@ export default function App() {
         : "idle";
   const update = (value: Partial<Settings>) =>
     act(() => api.settings({ ...settings, ...value }));
+  if (!floating && (!state.setupComplete || reviewSetup))
+    return (
+      <Setup
+        state={state}
+        onFinish={state.setupComplete ? () => setReviewSetup(false) : undefined}
+      />
+    );
+  if (quickMode)
+    return (
+      <div className="quick-shell">
+        <header className="quick-titlebar">
+          <span className="status-dot" />
+          <strong>{settings.petName}</strong>
+          <span>Quick Ask</span>
+          <button
+            aria-label="Open full workspace"
+            onClick={() => void act(() => api.openHome())}
+          >
+            <ExternalLink size={15} />
+          </button>
+          <button
+            aria-label="Close Quick Ask"
+            onClick={() => void api.closeQuick()}
+          >
+            <X size={16} />
+          </button>
+        </header>
+        <Chat
+          key={state.activeSessionId}
+          state={state}
+          act={act}
+          openSettings={() => void act(() => api.openHome("settings"))}
+          onReminder={() => setTaskComposer(true)}
+        />
+        <footer>
+          Escape to close<span>⌘⇧J to return</span>
+        </footer>
+        {taskComposer && (
+          <TaskComposer act={act} onClose={() => setTaskComposer(false)} />
+        )}{" "}
+        {error && (
+          <div role="alert" className="toast">
+            {error}
+          </div>
+        )}
+      </div>
+    );
   if (floating)
     return (
       <div className={`floating-pet mood-${mood}`}>
@@ -225,7 +290,7 @@ export default function App() {
         </div>
         <button
           className={`pet-bubble ${due.length ? "has-reminder" : ""}`}
-          onClick={() => void act(() => api.openHome())}
+          onClick={() => void act(() => api.openQuick())}
         >
           {due.length ? (
             <>
@@ -248,10 +313,10 @@ export default function App() {
           color={settings.color}
           mood={mood}
           floating
-          onPet={() => void act(() => api.openHome())}
+          onPet={() => void act(() => api.openQuick())}
         />
         <div className="floating-actions">
-          <button onClick={() => void act(() => api.openHome())}>
+          <button onClick={() => void act(() => api.openQuick())}>
             <MessageCircle size={14} />
             Talk
           </button>
@@ -294,23 +359,29 @@ export default function App() {
         <div className="sidebar-label">YOUR SPACE</div>
         <nav aria-label="Main navigation">
           {nav.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              aria-label={id === "home" ? "Your companion" : label}
-              aria-current={page === id ? "page" : undefined}
-              className={`nav-item ${page === id ? "active" : ""}`}
-              onClick={() => setPage(id)}
-            >
-              <Icon size={17} />
-              {label}
-              {id === "tasks" && active.length > 0 && (
-                <span className="nav-count">{active.length}</span>
+            <div key={id}>
+              {id === "memory" && (
+                <div className="sidebar-label personalize-label">
+                  PERSONALIZE
+                </div>
               )}
-              {id === "memory" &&
-                state.memories.some((m) => m.source === "suggested") && (
-                  <span className="nav-dot" />
+              <button
+                aria-label={id === "home" ? "Your companion" : label}
+                aria-current={page === id ? "page" : undefined}
+                className={`nav-item ${page === id ? "active" : ""}`}
+                onClick={() => setPage(id)}
+              >
+                <Icon size={17} />
+                {label}
+                {id === "tasks" && active.length > 0 && (
+                  <span className="nav-count">{active.length}</span>
                 )}
-            </button>
+                {id === "memory" &&
+                  state.memories.some((m) => m.source === "suggested") && (
+                    <span className="nav-dot" />
+                  )}
+              </button>
+            </div>
           ))}
         </nav>
         <div className="sidebar-label sessions-heading">
@@ -396,6 +467,13 @@ export default function App() {
             </strong>
           </div>
           <div className="topbar-actions">
+            <button
+              className="quick-launch"
+              onClick={() => void act(() => api.openQuick())}
+            >
+              <MessageCircle size={14} />
+              Quick Ask<kbd>⌘⇧J</kbd>
+            </button>
             <button
               className={`topbar-focus ${settings.focus ? "is-on" : ""}`}
               onClick={() => void update({ focus: !settings.focus })}
@@ -560,7 +638,13 @@ export default function App() {
               {page === "memory" && <MemoryPanel state={state} act={act} />}{" "}
               {page === "skills" && <SkillsPanel state={state} act={act} />}{" "}
               {page === "workshop" && <Workshop state={state} act={act} />}{" "}
-              {page === "settings" && <SettingsPanel state={state} act={act} />}
+              {page === "settings" && (
+                <SettingsPanel
+                  state={state}
+                  act={act}
+                  onSetup={() => setReviewSetup(true)}
+                />
+              )}
             </div>
           )}
         </div>
@@ -656,13 +740,26 @@ function Chat({
   openSettings: () => void;
   onReminder: () => void;
 }) {
-  const [text, setText] = useState(""),
+  const [text, setText] = useState(
+      () => sessionStorage.getItem(`draft:${state.activeSessionId}`) || "",
+    ),
     [sending, setSending] = useState(false),
     [jump, setJump] = useState(false);
   const scroll = useRef<HTMLDivElement>(null),
     input = useRef<HTMLTextAreaElement>(null),
     nearBottom = useRef(true);
   const session = state.sessions.find((s) => s.id === state.activeSessionId)!;
+  useEffect(() => {
+    sessionStorage.setItem(`draft:${session.id}`, text);
+  }, [text, session.id]);
+  useEffect(() => {
+    const focus = () => input.current?.focus();
+    if (location.hash === "#quick") {
+      focus();
+      window.addEventListener("focus", focus);
+      return () => window.removeEventListener("focus", focus);
+    }
+  }, []);
   const busy = sending || !!state.agent;
   const fresh =
     session.messages.length === 0 ||
@@ -699,6 +796,7 @@ function Chat({
     try {
       await api.chat(value.trim());
       setText("");
+      sessionStorage.removeItem(`draft:${session.id}`);
       nearBottom.current = true;
     } catch (error) {
       await act(() => Promise.reject(error));
@@ -755,12 +853,12 @@ function Chat({
             <span className="eyebrow">YOUR EVERYDAY SIDEKICK</span>
             <h2>
               Hey, I’m {state.settings.petName}.<br />
-              <span>Let’s make some headspace.</span>
+              <span>What can I take off your mind?</span>
             </h2>
             <p>
-              Think out loud, hand me a reminder,
+              A reminder for later, a question for now,
               <br />
-              or let’s make something worth making.
+              or a little help with your next task.
             </p>
             <div className="starter-cards">
               <button onClick={onReminder}>
@@ -805,7 +903,7 @@ function Chat({
               })}{" "}
               <span />
             </div>
-            {session.messages.map((message) => (
+            {session.messages.map((message, messageIndex) => (
               <div className={`message ${message.role}`} key={message.id}>
                 {message.role === "assistant" && (
                   <span className="message-avatar">
@@ -839,9 +937,35 @@ function Chat({
                       message.text
                     )}
                   </div>
+                  {message.itemIds?.map((id) => {
+                    const item = state.items.find((i) => i.id === id);
+                    return item ? (
+                      <ActionReceipt key={id} item={item} act={act} />
+                    ) : (
+                      <div key={id} className="muted">
+                        This task was deleted.
+                      </div>
+                    );
+                  })}
                   {message.role === "assistant" && (
                     <div className="message-tools">
                       <CopyButton text={message.text} />
+                      {message.failed && (
+                        <button
+                          className="text-button"
+                          disabled={busy}
+                          onClick={() =>
+                            draft(
+                              session.messages
+                                .slice(0, messageIndex)
+                                .reverse()
+                                .find((m) => m.role === "user")?.text || "",
+                            )
+                          }
+                        >
+                          Edit & retry
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -891,6 +1015,15 @@ function Chat({
         </div>
       )}
       <div className="chat-bottom">
+        {state.settings.provider === "local" && (
+          <div className="local-mode-note">
+            Local mode · reminders, tasks & memory
+            <button onClick={openSettings}>
+              Connect AI
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        )}
         {!fresh && (
           <div className="suggestions">
             <button disabled={busy} onClick={onReminder}>
@@ -1226,9 +1359,11 @@ function SkillsPanel({ state, act }: { state: Snapshot; act: Act }) {
         </div>
       </div>
       {editing && (
-        <div className="modal-backdrop">
+        <Modal
+          title="Teach a little superpower"
+          onClose={() => setEditing(null)}
+        >
           <form
-            className="modal"
             onSubmit={(e) => {
               e.preventDefault();
               void act(async () => {
@@ -1237,17 +1372,6 @@ function SkillsPanel({ state, act }: { state: Snapshot; act: Act }) {
               });
             }}
           >
-            <div className="section-title">
-              <h2>Teach a little superpower</h2>
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Close skill editor"
-                onClick={() => setEditing(null)}
-              >
-                <X size={18} />
-              </button>
-            </div>
             <label>
               Skill name
               <input
@@ -1292,7 +1416,7 @@ function SkillsPanel({ state, act }: { state: Snapshot; act: Act }) {
               <button className="button primary">Save skill</button>
             </div>
           </form>
-        </div>
+        </Modal>
       )}
     </div>
   );
@@ -1397,18 +1521,11 @@ function Workshop({ state, act }: { state: Snapshot; act: Act }) {
         </div>
       </div>
       {confirm && state.project && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="section-title">
-              <h2>Run this project script?</h2>
-              <button
-                className="icon-button"
-                aria-label="Cancel script"
-                onClick={() => setConfirm(null)}
-              >
-                <X size={18} />
-              </button>
-            </div>
+        <Modal
+          title="Run this project script?"
+          onClose={() => setConfirm(null)}
+        >
+          <div>
             <p>
               This runs locally in <strong>{state.project.path}</strong>.
             </p>
@@ -1435,12 +1552,20 @@ function Workshop({ state, act }: { state: Snapshot; act: Act }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
 }
-function SettingsPanel({ state, act }: { state: Snapshot; act: Act }) {
+function SettingsPanel({
+  state,
+  act,
+  onSetup,
+}: {
+  state: Snapshot;
+  act: Act;
+  onSetup: () => void;
+}) {
   const [draft, setDraft] = useState(state.settings),
     [agents, setAgents] = useState<Record<string, string>>({}),
     [saved, setSaved] = useState(false);
@@ -1456,6 +1581,16 @@ function SettingsPanel({ state, act }: { state: Snapshot; act: Act }) {
   }, []);
   return (
     <form className="settings-grid" onSubmit={submit}>
+      <div className="connection-setup">
+        <div>
+          <strong>Connection & first-run setup</strong>
+          <p>Review your name and available agents without losing your data.</p>
+        </div>
+        <button type="button" className="button" onClick={onSetup}>
+          Review setup
+        </button>
+      </div>
+      <ReliabilitySettings state={state} />
       <section className="settings-card">
         <span className="note-kicker">
           <Leaf size={14} />
@@ -1578,7 +1713,7 @@ function SettingsPanel({ state, act }: { state: Snapshot; act: Act }) {
                     ? "Reminders, todos & memory. No model calls."
                     : agents[provider] === "Not installed"
                       ? "Install the CLI to connect"
-                      : "Uses your existing CLI login & sessions"}
+                      : "CLI found · login is checked on your first message"}
                 </small>
               </span>
             </label>

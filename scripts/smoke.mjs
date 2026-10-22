@@ -15,6 +15,7 @@ import { initialState } from "../dist-electron/electron/store.js";
 const root = resolve(import.meta.dirname, "..");
 const data = mkdtempSync(join(tmpdir(), "sidefolk-smoke-"));
 const fixture = initialState();
+fixture.setupComplete = true;
 fixture.settings.petShortcut = "Control+Alt+Shift+F20";
 writeFileSync(join(data, "sidefolk.json"), JSON.stringify(fixture));
 const project = join(data, "test-project");
@@ -264,6 +265,13 @@ try {
   // Repeated visibility changes reuse the same pet window.
   assert.equal(app.windows().length, 2);
   await pet.getByRole("button", { name: "Talk", exact: true }).click();
+  let quick;
+  for (let i = 0; i < 100; i++) {
+    quick = app.windows().find((p) => p.url().endsWith("#quick"));
+    if (quick) break;
+    await page.waitForTimeout(50);
+  }
+  await quick.getByRole("button", { name: "Open full workspace" }).click();
   assert.equal(
     await app.evaluate(({ BrowserWindow }) =>
       BrowserWindow.getAllWindows()

@@ -16,7 +16,8 @@
     "test:agents": "npm run build:electron && node scripts/agents-smoke.mjs",
     "format": "prettier --write src electron shared tests scripts *.json *.ts README.md",
     "test:packaged": "node scripts/packaged-smoke.mjs",
-    "test:design": "node scripts/design-smoke.mjs"
+    "test:design": "node scripts/design-smoke.mjs",
+    "test:product": "node scripts/product-smoke.mjs"
   },
   "keywords": [],
   "author": "",

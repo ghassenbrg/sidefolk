@@ -2,6 +2,15 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { NewItem, Settings, Skill, Snapshot } from "../shared/types.js";
 
 contextBridge.exposeInMainWorld("sidefolk", {
+  finishSetup: (settings: Settings) =>
+    ipcRenderer.invoke("setup:finish", settings),
+  openQuick: () => ipcRenderer.invoke("window:quick"),
+  closeQuick: () => ipcRenderer.invoke("window:quick-close"),
+  openLink: (url: string) => ipcRenderer.invoke("link:open", url),
+  testNotification: () => ipcRenderer.invoke("notification:test"),
+  exportBackup: () => ipcRenderer.invoke("data:export"),
+  updateItem: (id: string, item: NewItem) =>
+    ipcRenderer.invoke("item:update", id, item),
   snapshot: () => ipcRenderer.invoke("state:get"),
   chat: (text: string) => ipcRenderer.invoke("chat:send", text),
   settings: (settings: Settings) =>
@@ -12,7 +21,13 @@ contextBridge.exposeInMainWorld("sidefolk", {
   chooseProject: () => ipcRenderer.invoke("project:choose"),
   runScript: (name: string) => ipcRenderer.invoke("project:run", name),
   stopJob: () => ipcRenderer.invoke("project:stop"),
-  openHome: () => ipcRenderer.invoke("window:home"),
+  openHome: (page?: string) => ipcRenderer.invoke("window:home", page),
+  onNavigate: (listener: (page: "home" | "settings" | "tasks") => void) => {
+    const handler = (_event: unknown, page: "home" | "settings" | "tasks") =>
+      listener(page);
+    ipcRenderer.on("ui:navigate", handler);
+    return () => ipcRenderer.removeListener("ui:navigate", handler);
+  },
   petInteractive: (value: boolean) =>
     ipcRenderer.invoke("pet:interactive", value),
   petControl: (action: string) => ipcRenderer.invoke("pet:control", action),

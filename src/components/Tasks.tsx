@@ -9,6 +9,7 @@ import {
   Search,
   Trash2,
   ArrowUpRight,
+  Pencil,
 } from "lucide-react";
 import type { Item } from "../../shared/types";
 import { api } from "../api";
@@ -24,6 +25,8 @@ const timeLabel = (time: number) =>
 const localInput = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 export function TaskRow({ item, act }: { item: Item; act: Act }) {
+  const [editing, setEditing] = useState(false),
+    [deleting, setDeleting] = useState(false);
   return (
     <div className={`task-row ${item.status}`}>
       <button
@@ -55,6 +58,14 @@ export function TaskRow({ item, act }: { item: Item; act: Act }) {
         </span>
       </div>
       <div className="task-actions">
+        <button
+          className="icon-button"
+          aria-label={`Edit ${item.title}`}
+          title="Edit task"
+          onClick={() => setEditing(true)}
+        >
+          <Pencil size={13} />
+        </button>
         {item.kind === "reminder" && item.status !== "done" && (
           <button
             className="icon-button"
@@ -69,24 +80,52 @@ export function TaskRow({ item, act }: { item: Item; act: Act }) {
           className="icon-button"
           aria-label={`Delete ${item.title}`}
           title="Delete task"
-          onClick={() => void act(() => api.item(item.id, "delete"))}
+          onClick={() => setDeleting(true)}
         >
           <Trash2 size={13} />
         </button>
       </div>
+      {editing && (
+        <TaskComposer item={item} act={act} onClose={() => setEditing(false)} />
+      )}
+      {deleting && (
+        <Modal title="Delete this task?" onClose={() => setDeleting(false)}>
+          <p>{item.title}</p>
+          <div className="modal-actions">
+            <button className="button" onClick={() => setDeleting(false)}>
+              Keep task
+            </button>
+            <button
+              className="button danger"
+              onClick={() =>
+                void act(async () => {
+                  await api.item(item.id, "delete");
+                  setDeleting(false);
+                })
+              }
+            >
+              Delete task
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
 export function TaskComposer({
+  item,
   act,
   onClose,
 }: {
+  item?: Item;
   act: Act;
   onClose: () => void;
 }) {
-  const [title, setTitle] = useState(""),
-    [kind, setKind] = useState<"reminder" | "todo">("reminder"),
-    [when, setWhen] = useState(localInput(new Date(Date.now() + 3600_000))),
+  const [title, setTitle] = useState(item?.title ?? ""),
+    [kind, setKind] = useState<"reminder" | "todo">(item?.kind ?? "reminder"),
+    [when, setWhen] = useState(
+      localInput(new Date(item?.dueAt ?? Date.now() + 3600_000)),
+    ),
     [saving, setSaving] = useState(false);
   const quick = (tomorrow: boolean) => {
     const date = new Date(Date.now() + (tomorrow ? 86400_000 : 1800_000));
@@ -94,13 +133,20 @@ export function TaskComposer({
     setWhen(localInput(date));
   };
   return (
-    <Modal title="One less thing to remember." onClose={onClose}>
+    <Modal
+      title={item ? "Edit task" : "Add a reminder or to-do"}
+      onClose={onClose}
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault();
           setSaving(true);
           void act(async () => {
-            await api.addItem({
+            const save = item
+              ? (value: import("../../shared/types").NewItem) =>
+                  api.updateItem(item.id, value)
+              : api.addItem;
+            await save({
               title,
               kind,
               dueAt: kind === "reminder" ? new Date(when).getTime() : null,
@@ -173,9 +219,11 @@ export function TaskComposer({
           <button className="button primary" disabled={!title.trim() || saving}>
             {saving
               ? "Saving…"
-              : kind === "reminder"
-                ? "Create reminder"
-                : "Add to-do"}
+              : item
+                ? "Save task"
+                : kind === "reminder"
+                  ? "Create reminder"
+                  : "Add to-do"}
             <Check size={14} />
           </button>
         </div>
@@ -310,7 +358,13 @@ export function TasksPanel({
             </button>
           ))}
         </div>
-        <button className="button primary" onClick={onAdd}>
+        <button
+          className="button primary"
+          onClick={() => {
+            setFilter("all");
+            onAdd();
+          }}
+        >
           <Plus size={15} />
           Add task
         </button>
@@ -345,6 +399,34 @@ export function TasksPanel({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export function ActionReceipt({ item, act }: { item: Item; act: Act }) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className="action-receipt">
+      <span className="receipt-icon">
+        <Check size={16} />
+      </span>
+      <div>
+        <strong>
+          {item.status === "done"
+            ? "Completed"
+            : item.kind === "reminder"
+              ? "Reminder saved"
+              : "Added to your list"}
+        </strong>
+        <p>{item.title}</p>
+        <span>{item.dueAt ? timeLabel(item.dueAt) : "No due date"}</span>
+      </div>
+      <button className="text-button" onClick={() => setEditing(true)}>
+        Edit
+      </button>
+      {editing && (
+        <TaskComposer item={item} act={act} onClose={() => setEditing(false)} />
+      )}
     </div>
   );
 }

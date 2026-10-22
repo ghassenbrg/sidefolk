@@ -1,4 +1,9 @@
 import {
+  externalWebUrl,
+  projectToolsAllowed,
+  scriptReviewMatches,
+} from "../shared/safety.js";
+import {
   app,
   BrowserWindow,
   ipcMain,
@@ -10,10 +15,11 @@ import {
   powerMonitor,
   screen,
   globalShortcut,
+  shell,
 } from "electron";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { mkdirSync, readFileSync, realpathSync } from "node:fs";
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { z } from "zod";
@@ -56,6 +62,7 @@ if (process.env.SIDEFOLK_DATA_DIR)
 app.setName("Sidefolk");
 let home: BrowserWindow | null = null,
   pet: BrowserWindow | null = null,
+  quick: BrowserWindow | null = null,
   tray: Tray;
 let store: Store,
   project: Project | null = null,
@@ -75,6 +82,9 @@ const snapshot = (): Snapshot => ({
   job,
   agent,
   storageWarning: store.warning,
+  quickShortcutRegistered: globalShortcut.isRegistered(
+    "CommandOrControl+Shift+J",
+  ),
   shortcutRegistered:
     !!registeredShortcut && globalShortcut.isRegistered(registeredShortcut),
   shortcutError,
@@ -82,7 +92,7 @@ const snapshot = (): Snapshot => ({
 function publish(persist = true) {
   if (persist) store.save();
   updateTray();
-  for (const window of [home, pet])
+  for (const window of [home, pet, quick])
     if (window && !window.isDestroyed())
       window.webContents.send("state:changed", snapshot());
 }
@@ -99,6 +109,7 @@ function loadWindow(window: BrowserWindow, mode = "") {
   } else void window.loadFile(join(root, "dist/index.html"), { hash: mode });
 }
 function showHome() {
+  quick?.hide();
   if (home && !home.isDestroyed()) {
     home.show();
     home.focus();
@@ -130,6 +141,62 @@ function showHome() {
     }
   });
   loadWindow(home);
+}
+function navigateHome(page?: "home" | "settings" | "tasks") {
+  showHome();
+  if (!page || !home) return;
+  const window = home;
+  if (window.webContents.isLoading())
+    window.webContents.once("did-finish-load", () =>
+      window.webContents.send("ui:navigate", page),
+    );
+  else window.webContents.send("ui:navigate", page);
+}
+function showQuick() {
+  if (!store.state.setupComplete) {
+    showHome();
+    return;
+  }
+  if (quick && !quick.isDestroyed()) {
+    quick.show();
+    quick.focus();
+    return;
+  }
+  const area = screen.getDisplayNearestPoint(
+    screen.getCursorScreenPoint(),
+  ).workArea;
+  quick = new BrowserWindow({
+    title: "Sidefolk Quick Ask",
+    width: 480,
+    height: 600,
+    minWidth: 400,
+    minHeight: 420,
+    maxWidth: 640,
+    x: Math.round(area.x + (area.width - 480) / 2),
+    y: Math.round(area.y + Math.max(20, (area.height - 600) / 2)),
+    frame: false,
+    show: false,
+    backgroundColor: "#17191e",
+    alwaysOnTop: true,
+    webPreferences: {
+      preload: join(root, "dist-electron/electron/preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  const window = quick;
+  window.once("ready-to-show", () => {
+    window.show();
+    window.focus();
+  });
+  window.on("close", (event) => {
+    if (!quitting) {
+      event.preventDefault();
+      window.hide();
+    }
+  });
+  loadWindow(window, "quick");
 }
 function updatePet(summon = false) {
   if (!store.state.settings.petVisible) {
@@ -237,6 +304,11 @@ function updateTray() {
   trayMenuKey = key;
   tray.setContextMenu(
     Menu.buildFromTemplate([
+      {
+        label: "Quick Ask",
+        accelerator: "CommandOrControl+Shift+J",
+        click: showQuick,
+      },
       { label: "Open Sidefolk", click: showHome },
       {
         label: store.state.settings.petVisible
@@ -302,7 +374,7 @@ function tick() {
         title: `${store.state.settings.petName} has a little reminder`,
         body: item.title,
       });
-      notification.on("click", showHome);
+      notification.on("click", () => navigateHome("tasks"));
       notification.show();
     }
   }
@@ -320,6 +392,7 @@ async function sendChat(text: string) {
     (project && session.workspace !== project.path)
   )
     session = newSession();
+  session.toolsEnabled = projectToolsAllowed(project?.path, session.workspace);
   store.addMessage("user", text);
   if (session.messages.filter((m) => m.role === "user").length === 1)
     session.title = text.slice(0, 44);
@@ -345,6 +418,7 @@ async function sendChat(text: string) {
         ? `On your list: ${intent.title}. One less thing to keep in your head.`
         : reminderConfirmation({ title: intent.title, dueAt: intent.dueAt }),
     );
+    session.messages.at(-1)!.itemIds = [store.state.items[0].id];
   } else if (intent.type === "clarify") {
     store.state.pendingReminder = { title: intent.title };
     store.addMessage(
@@ -463,9 +537,11 @@ async function sendChat(text: string) {
                 ? "Stopped. We can pick this up again whenever you’re ready."
                 : `The agent hit a snag: ${error}`,
             );
+          if (error || stoppedAgent) session.messages.at(-1)!.failed = true;
           if (!error && !stoppedAgent) {
             session.contextHash = contextHash;
             if (proposed.present) {
+              const existingIds = new Set(store.state.items.map((i) => i.id));
               const applied = proposed.error
                 ? { error: proposed.error, confirmations: [] }
                 : applyActions(store.state, proposed.actions, requestedAt);
@@ -473,6 +549,9 @@ async function sendChat(text: string) {
                 "assistant",
                 applied.error ?? applied.confirmations.join("\n"),
               );
+              session.messages.at(-1)!.itemIds = store.state.items
+                .filter((i) => !existingIds.has(i.id))
+                .map((i) => i.id);
             }
             if (!visible && !proposed.present)
               store.addMessage(
@@ -500,6 +579,7 @@ async function sendChat(text: string) {
     } catch (error) {
       agent = null;
       store.addMessage("assistant", (error as Error).message);
+      session.messages.at(-1)!.failed = true;
     }
   }
   publish();
@@ -509,7 +589,11 @@ async function sendChat(text: string) {
 function handle(channel: string, fn: (...args: any[]) => unknown) {
   ipcMain.handle(channel, (event, ...args) => {
     if (
-      ![home?.webContents.id, pet?.webContents.id].includes(event.sender.id) ||
+      ![
+        home?.webContents.id,
+        pet?.webContents.id,
+        quick?.webContents.id,
+      ].includes(event.sender.id) ||
       event.senderFrame !== event.sender.mainFrame
     )
       throw new Error("Untrusted renderer");
@@ -518,6 +602,63 @@ function handle(channel: string, fn: (...args: any[]) => unknown) {
 }
 function setupIPC() {
   handle("state:get", snapshot);
+  handle("window:quick", showQuick);
+  handle("window:quick-close", () => quick?.hide());
+  handle("link:open", (value) =>
+    shell.openExternal(externalWebUrl(z.string().max(8192).parse(value))),
+  );
+  handle("notification:test", () => {
+    if (!Notification.isSupported())
+      throw new Error("Desktop notifications are unavailable on this system.");
+    new Notification({
+      title: "Sidefolk is ready to remind you",
+      body: "Test notification. If you can see this, delivery is working right now.",
+    }).show();
+  });
+  handle("data:export", async () => {
+    const result = await dialog.showSaveDialog(home!, {
+      title: "Export Sidefolk backup",
+      defaultPath: "sidefolk-backup.json",
+      filters: [{ name: "JSON backup", extensions: ["json"] }],
+    });
+    if (result.canceled || !result.filePath) return null;
+    writeFileSync(result.filePath, JSON.stringify(store.state, null, 2), {
+      mode: 0o600,
+    });
+    return result.filePath;
+  });
+  handle("setup:finish", (value) => {
+    if (agent) throw new Error("Wait for the current request to finish.");
+    const parsed = settingsSchema.parse(value);
+    const settings = {
+      ...store.state.settings,
+      petName: parsed.petName,
+      provider: parsed.provider,
+    };
+    if (settings.provider !== "local") executable(settings.provider);
+    store.state.settings = settings;
+    store.state.setupComplete = true;
+    if (!currentSession().messages.some((m) => m.role === "user"))
+      currentSession().provider = settings.provider;
+    updatePet();
+    publish();
+  });
+  handle("item:update", (id, value) => {
+    const edited = newItemSchema.parse(value);
+    const item = store.state.items.find((i) => i.id === z.string().parse(id));
+    if (!item) throw new Error("This task no longer exists.");
+    if (
+      edited.kind === "reminder" &&
+      (!edited.dueAt || edited.dueAt <= Date.now())
+    )
+      throw new Error("Choose a future time for your reminder.");
+    Object.assign(item, edited, {
+      dueAt: edited.kind === "reminder" ? edited.dueAt : null,
+      status: "pending",
+      notifiedAt: null,
+    });
+    publish();
+  });
   handle("chat:send", (value) =>
     sendChat(z.string().trim().min(1).max(12_000).parse(value)),
   );
@@ -541,7 +682,9 @@ function setupIPC() {
     publish();
     tick();
   });
-  handle("window:home", showHome);
+  handle("window:home", (value) =>
+    navigateHome(z.enum(["home", "settings", "tasks"]).optional().parse(value)),
+  );
   handle("pet:interactive", (value) => {
     pet?.setIgnoreMouseEvents(!z.boolean().parse(value), { forward: true });
   });
@@ -651,6 +794,10 @@ function setupIPC() {
     store.state.pendingReminder = null;
     // Restoring a conversation does not grant fresh project execution permissions.
     if (project?.path !== session.workspace) project = null;
+    session.toolsEnabled = projectToolsAllowed(
+      project?.path,
+      session.workspace,
+    );
     publish();
   });
   handle("agents:check", () =>
@@ -703,7 +850,13 @@ function setupIPC() {
     const pkg = JSON.parse(
       readFileSync(join(project.path, "package.json"), "utf8"),
     );
-    if (pkg.scripts?.[name] !== project.scripts[name])
+    if (
+      !scriptReviewMatches(
+        project.scripts,
+        z.record(z.string(), z.string()).parse(pkg.scripts ?? {}),
+        name,
+      )
+    )
       throw new Error(
         "This script changed. Reconnect the folder to review it.",
       );
@@ -770,8 +923,13 @@ else {
   });
   app.whenReady().then(() => {
     store = new Store(join(app.getPath("userData"), "sidefolk.json"));
+    for (const session of store.state.sessions) session.toolsEnabled = false;
     setupIPC();
     registerPetShortcut(store.state.settings.petShortcut);
+    globalShortcut.register("CommandOrControl+Shift+J", () => {
+      if (quick?.isVisible()) quick.hide();
+      else showQuick();
+    });
     showHome();
     if (process.argv.includes("--summon-pet")) controlPet("summon");
     else updatePet();
