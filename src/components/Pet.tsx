@@ -1,9 +1,21 @@
-import { Component, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { petCatalog, type PetSpecies } from "../../shared/pets";
+import { PetIllustration } from "./PetIllustration";
+import {
+  Component,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 const colors = { sage: "#a6b994", peach: "#e9b39e", lilac: "#b8afd0" };
 type Props = {
+  accessory?: "none" | "glasses" | "headphones";
+  species?: PetSpecies;
+  style?: "2d" | "3d";
   color: keyof typeof colors;
   mood: "idle" | "working" | "reminder" | "sleeping";
   onPet?: () => void;
@@ -23,7 +35,13 @@ function Ticker() {
   }, [invalidate]);
   return null;
 }
-function Creature({ color, mood, onPet }: Props) {
+function Creature({
+  color,
+  mood,
+  onPet,
+  species = "bunny",
+  accessory = "none",
+}: Props) {
   const group = useRef<THREE.Group>(null),
     eyes = useRef<THREE.Group>(null),
     leftArm = useRef<THREE.Mesh>(null),
@@ -74,18 +92,34 @@ function Creature({ color, mood, onPet }: Props) {
         0.3 + (mood === "working" ? Math.sin(t * 6) * 0.25 : 0);
     }
   });
-  const coat = colors[color];
+  const coat =
+    species === "bunny"
+      ? colors[color]
+      : petCatalog.find((p) => p.id === species)!.color;
+  const earScale: [number, number, number] =
+    species === "bunny"
+      ? [0.24, 0.5, 0.23]
+      : species === "frog"
+        ? [0.3, 0.25, 0.23]
+        : species === "ghost"
+          ? [0.01, 0.01, 0.01]
+          : [0.3, 0.3, 0.23];
   const sphere = (
     position: [number, number, number],
     scale: [number, number, number],
     material: string,
     key: string,
-  ) => (
-    <mesh key={key} position={position} scale={scale} castShadow>
-      <sphereGeometry args={[1, 40, 32]} />
-      <meshStandardMaterial color={material} roughness={0.8} />
-    </mesh>
-  );
+  ) =>
+    species === "ghost" && /^(ear|inner|foot|belly|muzzle)/.test(key) ? null : (
+      <mesh key={key} position={position} scale={scale} castShadow>
+        {key.startsWith("ear-") && (species === "cat" || species === "fox") ? (
+          <coneGeometry args={[1, 2, 3]} />
+        ) : (
+          <sphereGeometry args={[1, 32, 24]} />
+        )}
+        <meshStandardMaterial color={material} roughness={0.8} />
+      </mesh>
+    );
   return (
     <group
       ref={group}
@@ -95,15 +129,75 @@ function Creature({ color, mood, onPet }: Props) {
         onPet?.();
       }}
     >
-      {sphere([0, 0.03, 0], [0.68, 0.79, 0.52], coat, "body")}
-      {sphere([0, 0.85, 0.025], [0.88, 0.73, 0.64], coat, "head")}
+      {accessory === "glasses" && (
+        <group position={[0, 1.02, 0.75]}>
+          {[-0.29, 0.29].map((x) => (
+            <mesh key={x} position={[x, 0, 0]}>
+              <torusGeometry args={[0.18, 0.025, 8, 32]} />
+              <meshStandardMaterial color="#3c324d" />
+            </mesh>
+          ))}
+          <mesh>
+            <boxGeometry args={[0.22, 0.025, 0.025]} />
+            <meshStandardMaterial color="#3c324d" />
+          </mesh>
+        </group>
+      )}
+      {accessory === "headphones" && (
+        <group>
+          <mesh position={[0, 1.03, 0]}>
+            <torusGeometry args={[0.9, 0.065, 8, 40, Math.PI]} />
+            <meshStandardMaterial color="#554568" />
+          </mesh>
+          {[-0.86, 0.86].map((x) => (
+            <mesh key={x} position={[x, 0.97, 0]} scale={[0.14, 0.29, 0.3]}>
+              <sphereGeometry args={[1, 24, 16]} />
+              <meshStandardMaterial color="#ac91d3" />
+            </mesh>
+          ))}
+        </group>
+      )}
+      {(species === "cat" || species === "fox") && (
+        <group position={[0.65, -0.2, -0.3]} rotation={[0, 0, -0.65]}>
+          {sphere(
+            [0, 0.3, 0],
+            species === "fox" ? [0.3, 0.65, 0.3] : [0.13, 0.65, 0.13],
+            coat,
+            "tail",
+          )}
+          {species === "fox" &&
+            sphere([0, 0.8, 0], [0.22, 0.22, 0.23], "#fff0dc", "tail-tip")}
+        </group>
+      )}
+      {sphere(
+        [0, 0.03, 0],
+        species === "ghost" ? [0.77, 0.95, 0.55] : [0.68, 0.79, 0.52],
+        coat,
+        "body",
+      )}
+      {sphere(
+        [0, 0.85, 0.025],
+        species === "frog" ? [1, 0.58, 0.64] : [0.88, 0.73, 0.64],
+        coat,
+        "head",
+      )}
       <group position={[-0.5, 1.45, 0]} rotation={[0, 0, 0.25]}>
-        {sphere([0, 0, 0], [0.24, 0.5, 0.23], coat, "ear-left")}
-        {sphere([0, 0.03, 0.18], [0.115, 0.3, 0.055], "#d9dfc3", "inner-left")}
+        {sphere([0, 0, 0], earScale, coat, "ear-left")}
+        {sphere(
+          [0, 0.03, 0.18],
+          [0.115, species === "bunny" ? 0.3 : 0.12, 0.055],
+          "#f4d8cb",
+          "inner-left",
+        )}
       </group>
       <group position={[0.5, 1.45, 0]} rotation={[0, 0, -0.25]}>
-        {sphere([0, 0, 0], [0.24, 0.5, 0.23], coat, "ear-right")}
-        {sphere([0, 0.03, 0.18], [0.115, 0.3, 0.055], "#d9dfc3", "inner-right")}
+        {sphere([0, 0, 0], earScale, coat, "ear-right")}
+        {sphere(
+          [0, 0.03, 0.18],
+          [0.115, species === "bunny" ? 0.3 : 0.12, 0.055],
+          "#f4d8cb",
+          "inner-right",
+        )}
       </group>
       {sphere([0, -0.03, 0.45], [0.43, 0.49, 0.1], "#eeedd9", "belly")}
       {sphere([-0.37, -0.59, 0.18], [0.31, 0.2, 0.37], coat, "foot-left")}
@@ -127,6 +221,10 @@ function Creature({ color, mood, onPet }: Props) {
         <meshStandardMaterial color={coat} />
       </mesh>
       {sphere([0, 0.77, 0.55], [0.59, 0.36, 0.22], "#f3f0dd", "muzzle")}
+      {species === "ghost" &&
+        [-0.5, 0, 0.5].map((x) =>
+          sphere([x, -0.72, 0], [0.28, 0.25, 0.46], coat, `hem-${x}`),
+        )}
       <group ref={eyes} position={[0, 1.03, 0.61]}>
         {sphere([-0.29, 0, 0], [0.075, 0.105, 0.052], "#303c31", "eye-left")}
         {sphere([0.29, 0, 0], [0.075, 0.105, 0.052], "#303c31", "eye-right")}
@@ -200,12 +298,41 @@ class PetBoundary extends Component<
   }
 }
 export default function Pet(props: Props) {
+  const [reaction, setReaction] = useState(false);
+  useEffect(() => {
+    if (reaction) {
+      const t = setTimeout(() => setReaction(false), 1600);
+      return () => clearTimeout(t);
+    }
+  }, [reaction]);
+  const interact = () => {
+    setReaction(true);
+    props.onPet?.();
+  };
+  if (props.style === "2d")
+    return (
+      <button
+        className={`pet-canvas pet-2d ${reaction ? "is-happy" : ""} mood-${props.mood}`}
+        aria-label={`Pet your ${props.species || "bunny"} companion`}
+        onClick={interact}
+      >
+        <PetIllustration
+          species={props.species || "bunny"}
+          accessory={props.accessory}
+          color={props.color}
+          happy={reaction}
+          sleeping={props.mood === "sleeping"}
+        />
+        {reaction && <span className="pet-heart">♥</span>}
+      </button>
+    );
   return (
     <div
       className={`pet-canvas ${props.floating ? "floating-canvas" : ""}`}
       role="img"
       aria-label={`Your ${props.color} 3D companion, ${props.mood}`}
     >
+      {reaction && <span className="pet-heart">♥</span>}
       <PetBoundary>
         <Canvas
           shadows
@@ -227,7 +354,7 @@ export default function Pet(props: Props) {
             intensity={1}
             color="#fff4df"
           />
-          <Creature {...props} />
+          <Creature {...props} onPet={interact} />
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
             position={[0, -0.99, 0]}

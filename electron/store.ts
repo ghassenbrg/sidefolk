@@ -16,6 +16,9 @@ export function initialState(): AppState {
     settings: {
       petName: "Pip",
       color: "sage",
+      petSpecies: "bunny",
+      petStyle: "3d",
+      petAccessory: "none",
       focus: false,
       petVisible: true,
       petShortcut: DEFAULT_PET_SHORTCUT,

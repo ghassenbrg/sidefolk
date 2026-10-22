@@ -10,13 +10,13 @@ import {
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import assert from "node:assert/strict";
-import { initialState } from '../dist-electron/electron/store.js';
+import { initialState } from "../dist-electron/electron/store.js";
 
 const root = resolve(import.meta.dirname, "..");
 const data = mkdtempSync(join(tmpdir(), "sidefolk-smoke-"));
 const fixture = initialState();
-fixture.settings.petShortcut = 'Control+Alt+Shift+F20';
-writeFileSync(join(data, 'sidefolk.json'), JSON.stringify(fixture));
+fixture.settings.petShortcut = "Control+Alt+Shift+F20";
+writeFileSync(join(data, "sidefolk.json"), JSON.stringify(fixture));
 const project = join(data, "test-project");
 mkdirSync(project);
 writeFileSync(
@@ -32,13 +32,20 @@ delete env.SIDEFOLK_DEV_URL;
 const errors = [];
 let app;
 const launch = () => electron.launch({ args: ["."], cwd: root, env });
-const mainWindow = async app => {
+const mainWindow = async (app) => {
   for (let i = 0; i < 150; i++) {
-    const page = app.windows().find(window => window.url() && window.url() !== 'about:blank' && !window.url().endsWith('#pet'));
+    const page = app
+      .windows()
+      .find(
+        (window) =>
+          window.url() &&
+          window.url() !== "about:blank" &&
+          !window.url().endsWith("#pet"),
+      );
     if (page) return page;
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error('Main window did not load.');
+  throw new Error("Main window did not load.");
 };
 const screenshot = async (page, name) => {
   mkdirSync(join(root, "output/playwright"), { recursive: true });

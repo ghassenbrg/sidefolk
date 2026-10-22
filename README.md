@@ -103,3 +103,11 @@ Verified locally on macOS Apple Silicon: production build, 23 core tests, full d
 - Richer animation, character customization, and Windows/Linux validation.
 
 This first version supports one active agent turn at a time. There is no autonomous continuous learning or model retraining: learning means remembered preferences, accepted suggestions, and reusable skills.
+
+### Pet studio and redesigned workspace
+
+Open **Pet studio** to preview Moonbun, Miso, Ember, Pebble, Fern, or Boo in illustrated 2D or sculpted 3D. Add round glasses (Little professor) or headphones (Lo-fi buddy), preview idle/thinking/reminder/sleep moods, and click the pet for a heart reaction. **Make this my companion** saves the appearance to both the main app and the floating desktop pet without changing the pet name, memories, skills, or conversations. Gallery thumbnails are static SVGs; only the active preview animates. Reduced-motion preferences are respected. All interactions are local and consume no AI tokens.
+
+The charcoal/lilac workspace includes a full Tasks view with filters, search, direct reminder/to-do creation, Markdown chat replies, copy-message controls, and **⌘K / Ctrl+K** quick actions. The desktop summon shortcut remains **⌘⇧Space** by default on macOS. Settings can change it.
+
+`npm run test:design` runs the real Electron UI against disposable data: gallery selections, accessories, 2D reactions, all 3D previews, persistence, direct reminders, rejected past reminders, dialogs, quick actions, compact layouts, and desktop appearance synchronization. It makes no AI calls. Current desktop validation targets macOS; other operating systems need native packaging and validation.

@@ -3,6 +3,11 @@ import { DEFAULT_PET_SHORTCUT, validPetShortcut } from "./desktop.js";
 
 export const settingsSchema = z.object({
   petName: z.string().trim().min(1).max(24),
+  petSpecies: z
+    .enum(["bunny", "cat", "fox", "bear", "frog", "ghost"])
+    .default("bunny"),
+  petAccessory: z.enum(["none", "glasses", "headphones"]).default("none"),
+  petStyle: z.enum(["2d", "3d"]).default("3d"),
   color: z.enum(["sage", "peach", "lilac"]),
   focus: z.boolean(),
   petVisible: z.boolean(),
@@ -29,6 +34,14 @@ export const itemSchema = z.object({
   notifiedAt: z.number().nullable(),
 });
 export type Item = z.infer<typeof itemSchema>;
+export const newItemSchema = z
+  .object({
+    title: z.string().trim().min(1).max(240),
+    kind: z.enum(["todo", "reminder"]),
+    dueAt: z.number().finite().nullable(),
+  })
+  .strict();
+export type NewItem = z.infer<typeof newItemSchema>;
 export const messageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
@@ -129,6 +142,7 @@ export interface SidefolkAPI {
     id: string,
     action: "done" | "reopen" | "snooze" | "delete",
   ): Promise<void>;
+  addItem(item: NewItem): Promise<void>;
   chooseProject(): Promise<void>;
   runScript(name: string): Promise<void>;
   stopJob(): Promise<void>;

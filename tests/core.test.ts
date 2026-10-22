@@ -335,3 +335,24 @@ test("provider events carry actual session, tool, result, and usage data", () =>
     "hello",
   );
 });
+
+test("legacy companions gain appearance defaults without changing identity or memory", () => {
+  const original = initialState();
+  const legacy = JSON.parse(JSON.stringify(original));
+  delete legacy.settings.petSpecies;
+  delete legacy.settings.petStyle;
+  delete legacy.settings.petAccessory;
+  legacy.settings.petName = "My friend";
+  const directory = mkdtempSync(join(tmpdir(), "sidefolk-appearance-"));
+  try {
+    writeFileSync(join(directory, "sidefolk.json"), JSON.stringify(legacy));
+    const restored = new Store(join(directory, "sidefolk.json"));
+    assert.equal(restored.state.settings.petName, "My friend");
+    assert.equal(restored.state.settings.petSpecies, "bunny");
+    assert.equal(restored.state.settings.petStyle, "3d");
+    assert.equal(restored.state.settings.petAccessory, "none");
+    assert.deepEqual(restored.state.sessions, original.sessions);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

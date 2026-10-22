@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Settings, Skill, Snapshot } from "../shared/types.js";
+import type { NewItem, Settings, Skill, Snapshot } from "../shared/types.js";
 
 contextBridge.exposeInMainWorld("sidefolk", {
   snapshot: () => ipcRenderer.invoke("state:get"),
@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld("sidefolk", {
     ipcRenderer.invoke("settings:set", settings),
   item: (id: string, action: string) =>
     ipcRenderer.invoke("item:action", id, action),
+  addItem: (item: NewItem) => ipcRenderer.invoke("item:add", item),
   chooseProject: () => ipcRenderer.invoke("project:choose"),
   runScript: (name: string) => ipcRenderer.invoke("project:run", name),
   stopJob: () => ipcRenderer.invoke("project:stop"),

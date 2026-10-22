@@ -33,6 +33,7 @@ import {
 import {
   settingsSchema,
   skillSchema,
+  newItemSchema,
   type Snapshot,
   type Project,
   type Job,
@@ -109,7 +110,7 @@ function showHome() {
     height: 850,
     minWidth: 980,
     minHeight: 700,
-    backgroundColor: "#f7f8f5",
+    backgroundColor: "#111216",
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
@@ -567,6 +568,20 @@ function setupIPC() {
     }
     publish();
     tick();
+  });
+  handle("item:add", (value) => {
+    const item = newItemSchema.parse(value);
+    if (item.kind === "reminder" && (!item.dueAt || item.dueAt <= Date.now()))
+      throw new Error("Choose a future time for your reminder.");
+    store.state.items.unshift({
+      ...item,
+      id: randomUUID(),
+      dueAt: item.kind === "reminder" ? item.dueAt : null,
+      createdAt: Date.now(),
+      status: "pending",
+      notifiedAt: null,
+    });
+    publish();
   });
   handle("memory:add", (value, id) => {
     const text = z.string().trim().min(1).max(1200).parse(value);
