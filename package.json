@@ -1,0 +1,50 @@
+{
+  "name": "sidefolk",
+  "version": "0.1.0",
+  "description": "A little desktop company, powered by real AI agents.",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "npm run build:electron && concurrently -k -s first \"vite\" \"wait-on http://127.0.0.1:5173 && node scripts/launch.mjs --dev\"",
+    "dev:web": "vite",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && npm run build:electron && vite build",
+    "start": "node scripts/launch.mjs",
+    "test": "tsx --test tests/*.test.ts",
+    "test:desktop": "node scripts/smoke.mjs",
+    "package": "npm run build && electron-packager . Sidefolk --out=release --overwrite --ignore=\"^/(src|tests|scripts|output|release|.git|tsconfig.*|vite.config.ts)$\" --icon=assets/sidefolk.icns --extra-resource=assets/agent-instructions.md",
+    "test:agents": "npm run build:electron && node scripts/agents-smoke.mjs",
+    "format": "prettier --write src electron shared tests scripts *.json *.ts README.md",
+    "test:packaged": "node scripts/packaged-smoke.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "module",
+  "dependencies": {
+    "@react-three/fiber": "^9.8.2",
+    "chrono-node": "^2.10.3",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "electron": "^45.0.0",
+    "playwright": "^1.64.1",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "wait-on": "^9.5.1"
+  },
+  "private": true
+}
