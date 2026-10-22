@@ -9,6 +9,7 @@ import {
   dialog,
   powerMonitor,
   screen,
+  globalShortcut,
 } from "electron";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +20,11 @@ import { z } from "zod";
 import { Store } from "./store.js";
 import { interpret } from "../shared/intents.js";
 import { visibleAgentText } from "../shared/protocol.js";
+import {
+  clampPetPosition,
+  summonedPetPosition,
+  PET_SIZE,
+} from "../shared/desktop.js";
 import {
   applyActions,
   extractActions,
@@ -58,20 +64,29 @@ let jobChild: ChildProcessWithoutNullStreams | null = null,
   agentChild: ChildProcessWithoutNullStreams | null = null;
 let quitting = false,
   stoppedAgent = false;
+let registeredShortcut: string | null = null;
+let shortcutError: string | undefined;
+let petMoveTimer: NodeJS.Timeout | undefined;
+let trayMenuKey = "";
 const snapshot = (): Snapshot => ({
   ...store.state,
   project,
   job,
   agent,
   storageWarning: store.warning,
+  shortcutRegistered:
+    !!registeredShortcut && globalShortcut.isRegistered(registeredShortcut),
+  shortcutError,
 });
 function publish(persist = true) {
   if (persist) store.save();
+  updateTray();
   for (const window of [home, pet])
     if (window && !window.isDestroyed())
       window.webContents.send("state:changed", snapshot());
 }
 function loadWindow(window: BrowserWindow, mode = "") {
+  window.on("page-title-updated", (event) => event.preventDefault());
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   window.webContents.on("will-navigate", (e) => e.preventDefault());
   if (process.env.SIDEFOLK_DEV_URL) {
@@ -115,19 +130,36 @@ function showHome() {
   });
   loadWindow(home);
 }
-function updatePet() {
+function updatePet(summon = false) {
   if (!store.state.settings.petVisible) {
-    pet?.destroy();
-    pet = null;
+    pet?.hide();
     return;
   }
-  if (pet && !pet.isDestroyed()) return;
-  const { x, y, width, height } = screen.getPrimaryDisplay().workArea;
+  const cursor = screen.getCursorScreenPoint();
+  const display = screen.getDisplayNearestPoint(
+    summon ? cursor : (store.state.petPosition ?? cursor),
+  );
+  const position = summon
+    ? summonedPetPosition(cursor, display.workArea)
+    : clampPetPosition(
+        store.state.petPosition ?? {
+          x: display.workArea.x + display.workArea.width - PET_SIZE.width - 20,
+          y:
+            display.workArea.y + display.workArea.height - PET_SIZE.height - 20,
+        },
+        display.workArea,
+      );
+  if (pet && !pet.isDestroyed()) {
+    if (summon) pet.setPosition(position.x, position.y, false);
+    pet.showInactive();
+    return;
+  }
   pet = new BrowserWindow({
-    x: x + width - 310,
-    y: y + height - 350,
-    width: 290,
-    height: 330,
+    title: "Sidefolk desktop companion",
+    ...position,
+    ...PET_SIZE,
+    show: false,
+    focusable: false,
     transparent: true,
     frame: false,
     resizable: false,
@@ -143,9 +175,92 @@ function updatePet() {
       backgroundThrottling: true,
     },
   });
+  pet.setAlwaysOnTop(true, "floating");
   pet.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   pet.setIgnoreMouseEvents(true, { forward: true });
+  const window = pet;
+  window.once("ready-to-show", () => {
+    if (!window.isDestroyed() && store.state.settings.petVisible)
+      window.showInactive();
+  });
+  window.on("move", () => {
+    clearTimeout(petMoveTimer);
+    petMoveTimer = setTimeout(() => {
+      if (window.isDestroyed()) return;
+      const [x, y] = window.getPosition();
+      store.state.petPosition = { x, y };
+      publish();
+    }, 200);
+  });
   loadWindow(pet, "pet");
+}
+function controlPet(action: "show" | "hide" | "toggle" | "summon") {
+  const visible =
+    action === "toggle" ? !store.state.settings.petVisible : action !== "hide";
+  store.state.settings.petVisible = visible;
+  if (visible && process.platform === "darwin" && app.isHidden()) {
+    home?.hide();
+    app.show();
+  }
+  updatePet(visible && (action === "toggle" || action === "summon"));
+  publish();
+}
+function registerPetShortcut(accelerator: string): boolean {
+  if (
+    accelerator === registeredShortcut &&
+    globalShortcut.isRegistered(accelerator)
+  )
+    return true;
+  let registered = false;
+  try {
+    registered = globalShortcut.register(accelerator, () =>
+      controlPet("toggle"),
+    );
+  } catch {
+    /* report unavailable binding */
+  }
+  if (!registered) {
+    shortcutError = `The desktop shortcut is unavailable or already used by another app. Choose another in Settings; the menu bar controls still work.`;
+    return false;
+  }
+  if (registeredShortcut && registeredShortcut !== accelerator)
+    globalShortcut.unregister(registeredShortcut);
+  registeredShortcut = accelerator;
+  shortcutError = undefined;
+  return true;
+}
+function updateTray() {
+  if (!tray || tray.isDestroyed()) return;
+  const key = `${store.state.settings.petVisible}:${store.state.settings.petShortcut}`;
+  if (key === trayMenuKey) return;
+  trayMenuKey = key;
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "Open Sidefolk", click: showHome },
+      {
+        label: store.state.settings.petVisible
+          ? "Hide desktop pet"
+          : "Show desktop pet",
+        click: () => controlPet("toggle"),
+      },
+      { label: "Call pet to cursor", click: () => controlPet("summon") },
+      {
+        label: `Show / hide: ${store.state.settings.petShortcut}`,
+        enabled: false,
+      },
+      { type: "separator" },
+      { label: "Quit Sidefolk", click: () => app.quit() },
+    ]),
+  );
+}
+function keepPetOnScreen() {
+  if (!pet || pet.isDestroyed()) return;
+  const bounds = pet.getBounds();
+  const position = clampPetPosition(
+    bounds,
+    screen.getDisplayMatching(bounds).workArea,
+  );
+  pet.setPosition(position.x, position.y, false);
 }
 function newSession(workspace = project?.path ?? ""): AgentSession {
   if (agent)
@@ -410,7 +525,17 @@ function setupIPC() {
       throw new Error(
         "Finish or stop the current turn before changing agent settings.",
       );
-    store.state.settings = settingsSchema.parse(value);
+    const settings = settingsSchema.parse(value);
+    const previousError = shortcutError;
+    if (
+      !registerPetShortcut(settings.petShortcut) &&
+      settings.petShortcut !== store.state.settings.petShortcut
+    ) {
+      const error = shortcutError;
+      shortcutError = previousError;
+      throw new Error(error);
+    }
+    store.state.settings = settings;
     updatePet();
     publish();
     tick();
@@ -419,6 +544,9 @@ function setupIPC() {
   handle("pet:interactive", (value) => {
     pet?.setIgnoreMouseEvents(!z.boolean().parse(value), { forward: true });
   });
+  handle("pet:control", (action) =>
+    controlPet(z.enum(["show", "hide", "toggle", "summon"]).parse(action)),
+  );
   handle("item:action", (id, action) => {
     z.string().parse(id);
     z.enum(["done", "reopen", "snooze", "delete"]).parse(action);
@@ -621,31 +749,22 @@ function setupIPC() {
 
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
-  app.on("second-instance", showHome);
+  app.on("second-instance", (_event, args) => {
+    if (args.includes("--summon-pet")) controlPet("summon");
+    else showHome();
+  });
   app.whenReady().then(() => {
     store = new Store(join(app.getPath("userData"), "sidefolk.json"));
     setupIPC();
+    registerPetShortcut(store.state.settings.petShortcut);
     showHome();
-    updatePet();
+    if (process.argv.includes("--summon-pet")) controlPet("summon");
+    else updatePet();
     const image = nativeImage.createFromPath(join(root, "assets/tray.png"));
     image.setTemplateImage(true);
     tray = new Tray(image);
     tray.setToolTip("Sidefolk");
-    tray.setContextMenu(
-      Menu.buildFromTemplate([
-        { label: "Open Sidefolk", click: showHome },
-        {
-          label: "Show / hide companion",
-          click: () => {
-            store.state.settings.petVisible = !store.state.settings.petVisible;
-            updatePet();
-            publish();
-          },
-        },
-        { type: "separator" },
-        { label: "Quit Sidefolk", click: () => app.quit() },
-      ]),
-    );
+    updateTray();
     tray.on("click", showHome);
     Menu.setApplicationMenu(
       Menu.buildFromTemplate([
@@ -665,6 +784,8 @@ else {
     );
     setInterval(tick, 1000).unref();
     powerMonitor.on("resume", tick);
+    screen.on("display-removed", keepPetOnScreen);
+    screen.on("display-metrics-changed", keepPetOnScreen);
     tick();
   });
   app.on("activate", showHome);
@@ -673,6 +794,8 @@ else {
   });
   app.on("before-quit", () => {
     quitting = true;
+    clearTimeout(petMoveTimer);
+    globalShortcut.unregisterAll();
     if (jobChild) terminate(jobChild);
     if (agentChild) terminate(agentChild);
   });

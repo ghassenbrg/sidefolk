@@ -33,6 +33,7 @@ import {
 import type { Item, Memory, Settings, Skill, Snapshot } from "../shared/types";
 import { api } from "./api";
 import { visibleAgentText } from "../shared/protocol";
+import { shortcutLabel } from "../shared/desktop";
 import Pet from "./components/Pet";
 
 type Page = "home" | "memory" | "skills" | "workshop" | "settings";
@@ -54,6 +55,7 @@ const compact = (n: number) =>
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(n);
+const isMac = navigator.userAgent.includes("Mac");
 
 export default function App() {
   const [state, setState] = useState<Snapshot | null>(null);
@@ -182,7 +184,8 @@ export default function App() {
           </button>
           <button
             aria-label="Hide desktop companion"
-            onClick={() => void update({ petVisible: false })}
+            title={`Hide pet · ${shortcutLabel(settings.petShortcut, isMac)} to call me back`}
+            onClick={() => void act(() => api.petControl("hide"))}
           >
             <X size={14} />
           </button>
@@ -272,6 +275,15 @@ export default function App() {
             <SettingsIcon size={18} />
             Settings<span className="version">v0.1</span>
           </button>
+          <button
+            className="desktop-shortcut"
+            title="Show or hide your pet anywhere on the desktop"
+            onClick={() => void act(() => api.petControl("toggle"))}
+          >
+            <ExternalLink size={13} />
+            <span>Desktop pet</span>
+            <kbd>{shortcutLabel(settings.petShortcut, isMac)}</kbd>
+          </button>
         </div>
       </aside>
       <main className="main">
@@ -339,19 +351,22 @@ export default function App() {
                 </button>
                 <button
                   className="button"
-                  onClick={() =>
-                    void update({ petVisible: !settings.petVisible })
-                  }
-                  disabled={!!state.agent}
+                  onClick={() => void act(() => api.petControl("toggle"))}
+                  title={shortcutLabel(settings.petShortcut, isMac)}
                 >
                   <ExternalLink size={15} />
-                  {settings.petVisible ? "Bring pet home" : "Let pet roam"}
+                  {settings.petVisible
+                    ? "Hide desktop pet"
+                    : "Show desktop pet"}
                 </button>
               </div>
             )}
           </div>
           {state.storageWarning && (
             <div className="notice">{state.storageWarning}</div>
+          )}
+          {state.shortcutError && (
+            <div className="notice">{state.shortcutError}</div>
           )}
           {page === "home" && (
             <div className="home-grid">
@@ -1246,10 +1261,54 @@ function SettingsPanel({ state, act }: { state: Snapshot; act: Act }) {
         </div>
         <SettingSwitch
           title="Live on my desktop"
-          text="A draggable, always-on-top companion."
+          text="Above other apps and across macOS desktops, even with this window closed."
           value={draft.petVisible}
           set={(petVisible) => setDraft({ ...draft, petVisible })}
         />
+        <label>
+          Show / hide shortcut
+          <select
+            className="shortcut-select"
+            value={draft.petShortcut}
+            onChange={(e) => {
+              setSaved(false);
+              setDraft({ ...draft, petShortcut: e.target.value });
+            }}
+          >
+            {[
+              "CommandOrControl+Shift+Space",
+              "CommandOrControl+Shift+P",
+              "Control+Alt+Space",
+              ...(![
+                "CommandOrControl+Shift+Space",
+                "CommandOrControl+Shift+P",
+                "Control+Alt+Space",
+              ].includes(draft.petShortcut)
+                ? [draft.petShortcut]
+                : []),
+            ].map((value) => (
+              <option key={value} value={value}>
+                {shortcutLabel(value, isMac)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="panel-footnote" style={{ marginTop: 12 }}>
+          {state.shortcutRegistered
+            ? "Global shortcut active."
+            : "Shortcut unavailable — choose another combination."}{" "}
+          Hiding keeps the app and reminders running. Summoning brings the pet
+          near your cursor.
+        </p>
+        <button
+          className="button small"
+          style={{ marginTop: 12 }}
+          type="button"
+          onClick={() => void act(() => api.petControl("summon"))}
+        >
+          Call pet here
+          <ExternalLink size={13} />
+        </button>
       </section>
       <section className="settings-card">
         <span className="note-kicker">

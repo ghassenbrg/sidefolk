@@ -10,9 +10,13 @@ import {
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import assert from "node:assert/strict";
+import { initialState } from '../dist-electron/electron/store.js';
 
 const root = resolve(import.meta.dirname, "..");
 const data = mkdtempSync(join(tmpdir(), "sidefolk-smoke-"));
+const fixture = initialState();
+fixture.settings.petShortcut = 'Control+Alt+Shift+F20';
+writeFileSync(join(data, 'sidefolk.json'), JSON.stringify(fixture));
 const project = join(data, "test-project");
 mkdirSync(project);
 writeFileSync(
@@ -28,15 +32,28 @@ delete env.SIDEFOLK_DEV_URL;
 const errors = [];
 let app;
 const launch = () => electron.launch({ args: ["."], cwd: root, env });
+const mainWindow = async app => {
+  for (let i = 0; i < 150; i++) {
+    const page = app.windows().find(window => window.url() && window.url() !== 'about:blank' && !window.url().endsWith('#pet'));
+    if (page) return page;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('Main window did not load.');
+};
 const screenshot = async (page, name) => {
   mkdirSync(join(root, "output/playwright"), { recursive: true });
   await page.screenshot({ path: join(root, `output/playwright/${name}.png`) });
 };
 try {
   app = await launch();
-  let page = await app.firstWindow();
+  let page = await mainWindow(app);
   page.on("pageerror", (error) => errors.push(error.message));
   await page.getByRole("heading", { name: "Meet Pip" }).waitFor();
+  assert.equal(
+    (await page.evaluate(() => window.sidefolk.snapshot())).settings.petVisible,
+    true,
+  );
+  await page.evaluate(() => window.sidefolk.petControl("hide"));
   await page.locator("canvas").waitFor();
   await page.waitForTimeout(1800);
   await screenshot(page, "home");
@@ -123,9 +140,12 @@ try {
   await page
     .getByRole("button", { name: "Your companion", exact: true })
     .click();
-  const petWindow = app.waitForEvent("window");
-  await page.getByRole("button", { name: "Let pet roam" }).click();
-  const pet = await petWindow;
+  await page.getByRole("button", { name: "Show desktop pet" }).click();
+  const pet = app.windows().find((window) => window.url().endsWith("#pet"));
+  assert.ok(
+    pet,
+    "desktop window should exist independently of the main window",
+  );
   await pet.getByRole("button", { name: "Talk", exact: true }).waitFor();
   assert.equal(
     await pet.evaluate(
@@ -138,6 +158,110 @@ try {
   assert.equal(
     await app.evaluate(({ BrowserWindow }) =>
       BrowserWindow.getAllWindows().some((w) => w.isAlwaysOnTop()),
+    ),
+    true,
+  );
+  if (process.platform === "darwin")
+    assert.equal(
+      await app.evaluate(({ BrowserWindow }) =>
+        BrowserWindow.getAllWindows()
+          .find((w) => w.getTitle() === "Sidefolk desktop companion")
+          .isVisibleOnAllWorkspaces(),
+      ),
+      true,
+    );
+  const shortcut = (await page.evaluate(() => window.sidefolk.snapshot()))
+    .settings.petShortcut;
+  assert.equal(
+    await app.evaluate(
+      ({ globalShortcut }, key) => globalShortcut.isRegistered(key),
+      shortcut,
+    ),
+    true,
+  );
+  // A conflict must leave the previously working shortcut and settings intact.
+  const reserved = "Control+Alt+Shift+F19";
+  assert.equal(
+    await app.evaluate(
+      ({ globalShortcut }, key) => globalShortcut.register(key, () => {}),
+      reserved,
+    ),
+    true,
+  );
+  const conflict = await page.evaluate(async (key) => {
+    const state = await window.sidefolk.snapshot();
+    try {
+      await window.sidefolk.settings({ ...state.settings, petShortcut: key });
+      return false;
+    } catch {
+      return true;
+    }
+  }, reserved);
+  assert.equal(conflict, true);
+  assert.equal(
+    (await page.evaluate(() => window.sidefolk.snapshot())).settings
+      .petShortcut,
+    shortcut,
+  );
+  assert.equal(
+    await app.evaluate(
+      ({ globalShortcut }, key) => globalShortcut.isRegistered(key),
+      shortcut,
+    ),
+    true,
+  );
+  await app.evaluate(
+    ({ globalShortcut }, key) => globalShortcut.unregister(key),
+    reserved,
+  );
+  // Closing the control window leaves the pet visible and functional.
+  await app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()
+      .find((w) => w.getTitle() === "Sidefolk")
+      .close(),
+  );
+  assert.equal(
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .find((w) => w.getTitle() === "Sidefolk")
+        .isVisible(),
+    ),
+    false,
+  );
+  assert.equal(
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .find((w) => w.getTitle() === "Sidefolk desktop companion")
+        .isVisible(),
+    ),
+    true,
+  );
+  await pet.evaluate(() => window.sidefolk.petControl("toggle"));
+  assert.equal(
+    (await pet.evaluate(() => window.sidefolk.snapshot())).settings.petVisible,
+    false,
+  );
+  await page.evaluate(() => window.sidefolk.petControl("toggle"));
+  assert.equal(
+    (await page.evaluate(() => window.sidefolk.snapshot())).settings.petVisible,
+    true,
+  );
+  assert.equal(
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .find((w) => w.getTitle() === "Sidefolk")
+        .isVisible(),
+    ),
+    false,
+  );
+  // Repeated visibility changes reuse the same pet window.
+  assert.equal(app.windows().length, 2);
+  await pet.getByRole("button", { name: "Talk", exact: true }).click();
+  assert.equal(
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .find((w) => w.getTitle() === "Sidefolk")
+        .isVisible(),
     ),
     true,
   );
@@ -174,7 +298,7 @@ try {
   );
   await app.close();
   app = await launch();
-  page = await app.firstWindow();
+  page = await mainWindow(app);
   await page.getByRole("heading", { name: "Meet Mochi" }).waitFor();
   await page
     .getByRole("button", { name: "Complete water the plants", exact: true })

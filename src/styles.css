@@ -13,6 +13,37 @@
   --line: #e5e8df;
   --sage: #eff3e9;
 }
+.desktop-shortcut {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  width: 100%;
+  font-size: 9px;
+  color: #8b9a7e;
+  padding: 8px 10px;
+  border-radius: 7px;
+}
+.desktop-shortcut:hover {
+  background: #e5ecdd;
+}
+.desktop-shortcut kbd {
+  margin-left: auto;
+  font:
+    8px -apple-system,
+    sans-serif;
+  border: 1px solid #d9e2cf;
+  border-radius: 4px;
+  background: #f6f8f1;
+  padding: 4px 5px;
+  white-space: nowrap;
+}
+.shortcut-select {
+  border: 1px solid #dfe6d6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f9fbf5;
+  color: #6b7e5c;
+}
 * {
   box-sizing: border-box;
 }

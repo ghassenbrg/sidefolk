@@ -1,10 +1,19 @@
 import { z } from "zod";
+import { DEFAULT_PET_SHORTCUT, validPetShortcut } from "./desktop.js";
 
 export const settingsSchema = z.object({
   petName: z.string().trim().min(1).max(24),
   color: z.enum(["sage", "peach", "lilac"]),
   focus: z.boolean(),
   petVisible: z.boolean(),
+  petShortcut: z
+    .string()
+    .max(90)
+    .refine(
+      validPetShortcut,
+      "Choose a shortcut with Command, Control, or Alt and a key.",
+    )
+    .default(DEFAULT_PET_SHORTCUT),
   provider: z.enum(["local", "codex", "claude"]),
   allowEdits: z.boolean(),
   economy: z.boolean(),
@@ -71,6 +80,10 @@ export const stateSchema = z.object({
     output: z.number(),
   }),
   pendingReminder: z.object({ title: z.string() }).nullable(),
+  petPosition: z
+    .object({ x: z.number().finite(), y: z.number().finite() })
+    .nullable()
+    .default(null),
 });
 export type AppState = z.infer<typeof stateSchema>;
 export type Project = {
@@ -97,6 +110,8 @@ export type Snapshot = AppState & {
   job: Job | null;
   agent: AgentRun | null;
   storageWarning?: string;
+  shortcutRegistered: boolean;
+  shortcutError?: string;
 };
 export type Intent =
   | { type: "reminder"; title: string; dueAt: number }
@@ -119,6 +134,7 @@ export interface SidefolkAPI {
   stopJob(): Promise<void>;
   openHome(): Promise<void>;
   petInteractive(value: boolean): Promise<void>;
+  petControl(action: "show" | "hide" | "toggle" | "summon"): Promise<void>;
   checkAgents(): Promise<Record<string, string>>;
   stopAgent(): Promise<void>;
   newSession(): Promise<void>;

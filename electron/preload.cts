@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld("sidefolk", {
   openHome: () => ipcRenderer.invoke("window:home"),
   petInteractive: (value: boolean) =>
     ipcRenderer.invoke("pet:interactive", value),
+  petControl: (action: string) => ipcRenderer.invoke("pet:control", action),
   checkAgents: () => ipcRenderer.invoke("agents:check"),
   stopAgent: () => ipcRenderer.invoke("agents:stop"),
   newSession: () => ipcRenderer.invoke("session:new"),

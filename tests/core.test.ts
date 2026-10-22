@@ -21,8 +21,56 @@ import {
 import type { Item } from "../shared/types.js";
 import { applyActions, extractActions } from "../electron/actions.js";
 import { visibleAgentText } from "../shared/protocol.js";
+import {
+  clampPetPosition,
+  summonedPetPosition,
+  validPetShortcut,
+  shortcutLabel,
+  DEFAULT_PET_SHORTCUT,
+} from "../shared/desktop.js";
+import { stateSchema } from "../shared/types.js";
 
 const now = new Date(2026, 9, 22, 14, 0);
+test("desktop shortcuts require modifiers and format for the current platform", () => {
+  assert.equal(validPetShortcut(DEFAULT_PET_SHORTCUT), true);
+  assert.equal(validPetShortcut("Control+Alt+Space"), true);
+  for (const shortcut of [
+    "Space",
+    "Shift+P",
+    "CommandOrControl+",
+    "nope+Space",
+  ])
+    assert.equal(validPetShortcut(shortcut), false);
+  assert.equal(shortcutLabel(DEFAULT_PET_SHORTCUT, true), "⌘⇧Space");
+  assert.equal(shortcutLabel(DEFAULT_PET_SHORTCUT, false), "Ctrl+Shift+Space");
+});
+test("pet summoning stays inside each monitor including negative coordinates", () => {
+  const left = { x: -1920, y: -100, width: 1920, height: 1080 };
+  assert.deepEqual(summonedPetPosition({ x: -2, y: -95 }, left), {
+    x: -290,
+    y: -100,
+  });
+  assert.deepEqual(clampPetPosition({ x: -5000, y: 5000 }, left), {
+    x: -1920,
+    y: 650,
+  });
+  const primary = { x: 0, y: 25, width: 1440, height: 850 };
+  assert.deepEqual(clampPetPosition({ x: -1000, y: -100 }, primary), {
+    x: 0,
+    y: 25,
+  });
+});
+test("existing app data gains desktop controls without losing the user’s hidden preference", () => {
+  const old = JSON.parse(JSON.stringify(initialState()));
+  old.settings.petVisible = false;
+  delete old.settings.petShortcut;
+  delete old.petPosition;
+  const restored = stateSchema.parse(old);
+  assert.equal(restored.settings.petVisible, false);
+  assert.equal(restored.settings.petShortcut, DEFAULT_PET_SHORTCUT);
+  assert.equal(restored.petPosition, null);
+  assert.equal(initialState().settings.petVisible, true);
+});
 test("casual reminder requests work without a model call or exact syntax", () => {
   for (const input of [
     "can u remind to check my phone in 5 min from now",

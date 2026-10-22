@@ -1,11 +1,15 @@
 import { _electron } from "playwright";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
+import { initialState } from '../dist-electron/electron/store.js';
 
 const root = resolve(import.meta.dirname, "..");
 const data = mkdtempSync(join(tmpdir(), "sidefolk-packaged-"));
+const fixture = initialState();
+fixture.settings.petShortcut = 'Control+Alt+Shift+F18';
+writeFileSync(join(data, 'sidefolk.json'), JSON.stringify(fixture));
 const env = { ...process.env, SIDEFOLK_DATA_DIR: data };
 delete env.ELECTRON_RUN_AS_NODE;
 delete env.SIDEFOLK_DEV_URL;
@@ -18,9 +22,24 @@ try {
     ),
     env,
   });
-  const page = await app.firstWindow();
+  let page;
+  for (let i = 0; i < 150; i++) {
+    page = app.windows().find(window => window.url() && window.url() !== 'about:blank' && !window.url().endsWith('#pet'));
+    if (page) break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.ok(page, 'main window should load alongside the desktop pet');
   await page.getByRole("heading", { name: "Meet Pip" }).waitFor();
   assert.equal(await app.evaluate(({ app }) => app.isPackaged), true);
+  const startup = await page.evaluate(() => window.sidefolk.snapshot());
+  assert.equal(startup.settings.petVisible, true);
+  assert.equal(
+    await app.evaluate(
+      ({ globalShortcut }, shortcut) => globalShortcut.isRegistered(shortcut),
+      startup.settings.petShortcut,
+    ),
+    true,
+  );
   if (process.argv.includes("--live") || process.argv.includes("--reminder")) {
     const reminder = process.argv.includes("--reminder");
     const requestedAt = Date.now();

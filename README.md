@@ -25,7 +25,7 @@ Create an unpacked desktop application with `npm run package`. On Apple Silicon 
 
 ## Meet your companion
 
-- **A real 3D pet.** Name it and choose sage, peach, or lilac. Click to make it bounce. “Let pet roam” opens a draggable, transparent, always-on-top desktop window. The pet reacts to working, reminder, and quiet states.
+- **A real desktop 3D pet.** Name it and choose sage, peach, or lilac. New installs show a draggable, transparent companion above other apps by default, including macOS Spaces and fullscreen windows. Closing the control window keeps the desktop pet alive. The pet reacts to working, reminder, and quiet states.
 - **Codex or Claude behind the scenes.** Connect the installed CLI, use its existing login, and resume Sidefolk-owned sessions across launches. Switching providers keeps shared memory and skills. Each provider retains its own native history.
 - **Natural reminders.** “Can u remind to check my phone in 5 min from now” works directly; there is no required command phrase. Common wording stays local. For contextual or less direct wording, the agent proposes an action in its existing response; the app validates and saves it before confirming success. Date-only requests use 9am. Missing times get a short question. Snooze, complete, reopen, and delete reminders.
 - **Local todos.** “Add buy coffee to my todos.” “Show my unfinished tasks.”
@@ -34,6 +34,16 @@ Create an unpacked desktop application with `npm run package`. On Apple Silicon 
 - **A small workshop.** Choose a project folder for agent work. Review and run an npm script, see live output, and stop its process group. The preview includes npm pre/post scripts.
 
 Close the main window to keep Sidefolk in the menu bar. Use the menu bar icon to reopen it or quit. Reminders run while the app is running; they do **not** wake a shut-down computer or fire while the app is quit. Overdue reminders surface the next time the app runs or the computer wakes. macOS notification settings may need to allow notifications for Electron or Sidefolk. Quiet time defers notifications until turned off.
+
+## Hide or call your pet
+
+- **⌘ Shift Space** on macOS / **Ctrl Shift Space** on Windows or Linux: hide the pet, or summon it near your cursor on the current monitor. This is a global shortcut and works with another app focused while Sidefolk is running.
+- **×** beneath the desktop pet hides it; the shortcut calls it back. Neither action quits Sidefolk or stops reminders.
+- The **menu bar icon** offers Show/Hide and Call pet to cursor. These remain available if a shortcut is taken by another app.
+- **Settings → Show / hide shortcut** offers alternative combinations. Conflicts are reported, and a failed shortcut change preserves the previous working binding.
+- Drag the pet by its name/grip. Its position is remembered and kept inside a connected monitor's work area. Summoning moves it to the monitor under your cursor without opening or focusing the control window.
+
+Existing visibility preferences are preserved on update. Use Show desktop pet, the shortcut, or launch with `--summon-pet` to explicitly show a previously hidden pet. Windows keeps the pet above normal application windows; exclusive fullscreen games and OS-protected screens can take precedence. Linux window-manager support varies.
 
 ## Connect an agent
 
@@ -80,7 +90,7 @@ node scripts/packaged-smoke.mjs --live # Opt-in: one real Codex turn in the .app
 
 Desktop screenshots go into ignored `output/playwright/`. `SIDEFOLK_DATA_DIR` overrides the data directory for isolated testing.
 
-Verified locally on macOS Apple Silicon: production build, 20 core tests, full desktop flow (including restart and casual reminders), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
+Verified locally on macOS Apple Silicon: production build, 23 core tests, full desktop flow (including restart and casual reminders), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
 
 ## Next iterations
 

@@ -8,6 +8,7 @@ import {
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { stateSchema, type AppState, type Message } from "../shared/types.js";
+import { DEFAULT_PET_SHORTCUT } from "../shared/desktop.js";
 
 export function initialState(): AppState {
   return {
@@ -16,13 +17,15 @@ export function initialState(): AppState {
       petName: "Pip",
       color: "sage",
       focus: false,
-      petVisible: false,
+      petVisible: true,
+      petShortcut: DEFAULT_PET_SHORTCUT,
       provider: "codex",
       allowEdits: false,
       economy: true,
     },
     items: [],
     pendingReminder: null,
+    petPosition: null,
     activeSessionId: "first",
     sessions: [
       {
