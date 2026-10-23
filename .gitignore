@@ -1,9 +1,7 @@
 node_modules/
 dist/
-dist-electron/
-release/
+src-tauri/target/
+src-tauri/gen/
 output/
+release/
 .DS_Store
-*.log
-.env
-.env.*

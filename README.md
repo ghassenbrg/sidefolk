@@ -1,131 +1,65 @@
-# Sidefolk 🌱
+# Sidefolk
 
-A little desktop company, powered by real AI agents. Name your pet, give it something to remember, or work on a project together.
+A 3D familiar that lives on your desktop and gives your AI agents a body. It is alive on its
+own (no tokens), acts out what Claude Code and Codex are doing, comes to get you when they
+need an answer, and can hand work to the agent you already have installed.
 
-**Local macOS release candidate · Electron + React · unsigned build**
+This branch is the **Phase 0** rework: throwaway spikes that de-risk the stack before the real
+build. Findings and measurements are in [docs/PHASE0.md](docs/PHASE0.md). The previous
+Electron app is preserved at the `legacy-v0` tag.
 
 ## Run it
 
-Requires Node.js 22.12+ (Node 24 recommended) and npm.
+Requires Rust (stable), Node 22+, and macOS 14+.
 
 ```sh
-cd ~/git/sidefolk
 npm install
-npm run dev
+npm run dev        # desktop overlay (Tauri dev build)
+npm run web        # browser preview at http://127.0.0.1:1420 (add ?zoom=3 to inspect)
+npm run build      # optimized src-tauri/target/release/bundle/macos/Sidefolk.app
+npm run measure    # CPU/RAM of the built app and its WebKit helpers
 ```
 
-For a production build:
+The pet has no Dock icon. Use the menu bar icon to quit or move it to the display under your
+cursor.
 
-```sh
-npm run build
-npm start
+In the browser preview, number keys play fake agent events: `1` think, `2` read, `3` edit,
+`4` run, `5` permission question, `6` done, `7` failed, `8` prompt, `0` end.
+
+## Try it
+
+- **Pet it:** click to poke, drag to pick up, fling to throw. It wanders, waves when your
+  cursor comes near, follows the cursor with its eyes, and falls asleep when you stop moving.
+- **Watch Claude Code:** start a session with the Sidefolk hooks loaded for that session only
+  (your own settings are untouched):
+
+  ```sh
+  claude --settings hooks/claude-settings.json
+  ```
+
+  The pet thinks, reads, works, and celebrates along with the session. Permission prompts
+  appear in its speech bubble for 60 seconds (Allow / Deny / In terminal) before the terminal
+  prompt takes over.
+- **Hand work to Codex:** double-click the pet, type a request, press Enter. Codex runs in
+  `~/Library/Application Support/dev.sidefolk.companion/playground` (override with
+  `SIDEFOLK_WORKDIR`) and asks the pet before running commands.
+
+## Layout
+
 ```
-
-Create an unpacked desktop application with `npm run package`. On Apple Silicon the app appears under `release/Sidefolk-darwin-arm64/Sidefolk.app`. This is an unsigned local build.
-
-## The everyday workflow
-
-1. Open **Quick Ask** with **⌘⇧J** (Ctrl+Shift+J on other platforms), the pet’s **Talk** button, or the menu bar.
-2. Ask for a reminder, a to-do, or help. A saved task gets an explicit receipt with **Edit**, so you can correct the title or time in place.
-3. Press **Escape** to return to your work. The full workspace is for reviewing tasks, conversations, and preferences.
-
-First launch provides a short setup with your companion’s name, installed CLI detection, and a local-only option. CLI presence does not prove login, quota, or connectivity. Existing installations keep their data and skip onboarding; **Settings → Review setup** opens it again. **Connect AI** in Quick Ask goes directly to Settings.
-
-Drafts survive navigation within a window. Failed requests offer **Edit & retry**; retries are always initiated by you. Task deletion asks for confirmation. Markdown links open in the default browser after HTTP(S) validation. Notification clicks take you to Tasks. Settings includes a test notification and JSON backup export. The backup contains personal data and is not encrypted; an import UI is not included yet.
-
-## Meet your companion
-
-- **A real desktop 3D pet.** Name it and choose sage, peach, or lilac. New installs show a draggable, transparent companion above other apps by default, including macOS Spaces and fullscreen windows. Closing the control window keeps the desktop pet alive. The pet reacts to working, reminder, and quiet states.
-- **Codex or Claude behind the scenes.** Connect the installed CLI, use its existing login, and resume Sidefolk-owned sessions across launches. Switching providers keeps shared memory and skills. Each provider retains its own native history.
-- **Natural reminders.** “Can u remind to check my phone in 5 min from now” works directly; there is no required command phrase. Common wording stays local. For contextual or less direct wording, the agent proposes an action in its existing response; the app validates and saves it before confirming success. Date-only requests use 9am. Missing times get a short question. Snooze, complete, reopen, and delete reminders.
-- **Local todos.** “Add buy coffee to my todos.” “Show my unfinished tasks.”
-- **Shared memory.** “Remember that I prefer pnpm.” Add, edit, and forget notes in Memory. Agent responses can propose new preferences; only accepted suggestions enter shared context.
-- **Editable skills.** Reusable instructions shape the companion across providers. Enabled skills share a 3,000-character budget and are sent only on a new session or when changed.
-- **A small workshop.** Choose a project folder for agent work. Review and run an npm script, see live output, and stop its process group. The preview includes npm pre/post scripts.
-
-Close the main window to keep Sidefolk in the menu bar. Use the menu bar icon to reopen it or quit. Reminders run while the app is running; they do **not** wake a shut-down computer or fire while the app is quit. Overdue reminders surface the next time the app runs or the computer wakes. macOS notification settings may need to allow notifications for Electron or Sidefolk. Quiet time defers notifications until turned off.
-
-## Hide or call your pet
-
-- **⌘ Shift Space** on macOS / **Ctrl Shift Space** on Windows or Linux: hide the pet, or summon it near your cursor on the current monitor. This is a global shortcut and works with another app focused while Sidefolk is running.
-- **×** beneath the desktop pet hides it; the shortcut calls it back. Neither action quits Sidefolk or stops reminders.
-- The **menu bar icon** offers Show/Hide and Call pet to cursor. These remain available if a shortcut is taken by another app.
-- **Settings → Show / hide shortcut** offers alternative combinations. Conflicts are reported, and a failed shortcut change preserves the previous working binding.
-- Drag the pet by its name/grip. Its position is remembered and kept inside a connected monitor's work area. Summoning moves it to the monitor under your cursor without opening or focusing the control window.
-
-Existing visibility preferences are preserved on update. Use Show desktop pet, the shortcut, or launch with `--summon-pet` to explicitly show a previously hidden pet. Windows keeps the pet above normal application windows; exclusive fullscreen games and OS-protected screens can take precedence. Linux window-manager support varies.
-
-## Connect an agent
-
-Install and sign in to **Codex CLI** or **Claude Code** using their official setup instructions. Sidefolk checks standard executable locations and your PATH. It uses the CLI's configured default model and credentials; it never asks you to paste a key into the UI.
-
-Choose the provider in Settings. Without a selected project, the agent runs a lightweight conversation with project tools disabled. Choose a project in Workshop to enable project tools and work on your own code.
-
-For project work, Codex defaults to its read-only sandbox. Claude is given only Read, Glob, and Grep tools. Optional workspace edits enable Codex's workspace-write sandbox or Claude's Edit/Write tools; Claude shell execution remains disabled. The explicit npm script runner is separate. Standard mode loads existing CLI customizations, skills, hooks, and MCP configuration according to the provider's behavior. Sidefolk's prompt asks the agent to stay within the workspace; Claude's tool allowlist is **not** an OS filesystem sandbox. Use trusted project folders.
-
-Native provider skills remain provider-specific. Economy mode uses Sidefolk's shared skills instead of loading large global catalogs. Codex receives per-invocation overrides to skip user config, disable global skill entries, and use a compact base instruction file. Claude skips settings sources, slash commands, and external MCP configs. These overrides never modify your own CLI configuration. Standard mode restores normal provider customization loading. The current Codex adapter uses the `skip_host_skill_discovery` feature supported by the installed CLI 0.160.0; older CLI versions may need an upgrade.
-
-References: [Codex non-interactive sessions](https://learn.chatgpt.com/docs/non-interactive-mode), [Claude Code programmatic usage](https://code.claude.com/docs/en/headless), [Electron context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation), [React Three Fiber](https://r3f.docs.pmnd.rs/).
-
-## Keep it light
-
-No AI loop runs in the background. Animations, scheduling, todo actions, naming, and memory CRUD are local. Local-only mode works with no model or account at all.
-
-The agent can create reminders and todos through a bounded app-action protocol even when project tools are disabled. Relative time is anchored to the original request, invalid or past dates are rejected, repeated actions within a response are deduplicated, and failed/stopped turns execute no actions. The app executes at most three validated actions per response. This adds no separate intent-classification model call. Local-only mode handles common wording; semantic and contextual fallback needs an agent.
-
-Economy mode requests low reasoning effort and concise replies, with compact native instructions and global catalogs disabled. Native session resume avoids replaying the app's whole transcript. Up to four relevant confirmed memory snippets (300 characters each) are included per request. Unchanged skills/persona are not resent. Memory suggestions arrive in the existing response, with no extraction model call. Agent turns have a five-minute limit and a Stop button.
-
-In the local smoke check, initial Codex input fell from 24,561 tokens with the original CLI configuration to 9,102 in lightweight Economy chat (about 63% less). Native agent overhead remains substantial, and these are observations on this machine, not a guaranteed request size. Codex's cumulative session counters are converted into incremental app usage.
-
-The usage panel shows reported input, cached, and output tokens. Providers account for cache tokens differently; the totals are not a billing estimate. CLI system prompts, native skills, growing conversation history, and tool results still consume context. Start a fresh conversation when appropriate. Economy mode is a reduction strategy, not a hard token cap.
-
-Quick Ask and 2D characters do not load the 3D engine. It is loaded on demand only when a 3D pet is rendered. The 3D scene caps resolution at 1.5× and invalidates at 24 fps. Hidden documents stop animation invalidation. Reduced-motion mode updates once per second. Geometry is generated in code; no external 3D assets or network font requests are needed.
-
-## Data and privacy
-
-App state is stored as `sidefolk.json` in Electron's user data directory (on macOS, typically `~/Library/Application Support/Sidefolk/`). It contains pet settings, reminders, memory, skills, visible conversation history, native session IDs, and usage counters. Writes use a temporary file and atomic rename. Invalid data is preserved in a recovery file. This MVP does not encrypt local data.
-
-Confirmed memory and conversation text are sent to the selected provider when an agent runs. No analytics or app-operated backend is configured. Forgetting a note excludes it from future Sidefolk prompts; it does not erase the provider's earlier session history. Create a new conversation after forgetting sensitive context.
-
-## Development and verification
-
-```sh
-npm test                # Scheduling, local routing, storage, agent protocol, context budgets
-npm run build           # Typecheck, Electron compilation, renderer production build
-npm run test:product    # Setup → Quick Ask → editable receipt → dismissal → restart
-npm run test:design     # Pet gallery, accessories, compact layouts
-npm run test:desktop    # Real Electron UI test using disposable data; no AI calls
-npm run test:agents     # Opt-in LIVE check: two short model calls per provider
-npm run test:packaged   # Open/check the packaged macOS app without AI calls
-node scripts/packaged-smoke.mjs --live # Opt-in: one real Codex turn in the .app
+src/                 overlay page (TypeScript + three.js)
+  pet/rig.ts         placeholder bunny: primitives on a real skeleton, one skinned mesh
+  pet/clips.ts       procedural clips sampled into ordinary AnimationClips
+  pet/pet.ts         mixer, crossfades, gaze, blinking, squash, props
+  mind.ts            behavior: routine, reactions, agent directives, drag/throw physics
+  agents.ts          folds agent sessions into one thing to act out
+  bubble.ts          speech bubble: lines, permission questions, prompt
+  input.ts           click-through hit testing against the skinned mesh
+src-tauri/src/       Rust core
+  overlay.rs         transparent work-area window, cursor stream
+  hooks.rs           127.0.0.1:47821 endpoint for Claude Code HTTP hooks
+  codex.rs           codex app-server JSON-RPC driver
+  bus.rs             shared event shapes and pending permissions
+hooks/               Claude Code hook settings
+scripts/measure.sh   resource measurement
 ```
-
-Desktop screenshots go into ignored `output/playwright/`. `SIDEFOLK_DATA_DIR` overrides the data directory for isolated testing.
-
-Verified locally on macOS Apple Silicon: production build, 29 core tests, full desktop flow (including restart and casual reminders), native packaged launch, a live Codex conversation in the packaged app, and native Codex session resume. `npm audit` reports zero vulnerabilities. The Claude adapter's protocol and permissions are tested; its live check was blocked by this account's weekly Claude usage limit.
-
-## Next iterations
-
-- Voice input and optional speech.
-- File/link attachments and contextual reminders.
-- Compact session summaries and smarter memory retrieval.
-- Visible helper agents with explicit task delegation and budget controls.
-- Agent SDK/app-server transports for finer tool approvals and streaming.
-- Recurring reminders, OS-backed scheduling, and optional launch at login.
-- Richer animation, character customization, and Windows/Linux validation.
-
-This first version supports one active agent turn at a time. There is no autonomous continuous learning or model retraining: learning means remembered preferences, accepted suggestions, and reusable skills.
-
-### Pet studio and redesigned workspace
-
-Open **Pet studio** to preview Moonbun, Miso, Ember, Pebble, Fern, or Boo in illustrated 2D or sculpted 3D. Add round glasses (Little professor) or headphones (Lo-fi buddy), preview idle/thinking/reminder/sleep moods, and click the pet for a heart reaction. **Make this my companion** saves the appearance to both the main app and the floating desktop pet without changing the pet name, memories, skills, or conversations. Gallery thumbnails are static SVGs; only the active preview animates. Reduced-motion preferences are respected. All interactions are local and consume no AI tokens.
-
-The charcoal/lilac workspace includes a full Tasks view with filters, search, direct reminder/to-do creation, Markdown chat replies, copy-message controls, and **⌘K / Ctrl+K** quick actions. The desktop summon shortcut remains **⌘⇧Space** by default on macOS. Settings can change it.
-
-`npm run test:design` runs the real Electron UI against disposable data: gallery selections, accessories, 2D reactions, all 3D previews, persistence, direct reminders, rejected past reminders, dialogs, quick actions, compact layouts, and desktop appearance synchronization. It makes no AI calls. Current desktop validation targets macOS; other operating systems need native packaging and validation.
-
-## Product audit and release gates
-
-See [the product audit](docs/PRODUCT_AUDIT.md) for evidence, fixes, and remaining release requirements. The primary loop is summon → ask → verify the result → return to work. The setup illustration is generated artwork; its [asset and exact prompt](docs/WELCOME_ART.md) are recorded separately from the interactive character code.
-
-This build is suitable for further local macOS testing. Public distribution still requires code signing/notarization, an update/installer strategy, and broader accessibility/platform validation. No auto-update or OS-backed scheduling is implied by this release. No live agent credentials are checked by onboarding.
