@@ -32,8 +32,12 @@ export function wireInput(o: {
 
   const overPet = (x: number, y: number) => {
     const world = o.stage.toWorld(x, y);
+    // A box around the pet first: the skinned raycast checks every triangle.
+    const { position, scale } = o.pet.holder;
+    const dy = world.y - position.y;
+    if (Math.abs(world.x - position.x) > scale.x || dy < -0.2 * scale.y || dy > 3 * scale.y) return false;
     raycaster.set(origin.set(world.x, world.y, 1000), down);
-    return raycaster.intersectObject(o.pet.rig.body, false).length > 0;
+    return raycaster.intersectObject(o.pet.model.body, false).length > 0;
   };
 
   const refresh = (x: number, y: number) => {

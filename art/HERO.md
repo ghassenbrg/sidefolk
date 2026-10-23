@@ -50,12 +50,24 @@ the agent status signal, readable in peripheral vision without any text.
 | Failed, sad | Dim gray-violet |
 | Asleep | Faint |
 
+## Build
+
+`npm run model` runs [blender/build_hero.py](blender/build_hero.py) headlessly. It models the
+character from primitives in app space, paints vertex colors, rigs it, keys the clips, and
+writes `public/models/hero.glb` plus the editable [blender/hero.blend](blender/hero.blend).
+The script is the source of truth until an artist takes over the `.blend`; then the export
+settings at the bottom of the script still apply.
+
+Two meshes: `Body` (gets the outline: head, body, limbs, ears, tail, scarf) and `Face`
+(details without outline: eyes, highlights, brows, nose, mouth, blush, muzzle, belly, inner
+ears). All bones point straight up with no roll, so they export with identity rest rotations.
+
 ## Rig contract
 
-The glTF export must use these bone names so it can replace the placeholder in `src/pet/rig.ts`
-without code changes elsewhere: `root`, `hips`, `chest`, `head`, `earL`, `earR`, `eyeL`, `eyeR`,
-`armL`, `armR`, `legL`, `legR`, `tail`. Ears get two bones each in the real rig (base and tip) so
-they can bend as in the thinking and sad poses.
+The glTF must use these bone names (checked at load in `src/pet/model.ts`): `root`, `hips`,
+`chest`, `head`, `earL`, `earLTip`, `earR`, `earRTip`, `eyeL`, `eyeR`, `armL`, `armR`, `legL`,
+`legR`, `tail`. The tip bones let the ears bend (thinking) and hang (sad). The app scales the eye
+bones to blink, so eye geometry must be weighted to them alone.
 
 Clips, named as in `src/pet/clips.ts`: `idle`, `walk`, `sit`, `sleep`, `wave`, `think`, `read`, `work`,
 `celebrate`, `alert`, `sad`, `dangle`, `fall`.

@@ -5,3 +5,4 @@ src-tauri/gen/
 output/
 release/
 .DS_Store
+*.blend1

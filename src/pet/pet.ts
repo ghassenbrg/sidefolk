@@ -1,10 +1,10 @@
 import * as THREE from "three";
-import { buildClips, CLIPS, type ClipName } from "./clips";
-import { buildRig, PALETTE, type Rig } from "./rig";
+import { CLIPS, type ClipName } from "./clips";
+import { EYE_HEIGHT, MODEL_HEIGHT, OUTLINE, RIGHT_PAW, type Model } from "./model";
 
-/** CSS pixels per model unit: the pet stands about 140 px tall. */
-export const SCALE = 60;
-export const HEIGHT = 2.35 * SCALE;
+/** CSS pixels per model unit: the pet stands about 150 px tall, ears included. */
+export const SCALE = 58;
+export const HEIGHT = MODEL_HEIGHT * SCALE;
 
 export type Eyes = "open" | "closed" | "happy";
 
@@ -25,7 +25,7 @@ function signProp(): THREE.Group {
   ctx.fillText("!", 64, 52);
   const face = new THREE.CanvasTexture(canvas);
   face.colorSpace = THREE.SRGBColorSpace;
-  const edge = new THREE.MeshBasicMaterial({ color: PALETTE.outline });
+  const edge = new THREE.MeshBasicMaterial({ color: OUTLINE });
   const board = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.42, 0.04), [
     edge,
     edge,
@@ -34,12 +34,12 @@ function signProp(): THREE.Group {
     new THREE.MeshBasicMaterial({ map: face }),
     edge,
   ]);
-  board.position.y = 0.62;
+  board.position.y = 1.0;
   const stick = new THREE.Mesh(
-    new THREE.BoxGeometry(0.05, 0.6, 0.05),
+    new THREE.BoxGeometry(0.05, 1.0, 0.05),
     new THREE.MeshBasicMaterial({ color: 0x9a6b45 }),
   );
-  stick.position.y = 0.25;
+  stick.position.y = 0.5;
   const sign = new THREE.Group();
   sign.add(stick, board);
   return sign;
@@ -51,7 +51,7 @@ function signProp(): THREE.Group {
  */
 export class Pet {
   readonly holder = new THREE.Group();
-  readonly rig: Rig;
+  readonly model: Model;
   private readonly mixer: THREE.AnimationMixer;
   private readonly actions: Record<ClipName, THREE.AnimationAction>;
   private current: ClipName = "idle";
@@ -65,22 +65,23 @@ export class Pet {
   private readonly lookQ = new THREE.Quaternion();
   private readonly lookE = new THREE.Euler();
 
-  constructor() {
-    this.rig = buildRig();
-    this.holder.add(this.rig.object);
+  constructor(model: Model) {
+    this.model = model;
+    this.holder.add(model.object);
     this.holder.scale.setScalar(SCALE);
     this.holder.rotation.x = 0.1;
-    this.mixer = new THREE.AnimationMixer(this.rig.object);
-    const clips = buildClips(this.rig);
+    this.mixer = new THREE.AnimationMixer(model.object);
     this.actions = Object.fromEntries(
-      CLIPS.map((name) => [name, this.mixer.clipAction(clips[name])]),
+      CLIPS.map((name) => [name, this.mixer.clipAction(model.clips[name])]),
     ) as Record<ClipName, THREE.AnimationAction>;
     this.actions.idle.play();
-    // Held up in the raised right paw while the alert clip plays.
-    this.sign.position.set(0.12, -0.36, 0.1);
-    this.sign.rotation.z = -2.25;
+    // Held in the right paw while the alert clip plays. That clip raises the arm 1.6 rad; the
+    // stick leans 0.25 rad outward so the board clears the head and ear.
+    this.sign.position.copy(RIGHT_PAW);
+    this.sign.rotation.z = -1.85;
+    this.sign.scale.setScalar(0.9);
     this.sign.visible = false;
-    this.rig.bones.armR.add(this.sign);
+    model.bones.armR.add(this.sign);
   }
 
   get clip(): ClipName {
@@ -116,17 +117,17 @@ export class Pet {
    */
   update(dt: number, target: { x: number; y: number } | null, gaze: number, eyes: Eyes) {
     this.mixer.update(dt);
-    const { bones, rest } = this.rig;
+    const { bones, rest } = this.model;
 
     this.yaw = damp(this.yaw, this.targetYaw, 7, dt);
-    this.rig.object.rotation.y = this.yaw;
+    this.model.object.rotation.y = this.yaw;
 
     // Head follows the cursor on top of whatever the clip is doing.
     let yaw = 0;
     let pitch = 0;
     if (target && gaze > 0) {
       const dx = target.x - this.holder.position.x;
-      const dy = target.y - (this.holder.position.y + this.rig.eyeHeight * SCALE);
+      const dy = target.y - (this.holder.position.y + EYE_HEIGHT * this.holder.scale.y);
       yaw = (THREE.MathUtils.clamp(dx / 260, -0.75, 0.75) - this.yaw * 0.7) * gaze;
       pitch = THREE.MathUtils.clamp(-dy / 320, -0.32, 0.28) * gaze;
     }
@@ -158,6 +159,6 @@ export class Pet {
     // Landing squash springs back on its own.
     this.squashAmount = damp(this.squashAmount, 0, 9, dt);
     const s = this.squashAmount;
-    this.rig.object.scale.set(1 + s * 0.6, 1 - s, 1 + s * 0.6);
+    this.model.object.scale.set(1 + s * 0.6, 1 - s, 1 + s * 0.6);
   }
 }

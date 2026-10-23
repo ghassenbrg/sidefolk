@@ -9,7 +9,8 @@
     "web": "vite",
     "web:build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "measure": "scripts/measure.sh"
+    "measure": "scripts/measure.sh",
+    "model": "blender --background --factory-startup --python art/blender/build_hero.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",

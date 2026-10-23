@@ -8,8 +8,21 @@ Generated two concept sheets with image generation: a four-view turnaround and a
 sheet. They show an ivory chibi bunny with charcoal points, a mint scarf and a floating status
 light. The spec (proportions, palette, light colors, rig contract) is in [art/HERO.md](../art/HERO.md).
 
-Next: model, rig and animate it in Blender from the turnaround, then export glTF with the bone
-and clip names in the spec.
+## Hero in Blender · done
+
+`npm run model` builds the hero headlessly in Blender 5.2 (`art/blender/build_hero.py`) and
+exports `public/models/hero.glb`: 9,392 vertices, 15 bones (two per ear), 13 clips that each
+key every bone, vertex colors, 1 MB. The app loads it with toon shading and an outline on the
+`Body` mesh only, and a floating status light (`src/pet/orb.ts`) follows the head with the
+colors from the spec. The primitive placeholder rig is gone.
+
+Checked in the browser preview against the concept sheets: idle, walk, think (paw on chin, one
+ear bent), alert (sign held beside the head, orange light), celebrate (happy eyes, green light),
+sad (lop ears), sleep (eyes closed, ears folded back). The desktop overlay reloaded with the
+model without errors.
+
+Known gaps: the stubby arms cannot reach above the big head, so "arms up" poses end at cheek
+height; the "!" on the sign is small at real size.
 
 ## Non-activating overlay · done
 

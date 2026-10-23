@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -5,7 +6,9 @@ import { Agents, type AgentEvent } from "./agents";
 import { Bubble, type Ask } from "./bubble";
 import { wireInput } from "./input";
 import { Mind } from "./mind";
-import { HEIGHT, Pet } from "./pet/pet";
+import { loadModel } from "./pet/model";
+import { glowFor, Orb } from "./pet/orb";
+import { HEIGHT, Pet, SCALE } from "./pet/pet";
 import { Stage, VIEW } from "./stage";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
@@ -16,9 +19,11 @@ const zoom = inTauri ? 1 : Number(new URLSearchParams(location.search).get("zoom
 const height = HEIGHT * zoom;
 
 const stage = new Stage(document.querySelector<HTMLCanvasElement>("#stage")!, VIEW * zoom);
-const pet = new Pet();
+const pet = new Pet(await loadModel());
 pet.holder.scale.multiplyScalar(zoom);
-stage.scene.add(pet.holder);
+const orb = new Orb(30 * zoom);
+stage.scene.add(pet.holder, orb.object);
+const orbAnchor = new THREE.Vector3();
 const mind = new Mind(pet, stage);
 const bubble = new Bubble(document.querySelector<HTMLElement>("#bubble")!);
 const hud = document.querySelector<HTMLElement>("#hud")!;
@@ -94,6 +99,10 @@ function frame(now: number) {
   mind.update(dt);
   pet.holder.position.set(mind.x, mind.y, 0);
   pet.update(dt, mind.target, mind.gaze, mind.eyes);
+  // The light floats beside the head on the viewer's left, as in the concept sheets, and lags
+  // behind when the pet moves.
+  orbAnchor.set(mind.x - 0.85 * SCALE * zoom, mind.y + 2.05 * SCALE * zoom, 300);
+  orb.update(dt, orbAnchor, glowFor(pet.clip, mind.directive?.clip === "alert"));
   stage.frame(mind.x, mind.y + height / 2);
   stage.render();
   renders++;
