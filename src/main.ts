@@ -1,142 +1,286 @@
-import * as THREE from "three";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Agents, type AgentEvent } from "./agents";
-import { Bubble, type Ask } from "./bubble";
+import { handleToolCall, type ToolCall } from "./agent-tools";
+import type { AgentEvent } from "./agents";
+import { AWAY_SECS, welcomeBack, type JournalEntry } from "./away";
+import { Crew, type Ask, type CrewFile, type Host } from "./crew";
 import { wireInput } from "./input";
-import { Mind } from "./mind";
-import { loadModel } from "./pet/model";
-import { glowFor, Orb } from "./pet/orb";
-import { HEIGHT, Pet, SCALE } from "./pet/pet";
-import { Stage, VIEW } from "./stage";
+import { shortcutLabel } from "./keys";
+import { sound } from "./sound";
+import { normalizeLook } from "./pet/look";
+import { setCustomReader } from "./pet/model";
+import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 document.body.classList.toggle("web", !inTauri);
 
-// Browser preview only: ?zoom=3 enlarges the character for close inspection.
-const zoom = inTauri ? 1 : Number(new URLSearchParams(location.search).get("zoom")) || 1;
-const height = HEIGHT * zoom;
+// Kept in <data dir>/logs/page.log, so a bug report can include what went wrong.
+if (inTauri && !import.meta.env.DEV) {
+  const log = (message: string) => void invoke("log_error", { message }).catch(() => {});
+  addEventListener("error", (e) => log(`${e.message} at ${e.filename}:${e.lineno}`));
+  addEventListener("unhandledrejection", (e) => log(`Unhandled: ${e.reason instanceof Error ? e.reason.stack : e.reason}`));
+}
 
-const stage = new Stage(document.querySelector<HTMLCanvasElement>("#stage")!, VIEW * zoom);
-const pet = new Pet(await loadModel());
-pet.holder.scale.multiplyScalar(zoom);
-const orb = new Orb(30 * zoom);
-stage.scene.add(pet.holder, orb.object);
-const orbAnchor = new THREE.Vector3();
-const mind = new Mind(pet, stage);
-const bubble = new Bubble(document.querySelector<HTMLElement>("#bubble")!);
-const hud = document.querySelector<HTMLElement>("#hud")!;
-const agents = new Agents(mind, bubble, hud);
+/** Mirrors `Settings` in src-tauri/src/settings.rs (the fields the overlay uses). */
+type Settings = {
+  pet_x: number | null;
+  sleep_after_secs: number;
+  onboarded: boolean;
+  pet_size: "small" | "medium" | "large";
+  calm: boolean;
+  large_text: boolean;
+  shortcut: string;
+  sounds: boolean;
+  volume: number;
+  speak: boolean;
+  voice: string;
+};
+const settings = inTauri ? await invoke<Settings>("get_settings") : null;
+const SIZES = { small: 0.8, medium: 1, large: 1.3 };
+// Browser preview only: ?zoom=3 enlarges the characters for close inspection.
+const zoom = settings ? (SIZES[settings.pet_size] ?? 1) : Number(new URLSearchParams(location.search).get("zoom")) || 1;
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+// The browser preview keeps its crew in localStorage; it may be unavailable (private mode).
+const WEB_CREW = "sidefolk-crew";
+const webStore = {
+  load: (): unknown => {
+    try {
+      return JSON.parse(localStorage.getItem(WEB_CREW) ?? "null");
+    } catch {
+      return null;
+    }
+  },
+  save: (file: CrewFile) => {
+    try {
+      localStorage.setItem(WEB_CREW, JSON.stringify(file));
+    } catch {
+      // Preview only; the crew just won't survive a reload.
+    }
+  },
+};
+
+const host: Host = {
+  saveCrew: async (crew) => (inTauri ? invoke("save_crew", { crew }) : webStore.save(crew)),
+  dispatch: async (prompt, cwd) => {
+    if (!inTauri) throw new Error("Codex needs the desktop app.");
+    await invoke("dispatch", { prompt, cwd });
+  },
+  resolvePermission: (id, decision) => {
+    if (inTauri) void invoke("resolve_permission", { id, decision });
+  },
+  // Takes keyboard focus without activating Sidefolk, and hands it back afterwards.
+  typing: (typing) => {
+    if (inTauri) void invoke("overlay_typing", { typing });
+  },
+  command: (text, kind, from) => reminders.command(text, kind, from),
+  trayAction: (action) => {
+    if (inTauri) void invoke("tray_action", { action });
+  },
+  ...(inTauri && {
+    models: () => invoke<string[]>("list_models"),
+    importModel: () => invoke<string | null>("import_model"),
+    photoLook: async () => {
+      const json = await invoke<string | null>("describe_photo");
+      if (!json) return null;
+      // The model's answer is untrusted; keep only valid settings it named.
+      const named = JSON.parse(json) as Record<string, unknown>;
+      const valid = normalizeLook(named);
+      return Object.fromEntries(Object.entries(valid).filter(([key, value]) => named[key] === value));
+    },
+  }),
+};
+if (inTauri) setCustomReader((name) => invoke<ArrayBuffer>("read_model", { name }));
+
+const reminderStore: ReminderStore = inTauri
+  ? {
+      list: () => invoke<Reminder[]>("list_reminders"),
+      add: (text, due, project, from) => invoke<Reminder>("add_reminder", { text, due, project, from }),
+      update: async (id, change) => void (await invoke("update_reminder", { id, change })),
+      peek: (show) => void invoke("peek", { show }),
+    }
+  : memoryStore();
+const journal = (since: number) => (inTauri ? invoke<JournalEntry[]>("journal_since", { since }) : Promise.resolve([]));
+
+const crew = await Crew.start(inTauri ? await invoke("get_crew") : webStore.load(), host, zoom);
+const main = crew.main;
+
+/** Settings that apply without a restart. Pet size rebuilds the pets, so it reloads the page. */
+function applySettings(next: Settings | null) {
+  document.body.classList.toggle("large-text", !!next?.large_text);
+  if (next) {
+    sound.enabled = next.sounds;
+    sound.volume = next.volume / 100;
+    sound.speaker = next.speak
+      ? (text, voice) => void invoke("speak", { text, voice: next.voice, pitch: voice.pitch / 640 }).catch(() => {})
+      : null;
+  }
+  for (const f of crew.all) {
+    f.mind.calm = !!next?.calm || reducedMotion.matches;
+    if (next) f.mind.sleepAfterSecs = next.sleep_after_secs;
+  }
+}
+applySettings(settings);
+reducedMotion.addEventListener("change", () => applySettings(settings));
+const reminders = new Reminders(crew, reminderStore);
+crew.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
+await reminders.start();
 
 const overlay = inTauri ? getCurrentWindow() : null;
 const input = wireInput({
-  stage,
-  pet,
-  mind,
-  bubble,
+  familiars: () => crew.all,
   setInteractive: (on) => void overlay?.setIgnoreCursorEvents(!on),
+  onDoubleClick: (f) => crew.openPrompt(f),
+  onMenu: (f) => crew.menu(f),
 });
 
-const openAsks = new Set<string>();
-const askChanged = () => agents.asking(openAsks.size);
-
-bubble.onDecision = (id, decision) => {
-  openAsks.delete(id);
-  askChanged();
-  if (inTauri) void invoke("resolve_permission", { id, decision });
-};
-bubble.onPrompt = async (prompt) => {
-  if (!inTauri) throw new Error("Codex needs the desktop app.");
-  await invoke("dispatch", { prompt });
-};
-// Takes keyboard focus without activating Sidefolk, and hands it back afterwards.
-bubble.onTyping = (typing) => {
-  if (inTauri) void invoke("overlay_typing", { typing });
-};
-
-// Clicking the pet or a bubble button can make the panel key (web views ask for it).
-// Hand keyboard focus straight back unless the user is typing in the bubble.
+// Clicking a pet or a bubble button can make the panel key (web views ask for it).
+// Hand keyboard focus straight back unless the user is typing in a bubble.
+addEventListener("pointerdown", () => sound.unlock());
 addEventListener("pointerup", () => {
-  if (inTauri && !bubble.typing) void invoke("overlay_typing", { typing: false });
+  if (inTauri && !crew.typing) void invoke("overlay_typing", { typing: false });
 });
 
 const onCursor = (x: number, y: number) => {
-  mind.onCursor(stage.toWorld(x, y));
+  crew.onCursor(main.stage.toWorld(x, y));
   input.refresh(x, y);
 };
 
 if (inTauri) {
-  const settings = await invoke<{ pet_x: number | null; sleep_after_secs: number }>("get_settings");
-  mind.sleepAfterSecs = settings.sleep_after_secs;
-  void listen<number>("idle", (e) => mind.setOsIdle(e.payload));
-  if (settings.pet_x !== null) mind.x = settings.pet_x;
-  mind.fitBounds();
-  void invoke("ui_log", { line: `restored x=${mind.x.toFixed(0)} sleep_after=${mind.sleepAfterSecs}s` });
-  let savedX = mind.x;
+  void listen<Settings>("settings-changed", (e) => {
+    if (e.payload.pet_size !== settings!.pet_size) return location.reload();
+    Object.assign(settings!, e.payload);
+    applySettings(settings);
+  });
+  if (!settings!.onboarded) welcome();
+  // From the Settings window and the tray: crew commands, new pets, the reminder form.
+  void listen<{ action: string; text?: string; project?: string; id?: string }>("pet-action", (e) => {
+    const { action, text, project, id } = e.payload;
+    const pet = (action !== "answer" && id && crew.byId(id)) || main;
+    if (action === "run" && text) void crew.run(text, pet).then((reply) => reply && pet.bubble.say(reply, 6));
+    if (action === "customize") void crew.customize(pet);
+    if (action === "call") crew.call(pet);
+    if (action === "forget") void crew.forget(pet);
+    if (action === "create" && project) void crew.create({ kind: "project", key: project });
+    if (action === "new-reminder") void reminders.command("", "new-reminder", main);
+    if (action === "welcome") welcome();
+    if (action === "answer" && id && text) crew.answer(id, text);
+  });
+  // Coming back after a long time away earns a briefing of what the agents did meanwhile.
+  let lastIdle = 0;
+  void listen<number>("idle", (e) => {
+    const idle = e.payload;
+    for (const f of crew.all) f.mind.setOsIdle(idle);
+    if (lastIdle >= AWAY_SECS && idle < 1) void briefing(Date.now() - lastIdle * 1000);
+    lastIdle = idle;
+  });
+  void listen("reminders-changed", () => void reminders.reload());
+  // An agent called one of the pet's tools (MCP); Rust waits for the answer.
+  void listen<ToolCall>("mcp", (e) =>
+    handleToolCall(e.payload, crew, reminders, (result) => void invoke("mcp_reply", { id: e.payload.id, result })),
+  );
+  void listen<string>("mcp-closed", (e) => crew.closeAsk(e.payload));
+  if (settings!.pet_x !== null) main.mind.x = settings!.pet_x;
+  main.mind.fitBounds();
+  void invoke("ui_log", { line: `restored x=${main.mind.x.toFixed(0)} sleep_after=${main.mind.sleepAfterSecs}s crew=${crew.all.length - 1}` });
+  let savedX = main.mind.x;
   setInterval(() => {
-    if (!mind.onGround || Math.abs(mind.x - savedX) <= 8) return;
-    const x = mind.x;
+    if (!main.mind.onGround || Math.abs(main.mind.x - savedX) <= 8) return;
+    const x = main.mind.x;
     void invoke("save_pet", { x }).then(() => { savedX = x; }).catch(console.error);
   }, 5_000);
   void listen<[number, number]>("cursor", (e) => onCursor(e.payload[0], e.payload[1]));
   void listen<{ x: number }>("summon", (e) => {
-    stage.resize();
-    mind.summon(e.payload.x);
-    void invoke("save_pet", { x: mind.x }).catch(console.error);
-    void invoke("ui_log", { line: `summon x=${mind.x.toFixed(0)}`, focus: true });
+    crew.resize();
+    main.mind.summon(e.payload.x);
+    void invoke("save_pet", { x: main.mind.x }).catch(console.error);
+    void invoke("ui_log", { line: `summon x=${main.mind.x.toFixed(0)}`, focus: true });
   });
-  void listen<AgentEvent>("agent", (e) => agents.handle(e.payload));
-  void listen<Ask>("permission", (e) => {
-    openAsks.add(e.payload.id);
-    bubble.ask(e.payload);
-    askChanged();
+  void listen<{ id: string }>("call", (e) => {
+    const f = crew.byId(e.payload.id);
+    if (f) crew.call(f);
   });
-  void listen<string>("permission-closed", (e) => {
-    openAsks.delete(e.payload);
-    bubble.close(e.payload);
-    askChanged();
-  });
-  void listen("overlay-resized", () => {
-    stage.resize();
-    mind.fitBounds();
-  });
+  void listen<AgentEvent>("agent", (e) => crew.handleEvent(e.payload));
+  void listen<Ask>("permission", (e) => crew.handleAsk(e.payload));
+  void listen<string>("permission-closed", (e) => crew.closeAsk(e.payload));
+  void listen("overlay-resized", () => crew.resize());
+  // The dashboard's live view: sent when something changed, checked once a second.
+  let published = "";
+  setInterval(() => {
+    const status = JSON.stringify(crew.status());
+    if (status === published) return;
+    published = status;
+    void invoke("publish_status", { status: JSON.parse(status) }).catch(() => {});
+  }, 1_000);
 } else {
   addEventListener("pointermove", (e) => onCursor(e.clientX, e.clientY));
-  void import("./demo").then((demo) => demo.install(agents, bubble, openAsks, askChanged));
+  void import("./demo").then((demo) => demo.install(crew));
 }
 
-// Render only as often as the current state needs; rAF stops by itself when hidden.
-let last = performance.now();
-let renders = 0;
-function frame(now: number) {
-  requestAnimationFrame(frame);
-  if (now - last < 1000 / mind.fps - 2) return;
-  const dt = Math.min(0.1, (now - last) / 1000);
-  last = now;
-  mind.update(dt);
-  pet.holder.position.set(mind.x, mind.y, 0);
-  pet.update(dt, mind.target, mind.gaze, mind.eyes);
-  // The light floats beside the head on the viewer's left, as in the concept sheets, and lags
-  // behind when the pet moves.
-  orbAnchor.set(mind.x - 0.85 * SCALE * zoom, mind.y + 2.05 * SCALE * zoom, 300);
-  orb.update(dt, orbAnchor, glowFor(pet.clip, mind.directive?.clip === "alert"));
-  stage.frame(mind.x, mind.y + height / 2);
-  stage.render();
-  renders++;
-  bubble.tick(now);
-  const hudOffset = hud.hidden ? 0 : 30;
-  if (!hud.hidden) {
-    const left = Math.round(mind.x - hud.offsetWidth / 2);
-    hud.style.transform = `translate(${left}px, ${Math.round(stage.height - mind.y - height - 26)}px)`;
-  }
-  bubble.place(mind.x, mind.y + height + hudOffset + 8);
+/** The first-run card: what the pet is for, and the one step that makes it useful. */
+function welcome() {
+  const done = () => void invoke("update_settings", { change: { onboarded: true } });
+  main.bubble.show({
+    id: "onboarding",
+    who: main.name,
+    title: `Hi! I'm ${main.name}.`,
+    lines: [
+      "I act out what your AI agents are doing and bring you their questions.",
+      "Connect Claude Code to start. Everything can be changed later in Settings.",
+    ],
+    choices: [
+      { label: "Connect Claude Code…", value: "claude", primary: true },
+      { label: "Open Sidefolk…", value: "settings" },
+      { label: "Later", value: "later" },
+    ],
+    onChoose: (value) => {
+      if (value !== "later") void invoke("tray_action", { action: value });
+      done();
+      main.bubble.show({
+        id: "tips",
+        who: main.name,
+        title: "Three things to know",
+        lines: [
+          "Right-click any pet for everything it can do.",
+          'Double-click to type, like "remind me at 5 to stretch".',
+          `${shortcutLabel(settings?.shortcut ?? "CommandOrControl+Shift+Space")} hides us; press it again to call us to your cursor.`,
+        ],
+        choices: [{ label: "Got it", value: "ok", primary: true }],
+        onChoose: () => {},
+      });
+    },
+  });
 }
-requestAnimationFrame(frame);
-setInterval(() => agents.tick(), 30_000);
+
+async function briefing(since: number) {
+  const lines = welcomeBack(await journal(since), reminders.upcoming);
+  if (!lines.length) return;
+  main.bubble.show({
+    id: "welcome",
+    who: main.name,
+    title: "Welcome back. While you were away:",
+    lines,
+    choices: [{ label: "OK", value: "ok", primary: true }],
+    onChoose: () => {},
+  });
+}
+
+// Each pet renders only as often as its state needs. Between slow frames the page sleeps
+// instead of waking for every display refresh; rAF still stops by itself when hidden.
+function loop() {
+  const now = performance.now();
+  for (const f of crew.all) f.frame(now);
+  const wait = Math.min(...crew.all.map((f) => f.due(performance.now())));
+  if (wait > 40) setTimeout(() => (document.hidden ? requestAnimationFrame(loop) : loop()), wait);
+  else requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+setInterval(() => crew.agentsTick(), 30_000);
+setInterval(() => crew.tick(), 500);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { sidefolk: { mind, pet, agents, bubble, stage } });
+  Object.assign(window, { sidefolk: { crew, main } });
   // Lets the terminal see what the overlay is doing when screenshots are not possible.
   if (inTauri) {
     let frames = 0;
@@ -146,23 +290,30 @@ if (import.meta.env.DEV) {
     };
     requestAnimationFrame(count);
     const report = (line: string, focus = false) => void invoke("ui_log", { line, focus });
-    // Clicking the pet must leave your current app frontmost.
+    // Clicking a pet must leave your current app frontmost.
     addEventListener("pointerup", () => setTimeout(() => report("after click", true), 250));
     void listen<string>("dev", (e) => {
-      if (e.payload === "prompt") bubble.prompt();
-      if (e.payload === "dismiss") bubble.dismissPrompt();
-      if (e.payload === "sleep") mind.setOsIdle(mind.sleepAfterSecs + 1);
-      if (e.payload === "wake") mind.setOsIdle(0);
-      if (e.payload === "state") report(`state clip=${pet.clip} x=${mind.x.toFixed(0)} ground=${mind.onGround}`, true);
+      if (e.payload === "prompt") crew.openPrompt(main);
+      if (e.payload === "dismiss") for (const f of crew.all) f.bubble.dismissPrompt();
+      if (e.payload === "sleep") main.mind.setOsIdle(main.mind.sleepAfterSecs + 1);
+      if (e.payload === "wake") main.mind.setOsIdle(0);
+      if (e.payload === "welcome") void briefing(0);
+      if (e.payload === "bubbles")
+        report(`bubbles ${crew.all.filter((f) => !f.bubble.root.hidden).map((f) => `[${f.name}] ${f.bubble.root.innerText.replace(/\s+/g, " ")}`).join(" | ")}`);
+      if (e.payload === "state")
+        report(`state ${crew.all.map((f) => `${f.name}:${f.out ? f.pet.clip : "away"}@${f.mind.x.toFixed(0)}`).join(" ")}`, true);
+      if (e.payload.startsWith("run:")) void crew.run(e.payload.slice(4), main).then((r) => r && main.bubble.say(r, 5));
+      // Presses the first visible bubble button with this label.
+      if (e.payload.startsWith("choose:")) {
+        const label = e.payload.slice(7);
+        const button = [...document.querySelectorAll<HTMLButtonElement>(".bubble:not([hidden]) button")].find((b) => b.textContent === label);
+        report(`choose ${label} ${button ? "pressed" : "not found"}`);
+        button?.click();
+      }
     });
-    const onTyping = bubble.onTyping;
-    bubble.onTyping = (typing) => {
-      onTyping(typing);
-      setTimeout(() => report(`typing=${typing}`, true), 250);
-    };
-    report(`overlay ${stage.width}x${stage.height} dpr=${devicePixelRatio}`);
+    report(`overlay ${main.stage.width}x${main.stage.height} dpr=${devicePixelRatio}`);
     void listen("overlay-resized", () => setTimeout(() => report(`refit ${innerWidth}x${innerHeight}`), 100));
-    void listen<AgentEvent>("agent", (e) => report(`agent ${e.payload.source} ${e.payload.kind} ${e.payload.detail}`));
+    void listen<AgentEvent>("agent", (e) => report(`agent ${e.payload.source} ${e.payload.kind} ${e.payload.project} ${e.payload.detail}`));
     void listen<Ask>("permission", (e) => report(`ask ${e.payload.id} ${e.payload.title} ${e.payload.detail}`));
     let lastInteractive = false;
     setInterval(() => {
@@ -170,8 +321,9 @@ if (import.meta.env.DEV) {
       if (interactive !== lastInteractive) report(`interactive=${(lastInteractive = interactive)}`);
     }, 100);
     setInterval(() => {
-      report(`vis=${document.visibilityState} raf=${(frames / 10).toFixed(0)}/s renders=${(renders / 10).toFixed(0)}/s clip=${pet.clip} x=${mind.x.toFixed(0)} y=${mind.y.toFixed(0)} size=${stage.width}x${stage.height}`, true);
-      frames = renders = 0;
+      const out = crew.all.filter((f) => f.out).map((f) => `${f.name}:${f.pet.clip}`).join(",");
+      report(`vis=${document.visibilityState} raf=${(frames / 10).toFixed(0)}/s out=${out} x=${main.mind.x.toFixed(0)} size=${main.stage.width}x${main.stage.height}`, true);
+      frames = 0;
     }, 10_000);
   }
 }

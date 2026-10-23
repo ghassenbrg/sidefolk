@@ -29,7 +29,8 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
         let router = Router::new()
             .route("/health", get(|| async { "sidefolk" }))
             .route("/claude/event", post(event))
-            .route("/claude/permission", post(permission));
+            .route("/claude/permission", post(permission))
+            .route("/mcp/call", post(crate::mcp::call));
         // Debug builds only: lets scripts drive the pet without clicking it.
         #[cfg(debug_assertions)]
         let router = router
@@ -87,7 +88,7 @@ async fn event(State((app, _)): State<Ctx>, headers: HeaderMap, body: Bytes) -> 
 fn claude_event(hook: &Value) -> Option<AgentEvent> {
     let (kind, detail) = match hook.get("hook_event_name")?.as_str()? {
         "SessionStart" => ("start", text(hook, "source")),
-        "UserPromptSubmit" => ("think", clip(&text(hook, "prompt"), 120)),
+        "UserPromptSubmit" => ("prompt", clip(&text(hook, "prompt"), 120)),
         "PreToolUse" => tool_activity(&text(hook, "tool_name"), &hook["tool_input"]),
         "PostToolUse" | "PostToolUseFailure" => ("think", String::new()),
         "Notification" => {
@@ -105,13 +106,13 @@ fn claude_event(hook: &Value) -> Option<AgentEvent> {
         "SessionEnd" => ("end", text(hook, "reason")),
         _ => return None,
     };
-    Some(AgentEvent {
-        source: "claude",
-        session: text(hook, "session_id"),
+    Some(AgentEvent::new(
+        "claude",
+        &text(hook, "session_id"),
         kind,
         detail,
-        cwd: text(hook, "cwd"),
-    })
+        &text(hook, "cwd"),
+    ))
 }
 
 fn tool_activity(tool: &str, input: &Value) -> (&'static str, String) {
@@ -153,7 +154,8 @@ async fn dev_codex(State((app, shared)): State<Ctx>, headers: HeaderMap, body: B
         Ok(request) => request,
         Err(response) => return response,
     };
-    match crate::codex::dispatch(&app, shared, text(&request, "prompt")).await {
+    let cwd = Some(text(&request, "cwd")).filter(|c| !c.is_empty()).map(Into::into);
+    match crate::codex::dispatch(&app, shared, text(&request, "prompt"), cwd).await {
         Ok(thread) => axum::Json(json!({ "thread": thread })).into_response(),
         Err(error) => (StatusCode::CONFLICT, error).into_response(),
     }
@@ -259,6 +261,9 @@ async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: 
     }
     let tool = text(&hook, "tool_name");
     let (title, detail) = describe(&tool, &hook["tool_input"]);
+    let session = text(&hook, "session_id");
+    let project = bus::project_root(&text(&hook, "cwd"));
+    bus::note(&app, "claude", &session, &project, "ask", &format!("{title} {detail}"));
     let (id, answer) = shared.permissions.open("claude");
     let _open = OpenRequest {
         app: &app,
@@ -270,14 +275,22 @@ async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: 
         PermissionAsk {
             id,
             source: "claude",
-            session: text(&hook, "session_id"),
+            session: session.clone(),
             title,
             detail,
+            project: project.clone(),
             cwd: text(&hook, "cwd"),
             can_defer: true,
         },
     );
     let decision = tokio::time::timeout(PERMISSION_WAIT, answer).await;
+    let answered = match decision {
+        Ok(Ok(Decision::Allow)) => "allowed",
+        Ok(Ok(Decision::Deny)) => "denied",
+        Ok(Ok(Decision::Defer)) => "left to the terminal",
+        _ => "not answered on the pet",
+    };
+    bus::note(&app, "claude", &session, &project, "answer", answered);
     let behavior = match decision {
         Ok(Ok(Decision::Allow)) => json!({ "behavior": "allow" }),
         Ok(Ok(Decision::Deny)) => json!({

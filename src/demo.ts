@@ -1,35 +1,49 @@
-// Browser-only harness: number keys play fake agent events so the pet can be checked
-// without the desktop app or any model calls. Not loaded inside Tauri.
+// Browser-only harness: keys play fake agent events so the crew can be checked without the
+// desktop app or any model calls. Not loaded inside Tauri.
+//
+//   1 think · 2 read · 3 edit · 4 run · 5 permission question · 6 done · 7 failed · 0 end
+//   p switches the fake project (api, web, docs) · c opens the main pet's command bar
 
-import type { AgentEvent, Agents } from "./agents";
-import type { Bubble } from "./bubble";
+import type { AgentEvent } from "./agents";
+import type { Crew } from "./crew";
 
-const cwd = "/Users/you/git/api";
-const event = (kind: AgentEvent["kind"], detail = ""): AgentEvent => ({
-  source: "claude",
-  session: "demo",
-  kind,
-  detail,
-  cwd,
-});
+const projects = ["/Users/you/git/api", "/Users/you/git/web", "/Users/you/git/docs"];
 
-export function install(agents: Agents, bubble: Bubble, openAsks: Set<string>, changed: () => void) {
+export function install(crew: Crew) {
+  let project = 0;
   let asks = 0;
+  const event = (kind: AgentEvent["kind"], detail = ""): AgentEvent => ({
+    source: "claude",
+    session: `demo-${project}`,
+    kind,
+    detail,
+    cwd: projects[project],
+    project: projects[project],
+  });
   const keys: Record<string, () => void> = {
-    "1": () => agents.handle(event("think")),
-    "2": () => agents.handle(event("read", "App.tsx")),
-    "3": () => agents.handle(event("edit", "App.tsx")),
-    "4": () => agents.handle(event("run", "npm test")),
-    "5": () => {
-      const id = `demo-${asks++}`;
-      openAsks.add(id);
-      bubble.ask({ id, source: "claude", session: "demo", title: "Run a command?", detail: "rm -rf node_modules", cwd, canDefer: true });
-      changed();
+    "1": () => crew.handleEvent(event("think")),
+    "2": () => crew.handleEvent(event("read", "App.tsx")),
+    "3": () => crew.handleEvent(event("edit", "App.tsx")),
+    "4": () => crew.handleEvent(event("run", "npm test")),
+    "5": () =>
+      crew.handleAsk({
+        id: `demo-${asks++}`,
+        source: "claude",
+        session: `demo-${project}`,
+        title: "Run a command?",
+        detail: "rm -rf node_modules",
+        cwd: projects[project],
+        project: projects[project],
+        canDefer: true,
+      }),
+    "6": () => crew.handleEvent(event("done", "Tests pass. 3 files changed.")),
+    "7": () => crew.handleEvent(event("failed", "rate_limit")),
+    "0": () => crew.handleEvent(event("end")),
+    p: () => {
+      project = (project + 1) % projects.length;
+      crew.main.bubble.say(`Demo project: ${projects[project].split("/").pop()}`, 2);
     },
-    "6": () => agents.handle(event("done", "Tests pass. 3 files changed.")),
-    "7": () => agents.handle(event("failed", "rate_limit")),
-    "8": () => bubble.prompt(),
-    "0": () => agents.handle(event("end")),
+    c: () => crew.openPrompt(crew.main),
   };
   addEventListener("keydown", (e) => {
     if (e.target instanceof HTMLInputElement) return;

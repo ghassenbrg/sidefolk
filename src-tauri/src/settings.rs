@@ -17,6 +17,34 @@ pub struct Settings {
     pub shortcut: String,
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
+    /// Keep the overlay out of screenshots, recordings and screen sharing: crew pets show
+    /// project names.
+    pub hide_in_recordings: bool,
+    /// The first-run card has been answered.
+    pub onboarded: bool,
+    /// small | medium | large.
+    pub pet_size: String,
+    /// Less wandering around (also on when macOS asks for reduced motion).
+    pub calm: bool,
+    pub large_text: bool,
+    /// Babble and little sounds.
+    pub sounds: bool,
+    /// 0..=100
+    pub volume: u8,
+    /// Read lines aloud with a macOS voice instead of babbling.
+    pub speak: bool,
+    /// A `say` voice name; empty for the system voice.
+    pub voice: String,
+    /// Desktop presence: always | needed (pets come out only when something needs you) |
+    /// menubar (no pets; requests wait in the menu bar and the Sidefolk window).
+    pub presence: String,
+    /// What pet cards show: full (commands too) | project (project and status) | status.
+    pub detail: String,
+    /// The comfort preset picked last: friendly | professional | minimal. A label only; each
+    /// setting it suggested is stored on its own.
+    pub comfort: String,
+    /// Where "Open session" continues a session: auto | terminal | iterm | ghostty.
+    pub terminal: String,
 }
 impl Default for Settings {
     fn default() -> Self {
@@ -27,6 +55,19 @@ impl Default for Settings {
             shortcut: "CommandOrControl+Shift+Space".into(),
             sleep_after_secs: 120,
             pet_answers_permissions: true,
+            hide_in_recordings: true,
+            onboarded: false,
+            pet_size: "medium".into(),
+            calm: false,
+            large_text: false,
+            sounds: true,
+            volume: 60,
+            speak: false,
+            voice: String::new(),
+            presence: "always".into(),
+            detail: "full".into(),
+            comfort: "friendly".into(),
+            terminal: "auto".into(),
         }
     }
 }
@@ -107,7 +148,7 @@ mod tests {
     #[test]
     fn missing_fields_keep_defaults() {
         let value: Settings = serde_json::from_str(r#"{"hidden":true}"#).unwrap();
-        assert!(value.hidden && value.pet_answers_permissions);
+        assert!(value.hidden && value.pet_answers_permissions && value.hide_in_recordings);
         assert_eq!(value.sleep_after_secs, 120);
         assert_eq!(value.shortcut, Settings::default().shortcut);
     }

@@ -1,6 +1,8 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { CLIPS, type ClipName } from "./clips";
+import { accessory, CUSTOM, recolor, SPECIES, type Look, type SpeciesName } from "./look";
 
 // The hero comes from art/blender/build_hero.py (npm run model). The glTF follows the rig
 // contract in art/HERO.md: these bone names, these clip names, a "Body" mesh that gets the
@@ -62,16 +64,46 @@ function outlineMaterial(width: number): THREE.MeshBasicMaterial {
 
 function skinnedMesh(root: THREE.Object3D, name: string): THREE.SkinnedMesh {
   const mesh = root.getObjectByName(name);
-  if (!(mesh instanceof THREE.SkinnedMesh)) throw new Error(`hero.glb has no skinned "${name}" mesh`);
+  if (!(mesh instanceof THREE.SkinnedMesh)) throw new Error(`model has no skinned "${name}" mesh`);
   return mesh;
 }
 
-export async function loadModel(url = "models/hero.glb"): Promise<Model> {
-  const gltf = await new GLTFLoader().loadAsync(url);
+const loaded = new Map<string, Promise<GLTF>>();
+
+/** Reads an imported model's bytes; set by the desktop app. */
+let readCustom: (file: string) => Promise<ArrayBuffer> = () => Promise.reject(new Error("Imported models need the desktop app."));
+export function setCustomReader(reader: typeof readCustom) {
+  readCustom = reader;
+}
+
+/** Parses each model file once; every pet gets its own instance of it. */
+function load(species: string): Promise<GLTF> {
+  let gltf = loaded.get(species);
+  if (!gltf) {
+    gltf = species.startsWith(CUSTOM)
+      ? readCustom(species.slice(CUSTOM.length)).then((bytes) => new GLTFLoader().parseAsync(bytes, ""))
+      : new GLTFLoader().loadAsync((SPECIES[species as SpeciesName] ?? SPECIES.bunny).url);
+    loaded.set(species, gltf);
+    // A failed load (a bad import) should be retried, not cached.
+    gltf.catch(() => loaded.delete(species));
+  }
+  return gltf;
+}
+
+/**
+ * An independent copy of the hero for one pet: its own skeleton, recolored vertex colors and
+ * accessory. Clips are shared; each pet's mixer plays them on its own bones.
+ */
+export async function loadModel(look: Look): Promise<Model> {
+  const url = look.species;
+  const gltf = await load(look.species);
+  const scene = SkeletonUtils.clone(gltf.scene);
   const toon = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonRamp() });
-  const body = skinnedMesh(gltf.scene, "Body");
-  const face = skinnedMesh(gltf.scene, "Face");
+  const body = skinnedMesh(scene, "Body");
+  const face = skinnedMesh(scene, "Face");
   for (const mesh of [body, face]) {
+    mesh.geometry = mesh.geometry.clone();
+    recolor(mesh.geometry, look.palette);
     mesh.material = toon;
     // Skinned bounds are computed from the bind pose; animation can leave them.
     mesh.frustumCulled = false;
@@ -90,7 +122,7 @@ export async function loadModel(url = "models/hero.glb"): Promise<Model> {
   const rest = {} as Record<BoneName, THREE.Vector3>;
   for (const name of BONES) {
     const bone = body.skeleton.getBoneByName(name);
-    if (!bone) throw new Error(`hero.glb is missing bone "${name}"`);
+    if (!bone) throw new Error(`${url} is missing bone "${name}"`);
     bones[name] = bone;
     rest[name] = bone.position.clone();
   }
@@ -98,8 +130,14 @@ export async function loadModel(url = "models/hero.glb"): Promise<Model> {
   const clips = {} as Record<ClipName, THREE.AnimationClip>;
   for (const name of CLIPS) {
     const clip = THREE.AnimationClip.findByName(gltf.animations, name);
-    if (!clip) throw new Error(`hero.glb is missing clip "${name}"`);
+    if (!clip) throw new Error(`${url} is missing clip "${name}"`);
     clips[name] = clip;
   }
-  return { object: gltf.scene, body, bones, rest, clips };
+
+  const extra = accessory(look.accessory, OUTLINE);
+  if (extra) {
+    extra.object.traverse((o) => (o.raycast = () => {}));
+    bones[extra.bone].add(extra.object);
+  }
+  return { object: scene, body, bones, rest, clips };
 }

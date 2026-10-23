@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sidefolk</title>
+    <link rel="stylesheet" href="/src/settings.css" />
+  </head>
+  <body>
+    <nav aria-label="Settings sections">
+      <div class="brand"><img src="/icon.png" alt="" /> Sidefolk</div>
+      <button data-tab="home" aria-current="page">Home <span class="badge" id="waiting-badge" hidden></span></button>
+      <button data-tab="activity">Activity</button>
+      <button data-tab="crew">Crew</button>
+      <button data-tab="reminders">Reminders</button>
+      <button data-tab="agents">Agents</button>
+      <button data-tab="general">Settings</button>
+      <button data-tab="about">About &amp; help</button>
+    </nav>
+
+    <main>
+      <section id="home">
+        <h1 id="greeting">Hello</h1>
+        <p class="lead" id="summary"></p>
+        <div id="waiting"></div>
+        <h2>Pets</h2>
+        <div class="pets" id="home-pets"></div>
+        <div class="columns">
+          <div>
+            <h2>Coming up</h2>
+            <div class="group" id="home-reminders"></div>
+          </div>
+          <div>
+            <h2>Connections</h2>
+            <div class="group" id="home-connections"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="activity" hidden>
+        <h1>Activity</h1>
+        <p class="lead">What your agents did, from the journal kept on this Mac (30 days).</p>
+        <div class="filters">
+          <div class="segmented" role="radiogroup" aria-label="Period" id="period">
+            <button role="radio" data-value="1">Today</button>
+            <button role="radio" data-value="7">7 days</button>
+            <button role="radio" data-value="30">30 days</button>
+          </div>
+          <select id="activity-project" aria-label="Project"><option value="">All projects</option></select>
+        </div>
+        <div id="activity-list"></div>
+      </section>
+
+      <section id="general" hidden>
+        <h1>Settings</h1>
+        <div class="group">
+          <div class="row">
+            <div><strong>Summon shortcut</strong><p>Hides the pets, or calls them to your cursor.</p></div>
+            <button id="shortcut" class="keys" aria-label="Change the summon shortcut"></button>
+          </div>
+          <div class="row">
+            <div><strong>Pet size</strong></div>
+            <div class="segmented" role="radiogroup" aria-label="Pet size" data-setting="pet_size">
+              <button role="radio" data-value="small">Small</button>
+              <button role="radio" data-value="medium">Medium</button>
+              <button role="radio" data-value="large">Large</button>
+            </div>
+          </div>
+          <label class="row">
+            <div><strong>Calm pets</strong><p>Less walking around. Also on when macOS asks for reduced motion.</p></div>
+            <input type="checkbox" class="switch" data-setting="calm" />
+          </label>
+          <label class="row">
+            <div><strong>Larger text</strong><p>Bigger speech bubbles.</p></div>
+            <input type="checkbox" class="switch" data-setting="large_text" />
+          </label>
+          <label class="row">
+            <div><strong>Fall asleep after</strong><p>Without keyboard or mouse input.</p></div>
+            <select data-setting="sleep_after_secs">
+              <option value="60">1 minute</option>
+              <option value="120">2 minutes</option>
+              <option value="300">5 minutes</option>
+              <option value="600">10 minutes</option>
+              <option value="1800">30 minutes</option>
+              <option value="86400">Never</option>
+            </select>
+          </label>
+        </div>
+        <h2>Sound and voice</h2>
+        <div class="group">
+          <label class="row">
+            <div><strong>Sounds</strong><p>Pets babble when they talk and chirp when they react.</p></div>
+            <input type="checkbox" class="switch" data-setting="sounds" />
+          </label>
+          <label class="row">
+            <div><strong>Volume</strong></div>
+            <input type="range" min="0" max="100" step="5" data-setting="volume" aria-label="Volume" />
+          </label>
+          <label class="row">
+            <div><strong>Speak out loud</strong><p>Pets read their lines with a macOS voice instead of babbling. Agent text is read too.</p></div>
+            <input type="checkbox" class="switch" data-setting="speak" />
+          </label>
+          <label class="row">
+            <div><strong>Voice</strong><p>More voices: System Settings → Accessibility → Spoken Content.</p></div>
+            <div class="inline">
+              <select data-setting="voice" data-text id="voice"><option value="">System voice</option></select>
+              <button id="try-voice" type="button">Try</button>
+            </div>
+          </label>
+        </div>
+        <h2>Privacy and startup</h2>
+        <div class="group">
+          <label class="row">
+            <div><strong>Hide from screen recordings</strong><p>Screenshots and screen sharing won't show the pets or your project names.</p></div>
+            <input type="checkbox" class="switch" data-setting="hide_in_recordings" />
+          </label>
+          <div class="row">
+            <div><strong>Start at login</strong><p>Opens Sidefolk when you log in.</p></div>
+            <button data-action="login" data-status="start_at_login"></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="agents" hidden>
+        <h1>Agents</h1>
+        <p class="lead">Connect the agents you use. Each change asks you first and keeps a backup of the file it edits.</p>
+        <div class="group">
+          <div class="row">
+            <div><strong>Claude Code activity</strong> <span class="pill" data-pill="claude_hooks"></span><p>Pets see sessions, act them out and bring you Claude's questions.</p></div>
+            <button data-action="claude" data-status="claude_hooks"></button>
+          </div>
+          <div class="row">
+            <div><strong>Pet tools for Claude Code</strong> <span class="pill" data-pill="claude_tools"></span><p>Sessions can notify you, ask you, set reminders and check if you're around.</p></div>
+            <button data-action="tools-claude" data-status="claude_tools"></button>
+          </div>
+          <div class="row">
+            <div><strong>Pet tools for Codex</strong> <span class="pill" data-pill="codex_tools"></span><p>The same tools for Codex sessions.</p></div>
+            <button data-action="tools-codex" data-status="codex_tools"></button>
+          </div>
+        </div>
+        <div class="group">
+          <label class="row">
+            <div><strong>Answer permissions on the pet</strong><p>When no terminal or editor is in front, the pet asks for up to 60 seconds. Otherwise the agent asks as usual.</p></div>
+            <input type="checkbox" class="switch" data-setting="pet_answers_permissions" />
+          </label>
+        </div>
+      </section>
+
+      <section id="crew" hidden>
+        <h1>Crew</h1>
+        <p class="lead">Each project can have its own pet. It comes out when that project needs you.</p>
+        <div class="group" id="crew-list"></div>
+        <button id="add-pet" class="primary">Add a pet for a project…</button>
+      </section>
+
+      <section id="reminders" hidden>
+        <h1>Reminders</h1>
+        <form id="reminder-form" class="group">
+          <div class="row stack">
+            <input id="reminder-text" type="text" placeholder="Call the bank tomorrow at 10" aria-label="What to remember, optionally with when" autocomplete="off" />
+            <div class="when">
+              <input id="reminder-when" type="datetime-local" aria-label="When" />
+              <button type="submit" class="primary">Add</button>
+            </div>
+            <p id="reminder-preview" class="hint"></p>
+          </div>
+        </form>
+        <div class="group" id="reminder-list"></div>
+      </section>
+
+      <section id="about" hidden>
+        <h1>About &amp; help</h1>
+        <div class="group">
+          <div class="row"><div><strong>Sidefolk</strong><p id="version"></p></div></div>
+          <div class="row">
+            <div><strong>Your data</strong><p>Crew, journal, reminders, backups. Nothing leaves this Mac.</p></div>
+            <button id="reveal">Show</button>
+          </div>
+          <div class="row">
+            <div><strong>Logs</strong><p>Errors and crashes, to attach to a bug report.</p></div>
+            <button id="reveal-logs">Show</button>
+          </div>
+          <div class="row">
+            <div><strong>Welcome tour</strong><p>See the first-run card again.</p></div>
+            <button id="welcome">Show</button>
+          </div>
+        </div>
+        <h2>Talking to pets</h2>
+        <div class="group help">
+          <p><strong>Right-click</strong> a pet for its menu. <strong>Double-click</strong> to type. Typing shows what Enter will do before anything happens.</p>
+          <table>
+            <tr><td><code>crew</code> · <code>call Pip</code></td><td>See your pets, or bring one out</td></tr>
+            <tr><td><code>remind me Friday at 3 to …</code></td><td>A reminder, from the right pet</td></tr>
+            <tr><td><code>customize Pip</code></td><td>Body, coat and extras</td></tr>
+            <tr><td><code>Pip: run the tests</code></td><td>Codex works in Pip's project</td></tr>
+            <tr><td><code>send Pip home</code></td><td>Back off screen</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+    <script type="module" src="/src/settings-page.ts"></script>
+  </body>
+</html>

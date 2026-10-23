@@ -4,6 +4,14 @@ Agreed with the user on 23 October 2026: where Sidefolk is going and in what ord
 decisions behind it are entries 12–17 in [memory/DECISIONS.md](../memory/DECISIONS.md); progress
 is tracked in [memory/STATUS.md](../memory/STATUS.md).
 
+## Status (24 October 2026)
+
+Phases 1–5 are built and checked through tests, the browser preview and the desktop app's
+logs; a few things need a hand check by the user (STATUS.md lists them). Phase 6 is partly done:
+the parts that need the user's Apple and update-signing keys are written up in
+[docs/RELEASE.md](RELEASE.md). Where the build departed from this plan, the plan below says so
+in *Built:* notes, and DECISIONS 18–23 give the reasons.
+
 ## The goal
 
 > Sidefolk is a small crew of desktop pets, one per project or agent, led by your main pet. At
@@ -57,8 +65,10 @@ events arrive from a project that has no pet, the main pet offers once: "New pro
 
 Where idle crew pets wait. A crew pet walks out when its project or agent asks for a
 permission, fails, or (briefly) finishes, then goes back. At most three pets are on screen at
-once (to be tuned). Whether the den is a small house in a screen corner or lives only in the
-menu bar is decided in Phase 2.
+once (to be tuned).
+
+*Built:* the den is off screen. Pets walk on from the nearer screen edge and walk back off it;
+the tray's Crew menu lists them.
 
 ### Mood
 
@@ -82,7 +92,8 @@ These reuse the existing 13 clips and status-light colors ([art/HERO.md](../art/
 
 ### Journal and reminders (the shared memory)
 
-Kept small and concrete, in a local SQLite database in the data directory:
+Kept small and concrete, in the data directory (*built:* small JSON files and one JSONL file
+per day instead of SQLite, see DECISIONS 19):
 
 - **Pets and bindings.**
 - **A journal per project:** events we already receive (sessions, a summary of tool activity,
@@ -154,7 +165,10 @@ animation works on every pet.
 
 Each phase ends with something usable. Its detailed checklist goes into STATUS.md when it starts.
 
-### Phase 1 exit: one pet, cheap
+### Phase 1 exit: one pet, cheap · done
+
+*Built:* 16.8% → 8.7% awake, 1.0% hidden; the 5% target was not reached (docs/PHASE1.md says
+why).
 
 - Live with the pet for a few days and fix what comes up.
 - Cut visible CPU. Measure before changing anything: idle already renders at 30 fps (the WebKit
@@ -166,7 +180,11 @@ Each phase ends with something usable. Its detailed checklist goes into STATUS.m
 - Leftovers, done when convenient: following the cursor across displays, window awareness, the
   full-screen floor offset with a visible Dock, the "arms up" reach.
 
-### Phase 2: Crew
+### Phase 2: Crew · done
+
+*Built:* everything below except the hook endpoint token (DECISIONS 21); one small canvas per
+pet instead of a shared renderer (DECISIONS 18); hiding from screen recordings uses macOS
+content protection instead of detecting screen sharing.
 
 - One renderer for several pets (one WebGL context), within the CPU budget.
 - Pets, bindings and resolution (session, project, agent, main pet); the "new project" offer.
@@ -183,7 +201,11 @@ Each phase ends with something usable. Its detailed checklist goes into STATUS.m
 - Exit: with three projects running at once, you can tell at a glance which one needs you and
   answer from the right pet.
 
-### Phase 3: Journal and reminders
+### Phase 3: Journal and reminders · done
+
+*Built:* a hidden pet comes back on screen for a due reminder instead of a native
+notification (DECISIONS 20). The on-device model spike compiled but the model reported
+`modelNotReady` on this Mac, so chrono-node is the only parser for now.
 
 - SQLite store; pets and bindings move into it, while settings.json keeps preferences.
 - Journal from hook and Codex events, with retention.
@@ -194,13 +216,18 @@ Each phase ends with something usable. Its detailed checklist goes into STATUS.m
 - Exit: a reminder set on Monday fires on Friday even after restarts, and Monday's briefing is
   right.
 
-### Phase 4: Agents can reach you
+### Phase 4: Agents can reach you · done
+
+*Built:* the token protects `/mcp/call`; the installer runs the agents' own `mcp add/remove`.
 
 - The MCP server (notify, ask, remind, presence) and the stdio shim for project identity.
 - Tray installer for Claude Code and Codex, with confirmation and backup.
 - Exit: a Claude session asks you a question through its project's pet and gets the answer.
 
-### Phase 5: Make your own
+### Phase 5: Make your own · done
+
+*Built:* bunny, cat and fox; seven palettes; four accessories; local "describe your pet";
+photos through one Haiku call; glb import with docs/CREATORS.md.
 
 - Two or three more species from the kit.
 - A customizer: species, colors, accessories, name.
@@ -208,7 +235,13 @@ Each phase ends with something usable. Its detailed checklist goes into STATUS.m
 - glb import with the contract check and a short creator guide.
 - Exit: someone makes a pet of their own cat in under a minute.
 
-### Phase 6: Production
+### Phase 6: Production · partly done
+
+*Built:* the Sidefolk dashboard window (Home, Activity, Crew, Reminders, Agents, Settings,
+About), first-run card, pet menus and command previews, voices (babble, chirps, optional
+speech), app and menu bar icons, local crash and error logs, no Dock icon at launch.
+*Waiting on the user's keys:* signing, notarizing and auto-update (docs/RELEASE.md). Windows
+not started.
 
 - Signed and notarized app, auto-update.
 - Onboarding (connect agents, make a first pet) and a settings window.

@@ -1,6 +1,6 @@
 {
   "name": "sidefolk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,16 +10,19 @@
     "web:build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "measure": "scripts/measure.sh",
-    "model": "blender --background --factory-startup --python art/blender/build_hero.py"
+    "model": "blender --background --factory-startup --python art/blender/build_hero.py",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",
+    "chrono-node": "^2.10.3",
     "three": "^0.186.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4",
     "@types/three": "^0.186.0",
     "typescript": "^7.0.2",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   }
 }

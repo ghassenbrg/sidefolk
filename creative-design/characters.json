@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Design roster only; not a runtime import format. Affinities do not grant capabilities.",
+  "characters": [
+    {
+      "id": "pip",
+      "name": "Pip",
+      "form": "Bunny",
+      "personality": "The welcoming anchor",
+      "signature": "Long charcoal-tipped ears, ivory coat, mint scarf",
+      "suggestedAffinity": "Main pet and unassigned events",
+      "styles": [
+        "soft-3d",
+        "ink",
+        "anime"
+      ],
+      "tier": "A",
+      "existingSpeciesBase": "bunny",
+      "status": "concept"
+    },
+    {
+      "id": "byte",
+      "name": "Byte",
+      "form": "Cat",
+      "personality": "The thoughtful investigator",
+      "signature": "Round mint glasses, cream muzzle, hooked tail",
+      "suggestedAffinity": "Code and research",
+      "styles": [
+        "soft-3d",
+        "ink",
+        "anime"
+      ],
+      "tier": "A",
+      "existingSpeciesBase": "cat",
+      "status": "concept"
+    },
+    {
+      "id": "patch",
+      "name": "Patch",
+      "form": "Fox",
+      "personality": "The steady builder",
+      "signature": "Terracotta coat, broad white-tipped tail, mint scarf",
+      "suggestedAffinity": "Fixes and shipping",
+      "styles": [
+        "soft-3d",
+        "ink",
+        "anime"
+      ],
+      "tier": "A",
+      "existingSpeciesBase": "fox",
+      "status": "concept"
+    },
+    {
+      "id": "loom",
+      "name": "Loom",
+      "form": "Sheep",
+      "personality": "The patient organizer",
+      "signature": "Lavender cloud silhouette and chunky scarf knot",
+      "suggestedAffinity": "Planning and documentation",
+      "styles": [
+        "soft-3d"
+      ],
+      "tier": "B",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "moss",
+      "name": "Moss",
+      "form": "Turtle",
+      "personality": "The grounded caretaker",
+      "signature": "Sage shell, ivory face, small neck tag",
+      "suggestedAffinity": "Long tasks and infrastructure",
+      "styles": [
+        "soft-3d"
+      ],
+      "tier": "B",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "relay",
+      "name": "Relay",
+      "form": "Robot",
+      "personality": "The direct communicator",
+      "signature": "Rounded faceplate, mint eyes, bent antenna",
+      "suggestedAffinity": "Integrations and handoffs",
+      "styles": [
+        "soft-3d"
+      ],
+      "tier": "B",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "stack",
+      "name": "Stack",
+      "form": "Raccoon",
+      "personality": "The careful archivist",
+      "signature": "Eye mask, striped tail, mint overshirt",
+      "suggestedAffinity": "Repositories and knowledge",
+      "styles": [
+        "ink"
+      ],
+      "tier": "C",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "nib",
+      "name": "Nib",
+      "form": "Squid",
+      "personality": "The playful designer",
+      "signature": "Indigo cap, four rounded tentacles, mint pencil",
+      "suggestedAffinity": "Design and creative work",
+      "styles": [
+        "ink"
+      ],
+      "tier": "C",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "pico",
+      "name": "Pico",
+      "form": "CRT robot",
+      "personality": "The friendly tinkerer",
+      "signature": "Wide ivory screen housing and stubby feet",
+      "suggestedAffinity": "Tools and experiments",
+      "styles": [
+        "ink"
+      ],
+      "tier": "C",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "sora",
+      "name": "Sora",
+      "form": "Adult courier",
+      "personality": "The pocket navigator",
+      "signature": "Navy bob, cream jacket, mint scarf",
+      "suggestedAffinity": "Product and coordination",
+      "styles": [
+        "anime"
+      ],
+      "tier": "D",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "yuna",
+      "name": "Yuna",
+      "form": "Adult archivist",
+      "personality": "The quiet researcher",
+      "signature": "Plum bob, crescent clip, short mint cape",
+      "suggestedAffinity": "Writing and deep work",
+      "styles": [
+        "anime"
+      ],
+      "tier": "D",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "kite",
+      "name": "Kite",
+      "form": "Dragon",
+      "personality": "The curious explorer",
+      "signature": "Mint coat, rounded horns, folded wings",
+      "suggestedAffinity": "Prototypes and experiments",
+      "styles": [
+        "anime"
+      ],
+      "tier": "D",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "calder",
+      "name": "Calder",
+      "form": "Owl",
+      "personality": "The composed analyst",
+      "signature": "Slate brow, cream belly, thin mint collar",
+      "suggestedAffinity": "Research and planning",
+      "styles": [
+        "studio-2d",
+        "studio-3d"
+      ],
+      "collection": "professional",
+      "tier": "E",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "finch",
+      "name": "Finch",
+      "form": "Bird",
+      "personality": "The quiet communicator",
+      "signature": "Sand coat, charcoal wing, mint wing tab",
+      "suggestedAffinity": "Writing and notes",
+      "styles": [
+        "studio-2d",
+        "studio-3d"
+      ],
+      "collection": "professional",
+      "tier": "E",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "orbit",
+      "name": "Orbit",
+      "form": "Robot",
+      "personality": "The precise operator",
+      "signature": "Ivory shell, mint horizontal eyes, arc antenna",
+      "suggestedAffinity": "Integrations and operations",
+      "styles": [
+        "studio-2d",
+        "studio-3d"
+      ],
+      "collection": "professional",
+      "tier": "E",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "slate",
+      "name": "Slate",
+      "form": "Penguin",
+      "personality": "The steady work companion",
+      "signature": "Charcoal coat, ivory belly, mint lapel patch",
+      "suggestedAffinity": "Main work companion",
+      "styles": [
+        "studio-2d",
+        "studio-3d"
+      ],
+      "collection": "professional",
+      "tier": "E",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    },
+    {
+      "id": "vale",
+      "name": "Vale",
+      "form": "Fox",
+      "personality": "The restrained maker",
+      "signature": "Terracotta coat, curled tail, mint neck band",
+      "suggestedAffinity": "Product and delivery",
+      "styles": [
+        "studio-2d",
+        "studio-3d"
+      ],
+      "collection": "professional",
+      "tier": "E",
+      "existingSpeciesBase": "fox",
+      "status": "concept"
+    },
+    {
+      "id": "dot",
+      "name": "Dot",
+      "form": "Capsule",
+      "personality": "The minimal presence",
+      "signature": "Ivory capsule, small dot eyes, mint side stripe",
+      "suggestedAffinity": "Any project",
+      "styles": [
+        "studio-2d",
+        "studio-3d"
+      ],
+      "collection": "professional",
+      "tier": "E",
+      "existingSpeciesBase": null,
+      "status": "concept"
+    }
+  ]
+}

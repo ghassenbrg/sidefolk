@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Sidefolk">
+  <g fill="#272A33">
+    <ellipse cx="37" cy="33" rx="10.5" ry="25" transform="rotate(-9 37 33)"/>
+    <ellipse cx="63.5" cy="36" rx="10" ry="22" transform="rotate(9 63.5 36)"/>
+    <ellipse cx="50" cy="67" rx="33" ry="24.5"/>
+  </g>
+  <g fill="#F7F3EA">
+    <circle cx="40" cy="65" r="3.6"/>
+    <circle cx="60" cy="65" r="3.6"/>
+  </g>
+  <circle cx="86" cy="17" r="7.5" fill="#6FCFB4"/>
+</svg>

@@ -3,8 +3,11 @@
   --paper: #fffdf8;
   --muted: #6f6878;
   --line: rgba(44, 39, 51, 0.14);
+  --code: #f3efe7;
+  --field: #fff;
   --accent: #2f9e83;
   --warn: #d9623b;
+  --text: 13.5px;
   --font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -26,18 +29,18 @@ body.web {
   background: linear-gradient(160deg, #3d4a63 0%, #6b6f8f 55%, #b9a6a0 100%);
 }
 
-#stage {
+.stage {
   position: fixed;
   top: 0;
   left: 0;
   will-change: transform;
 }
 
-body.hover #stage {
+body.hover .stage {
   cursor: grab;
 }
 
-#hud {
+.hud {
   position: fixed;
   top: 0;
   left: 0;
@@ -54,11 +57,11 @@ body.hover #stage {
   pointer-events: none;
 }
 
-#hud.state-waiting {
+.hud.state-waiting {
   background: var(--warn);
 }
 
-#bubble {
+.bubble {
   position: fixed;
   top: 0;
   left: 0;
@@ -70,28 +73,29 @@ body.hover #stage {
   color: var(--ink);
   border: 1.5px solid var(--ink);
   box-shadow: 0 6px 18px rgba(20, 16, 28, 0.18);
-  font-size: 13.5px;
+  font-size: var(--text);
   line-height: 1.35;
 }
 
-#bubble[hidden],
-#hud[hidden] {
+.stage[hidden],
+.bubble[hidden],
+.hud[hidden] {
   display: none;
 }
 
-#bubble p {
+.bubble p {
   margin: 0;
 }
 
-#bubble.tone-done {
+.bubble.tone-done {
   border-color: var(--accent);
 }
 
-#bubble.tone-fail {
+.bubble.tone-fail {
   border-color: var(--warn);
 }
 
-#bubble .who {
+.bubble .who {
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -102,20 +106,35 @@ body.hover #stage {
   margin-bottom: 4px;
 }
 
-#bubble .count {
+.bubble .count {
   color: var(--warn);
 }
 
-#bubble .title {
+.bubble .title {
   font-weight: 700;
 }
 
-#bubble .detail {
+.bubble .info {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.bubble .info + .actions,
+.bubble .title + .actions {
+  margin-top: 9px;
+}
+
+.bubble.urgent {
+  border-color: var(--warn);
+}
+
+.bubble .detail {
   display: block;
   margin: 6px 0 9px;
   padding: 6px 8px;
   border-radius: 8px;
-  background: #f3efe7;
+  background: var(--code);
   font-family: var(--mono);
   font-size: 11.5px;
   word-break: break-all;
@@ -125,12 +144,12 @@ body.hover #stage {
   -webkit-user-select: text;
 }
 
-#bubble .actions {
+.bubble .actions {
   display: flex;
   gap: 6px;
 }
 
-#bubble button {
+.bubble button {
   font: inherit;
   font-size: 12.5px;
   font-weight: 700;
@@ -142,16 +161,16 @@ body.hover #stage {
   cursor: pointer;
 }
 
-#bubble button.primary {
+.bubble button.primary {
   background: var(--ink);
   color: var(--paper);
 }
 
-#bubble.prompt {
+.bubble.prompt {
   width: 300px;
 }
 
-#bubble input {
+.bubble input {
   box-sizing: border-box;
   width: 100%;
   font: inherit;
@@ -159,16 +178,138 @@ body.hover #stage {
   border-radius: 10px;
   border: 1.5px solid var(--line);
   outline: none;
-  background: #fff;
+  background: var(--field);
   color: var(--ink);
 }
 
-#bubble input:focus {
+.bubble input:focus {
   border-color: var(--accent);
 }
 
-#bubble .hint {
+.bubble .hint {
   margin-top: 5px;
   color: var(--muted);
   font-size: 11px;
+}
+
+.bubble .chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.bubble .chips-label {
+  width: 100%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bubble button.chip {
+  padding: 3px 9px;
+  font-size: 12px;
+  border-width: 1px;
+  border-color: var(--line);
+}
+
+.bubble button.chip.selected {
+  border-color: var(--ink);
+  background: var(--code);
+}
+
+.bubble button.chip.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.bubble button.chip.swatch.selected {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.bubble .chips + .actions {
+  margin-top: 10px;
+}
+
+/* Bubbles follow the system appearance. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f1ecf7;
+    --paper: #2a2531;
+    --muted: #b3abbe;
+    --line: rgba(241, 236, 247, 0.18);
+    --code: #3a3443;
+    --field: #1f1b25;
+  }
+}
+
+/* Settings → Larger text. */
+body.large-text {
+  --text: 15.5px;
+}
+body.large-text .bubble {
+  max-width: 340px;
+}
+body.large-text .bubble .who,
+body.large-text .bubble .hint,
+body.large-text .bubble .info {
+  font-size: 13px;
+}
+
+.bubble button:focus-visible,
+.bubble input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bubble .who .close {
+  margin-left: auto;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.bubble .who .close:hover {
+  color: var(--ink);
+}
+
+.bubble .who .count {
+  margin-left: 6px;
+}
+
+.bubble.menu {
+  width: 230px;
+}
+
+.bubble .actions.list {
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.bubble .actions.list button {
+  text-align: left;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-weight: 600;
+}
+
+.bubble .actions.list button:hover {
+  background: var(--code);
+}
+
+.bubble .chips.suggestions {
+  margin-top: 6px;
+}
+
+.bubble .chips[hidden] {
+  display: none;
 }

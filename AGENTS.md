@@ -20,28 +20,36 @@ Where the product is going and in what order: [docs/ROADMAP.md](docs/ROADMAP.md)
 work against it.
 
 Background reading: [README.md](README.md), [docs/PHASE0.md](docs/PHASE0.md),
-[docs/PHASE1.md](docs/PHASE1.md), [art/HERO.md](art/HERO.md).
+[docs/PHASE1.md](docs/PHASE1.md), [art/HERO.md](art/HERO.md), [docs/CREATORS.md](docs/CREATORS.md),
+[docs/RELEASE.md](docs/RELEASE.md).
 
 ## Commands
 
 ```sh
 npm install
 npm run dev        # desktop overlay, Tauri dev build (logs go to the terminal)
-npm run web        # browser preview at http://127.0.0.1:1420 (?zoom=3 to inspect; number keys fake agent events)
+npm run web        # browser preview at http://127.0.0.1:1420 (?zoom=3; keys 0-7 fake agent events, p switches project, c opens the command bar)
 npm run typecheck
+npm test           # vitest: commands, routing, reminders, briefings, descriptions
 npm run build      # release Sidefolk.app
 npm run measure    # CPU/RAM of the built app
-npm run model      # rebuild public/models/hero.glb from art/blender/build_hero.py
+npm run model      # rebuild public/models/*.glb (bunny, cat, fox) from art/blender/build_hero.py
 ```
 
-Rust only: `cd src-tauri && cargo build`.
+Rust only: `cd src-tauri && cargo build && cargo test`. Ignored tests run real CLIs or one live
+model call; run them only when that part changes (README lists them).
+
+Driving the dev app without clicks: POST JSON to `http://127.0.0.1:47821/dev/ui` with
+`{"action": "state" | "bubbles" | "welcome" | "run:<command>" | "choose:<button label>"}` and
+read the `[ui]` lines in the dev log.
 
 ## Rules
 
-- Never edit the user's global agent config (`~/.claude/settings.json`, `~/.codex/config.toml`)
-  yourself. The app's own installer may change it only when the user clicks it, after a
-  confirmation and a backup. While developing, use `claude --settings hooks/claude-settings.json`
-  or a copy of the file through `SIDEFOLK_CLAUDE_SETTINGS`.
+- Never edit the user's global agent config (`~/.claude/settings.json`, `~/.claude.json`,
+  `~/.codex/config.toml`) yourself. The app's own installers may change it only when the user
+  clicks them, after a confirmation and a backup. While developing, use
+  `claude --settings hooks/claude-settings.json`, a copy through `SIDEFOLK_CLAUDE_SETTINGS`, or
+  point `CLAUDE_CONFIG_DIR` / `CODEX_HOME` at temporary folders.
 - Live model calls cost the user's quota. Keep them rare and tiny, and prefer the
   debug-only endpoints (`/dev/ui`, `/dev/codex`, `/dev/resolve` on 127.0.0.1:47821) and the
   browser preview.

@@ -1,0 +1,208 @@
+import { folder } from "./agents";
+import type { Crew } from "./crew";
+import type { Familiar } from "./familiar";
+import { describeDue, parseReminder } from "./when";
+
+/** Mirrors `Reminder` in src-tauri/src/reminders.rs. */
+export type Reminder = {
+  id: string;
+  text: string;
+  due: number;
+  project: string;
+  from: string;
+  created: number;
+  done: boolean;
+  fired: boolean;
+};
+
+export type ReminderStore = {
+  list(): Promise<Reminder[]>;
+  add(text: string, due: number, project: string | null, from?: string): Promise<Reminder>;
+  update(id: string, change: { done?: boolean; due?: number; fired?: boolean }): Promise<void>;
+  /** Shows the overlay while the pet is hidden (false puts it back). */
+  peek(show: boolean): void;
+};
+
+const CHECK_MS = 10_000;
+const MINUTE = 60_000;
+
+/**
+ * Delivers reminders on time through the pet that looks after their project (the main pet
+ * otherwise). Ones that came due while Sidefolk was not running are delivered at start.
+ */
+export class Reminders {
+  private list: Reminder[] = [];
+  private showing = new Set<string>();
+  /** Opens the Settings window's reminder list (desktop app only). */
+  manage?: () => void;
+
+  constructor(
+    private readonly crew: Crew,
+    private readonly store: ReminderStore,
+  ) {}
+
+  async start() {
+    await this.reload();
+    this.check(true);
+    setInterval(() => this.check(false), CHECK_MS);
+  }
+
+  async reload() {
+    this.list = await this.store.list();
+  }
+
+  /** `remind me …` and `reminders` from a command bar. */
+  /** A reminder set by an agent through its pet tools. */
+  async fromAgent(text: string, due: Date, project: string, agent: string) {
+    const reminder = await this.store.add(text, due.getTime(), project || null, agent);
+    this.list.push(reminder);
+    return reminder;
+  }
+
+  async command(text: string, kind: "remind" | "reminders" | "new-reminder", from: Familiar): Promise<string | void> {
+    if (kind === "reminders") return this.showList(from);
+    if (kind === "new-reminder") return this.form(from);
+    const parsed = parseReminder(text);
+    if (!parsed) return this.askWhen(text.replace(/^(to|about)\s+/i, ""), from);
+    return this.add(parsed.what, parsed.due, from);
+  }
+
+  private async add(what: string, due: Date, from: Familiar) {
+    const reminder = await this.store.add(what, due.getTime(), from.project);
+    this.list.push(reminder);
+    return `OK, ${describeDue(due)}: ${what}`;
+  }
+
+  /** "New reminder…": one field that takes the time too, or asks for it next. */
+  private form(on: Familiar) {
+    on.bubble.prompt({
+      who: `${on.name} · new reminder`,
+      placeholder: "Call the bank tomorrow at 10",
+      suggestions: ["Stretch in 30 minutes", "Review the PR tomorrow at 10", "Standup Monday at 9:30"],
+      preview: (text) => {
+        const parsed = parseReminder(text);
+        return parsed ? `Remind you ${describeDue(parsed.due)}: ${parsed.what}` : "Then pick when";
+      },
+      submit: async (text) => {
+        const parsed = parseReminder(text);
+        return parsed ? this.add(parsed.what, parsed.due, on) : this.askWhen(text, on);
+      },
+    });
+  }
+
+  /** The thing to remember is known but not when: offer the usual times. */
+  private askWhen(what: string, on: Familiar) {
+    if (!what.trim()) return this.form(on);
+    const at = (hours: number, minutes = 0, days = 0) => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      d.setHours(hours, minutes, 0, 0);
+      return d;
+    };
+    const now = new Date();
+    const options: [string, Date][] = [
+      ["In 10 min", new Date(now.getTime() + 10 * MINUTE)],
+      ["In 1 hour", new Date(now.getTime() + 60 * MINUTE)],
+      ...(now.getHours() < 17 ? [["This evening", at(18)] as [string, Date]] : []),
+      ["Tomorrow 9:00", at(9, 0, 1)],
+    ];
+    on.bubble.show({
+      id: "reminder-when",
+      who: `${on.name} · new reminder`,
+      title: `When should I remind you to ${what}?`,
+      lines: ['Or type it with a time, like "tomorrow at 10".'],
+      choices: options.map(([label], i) => ({ label, value: String(i), primary: i === 0 })),
+      onChoose: async (value) => on.bubble.say(await this.add(what, options[Number(value)][1], on), 5),
+    });
+  }
+
+  /** Reminders still to come, soonest first. */
+  get upcoming() {
+    return this.list.filter((r) => !r.done).sort((a, b) => a.due - b.due);
+  }
+
+  private check(starting: boolean) {
+    const now = Date.now();
+    for (const r of this.list) {
+      if (r.done || this.showing.has(r.id)) continue;
+      // Shown before Sidefolk quit but never answered: show it again.
+      if (r.due <= now && (!r.fired || starting)) this.show(r, now - r.due > 2 * MINUTE);
+    }
+  }
+
+  private show(r: Reminder, missed: boolean) {
+    const pet = r.project ? this.crew.petFor(r.project) : this.crew.main;
+    this.showing.add(r.id);
+    r.fired = true;
+    void this.store.update(r.id, { fired: true });
+    if (this.showing.size === 1) this.store.peek(true);
+    const by = r.from === "you" ? "" : ` (set by ${r.from === "codex" ? "Codex" : "Claude"})`;
+    pet.bubble.show({
+      id: `reminder-${r.id}`,
+      who: `${pet.name} · reminder${by}`,
+      title: r.text,
+      lines: [missed ? `Missed while you were away: ${describeDue(new Date(r.due))}` : describeDue(new Date(r.due))].concat(
+        r.project && pet.isMain ? [folder(r.project)] : [],
+      ),
+      choices: [
+        { label: "Done", value: "done", primary: true },
+        { label: "10 min", value: "10" },
+        { label: "1 hour", value: "60" },
+        { label: "Tomorrow", value: "tomorrow" },
+      ],
+      onChoose: (value) => void this.answer(r, value),
+    });
+    pet.mind.react("wave", 1.6);
+    pet.holdUntil = Math.max(pet.holdUntil, Date.now() + 5_000);
+    this.crew.tick();
+  }
+
+  private async answer(r: Reminder, value: string) {
+    this.showing.delete(r.id);
+    if (this.showing.size === 0) this.store.peek(false);
+    if (value === "done") {
+      r.done = true;
+      return this.store.update(r.id, { done: true });
+    }
+    const due = new Date();
+    if (value === "tomorrow") {
+      due.setDate(due.getDate() + 1);
+      due.setHours(9, 0, 0, 0);
+    } else due.setTime(due.getTime() + Number(value) * MINUTE);
+    r.due = due.getTime();
+    r.fired = false;
+    await this.store.update(r.id, { due: r.due });
+  }
+
+  private showList(on: Familiar) {
+    const next = this.upcoming;
+    const lines = next.slice(0, 6).map((r) => `${describeDue(new Date(r.due))} · ${r.text}`);
+    if (next.length > 6) lines.push(`+${next.length - 6} more`);
+    on.bubble.show({
+      id: "reminders",
+      who: on.name,
+      title: next.length ? "Coming up" : "No reminders",
+      lines: next.length ? lines : ['Try "remind me tomorrow at 10 to call the bank".'],
+      choices: [
+        { label: "New reminder…", value: "new", primary: true },
+        ...(this.manage ? [{ label: "Manage…", value: "manage" }] : []),
+      ],
+      onChoose: (value) => (value === "new" ? this.form(on) : this.manage?.()),
+    });
+  }
+}
+
+/** A browser-preview store: kept in memory, gone on reload. */
+export function memoryStore(): ReminderStore {
+  const list: Reminder[] = [];
+  return {
+    list: async () => [...list],
+    add: async (text, due, project, from = "you") => {
+      const r = { id: `r${Date.now()}`, text, due, project: project ?? "", from, created: Date.now(), done: false, fired: false };
+      list.push(r);
+      return r;
+    },
+    update: async () => {},
+    peek: () => {},
+  };
+}

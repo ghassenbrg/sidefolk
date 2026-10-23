@@ -1,15 +1,17 @@
 //! Drives Codex through `codex app-server`: newline-delimited JSON-RPC over stdio
-//! (no "jsonrpc" field). One app-server process and one thread per run of Sidefolk.
+//! (no "jsonrpc" field). One app-server process per run of Sidefolk and one thread per
+//! working folder, so each project's pet hands work to Codex in that project.
 //! Command and file-change approvals are routed to the pet.
 
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::PathBuf,
     process::Stdio,
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicI64, Ordering},
     },
+    time::Duration,
 };
 
 use serde_json::{Value, json};
@@ -24,21 +26,38 @@ use crate::bus::{self, AgentEvent, Decision, PermissionAsk, Shared, clip};
 
 type Reply = Result<Value, String>;
 
+/// Codex waits forever for an approval; after this long nobody is coming, so decline.
+const APPROVAL_WAIT: Duration = Duration::from_secs(10 * 60);
+
 pub struct Codex {
     stdin: tokio::sync::Mutex<ChildStdin>,
     next_id: AtomicI64,
     waiting: Mutex<HashMap<i64, oneshot::Sender<Reply>>>,
-    thread_id: tokio::sync::Mutex<Option<String>>,
+    /// Working folder -> thread id.
+    threads: tokio::sync::Mutex<HashMap<PathBuf, String>>,
+    /// Thread id -> working folder, for events and approvals.
+    folders: Mutex<HashMap<String, String>>,
+    /// Threads with a turn in progress.
+    busy: Mutex<HashSet<String>>,
     alive: AtomicBool,
-    busy: AtomicBool,
-    cwd: PathBuf,
     /// Paths touched by each fileChange item, for the approval bubble.
     changes: Mutex<HashMap<String, String>>,
     last_message: Mutex<String>,
     _child: Mutex<Child>,
 }
 
-pub async fn dispatch(app: &AppHandle, shared: Arc<Shared>, prompt: String) -> Result<String, String> {
+/// Starts a turn in `cwd` (a project folder), or in the playground when it is `None`.
+pub async fn dispatch(
+    app: &AppHandle,
+    shared: Arc<Shared>,
+    prompt: String,
+    cwd: Option<PathBuf>,
+) -> Result<String, String> {
+    let cwd = match cwd {
+        Some(dir) if dir.is_dir() => dir,
+        Some(dir) => return Err(format!("{} is not a folder.", dir.display())),
+        None => workdir(app)?,
+    };
     let codex = {
         let mut slot = shared.codex.lock().await;
         match slot.as_ref() {
@@ -50,11 +69,11 @@ pub async fn dispatch(app: &AppHandle, shared: Arc<Shared>, prompt: String) -> R
             }
         }
     };
-    if codex.busy.swap(true, Ordering::SeqCst) {
-        return Err("Codex is still working on the last request.".into());
+    let thread = codex.thread(&cwd).await?;
+    if !codex.busy.lock().unwrap().insert(thread.clone()) {
+        return Err("Codex is still working on the last request there.".into());
     }
     let result = async {
-        let thread = codex.thread().await?;
         codex
             .request(
                 "turn/start",
@@ -65,17 +84,16 @@ pub async fn dispatch(app: &AppHandle, shared: Arc<Shared>, prompt: String) -> R
                 }),
             )
             .await?;
-        Ok(thread)
+        Ok(thread.clone())
     }
     .await;
     if result.is_err() {
-        codex.busy.store(false, Ordering::SeqCst);
+        codex.busy.lock().unwrap().remove(&thread);
     }
     result
 }
 
-/// Where dispatched work runs until project selection exists: a scratch folder that
-/// SIDEFOLK_WORKDIR can override.
+/// Where work without a project runs: a scratch folder that SIDEFOLK_WORKDIR can override.
 fn workdir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = match std::env::var_os("SIDEFOLK_WORKDIR") {
         Some(dir) => PathBuf::from(dir),
@@ -123,10 +141,10 @@ impl Codex {
             stdin: tokio::sync::Mutex::new(stdin),
             next_id: AtomicI64::new(1),
             waiting: Mutex::new(HashMap::new()),
-            thread_id: tokio::sync::Mutex::new(None),
+            threads: Default::default(),
+            folders: Default::default(),
+            busy: Default::default(),
             alive: AtomicBool::new(true),
-            busy: AtomicBool::new(false),
-            cwd,
             changes: Mutex::new(HashMap::new()),
             last_message: Mutex::new(String::new()),
             _child: Mutex::new(child),
@@ -144,8 +162,9 @@ impl Codex {
             for (_, waiter) in reader.waiting.lock().unwrap().drain() {
                 let _ = waiter.send(Err("Codex stopped.".into()));
             }
-            if reader.busy.swap(false, Ordering::SeqCst) {
-                reader.emit(&app, "", "failed", "Codex stopped unexpectedly.".into());
+            let busy: Vec<String> = reader.busy.lock().unwrap().drain().collect();
+            for thread in busy {
+                reader.emit(&app, &thread, "failed", "Codex stopped unexpectedly.".into());
             }
         });
 
@@ -162,9 +181,9 @@ impl Codex {
         Ok(codex)
     }
 
-    async fn thread(&self) -> Result<String, String> {
-        let mut slot = self.thread_id.lock().await;
-        if let Some(id) = slot.as_ref() {
+    async fn thread(&self, cwd: &PathBuf) -> Result<String, String> {
+        let mut threads = self.threads.lock().await;
+        if let Some(id) = threads.get(cwd) {
             return Ok(id.clone());
         }
         // "untrusted" asks before anything beyond known-safe reads, which exercises approvals.
@@ -172,7 +191,7 @@ impl Codex {
             .request(
                 "thread/start",
                 json!({
-                    "cwd": self.cwd,
+                    "cwd": cwd,
                     "approvalPolicy": "untrusted",
                     "sandbox": "workspace-write",
                     "ephemeral": true
@@ -180,7 +199,8 @@ impl Codex {
             )
             .await?;
         let id = started["thread"]["id"].as_str().ok_or("Codex returned no thread id")?.to_string();
-        *slot = Some(id.clone());
+        threads.insert(cwd.clone(), id.clone());
+        self.folders.lock().unwrap().insert(id.clone(), cwd.display().to_string());
         Ok(id)
     }
 
@@ -225,17 +245,12 @@ impl Codex {
         }
     }
 
+    fn folder(&self, thread: &str) -> String {
+        self.folders.lock().unwrap().get(thread).cloned().unwrap_or_default()
+    }
+
     fn emit(&self, app: &AppHandle, session: &str, kind: &'static str, detail: String) {
-        bus::emit(
-            app,
-            AgentEvent {
-                source: "codex",
-                session: session.to_string(),
-                kind,
-                detail,
-                cwd: self.cwd.display().to_string(),
-            },
-        );
+        bus::emit(app, AgentEvent::new("codex", session, kind, detail, &self.folder(session)));
     }
 
     fn notify(&self, app: &AppHandle, method: &str, params: &Value) {
@@ -285,7 +300,7 @@ impl Codex {
                 }
             }
             "turn/completed" => {
-                self.busy.store(false, Ordering::SeqCst);
+                self.busy.lock().unwrap().remove(session);
                 let turn = &params["turn"];
                 match turn["status"].as_str().unwrap_or_default() {
                     "completed" => {
@@ -341,6 +356,9 @@ impl Codex {
             }
         };
         let session = params["threadId"].as_str().unwrap_or_default().to_string();
+        let cwd = self.folder(&session);
+        let project = bus::project_root(&cwd);
+        bus::note(app, "codex", &session, &project, "ask", &format!("{title} {detail}"));
         let (ask, answer) = shared.permissions.open("codex");
         let _ = app.emit(
             "permission",
@@ -350,13 +368,22 @@ impl Codex {
                 session: session.clone(),
                 title,
                 detail,
-                cwd: self.cwd.display().to_string(),
+                project: project.clone(),
+                cwd,
                 can_defer: false,
             },
         );
         self.emit(app, &session, "waiting", String::new());
-        let decision = answer.await.unwrap_or(Decision::Deny);
+        let decision = match tokio::time::timeout(APPROVAL_WAIT, answer).await {
+            Ok(answer) => answer.unwrap_or(Decision::Deny),
+            Err(_) => {
+                self.emit(app, &session, "message", "Nobody answered Codex's question, so I declined it.".into());
+                Decision::Deny
+            }
+        };
         shared.permissions.close(app, &ask);
+        let answered = if decision == Decision::Allow { "allowed" } else { "denied" };
+        bus::note(app, "codex", &session, &project, "answer", answered);
         let decision = if decision == Decision::Allow { "accept" } else { "decline" };
         let _ = self.send(json!({ "id": id, "result": { "decision": decision } })).await;
         self.emit(app, &session, "think", String::new());

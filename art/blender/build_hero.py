@@ -1,7 +1,12 @@
-"""Builds the Sidefolk hero (mesh, colors, rig, clips) and exports public/models/hero.glb.
+"""Builds the Sidefolk pets (mesh, colors, rig, clips) and exports one glb per species:
+public/models/hero.glb (the bunny), cat.glb and fox.glb.
 
     npm run model
     # = blender --background --factory-startup --python art/blender/build_hero.py
+
+Every species shares the skeleton, the clips and the palette colors, so every animation and
+every palette (src/pet/look.ts recolors these exact colors) works on every species. Only the
+ears, tail and a few face details change.
 
 Everything is modeled in app space (x right, y up, z toward the viewer, feet at y = 0) and
 converted to Blender space (x, -z, y) when the mesh is built. Bones all point straight up with
@@ -18,7 +23,7 @@ import bpy
 from mathutils import Euler, Quaternion, Vector
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-GLB = os.path.join(ROOT, "public", "models", "hero.glb")
+MODELS = os.path.join(ROOT, "public", "models")
 BLEND = os.path.join(ROOT, "art", "blender", "hero.blend")
 FPS = 30
 
@@ -200,7 +205,55 @@ def ear(side):
     return part, inner
 
 
-def build_parts():
+def taper(p):
+    # Wide at the base, nearly a point at the top: a cat or fox ear.
+    t = max(0.06, (1 - p.y) / 2) ** 0.75
+    return Vector((p.x * t, p.y, p.z * t))
+
+
+def pointed_ear(side, length, width, tilt, tip_from):
+    """Short pointed ear on the base ear bone only (the tip bone sits above it)."""
+    base = Vector((0.27 * side, 1.64, -0.02))
+    rotation = Euler((-0.12, 0, -tilt * side)).to_matrix()
+    part = ellipsoid(base + rotation @ Vector((0, length / 2, 0)), (width, length / 2, 0.08), COAT, "earL" if side < 0 else "earR",
+                     rotation=rotation, segments=(28, 24), shape=taper)
+    inner = ellipsoid(base + rotation @ Vector((0, length * 0.42, 0.06)), (width * 0.55, length * 0.32, 0.03), INNER_EAR,
+                      "earL" if side < 0 else "earR", rotation=rotation, segments=(20, 16), shape=taper)
+    for i, v in enumerate(part.verts):
+        if (rotation.transposed() @ (v - base)).y / length > tip_from:
+            part.colors[i] = POINTS
+    return part, inner
+
+
+def long_tail():
+    """A cat's tail curling up beside the body: overlapping beads, charcoal at the tip."""
+    beads = [(0.0, 0.36, -0.3), (0.02, 0.42, -0.43), (0.04, 0.53, -0.53), (0.05, 0.66, -0.58), (0.05, 0.79, -0.57),
+             (0.04, 0.91, -0.52), (0.03, 1.0, -0.45)]
+    return [ellipsoid(c, (0.082 - 0.003 * k,) * 3, POINTS if k == len(beads) - 1 else COAT, "tail", segments=(16, 10))
+            for k, c in enumerate(beads)]
+
+
+def bushy_tail():
+    """A fox's brush: one big plume and a cream tip."""
+    # Sweeps up and back from the hips (negative x rotation tips +y toward -z).
+    turn = Euler((-0.85, 0, -0.3)).to_matrix()
+    base = Vector((0.04, 0.42, -0.34))
+    center = base + turn @ Vector((0, 0.3, 0))
+    tip = base + turn @ Vector((0, 0.62, 0))
+    return [
+        ellipsoid(center, (0.18, 0.34, 0.18), COAT, "tail", rotation=turn, segments=(24, 16)),
+        ellipsoid(tip, (0.13, 0.14, 0.13), CREAM, "tail", segments=(18, 12)),
+    ]
+
+
+SPECIES = {
+    "hero": {"ears": "long", "tail": "puff"},
+    "cat": {"ears": (0.5, 0.2, 0.32, 0.72), "tail": "long", "whiskers": True},
+    "fox": {"ears": (0.66, 0.22, 0.22, 0.6), "tail": "bushy", "muzzle": 1.3},
+}
+
+
+def build_parts(spec):
     body, face = [], []
     side = (-1, 1)
 
@@ -234,15 +287,24 @@ def build_parts():
         body.append(ellipsoid((0.16 * s, 0.21, 0.0), (0.12, 0.12, 0.12), COAT, bone, segments=(18, 12)))
         body.append(ellipsoid((0.17 * s, 0.085, 0.05), (0.15, 0.085, 0.2), POINTS, bone, segments=(24, 14)))
 
-    body.append(ellipsoid((0, 0.4, -0.33), (0.12, 0.12, 0.12), POINTS, "tail", segments=(18, 12)))
+    if spec["tail"] == "puff":
+        body.append(ellipsoid((0, 0.4, -0.33), (0.12, 0.12, 0.12), POINTS, "tail", segments=(18, 12)))
+    else:
+        body.extend(long_tail() if spec["tail"] == "long" else bushy_tail())
 
     for s in side:
-        outer, inner = ear(s)
+        outer, inner = ear(s) if spec["ears"] == "long" else pointed_ear(s, *spec["ears"])
         body.append(outer)
         face.append(inner)
 
     # Face, sitting on the head surface.
-    face.append(decal(HEAD, 0, 1.16, (0.25, 0.16, 0.05), CREAM, "head", lift=-0.03))
+    m = spec.get("muzzle", 1.0)
+    face.append(decal(HEAD, 0, 1.16, (0.25 * m, 0.16 * m, 0.05), CREAM, "head", lift=-0.03))
+    if spec.get("whiskers"):
+        for s in side:
+            for k in (-1, 0, 1):
+                face.append(decal(HEAD, 0.53 * s, 1.17 + 0.045 * k, (0.085, 0.009, 0.012), INK, "head", lift=0.0, spin=0.12 * k * s,
+                                  segments=(12, 6)))
     for s in side:
         eye = "eyeL" if s < 0 else "eyeR"
         face.append(decal(HEAD, 0.25 * s, 1.33, (0.1, 0.125, 0.05), INK, eye, lift=-0.012))
@@ -532,20 +594,31 @@ def all_fcurves(action):
         yield from action.fcurves
 
 
-def main():
+def reset():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete()
-    bpy.context.scene.render.fps = FPS
+    # Actions outlive their objects; left over, they would export again under ".001" names.
+    for action in list(bpy.data.actions):
+        bpy.data.actions.remove(action)
+    for armature in list(bpy.data.armatures):
+        bpy.data.armatures.remove(armature)
+    for mesh in list(bpy.data.meshes):
+        bpy.data.meshes.remove(mesh)
 
+
+def build(name, spec):
+    reset()
+    bpy.context.scene.render.fps = FPS
     rig = build_armature()
-    body, face = build_parts()
+    body, face = build_parts(spec)
     build_mesh("Body", body, rig)
     build_mesh("Face", face, rig)
     build_actions(rig)
 
-    os.makedirs(os.path.dirname(GLB), exist_ok=True)
+    glb = os.path.join(MODELS, f"{name}.glb")
+    os.makedirs(MODELS, exist_ok=True)
     bpy.ops.export_scene.gltf(
-        filepath=GLB,
+        filepath=glb,
         export_format="GLB",
         export_yup=True,
         export_skins=True,
@@ -557,8 +630,14 @@ def main():
         export_materials="EXPORT",
         export_morph=False,
     )
+    print(f"{name}: {sum(len(p.verts) for p in body + face)} vertices, {len(CLIPS)} clips -> {glb}")
+
+
+def main():
+    # The bunny goes last: its scene is the one saved for an artist to open.
+    for name in sorted(SPECIES, key=lambda n: n == "hero"):
+        build(name, SPECIES[name])
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
-    print(f"hero: {sum(len(p.verts) for p in body + face)} vertices, {len(CLIPS)} clips -> {GLB}")
 
 
 main()

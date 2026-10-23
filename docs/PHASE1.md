@@ -109,3 +109,29 @@ steady 30 renders/s, pet interactions and keyboard focus released after typing. 
 round-trip also appears in the interactive dev log; automated checks did not initiate it.
 Extended multi-display/Space coverage can continue during daily use. The isolated dev app is
 left running, and the next Phase 1 step is to live with the pet for a few days.
+
+## Phase 1 exit: CPU cut · done
+
+Measured with the release build, the screen unlocked, 15 s warm-up and 60 s sampling
+(`npm run measure`), same conditions as the 16.9% baseline (re-measured first: 16.8%).
+
+| Change | Awake total |
+|---|---:|
+| Baseline | 16.8% |
+| Frame rate by state: idle/sit 10 fps, think/read/work/alert 15, sleep 5; 30 while walking, held, reacting or when the cursor moves nearby. Slow frames come from timers, not every display refresh | 13.5% |
+| Calmer routine: strolls of 160–480 px instead of across the screen, sits of 15–35 s | 11.3% |
+| Cursor read from CoreGraphics on the cursor thread instead of `AppHandle::cursor_position` (a main-thread round trip 30 times a second) | — |
+| `Malloc=1` for the app process: WebKit's libpas scavenger thread there woke for every frame (~2%) | **8.7%** |
+
+Final breakdown, awake: Sidefolk 2.4%, WebKit WebContent 4.7%, WebKit GPU 1.5%, 235 MB.
+Hidden: 1.0% (was 1.9% before the cursor change). Asleep: the web content process is nearly
+idle (sampled); short `top` runs of the asleep pet were too noisy to quote.
+
+The 5% target for one awake pet was not reached. What remains is WebKit's cost per rendered
+frame, and most frames now come from walking and reactions at 30 fps. Walking at 15 fps would
+get close to 5% but visibly stutters (5 px steps). Revisit with a single shared renderer if the
+crew makes this matter. The CoreGraphics cursor matched Tauri's position exactly in a dev check.
+
+After the crew code (Phase 2 onward), with one pet out: 10.2% and 7.1% in two runs, so 8.7%
+on average, unchanged (the random routine moves single runs by a couple of percent). The
+release bundle is 4.83 MiB with the cat and fox models.

@@ -60,3 +60,42 @@ Newest last. Each entry: what, why, and what would change it.
     server (notify, ask, remind, presence), installed with the same confirm-and-backup rules.
 17. **CPU before crew.** One visible pet measured 16.9% CPU. The budget is under 5% for everything
     on screen; Phase 1 ends by cutting the single pet's cost before Phase 2 adds more pets.
+18. **One small canvas per pet, not one shared renderer (24 October 2026).** Each pet draws into
+    its own 320 px WebGL canvas that follows it. Pets stand far apart, so a shared canvas would
+    have to cover the screen, and compositing that costs more than a few small ones. At most four
+    are drawn (main pet + three crew); pets in the den draw nothing. Measured with the crew
+    code and one pet out: 8.7% (two runs), the same as before. Several pets out at once has not
+    been measured. Would change if many more pets are on screen at once.
+19. **Small local files, not SQLite.** crew.json and reminders.json are written atomically; the
+    journal is one JSONL file per UTC day, kept 30 days. The data is small, nothing needs queries,
+    no native database dependency, and the user can read every file. Would change if briefings
+    need real queries across months.
+20. **A hidden pet comes back for a due reminder** (Rust `peek`, not saved as un-hidden)
+    instead of a native notification: the user asked for the pet to appear and remind, and it
+    needs no notification permission. Reminders fire through the project's pet when it has one.
+21. **No token on the hook endpoint, yet.** Browsers are already refused (Origin and
+    content-type checks), any local process that could forge a request could also read a token
+    file, and requiring one would silently break hooks installed earlier. The MCP endpoint does
+    require the per-install token (`<data dir>/token`, 0600) because it accepts questions and
+    reminders. Would change when the hook installer can upgrade existing installs.
+22. **Agent configs change only through the agents' own CLIs** (`claude mcp add --scope user`,
+    `codex mcp add`), after a confirmation and a byte-for-byte backup of the file they edit;
+    status is read from that file. Their formats and locations are theirs to change.
+23. **Custom pets = species glbs + runtime recolor + accessories.** Species share the
+    skeleton, clips and palette colors, so palettes recolor the same vertex colors on all of
+    them. "Describe your pet" is local words first; a photo goes to Claude Haiku only when the
+    user picks one. Imported glbs must pass the loader's contract check; a missing one falls
+    back to the bunny. Settings live in a Settings window; the tray keeps everyday items.
+24. **Pets have voices, made on the fly (24 October 2026).** Talking babbles soft Web Audio
+    syllables (pitch per species and name, rising on questions) and reactions chirp; no sound
+    files. On by default at 60% volume because the user asked for the pets to feel alive; one
+    switch turns it off. "Speak out loud" (macOS `say`, any installed voice, pitch per pet) is
+    off by default: agent text read aloud in an office is a surprise nobody wants.
+25. **One window: the Sidefolk dashboard.** Home (waiting questions answerable in place, pets
+    and sessions, reminders, connections), Activity, Crew, Reminders, Agents, Settings, About.
+    The overlay publishes a live snapshot (`publish_status`, sent when it changes, checked once
+    a second); the dashboard never changes crew.json or answers questions itself: it asks the
+    pets (`pet_action`), so a dashboard answer runs exactly the code a click on the pet runs.
+26. **Discoverability over memorizing.** Right-click menus on every pet, suggestion chips, and a
+    line under the command field saying what Enter will do, including when it spends Codex
+    quota. The user's first try sent a request to Codex without meaning to.

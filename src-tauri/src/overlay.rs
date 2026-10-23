@@ -6,7 +6,7 @@
 use crate::bus::Shared;
 use std::{sync::Arc, thread, time::Duration};
 
-use tauri::{AppHandle, Emitter, Manager, Monitor, PhysicalPosition, WebviewWindow};
+use tauri::{AppHandle, Emitter, Manager, Monitor, WebviewWindow};
 
 pub const OVERLAY: &str = "overlay";
 const CURSOR_INTERVAL: Duration = Duration::from_millis(33);
@@ -14,9 +14,53 @@ const CURSOR_INTERVAL: Duration = Duration::from_millis(33);
 const REFIT_EVERY: u32 = 30;
 
 #[cfg(target_os = "macos")]
+#[repr(C)]
+struct CGPoint {
+    x: f64,
+    y: f64,
+}
+
+#[cfg(target_os = "macos")]
 #[link(name = "CoreGraphics", kind = "framework")]
 unsafe extern "C" {
     fn CGEventSourceSecondsSinceLastEventType(state: i32, kind: u32) -> f64;
+    fn CGEventCreate(source: *const std::ffi::c_void) -> *mut std::ffi::c_void;
+    fn CGEventGetLocation(event: *const std::ffi::c_void) -> CGPoint;
+}
+
+#[cfg(target_os = "macos")]
+#[link(name = "CoreFoundation", kind = "framework")]
+unsafe extern "C" {
+    fn CFRelease(cf: *const std::ffi::c_void);
+}
+
+/// Seconds since the last keyboard or mouse input in this login session; no permission needed.
+#[cfg(target_os = "macos")]
+pub fn idle_seconds() -> f64 {
+    // Combined session state, any event type.
+    unsafe { CGEventSourceSecondsSinceLastEventType(0, u32::MAX) }
+}
+
+/// Cursor in global points (top-left origin), read on the calling thread. Tauri's
+/// `cursor_position` is a round trip through the main thread, and doing that 30 times a
+/// second kept AppKit and WebKit busy (about 3% CPU with nothing on screen moving).
+#[cfg(target_os = "macos")]
+fn cursor_points(_: &AppHandle, _: f64) -> Option<(f64, f64)> {
+    unsafe {
+        let event = CGEventCreate(std::ptr::null());
+        if event.is_null() {
+            return None;
+        }
+        let point = CGEventGetLocation(event);
+        CFRelease(event);
+        Some((point.x, point.y))
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn cursor_points(app: &AppHandle, scale: f64) -> Option<(f64, f64)> {
+    let cursor = app.cursor_position().ok()?;
+    Some((cursor.x / scale, cursor.y / scale))
 }
 
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
@@ -42,6 +86,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     window.set_ignore_cursor_events(true)?;
     #[cfg(target_os = "macos")]
     crate::panel::install(&window)?;
+    window.set_content_protected(saved.hide_in_recordings)?;
     #[cfg(not(target_os = "macos"))]
     window.show()?;
     set_visible(app, !saved.hidden)?;
@@ -144,8 +189,9 @@ fn refit_if_needed(window: &WebviewWindow) {
 /// Sends the cursor in overlay CSS pixels whenever it moves, about 30 times a second.
 fn stream_cursor(app: AppHandle) {
     thread::spawn(move || {
-        let mut last = PhysicalPosition::new(f64::NAN, f64::NAN);
-        let mut origin = PhysicalPosition::new(0, 0);
+        let mut last = (f64::NAN, f64::NAN);
+        // Overlay origin in global points.
+        let mut origin = (0.0, 0.0);
         let mut scale = 1.0;
         let mut tick: u32 = 0;
         loop {
@@ -158,29 +204,26 @@ fn stream_cursor(app: AppHandle) {
                 refit_if_needed(&window);
                 #[cfg(target_os = "macos")]
                 {
-                    // Combined session state, any keyboard/mouse event; no capture permission.
-                    let idle = unsafe { CGEventSourceSecondsSinceLastEventType(0, u32::MAX) };
+                    let idle = idle_seconds();
                     if idle.is_finite() && idle >= 0.0 {
                         let _ = window.emit("idle", idle);
                     }
                 }
                 if let (Ok(position), Ok(factor)) = (window.inner_position(), window.scale_factor())
                 {
-                    origin = position;
+                    origin = (position.x as f64 / factor, position.y as f64 / factor);
                     scale = factor;
                 }
             }
             tick = tick.wrapping_add(1);
-            let Ok(cursor) = app.cursor_position() else {
+            let Some(cursor) = cursor_points(&app, scale) else {
                 continue;
             };
-            if (cursor.x - last.x).abs() < 0.5 && (cursor.y - last.y).abs() < 0.5 {
+            if (cursor.0 - last.0).abs() < 0.25 && (cursor.1 - last.1).abs() < 0.25 {
                 continue;
             }
             last = cursor;
-            let x = (cursor.x - origin.x as f64) / scale;
-            let y = (cursor.y - origin.y as f64) / scale;
-            let _ = window.emit("cursor", (x, y));
+            let _ = window.emit("cursor", (cursor.0 - origin.0, cursor.1 - origin.1));
         }
     });
 }

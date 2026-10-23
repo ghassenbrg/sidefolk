@@ -1,0 +1,43 @@
+/* Proposed Sidefolk design tokens. Used only by the creative lookbook. */
+:root {
+  color-scheme: light;
+  --canvas: #f7f3ea;
+  --surface: #fffcf7;
+  --ink: #272a33;
+  --muted: #636773;
+  --border: #dad6cd;
+  --control-border: #737783;
+  --mint: #6fcfb4;
+  --on-mint: #272a33;
+  --focus: #176650;
+  --terracotta: #c87658;
+  --orb-idle: #ffd98a;
+  --orb-think: #8cc6ff;
+  --orb-work: #ffb547;
+  --orb-alert: #ff7a2e;
+  --orb-done: #6fe3b4;
+  --orb-sad: #9d90b8;
+  --orb-sleep: #ffe3ad;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --radius-control: 10px;
+  --radius-card: 18px;
+  --radius-panel: 24px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --canvas: #191c22;
+  --surface: #242832;
+  --ink: #f7f3ea;
+  --muted: #bec3cd;
+  --border: #4b515d;
+  --control-border: #9ba2af;
+  --focus: #9ae7d0;
+  --terracotta: #d99377;
+}

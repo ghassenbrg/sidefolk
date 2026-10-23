@@ -7,6 +7,7 @@ export type AgentEvent = {
   session: string;
   kind:
     | "start"
+    | "prompt"
     | "think"
     | "read"
     | "edit"
@@ -20,12 +21,22 @@ export type AgentEvent = {
     | "end";
   detail: string;
   cwd: string;
+  /** Git root of `cwd`, or `cwd` outside a repository. */
+  project: string;
 };
 
 type Busy = "think" | "read" | "edit" | "run" | "tool" | "waiting";
-type Session = { source: AgentEvent["source"]; cwd: string; state: Busy; detail: string; at: number };
+export type Session = {
+  key: string;
+  source: AgentEvent["source"];
+  project: string;
+  state: Busy;
+  detail: string;
+  at: number;
+};
+export type Outcome = { kind: "done" | "failed"; source: AgentEvent["source"]; project: string; detail: string; at: number };
 
-const NAMES = { claude: "Claude", codex: "Codex" } as const;
+export const AGENT_NAMES = { claude: "Claude", codex: "Codex" } as const;
 const RANK: Record<Busy, number> = { waiting: 5, edit: 4, run: 4, tool: 3, read: 2, think: 1 };
 const CLIP: Record<Busy, NonNullable<Directive>["clip"]> = {
   waiting: "alert",
@@ -35,7 +46,7 @@ const CLIP: Record<Busy, NonNullable<Directive>["clip"]> = {
   read: "read",
   think: "think",
 };
-const VERB: Record<Busy, string> = {
+export const VERB: Record<Busy, string> = {
   waiting: "needs you",
   edit: "editing",
   run: "running",
@@ -46,15 +57,19 @@ const VERB: Record<Busy, string> = {
 /** A session that goes quiet this long is assumed gone (crashed, closed terminal). */
 const STALE_MS = 10 * 60 * 1000;
 
-const folder = (path: string) => path.split("/").filter(Boolean).pop() ?? "";
+export const folder = (path: string) => path.split("/").filter(Boolean).pop() ?? path;
 
 /**
- * Folds events from every agent session into one thing the pet can act out:
+ * Folds events from the sessions one pet speaks for into one thing it can act out:
  * the most urgent session wins, finishes and failures play a short reaction.
  */
 export class Agents {
   private sessions = new Map<string, Session>();
   private openAsks = 0;
+  /** Latest finish or failure per project, for briefings. */
+  readonly outcomes = new Map<string, Outcome>();
+  /** Told about every event after it is applied, so the crew can bring the pet out. */
+  onEvent: (event: AgentEvent) => void = () => {};
 
   constructor(
     private readonly mind: Mind,
@@ -62,15 +77,25 @@ export class Agents {
     private readonly hud: HTMLElement,
   ) {}
 
+  get list(): Session[] {
+    return [...this.sessions.values()].sort((a, b) => RANK[b.state] - RANK[a.state] || b.at - a.at);
+  }
+
+  /** A session is waiting on the user or a question is open. */
+  get needsYou() {
+    return this.openAsks > 0 || this.list.some((s) => s.state === "waiting");
+  }
+
   handle(event: AgentEvent) {
     const key = `${event.source}:${event.session}`;
-    const name = NAMES[event.source];
-    const where = folder(event.cwd);
+    const name = AGENT_NAMES[event.source];
+    const where = folder(event.project || event.cwd);
     switch (event.kind) {
       case "start":
         this.bubble.say(`${name} started in ${where}.`, 3);
         this.mind.react("wave", 1.4);
         break;
+      case "prompt":
       case "think":
       case "read":
       case "edit":
@@ -78,10 +103,11 @@ export class Agents {
       case "tool":
       case "waiting":
         this.sessions.set(key, {
+          key,
           source: event.source,
-          cwd: event.cwd,
-          state: event.kind,
-          detail: event.detail,
+          project: event.project,
+          state: event.kind === "prompt" ? "think" : event.kind,
+          detail: event.kind === "prompt" ? "" : event.detail,
           at: Date.now(),
         });
         if (event.kind === "waiting" && !this.bubble.busy)
@@ -91,14 +117,16 @@ export class Agents {
         if (event.detail) this.bubble.say(event.detail, 7);
         break;
       case "done":
-        this.sessions.delete(key);
-        this.mind.react("celebrate", 2.2);
-        this.bubble.say(`${name} finished in ${where}.${event.detail ? ` ${event.detail}` : ""}`, 9, "done");
-        break;
       case "failed":
         this.sessions.delete(key);
-        this.mind.react("sad", 2.6);
-        this.bubble.say(`${name} hit a problem in ${where}: ${event.detail || "unknown error"}`, 9, "fail");
+        this.outcomes.set(event.project, { kind: event.kind, source: event.source, project: event.project, detail: event.detail, at: Date.now() });
+        if (event.kind === "done") {
+          this.mind.react("celebrate", 2.2);
+          this.bubble.say(`${name} finished in ${where}.${event.detail ? ` ${event.detail}` : ""}`, 9, "done");
+        } else {
+          this.mind.react("sad", 2.6);
+          this.bubble.say(`${name} hit a problem in ${where}: ${event.detail || "unknown error"}`, 9, "fail");
+        }
         break;
       case "idle":
       case "end":
@@ -106,9 +134,23 @@ export class Agents {
         break;
     }
     this.refresh();
+    this.onEvent(event);
   }
 
-  /** A permission bubble is open or closed; keep the pet at the cursor while any is open. */
+  /** Hands over sessions to a pet that was just created for them. */
+  extract(which: (session: Session) => boolean): Session[] {
+    const moved = this.list.filter(which);
+    for (const s of moved) this.sessions.delete(s.key);
+    if (moved.length) this.refresh();
+    return moved;
+  }
+
+  adopt(sessions: Session[]) {
+    for (const s of sessions) this.sessions.set(s.key, s);
+    if (sessions.length) this.refresh();
+  }
+
+  /** Questions open on this pet; keep it at the cursor while any is open. */
   asking(open: number) {
     this.openAsks = open;
     this.refresh();
@@ -123,7 +165,7 @@ export class Agents {
   }
 
   private refresh() {
-    const top = [...this.sessions.values()].sort((a, b) => RANK[b.state] - RANK[a.state] || b.at - a.at)[0];
+    const top = this.list[0];
     if (this.openAsks > 0) this.mind.directive = { clip: "alert", come: true };
     else this.mind.directive = top ? { clip: CLIP[top.state], come: top.state === "waiting" } : null;
 
@@ -133,10 +175,10 @@ export class Agents {
       return;
     }
     this.hud.hidden = false;
-    this.hud.className = `state-${top.state}`;
+    this.hud.className = `hud state-${top.state}`;
     const others = this.sessions.size - 1;
     this.hud.textContent =
-      `${NAMES[top.source]} · ${VERB[top.state]}${top.detail && top.state !== "waiting" ? ` ${top.detail}` : ""}` +
+      `${AGENT_NAMES[top.source]} · ${VERB[top.state]}${top.detail && top.state !== "waiting" ? ` ${top.detail}` : ""}` +
       (others > 0 ? `  +${others}` : "");
   }
 }

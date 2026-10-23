@@ -28,15 +28,23 @@ export class Mind {
   private walkTo: number | null = null;
   private reaction: { clip: ClipName; left: number } | null = null;
   private cursor: Point | null = null;
+  private cursorMovedAt = 0;
   private idle = 0;
   private osIdle = false;
   sleepAfterSecs = 120;
+  /** Settings → Calm pets, or reduced motion: no wandering, fewer greetings. */
+  calm = false;
   private cursorWasNear = false;
   private waveCooldown = 5;
+  /** Walking on from a screen edge (a goal x) or off to the den (an x past the edge). */
+  private arriving: number | null = null;
+  private leaving: number | null = null;
+  /** Off screen, in the den: nothing to update or draw. */
+  away = false;
   directive: Directive = null;
 
   constructor(
-    private readonly pet: Pet,
+    public pet: Pet,
     private readonly bounds: Bounds,
   ) {
     this.x = Math.max(MARGIN, bounds.width - 180);
@@ -69,25 +77,38 @@ export class Mind {
     }
   }
 
-  /** Frames per second worth spending on the current state. */
+  /**
+   * Frames per second worth spending on the current state. WebKit caps the overlay at 30, and
+   * every frame costs the page, the GPU process and the compositor in the app process, so calm
+   * poses run at a fraction of that. Values divide 30 so frames land evenly on the display.
+   */
   get fps(): number {
-    if (this.mode !== "ground") return 60;
+    if (this.mode !== "ground" || this.reaction) return 30;
+    // Smooth gaze while the cursor moves nearby.
+    const watching =
+      !!this.cursor && performance.now() - this.cursorMovedAt < 600 && Math.hypot(this.cursor.x - this.x, this.cursor.y - this.y) < 420;
     switch (this.pet.clip) {
       case "sleep":
-        return 12;
+        return 5;
       case "idle":
       case "sit":
+        return watching ? 30 : 10;
       case "think":
       case "read":
       case "sad":
-        return 30;
+      case "work":
+      case "alert":
+        return watching ? 30 : 15;
       default:
-        return 60;
+        return 30;
     }
   }
 
   onCursor(point: Point) {
-    if (!this.osIdle && this.cursor && Math.hypot(point.x - this.cursor.x, point.y - this.cursor.y) > 2) this.idle = 0;
+    if (this.cursor && Math.hypot(point.x - this.cursor.x, point.y - this.cursor.y) > 2) {
+      this.cursorMovedAt = performance.now();
+      if (!this.osIdle) this.idle = 0;
+    }
     this.cursor = point;
   }
 
@@ -99,13 +120,18 @@ export class Mind {
     if (seconds < 0.5 && this.activity === "sleep") this.begin("wave", 1.6);
   }
 
+  /** Told about reactions, so the pet can make a sound. */
+  onReact: (clip: ClipName | "poke") => void = () => {};
+
   react(clip: ClipName, seconds: number) {
     this.reaction = { clip, left: seconds };
+    this.onReact(clip);
   }
 
   poke() {
     if (this.mode !== "ground") return;
-    this.react("celebrate", 0.9);
+    this.reaction = { clip: "celebrate", left: 0.9 };
+    this.onReact("poke");
     this.pet.squash(0.12);
     if (!this.osIdle) this.idle = 0;
   }
@@ -120,7 +146,32 @@ export class Mind {
     this.pet.squash(0.18);
   }
 
+  /** Walks on from the screen edge nearer to `x` and stops there. */
+  enter(x: number) {
+    const goal = this.clampX(x);
+    if (this.away) {
+      this.x = goal < this.bounds.width / 2 ? -MARGIN : this.bounds.width + MARGIN;
+      this.y = this.vx = this.vy = 0;
+      this.mode = "ground";
+    }
+    this.away = false;
+    this.leaving = null;
+    this.arriving = goal;
+  }
+
+  /** Walks off the nearer screen edge, back to the den. */
+  leave() {
+    if (this.away) return;
+    this.arriving = null;
+    this.leaving = this.x < this.bounds.width / 2 ? -MARGIN * 1.5 : this.bounds.width + MARGIN * 1.5;
+  }
+
+  get isLeaving() {
+    return this.leaving !== null;
+  }
+
   grab() {
+    this.arriving = this.leaving = null;
     this.mode = "held";
     this.reaction = null;
     this.walkTo = null;
@@ -146,6 +197,17 @@ export class Mind {
       return;
     }
     if (this.mode === "air") return this.fly(dt);
+
+    const walkingTo = this.leaving ?? this.arriving;
+    if (walkingTo !== null && !this.reaction) {
+      this.step(walkingTo, dt, 1.6);
+      if (Math.abs(walkingTo - this.x) < 2) {
+        if (this.leaving !== null) this.away = true;
+        this.arriving = this.leaving = null;
+        this.begin("idle", between(2, 4));
+      }
+      return;
+    }
 
     if (this.reaction) {
       this.reaction.left -= dt;
@@ -205,16 +267,16 @@ export class Mind {
 
   private chooseNext() {
     if (this.activity === "sit" && this.idle >= this.sleepAfterSecs) return this.begin("sleep", Infinity);
+    // A calm routine: short strolls, long sits. Walking renders at full rate, so how much of
+    // the day the pet spends walking decides most of its CPU cost.
     const roll = Math.random();
-    if (roll < 0.45) {
+    if (roll < 0.3 && !this.calm) {
       const towardCursor = this.cursor && Math.random() < 0.35;
-      const goal = towardCursor
-        ? this.cursor!.x + between(-160, 160)
-        : between(MARGIN, this.bounds.width - MARGIN);
-      this.begin("walk", 30);
+      const goal = towardCursor ? this.cursor!.x + between(-160, 160) : this.x + between(160, 480) * (Math.random() < 0.5 ? -1 : 1);
+      this.begin("walk", 8);
       this.walkTo = this.clampX(goal);
-    } else if (roll < 0.75) this.begin("idle", between(3, 7));
-    else if (roll < 0.92) this.begin("sit", between(8, 16));
+    } else if (roll < 0.6) this.begin("idle", between(4, 9));
+    else if (roll < 0.9) this.begin("sit", between(15, 35));
     else this.begin("think", between(2.5, 4));
   }
 
@@ -255,6 +317,8 @@ export class Mind {
 
   /** Keeps the pet on screen after the overlay changes size. */
   fitBounds() {
+    if (this.away || this.leaving !== null) return;
+    if (this.arriving !== null) this.arriving = this.clampX(this.arriving);
     this.x = this.clampX(this.x);
     this.y = Math.min(this.y, Math.max(0, this.bounds.height - 180));
     if (this.walkTo !== null) this.walkTo = this.clampX(this.walkTo);

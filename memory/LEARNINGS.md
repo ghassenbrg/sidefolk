@@ -79,3 +79,62 @@ Things that cost time to discover. Add to this when something surprises you.
   the newly launched WebKit/audio XPC services; unrelated browser helpers are excluded.
 - This agent shell did not include Cargo on PATH. Use `~/.cargo/bin/cargo`, or add that directory
   to PATH for `npm run dev` / `npm run build`.
+
+## CPU (Phase 1 exit)
+
+- `AppHandle::cursor_position` sends a message to the main thread and waits. At 30 Hz that kept
+  AppKit and WebKit's run-loop observers busy. `CGEventCreate(NULL)` + `CGEventGetLocation`
+  gives the same global points on any thread.
+- WebKit's libpas scavenger thread runs inside the app process and woke for every frame (~2% of
+  a core). Setting `Malloc=1` at the top of `main` (before WebKit allocates) switches this
+  process to the system allocator and the thread disappears. Web content is unaffected.
+- Profile with `sample <pid> 8 -file out.txt` and read "Sort by top of stack"; release
+  binaries are stripped, so look at system frames.
+- `top` averages over 30 s runs vary by a couple of percent; compare with `npm run measure`.
+
+## Crew, reminders, MCP, custom pets (24 October 2026)
+
+- 23 October 2026 was a Friday. Write date tests from a fixed `now` and check the weekday.
+- chrono-node reads "at 3" as 03:00; `when.ts` moves bare hours 1–7 to the afternoon unless
+  am/pm is given, and leaves ISO times alone.
+- `claude --allowedTools a b "prompt"` swallows the prompt as another tool name. Use
+  `--allowedTools=Read` or put the prompt first.
+- `claude mcp add --scope user` writes `~/.claude.json` (or `$CLAUDE_CONFIG_DIR/.claude.json`);
+  `codex mcp add` writes `~/.codex/config.toml` (or `$CODEX_HOME`). Point those variables at
+  temp folders to test without touching real configs.
+- MCP over stdio is JSON-RPC 2.0 with `"jsonrpc"`, unlike Codex app-server. Echo the client's
+  `protocolVersion`; `clientInfo.name` tells Claude Code from Codex.
+- Tauri raw responses (`tauri::ipc::Response`) arrive in the page as an `ArrayBuffer`;
+  `GLTFLoader.parseAsync(buffer, "")` loads them.
+- Blender: actions outlive their objects. When exporting several species in one run, remove
+  `bpy.data.actions` (and meshes, armatures) between builds or the next export carries
+  ".001" duplicates.
+- Ellipsoid rotations in build_hero.py: a negative x rotation tips +y toward -z (backwards).
+  The first fox tail leaned forward into the body.
+- Look changes are async (model loads); apply them in order on top of each other, or quick
+  clicks race (a slow fox load overwrote a palette change).
+- The browser pane throttles timers and rAF when it is not in front (about 1 frame/s) and can
+  show a stale screenshot; take a second screenshot or check state with JS.
+- `tauri dev` did not rebuild after Rust edits made while `cargo build` also ran; restart it if
+  the log shows no new "Running" line.
+- `open` drops environment variables; run `Sidefolk.app/Contents/MacOS/sidefolk` directly to
+  pass `SIDEFOLK_DATA_DIR`.
+- Apple's Foundation Models framework is present on macOS 27, but `SystemLanguageModel.default`
+  reported `modelNotReady` here (model assets not downloaded).
+
+## UI, sound, icons (24 October 2026, later)
+
+- A chip under a text field must `preventDefault` on mousedown, or the field's blur closes the
+  prompt before the click lands.
+- `say` takes embedded commands: `[[pbas 60]] text` changes the pitch base. Escape `[[` in
+  untrusted text. `say -o file.aiff` checks it silently; `say -v '?'` lists voices.
+- Tray icon: `tauri::image::Image::from_bytes` needs the tauri `image-png` feature;
+  `icon_as_template(true)` tints a black-on-transparent PNG for light and dark menu bars.
+  Tauri scales it to the menu bar height, so one 44 px image is enough.
+- Blender Workbench renders vertex colors grey with the default view transform; set
+  `view_settings.view_transform = "Standard"` (still a little dark with studio light, so
+  scripts/make_icons.py brightens the render).
+- `npx tauri icon` writes Windows, iOS and Android sizes too; write to a temp folder and copy
+  the five files tauri.conf.json lists.
+- Rebuilding the release bundle while it runs is fine; the running copy keeps its loaded
+  binary until relaunched.

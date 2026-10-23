@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sidefolk — App experience prototype</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="app-prototype.css">
+</head>
+<body>
+  <div class="preview-bar"><a href="index.html">← Creative lookbook</a><span>Interactive design preview · sample data · nothing is connected</span><button data-action="reset">Reset demo</button></div>
+  <div class="app-window">
+    <aside>
+      <a class="brand" href="index.html"><span class="brand-picture"><img src="references/selected-pip-signal.png" alt="Selected Pip Signal bunny logo"></span><strong>sidefolk<span aria-hidden="true">●</span></strong></a>
+      <nav aria-label="Main navigation">
+        <button data-view="home"><span aria-hidden="true">⌂</span>Home</button>
+        <button data-view="requests"><span aria-hidden="true">▤</span>Requests <b id="request-count">1</b></button>
+        <button data-view="crew"><span aria-hidden="true">♧</span>Crew</button>
+        <button data-view="reminders"><span aria-hidden="true">◷</span>Reminders</button>
+        <button data-view="settings"><span aria-hidden="true">⚙</span>Settings</button>
+      </nav>
+      <div class="sidebar-bottom"><p>Your work.<br>A little more human.</p><button data-view="welcome">Try first-time setup</button><small>Prototype only. Changes reset when you reload.</small></div>
+    </aside>
+    <main id="screen" aria-label="Sidefolk content"></main>
+  </div>
+  <div id="feedback" role="status" aria-live="polite"></div>
+  <script src="app-prototype.js"></script>
+</body>
+</html>
