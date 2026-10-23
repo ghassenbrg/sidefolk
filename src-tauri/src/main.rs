@@ -5,6 +5,8 @@ mod bus;
 mod codex;
 mod hooks;
 mod overlay;
+#[cfg(target_os = "macos")]
+mod panel;
 
 use std::sync::Arc;
 
@@ -38,19 +40,35 @@ async fn dispatch(
     codex::dispatch(&app, shared.inner().clone(), prompt.to_string()).await
 }
 
-/// Dev builds only: lets the page report what it is doing to the terminal.
+/// The bubble's text field opened or closed.
 #[tauri::command]
-fn ui_log(line: String) {
-    if cfg!(debug_assertions) {
-        eprintln!("[ui] {line}");
+fn overlay_typing(app: AppHandle, typing: bool) {
+    overlay::set_typing(&app, typing);
+}
+
+/// Dev builds only: lets the page report what it is doing to the terminal. Async so the
+/// focus report can wait on the main thread without blocking it.
+#[tauri::command]
+async fn ui_log(app: AppHandle, line: String, focus: Option<bool>) {
+    if !cfg!(debug_assertions) {
+        return;
     }
+    #[cfg(target_os = "macos")]
+    if focus == Some(true) {
+        return eprintln!("[ui] {line} {}", panel::focus_report(&app));
+    }
+    let _ = (&app, focus);
+    eprintln!("[ui] {line}");
 }
 
 fn main() {
     let shared = Arc::new(Shared::default());
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_nspanel::init());
+    builder
         .manage(shared.clone())
-        .invoke_handler(tauri::generate_handler![resolve_permission, dispatch, ui_log])
+        .invoke_handler(tauri::generate_handler![resolve_permission, dispatch, overlay_typing, ui_log])
         .setup(move |app| {
             // A desktop pet lives in the menu bar, not the Dock or app switcher.
             #[cfg(target_os = "macos")]

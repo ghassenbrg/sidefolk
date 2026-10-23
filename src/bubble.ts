@@ -37,6 +37,10 @@ export class Bubble {
 
   constructor(private readonly root: HTMLElement) {}
 
+  get typing() {
+    return this.prompting;
+  }
+
   get busy() {
     return this.asks.length > 0 || this.prompting;
   }
@@ -60,6 +64,10 @@ export class Bubble {
     this.prompting = true;
     this.onTyping(true);
     this.render();
+  }
+
+  dismissPrompt() {
+    if (this.prompting) this.endPrompt();
   }
 
   private endPrompt() {

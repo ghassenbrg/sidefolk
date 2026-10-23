@@ -34,7 +34,10 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
             .route("/claude/permission", post(permission));
         // Debug builds only: lets scripts drive the pet without clicking it.
         #[cfg(debug_assertions)]
-        let router = router.route("/dev/codex", post(dev_codex)).route("/dev/resolve", post(dev_resolve));
+        let router = router
+            .route("/dev/codex", post(dev_codex))
+            .route("/dev/resolve", post(dev_resolve))
+            .route("/dev/ui", post(dev_ui));
         let router = router.with_state((app, shared));
         match tokio::net::TcpListener::bind(("127.0.0.1", PORT)).await {
             Ok(listener) => {
@@ -159,6 +162,18 @@ async fn dev_resolve(State((_, shared)): State<Ctx>, headers: HeaderMap, body: B
     };
     let resolved = shared.permissions.resolve(&text(&request, "id"), decision);
     axum::Json(json!({ "resolved": resolved })).into_response()
+}
+
+/// Forwards an action (for example "prompt" or "dismiss") to the page's dev harness.
+#[cfg(debug_assertions)]
+async fn dev_ui(State((app, _)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
+    match payload(&headers, &body) {
+        Ok(request) => {
+            let _ = app.emit("dev", text(&request, "action"));
+            StatusCode::OK.into_response()
+        }
+        Err(response) => response,
+    }
 }
 
 /// Removes the bubble if Claude Code hangs up while the user is still deciding.

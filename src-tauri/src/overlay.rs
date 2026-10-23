@@ -5,15 +5,20 @@
 
 use std::{thread, time::Duration};
 
-use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WebviewWindow};
+use tauri::{AppHandle, Emitter, Manager, Monitor, PhysicalPosition, WebviewWindow};
 
-const OVERLAY: &str = "overlay";
+pub const OVERLAY: &str = "overlay";
 const CURSOR_INTERVAL: Duration = Duration::from_millis(33);
+/// Cursor ticks between checks that the overlay still matches its display's work area.
+const REFIT_EVERY: u32 = 30;
 
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let window = overlay(app);
     fit_to_cursor_display(app)?;
     window.set_ignore_cursor_events(true)?;
+    #[cfg(target_os = "macos")]
+    crate::panel::install(&window)?;
+    #[cfg(not(target_os = "macos"))]
     window.show()?;
     stream_cursor(app.clone());
     Ok(())
@@ -24,9 +29,18 @@ fn overlay(app: &AppHandle) -> WebviewWindow {
         .expect("the overlay window is declared in tauri.conf.json")
 }
 
+/// Keyboard focus for the bubble's text field, without activating the app on macOS.
+pub fn set_typing(app: &AppHandle, typing: bool) {
+    #[cfg(target_os = "macos")]
+    crate::panel::set_typing(app, typing);
+    #[cfg(not(target_os = "macos"))]
+    if typing {
+        let _ = overlay(app).set_focus();
+    }
+}
+
 /// Covers the work area (no menu bar, no Dock) of the display under the cursor.
 pub fn fit_to_cursor_display(app: &AppHandle) -> tauri::Result<()> {
-    let window = overlay(app);
     let cursor = app.cursor_position()?;
     let monitor = match app.monitor_from_point(cursor.x, cursor.y)? {
         Some(monitor) => monitor,
@@ -35,11 +49,37 @@ pub fn fit_to_cursor_display(app: &AppHandle) -> tauri::Result<()> {
             None => return Ok(()),
         },
     };
+    fit(&overlay(app), &monitor)
+}
+
+fn fit(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<()> {
     let area = monitor.work_area();
     window.set_position(area.position)?;
     window.set_size(area.size)?;
     let _ = window.emit("overlay-resized", ());
     Ok(())
+}
+
+/// The work area changes when the Dock or menu bar hides, in full-screen Spaces, and when
+/// display settings change. Keep the overlay matched so the pet stands on the right floor.
+fn refit_if_needed(window: &WebviewWindow) {
+    let (Ok(Some(monitor)), Ok(position), Ok(size)) =
+        (window.current_monitor(), window.outer_position(), window.outer_size())
+    else {
+        return;
+    };
+    let area = monitor.work_area();
+    if area.position != position || area.size != size {
+        if cfg!(debug_assertions) {
+            eprintln!(
+                "sidefolk: refit {position:?} {size:?} -> {:?} {:?} {:?}",
+                monitor.name(),
+                area.position,
+                area.size
+            );
+        }
+        let _ = fit(window, &monitor);
+    }
 }
 
 /// Sends the cursor in overlay CSS pixels whenever it moves, about 30 times a second.
@@ -55,7 +95,8 @@ fn stream_cursor(app: AppHandle) {
                 return;
             };
             // The overlay only moves when it is refit, so its geometry is refreshed lazily.
-            if tick % 30 == 0 {
+            if tick % REFIT_EVERY == 0 {
+                refit_if_needed(&window);
                 if let (Ok(position), Ok(factor)) = (window.inner_position(), window.scale_factor()) {
                     origin = position;
                     scale = factor;

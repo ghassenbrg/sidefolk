@@ -231,6 +231,13 @@ export class Mind {
     this.begin("idle", between(1.5, 3));
   }
 
+  /** Keeps the pet on screen after the overlay changes size. */
+  fitBounds() {
+    this.x = this.clampX(this.x);
+    this.y = Math.min(this.y, Math.max(0, this.bounds.height - 180));
+    if (this.walkTo !== null) this.walkTo = this.clampX(this.walkTo);
+  }
+
   private clampX(x: number) {
     return Math.min(this.bounds.width - MARGIN, Math.max(MARGIN, x));
   }

@@ -4,9 +4,9 @@ A 3D familiar that lives on your desktop and gives your AI agents a body. It is 
 own (no tokens), acts out what Claude Code and Codex are doing, comes to get you when they
 need an answer, and can hand work to the agent you already have installed.
 
-This branch is the **Phase 0** rework: throwaway spikes that de-risk the stack before the real
-build. Findings and measurements are in [docs/PHASE0.md](docs/PHASE0.md). The previous
-Electron app is preserved at the `legacy-v0` tag.
+This branch is the rework. Phase 0 spikes de-risked the stack ([docs/PHASE0.md](docs/PHASE0.md));
+Phase 1 is in progress ([docs/PHASE1.md](docs/PHASE1.md)). The hero character's concept sheets and
+spec are in [art/](art/HERO.md). The previous Electron app is preserved at the `legacy-v0` tag.
 
 ## Run it
 
@@ -56,10 +56,12 @@ src/                 overlay page (TypeScript + three.js)
   bubble.ts          speech bubble: lines, permission questions, prompt
   input.ts           click-through hit testing against the skinned mesh
 src-tauri/src/       Rust core
-  overlay.rs         transparent work-area window, cursor stream
+  overlay.rs         transparent work-area window, refit, cursor stream
+  panel.rs           macOS non-activating panel on every Space, typing focus
   hooks.rs           127.0.0.1:47821 endpoint for Claude Code HTTP hooks
   codex.rs           codex app-server JSON-RPC driver
   bus.rs             shared event shapes and pending permissions
+art/                 hero character concept sheets and spec
 hooks/               Claude Code hook settings
 scripts/measure.sh   resource measurement
 ```

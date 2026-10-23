@@ -45,9 +45,16 @@ bubble.onPrompt = async (prompt) => {
   if (!inTauri) throw new Error("Codex needs the desktop app.");
   await invoke("dispatch", { prompt });
 };
+// Takes keyboard focus without activating Sidefolk, and hands it back afterwards.
 bubble.onTyping = (typing) => {
-  if (typing) void overlay?.setFocus();
+  if (inTauri) void invoke("overlay_typing", { typing });
 };
+
+// Clicking the pet or a bubble button can make the panel key (web views ask for it).
+// Hand keyboard focus straight back unless the user is typing in the bubble.
+addEventListener("pointerup", () => {
+  if (inTauri && !bubble.typing) void invoke("overlay_typing", { typing: false });
+});
 
 const onCursor = (x: number, y: number) => {
   mind.onCursor(stage.toWorld(x, y));
@@ -67,7 +74,10 @@ if (inTauri) {
     bubble.close(e.payload);
     askChanged();
   });
-  void listen("overlay-resized", () => stage.resize());
+  void listen("overlay-resized", () => {
+    stage.resize();
+    mind.fitBounds();
+  });
 } else {
   addEventListener("pointermove", (e) => onCursor(e.clientX, e.clientY));
   void import("./demo").then((demo) => demo.install(agents, bubble, openAsks, askChanged));
@@ -108,8 +118,20 @@ if (import.meta.env.DEV) {
       requestAnimationFrame(count);
     };
     requestAnimationFrame(count);
-    const report = (line: string) => void invoke("ui_log", { line });
+    const report = (line: string, focus = false) => void invoke("ui_log", { line, focus });
+    // Clicking the pet must leave your current app frontmost.
+    addEventListener("pointerup", () => setTimeout(() => report("after click", true), 250));
+    void listen<string>("dev", (e) => {
+      if (e.payload === "prompt") bubble.prompt();
+      if (e.payload === "dismiss") bubble.dismissPrompt();
+    });
+    const onTyping = bubble.onTyping;
+    bubble.onTyping = (typing) => {
+      onTyping(typing);
+      setTimeout(() => report(`typing=${typing}`, true), 250);
+    };
     report(`overlay ${stage.width}x${stage.height} dpr=${devicePixelRatio}`);
+    void listen("overlay-resized", () => setTimeout(() => report(`refit ${innerWidth}x${innerHeight}`), 100));
     void listen<AgentEvent>("agent", (e) => report(`agent ${e.payload.source} ${e.payload.kind} ${e.payload.detail}`));
     void listen<Ask>("permission", (e) => report(`ask ${e.payload.id} ${e.payload.title} ${e.payload.detail}`));
     let lastInteractive = false;
@@ -118,7 +140,7 @@ if (import.meta.env.DEV) {
       if (interactive !== lastInteractive) report(`interactive=${(lastInteractive = interactive)}`);
     }, 100);
     setInterval(() => {
-      report(`vis=${document.visibilityState} focus=${document.hasFocus()} raf=${(frames / 10).toFixed(0)}/s renders=${(renders / 10).toFixed(0)}/s clip=${pet.clip} x=${mind.x.toFixed(0)} y=${mind.y.toFixed(0)} size=${stage.width}x${stage.height}`);
+      report(`vis=${document.visibilityState} raf=${(frames / 10).toFixed(0)}/s renders=${(renders / 10).toFixed(0)}/s clip=${pet.clip} x=${mind.x.toFixed(0)} y=${mind.y.toFixed(0)} size=${stage.width}x${stage.height}`, true);
       frames = renders = 0;
     }, 10_000);
   }
