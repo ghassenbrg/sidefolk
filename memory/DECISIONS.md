@@ -35,3 +35,28 @@ Newest last. Each entry: what, why, and what would change it.
     stale confirmations. Tests target a copy via `SIDEFOLK_CLAUDE_SETTINGS`; only a user's confirmed
     tray action may write real global Claude settings. Foreground lookup failure defers permission
     immediately, so an AppKit scheduling problem cannot stall the agent's own prompt.
+12. **Direction: a crew (23 October 2026).** A main pet plus one crew pet per project or agent,
+    shown in [docs/ROADMAP.md](../docs/ROADMAP.md). Reason: with several sessions running, the
+    hard part is knowing which one is waiting; a pet per project can be recognized at a glance.
+    A crew pet's mood shows its project's state. Idle crew pets wait in a den; at most three are
+    on screen. Would change if daily use shows one pet with a sessions list works as well.
+13. **Bindings.** Projects (git root of `cwd`) and agents (`source`) are the stable things to bind
+    pets to; a session binding is a one-off that ends with the session. The most specific wins:
+    session, project, agent, then the main pet. Every question names the pet and project in text,
+    never by color alone, so the wrong session cannot be approved by mistake.
+14. **Custom pets come from a species kit, not from images.** All species share the 15-bone
+    skeleton and 13 clips; customization is colors per region, accessories and name. "Describe
+    your pet" (text or photo → a vision model picks kit settings, once) is the AI part; glb
+    import for creators. The first crew pets are the bunny in different colors and accessories;
+    new species come later. Reason: image-to-3D output does not fit the rig and breaks the
+    animations. Would change if image-to-3D can produce our rig reliably.
+15. **Developer work first, no quota by default.** Projects, agents and PRs come before general
+    tasks such as weather checks, which return later as routines or plugins. Commands and
+    reminders are understood locally (grammar and date parser, then Apple's on-device model); an
+    agent is used only when the user asks.
+16. **Shared memory is small, local and per project:** pets, bindings, a journal of agent events
+    (30 days), reminders and a few facts about the user, in SQLite. It is not an agent memory and
+    does not compete with CLAUDE.md or Codex's. Agents reach the user through a Sidefolk MCP
+    server (notify, ask, remind, presence), installed with the same confirm-and-backup rules.
+17. **CPU before crew.** One visible pet measured 16.9% CPU. The budget is under 5% for everything
+    on screen; Phase 1 ends by cutting the single pet's cost before Phase 2 adds more pets.

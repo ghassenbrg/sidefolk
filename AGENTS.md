@@ -16,6 +16,9 @@ Several agents (Claude Code, Codex, others) work on this repo in turns. Shared m
    STATUS.md so the next agent can continue without asking: what you changed, what is half
    done, the exact next step, how you verified things.
 
+Where the product is going and in what order: [docs/ROADMAP.md](docs/ROADMAP.md). Check new
+work against it.
+
 Background reading: [README.md](README.md), [docs/PHASE0.md](docs/PHASE0.md),
 [docs/PHASE1.md](docs/PHASE1.md), [art/HERO.md](art/HERO.md).
 

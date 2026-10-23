@@ -1,6 +1,7 @@
 # Status
 
-Last updated: 2026-10-23 by Codex. Daily-driver pack complete; user hand checks accepted.
+Last updated: 2026-10-23 by Claude Code. Daily-driver pack complete (still uncommitted); user
+hand checks accepted. Roadmap agreed with the user: [docs/ROADMAP.md](../docs/ROADMAP.md).
 
 ## Where things are
 
@@ -84,13 +85,25 @@ Commit only when the user asks; no Co-Authored-By trailer.
 - [x] **7. Docs.** README (tray, shortcut, connect Claude), docs/PHASE1.md, this file,
       DECISIONS (hold policy), LEARNINGS.
 
-## After the pack
+## Roadmap (agreed 23 October)
 
-The user lives with the pet for a few days (Phase 1 exit). Then Phase 2: a sessions panel, a
-Codex approval timeout, a token on the hook endpoint, a picker for the Codex project folder, and
-an MCP server so agents can talk through the pet. Smaller Phase 1 leftovers: auto-hide during
-screen sharing, following the cursor across displays, window awareness, the full-screen floor
-offset with a visible Dock, the "arms up" reach.
+The user brainstormed a multi-pet idea; the agreed plan is in [docs/ROADMAP.md](../docs/ROADMAP.md)
+and decisions 12–17. In short: a main pet plus a crew of pets bound to projects and agents, a
+den for idle pets, a local journal and reminders, an MCP server so agents can reach the user,
+and custom pets from a species kit (not image-to-3D). Order:
+
+1. **Phase 1 exit (now):** the user lives with the pet for a few days; cut visible CPU from
+   16.9% toward 5% for one awake pet. Measure first (the roadmap lists what is already
+   throttled).
+2. **Phase 2, Crew:** bindings, bunny color and accessory variants, den, questions from the right
+   pet, call/briefing. Absorbs the earlier Phase 2 items: the sessions panel becomes the status
+   card, the Codex folder picker becomes "run in the project's folder", plus the Codex approval
+   timeout, the hook endpoint token and auto-hide during screen sharing.
+3. Phase 3 journal and reminders, Phase 4 MCP server, Phase 5 species and customizer, Phase 6
+   production (signing, auto-update, onboarding, Windows).
+
+Phase 1 leftovers, when convenient: following the cursor across displays, window awareness, the
+full-screen floor offset with a visible Dock, the "arms up" reach.
 
 ## Open questions for the user
 
@@ -123,6 +136,9 @@ Defaults remain ⌘⇧Space, 120 s idle, pet permissions enabled with foreground
    Extended display/Space checks can be done during daily use. Inspect `[ui]` logs; no screenshots.
    Never click-install into the real file yourself.
 3. Next: the user lives with the pet for a few days (Phase 1 exit). Record any issues they report.
+   The first engineering step is the CPU cut in docs/ROADMAP.md ("Phase 1 exit"): profile the
+   awake pet, change one thing at a time, re-run `npm run measure` with the screen unlocked, and
+   record each result in docs/PHASE1.md. Then write the Phase 2 checklist here before coding it.
    Keep changes uncommitted until explicitly asked to commit.
 
 Copy test rerun: `cd src-tauri && SIDEFOLK_CLAUDE_SETTINGS="$(cat /tmp/sidefolk-daily-path)/claude-settings.json" ~/.cargo/bin/cargo test copied_user_settings_round_trip -- --ignored`.

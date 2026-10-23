@@ -8,6 +8,9 @@ This branch is the rework. Phase 0 spikes de-risked the stack ([docs/PHASE0.md](
 Phase 1 is in progress ([docs/PHASE1.md](docs/PHASE1.md)). The hero character's concept sheets and
 spec are in [art/](art/HERO.md). The previous Electron app is preserved at the `legacy-v0` tag.
 
+Where it is going: a crew of pets, one per project or agent, led by a main pet, with a journal,
+reminders and a way for agents to reach you. See [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Run it
 
 Requires Rust (stable), Node 22+, and macOS 14+.
