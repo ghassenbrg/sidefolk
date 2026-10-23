@@ -13,7 +13,7 @@ use std::{
 };
 
 use serde_json::{Value, json};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     process::{Child, ChildStdin, Command},
@@ -79,9 +79,7 @@ pub async fn dispatch(app: &AppHandle, shared: Arc<Shared>, prompt: String) -> R
 fn workdir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = match std::env::var_os("SIDEFOLK_WORKDIR") {
         Some(dir) => PathBuf::from(dir),
-        None => app
-            .path()
-            .app_data_dir()
+        None => crate::settings::data_dir(app)
             .map_err(|e| e.to_string())?
             .join("playground"),
     };

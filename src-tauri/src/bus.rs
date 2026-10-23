@@ -77,8 +77,8 @@ impl Permissions {
     }
 }
 
-#[derive(Default)]
 pub struct Shared {
+    pub settings: Mutex<crate::settings::Store>,
     pub permissions: Permissions,
     pub codex: tokio::sync::Mutex<Option<std::sync::Arc<crate::codex::Codex>>>,
 }

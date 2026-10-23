@@ -3,7 +3,8 @@
 //! the pet or its speech bubble. The page cannot see the cursor while it ignores events,
 //! so this module streams the cursor position to it.
 
-use std::{thread, time::Duration};
+use crate::bus::Shared;
+use std::{sync::Arc, thread, time::Duration};
 
 use tauri::{AppHandle, Emitter, Manager, Monitor, PhysicalPosition, WebviewWindow};
 
@@ -12,21 +13,71 @@ const CURSOR_INTERVAL: Duration = Duration::from_millis(33);
 /// Cursor ticks between checks that the overlay still matches its display's work area.
 const REFIT_EVERY: u32 = 30;
 
+#[cfg(target_os = "macos")]
+#[link(name = "CoreGraphics", kind = "framework")]
+unsafe extern "C" {
+    fn CGEventSourceSecondsSinceLastEventType(state: i32, kind: u32) -> f64;
+}
+
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let window = overlay(app);
-    fit_to_cursor_display(app)?;
+    let saved = app
+        .state::<Arc<Shared>>()
+        .settings
+        .lock()
+        .unwrap()
+        .value
+        .clone();
+    let monitor = app.available_monitors()?.into_iter().find(|m| {
+        saved
+            .display
+            .as_ref()
+            .is_some_and(|name| m.name() == Some(name))
+    });
+    if let Some(monitor) = monitor {
+        fit(&window, &monitor)?;
+    } else {
+        fit_to_cursor_display(app)?;
+    }
     window.set_ignore_cursor_events(true)?;
     #[cfg(target_os = "macos")]
     crate::panel::install(&window)?;
     #[cfg(not(target_os = "macos"))]
     window.show()?;
+    set_visible(app, !saved.hidden)?;
     stream_cursor(app.clone());
     Ok(())
 }
 
-fn overlay(app: &AppHandle) -> WebviewWindow {
+pub fn overlay(app: &AppHandle) -> WebviewWindow {
     app.get_webview_window(OVERLAY)
         .expect("the overlay window is declared in tauri.conf.json")
+}
+
+/// Must run on the main thread on macOS, just like tray callbacks and setup.
+pub fn set_visible(app: &AppHandle, visible: bool) -> tauri::Result<()> {
+    #[cfg(target_os = "macos")]
+    {
+        use tauri_nspanel::ManagerExt;
+        let panel = app
+            .get_webview_panel(OVERLAY)
+            .map_err(|e| tauri::Error::Io(std::io::Error::other(format!("Panel: {e:?}"))))?;
+        if visible {
+            panel.show();
+        } else {
+            panel.resign_key_window();
+            panel.hide();
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        if visible {
+            overlay(app).show()?;
+        } else {
+            overlay(app).hide()?;
+        }
+    }
+    Ok(())
 }
 
 /// Keyboard focus for the bubble's text field, without activating the app on macOS.
@@ -56,6 +107,12 @@ fn fit(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<()> {
     let area = monitor.work_area();
     window.set_position(area.position)?;
     window.set_size(area.size)?;
+    window
+        .state::<Arc<Shared>>()
+        .settings
+        .lock()
+        .unwrap()
+        .update(|s| s.display = monitor.name().cloned())?;
     let _ = window.emit("overlay-resized", ());
     Ok(())
 }
@@ -63,9 +120,11 @@ fn fit(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<()> {
 /// The work area changes when the Dock or menu bar hides, in full-screen Spaces, and when
 /// display settings change. Keep the overlay matched so the pet stands on the right floor.
 fn refit_if_needed(window: &WebviewWindow) {
-    let (Ok(Some(monitor)), Ok(position), Ok(size)) =
-        (window.current_monitor(), window.outer_position(), window.outer_size())
-    else {
+    let (Ok(Some(monitor)), Ok(position), Ok(size)) = (
+        window.current_monitor(),
+        window.outer_position(),
+        window.outer_size(),
+    ) else {
         return;
     };
     let area = monitor.work_area();
@@ -97,7 +156,16 @@ fn stream_cursor(app: AppHandle) {
             // The overlay only moves when it is refit, so its geometry is refreshed lazily.
             if tick % REFIT_EVERY == 0 {
                 refit_if_needed(&window);
-                if let (Ok(position), Ok(factor)) = (window.inner_position(), window.scale_factor()) {
+                #[cfg(target_os = "macos")]
+                {
+                    // Combined session state, any keyboard/mouse event; no capture permission.
+                    let idle = unsafe { CGEventSourceSecondsSinceLastEventType(0, u32::MAX) };
+                    if idle.is_finite() && idle >= 0.0 {
+                        let _ = window.emit("idle", idle);
+                    }
+                }
+                if let (Ok(position), Ok(factor)) = (window.inner_position(), window.scale_factor())
+                {
                     origin = position;
                     scale = factor;
                 }

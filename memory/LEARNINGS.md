@@ -57,3 +57,25 @@ Things that cost time to discover. Add to this when something surprises you.
   sit on a long stick held out to the side.
 - Verify export structure without Blender: parse the GLB JSON chunk with Node
   (`node -e` reading bytes 20..20+len) and check joints, rotations, animations.
+
+
+## Daily-driver pack
+
+- macOS global-shortcut 2.4.1 supports `CommandOrControl+Shift+Space`. Dispatch shortcut actions
+  onto the main thread before using `tauri-nspanel` show/hide. Keep dialog 2.8.3 confirmation
+  nonblocking (`show`); writes run off the main thread and menu refresh returns to it.
+- `serde_json` with `preserve_order` needs `shift_remove` (not swap-removal) when deleting keys.
+  Reinstall must also keep the original `hooks` key position if removing old Sidefolk handlers
+  temporarily empties it. Regression tests cover both cases.
+- `CGEventSourceSecondsSinceLastEventType(0, u32::MAX)` provides keyboard-and-mouse idle without
+  screen capture permissions. Ignore cursor coordinate changes once OS idle is authoritative.
+- `ioreg -n Root -d1 -a` is a plist; recurse for `CGSSessionScreenIsLocked` rather than assuming
+  a top-level array. `plutil` to JSON plus Node works in the measurement script. No visible-CPU
+  claim is valid while locked. macOS removes `CGSSessionScreenIsLocked` when unlocked; require
+  an active `kCGSSessionOnConsoleKey` session and no true lock flag, rather than a literal false
+  flag. Keep the benchmark awake even if OS idle was already long.
+- Resource sampling must not match every new `*Helper*` process: a Chrome extension renderer
+  started during warm-up and contaminated the first attempt. Match the measured app path and
+  the newly launched WebKit/audio XPC services; unrelated browser helpers are excluded.
+- This agent shell did not include Cargo on PATH. Use `~/.cargo/bin/cargo`, or add that directory
+  to PATH for `npm run dev` / `npm run build`.

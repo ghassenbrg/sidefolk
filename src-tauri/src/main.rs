@@ -2,20 +2,37 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod bus;
+mod claude_setup;
 mod codex;
 mod hooks;
 mod overlay;
 #[cfg(target_os = "macos")]
 mod panel;
+mod settings;
+mod tray;
 
 use std::sync::Arc;
 
 use bus::{Decision, Shared};
-use tauri::{
-    AppHandle, State,
-    menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
-};
+use tauri::{AppHandle, Manager, State};
+
+#[tauri::command]
+fn get_settings(shared: State<'_, Arc<Shared>>) -> settings::Settings {
+    shared.settings.lock().unwrap().value.clone()
+}
+
+#[tauri::command]
+fn save_pet(shared: State<'_, Arc<Shared>>, x: f64) -> Result<(), String> {
+    if !x.is_finite() {
+        return Err("Pet position must be finite".into());
+    }
+    shared
+        .settings
+        .lock()
+        .unwrap()
+        .update(|s| s.pet_x = Some(x))
+        .map_err(|e| e.to_string())
+}
 
 #[tauri::command]
 fn resolve_permission(shared: State<'_, Arc<Shared>>, id: String, decision: String) -> bool {
@@ -62,35 +79,36 @@ async fn ui_log(app: AppHandle, line: String, focus: Option<bool>) {
 }
 
 fn main() {
-    let shared = Arc::new(Shared::default());
     let builder = tauri::Builder::default();
     #[cfg(target_os = "macos")]
     let builder = builder.plugin(tauri_nspanel::init());
     builder
-        .manage(shared.clone())
-        .invoke_handler(tauri::generate_handler![resolve_permission, dispatch, overlay_typing, ui_log])
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .manage(claude_setup::SetupState::default())
+        .invoke_handler(tauri::generate_handler![
+            resolve_permission,
+            dispatch,
+            overlay_typing,
+            ui_log,
+            get_settings,
+            save_pet
+        ])
         .setup(move |app| {
+            let shared = Arc::new(Shared {
+                settings: std::sync::Mutex::new(settings::Store::load(settings::data_dir(
+                    app.handle(),
+                )?)?),
+                permissions: Default::default(),
+                codex: Default::default(),
+            });
+            app.manage(shared.clone());
             // A desktop pet lives in the menu bar, not the Dock or app switcher.
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
-            let quit = MenuItem::with_id(app, "quit", "Quit Sidefolk", true, None::<&str>)?;
-            let refit = MenuItem::with_id(app, "refit", "Move to this display", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&refit, &quit])?;
-            TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("Sidefolk")
-                .menu(&menu)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => app.exit(0),
-                    "refit" => {
-                        let _ = overlay::fit_to_cursor_display(app);
-                    }
-                    _ => {}
-                })
-                .build(app)?;
-
             overlay::setup(app.handle())?;
+            tray::setup(app.handle())?;
             hooks::spawn(app.handle().clone(), shared.clone());
             Ok(())
         })

@@ -10,8 +10,6 @@ type Bounds = { width: number; height: number };
 const WALK_SPEED = 72;
 const GRAVITY = 2600;
 const MARGIN = 70;
-/** Phase 0 uses cursor stillness; Phase 1 should use the OS idle time instead. */
-const SLEEP_AFTER = 45;
 
 const between = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -30,7 +28,9 @@ export class Mind {
   private walkTo: number | null = null;
   private reaction: { clip: ClipName; left: number } | null = null;
   private cursor: Point | null = null;
-  private cursorStill = 0;
+  private idle = 0;
+  private osIdle = false;
+  sleepAfterSecs = 120;
   private cursorWasNear = false;
   private waveCooldown = 5;
   directive: Directive = null;
@@ -40,6 +40,10 @@ export class Mind {
     private readonly bounds: Bounds,
   ) {
     this.x = Math.max(MARGIN, bounds.width - 180);
+  }
+
+  get onGround(): boolean {
+    return this.mode === "ground";
   }
 
   get target(): Point | null {
@@ -83,8 +87,16 @@ export class Mind {
   }
 
   onCursor(point: Point) {
-    if (this.cursor && Math.hypot(point.x - this.cursor.x, point.y - this.cursor.y) > 2) this.cursorStill = 0;
+    if (!this.osIdle && this.cursor && Math.hypot(point.x - this.cursor.x, point.y - this.cursor.y) > 2) this.idle = 0;
     this.cursor = point;
+  }
+
+  /** Desktop idle is authoritative; cursor stillness is only a preview fallback. */
+  setOsIdle(seconds: number) {
+    if (!Number.isFinite(seconds) || seconds < 0) return;
+    this.osIdle = true;
+    this.idle = seconds;
+    if (seconds < 0.5 && this.activity === "sleep") this.begin("wave", 1.6);
   }
 
   react(clip: ClipName, seconds: number) {
@@ -95,7 +107,17 @@ export class Mind {
     if (this.mode !== "ground") return;
     this.react("celebrate", 0.9);
     this.pet.squash(0.12);
-    this.cursorStill = 0;
+    if (!this.osIdle) this.idle = 0;
+  }
+
+  summon(x: number) {
+    this.x = x;
+    this.y = this.vx = this.vy = 0;
+    this.mode = "ground";
+    this.fitBounds();
+    this.begin("idle", 3);
+    this.react("wave", 1.6);
+    this.pet.squash(0.18);
   }
 
   grab() {
@@ -116,7 +138,7 @@ export class Mind {
   }
 
   update(dt: number) {
-    this.cursorStill += dt;
+    if (!this.osIdle) this.idle += dt;
     this.waveCooldown -= dt;
     if (this.mode === "held") {
       this.pet.play("dangle", 0.15);
@@ -154,10 +176,10 @@ export class Mind {
 
   private routine(dt: number) {
     const near = !!this.cursor && Math.hypot(this.cursor.x - this.x, this.cursor.y - this.y - 70) < 220;
-    if (this.activity === "sleep" && this.cursorStill < 0.5) {
+    if (this.activity === "sleep" && this.idle < 0.5) {
       this.begin("wave", 1.6);
-    } else if (this.cursorStill > SLEEP_AFTER && this.activity !== "sleep") {
-      this.begin(this.activity === "sit" ? "sleep" : "sit", this.activity === "sit" ? Infinity : 2);
+    } else if (this.idle >= this.sleepAfterSecs && this.activity !== "sleep" && this.activity !== "sit") {
+      this.begin("sit", 2);
     } else if (near && !this.cursorWasNear && this.waveCooldown <= 0 && this.activity !== "walk" && this.activity !== "sleep") {
       this.begin("wave", 1.6);
       this.waveCooldown = 40;
@@ -182,7 +204,7 @@ export class Mind {
   }
 
   private chooseNext() {
-    if (this.activity === "sit" && this.cursorStill > SLEEP_AFTER) return this.begin("sleep", Infinity);
+    if (this.activity === "sit" && this.idle >= this.sleepAfterSecs) return this.begin("sleep", Infinity);
     const roll = Math.random();
     if (roll < 0.45) {
       const towardCursor = this.cursor && Math.random() < 0.35;

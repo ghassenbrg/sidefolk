@@ -1,9 +1,7 @@
 //! Local endpoint for Claude Code's HTTP hooks. Every hook event becomes an `agent` event
-//! for the pet. PermissionRequest is held open until the user answers from the pet, so
-//! the decision goes straight back to Claude Code.
+//! for the pet. PermissionRequest is held only when the user is away from an agent UI.
 //!
-//! Hooks are configured in `hooks/claude-settings.json`. Nothing here edits the user's
-//! Claude Code settings.
+//! Hooks are configured in `hooks/claude-settings.json` or through the tray installer.
 
 use std::{sync::Arc, time::Duration};
 
@@ -67,7 +65,11 @@ fn payload(headers: &HeaderMap, body: &Bytes) -> Result<Value, Response> {
 }
 
 fn text(value: &Value, key: &str) -> String {
-    value.get(key).and_then(Value::as_str).unwrap_or_default().to_string()
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string()
 }
 
 async fn event(State((app, _)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
@@ -91,7 +93,9 @@ fn claude_event(hook: &Value) -> Option<AgentEvent> {
         "Notification" => {
             let message = clip(&text(hook, "message"), 140);
             match text(hook, "notification_type").as_str() {
-                "permission_prompt" | "agent_needs_input" | "elicitation_dialog" => ("waiting", message),
+                "permission_prompt" | "agent_needs_input" | "elicitation_dialog" => {
+                    ("waiting", message)
+                }
                 "idle_prompt" => ("idle", message),
                 _ => ("message", message),
             }
@@ -112,7 +116,13 @@ fn claude_event(hook: &Value) -> Option<AgentEvent> {
 
 fn tool_activity(tool: &str, input: &Value) -> (&'static str, String) {
     let field = |key: &str| input.get(key).and_then(Value::as_str).unwrap_or_default();
-    let file = |key: &str| field(key).rsplit('/').next().unwrap_or_default().to_string();
+    let file = |key: &str| {
+        field(key)
+            .rsplit('/')
+            .next()
+            .unwrap_or_default()
+            .to_string()
+    };
     match tool {
         "Read" => ("read", file("file_path")),
         "Grep" | "Glob" => ("read", clip(field("pattern"), 60)),
@@ -169,7 +179,13 @@ async fn dev_resolve(State((_, shared)): State<Ctx>, headers: HeaderMap, body: B
 async fn dev_ui(State((app, _)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
     match payload(&headers, &body) {
         Ok(request) => {
-            let _ = app.emit("dev", text(&request, "action"));
+            let action = text(&request, "action");
+            if ["toggle", "call", "refit"].contains(&action.as_str()) {
+                let handle = app.clone();
+                let _ = app.run_on_main_thread(move || crate::tray::action(&handle, &action));
+            } else {
+                let _ = app.emit("dev", action);
+            }
             StatusCode::OK.into_response()
         }
         Err(response) => response,
@@ -189,15 +205,66 @@ impl Drop for OpenRequest<'_> {
     }
 }
 
+fn defer_to_app(bundle: &str) -> bool {
+    bundle.starts_with("com.jetbrains.")
+        || [
+            "com.apple.Terminal",
+            "com.googlecode.iterm2",
+            "dev.warp.Warp-Stable",
+            "com.mitchellh.ghostty",
+            "net.kovidgoyal.kitty",
+            "org.alacritty",
+            "com.microsoft.VSCode",
+            "com.todesktop.230313mzl4w4u92",
+            "dev.zed.Zed",
+            "co.zeit.hyper",
+            "com.anthropic.claudefordesktop",
+        ]
+        .contains(&bundle)
+}
+
+async fn should_hold(app: &AppHandle, shared: &Shared) -> bool {
+    if !shared
+        .settings
+        .lock()
+        .unwrap()
+        .value
+        .pet_answers_permissions
+    {
+        return false;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        crate::panel::frontmost_bundle(app)
+            .await
+            .is_some_and(|id| !defer_to_app(&id))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        false
+    }
+}
+
 async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
     let hook = match payload(&headers, &body) {
         Ok(hook) => hook,
         Err(response) => return response,
     };
+    if !should_hold(&app, &shared).await {
+        if cfg!(debug_assertions) {
+            eprintln!("sidefolk: Claude permission deferred to agent UI");
+        }
+        return StatusCode::OK.into_response();
+    }
     let tool = text(&hook, "tool_name");
     let (title, detail) = describe(&tool, &hook["tool_input"]);
     let (id, answer) = shared.permissions.open("claude");
-    let _open = OpenRequest { app: &app, shared: &shared, id: id.clone() };
+    let _open = OpenRequest {
+        app: &app,
+        shared: &shared,
+        id: id.clone(),
+    };
     let _ = app.emit(
         "permission",
         PermissionAsk {
@@ -224,4 +291,30 @@ async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: 
         "hookSpecificOutput": { "hookEventName": "PermissionRequest", "decision": behavior }
     }))
     .into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn agent_frontends_defer_but_unrelated_apps_do_not() {
+        for id in [
+            "com.apple.Terminal",
+            "com.googlecode.iterm2",
+            "dev.warp.Warp-Stable",
+            "com.mitchellh.ghostty",
+            "net.kovidgoyal.kitty",
+            "org.alacritty",
+            "com.microsoft.VSCode",
+            "com.todesktop.230313mzl4w4u92",
+            "dev.zed.Zed",
+            "com.jetbrains.intellij",
+            "co.zeit.hyper",
+            "com.anthropic.claudefordesktop",
+        ] {
+            assert!(defer_to_app(id), "{id}");
+        }
+        assert!(!defer_to_app("com.apple.Safari"));
+        assert!(!defer_to_app("com.jetbrainsOther"));
+    }
 }

@@ -35,13 +35,15 @@ Rust only: `cd src-tauri && cargo build`.
 
 ## Rules
 
-- Never edit the user's global agent config (`~/.claude/settings.json`, `~/.codex/config.toml`).
-  Load Sidefolk's Claude Code hooks per session with `claude --settings hooks/claude-settings.json`.
+- Never edit the user's global agent config (`~/.claude/settings.json`, `~/.codex/config.toml`)
+  yourself. The app's own installer may change it only when the user clicks it, after a
+  confirmation and a backup. While developing, use `claude --settings hooks/claude-settings.json`
+  or a copy of the file through `SIDEFOLK_CLAUDE_SETTINGS`.
 - Live model calls cost the user's quota. Keep them rare and tiny, and prefer the
   debug-only endpoints (`/dev/ui`, `/dev/codex`, `/dev/resolve` on 127.0.0.1:47821) and the
   browser preview.
 - Screen capture is not available to agents here. Verify the desktop app through its dev log
   (`[ui] ...` lines) and ask the user for hand checks.
-- Commit only when the user asks. Work happens on the `rework` branch; `legacy-v0` tags the
-  old app.
+- Commit only when the user asks, and never add `Co-Authored-By` trailers. Work happens on
+  `main`; the local tag `legacy-v0` marks the old app.
 - Match the surrounding code: small modules, comments that explain why, no dead code.

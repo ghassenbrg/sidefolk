@@ -67,7 +67,25 @@ const onCursor = (x: number, y: number) => {
 };
 
 if (inTauri) {
+  const settings = await invoke<{ pet_x: number | null; sleep_after_secs: number }>("get_settings");
+  mind.sleepAfterSecs = settings.sleep_after_secs;
+  void listen<number>("idle", (e) => mind.setOsIdle(e.payload));
+  if (settings.pet_x !== null) mind.x = settings.pet_x;
+  mind.fitBounds();
+  void invoke("ui_log", { line: `restored x=${mind.x.toFixed(0)} sleep_after=${mind.sleepAfterSecs}s` });
+  let savedX = mind.x;
+  setInterval(() => {
+    if (!mind.onGround || Math.abs(mind.x - savedX) <= 8) return;
+    const x = mind.x;
+    void invoke("save_pet", { x }).then(() => { savedX = x; }).catch(console.error);
+  }, 5_000);
   void listen<[number, number]>("cursor", (e) => onCursor(e.payload[0], e.payload[1]));
+  void listen<{ x: number }>("summon", (e) => {
+    stage.resize();
+    mind.summon(e.payload.x);
+    void invoke("save_pet", { x: mind.x }).catch(console.error);
+    void invoke("ui_log", { line: `summon x=${mind.x.toFixed(0)}`, focus: true });
+  });
   void listen<AgentEvent>("agent", (e) => agents.handle(e.payload));
   void listen<Ask>("permission", (e) => {
     openAsks.add(e.payload.id);
@@ -133,6 +151,9 @@ if (import.meta.env.DEV) {
     void listen<string>("dev", (e) => {
       if (e.payload === "prompt") bubble.prompt();
       if (e.payload === "dismiss") bubble.dismissPrompt();
+      if (e.payload === "sleep") mind.setOsIdle(mind.sleepAfterSecs + 1);
+      if (e.payload === "wake") mind.setOsIdle(0);
+      if (e.payload === "state") report(`state clip=${pet.clip} x=${mind.x.toFixed(0)} ground=${mind.onGround}`, true);
     });
     const onTyping = bubble.onTyping;
     bubble.onTyping = (typing) => {

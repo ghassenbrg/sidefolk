@@ -89,16 +89,33 @@ requests become bubble questions answered with `accept` or `decline`.
 
 Measured with `scripts/measure.sh` (60 s, all processes including WebKit helpers).
 
-| | Sidefolk Phase 0 (Tauri) | Sidefolk v0 (Electron) |
+| | Sidefolk (Tauri; Phase 0 unless noted) | Sidefolk v0 (Electron) |
 |---|---|---|
 | App bundle | **3.65 MB** | 334 MB |
 | Memory, all processes | **111 MB** | 322 MB |
 | CPU, overlay hidden | **0.4%** | 6.3% |
-| CPU, overlay visible at 30 fps | not measured yet | not measured |
+| Memory, visible daily-driver build | **244.1 MB** | not measured |
+| CPU, overlay visible (daily-driver build) | **16.9%** | not measured |
 
-Both runs happened with the screen locked, so the overlay was hidden. Memory is
-representative; visible CPU is not. Run `npm run measure` with the screen unlocked to fill in
-the last row.
+The original Phase 0 and Electron runs happened with the screen locked, so those overlays
+were hidden. The daily-driver visible run on 23 October used the 4.17 MiB release bundle,
+15 s warm-up and 60 s sampling with the screen unlocked and pet sleep disabled. CPU is the
+sum of per-process averages (100% is one core); memory is the sum of the last sample.
+
+| Visible daily-driver process | Average CPU | Memory |
+|---|---:|---:|
+| Sidefolk | 5.2% | 27.0 MB |
+| WebKit GPU | 3.6% | 121.0 MB |
+| WebKit WebContent | 8.1% | 85.0 MB |
+| WebKit Networking | 0.0% | 5.6 MB |
+| Audio sandbox helper | 0.0% | 5.5 MB |
+| **Total** | **16.9%** | **244.1 MB** |
+
+The measurement script isolated both settings files, verified no existing instance on port
+47821, and checked screen lock throughout. An initial attempt that included an unrelated new
+Chrome helper was discarded; the process filter was narrowed before the recorded run. The
+visible cost is substantially higher than the hidden baseline; these are different workloads,
+not evidence of a regression from a previously measured visible run.
 
 ## Decisions
 

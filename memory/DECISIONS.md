@@ -23,3 +23,15 @@ Newest last. Each entry: what, why, and what would change it.
    script is the source of truth for the model and its clips until an artist takes over the
    `.blend`.
 9. **Shared memory in `memory/`** so any agent can pick up the work.
+10. **Daily-driver defaults (implemented 23 October 2026):** global shortcut ⌘⇧Space toggles hide / show at
+    cursor; sleep after 2 minutes of OS idle time; Claude Code hooks installed into the user's
+    global settings only from a tray click with confirmation and a backup. **Permission hold
+    policy:** when a terminal, IDE or the Claude app is frontmost, that app asks at once; otherwise
+    the pet holds the request for up to 60 s. Reason: global hooks reach every session, and a
+    stalled terminal prompt would be worse than no pet.
+
+11. **Installer preserves other integrations.** Use ordered JSON, remove only handlers pointing
+    at Sidefolk's localhost URL prefix, back up exact bytes before atomic replacement, and refuse
+    stale confirmations. Tests target a copy via `SIDEFOLK_CLAUDE_SETTINGS`; only a user's confirmed
+    tray action may write real global Claude settings. Foreground lookup failure defers permission
+    immediately, so an AppKit scheduling problem cannot stall the agent's own prompt.

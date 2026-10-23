@@ -89,3 +89,21 @@ pub fn focus_report(app: &AppHandle) -> String {
     rx.recv_timeout(std::time::Duration::from_secs(1))
         .unwrap_or_else(|_| "focus report timed out".into())
 }
+
+/// Hook handlers run off the main thread; NSWorkspace must still be queried on it.
+pub async fn frontmost_bundle(app: &AppHandle) -> Option<String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.run_on_main_thread(move || {
+        use tauri_nspanel::objc2_app_kit::NSWorkspace;
+        let id = NSWorkspace::sharedWorkspace()
+            .frontmostApplication()
+            .and_then(|app| app.bundleIdentifier())
+            .map(|id| id.to_string());
+        let _ = tx.send(id);
+    })
+    .ok()?;
+    tokio::time::timeout(std::time::Duration::from_secs(1), rx)
+        .await
+        .ok()?
+        .ok()?
+}
