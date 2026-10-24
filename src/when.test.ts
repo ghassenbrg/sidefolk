@@ -89,3 +89,18 @@ describe("repeats", () => {
     expect(describeRepeat({ every: "week", n: 2 }, now)).toBe("every 2 weeks on Thursday");
   });
 });
+
+describe("offsets", () => {
+  it("reminds earlier than the time given", () => {
+    const r = parseReminder("10 minutes before the call tomorrow at 3", now)!;
+    expect(at(r.due)).toEqual([23, 14, 50]);
+    expect(r.what).toBe("the call");
+  });
+  it("reads an hour before", () => {
+    const r = parseReminder("remind the team an hour before Friday at 10", now)!;
+    expect(at(r.due)).toEqual([23, 9, 0]);
+  });
+  it("refuses an offset that lands in the past", () => {
+    expect(parseReminder("2 hours before the demo at 5pm today", now)).toBeNull();
+  });
+});

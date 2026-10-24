@@ -66,8 +66,18 @@ function workingHours(result: chrono.ParsedResult, due: Date) {
   if (hour !== null && !meridiem && hour >= 1 && hour <= 7) due.setHours(hour + 12);
 }
 
+/** "10 minutes before", "an hour before", "2 days before": how much earlier than the time given. */
+function takeOffset(text: string): { rest: string; ms: number } {
+  const m = text.match(/\b(\d+|an?|one) (min(?:ute)?s?|hours?|days?) before\b/i);
+  if (!m || m.index === undefined) return { rest: text, ms: 0 };
+  const n = /^\d+$/.test(m[1]) ? Number(m[1]) : 1;
+  const unit = m[2].toLowerCase().startsWith("min") ? 60_000 : m[2].toLowerCase().startsWith("hour") ? 3_600_000 : 86_400_000;
+  return { rest: (text.slice(0, m.index) + " " + text.slice(m.index + m[0].length)).replace(/\s+/g, " ").trim(), ms: n * unit };
+}
+
 export function parseReminder(input: string, now = new Date()): Parsed | null {
-  const { rest: text, repeat } = takeRepeat(input);
+  const { rest: withoutOffset, ms: offset } = takeOffset(input);
+  const { rest: text, repeat } = takeRepeat(withoutOffset);
   const results = chrono.parse(text, now, { forwardDate: true });
   const result = results[0];
   if (!result) {
@@ -85,14 +95,19 @@ export function parseReminder(input: string, now = new Date()): Parsed | null {
   if (!result.start.isCertain("hour")) due.setHours(9, 0, 0, 0);
   // "at 3" said at 16:00 means tomorrow at 15:00, not an hour ago.
   if (due <= now) due.setDate(due.getDate() + 1);
+  // "10 minutes before the 3pm call": earlier than the time given, never in the past.
+  if (offset) {
+    due.setTime(due.getTime() - offset);
+    if (due <= now) return null;
+  }
   // Weekday repeats start on a weekday.
   if (repeat?.every === "weekday") while (due.getDay() === 0 || due.getDay() === 6) due.setDate(due.getDate() + 1);
 
   const what = (text.slice(0, result.index) + " " + text.slice(result.index + result.text.length))
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/^(to|about|that)\s+/i, "")
-    .replace(/\s+(to|about|that|on|at|in|by)$/i, "")
+    .replace(/^(to|about|that|of)\s+/i, "")
+    .replace(/\s+(to|about|that|on|at|in|by|the|of)$/i, "")
     .trim();
   if (!what) return null;
   return repeat ? { what, due, repeat } : { what, due };
