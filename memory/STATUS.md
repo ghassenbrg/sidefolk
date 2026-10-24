@@ -85,6 +85,17 @@ listed below, then phases 5–8. Signing/notarization and colleague beta require
   details/history, then a real sleep/wake reminder. DST browser/unit checks already pass.
 - Release rebuild/relaunch is in progress for this continuation; check the final handoff below.
 
+**Phase 4, plain commands done (f4819d7, Claude Code):** src/commands.ts `run` kind (everyday
+commands + the user's PATH via `path_commands`; "make a note"/"find my keys" stay sentences;
+"run X in api" / "$ X"); companion card "Run this in your terminal?" with Command + Folder
+(src/companion.ts `confirmRun`), window Tell bar confirms via toast; Rust src-tauri/src/actions.rs
+(`resolve_folder`: ~, abs, or a name under ~/git, ~/code, ~/Developer…; `run_command` → new
+window of the chosen terminal). Verified: 48 vitest, 24 Rust, WebKit (overlay card + window
+Tell bar). Not run in the real app yet. Next phase 4: per-session full access, Automation
+explanation in setup, end-to-end Terminal/Ghostty/iTerm checks.
+Open proposal to the user (24 Oct): easy custom 2D characters (template sheet + import);
+waiting for their pick before building.
+
 **Phase 4 started — host lookup:** CLI `.../claude.app/Contents/MacOS/claude` is skipped while
 walking parents, so the real Claude desktop/terminal app is selected. Terminal/iTerm focus
 reports success only when a matching tab was actually selected. macOS open failure is now
