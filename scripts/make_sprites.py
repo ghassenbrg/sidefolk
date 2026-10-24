@@ -1,9 +1,9 @@
-"""Cuts a character's generated sprite sheets into transparent frames for the app.
+"""Cuts a crew character's generated sprite sheets into transparent frames for the app.
 
-    python3 scripts/make_sprites.py [pip|spark]
+    python3 scripts/make_sprites.py <id> [3d|2d]      (npm run sprites -- pip 3d)
 
-art/<name>/sheet-a.png and sheet-b.png are 4×2 grids generated with Codex image generation (the
-briefs are in art/<name>/README.md) on a pure chroma-green background. Each figure is found from
+art/crew/<id>/<style>/sheet-a.webp and sheet-b.webp are 4×2 grids generated with Codex image
+generation (scripts/crew_art.sh has the briefs) on a pure chroma-green background. Each figure is found from
 the empty columns and rows between them (a pose may spill past its grid cell), the green is
 keyed out and its fringe removed, and every frame is placed on the same canvas with the feet on
 one baseline and the body centered, so swapping frames never makes Pip jump.
@@ -11,7 +11,7 @@ one baseline and the body centered, so swapping frames never makes Pip jump.
 A thin ivory outline goes around every figure, like a sticker, so the charcoal Pip stays
 readable on dark wallpapers too.
 
-Output: public/<name>/<pose>.png (2× the on-screen size of the "medium" companion).
+Output: public/crew/<id>/<style>/<pose>.webp (2× the on-screen size of the "medium" companion).
 """
 
 import os
@@ -20,16 +20,19 @@ import sys
 from PIL import Image, ImageChops, ImageFilter
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# Which character: `npm run sprites` builds Pip, `npm run sprites -- spark` builds Spark.
 NAME = sys.argv[1] if len(sys.argv) > 1 else "pip"
-OUT = os.path.join(ROOT, "public", NAME)
+STYLE = sys.argv[2] if len(sys.argv) > 2 else "3d"
+OUT = os.path.join(ROOT, "public", "crew", NAME, STYLE)
 
+# Kept as WebP at quality 95 (crew_art.sh converts what Codex saves), a twelfth of the PNG.
 SHEETS = {
-    "sheet-a.png": ["idle", "blink", "listen", "think", "work1", "work2", "alert", "sad"],
-    "sheet-b.png": ["note", "write1", "write2", "done", "wave", "sit", "sleep", "dangle"],
+    "sheet-a.webp": ["idle", "blink", "listen", "think", "work1", "work2", "alert", "sad"],
+    "sheet-b.webp": ["note", "write1", "write2", "done", "wave", "sit", "sleep", "dangle"],
 }
 # Figure height of a standing pose on the canvas, in pixels; the app shows it at 150 CSS px.
 STANDING = 300
+# ...and at most this wide, so round characters (a cloud, a penguin) aren't much bigger than tall ones.
+WIDEST = 260
 CANVAS = (420, 380)
 BASELINE = 366
 # The sticker outline: width in pixels on the canvas, and its color.
@@ -107,7 +110,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     scale = None
     for sheet, names in SHEETS.items():
-        rgb = Image.open(os.path.join(ROOT, "art", NAME, sheet)).convert("RGB")
+        rgb = Image.open(os.path.join(ROOT, "art", "crew", NAME, STYLE, sheet)).convert("RGB")
         alpha = alpha_of(rgb)
         rgb = despill(rgb, alpha)
         boxes = figures(alpha)
@@ -115,7 +118,7 @@ def main():
             raise SystemExit(f"{sheet}: found {len(boxes)} figures, expected {len(names)}")
         # Both sheets end up at the same scale: their first (standing) pose is STANDING tall.
         first = boxes[0]
-        sheet_scale = STANDING / (first[3] - first[1])
+        sheet_scale = min(STANDING / (first[3] - first[1]), WIDEST / (first[2] - first[0]))
         scale = scale or sheet_scale
         for name, box in zip(names, boxes):
             cx = foot_center(alpha, box)
@@ -127,7 +130,8 @@ def main():
             y = BASELINE - figure.height
             canvas.alpha_composite(figure, (x, y))
             canvas = outlined(canvas)
-            canvas.save(os.path.join(OUT, f"{name}.png"), optimize=True)
+            # WebP at quality 90: a seventh of the PNG's size, no visible difference at this scale.
+            canvas.save(os.path.join(OUT, f"{name}.webp"), "WEBP", quality=90, method=6)
             print(f"{name}: {size[0]}×{size[1]} at ({x}, {y})")
 
 

@@ -11,6 +11,7 @@ export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in
 /** Mirrors `Settings` in src-tauri/src/settings.rs. */
 export type Settings = {
   theme: import("../theme").Theme;
+  art_style: import("../roster").Style;
   shortcut: string;
   sleep_after_secs: number;
   pet_answers_permissions: boolean;
@@ -100,6 +101,7 @@ function preview(): typeof tauriInvoke {
     ],
     settings: {
       theme: (() => { try { return localStorage.getItem("sidefolk-theme") ?? "system"; } catch { return "system"; } })(),
+      art_style: "3d",
       shortcut: "CommandOrControl+Shift+Space",
       sleep_after_secs: 120,
       pet_answers_permissions: true,

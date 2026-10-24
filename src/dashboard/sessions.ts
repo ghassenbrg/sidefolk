@@ -7,6 +7,7 @@ import { COLORS, colorName } from "../worker-colors";
 import { cachedCharacters, characters } from "./characters";
 import { agentShort, ago, button, folder, h } from "./dom";
 import { empty, folderPicker, header, sessionRow } from "./ui";
+import { ROSTER, WORKER_LOOK } from "../roster";
 
 // Sessions: the Claude Code and Codex sessions the companion follows, the ones that finished
 // recently (one click continues them), and starting a new one in a folder. Everything here is
@@ -77,9 +78,14 @@ function sparks(app: App) {
     color.value = String(p.hue ?? 0);
     color.addEventListener("change", () => send({ project: p.project, hue: Number(color.value) }, `${p.name} is ${colorName(Number(color.value)).toLowerCase()} now.`));
     const spec = app.state.crew.workers?.find((w) => w.project === p.project);
-    const look = h("select", { "aria-label": `Look of ${p.name}` }, h("option", { value: "", text: "Spark" }), ...cachedCharacters().map((c) => h("option", { value: c.id, text: c.name })));
-    look.value = spec?.look ?? "";
-    look.addEventListener("change", () => send({ project: p.project, look: look.value || null }, "New look on the desktop."));
+    const look = h(
+      "select",
+      { "aria-label": `Look of ${p.name}` },
+      ...ROSTER.map((m) => h("option", { value: m.id, text: `${m.name} (${m.kind.toLowerCase()})` })),
+      ...cachedCharacters().map((c) => h("option", { value: c.id, text: c.name })),
+    );
+    look.value = spec?.look ?? WORKER_LOOK;
+    look.addEventListener("change", () => send({ project: p.project, look: look.value === WORKER_LOOK ? null : look.value }, "New look on the desktop."));
     list.append(
       h(
         "div",

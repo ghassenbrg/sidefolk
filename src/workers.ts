@@ -1,13 +1,13 @@
 import { folder } from "./agents";
 import type { Companion } from "./companion";
-import { Familiar } from "./familiar";
+import { Familiar, type Look } from "./familiar";
 import { COLORS, colorName } from "./worker-colors";
 
 // Spark workers: a companion per project you choose ("give api a spark"), in its own color with
 // the project's name under its feet. It acts out that project's sessions and brings their
 // requests; everything else stays with Pip. Nothing appears on its own.
 
-/** `look` is a made character's id (Settings → Characters); Spark when absent. */
+/** `look` is a crew member's id (roster.ts) or a made character's (Settings → Characters); Spark when absent. */
 export type WorkerSpec = { project: string; name: string; hue: number; look?: string };
 
 const MAX = 6;
@@ -20,11 +20,9 @@ export class Workers {
   constructor(
     private readonly companion: Companion,
     private readonly zoom: number,
-    /** "spark" once Spark's frames are there, else a recolored Pip. */
-    private readonly character: string,
+    /** A worker's look, Spark's when it has none or its made character is gone. */
+    private readonly look: (id: string | undefined) => Promise<Look>,
     private readonly save: (specs: WorkerSpec[]) => Promise<unknown>,
-    /** A made character's frames, or null when it's gone (the Spark look then). */
-    private readonly frames: (id: string) => Promise<Partial<Record<string, string>> | null> = async () => null,
   ) {}
 
   async load(specs: WorkerSpec[]) {
@@ -63,9 +61,9 @@ export class Workers {
 
   private async place(spec: WorkerSpec) {
     if (!this.specs.includes(spec)) this.specs = [...this.specs.filter((s) => s.project !== spec.project), spec];
-    const frames = spec.look ? await this.frames(spec.look) : null;
+    const look = await this.look(spec.look);
     // A made character keeps its own colors; the worker's color is on its badge.
-    const worker = await Familiar.create(spec.name, this.zoom * 0.85, frames ? { frames, hue: 0, badge: folder(spec.project) } : { character: this.character, hue: spec.hue, badge: folder(spec.project) });
+    const worker = await Familiar.create(spec.name, this.zoom * 0.85, { ...look, hue: look.frames ? 0 : spec.hue, badge: folder(spec.project) });
     worker.badge?.style.setProperty("--hue", `${spec.hue}deg`);
     // Side by side to Pip's left, in the order they were added.
     const index = this.specs.indexOf(spec);

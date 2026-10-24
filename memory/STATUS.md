@@ -179,6 +179,23 @@ lists today's meetings and reminders, then overnight agent work (src/away.ts `mo
 `<name>.sidefolk.png` sheet (transparent, template layout) that imports as it is; the importer's
 light outline is optional. Release build from the export commit is running.
 
+**The crew, 3D and 2D (24 Oct, Claude; decision 38):** the user sent ten reference photos with
+names for 6–10 (Lumi, Pixel, Otis, Rune, Sprout) and asked for high-fidelity characters, a 3D/2D
+choice and easier custom characters. A live three.js trial with the Blender film rigs was dropped
+(looked far from the photos). Now: art/crew/<id>/<3d|2d>/sheet-{a,b}.webp generated with
+scripts/crew_art.sh (codex-imagegen; 40 sheets, all reviewed; Sprout 2d b regenerated once),
+cut by `npm run sprites -- <id> <style>` into public/crew/<id>/<style>/<pose>.webp (q90, width
+capped at 260). src/roster.ts lists the crew (ids spark, pip, pebble, capy, nova, lumi, pixel,
+otis, rune, sprout; **names 3–5 Pebble, Capy, Nova are placeholders: ask the user**). Settings →
+Companion: picture grid of the crew + made characters, Style 3D/2D (`art_style` in settings.rs,
+reloads the overlay). Sessions: each Spark picks a crew member. Spark colors turn only mint pixels
+(src/recolor.ts). Importer (src/character-import.ts) reads any mix of per-pose files (named
+idle.png…), sheets in any grid (found by gaps; square = the 4×4 template by cell, so empty boxes
+stay gaps) or one drawing; green fringes despilled. Old art/pip, art/spark, public/pip,
+public/spark removed. Verified: typecheck, 100 Vitest, 32 Rust, WebKit check (template import,
+settings both styles, Spark recolor), release build 8.6 MB relaunched: overlay 452×222, no errors.
+Hand checks for the user: pick each character and style on the desktop; a Spark in each color.
+
 **Overlay sized to the companions (24 Oct, Claude):** the overlay window now covers only the
 companions, their cards and badges plus a 72 pt margin, and the whole work area while one is held
 or flying. src/frame.ts (`area`, `place`, `needed`, `shouldMove`, tests in frame.test.ts): the page

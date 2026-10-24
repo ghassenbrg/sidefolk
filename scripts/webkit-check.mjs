@@ -113,7 +113,7 @@ for (const scheme of ["light", "dark"]) {
     await page.locator(".pose-grid figure").nth(15).waitFor();
     const borrowed = await page.locator(".pose-grid figure.borrowed").count();
     if (borrowed !== 6) failures.push(`characters: expected 6 borrowed poses, got ${borrowed}`);
-    await page.getByText("6 of 16 boxes are empty", { exact: false }).waitFor();
+    await page.getByText("6 of 16 poses are missing", { exact: false }).waitFor();
     await page.screenshot({ path: join(out, "character-import.png"), fullPage: true });
     await page.locator("#character-name").fill("Test Bot");
     await page.getByRole("button", { name: "Save character" }).click();

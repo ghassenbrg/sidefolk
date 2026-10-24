@@ -13,6 +13,8 @@ use tauri::{Emitter, State};
 use crate::bus::Shared;
 
 const POSES: [&str; 16] = ["idle", "blink", "listen", "think", "work1", "work2", "alert", "sad", "note", "write1", "write2", "done", "wave", "sit", "sleep", "dangle"];
+/// The built-in crew's ids (src/roster.ts): a made character never takes one, or it would hide it.
+const CREW: [&str; 10] = ["spark", "pip", "pebble", "capy", "nova", "lumi", "pixel", "otis", "rune", "sprout"];
 const MAX_FRAME: usize = 2 * 1024 * 1024;
 const PNG: &[u8] = b"\x89PNG\r\n\x1a\n";
 
@@ -89,7 +91,7 @@ pub fn save_character(app: tauri::AppHandle, shared: State<'_, std::sync::Arc<Sh
     }
     let root = dir(&shared);
     let base = slug(&name);
-    let id = (1..).map(|n| if n == 1 { base.clone() } else { format!("{base}-{n}") }).find(|id| !root.join(id).exists()).unwrap();
+    let id = (1..).map(|n| if n == 1 { base.clone() } else { format!("{base}-{n}") }).find(|id| !CREW.contains(&id.as_str()) && !root.join(id).exists()).unwrap();
     let folder = root.join(&id);
     fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
     let write = || -> io::Result<()> {

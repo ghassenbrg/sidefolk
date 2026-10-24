@@ -8,6 +8,7 @@ import { button, h, TERMINAL_LABELS } from "./dom";
 import { cachedCharacters, characters as loadCharacters } from "./characters";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
+import { framesDir, MAIN_LOOK, ROSTER } from "../roster";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
 // the settings file is written. Connecting a tool opens the app's own confirmation, which
@@ -58,6 +59,24 @@ function segmented(app: App, key: keyof Settings, label: string, description: st
   return h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: label }), h("p", { class: "muted", text: description })), control);
 }
 
+/** The crew and the characters you made, as pictures to pick your companion's look from. */
+function crewChoices(app: App) {
+  const current = app.state.crew.main.look ?? MAIN_LOOK;
+  const choices = h("fieldset", { class: "crew-choices" }, h("legend", { text: "Looks like" }));
+  const choose = (id: string, name: string) => {
+    if (id === current) return;
+    void app.petAction({ action: "look", look: id === MAIN_LOOK ? null : id }, `${app.state.crew.main.name} looks like ${name} now.`);
+  };
+  const tile = (id: string, name: string, kind: string, picture: HTMLElement) => {
+    const radio = h("input", { type: "radio", id: `look-${id}`, name: "look", value: id, checked: id === current });
+    radio.addEventListener("change", () => choose(id, name));
+    return h("label", { class: "crew-choice", for: radio.id }, radio, picture, h("strong", { text: name }), h("span", { class: "muted", text: kind }));
+  };
+  for (const m of ROSTER) choices.append(tile(m.id, m.name, m.kind, h("img", { src: `${framesDir(m.id, app.state.settings.art_style)}/idle.webp`, alt: "" })));
+  for (const c of cachedCharacters()) choices.append(tile(c.id, c.name, "Made by you", h("span", { class: "crew-initial", "aria-hidden": "true", text: c.name.slice(0, 1).toUpperCase() })));
+  return choices;
+}
+
 function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools", action: string, title: string, what: string, change: string, stops: string) {
   const on = app.state.integrations[key];
   return h(
@@ -89,16 +108,17 @@ function settingsContents(app: App) {
 
   const view = h("div", { class: "view settings" }, ...header("Make Sidefolk comfortable.", "A few simple preferences. Everything here can change later."));
 
-  const looks = cachedCharacters();
-  const look = h("select", { id: "setting-look" }, h("option", { value: "", text: "Pip" }), ...looks.map((c) => h("option", { value: c.id, text: c.name })));
-  look.value = app.state.crew.main.look ?? "";
-  look.addEventListener("change", () => void app.petAction({ action: "look", look: look.value || null }, look.value ? "New look on the desktop." : "Pip is back."));
   view.append(
     group(
       "Your companion",
       "home",
       "companion",
-      row("Looks like", "Pip, or a character you made.", h("div", { class: "inline" }, look, button("Make your own…", () => app.go("characters"))), "setting-look"),
+      crewChoices(app),
+      segmented(app, "art_style", "Style", "Soft 3D renders or flat 2D drawings of the same characters, for your companion and every Spark.", [
+        ["3d", "3D"],
+        ["2d", "2D"],
+      ]),
+      row("Your own", "Turn a drawing into a companion: one picture, or one per pose.", button("Make your own…", () => app.go("characters"))),
     ),
   );
 

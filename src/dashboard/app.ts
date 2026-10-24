@@ -13,6 +13,7 @@ import { renderSessions } from "./sessions";
 import { prepareSettings, renderSettings } from "./settings";
 import { renderSetup } from "./setup";
 import { tellBar } from "./tell";
+import { picture } from "../roster";
 
 // The Sidefolk app window: a sidebar of sections, a "Tell Pip…" bar that runs the companion's
 // commands, and the first-launch setup guide. Changes go through the app's commands; agent
@@ -275,7 +276,7 @@ function buildNav() {
     if (view === "today") b.append(h("span", { class: "count", hidden: true }));
     (view === "sessions" ? ai : ["settings", "actions"].includes(view) ? utility : list).append(b);
   }
-  const pet = h("img", { class: "nav-pip", src: "/pip/idle.png", alt: "", width: 84, height: 76 });
+  const pet = h("img", { class: "nav-pip", src: picture(app.state.crew.main.look, app.state.settings.art_style), alt: "", width: 84, height: 76 });
   nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, ai, utility, pet);
 }
 

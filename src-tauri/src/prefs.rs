@@ -74,6 +74,7 @@ pub fn answered(app: AppHandle, id: String, ok: bool, text: Option<String>) {
 pub struct Change {
     shortcut: Option<String>,
     theme: Option<String>,
+    art_style: Option<String>,
     sleep_after_secs: Option<u64>,
     pet_answers_permissions: Option<bool>,
     hide_in_recordings: Option<bool>,
@@ -103,6 +104,7 @@ fn check(value: &Option<String>, name: &str, allowed: &[&str]) -> Result<(), Str
 #[tauri::command]
 pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: Change) -> Result<crate::settings::Settings, String> {
     check(&change.theme, "Theme", &["system", "light", "dark"])?;
+    check(&change.art_style, "Style", &["3d", "2d"])?;
     check(&change.pet_size, "Pet size", &["small", "medium", "large"])?;
     check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
     if let Some(shortcut) = change.shortcut.as_deref() {
@@ -118,6 +120,9 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
             .update(|s| {
                 if let Some(theme) = change.theme {
                     s.theme = theme;
+                }
+                if let Some(style) = change.art_style {
+                    s.art_style = style;
                 }
                 if let Some(shortcut) = change.shortcut {
                     s.shortcut = shortcut;

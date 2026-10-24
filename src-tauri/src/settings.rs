@@ -17,6 +17,8 @@ pub struct Settings {
     pub shortcut: String,
     /// system | light | dark. System follows macOS while running.
     pub theme: String,
+    /// 3d | 2d: the crew's soft clay renders or their flat drawings (src/roster.ts).
+    pub art_style: String,
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
     /// Keep the overlay out of screenshots, recordings and screen sharing. Off by default: macOS
@@ -56,6 +58,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             theme: "system".into(),
+            art_style: "3d".into(),
             pet_x: None,
             display: None,
             hidden: false,

@@ -4,15 +4,15 @@ import type { App } from "./app";
 import { button, h } from "./dom";
 import { back, header } from "./ui";
 
-// Characters: make your own companion from a picture. Fill in the template (or use one picture),
-// import it, check every pose, save. It can then be Pip's look or a Spark's. All on this Mac;
+// Characters: make your own companion from pictures: one per pose, pose sheets in any grid, or
+// one standing picture. Import, check every pose, save. It can then be Pip's look or a Spark's. All on this Mac;
 // each character is a folder you can copy to a friend.
 
 export type Character = { id: string; name: string; poses: string[] };
 
-/** Ready-to-paste brief for an image tool, matching the template's boxes and order. */
+/** Ready-to-paste brief for an image tool: the order the importer reads poses in. */
 export const PROMPT =
-  "Fill in this character sheet template with my character, one pose per box, in this order (left to right, top to bottom): idle, blink (eyes closed), listen (head tilted), think (hand at chin), work1 and work2 (busy, e.g. with a laptop), alert (one hand raised), sad, note (holding a note card), write1 and write2 (writing on it), done (happy, arms up), wave, sit, sleep (sitting, eyes closed), dangle (being held up, arms up). Same character, same size and style in every box, feet on the dashed line, fully inside the box, facing the viewer. Plain white background, no shadows, no text, no extra objects.";
+  "Draw my character in 16 full-body poses as a 4 by 4 grid, in this order (left to right, top to bottom): idle, blink (eyes closed), listen (head tilted), think (hand at chin), work1 and work2 (busy, e.g. typing on a laptop), alert (holding up a card with an orange !), sad, note (holding a note card), write1 and write2 (writing on a notepad), done (happy, arms up), wave, sit, sleep (sitting, eyes closed), dangle (being held up, arms up). Same character, same size and style in every pose, feet on one line per row, clear empty space between poses, facing the viewer. One plain background color (white or pure green), no shadows, no floor, no text.";
 
 let cached: Character[] | null = null;
 /** The last list read, for pickers that draw at once (empty until the first read). */
@@ -22,10 +22,10 @@ export async function characters(refresh = false) {
   return cached;
 }
 
-let draft: { imported: Imported; layout: "sheet" | "single" } | null = null;
+let draft: { imported: Imported } | null = null;
 
 export function renderCharacters(app: App) {
-  const view = h("div", { class: "view characters" }, back("Settings", () => app.go("settings", "companion")), ...header("Characters", "Make your own companion from a picture: fill in the template, or start with a single drawing. Everything happens on this Mac."));
+  const view = h("div", { class: "view characters" }, back("Settings", () => app.go("settings", "companion")), ...header("Characters", "Make your own companion from pictures: one per pose, a pose sheet, or a single drawing. Everything happens on this Mac."));
   app.live(() => {});
   const mine = h("section", { "aria-label": "Your characters" });
   const fillMine = async () => {
@@ -76,9 +76,8 @@ function maker(app: App, refill: () => Promise<void>) {
   const notes = h("ul", { class: "warnings" });
   const name = h("input", { type: "text", id: "character-name", maxlength: 24, autocomplete: "off", placeholder: "Bun" });
   const save = h("button", { type: "submit", class: "primary", text: "Save character", disabled: true });
-  const file = h("input", { type: "file", id: "character-file", accept: "image/png,image/jpeg,image/webp" });
+  const file = h("input", { type: "file", id: "character-file", accept: "image/png,image/jpeg,image/webp", multiple: true });
   const outline = h("input", { type: "checkbox", id: "character-outline", checked: true });
-  const layout = h("select", { id: "character-layout" }, h("option", { value: "sheet", text: "The template (up to 16 poses)" }), h("option", { value: "single", text: "One picture (just standing)" }));
 
   const show = () => {
     preview.replaceChildren();
@@ -94,20 +93,26 @@ function maker(app: App, refill: () => Promise<void>) {
     save.disabled = !draft.imported.frames.idle;
   };
   const read = async () => {
-    const chosen = file.files?.[0];
-    if (!chosen) return;
-    const url = URL.createObjectURL(chosen);
+    // Pose files are read in name order, so "sheet-a" comes before "sheet-b".
+    const chosen = [...(file.files ?? [])].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    if (!chosen.length) return;
+    const urls = chosen.map((f) => URL.createObjectURL(f));
     try {
-      const image = new Image();
-      image.src = url;
-      await image.decode();
-      draft = { imported: await importCharacter(image, layout.value as "sheet" | "single", outline.checked), layout: layout.value as "sheet" | "single" };
-      if (!name.value) name.value = chosen.name.replace(/\.[a-z]+$/i, "").replace(/[-_]+/g, " ").slice(0, 24);
+      const sources = await Promise.all(
+        chosen.map(async (f, i) => {
+          const image = new Image();
+          image.src = urls[i];
+          await image.decode();
+          return { image, name: f.name };
+        }),
+      );
+      draft = { imported: await importCharacter(sources, outline.checked) };
+      if (!name.value && chosen.length === 1) name.value = chosen[0].name.replace(/\.[a-z.]+$/i, "").replace(/[-_]+/g, " ").slice(0, 24);
       show();
     } catch {
-      app.toast("That file couldn't be read as a picture.", undefined, true);
+      app.toast("A file couldn't be read as a picture.", undefined, true);
     } finally {
-      URL.revokeObjectURL(url);
+      urls.forEach((u) => URL.revokeObjectURL(u));
     }
   };
   // A sheet exported from Sidefolk already has its outline.
@@ -116,12 +121,11 @@ function maker(app: App, refill: () => Promise<void>) {
     void read();
   });
   outline.addEventListener("change", () => void read());
-  layout.addEventListener("change", () => void read());
 
   const form = h(
     "form",
     {},
-    h("div", { class: "form-grid" }, h("div", { class: "field wide" }, h("label", { for: file.id, text: "Your picture" }), file), h("div", { class: "field" }, h("label", { for: layout.id, text: "It is" }), layout)),
+    h("div", { class: "form-grid" }, h("div", { class: "field wide" }, h("label", { for: file.id, text: "Your pictures" }), file, h("p", { class: "hint", text: "Choose several at once: files named after a pose (idle.png, wave.png) go to that pose; other pictures fill the poses in order." }))),
     h("label", { class: "inline check", for: outline.id }, outline, " Light outline (keeps it visible on dark wallpapers)"),
     preview,
     notes,
@@ -148,9 +152,9 @@ function maker(app: App, refill: () => Promise<void>) {
     h(
       "ol",
       { class: "steps" },
-      h("li", {}, h("strong", { text: "Get the template. " }), "Sixteen boxes, one per pose, with a line for the feet. Only the first box (idle) is needed; empty boxes borrow from the others. ", button("Save template to Downloads", () => void saveTemplate(app), "small")),
-      h("li", {}, h("strong", { text: "Draw, paint or generate. " }), "Any app works. With an image AI, attach the template and paste this: ", button("Copy prompt", () => void navigator.clipboard.writeText(PROMPT).then(() => app.toast("Prompt copied.")), "small")),
-      h("li", {}, h("strong", { text: "Import it here " }), "and check every pose on light and dark before saving."),
+      h("li", {}, h("strong", { text: "Draw, paint or generate the poses. " }), "Only idle (standing) is needed; missing poses borrow from the others. With an image AI, attach a picture of your character and paste this: ", button("Copy prompt", () => void navigator.clipboard.writeText(PROMPT).then(() => app.toast("Prompt copied.")), "small"), " The template shows the poses and their order: ", button("Save template to Downloads", () => void saveTemplate(app), "small")),
+      h("li", {}, h("strong", { text: "Import the pictures here: " }), "one per pose (named idle.png, wave.png…), one or more sheets in any grid, or a single drawing. Full-size pictures keep every detail."),
+      h("li", {}, h("strong", { text: "Check every pose " }), "on light and dark, name it, save."),
     ),
     form,
   );

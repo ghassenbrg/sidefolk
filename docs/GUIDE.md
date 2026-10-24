@@ -43,14 +43,21 @@ Open it from the Dock, the menu bar icon, or "open Sidefolk".
 - **Settings** (⌘,): searchable categories for appearance, companion, reminders and calendar, sound, AI tools, privacy, accessibility and your data.
   **Appearance → Theme** offers System (default), Light and Dark. The choice saves automatically and applies to windows and companion cards. System follows your Mac while Sidefolk is running.
 
-## Sparks and your own characters
+## Your crew
+
+Ten characters can be your companion or a Spark: Spark (robot), Pip (bunny), Pebble (penguin),
+Capy (capybara), Nova (alien), Lumi (cloud spirit), Pixel (cat), Otis (otter), Rune (owl) and
+Sprout (tiny plant). Settings → Companion picks yours and the style: **3D** (soft clay) or **2D**
+(flat drawings of the same characters), for every companion at once.
 
 A Spark looks after one project: it acts out that project's sessions and brings their requests,
-in its own color with the project's name under its feet. Pip keeps everything else.
+in its own color (only the mint parts change) with the project's name under its feet. Sessions →
+a Spark's options pick its character. Pip keeps everything else.
 
-Settings → Companion → **Make your own…** turns a picture into a companion: save the template,
-draw (or generate) your character in its boxes, import it, check the poses, save. Only the first
-box is required. It can be Pip's look or any Spark's.
+Settings → Companion → **Make your own…** turns pictures into a companion. Choose one picture per
+pose (named idle.png, wave.png…), one or more pose sheets in any grid (read left to right, top to
+bottom; the template shows the order), or a single standing drawing. Only idle is required;
+missing poses borrow from the others. "Copy prompt" gives an image AI the poses and their order.
 
 ## AI tools (optional)
 

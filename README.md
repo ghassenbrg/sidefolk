@@ -24,7 +24,7 @@ npm run check:webkit  # with npm run web running: every view in WebKit, fails on
                       # (once: npx playwright install webkit)
 npm run build         # optimized src-tauri/target/release/bundle/macos/Sidefolk.app
 npm run measure       # CPU/RAM of the built app and its WebKit helpers
-npm run sprites       # cut public/pip/*.png from the generated sheets in art/pip
+npm run sprites -- pip 3d   # cut a crew character's frames from its sheets (art/crew/README.md)
 ```
 
 Releasing (signing, notarizing, auto-update): [docs/RELEASE.md](docs/RELEASE.md).
@@ -112,6 +112,6 @@ src-tauri/src/       Rust core
   journal.rs · reminders.rs · crew.rs · settings.rs · prefs.rs · tray.rs · voice.rs
 art/                 pip/ (generated sprite sheets and how to remake them), brand SVGs, icon
 creative-design/     the design package; v2/ holds the Pip and Spark concept sheets
-public/pip/          Pip's frames (`npm run sprites`)
+public/crew/         the ten characters' frames, 3d and 2d (`npm run sprites`)
 scripts/             make_icons.py, make_sprites.py, measure.sh, webkit-check.mjs
 ```

@@ -153,3 +153,13 @@ Newest last. Each entry: what, why, and what would change it.
     Use existing tokens and status words in both app and overlay. System is the
     default theme, overrides persist, native appearance and cards share it.
     This approval supersedes the review package's earlier pending-review notes.
+38. **The crew: ten characters, 3D and 2D as pictures (24 October 2026).** The user supplied ten
+    reference photos (art/crew/refs) and asked for high-fidelity versions, a 3D/2D choice in
+    Settings, and easier custom characters. Both styles are generated pose sheets cut into frames
+    (art/crew/README.md), not live 3D: a three.js trial with the Blender film rigs looked far from
+    the photos ("very bad"), while generated sheets match them closely, cost no GPU, and keep one
+    pipeline for built-in and made characters. Spark colors turn only the shared mint accent
+    (src/recolor.ts). Made characters import from per-pose files or any sheet grid, found by the
+    space between poses. Would change if real-time customization (gadgets on bones) becomes a must;
+    then a gadget layer anchored to the frames is the next step before any 3D runtime. Supersedes
+    decision 36's "Pip (2D, body B)" character art; Pip is now the photo's bunny.

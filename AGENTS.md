@@ -26,7 +26,7 @@ Use the tokens in `src/tokens.css` and the status vocabulary in `src/states.ts`;
 colors, sizes or state words of your own.
 
 Background reading: [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) (what users see), [docs/PHASE0.md](docs/PHASE0.md),
-[docs/PHASE1.md](docs/PHASE1.md), [art/pip/README.md](art/pip/README.md),
+[docs/PHASE1.md](docs/PHASE1.md), [art/crew/README.md](art/crew/README.md),
 [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Commands
@@ -41,7 +41,7 @@ npm test           # vitest: commands, routing, reminders, briefings, descriptio
 npm run check:webkit  # with npm run web running: every view in WebKit (the app's engine), fails on errors
 npm run build      # release Sidefolk.app
 npm run measure    # CPU/RAM of the built app
-npm run sprites    # rebuild public/pip/*.png from art/pip (npm run sprites -- spark for Spark)
+npm run sprites -- pip 3d   # cut public/crew/pip/3d/*.webp from art/crew/pip/3d (art/crew/README.md)
 ```
 
 Rust only: `cd src-tauri && cargo build && cargo test`. Ignored tests run real CLIs or one live

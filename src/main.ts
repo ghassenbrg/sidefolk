@@ -15,6 +15,8 @@ import { sound } from "./sound";
 import { memoryNotes, Notes, type NoteStore } from "./notes";
 import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
 import { Workers, type WorkerSpec } from "./workers";
+import { framesDir, MAIN_LOOK, member, WORKER_LOOK, type Style } from "./roster";
+import type { Look } from "./familiar";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 document.body.classList.toggle("web", !inTauri);
@@ -29,6 +31,7 @@ if (inTauri && !import.meta.env.DEV) {
 /** Mirrors `Settings` in src-tauri/src/settings.rs (the fields the overlay uses). */
 type Settings = {
   theme: Theme;
+  art_style: Style;
   pet_x: number | null;
   sleep_after_secs: number;
   pet_size: "small" | "medium" | "large";
@@ -139,8 +142,17 @@ const journal = (since: number) => (inTauri ? invoke<JournalEntry[]>("journal_si
 if (inTauri) void invoke<string[]>("path_commands").then(knowCommands).catch(() => {});
 /** A made character's frames (Settings → Characters); null if it was deleted. */
 const characterFrames = (id: string) => (inTauri ? invoke<Record<string, string>>("character_frames", { id }).catch(() => null) : Promise.resolve(null));
-const mainFrames = crew.main.look ? await characterFrames(crew.main.look) : null;
-const companion = await Companion.start(crew.main.name, host, zoom, mainFrames ? { frames: mainFrames } : {});
+// Browser preview only: ?style=2d shows the flat drawings.
+const style: Style = settings?.art_style ?? (new URLSearchParams(location.search).get("style") === "2d" ? "2d" : "3d");
+/** A look (a crew id or a made character's) as frames; a deleted made character falls back. */
+async function lookOf(id: string | undefined, fallback: string): Promise<Look> {
+  if (id && !member(id)) {
+    const frames = await characterFrames(id);
+    if (frames) return { frames };
+  }
+  return { folder: framesDir(member(id) ? id! : fallback, style) };
+}
+const companion = await Companion.start(crew.main.name, host, zoom, await lookOf(crew.main.look, MAIN_LOOK));
 const pet = companion.pet;
 
 /** Settings that apply without a restart. Companion size rebuilds it, so that reloads the page. */
@@ -176,22 +188,14 @@ const headsUp = new HeadsUp(
 );
 if (settings) headsUp.set(settings.calendar_heads_up, settings.calendar_lead_mins);
 
-// Spark's own frames once they're in public/spark; until then a worker is a recolored Pip.
-const character = await new Promise<string>((resolve) => {
-  const probe = new Image();
-  probe.onload = () => resolve("spark");
-  probe.onerror = () => resolve("pip");
-  probe.src = "spark/idle.png";
-});
 const workers = new Workers(
   companion,
   zoom,
-  character,
+  (id) => lookOf(id, WORKER_LOOK),
   (specs) => {
     crew.workers = specs;
     return saveCrew();
   },
-  characterFrames,
 );
 await workers.load(crew.workers);
 /** "give api a spark", the window's Sparks list: a folder name or path becomes the project's root. */
@@ -231,7 +235,7 @@ const onCursor = (x: number, y: number) => {
 
 if (inTauri) {
   void listen<Settings>("settings-changed", (e) => {
-    if (e.payload.pet_size !== settings!.pet_size) return location.reload();
+    if (e.payload.pet_size !== settings!.pet_size || e.payload.art_style !== settings!.art_style) return location.reload();
     if (e.payload.calendar_heads_up !== settings!.calendar_heads_up || e.payload.calendar_lead_mins !== settings!.calendar_lead_mins) headsUp.set(e.payload.calendar_heads_up, e.payload.calendar_lead_mins);
     Object.assign(settings!, e.payload);
     applySettings(settings);
