@@ -117,7 +117,7 @@ function feetCenter(alpha: Uint8ClampedArray, width: number, box: Box) {
  * Reads the picture: `layout` "sheet" is the 16-pose template, "single" one standing figure.
  * Resolves to data URLs per pose found, the poses left empty, and plain-language warnings.
  */
-export async function importCharacter(image: HTMLImageElement, layout: "sheet" | "single"): Promise<Imported> {
+export async function importCharacter(image: HTMLImageElement, layout: "sheet" | "single", outline = true): Promise<Imported> {
   const { naturalWidth: width, naturalHeight: height } = image;
   const source = document.createElement("canvas");
   source.width = width;
@@ -170,11 +170,34 @@ export async function importCharacter(image: HTMLImageElement, layout: "sheet" |
     s.fillStyle = "#fffcf7";
     s.fillRect(0, 0, CANVAS_W, CANVAS_H);
     const f = frame.getContext("2d")!;
-    for (let a = 0; a < 16; a++) f.drawImage(silhouette, Math.cos((a / 16) * Math.PI * 2) * OUTLINE, Math.sin((a / 16) * Math.PI * 2) * OUTLINE);
+    if (outline) for (let a = 0; a < 16; a++) f.drawImage(silhouette, Math.cos((a / 16) * Math.PI * 2) * OUTLINE, Math.sin((a / 16) * Math.PI * 2) * OUTLINE);
     f.drawImage(cut, box.x0, box.y0, box.x1 - box.x0 + 1, box.y1 - box.y0 + 1, fx, fy, w, h);
     frames[pose] = frame.toDataURL("image/png");
   }
   const missing = POSES.filter((p) => !frames[p]);
   if (layout === "sheet" && missing.length) warnings.unshift(`${missing.length} of 16 boxes are empty; those poses borrow from others (${missing.slice(0, 4).join(", ")}${missing.length > 4 ? "…" : ""}). It works, just with less variety.`);
   return { frames, missing, warnings };
+}
+
+/**
+ * A character as one picture in the template's layout, background transparent, so it can be sent
+ * to someone and imported as it is ("Bun.sidefolk.png").
+ */
+export async function exportSheet(frames: Partial<Record<string, string>>): Promise<string> {
+  const sheet = document.createElement("canvas");
+  sheet.width = 1600;
+  sheet.height = 1600;
+  const ctx = sheet.getContext("2d")!;
+  // Each 420×380 frame fits the box's 352 px drawing area; its feet land near the dashed line.
+  const scale = (400 * TEMPLATE_DRAW) / CANVAS_H;
+  for (const [i, pose] of POSES.entries()) {
+    const src = frames[pose];
+    if (!src) continue;
+    const image = new Image();
+    image.src = src;
+    await image.decode();
+    const w = CANVAS_W * scale;
+    ctx.drawImage(image, (i % 4) * 400 + (400 - w) / 2, Math.floor(i / 4) * 400, w, CANVAS_H * scale);
+  }
+  return sheet.toDataURL("image/png");
 }

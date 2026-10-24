@@ -135,15 +135,20 @@ pub fn delete_character(app: tauri::AppHandle, shared: State<'_, std::sync::Arc<
     Ok(())
 }
 
-/// Puts the template in ~/Downloads and shows it in Finder (Characters → Save template).
+/// Puts the template, or a character exported as one sheet (`name`), in ~/Downloads and shows it
+/// in Finder.
 #[tauri::command]
-pub fn save_template(png: String) -> Result<String, String> {
-    let bytes = decode(png.strip_prefix("data:image/png;base64,").unwrap_or(&png)).filter(|b| b.starts_with(PNG)).ok_or("The template couldn't be read.")?;
+pub fn save_template(png: String, name: Option<String>) -> Result<String, String> {
+    let bytes = decode(png.strip_prefix("data:image/png;base64,").unwrap_or(&png)).filter(|b| b.starts_with(PNG)).ok_or("The picture couldn't be read.")?;
+    let file = match name {
+        Some(name) => format!("{}.sidefolk.png", slug(&name)),
+        None => "sidefolk-character-template.png".into(),
+    };
     let downloads = std::env::var_os("HOME").map(PathBuf::from).ok_or("No home folder.")?.join("Downloads");
-    let path = downloads.join("sidefolk-character-template.png");
+    let path = downloads.join(&file);
     fs::write(&path, bytes).map_err(|e| e.to_string())?;
     let _ = std::process::Command::new("open").arg("-R").arg(&path).spawn();
-    Ok("Saved to Downloads as sidefolk-character-template.png.".into())
+    Ok(format!("Saved to Downloads as {file}."))
 }
 
 const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

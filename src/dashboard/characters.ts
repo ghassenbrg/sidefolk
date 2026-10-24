@@ -1,4 +1,4 @@
-import { importCharacter, POSES, resolvePose, type Imported, type Pose } from "../character-import";
+import { exportSheet, importCharacter, POSES, resolvePose, type Imported, type Pose } from "../character-import";
 import { invoke } from "./api";
 import type { App } from "./app";
 import { button, h } from "./dom";
@@ -53,6 +53,14 @@ function characterRow(app: App, c: Character, refill: () => Promise<void>) {
       "div",
       { class: "inline" },
       button("Use for Pip", () => void app.petAction({ action: "look", look: c.id }, `${app.state.crew.main.name} looks like ${c.name} now.`), "small"),
+      button("Export", async () => {
+        try {
+          const frames = await invoke<Record<string, string>>("character_frames", { id: c.id });
+          app.toast(await invoke<string>("save_template", { png: await exportSheet(frames), name: c.name }));
+        } catch (error) {
+          app.toast(String(error), undefined, true);
+        }
+      }, "small", { title: "One picture in the template's layout: send it to someone and they import it as it is." }),
       button("Delete…", () =>
         app.toast(`Delete ${c.name}? Companions using it go back to their usual look.`, {
           label: "Delete",
@@ -69,6 +77,7 @@ function maker(app: App, refill: () => Promise<void>) {
   const name = h("input", { type: "text", id: "character-name", maxlength: 24, autocomplete: "off", placeholder: "Bun" });
   const save = h("button", { type: "submit", class: "primary", text: "Save character", disabled: true });
   const file = h("input", { type: "file", id: "character-file", accept: "image/png,image/jpeg,image/webp" });
+  const outline = h("input", { type: "checkbox", id: "character-outline", checked: true });
   const layout = h("select", { id: "character-layout" }, h("option", { value: "sheet", text: "The template (up to 16 poses)" }), h("option", { value: "single", text: "One picture (just standing)" }));
 
   const show = () => {
@@ -92,7 +101,7 @@ function maker(app: App, refill: () => Promise<void>) {
       const image = new Image();
       image.src = url;
       await image.decode();
-      draft = { imported: await importCharacter(image, layout.value as "sheet" | "single"), layout: layout.value as "sheet" | "single" };
+      draft = { imported: await importCharacter(image, layout.value as "sheet" | "single", outline.checked), layout: layout.value as "sheet" | "single" };
       if (!name.value) name.value = chosen.name.replace(/\.[a-z]+$/i, "").replace(/[-_]+/g, " ").slice(0, 24);
       show();
     } catch {
@@ -101,13 +110,19 @@ function maker(app: App, refill: () => Promise<void>) {
       URL.revokeObjectURL(url);
     }
   };
-  file.addEventListener("change", () => void read());
+  // A sheet exported from Sidefolk already has its outline.
+  file.addEventListener("change", () => {
+    if (file.files?.[0]?.name.endsWith(".sidefolk.png")) outline.checked = false;
+    void read();
+  });
+  outline.addEventListener("change", () => void read());
   layout.addEventListener("change", () => void read());
 
   const form = h(
     "form",
     {},
     h("div", { class: "form-grid" }, h("div", { class: "field wide" }, h("label", { for: file.id, text: "Your picture" }), file), h("div", { class: "field" }, h("label", { for: layout.id, text: "It is" }), layout)),
+    h("label", { class: "inline check", for: outline.id }, outline, " Light outline (keeps it visible on dark wallpapers)"),
     preview,
     notes,
     h("div", { class: "form-grid" }, h("div", { class: "field" }, h("label", { for: name.id, text: "Name" }), name)),

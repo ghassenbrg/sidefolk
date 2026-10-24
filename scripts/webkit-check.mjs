@@ -92,6 +92,8 @@ for (const scheme of ["light", "dark"]) {
     await page.locator("#character-name").fill("Test Bot");
     await page.getByRole("button", { name: "Save character" }).click();
     await page.getByText("Test Bot", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Export" }).first().click();
+    await page.locator("#toast").getByText("sidefolk.png", { exact: false }).waitFor();
   }
   // A saved action runs quietly and offers its output.
   await page.goto(base + "/settings.html?tab=actions");

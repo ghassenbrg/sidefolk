@@ -272,7 +272,7 @@ function preview(): typeof tauriInvoke {
         state.characters = state.characters.filter((c) => c.id !== (args as { id: string }).id);
         return null;
       case "save_template":
-        return "Saved to Downloads as sidefolk-character-template.png. (Preview: nothing saved.)";
+        return `Saved to Downloads as ${(args as { name?: string }).name ? "character.sidefolk.png" : "sidefolk-character-template.png"}. (Preview: nothing saved.)`;
       case "problem_report":
         return "Sidefolk preview on macOS (preview)\n\nWhat happened, and what did you expect?\n";
       case "calendar_status":
