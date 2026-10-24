@@ -59,9 +59,12 @@ topmost companion is tested first. Release build c43fc7e is running.
 lists today's meetings and reminders, then overnight agent work (src/away.ts `morning`,
 `firstToday`). Release build fa8f86a is running.
 
-**Next for an agent (no user needed):** more of PLAN-V2 section 7 (weekly wins from notebooks,
-timers); a
-character export as one file; sizing the overlay to the companions (fixes black Mission Control
+**Weekly wins (70ad641)** on Friday after 15:00, once a week (src/away.ts `weekly`,
+`weeklyDue`), with "Write this week's wins" → note capture. **Character export** as one
+`<name>.sidefolk.png` sheet (transparent, template layout) that imports as it is; the importer's
+light outline is optional. Release build from the export commit is running.
+
+**Next for an agent (no user needed):** timers or other PLAN-V2 section 7 helpers; sizing the overlay to the companions (fixes black Mission Control
 previews even with "Hide from screen recordings" on, and saves GPU).
 
 ## PLAN PHASE: read this first (24 October, late)
