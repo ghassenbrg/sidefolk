@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { handleToolCall, type ToolCall } from "./agent-tools";
 import type { AgentEvent } from "./agents";
 import { AWAY_SECS, welcomeBack, type JournalEntry } from "./away";
+import { knowCommands } from "./commands";
 import { Companion, type Ask, type Host } from "./companion";
 import { install } from "./demo";
 import { wireInput } from "./input";
@@ -75,6 +76,13 @@ const host: Host = {
     hide: () => void invoke("tray_action", { action: "toggle" }),
     openTab: (tab: string) => void invoke("open_tab", { tab }),
     openSession: async (ref) => (await invoke<{ message: string }>("open_session", { ...ref })).message,
+    resolveFolder: (folder) => invoke("resolve_folder", { folder }),
+    runCommand: (command, cwd) => invoke<string>("run_command", { command, cwd }),
+  }),
+  // Browser preview: the confirmation card can be looked at; nothing runs.
+  ...(!inTauri && {
+    resolveFolder: async (folder) => ({ path: "/Users/you", label: folder ? `~/git/${folder}` : "~" }),
+    runCommand: async () => "Running in Terminal. (Preview: nothing ran.)",
   }),
 };
 
@@ -89,6 +97,8 @@ const reminderStore: ReminderStore = inTauri
   : memoryStore();
 const journal = (since: number) => (inTauri ? invoke<JournalEntry[]>("journal_since", { since }) : Promise.resolve([]));
 
+// What's on your PATH, so "terraform plan -out x" is a command and "say hi" stays a sentence.
+if (inTauri) void invoke<string[]>("path_commands").then(knowCommands).catch(() => {});
 const companion = await Companion.start(storedName?.trim() || "Pip", host, zoom);
 const pet = companion.pet;
 

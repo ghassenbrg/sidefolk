@@ -12,7 +12,34 @@ export type Command =
   | { kind: "rename"; name: string }
   | { kind: "hide" }
   | { kind: "help" }
+  /** A shell command to run in the user's terminal, after they see it. `folder` as typed ("api", "~/x"). */
+  | { kind: "run"; command: string; folder: string | null }
   | { kind: "unknown"; text: string };
+
+/** Commands people type to a terminal all day; also known before the PATH list arrives. */
+const EVERYDAY = new Set(
+  "ls ll la pwd cd cat less head tail grep rg find fd git gh npm npx pnpm yarn bun deno node python python3 pip pip3 uv make cargo rustc go swift xcodebuild brew docker kubectl ssh scp curl wget top htop du df ps kill mkdir touch cp mv rm tree code tsc jest vitest pytest ruby bundle rails mvn gradle java terraform aws gcloud".split(" "),
+);
+/** Words that are commands but more often start a sentence ("open the…", "find my notes"). */
+const WORDS = new Set("open say find look which time date yes test man more w who last leave write talk join sort split what where when how why".split(" "));
+let executables = new Set<string>();
+
+/** The names on the user's PATH (from the app), so "terraform plan" is known without a list. */
+export function knowCommands(names: string[]) {
+  executables = new Set(names);
+}
+
+/** Text that is a shell command: an everyday command, or a PATH command written like one. */
+function shellCommand(text: string): boolean {
+  const [first, second = ""] = text.split(/\s+/);
+  if (!/^[\w.+-]+$/.test(first)) return false;
+  // "make a note", "find my keys", "go to the api session": English, not a command.
+  if (/^(a|an|the|my|me|it|this|that|some|sure|up|out|to|of|for|your|our|i|you|we|please)$/i.test(second)) return false;
+  if (EVERYDAY.has(first)) return true;
+  if (WORDS.has(first.toLowerCase()) || !executables.has(first)) return false;
+  // A sentence starting with a command name ("make a note") has no flags, paths or pipes.
+  return text === first || /\s(-|\.|\/|~|\||>|\$|=)|[|&;]/.test(text);
+}
 
 export function parse(input: string): Command {
   const text = input.trim().replace(/[.!?]+$/, "");
@@ -28,6 +55,11 @@ export function parse(input: string): Command {
   if (/^(continue|resume)$/.test(lower)) return { kind: "open", project: null };
   if ((m = text.match(/^(?:rename (?:yourself |you )?to|call yourself|your name is)\s+(.+)$/i))) return { kind: "rename", name: m[1].trim() };
   if (/^(hide|go away|hide yourself)$/.test(lower)) return { kind: "hide" };
+  // "run npm test in api", "$ ls -la", or just "ls -la". Checked on the raw input: a trailing "?"
+  // or "." can be part of a command.
+  const raw = input.trim();
+  if ((m = raw.match(/^(?:run|\$)\s+(.+?)(?:\s+in\s+(~?[\w./-]+))?$/i))) return { kind: "run", command: m[1], folder: m[2] ?? null };
+  if (shellCommand(raw)) return { kind: "run", command: raw, folder: null };
   if ((/^(tomorrow|today|tonight|in \d+|every|daily|weekdays|monthly)\b/i.test(text) || /\bremind me\b.+\bbefore\b/i.test(text)) && parseReminder(text)) return { kind: "remind", text };
   return { kind: "unknown", text };
 }
@@ -36,6 +68,7 @@ export const HELP = [
   "remind me tomorrow at 9 to check the results · reminders",
   "open session · open api session",
   "open Sidefolk · hide · rename to Pip",
+  "ls -la · run npm test in api (you confirm first)",
 ];
 
 /** What `explain` needs to know about the companion's sessions. */
@@ -69,6 +102,8 @@ export function explain(text: string, ctx: ExplainContext): string {
       return `Rename ${ctx.name} to ${command.name}`;
     case "hide":
       return `Hide ${ctx.name} until you press the shortcut`;
+    case "run":
+      return `Run \`${command.command}\` in ${command.folder ?? "your home folder"}, in your terminal (you confirm first)`;
     case "unknown":
       return "I don't know that one yet. Try “remind me…” or “help”";
   }

@@ -35,6 +35,10 @@ export type Host = {
   openTab?(tab: string): void;
   /** Brings an agent session forward, or continues it in a terminal. Resolves to what happened. */
   openSession?(ref: SessionRef): Promise<string>;
+  /** The folder a command would run in ("api" → ~/git/api); throws when there's none. */
+  resolveFolder?(folder: string | null): Promise<{ path: string; label: string }>;
+  /** Runs a confirmed command in the user's terminal. Resolves to what happened. */
+  runCommand?(command: string, cwd: string): Promise<string>;
 };
 
 const ACTION: Record<string, [string, string]> = {
@@ -249,9 +253,49 @@ export class Companion {
         return this.rename(command.name);
       case "hide":
         return this.host.hide?.();
+      case "run":
+        return this.confirmRun(command.command, command.folder);
       case "unknown":
-        return "I can set reminders and open your work sessions. Type “help” to see how.";
+        return "I can set reminders, run commands and open your work sessions. Type “help” to see how.";
     }
+  }
+
+  /** A command runs only after you've seen it and its folder, and always where you can watch. */
+  private async confirmRun(text: string, wanted: string | null): Promise<string | void> {
+    const { resolveFolder, runCommand } = this.host;
+    if (!resolveFolder || !runCommand) return "Running commands needs the desktop app.";
+    // A project named in "run … in api" is the folder of its work session when there is one.
+    const session = wanted ? this.sessionOf(wanted) : null;
+    let folder: { path: string; label: string };
+    try {
+      folder = await resolveFolder(session?.cwd ?? wanted);
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+    const bubble = this.pet.bubble;
+    bubble.show({
+      id: "run-command",
+      who: `${this.name} · command`,
+      title: "Run this in your terminal?",
+      facts: [
+        { label: "Command", value: text },
+        { label: "Folder", value: folder.label },
+      ],
+      note: "It opens in a new terminal window, so you see everything it does.",
+      choices: [
+        { label: "Cancel", value: "cancel" },
+        { label: "Run in terminal", value: "run", primary: true },
+      ],
+      onChoose: async (value) => {
+        bubble.close("run-command");
+        if (value !== "run") return;
+        try {
+          bubble.say(await runCommand(text, folder.path), 4);
+        } catch (error) {
+          bubble.say(error instanceof Error ? error.message : String(error), 8, "fail");
+        }
+      },
+    });
   }
 
   async rename(name: string): Promise<string> {

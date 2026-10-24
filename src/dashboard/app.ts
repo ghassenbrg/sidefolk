@@ -1,3 +1,4 @@
+import { knowCommands } from "../commands";
 import { icon, mark, type IconName } from "../icons";
 import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
 import { button, h } from "./dom";
@@ -260,6 +261,8 @@ if (inTauri && !import.meta.env.DEV) {
 }
 
 buildNav();
+// The Tell bar recognizes commands on your PATH the same way the companion does.
+if (inTauri) void invoke<string[]>("path_commands").then(knowCommands).catch(() => {});
 await app.refresh().catch((error) => app.toast(String(error), undefined, true));
 void invoke<{ version: string; data_dir: string }>("app_info").then((info) => {
   app.state.version = info.version;

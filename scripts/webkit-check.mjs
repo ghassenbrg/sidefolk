@@ -50,6 +50,13 @@ for (const scheme of ["light", "dark"]) {
   await page.waitForTimeout(1200);
   const result = (await page.locator(".result").textContent()) ?? "";
   if (!result.includes("Sent to Codex")) failures.push(`${scheme} answer: "${result.trim()}"`);
+  // The Tell bar confirms a plain command itself and never hands it to an AI tool.
+  await page.goto(base + "/settings.html");
+  await page.locator(".tell-input").fill("ls -la");
+  assert.match((await page.locator(".tell-preview").textContent()) ?? "", /Run `ls -la` in your home folder/);
+  await page.locator(".tell-input").press("Enter");
+  await page.locator("#toast").getByRole("button", { name: "Run in terminal" }).click();
+  await page.locator("#toast").getByText("Preview: nothing ran", { exact: false }).waitFor();
   // Repeat edits must survive saving, advancing, clearing, deleting and Undo.
   await page.goto(base + "/settings.html?tab=reminders");
   const add = page.getByRole("form", { name: "Add a reminder" });
@@ -102,6 +109,21 @@ await overlay.keyboard.press("c");
 await overlay.locator(".bubble input").fill("reminders");
 await overlay.locator(".bubble input").press("Enter");
 await overlay.getByText("No reminders", { exact: true }).waitFor();
+// A plain command is recognized locally and only runs after the confirmation card.
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("run npm test in api");
+await overlay.locator(".bubble input").press("Enter");
+const run = overlay.locator(".bubble").filter({ hasText: "Run this in your terminal?" });
+await run.waitFor();
+const runText = (await run.innerText()).replace(/\s+/g, " ");
+for (const part of ["npm test", "~/git/api", "Cancel", "Run in terminal"])
+  if (!runText.includes(part)) failures.push(`overlay run card is missing "${part}"`);
+await overlay.waitForTimeout(800);
+await overlay.screenshot({ path: join(out, "overlay-run.png") });
+await run.getByRole("button", { name: "Run in terminal" }).click();
+await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
 await browser.close();
 
 console.log(`screenshots: ${out}`);

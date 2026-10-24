@@ -1,5 +1,6 @@
-import { explain } from "../commands";
+import { explain, parse } from "../commands";
 import { icon } from "../icons";
+import { invoke } from "./api";
 import type { App } from "./app";
 import { agentShort, folder, h } from "./dom";
 
@@ -31,11 +32,34 @@ export function tellBar(app: App) {
     const text = input.value.trim();
     input.value = "";
     update();
+    const command = parse(text);
+    if (command.kind === "run") return confirmRun(app, command.command, command.folder);
     const reply = await app.tell(text);
     if (reply) app.toast(reply);
     void app.refresh();
   });
   return h("form", { class: "tell", onsubmit: (e: Event) => e.preventDefault() }, h("span", { class: "tell-icon" }, icon("requests")), input, preview);
+}
+
+/** Same rule as on the companion: the exact command and folder first, then it runs where you can watch. */
+async function confirmRun(app: App, command: string, wanted: string | null) {
+  try {
+    const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: sessionFolder(app, wanted) ?? wanted });
+    app.toast(`Run \`${command}\` in ${folder.label}? It opens in your terminal.`, {
+      label: "Run in terminal",
+      run: () => void invoke<string>("run_command", { command, cwd: folder.path }).then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)),
+    });
+  } catch (error) {
+    app.toast(String(error), undefined, true);
+  }
+}
+
+/** "run … in api": the folder of the api work session when there is one. */
+function sessionFolder(app: App, project: string | null) {
+  if (!project) return null;
+  const pet = app.state.status.pets[0];
+  const live = pet?.sessions.find((s) => folder(s.project).toLowerCase() === project.toLowerCase());
+  return live ? live.cwd || live.project : null;
 }
 
 function context(app: App) {

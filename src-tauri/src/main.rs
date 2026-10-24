@@ -1,6 +1,7 @@
 // Prevents an extra console window on Windows release builds.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod actions;
 mod app_menu;
 mod bus;
 mod claude_setup;
@@ -213,6 +214,9 @@ fn main() {
         .manage(claude_setup::SetupState::default())
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
+            actions::path_commands,
+            actions::resolve_folder,
+            actions::run_command,
             resolve_permission,
             dispatch,
             overlay_typing,

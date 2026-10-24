@@ -185,7 +185,7 @@ fn focus(host: &Host) -> Result<String, String> {
 const TERMINALS: [(&str, &str); 3] =
     [("terminal", "/System/Applications/Utilities/Terminal.app"), ("iterm", "/Applications/iTerm.app"), ("ghostty", "/Applications/Ghostty.app")];
 
-fn terminal_for(choice: &str, recent: Option<&Path>) -> &'static str {
+pub(crate) fn terminal_for(choice: &str, recent: Option<&Path>) -> &'static str {
     let installed = |key: &str| TERMINALS.iter().any(|(k, path)| *k == key && Path::new(path).exists());
     if choice != "auto" && installed(choice) {
         return TERMINALS.iter().find(|(k, _)| *k == choice).unwrap().0;
@@ -201,8 +201,8 @@ fn terminal_for(choice: &str, recent: Option<&Path>) -> &'static str {
 }
 
 /// Starts `command` in `cwd` in a new terminal window, through the login shell so PATH
-/// finds `claude` and `codex` as it does when the user types them.
-fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Result<String, String> {
+/// finds `claude` and `codex` as it does when the user types them. Returns the terminal's name.
+pub(crate) fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Result<&'static str, String> {
     let line = format!("cd {} && {command}", quote(cwd));
     match terminal {
         "iterm" => {
@@ -210,7 +210,7 @@ fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Result<String, S
                 "tell application \"iTerm2\"\nactivate\nset w to (create window with default profile)\ntell current session of w to write text {}\nend tell",
                 apple(&line)
             ));
-            ok.then(|| "Continuing in iTerm.".to_string()).ok_or_else(|| "iTerm didn't open. Allow Sidefolk to control iTerm in System Settings → Privacy & Security → Automation.".into())
+            ok.then_some("iTerm").ok_or_else(|| "iTerm didn't open. Allow Sidefolk to control iTerm in System Settings → Privacy & Security → Automation.".into())
         }
         "ghostty" => {
             let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
@@ -219,11 +219,11 @@ fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Result<String, S
                 .arg(format!("{command}; exec {shell} -l"))
                 .status()
                 .map_err(|e| e.to_string())?;
-            Ok("Continuing in Ghostty.".into())
+            Ok("Ghostty")
         }
         _ => {
             let ok = osascript(&format!("tell application \"Terminal\"\nactivate\ndo script {}\nend tell", apple(&line)));
-            ok.then(|| "Continuing in Terminal.".to_string()).ok_or_else(|| "Terminal didn't open. Allow Sidefolk to control Terminal in System Settings → Privacy & Security → Automation.".into())
+            ok.then_some("Terminal").ok_or_else(|| "Terminal didn't open. Allow Sidefolk to control Terminal in System Settings → Privacy & Security → Automation.".into())
         }
     }
 }
@@ -275,11 +275,16 @@ pub async fn open_session(
         }
         _ => return Err("Only Claude Code and Codex sessions can be opened.".into()),
     };
+    let terminal = chosen_terminal(&shared);
+    let name = tauri::async_runtime::spawn_blocking(move || run_in_terminal(terminal, &cwd, &command)).await.map_err(|e| e.to_string())??;
+    Ok(Opened { how: "resumed", message: format!("Continuing in {name}.") })
+}
+
+/// The terminal from Settings, or (automatic) the one the user's sessions run in.
+pub(crate) fn chosen_terminal(shared: &Shared) -> &'static str {
     let choice = shared.settings.lock().unwrap().value.terminal.clone();
     let recent = shared.hosts.known.lock().unwrap().values().filter_map(|h| h.app.clone()).last();
-    let terminal = terminal_for(&choice, recent.as_deref());
-    let message = tauri::async_runtime::spawn_blocking(move || run_in_terminal(terminal, &cwd, &command)).await.map_err(|e| e.to_string())??;
-    Ok(Opened { how: "resumed", message })
+    terminal_for(&choice, recent.as_deref())
 }
 
 /// Terminals installed on this Mac, for Settings.

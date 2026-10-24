@@ -173,6 +173,12 @@ function preview(): typeof tauriInvoke {
         }
         return !!r;
       }
+      case "resolve_folder": {
+        const folder = (args as { folder?: string | null }).folder;
+        return { path: "/Users/you", label: folder ? `~/git/${folder.split("/").pop()}` : "~" };
+      }
+      case "run_command":
+        return "Running in Terminal. (Preview: nothing ran.)";
       case "remove_reminder": {
         const i = state.reminders.findIndex((x) => x.id === a.id);
         return i < 0 ? null : state.reminders.splice(i, 1)[0];
