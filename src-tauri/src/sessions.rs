@@ -102,7 +102,11 @@ fn parse_ps(listing: &str) -> HashMap<u32, Process> {
 /// The app bundle an executable belongs to: the outermost `.app` in its path.
 fn bundle_of(executable: &str) -> Option<PathBuf> {
     let end = executable.find(".app/")?;
-    Some(PathBuf::from(&executable[..end + 4]))
+    let bundle = PathBuf::from(&executable[..end + 4]);
+    // Claude Code ships its CLI in a lowercase claude.app inside its version directory.
+    // Launching that bundle opens no window; keep walking to Terminal or Claude desktop.
+    if bundle.file_name().is_some_and(|name| name == "claude.app") { return None; }
+    Some(bundle)
 }
 
 fn host_of(pid: u32) -> Option<Host> {
@@ -143,6 +147,12 @@ fn osascript(script: &str) -> bool {
     Command::new("/usr/bin/osascript").args(["-e", script]).output().is_ok_and(|o| o.status.success())
 }
 
+/// A successful script can still mean no matching tab. Only report a selected tab on true.
+fn select_tab(script: &str) -> bool {
+    Command::new("/usr/bin/osascript").args(["-e", script]).output()
+        .is_ok_and(|out| out.status.success() && String::from_utf8_lossy(&out.stdout).trim() == "true")
+}
+
 fn app_name(app: &Path) -> String {
     app.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "the app".into())
 }
@@ -155,11 +165,11 @@ fn focus(host: &Host) -> Result<String, String> {
         let tty = apple(tty);
         // Needs the Automation permission once; without it the app still comes forward below.
         let picked = match name.as_str() {
-            "Terminal" => osascript(&format!(
-                "tell application \"Terminal\"\nrepeat with w in windows\nrepeat with t in tabs of w\nif tty of t is {tty} then\nset selected of t to true\nset index of w to 1\nactivate\nreturn\nend if\nend repeat\nend repeat\nend tell"
+            "Terminal" => select_tab(&format!(
+                "tell application \"Terminal\"\nrepeat with w in windows\nrepeat with t in tabs of w\nif tty of t is {tty} then\nset selected of t to true\nset index of w to 1\nactivate\nreturn true\nend if\nend repeat\nend repeat\nend tell\nreturn false"
             )),
-            "iTerm" | "iTerm2" => osascript(&format!(
-                "tell application \"iTerm2\"\nrepeat with w in windows\nrepeat with t in tabs of w\nrepeat with s in sessions of t\nif tty of s is {tty} then\nselect w\nselect t\nselect s\nactivate\nreturn\nend if\nend repeat\nend repeat\nend repeat\nend tell"
+            "iTerm" | "iTerm2" => select_tab(&format!(
+                "tell application \"iTerm2\"\nrepeat with w in windows\nrepeat with t in tabs of w\nrepeat with s in sessions of t\nif tty of s is {tty} then\nselect w\nselect t\nselect s\nactivate\nreturn true\nend if\nend repeat\nend repeat\nend repeat\nend tell\nreturn false"
             )),
             _ => false,
         };
@@ -167,8 +177,9 @@ fn focus(host: &Host) -> Result<String, String> {
             return Ok(format!("Opened in {name}."));
         }
     }
-    Command::new("/usr/bin/open").arg("-a").arg(app).status().map_err(|e| e.to_string())?;
-    Ok(format!("Opened {name}."))
+    let status = Command::new("/usr/bin/open").arg("-a").arg(app).status().map_err(|e| e.to_string())?;
+    if !status.success() { return Err(format!("macOS couldn't open {name}.")); }
+    Ok(format!("Opened {name}. Select your session in its window."))
 }
 
 const TERMINALS: [(&str, &str); 3] =
@@ -302,6 +313,30 @@ mod tests {
         let detached = walk(701, &table).unwrap();
         assert_eq!((detached.app, detached.tty.as_deref()), (None, Some("/dev/ttys011")));
         assert!(walk(9999, &table).is_none());
+    }
+
+    #[test]
+    fn skips_bundled_claude_cli_for_desktop_and_terminal_sessions() {
+        let table = parse_ps("1 0 ?? /sbin/launchd\n10 1 ?? /Applications/Claude.app/Contents/MacOS/Claude\n11 10 ?? /Users/me/.local/share/claude/versions/1/claude.app/Contents/MacOS/claude\n20 1 ?? /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal\n21 20 ttys002 /bin/zsh\n22 21 ttys002 /Users/me/.local/share/claude/versions/1/claude.app/Contents/MacOS/claude\n30 1 ?? /Users/me/.local/share/claude/versions/1/claude.app/Contents/MacOS/claude");
+        assert_eq!(walk(11, &table).unwrap().app.as_deref(), Some(Path::new("/Applications/Claude.app")));
+        let terminal = walk(22, &table).unwrap();
+        assert_eq!(terminal.app.as_deref(), Some(Path::new("/System/Applications/Utilities/Terminal.app")));
+        assert_eq!(terminal.tty.as_deref(), Some("/dev/ttys002"));
+        assert_eq!(walk(30, &table).unwrap().app, None);
+        assert_eq!(bundle_of("/Applications/Claude.app/Contents/Resources/claude.app/Contents/MacOS/claude"), Some(PathBuf::from("/Applications/Claude.app")));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "focuses a live Claude desktop session; set SIDEFOLK_TEST_SESSION_PID"]
+    fn live_claude_desktop_host() {
+        let pid = std::env::var("SIDEFOLK_TEST_SESSION_PID").unwrap().parse().unwrap();
+        let host = host_of(pid).expect("live process");
+        assert_eq!(host.app.as_deref(), Some(Path::new("/Applications/Claude.app")));
+        assert!(focus(&host).unwrap().starts_with("Opened Claude."));
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        let front = tauri_nspanel::objc2_app_kit::NSWorkspace::sharedWorkspace().frontmostApplication().unwrap();
+        assert_eq!(front.bundleIdentifier().unwrap().to_string(), "com.anthropic.claudefordesktop");
     }
 
     #[test]
