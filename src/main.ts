@@ -3,7 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { handleToolCall, type ToolCall } from "./agent-tools";
 import type { AgentEvent } from "./agents";
-import { AWAY_SECS, firstToday, morning, welcomeBack, type JournalEntry } from "./away";
+import { AWAY_SECS, firstToday, morning, weekly, weeklyDue, weekStart, welcomeBack, type JournalEntry } from "./away";
 import { HeadsUp, type CalendarEvent } from "./calendar";
 import { knowCommands } from "./commands";
 import { Companion, type Ask, type Host } from "./companion";
@@ -259,12 +259,13 @@ if (inTauri) {
   });
   // Started in the morning (at login, usually): the day's brief, once.
   if (new Date().getHours() < 12) setTimeout(() => void briefing(Date.now() - 12 * 3_600_000, true), 4000);
+  else setTimeout(() => void weeklyWins(), 6000);
   // Coming back after a long time away earns a briefing of what the agents did meanwhile.
   let lastIdle = 0;
   void listen<number>("idle", (e) => {
     const idle = e.payload;
     pet.mind.setOsIdle(idle);
-    if (lastIdle >= AWAY_SECS && idle < 1) void briefing(Date.now() - lastIdle * 1000);
+    if (lastIdle >= AWAY_SECS && idle < 1) void briefing(Date.now() - lastIdle * 1000).then(weeklyWins);
     lastIdle = idle;
   });
   void listen("reminders-changed", () => void reminders.reload());
@@ -313,6 +314,30 @@ function safeStorage() {
   } catch {
     return null;
   }
+}
+
+/** Friday afternoon: what this week brought, and a nudge to note the wins (the evaluation habit). */
+async function weeklyWins() {
+  if (!inTauri || !weeklyDue(safeStorage())) return;
+  const books = await invoke<{ id: string; name: string }[]>("list_notebooks").catch(() => []);
+  const pages = await Promise.all(books.map((b) => invoke<{ name: string; entries: { date: string }[] }>("read_notebook", { id: b.id }).catch(() => null)));
+  const notesThisWeek = pages.flatMap((p) => (p ? p.entries.map((e) => ({ notebook: p.name, date: e.date })) : []));
+  const lines = weekly(await journal(weekStart().getTime()), notesThisWeek);
+  pet.bubble.show({
+    id: "weekly",
+    who: pet.name,
+    title: "Your week",
+    lines: lines.length ? lines : ["A quiet week on my side."],
+    choices: [
+      { label: "Later", value: "later" },
+      { label: "Write this week's wins", value: "write", primary: true },
+    ],
+    onChoose: (value) => {
+      pet.bubble.close("weekly");
+      if (value === "write") void notes.capture("note what I achieved this week for evaluation");
+    },
+  });
+  pet.mind.react("wave", 1.6);
 }
 
 /** `onlyMorning`: at launch, a morning brief if it's the day's first, and nothing otherwise. */
