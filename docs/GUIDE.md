@@ -22,6 +22,7 @@ anything happens. The same field is at the top of the Sidefolk window ("Tell Pip
 | start a claude session in api | A new Claude Code (or Codex) session in your terminal. |
 | open session · open api session | Brings that work session forward, or continues it. |
 | give api a spark · send the api spark home | A worker companion for one project. |
+| next meeting | What's next on your calendar (Settings → Calendar turns on the heads-up). |
 | rename to Bun · hide · help | |
 
 Every card has ×. Closing a request only hides it: it waits in the window until it's answered.

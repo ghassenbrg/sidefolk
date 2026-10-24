@@ -44,9 +44,17 @@ switched off once for existing installs (`recordings_reset`), with the trade-off
 Follow-up idea if they want both: size the overlay window to the companions instead of the
 whole screen (also saves GPU).
 
-**Next for an agent (no user needed):** Phase 9 per PLAN-V2 section 7, starting with the calendar
-heads-up (user's choice: right after the MVP; EventKit, permission asked in setup). Smaller:
-clicking a Spark could open the field scoped to its project; a "Characters" export as a zip.
+**Phase 9 started (3d99851):** calendar heads-up. src-tauri/src/calendar.rs (EventKit via
+objc2-event-kit: status, request on a blocking thread, upcoming events with video-link detection;
+Info.plist usage strings), src/calendar.ts (`HeadsUp`: checks each minute while
+`calendar_heads_up`, announces once with Join, "next meeting"), Settings → Calendar (asks macOS
+when switched on; lead 2–15 min), Today lists next meetings. Release build 3d99851 is running.
+Hand check: switch it on, allow in macOS's dialog, have a meeting with a Meet link in 5 min.
+
+**Next for an agent (no user needed):** more of PLAN-V2 section 7 (morning brief, weekly wins
+from notebooks, timers); clicking a Spark could open the field scoped to its project; a
+character export as one file; sizing the overlay to the companions (fixes black Mission Control
+previews even with "Hide from screen recordings" on, and saves GPU).
 
 ## PLAN PHASE: read this first (24 October, late)
 

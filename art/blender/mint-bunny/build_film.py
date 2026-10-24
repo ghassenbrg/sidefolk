@@ -316,7 +316,9 @@ def bind(obj,weights):
             groups[name].add([v.index],w/total,'REPLACE')
     mod=obj.modifiers.new('Character deformation','ARMATURE'); mod.object=rig
     # Apply armature before subdivision; hair later follows the deformed surface.
-    active(obj); bpy.ops.object.modifier_move_up(modifier=mod.name)
+    active(obj)
+    while list(obj.modifiers).index(mod)>0:
+        bpy.ops.object.modifier_move_up(modifier=mod.name)
     obj.parent=rig
 
 def fixed(name): return lambda p:{name:1}
