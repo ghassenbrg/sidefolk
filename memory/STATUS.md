@@ -85,16 +85,27 @@ listed below, then phases 5–8. Signing/notarization and colleague beta require
   details/history, then a real sleep/wake reminder. DST browser/unit checks already pass.
 - Release rebuild/relaunch is in progress for this continuation; check the final handoff below.
 
-**Phase 4, plain commands done (f4819d7, Claude Code):** src/commands.ts `run` kind (everyday
-commands + the user's PATH via `path_commands`; "make a note"/"find my keys" stay sentences;
-"run X in api" / "$ X"); companion card "Run this in your terminal?" with Command + Folder
-(src/companion.ts `confirmRun`), window Tell bar confirms via toast; Rust src-tauri/src/actions.rs
-(`resolve_folder`: ~, abs, or a name under ~/git, ~/code, ~/Developer…; `run_command` → new
-window of the chosen terminal). Verified: 48 vitest, 24 Rust, WebKit (overlay card + window
-Tell bar). Not run in the real app yet. Next phase 4: per-session full access, Automation
-explanation in setup, end-to-end Terminal/Ghostty/iTerm checks.
-Open proposal to the user (24 Oct): easy custom 2D characters (template sheet + import);
-waiting for their pick before building.
+**Phase 4 (Claude Code, 24 Oct) — built, waiting on the user's hand checks:**
+- Plain commands (f4819d7): src/commands.ts `run` kind (everyday commands + PATH via
+  `path_commands`; "make a note"/"find my keys" stay sentences; "run X in api" / "$ X");
+  companion card "Run this in your terminal?" (Command + Folder) and the window Tell bar's
+  confirm toast; Rust src-tauri/src/actions.rs `resolve_folder` / `run_command`.
+- Full access per session (3ff1157): src/access.ts (`FullAccess` in overlay localStorage,
+  `stillAsk` keeps rm -rf/sudo/force push/reset --hard/curl|sh/publish asking); "Allow everything
+  from this session" on a request card; "Asks first / Full access" button on each session in
+  Today; list mirrored to Rust (`sync_full_access`) so hooks.rs holds that session's requests for
+  the companion even with a terminal in front. Codex CLI sessions in a terminal still ask in
+  Codex (no hook); Sidefolk-started Codex threads get it in phase 6.
+- Terminal control (c781432): "Allow…" in setup step 4 and Settings → Connected tools runs
+  `allow_terminal_control` (osascript to the chosen terminal; Ghostty needs nothing).
+- Release build from c781432 (5.19 MiB) relaunched; logs folder empty after launch.
+- Hand checks for the user: Allow terminal control; type `ls -la` to Pip → Run in terminal;
+  "run git status in sidefolk"; give a Claude Code session Full access and see `npm test`
+  allowed while `rm -rf x` still asks; Open session from Terminal, Ghostty, iTerm, Claude desktop.
+- Decided (user asked for a proposal, goal says choose): custom 2D characters = template sheet
+  (4×4 boxes with feet line + prompt) + import in the window (cut, align, key, outline, preview
+  with warnings) + only idle required (code fills missing poses) + shareable character packs;
+  optional AI sheet from one picture via the user's Codex. Built in phase 6 with Sparks.
 
 **Phase 4 started — host lookup:** CLI `.../claude.app/Contents/MacOS/claude` is skipped while
 walking parents, so the real Claude desktop/terminal app is selected. Terminal/iTerm focus
