@@ -94,6 +94,16 @@ const host: Host = {
     runCommand: (command, cwd) => invoke<string>("run_command", { command, cwd }),
     syncFullAccess: (keys) => void invoke("sync_full_access", { keys }).catch(() => {}),
     startSession: (agent, cwd, fullAccess) => invoke<string>("start_session", { agent, cwd, fullAccess }),
+    open: (target, app) => invoke<string>("open_target", { target, app }),
+    actions: {
+      save: async (name, kind, value, folder) => {
+        const saved = await invoke<{ name: string }>("save_action", { name, kind, value, folder });
+        return `Saved. Say “${saved.name}” to ${kind === "link" ? "open" : "run"} it.`;
+      },
+      find: async (name) => (await invoke<{ name: string; kind: string; value: string; folder: string }[]>("list_actions")).find((a) => a.name.toLowerCase() === name.trim().toLowerCase()) ?? null,
+      run: (name, background) => invoke("run_action", { name, background }),
+      showOutput: (log) => void invoke("show_output", { log }),
+    },
   }),
   // Browser preview: the confirmation card can be looked at; nothing runs.
   ...(!inTauri && {

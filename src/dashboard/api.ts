@@ -79,6 +79,7 @@ function preview(): typeof tauriInvoke {
   const web = "/Users/you/git/website";
   const notesDir = "/Users/you/Library/Application Support/dev.sidefolk.companion/notes";
   const state = {
+    actions: [{ name: "deploy staging", kind: "command", value: "npm run deploy -- staging", folder: api }] as { name: string; kind: string; value: string; folder: string }[],
     characters: [] as { id: string; name: string; poses: string[]; frames: Record<string, string> }[],
     notebooks: [
       {
@@ -235,6 +236,24 @@ function preview(): typeof tauriInvoke {
         return ["claude"];
       case "draft_summary":
         return "## Reliability (Sep–Oct 2026)\n- Led the login migration; errors down 40% [Sep 12]\n\n(Preview: no AI was used.)";
+      case "list_actions":
+        return state.actions;
+      case "save_action": {
+        const a = args as { name: string; kind: string; value: string; folder?: string | null };
+        const saved = { name: a.name.trim(), kind: a.kind, value: a.value.trim(), folder: a.kind === "link" ? "" : `/Users/you/git/${a.folder || "api"}` };
+        if (!saved.name || !saved.value) throw "An action needs a name and a one-line command or link.";
+        state.actions = [...state.actions.filter((x) => x.name !== saved.name), saved];
+        return saved;
+      }
+      case "remove_action":
+        state.actions = state.actions.filter((x) => x.name !== (args as { name: string }).name);
+        return null;
+      case "run_action": {
+        const a = args as { name: string; background?: boolean };
+        return a.background ? { ok: true, message: `${a.name} finished. (Preview: nothing ran.)`, log: "/preview.log" } : { ok: true, message: `Running ${a.name} in Terminal. (Preview: nothing ran.)`, log: null };
+      }
+      case "show_output":
+        return null;
       case "list_characters":
         return state.characters.map(({ frames, ...c }) => c);
       case "character_frames":

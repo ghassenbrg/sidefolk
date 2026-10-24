@@ -67,6 +67,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             &item("go:reminders", "Reminders", Some("CmdOrCtrl+2"))?,
             &item("go:notes", "Notes", Some("CmdOrCtrl+3"))?,
             &item("go:sessions", "Sessions", Some("CmdOrCtrl+4"))?,
+            &item("go:actions", "Actions", Some("CmdOrCtrl+5"))?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::fullscreen(app, None)?,
         ],

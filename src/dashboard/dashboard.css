@@ -890,3 +890,6 @@ button.access.on {
   border-radius: var(--radius-control);
   background: var(--canvas);
 }
+.mono {
+  font-family: var(--font-mono);
+}

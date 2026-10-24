@@ -33,7 +33,7 @@ describe("parse", () => {
     knowCommands(["terraform", "open", "say", "make"]);
     expect(parse("terraform plan -out x").kind).toBe("run");
     expect(parse("terraform").kind).toBe("run");
-    expect(parse("open the team's Jira").kind).toBe("unknown");
+    expect(parse("open the team's Jira")).toEqual({ kind: "open-thing", target: "team's Jira", app: null }); // a saved link, if there is one
     expect(parse("say hello").kind).toBe("unknown");
     expect(parse("make a note about the release").kind).toBe("unknown");
     expect(parse("find my notes").kind).toBe("unknown");
@@ -63,5 +63,17 @@ describe("parse", () => {
     expect(parse("add a spark for ~/git/web called Frontend")).toEqual({ kind: "spark", project: "~/git/web", name: "Frontend", remove: false });
     expect(parse("send the api spark home")).toEqual({ kind: "spark", project: "api", name: null, remove: true });
     expect(parse("give me a minute").kind).toBe("unknown");
+  });
+
+  it("opens folders in apps, links and apps, and saves actions", () => {
+    expect(parse("open api in VS Code")).toEqual({ kind: "open-thing", target: "api", app: "VS Code" });
+    expect(parse("open a terminal in ~/git/x")).toEqual({ kind: "open-thing", target: "~/git/x", app: "terminal" });
+    expect(parse("open github.com/me/x")).toEqual({ kind: "open-thing", target: "github.com/me/x", app: null });
+    expect(parse("open Slack")).toEqual({ kind: "open-thing", target: "Slack", app: null });
+    expect(parse("open session")).toEqual({ kind: "open", project: null });
+    expect(parse("open sidefolk")).toEqual({ kind: "sidefolk" });
+    expect(parse("open notes")).toEqual({ kind: "notes" });
+    expect(parse("save action deploy staging: npm run deploy -- staging in api")).toEqual({ kind: "save-action", name: "deploy staging", value: "npm run deploy -- staging", folder: "api", link: false });
+    expect(parse("save link jira: https://team.atlassian.net/board")).toEqual({ kind: "save-action", name: "jira", value: "https://team.atlassian.net/board", folder: null, link: true });
   });
 });

@@ -3,6 +3,7 @@ import { icon, mark, type IconName } from "../icons";
 import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
 import { button, h } from "./dom";
 import { renderHome } from "./home";
+import { renderActions } from "./actions";
 import { renderCharacters } from "./characters";
 import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
@@ -54,6 +55,7 @@ const NAV: [string, string, IconName][] = [
   ["reminders", "Reminders", "reminders"],
   ["notes", "Notes", "notes"],
   ["sessions", "Sessions", "terminal"],
+  ["actions", "Actions", "next"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
@@ -217,6 +219,7 @@ function draw(focus: boolean) {
       notes: renderNotes,
       sessions: renderSessions,
       characters: renderCharacters,
+      actions: renderActions,
       settings: renderSettings,
       setup: renderSetup,
     }[view] ?? renderHome;

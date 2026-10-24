@@ -42,6 +42,15 @@ export type Host = {
   runCommand?(command: string, cwd: string): Promise<string>;
   /** Starts a new agent session in a folder, in the user's terminal. Resolves to what happened. */
   startSession?(agent: "claude" | "codex", cwd: string, fullAccess: boolean): Promise<string>;
+  /** Opens a folder in an app, a web address or an app; resolves to what opened. */
+  open?(target: string, app: string | null): Promise<string>;
+  /** Saved actions (actions.rs): save one, find one by name, run it. */
+  actions?: {
+    save(name: string, kind: "command" | "link", value: string, folder: string | null): Promise<string>;
+    find(name: string): Promise<{ name: string; kind: string; value: string; folder: string } | null>;
+    run(name: string, background: boolean): Promise<{ ok: boolean; message: string; log: string | null }>;
+    showOutput(log: string): void;
+  };
   /** Gives a project its Spark worker, renames or recolors it, or sends it home (workers.ts). */
   spark?(project: string, change: { name?: string; hue?: number; remove?: boolean }): Promise<string>;
   /** Note commands, handled by notes.ts. */
@@ -343,13 +352,72 @@ export class Companion {
         return this.host.openTab?.("notes");
       case "run":
         return this.confirmRun(command.command, command.folder);
+      case "open-thing": {
+        // A saved link or action by that name comes first ("open jira").
+        const saved = await this.host.actions?.find(command.target).catch(() => null);
+        if (saved && !command.app) return this.runSaved(saved);
+        if (!this.host.open) return "Opening things needs the desktop app.";
+        return this.host.open(command.target, command.app).catch((e) => String(e));
+      }
+      case "save-action": {
+        if (!this.host.actions) return "Saved actions need the desktop app.";
+        return this.host.actions.save(command.name, command.link ? "link" : "command", command.value, command.folder).catch((e) => String(e));
+      }
       case "spark":
         return this.host.spark ? this.host.spark(command.project, { name: command.name ?? undefined, remove: command.remove }).catch((e) => String(e)) : "Sparks need the desktop app.";
       case "start":
         return this.confirmStart(command.agent, command.folder, command.full);
-      case "unknown":
+      case "unknown": {
+        // A saved action's name on its own runs it ("deploy staging").
+        const saved = await this.host.actions?.find(command.text).catch(() => null);
+        if (saved) return this.runSaved(saved);
         return "I can set reminders, run commands and open your work sessions. Type “help” to see how.";
+      }
     }
+  }
+
+  /** A saved link opens at once; a saved command shows what it runs and where, then runs. */
+  private async runSaved(saved: { name: string; kind: string; value: string; folder: string }): Promise<string | void> {
+    const actions = this.host.actions!;
+    if (saved.kind === "link") return (await actions.run(saved.name, false).catch((e) => ({ message: String(e) }))).message;
+    const bubble = this.pet.bubble;
+    bubble.show({
+      id: "run-saved",
+      who: `${this.name} · ${saved.name}`,
+      title: `Run ${saved.name}?`,
+      facts: [
+        { label: "Command", value: saved.value },
+        { label: "Folder", value: saved.folder.replace(/^\/Users\/[^/]+/, "~") },
+      ],
+      choices: [
+        { label: "Cancel", value: "cancel" },
+        { label: "Quietly, tell me when done", value: "quiet" },
+        { label: "In terminal", value: "terminal", primary: true },
+      ],
+      onChoose: async (value) => {
+        bubble.close("run-saved");
+        if (value === "cancel") return;
+        if (value === "terminal") return bubble.say((await actions.run(saved.name, false).catch((e) => ({ message: String(e) }))).message, 4);
+        bubble.say(`Running ${saved.name}…`, 3);
+        this.pet.mind.react("think", 1.2);
+        try {
+          const result = await actions.run(saved.name, true);
+          this.pet.mind.react(result.ok ? "celebrate" : "sad", 1.6);
+          bubble.show({
+            id: "run-saved-result",
+            who: `${this.name} · ${saved.name}`,
+            title: result.message,
+            choices: [...(result.log ? [{ label: "Show output", value: "output" }] : []), { label: "OK", value: "ok", primary: true }],
+            onChoose: (choice) => {
+              bubble.close("run-saved-result");
+              if (choice === "output" && result.log) actions.showOutput(result.log);
+            },
+          });
+        } catch (error) {
+          bubble.say(String(error), 8, "fail");
+        }
+      },
+    });
   }
 
   /** A new session: which tool, which folder, and whether it asks first; you choose before it starts. */
@@ -391,6 +459,8 @@ export class Companion {
 
   /** A command runs only after you've seen it and its folder, and always where you can watch. */
   private async confirmRun(text: string, wanted: string | null): Promise<string | void> {
+    const saved = wanted ? null : await this.host.actions?.find(text).catch(() => null);
+    if (saved) return this.runSaved(saved);
     const { resolveFolder, runCommand } = this.host;
     if (!resolveFolder || !runCommand) return "Running commands needs the desktop app.";
     // A project named in "run … in api" is the folder of its work session when there is one.

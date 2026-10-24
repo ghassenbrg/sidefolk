@@ -25,6 +25,7 @@ const views = [
   ["notes", "/settings.html?tab=notes"],
   ["sessions", "/settings.html?tab=sessions"],
   ["characters", "/settings.html?tab=characters"],
+  ["actions", "/settings.html?tab=actions"],
   ["notebook", "/settings.html?tab=notes:evaluation-h2-2026"],
 ];
 
@@ -92,6 +93,10 @@ for (const scheme of ["light", "dark"]) {
     await page.getByRole("button", { name: "Save character" }).click();
     await page.getByText("Test Bot", { exact: true }).waitFor();
   }
+  // A saved action runs quietly and offers its output.
+  await page.goto(base + "/settings.html?tab=actions");
+  await page.getByRole("button", { name: "Run quietly" }).first().click();
+  await page.locator("#toast").getByRole("button", { name: "Show output" }).waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");

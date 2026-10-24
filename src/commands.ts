@@ -12,6 +12,10 @@ export type Command =
   | { kind: "rename"; name: string }
   | { kind: "hide" }
   | { kind: "help" }
+  /** Opens a folder in an app ("open api in VS Code", "open a terminal in api"), a web address or an app. */
+  | { kind: "open-thing"; target: string; app: string | null }
+  /** Names a command (run in a folder) or a link, to run later by its name. */
+  | { kind: "save-action"; name: string; value: string; folder: string | null; link: boolean }
   /** A Spark worker for a project (folder name or path), or sending it home. */
   | { kind: "spark"; project: string; name: string | null; remove: boolean }
   /** A new Claude Code or Codex session in a folder, in the user's terminal. */
@@ -77,8 +81,15 @@ export function parse(input: string): Command {
   if ((m = text.match(/^(?:open|jump to|go to|back to|continue|resume)\s+(?:the\s+)?(?:(.+?)(?:'s)?\s+)?session$/i)))
     return { kind: "open", project: m[1] ?? null };
   if (/^(continue|resume)$/.test(lower)) return { kind: "open", project: null };
+  // "save action deploy staging: npm run deploy in api", "save link jira: https://…".
+  const raw0 = input.trim();
+  if ((m = raw0.match(/^save\s+(action|command|link)\s+(.{1,40}?)\s*:\s*(.+?)(?:\s+in\s+(~?[\w./-]+))?$/i)))
+    return { kind: "save-action", name: m[2].trim(), value: m[3].trim(), folder: m[1].toLowerCase() === "link" ? null : (m[4] ?? null), link: m[1].toLowerCase() === "link" };
+  if ((m = text.match(/^(?:open\s+)?(?:a\s+(?:new\s+)?)?terminal\s+in\s+(~?[\w./-]+)$/i))) return { kind: "open-thing", target: m[1], app: "terminal" };
+  if ((m = text.match(/^open\s+(~?[\w./-]+)\s+in\s+([\w .+-]{2,30})$/i))) return { kind: "open-thing", target: m[1], app: m[2].trim() };
   if ((m = text.match(/^(?:rename (?:yourself |you )?to|call yourself|your name is)\s+(.+)$/i))) return { kind: "rename", name: m[1].trim() };
   if (/^(hide|go away|hide yourself)$/.test(lower)) return { kind: "hide" };
+  if ((m = text.match(/^open\s+(?:the\s+)?(\S.{0,60})$/i)) && !/\s(session|notebook)$/i.test(text)) return { kind: "open-thing", target: m[1], app: null };
   // "run npm test in api", "$ ls -la", or just "ls -la". Checked on the raw input: a trailing "?"
   // or "." can be part of a command.
   const raw = input.trim();
@@ -95,6 +106,8 @@ export const HELP = [
   "note for evaluation: shipped the login migration · notes",
   "give api a spark · send the api spark home",
   "ls -la · run npm test in api (you confirm first)",
+  "open api in VS Code · open a terminal in api · open github.com",
+  "save action deploy: npm run deploy in api · then just say “deploy”",
 ];
 
 /** What `explain` needs to know about the companion's sessions. */
@@ -128,6 +141,10 @@ export function explain(text: string, ctx: ExplainContext): string {
       return `Rename ${ctx.name} to ${command.name}`;
     case "hide":
       return `Hide ${ctx.name} until you press the shortcut`;
+    case "open-thing":
+      return command.app ? `Open ${command.target} in ${command.app}` : /\.[a-z]{2,}(\/|$)/i.test(command.target) ? `Open ${command.target} in your browser` : `Open ${command.target}`;
+    case "save-action":
+      return command.link ? `Save the link “${command.name}”` : `Save “${command.name}”: ${command.value}${command.folder ? ` in ${command.folder}` : ""}`;
     case "spark":
       return command.remove ? `Send the ${command.project} Spark home` : `Give ${command.project} its own Spark${command.name ? ` called ${command.name}` : ""}`;
     case "start":
