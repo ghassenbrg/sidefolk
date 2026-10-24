@@ -14,10 +14,39 @@ works. Final renders reviewed. This is a separate art asset, with no app integra
 or roadmap change. No commit; pre-existing Rust edits were left alone. Next step only
 if requested: user art review, then rigging/animation or optimization for a target.
 
-Last updated: 2026-10-24 (evening) by Claude Code. The roadmap ([docs/ROADMAP.md](../docs/ROADMAP.md))
+Last updated: 2026-10-24 18:30 by Claude Code. The roadmap ([docs/ROADMAP.md](../docs/ROADMAP.md))
 is implemented through Phase 5, Phase 6 in part, plus a UI/UX pass with voices and a
 dashboard, and the creative-design system applied with "Open session" (below). Nothing since
 commit `b0be266` is committed. All 18 designed characters and three art styles are built. The user asked for the implementation ("implement roadmap"); commit only when asked.
+
+## NOW (24 October, 18:30, Claude Code): read this first
+
+Phases 0–7 of docs/PLAN-V2.md are built and committed (latest d1c0c4d + this status); phase 8 is
+in progress. The user's running app is the release build from d1c0c4d (relaunched 18:27, logs
+empty). Checks at that commit: typecheck, 83 vitest, 29 Rust tests, `npm run check:webkit`.
+CPU of the running build ≈1.3% (app + 3 web views, 60 s).
+
+**Blocked on the user (can't be done by an agent):**
+1. Apple Developer ID keys → `scripts/release.sh` (docs/RELEASE.md step 1); updater keys and a
+   release URL for auto-update (step 2).
+2. Click "Allow notifications" (setup step 3 / Settings) so quit-time reminders schedule; then the
+   checks in docs/REMINDER-CHECKS.md (quit, click, sleep/wake).
+3. Hand checks in the real app: Settings → Connected tools → Allow… (terminal control) and Install
+   (CLI); `ls -la` to Pip → Run in terminal; full access on a Claude Code session (`npm test`
+   allowed, `rm -rf x` still asks); start a session; open session from Terminal / Ghostty / iTerm /
+   Claude desktop; "give sidefolk a spark"; Characters import with a real drawing; notes +
+   Draft a summary (one real Claude call); saved action "Run quietly".
+4. Two or three colleagues for a week (phase 8 "done when").
+
+**Fixed today on the user's report:** Mission Control desktop previews were black. Cause:
+`hide_in_recordings` (content protection) on a full-screen overlay. Now off by default and
+switched off once for existing installs (`recordings_reset`), with the trade-off explained.
+Follow-up idea if they want both: size the overlay window to the companions instead of the
+whole screen (also saves GPU).
+
+**Next for an agent (no user needed):** Phase 9 per PLAN-V2 section 7, starting with the calendar
+heads-up (user's choice: right after the MVP; EventKit, permission asked in setup). Smaller:
+clicking a Spark could open the field scoped to its project; a "Characters" export as a zip.
 
 ## PLAN PHASE: read this first (24 October, late)
 
