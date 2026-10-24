@@ -19,6 +19,7 @@ export type ReminderStore = {
   list(): Promise<Reminder[]>;
   add(text: string, due: number, project: string | null, from?: string, repeat?: Repeat): Promise<Reminder>;
   update(id: string, change: { done?: boolean; due?: number; fired?: boolean }): Promise<void>;
+  remove(id: string): Promise<void>;
   /** Shows the overlay while the pet is hidden (false puts it back). */
   peek(show: boolean): void;
 };
@@ -72,7 +73,32 @@ export class Reminders {
     this.list.push(reminder);
     // Pip writes it down.
     this.companion.pet.mind.react("write", 1.6);
-    return repeat ? `OK, ${describeRepeat(repeat, due)}, starting ${describeDue(due)}: ${what}` : `OK, ${describeDue(due)}: ${what}`;
+    const reply = repeat ? `OK, ${describeRepeat(repeat, due)}, starting ${describeDue(due)}: ${what}` : `OK, ${describeDue(due)}: ${what}`;
+    this.confirm(reminder, reply);
+    return reply;
+  }
+
+  /** The saved reminder, with Undo for a few seconds (a misheard time is fixed in one click). */
+  private confirm(reminder: Reminder, reply: string) {
+    const bubble = this.companion.pet.bubble;
+    const id = `reminder-added-${reminder.id}`;
+    bubble.show({
+      id,
+      who: `${this.companion.pet.name} · reminder`,
+      title: reply,
+      choices: [
+        { label: "Undo", value: "undo" },
+        { label: "OK", value: "ok", primary: true },
+      ],
+      onChoose: async (value) => {
+        bubble.close(id);
+        if (value !== "undo") return;
+        await this.store.remove(reminder.id);
+        this.list = this.list.filter((r) => r.id !== reminder.id);
+        bubble.say("Removed.", 3);
+      },
+    });
+    setTimeout(() => bubble.close(id), 8_000);
   }
 
   /** "New reminder…": one field that takes the time too, or asks for it next. */
@@ -219,6 +245,7 @@ export function memoryStore(): ReminderStore {
       return r;
     },
     update: async () => {},
+    remove: async (id) => void list.splice(list.findIndex((r) => r.id === id) >>> 0, 1),
     peek: () => {},
   };
 }

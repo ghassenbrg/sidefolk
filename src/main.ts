@@ -83,6 +83,7 @@ const reminderStore: ReminderStore = inTauri
       list: () => invoke<Reminder[]>("list_reminders"),
       add: (text, due, project, from, repeat) => invoke<Reminder>("add_reminder", { text, due, project, from, repeat }),
       update: async (id, change) => void (await invoke("update_reminder", { id, change })),
+      remove: async (id) => void (await invoke("remove_reminder", { id })),
       peek: (show) => void invoke("peek", { show }),
     }
   : memoryStore();
