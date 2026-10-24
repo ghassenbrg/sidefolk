@@ -42,3 +42,6 @@ export function ago(at: number, now = Date.now()) {
 
 /** The time zone shown next to reminder times, e.g. "Europe/Paris". */
 export const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/** The terminals Sidefolk can open things in (sessions.rs), by their setting key. */
+export const TERMINAL_LABELS: Record<string, string> = { terminal: "Terminal", iterm: "iTerm", ghostty: "Ghostty", wezterm: "WezTerm", kitty: "kitty", alacritty: "Alacritty" };

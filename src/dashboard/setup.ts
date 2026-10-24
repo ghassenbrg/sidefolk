@@ -1,8 +1,8 @@
 import { notificationSetting } from "./notifications";
 import { shortcutLabel } from "../keys";
-import { invoke } from "./api";
+import { invoke, type Settings } from "./api";
 import type { App } from "./app";
-import { button, h } from "./dom";
+import { button, h, TERMINAL_LABELS } from "./dom";
 import { header } from "./ui";
 
 // The first-launch guide: five short steps anyone can follow, no technical words until the
@@ -103,6 +103,7 @@ export function renderSetup(app: App, arg: string) {
         connect(integrations.claude_hooks, "claude", "Claude Code", "See its sessions and answer its requests. Each change is explained first and a backup is kept."),
         connect(integrations.claude_tools, "tools-claude", "Companion tools for Claude Code", "Lets Claude Code send you a note, ask a question or set a reminder."),
         connect(integrations.codex_tools, "tools-codex", "Companion tools for Codex", "The same for Codex."),
+        terminalChoice(app),
         terminalControl(),
       );
       actions.append(next("Skip or continue"));
@@ -150,4 +151,20 @@ export function terminalControl() {
       }
     }),
   );
+}
+
+let installedTerminals: string[] | null = null;
+
+/** "Your terminal": the one commands and sessions open in, picked from what's installed. */
+function terminalChoice(app: App) {
+  if (!installedTerminals) {
+    void invoke<string[]>("terminals").then((t) => {
+      installedTerminals = t;
+      app.redraw(true);
+    });
+  }
+  const select = h("select", { id: "setup-terminal" }, h("option", { value: "auto", text: "Automatic" }), ...(installedTerminals ?? []).map((t) => h("option", { value: t, text: TERMINAL_LABELS[t] ?? t })));
+  select.value = app.state.settings.terminal;
+  select.addEventListener("change", () => void app.save({ terminal: select.value as Settings["terminal"] }, `Commands and sessions open in ${TERMINAL_LABELS[select.value] ?? "your usual terminal"}.`));
+  return h("div", { class: "setting" }, h("div", { class: "setting-text" }, h("label", { for: select.id, text: "Your terminal" }), h("p", { class: "muted", text: "Where commands and sessions open." })), select);
 }

@@ -3,7 +3,7 @@ import { icon, type IconName } from "../icons";
 import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
 import type { App } from "./app";
-import { button, h } from "./dom";
+import { button, h, TERMINAL_LABELS } from "./dom";
 import { cachedCharacters, characters as loadCharacters } from "./characters";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
@@ -17,7 +17,6 @@ let terminals: string[] | null = null;
 let recording = false;
 let charactersLoaded = false;
 
-const TERMINAL_LABELS: Record<string, string> = { terminal: "Terminal", iterm: "iTerm", ghostty: "Ghostty" };
 
 function group(title: string, glyph: IconName, id: string, ...rows: (HTMLElement | null)[]) {
   return h("section", { class: "card settings-group", id, "aria-labelledby": `${id}-title` }, h("h2", { id: `${id}-title`, class: "with-icon" }, icon(glyph), h("span", { text: title })), ...rows);
@@ -100,6 +99,18 @@ export function renderSettings(app: App, arg: string) {
       "home",
       "companion",
       row("Looks like", "Pip, or a character you made.", h("div", { class: "inline" }, look, button("Make your own…", () => app.go("characters"))), "setting-look"),
+    ),
+  );
+
+  const terminalOptions: [string, string][] = [["auto", "Automatic"], ...(terminals ?? []).map((t): [string, string] => [t, TERMINAL_LABELS[t] ?? t])];
+  view.append(
+    group(
+      "Terminal",
+      "terminal",
+      "terminal",
+      select(app, "terminal", "Default terminal", "Where commands, new sessions and continued sessions open. Automatic uses the one your sessions run in, else a terminal you installed. A running session always comes forward where it is.", terminalOptions),
+      terminalControl(),
+      row("Command line tool", "In a project folder, “sidefolk here --name Backend” gives it a Spark; “sidefolk home” sends it home. Asks for your password once to install.", button("Install…", () => void invoke<string>("install_cli").then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)))),
     ),
   );
 
@@ -190,7 +201,6 @@ export function renderSettings(app: App, arg: string) {
     ),
   );
 
-  const terminalOptions: [string, string][] = [["auto", "Automatic (where your sessions run)"], ...(terminals ?? []).map((t): [string, string] => [t, TERMINAL_LABELS[t] ?? t])];
   view.append(
     group(
       "Connected tools",
@@ -201,9 +211,6 @@ export function renderSettings(app: App, arg: string) {
       toolRow(app, "claude_tools", "tools-claude", "Companion tools for Claude Code", "Claude Code can send you a note, ask a question, set a reminder or check if you're around.", "Runs `claude mcp add` to register Sidefolk's tools for your user and keeps a backup of Claude's config.", "Claude Code can no longer reach you through a companion. Notes, questions and reminders from it stop."),
       toolRow(app, "codex_tools", "tools-codex", "Companion tools for Codex", "The same tools for Codex sessions.", "Runs `codex mcp add` to register Sidefolk's tools and keeps a backup of Codex's config.", "Codex can no longer reach you through a companion."),
       integrations.claude_hooks ? toggle(app, "pet_answers_permissions", "Answer requests on the companion", "When no terminal or editor is in front, the companion asks for up to 60 seconds. Otherwise the tool asks in its own window as usual.") : null,
-      select(app, "terminal", "Open sessions in", "Where “Continue” opens an ended work session and where commands run. A running session always comes forward where it is.", terminalOptions),
-      terminalControl(),
-      row("Command line tool", "In a project folder, “sidefolk here --name Backend” gives it a Spark; “sidefolk home” sends it home. Asks for your password once to install.", button("Install…", () => void invoke<string>("install_cli").then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)))),
     ),
   );
 

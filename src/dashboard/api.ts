@@ -24,7 +24,7 @@ export type Settings = {
   volume: number;
   speak: boolean;
   voice: string;
-  terminal: "auto" | "terminal" | "iterm" | "ghostty";
+  terminal: "auto" | "terminal" | "iterm" | "ghostty" | "wezterm" | "kitty" | "alacritty";
   hide_from_dock: boolean;
 };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
@@ -330,7 +330,7 @@ function preview(): typeof tauriInvoke {
           { name: "Daniel", language: "en_GB" },
         ];
       case "terminals":
-        return ["terminal", "ghostty"];
+        return ["ghostty", "iterm", "terminal"];
       case "open_session":
         return { how: "focused", message: "Opened in Ghostty." };
       case "tray_action":

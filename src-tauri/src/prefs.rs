@@ -94,7 +94,7 @@ fn check(value: &Option<String>, name: &str, allowed: &[&str]) -> Result<(), Str
 #[tauri::command]
 pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: Change) -> Result<crate::settings::Settings, String> {
     check(&change.pet_size, "Pet size", &["small", "medium", "large"])?;
-    check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty"])?;
+    check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
     if let Some(shortcut) = change.shortcut.as_deref() {
         crate::tray::register_shortcut(&app, shortcut)?;
     }

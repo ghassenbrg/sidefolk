@@ -46,7 +46,8 @@ pub struct Settings {
     pub voice: String,
     /// A menu-bar-only app (no Dock icon, not in ⌘Tab).
     pub hide_from_dock: bool,
-    /// Where "Open session" continues a session: auto | terminal | iterm | ghostty.
+    /// The terminal sessions and commands open in: auto | terminal | iterm | ghostty | wezterm |
+    /// kitty | alacritty.
     pub terminal: String,
 }
 impl Default for Settings {

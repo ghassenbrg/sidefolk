@@ -182,22 +182,32 @@ fn focus(host: &Host) -> Result<String, String> {
     Ok(format!("Opened {name}. Select your session in its window."))
 }
 
-const TERMINALS: [(&str, &str); 3] =
-    [("terminal", "/System/Applications/Utilities/Terminal.app"), ("iterm", "/Applications/iTerm.app"), ("ghostty", "/Applications/Ghostty.app")];
+/// Terminals Sidefolk can open a session or command in: key and app bundle name. Favorites first:
+/// "Automatic" picks the first one installed after the one the user's sessions run in.
+const TERMINALS: [(&str, &str); 6] = [("ghostty", "Ghostty"), ("iterm", "iTerm"), ("wezterm", "WezTerm"), ("kitty", "kitty"), ("alacritty", "Alacritty"), ("terminal", "Terminal")];
+
+/// Where a terminal is installed: Apple's Terminal, /Applications or ~/Applications.
+fn app_path(key: &str) -> Option<PathBuf> {
+    let (_, bundle) = TERMINALS.iter().find(|(k, _)| *k == key)?;
+    if key == "terminal" {
+        return Some(PathBuf::from("/System/Applications/Utilities/Terminal.app"));
+    }
+    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
+    [PathBuf::from("/Applications"), home.join("Applications")].into_iter().map(|dir| dir.join(format!("{bundle}.app"))).find(|p| p.exists())
+}
 
 pub(crate) fn terminal_for(choice: &str, recent: Option<&Path>) -> &'static str {
-    let installed = |key: &str| TERMINALS.iter().any(|(k, path)| *k == key && Path::new(path).exists());
-    if choice != "auto" && installed(choice) {
-        return TERMINALS.iter().find(|(k, _)| *k == choice).unwrap().0;
+    let installed = |key: &str| app_path(key).is_some();
+    if let Some((key, _)) = TERMINALS.iter().find(|(k, _)| *k == choice && installed(k)) {
+        return key;
     }
-    // Auto: the terminal the user's sessions run in, else Terminal.
+    // Automatic: the terminal the user's sessions run in, else one they installed themselves
+    // (people who add a terminal use it), else Apple's.
     let recent = recent.map(app_name).unwrap_or_default().to_lowercase();
-    for key in ["ghostty", "iterm"] {
-        if recent.starts_with(key) && installed(key) {
-            return key;
-        }
+    if let Some((key, _)) = TERMINALS.iter().find(|(k, _)| recent.starts_with(k) && installed(k)) {
+        return key;
     }
-    "terminal"
+    TERMINALS.iter().map(|(k, _)| *k).find(|k| installed(k)).unwrap_or("terminal")
 }
 
 /// Starts `command` in `cwd` in a new terminal window, through the login shell so PATH
@@ -212,14 +222,23 @@ pub(crate) fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Resul
             ));
             ok.then_some("iTerm").ok_or_else(|| "iTerm didn't open. Allow Sidefolk to control iTerm in System Settings → Privacy & Security → Automation.".into())
         }
-        "ghostty" => {
+        // These take the command on their own command line; the shell stays open after it.
+        "ghostty" | "wezterm" | "kitty" | "alacritty" => {
             let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
-            Command::new("/usr/bin/open")
-                .args(["-na", "/Applications/Ghostty.app", "--args", &format!("--working-directory={cwd}"), "-e", &shell, "-lic"])
-                .arg(format!("{command}; exec {shell} -l"))
-                .status()
-                .map_err(|e| e.to_string())?;
-            Ok("Ghostty")
+            let app = app_path(terminal).ok_or("That terminal isn't installed.")?;
+            let script = format!("{command}; exec {shell} -l");
+            let mut args: Vec<String> = vec!["-na".into(), app.to_string_lossy().into(), "--args".into()];
+            match terminal {
+                "ghostty" => args.extend([format!("--working-directory={cwd}"), "-e".into(), shell.clone(), "-lic".into(), script]),
+                "wezterm" => args.extend(["start".into(), "--cwd".into(), cwd.into(), "--".into(), shell.clone(), "-lic".into(), script]),
+                "kitty" => args.extend(["--directory".into(), cwd.into(), shell.clone(), "-lic".into(), script]),
+                _ => args.extend(["--working-directory".into(), cwd.into(), "-e".into(), shell.clone(), "-lic".into(), script]),
+            }
+            let status = Command::new("/usr/bin/open").args(&args).status().map_err(|e| e.to_string())?;
+            if !status.success() {
+                return Err("The terminal didn't open.".into());
+            }
+            Ok(TERMINALS.iter().find(|(k, _)| *k == terminal).map_or("your terminal", |(_, name)| name))
         }
         _ => {
             let ok = osascript(&format!("tell application \"Terminal\"\nactivate\ndo script {}\nend tell", apple(&line)));
@@ -290,7 +309,7 @@ pub(crate) fn chosen_terminal(shared: &Shared) -> &'static str {
 /// Terminals installed on this Mac, for Settings.
 #[tauri::command]
 pub fn terminals() -> Vec<&'static str> {
-    TERMINALS.iter().filter(|(_, path)| Path::new(path).exists()).map(|(k, _)| *k).collect()
+    TERMINALS.iter().map(|(k, _)| *k).filter(|k| app_path(k).is_some()).collect()
 }
 
 #[cfg(test)]
