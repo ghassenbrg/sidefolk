@@ -3,7 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { handleToolCall, type ToolCall } from "./agent-tools";
 import type { AgentEvent } from "./agents";
-import { AWAY_SECS, welcomeBack, type JournalEntry } from "./away";
+import { AWAY_SECS, firstToday, morning, welcomeBack, type JournalEntry } from "./away";
 import { HeadsUp, type CalendarEvent } from "./calendar";
 import { knowCommands } from "./commands";
 import { Companion, type Ask, type Host } from "./companion";
@@ -257,6 +257,8 @@ if (inTauri) {
     if (action === "new-reminder") void reminders.command("", "new-reminder");
     if (action === "answer" && id && text) void invoke("answered", { id, ok: companion.answer(id, text) });
   });
+  // Started in the morning (at login, usually): the day's brief, once.
+  if (new Date().getHours() < 12) setTimeout(() => void briefing(Date.now() - 12 * 3_600_000, true), 4000);
   // Coming back after a long time away earns a briefing of what the agents did meanwhile.
   let lastIdle = 0;
   void listen<number>("idle", (e) => {
@@ -305,7 +307,24 @@ if (inTauri) {
   install(companion);
 }
 
-async function briefing(since: number) {
+function safeStorage() {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** `onlyMorning`: at launch, a morning brief if it's the day's first, and nothing otherwise. */
+async function briefing(since: number, onlyMorning = false) {
+  // The first one of the day is a morning brief: today's meetings and reminders come first.
+  if (firstToday(safeStorage())) {
+    const meetings = settings?.calendar_heads_up ? await invoke<CalendarEvent[]>("upcoming_events", { hours: 14 }).catch(() => []) : [];
+    const today = morning(await journal(since), reminders.upcoming, meetings);
+    if (today.length)
+      return pet.bubble.show({ id: "welcome", who: pet.name, title: "Good morning. Today:", lines: today, choices: [{ label: "OK", value: "ok", primary: true }], onChoose: () => {} });
+  }
+  if (onlyMorning) return;
   const lines = welcomeBack(await journal(since), reminders.upcoming);
   if (!lines.length) return;
   pet.bubble.show({

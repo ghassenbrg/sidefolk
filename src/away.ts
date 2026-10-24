@@ -34,3 +34,29 @@ export function welcomeBack(entries: JournalEntry[], upcoming: Reminder[], now =
   if (next) lines.push(`Next reminder: ${describeDue(new Date(next.due), now)} · ${next.text}`);
   return lines.slice(0, 6);
 }
+
+/** Today's meetings and reminders, then what happened overnight: the first briefing of a day. */
+export function morning(entries: JournalEntry[], upcoming: Reminder[], meetings: { title: string; start: number }[], now = new Date()): string[] {
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+  const clock = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const lines = [
+    ...meetings.filter((m) => m.start <= end.getTime()).slice(0, 3).map((m) => `${clock(m.start)} · ${m.title}`),
+    ...upcoming.filter((r) => r.due <= end.getTime()).slice(0, 3).map((r) => `${clock(r.due)} · ${r.text}`),
+  ];
+  // Overnight work, without its "next reminder" line (today's are listed above).
+  const overnight = welcomeBack(entries, [], now);
+  return [...lines, ...overnight].slice(0, 7);
+}
+
+/** Whether today's first briefing is still to come (kept per day in this Mac's storage). */
+export function firstToday(storage: Pick<Storage, "getItem" | "setItem"> | null, now = new Date()): boolean {
+  const day = now.toDateString();
+  try {
+    if (storage?.getItem("sidefolk.morning") === day) return false;
+    storage?.setItem("sidefolk.morning", day);
+  } catch {
+    // Without storage every long absence gets the plain welcome back.
+  }
+  return true;
+}
