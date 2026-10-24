@@ -10,18 +10,16 @@
     "web:build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "measure": "scripts/measure.sh",
-    "model": "blender --background --factory-startup --python art/blender/build_hero.py",
     "test": "vitest run",
-    "check:webkit": "node scripts/webkit-check.mjs"
+    "check:webkit": "node scripts/webkit-check.mjs",
+    "sprites": "python3 scripts/make_sprites.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",
-    "chrono-node": "^2.10.3",
-    "three": "^0.186.1"
+    "chrono-node": "^2.10.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4",
-    "@types/three": "^0.186.0",
     "playwright": "^1.64.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",

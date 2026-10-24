@@ -126,7 +126,7 @@ addEventListener("pointerup", () => {
 });
 
 const onCursor = (x: number, y: number) => {
-  pet.mind.onCursor(pet.stage.toWorld(x, y));
+  pet.mind.onCursor(pet.bounds.toWorld(x, y));
   input.refresh(x, y);
 };
 
@@ -240,7 +240,7 @@ if (import.meta.env.DEV) {
       if (e.payload === "wake") pet.mind.setOsIdle(0);
       if (e.payload === "welcome") void briefing(0);
       if (e.payload === "bubbles") report(`bubbles [${pet.name}] ${pet.bubble.root.hidden ? "" : pet.bubble.root.innerText.replace(/\s+/g, " ")}`);
-      if (e.payload === "state") report(`state ${pet.name}:${pet.pet.clip}@${pet.mind.x.toFixed(0)}`, true);
+      if (e.payload === "state") report(`state ${pet.name}:${pet.view.clip}@${pet.mind.x.toFixed(0)}`, true);
       if (e.payload.startsWith("run:")) void companion.run(e.payload.slice(4)).then((r) => r && pet.bubble.say(r, 5));
       // Presses the first visible card button with this label.
       if (e.payload.startsWith("choose:")) {
@@ -250,7 +250,7 @@ if (import.meta.env.DEV) {
         button?.click();
       }
     });
-    report(`overlay ${pet.stage.width}x${pet.stage.height} dpr=${devicePixelRatio}`);
+    report(`overlay ${pet.bounds.width}x${pet.bounds.height} dpr=${devicePixelRatio}`);
     void listen("overlay-resized", () => setTimeout(() => report(`refit ${innerWidth}x${innerHeight}`), 100));
     void listen<AgentEvent>("agent", (e) => report(`agent ${e.payload.source} ${e.payload.kind} ${e.payload.project} ${e.payload.detail}`));
     void listen<Ask>("permission", (e) => report(`ask ${e.payload.id} ${e.payload.title} ${e.payload.detail}`));
@@ -260,7 +260,7 @@ if (import.meta.env.DEV) {
       if (interactive !== lastInteractive) report(`interactive=${(lastInteractive = interactive)}`);
     }, 100);
     setInterval(() => {
-      report(`vis=${document.visibilityState} raf=${(frames / 10).toFixed(0)}/s clip=${pet.pet.clip} x=${pet.mind.x.toFixed(0)} size=${pet.stage.width}x${pet.stage.height}`, true);
+      report(`vis=${document.visibilityState} raf=${(frames / 10).toFixed(0)}/s clip=${pet.view.clip} x=${pet.mind.x.toFixed(0)} size=${pet.bounds.width}x${pet.bounds.height}`, true);
       frames = 0;
     }, 10_000);
   }

@@ -24,7 +24,7 @@ npm run check:webkit  # with npm run web running: every view in WebKit, fails on
                       # (once: npx playwright install webkit)
 npm run build         # optimized src-tauri/target/release/bundle/macos/Sidefolk.app
 npm run measure       # CPU/RAM of the built app and its WebKit helpers
-npm run model         # rebuild public/models/hero.glb in Blender (headless)
+npm run sprites       # cut public/pip/*.png from the generated sheets in art/pip
 ```
 
 Releasing (signing, notarizing, auto-update): [docs/RELEASE.md](docs/RELEASE.md).
@@ -93,10 +93,11 @@ TEST_DIR=$(mktemp -d); cp ~/.claude/settings.json "$TEST_DIR/claude-settings.jso
 ## Layout
 
 ```
-src/                 the companion's page (TypeScript + three.js)
+src/                 the companion's page (TypeScript)
   main.ts            boot, events from Rust, frame loop, welcome-back
   companion.ts       the companion: requests, commands, opening sessions, status for the window
-  familiar.ts        its model, mind, light, canvas, card and status badge
+  familiar.ts        the companion on screen: Pip's frames, mind, card and status badge
+  pip.ts             Pip: frame per pose, breathing, blinks, hop, status light, hit testing
   agents.ts          folds agent sessions into one thing to act out
   commands.ts        what the field understands (pure, local)
   reminders.ts       reminder scheduler and cards; when.ts parses times (chrono-node)
@@ -104,8 +105,7 @@ src/                 the companion's page (TypeScript + three.js)
   away.ts            the welcome-back briefing (pure)
   mind.ts            behavior: idle routine, reactions, directives, dragging, frame rate
   bubble.ts          the card: lines, requests (who, context, facts, choices), the field
-  input.ts           click-through hit testing against the companion's mesh
-  pet/               model loader, animation, status light
+  input.ts           click-through: interactive only over Pip's opaque pixels or its card
   tokens.css         design tokens; states.ts status words and glyphs; icons.ts icons and mark
   dashboard/         the Sidefolk window: app.ts, home, requests, reminders, settings
 src-tauri/src/       Rust core
@@ -118,8 +118,8 @@ src-tauri/src/       Rust core
   mcp_setup.rs       companion tools installer (claude/codex mcp add, with backups)
   claude_setup.rs    confirmed hook installer, backup and uninstall
   journal.rs · reminders.rs · crew.rs · settings.rs · prefs.rs · tray.rs · voice.rs
-art/                 concept sheets, spec, Blender build script, brand SVGs
+art/                 pip/ (generated sprite sheets and how to remake them), brand SVGs, icon
 creative-design/     the design package; v2/ holds the Pip and Spark concept sheets
-public/models/       hero.glb (`npm run model`)
-scripts/             make_icons.py, measure.sh, webkit-check.mjs
+public/pip/          Pip's frames (`npm run sprites`)
+scripts/             make_icons.py, make_sprites.py, measure.sh, webkit-check.mjs
 ```

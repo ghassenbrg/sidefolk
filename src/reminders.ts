@@ -69,6 +69,8 @@ export class Reminders {
   private async add(what: string, due: Date) {
     const reminder = await this.store.add(what, due.getTime(), null);
     this.list.push(reminder);
+    // Pip writes it down.
+    this.companion.pet.mind.react("write", 1.6);
     return `OK, ${describeDue(due)}: ${what}`;
   }
 

@@ -53,12 +53,22 @@ const ACTION: Record<string, [string, string]> = {
 export class Companion {
   /** Open requests (permissions, agent questions, due reminders), oldest first. */
   private readonly requests = new Map<string, Card>();
+  /** Due reminders whose card is on screen: Pip holds the note while any is. */
+  private readonly notes = new Set<string>();
 
   private constructor(
     readonly pet: Familiar,
     private readonly host: Host,
   ) {
-    pet.bubble.onTyping = (typing) => host.typing(typing);
+    pet.bubble.onTyping = (typing) => {
+      host.typing(typing);
+      this.pose();
+    };
+  }
+
+  /** Listening while you type beats holding a reminder's note, which beats everything else. */
+  private pose() {
+    this.pet.mind.pose = this.pet.bubble.typing ? "listen" : this.notes.size ? "note" : null;
   }
 
   static async start(name: string, host: Host, zoom = 1): Promise<Companion> {
@@ -144,7 +154,17 @@ export class Companion {
         this.closeRequest(card.id);
         card.onChoose(value);
       },
+      // Closed with ×: the request still waits (window, menu bar), but Pip stops insisting.
+      onClose: () => {
+        this.notes.delete(card.id);
+        this.pet.asks.delete(card.id);
+        this.pet.agents.asking(this.pet.asks.size);
+        this.pose();
+        card.onClose?.();
+      },
     };
+    if (card.meta?.kind === "reminder") this.notes.add(card.id);
+    this.pose();
     this.requests.set(card.id, tracked);
     this.pet.asks.add(card.id);
     this.pet.bubble.show(tracked);
@@ -154,6 +174,8 @@ export class Companion {
   /** The request ended elsewhere (answered in the terminal, expired, the agent went away). */
   closeRequest(id: string) {
     if (!this.requests.delete(id)) return;
+    this.notes.delete(id);
+    this.pose();
     this.pet.asks.delete(id);
     this.pet.bubble.close(id);
     this.pet.agents.asking(this.pet.asks.size);
@@ -268,7 +290,7 @@ export class Companion {
           main: true,
           project: null,
           out: true,
-          clip: pet.pet.clip,
+          clip: pet.view.clip,
           sessions: pet.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at })),
           outcomes: [...pet.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
         },

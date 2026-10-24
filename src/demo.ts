@@ -41,7 +41,7 @@ export function install(companion: Companion) {
     "6": () => companion.handleEvent(event("done", "Tests pass. 3 files changed.")),
     "7": () => companion.handleEvent(event("failed", "rate_limit")),
     "0": () => companion.handleEvent(event("end")),
-    r: () => void companion.run("remind me in 0 minutes to stretch"),
+    r: () => void companion.run("remind me in 1 minute to stretch"),
     p: () => {
       project = (project + 1) % projects.length;
       companion.pet.bubble.say(`Demo project: ${projects[project].split("/").pop()}`, 2);

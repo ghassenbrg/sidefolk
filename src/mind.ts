@@ -1,5 +1,4 @@
-import type { ClipName } from "./pet/clips";
-import type { Eyes, Pet } from "./pet/pet";
+import type { ClipName, PipView } from "./pip";
 
 /** What agent activity asks the companion to act out. */
 export type Directive = { clip: "think" | "read" | "work" | "alert" } | null;
@@ -35,9 +34,11 @@ export class Mind {
   private cursorWasNear = false;
   private waveCooldown = 5;
   directive: Directive = null;
+  /** What the companion is doing for you right now (listening, holding a reminder); beats agent work. */
+  pose: "listen" | "note" | null = null;
 
   constructor(
-    public pet: Pet,
+    public pet: PipView,
     private readonly bounds: Bounds,
   ) {
     this.x = Math.max(MARGIN, bounds.width - 180);
@@ -49,25 +50,6 @@ export class Mind {
 
   get target(): Point | null {
     return this.cursor;
-  }
-
-  get eyes(): Eyes {
-    if (this.pet.clip === "sleep") return "closed";
-    if (this.pet.clip === "celebrate") return "happy";
-    return "open";
-  }
-
-  get gaze(): number {
-    switch (this.pet.clip) {
-      case "sleep":
-        return 0;
-      case "work":
-      case "read":
-      case "dangle":
-        return 0.35;
-      default:
-        return 1;
-    }
   }
 
   /**
@@ -91,6 +73,8 @@ export class Mind {
       case "sad":
       case "work":
       case "alert":
+      case "listen":
+      case "note":
         return watching ? 30 : 15;
       default:
         return 30;
@@ -118,8 +102,8 @@ export class Mind {
 
   react(clip: ClipName, seconds: number) {
     this.onReact(clip);
-    // Reduced motion: the state shows at once, without hops and waves.
-    if (this.calm && clip !== "sad") return;
+    // Reduced motion: no hops or waves; the pose itself still shows.
+    if (this.calm && (clip === "celebrate" || clip === "wave")) return;
     this.reaction = { clip, left: seconds };
   }
 
@@ -162,8 +146,7 @@ export class Mind {
     if (!this.osIdle) this.idle += dt;
     this.waveCooldown -= dt;
     if (this.mode === "held") {
-      this.pet.play("dangle", 0.15);
-      this.pet.face(0);
+      this.pet.play("dangle");
       return;
     }
     if (this.mode === "air") return this.fly(dt);
@@ -171,14 +154,17 @@ export class Mind {
     if (this.reaction) {
       this.reaction.left -= dt;
       this.pet.play(this.reaction.clip);
-      this.pet.face(0);
       if (this.reaction.left <= 0) this.reaction = null;
       return;
     }
 
+    if (this.pose) {
+      this.idle = 0;
+      return this.pet.play(this.pose);
+    }
+
     if (this.directive) {
       this.pet.play(this.directive.clip);
-      this.pet.face(0);
       return;
     }
 
@@ -201,7 +187,6 @@ export class Mind {
     if (this.activityLeft <= 0) this.chooseNext();
 
     this.pet.play(this.activity);
-    this.pet.face(0);
   }
 
   private begin(activity: ClipName, seconds: number) {
@@ -222,8 +207,7 @@ export class Mind {
     this.vy -= GRAVITY * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
-    this.pet.play("fall", 0.12);
-    this.pet.face(0);
+    this.pet.play("fall");
     if (this.x < MARGIN || this.x > this.bounds.width - MARGIN) {
       this.x = this.clampX(this.x);
       this.vx = -this.vx * 0.5;

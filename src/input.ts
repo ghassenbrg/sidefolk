@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import type { Familiar } from "./familiar";
 
 type Sample = { x: number; y: number; t: number };
@@ -7,8 +6,8 @@ const DRAG_SLOP = 4;
 const MAX_THROW = 2600;
 
 /**
- * Click-through: the overlay ignores the mouse unless the cursor is over the companion's actual
- * surface (a raycast against its skinned mesh) or over its card.
+ * Click-through: the overlay ignores the mouse unless the cursor is over the companion itself
+ * (its frame's opaque pixels) or over its card.
  */
 export function wireInput(o: {
   familiar: Familiar;
@@ -16,23 +15,12 @@ export function wireInput(o: {
   /** A click, left or right: the one place to talk to the companion. It never answers anything. */
   onClick: () => void;
 }) {
-  const raycaster = new THREE.Raycaster();
-  const origin = new THREE.Vector3();
-  const down = new THREE.Vector3(0, 0, -1);
   let interactive = false;
   let pressed: { f: Familiar; x: number; y: number; dx: number; dy: number } | null = null;
   let dragging = false;
   let samples: Sample[] = [];
 
-  const overPet = (f: Familiar, x: number, y: number) => {
-    const world = f.stage.toWorld(x, y);
-    // A box around the pet first: the skinned raycast checks every triangle.
-    const { position, scale } = f.pet.holder;
-    const dy = world.y - position.y;
-    if (Math.abs(world.x - position.x) > scale.x || dy < -0.2 * scale.y || dy > 3 * scale.y) return false;
-    raycaster.set(origin.set(world.x, world.y, 1000), down);
-    return raycaster.intersectObject(f.pet.model.body, false).length > 0;
-  };
+  const overPet = (f: Familiar, x: number, y: number) => f.contains(x, y);
   const petAt = (x: number, y: number) => (overPet(o.familiar, x, y) ? o.familiar : undefined);
 
   const refresh = (x: number, y: number) => {
@@ -53,7 +41,7 @@ export function wireInput(o: {
     if (event.button !== 0 || event.ctrlKey) return;
     const f = petAt(event.clientX, event.clientY);
     if (!f) return;
-    const world = f.stage.toWorld(event.clientX, event.clientY);
+    const world = f.bounds.toWorld(event.clientX, event.clientY);
     pressed = { f, x: event.clientX, y: event.clientY, dx: f.mind.x - world.x, dy: f.mind.y - world.y };
     samples = [];
   });
@@ -66,7 +54,7 @@ export function wireInput(o: {
       f.mind.grab();
     }
     if (!dragging) return;
-    const world = f.stage.toWorld(event.clientX, event.clientY);
+    const world = f.bounds.toWorld(event.clientX, event.clientY);
     f.mind.hold(world.x + pressed.dx, world.y + pressed.dy);
     samples.push({ ...world, t: performance.now() });
     samples = samples.filter((s) => performance.now() - s.t < 90);
