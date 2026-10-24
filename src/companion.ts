@@ -40,6 +40,8 @@ export type Host = {
   resolveFolder?(folder: string | null): Promise<{ path: string; label: string }>;
   /** Runs a confirmed command in the user's terminal. Resolves to what happened. */
   runCommand?(command: string, cwd: string): Promise<string>;
+  /** Starts a new agent session in a folder, in the user's terminal. Resolves to what happened. */
+  startSession?(agent: "claude" | "codex", cwd: string, fullAccess: boolean): Promise<string>;
   /** Note commands, handled by notes.ts. */
   note?(command: { kind: "note"; notebook: string | null; text: string } | { kind: "notebook"; name: string }): Promise<string | void>;
   /** Tells the app which sessions have full access, so their requests always come here. */
@@ -287,9 +289,48 @@ export class Companion {
         return this.host.openTab?.("notes");
       case "run":
         return this.confirmRun(command.command, command.folder);
+      case "start":
+        return this.confirmStart(command.agent, command.folder, command.full);
       case "unknown":
         return "I can set reminders, run commands and open your work sessions. Type “help” to see how.";
     }
+  }
+
+  /** A new session: which tool, which folder, and whether it asks first; you choose before it starts. */
+  private async confirmStart(agent: "claude" | "codex", wanted: string | null, full: boolean): Promise<string | void> {
+    const { resolveFolder, startSession } = this.host;
+    if (!resolveFolder || !startSession) return "Starting sessions needs the desktop app.";
+    let folder: { path: string; label: string };
+    try {
+      folder = await resolveFolder(wanted);
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+    const name = agent === "codex" ? "Codex" : "Claude Code";
+    const bubble = this.pet.bubble;
+    bubble.show({
+      id: "start-session",
+      who: `${this.name} · new session`,
+      title: `Start ${name} here?`,
+      facts: [
+        { label: "Folder", value: folder.label },
+        { label: "Permissions", value: full ? "Full access: works without asking; risky actions still stop" : "Asks first (default)" },
+      ],
+      choices: [
+        { label: "Cancel", value: "cancel" },
+        ...(full ? [{ label: "Start, but ask first", value: "ask" }] : [{ label: "Start with full access", value: "full" }]),
+        { label: `Start ${name}`, value: full ? "full" : "ask", primary: true },
+      ],
+      onChoose: async (value) => {
+        bubble.close("start-session");
+        if (value === "cancel") return;
+        try {
+          bubble.say(await startSession(agent, folder.path, value === "full"), 4);
+        } catch (error) {
+          bubble.say(error instanceof Error ? error.message : String(error), 8, "fail");
+        }
+      },
+    });
   }
 
   /** A command runs only after you've seen it and its folder, and always where you can watch. */

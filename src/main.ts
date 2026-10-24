@@ -81,11 +81,13 @@ const host: Host = {
     resolveFolder: (folder) => invoke("resolve_folder", { folder }),
     runCommand: (command, cwd) => invoke<string>("run_command", { command, cwd }),
     syncFullAccess: (keys) => void invoke("sync_full_access", { keys }).catch(() => {}),
+    startSession: (agent, cwd, fullAccess) => invoke<string>("start_session", { agent, cwd, fullAccess }),
   }),
   // Browser preview: the confirmation card can be looked at; nothing runs.
   ...(!inTauri && {
     resolveFolder: async (folder) => ({ path: "/Users/you", label: folder ? `~/git/${folder}` : "~" }),
     runCommand: async () => "Running in Terminal. (Preview: nothing ran.)",
+    startSession: async (agent, _cwd, full) => `Started ${agent === "codex" ? "Codex" : "Claude Code"} in Terminal${full ? " with full access" : ""}. (Preview: nothing ran.)`,
   }),
 };
 

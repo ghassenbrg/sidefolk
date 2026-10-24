@@ -120,6 +120,29 @@ pub async fn run_command(shared: State<'_, std::sync::Arc<Shared>>, command: Str
     Ok(format!("Running in {name}."))
 }
 
+/// Starts a new Claude Code or Codex session in a folder, in a new window of the user's terminal.
+/// Full access maps to each tool's own unattended mode: Claude Code's auto mode (its classifier
+/// still stops risky actions) and Codex without approvals but sandboxed to the workspace.
+#[tauri::command]
+pub async fn start_session(shared: State<'_, std::sync::Arc<Shared>>, agent: String, cwd: String, full_access: bool) -> Result<String, String> {
+    let command = match (agent.as_str(), full_access) {
+        ("claude", false) => "claude",
+        ("claude", true) => "claude --permission-mode auto",
+        ("codex", false) => "codex",
+        ("codex", true) => "codex -a never -s workspace-write",
+        _ => return Err("Sidefolk can start Claude Code or Codex sessions.".into()),
+    };
+    if !Path::new(&cwd).is_dir() {
+        return Err(format!("The folder is gone: {cwd}"));
+    }
+    let terminal = crate::sessions::chosen_terminal(&shared);
+    let name = tauri::async_runtime::spawn_blocking(move || crate::sessions::run_in_terminal(terminal, &cwd, command))
+        .await
+        .map_err(|e| e.to_string())??;
+    let agent = if agent == "codex" { "Codex" } else { "Claude Code" };
+    Ok(format!("Started {agent} in {name}{}.", if full_access { " with full access" } else { "" }))
+}
+
 /// Asks macOS, while the user is reading why (setup, Settings), to let Sidefolk control their
 /// terminal: needed to open a command or session in Terminal or iTerm and to pick a session's tab.
 /// macOS shows its own prompt the first time; later calls just report the answer.

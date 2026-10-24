@@ -34,6 +34,7 @@ export function tellBar(app: App) {
     update();
     const command = parse(text);
     if (command.kind === "run") return confirmRun(app, command.command, command.folder);
+    if (command.kind === "start") return confirmStart(app, command.agent, command.folder, command.full);
     const reply = await app.tell(text);
     if (reply) app.toast(reply);
     void app.refresh();
@@ -48,6 +49,19 @@ async function confirmRun(app: App, command: string, wanted: string | null) {
     app.toast(`Run \`${command}\` in ${folder.label}? It opens in your terminal.`, {
       label: "Run in terminal",
       run: () => void invoke<string>("run_command", { command, cwd: folder.path }).then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)),
+    });
+  } catch (error) {
+    app.toast(String(error), undefined, true);
+  }
+}
+
+async function confirmStart(app: App, agent: "claude" | "codex", wanted: string | null, full: boolean) {
+  try {
+    const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: sessionFolder(app, wanted) ?? wanted });
+    const name = agent === "codex" ? "Codex" : "Claude Code";
+    app.toast(`Start ${name} in ${folder.label}${full ? " with full access" : " (asks first)"}?`, {
+      label: `Start ${name}`,
+      run: () => void invoke<string>("start_session", { agent, cwd: folder.path, fullAccess: full }).then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)),
     });
   } catch (error) {
     app.toast(String(error), undefined, true);

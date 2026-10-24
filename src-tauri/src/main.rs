@@ -226,6 +226,7 @@ fn main() {
             notes::draft_tools,
             notes::draft_summary,
             actions::path_commands,
+            actions::start_session,
             hooks::sync_full_access,
             actions::resolve_folder,
             actions::run_command,

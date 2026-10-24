@@ -234,6 +234,8 @@ function preview(): typeof tauriInvoke {
         return "## Reliability (Sep–Oct 2026)\n- Led the login migration; errors down 40% [Sep 12]\n\n(Preview: no AI was used.)";
       case "allow_terminal_control":
         return "Sidefolk can open sessions and commands in Terminal. (Preview)";
+      case "start_session":
+        return "Started Claude Code in Terminal. (Preview: nothing ran.)";
       case "run_command":
         return "Running in Terminal. (Preview: nothing ran.)";
       case "remove_reminder": {

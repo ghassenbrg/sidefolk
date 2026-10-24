@@ -12,6 +12,8 @@ export type Command =
   | { kind: "rename"; name: string }
   | { kind: "hide" }
   | { kind: "help" }
+  /** A new Claude Code or Codex session in a folder, in the user's terminal. */
+  | { kind: "start"; agent: "claude" | "codex"; folder: string | null; full: boolean }
   /** A dated note; `notebook` as typed ("evaluation"), or null to pick one. */
   | { kind: "note"; notebook: string | null; text: string }
   | { kind: "notebook"; name: string }
@@ -60,6 +62,9 @@ export function parse(input: string): Command {
   if ((m = kept.match(/^(?:note|jot|log|add)\s+(?:it\s+)?(?:for|to|in|into)\s+(?:my\s+|the\s+)?([^:]{1,60}?)\s*(?:notebook\s*)?:\s*(.+)$/is))) return { kind: "note", notebook: m[1], text: m[2].trim() };
   if ((m = kept.match(/^(?:note|jot down|write down)\s*(?::|that\s)\s*(.+)$/is))) return { kind: "note", notebook: null, text: m[1].trim() };
   if (/^(?:open|show)\s+(?:the\s+)?(?:sidefolk|dashboard|app|window)$/.test(lower)) return { kind: "sidefolk" };
+  // "start a claude session in sidefolk", "new codex session in api with full access", "open a claude session".
+  if ((m = text.match(/^(?:(?:start|new|launch|begin)\s+(?:an?\s+)?(?:new\s+)?|open\s+an?\s+(?:new\s+)?)(claude(?:\s+code)?|codex)(?:\s+session)?(?:\s+(?:in|for)\s+(~?[\w./-]+))?(\s+with\s+full\s+access)?$/i)))
+    return { kind: "start", agent: m[1].toLowerCase().startsWith("codex") ? "codex" : "claude", folder: m[2] ?? null, full: !!m[3] };
   if ((m = text.match(/^(?:open|jump to|go to|back to|continue|resume)\s+(?:the\s+)?(?:(.+?)(?:'s)?\s+)?session$/i)))
     return { kind: "open", project: m[1] ?? null };
   if (/^(continue|resume)$/.test(lower)) return { kind: "open", project: null };
@@ -76,7 +81,7 @@ export function parse(input: string): Command {
 
 export const HELP = [
   "remind me tomorrow at 9 to check the results · reminders",
-  "open session · open api session",
+  "open session · open api session · start a claude session in api",
   "open Sidefolk · hide · rename to Pip",
   "note for evaluation: shipped the login migration · notes",
   "ls -la · run npm test in api (you confirm first)",
@@ -113,6 +118,8 @@ export function explain(text: string, ctx: ExplainContext): string {
       return `Rename ${ctx.name} to ${command.name}`;
     case "hide":
       return `Hide ${ctx.name} until you press the shortcut`;
+    case "start":
+      return `Start ${command.agent === "codex" ? "Codex" : "Claude Code"} in ${command.folder ?? "your home folder"}${command.full ? " with full access" : ""} (you confirm first)`;
     case "note":
       return command.notebook ? `Add to ${command.notebook}: ${command.text}` : `Add a note (I'll ask which notebook): ${command.text}`;
     case "notebook":

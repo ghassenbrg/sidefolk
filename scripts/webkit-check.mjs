@@ -159,6 +159,17 @@ await overlay.waitForTimeout(800);
 await overlay.screenshot({ path: join(out, "overlay-run.png") });
 await run.getByRole("button", { name: "Run in terminal" }).click();
 await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
+// Starting a session shows the folder and the permission mode before anything starts.
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("start a claude session in api");
+await overlay.locator(".bubble input").press("Enter");
+const start = overlay.locator(".bubble").filter({ hasText: "Start Claude Code here?" });
+await start.waitFor();
+for (const part of ["~/git/api", "Asks first", "Start with full access"]) if (!(await start.innerText()).includes(part)) failures.push(`start card is missing "${part}"`);
+await start.getByRole("button", { name: "Start Claude Code" }).click();
+await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
 await browser.close();
 
 console.log(`screenshots: ${out}`);

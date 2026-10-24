@@ -50,4 +50,11 @@ describe("parse", () => {
     expect(parse("notes")).toEqual({ kind: "notes" });
     expect(parse("make a note about the release").kind).toBe("unknown");
   });
+
+  it("starts sessions only when asked to start one", () => {
+    expect(parse("start a claude session in sidefolk")).toEqual({ kind: "start", agent: "claude", folder: "sidefolk", full: false });
+    expect(parse("new codex session in ~/git/api with full access")).toEqual({ kind: "start", agent: "codex", folder: "~/git/api", full: true });
+    expect(parse("open a Claude Code session")).toEqual({ kind: "start", agent: "claude", folder: null, full: false });
+    expect(parse("open the api session")).toEqual({ kind: "open", project: "api" });
+  });
 });
