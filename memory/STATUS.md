@@ -51,6 +51,17 @@ Verified: typecheck, vitest, cargo test, `npm run check:webkit` (now also setup 
 reminders:new). Not yet checked in the real app (release build pending; the user's release
 build holds port 47821, so the dev app can't start while it runs).
 
+**Continuation — 24 October, Codex:** Native scheduled notifications implemented in
+`src-tauri/src/notifications.rs` (objc2 UserNotifications), wired at the store so UI and MCP
+mutations schedule/cancel alike. Setup “Where it lives” and Settings expose permission and
+scheduling errors; only the user's Allow click requests permission. Notification clicks open
+`reminders:<id>`. An unbundled dev binary skips the native API (it requires an app bundle).
+Only the next occurrence is scheduled; completing a repeat advances it. Verification:
+typecheck, 43 Vitest tests, Rust tests (22 passed, 2 intentionally ignored), WebKit views.
+Native quit/delivery/click verification is still pending the rebuilt .app; don't call phase 3
+finished until this is checked. Next: repeat picker/edit + window repeat completion, then
+companion Undo browser behavior, section 6.1 acceptance, build/relaunch, phase 4.
+
 **Phase 3 (reminders) IN PROGRESS, all committed, everything green:**
 - Done: `src/when.ts` `takeRepeat` / `nextDue` (local wall-clock, DST-safe, monthly clamps to
   short months) / `describeRepeat`; `parseReminder` returns `repeat` (tests in when.test.ts).

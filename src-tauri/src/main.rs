@@ -15,6 +15,7 @@ mod overlay;
 #[cfg(target_os = "macos")]
 mod panel;
 mod reminders;
+mod notifications;
 mod sessions;
 mod settings;
 mod tray;
@@ -221,6 +222,8 @@ fn main() {
             get_crew,
             save_crew,
             journal_since,
+            notifications::notification_status,
+            notifications::request_notifications,
             list_reminders,
             add_reminder,
             update_reminder,
@@ -260,6 +263,9 @@ fn main() {
                 hosts: Default::default(),
             });
             app.manage(shared.clone());
+            if let Some(sender) = notifications::install(app.handle()) {
+                shared.reminders.schedule_with(sender);
+            }
             app_menu::apply_dock(app.handle());
             app.set_menu(app_menu::build(app.handle())?)?;
             app.on_menu_event(|app, event| app_menu::handle(app, event.id().as_ref()));

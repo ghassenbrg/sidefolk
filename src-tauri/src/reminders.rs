@@ -76,6 +76,7 @@ pub struct Change {
 pub struct Reminders {
     path: PathBuf,
     list: Mutex<Vec<Reminder>>,
+    notifications: Mutex<Option<std::sync::mpsc::Sender<Vec<Reminder>>>>,
 }
 
 impl Reminders {
@@ -93,6 +94,24 @@ impl Reminders {
         Self {
             path,
             list: Mutex::new(list),
+            notifications: Mutex::new(None),
+        }
+    }
+
+    pub fn schedule_with(&self, sender: std::sync::mpsc::Sender<Vec<Reminder>>) {
+        let list = self.list.lock().unwrap();
+        let _ = sender.send(list.clone());
+        *self.notifications.lock().unwrap() = Some(sender);
+    }
+
+    pub fn reschedule(&self) {
+        let list = self.list.lock().unwrap();
+        self.schedule(&list);
+    }
+
+    fn schedule(&self, list: &[Reminder]) {
+        if let Some(sender) = self.notifications.lock().unwrap().as_ref() {
+            let _ = sender.send(list.to_vec());
         }
     }
 
@@ -183,13 +202,37 @@ impl Reminders {
     }
 
     fn write(&self, list: &[Reminder]) -> io::Result<()> {
-        crate::settings::atomic_write(&self.path, &serde_json::to_vec_pretty(list)?)
+        crate::settings::atomic_write(&self.path, &serde_json::to_vec_pretty(list)?)?;
+        self.schedule(list);
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn every_saved_mutation_updates_the_notification_schedule() {
+        let dir = std::env::temp_dir().join(format!("sidefolk-notification-store-{}", std::process::id()));
+        let store = Reminders::load(&dir);
+        let (tx, rx) = std::sync::mpsc::channel();
+        store.schedule_with(tx);
+        assert!(rx.recv().unwrap().is_empty());
+        let r = store.add("alarm", now_ms() + 60_000, "", "you", None).unwrap();
+        assert_eq!(rx.recv().unwrap(), vec![r.clone()]);
+        store.update(&r.id, &Change { due: Some(r.due + 60_000), ..Default::default() }).unwrap();
+        assert_eq!(rx.recv().unwrap()[0].due, r.due + 60_000);
+        let removed = store.remove(&r.id).unwrap().unwrap();
+        assert!(rx.recv().unwrap().is_empty());
+        store.restore(removed.clone()).unwrap();
+        assert_eq!(rx.recv().unwrap(), vec![removed]);
+        store.update(&r.id, &Change { done: Some(true), ..Default::default() }).unwrap();
+        assert!(rx.recv().unwrap()[0].done);
+        assert!(store.add("", 0, "", "you", None).is_err());
+        assert!(rx.try_recv().is_err());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     #[test]
     fn add_update_and_reload() {
         let dir = std::env::temp_dir().join(format!("sidefolk-reminders-{}", std::process::id()));

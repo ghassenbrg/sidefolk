@@ -1,3 +1,4 @@
+import { notificationSetting } from "./notifications";
 import { icon, type IconName } from "../icons";
 import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
@@ -185,6 +186,7 @@ export function renderSettings(app: App, arg: string) {
       "settings",
       "startup",
       row("Summon shortcut", "Hides the companion, or calls it to your cursor.", shortcut),
+      notificationSetting(app),
       row("Start at login", "Opens Sidefolk when you log in.", button(integrations.start_at_login ? "Turn off" : "Turn on", () => void invoke("tray_action", { action: "login" }).then(() => app.refresh()))),
       toggle(app, "hide_from_dock", "Hide from Dock", "Sidefolk leaves the Dock and ⌘Tab; open this window from the menu bar icon instead."),
     ),

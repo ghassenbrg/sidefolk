@@ -78,6 +78,7 @@ function fields(prefix: string, initial?: Reminder) {
 let editing: string | null = null;
 
 export function renderReminders(app: App, arg = "") {
+  if (arg && arg !== "new" && app.state.reminders.some((r) => r.id === arg && !r.done)) editing = arg;
   const view = h("div", { class: "view" }, ...header("Reminders", "Small things, remembered."));
   const add = fields("new");
   const form = h("form", { class: "card", "aria-label": "Add a reminder" }, add.node, h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Add reminder" })));

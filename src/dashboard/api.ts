@@ -145,6 +145,10 @@ function preview(): typeof tauriInvoke {
   return (async (command: string, args?: Record<string, unknown>) => {
     const a = (args ?? {}) as Record<string, any>;
     switch (command) {
+      case "notification_status":
+        return { permission: "notRequested", error: null };
+      case "request_notifications":
+        return { permission: "allowed", error: null };
       case "get_settings":
         return state.settings;
       case "update_settings":

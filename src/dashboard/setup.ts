@@ -1,3 +1,4 @@
+import { notificationSetting } from "./notifications";
 import { shortcutLabel } from "../keys";
 import { invoke } from "./api";
 import type { App } from "./app";
@@ -75,6 +76,7 @@ export function renderSetup(app: App, arg: string) {
       body.append(
         ...header("Where it lives.", `${name} stays where you put it. Drag it anywhere; it never wanders off.`),
         h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: "Size" })), size),
+        notificationSetting(app),
         check("setup-login", "Start at login", "So your reminders are always on time.", integrations.start_at_login, () => void invoke("tray_action", { action: "login" }).then(() => app.refresh())),
         check("setup-recordings", "Hide from screen recordings", "Keeps the companion out of screen sharing and screenshots.", settings.hide_in_recordings, (on) => void app.save({ hide_in_recordings: on })),
         h("p", { class: "muted", text: `Hide or call ${name} anytime with ${shortcutLabel(settings.shortcut)}. This window is in the Dock; you can hide it from the Dock in Settings.` }),
