@@ -51,6 +51,18 @@ Verified: typecheck, vitest, cargo test, `npm run check:webkit` (now also setup 
 reminders:new). Not yet checked in the real app (release build pending; the user's release
 build holds port 47821, so the dev app can't start while it runs).
 
+**Final handoff — Codex, 24 October:** Stopped at 96% five-hour usage to stay below the
+user's 97% ceiling. Four pieces committed: e6adaf4, 3eb51e4, 7629ec7, c67566f. Production
+`npm run build` succeeded from c67566f (5.16 MiB), debug app stopped, release bundle reopened
+from src-tauri/target/release/bundle/macos/Sidefolk.app. Only the smoke-test reminder
+r1792821805766-0 was removed; existing user reminders/settings preserved. No global agent
+config touched. Checks: 46 Vitest, 23 Rust (+3 opt-in skipped), live Claude-host test passed
+separately, WebKit clean, Europe/Paris DST tests passed. No model calls.
+Exact next steps: docs/REMINDER-CHECKS.md native permission/quit/click/sleep acceptance;
+also test immediate quit after Save (OS scheduling is asynchronous). Phase 3 remains open
+until those pass. Continue phase 4 local command preview/execution and session controls as
+listed below, then phases 5–8. Signing/notarization and colleague beta require external input.
+
 **Phase 3 implementation — 24 October, Codex; acceptance still pending:**
 - `e6adaf4`: scheduled macOS local notifications via objc2 UserNotifications. Store-level
   scheduling covers UI/MCP adds, updates, remove/Undo; reconciles at launch. Only the next
