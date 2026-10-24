@@ -3,6 +3,7 @@
 
 mod actions;
 mod app_menu;
+mod characters;
 mod bus;
 mod claude_setup;
 mod codex;
@@ -221,6 +222,11 @@ fn main() {
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
             actions::allow_terminal_control,
+            characters::list_characters,
+            characters::save_character,
+            characters::character_frames,
+            characters::delete_character,
+            characters::save_template,
             actions::install_cli,
             notes::list_notebooks,
             notes::read_notebook,

@@ -7,7 +7,8 @@ import { COLORS, colorName } from "./worker-colors";
 // the project's name under its feet. It acts out that project's sessions and brings their
 // requests; everything else stays with Pip. Nothing appears on its own.
 
-export type WorkerSpec = { project: string; name: string; hue: number };
+/** `look` is a made character's id (Settings → Characters); Spark when absent. */
+export type WorkerSpec = { project: string; name: string; hue: number; look?: string };
 
 const MAX = 6;
 /** Space between companions standing side by side, in CSS pixels. */
@@ -22,6 +23,8 @@ export class Workers {
     /** "spark" once Spark's frames are there, else a recolored Pip. */
     private readonly character: string,
     private readonly save: (specs: WorkerSpec[]) => Promise<unknown>,
+    /** A made character's frames, or null when it's gone (the Spark look then). */
+    private readonly frames: (id: string) => Promise<Partial<Record<string, string>> | null> = async () => null,
   ) {}
 
   async load(specs: WorkerSpec[]) {
@@ -29,15 +32,18 @@ export class Workers {
   }
 
   /** Gives a project (a folder path) its Spark; a second call renames or recolors it. */
-  async add(project: string, name?: string, hue?: number): Promise<string> {
+  async add(project: string, name?: string, hue?: number, look?: string | null): Promise<string> {
     const existing = this.specs.find((s) => s.project === project);
     if (!existing && this.specs.length >= MAX) return `That's ${MAX} Sparks already. Remove one first.`;
     // Mint is Pip's own color: a new Spark takes the first color nobody wears yet.
     const used = new Set([0, ...this.specs.map((s) => s.hue)]);
+    // undefined keeps the current look, null goes back to Spark.
+    const chosen = look === undefined ? existing?.look : (look ?? undefined);
     const spec: WorkerSpec = {
       project,
       name: (name ?? existing?.name ?? "Spark").replace(/\s+/g, " ").trim().slice(0, 24) || "Spark",
       hue: hue ?? existing?.hue ?? (COLORS.find(([, h]) => !used.has(h)) ?? COLORS[0])[1],
+      ...(chosen ? { look: chosen } : {}),
     };
     if (existing) this.companion.removeWorker(project);
     this.specs = [...this.specs.filter((s) => s.project !== project), spec];
@@ -57,7 +63,10 @@ export class Workers {
 
   private async place(spec: WorkerSpec) {
     if (!this.specs.includes(spec)) this.specs = [...this.specs.filter((s) => s.project !== spec.project), spec];
-    const worker = await Familiar.create(spec.name, this.zoom * 0.85, { character: this.character, hue: spec.hue, badge: folder(spec.project) });
+    const frames = spec.look ? await this.frames(spec.look) : null;
+    // A made character keeps its own colors; the worker's color is on its badge.
+    const worker = await Familiar.create(spec.name, this.zoom * 0.85, frames ? { frames, hue: 0, badge: folder(spec.project) } : { character: this.character, hue: spec.hue, badge: folder(spec.project) });
+    worker.badge?.style.setProperty("--hue", `${spec.hue}deg`);
     // Side by side to Pip's left, in the order they were added.
     const index = this.specs.indexOf(spec);
     const pip = this.companion.pet.mind;

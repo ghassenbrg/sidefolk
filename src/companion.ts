@@ -2,7 +2,7 @@ import { FullAccess, sessionKey, stillAsk } from "./access";
 import { AGENT_NAMES, VERB, folder, sessionLabel, type AgentEvent } from "./agents";
 import type { Card, Choice, Fact } from "./bubble";
 import { explain, HELP, parse } from "./commands";
-import { Familiar } from "./familiar";
+import { Familiar, type Look } from "./familiar";
 
 /** Mirrors `PermissionAsk` in src-tauri/src/bus.rs. */
 export type Ask = {
@@ -88,8 +88,8 @@ export class Companion {
     this.pet.mind.pose = this.pet.bubble.typing ? "listen" : this.notes.size ? "note" : null;
   }
 
-  static async start(name: string, host: Host, zoom = 1): Promise<Companion> {
-    return new Companion(await Familiar.create(name, zoom), host);
+  static async start(name: string, host: Host, zoom = 1, look: Look = {}): Promise<Companion> {
+    return new Companion(await Familiar.create(name, zoom, look), host);
   }
 
   get name() {

@@ -3,6 +3,8 @@
 // blinks, a short hop, squash when landing, a slight sway, and the status light, drawn here so
 // its colors are exact and it pulses only when Pip needs you.
 
+import { resolvePose, type Pose } from "./character-import";
+
 export type ClipName =
   | "idle"
   | "listen"
@@ -109,16 +111,17 @@ export class PipView {
    * `character` is the frame folder in public/ ("pip", "spark"); `hue` turns its colored parts
    * (Pip's scarf, Spark's eyes and antenna) to a worker's color and leaves ivory and charcoal be.
    */
-  constructor(character = "pip", hue = 0) {
+  constructor(character = "pip", hue = 0, frames?: Partial<Record<string, string>>) {
     this.el = document.createElement("div");
     this.el.className = "pip";
     this.el.setAttribute("role", "img");
-    this.el.setAttribute("aria-label", character === "pip" ? "Pip" : "Spark");
+    this.el.setAttribute("aria-label", frames ? "Companion" : character === "pip" ? "Pip" : "Spark");
     this.body = document.createElement("div");
     this.body.className = "pip-body";
     for (const name of FRAMES) {
       const img = new Image();
-      img.src = `${character}/${name}.png`;
+      // A made character's own frames; a pose it lacks borrows another (character-import.ts).
+      img.src = frames ? frames[resolvePose(new Set(Object.keys(frames)), name as Pose)]! : `${character}/${name}.png`;
       img.alt = "";
       // Only the drawing takes the worker's color; the status light keeps its exact color.
       if (hue) img.style.filter = `hue-rotate(${hue}deg)`;

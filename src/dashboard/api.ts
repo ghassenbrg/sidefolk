@@ -26,8 +26,8 @@ export type Settings = {
   hide_from_dock: boolean;
 };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
-/** crew.json: the companion's name. */
-export type CrewFile = { main: { name: string } };
+/** crew.json: the companion's name and look, and its Spark workers. */
+export type CrewFile = { main: { name: string; look?: string }; workers?: { project: string; name: string; hue: number; look?: string }[] };
 
 /** Mirrors `status()` in src/companion.ts. */
 export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number; fullAccess?: boolean };
@@ -79,6 +79,7 @@ function preview(): typeof tauriInvoke {
   const web = "/Users/you/git/website";
   const notesDir = "/Users/you/Library/Application Support/dev.sidefolk.companion/notes";
   const state = {
+    characters: [] as { id: string; name: string; poses: string[]; frames: Record<string, string> }[],
     notebooks: [
       {
         id: "evaluation-h2-2026",
@@ -234,6 +235,21 @@ function preview(): typeof tauriInvoke {
         return ["claude"];
       case "draft_summary":
         return "## Reliability (Sep–Oct 2026)\n- Led the login migration; errors down 40% [Sep 12]\n\n(Preview: no AI was used.)";
+      case "list_characters":
+        return state.characters.map(({ frames, ...c }) => c);
+      case "character_frames":
+        return state.characters.find((c) => c.id === (args as { id: string }).id)?.frames ?? {};
+      case "save_character": {
+        const a = args as { name: string; frames: Record<string, string> };
+        const c = { id: a.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: a.name, poses: Object.keys(a.frames), frames: a.frames };
+        state.characters.push(c);
+        return c;
+      }
+      case "delete_character":
+        state.characters = state.characters.filter((c) => c.id !== (args as { id: string }).id);
+        return null;
+      case "save_template":
+        return "Saved to Downloads as sidefolk-character-template.png. (Preview: nothing saved.)";
       case "install_cli":
         return "Installed. (Preview: nothing changed.)";
       case "allow_terminal_control":
@@ -269,6 +285,7 @@ function preview(): typeof tauriInvoke {
             emit("answered", { id: a.action.id, ok: true, text: a.action.remove ? "Spark went home." : "Spark is on it." });
           }, 100);
         }
+        if (a.action.action === "look") state.crew.main.look = a.action.look ?? undefined;
         if (a.action.action === "full-access") {
           for (const s of state.status.pets[0].sessions) if (s.id === a.action.session) s.fullAccess = !!a.action.on;
           setTimeout(() => emit("status", state.status), 100);

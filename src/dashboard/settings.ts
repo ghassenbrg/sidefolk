@@ -4,6 +4,7 @@ import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
 import type { App } from "./app";
 import { button, h } from "./dom";
+import { cachedCharacters, characters as loadCharacters } from "./characters";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
 
@@ -14,6 +15,7 @@ import { header } from "./ui";
 let voices: { name: string; language: string }[] | null = null;
 let terminals: string[] | null = null;
 let recording = false;
+let charactersLoaded = false;
 
 const TERMINAL_LABELS: Record<string, string> = { terminal: "Terminal", iterm: "iTerm", ghostty: "Ghostty" };
 
@@ -78,11 +80,28 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
 export function renderSettings(app: App, arg: string) {
   const { settings, integrations } = app.state;
   voices ?? void invoke<{ name: string; language: string }[]>("voices").then((v) => ((voices = v), app.redraw(true))).catch(() => (voices = []));
+  if (!charactersLoaded) {
+    charactersLoaded = true;
+    void loadCharacters().then(() => app.redraw(true));
+  }
   terminals ?? void invoke<string[]>("terminals").then((t) => ((terminals = t), app.redraw(true))).catch(() => (terminals = []));
   // Settings don't change while being read; only saves (forced) redraw this page.
   app.live(() => {});
 
   const view = h("div", { class: "view settings" }, ...header("Make Sidefolk comfortable.", "A few simple preferences. Everything here can change later."));
+
+  const looks = cachedCharacters();
+  const look = h("select", { id: "setting-look" }, h("option", { value: "", text: "Pip" }), ...looks.map((c) => h("option", { value: c.id, text: c.name })));
+  look.value = app.state.crew.main.look ?? "";
+  look.addEventListener("change", () => void app.petAction({ action: "look", look: look.value || null }, look.value ? "New look on the desktop." : "Pip is back."));
+  view.append(
+    group(
+      "Your companion",
+      "home",
+      "companion",
+      row("Looks like", "Pip, or a character you made.", h("div", { class: "inline" }, look, button("Make your own…", () => app.go("characters"))), "setting-look"),
+    ),
+  );
 
   view.append(
     group(

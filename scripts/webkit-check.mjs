@@ -24,6 +24,7 @@ const views = [
   ["new-reminder", "/settings.html?tab=reminders:new"],
   ["notes", "/settings.html?tab=notes"],
   ["sessions", "/settings.html?tab=sessions"],
+  ["characters", "/settings.html?tab=characters"],
   ["notebook", "/settings.html?tab=notes:evaluation-h2-2026"],
 ];
 
@@ -78,6 +79,19 @@ for (const scheme of ["light", "dark"]) {
   await page.locator("#spark-folder").fill("web");
   await page.getByRole("button", { name: "Add Spark" }).click();
   await page.getByText("Spark · web", { exact: true }).waitFor();
+  // A filled-in template imports with every pose aligned; empty boxes borrow, and it saves.
+  if (scheme === "light") {
+    await page.goto(base + "/settings.html?tab=characters");
+    await page.locator("#character-file").setInputFiles(new URL("./fixtures/character-sheet.png", import.meta.url).pathname);
+    await page.locator(".pose-grid figure").nth(15).waitFor();
+    const borrowed = await page.locator(".pose-grid figure.borrowed").count();
+    if (borrowed !== 6) failures.push(`characters: expected 6 borrowed poses, got ${borrowed}`);
+    await page.getByText("6 of 16 boxes are empty", { exact: false }).waitFor();
+    await page.screenshot({ path: join(out, "character-import.png"), fullPage: true });
+    await page.locator("#character-name").fill("Test Bot");
+    await page.getByRole("button", { name: "Save character" }).click();
+    await page.getByText("Test Bot", { exact: true }).waitFor();
+  }
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");

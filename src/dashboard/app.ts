@@ -3,6 +3,7 @@ import { icon, mark, type IconName } from "../icons";
 import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
 import { button, h } from "./dom";
 import { renderHome } from "./home";
+import { renderCharacters } from "./characters";
 import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
 import { renderRequests, renderReview } from "./requests";
@@ -56,7 +57,7 @@ const NAV: [string, string, IconName][] = [
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "today", requests: "today", home: "today" };
+const PARENT: Record<string, string> = { review: "today", requests: "today", home: "today", characters: "settings" };
 
 const main = document.querySelector<HTMLElement>("main")!;
 const topbar = document.querySelector<HTMLElement>("#topbar")!;
@@ -215,6 +216,7 @@ function draw(focus: boolean) {
       reminders: renderReminders,
       notes: renderNotes,
       sessions: renderSessions,
+      characters: renderCharacters,
       settings: renderSettings,
       setup: renderSetup,
     }[view] ?? renderHome;

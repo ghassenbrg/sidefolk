@@ -3,6 +3,7 @@ import { badge } from "../states";
 import { invoke } from "./api";
 import type { App } from "./app";
 import { COLORS, colorName } from "../worker-colors";
+import { cachedCharacters, characters } from "./characters";
 import { agentShort, ago, button, folder, h } from "./dom";
 import { empty, header, sessionRow } from "./ui";
 
@@ -10,7 +11,13 @@ import { empty, header, sessionRow } from "./ui";
 // recently (one click continues them), and starting a new one in a folder. Everything here is
 // also a sentence to the companion ("start a claude session in api").
 
+let charactersLoaded = false;
+
 export function renderSessions(app: App) {
+  if (!charactersLoaded) {
+    charactersLoaded = true;
+    void characters().then(() => app.redraw(true));
+  }
   const view = h("div", { class: "view sessions" }, ...header("Sessions", "Claude Code and Codex sessions your companion follows. Start one here, or tell it “start a claude session in api”."));
   const running = h("section", { class: "card list", "aria-label": "Running sessions" });
   const finished = h("section", { class: "card list", "aria-label": "Recently finished" });
@@ -63,12 +70,16 @@ function sparks(app: App) {
     const color = h("select", { "aria-label": `Color of ${p.name}` }, ...COLORS.map(([name, hue]) => h("option", { value: String(hue), text: name })));
     color.value = String(p.hue ?? 0);
     color.addEventListener("change", () => send({ project: p.project, hue: Number(color.value) }, `${p.name} is ${colorName(Number(color.value)).toLowerCase()} now.`));
+    const spec = app.state.crew.workers?.find((w) => w.project === p.project);
+    const look = h("select", { "aria-label": `Look of ${p.name}` }, h("option", { value: "", text: "Spark" }), ...cachedCharacters().map((c) => h("option", { value: c.id, text: c.name })));
+    look.value = spec?.look ?? "";
+    look.addEventListener("change", () => send({ project: p.project, look: look.value || null }, "New look on the desktop."));
     list.append(
       h(
         "div",
         { class: "row line" },
         h("div", { class: "identity-text" }, h("strong", { text: `${p.name} · ${folder(p.project!)}` }), h("span", { class: "meta", text: `${p.sessions.length ? `${p.sessions.length} running` : "Waiting for work"} · ${colorName(p.hue ?? 0)}` })),
-        h("div", { class: "inline" }, color, button("Remove", () => send({ project: p.project, remove: true }, `${p.name} went home.`), "small")),
+        h("div", { class: "inline" }, look, color, button("Remove", () => send({ project: p.project, remove: true }, `${p.name} went home.`), "small")),
       ),
     );
   }

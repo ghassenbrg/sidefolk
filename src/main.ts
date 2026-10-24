@@ -61,11 +61,11 @@ const webName = {
 };
 
 /** crew.json keeps the companion's name and its Spark workers (v0.1's other keys are dropped). */
-type Stored = { main?: { name?: string }; workers?: unknown } | null;
+type Stored = { main?: { name?: string; look?: string }; workers?: unknown } | null;
 const stored = inTauri ? await invoke<Stored>("get_crew") : null;
 const storedName = inTauri ? stored?.main?.name : webName.load();
-const crew: { main: { name: string }; workers: WorkerSpec[] } = {
-  main: { name: storedName?.trim() || "Pip" },
+const crew: { main: { name: string; look?: string }; workers: WorkerSpec[] } = {
+  main: { name: storedName?.trim() || "Pip", ...(stored?.main?.look ? { look: stored.main.look } : {}) },
   workers: Array.isArray(stored?.workers) ? stored.workers.filter((w): w is WorkerSpec => typeof w?.project === "string" && typeof w?.name === "string" && typeof w?.hue === "number") : [],
 };
 const saveCrew = () => (inTauri ? invoke("save_crew", { crew }) : Promise.resolve());
@@ -116,7 +116,10 @@ const journal = (since: number) => (inTauri ? invoke<JournalEntry[]>("journal_si
 
 // What's on your PATH, so "terraform plan -out x" is a command and "say hi" stays a sentence.
 if (inTauri) void invoke<string[]>("path_commands").then(knowCommands).catch(() => {});
-const companion = await Companion.start(storedName?.trim() || "Pip", host, zoom);
+/** A made character's frames (Settings → Characters); null if it was deleted. */
+const characterFrames = (id: string) => (inTauri ? invoke<Record<string, string>>("character_frames", { id }).catch(() => null) : Promise.resolve(null));
+const mainFrames = crew.main.look ? await characterFrames(crew.main.look) : null;
+const companion = await Companion.start(crew.main.name, host, zoom, mainFrames ? { frames: mainFrames } : {});
 const pet = companion.pet;
 
 /** Settings that apply without a restart. Companion size rebuilds it, so that reloads the page. */
@@ -152,13 +155,19 @@ const character = await new Promise<string>((resolve) => {
   probe.onerror = () => resolve("pip");
   probe.src = "spark/idle.png";
 });
-const workers = new Workers(companion, zoom, character, (specs) => {
-  crew.workers = specs;
-  return saveCrew();
-});
+const workers = new Workers(
+  companion,
+  zoom,
+  character,
+  (specs) => {
+    crew.workers = specs;
+    return saveCrew();
+  },
+  characterFrames,
+);
 await workers.load(crew.workers);
 /** "give api a spark", the window's Sparks list: a folder name or path becomes the project's root. */
-async function sparks(project: string, change: { name?: string; hue?: number; remove?: boolean }): Promise<string> {
+async function sparks(project: string, change: { name?: string; hue?: number; remove?: boolean; look?: string | null }): Promise<string> {
   if (change.remove) return workers.remove(project);
   let path = project;
   if (!project.startsWith("/")) {
@@ -166,7 +175,7 @@ async function sparks(project: string, change: { name?: string; hue?: number; re
     if (session) path = session.cwd;
     else if (inTauri) path = (await invoke<{ path: string }>("resolve_folder", { folder: project })).path;
   }
-  return workers.add(path, change.name, change.hue);
+  return workers.add(path, change.name, change.hue, change.look);
 }
 if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
@@ -200,9 +209,9 @@ if (inTauri) {
   });
   // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
   // "Sent" only once the companion really passed the answer on.
-  type Action = { action: string; text?: string; id?: string; name?: string; source?: string; session?: string; on?: boolean; project?: string; hue?: number; remove?: boolean };
+  type Action = { action: string; text?: string; id?: string; name?: string; source?: string; session?: string; on?: boolean; project?: string; hue?: number; remove?: boolean; look?: string | null };
   void listen<Action>("pet-action", (e) => {
-    const { action, text, id, name, source, session, on, project, hue, remove } = e.payload;
+    const { action, text, id, name, source, session, on, project, hue, remove, look } = e.payload;
     const reply = (line?: string | void) => line && pet.bubble.say(line, 6);
     // From the window's "Tell Pip…" bar: the same commands, and the reply goes back to it.
     if (action === "run" && text)
@@ -213,8 +222,14 @@ if (inTauri) {
     if (action === "rename" && name) void companion.rename(name).then(reply);
     if (action === "open-session") void companion.openSession();
     if (action === "full-access" && source && session) companion.setFullAccess(source, session, !!on);
+    // A new look for Pip: saved, then the overlay starts over with it.
+    if (action === "look" && !project) {
+      if (look) crew.main.look = look;
+      else delete crew.main.look;
+      void saveCrew().then(() => location.reload());
+    }
     if (action === "spark" && project)
-      void sparks(project, { name, hue, remove }).then(
+      void sparks(project, { name, hue, remove, look }).then(
         (line) => id && void invoke("answered", { id, ok: true, text: line }),
         (error) => id && void invoke("answered", { id, ok: false, text: String(error) }),
       );

@@ -190,10 +190,11 @@ pub fn tray_action(app: AppHandle, action: String) -> Result<(), String> {
 
 /// Opens the data folder (or its `logs` subfolder) in Finder.
 #[tauri::command]
-pub fn reveal_data_dir(shared: State<'_, Arc<Shared>>, logs: Option<bool>, notes: Option<bool>) -> Result<(), String> {
+pub fn reveal_data_dir(shared: State<'_, Arc<Shared>>, logs: Option<bool>, notes: Option<bool>, characters: Option<bool>) -> Result<(), String> {
     let mut dir = shared.settings.lock().unwrap().dir.clone();
-    if logs == Some(true) || notes == Some(true) {
-        dir = dir.join(if notes == Some(true) { "notes" } else { "logs" });
+    let sub = [(logs, "logs"), (notes, "notes"), (characters, "characters")].into_iter().find(|(on, _)| *on == Some(true)).map(|(_, name)| name);
+    if let Some(sub) = sub {
+        dir = dir.join(sub);
         fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     }
     std::process::Command::new("open").arg(dir).spawn().map(|_| ()).map_err(|e| e.to_string())

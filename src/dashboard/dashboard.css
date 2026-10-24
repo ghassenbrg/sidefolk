@@ -844,3 +844,49 @@ button.access.on {
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
+
+/* Characters: the import's poses on half light, half dark, so both wallpapers get checked. */
+.pose-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+.pose-grid:empty {
+  display: none;
+}
+.pose-grid figure {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: linear-gradient(90deg, var(--canvas) 50%, var(--ink) 50%);
+  overflow: hidden;
+}
+.pose-grid figure.borrowed img {
+  opacity: 0.45;
+}
+.pose-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pose-grid figcaption {
+  padding: 2px 6px;
+  background: var(--surface);
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+.characters .steps {
+  display: grid;
+  gap: var(--space-3);
+  padding-left: 1.2em;
+}
+.characters .warnings:empty {
+  display: none;
+}
+.character-thumb {
+  width: 63px;
+  height: auto;
+  border-radius: var(--radius-control);
+  background: var(--canvas);
+}

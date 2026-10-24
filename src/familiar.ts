@@ -18,7 +18,7 @@ export class Bounds {
 }
 
 /** How a companion looks: Pip, or a Spark worker with its color and project badge. */
-export type Look = { character?: string; hue?: number; badge?: string };
+export type Look = { character?: string; hue?: number; badge?: string; frames?: Partial<Record<string, string>> };
 
 /**
  * A companion on the desktop: its drawing, its mind, card and status badge, and the agent
@@ -28,7 +28,7 @@ export class Familiar {
   readonly bounds = new Bounds();
   readonly view: PipView;
   /** A worker's project name under its feet; null for Pip. */
-  private readonly badge: HTMLElement | null = null;
+  readonly badge: HTMLElement | null = null;
   readonly mind: Mind;
   readonly bubble: Bubble;
   readonly hud: HTMLElement;
@@ -43,7 +43,7 @@ export class Familiar {
     zoom = 1,
     readonly look: Look = {},
   ) {
-    this.view = new PipView(look.character, look.hue);
+    this.view = new PipView(look.character, look.hue, look.frames);
     this.unit = (HEIGHT * zoom) / DRAWN;
     this.view.el.style.width = `${VIEW_W * this.unit}px`;
     this.view.el.style.height = `${VIEW_H * this.unit}px`;
