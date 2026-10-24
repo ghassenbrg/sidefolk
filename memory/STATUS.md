@@ -55,8 +55,12 @@ Hand check: switch it on, allow in macOS's dialog, have a meeting with a Meet li
 masks are built after decode (cached frames gave empty masks: clicks fell through) and the
 topmost companion is tested first. Release build c43fc7e is running.
 
-**Next for an agent (no user needed):** more of PLAN-V2 section 7 (morning brief, weekly wins
-from notebooks, timers); a
+**Morning brief (fa8f86a):** the day's first welcome (after 30 min away, or a launch before noon)
+lists today's meetings and reminders, then overnight agent work (src/away.ts `morning`,
+`firstToday`). Release build fa8f86a is running.
+
+**Next for an agent (no user needed):** more of PLAN-V2 section 7 (weekly wins from notebooks,
+timers); a
 character export as one file; sizing the overlay to the companions (fixes black Mission Control
 previews even with "Hide from screen recordings" on, and saves GPU).
 

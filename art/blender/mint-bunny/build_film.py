@@ -113,12 +113,17 @@ body_parts = [ell('torso volume', (0,.06,1.10), (.86,.65,.89)),
               ell('hips volume', (0,.06,.65), (.79,.61,.52)),
               ell('neck volume', (0,.06,1.81), (.50,.43,.36))]
 for side in [-1,1]:
-    body_parts += [ell('shoulder volume', (side*.69,.025,1.52), (.33,.38,.42)),
-                   ell('arm volume', (side*.94,-.035,1.14), (.28,.31,.46), ry=-side*.18),
-                   ell('paw volume', (side*1.00,-.14,.88), (.29,.33,.31)),
-                   ell('haunch volume', (side*.46,.06,.57), (.37,.43,.49)),
+    body_parts += [ell('haunch volume', (side*.46,.06,.57), (.37,.43,.49)),
                    ell('foot volume', (side*.46,-.25,.25), (.41,.50,.245))]
-body = fuse(body_parts, 'Skin • continuous torso arms and feet', .045)
+body = fuse(body_parts, 'Skin • sculpted torso and feet', .045)
+# Free arm surfaces overlap inside the shoulder. Fusing the paw to the hip would
+# make a web of skin that stretches when the arm is raised.
+arms=[]
+for side,label in [(-1,'L'),(1,'R')]:
+    arms.append(fuse([
+        ell('shoulder volume', (side*.69,.025,1.52), (.33,.38,.42)),
+        ell('arm volume', (side*.94,-.035,1.14), (.28,.31,.46), ry=-side*.18),
+        ell('paw volume', (side*1.00,-.14,.88), (.29,.33,.31))], 'Arm.'+label+' • soft deforming paw', .035))
 
 head_main = ell('head volume', (0,.005,2.68), (1.18,.76,.91))
 # A domed forehead, soft cheeks, and a gentle muzzle rather than a squared block.
@@ -336,12 +341,16 @@ def body_weights(p):
     # Continuous capsule weights avoid a hard seam between the paw and hip.
     side='L' if p.x<0 else 'R'
     radii={'Pelvis':.64,'Spine':.61,'Chest':.56,'Neck':.42,
-           'UpperArm.'+side:.29,'Forearm.'+side:.28,'Paw.'+side:.30,
            'Thigh.'+side:.35,'Shin.'+side:.31,'Foot.'+side:.40}
     ds=sorted([(distance_segment(p,*bones[n])/r,n) for n,r in radii.items()])[:4]
     return {n:1/(d+.12)**8 for d,n in ds}
 
 bind(body,body_weights); bind(head,fixed('Head')); bind(tail,fixed('Tail'))
+for arm,label in zip(arms,['L','R']):
+    def arm_weights(p,label=label):
+        radii={'UpperArm.'+label:.33,'Forearm.'+label:.28,'Paw.'+label:.32}
+        return {n:1/(distance_segment(p,*bones[n])/r+.12)**8 for n,r in radii.items()}
+    bind(arm,arm_weights)
 for ear,label in zip(ears,['L','R']):
     def ear_weights(p,label=label):
         t=max(0,min(1,(p.z-3.65)/.72)); t=t*t*(3-2*t)
@@ -355,7 +364,7 @@ def scarf_weights(p):
     t=max(0,min(1,(1.70-p.z)/.40))
     return {'Scarf.01':1-t,'Scarf.02':t}
 for obj in [drape]+hem: bind(obj,scarf_weights)
-for obj in [body,head]+ears:
+for obj in [body,head]+arms+ears:
     sub=obj.modifiers.new('Film silhouette smoothing','SUBSURF'); sub.levels=1; sub.render_levels=1
 
 # Real short hair, with a sparse facial area so eyes and muzzle stay readable.
@@ -387,6 +396,7 @@ def fur(obj,length,count,material=1,region=None):
     return system
 
 fur(body,.038,5000); fur(head,.034,6000); fur(tail,.065,1200)
+for arm in arms: fur(arm,.038,1500)
 for ear in ears:
     fur(ear,.018,1800,1,'base'); fur(ear,.018,1500,2,'tip')
 

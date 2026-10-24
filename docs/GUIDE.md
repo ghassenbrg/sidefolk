@@ -25,6 +25,9 @@ anything happens. The same field is at the top of the Sidefolk window ("Tell Pip
 | next meeting | What's next on your calendar (Settings → Calendar turns on the heads-up). |
 | rename to Bun · hide · help | |
 
+The first time you come back each day (or when Sidefolk starts in the morning), Pip says what's
+on today: meetings, reminders, and what your AI tools finished overnight.
+
 Every card has ×. Closing a request only hides it: it waits in the window until it's answered.
 
 ## The window
