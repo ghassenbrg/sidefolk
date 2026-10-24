@@ -5,7 +5,7 @@ yet: signing, notarizing and auto-update all need credentials only you should ho
 
 ## Ready in the repo
 
-- `npm run build` makes `src-tauri/target/release/bundle/macos/Sidefolk.app` (about 6.5 MB).
+- `npm run build` makes `src-tauri/target/release/bundle/macos/Sidefolk.app` (about 8.6 MB with the crew).
 - `scripts/release.sh` runs every check and builds a signed, notarized app and DMG once the
   keys below are set (it refuses to build an unsigned release unless you pass `--unsigned`).
 - A Dock app with menus; `Info.plist` keeps `LSUIElement` so "Hide from Dock" never flashes an
@@ -56,7 +56,7 @@ public key.
 
 - `scripts/release.sh` (or by hand: `npm run typecheck && npm test && (cd src-tauri && cargo test)`
   and, with `npm run web` running, `npm run check:webkit`).
-- `npm run sprites` (and `npm run sprites -- spark`) if the sheets in `art/` changed.
+- `npm run sprites -- <id> <3d|2d>` for each crew character whose sheets in `art/crew/` changed.
 - `npm run measure` with the screen awake and unlocked and no other Sidefolk running.
 - Try a fresh data directory (`open` would drop the variable, so run the binary):
   `SIDEFOLK_DATA_DIR=$(mktemp -d) Sidefolk.app/Contents/MacOS/sidefolk` shows the setup guide.

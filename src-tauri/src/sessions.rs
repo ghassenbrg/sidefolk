@@ -222,6 +222,9 @@ pub(crate) fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Resul
             ));
             ok.then_some("iTerm").ok_or_else(|| "iTerm didn't open. Allow Sidefolk to control iTerm in System Settings → Privacy & Security → Automation.".into())
         }
+        // Ghostty 1.3+ through AppleScript: a window in the folder with the command typed into the
+        // user's own shell. Its command line (-e) asks "Allow Ghostty to execute…?" every time.
+        "ghostty" if osascript(&ghostty_script(cwd, command)) => Ok("Ghostty"),
         // These take the command on their own command line; the shell stays open after it.
         "ghostty" | "wezterm" | "kitty" | "alacritty" => {
             let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
@@ -245,6 +248,14 @@ pub(crate) fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Resul
             ok.then_some("Terminal").ok_or_else(|| "Terminal didn't open. Allow Sidefolk to control Terminal in System Settings → Privacy & Security → Automation.".into())
         }
     }
+}
+
+fn ghostty_script(cwd: &str, command: &str) -> String {
+    format!(
+        "tell application \"Ghostty\"\nactivate\nset cfg to new surface configuration\nset initial working directory of cfg to {}\nset initial input of cfg to {} & linefeed\nnew window with configuration cfg\nend tell",
+        apple(cwd),
+        apple(command)
+    )
 }
 
 fn valid_id(id: &str) -> bool {
@@ -370,5 +381,12 @@ mod tests {
         assert!(valid_id("3f2a9c1e-77b0-4c1a-9d0e-0a1b2c3d4e5f"));
         assert!(!valid_id("x; rm -rf ~"));
         assert!(!valid_id(""));
+    }
+
+    #[test]
+    fn ghostty_runs_the_command_in_the_users_shell() {
+        let script = ghostty_script("/a b", "claude \"x\"");
+        assert!(script.contains("set initial working directory of cfg to \"/a b\""));
+        assert!(script.contains("set initial input of cfg to \"claude \\\"x\\\"\" & linefeed"));
     }
 }

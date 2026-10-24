@@ -39,6 +39,7 @@ Every character wears the same mint accent, so a Spark's color turns only the mi
 
 `scripts/make_sprites.py` finds each pose by the empty space around it, keys out the green and its
 fringe, scales the sheet so the first pose stands 300 px tall (at most 260 px wide), puts the feet
-on one baseline, adds the ivory sticker outline and writes WebP at quality 90 (about 160 KB a set).
+on one baseline and writes WebP at quality 90 (about 160 KB a set). No outline: the user preferred
+the characters without the white stroke (24 October 2026).
 Look at every sheet before cutting: a pose that drifts from the character means generating that
 sheet again.

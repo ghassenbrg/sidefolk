@@ -77,7 +77,7 @@ function maker(app: App, refill: () => Promise<void>) {
   const name = h("input", { type: "text", id: "character-name", maxlength: 24, autocomplete: "off", placeholder: "Bun" });
   const save = h("button", { type: "submit", class: "primary", text: "Save character", disabled: true });
   const file = h("input", { type: "file", id: "character-file", accept: "image/png,image/jpeg,image/webp", multiple: true });
-  const outline = h("input", { type: "checkbox", id: "character-outline", checked: true });
+  const outline = h("input", { type: "checkbox", id: "character-outline" });
 
   const show = () => {
     preview.replaceChildren();
@@ -115,11 +115,7 @@ function maker(app: App, refill: () => Promise<void>) {
       urls.forEach((u) => URL.revokeObjectURL(u));
     }
   };
-  // A sheet exported from Sidefolk already has its outline.
-  file.addEventListener("change", () => {
-    if (file.files?.[0]?.name.endsWith(".sidefolk.png")) outline.checked = false;
-    void read();
-  });
+  file.addEventListener("change", () => void read());
   outline.addEventListener("change", () => void read());
 
   const form = h(

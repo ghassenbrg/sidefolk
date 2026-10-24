@@ -8,16 +8,13 @@ the empty columns and rows between them (a pose may spill past its grid cell), t
 keyed out and its fringe removed, and every frame is placed on the same canvas with the feet on
 one baseline and the body centered, so swapping frames never makes Pip jump.
 
-A thin ivory outline goes around every figure, like a sticker, so the charcoal Pip stays
-readable on dark wallpapers too.
-
 Output: public/crew/<id>/<style>/<pose>.webp (2× the on-screen size of the "medium" companion).
 """
 
 import os
 import sys
 
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 NAME = sys.argv[1] if len(sys.argv) > 1 else "pip"
@@ -35,9 +32,6 @@ STANDING = 300
 WIDEST = 260
 CANVAS = (420, 380)
 BASELINE = 366
-# The sticker outline: width in pixels on the canvas, and its color.
-OUTLINE = 5
-IVORY = (255, 252, 247)
 
 
 def alpha_of(rgb):
@@ -56,15 +50,6 @@ def despill(rgb, alpha):
     edge = alpha.point(lambda a: 255 if a < 250 else 0)
     g = Image.composite(capped, g, edge)
     return Image.merge("RGB", (r, g, b))
-
-
-def outlined(frame):
-    """The frame on a slightly larger ivory silhouette of itself."""
-    grown = frame.getchannel("A").filter(ImageFilter.MaxFilter(OUTLINE * 2 + 1)).filter(ImageFilter.GaussianBlur(0.8))
-    sticker = Image.new("RGBA", frame.size, IVORY + (0,))
-    sticker.putalpha(grown)
-    sticker.alpha_composite(frame)
-    return sticker
 
 
 def spans(profile, min_gap, min_size):
@@ -129,7 +114,6 @@ def main():
             x = round(CANVAS[0] / 2 - (cx - box[0]) * sheet_scale)
             y = BASELINE - figure.height
             canvas.alpha_composite(figure, (x, y))
-            canvas = outlined(canvas)
             # WebP at quality 90: a seventh of the PNG's size, no visible difference at this scale.
             canvas.save(os.path.join(OUT, f"{name}.webp"), "WEBP", quality=90, method=6)
             print(f"{name}: {size[0]}×{size[1]} at ({x}, {y})")

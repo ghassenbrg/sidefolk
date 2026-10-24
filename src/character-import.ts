@@ -3,8 +3,8 @@
 // read left to right, top to bottom (the template, the crew's 4×2 sheets on chroma green, two
 // sheets one after the other, an exported .sidefolk.png); or one standing picture. The background
 // goes (transparent pixels, or whatever color the corners are), each pose is found by the empty
-// space around it, every frame gets the same scale with the feet on one line, and a thin ivory
-// outline like the crew's. Mirrors scripts/make_sprites.py, which makes the built-in characters.
+// space around it, and every frame gets the same scale with the feet on one line, optionally with
+// a thin ivory outline. Mirrors scripts/make_sprites.py, which makes the built-in characters.
 
 export const POSES = ["idle", "blink", "listen", "think", "work1", "work2", "alert", "sad", "note", "write1", "write2", "done", "wave", "sit", "sleep", "dangle"] as const;
 export type Pose = (typeof POSES)[number];
@@ -226,7 +226,7 @@ export function despill(data: Uint8ClampedArray, alpha: Uint8ClampedArray) {
  * Reads the pictures (see the top of this file). Resolves to data URLs per pose found, the poses
  * still missing (they borrow, see FALLBACK), and plain-language warnings.
  */
-export async function importCharacter(sources: Source[], outline = true): Promise<Imported> {
+export async function importCharacter(sources: Source[], outline = false): Promise<Imported> {
   const warnings: string[] = [];
   const found: [Pose, Cut, Box][] = [];
   // Unnamed pictures' figures by grid cell, each picture after the last one's cells.
