@@ -60,10 +60,9 @@ build holds port 47821, so the dev app can't start while it runs).
   typed in the title and shows ", then every …" on rows.
 - Also done: offsets ("10 minutes before the call tomorrow at 3"; an offset landing in the past
   is refused) in when.ts with tests; Undo in the window's toast right after adding a reminder.
-- Next, in order: (2) Undo on the companion after saving: in src/reminders.ts `add()`, show a
-  card (bubble.show with choices) "OK, tomorrow 09:00: call the bank" + Undo → `remove_reminder`;
-  careful, callers also `bubble.say` the returned string, so return it and let the card replace it.
-  (3) Reminders fire when Sidefolk is quit: schedule macOS local notifications
+- Also done: Undo on the companion (src/reminders.ts `confirm()`: a card with Undo / OK for 8 s;
+  `ReminderStore.remove`). Not yet tried in the real app or the preview by hand.
+- Next, in order: (3) Reminders fire when Sidefolk is quit: schedule macOS local notifications
   (UNUserNotificationCenter via objc2-user-notifications, request permission in setup step 3;
   schedule on add/update/remove, cancel by reminder id; for repeats schedule only the next one,
   re-scheduled when the app next runs). Tauri's notification plugin was removed in phase 0
