@@ -85,6 +85,17 @@ listed below, then phases 5–8. Signing/notarization and colleague beta require
   details/history, then a real sleep/wake reminder. DST browser/unit checks already pass.
 - Release rebuild/relaunch is in progress for this continuation; check the final handoff below.
 
+**Phase 5 Notes (Claude Code, 24 Oct) — built:** src-tauri/src/notes.rs (one Markdown file per
+notebook in <data>/notes: `# Name`, entries `- YYYY-MM-DD — text _(project)_`; hand-written lines
+kept; edits check the line still matches), src/notes.ts (companion: "note for X: …", "note: …",
+"new notebook X", "notes"; picks/asks/creates the notebook; Undo card; `capture()` for reminders
+about writing), src/dashboard/notes.ts (⌘3: list, search all, notebook page with add/edit/delete+
+Undo, Copy as Markdown, Show in Finder, "Draft a summary…" → `draft_summary` with the user's
+claude (`-p --tools "" --no-session-persistence`, empty temp folder) or codex (`exec -s
+read-only`), labelled as using their plan). Reminders that mention writing ("every Friday at 4,
+note what I achieved") offer "Write it now". One tiny live haiku call confirmed the claude flags.
+Not tried in the real app yet.
+
 **Phase 4 (Claude Code, 24 Oct) — built, waiting on the user's hand checks:**
 - Plain commands (f4819d7): src/commands.ts `run` kind (everyday commands + PATH via
   `path_commands`; "make a note"/"find my keys" stay sentences; "run X in api" / "$ X");

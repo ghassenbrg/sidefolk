@@ -223,6 +223,8 @@ fn main() {
             notes::edit_note,
             notes::remove_note,
             notes::restore_note,
+            notes::draft_tools,
+            notes::draft_summary,
             actions::path_commands,
             hooks::sync_full_access,
             actions::resolve_folder,

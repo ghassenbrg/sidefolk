@@ -67,6 +67,11 @@ for (const scheme of ["light", "dark"]) {
   await page.locator(".note").first().getByRole("button", { name: "Delete" }).click();
   await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
+  // Drafting with AI is explicit: it says what it sends, then shows the draft.
+  await page.getByRole("button", { name: "Draft a summary…" }).click();
+  await page.getByText("and nothing else", { exact: false }).waitFor();
+  await page.getByRole("button", { name: "Draft with Claude Code" }).click();
+  await page.getByRole("heading", { name: "Draft by Claude Code" }).waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");

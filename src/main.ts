@@ -129,6 +129,7 @@ const noteStore: NoteStore = inTauri
     }
   : memoryNotes();
 const notes = new Notes(companion, noteStore);
+reminders.writeNote = (text) => void notes.capture(text);
 if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();

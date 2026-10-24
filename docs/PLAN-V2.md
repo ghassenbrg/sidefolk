@@ -320,7 +320,7 @@ Sizes: S ≈ a few days, M ≈ a week, L ≈ two weeks of focused work.
 | 2. App shell ✓ (24 Oct) | A real app | Dock app, window with sidebar (Today, Reminders, Notes, Settings; others hidden until built), menus, setup guide, the one input | A new user gets through setup and finds everything | M |
 | 3. Reminders | Pillar 1 | Natural capture, confirm, repeats, offsets, note-holding arrival, notifications when quit, app views | Section 6.1 checks pass on your Mac | M |
 | 4. Sessions basics ✓ built (24 Oct; hand checks pending) | Fix today's worst pains | Open session fixed for Terminal, Ghostty, iTerm and Claude desktop (tested end to end); plain commands run locally, never through AI; per-session full access; default terminal and session app in Settings | You open any session in one click, `ls -la` never reaches Codex, a full-access session doesn't ask | S–M |
-| 5. Notes | Pillar 2 | Notebooks, one-sentence capture, prompts, search, Markdown export, optional AI draft | Section 6.2 checks pass | M |
+| 5. Notes ✓ built (24 Oct; hand checks pending) | Pillar 2 | Notebooks, one-sentence capture, prompts, search, Markdown export, optional AI draft | Section 6.2 checks pass | M |
 | 6. Sessions | Pillar 3 | Sparks per project or session (color, badge), start/watch from the companion, `sidefolk` CLI, `/sidefolk` command in Claude Code and Codex | Section 6.3 checks pass with your setup at work and at home | L |
 | 7. Actions | Pillar 4 | Open folder/app/URL, run command with preview, saved actions | Section 6.4 checks pass | S–M |
 | 8. Beta | Ship it | Signing and notarization (your keys), auto-update, crash reports opt-in, a short guide | Two or three colleagues use it for a week | M |

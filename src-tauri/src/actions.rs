@@ -22,7 +22,7 @@ fn home() -> PathBuf {
 }
 
 /// The user's PATH as their login shell sets it (the app itself starts with launchd's short one).
-fn login_path() -> &'static str {
+pub(crate) fn login_path() -> &'static str {
     static PATH: OnceLock<String> = OnceLock::new();
     PATH.get_or_init(|| {
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());

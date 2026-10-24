@@ -827,3 +827,12 @@ button.access.on {
 .inline-form .field {
   flex: 1;
 }
+.draft-text {
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font: var(--text-secondary) / var(--leading) var(--font-ui);
+}
+.draft:not(:empty) {
+  margin-bottom: var(--space-4);
+}

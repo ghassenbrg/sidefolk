@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "./bubble";
 import type { Companion } from "./companion";
-import { memoryStore, Reminders } from "./reminders";
+import { aboutWriting, memoryStore, Reminders } from "./reminders";
 
 function fixture() {
   const cards = new Map<string, Card>();
@@ -41,4 +41,9 @@ describe("reminder delivery", () => {
     await reminders.reload();
     expect(closeRequest).toHaveBeenCalledWith(`reminder-${r.id}`);
   });
+});
+
+describe("aboutWriting", () => {
+  it.each(["note what I achieved this week", "write down the wins", "log the incident", "what I shipped for evaluation"])("offers a note for %s", (text) => expect(aboutWriting(text)).toBe(true));
+  it.each(["call the bank", "stretch", "review the PR notesheet"])("not for %s", (text) => expect(aboutWriting(text)).toBe(false));
 });

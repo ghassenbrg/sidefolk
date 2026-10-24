@@ -46,6 +46,21 @@ export class Notes {
     return this.ask(books, text);
   }
 
+  /** A quick capture, from a reminder like "every Friday at 4, note what I achieved for evaluation". */
+  async capture(reminderText: string) {
+    const books = await this.store.list();
+    const lower = reminderText.toLowerCase();
+    const book = books.find((b) => b.name.toLowerCase().split(/\s+/).some((w) => w.length > 3 && lower.includes(w)));
+    const bubble = this.companion.pet.bubble;
+    bubble.prompt({
+      who: `${this.companion.pet.name} · ${book ? book.name : "note"}`,
+      placeholder: "What happened? One sentence is enough.",
+      suggestions: [],
+      preview: (text) => (text.trim() ? (book ? `Add to ${book.name}` : "Add a note (I'll ask which notebook)") : ""),
+      submit: (text) => this.take(text, book ? book.id : null),
+    });
+  }
+
   async create(name: string): Promise<string> {
     const book = await this.store.create(name);
     return `Notebook ${book.name} is ready. Say “note for ${book.name}: …” to add to it.`;

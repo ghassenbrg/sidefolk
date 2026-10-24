@@ -228,6 +228,10 @@ function preview(): typeof tauriInvoke {
         setTimeout(() => emit("notes-changed", null), 50);
         return null;
       }
+      case "draft_tools":
+        return ["claude"];
+      case "draft_summary":
+        return "## Reliability (Sep–Oct 2026)\n- Led the login migration; errors down 40% [Sep 12]\n\n(Preview: no AI was used.)";
       case "allow_terminal_control":
         return "Sidefolk can open sessions and commands in Terminal. (Preview)";
       case "run_command":

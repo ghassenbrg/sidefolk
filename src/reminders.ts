@@ -37,6 +37,8 @@ export class Reminders {
   private showing = new Set<string>();
   /** Opens the Settings window's reminder list (desktop app only). */
   manage?: (id?: string) => void;
+  /** Opens a quick note capture; a reminder about writing something down offers it. */
+  writeNote?: (reminderText: string) => void;
 
   constructor(
     private readonly companion: Companion,
@@ -206,11 +208,14 @@ export class Reminders {
         { label: "In 10 min", value: "10" },
         { label: "In 1 hour", value: "60" },
         { label: "Tomorrow 9:00", value: "tomorrow" },
-        { label: "Done", value: "done", primary: true },
+        // "Every Friday at 4, note what I achieved": the reminder opens the notebook's capture.
+        ...(this.writeNote && aboutWriting(r.text) ? [{ label: "Write it now", value: "write", primary: true }, { label: "Done", value: "done" }] : [{ label: "Done", value: "done", primary: true }]),
         ...(this.manage ? [{ label: "Open", value: "open", quiet: true }] : []),
       ],
       onChoose: (value) => {
         if (value === "open") { this.unpeek(r); this.manage?.(r.id); return; }
+        if (value === "write") this.writeNote?.(r.text);
+        if (value === "write") value = "done";
         void this.answer(r, value).catch((e) => { pet.bubble.say(`Not saved: ${e}`, 6, "fail"); this.show(r, missed); });
       },
       // Closed without an answer: it stays in the window's Requests; a hidden companion hides again.
@@ -267,6 +272,9 @@ export class Reminders {
     });
   }
 }
+
+/** A reminder to write something down ("note what I achieved this week", "log the wins"). */
+export const aboutWriting = (text: string) => /\b(note|notes|write( it)? down|log|jot|journal)\b|what (i|we) (did|achieved|shipped)|\bwins\b/i.test(text);
 
 /** A browser-preview store: kept in memory, gone on reload. */
 export function memoryStore(): ReminderStore {
