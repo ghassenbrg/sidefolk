@@ -71,6 +71,9 @@ pub struct Change {
     pub done: Option<bool>,
     pub due: Option<u64>,
     pub fired: Option<bool>,
+    pub repeat: Option<Repeat>,
+    #[serde(default)]
+    pub clear_repeat: bool,
 }
 
 pub struct Reminders {
@@ -160,6 +163,11 @@ impl Reminders {
             }
             r.text = text.chars().take(MAX_TEXT).collect();
         }
+        if change.repeat.as_ref().is_some_and(|repeat| !repeat.valid()) {
+            return Err(io::Error::other("Choose a valid repeat interval (1–52)"));
+        }
+        if change.clear_repeat { r.repeat = None; }
+        else if let Some(repeat) = &change.repeat { r.repeat = Some(repeat.clone()); }
         if let Some(done) = change.done {
             r.done = done;
         }
@@ -251,7 +259,14 @@ mod tests {
         assert!(!store.update("missing", &Change::default()).unwrap());
         let weekly = Repeat { every: "week".into(), n: 2 };
         let r = store.add("send the report", now_ms() + 60_000, "", "you", Some(weekly.clone())).unwrap();
-        assert_eq!(r.repeat, Some(weekly));
+        assert_eq!(r.repeat, Some(weekly.clone()));
+        store.update(&r.id, &serde_json::from_str::<Change>(r#"{"text":"new title"}"#).unwrap()).unwrap();
+        assert_eq!(store.list().iter().find(|x| x.id == r.id).unwrap().repeat, Some(weekly));
+        store.update(&r.id, &serde_json::from_str::<Change>(r#"{"repeat":{"every":"day","n":3}}"#).unwrap()).unwrap();
+        assert_eq!(store.list().iter().find(|x| x.id == r.id).unwrap().repeat.as_ref().unwrap().n, 3);
+        assert!(store.update(&r.id, &serde_json::from_str::<Change>(r#"{"repeat":{"every":"day","n":0}}"#).unwrap()).is_err());
+        store.update(&r.id, &serde_json::from_str::<Change>(r#"{"clear_repeat":true}"#).unwrap()).unwrap();
+        assert_eq!(Reminders::load(&dir).list().iter().find(|x| x.id == r.id).unwrap().repeat, None);
         let odd = store.add("odd", now_ms() + 60_000, "", "you", Some(Repeat { every: "hour".into(), n: 1 })).unwrap();
         assert_eq!(odd.repeat, None);
         let r = store.add("call the bank", now_ms() + 60_000, "", "you", None).unwrap();

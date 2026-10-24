@@ -160,13 +160,17 @@ function preview(): typeof tauriInvoke {
       case "list_reminders":
         return state.reminders;
       case "add_reminder": {
-        const r = { id: `r${Date.now()}`, text: a.text, due: a.due, project: a.project ?? "", from: "you", created: Date.now(), done: false, fired: false };
+        const r = { id: `r${Date.now()}`, text: a.text, due: a.due, project: a.project ?? "", from: "you", created: Date.now(), done: false, fired: false, repeat: a.repeat };
         state.reminders.push(r);
         return r;
       }
       case "update_reminder": {
         const r = state.reminders.find((x) => x.id === a.id);
-        if (r) Object.assign(r, a.change);
+        if (r) {
+          Object.assign(r, a.change);
+          if (a.change.clear_repeat) r.repeat = null;
+          if (a.change.due !== undefined) r.fired = false;
+        }
         return !!r;
       }
       case "remove_reminder": {

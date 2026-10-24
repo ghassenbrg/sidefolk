@@ -62,6 +62,17 @@ Native quit/delivery/click verification is still pending the rebuilt .app; don't
 finished until this is checked. Next: repeat picker/edit + window repeat completion, then
 companion Undo browser behavior, section 6.1 acceptance, build/relaunch, phase 4.
 
+**Repeat controls and browser acceptance — 24 October, Codex:** Window add/edit has
+None / Daily / Weekdays / Weekly / Monthly plus 1–52 intervals. Rust Change supports repeat
+and explicit clear_repeat; unrelated edits preserve recurrence, invalid repeats are rejected.
+Window completion now advances repeats (including early completion); preview stores preserve
+repeat edits too. WebKit checks now exercise add→edit→complete→clear repeat→delete→Undo in
+light and dark, plus companion key r→Undo→empty reminders. All passed, along with typecheck,
+43 Vitest, 22 Rust tests (+2 ignored). Remaining section 6.1 work found during review:
+pre-save Save/Change confirmation, Open/details/history, and native hidden/quit/sleep checks.
+Do not mark phase 3 complete merely from unit/browser checks. Next implement those small gaps,
+then build HEAD/relaunch and verify native behavior; continue session basics afterward.
+
 **Phase 3 (reminders) IN PROGRESS, all committed, everything green:**
 - Done: `src/when.ts` `takeRepeat` / `nextDue` (local wall-clock, DST-safe, monthly clamps to
   short months) / `describeRepeat`; `parseReminder` returns `repeat` (tests in when.test.ts).

@@ -6,6 +6,7 @@
 //   npx playwright install webkit      # once
 //   npm run check:webkit [-- <screenshot dir>]
 
+import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -49,6 +50,32 @@ for (const scheme of ["light", "dark"]) {
   await page.waitForTimeout(1200);
   const result = (await page.locator(".result").textContent()) ?? "";
   if (!result.includes("Sent to Codex")) failures.push(`${scheme} answer: "${result.trim()}"`);
+  // Repeat edits must survive saving, advancing, clearing, deleting and Undo.
+  await page.goto(base + "/settings.html?tab=reminders");
+  const add = page.getByRole("form", { name: "Add a reminder" });
+  await add.getByLabel("What would you like to remember?").fill("every 2 weeks tomorrow at 9 to repeat acceptance");
+  assert.equal(await add.getByLabel("Repeat", { exact: true }).inputValue(), "week");
+  assert.equal(await add.getByLabel("Every how many?").inputValue(), "2");
+  await add.getByRole("button", { name: "Add reminder" }).click();
+  const reminder = page.locator("article.reminder").filter({ hasText: "repeat acceptance" });
+  await reminder.getByRole("button", { name: "Edit", exact: true }).click();
+  let edit = page.getByRole("form", { name: "Edit repeat acceptance" });
+  assert.equal(await edit.getByLabel("Repeat", { exact: true }).inputValue(), "week");
+  await edit.getByLabel("Repeat", { exact: true }).selectOption("day");
+  await edit.getByLabel("Every how many?").fill("1");
+  const originalDate = await edit.getByLabel("Date", { exact: true }).inputValue();
+  await edit.getByRole("button", { name: "Save changes" }).click();
+  await reminder.getByRole("button", { name: "Mark complete" }).click();
+  await reminder.getByRole("button", { name: "Edit", exact: true }).click();
+  edit = page.getByRole("form", { name: "Edit repeat acceptance" });
+  assert.notEqual(await edit.getByLabel("Date", { exact: true }).inputValue(), originalDate);
+  await edit.getByLabel("Repeat", { exact: true }).selectOption("");
+  await edit.getByRole("button", { name: "Save changes" }).click();
+  assert.equal((await reminder.innerText()).includes("then every"), false);
+  await reminder.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
+  await reminder.getByRole("button", { name: "Edit", exact: true }).click();
+  assert.equal(await page.getByRole("form", { name: "Edit repeat acceptance" }).getByLabel("Repeat", { exact: true }).inputValue(), "");
   await page.close();
 }
 
@@ -62,6 +89,15 @@ const card = (await overlay.locator(".bubble.urgent").first().innerText().catch(
 for (const part of ["Work session", "Run a command?", "Command", "Folder", "Decline", "Allow once"])
   if (!card.includes(part)) failures.push(`overlay permission card is missing "${part}"`);
 await overlay.screenshot({ path: join(out, "overlay.png") });
+// Browser key r creates a real in-memory reminder; Undo must remove it from the list.
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("r");
+await overlay.getByRole("button", { name: "Undo", exact: true }).click();
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("reminders");
+await overlay.locator(".bubble input").press("Enter");
+await overlay.getByText("No reminders", { exact: true }).waitFor();
 await browser.close();
 
 console.log(`screenshots: ${out}`);

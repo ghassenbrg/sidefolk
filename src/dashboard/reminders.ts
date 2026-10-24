@@ -1,6 +1,6 @@
 import { icon } from "../icons";
 import { badge } from "../states";
-import { describeRepeat, parseReminder, type Repeat } from "../when";
+import { describeRepeat, nextDue, parseReminder, type Repeat } from "../when";
 import { invoke, type Reminder } from "./api";
 import type { App } from "./app";
 import { agentShort, button, folder, h, timeZone } from "./dom";
@@ -31,10 +31,19 @@ function fields(prefix: string, initial?: Reminder) {
   const text = h("input", { type: "text", id: `${prefix}-text`, maxlength: 300, autocomplete: "off", value: initial?.text ?? "", placeholder: "Review launch notes", "aria-describedby": `${prefix}-text-error` });
   const date = h("input", { type: "date", id: `${prefix}-date`, value: due ? dateValue(due) : "", "aria-describedby": `${prefix}-when-error` });
   const time = h("input", { type: "time", id: `${prefix}-time`, value: due ? timeValue(due) : "", "aria-describedby": `${prefix}-when-error` });
+  const repeat = h("select", { id: `${prefix}-repeat` });
+  for (const [value, label] of [["", "None"], ["day", "Every day"], ["weekday", "Weekdays"], ["week", "Weekly"], ["month", "Monthly"]])
+    repeat.append(h("option", { value, text: label }));
+  repeat.value = initial?.repeat?.every ?? "";
+  const interval = h("input", { type: "number", id: `${prefix}-interval`, min: 1, max: 52, step: 1, value: String(initial?.repeat?.n ?? 1) });
+  const intervalField = h("div", { class: "field" }, h("label", { for: interval.id, text: "Every how many?" }), interval);
+  let typedRepeat = !!initial;
+  const selectedRepeat = (): Repeat | undefined => repeat.value ? { every: repeat.value as Repeat["every"], n: repeat.value === "weekday" ? 1 : Number(interval.value) } : undefined;
   const textError = h("p", { class: "field-error", id: `${prefix}-text-error`, role: "alert" });
   const whenError = h("p", { class: "field-error", id: `${prefix}-when-error`, role: "alert" });
   const resolved = h("p", { class: "hint", "aria-live": "polite" });
   let typedWhen = !!initial;
+  let changedText = false;
   const update = () => {
     // A time typed in the title fills the fields, unless they were set by hand.
     const parsed = parseReminder(text.value);
@@ -42,10 +51,17 @@ function fields(prefix: string, initial?: Reminder) {
       date.value = dateValue(parsed.due);
       time.value = timeValue(parsed.due);
     }
+    if (!typedRepeat) {
+      repeat.value = parsed?.repeat?.every ?? "";
+      interval.value = String(parsed?.repeat?.n ?? 1);
+    }
+    intervalField.hidden = !repeat.value || repeat.value === "weekday";
     const when = fromFields(date.value, time.value);
-    resolved.textContent = when ? `Reminds you ${longDate(when)} (${timeZone()}).` : `Times are in your time zone, ${timeZone()}.`;
+    const recurrence = selectedRepeat();
+    resolved.textContent = when ? `Reminds you ${longDate(when)} (${timeZone()})${recurrence ? `, then ${describeRepeat(recurrence, when)}` : ""}.` : `Times are in your time zone, ${timeZone()}.`;
   };
-  text.addEventListener("input", update);
+  for (const control of [repeat, interval]) control.addEventListener("change", () => { typedRepeat = true; update(); });
+  text.addEventListener("input", () => { changedText = true; update(); });
   for (const f of [date, time])
     f.addEventListener("input", () => {
       typedWhen = true;
@@ -60,17 +76,20 @@ function fields(prefix: string, initial?: Reminder) {
     h("div", { class: "field wide" }, h("label", { for: text.id, text: "What would you like to remember?" }), text, textError),
     h("div", { class: "field" }, h("label", { for: date.id, text: "Date" }), date),
     h("div", { class: "field" }, h("label", { for: time.id, text: "Time" }), time),
+    h("div", { class: "field" }, h("label", { for: repeat.id, text: "Repeat" }), repeat),
+    intervalField,
     h("div", { class: "wide" }, whenError, resolved),
   );
   /** Checks the fields; returns what to save, or null with errors shown next to the fields. */
   const read = (): { text: string; due: Date; repeat?: Repeat } | null => {
     const parsed = parseReminder(text.value);
-    const what = (parsed && !typedWhen ? parsed.what : text.value).trim();
+    const what = (parsed && (!initial || changedText) ? parsed.what : text.value).trim();
     const when = fromFields(date.value, time.value);
     textError.textContent = what ? "" : "Enter what to remember.";
     whenError.textContent = !when ? "Choose a date and a time." : when.getTime() <= Date.now() && !initial ? "That time has passed. Choose a later one." : "";
-    // "every weekday at 9 to…" typed in the title keeps its repeat, even with the time changed by hand.
-    return what && when && !whenError.textContent ? { text: what, due: when, repeat: parsed?.repeat } : null;
+    const recurrence = selectedRepeat();
+    if (recurrence && (!Number.isInteger(recurrence.n) || recurrence.n < 1 || recurrence.n > 52)) whenError.textContent = "Choose a repeat interval from 1 to 52.";
+    return what && when && !whenError.textContent ? { text: what, due: when, repeat: recurrence } : null;
   };
   return { node, read, focus: () => text.focus() };
 }
@@ -174,7 +193,7 @@ function row(app: App, r: Reminder) {
             app.toast(String(error), undefined, true);
           }
         }, "quiet"),
-        button([icon("done"), "Mark complete"], () => void update({ done: true }, "Marked complete."), ""),
+        button([icon("done"), "Mark complete"], () => void update(r.repeat ? { due: nextDue(due, r.repeat, new Date(Math.max(Date.now(), r.due))).getTime() } : { done: true }, r.repeat ? "Next repeat scheduled." : "Marked complete."), ""),
       ),
     ),
   );
@@ -186,18 +205,18 @@ function editRow(app: App, r: Reminder) {
     "form",
     { class: "card reminder editing", "aria-label": `Edit ${r.text}` },
     edit.node,
-    h("div", { class: "actions" }, button("Cancel", () => ((editing = null), app.redraw(true))), h("button", { type: "submit", class: "primary", text: "Save changes" })),
+    h("div", { class: "actions" }, button("Cancel", () => ((editing = null), app.go("reminders"))), h("button", { type: "submit", class: "primary", text: "Save changes" })),
   );
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const value = edit.read();
     if (!value) return;
     try {
-      await invoke("update_reminder", { id: r.id, change: { text: value.text, due: value.due.getTime() } });
+      await invoke("update_reminder", { id: r.id, change: { text: value.text, due: value.due.getTime(), repeat: value.repeat ?? null, clear_repeat: !value.repeat } });
       editing = null;
       app.toast(`Saved for ${longDate(value.due)}.`);
       await app.refresh();
-      app.redraw(true);
+      app.go("reminders");
     } catch (error) {
       app.toast(`Not saved: ${error}`, undefined, true);
     }

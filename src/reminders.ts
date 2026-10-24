@@ -197,7 +197,7 @@ export class Reminders {
     this.unpeek(r);
     if (value === "done" && r.repeat) {
       // A repeating reminder isn't finished: it moves to its next time.
-      r.due = nextDue(new Date(r.due), r.repeat, new Date()).getTime();
+      r.due = nextDue(new Date(r.due), r.repeat, new Date(Math.max(Date.now(), r.due))).getTime();
       r.fired = false;
       return this.store.update(r.id, { due: r.due });
     }
@@ -239,12 +239,15 @@ export function memoryStore(): ReminderStore {
   const list: Reminder[] = [];
   return {
     list: async () => [...list],
-    add: async (text, due, project, from = "you") => {
-      const r = { id: `r${Date.now()}`, text, due, project: project ?? "", from, created: Date.now(), done: false, fired: false };
+    add: async (text, due, project, from = "you", repeat) => {
+      const r = { id: `r${Date.now()}`, text, due, project: project ?? "", from, created: Date.now(), done: false, fired: false, repeat };
       list.push(r);
       return r;
     },
-    update: async () => {},
+    update: async (id, change) => {
+      const r = list.find((r) => r.id === id);
+      if (r) { Object.assign(r, change); if (change.due !== undefined) r.fired = false; }
+    },
     remove: async (id) => void list.splice(list.findIndex((r) => r.id === id) >>> 0, 1),
     peek: () => {},
   };
