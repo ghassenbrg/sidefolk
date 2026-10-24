@@ -17,9 +17,14 @@ pub struct Settings {
     pub shortcut: String,
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
-    /// Keep the overlay out of screenshots, recordings and screen sharing: crew pets show
-    /// project names.
+    /// Keep the overlay out of screenshots, recordings and screen sharing. Off by default: macOS
+    /// then also blanks it in Mission Control, and the overlay covers the whole screen, so every
+    /// desktop's preview turns black.
     pub hide_in_recordings: bool,
+    /// The one-time switch-off of `hide_in_recordings` (it used to be on by default) has run.
+    /// Missing in older files, so it reads as false there and the switch-off runs once.
+    #[serde(default)]
+    pub recordings_reset: bool,
     /// The first-run card has been answered.
     pub onboarded: bool,
     /// small | medium | large.
@@ -49,7 +54,8 @@ impl Default for Settings {
             shortcut: "CommandOrControl+Shift+Space".into(),
             sleep_after_secs: 120,
             pet_answers_permissions: true,
-            hide_in_recordings: true,
+            hide_in_recordings: false,
+            recordings_reset: true,
             onboarded: false,
             pet_size: "medium".into(),
             calm: false,
@@ -82,7 +88,16 @@ impl Store {
             Err(e) if e.kind() == io::ErrorKind::NotFound => Settings::default(),
             Err(e) => return Err(e),
         };
-        Ok(Self { dir, value })
+        let mut store = Self { dir, value };
+        // Older installs had it on without asking, which blacked out Mission Control; turn it
+        // off once, and leave it alone from then on.
+        if !store.value.recordings_reset {
+            store.update(|s| {
+                s.hide_in_recordings = false;
+                s.recordings_reset = true;
+            })?;
+        }
+        Ok(store)
     }
     pub fn update(&mut self, change: impl FnOnce(&mut Settings)) -> io::Result<()> {
         let mut next = self.value.clone();
@@ -140,9 +155,20 @@ mod tests {
     #[test]
     fn missing_fields_keep_defaults() {
         let value: Settings = serde_json::from_str(r#"{"hidden":true}"#).unwrap();
-        assert!(value.hidden && value.pet_answers_permissions && value.hide_in_recordings);
+        assert!(value.hidden && value.pet_answers_permissions && !value.hide_in_recordings);
         assert_eq!(value.sleep_after_secs, 120);
         assert_eq!(value.shortcut, Settings::default().shortcut);
+    }
+    #[test]
+    fn old_installs_stop_blanking_mission_control_once() {
+        let dir = std::env::temp_dir().join(format!("sidefolk-settings-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("settings.json"), r#"{"hide_in_recordings":true}"#).unwrap();
+        let mut store = Store::load(dir.clone()).unwrap();
+        assert!(!store.value.hide_in_recordings && store.value.recordings_reset);
+        store.update(|s| s.hide_in_recordings = true).unwrap();
+        assert!(Store::load(dir.clone()).unwrap().value.hide_in_recordings);
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn saves_and_reloads() {

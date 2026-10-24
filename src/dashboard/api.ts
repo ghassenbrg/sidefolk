@@ -99,7 +99,7 @@ function preview(): typeof tauriInvoke {
       shortcut: "CommandOrControl+Shift+Space",
       sleep_after_secs: 120,
       pet_answers_permissions: true,
-      hide_in_recordings: true,
+      hide_in_recordings: false,
       onboarded: true,
       pet_size: "medium",
       calm: false,
