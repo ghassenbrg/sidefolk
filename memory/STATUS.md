@@ -85,6 +85,28 @@ listed below, then phases 5–8. Signing/notarization and colleague beta require
   details/history, then a real sleep/wake reminder. DST browser/unit checks already pass.
 - Release rebuild/relaunch is in progress for this continuation; check the final handoff below.
 
+**Phase 6 Sessions with Sparks (Claude Code, 24 Oct) — built:**
+- Start sessions (7c1b22a): "start a claude session in api [with full access]" → card with folder
+  and mode → `start_session` (claude / `--permission-mode auto`; codex / `-a never -s
+  workspace-write`) in the chosen terminal. Window: Sessions page ⌘4 (d636865) with running,
+  recently finished (Continue), New session form, Sparks.
+- Sparks (2122d46, 0e675fe): src/workers.ts + src/worker-colors.ts; "give api a spark", "send the
+  api spark home", Sessions → Sparks (color, look, remove). Saved in crew.json `workers`
+  (project path, name, hue, look). Companion routes events/requests/notifies by project to the
+  worker (`familiarFor`), status lists all companions. Spark art: art/spark (codex-imagegen,
+  briefs in README), `npm run sprites -- spark`; color = hue-rotate on the frames only.
+- CLI + MCP (2098137): `sidefolk here [--name X]` / `sidefolk home` (same binary; installed by
+  Settings → Connected tools → Command line tool, admin prompt, /usr/local/bin symlink); MCP tool
+  `spark` so agents can do it when the user asks.
+- Custom characters (40e351c): public/character-template.png (scripts/make_template.py),
+  src/character-import.ts (canvas: edge-connected background removal, 4×4 cells, scale to idle,
+  feet line, ivory outline; only idle required, FALLBACK map), src-tauri/src/characters.rs
+  (<data>/characters/<id>/pose.png + character.json; base64 in/out; save_template → Downloads),
+  window: Settings → Your companion → Looks like / Make your own… (src/dashboard/characters.ts).
+  Pip's look is crew.main.look; changing it reloads the overlay.
+- Not tried in the real app yet: Sparks on the real desktop, CLI against the new build, look
+  switching. Release build still c781432 — rebuild and relaunch before hand checks.
+
 **Phase 5 Notes (Claude Code, 24 Oct) — built:** src-tauri/src/notes.rs (one Markdown file per
 notebook in <data>/notes: `# Name`, entries `- YYYY-MM-DD — text _(project)_`; hand-written lines
 kept; edits check the line still matches), src/notes.ts (companion: "note for X: …", "note: …",
