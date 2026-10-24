@@ -18,6 +18,8 @@ export type Settings = {
   pet_size: "small" | "medium" | "large";
   calm: boolean;
   large_text: boolean;
+  calendar_heads_up: boolean;
+  calendar_lead_mins: number;
   sounds: boolean;
   volume: number;
   speak: boolean;
@@ -104,6 +106,8 @@ function preview(): typeof tauriInvoke {
       pet_size: "medium",
       calm: false,
       large_text: false,
+      calendar_heads_up: false,
+      calendar_lead_mins: 5,
       sounds: true,
       volume: 60,
       speak: false,
@@ -271,6 +275,12 @@ function preview(): typeof tauriInvoke {
         return "Saved to Downloads as sidefolk-character-template.png. (Preview: nothing saved.)";
       case "problem_report":
         return "Sidefolk preview on macOS (preview)\n\nWhat happened, and what did you expect?\n";
+      case "calendar_status":
+        return "notRequested";
+      case "request_calendar":
+        return "allowed";
+      case "upcoming_events":
+        return [{ id: "e1@1", title: "Design review", start: now + 40 * 60_000, end: now + 70 * 60_000, location: "Room 4", link: "https://meet.google.com/abc-defg-hij", calendar: "Work" }];
       case "install_cli":
         return "Installed. (Preview: nothing changed.)";
       case "allow_terminal_control":

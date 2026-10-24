@@ -72,6 +72,8 @@ pub struct Change {
     pet_size: Option<String>,
     calm: Option<bool>,
     large_text: Option<bool>,
+    calendar_heads_up: Option<bool>,
+    calendar_lead_mins: Option<u64>,
     sounds: Option<bool>,
     volume: Option<u8>,
     speak: Option<bool>,
@@ -124,6 +126,12 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
                 }
                 if let Some(calm) = change.calm {
                     s.calm = calm;
+                }
+                if let Some(on) = change.calendar_heads_up {
+                    s.calendar_heads_up = on;
+                }
+                if let Some(mins) = change.calendar_lead_mins {
+                    s.calendar_lead_mins = mins.clamp(1, 60);
                 }
                 if let Some(large) = change.large_text {
                     s.large_text = large;

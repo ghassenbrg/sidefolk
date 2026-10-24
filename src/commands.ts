@@ -24,6 +24,7 @@ export type Command =
   | { kind: "note"; notebook: string | null; text: string }
   | { kind: "notebook"; name: string }
   | { kind: "notes" }
+  | { kind: "calendar" }
   /** A shell command to run in the user's terminal, after they see it. `folder` as typed ("api", "~/x"). */
   | { kind: "run"; command: string; folder: string | null }
   | { kind: "unknown"; text: string };
@@ -62,6 +63,7 @@ export function parse(input: string): Command {
   if (/^(reminders|my reminders|list reminders)$/.test(lower)) return { kind: "reminders" };
   if ((m = text.match(/^remind me\b\s*(.*)$/i))) return { kind: "remind", text: m[1] };
   if (/^(notes|my notes|notebooks|open notes)$/.test(lower)) return { kind: "notes" };
+  if (/^(next meeting|my next meeting|what'?s next|calendar|agenda|what'?s on my calendar)$/.test(lower)) return { kind: "calendar" };
   if ((m = text.match(/^(?:new|create|make)\s+(?:a\s+)?notebook\s+(?:called\s+|named\s+)?(.+)$/i))) return { kind: "notebook", name: m[1].trim() };
   // "note for evaluation: shipped X", "add to ideas: …", "note: …", "note that …". Kept as typed.
   const kept = input.trim();
@@ -104,7 +106,7 @@ export const HELP = [
   "open session · open api session · start a claude session in api",
   "open Sidefolk · hide · rename to Pip",
   "note for evaluation: shipped the login migration · notes",
-  "give api a spark · send the api spark home",
+  "give api a spark · send the api spark home · next meeting",
   "ls -la · run npm test in api (you confirm first)",
   "open api in VS Code · open a terminal in api · open github.com",
   "save action deploy: npm run deploy in api · then just say “deploy”",
@@ -155,6 +157,8 @@ export function explain(text: string, ctx: ExplainContext): string {
       return `Start a notebook called ${command.name}`;
     case "notes":
       return "Show your notebooks";
+    case "calendar":
+      return "Say what's next on your calendar";
     case "run":
       return `Run \`${command.command}\` in ${command.folder ?? "your home folder"}, in your terminal (you confirm first)`;
     case "unknown":

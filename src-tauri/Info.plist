@@ -3,6 +3,10 @@
 <plist version="1.0">
 <dict>
 	<!-- A menu bar app: no Dock icon, not even for a moment at launch. -->
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Sidefolk reads your upcoming events to tell you a few minutes before a meeting starts. Nothing leaves your Mac.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Sidefolk reads your upcoming events to tell you a few minutes before a meeting starts. Nothing leaves your Mac.</string>
 	<key>LSUIElement</key>
 	<true/>
 </dict>

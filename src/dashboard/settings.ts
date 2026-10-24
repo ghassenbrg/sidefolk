@@ -153,6 +153,34 @@ export function renderSettings(app: App, arg: string) {
     ),
   );
 
+  const calendarOn = h("input", { type: "checkbox", class: "switch", role: "switch", id: "setting-calendar", checked: settings.calendar_heads_up, "aria-describedby": "setting-calendar-help" });
+  const calendarNote = h("p", { class: "muted", "aria-live": "polite" });
+  calendarOn.addEventListener("change", async () => {
+    if (!calendarOn.checked) return void app.save({ calendar_heads_up: false });
+    // Asked here, with the reason on screen, the first time it's turned on.
+    const status = await invoke<string>("request_calendar").catch((e) => String(e));
+    if (status === "allowed") return void app.save({ calendar_heads_up: true }, "Calendar heads-up is on.");
+    calendarOn.checked = false;
+    calendarNote.textContent = status === "denied" ? "macOS says no. Allow Sidefolk in System Settings → Privacy & Security → Calendars, then turn this on again." : status;
+  });
+  view.append(
+    group(
+      "Calendar",
+      "reminders",
+      "calendar",
+      row("Meeting heads-up", "A few minutes before a meeting, your companion says so, with Join when there's a video link. Read from your Mac's calendars, never sent anywhere.", calendarOn, "setting-calendar"),
+      calendarNote,
+      settings.calendar_heads_up
+        ? select(app, "calendar_lead_mins", "How early", null, [
+            ["2", "2 minutes before"],
+            ["5", "5 minutes before"],
+            ["10", "10 minutes before"],
+            ["15", "15 minutes before"],
+          ], true)
+        : null,
+    ),
+  );
+
   view.append(
     group(
       "Privacy",

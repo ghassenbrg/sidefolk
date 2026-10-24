@@ -97,6 +97,12 @@ for (const scheme of ["light", "dark"]) {
   await page.goto(base + "/settings.html?tab=actions");
   await page.getByRole("button", { name: "Run quietly" }).first().click();
   await page.locator("#toast").getByRole("button", { name: "Show output" }).waitFor();
+  // Turning on the calendar heads-up asks for access first, then shows the lead time choice.
+  await page.goto(base + "/settings.html?tab=settings:calendar");
+  await page.locator("#setting-calendar").check();
+  await page.locator("#setting-calendar_lead_mins").waitFor();
+  await page.locator("nav").getByRole("button", { name: "Today" }).click();
+  await page.getByText("Design review", { exact: true }).waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");

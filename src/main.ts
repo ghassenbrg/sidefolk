@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { handleToolCall, type ToolCall } from "./agent-tools";
 import type { AgentEvent } from "./agents";
 import { AWAY_SECS, welcomeBack, type JournalEntry } from "./away";
+import { HeadsUp, type CalendarEvent } from "./calendar";
 import { knowCommands } from "./commands";
 import { Companion, type Ask, type Host } from "./companion";
 import { install } from "./demo";
@@ -34,6 +35,8 @@ type Settings = {
   volume: number;
   speak: boolean;
   voice: string;
+  calendar_heads_up: boolean;
+  calendar_lead_mins: number;
 };
 const settings = inTauri ? await invoke<Settings>("get_settings") : null;
 const SIZES = { small: 0.8, medium: 1, large: 1.3 };
@@ -85,6 +88,7 @@ const host: Host = {
   },
   command: (text, kind) => reminders.command(text, kind),
   spark: (project, change) => sparks(project, change),
+  nextMeeting: () => (settings?.calendar_heads_up ? headsUp.next() : Promise.resolve("Turn on the calendar heads-up in Settings → Calendar first.")),
   note: (command) => (command.kind === "note" ? notes.take(command.text, command.notebook) : notes.create(command.name)),
   ...(inTauri && {
     hide: () => void invoke("tray_action", { action: "toggle" }),
@@ -157,6 +161,12 @@ const noteStore: NoteStore = inTauri
   : memoryNotes();
 const notes = new Notes(companion, noteStore);
 reminders.writeNote = (text) => void notes.capture(text);
+const headsUp = new HeadsUp(
+  companion,
+  () => (inTauri ? invoke<CalendarEvent[]>("upcoming_events", { hours: 3 }) : Promise.resolve([])),
+  (url) => void invoke("open_target", { target: url }),
+);
+if (settings) headsUp.set(settings.calendar_heads_up, settings.calendar_lead_mins);
 
 // Spark's own frames once they're in public/spark; until then a worker is a recolored Pip.
 const character = await new Promise<string>((resolve) => {
@@ -214,6 +224,7 @@ const onCursor = (x: number, y: number) => {
 if (inTauri) {
   void listen<Settings>("settings-changed", (e) => {
     if (e.payload.pet_size !== settings!.pet_size) return location.reload();
+    if (e.payload.calendar_heads_up !== settings!.calendar_heads_up || e.payload.calendar_lead_mins !== settings!.calendar_lead_mins) headsUp.set(e.payload.calendar_heads_up, e.payload.calendar_lead_mins);
     Object.assign(settings!, e.payload);
     applySettings(settings);
   });

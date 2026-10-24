@@ -1,7 +1,8 @@
 import { icon } from "../icons";
 import { badge } from "../states";
 import { describeDue } from "../when";
-import type { Waiting } from "./api";
+import type { CalendarEvent } from "../calendar";
+import { invoke, type Waiting } from "./api";
 import type { App } from "./app";
 import { agentShort, button, h } from "./dom";
 import { header, identity, petLine, petOf, requestTitle, sessionLabel, sessionRow } from "./ui";
@@ -89,6 +90,23 @@ export function renderHome(app: App) {
   for (const r of next)
     upcoming.append(h("div", { class: "row line" }, h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })), h("span", { class: "meta", text: describeDue(new Date(r.due)) })));
   if (!next.length) upcoming.append(h("p", { class: "muted", text: "Nothing coming up. Add a reminder for your next small step." }));
+  // The next meetings, when the calendar heads-up is on (Settings → Calendar).
+  if (app.state.settings.calendar_heads_up)
+    void invoke<CalendarEvent[]>("upcoming_events", { hours: 8 })
+      .then((events) => {
+        const at = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        for (const e of events.slice(0, 3).reverse())
+          upcoming.prepend(
+            h(
+              "div",
+              { class: "row line" },
+              h("span", { class: "with-icon" }, icon("activity"), h("strong", { text: e.title })),
+              h("span", { class: "inline" }, h("span", { class: "meta", text: `${at(e.start)}${e.location ? ` · ${e.location}` : ""}` }), e.link ? button("Join", () => void invoke("open_target", { target: e.link }), "small") : null),
+            ),
+          );
+        upcoming.querySelector(".muted")?.remove();
+      })
+      .catch(() => {});
   upcoming.append(h("div", { class: "actions" }, button("Add reminder", () => app.go("reminders"))));
   view.append(upcoming);
   return view;

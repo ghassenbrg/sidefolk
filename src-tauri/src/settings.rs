@@ -32,6 +32,10 @@ pub struct Settings {
     /// Less wandering around (also on when macOS asks for reduced motion).
     pub calm: bool,
     pub large_text: bool,
+    /// Say a meeting is coming, from the macOS calendars (off until the user turns it on).
+    pub calendar_heads_up: bool,
+    /// How many minutes before a meeting.
+    pub calendar_lead_mins: u64,
     /// Babble and little sounds.
     pub sounds: bool,
     /// 0..=100
@@ -60,6 +64,8 @@ impl Default for Settings {
             pet_size: "medium".into(),
             calm: false,
             large_text: false,
+            calendar_heads_up: false,
+            calendar_lead_mins: 5,
             sounds: true,
             volume: 60,
             speak: false,

@@ -51,6 +51,8 @@ export type Host = {
     run(name: string, background: boolean): Promise<{ ok: boolean; message: string; log: string | null }>;
     showOutput(log: string): void;
   };
+  /** "next meeting": the next calendar event, in a sentence (calendar.ts). */
+  nextMeeting?(): Promise<string>;
   /** Gives a project its Spark worker, renames or recolors it, or sends it home (workers.ts). */
   spark?(project: string, change: { name?: string; hue?: number; remove?: boolean }): Promise<string>;
   /** Note commands, handled by notes.ts. */
@@ -350,6 +352,8 @@ export class Companion {
         return this.host.note ? this.host.note(command) : "Notes need the desktop app.";
       case "notes":
         return this.host.openTab?.("notes");
+      case "calendar":
+        return this.host.nextMeeting ? this.host.nextMeeting().catch((e) => String(e)) : "The calendar needs the desktop app.";
       case "run":
         return this.confirmRun(command.command, command.folder);
       case "open-thing": {

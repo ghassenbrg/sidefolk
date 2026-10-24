@@ -3,6 +3,7 @@
 
 mod actions;
 mod app_menu;
+mod calendar;
 mod characters;
 mod bus;
 mod claude_setup;
@@ -222,6 +223,9 @@ fn main() {
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
             actions::allow_terminal_control,
+            calendar::calendar_status,
+            calendar::request_calendar,
+            calendar::upcoming_events,
             prefs::problem_report,
             characters::list_characters,
             characters::save_character,
