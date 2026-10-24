@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-24 by Claude Code. The roadmap ([docs/ROADMAP.md](../docs/ROADMAP.md))
+Last updated: 2026-10-24 (evening) by Claude Code. The roadmap ([docs/ROADMAP.md](../docs/ROADMAP.md))
 is implemented through Phase 5, Phase 6 in part, plus a UI/UX pass with voices and a
 dashboard, and the creative-design system applied with "Open session" (below). Nothing since
 commit `b0be266` is committed. All 18 designed characters and three art styles are built. The user asked for the implementation ("implement roadmap"); commit only when asked.
@@ -50,6 +50,28 @@ done → onboarded). First launch opens the guide; Settings → About and help �
 Verified: typecheck, vitest, cargo test, `npm run check:webkit` (now also setup and
 reminders:new). Not yet checked in the real app (release build pending; the user's release
 build holds port 47821, so the dev app can't start while it runs).
+
+**Phase 3 (reminders) IN PROGRESS, all committed, everything green:**
+- Done: `src/when.ts` `takeRepeat` / `nextDue` (local wall-clock, DST-safe, monthly clamps to
+  short months) / `describeRepeat`; `parseReminder` returns `repeat` (tests in when.test.ts).
+  Rust `Reminder.repeat: Option<Repeat {every, n}>` (validated), `add_reminder(..., repeat)`.
+  Companion: Done on a repeating reminder moves `due` to `nextDue` instead of closing it;
+  replies and previews say "every weekday, from tomorrow 09:00". Window form passes the repeat
+  typed in the title and shows ", then every …" on rows.
+- Next, in order: (1) offsets: "10 minutes before the 3pm call" → due = time − offset (when.ts,
+  tests). (2) Confirmation with Undo on the companion after saving (card "OK, tomorrow 09:00:
+  call the bank" with an Undo button → `remove_reminder`), and in the window (toast action).
+  (3) Reminders fire when Sidefolk is quit: schedule macOS local notifications
+  (UNUserNotificationCenter via objc2-user-notifications, request permission in setup step 3;
+  schedule on add/update/remove, cancel by reminder id; for repeats schedule only the next one,
+  re-scheduled when the app next runs). Tauri's notification plugin was removed in phase 0
+  because it can't schedule while quit; check before re-adding. (4) Window: repeat picker on the
+  form (None / Every day / Weekdays / Weekly / Monthly) and edit of repeat (Rust `Change` needs
+  `repeat`, use `Option<Option<Repeat>>` with `#[serde(default, with = ...)]` or a `clear_repeat`
+  flag). (5) PLAN-V2 section 6.1 checks on the real Mac, then mark row 3 done.
+- Release build of the phase 2 commit finished (`npm run build`) but was not relaunched; the
+  user's running /Applications build is still phase 0. Build again from HEAD and relaunch
+  (quit Sidefolk, `open` the new .app; retry `open` once after a short wait on error -600).
 
 - Then phases 3–8 per docs/PLAN-V2.md section 10 (detailed design notes for each are in the
   conversation summary).
