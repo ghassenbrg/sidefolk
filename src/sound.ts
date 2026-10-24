@@ -6,7 +6,26 @@
 export type Voice = { pitch: number; wave: OscillatorType };
 export type Cue = "poke" | "wave" | "celebrate" | "sad" | "alert" | "done" | "fail";
 
-const BASE: Record<string, number> = { bunny: 640, cat: 720, fox: 560 };
+const BASE: Record<string, number> = {
+  bunny: 640,
+  cat: 720,
+  fox: 560,
+  vale: 540,
+  sheep: 600,
+  turtle: 470,
+  robot: 680,
+  orbit: 620,
+  crt: 700,
+  raccoon: 580,
+  squid: 660,
+  courier: 610,
+  archivist: 650,
+  dragon: 600,
+  penguin: 520,
+  capsule: 600,
+  owl: 500,
+  bird: 760,
+};
 
 /** A pet's voice: its species sets the register, its name nudges it so two cats differ. */
 export function voiceFor(species: string, name: string): Voice {

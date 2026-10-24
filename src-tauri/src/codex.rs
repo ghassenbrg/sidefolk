@@ -123,6 +123,11 @@ pub fn agent_path() -> String {
 }
 
 impl Codex {
+    /// A turn is running in this thread.
+    pub fn is_busy(&self, thread: &str) -> bool {
+        self.busy.lock().unwrap().contains(thread)
+    }
+
     async fn start(app: AppHandle, shared: Arc<Shared>) -> Result<Arc<Self>, String> {
         let cwd = workdir(&app)?;
         let mut child = Command::new("codex")
@@ -327,12 +332,13 @@ impl Codex {
     }
 
     async fn approve(&self, app: &AppHandle, shared: &Arc<Shared>, id: Value, method: &str, params: Value) {
-        let (title, detail) = match method {
+        let (kind, title, detail) = match method {
             "item/commandExecution/requestApproval" => (
+                "command",
                 "Run a command?".to_string(),
                 clip(
                     params["command"].as_str().or(params["reason"].as_str()).unwrap_or("a command"),
-                    160,
+                    crate::hooks::ACTION_MAX,
                 ),
             ),
             "item/fileChange/requestApproval" => {
@@ -345,7 +351,7 @@ impl Codex {
                 } else {
                     paths
                 };
-                ("Edit files?".to_string(), clip(&detail, 160))
+                ("file", "Edit files?".to_string(), clip(&detail, crate::hooks::ACTION_MAX))
             }
             other => {
                 // Not handled in Phase 0: answer so Codex is never left waiting.
@@ -371,6 +377,8 @@ impl Codex {
                 project: project.clone(),
                 cwd,
                 can_defer: false,
+                kind,
+                expires: crate::journal::now_ms() + APPROVAL_WAIT.as_millis() as u64,
             },
         );
         self.emit(app, &session, "waiting", String::new());

@@ -89,9 +89,20 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     window.set_content_protected(saved.hide_in_recordings)?;
     #[cfg(not(target_os = "macos"))]
     window.show()?;
-    set_visible(app, !saved.hidden)?;
+    set_visible(app, shown(&saved))?;
     stream_cursor(app.clone());
     Ok(())
+}
+
+/// Whether the pets' overlay is on screen: not hidden by the user, and not Menu bar only.
+pub fn shown(settings: &crate::settings::Settings) -> bool {
+    !settings.hidden && settings.presence != "menubar"
+}
+
+/// Shows or hides the overlay to match the settings (after a presence change).
+pub fn apply_visibility(app: &AppHandle) -> tauri::Result<()> {
+    let settings = app.state::<Arc<Shared>>().settings.lock().unwrap().value.clone();
+    set_visible(app, shown(&settings))
 }
 
 pub fn overlay(app: &AppHandle) -> WebviewWindow {

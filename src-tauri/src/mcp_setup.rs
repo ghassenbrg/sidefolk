@@ -119,14 +119,17 @@ pub fn confirm(app: &AppHandle, agent: Agent) {
     let backups = app.state::<Arc<Shared>>().settings.lock().unwrap().dir.join("backups");
     let (title, change) = if add {
         (
-            format!("Add pet tools to {}?", agent.name()),
+            format!("Connect companion tools to {}?", agent.name()),
             format!(
-                "{} sessions get four tools that reach you through the pet: notify, ask, remind and presence. Each session's project decides which pet speaks.",
+                "{} work sessions will be able to send you a note, ask you a question, set a reminder and check whether you're around, through the companion that looks after their project.",
                 agent.name()
             ),
         )
     } else {
-        (format!("Remove pet tools from {}?", agent.name()), "Only Sidefolk's MCP server is removed.".into())
+        (
+            format!("Disconnect companion tools from {}?", agent.name()),
+            format!("{} work sessions will no longer reach you through a companion. Only Sidefolk's tool server is removed.", agent.name()),
+        )
     };
     let message = format!(
         "{change}\n\nRuns `{} mcp {}` for your user. Applies to new sessions.\nA backup of {} is saved first in:\n{}",
@@ -160,7 +163,7 @@ pub fn confirm(app: &AppHandle, agent: Agent) {
                             eprintln!("sidefolk: pet tools: {error}");
                             app.dialog()
                                 .message(error.to_string())
-                                .title("Pet tools")
+                                .title("Companion tools")
                                 .kind(MessageDialogKind::Error)
                                 .show(|_| {});
                         }

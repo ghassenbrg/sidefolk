@@ -1,5 +1,8 @@
 # Roadmap
 
+> **Superseded by [PLAN-V2.md](PLAN-V2.md)** once the user approves it (24 October 2026). This
+> file records how v0.1 was planned and built.
+
 Agreed with the user on 23 October 2026: where Sidefolk is going and in what order. The
 decisions behind it are entries 12–17 in [memory/DECISIONS.md](../memory/DECISIONS.md); progress
 is tracked in [memory/STATUS.md](../memory/STATUS.md).
@@ -226,8 +229,9 @@ notification (DECISIONS 20). The on-device model spike compiled but the model re
 
 ### Phase 5: Make your own · done
 
-*Built:* bunny, cat and fox; seven palettes; four accessories; local "describe your pet";
-photos through one Haiku call; glb import with docs/CREATORS.md.
+*Built:* the whole creative-design roster, 18 characters on one rig (each under 8k triangles),
+in three art styles (Soft 3D, Ink & Geek, Pocket Anime); eighteen palettes; four accessories; local
+"describe your pet"; photos through one Haiku call; glb import with docs/CREATORS.md.
 
 - Two or three more species from the kit.
 - A customizer: species, colors, accessories, name.
@@ -237,9 +241,11 @@ photos through one Haiku call; glb import with docs/CREATORS.md.
 
 ### Phase 6: Production · partly done
 
-*Built:* the Sidefolk dashboard window (Home, Activity, Crew, Reminders, Agents, Settings,
-About), first-run card, pet menus and command previews, voices (babble, chirps, optional
-speech), app and menu bar icons, local crash and error logs, no Dock icon at launch.
+*Built:* the Sidefolk window on the creative-design system (Home, Requests, Crew, Reminders,
+Settings; docs/DESIGN-COMPLIANCE.md), a three-step first minute with comfort presets, Pip
+Signal app and menu bar icons, desktop presence and card detail settings, "Open session" for
+live and ended work sessions, pet menus and command previews, voices (sound cues, optional
+speech), local crash and error logs, no Dock icon at launch.
 *Waiting on the user's keys:* signing, notarizing and auto-update (docs/RELEASE.md). Windows
 not started.
 

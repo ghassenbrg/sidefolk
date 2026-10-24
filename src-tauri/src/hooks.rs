@@ -3,12 +3,12 @@
 //!
 //! Hooks are configured in `hooks/claude-settings.json` or through the tray installer.
 
-use std::{sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use axum::{
     Router,
     body::Bytes,
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -21,6 +21,9 @@ use crate::bus::{self, AgentEvent, Decision, PermissionAsk, Shared, clip};
 pub const PORT: u16 = 47821;
 /// How long the pet holds a permission before the terminal prompt takes over.
 const PERMISSION_WAIT: Duration = Duration::from_secs(60);
+
+/// Longest command or input a permission card shows; longer ones are cut with an ellipsis.
+pub const ACTION_MAX: usize = 2000;
 
 type Ctx = (AppHandle, Arc<Shared>);
 
@@ -40,7 +43,7 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
         let router = router.with_state((app, shared));
         match tokio::net::TcpListener::bind(("127.0.0.1", PORT)).await {
             Ok(listener) => {
-                if let Err(error) = axum::serve(listener, router).await {
+                if let Err(error) = axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await {
                     eprintln!("sidefolk: hook server stopped: {error}");
                 }
             }
@@ -73,11 +76,13 @@ fn text(value: &Value, key: &str) -> String {
         .to_string()
 }
 
-async fn event(State((app, _)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
+async fn event(State((app, shared)): State<Ctx>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, body: Bytes) -> Response {
     let hook = match payload(&headers, &body) {
         Ok(hook) => hook,
         Err(response) => return response,
     };
+    // Remembers where this session runs, for "Open session".
+    shared.hosts.locate_claude(&app, &text(&hook, "session_id"), peer.port());
     if let Some(event) = claude_event(&hook) {
         bus::emit(&app, event);
     }
@@ -136,15 +141,16 @@ fn tool_activity(tool: &str, input: &Value) -> (&'static str, String) {
     }
 }
 
-/// What a permission request would do, phrased for a speech bubble.
-fn describe(tool: &str, input: &Value) -> (String, String) {
+/// What a permission request would do: its kind, a plain question and the exact action.
+/// The action is kept whole (up to `ACTION_MAX`): the card must not hide its meaningful end.
+fn describe(tool: &str, input: &Value) -> (&'static str, String, String) {
     let field = |key: &str| input.get(key).and_then(Value::as_str).unwrap_or_default();
     match tool {
-        "Bash" => ("Run a command?".into(), clip(field("command"), 160)),
-        "Edit" | "MultiEdit" => ("Edit a file?".into(), field("file_path").into()),
-        "Write" => ("Write a file?".into(), field("file_path").into()),
-        "WebFetch" => ("Open a web page?".into(), clip(field("url"), 160)),
-        other => (format!("Use {other}?"), clip(&input.to_string(), 160)),
+        "Bash" => ("command", "Run a command?".into(), clip(field("command"), ACTION_MAX)),
+        "Edit" | "MultiEdit" => ("file", "Edit a file?".into(), field("file_path").into()),
+        "Write" => ("file", "Write a file?".into(), field("file_path").into()),
+        "WebFetch" => ("web", "Open a web page?".into(), clip(field("url"), ACTION_MAX)),
+        other => ("tool", format!("Use {other}?"), clip(&input.to_string(), ACTION_MAX)),
     }
 }
 
@@ -248,11 +254,12 @@ async fn should_hold(app: &AppHandle, shared: &Shared) -> bool {
     }
 }
 
-async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
+async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, body: Bytes) -> Response {
     let hook = match payload(&headers, &body) {
         Ok(hook) => hook,
         Err(response) => return response,
     };
+    shared.hosts.locate_claude(&app, &text(&hook, "session_id"), peer.port());
     if !should_hold(&app, &shared).await {
         if cfg!(debug_assertions) {
             eprintln!("sidefolk: Claude permission deferred to agent UI");
@@ -260,7 +267,7 @@ async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: 
         return StatusCode::OK.into_response();
     }
     let tool = text(&hook, "tool_name");
-    let (title, detail) = describe(&tool, &hook["tool_input"]);
+    let (kind, title, detail) = describe(&tool, &hook["tool_input"]);
     let session = text(&hook, "session_id");
     let project = bus::project_root(&text(&hook, "cwd"));
     bus::note(&app, "claude", &session, &project, "ask", &format!("{title} {detail}"));
@@ -281,6 +288,8 @@ async fn permission(State((app, shared)): State<Ctx>, headers: HeaderMap, body: 
             project: project.clone(),
             cwd: text(&hook, "cwd"),
             can_defer: true,
+            kind,
+            expires: crate::journal::now_ms() + PERMISSION_WAIT.as_millis() as u64,
         },
     );
     let decision = tokio::time::timeout(PERMISSION_WAIT, answer).await;

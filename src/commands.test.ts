@@ -27,6 +27,15 @@ describe("parse", () => {
     ["forget Pip", { kind: "forget", who: "Pip" }],
     ["remind me Friday at 3 to review the PR", { kind: "remind", text: "Friday at 3 to review the PR" }],
     ["reminders", { kind: "reminders" }],
+    ["open session", { kind: "open", who: null }],
+    ["open Byte's session", { kind: "open", who: "Byte" }],
+    ["continue", { kind: "open", who: null }],
+    ["resume api", { kind: "open", who: "api" }],
+    ["open Sidefolk", { kind: "sidefolk" }],
+    ["Byte become anime", { kind: "look", who: "Byte", style: "anime" }],
+    ["style ink", { kind: "look", who: null, style: "ink" }],
+    ["Pip turn soft 3d", { kind: "look", who: "Pip", style: "soft" }],
+    ["Nib be pocket anime", { kind: "look", who: "Nib", style: "anime" }],
   ])("%s", (input, expected) => {
     expect(parse(input)).toEqual(expected);
   });

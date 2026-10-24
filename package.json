@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "measure": "scripts/measure.sh",
     "model": "blender --background --factory-startup --python art/blender/build_hero.py",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:webkit": "node scripts/webkit-check.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4",
     "@types/three": "^0.186.0",
+    "playwright": "^1.64.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"

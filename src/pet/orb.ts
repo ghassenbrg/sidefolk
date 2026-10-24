@@ -83,22 +83,26 @@ export class Orb {
     this.object.renderOrder = 10;
   }
 
-  /** @param anchor where the orb wants to float, in world pixels */
-  update(dt: number, anchor: THREE.Vector3, glow: Glow) {
+  /**
+   * @param anchor where the orb wants to float, in world pixels
+   * @param still reduced motion: a steady light, no bobbing or pulsing
+   */
+  update(dt: number, anchor: THREE.Vector3, glow: Glow, still = false) {
     const look = LOOK[glow];
     this.time += dt;
     if (!this.placed) {
       this.object.position.copy(anchor);
       this.placed = true;
     }
-    const bob = Math.sin(this.time * 1.7) * this.size * 0.12;
+    // The pulse rate belongs to the state; more events never make it flash faster.
+    const bob = still ? 0 : Math.sin(this.time * 1.7) * this.size * 0.12;
     this.object.position.x = damp(this.object.position.x, anchor.x, 3.5, dt);
     this.object.position.y = damp(this.object.position.y, anchor.y + bob, 3.5, dt);
     this.object.position.z = anchor.z;
 
     this.color.lerp(this.target.set(look.color), 1 - Math.exp(-5 * dt));
     this.strength = damp(this.strength, look.strength, 4, dt);
-    const pulse = 0.82 + 0.18 * Math.sin(this.time * look.pulse * Math.PI);
+    const pulse = still ? 1 : 0.82 + 0.18 * Math.sin(this.time * look.pulse * Math.PI);
     this.halo.material.color.copy(this.color);
     this.halo.material.opacity = this.strength * pulse;
     this.core.material.color.copy(this.color).lerp(WHITE, 0.55);

@@ -1,21 +1,10 @@
-import { AGENT_NAMES, VERB, folder, type AgentEvent } from "./agents";
-import type { Card } from "./bubble";
+import { AGENT_NAMES, VERB, folder, sessionLabel, type AgentEvent } from "./agents";
+import type { Card, Choice, Fact } from "./bubble";
 import { HELP, parse } from "./commands";
 import { Familiar, MAIN_ID, type Binding, type PetRecord } from "./familiar";
-import { describe } from "./describe";
-import {
-  ACCESSORIES,
-  ACCESSORY_NAMES,
-  CUSTOM,
-  DEFAULT_LOOK,
-  normalizeLook,
-  PALETTE_NAMES,
-  PALETTES,
-  SPECIES,
-  SPECIES_NAMES,
-  type Look,
-} from "./pet/look";
-import { findPet, nextName, nextPalette, resolve, type Origin } from "./routing";
+import { DEFAULT_LOOK, normalizeLook, type Look } from "./pet/look";
+import { findPet, nextCompanion, resolve, type Origin } from "./routing";
+import { privacy } from "./states";
 import { describeDue, parseReminder } from "./when";
 
 /** Mirrors `PermissionAsk` in src-tauri/src/bus.rs. */
@@ -28,7 +17,14 @@ export type Ask = {
   cwd: string;
   project: string;
   canDefer: boolean;
+  /** command | file | web | tool */
+  kind: string;
+  /** Unix ms when the agent stops waiting. */
+  expires: number;
 };
+
+/** A session a pet can open: live where it runs, or resumed in a terminal. */
+export type SessionRef = { source: string; session: string; cwd: string };
 
 /** Stored as crew.json in the data directory. */
 export type CrewFile = {
@@ -46,12 +42,12 @@ export type Host = {
   typing(typing: boolean): void;
   /** Extra commands (reminders) handled outside the crew. */
   command?(text: string, kind: "remind" | "reminders" | "new-reminder", from: Familiar): Promise<string | void>;
-  /** Tray actions the pet's menu offers (Settings, hide). */
+  /** Tray actions the pet's menu offers (Sidefolk window, hide). */
   trayAction?(action: "settings" | "toggle"): void;
-  /** Custom pets; desktop app only. */
-  models?(): Promise<string[]>;
-  importModel?(): Promise<string | null>;
-  photoLook?(): Promise<Partial<Look> | null>;
+  /** Opens the Sidefolk window on a section ("crew:<id>", "review:<id>", …). */
+  openTab?(tab: string): void;
+  /** Brings an agent session forward, or continues it in a terminal. Resolves to what happened. */
+  openSession?(ref: SessionRef): Promise<string>;
 };
 
 /** Crew pets on screen at once, besides the main pet. */
@@ -61,7 +57,7 @@ const OUT_AFTER_FAILED_MS = 25_000;
 const OUT_WHEN_CALLED_MS = 45_000;
 
 export function emptyCrew(): CrewFile {
-  return { main: { name: "Sidefolk", look: DEFAULT_LOOK }, pets: [], ignored: [] };
+  return { main: { name: "Pip", look: DEFAULT_LOOK }, pets: [], ignored: [] };
 }
 
 /** Accepts whatever was stored and returns a usable crew. */
@@ -81,13 +77,21 @@ export function normalizeCrew(value: unknown): CrewFile {
     // Session pets end with their session; one left over from a crash has nothing to do.
     .filter((p) => p.bindings.some((b) => b.kind !== "session"));
   return {
-    main: { name: typeof v.main?.name === "string" && v.main.name ? v.main.name.slice(0, 24) : "Sidefolk", look: normalizeLook(v.main?.look) },
+    main: { name: typeof v.main?.name === "string" && v.main.name ? v.main.name.slice(0, 24) : "Pip", look: normalizeLook(v.main?.look) },
     pets,
     ignored: Array.isArray(v.ignored) ? v.ignored.filter((p): p is string => typeof p === "string") : [],
   };
 }
 
 const mainRecord = (file: CrewFile): PetRecord => ({ id: MAIN_ID, name: file.main.name, look: file.main.look, bindings: [] });
+
+
+const ACTION: Record<string, [string, string]> = {
+  command: ["run this command", "Command"],
+  file: ["change this file", "File"],
+  web: ["open this page", "Page"],
+  tool: ["use this tool", "Input"],
+};
 
 /**
  * The main pet and its crew: routes each agent event and question to the pet that speaks for
@@ -98,6 +102,10 @@ export class Crew {
   private readonly askOwner = new Map<string, Familiar>();
   /** Projects offered a pet during this run (answered "Not now" or still open). */
   private readonly offered = new Set<string>();
+  /** Settings → Desktop presence. With "needed", the main pet rests in the den too. */
+  presence: "always" | "needed" | "menubar" = "always";
+  /** Settings → Comfort: whose crew new companions come from. */
+  comfort = "friendly";
 
   private constructor(
     readonly main: Familiar,
@@ -137,9 +145,9 @@ export class Crew {
   private wire(f: Familiar) {
     f.bubble.onTyping = (typing) => this.host.typing(typing);
     f.agents.onEvent = (event) => {
-      if (f.isMain) return;
       if (event.kind === "done") f.holdUntil = Math.max(f.holdUntil, Date.now() + OUT_AFTER_DONE_MS);
       if (event.kind === "failed") f.holdUntil = Math.max(f.holdUntil, Date.now() + OUT_AFTER_FAILED_MS);
+      if (f.isMain) return;
       const sessionPet = f.record.bindings.length > 0 && f.record.bindings.every((b) => b.kind === "session");
       if (event.kind === "end" && sessionPet) void this.retire(f, event);
     };
@@ -156,10 +164,18 @@ export class Crew {
   }
 
   /** Remembers recent outcomes from the journal, so briefings survive a restart. */
-  seedOutcomes(entries: { at: number; source: string; project: string; kind: string; detail: string }[]) {
+  seedOutcomes(entries: { at: number; source: string; session?: string; project: string; kind: string; detail: string }[]) {
     for (const e of entries) {
       if ((e.kind !== "done" && e.kind !== "failed") || (e.source !== "claude" && e.source !== "codex")) continue;
-      this.petFor(e.project).agents.outcomes.set(e.project, { kind: e.kind, source: e.source, project: e.project, detail: e.detail, at: e.at });
+      this.petFor(e.project).agents.outcomes.set(e.project, {
+        kind: e.kind,
+        source: e.source,
+        project: e.project,
+        detail: e.detail,
+        at: e.at,
+        session: e.session,
+        cwd: e.project,
+      });
     }
   }
 
@@ -179,28 +195,68 @@ export class Crew {
     const f = this.familiarFor(event);
     if (f.isMain && event.project && !["end", "idle"].includes(event.kind)) this.offer(event.project);
     f.agents.handle(event);
+    // An open status card follows what the pet is doing.
+    if (f.bubble.has(`status-${f.record.id}`)) this.statusCard(f, true);
   }
 
   handleAsk(ask: Ask) {
     const f = this.familiarFor(ask);
     // A crew pet that cannot come out (too many on screen) asks through the main pet.
     const target = !f.isMain && !f.out && this.outCount >= CAP ? this.main : f;
+    this.question(target, this.askCard(f, target, ask));
+  }
+
+  /**
+   * A permission card: pet · project, tool · work session, the plain question, the exact action
+   * and explicit choices, none preselected. With less card detail (screens others can see) the
+   * card names less and sends you to Sidefolk to review before allowing.
+   */
+  private askCard(f: Familiar, target: Familiar, ask: Ask): Card {
     const agent = AGENT_NAMES[ask.source];
-    const who = f.isMain ? `${agent} · ${folder(ask.project || ask.cwd)}` : `${f.label} · ${agent}`;
-    const choices = [
-      { label: "Allow", value: "allow", primary: true },
-      { label: "Deny", value: "deny" },
-      ...(ask.canDefer ? [{ label: "In terminal", value: "defer" }] : []),
-    ];
-    this.question(target, {
+    const project = folder(ask.project || ask.cwd);
+    const [action, label] = ACTION[ask.kind] ?? ACTION.tool;
+    const detail = privacy.detail;
+    const ref: SessionRef = { source: ask.source, session: ask.session, cwd: ask.cwd };
+    const facts: Fact[] = [{ label, value: ask.detail }, ...(ask.cwd ? [{ label: "Folder", value: ask.cwd }] : [])];
+    const choices: Choice[] =
+      detail === "full"
+        ? [{ label: "Decline", value: "deny" }, { label: "Allow once", value: "allow", primary: true }]
+        : [{ label: "Decline", value: "deny" }, { label: "Review…", value: "review", primary: true }];
+    if (ask.canDefer) choices.push({ label: `Answer in ${agent}'s window`, value: "defer", quiet: true });
+    const card: Card = {
       id: ask.id,
-      who,
-      title: ask.title,
-      detail: ask.detail,
+      who: detail === "status" ? f.name : `${f.name} · ${project}`,
+      context: `${agent} · ${sessionLabel(ask.session)}`,
+      title: detail === "status" ? "A request needs your answer." : ask.title,
+      lines: detail === "status" ? [] : [`${agent} is asking to ${action} in ${project}.`],
+      facts: detail === "full" ? facts : [],
+      note: detail === "full" ? "Review it before allowing." : "Review it in Sidefolk before allowing.",
       choices,
       urgent: true,
-      onChoose: (value) => this.host.resolvePermission(ask.id, value),
-    });
+      meta: {
+        kind: "permission",
+        action: ask.kind,
+        title: ask.title,
+        command: ask.detail,
+        source: ask.source,
+        session: ask.session,
+        project: ask.project,
+        cwd: ask.cwd,
+        expires: String(ask.expires),
+        canDefer: String(ask.canDefer),
+      },
+      onChoose: (value) => {
+        // Reviewing is navigation, not an answer: the card stays until a real choice.
+        if (value === "review") {
+          this.host.openTab?.(`review:${ask.id}`);
+          return this.question(target, card);
+        }
+        this.host.resolvePermission(ask.id, value);
+        // Answering in the agent's own window: take the user there.
+        if (value === "defer") void this.openSession(f, ref);
+      },
+    };
+    return card;
   }
 
   /** Shows a question that keeps its pet out, at the cursor, until it is answered or closed. */
@@ -228,19 +284,25 @@ export class Crew {
     owner.agents.asking(owner.asks.size);
   }
 
-  /** Brings crew pets out when needed and sends them home when they are done. */
+  /** Brings pets out when needed and sends them home when they are done. */
   tick() {
     const now = Date.now();
+    const needed = (f: Familiar) => f.agents.needsYou || f.asks.size > 0 || f.holdUntil > now || f.bubble.busy;
     for (const f of this.pets.values()) {
-      const needed = f.agents.needsYou || f.asks.size > 0 || f.holdUntil > now || f.bubble.busy;
-      if (needed && !f.out) {
+      const want = needed(f);
+      if (want && !f.out) {
         if (this.outCount < CAP) f.mind.enter(this.spotFor(f));
-      } else if (needed && f.mind.isLeaving) {
+      } else if (want && f.mind.isLeaving) {
         f.mind.enter(f.mind.x);
-      } else if (!needed && f.out && !f.mind.isLeaving) {
+      } else if (!want && f.out && !f.mind.isLeaving) {
         f.mind.leave();
       }
     }
+    // "Only when needed": the main pet rests too, and comes back where it last stood.
+    const main = this.main;
+    const mainWanted = this.presence !== "needed" || needed(main) || [...this.pets.values()].some((f) => f.out);
+    if (mainWanted && (!main.out || main.mind.isLeaving)) main.mind.enter(main.mind.x);
+    else if (!mainWanted && main.out && !main.mind.isLeaving) main.mind.leave();
   }
 
   /**
@@ -262,77 +324,114 @@ export class Crew {
     return anchor;
   }
 
+  /** Brings a pet out with its status card. */
   call(f: Familiar) {
-    if (f.isMain) return this.showCrew(f);
     f.holdUntil = Date.now() + OUT_WHEN_CALLED_MS;
     this.tick();
-    f.bubble.show(this.briefing(f));
+    this.statusCard(f, true);
   }
 
-  private briefing(f: Familiar): Card {
+  /** The session a pet would open: the most urgent live one, else the last one that ended. */
+  sessionOf(f: Familiar): (SessionRef & { live: boolean }) | null {
+    const live = f.agents.list.find((s) => s.id);
+    if (live) return { source: live.source, session: live.id, cwd: live.cwd || live.project, live: true };
+    const last = [...f.agents.outcomes.values()].filter((o) => o.session).sort((a, b) => b.at - a.at)[0];
+    return last ? { source: last.source, session: last.session!, cwd: last.cwd || last.project, live: false } : null;
+  }
+
+  async openSession(f: Familiar, ref?: SessionRef | null) {
+    const target = ref ?? this.sessionOf(f);
+    if (!target) return f.bubble.say("There's no work session to open yet.", 4);
+    if (!this.host.openSession) return f.bubble.say("Opening sessions needs the desktop app.", 4, "fail");
+    try {
+      f.bubble.say(await this.host.openSession(target), 3);
+    } catch (error) {
+      f.bubble.say(error instanceof Error ? error.message : String(error), 8, "fail");
+    }
+  }
+
+  /**
+   * Clicking a pet: what it is doing, factual and short, and the ways on from here: its work
+   * session, the Sidefolk window, home. A second click closes it.
+   */
+  statusCard(f: Familiar, keep = false) {
+    const id = `status-${f.record.id}`;
+    if (f.bubble.has(id) && !keep) return f.bubble.close(id);
     const minutes = (at: number) => {
       const m = Math.round((Date.now() - at) / 60_000);
       return m < 1 ? "just now" : m === 1 ? "1 min ago" : m < 90 ? `${m} min ago` : `${Math.round(m / 60)} h ago`;
     };
-    const sessions = f.agents.list.map(
-      (s) => `${AGENT_NAMES[s.source]} · ${VERB[s.state]}${s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}`,
-    );
+    const full = privacy.detail === "full";
+    const named = privacy.detail !== "status";
+    const sessions = f.agents.list.map((s) => {
+      const where = named && f.isMain && s.project ? ` in ${folder(s.project)}` : "";
+      return `${AGENT_NAMES[s.source]} · ${VERB[s.state]}${full && s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}${where}`;
+    });
     const outcomes = [...f.agents.outcomes.values()]
       .sort((a, b) => b.at - a.at)
       .slice(0, 2)
-      .map((o) => `${AGENT_NAMES[o.source]} ${o.kind === "done" ? "finished" : "hit a problem"} ${minutes(o.at)}${o.detail ? `: ${o.detail}` : "."}`);
-    const where = f.project ? folder(f.project) : "my sessions";
-    return {
-      id: `brief-${f.record.id}`,
-      who: f.label,
-      title: sessions.length ? `Here's ${where}.` : `All quiet in ${where}.`,
+      .map((o) => `${AGENT_NAMES[o.source]} ${o.kind === "done" ? "finished" : "stopped with a problem"} ${minutes(o.at)}${full && o.detail ? `: ${o.detail}` : "."}`);
+    const where = named && f.project ? folder(f.project) : "";
+    const session = this.sessionOf(f);
+    const agent = session ? (AGENT_NAMES[session.source as keyof typeof AGENT_NAMES] ?? "the") : "";
+    f.bubble.show({
+      id,
+      who: f.shownLabel,
+      title: sessions.length
+        ? `${sessions.length === 1 ? "One work session" : `${sessions.length} work sessions`}${where ? ` in ${where}` : ""}.`
+        : `All quiet${where ? ` in ${where}` : ""}.`,
       lines: [...sessions, ...outcomes].slice(0, 5),
       choices: [
-        { label: "OK", value: "ok", primary: true },
-        { label: "Ask here…", value: "ask" },
-        { label: "Look…", value: "look" },
-        { label: "Send home", value: "home" },
+        ...(session ? [{ label: session.live ? `Open ${agent} session` : `Continue in ${agent}`, value: "open", primary: true }] : []),
+        { label: "Open Sidefolk", value: "sidefolk", primary: !session },
+        ...(f.isMain ? [{ label: "Type a command…", value: "prompt" }] : [{ label: "Send home", value: "home" }]),
       ],
       onChoose: (value) => {
-        if (value === "ask") this.openPrompt(f);
-        else if (value === "look") void this.customize(f);
+        if (value === "open") void this.openSession(f, session);
+        else if (value === "sidefolk") this.host.openTab?.(f.isMain ? "home" : `crew:${f.record.id}`);
+        else if (value === "prompt") this.openPrompt(f);
         else if (value === "home") this.sendHome(f);
-        else f.holdUntil = Date.now() + 3_000;
+        f.holdUntil = Math.max(f.holdUntil, Date.now() + 3_000);
       },
-    };
+    });
   }
 
   private showCrew(on: Familiar) {
     const lines = [...this.pets.values()].map((f) => {
       const top = f.agents.list[0];
-      const state = top ? `${AGENT_NAMES[top.source]} ${VERB[top.state]}` : f.out ? "out" : "in the den";
-      return `${f.label} — ${state}`;
+      const state = top ? `${AGENT_NAMES[top.source]} ${VERB[top.state]}` : f.out ? "out" : "resting";
+      return `${privacy.detail === "status" ? f.name : f.label} — ${state}`;
     });
     on.bubble.show({
       id: "crew",
       who: this.main.name,
       title: lines.length ? "Your crew" : "No crew yet",
-      lines: lines.length ? lines : ["When an agent works in a git project, I'll offer it a pet."],
-      choices: [{ label: "OK", value: "ok", primary: true }],
-      onChoose: () => {},
+      lines: lines.length ? lines : ["When an AI tool works in a git project, I'll offer it a companion."],
+      choices: [
+        { label: "Open Crew", value: "crew", primary: true },
+        { label: "OK", value: "ok" },
+      ],
+      onChoose: (value) => value === "crew" && this.host.openTab?.("crew"),
     });
   }
 
   sendHome(f: Familiar) {
     if (f.isMain) return;
-    if (f.asks.size) return f.bubble.say("I still have a question for you.", 4);
+    if (f.asks.size) return f.bubble.say("A request is still waiting for your answer.", 4);
     f.holdUntil = 0;
-    f.bubble.close(`brief-${f.record.id}`);
+    f.bubble.close(`status-${f.record.id}`);
     this.tick();
   }
 
   openPrompt(f: Familiar) {
+    const crew = [...this.pets.values()];
     f.bubble.prompt({
-      who: f.isMain ? `Talk to ${f.name}` : `Talk to ${f.label}`,
+      who: f.isMain ? `Talk to ${f.name}` : `Talk to ${f.shownLabel}`,
       placeholder: f.isMain ? "Type a command or a task…" : `Tell ${f.name} what to do…`,
+      // Short, concrete starters; most are understood here without any model.
       suggestions: f.isMain
-        ? ["crew", "remind me …", "reminders", "customize", "help"]
-        : ["what's happening", "customize", "go home"],
+        ? [crew[0] ? `Call ${crew[0].name}` : "Crew", "Remind me tomorrow at 3 to …", "Open session", "Help"]
+        : ["Open session", "What's happening", `Send ${f.name} home`],
       preview: (text) => this.explain(text, f),
       submit: (text) => this.run(/^what'?s happening$/i.test(text) ? `call ${f.name}` : text, f),
     });
@@ -351,13 +450,23 @@ export class Crew {
       case "crew":
         return "Show your crew";
       case "customize":
-        return name(command.who) ? `Change how ${name(command.who)} looks` : unknown(command.who!);
+        return name(command.who) ? `Open ${name(command.who)}'s appearance in Sidefolk` : unknown(command.who!);
       case "call":
         return name(command.who) ? `Bring ${name(command.who)} out` : unknown(command.who);
       case "home":
         return command.who && !/^(everyone|everybody|all|the crew)$/i.test(command.who) && !name(command.who)
           ? unknown(command.who)
           : `Send ${command.who ? name(command.who) ?? "everyone" : from.isMain ? "everyone" : from.name} home`;
+      case "open": {
+        const f = command.who ? this.find(command.who) : from;
+        if (!f) return codex(from);
+        const session = this.sessionOf(f);
+        if (!session) return `${f.name} has no work session to open yet`;
+        const agent = AGENT_NAMES[session.source as keyof typeof AGENT_NAMES];
+        return session.live ? `Bring ${agent}'s session forward` : `Continue ${agent}'s last session in a terminal`;
+      }
+      case "sidefolk":
+        return "Open the Sidefolk window";
       case "tell":
         return codex(command.who ? (this.find(command.who) ?? from) : from);
       case "codex":
@@ -371,7 +480,7 @@ export class Crew {
       case "forget":
         return name(command.who) ? `Forget ${name(command.who)} (asks first)` : unknown(command.who);
       case "adopt":
-        return "Give the latest agent session its own pet";
+        return "Give the latest work session its own companion";
       case "remind": {
         const parsed = parseReminder(command.text);
         return parsed ? `Remind you ${describeDue(parsed.due)}: ${parsed.what}` : "Set a reminder (then pick when)";
@@ -381,42 +490,43 @@ export class Crew {
     }
   }
 
-  /** Right-click on a pet: everything it can do, so nothing has to be remembered. */
+  /** Right-click on a pet: what it can do right now. Setup lives in the Sidefolk window. */
   menu(f: Familiar) {
+    const session = this.sessionOf(f);
+    const agent = session ? AGENT_NAMES[session.source as keyof typeof AGENT_NAMES] : "";
+    const open = session ? [{ label: session.live ? `Open ${agent} session` : `Continue in ${agent}`, value: "open" }] : [];
     const choices = f.isMain
       ? [
+          ...open,
           { label: "Type a command…", value: "prompt" },
           { label: "New reminder…", value: "reminder" },
-          { label: "Reminders", value: "reminders" },
           { label: "Your crew", value: "crew" },
-          { label: "Customize…", value: "look" },
           { label: "Open Sidefolk…", value: "settings" },
-          { label: "Hide pets", value: "hide" },
+          { label: "Hide companions", value: "hide" },
         ]
       : [
+          ...open,
           { label: "What's happening", value: "brief" },
           { label: `Ask Codex in ${f.project ? folder(f.project) : "a scratch folder"}…`, value: "prompt" },
-          { label: "Customize…", value: "look" },
+          { label: "Appearance…", value: "look" },
           { label: "Send home", value: "home" },
-          { label: `Forget ${f.name}…`, value: "forget" },
         ];
     f.bubble.show({
       id: `menu-${f.record.id}`,
-      who: f.label,
-      title: f.isMain ? "What would you like?" : `${f.name} looks after ${f.project ? folder(f.project) : "a session"}`,
+      who: f.shownLabel,
+      title: f.isMain ? "What would you like?" : `${f.name} looks after ${f.project && privacy.detail !== "status" ? folder(f.project) : "a project"}`,
       choices,
       menu: true,
       onChoose: (value) => {
-        if (value === "prompt") this.openPrompt(f);
+        if (value === "open") void this.openSession(f, session);
+        else if (value === "prompt") this.openPrompt(f);
         else if (value === "reminder") void this.host.command?.("", "new-reminder", f);
-        else if (value === "reminders") void this.host.command?.("", "reminders", f);
         else if (value === "crew") this.showCrew(f);
         else if (value === "look") void this.customize(f);
         else if (value === "settings") this.host.trayAction?.("settings");
         else if (value === "hide") this.host.trayAction?.("toggle");
-        else if (value === "brief") this.call(f);
+        else if (value === "brief") this.statusCard(f, true);
         else if (value === "home") this.sendHome(f);
-        else if (value === "forget") this.confirmForget(f, f);
       },
     });
     if (!f.isMain) f.holdUntil = Math.max(f.holdUntil, Date.now() + 20_000);
@@ -432,10 +542,18 @@ export class Crew {
         return;
       case "crew":
         return this.showCrew(from);
+      case "sidefolk":
+        return this.host.openTab?.("home");
       case "customize": {
         const f = target(command.who);
         if (!f) return `I don't know "${command.who}".`;
         return this.customize(f);
+      }
+      case "open": {
+        const f = target(command.who);
+        // "continue the refactor" is a task, not a pet called "the refactor".
+        if (!f) return this.task(text, from);
+        return this.openSession(f);
       }
       case "call": {
         const f = this.find(command.who);
@@ -469,23 +587,17 @@ export class Crew {
       case "rename": {
         const f = target(command.who);
         if (!f) return `I don't know "${command.who}".`;
-        const name = command.name.replace(/\s+/g, " ").slice(0, 24);
-        if (this.all.some((p) => p !== f && p.name.toLowerCase() === name.toLowerCase())) return `${name} is already taken.`;
-        const old = f.name;
-        f.record = { ...f.record, name };
-        await this.save();
-        return f === from ? `I'm ${name} now.` : `${old} is ${name} now.`;
+        return this.rename(f, command.name);
       }
       case "look": {
         const f = target(command.who);
         if (!f) return `I don't know "${command.who}".`;
-        await f.setLook({
+        await this.setLook(f, {
           ...(command.palette && { palette: command.palette }),
           ...(command.accessory && { accessory: command.accessory }),
           ...(command.species && { species: command.species }),
+          ...(command.style && { style: command.style }),
         });
-        f.mind.react("celebrate", 1.2);
-        await this.save();
         return;
       }
       case "forget": {
@@ -501,84 +613,27 @@ export class Crew {
     }
   }
 
-  /** The look editor: body, coat and extra apply live; Done saves. */
-  async customize(f: Familiar) {
-    const models = (await this.host.models?.().catch(() => [])) ?? [];
-    const apply = async (change: Partial<Look>) => {
-      try {
-        await f.setLook(change);
-      } catch (error) {
-        f.bubble.say(`That model doesn't fit: ${error instanceof Error ? error.message : error}`, 8, "fail");
-      }
-    };
-    const reopen = () => void this.customize(f);
-    // A crew pet stays out while its look is being changed.
-    f.holdUntil = Math.max(f.holdUntil, Date.now() + 60_000);
-    this.tick();
-    const look = f.record.look;
-    f.bubble.show({
-      id: `look-${f.record.id}`,
-      who: f.label,
-      title: `How should ${f.name} look?`,
-      rows: [
-        {
-          label: "Body",
-          options: [
-            ...SPECIES_NAMES.map((n) => ({ label: SPECIES[n].label, value: n as string })),
-            ...models.map((m) => ({ label: m.replace(/\.glb$/, ""), value: CUSTOM + m })),
-          ],
-          selected: look.species,
-          onPick: (species) => void apply({ species }),
-        },
-        {
-          label: "Coat",
-          options: PALETTE_NAMES.map((n) => ({ label: PALETTES[n].label, value: n, swatch: PALETTES[n].body })),
-          selected: look.palette,
-          onPick: (palette) => void apply({ palette: palette as Look["palette"] }),
-        },
-        {
-          label: "Extra",
-          options: ACCESSORY_NAMES.map((n) => ({ label: ACCESSORIES[n], value: n })),
-          selected: look.accessory,
-          onPick: (accessory) => void apply({ accessory: accessory as Look["accessory"] }),
-        },
-      ],
-      choices: [
-        { label: "Done", value: "done", primary: true },
-        { label: "Describe…", value: "describe" },
-        ...(this.host.photoLook ? [{ label: "Photo…", value: "photo" }] : []),
-        ...(this.host.importModel ? [{ label: "Import…", value: "import" }] : []),
-      ],
-      onChoose: async (value) => {
-        if (value === "done") {
-          f.holdUntil = Date.now() + 3_000;
-          f.mind.react("celebrate", 1.2);
-          return this.save();
-        }
-        if (value === "describe")
-          return f.bubble.prompt({
-            who: f.label,
-            placeholder: "A sleepy black cat with glasses…",
-            submit: async (text) => {
-              const change = describe(text);
-              await apply(change);
-              reopen();
-              return Object.keys(change).length ? undefined : "I couldn't tell. Try a color and an animal.";
-            },
-          });
-        if (value === "photo") {
-          f.bubble.say("Asking Claude to look at the photo…", 15);
-          const change = await this.host.photoLook!().catch((error) => (f.bubble.say(String(error), 8, "fail"), null));
-          if (change) await apply(change);
-          return reopen();
-        }
-        if (value === "import") {
-          const name = await this.host.importModel!().catch((error) => (f.bubble.say(String(error), 8, "fail"), null));
-          if (name) await apply({ species: CUSTOM + name });
-          return reopen();
-        }
-      },
-    });
+  async rename(f: Familiar, name: string): Promise<string> {
+    name = name.replace(/\s+/g, " ").trim().slice(0, 24);
+    if (!name) return "A name needs at least one letter.";
+    if (this.all.some((p) => p !== f && p.name.toLowerCase() === name.toLowerCase())) return `${name} is already taken.`;
+    const old = f.name;
+    f.record = { ...f.record, name };
+    await this.save();
+    return `${old} is ${name} now.`;
+  }
+
+  /** Changes a pet's look (from a command or the Sidefolk window) and keeps it. */
+  async setLook(f: Familiar, change: Partial<Look>) {
+    await f.setLook(change);
+    f.mind.react("celebrate", 1.1);
+    await this.save();
+  }
+
+  /** Appearance is edited in the Sidefolk window, with idle and alert previews. */
+  customize(f: Familiar) {
+    if (!this.host.openTab) return f.bubble.say('Try "wear glasses", "become a fox" or "color midnight".', 6);
+    this.host.openTab(`crew:${f.record.id}`);
   }
 
   private async task(task: string, f: Familiar) {
@@ -590,16 +645,18 @@ export class Crew {
   private offer(project: string) {
     if (this.offered.has(project) || this.file.ignored.includes(project)) return;
     this.offered.add(project);
+    const named = privacy.detail !== "status";
     this.main.bubble.show({
       id: `offer-${project}`,
       who: this.main.name,
-      title: `New project: ${folder(project)}`,
-      lines: ["Give it its own pet? It comes out when this project needs you."],
+      title: named ? `New project: ${folder(project)}` : "An AI tool started work in a new project.",
+      lines: ["Give it its own companion? It comes out when this project needs you and rests otherwise."],
       choices: [
-        { label: "Yes", value: "yes", primary: true },
         { label: "Not now", value: "later" },
-        { label: "Never", value: "never" },
+        { label: "Never for this project", value: "never" },
+        { label: "Yes, add one", value: "yes", primary: true },
       ],
+      meta: { kind: "offer", project },
       onChoose: (value) => {
         if (value === "yes") void this.create({ kind: "project", key: project });
         if (value === "never") {
@@ -613,16 +670,16 @@ export class Crew {
   /** Gives the latest session the main pet speaks for its own temporary pet. */
   private async adopt() {
     const session = this.main.agents.list[0];
-    if (!session) return "There's no session to adopt right now.";
+    if (!session) return "There's no work session to adopt right now.";
     await this.create({ kind: "session", key: session.key });
   }
 
-  async create(binding: Binding) {
-    const taken = this.all.map((f) => f.name);
+  async create(binding: Binding, look?: Partial<Look>, name?: string) {
+    const companion = nextCompanion(this.all.map((f) => f.record), this.comfort);
     const record: PetRecord = {
       id: crypto.randomUUID(),
-      name: nextName(taken),
-      look: { ...DEFAULT_LOOK, palette: nextPalette(this.all.map((f) => f.record.look.palette)) },
+      name: name?.trim().slice(0, 24) || companion.name,
+      look: normalizeLook({ ...companion.look, ...look }),
       bindings: [binding],
     };
     const f = await Familiar.create(record, this.zoom);
@@ -633,8 +690,16 @@ export class Crew {
     );
     f.holdUntil = Date.now() + 7_000;
     this.tick();
-    const what = binding.kind === "project" ? folder(binding.key) : "this session";
-    f.bubble.say(`Hi! I'm ${f.name}. I'll look after ${what}.`, 6, "done");
+    const what = binding.kind === "project" ? folder(binding.key) : "this work session";
+    f.bubble.say(`Hi, I'm ${f.name}. I'll look after ${what}.`, 6, "done");
+    await this.save();
+    return f;
+  }
+
+  /** Points a pet at another project (Sidefolk window → Crew → Change project). */
+  async assign(f: Familiar, project: string) {
+    if (f.isMain) return;
+    f.record = { ...f.record, bindings: [{ kind: "project", key: project }] };
     await this.save();
   }
 
@@ -642,11 +707,11 @@ export class Crew {
     on.bubble.show({
       id: `forget-${f.record.id}`,
       who: this.main.name,
-      title: `Forget ${f.name}?`,
-      lines: [f.project ? `${folder(f.project)} goes back to me.` : "Its sessions go back to me."],
+      title: `Remove ${f.name} from your crew?`,
+      lines: [f.project ? `${folder(f.project)}'s work sessions go back to ${this.main.name}.` : `Its work sessions go back to ${this.main.name}.`],
       choices: [
-        { label: "Forget", value: "forget", primary: true },
         { label: "Keep", value: "keep" },
+        { label: `Remove ${f.name}`, value: "forget" },
       ],
       onChoose: (value) => {
         if (value === "forget") void this.forget(f);
@@ -667,7 +732,7 @@ export class Crew {
   /** A session pet waves goodbye and leaves for good when its session ends. */
   private async retire(f: Familiar, event: AgentEvent) {
     f.holdUntil = 0;
-    f.bubble.say(`${AGENT_NAMES[event.source]}'s session ended. Bye!`, 4);
+    f.bubble.say(`${AGENT_NAMES[event.source]}'s work session ended.`, 4);
     f.record = { ...f.record, bindings: [] };
     setTimeout(() => {
       if (f.agents.list.length === 0 && !f.asks.size) void this.forget(f);
@@ -683,7 +748,7 @@ export class Crew {
     await this.host.saveCrew(this.file);
   }
 
-  /** What the dashboard shows: every pet, its sessions, and what is waiting on the user. */
+  /** What the Sidefolk window shows: every pet, its sessions, and what is waiting on the user. */
   status() {
     const pets = this.all.map((f) => ({
       id: f.record.id,
@@ -694,21 +759,49 @@ export class Crew {
       look: f.record.look,
       out: f.out,
       clip: f.out ? f.pet.clip : "away",
-      sessions: f.agents.list.map((s) => ({ source: s.source, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at })),
+      sessions: f.agents.list.map((s) => ({
+        source: s.source,
+        id: s.id,
+        cwd: s.cwd,
+        state: s.state,
+        verb: VERB[s.state],
+        detail: s.detail,
+        project: s.project,
+        at: s.at,
+      })),
       outcomes: [...f.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 3),
     }));
-    // Questions and offers can be answered from the dashboard; menus and editors cannot.
+    // Requests, offers and reminders can be answered from the window; menus and lines cannot.
     const waiting = this.all.flatMap((f) =>
       f.bubble.open
         .filter((c) => c.urgent || c.id.startsWith("offer-") || c.id.startsWith("reminder-"))
-        .map((c) => ({ id: c.id, pet: f.record.id, who: c.who, title: c.title, detail: c.detail ?? "", choices: c.choices.map(({ label, value }) => ({ label, value })) })),
+        .map((c) => ({
+          id: c.id,
+          pet: f.record.id,
+          petName: f.name,
+          who: c.who,
+          title: c.title,
+          lines: c.lines ?? [],
+          meta: c.meta ?? {},
+          choices: c.choices.filter((x) => x.value !== "review").map(({ label, value, primary, quiet }) => ({ label, value, primary: !!primary, quiet: !!quiet })),
+        })),
     );
-    return { pets, waiting };
+    return { pets, waiting, presence: this.presence };
   }
 
-  /** A dashboard answer to a question or offer showing on some pet. */
+  /** An answer sent from the Sidefolk window. Permission requests take any of their real choices. */
   answer(id: string, value: string): boolean {
-    return this.all.some((f) => f.bubble.choose(id, value));
+    for (const f of this.all) {
+      const card = f.bubble.open.find((c) => c.id === id);
+      if (!card) continue;
+      const allowed = card.meta?.kind === "permission" ? ["allow", "deny", ...(card.meta.canDefer === "true" ? ["defer"] : [])] : card.choices.map((c) => c.value);
+      const written = card.meta?.free === "true" && value.trim() !== "" && !value.startsWith("\u0000");
+      if (!allowed.includes(value) && !written) return false;
+      f.bubble.close(id);
+      card.onChoose(value);
+      return true;
+    }
+    return false;
   }
 
   resize() {

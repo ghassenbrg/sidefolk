@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { CLIPS, type ClipName } from "./clips";
-import { accessory, CUSTOM, recolor, SPECIES, type Look, type SpeciesName } from "./look";
+import { accessory, CUSTOM, recolor, SPECIES, type Look, type SpeciesName, type StyleName } from "./look";
 
 // The hero comes from art/blender/build_hero.py (npm run model). The glTF follows the rig
 // contract in art/HERO.md: these bone names, these clip names, a "Body" mesh that gets the
@@ -43,16 +43,40 @@ export type Model = {
   clips: Record<ClipName, THREE.AnimationClip>;
 };
 
-function toonRamp(): THREE.DataTexture {
-  const ramp = new THREE.DataTexture(new Uint8Array([120, 195, 255]), 3, 1, THREE.RedFormat);
-  ramp.minFilter = ramp.magFilter = THREE.NearestFilter;
+/** Light bands from shadow to lit; `smooth` blends them into a matte gradient. */
+function toonRamp(steps: number[], smooth = false): THREE.DataTexture {
+  const ramp = new THREE.DataTexture(new Uint8Array(steps), steps.length, 1, THREE.RedFormat);
+  ramp.minFilter = ramp.magFilter = smooth ? THREE.LinearFilter : THREE.NearestFilter;
   ramp.needsUpdate = true;
   return ramp;
 }
 
+/**
+ * How each art style draws the same model. Soft 3D: round matte volumes (a smooth light
+ * gradient) and a plum line. Ink & Geek: flat fills (the boards' 2D versions) and a heavy
+ * charcoal line. Pocket Anime: hard cel shading, one crisp shadow band, a thin warm line.
+ */
+const STYLE: Record<StyleName, { fill: (color?: string) => THREE.Material; line: number; ink: number }> = {
+  soft: {
+    fill: (color) => new THREE.MeshToonMaterial(color ? { color } : { vertexColors: true, gradientMap: toonRamp([120, 195, 255], true) }),
+    line: 0.03,
+    ink: OUTLINE,
+  },
+  ink: {
+    fill: (color) => new THREE.MeshBasicMaterial(color ? { color } : { vertexColors: true }),
+    line: 0.055,
+    ink: 0x272a33,
+  },
+  anime: {
+    fill: (color) => new THREE.MeshToonMaterial({ ...(color ? { color } : { vertexColors: true }), gradientMap: toonRamp([135, 255]) }),
+    line: 0.017,
+    ink: 0x4a3640,
+  },
+};
+
 /** Inverted-hull outline: back faces pushed out along normals, before skinning. */
-function outlineMaterial(width: number): THREE.MeshBasicMaterial {
-  const material = new THREE.MeshBasicMaterial({ color: OUTLINE, side: THREE.BackSide });
+function outlineMaterial(width: number, color = OUTLINE): THREE.MeshBasicMaterial {
+  const material = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide });
   material.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader.replace(
       "#include <begin_vertex>",
@@ -98,7 +122,8 @@ export async function loadModel(look: Look): Promise<Model> {
   const url = look.species;
   const gltf = await load(look.species);
   const scene = SkeletonUtils.clone(gltf.scene);
-  const toon = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonRamp() });
+  const style = STYLE[look.style] ?? STYLE.soft;
+  const toon = style.fill();
   const body = skinnedMesh(scene, "Body");
   const face = skinnedMesh(scene, "Face");
   for (const mesh of [body, face]) {
@@ -112,7 +137,7 @@ export async function loadModel(look: Look): Promise<Model> {
   body.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.2, 0), 2.6);
   face.raycast = () => {};
 
-  const outline = new THREE.SkinnedMesh(body.geometry, outlineMaterial(0.03));
+  const outline = new THREE.SkinnedMesh(body.geometry, outlineMaterial(style.line, style.ink));
   outline.bind(body.skeleton, body.bindMatrix);
   outline.frustumCulled = false;
   outline.raycast = () => {};
@@ -134,7 +159,7 @@ export async function loadModel(look: Look): Promise<Model> {
     clips[name] = clip;
   }
 
-  const extra = accessory(look.accessory, OUTLINE);
+  const extra = accessory(look.accessory, style.ink, (color) => style.fill(color));
   if (extra) {
     extra.object.traverse((o) => (o.raycast = () => {}));
     bones[extra.bone].add(extra.object);

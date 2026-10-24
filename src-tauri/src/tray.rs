@@ -71,14 +71,28 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let shared = app.state::<Arc<Shared>>();
     let settings = shared.settings.lock().unwrap().value.clone();
     let hidden = settings.hidden;
+    let menubar_only = settings.presence == "menubar";
+    let waiting = shared.status.lock().unwrap()["waiting"].as_array().map_or(0, Vec::len);
+    // Requests stay one click away even when no pet is on screen.
+    let requests = MenuItem::with_id(
+        app,
+        "requests",
+        match waiting {
+            0 => "No requests waiting".to_string(),
+            1 => "1 request waiting…".to_string(),
+            n => format!("{n} requests waiting…"),
+        },
+        waiting > 0,
+        None::<&str>,
+    )?;
     let toggle = MenuItem::with_id(
         app,
         "toggle",
-        if hidden { "Show pet" } else { "Hide pet" },
-        true,
+        if hidden { "Show companions" } else { "Hide companions" },
+        !menubar_only,
         None::<&str>,
     )?;
-    let call = MenuItem::with_id(app, "call", "Call pet here", true, None::<&str>)?;
+    let call = MenuItem::with_id(app, "call", "Call companions here", !menubar_only, None::<&str>)?;
     let connected = crate::claude_setup::connected(app);
     let connect = MenuItem::with_id(
         app,
@@ -104,9 +118,10 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let preferences = MenuItem::with_id(app, "settings", "Open Sidefolk…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Sidefolk", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
+    let separator2 = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(
         app,
-        &[&toggle, &call, &crew, &reminder, &separator, &connect, &preferences, &refit, &quit],
+        &[&preferences, &requests, &separator, &toggle, &call, &crew, &reminder, &separator2, &connect, &refit, &quit],
     )?;
     if let Some(error) = app
         .state::<TrayState>()
@@ -129,17 +144,20 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 pub fn refresh(app: &AppHandle) -> tauri::Result<()> {
     if let Some(tray) = app.tray_by_id("sidefolk") {
         tray.set_menu(Some(menu(app)?))?;
+        // A count beside the icon: words and numbers, never color alone.
+        let waiting = app.state::<Arc<Shared>>().status.lock().unwrap()["waiting"].as_array().map_or(0, Vec::len);
+        tray.set_title((waiting > 0).then(|| waiting.to_string()))?;
     }
     Ok(())
 }
 
 fn hidden(app: &AppHandle, hidden: bool) -> tauri::Result<()> {
-    overlay::set_visible(app, !hidden)?;
     app.state::<Arc<Shared>>()
         .settings
         .lock()
         .unwrap()
         .update(|s| s.hidden = hidden)?;
+    overlay::apply_visibility(app)?;
     if cfg!(debug_assertions) {
         eprintln!("[ui] hidden={hidden}");
     }
@@ -187,6 +205,11 @@ pub fn action(app: &AppHandle, action: &str) {
             app.exit(0);
             return;
         }
+        // Menu bar only: there are no pets to show; the shortcut opens Sidefolk instead.
+        "toggle" | "call" if app.state::<Arc<Shared>>().settings.lock().unwrap().value.presence == "menubar" => {
+            crate::prefs::open_at(app, "requests")
+        }
+        "requests" => crate::prefs::open_at(app, "requests"),
         "toggle" => {
             let is_hidden = app
                 .state::<Arc<Shared>>()

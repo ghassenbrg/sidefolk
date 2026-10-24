@@ -14,6 +14,8 @@ const MAX_THROW = 2600;
 export function wireInput(o: {
   familiars: () => Familiar[];
   setInteractive: (on: boolean) => void;
+  /** A single click: the pet's status card. Petting never answers anything. */
+  onClick: (f: Familiar) => void;
   onDoubleClick: (f: Familiar) => void;
   onMenu: (f: Familiar) => void;
 }) {
@@ -89,7 +91,10 @@ export function wireInput(o: {
     } else if (pressed) {
       const now = performance.now();
       if (lastClick.f === pressed.f && now - lastClick.at < DOUBLE_CLICK_MS) o.onDoubleClick(pressed.f);
-      else pressed.f.mind.poke();
+      else {
+        pressed.f.mind.poke();
+        o.onClick(pressed.f);
+      }
       lastClick = { f: pressed.f, at: now };
     }
     pressed = null;

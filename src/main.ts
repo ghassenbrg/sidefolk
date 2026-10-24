@@ -5,11 +5,12 @@ import { handleToolCall, type ToolCall } from "./agent-tools";
 import type { AgentEvent } from "./agents";
 import { AWAY_SECS, welcomeBack, type JournalEntry } from "./away";
 import { Crew, type Ask, type CrewFile, type Host } from "./crew";
+import { install, play } from "./demo";
 import { wireInput } from "./input";
-import { shortcutLabel } from "./keys";
 import { sound } from "./sound";
 import { normalizeLook } from "./pet/look";
 import { setCustomReader } from "./pet/model";
+import { privacy, type Detail } from "./states";
 import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
@@ -35,6 +36,9 @@ type Settings = {
   volume: number;
   speak: boolean;
   voice: string;
+  presence: "always" | "needed" | "menubar";
+  detail: Detail;
+  comfort: string;
 };
 const settings = inTauri ? await invoke<Settings>("get_settings") : null;
 const SIZES = { small: 0.8, medium: 1, large: 1.3 };
@@ -79,16 +83,8 @@ const host: Host = {
     if (inTauri) void invoke("tray_action", { action });
   },
   ...(inTauri && {
-    models: () => invoke<string[]>("list_models"),
-    importModel: () => invoke<string | null>("import_model"),
-    photoLook: async () => {
-      const json = await invoke<string | null>("describe_photo");
-      if (!json) return null;
-      // The model's answer is untrusted; keep only valid settings it named.
-      const named = JSON.parse(json) as Record<string, unknown>;
-      const valid = normalizeLook(named);
-      return Object.fromEntries(Object.entries(valid).filter(([key, value]) => named[key] === value));
-    },
+    openTab: (tab: string) => void invoke("open_tab", { tab }),
+    openSession: async (ref) => (await invoke<{ message: string }>("open_session", { ...ref })).message,
   }),
 };
 if (inTauri) setCustomReader((name) => invoke<ArrayBuffer>("read_model", { name }));
@@ -109,7 +105,12 @@ const main = crew.main;
 /** Settings that apply without a restart. Pet size rebuilds the pets, so it reloads the page. */
 function applySettings(next: Settings | null) {
   document.body.classList.toggle("large-text", !!next?.large_text);
+  const calm = !!next?.calm || reducedMotion.matches;
+  document.body.classList.toggle("reduce-motion", calm);
   if (next) {
+    privacy.detail = next.detail;
+    crew.presence = next.presence;
+    crew.comfort = next.comfort;
     sound.enabled = next.sounds;
     sound.volume = next.volume / 100;
     sound.speaker = next.speak
@@ -117,13 +118,16 @@ function applySettings(next: Settings | null) {
       : null;
   }
   for (const f of crew.all) {
-    f.mind.calm = !!next?.calm || reducedMotion.matches;
+    f.mind.calm = calm;
+    f.agents.redraw();
     if (next) f.mind.sleepAfterSecs = next.sleep_after_secs;
   }
+  crew.tick();
 }
 applySettings(settings);
 reducedMotion.addEventListener("change", () => applySettings(settings));
 const reminders = new Reminders(crew, reminderStore);
+if (inTauri) reminders.manage = () => host.openTab?.("reminders");
 crew.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();
 
@@ -131,6 +135,7 @@ const overlay = inTauri ? getCurrentWindow() : null;
 const input = wireInput({
   familiars: () => crew.all,
   setInteractive: (on) => void overlay?.setIgnoreCursorEvents(!on),
+  onClick: (f) => crew.statusCard(f),
   onDoubleClick: (f) => crew.openPrompt(f),
   onMenu: (f) => crew.menu(f),
 });
@@ -153,19 +158,24 @@ if (inTauri) {
     Object.assign(settings!, e.payload);
     applySettings(settings);
   });
-  if (!settings!.onboarded) welcome();
-  // From the Settings window and the tray: crew commands, new pets, the reminder form.
-  void listen<{ action: string; text?: string; project?: string; id?: string }>("pet-action", (e) => {
-    const { action, text, project, id } = e.payload;
+  // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
+  // "Sent" only once the pet really passed the answer on.
+  type PetAction = { action: string; text?: string; project?: string; id?: string; name?: string; look?: unknown };
+  void listen<PetAction>("pet-action", (e) => {
+    const { action, text, project, id, name, look } = e.payload;
     const pet = (action !== "answer" && id && crew.byId(id)) || main;
-    if (action === "run" && text) void crew.run(text, pet).then((reply) => reply && pet.bubble.say(reply, 6));
-    if (action === "customize") void crew.customize(pet);
+    const reply = (text?: string | void) => text && pet.bubble.say(text, 6);
+    if (action === "run" && text) void crew.run(text, pet).then(reply);
     if (action === "call") crew.call(pet);
     if (action === "forget") void crew.forget(pet);
-    if (action === "create" && project) void crew.create({ kind: "project", key: project });
+    if (action === "create" && project) void crew.create({ kind: "project", key: project }, look ? normalizeLook(look) : undefined, name);
+    if (action === "assign" && project) void crew.assign(pet, project);
+    if (action === "rename" && name) void crew.rename(pet, name).then(reply);
+    if (action === "look" && look) void crew.setLook(pet, normalizeLook({ ...pet.record.look, ...(look as object) }));
+    if (action === "open-session") void crew.openSession(pet);
     if (action === "new-reminder") void reminders.command("", "new-reminder", main);
-    if (action === "welcome") welcome();
-    if (action === "answer" && id && text) crew.answer(id, text);
+    if (action === "demo") play(crew);
+    if (action === "answer" && id && text) void invoke("answered", { id, ok: crew.answer(id, text) });
   });
   // Coming back after a long time away earns a briefing of what the agents did meanwhile.
   let lastIdle = 0;
@@ -205,52 +215,25 @@ if (inTauri) {
   void listen<Ask>("permission", (e) => crew.handleAsk(e.payload));
   void listen<string>("permission-closed", (e) => crew.closeAsk(e.payload));
   void listen("overlay-resized", () => crew.resize());
-  // The dashboard's live view: sent when something changed, checked once a second.
+  // The Sidefolk window's live view: sent when something changed, checked once a second.
+  // Menu bar only has no pet to show a card, so new requests become notifications.
   let published = "";
+  let notified = new Set<string>();
   setInterval(() => {
-    const status = JSON.stringify(crew.status());
-    if (status === published) return;
-    published = status;
-    void invoke("publish_status", { status: JSON.parse(status) }).catch(() => {});
+    const status = crew.status();
+    const json = JSON.stringify(status);
+    if (json === published) return;
+    published = json;
+    void invoke("publish_status", { status }).catch(() => {});
+    const ids = new Set(status.waiting.map((w) => w.id));
+    if (settings!.presence === "menubar")
+      for (const w of status.waiting.filter((w) => !notified.has(w.id)))
+        void invoke("notify", { title: w.who, body: `${w.title} Open Sidefolk from the menu bar to answer.` }).catch(() => {});
+    notified = ids;
   }, 1_000);
 } else {
   addEventListener("pointermove", (e) => onCursor(e.clientX, e.clientY));
-  void import("./demo").then((demo) => demo.install(crew));
-}
-
-/** The first-run card: what the pet is for, and the one step that makes it useful. */
-function welcome() {
-  const done = () => void invoke("update_settings", { change: { onboarded: true } });
-  main.bubble.show({
-    id: "onboarding",
-    who: main.name,
-    title: `Hi! I'm ${main.name}.`,
-    lines: [
-      "I act out what your AI agents are doing and bring you their questions.",
-      "Connect Claude Code to start. Everything can be changed later in Settings.",
-    ],
-    choices: [
-      { label: "Connect Claude Code…", value: "claude", primary: true },
-      { label: "Open Sidefolk…", value: "settings" },
-      { label: "Later", value: "later" },
-    ],
-    onChoose: (value) => {
-      if (value !== "later") void invoke("tray_action", { action: value });
-      done();
-      main.bubble.show({
-        id: "tips",
-        who: main.name,
-        title: "Three things to know",
-        lines: [
-          "Right-click any pet for everything it can do.",
-          'Double-click to type, like "remind me at 5 to stretch".',
-          `${shortcutLabel(settings?.shortcut ?? "CommandOrControl+Shift+Space")} hides us; press it again to call us to your cursor.`,
-        ],
-        choices: [{ label: "Got it", value: "ok", primary: true }],
-        onChoose: () => {},
-      });
-    },
-  });
+  install(crew);
 }
 
 async function briefing(since: number) {
@@ -271,7 +254,8 @@ async function briefing(since: number) {
 function loop() {
   const now = performance.now();
   for (const f of crew.all) f.frame(now);
-  const wait = Math.min(...crew.all.map((f) => f.due(performance.now())));
+  // With every pet resting (Only when needed) nothing is due; look again in a second.
+  const wait = Math.min(1000, ...crew.all.map((f) => f.due(performance.now())));
   if (wait > 40) setTimeout(() => (document.hidden ? requestAnimationFrame(loop) : loop()), wait);
   else requestAnimationFrame(loop);
 }
@@ -298,6 +282,7 @@ if (import.meta.env.DEV) {
       if (e.payload === "sleep") main.mind.setOsIdle(main.mind.sleepAfterSecs + 1);
       if (e.payload === "wake") main.mind.setOsIdle(0);
       if (e.payload === "welcome") void briefing(0);
+      if (e.payload === "demo") play(crew);
       if (e.payload === "bubbles")
         report(`bubbles ${crew.all.filter((f) => !f.bubble.root.hidden).map((f) => `[${f.name}] ${f.bubble.root.innerText.replace(/\s+/g, " ")}`).join(" | ")}`);
       if (e.payload === "state")

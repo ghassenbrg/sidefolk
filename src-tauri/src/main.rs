@@ -15,6 +15,7 @@ mod overlay;
 #[cfg(target_os = "macos")]
 mod panel;
 mod reminders;
+mod sessions;
 mod settings;
 mod tray;
 mod voice;
@@ -156,7 +157,9 @@ fn mcp_reply(shared: State<'_, Arc<Shared>>, id: String, result: serde_json::Val
 /// `false` puts it back the way the user left it.
 #[tauri::command]
 fn peek(app: AppHandle, shared: State<'_, Arc<Shared>>, show: bool) {
-    if !shared.settings.lock().unwrap().value.hidden {
+    let settings = shared.settings.lock().unwrap().value.clone();
+    // Menu bar only means no pets on screen; the page sends a notification instead.
+    if !settings.hidden || settings.presence == "menubar" {
         return;
     }
     let handle = app.clone();
@@ -230,6 +233,7 @@ fn main() {
     builder
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -268,7 +272,12 @@ fn main() {
             prefs::publish_status,
             prefs::get_status,
             voice::speak,
-            voice::voices
+            voice::voices,
+            sessions::open_session,
+            sessions::terminals,
+            prefs::notify,
+            prefs::answered,
+            prefs::open_tab
         ])
         .setup(move |app| {
             let store = settings::Store::load(settings::data_dir(app.handle())?)?;
@@ -283,6 +292,7 @@ fn main() {
                 settings: std::sync::Mutex::new(store),
                 permissions: Default::default(),
                 codex: Default::default(),
+                hosts: Default::default(),
             });
             app.manage(shared.clone());
             // A desktop pet lives in the menu bar, not the Dock or app switcher.
@@ -292,6 +302,10 @@ fn main() {
             overlay::setup(app.handle())?;
             tray::setup(app.handle())?;
             hooks::spawn(app.handle().clone(), shared.clone());
+            // The first minute happens in the Sidefolk window: welcome, comfort, connect.
+            if !shared.settings.lock().unwrap().value.onboarded {
+                prefs::open_at(app.handle(), "welcome")?;
+            }
             Ok(())
         })
         .run(tauri::generate_context!())

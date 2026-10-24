@@ -1,6 +1,7 @@
 import { folder } from "./agents";
 import type { Crew } from "./crew";
 import type { Familiar } from "./familiar";
+import { privacy } from "./states";
 import { describeDue, parseReminder } from "./when";
 
 /** Mirrors `Reminder` in src-tauri/src/reminders.rs. */
@@ -137,18 +138,19 @@ export class Reminders {
     void this.store.update(r.id, { fired: true });
     if (this.showing.size === 1) this.store.peek(true);
     const by = r.from === "you" ? "" : ` (set by ${r.from === "codex" ? "Codex" : "Claude"})`;
+    const due = describeDue(new Date(r.due));
     pet.bubble.show({
       id: `reminder-${r.id}`,
       who: `${pet.name} · reminder${by}`,
-      title: r.text,
-      lines: [missed ? `Missed while you were away: ${describeDue(new Date(r.due))}` : describeDue(new Date(r.due))].concat(
-        r.project && pet.isMain ? [folder(r.project)] : [],
-      ),
+      title: privacy.detail === "status" ? "A reminder is due." : r.text,
+      // A reminder missed while the Mac slept says when it was due.
+      lines: [missed ? `Was due ${due}` : `Due ${due}`].concat(r.project && pet.isMain && privacy.detail !== "status" ? [folder(r.project)] : []),
+      meta: { kind: "reminder", text: r.text, due: String(r.due), project: r.project },
       choices: [
+        { label: "In 10 min", value: "10" },
+        { label: "In 1 hour", value: "60" },
+        { label: "Tomorrow 9:00", value: "tomorrow" },
         { label: "Done", value: "done", primary: true },
-        { label: "10 min", value: "10" },
-        { label: "1 hour", value: "60" },
-        { label: "Tomorrow", value: "tomorrow" },
       ],
       onChoose: (value) => void this.answer(r, value),
     });

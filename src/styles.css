@@ -1,15 +1,11 @@
+@import "./tokens.css";
+
+/* The pets' overlay: transparent, with each pet's canvas, status badge and speech bubble. */
+
 :root {
-  --ink: #2c2733;
-  --paper: #fffdf8;
-  --muted: #6f6878;
-  --line: rgba(44, 39, 51, 0.14);
-  --code: #f3efe7;
-  --field: #fff;
-  --accent: #2f9e83;
-  --warn: #d9623b;
-  --text: 13.5px;
-  --font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Bubble text; Settings → Larger text raises it without changing the pets' size. */
+  --bubble-text: var(--text-body);
+  --bubble-width: 340px;
 }
 
 html,
@@ -19,7 +15,7 @@ body {
   height: 100%;
   overflow: hidden;
   background: transparent;
-  font-family: var(--font);
+  font-family: var(--font-ui);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -34,47 +30,30 @@ body.web {
   top: 0;
   left: 0;
   will-change: transform;
+  transition: opacity var(--motion-entrance) ease-out;
+}
+
+/* Coming out of the den or going back: a fade, not a walk across the screen. */
+.stage.out-of-view {
+  opacity: 0;
 }
 
 body.hover .stage {
   cursor: grab;
 }
 
+/* The status badge over a pet's head: glyph + word, then the tool and what it is doing. */
 .hud {
   position: fixed;
   top: 0;
   left: 0;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(44, 39, 51, 0.82);
-  color: #f6f1ff;
-  font-size: 11.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  max-width: 260px;
+  max-width: 300px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(39, 42, 51, 0.18);
+}
+.hud > span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;
-  pointer-events: none;
-}
-
-.hud.state-waiting {
-  background: var(--warn);
-}
-
-.bubble {
-  position: fixed;
-  top: 0;
-  left: 0;
-  box-sizing: border-box;
-  max-width: 300px;
-  padding: 10px 13px;
-  border-radius: 16px;
-  background: var(--paper);
-  color: var(--ink);
-  border: 1.5px solid var(--ink);
-  box-shadow: 0 6px 18px rgba(20, 16, 28, 0.18);
-  font-size: var(--text);
-  line-height: 1.35;
 }
 
 .stage[hidden],
@@ -83,233 +62,260 @@ body.hover .stage {
   display: none;
 }
 
+.bubble {
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  max-width: var(--bubble-width);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--control-border);
+  box-shadow: var(--shadow);
+  font-size: var(--bubble-text);
+  line-height: var(--leading);
+}
+
+.bubble.entering {
+  animation: card-in var(--motion-card) ease-out;
+}
+.bubble.leaving {
+  opacity: 0;
+  transition: opacity var(--motion-card) ease-in;
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
 .bubble p {
   margin: 0;
 }
 
-.bubble.tone-done {
-  border-color: var(--accent);
+/* A plain line (not a card): a little padding all round. */
+.bubble:not(.ask):not(.prompt) {
+  padding: var(--space-3) var(--space-4);
 }
-
+.bubble.tone-done,
 .bubble.tone-fail {
-  border-color: var(--warn);
+  border-width: 2px;
+}
+.bubble.tone-done {
+  border-color: var(--focus);
 }
 
 .bubble .who {
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 24px;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  margin-bottom: 4px;
+  font-size: var(--text-meta);
+  font-weight: 600;
+}
+.bubble .who .name {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.bubble .who .count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--ink);
 }
 
-.bubble .count {
-  color: var(--warn);
+.bubble .context {
+  color: var(--muted);
+  font-size: var(--text-meta);
 }
 
 .bubble .title {
+  margin-top: var(--space-1);
+  font-size: var(--bubble-text);
   font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.bubble.urgent .title {
+  font-size: calc(var(--bubble-text) + 2px);
 }
 
 .bubble .info {
-  margin-top: 3px;
+  margin-top: var(--space-1);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
-.bubble .info + .actions,
-.bubble .title + .actions {
-  margin-top: 9px;
+.bubble .facts {
+  display: grid;
+  gap: 2px;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  background: var(--canvas);
 }
-
-.bubble.urgent {
-  border-color: var(--warn);
+.bubble .facts .label {
+  color: var(--muted);
+  font-size: var(--text-meta);
 }
-
-.bubble .detail {
-  display: block;
-  margin: 6px 0 9px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: var(--code);
-  font-family: var(--mono);
-  font-size: 11.5px;
-  word-break: break-all;
-  max-height: 72px;
+.bubble .facts .label:not(:first-child) {
+  margin-top: var(--space-2);
+}
+/* Commands and paths wrap whole: the meaningful end of an action is never cut off. */
+.bubble .facts .value {
+  font-family: var(--font-mono);
+  font-size: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 200px;
   overflow: auto;
   user-select: text;
   -webkit-user-select: text;
 }
 
+.bubble .note {
+  margin-top: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-secondary);
+}
+
 .bubble .actions {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.bubble .actions:not(.list):not(.quiet) > button {
+  flex: 1 1 auto;
 }
 
 .bubble button {
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1.5px solid var(--ink);
-  background: transparent;
+  min-height: var(--target);
+  min-width: var(--target);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--control-border);
+  background: var(--surface);
   color: var(--ink);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 600;
   cursor: pointer;
+  transition: background var(--motion-control), border-color var(--motion-control);
 }
-
+.bubble button:hover {
+  border-color: var(--focus);
+}
 .bubble button.primary {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--on-mint);
 }
-
-.bubble.prompt {
-  width: 300px;
-}
-
-.bubble input {
-  box-sizing: border-box;
-  width: 100%;
-  font: inherit;
-  padding: 6px 9px;
-  border-radius: 10px;
-  border: 1.5px solid var(--line);
-  outline: none;
-  background: var(--field);
-  color: var(--ink);
-}
-
-.bubble input:focus {
-  border-color: var(--accent);
-}
-
-.bubble .hint {
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.bubble .chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  margin-top: 7px;
-}
-
-.bubble .chips-label {
-  width: 100%;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.bubble button.chip {
-  padding: 3px 9px;
-  font-size: 12px;
-  border-width: 1px;
-  border-color: var(--line);
-}
-
-.bubble button.chip.selected {
-  border-color: var(--ink);
-  background: var(--code);
-}
-
-.bubble button.chip.swatch {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 2px solid var(--paper);
-  box-shadow: 0 0 0 1px var(--line);
-}
-
-.bubble button.chip.swatch.selected {
-  box-shadow: 0 0 0 2px var(--ink);
-}
-
-.bubble .chips + .actions {
-  margin-top: 10px;
-}
-
-/* Bubbles follow the system appearance. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #f1ecf7;
-    --paper: #2a2531;
-    --muted: #b3abbe;
-    --line: rgba(241, 236, 247, 0.18);
-    --code: #3a3443;
-    --field: #1f1b25;
-  }
-}
-
-/* Settings → Larger text. */
-body.large-text {
-  --text: 15.5px;
-}
-body.large-text .bubble {
-  max-width: 340px;
-}
-body.large-text .bubble .who,
-body.large-text .bubble .hint,
-body.large-text .bubble .info {
-  font-size: 13px;
-}
-
 .bubble button:focus-visible,
 .bubble input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.bubble .actions.quiet {
+  margin-top: var(--space-1);
+}
+.bubble button.quiet {
+  border-color: transparent;
+  background: none;
+  padding: 0 var(--space-2);
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .bubble .who .close {
-  margin-left: auto;
-  padding: 0 4px;
+  margin: -10px -10px -10px 0;
+  padding: 0;
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 16px;
-  line-height: 1;
+  display: grid;
+  place-items: center;
 }
-
+.bubble .who .close .icon {
+  width: 16px;
+  height: 16px;
+}
 .bubble .who .close:hover {
   color: var(--ink);
 }
 
-.bubble .who .count {
-  margin-left: 6px;
-}
-
 .bubble.menu {
-  width: 230px;
+  width: 260px;
 }
-
 .bubble .actions.list {
   flex-direction: column;
-  gap: 2px;
-  margin-top: 8px;
+  gap: 0;
+  margin-top: var(--space-2);
 }
-
 .bubble .actions.list button {
   text-align: left;
   border: none;
-  border-radius: 8px;
-  padding: 6px 9px;
-  font-weight: 600;
+  font-weight: 500;
 }
-
 .bubble .actions.list button:hover {
-  background: var(--code);
+  background: var(--canvas);
 }
 
-.bubble .chips.suggestions {
-  margin-top: 6px;
+.bubble.prompt {
+  width: var(--bubble-width);
 }
-
+.bubble input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--target);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--control-border);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.bubble .hint {
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-meta);
+}
+.bubble .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
 .bubble .chips[hidden] {
   display: none;
+}
+.bubble button.chip {
+  padding: 0 var(--space-3);
+  border-color: var(--border);
+  font-weight: 500;
+}
+
+/* Settings → Larger text. */
+body.large-text {
+  --bubble-text: 18px;
+  --bubble-width: 380px;
+}
+body.large-text .bubble .who,
+body.large-text .bubble .context,
+body.large-text .bubble .hint {
+  font-size: var(--text-secondary);
+}
+body.large-text .bubble .info,
+body.large-text .bubble .note,
+body.large-text .bubble button {
+  font-size: var(--text-body);
 }

@@ -16,8 +16,14 @@ Several agents (Claude Code, Codex, others) work on this repo in turns. Shared m
    STATUS.md so the next agent can continue without asking: what you changed, what is half
    done, the exact next step, how you verified things.
 
-Where the product is going and in what order: [docs/ROADMAP.md](docs/ROADMAP.md). Check new
-work against it.
+Where the product is going and in what order: [docs/PLAN-V2.md](docs/PLAN-V2.md) (in review
+with the user; nothing gets built before they approve it). [docs/ROADMAP.md](docs/ROADMAP.md)
+is the v0.1 history.
+
+UI work follows the design package in [creative-design/](creative-design/) (DESIGN-SYSTEM.md,
+APP-UX.md); [docs/DESIGN-COMPLIANCE.md](docs/DESIGN-COMPLIANCE.md) maps each rule to the code.
+Use the tokens in `src/tokens.css` and the status vocabulary in `src/states.ts`; don't add
+colors, sizes or state words of your own.
 
 Background reading: [README.md](README.md), [docs/PHASE0.md](docs/PHASE0.md),
 [docs/PHASE1.md](docs/PHASE1.md), [art/HERO.md](art/HERO.md), [docs/CREATORS.md](docs/CREATORS.md),
@@ -28,9 +34,11 @@ Background reading: [README.md](README.md), [docs/PHASE0.md](docs/PHASE0.md),
 ```sh
 npm install
 npm run dev        # desktop overlay, Tauri dev build (logs go to the terminal)
-npm run web        # browser preview at http://127.0.0.1:1420 (?zoom=3; keys 0-7 fake agent events, p switches project, c opens the command bar)
+npm run web        # browser preview at http://127.0.0.1:1420 (?zoom=3; keys 0-7 fake agent events, d the demo, p switches project, c opens the command bar)
+                   # and the Sidefolk window at /settings.html with sample data (?welcome, ?tab=review:codex-1)
 npm run typecheck
-npm test           # vitest: commands, routing, reminders, briefings, descriptions
+npm test           # vitest: commands, routing, reminders, briefings, descriptions, the window's logic
+npm run check:webkit  # with npm run web running: every view in WebKit (the app's engine), fails on errors
 npm run build      # release Sidefolk.app
 npm run measure    # CPU/RAM of the built app
 npm run model      # rebuild public/models/*.glb (bunny, cat, fox) from art/blender/build_hero.py

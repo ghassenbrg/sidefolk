@@ -16,19 +16,59 @@ const WINDOW: &str = "settings";
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
 pub fn open(app: &AppHandle) -> tauri::Result<()> {
+    open_at(app, "")
+}
+
+/// Opens the Sidefolk window on a section ("requests", "review:<id>", "welcome", …).
+pub fn open_at(app: &AppHandle, tab: &str) -> tauri::Result<()> {
     if let Some(window) = app.get_webview_window(WINDOW) {
+        if !tab.is_empty() {
+            window.emit("navigate", tab)?;
+        }
         window.show()?;
         return window.set_focus();
     }
-    let window = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App("settings.html".into()))
+    let url = if tab.is_empty() { "settings.html".to_string() } else { format!("settings.html?tab={tab}") };
+    let window = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App(url.into()))
         .title("Sidefolk")
-        .inner_size(880.0, 620.0)
-        .min_inner_size(680.0, 480.0)
+        .inner_size(1040.0, 740.0)
+        .min_inner_size(520.0, 480.0)
         .minimizable(false)
         .center()
         .build()?;
     // An accessory app's window opens behind the frontmost app unless it takes focus.
     window.set_focus()
+}
+
+/// The overlay asks for the Sidefolk window, e.g. "Review…" on a pet's card.
+#[tauri::command]
+pub fn open_tab(app: AppHandle, tab: String) -> Result<(), String> {
+    if !tab.chars().all(|c| c.is_ascii_alphanumeric() || "-_:.".contains(c)) || tab.len() > 120 {
+        return Err("Unknown section".into());
+    }
+    let handle = app.clone();
+    app.run_on_main_thread(move || {
+        let _ = open_at(&handle, &tab);
+    })
+    .map_err(|e| e.to_string())
+}
+
+/// A system notification, for Menu bar only (no pet on screen to show the card).
+#[tauri::command]
+pub fn notify(app: AppHandle, title: String, body: String) -> Result<(), String> {
+    use tauri_plugin_notification::NotificationExt;
+    app.notification()
+        .builder()
+        .title(crate::bus::clip(&title, 80))
+        .body(crate::bus::clip(&body, 200))
+        .show()
+        .map_err(|e| e.to_string())
+}
+
+/// The overlay applied (or could not apply) an answer sent from the dashboard.
+#[tauri::command]
+pub fn answered(app: AppHandle, id: String, ok: bool) {
+    let _ = app.emit_to(WINDOW, "answered", serde_json::json!({ "id": id, "ok": ok }));
 }
 
 #[derive(Deserialize, Default)]
@@ -73,6 +113,7 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
     if let Some(hide) = change.hide_in_recordings {
         overlay::overlay(&app).set_content_protected(hide).map_err(|e| e.to_string())?;
     }
+    let presence_changed = change.presence.is_some();
     let settings = {
         let mut store = shared.settings.lock().unwrap();
         store
@@ -131,6 +172,12 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
     };
     let _ = app.emit("settings-changed", &settings);
     let _ = crate::tray::refresh(&app);
+    if presence_changed {
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            let _ = overlay::apply_visibility(&handle);
+        });
+    }
     Ok(settings)
 }
 
@@ -181,8 +228,9 @@ pub fn pet_action(app: AppHandle, action: serde_json::Value) -> Result<(), Strin
     if !action.is_object() {
         return Err("A pet action is an object".into());
     }
-    // Answering from the dashboard works while the pets stay hidden.
-    if !["welcome", "new-reminder", "answer"].contains(&action["action"].as_str().unwrap_or_default()) {
+    // Only actions meant to be watched bring hidden pets back; answers, renames and looks
+    // work while they stay hidden.
+    if ["call", "create", "demo", "run", "open-session"].contains(&action["action"].as_str().unwrap_or_default()) {
         // The pets may be hidden; anything they are asked to do should be seen.
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || crate::tray::action(&handle, "show"));
@@ -203,8 +251,17 @@ pub async fn pick_project(app: AppHandle) -> Option<String> {
 /// The overlay's live snapshot; kept for the dashboard and forwarded to it.
 #[tauri::command]
 pub fn publish_status(app: AppHandle, shared: State<'_, Arc<Shared>>, status: serde_json::Value) {
+    let waiting = status["waiting"].as_array().map_or(0, Vec::len);
+    let before = shared.status.lock().unwrap()["waiting"].as_array().map_or(0, Vec::len);
     *shared.status.lock().unwrap() = status.clone();
     let _ = app.emit_to(WINDOW, "status", status);
+    // The menu bar shows how many requests wait, so they stay reachable with the pets hidden.
+    if waiting != before {
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            let _ = crate::tray::refresh(&handle);
+        });
+    }
 }
 
 #[tauri::command]

@@ -1,15 +1,18 @@
 # Making your own pet model
 
-Sidefolk can wear any model that follows its rig contract. In a pet's customizer
-(double-click it, type `customize`) choose **Import…** and pick a `.glb` file. The model is
-copied into Sidefolk's data folder (`models/`) and shows up under **Body** for every pet.
+Sidefolk can wear any model that follows its rig contract. In the Sidefolk window open
+**Crew**, pick a companion, then **Appearance → Other ways to choose a look → Import a model…**
+and pick a `.glb` file. The model is copied into Sidefolk's data folder (`models/`) and shows up
+under **Character** for every companion.
 
 If the model does not fit, the pet keeps its current body and says what is missing.
 
 ## The contract
 
-The same contract the built-in bunny, cat and fox follow (`art/blender/build_hero.py` builds
-them; read it as a worked example).
+The same contract all eighteen built-in bodies follow
+(`art/blender/build_hero.py` builds them; read it as a worked example). A character without
+ears or arms keeps those bones and simply has no geometry on them: the capsule's alert sign
+rides its hidden right arm bone.
 
 **File:** binary glTF (`.glb`), at most 20 MB. Feet at y = 0, about 2.5 units tall, facing +z.
 
@@ -44,3 +47,7 @@ Other colors are left alone.
 
 Accessories attach to the `head` bone at fixed spots fitted for the built-in heads; on a very
 different head they may float.
+
+**Budget:** under 8,000 triangles and 2 MB per pet, no textures needed (vertex colors carry the
+palette regions). Every art style (Soft 3D, Ink & Geek, Pocket Anime) is drawn from the same
+model by the app, so one file covers all three.

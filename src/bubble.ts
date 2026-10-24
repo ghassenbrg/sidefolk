@@ -1,30 +1,42 @@
+import { icon } from "./icons";
+
 // A pet's speech bubble: short lines, cards with answer buttons (permission questions,
 // offers, briefings, reminders) and a one-line prompt. Agent text is untrusted, so
 // everything is inserted with textContent.
+//
+// Card anatomy (creative-design/DESIGN-SYSTEM.md, "Permission card"): who (pet · project) →
+// context (tool · work session) → the question → the exact action → explicit choices.
 
-export type Choice = { label: string; value: string; primary?: boolean };
-
-/** A row of chips that keeps the card open when picked (the customizer). */
-export type Row = {
+export type Choice = {
   label: string;
-  options: { label: string; value: string; swatch?: string }[];
-  selected: string;
-  onPick: (value: string) => void;
+  value: string;
+  /** Mint button. Never focused or preselected: a choice is always an explicit click. */
+  primary?: boolean;
+  /** A text button under the others ("Answer in terminal"). */
+  quiet?: boolean;
 };
+
+/** A labelled exact value (command, folder, file), shown whole in monospace. */
+export type Fact = { label: string; value: string };
 
 export type Card = {
   id: string;
-  /** Header: who is asking, always as text ("Pip · sidefolk"), never by color alone. */
+  /** Who is asking, always as text ("Pip · sidefolk"), never by color alone. */
   who: string;
+  /** Which tool and work session ("Codex · Work session 3f2a"). */
+  context?: string;
   title: string;
-  detail?: string;
   lines?: string[];
-  rows?: Row[];
+  facts?: Fact[];
+  /** A short instruction above the choices ("Review the command before allowing it."). */
+  note?: string;
   choices: Choice[];
   /** Choices as a full-width list (a pet's menu) instead of a row of buttons. */
   menu?: boolean;
   /** Permission questions jump the queue and cannot be dismissed with ×. */
   urgent?: boolean;
+  /** What the dashboard needs to show this card as a request (kind, source, session, …). */
+  meta?: Record<string, string>;
   onChoose: (value: string) => void;
 };
 
@@ -41,6 +53,9 @@ export type PromptOptions = {
 
 type Tone = "info" | "done" | "fail";
 
+/** Card exit time; matches --motion-card in tokens.css. */
+const EXIT_MS = 200;
+
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string) {
   const node = document.createElement(tag);
   node.className = className;
@@ -48,11 +63,15 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
   return node;
 }
 
+const reducedMotion = () =>
+  document.body.classList.contains("reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export class Bubble {
   private cards: Card[] = [];
   private line: { text: string; tone: Tone; until: number } | null = null;
   private prompting: PromptOptions | null = null;
   private rendered = "";
+  private leaving = 0;
   /** Called when the prompt opens or closes, so the window can take or give up focus. */
   onTyping: (typing: boolean) => void = () => {};
   /** Called when a new line or card appears, so the pet can voice it. */
@@ -81,15 +100,6 @@ export class Bubble {
   /** Open cards, oldest first (for the dashboard). */
   get open(): readonly Card[] {
     return this.cards;
-  }
-
-  /** Answers a card as if its button were clicked (from the dashboard). */
-  choose(id: string, value: string): boolean {
-    const card = this.cards.find((c) => c.id === id);
-    if (!card || !card.choices.some((c) => c.value === value)) return false;
-    this.close(id);
-    card.onChoose(value);
-    return true;
   }
 
   has(id: string) {
@@ -162,12 +172,19 @@ export class Bubble {
           ? `line:${this.line.tone}:${this.line.text}`
           : "";
     if (key === this.rendered) return;
+    const wasShowing = this.rendered !== "";
     this.rendered = key;
-    this.root.replaceChildren();
-    this.root.className = "bubble";
-    this.root.removeAttribute("role");
-    this.root.removeAttribute("aria-label");
-    this.root.hidden = key === "";
+    clearTimeout(this.leaving);
+    // Nothing left to show: fade out, then hide (immediately with reduced motion).
+    if (key === "") {
+      if (!wasShowing || reducedMotion()) return this.clear();
+      this.root.classList.add("leaving");
+      this.leaving = window.setTimeout(() => this.clear(), EXIT_MS);
+      return;
+    }
+    this.clear();
+    this.root.hidden = false;
+    if (!wasShowing) this.root.classList.add("entering");
     if (this.prompting) return this.renderPrompt(this.prompting);
     if (card) {
       this.onShow(card.title, !!card.urgent);
@@ -180,62 +197,64 @@ export class Bubble {
     }
   }
 
+  private clear() {
+    this.root.replaceChildren();
+    this.root.className = "bubble";
+    this.root.removeAttribute("role");
+    this.root.removeAttribute("aria-label");
+    this.root.hidden = this.rendered === "";
+  }
+
   private renderCard(card: Card) {
     this.root.classList.add("ask");
     this.root.setAttribute("role", "dialog");
     this.root.setAttribute("aria-label", `${card.who}: ${card.title}`);
     if (card.urgent) this.root.classList.add("urgent");
     if (card.menu) this.root.classList.add("menu");
-    const head = el("div", "who", card.who);
-    if (this.cards.length > 1) head.append(el("span", "count", `+${this.cards.length - 1}`));
+    const head = el("div", "who");
+    head.append(el("span", "name", card.who));
+    // More waiting behind this one: the count stays visible.
+    if (this.cards.length > 1) head.append(el("span", "count", `${this.cards.length - 1} more`));
     if (!card.urgent) {
-      const close = el("button", "close", "×");
+      const close = el("button", "close");
       close.type = "button";
       close.title = "Close";
       close.setAttribute("aria-label", "Close");
+      close.append(icon("failed", "icon"));
       close.addEventListener("click", () => this.close(card.id));
       head.append(close);
     }
-    this.root.append(head, el("p", "title", card.title));
+    this.root.append(head);
+    if (card.context) this.root.append(el("p", "context", card.context));
+    this.root.append(el("p", "title", card.title));
     for (const line of card.lines ?? []) this.root.append(el("p", "info", line));
-    if (card.detail) this.root.append(el("code", "detail", card.detail));
-    for (const row of card.rows ?? []) {
-      const chips = el("div", "chips");
-      chips.setAttribute("role", "radiogroup");
-      chips.setAttribute("aria-label", row.label);
-      chips.append(el("span", "chips-label", row.label));
-      for (const option of row.options) {
-        const chip = el("button", `chip${option.value === row.selected ? " selected" : ""}`, option.swatch ? "" : option.label);
-        chip.type = "button";
-        chip.title = option.label;
-        chip.setAttribute("role", "radio");
-        chip.setAttribute("aria-checked", String(option.value === row.selected));
-        if (option.swatch) {
-          chip.classList.add("swatch");
-          chip.setAttribute("aria-label", option.label);
-          chip.style.background = option.swatch;
-        }
-        chip.addEventListener("click", () => {
-          row.selected = option.value;
-          row.onPick(option.value);
-          this.rendered = "";
-          this.render();
-        });
-        chips.append(chip);
-      }
-      this.root.append(chips);
+    if (card.facts?.length) {
+      const box = el("div", "facts");
+      for (const fact of card.facts) box.append(el("span", "label", fact.label), el("code", "value", fact.value));
+      this.root.append(box);
     }
-    const buttons = el("div", card.menu ? "actions list" : "actions");
-    for (const choice of card.choices) {
-      const b = el("button", choice.primary ? "primary" : "", choice.label);
+    if (card.note) this.root.append(el("p", "note", card.note));
+    const main = card.choices.filter((c) => !c.quiet);
+    const quiet = card.choices.filter((c) => c.quiet);
+    const button = (choice: Choice, className: string) => {
+      const b = el("button", className, choice.label);
       b.type = "button";
       b.addEventListener("click", () => {
         this.close(card.id);
         card.onChoose(choice.value);
       });
-      buttons.append(b);
+      return b;
+    };
+    if (main.length) {
+      const buttons = el("div", card.menu ? "actions list" : "actions");
+      for (const choice of main) buttons.append(button(choice, choice.primary ? "primary" : ""));
+      this.root.append(buttons);
     }
-    if (card.choices.length) this.root.append(buttons);
+    if (quiet.length) {
+      const links = el("div", "actions quiet");
+      for (const choice of quiet) links.append(button(choice, "quiet"));
+      this.root.append(links);
+    }
   }
 
   private renderPrompt(options: PromptOptions) {
@@ -247,7 +266,7 @@ export class Bubble {
     input.maxLength = 2000;
     input.setAttribute("aria-label", options.placeholder);
     const preview = el("p", "hint", "Enter to send · Esc to close");
-    const chips = el("div", "chips suggestions");
+    const chips = el("div", "chips");
     for (const suggestion of options.suggestions ?? []) {
       const chip = el("button", "chip", suggestion);
       chip.type = "button";
@@ -280,7 +299,9 @@ export class Bubble {
       }
     });
     input.addEventListener("blur", () => setTimeout(() => this.prompting && !input.disabled && this.endPrompt(), 150));
-    this.root.append(el("div", "who", options.who), input, chips, preview);
+    const head = el("div", "who");
+    head.append(el("span", "name", options.who));
+    this.root.append(head, input, chips, preview);
     update();
     requestAnimationFrame(() => input.focus());
   }

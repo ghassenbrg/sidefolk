@@ -5,9 +5,12 @@ import {
   PALETTE_NAMES,
   SPECIES,
   SPECIES_NAMES,
+  STYLE_NAMES,
+  STYLES,
   type AccessoryName,
   type PaletteName,
   type SpeciesName,
+  type StyleName,
 } from "./pet/look";
 
 // The command bar understands a few plain phrases locally, so calling pets, sending them
@@ -20,7 +23,7 @@ export type Command =
   | { kind: "tell"; who: string | null; task: string }
   | { kind: "codex"; task: string }
   | { kind: "rename"; who: string | null; name: string }
-  | { kind: "look"; who: string | null; palette?: PaletteName; accessory?: AccessoryName; species?: SpeciesName }
+  | { kind: "look"; who: string | null; palette?: PaletteName; accessory?: AccessoryName; species?: SpeciesName; style?: StyleName }
   | { kind: "crew" }
   | { kind: "customize"; who: string | null }
   | { kind: "forget"; who: string }
@@ -28,6 +31,8 @@ export type Command =
   | { kind: "remind"; text: string }
   | { kind: "reminders" }
   | { kind: "help" }
+  | { kind: "open"; who: string | null }
+  | { kind: "sidefolk" }
   | { kind: "task"; text: string };
 
 /** Matches a name or its label, ignoring case, a leading article and a plural "s". */
@@ -37,6 +42,12 @@ function pick<T extends string>(text: string, names: readonly T[], label: (name:
 }
 const palette = (text: string) => pick(text, PALETTE_NAMES, (n) => PALETTES[n].label);
 const species = (text: string) => pick(text, SPECIES_NAMES, (n) => SPECIES[n].label);
+// "ink", "anime", "soft 3d", "3d", or a style's full name.
+const style = (text: string) => {
+  const t = text.trim().toLowerCase().replace(/^(the|a|an)\s+/, "").replace(/\s+style$/, "");
+  if (t === "3d" || t === "soft") return "soft" as const;
+  return STYLE_NAMES.find((n) => t === n || t === STYLES[n].label.toLowerCase() || STYLES[n].label.toLowerCase().startsWith(t + " ") || STYLES[n].label.toLowerCase().endsWith(" " + t));
+};
 const accessory = (text: string) =>
   /^(nothing|none)$/i.test(text.trim()) ? ("none" as const) : pick(text, ACCESSORY_NAMES, (n) => ACCESSORIES[n]);
 
@@ -48,6 +59,9 @@ export function parse(input: string): Command {
   if (/^(help|\?|what can you do)$/.test(lower)) return { kind: "help" };
   if (/^(crew|who|who'?s out|list|pets)$/.test(lower)) return { kind: "crew" };
   if (/^adopt( this session)?$/.test(lower)) return { kind: "adopt" };
+  if (/^(?:open|show)\s+(?:the\s+)?(?:sidefolk|dashboard|app|window|home)$/.test(lower)) return { kind: "sidefolk" };
+  if ((m = text.match(/^(?:open|jump to|go to|back to)\s+(?:(.+?)(?:'s)?\s+)?session$/i))) return { kind: "open", who: m[1] ?? null };
+  if ((m = text.match(/^(?:continue|resume)(?:\s+(?:with\s+)?(.+?))?$/i))) return { kind: "open", who: m[1] ?? null };
   if ((m = text.match(/^(?:customi[sz]e|dress up|edit|change)(?:\s+(.+?))?(?:'s look)?$/i))) return { kind: "customize", who: m[1] ?? null };
   if (/^(reminders|my reminders|list reminders)$/.test(lower)) return { kind: "reminders" };
   if ((m = text.match(/^remind me\b\s*(.*)$/i))) return { kind: "remind", text: m[1] };
@@ -69,15 +83,20 @@ export function parse(input: string): Command {
     if (p) return { kind: "look", who: m[1] ?? null, palette: p };
     const s = species(m[2]);
     if (s) return { kind: "look", who: m[1] ?? null, species: s };
+    const st = style(m[2]);
+    if (st) return { kind: "look", who: m[1] ?? null, style: st };
   }
+  if ((m = text.match(/^(?:(.+?),?\s+)?(?:style|draw (?:yourself|me|it)? ?(?:as|in))\s+(.+)$/i)) && style(m[2]))
+    return { kind: "look", who: m[1] ?? null, style: style(m[2]) };
   if ((m = text.match(/^(?:tell|ask)\s+(.+?)\s+to\s+(.+)$/i))) return { kind: "tell", who: m[1], task: m[2] };
   if ((m = text.match(/^([\w-]{2,24}):\s+(.+)$/))) return { kind: "tell", who: m[1], task: m[2] };
   return { kind: "task", text };
 }
 
 export const HELP = [
-  "call Pip · send Pip home · crew",
+  "call Byte · send Byte home · crew",
+  "open session · continue Byte · open Sidefolk",
   "tell Pip to run the tests · Pip: fix the lint",
-  "customize Pip · Pip wear glasses · Pip become a fox · rename Pip to Bun",
+  "customize Byte · Byte wear glasses · Byte become a fox · Byte become anime · rename Byte to Bit",
   "remind me Friday at 3 to review the PR · reminders",
 ];

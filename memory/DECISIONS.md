@@ -99,3 +99,49 @@ Newest last. Each entry: what, why, and what would change it.
 26. **Discoverability over memorizing.** Right-click menus on every pet, suggestion chips, and a
     line under the command field saying what Enter will do, including when it spends Codex
     quota. The user's first try sent a request to Codex without meaning to.
+27. **The creative-design package is the UI's design system (24 October 2026).** The user
+    asked for 100% compliance with `creative-design/`. Tokens (`src/tokens.css`), one status
+    vocabulary (`src/states.ts`), the permission card order, 44 px targets, 3 px focus rings,
+    motion timings and the copy table apply to both the overlay and the window.
+    docs/DESIGN-COMPLIANCE.md is the checklist; new UI must keep it true.
+28. **Pip Signal replaces the rendered bunny icon.** One geometry in `scripts/make_icons.py`
+    draws the SVG masters, the app icon and the template menu bar icon; the window inlines the
+    same shapes so the mark follows the theme.
+29. **Five destinations: Home, Requests, Crew, Reminders, Settings.** Activity moved under Home,
+    Agents and About into Settings. Appearance is edited in the window (idle + alert previews),
+    so the bubble customizer and its chips are gone; quick commands ("wear glasses") remain.
+30. **Companions fade in where needed (520 ms) instead of walking across the screen.** The
+    spec's crew entrance is 400–650 ms; a walk from the edge took seconds. Supersedes the
+    walk-on part of 12. Reduce motion makes it immediate and drops hops and pulses.
+31. **Desktop presence and card detail.** Presence: always / only when needed (the main pet
+    rests too) / menu bar only (overlay hidden, requests counted in the menu bar, macOS
+    notifications, the only place Sidefolk notifies). Card detail: full / project and status
+    / status only; the window always shows everything, and with less detail a pet's request
+    card offers Decline / Review… instead of Allow.
+32. **Starter crew Byte, Patch, Loom, Slate, Dot; roster names stay with their designs.**
+    Loom (sheep, lavender coat) completes the package's recommended Starter Studio crew.
+34. **All 18 characters, and art styles as renderer looks (user: "do all remainings").** The
+    twelve remaining roster characters are Blender forms on the shared rig. Ink & Geek and
+    Pocket Anime are materials (`STYLE` in src/pet/model.ts), not sprite sets: the Studio
+    board's 2D versions are flat fills under an even line, which the 3D model gives directly,
+    with all 13 states. `look.style` defaults to soft, so old crew.json files need no migration.
+    Soft 3D became a smooth matte gradient so the three families differ at a glance.
+35. **Crews follow the comfort style; meshes fit the budget.** New companions come from the
+    style's crew (Starter Studio, Workday, Quiet Desk), then the rest of the roster, then plain
+    names. Every sphere and ring is built at 55% of its written segments (`DETAIL`), keeping
+    each pet under 8k triangles (the bunny was 18.6k). Slate
+    (penguin) and Dot (capsule) were built in Blender on the shared rig so the Professional and
+    Minimal presets are real. Later companions get plain names, not Finch/Loom/…, whose
+    designs don't exist yet. Ink & Geek and Pocket Anime show "Coming later".
+33. **Open session (user request).** Hook requests' TCP peer port → `lsof` → process tree →
+    hosting app and tty, once per session. A live session is focused (Terminal and iTerm pick
+    the tab via AppleScript); ended sessions and Sidefolk's background Codex threads resume in
+    a terminal (`claude --resume`, `codex resume`). Session IDs are checked and paths quoted.
+    A busy Codex thread is not resumed, so it never runs twice.
+36. **v2 direction (24 October 2026, with the user): see docs/PLAN-V2.md section 11.** Sidefolk
+    becomes a companion assistant: Pip (2D, body B) personal, Sparks color-coded workers per
+    project/session; a real Dock app with parity between app and companion; MVP order reset →
+    companion → app shell → reminders → session basics → notes → sessions → actions → beta;
+    plain rules before any AI, then on-device, then the user's Claude/Codex; plain commands
+    never go to AI; per-session full access. Supersedes the character and UI decisions 12, 27–35
+    where they conflict.

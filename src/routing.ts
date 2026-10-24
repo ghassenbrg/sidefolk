@@ -1,5 +1,5 @@
 import type { PetRecord } from "./familiar";
-import { PALETTE_NAMES, type PaletteName } from "./pet/look";
+import { PALETTE_NAMES, SPECIES_NAMES, type Look, type PaletteName, type StyleName } from "./pet/look";
 
 /** What an agent event or question says about where it came from. */
 export type Origin = { source: string; session: string; project: string };
@@ -22,9 +22,51 @@ export function resolve(pets: readonly PetRecord[], origin: Origin): string | nu
   return null;
 }
 
-const NAMES = ["Pip", "Mochi", "Biscuit", "Clover", "Pebble", "Juniper", "Toffee", "Nori", "Sprout", "Maple", "Basil", "Waffle"];
+type Character = { name: string; look: Look };
+const character = (name: string, species: string, palette: PaletteName, style: StyleName = "soft", accessory: Look["accessory"] = "none"): Character => ({
+  name,
+  look: { species, palette, accessory, style },
+});
 
-/** A friendly name nobody in the crew has yet. */
+/**
+ * The roster from creative-design/CHARACTERS.md and PROFESSIONAL-COLLECTION.md, each with its
+ * designed body, coat and first art family. Names stay with their designs.
+ */
+export const ROSTER: Record<string, Character> = Object.fromEntries(
+  [
+    character("Byte", "cat", "charcoal", "soft", "glasses"),
+    character("Patch", "fox", "terracotta"),
+    character("Loom", "sheep", "lavender"),
+    character("Moss", "turtle", "moss"),
+    character("Relay", "robot", "snow"),
+    character("Stack", "raccoon", "stone", "ink"),
+    character("Nib", "squid", "indigo", "ink"),
+    character("Pico", "crt", "snow", "ink"),
+    character("Sora", "courier", "navy", "anime"),
+    character("Yuna", "archivist", "plum", "anime"),
+    character("Kite", "dragon", "mint", "anime"),
+    character("Slate", "penguin", "charcoal"),
+    character("Dot", "capsule", "snow"),
+    character("Calder", "owl", "slate"),
+    character("Finch", "bird", "sand"),
+    character("Orbit", "orbit", "snow"),
+    character("Vale", "vale", "terracotta"),
+  ].map((c) => [c.name, c]),
+);
+
+/**
+ * Who comes next, by comfort style: Friendly follows the Starter Studio crew (Byte, Patch,
+ * Loom), Professional the Workday crew (Finch, Calder, Orbit), Minimal the Quiet Desk (Slate,
+ * Finch, Orbit). The rest of the roster follows, then plain names.
+ */
+export const ORDER: Record<string, string[]> = {
+  friendly: ["Byte", "Patch", "Loom", "Moss", "Relay", "Stack", "Nib", "Pico", "Kite", "Sora", "Yuna", "Finch", "Calder", "Orbit", "Vale", "Slate", "Dot"],
+  professional: ["Finch", "Calder", "Orbit", "Vale", "Slate", "Dot", "Byte", "Patch", "Loom", "Moss", "Relay", "Stack", "Nib", "Pico", "Kite", "Sora", "Yuna"],
+  minimal: ["Slate", "Finch", "Orbit", "Dot", "Calder", "Vale", "Byte", "Patch", "Loom", "Moss", "Relay", "Stack", "Nib", "Pico", "Kite", "Sora", "Yuna"],
+};
+const NAMES = ["Mochi", "Biscuit", "Clover", "Pebble", "Juniper", "Toffee", "Nori", "Sprout", "Maple", "Basil", "Waffle"];
+
+/** A plain name nobody in the crew has yet (after the roster is used up). */
 export function nextName(taken: readonly string[]): string {
   const used = new Set(taken.map((n) => n.toLowerCase()));
   const free = NAMES.find((n) => !used.has(n.toLowerCase()));
@@ -35,10 +77,23 @@ export function nextName(taken: readonly string[]): string {
   }
 }
 
-/** The palette used least so far, so pets are easy to tell apart. */
-export function nextPalette(used: readonly PaletteName[]): PaletteName {
-  const count = (p: PaletteName) => used.filter((u) => u === p).length;
-  return [...PALETTE_NAMES].sort((a, b) => count(a) - count(b))[0];
+const leastUsed = <T extends string>(options: readonly T[], used: readonly string[]) =>
+  [...options].sort((a, b) => used.filter((u) => u === a).length - used.filter((u) => u === b).length)[0];
+
+/** The next companion's name and look, following the comfort style's crew. */
+export function nextCompanion(crew: readonly PetRecord[], comfort = "friendly"): Character {
+  const taken = crew.map((p) => p.name.toLowerCase());
+  const name = (ORDER[comfort] ?? ORDER.friendly).find((n) => !taken.includes(n.toLowerCase()));
+  if (name) return ROSTER[name];
+  return {
+    name: nextName(crew.map((p) => p.name)),
+    look: {
+      species: leastUsed(SPECIES_NAMES, crew.map((p) => p.look.species)),
+      palette: leastUsed<PaletteName>(PALETTE_NAMES, crew.map((p) => p.look.palette)),
+      accessory: "none",
+      style: "soft",
+    },
+  };
 }
 
 /** Finds a pet by its name or its project's folder name, ignoring case. */

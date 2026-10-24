@@ -10,6 +10,8 @@ type Bounds = { width: number; height: number };
 const WALK_SPEED = 72;
 const GRAVITY = 2600;
 const MARGIN = 70;
+/** Fading back to the den; matches the overlay's --motion-entrance. */
+const LEAVE_SECS = 0.52;
 
 const between = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -32,12 +34,11 @@ export class Mind {
   private idle = 0;
   private osIdle = false;
   sleepAfterSecs = 120;
-  /** Settings → Calm pets, or reduced motion: no wandering, fewer greetings. */
+  /** Settings → Reduce motion, or macOS reduced motion: no wandering, hops or walking over. */
   calm = false;
   private cursorWasNear = false;
   private waveCooldown = 5;
-  /** Walking on from a screen edge (a goal x) or off to the den (an x past the edge). */
-  private arriving: number | null = null;
+  /** Seconds left fading out to the den. */
   private leaving: number | null = null;
   /** Off screen, in the den: nothing to update or draw. */
   away = false;
@@ -124,46 +125,53 @@ export class Mind {
   onReact: (clip: ClipName | "poke") => void = () => {};
 
   react(clip: ClipName, seconds: number) {
-    this.reaction = { clip, left: seconds };
     this.onReact(clip);
+    // Reduced motion: the state shows at once, without hops and waves.
+    if (this.calm && clip !== "sad") return;
+    this.reaction = { clip, left: seconds };
   }
 
   poke() {
     if (this.mode !== "ground") return;
-    this.reaction = { clip: "celebrate", left: 0.9 };
     this.onReact("poke");
-    this.pet.squash(0.12);
     if (!this.osIdle) this.idle = 0;
+    if (this.calm) return;
+    this.reaction = { clip: "celebrate", left: 0.9 };
+    this.pet.squash(0.12);
   }
 
   summon(x: number) {
     this.x = x;
     this.y = this.vx = this.vy = 0;
     this.mode = "ground";
+    this.away = false;
+    this.leaving = null;
     this.fitBounds();
     this.begin("idle", 3);
-    this.react("wave", 1.6);
-    this.pet.squash(0.18);
+    this.react("wave", 1.2);
+    if (!this.calm) this.pet.squash(0.18);
   }
 
-  /** Walks on from the screen edge nearer to `x` and stops there. */
+  /**
+   * Comes out of the den at `x`: the pet fades in where it is needed (the overlay fades its
+   * canvas) instead of walking across the screen, and waves once.
+   */
   enter(x: number) {
-    const goal = this.clampX(x);
     if (this.away) {
-      this.x = goal < this.bounds.width / 2 ? -MARGIN : this.bounds.width + MARGIN;
+      this.x = this.clampX(x);
       this.y = this.vx = this.vy = 0;
       this.mode = "ground";
+      this.begin("idle", between(2, 4));
+      this.react("wave", 1.2);
     }
     this.away = false;
     this.leaving = null;
-    this.arriving = goal;
   }
 
-  /** Walks off the nearer screen edge, back to the den. */
+  /** Fades back to the den. */
   leave() {
-    if (this.away) return;
-    this.arriving = null;
-    this.leaving = this.x < this.bounds.width / 2 ? -MARGIN * 1.5 : this.bounds.width + MARGIN * 1.5;
+    if (this.away || this.leaving !== null) return;
+    this.leaving = this.calm ? 0 : LEAVE_SECS;
   }
 
   get isLeaving() {
@@ -171,7 +179,7 @@ export class Mind {
   }
 
   grab() {
-    this.arriving = this.leaving = null;
+    this.leaving = null;
     this.mode = "held";
     this.reaction = null;
     this.walkTo = null;
@@ -198,15 +206,14 @@ export class Mind {
     }
     if (this.mode === "air") return this.fly(dt);
 
-    const walkingTo = this.leaving ?? this.arriving;
-    if (walkingTo !== null && !this.reaction) {
-      this.step(walkingTo, dt, 1.6);
-      if (Math.abs(walkingTo - this.x) < 2) {
-        if (this.leaving !== null) this.away = true;
-        this.arriving = this.leaving = null;
-        this.begin("idle", between(2, 4));
+    if (this.leaving !== null) {
+      this.leaving -= dt;
+      if (this.leaving <= 0) {
+        this.away = true;
+        this.leaving = null;
+        this.reaction = null;
+        return;
       }
-      return;
     }
 
     if (this.reaction) {
@@ -218,7 +225,7 @@ export class Mind {
     }
 
     if (this.directive) {
-      if (this.directive.come && this.cursor && this.walkTowardCursor(dt)) return;
+      if (this.directive.come && this.cursor && !this.calm && this.walkTowardCursor(dt)) return;
       this.pet.play(this.directive.clip);
       this.pet.face(0);
       return;
@@ -317,8 +324,7 @@ export class Mind {
 
   /** Keeps the pet on screen after the overlay changes size. */
   fitBounds() {
-    if (this.away || this.leaving !== null) return;
-    if (this.arriving !== null) this.arriving = this.clampX(this.arriving);
+    if (this.away) return;
     this.x = this.clampX(this.x);
     this.y = Math.min(this.y, Math.max(0, this.bounds.height - 180));
     if (this.walkTo !== null) this.walkTo = this.clampX(this.walkTo);

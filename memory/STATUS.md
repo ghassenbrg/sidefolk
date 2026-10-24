@@ -2,8 +2,28 @@
 
 Last updated: 2026-10-24 by Claude Code. The roadmap ([docs/ROADMAP.md](../docs/ROADMAP.md))
 is implemented through Phase 5, Phase 6 in part, plus a UI/UX pass with voices and a
-dashboard (below). Nothing since commit `b0be266` is
-committed. The user asked for the implementation ("implement roadmap"); commit only when asked.
+dashboard, and the creative-design system applied with "Open session" (below). Nothing since
+commit `b0be266` is committed. All 18 designed characters and three art styles are built. The user asked for the implementation ("implement roadmap"); commit only when asked.
+
+## PLAN PHASE: read this first (24 October, late)
+
+The user reviewed the running build and found the UI/UX and usage messy (too many concepts,
+not a real app, a "zoo" of characters with poor animation, Open session not working). They
+asked to stop building and plan. [docs/PLAN-V2.md](../docs/PLAN-V2.md) is the plan; all six
+section 11 decisions were made with the user on 24 October (Pip body B as personal companion,
+Sparks as color-coded workers; order: reset, companion, app shell, reminders, session basics,
+notes, sessions with Sparks, actions, beta; layered AI; Dock app; reset as listed; calendar right
+after the MVP). **Next: phase 0 (reset), only when the user says go.** Concept art for Pip and
+Spark is in creative-design/v2.
+
+- PLAN-V2 = review, direction (companion assistant, value before customization), MVP pillars
+  in order (Reminders, Notes, AI sessions, Quick actions), brainstorm, keep/rework/park,
+  roadmap phases 0–8 with "done when" checks run in the real app.
+- Verified finding: Open session picks the agent's own bundled binary
+  (`…/claude-code/<ver>/…/claude.app/Contents/MacOS/claude`) as the host for Claude desktop
+  sessions (`bundle_of` in src-tauri/src/sessions.rs takes the first `.app`), so nothing visible
+  opens. Fix belongs to phase 5 (or phase 0 if the user wants it sooner).
+- Everything below this section describes the build as it is (v0.1), still uncommitted.
 
 ## Where things are
 
@@ -59,19 +79,31 @@ writing to a file. Not heard: the babble and chirps (no audio check possible her
 
 ## Hand checks for the user
 
-Relaunch Sidefolk first (quit from the menu bar, then open the app again): the running copy
-is the build from before these changes.
+Relaunch Sidefolk first (quit from the menu bar, then open the new build): the running copy
+predates the design-system pass. Your data carries over; Settings → About and help → Welcome
+tour replays the new first minute.
 
-1. Listen: poke a pet, let it say something. Babble and chirps at a comfortable volume?
-   Dashboard → Settings → Sound and voice: Try a voice, turn on Speak out loud.
-2. Right-click a pet; double-click and type (watch the line under the field).
-3. Menu bar → Open Sidefolk…: Home shows your pets live; with a permission question open
-   (no terminal in front), answer it from Home.
-4. The crew on the desktop with two projects; questions come from the right pet.
-5. Settings: record a new shortcut, pet size, calm, larger text.
-6. Hide from screen recordings: a screenshot (⌘⇧4) should not show the pets.
-7. A due reminder while the pets are hidden appears, and hides again after Done.
-8. Customizer Photo… and Import… file dialogs open in front.
+1. Welcome tour: pick Professional, see the listed changes, Apply; Slate replaces the bunny.
+   (Crew → a companion → Character also offers Sheep: Loom.)
+   Pick Friendly again to go back. Try a demo: Pip shows a labelled sample request.
+2. Click a companion: status card with Open session / Open Sidefolk. Right-click: menu.
+3. With a Claude Code session running, click **Open … session**: its terminal tab comes
+   forward (Terminal and iTerm may ask once to allow automation). After the session ends,
+   Continue opens `claude --resume` in your terminal (Settings → Connected tools).
+4. A permission request with no terminal in front: the card reads Pip · project → Claude ·
+   Work session → question → command → Decline / Allow once. Answer it from Requests in the
+   window: "Sent to Claude Code" appears only after it went through.
+5. Settings → Card detail → Status only: cards show no project names. Desktop presence → Only
+   when needed (companions rest) and Menu bar only (no companions; a notification and a count
+   in the menu bar for requests).
+6. Reduce motion: no hops or pulsing light; companions appear without fading.
+7. Crew → a companion → Appearance: idle and "needs you" previews, Save appearance; rename;
+   Change project… asks to confirm the folder; Remove explains what happens.
+8. Reminders: type "call the bank tomorrow at 10" (date and time fill in, time zone shown),
+   edit, mark complete, delete and Undo.
+9. Light and dark mode, Larger text, a narrow window.
+10. Earlier checks still open: sounds at a comfortable volume, screenshot hiding, a reminder
+    while hidden, the photo and import file dialogs.
 
 ## Open questions for the user
 
@@ -85,6 +117,8 @@ welcome-back after 30 minutes away, Codex approvals declined after 10 minutes un
   `PATH="$HOME/.cargo/bin:$PATH" SIDEFOLK_DATA_DIR=$(mktemp -d) SIDEFOLK_CLAUDE_SETTINGS=<copy> npm run dev`.
 - Daily-driver verification details from 23 October are in docs/PHASE1.md.
 - Next step: the user's hand checks (above), then a commit when asked.
+- The release bundle at src-tauri/target/release/bundle/macos/Sidefolk.app is the
+  design-system build (5.40 MiB); the user's running copy is older until they relaunch.
 
 ## Creative direction package (24 October, Codex)
 
@@ -112,3 +146,47 @@ welcome-back after 30 minutes away, Codex approvals declined after 10 minutes un
   set (existing trio and/or professional Slate/Dot) and translate the selected Pip Signal logo
   into production vectors. Reconcile proposed navigation/settings with the latest dashboard
   implementation before coding it. Existing app hand checks above remain pending.
+
+## Design system applied, Open session (24 October, Claude Code)
+
+The user asked to apply `creative-design/` "till we are compliant 100%", then (mid-turn) that a
+pet can open its Claude/Codex session to keep working there, and reminded that Blender and
+image generation are available. Checklist: docs/DESIGN-COMPLIANCE.md.
+
+- Brand: Pip Signal mark from one geometry (`scripts/make_icons.py`): `art/brand/*.svg`, app
+  icon, template tray icon; the old Blender icon render was removed.
+- Tokens and components: `src/tokens.css`, `src/states.ts` (glyph + word statuses, card
+  detail), `src/icons.ts`. Overlay restyled (`src/styles.css`), bubble cards rebuilt
+  (`who`, `context`, `facts`, `note`, quiet choices), 200 ms enter/exit, fade-in entrance.
+- Window rewritten as `src/dashboard/*` (five destinations, review with ack/retry/expired,
+  crew with 3D portraits and live previews, reminders with explicit fields and Undo, plain
+  settings with comfort presets, three-step welcome opened on first run, activity under Home).
+  Old `settings-page.ts`, `dashboard-home.ts`, `settings.css` removed.
+- Rust: settings `presence`, `detail`, `comfort`, `terminal`; `sessions.rs` (locate + open);
+  permission asks carry `kind` and `expires` and keep commands up to 2000 characters;
+  `remove_reminder` / `restore_reminder`, reminder text edits; `notify` (notification plugin),
+  `answered`, `open_tab`; tray request count; plain installer dialogs.
+- Characters: charcoal, terracotta and lavender coats, mint glasses; Loom (`sheep.glb`),
+  Slate (`penguin.glb`) and Dot (`capsule.glb`) built in Blender; starter crew Byte, Patch,
+  Loom, Slate, Dot.
+- Then (user: "don't ask, work till done"): page errors from the window go to logs/page.log;
+  `npm run check:webkit` (Playwright WebKit, dev dependency) loads every view in the app's
+  engine and fails on errors: clean in light and dark, answer flow and overlay card included.
+- Verified: typecheck, 64 vitest tests, 23 Rust tests, release build, `npm run check:webkit`,
+  and in the browser preview: every window view (light, dark, 520 px wide), the review answer flow, reminder
+  add/delete/Undo, the overlay permission card, status card and badge, portraits of all five
+  bodies. Not verified: the running app (WKWebView, notifications, AppleScript focusing,
+  `lsof` locating, presence modes); image generation was not needed (the character art is
+  3D and built in Blender).
+
+## All remaining design items (24 October, Claude Code)
+
+User: "do all remainings". Built the twelve remaining roster characters in Blender (Moss,
+Relay, Stack, Nib, Pico, Sora, Yuna, Kite, Calder, Finch, Orbit, Vale), the Ink & Geek and
+Pocket Anime art styles (renderer looks, decision 34), the roster with crews per comfort style
+(`ROSTER`, `ORDER` in src/routing.ts), a character-first picker with style previews, style
+words in the command bar ("Byte become anime"), and the 8k-triangle budget for every model.
+Verified: 70 vitest tests, 23 Rust tests, `npm run check:webkit`, contact sheets of every
+character and style rendered in WebKit and reviewed against the boards, release build.
+Hand checks to add: Crew → a companion → try a few characters and all three art styles; check
+they read on light and dark wallpapers at the real desktop size.

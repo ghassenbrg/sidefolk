@@ -206,9 +206,9 @@ pub fn confirm(app: &AppHandle) {
     let connect = !is_installed(&snapshot.value);
     let verb = if connect { "Connect" } else { "Disconnect" };
     let change = if connect {
-        "Add Sidefolk's local HTTP hooks; existing hooks and preferences are kept."
+        "Companions will see Claude Code's work sessions and bring you its requests.\n\nSidefolk adds its own local hooks to Claude Code's settings. Your other hooks and preferences stay as they are."
     } else {
-        "Remove only Sidefolk's local HTTP hooks; existing hooks and preferences are kept."
+        "Companions will stop seeing Claude Code's work sessions, and its requests stay in Claude Code's own window.\n\nOnly Sidefolk's hooks are removed. Your other hooks and preferences stay as they are."
     };
     let dir = app
         .state::<Arc<Shared>>()

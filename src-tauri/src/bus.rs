@@ -95,6 +95,10 @@ pub struct PermissionAsk {
     pub project: String,
     /// Whether "answer in the terminal instead" is meaningful for this source.
     pub can_defer: bool,
+    /// command | file | web | tool: lets the card say what is being asked in plain words.
+    pub kind: &'static str,
+    /// Unix ms when the agent stops waiting (the card then says it expired).
+    pub expires: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -173,6 +177,8 @@ pub struct Shared {
     pub reminders: crate::reminders::Reminders,
     pub permissions: Permissions,
     pub codex: tokio::sync::Mutex<Option<std::sync::Arc<crate::codex::Codex>>>,
+    /// Where each agent session runs, for "Open session".
+    pub hosts: crate::sessions::Hosts,
 }
 
 pub fn clip(text: &str, max: usize) -> String {

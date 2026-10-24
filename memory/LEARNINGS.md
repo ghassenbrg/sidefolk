@@ -138,3 +138,21 @@ Things that cost time to discover. Add to this when something surprises you.
   the five files tauri.conf.json lists.
 - Rebuilding the release bundle while it runs is fine; the running copy keeps its loaded
   binary until relaunched.
+- Flat face decals on a curved head stand off the skin away from their center, so a big face
+  patch hides eyes placed near its edge. Lift the eyes (`eyes(..., lift=)`) above the patch.
+- The hook server sees Claude Code's TCP peer port (`into_make_service_with_connect_info`);
+  `lsof -nP -t -iTCP@127.0.0.1:<port>` lists both ends, so drop Sidefolk's own pid.
+- `ps -axo pid=,ppid=,tty=,comm=` gives full executable paths; the outermost `.app/` in the
+  path is the hosting app (VS Code's helpers live inside VS Code.app).
+- Sample data for the window (`src/dashboard/api.ts`) is created lazily, so the dashboard
+  modules import cleanly in vitest (no `window` or `location` at import time).
+- The browser pane sometimes returns a stale screenshot after a JS change; take a second one.
+- WebKit (the app's engine) can be driven headless with Playwright: `npm run check:webkit`
+  loads every view of the preview and fails on page or console errors. WebGL portraits render
+  there too. The in-app browser pane is not WebKit.
+- Loom's wool puffs covered its scarf: details meant to read at 140 px must sit outside the
+  outermost silhouette shapes, not just in front of the core body.
+- Fewer mesh segments don't break recoloring: palette regions are matched per vertex, and
+  vertex colors stay exact; only the rendering interpolates between them.
+- A character picker should show characters in their own designed looks; showing every body
+  in the current companion's coat made them hard to tell apart.

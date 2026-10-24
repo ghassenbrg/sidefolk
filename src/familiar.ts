@@ -7,6 +7,7 @@ import { loadModel } from "./pet/model";
 import { glowFor, Orb } from "./pet/orb";
 import { HEIGHT, Pet, SCALE } from "./pet/pet";
 import { sound, voiceFor, type Cue } from "./sound";
+import { privacy } from "./states";
 import { Stage, VIEW } from "./stage";
 
 export type Binding = { kind: "session" | "project" | "agent"; key: string };
@@ -38,6 +39,7 @@ export class Familiar {
   /** A crew pet stays out at least until then (after finishing, failing or being called). */
   holdUntil = 0;
   private last = 0;
+  private shown = false;
   private looking: Promise<void> = Promise.resolve();
   private readonly orbAnchor = new THREE.Vector3();
   private readonly canvas: HTMLCanvasElement;
@@ -98,6 +100,11 @@ export class Familiar {
     return this.record.bindings.find((b) => b.kind === "project")?.key ?? null;
   }
 
+  /** How cards name this pet: with its project, unless cards show status only. */
+  get shownLabel() {
+    return privacy.detail === "status" ? this.name : this.label;
+  }
+
   /** How bubbles name this pet: always text, so two similar pets cannot be confused. */
   get label() {
     const project = this.project;
@@ -143,11 +150,18 @@ export class Familiar {
     const visible = this.out;
     this.canvas.hidden = !visible;
     if (!visible) {
+      this.shown = false;
       this.bubble.root.hidden = true;
       this.hud.style.visibility = "hidden";
       return;
     }
-    this.hud.style.visibility = "";
+    // Fade in when coming out of the den, out when going back (--motion-entrance).
+    if (!this.shown) {
+      this.shown = true;
+      this.canvas.classList.add("out-of-view");
+      requestAnimationFrame(() => this.canvas.classList.toggle("out-of-view", this.mind.isLeaving));
+    } else this.canvas.classList.toggle("out-of-view", this.mind.isLeaving);
+    this.hud.style.visibility = this.mind.isLeaving ? "hidden" : "";
     if (now - this.last < 1000 / this.mind.fps - 4) return;
     // Calm states run at 5–10 fps on purpose; a cap below their frame time would slow them down.
     const dt = Math.min(0.25, (now - this.last) / 1000);
@@ -160,7 +174,7 @@ export class Familiar {
     // The light floats beside the head on the viewer's left, as in the concept sheets, and lags
     // behind when the pet moves.
     this.orbAnchor.set(mind.x - 0.85 * SCALE * zoom, mind.y + 2.05 * SCALE * zoom, 300);
-    this.orb.update(dt, this.orbAnchor, glowFor(pet.clip, mind.directive?.clip === "alert"));
+    this.orb.update(dt, this.orbAnchor, glowFor(pet.clip, mind.directive?.clip === "alert"), mind.calm);
     this.stage.frame(mind.x, mind.y + height / 2);
     this.stage.render();
     this.bubble.tick(now);
