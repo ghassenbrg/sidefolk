@@ -58,9 +58,11 @@ build holds port 47821, so the dev app can't start while it runs).
   Companion: Done on a repeating reminder moves `due` to `nextDue` instead of closing it;
   replies and previews say "every weekday, from tomorrow 09:00". Window form passes the repeat
   typed in the title and shows ", then every …" on rows.
-- Next, in order: (1) offsets: "10 minutes before the 3pm call" → due = time − offset (when.ts,
-  tests). (2) Confirmation with Undo on the companion after saving (card "OK, tomorrow 09:00:
-  call the bank" with an Undo button → `remove_reminder`), and in the window (toast action).
+- Also done: offsets ("10 minutes before the call tomorrow at 3"; an offset landing in the past
+  is refused) in when.ts with tests; Undo in the window's toast right after adding a reminder.
+- Next, in order: (2) Undo on the companion after saving: in src/reminders.ts `add()`, show a
+  card (bubble.show with choices) "OK, tomorrow 09:00: call the bank" + Undo → `remove_reminder`;
+  careful, callers also `bubble.say` the returned string, so return it and let the card replace it.
   (3) Reminders fire when Sidefolk is quit: schedule macOS local notifications
   (UNUserNotificationCenter via objc2-user-notifications, request permission in setup step 3;
   schedule on add/update/remove, cancel by reminder id; for repeats schedule only the next one,
