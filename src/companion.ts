@@ -125,6 +125,8 @@ export class Companion {
   addWorker(project: string, worker: Familiar) {
     this.workers.get(project)?.remove();
     this.workers.set(project, worker);
+    // Typing in a Spark's field needs the keyboard, as with Pip's.
+    worker.bubble.onTyping = (typing) => this.host.typing(typing);
     // It takes over its project's sessions from Pip, so the right companion acts them out.
     worker.agents.adopt(this.pet.agents.extract((s) => this.familiarFor(s.project) === worker));
     for (const [key, o] of this.pet.agents.outcomes) if (this.familiarFor(o.project) === worker) worker.agents.outcomes.set(key, o);
@@ -304,7 +306,19 @@ export class Companion {
   }
 
   /** Clicking the companion: one field, with what Enter will do shown before anything happens. */
-  openPrompt() {
+  /** The field, on the companion that was clicked; a Spark's field works in its project. */
+  openPrompt(f: Familiar = this.pet) {
+    const project = this.projectOf(f);
+    if (project) {
+      f.bubble.prompt({
+        who: `Talk to ${f.name} · ${folder(project)}`,
+        placeholder: "Open session, ls, npm test…",
+        suggestions: ["Open session", "Start a claude session", "git status", "Open in VS Code"],
+        preview: (text) => this.explain(text),
+        submit: (text) => this.run(text, project),
+      });
+      return;
+    }
     const session = this.sessionOf();
     this.pet.bubble.prompt({
       who: `Talk to ${this.name}`,
@@ -313,6 +327,11 @@ export class Companion {
       preview: (text) => this.explain(text),
       submit: (text) => this.run(text),
     });
+  }
+
+  /** The project a Spark looks after; null for Pip. */
+  private projectOf(f: Familiar) {
+    return [...this.workers].find(([, w]) => w === f)?.[0] ?? null;
   }
 
   /** What Enter would do with this text. */
@@ -327,8 +346,13 @@ export class Companion {
   }
 
   /** Runs what was typed. Returns what the companion says. */
-  async run(text: string): Promise<string | void> {
-    const command = parse(text);
+  /** Runs what was typed; on a Spark, `project` fills in the folder when none is named. */
+  async run(text: string, project: string | null = null): Promise<string | void> {
+    const command = parse(project && /^open in /i.test(text.trim()) ? text.replace(/^open in /i, `open ${project} in `) : text);
+    if (project) {
+      if (command.kind === "open" && !command.project) command.project = folder(project);
+      if ((command.kind === "run" || command.kind === "start") && !command.folder) command.folder = project;
+    }
     switch (command.kind) {
       case "help":
         this.pet.bubble.show({ id: "help", who: this.name, title: "Things I understand", lines: HELP, choices: [{ label: "OK", value: "ok", primary: true }], onChoose: () => {} });
@@ -435,7 +459,7 @@ export class Companion {
       return error instanceof Error ? error.message : String(error);
     }
     const name = agent === "codex" ? "Codex" : "Claude Code";
-    const bubble = this.pet.bubble;
+    const bubble = this.familiarFor(folder.path).bubble;
     bubble.show({
       id: "start-session",
       who: `${this.name} · new session`,
@@ -475,7 +499,7 @@ export class Companion {
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
     }
-    const bubble = this.pet.bubble;
+    const bubble = this.familiarFor(folder.path).bubble;
     bubble.show({
       id: "run-command",
       who: `${this.name} · command`,

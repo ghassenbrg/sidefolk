@@ -206,7 +206,7 @@ const overlay = inTauri ? getCurrentWindow() : null;
 const input = wireInput({
   familiars: () => companion.familiars,
   setInteractive: (on) => void overlay?.setIgnoreCursorEvents(!on),
-  onClick: () => companion.openPrompt(),
+  onClick: (f) => companion.openPrompt(f),
 });
 
 // Clicking the companion or a card button can make the panel key (web views ask for it).

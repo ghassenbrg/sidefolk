@@ -200,6 +200,16 @@ await overlay.locator(".worker-badge", { hasText: "api" }).waitFor();
 if ((await overlay.locator(".pip").count()) !== 2) failures.push("overlay: a Spark didn't join Pip");
 await overlay.waitForTimeout(600);
 await overlay.screenshot({ path: join(out, "overlay-spark.png") });
+// Clicking the Spark opens its own field, which works in its project.
+await overlay.locator(".bubble").first().waitFor({ state: "hidden", timeout: 10_000 }).catch(() => {});
+const spark = await overlay.locator(".pip").nth(1).boundingBox();
+await overlay.mouse.click(spark.x + spark.width / 2, spark.y + spark.height * 0.55);
+await overlay.getByText("Talk to Spark · api", { exact: true }).waitFor();
+await overlay.locator(".bubble input").fill("git status");
+await overlay.locator(".bubble input").press("Enter");
+const scoped = overlay.locator(".bubble").filter({ hasText: "Run this in your terminal?" });
+await scoped.waitFor();
+if (!(await scoped.innerText()).includes("~/git/api")) failures.push("a Spark's command doesn't run in its project");
 // Starting a session shows the folder and the permission mode before anything starts.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);

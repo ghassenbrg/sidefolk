@@ -12,8 +12,8 @@ const MAX_THROW = 2600;
 export function wireInput(o: {
   familiars: () => Familiar[];
   setInteractive: (on: boolean) => void;
-  /** A click, left or right: the one place to talk to the companion. It never answers anything. */
-  onClick: () => void;
+  /** A click, left or right, on a companion: the one place to talk to it. It never answers anything. */
+  onClick: (f: Familiar) => void;
 }) {
   let interactive = false;
   let pressed: { f: Familiar; x: number; y: number; dx: number; dy: number } | null = null;
@@ -21,7 +21,8 @@ export function wireInput(o: {
   let samples: Sample[] = [];
 
   const overPet = (f: Familiar, x: number, y: number) => f.contains(x, y);
-  const petAt = (x: number, y: number) => o.familiars().find((f) => overPet(f, x, y));
+  // Topmost first: companions added later are drawn over Pip, whose frame is wide.
+  const petAt = (x: number, y: number) => [...o.familiars()].reverse().find((f) => overPet(f, x, y));
 
   const refresh = (x: number, y: number) => {
     const want = dragging || !!pressed || o.familiars().some((f) => f.bubble.contains(x, y)) || !!petAt(x, y);
@@ -34,7 +35,8 @@ export function wireInput(o: {
   // The web view's own menu (Reload, Inspect) is no use here; a right click opens the field too.
   addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    if (petAt(event.clientX, event.clientY)) o.onClick();
+    const f = petAt(event.clientX, event.clientY);
+    if (f) o.onClick(f);
   });
 
   addEventListener("pointerdown", (event) => {
@@ -72,7 +74,7 @@ export function wireInput(o: {
       );
     } else if (pressed) {
       pressed.f.mind.poke();
-      o.onClick();
+      o.onClick(pressed.f);
     }
     pressed = null;
     dragging = false;

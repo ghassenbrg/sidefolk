@@ -127,7 +127,6 @@ export class PipView {
       if (hue) img.style.filter = `hue-rotate(${hue}deg)`;
       img.draggable = false;
       img.hidden = name !== "idle";
-      img.addEventListener("load", () => this.masks.set(name, mask(img)), { once: true });
       this.images.set(name, img);
       this.body.append(img);
     }
@@ -138,8 +137,10 @@ export class PipView {
   }
 
   /** Waits until every frame is decoded, so the first swaps never flash. */
+  /** Resolves once every frame is decoded; the hit-test masks are built then (a cached image can
+   * fire "load" before it can be drawn, which gave empty masks). */
   ready() {
-    return Promise.all([...this.images.values()].map((img) => img.decode().catch(() => {})));
+    return Promise.all([...this.images].map(([name, img]) => img.decode().then(() => this.masks.set(name, mask(img)), () => {})));
   }
 
   get clip(): ClipName {

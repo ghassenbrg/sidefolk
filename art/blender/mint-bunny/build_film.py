@@ -34,7 +34,6 @@ def mat(name, rgb, rough=.7, fuzz=0):
 
 cream = mat('warm cream fur', (.94,.88,.76), .8, .08)
 dark = mat('charcoal fur', (.095,.105,.13), .83, .04)
-inner = mat('warm ear lining', (.76,.59,.46), .9)
 mint = mat('mint wool', (.27,.69,.58), .83, .12)
 seam_mat = mat('mint stitching', (.36,.76,.64), .9)
 eye_mat = mat('espresso eyes', (.055,.041,.032), .13)
@@ -44,7 +43,6 @@ p.inputs['Coat Roughness'].default_value = .09
 p.inputs['Specular IOR Level'].default_value = .48
 nose_mat = mat('velvet nose', (.16,.11,.105), .4)
 mouth_mat = mat('smile', (.23,.13,.11), .72)
-blush_mat = mat('soft peach cheeks', (.89,.68,.56), .9, .1)
 floor_mat = mat('sand backdrop', (.79,.73,.63), .93)
 
 # Wool has a small crossed weave in addition to the geometric seam.
@@ -190,22 +188,29 @@ def stroke(name, points, radius, material, mesh=True):
         active(ob); bpy.ops.object.convert(target='MESH')
     return ob
 
-face=[]; eyes=[]
+face=[]; eyes=[]; lids=[]
 for side,label in [(-1,'L'),(1,'R')]:
     x=side*.445
     eye=ell('Eye.'+label+' • glossy', (x,-.711,2.64), (.178,.119,.217),eye_mat)
     eye.rotation_euler[2]=side*.12
     eye.shape_key_add(name='Basis')
-    blink=eye.shape_key_add(name='Blink')
+    blink=eye.shape_key_add(name='Blink',from_mix=False)
     for v in blink.data:
         v.co.z*=.035
         v.co.y+=.055
-    happy=eye.shape_key_add(name='Happy')
+    blink.value=0
+    happy=eye.shape_key_add(name='Happy',from_mix=False)
     for v in happy.data:
         v.co.z=.88*v.co.z+.018
+    happy.value=0
     eyes.append(eye); face.append(eye)
-    face.append(stroke('Upper eyelid.'+label,
-        [(x-.155,-.716,2.74),(x,-.749,2.854),(x+.155,-.716,2.74)],.025,cream))
+    lid=stroke('Upper eyelid.'+label,
+        [(x-.155,-.716,2.74),(x,-.749,2.854),(x+.155,-.716,2.74)],.025,cream)
+    lid.shape_key_add(name='Basis')
+    blink=lid.shape_key_add(name='Blink',from_mix=False)
+    for v in blink.data: v.co.z=2.64+.12*(v.co.z-2.64)
+    blink.value=0
+    lids.append(lid); face.append(lid)
     face.append(stroke('Brow.'+label,
         [(x-.13,-.64,2.985),(x,-.674,3.014),(x+.13,-.64,2.99)],.022,dark))
 
@@ -217,9 +222,10 @@ face.append(stroke('Philtrum',[(0,-.881,2.34),(0,-.889,2.28)],.012,mouth_mat))
 mouth=stroke('Smile • expression control',
     [(-.18,-.831,2.29),(-.10,-.878,2.245),(0,-.891,2.277),(.10,-.878,2.245),(.18,-.831,2.29)],.014,mouth_mat)
 mouth.shape_key_add(name='Basis')
-smile=mouth.shape_key_add(name='Smile')
+smile=mouth.shape_key_add(name='Smile',from_mix=False)
 for v in smile.data:
     v.co.z += .08*min(1,abs(v.co.x)/.18)**1.5
+smile.value=.25
 face.append(mouth)
 
 # The scarf is soft fabric with shallow folds, thin edges and a stitched hem.
@@ -357,12 +363,18 @@ for obj in [body,head]+ears:
 def fur(obj,length,count,material=1,region=None):
     active(obj)
     density=obj.vertex_groups.new(name='Fur density '+str(material))
+    material_vertices={v.index:[] for v in obj.data.vertices}
+    if region:
+        for poly in obj.data.polygons:
+            for vi in poly.vertices: material_vertices[vi].append(poly.material_index)
     for v in obj.data.vertices:
         p=obj.matrix_world@v.co
         w=1.0
         if obj==head and p.y<-.38 and abs(p.x)<.82 and 2.10<p.z<2.97: w=.12
-        if region=='tip': w*=max(0,min(1,(p.z-4.12)/.16))
-        if region=='base': w*=1-max(0,min(1,(p.z-4.12)/.16))
+        if region:
+            indices=material_vertices[v.index]
+            tip=sum(indices)/max(1,len(indices))
+            w*=tip if region=='tip' else 1-tip
         density.add([v.index],w,'REPLACE')
     bpy.ops.object.particle_system_add()
     system=obj.particle_systems[-1]
@@ -371,13 +383,13 @@ def fur(obj,length,count,material=1,region=None):
     st.type='HAIR'; st.count=count; st.hair_length=length; st.hair_step=3
     st.child_type='INTERPOLATED'; st.child_percent=5; st.rendered_child_count=12
     st.root_radius=.0022; st.tip_radius=.00045; st.radius_scale=.65
-    st.roughness_1=.018; st.roughness_endpoint=.012; st.clump_factor=.06
+    st.roughness_1=.003; st.roughness_endpoint=.004; st.clump_factor=.025
     st.material=material; st.use_modifier_stack=True
     return system
 
 fur(body,.038,5000); fur(head,.034,6000); fur(tail,.065,1200)
 for ear in ears:
-    fur(ear,.026,1800,1,'base'); fur(ear,.026,1500,2,'tip')
+    fur(ear,.018,1800,1,'base'); fur(ear,.018,1500,2,'tip')
 
 # Named NLA tracks merge rig motion and facial blinks into the same exported clip.
 def store_action(owner,name):
@@ -416,7 +428,7 @@ for clip,end in [('Idle',97),('Hello',73)]:
             pb.keyframe_insert('rotation_euler',frame=f,group=pb.name)
             pb.keyframe_insert('scale',frame=f,group=pb.name)
     tracks.append(store_action(rig,clip))
-    for eye in eyes:
+    for eye in eyes+lids:
         keys=eye.data.shape_keys
         for f,val in [(1,0),(33,0),(36,1),(39,0),(end,0)]:
             keys.key_blocks['Blink'].value=val
@@ -433,6 +445,16 @@ def aim(obj,target):
 
 bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-.015))
 floor=link(bpy.context.object,'Ground',floor_mat,ST)
+back_points=[(-20,0),(4,0)]
+for j in range(1,25):
+    a=(math.pi/2)*j/24
+    back_points.append((4+4*math.sin(a),4*(1-math.cos(a))))
+back_points.append((8,15))
+vs=[(x,y,z-.014) for y,z in back_points for x in [-20,20]]
+fs=[(2*j,2*j+1,2*j+3,2*j+2) for j in range(len(back_points)-1)]
+mesh=bpy.data.meshes.new('Film • cyclorama'); mesh.from_pydata(vs,[],fs); mesh.update()
+back=bpy.data.objects.new(mesh.name,mesh); ST.objects.link(back); mesh.materials.append(floor_mat)
+for p in mesh.polygons: p.use_smooth=True
 world=bpy.data.worlds.new('Film • soft daylight'); world.use_nodes=True
 world.node_tree.nodes['Background'].inputs['Color'].default_value=(.72,.80,1,1)
 world.node_tree.nodes['Background'].inputs['Strength'].default_value=.23
@@ -444,7 +466,7 @@ for name,xyz,energy,size,color in [
     data=bpy.data.lights.new('Film • '+name,'AREA'); data.energy=energy; data.shape='DISK'; data.size=size; data.color=color
     ob=bpy.data.objects.new(data.name,data); ST.objects.link(ob); ob.location=xyz; aim(ob,(0,0,2.3))
 data=bpy.data.cameras.new('Film • portrait'); cam=bpy.data.objects.new(data.name,data); ST.objects.link(cam)
-cam.location=(4.1,-12,4.2); aim(cam,(0,0,2.42)); data.lens=64
+cam.location=(3.3,-12,4.0); aim(cam,(0,0,2.42)); data.lens=68
 data.dof.use_dof=True; data.dof.focus_distance=(cam.location-Vector((0,-.3,2.6))).length; data.dof.aperture_fstop=8
 S.camera=cam
 S.render.engine='CYCLES'; S.cycles.samples=96; S.cycles.use_denoising=True
