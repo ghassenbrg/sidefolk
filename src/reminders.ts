@@ -1,6 +1,6 @@
 import { folder } from "./agents";
 import type { Companion } from "./companion";
-import { describeDue, parseReminder } from "./when";
+import { describeDue, describeRepeat, nextDue, parseReminder, type Repeat } from "./when";
 
 /** Mirrors `Reminder` in src-tauri/src/reminders.rs. */
 export type Reminder = {
@@ -12,11 +12,12 @@ export type Reminder = {
   created: number;
   done: boolean;
   fired: boolean;
+  repeat?: Repeat | null;
 };
 
 export type ReminderStore = {
   list(): Promise<Reminder[]>;
-  add(text: string, due: number, project: string | null, from?: string): Promise<Reminder>;
+  add(text: string, due: number, project: string | null, from?: string, repeat?: Repeat): Promise<Reminder>;
   update(id: string, change: { done?: boolean; due?: number; fired?: boolean }): Promise<void>;
   /** Shows the overlay while the pet is hidden (false puts it back). */
   peek(show: boolean): void;
@@ -63,15 +64,15 @@ export class Reminders {
     if (kind === "new-reminder") return this.form();
     const parsed = parseReminder(text);
     if (!parsed) return this.askWhen(text.replace(/^(to|about)\s+/i, ""));
-    return this.add(parsed.what, parsed.due);
+    return this.add(parsed.what, parsed.due, parsed.repeat);
   }
 
-  private async add(what: string, due: Date) {
-    const reminder = await this.store.add(what, due.getTime(), null);
+  private async add(what: string, due: Date, repeat?: Repeat) {
+    const reminder = await this.store.add(what, due.getTime(), null, undefined, repeat);
     this.list.push(reminder);
     // Pip writes it down.
     this.companion.pet.mind.react("write", 1.6);
-    return `OK, ${describeDue(due)}: ${what}`;
+    return repeat ? `OK, ${describeRepeat(repeat, due)}, starting ${describeDue(due)}: ${what}` : `OK, ${describeDue(due)}: ${what}`;
   }
 
   /** "New reminder…": one field that takes the time too, or asks for it next. */
@@ -83,11 +84,11 @@ export class Reminders {
       suggestions: ["Stretch in 30 minutes", "Review the PR tomorrow at 10", "Standup Monday at 9:30"],
       preview: (text) => {
         const parsed = parseReminder(text);
-        return parsed ? `Remind you ${describeDue(parsed.due)}: ${parsed.what}` : "Then pick when";
+        return parsed ? `Remind you ${parsed.repeat ? `${describeRepeat(parsed.repeat, parsed.due)}, from ` : ""}${describeDue(parsed.due)}: ${parsed.what}` : "Then pick when";
       },
       submit: async (text) => {
         const parsed = parseReminder(text);
-        return parsed ? this.add(parsed.what, parsed.due) : this.askWhen(text);
+        return parsed ? this.add(parsed.what, parsed.due, parsed.repeat) : this.askWhen(text);
       },
     });
   }
@@ -168,6 +169,12 @@ export class Reminders {
 
   private async answer(r: Reminder, value: string) {
     this.unpeek(r);
+    if (value === "done" && r.repeat) {
+      // A repeating reminder isn't finished: it moves to its next time.
+      r.due = nextDue(new Date(r.due), r.repeat, new Date()).getTime();
+      r.fired = false;
+      return this.store.update(r.id, { due: r.due });
+    }
     if (value === "done") {
       r.done = true;
       return this.store.update(r.id, { done: true });

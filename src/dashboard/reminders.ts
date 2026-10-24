@@ -1,6 +1,6 @@
 import { icon } from "../icons";
 import { badge } from "../states";
-import { parseReminder } from "../when";
+import { describeRepeat, parseReminder, type Repeat } from "../when";
 import { invoke, type Reminder } from "./api";
 import type { App } from "./app";
 import { agentShort, button, folder, h, timeZone } from "./dom";
@@ -63,13 +63,14 @@ function fields(prefix: string, initial?: Reminder) {
     h("div", { class: "wide" }, whenError, resolved),
   );
   /** Checks the fields; returns what to save, or null with errors shown next to the fields. */
-  const read = (): { text: string; due: Date } | null => {
+  const read = (): { text: string; due: Date; repeat?: Repeat } | null => {
     const parsed = parseReminder(text.value);
     const what = (parsed && !typedWhen ? parsed.what : text.value).trim();
     const when = fromFields(date.value, time.value);
     textError.textContent = what ? "" : "Enter what to remember.";
     whenError.textContent = !when ? "Choose a date and a time." : when.getTime() <= Date.now() && !initial ? "That time has passed. Choose a later one." : "";
-    return what && when && !whenError.textContent ? { text: what, due: when } : null;
+    // "every weekday at 9 to…" typed in the title keeps its repeat, even with the time changed by hand.
+    return what && when && !whenError.textContent ? { text: what, due: when, repeat: parsed?.repeat } : null;
   };
   return { node, read, focus: () => text.focus() };
 }
@@ -85,8 +86,8 @@ export function renderReminders(app: App, arg = "") {
     const value = add.read();
     if (!value) return;
     try {
-      await invoke("add_reminder", { text: value.text, due: value.due.getTime(), project: null });
-      app.toast(`Reminder set for ${longDate(value.due)}.`);
+      await invoke("add_reminder", { text: value.text, due: value.due.getTime(), project: null, repeat: value.repeat ?? null });
+      app.toast(`Reminder set for ${longDate(value.due)}${value.repeat ? `, then ${describeRepeat(value.repeat, value.due)}` : ""}.`);
       (document.activeElement as HTMLElement | null)?.blur();
       await app.refresh();
       app.redraw(true);
@@ -143,7 +144,7 @@ function row(app: App, r: Reminder) {
     h(
       "div",
       { class: "row" },
-      h("div", {}, h("strong", { text: r.text }), h("p", { class: "meta", text: `${missed ? "Was due " : ""}${longDate(due)}${where}${by}` })),
+      h("div", {}, h("strong", { text: r.text }), h("p", { class: "meta", text: `${missed ? "Was due " : ""}${longDate(due)}${r.repeat ? `, then ${describeRepeat(r.repeat, due)}` : ""}${where}${by}` })),
       h(
         "div",
         { class: "actions" },

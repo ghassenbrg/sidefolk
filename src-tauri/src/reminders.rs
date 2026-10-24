@@ -32,6 +32,21 @@ pub struct Reminder {
     pub done: bool,
     /// Shown at least once (it may be showing now, or snoozed later).
     pub fired: bool,
+    /// Comes back after it's done (the companion moves `due` to the next time; src/when.ts).
+    pub repeat: Option<Repeat>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Repeat {
+    /// "day", "weekday", "week" or "month".
+    pub every: String,
+    pub n: u32,
+}
+
+impl Repeat {
+    pub fn valid(&self) -> bool {
+        matches!(self.every.as_str(), "day" | "weekday" | "week" | "month") && (1..=52).contains(&self.n)
+    }
 }
 
 impl Default for Reminder {
@@ -45,6 +60,7 @@ impl Default for Reminder {
             created: 0,
             done: false,
             fired: false,
+            repeat: None,
         }
     }
 }
@@ -84,7 +100,7 @@ impl Reminders {
         self.list.lock().unwrap().clone()
     }
 
-    pub fn add(&self, text: &str, due: u64, project: &str, from: &str) -> io::Result<Reminder> {
+    pub fn add(&self, text: &str, due: u64, project: &str, from: &str, repeat: Option<Repeat>) -> io::Result<Reminder> {
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let text: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
         if text.is_empty() {
@@ -102,6 +118,7 @@ impl Reminders {
             project: project.to_string(),
             from: from.to_string(),
             created: now,
+            repeat: repeat.filter(Repeat::valid),
             ..Default::default()
         };
         let mut next = list.clone();
@@ -177,8 +194,8 @@ mod tests {
     fn add_update_and_reload() {
         let dir = std::env::temp_dir().join(format!("sidefolk-reminders-{}", std::process::id()));
         let store = Reminders::load(&dir);
-        assert!(store.add("   ", 1, "", "you").is_err());
-        let r = store.add("review  the PR", now_ms() + 60_000, "/p", "claude").unwrap();
+        assert!(store.add("   ", 1, "", "you", None).is_err());
+        let r = store.add("review  the PR", now_ms() + 60_000, "/p", "claude", None).unwrap();
         assert_eq!(r.text, "review the PR");
         assert!(store.update(&r.id, &Change { fired: Some(true), ..Default::default() }).unwrap());
         assert!(store.update(&r.id, &Change { due: Some(5), ..Default::default() }).unwrap());
@@ -189,7 +206,12 @@ mod tests {
         store.update(&r.id, &Change { done: Some(true), ..Default::default() }).unwrap();
         assert!(Reminders::load(&dir).list().is_empty());
         assert!(!store.update("missing", &Change::default()).unwrap());
-        let r = store.add("call the bank", now_ms() + 60_000, "", "you").unwrap();
+        let weekly = Repeat { every: "week".into(), n: 2 };
+        let r = store.add("send the report", now_ms() + 60_000, "", "you", Some(weekly.clone())).unwrap();
+        assert_eq!(r.repeat, Some(weekly));
+        let odd = store.add("odd", now_ms() + 60_000, "", "you", Some(Repeat { every: "hour".into(), n: 1 })).unwrap();
+        assert_eq!(odd.repeat, None);
+        let r = store.add("call the bank", now_ms() + 60_000, "", "you", None).unwrap();
         assert!(store.update(&r.id, &Change { text: Some(" ".into()), ..Default::default() }).is_err());
         store.update(&r.id, &Change { text: Some("call  mum".into()), ..Default::default() }).unwrap();
         let removed = store.remove(&r.id).unwrap().unwrap();

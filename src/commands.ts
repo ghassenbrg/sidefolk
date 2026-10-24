@@ -1,4 +1,4 @@
-import { describeDue, parseReminder } from "./when";
+import { describeDue, describeRepeat, parseReminder } from "./when";
 
 // What the companion understands, all locally: no model call and no tokens. Anything else gets
 // a short answer saying what it can do; it is never sent to an AI tool behind your back
@@ -52,7 +52,8 @@ export function explain(text: string, ctx: ExplainContext): string {
       return "Show what I understand";
     case "remind": {
       const parsed = parseReminder(command.text);
-      return parsed ? `Remind you ${describeDue(parsed.due)}: ${parsed.what}` : "Set a reminder (then pick when)";
+      if (!parsed) return "Set a reminder (then pick when)";
+      return `Remind you ${parsed.repeat ? `${describeRepeat(parsed.repeat, parsed.due)}, from ` : ""}${describeDue(parsed.due)}: ${parsed.what}`;
     }
     case "reminders":
       return "Show your reminders";

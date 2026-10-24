@@ -78,6 +78,7 @@ fn add_reminder(
     due: u64,
     project: Option<String>,
     from: Option<String>,
+    repeat: Option<reminders::Repeat>,
 ) -> Result<reminders::Reminder, String> {
     let from = match from.as_deref() {
         Some("claude") => "claude",
@@ -86,7 +87,7 @@ fn add_reminder(
     };
     let reminder = shared
         .reminders
-        .add(&text, due, project.as_deref().unwrap_or_default(), from)
+        .add(&text, due, project.as_deref().unwrap_or_default(), from, repeat)
         .map_err(|e| e.to_string())?;
     // The overlay and the Settings window both show reminders.
     let _ = app.emit("reminders-changed", ());
