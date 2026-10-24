@@ -39,6 +39,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         true,
         &[
             &item("go:reminders:new", "New Reminder", Some("CmdOrCtrl+N"))?,
+            &item("go:notes:new", "New Notebook", Some("CmdOrCtrl+Shift+N"))?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::close_window(app, None)?,
         ],
@@ -64,6 +65,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         &[
             &item("go:today", "Today", Some("CmdOrCtrl+1"))?,
             &item("go:reminders", "Reminders", Some("CmdOrCtrl+2"))?,
+            &item("go:notes", "Notes", Some("CmdOrCtrl+3"))?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::fullscreen(app, None)?,
         ],

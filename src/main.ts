@@ -9,6 +9,7 @@ import { Companion, type Ask, type Host } from "./companion";
 import { install } from "./demo";
 import { wireInput } from "./input";
 import { sound } from "./sound";
+import { memoryNotes, Notes, type NoteStore } from "./notes";
 import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
@@ -72,6 +73,7 @@ const host: Host = {
     if (inTauri) void invoke("overlay_typing", { typing });
   },
   command: (text, kind) => reminders.command(text, kind),
+  note: (command) => (command.kind === "note" ? notes.take(command.text, command.notebook) : notes.create(command.name)),
   ...(inTauri && {
     hide: () => void invoke("tray_action", { action: "toggle" }),
     openTab: (tab: string) => void invoke("open_tab", { tab }),
@@ -118,6 +120,15 @@ function applySettings(next: Settings | null) {
 applySettings(settings);
 reducedMotion.addEventListener("change", () => applySettings(settings));
 const reminders = new Reminders(companion, reminderStore);
+const noteStore: NoteStore = inTauri
+  ? {
+      list: () => invoke("list_notebooks"),
+      create: (name) => invoke("create_notebook", { name }),
+      add: (notebook, text, date, project, create) => invoke("add_note", { notebook, text, date, project, create }),
+      remove: (id, entry) => invoke("remove_note", { id, entry }),
+    }
+  : memoryNotes();
+const notes = new Notes(companion, noteStore);
 if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();

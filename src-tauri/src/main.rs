@@ -16,6 +16,7 @@ mod overlay;
 #[cfg(target_os = "macos")]
 mod panel;
 mod reminders;
+mod notes;
 mod notifications;
 mod sessions;
 mod settings;
@@ -215,6 +216,13 @@ fn main() {
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
             actions::allow_terminal_control,
+            notes::list_notebooks,
+            notes::read_notebook,
+            notes::create_notebook,
+            notes::add_note,
+            notes::edit_note,
+            notes::remove_note,
+            notes::restore_note,
             actions::path_commands,
             hooks::sync_full_access,
             actions::resolve_folder,
@@ -264,6 +272,7 @@ fn main() {
                 replies: Default::default(),
                 token: mcp::ensure_token(&store.dir)?,
                 reminders: reminders::Reminders::load(&store.dir),
+                notes: notes::Notes::new(&store.dir),
                 settings: std::sync::Mutex::new(store),
                 permissions: Default::default(),
                 codex: Default::default(),

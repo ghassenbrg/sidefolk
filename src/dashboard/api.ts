@@ -1,5 +1,6 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen as tauriListen } from "@tauri-apps/api/event";
+import type { NoteEntry } from "../notes";
 import type { Reminder } from "../reminders";
 
 // What the Sidefolk window reads and calls. In the browser preview (npm run web, /settings.html)
@@ -74,7 +75,22 @@ function preview(): typeof tauriInvoke {
   const now = Date.now();
   const api = "/Users/you/git/api";
   const web = "/Users/you/git/website";
+  const notesDir = "/Users/you/Library/Application Support/dev.sidefolk.companion/notes";
   const state = {
+    notebooks: [
+      {
+        id: "evaluation-h2-2026",
+        name: "Evaluation H2 2026",
+        count: 0,
+        updated: now - 86_400_000,
+        path: `${notesDir}/evaluation-h2-2026.md`,
+        entries: [
+          { line: 2, date: "2026-09-12", text: "Led the login migration; errors down 40%.", project: "api" },
+          { line: 3, date: "2026-10-03", text: "Mentored Sam through their first on-call week.", project: "" },
+        ] as NoteEntry[],
+      },
+      { id: "ideas", name: "Ideas", count: 0, updated: now - 3 * 86_400_000, path: `${notesDir}/ideas.md`, entries: [{ line: 2, date: "2026-10-20", text: "A weekly wins digest from the notebooks.", project: "" }] as NoteEntry[] },
+    ],
     settings: {
       shortcut: "CommandOrControl+Shift+Space",
       sleep_after_secs: 120,
@@ -176,6 +192,41 @@ function preview(): typeof tauriInvoke {
       case "resolve_folder": {
         const folder = (args as { folder?: string | null }).folder;
         return { path: "/Users/you", label: folder ? `~/git/${folder.split("/").pop()}` : "~" };
+      }
+      case "list_notebooks":
+        return state.notebooks.map(({ entries, path, ...book }) => ({ ...book, count: entries.length }));
+      case "read_notebook": {
+        const book = state.notebooks.find((b) => b.id === (args as { id: string }).id);
+        if (!book) throw "No such notebook";
+        return { ...book, count: book.entries.length };
+      }
+      case "create_notebook": {
+        const name = (args as { name: string }).name.trim();
+        const book = { id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name, count: 0, updated: Date.now(), entries: [] as NoteEntry[], path: `/Users/you/Library/Application Support/dev.sidefolk.companion/notes/${name.toLowerCase()}.md` };
+        state.notebooks.push(book);
+        return book;
+      }
+      case "add_note": {
+        const a = args as { notebook: string; text: string; date: string; project?: string | null };
+        const book = state.notebooks.find((b) => b.id === a.notebook || b.name.toLowerCase() === a.notebook.toLowerCase());
+        if (!book) throw `There's no notebook called ${a.notebook}.`;
+        const entry = { line: book.entries.length + 2, date: a.date, text: a.text.trim(), project: a.project ?? "" };
+        book.entries.push(entry);
+        book.updated = Date.now();
+        setTimeout(() => emit("notes-changed", null), 50);
+        return [book, entry];
+      }
+      case "edit_note":
+      case "remove_note":
+      case "restore_note": {
+        const a = args as { id: string; entry: NoteEntry; text?: string };
+        const book = state.notebooks.find((b) => b.id === a.id)!;
+        const at = book.entries.findIndex((e) => e.line === a.entry.line);
+        if (command === "edit_note") book.entries[at] = { ...book.entries[at], text: a.text!.trim() };
+        if (command === "remove_note") book.entries.splice(at, 1);
+        if (command === "restore_note") book.entries.splice(Math.min(a.entry.line - 2, book.entries.length), 0, a.entry);
+        setTimeout(() => emit("notes-changed", null), 50);
+        return null;
       }
       case "allow_terminal_control":
         return "Sidefolk can open sessions and commands in Terminal. (Preview)";

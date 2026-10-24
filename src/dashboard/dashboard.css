@@ -390,6 +390,7 @@ button.back {
 }
 
 input[type="text"],
+input[type="search"],
 input[type="date"],
 input[type="time"],
 select,
@@ -782,4 +783,47 @@ button.keys.recording {
 button.access.on {
   border: 2px solid var(--terracotta);
   font-weight: 650;
+}
+
+/* Notes: entries read as text, not as titles. */
+.note .identity-text {
+  min-width: 0;
+}
+.note-text {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note.editing {
+  display: grid;
+  gap: var(--space-2);
+}
+.notes textarea {
+  width: 100%;
+  resize: vertical;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.notes > .actions {
+  margin-bottom: var(--space-4);
+}
+.notes form.card .actions {
+  justify-content: space-between;
+  align-items: center;
+}
+.notes .field-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-weight: 650;
+}
+.inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.inline-form .field {
+  flex: 1;
 }

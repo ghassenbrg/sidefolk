@@ -40,6 +40,8 @@ export type Host = {
   resolveFolder?(folder: string | null): Promise<{ path: string; label: string }>;
   /** Runs a confirmed command in the user's terminal. Resolves to what happened. */
   runCommand?(command: string, cwd: string): Promise<string>;
+  /** Note commands, handled by notes.ts. */
+  note?(command: { kind: "note"; notebook: string | null; text: string } | { kind: "notebook"; name: string }): Promise<string | void>;
   /** Tells the app which sessions have full access, so their requests always come here. */
   syncFullAccess?(keys: string[]): void;
 };
@@ -278,6 +280,11 @@ export class Companion {
         return this.rename(command.name);
       case "hide":
         return this.host.hide?.();
+      case "note":
+      case "notebook":
+        return this.host.note ? this.host.note(command) : "Notes need the desktop app.";
+      case "notes":
+        return this.host.openTab?.("notes");
       case "run":
         return this.confirmRun(command.command, command.folder);
       case "unknown":

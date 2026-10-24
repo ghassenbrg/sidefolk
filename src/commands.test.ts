@@ -40,4 +40,14 @@ describe("parse", () => {
     expect(parse("make build").kind).toBe("run");
     knowCommands([]);
   });
+
+  it("takes notes in one sentence", () => {
+    expect(parse("note for evaluation: shipped the login migration, errors down 40%.")).toEqual({ kind: "note", notebook: "evaluation", text: "shipped the login migration, errors down 40%." });
+    expect(parse("add to my ideas: a weekly wins digest")).toEqual({ kind: "note", notebook: "ideas", text: "a weekly wins digest" });
+    expect(parse("note: call with Sam went well")).toEqual({ kind: "note", notebook: null, text: "call with Sam went well" });
+    expect(parse("note that the API froze at 3pm")).toEqual({ kind: "note", notebook: null, text: "the API froze at 3pm" });
+    expect(parse("new notebook Project X decisions")).toEqual({ kind: "notebook", name: "Project X decisions" });
+    expect(parse("notes")).toEqual({ kind: "notes" });
+    expect(parse("make a note about the release").kind).toBe("unknown");
+  });
 });

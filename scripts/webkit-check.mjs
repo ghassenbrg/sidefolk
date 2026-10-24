@@ -22,6 +22,8 @@ const views = [
   ["settings", "/settings.html?tab=settings"],
   ["setup", "/settings.html?tab=setup:start"],
   ["new-reminder", "/settings.html?tab=reminders:new"],
+  ["notes", "/settings.html?tab=notes"],
+  ["notebook", "/settings.html?tab=notes:evaluation-h2-2026"],
 ];
 
 const browser = await webkit.launch();
@@ -57,6 +59,14 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("button", { name: "Full access" }).first().waitFor();
   await page.getByRole("button", { name: "Full access" }).first().click();
   await page.getByRole("button", { name: "Asks first" }).nth(1).waitFor();
+  // A note added in the window shows up first, and Delete offers Undo.
+  await page.goto(base + "/settings.html?tab=notes:evaluation-h2-2026");
+  await page.locator("#note-text").fill("Ran the accessibility audit.");
+  await page.getByRole("button", { name: "Add note" }).click();
+  await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
+  await page.locator(".note").first().getByRole("button", { name: "Delete" }).click();
+  await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
+  await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
@@ -121,6 +131,14 @@ await overlay.keyboard.press("c");
 await overlay.locator(".bubble input").fill("reminders");
 await overlay.locator(".bubble input").press("Enter");
 await overlay.getByText("No reminders", { exact: true }).waitFor();
+// A note to a notebook that doesn't exist yet offers to start it, then confirms with Undo.
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("note for evaluation: shipped the login migration");
+await overlay.locator(".bubble input").press("Enter");
+await overlay.getByRole("button", { name: "Start evaluation" }).click();
+await overlay.getByText("Noted in evaluation.", { exact: true }).waitFor();
 // A plain command is recognized locally and only runs after the confirmation card.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);

@@ -175,6 +175,7 @@ pub struct Shared {
     /// Per-install secret the MCP shim must send.
     pub token: String,
     pub reminders: crate::reminders::Reminders,
+    pub notes: crate::notes::Notes,
     pub permissions: Permissions,
     pub codex: tokio::sync::Mutex<Option<std::sync::Arc<crate::codex::Codex>>>,
     /// Where each agent session runs, for "Open session".

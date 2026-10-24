@@ -12,6 +12,10 @@ export type Command =
   | { kind: "rename"; name: string }
   | { kind: "hide" }
   | { kind: "help" }
+  /** A dated note; `notebook` as typed ("evaluation"), or null to pick one. */
+  | { kind: "note"; notebook: string | null; text: string }
+  | { kind: "notebook"; name: string }
+  | { kind: "notes" }
   /** A shell command to run in the user's terminal, after they see it. `folder` as typed ("api", "~/x"). */
   | { kind: "run"; command: string; folder: string | null }
   | { kind: "unknown"; text: string };
@@ -49,6 +53,12 @@ export function parse(input: string): Command {
   if (/^(help|\?|what can you do)$/.test(lower)) return { kind: "help" };
   if (/^(reminders|my reminders|list reminders)$/.test(lower)) return { kind: "reminders" };
   if ((m = text.match(/^remind me\b\s*(.*)$/i))) return { kind: "remind", text: m[1] };
+  if (/^(notes|my notes|notebooks|open notes)$/.test(lower)) return { kind: "notes" };
+  if ((m = text.match(/^(?:new|create|make)\s+(?:a\s+)?notebook\s+(?:called\s+|named\s+)?(.+)$/i))) return { kind: "notebook", name: m[1].trim() };
+  // "note for evaluation: shipped X", "add to ideas: …", "note: …", "note that …". Kept as typed.
+  const kept = input.trim();
+  if ((m = kept.match(/^(?:note|jot|log|add)\s+(?:it\s+)?(?:for|to|in|into)\s+(?:my\s+|the\s+)?([^:]{1,60}?)\s*(?:notebook\s*)?:\s*(.+)$/is))) return { kind: "note", notebook: m[1], text: m[2].trim() };
+  if ((m = kept.match(/^(?:note|jot down|write down)\s*(?::|that\s)\s*(.+)$/is))) return { kind: "note", notebook: null, text: m[1].trim() };
   if (/^(?:open|show)\s+(?:the\s+)?(?:sidefolk|dashboard|app|window)$/.test(lower)) return { kind: "sidefolk" };
   if ((m = text.match(/^(?:open|jump to|go to|back to|continue|resume)\s+(?:the\s+)?(?:(.+?)(?:'s)?\s+)?session$/i)))
     return { kind: "open", project: m[1] ?? null };
@@ -68,6 +78,7 @@ export const HELP = [
   "remind me tomorrow at 9 to check the results · reminders",
   "open session · open api session",
   "open Sidefolk · hide · rename to Pip",
+  "note for evaluation: shipped the login migration · notes",
   "ls -la · run npm test in api (you confirm first)",
 ];
 
@@ -102,6 +113,12 @@ export function explain(text: string, ctx: ExplainContext): string {
       return `Rename ${ctx.name} to ${command.name}`;
     case "hide":
       return `Hide ${ctx.name} until you press the shortcut`;
+    case "note":
+      return command.notebook ? `Add to ${command.notebook}: ${command.text}` : `Add a note (I'll ask which notebook): ${command.text}`;
+    case "notebook":
+      return `Start a notebook called ${command.name}`;
+    case "notes":
+      return "Show your notebooks";
     case "run":
       return `Run \`${command.command}\` in ${command.folder ?? "your home folder"}, in your terminal (you confirm first)`;
     case "unknown":
