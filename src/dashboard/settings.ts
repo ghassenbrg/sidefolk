@@ -223,6 +223,15 @@ export function renderSettings(app: App, arg: string) {
       row("Your data", `Your companion, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
       row("Logs", "Errors and crashes, to attach to a bug report.", button("Show in Finder", () => void invoke("reveal_data_dir", { logs: true }))),
       row("Setup guide", "The five-step introduction from the first launch.", button("Run setup again", () => app.go("setup", "start"))),
+      row(
+        "Report a problem",
+        "Copies a short report (versions, settings, recent errors; never your reminders, notes or names) to paste into an email or an issue.",
+        button("Copy report", () =>
+          void invoke<string>("problem_report")
+            .then((report) => navigator.clipboard.writeText(report))
+            .then(() => app.toast("Report copied. Add what happened at the top, then send it."), (error) => app.toast(String(error), undefined, true)),
+        ),
+      ),
       h(
         "div",
         { class: "help" },

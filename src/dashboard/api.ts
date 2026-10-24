@@ -269,6 +269,8 @@ function preview(): typeof tauriInvoke {
         return null;
       case "save_template":
         return "Saved to Downloads as sidefolk-character-template.png. (Preview: nothing saved.)";
+      case "problem_report":
+        return "Sidefolk preview on macOS (preview)\n\nWhat happened, and what did you expect?\n";
       case "install_cli":
         return "Installed. (Preview: nothing changed.)";
       case "allow_terminal_control":

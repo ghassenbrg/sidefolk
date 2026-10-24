@@ -200,6 +200,37 @@ pub fn reveal_data_dir(shared: State<'_, Arc<Shared>>, logs: Option<bool>, notes
     std::process::Command::new("open").arg(dir).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
+/// "Report a problem": what someone helping needs, as plain text the user copies and sends
+/// themselves. Versions, settings, which tools are connected and the latest error lines; never
+/// reminders, notes, names or agent text.
+#[tauri::command]
+pub fn problem_report(shared: State<'_, Arc<Shared>>) -> String {
+    let (dir, settings) = {
+        let store = shared.settings.lock().unwrap();
+        (store.dir.clone(), serde_json::to_string_pretty(&store.value).unwrap_or_default())
+    };
+    let macos = std::process::Command::new("sw_vers")
+        .arg("-productVersion")
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_default();
+    let mut logs = String::new();
+    for name in ["page.log", "crash.log"] {
+        if let Ok(text) = fs::read_to_string(dir.join("logs").join(name)) {
+            let lines: Vec<&str> = text.lines().collect();
+            logs.push_str(&format!("--- {name} (last {} lines)\n{}\n", lines.len().min(40), lines[lines.len().saturating_sub(40)..].join("\n")));
+        }
+    }
+    if logs.is_empty() {
+        logs.push_str("(no errors logged)\n");
+    }
+    format!(
+        "Sidefolk {} on macOS {macos} ({})\n\nWhat happened, and what did you expect?\n\n\n--- settings\n{settings}\n{logs}",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::ARCH
+    )
+}
+
 /// Something for the companion to do, from the Sidefolk window or the tray (see "pet-action" in
 /// main.ts): run a command, rename, answer a request, open a session, open the reminder form.
 #[tauri::command]

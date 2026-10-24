@@ -222,6 +222,7 @@ fn main() {
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
             actions::allow_terminal_control,
+            prefs::problem_report,
             characters::list_characters,
             characters::save_character,
             characters::character_frames,

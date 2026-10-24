@@ -33,7 +33,7 @@ def material(name, rgb, roughness=.85, plush=False):
     bsdf.inputs['Roughness'].default_value = roughness
     bsdf.inputs['Specular IOR Level'].default_value = .22
     if plush:
-        bsdf.inputs['Sheen Weight'].default_value = .22
+        bsdf.inputs['Sheen Weight'].default_value = .055
         bsdf.inputs['Sheen Roughness'].default_value = .8
         tex = nodes.new('ShaderNodeTexNoise')
         tex.name = 'Fine woven plush grain'
@@ -47,10 +47,12 @@ def material(name, rgb, roughness=.85, plush=False):
         bsdf.inputs['Subsurface Weight'].default_value = .035
     return mat
 
-ivory = material('Plush • warm ivory', (.965, .929, .855), plush=True)
-charcoal = material('Plush • charcoal ear tips', (.19, .195, .21), plush=True)
+ivory = material('Plush • warm ivory', (.92, .865, .76), plush=True)
+charcoal = material('Plush • charcoal ear tips', (.09, .10, .12), plush=True)
+charcoal.node_tree.nodes['Principled BSDF'].inputs['Sheen Weight'].default_value = .015
+charcoal.node_tree.nodes['Principled BSDF'].inputs['Specular IOR Level'].default_value = .12
 eyes = material('Face • soft black', (.135, .14, .155), .56)
-mint = material('Scarf • seafoam mint', (.40, .78, .68), plush=True)
+mint = material('Scarf • seafoam mint', (.23, .65, .52), plush=True)
 floor_mat = material('Studio • warm white', (.98, .969, .945), .96)
 
 root = bpy.data.objects.new('Mint Bunny • move character here', None)
@@ -121,15 +123,18 @@ def surface(name, func, mat, lat=64, lon=96, tip_mat=None, tip_ring=0):
     return obj
 
 ellipsoid('Body • rounded bean', (0, .04, .82), (.95, .61, .78), ivory)
-ellipsoid('Foot • left', (-.46, -.25, .205), (.40, .46, .205), ivory)
-ellipsoid('Foot • right', (.46, -.25, .205), (.40, .46, .205), ivory)
+for side, label in [(-1, 'left'), (1, 'right')]:
+    foot = ellipsoid('Foot • '+label, (side*.46, -.25, .205), (.40, .46, .205), ivory)
+    for vert in foot.data.vertices:
+        z = vert.co.z/.205
+        vert.co.z = .205*math.copysign(abs(z)**.68, z)
 ellipsoid('Arm • left', (-.99, -.015, .91), (.275, .30, .46), ivory, math.radians(29))
 ellipsoid('Arm • right', (.99, -.015, .91), (.275, .30, .46), ivory, math.radians(-29))
 
 def head_shape(v, u):
     c, s = math.cos(v), max(0, math.sin(v))
-    z = 2.53 + .91*math.copysign(abs(c)**.80, c)
-    width = 1.235*(s**.78)*(1-.095*c)
+    z = 2.53 + .91*math.copysign(abs(c)**(1 if c >= 0 else .74), c)
+    width = 1.235*(s**(1 if c >= 0 else .76))*(1-.095*c)
     return (width*math.cos(u), .015+.745*(s**.82)*math.sin(u), z)
 
 head = surface('Head • broad cheeks and soft jaw', head_shape, ivory)
@@ -198,6 +203,9 @@ world.use_nodes = True
 world.node_tree.nodes['Background'].inputs['Color'].default_value = (.80, .84, .90, 1)
 world.node_tree.nodes['Background'].inputs['Strength'].default_value = .32
 scene.world = world
+floor_bsdf = floor_mat.node_tree.nodes.get('Principled BSDF')
+floor_bsdf.inputs['Emission Color'].default_value = floor_mat.diffuse_color
+floor_bsdf.inputs['Emission Strength'].default_value = .5
 
 def aim(obj, point):
     obj.rotation_euler = (Vector(point)-obj.location).to_track_quat('-Z', 'Y').to_euler()
@@ -210,9 +218,9 @@ def area(name, location, power, size, color):
     obj.location = location
     aim(obj, (0, 0, 2.3))
 
-area('Key • large softbox', (-3.7, -4.5, 7.3), 650, 4.5, (1, .94, .86))
-area('Fill • broad softbox', (4.5, -2.5, 4.7), 420, 4, (.88, .95, 1))
-area('Rim • overhead', (1, 3.5, 6.5), 700, 3.5, (1, .97, .9))
+area('Key • large softbox', (-3.7, -4.5, 7.3), 950, 4.5, (1, .94, .86))
+area('Fill • broad softbox', (4.5, -2.5, 4.7), 600, 4, (.88, .95, 1))
+area('Rim • overhead', (1, 3.5, 6.5), 900, 3.5, (1, .97, .9))
 
 data = bpy.data.cameras.new('Portrait • reference front')
 cam = bpy.data.objects.new(data.name, data)
@@ -225,13 +233,15 @@ data.lens = 65
 scene.camera = cam
 
 scene.render.engine = 'CYCLES'
-scene.cycles.samples = 64
+scene.cycles.samples = 128
 scene.cycles.use_denoising = True
-scene.render.resolution_x = 1000
-scene.render.resolution_y = 1000
+scene.render.resolution_x = 1200
+scene.render.resolution_y = 1200
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = 'PNG'
 scene.view_settings.view_transform = 'AgX'
+scene.view_settings.look = 'AgX - Medium High Contrast'
+scene.view_settings.exposure = .5
 scene.render.film_transparent = False
 scene.render.filepath = str(OUT / 'mint-bunny-front.png')
 
@@ -242,11 +252,10 @@ if ref.exists():
     image.name = 'REFERENCE • supplied character'
     image.pack()
 
-for obj in scene.objects:
-    obj.select_set(False)
-for obj in character.objects:
-    obj.select_set(True)
-bpy.context.view_layer.objects.active = head
+for view_layer in scene.view_layers:
+    for obj in view_layer.objects:
+        obj.select_set(obj.name in character.objects, view_layer=view_layer)
+    view_layer.objects.active = head
 for screen in bpy.data.screens:
     for ar in screen.areas:
         if ar.type == 'VIEW_3D':
@@ -255,7 +264,8 @@ for screen in bpy.data.screens:
 
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT / 'mint-bunny.blend'))
 bpy.ops.export_scene.gltf(filepath=str(OUT / 'mint-bunny.glb'), export_format='GLB',
-                          use_selection=True, export_animations=False,
+                          use_selection=True, use_visible=True, use_active_scene=True,
+                          export_animations=False,
                           export_cameras=False, export_lights=False)
 print({'blend': str(OUT / 'mint-bunny.blend'), 'glb': str(OUT / 'mint-bunny.glb'),
        'parts': len(character.objects)-1,
