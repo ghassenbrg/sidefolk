@@ -51,8 +51,12 @@ Info.plist usage strings), src/calendar.ts (`HeadsUp`: checks each minute while
 when switched on; lead 2–15 min), Today lists next meetings. Release build 3d99851 is running.
 Hand check: switch it on, allow in macOS's dialog, have a meeting with a Meet link in 5 min.
 
+**Also done (c43fc7e):** clicking a Spark opens its own field scoped to its project; hit-test
+masks are built after decode (cached frames gave empty masks: clicks fell through) and the
+topmost companion is tested first. Release build c43fc7e is running.
+
 **Next for an agent (no user needed):** more of PLAN-V2 section 7 (morning brief, weekly wins
-from notebooks, timers); clicking a Spark could open the field scoped to its project; a
+from notebooks, timers); a
 character export as one file; sizing the overlay to the companions (fixes black Mission Control
 previews even with "Hide from screen recordings" on, and saves GPU).
 

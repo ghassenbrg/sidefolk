@@ -6,7 +6,7 @@ The film file includes short hair; the GLB deliberately exports the skinned surf
 import bpy
 import math
 from pathlib import Path
-from mathutils import Vector
+from mathutils import Vector, Quaternion
 
 OUT = Path('/Users/ghassenbrg/git/sidefolk/output/mint-bunny-film')
 OUT.mkdir(parents=True, exist_ok=True)
@@ -333,14 +333,13 @@ def distance_segment(p,a,b):
     return (p-(a+t*ab)).length
 
 def body_weights(p):
+    # Continuous capsule weights avoid a hard seam between the paw and hip.
     side='L' if p.x<0 else 'R'
-    if abs(p.x)>.63 and p.z>.67:
-        names=['Chest','UpperArm.'+side,'Forearm.'+side,'Paw.'+side]
-    elif p.z<.76:
-        names=['Pelvis','Thigh.'+side,'Shin.'+side,'Foot.'+side]
-    else: names=['Pelvis','Spine','Chest','Neck']
-    ds=sorted([(distance_segment(p,*bones[n]),n) for n in names])[:3]
-    return {n:1/(d+.09)**5 for d,n in ds}
+    radii={'Pelvis':.64,'Spine':.61,'Chest':.56,'Neck':.42,
+           'UpperArm.'+side:.29,'Forearm.'+side:.28,'Paw.'+side:.30,
+           'Thigh.'+side:.35,'Shin.'+side:.31,'Foot.'+side:.40}
+    ds=sorted([(distance_segment(p,*bones[n])/r,n) for n,r in radii.items()])[:4]
+    return {n:1/(d+.12)**8 for d,n in ds}
 
 bind(body,body_weights); bind(head,fixed('Head')); bind(tail,fixed('Tail'))
 for ear,label in zip(ears,['L','R']):
@@ -418,9 +417,9 @@ for clip,end in [('Idle',97),('Hello',73)]:
         rig.pose.bones['Scarf.02'].rotation_euler[1]=.04*math.sin(t*2*math.pi-1)
         if clip=='Hello':
             lift=math.sin(math.pi*t)**.7
-            rig.pose.bones['UpperArm.R'].rotation_euler[0]=-.4*lift
-            rig.pose.bones['UpperArm.R'].rotation_euler[2]=1.1*lift
-            rig.pose.bones['Forearm.R'].rotation_euler[2]=.35*lift
+            for name,angle in [('UpperArm.R',-1.65*lift),('Forearm.R',-.48*lift)]:
+                q=rig.data.bones[name].matrix_local.to_quaternion()
+                rig.pose.bones[name].rotation_euler=(q.inverted()@Quaternion((0,1,0),angle)@q).to_euler('XYZ')
             rig.pose.bones['Paw.R'].rotation_euler[0]=.3*math.sin(t*8*math.pi)*lift
             rig.pose.bones['Head'].rotation_euler[1]+=.06*lift
         for pb in rig.pose.bones:
