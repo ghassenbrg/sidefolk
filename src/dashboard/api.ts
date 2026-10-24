@@ -26,7 +26,7 @@ export type Settings = {
   volume: number;
   speak: boolean;
   voice: string;
-  terminal: "auto" | "terminal" | "iterm" | "ghostty" | "wezterm" | "kitty" | "alacritty";
+  terminal: "auto" | "sidefolk" | "terminal" | "iterm" | "ghostty" | "wezterm" | "kitty" | "alacritty";
   hide_from_dock: boolean;
 };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
@@ -78,6 +78,8 @@ const emit = (event: string, payload: unknown) => handlers.get(event)?.forEach((
 
 /** Browser preview only: sample data so the window can be looked at without the app. */
 function preview(): typeof tauriInvoke {
+  const ptys = [{ id: 1, title: "claude · api", cwd: "/Users/you/git/api", alive: true }];
+  let ptyEnd = 40;
   const now = Date.now();
   const api = "/Users/you/git/api";
   const web = "/Users/you/git/website";
@@ -338,7 +340,26 @@ function preview(): typeof tauriInvoke {
           { name: "Daniel", language: "en_GB" },
         ];
       case "terminals":
-        return ["ghostty", "iterm", "terminal"];
+        return ["ghostty", "iterm", "terminal", "sidefolk"];
+      // A terminal inside Sidefolk that echoes what's typed; no shell runs in the preview.
+      case "pty_list":
+        return ptys;
+      case "pty_open":
+        ptys.push({ id: ptys.length + 1, title: "shell · you", cwd: "/Users/you", alive: true });
+        return null;
+      case "pty_attach":
+        return { data: "Preview: no shell runs here.\r\n$ ", end: ptyEnd, alive: true };
+      case "pty_write": {
+        const { id, data } = args as { id: number; data: string };
+        const end = (ptyEnd += data.length);
+        setTimeout(() => emit("pty-data", { id, data: data === "\r" ? "\r\n$ " : data, end }), 10);
+        return null;
+      }
+      case "pty_resize":
+        return null;
+      case "pty_close":
+        ptys.splice(ptys.findIndex((t) => t.id === (args as { id: number }).id), 1);
+        return null;
       case "open_session":
         return { how: "focused", message: "Opened in Ghostty." };
       case "tray_action":

@@ -126,6 +126,13 @@ for (const scheme of ["light", "dark"]) {
   await page.locator(".crew-choice").nth(9).waitFor();
   await page.locator("#setting-accent").selectOption({ label: "Coral" });
   await page.locator("#toast").getByText("wears coral now", { exact: false }).waitFor();
+  // A terminal inside Sidefolk: keys go to it and its output shows.
+  await page.goto(base + "/settings.html?tab=terminal:1");
+  await page.locator(".term-host .xterm-rows").waitFor();
+  await page.locator(".term-host").click();
+  await page.keyboard.type("echo hi");
+  await page.locator(".term-host .xterm-rows").getByText("echo hi", { exact: false }).waitFor();
+  if (scheme === "light") await page.screenshot({ path: join(out, "terminal.png") });
   // A saved action runs quietly and offers its output.
   await page.goto(base + "/settings.html?tab=actions");
   await page.getByRole("button", { name: "Run quietly" }).first().click();

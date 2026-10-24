@@ -179,6 +179,16 @@ lists today's meetings and reminders, then overnight agent work (src/away.ts `mo
 `<name>.sidefolk.png` sheet (transparent, template layout) that imports as it is; the importer's
 light outline is optional. Release build from the export commit is running.
 
+**Terminal inside Sidefolk (24 Oct, Claude):** the user asked to open Claude sessions in a
+terminal inside Sidefolk. "Inside Sidefolk" (`terminal = "sidefolk"`) is a default-terminal
+choice: src-tauri/src/inside.rs runs the login shell on a PTY (portable-pty), types the command,
+keeps the last 1 MB of output and streams `pty-data` {id, data, end} to the window;
+src/dashboard/terminal.ts draws tabs with xterm.js (route `terminal:<id>`, under Sessions).
+Open session on a live session matches its tty to an inside terminal and brings that tab
+forward. Ghostty 1.3+ now opens through AppleScript (no "Allow Ghostty to execute" prompt).
+Verified: 34 Rust tests (a PTY test), WebKit (typing echoes in the preview). Not yet hand-checked
+with a real Claude session: choose Inside Sidefolk in Settings, start a session, Open session.
+
 **The crew, 3D and 2D (24 Oct, Claude; decision 38):** the user sent ten reference photos with
 names for 6–10 (Lumi, Pixel, Otis, Rune, Sprout) and asked for high-fidelity characters, a 3D/2D
 choice and easier custom characters. A live three.js trial with the Blender film rigs was dropped

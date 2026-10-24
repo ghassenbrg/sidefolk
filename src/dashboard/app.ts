@@ -12,6 +12,7 @@ import { renderRequests, renderReview } from "./requests";
 import { renderSessions } from "./sessions";
 import { prepareSettings, renderSettings } from "./settings";
 import { renderSetup } from "./setup";
+import { renderTerminal } from "./terminal";
 import { tellBar } from "./tell";
 import { picture } from "../roster";
 
@@ -61,7 +62,7 @@ const NAV: [string, string, IconName][] = [
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today", characters: "settings" };
+const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today", characters: "settings", terminal: "sessions" };
 
 const main = document.querySelector<HTMLElement>("main")!;
 const topbar = document.querySelector<HTMLElement>("#topbar")!;
@@ -227,6 +228,7 @@ function draw(focus: boolean) {
       notes: renderNotes,
       sessions: renderSessions,
       characters: renderCharacters,
+      terminal: renderTerminal,
       actions: renderActions,
       settings: renderSettings,
       setup: renderSetup,

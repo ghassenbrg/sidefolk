@@ -11,7 +11,7 @@ use std::{
 use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::ManagerExt;
 
-const WINDOW: &str = "settings";
+pub(crate) const WINDOW: &str = "settings";
 /// Logs are for the user to read or attach to a bug report; they never leave this Mac.
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
@@ -106,7 +106,7 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
     check(&change.theme, "Theme", &["system", "light", "dark"])?;
     check(&change.art_style, "Style", &["3d", "2d"])?;
     check(&change.pet_size, "Pet size", &["small", "medium", "large"])?;
-    check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
+    check(&change.terminal, "Terminal", &["auto", "sidefolk", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
     if let Some(shortcut) = change.shortcut.as_deref() {
         crate::tray::register_shortcut(&app, shortcut)?;
     }

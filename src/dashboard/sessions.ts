@@ -20,11 +20,14 @@ export function renderSessions(app: App) {
     charactersLoaded = true;
     void characters().then(() => app.redraw(true));
   }
-  const view = h("div", { class: "view sessions" }, h("div", { class: "page-heading" }, h("div", {}, ...header("Sessions", "Pick up where your AI tools left off.")), button([icon("plus"), "New session"], () => {
-    let close = () => {};
-    const editor = sheet("New session", newSession(app, () => close()));
-    close = editor.close;
-  }, "primary")));
+  const view = h("div", { class: "view sessions" }, h("div", { class: "page-heading" }, h("div", {}, ...header("Sessions", "Pick up where your AI tools left off.")), h("div", { class: "inline" },
+    // Sessions run in Sidefolk's own terminal when it's the default (src/dashboard/terminal.ts).
+    app.state.settings.terminal === "sidefolk" ? button([icon("terminal"), "Terminal"], () => app.go("terminal")) : null,
+    button([icon("plus"), "New session"], () => {
+      let close = () => {};
+      const editor = sheet("New session", newSession(app, () => close()));
+      close = editor.close;
+    }, "primary"))));
   const running = h("section", { class: "card list", "aria-label": "Running sessions" });
   const finished = h("section", { class: "card list", "aria-label": "Recently finished" });
   const fill = () => {

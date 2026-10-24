@@ -38,7 +38,9 @@ Open it from the Dock, the menu bar icon, or "open Sidefolk".
 - **Reminders** (⌘2, ⌘N for a new one): add, edit, repeat, snooze, history.
 - **Notes** (⌘3): notebooks, search, edit, copy as Markdown. "Draft a summary…" asks your own
   Claude Code or Codex to group a notebook by theme; it says what it sends first.
-- **Sessions** (⌘4): running and finished sessions, starting new ones, Sparks.
+- **Sessions** (⌘4): running and finished sessions, starting new ones, Sparks. With **Inside
+  Sidefolk** as the default terminal (Settings → AI tools), sessions, commands and continued
+  sessions open in Sidefolk's own Terminal tabs instead of another app.
 - **Actions** (⌘5): your saved commands and links.
 - **Settings** (⌘,): searchable categories for appearance, companion, reminders and calendar, sound, AI tools, privacy, accessibility and your data.
   **Appearance → Theme** offers System (default), Light and Dark. The choice saves automatically and applies to windows and companion cards. System follows your Mac while Sidefolk is running.

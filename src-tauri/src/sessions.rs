@@ -197,6 +197,9 @@ fn app_path(key: &str) -> Option<PathBuf> {
 }
 
 pub(crate) fn terminal_for(choice: &str, recent: Option<&Path>) -> &'static str {
+    if choice == "sidefolk" {
+        return "sidefolk";
+    }
     let installed = |key: &str| app_path(key).is_some();
     if let Some((key, _)) = TERMINALS.iter().find(|(k, _)| *k == choice && installed(k)) {
         return key;
@@ -215,6 +218,7 @@ pub(crate) fn terminal_for(choice: &str, recent: Option<&Path>) -> &'static str 
 pub(crate) fn run_in_terminal(terminal: &str, cwd: &str, command: &str) -> Result<&'static str, String> {
     let line = format!("cd {} && {command}", quote(cwd));
     match terminal {
+        "sidefolk" => crate::inside::open(cwd, command),
         "iterm" => {
             let ok = osascript(&format!(
                 "tell application \"iTerm2\"\nactivate\nset w to (create window with default profile)\ntell current session of w to write text {}\nend tell",
@@ -272,6 +276,7 @@ pub struct Opened {
 /// Opens an agent session: the live one where it runs, otherwise a resumed one in a terminal.
 #[tauri::command]
 pub async fn open_session(
+    app: AppHandle,
     shared: State<'_, std::sync::Arc<Shared>>,
     source: String,
     session: String,
@@ -284,6 +289,11 @@ pub async fn open_session(
     let key = format!("{source}:{session}");
     let host = shared.hosts.get(&key);
     if resume != Some(true) {
+        // Running in one of Sidefolk's own terminals: that tab comes forward.
+        if let Some(id) = host.as_ref().filter(|h| alive(h.pid)).and_then(|h| h.tty.as_deref()).and_then(crate::inside::by_tty) {
+            crate::prefs::open_at(&app, &format!("terminal:{id}")).map_err(|e| e.to_string())?;
+            return Ok(Opened { how: "focused", message: "It's in Sidefolk's terminal.".into() });
+        }
         if let Some(host) = host.as_ref().filter(|h| h.app.is_some() && alive(h.pid)) {
             let host = host.clone();
             let message = tauri::async_runtime::spawn_blocking(move || focus(&host)).await.map_err(|e| e.to_string())??;
@@ -317,10 +327,10 @@ pub(crate) fn chosen_terminal(shared: &Shared) -> &'static str {
     terminal_for(&choice, recent.as_deref())
 }
 
-/// Terminals installed on this Mac, for Settings.
+/// Terminals installed on this Mac, then Sidefolk's own, for Settings.
 #[tauri::command]
 pub fn terminals() -> Vec<&'static str> {
-    TERMINALS.iter().map(|(k, _)| *k).filter(|k| app_path(k).is_some()).collect()
+    TERMINALS.iter().map(|(k, _)| *k).filter(|k| app_path(k).is_some()).chain(["sidefolk"]).collect()
 }
 
 #[cfg(test)]

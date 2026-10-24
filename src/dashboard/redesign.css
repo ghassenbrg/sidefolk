@@ -139,3 +139,11 @@ nav { overflow-y: auto; }
   .notebook-sidebar { display: flex; flex-wrap: wrap; gap: var(--space-2); }
   .notebook-sidebar button { width: auto; }
 }
+
+/* Terminals inside Sidefolk: tabs, then the terminal filling the rest of the window. */
+.terminals .term-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
+.terminals .term-tab { display: inline-flex; gap: var(--space-2); align-items: center; padding: var(--space-1) var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-card); background: none; color: var(--ink); font: inherit; cursor: pointer; }
+.terminals .term-tab[aria-selected="true"] { background: var(--mint-soft); border-color: var(--focus); }
+.terminals .term-tab.ended { color: var(--muted); }
+.terminals .term-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
+.terminals .term-host { height: calc(100vh - 340px); min-height: 240px; padding: var(--space-2); border: 1px solid var(--control-border); border-radius: var(--radius-card); background: var(--surface); overflow: hidden; }

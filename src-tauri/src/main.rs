@@ -10,6 +10,7 @@ mod claude_setup;
 mod codex;
 mod crew;
 mod hooks;
+mod inside;
 mod journal;
 mod mcp;
 mod mcp_setup;
@@ -258,6 +259,12 @@ fn main() {
             dispatch,
             overlay_typing,
             overlay::overlay_area,
+            inside::pty_open,
+            inside::pty_list,
+            inside::pty_attach,
+            inside::pty_write,
+            inside::pty_resize,
+            inside::pty_close,
             overlay::overlay_frame,
             ui_log,
             get_settings,
@@ -312,6 +319,7 @@ fn main() {
                 shared.reminders.schedule_with(sender);
             }
             prefs::apply_theme(app.handle(), &shared.settings.lock().unwrap().value.theme);
+            inside::init(app.handle());
             app_menu::apply_dock(app.handle());
             app.set_menu(app_menu::build(app.handle())?)?;
             app.on_menu_event(|app, event| app_menu::handle(app, event.id().as_ref()));
