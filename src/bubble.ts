@@ -45,6 +45,7 @@ export type Card = {
 export type PromptOptions = {
   who: string;
   placeholder: string;
+  value?: string;
   /** Says what Enter will do with the current text, so nothing (or no quota) is a surprise. */
   preview?: (text: string) => string;
   /** One-tap starters shown under an empty field. */
@@ -267,6 +268,7 @@ export class Bubble {
     this.root.setAttribute("aria-label", options.who);
     const input = el("input", "");
     input.placeholder = options.placeholder;
+    input.value = options.value ?? "";
     input.maxLength = 2000;
     input.setAttribute("aria-label", options.placeholder);
     const preview = el("p", "hint", "Enter to send · Esc to close");

@@ -34,6 +34,14 @@ pub struct Reminder {
     pub fired: bool,
     /// Comes back after it's done (the companion moves `due` to the next time; src/when.ts).
     pub repeat: Option<Repeat>,
+    pub history: Vec<History>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct History {
+    pub at: u64,
+    pub action: String,
+    pub due: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -61,6 +69,7 @@ impl Default for Reminder {
             done: false,
             fired: false,
             repeat: None,
+            history: Vec::new(),
         }
     }
 }
@@ -74,6 +83,8 @@ pub struct Change {
     pub repeat: Option<Repeat>,
     #[serde(default)]
     pub clear_repeat: bool,
+    #[serde(default)]
+    pub completed: bool,
 }
 
 pub struct Reminders {
@@ -141,6 +152,7 @@ impl Reminders {
             from: from.to_string(),
             created: now,
             repeat: repeat.filter(Repeat::valid),
+            history: vec![History { at: now, action: "Created".into(), due }],
             ..Default::default()
         };
         let mut next = list.clone();
@@ -156,6 +168,7 @@ impl Reminders {
         let Some(r) = next.iter_mut().find(|r| r.id == id) else {
             return Ok(false);
         };
+        let old_due = r.due;
         if let Some(text) = &change.text {
             let text: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
             if text.is_empty() {
@@ -177,6 +190,13 @@ impl Reminders {
         }
         if let Some(fired) = change.fired {
             r.fired = fired;
+        }
+        let action = if change.completed || change.done == Some(true) { Some("Completed") }
+            else if change.text.is_some() || change.repeat.is_some() || change.clear_repeat { Some("Edited") }
+            else if change.due.is_some() { Some("Rescheduled") } else { None };
+        if let Some(action) = action {
+            r.history.push(History { at: now_ms(), action: action.into(), due: if action == "Completed" { old_due } else { r.due } });
+            if r.history.len() > 50 { r.history.drain(..r.history.len() - 50); }
         }
         self.write(&next)?;
         *list = next;
@@ -235,7 +255,10 @@ mod tests {
         store.restore(removed.clone()).unwrap();
         assert_eq!(rx.recv().unwrap(), vec![removed]);
         store.update(&r.id, &Change { done: Some(true), ..Default::default() }).unwrap();
-        assert!(rx.recv().unwrap()[0].done);
+        let completed = rx.recv().unwrap().remove(0);
+        assert!(completed.done);
+        assert_eq!(completed.history.last().unwrap().action, "Completed");
+        assert_eq!(completed.history.last().unwrap().due, r.due + 60_000);
         assert!(store.add("", 0, "", "you", None).is_err());
         assert!(rx.try_recv().is_err());
         fs::remove_dir_all(dir).unwrap();

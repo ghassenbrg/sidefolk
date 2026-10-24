@@ -51,50 +51,38 @@ Verified: typecheck, vitest, cargo test, `npm run check:webkit` (now also setup 
 reminders:new). Not yet checked in the real app (release build pending; the user's release
 build holds port 47821, so the dev app can't start while it runs).
 
-**Continuation — 24 October, Codex:** Native scheduled notifications implemented in
-`src-tauri/src/notifications.rs` (objc2 UserNotifications), wired at the store so UI and MCP
-mutations schedule/cancel alike. Setup “Where it lives” and Settings expose permission and
-scheduling errors; only the user's Allow click requests permission. Notification clicks open
-`reminders:<id>`. An unbundled dev binary skips the native API (it requires an app bundle).
-Only the next occurrence is scheduled; completing a repeat advances it. Verification:
-typecheck, 43 Vitest tests, Rust tests (22 passed, 2 intentionally ignored), WebKit views.
-Native quit/delivery/click verification is still pending the rebuilt .app; don't call phase 3
-finished until this is checked. Next: repeat picker/edit + window repeat completion, then
-companion Undo browser behavior, section 6.1 acceptance, build/relaunch, phase 4.
+**Phase 3 implementation — 24 October, Codex; acceptance still pending:**
+- `e6adaf4`: scheduled macOS local notifications via objc2 UserNotifications. Store-level
+  scheduling covers UI/MCP adds, updates, remove/Undo; reconciles at launch. Only the next
+  occurrence is queued. Permission is requested by the user's Allow button in setup step 3
+  or Settings → Shortcut and startup. Unbundled dev executables skip the native API.
+- `3eb51e4`: repeat picker/edit, 1–52 intervals, explicit clearing, window completion advances
+  repeats. Preview stores preserve edits. Browser tests cover repeat add/edit/complete/clear,
+  delete/Undo and companion key r→Save→Undo→empty list in both themes.
+- Capture now previews Save / Change; Change keeps the text. Reminder Open goes to details
+  and persisted history (last 50 actions). Window offers snooze; window changes clear stale
+  companion requests. Voice-style offsets and date-first capture work locally.
+- Verified: typecheck, 46 Vitest tests, DST tests under TZ=Europe/Paris, Rust tests, WebKit.
+  Bundled debug app: hidden reminder arrived, Pip held a note, no keyboard focus theft
+  (`overlay_key=false`, `unoccluded=true` in /tmp/sidefolk-native-check.log). Snooze persisted
+  a future due time, reset fired, and added history. No screenshots or live model calls.
+- **Native permission is `notRequested`.** Scheduling returns UNErrorDomain 1 until the user
+  allows notifications. Do not mark phase 3 done: quit-time delivery/click-through and actual
+  sleep/wake checks are still pending. Next native check: user clicks Allow notifications in
+  setup/Settings, set a near-future reminder, quit, wait, click its notification, verify the
+  details/history, then a real sleep/wake reminder. DST browser/unit checks already pass.
+- Release rebuild/relaunch is in progress for this continuation; check the final handoff below.
 
-**Repeat controls and browser acceptance — 24 October, Codex:** Window add/edit has
-None / Daily / Weekdays / Weekly / Monthly plus 1–52 intervals. Rust Change supports repeat
-and explicit clear_repeat; unrelated edits preserve recurrence, invalid repeats are rejected.
-Window completion now advances repeats (including early completion); preview stores preserve
-repeat edits too. WebKit checks now exercise add→edit→complete→clear repeat→delete→Undo in
-light and dark, plus companion key r→Undo→empty reminders. All passed, along with typecheck,
-43 Vitest, 22 Rust tests (+2 ignored). Remaining section 6.1 work found during review:
-pre-save Save/Change confirmation, Open/details/history, and native hidden/quit/sleep checks.
-Do not mark phase 3 complete merely from unit/browser checks. Next implement those small gaps,
-then build HEAD/relaunch and verify native behavior; continue session basics afterward.
-
-**Phase 3 (reminders) IN PROGRESS, all committed, everything green:**
-- Done: `src/when.ts` `takeRepeat` / `nextDue` (local wall-clock, DST-safe, monthly clamps to
-  short months) / `describeRepeat`; `parseReminder` returns `repeat` (tests in when.test.ts).
-  Rust `Reminder.repeat: Option<Repeat {every, n}>` (validated), `add_reminder(..., repeat)`.
-  Companion: Done on a repeating reminder moves `due` to `nextDue` instead of closing it;
-  replies and previews say "every weekday, from tomorrow 09:00". Window form passes the repeat
-  typed in the title and shows ", then every …" on rows.
-- Also done: offsets ("10 minutes before the call tomorrow at 3"; an offset landing in the past
-  is refused) in when.ts with tests; Undo in the window's toast right after adding a reminder.
-- Also done: Undo on the companion (src/reminders.ts `confirm()`: a card with Undo / OK for 8 s;
-  `ReminderStore.remove`). Not yet tried in the real app or the preview by hand.
-- Next, in order: (3) Reminders fire when Sidefolk is quit: schedule macOS local notifications
-  (UNUserNotificationCenter via objc2-user-notifications, request permission in setup step 3;
-  schedule on add/update/remove, cancel by reminder id; for repeats schedule only the next one,
-  re-scheduled when the app next runs). Tauri's notification plugin was removed in phase 0
-  because it can't schedule while quit; check before re-adding. (4) Window: repeat picker on the
-  form (None / Every day / Weekdays / Weekly / Monthly) and edit of repeat (Rust `Change` needs
-  `repeat`, use `Option<Option<Repeat>>` with `#[serde(default, with = ...)]` or a `clear_repeat`
-  flag). (5) PLAN-V2 section 6.1 checks on the real Mac, then mark row 3 done.
-- Release build of the phase 2 commit finished (`npm run build`) but was not relaunched; the
-  user's running /Applications build is still phase 0. Build again from HEAD and relaunch
-  (quit Sidefolk, `open` the new .app; retry `open` once after a short wait on error -600).
+**Phase 4 started — host lookup:** CLI `.../claude.app/Contents/MacOS/claude` is skipped while
+walking parents, so the real Claude desktop/terminal app is selected. Terminal/iTerm focus
+reports success only when a matching tab was actually selected. macOS open failure is now
+reported. Claude/Ghostty fallback explicitly says to select the session inside the app.
+A live test with a running Claude desktop CLI process passed: parent resolved to
+/Applications/Claude.app and frontmost bundle became com.anthropic.claudefordesktop.
+No model call. Exact chat selection within Claude remains unsupported (honest fallback).
+Next phase 4 work: local command preview/execution (no AI), per-session full access for
+Sidefolk-started sessions, terminal/session-app defaults, Automation setup explanation,
+end-to-end Terminal/Ghostty/iTerm checks. Then phases 5–8 from PLAN-V2 section 10.
 
 - Then phases 3–8 per docs/PLAN-V2.md section 10 (detailed design notes for each are in the
   conversation summary).
@@ -102,7 +90,7 @@ then build HEAD/relaunch and verify native behavior; continue session basics aft
 - PLAN-V2 = review, direction (companion assistant, value before customization), MVP pillars
   in order (Reminders, Notes, AI sessions, Quick actions), brainstorm, keep/rework/park,
   roadmap phases 0–8 with "done when" checks run in the real app.
-- Verified finding: Open session picks the agent's own bundled binary
+- Historical cause (fixed above): Open session picked the agent's own bundled binary
   (`…/claude-code/<ver>/…/claude.app/Contents/MacOS/claude`) as the host for Claude desktop
   sessions (`bundle_of` in src-tauri/src/sessions.rs takes the first `.app`), so nothing visible
   opens. Fix belongs to phase 5 (or phase 0 if the user wants it sooner).

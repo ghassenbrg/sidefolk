@@ -107,7 +107,7 @@ function applySettings(next: Settings | null) {
 applySettings(settings);
 reducedMotion.addEventListener("change", () => applySettings(settings));
 const reminders = new Reminders(companion, reminderStore);
-if (inTauri) reminders.manage = () => host.openTab?.("reminders");
+if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();
 

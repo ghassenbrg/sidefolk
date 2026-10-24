@@ -28,6 +28,7 @@ export function parse(input: string): Command {
   if (/^(continue|resume)$/.test(lower)) return { kind: "open", project: null };
   if ((m = text.match(/^(?:rename (?:yourself |you )?to|call yourself|your name is)\s+(.+)$/i))) return { kind: "rename", name: m[1].trim() };
   if (/^(hide|go away|hide yourself)$/.test(lower)) return { kind: "hide" };
+  if ((/^(tomorrow|today|tonight|in \d+|every|daily|weekdays|monthly)\b/i.test(text) || /\bremind me\b.+\bbefore\b/i.test(text)) && parseReminder(text)) return { kind: "remind", text };
   return { kind: "unknown", text };
 }
 

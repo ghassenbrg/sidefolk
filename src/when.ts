@@ -76,7 +76,8 @@ function takeOffset(text: string): { rest: string; ms: number } {
 }
 
 export function parseReminder(input: string, now = new Date()): Parsed | null {
-  const { rest: withoutOffset, ms: offset } = takeOffset(input);
+  const { rest: offsetText, ms: offset } = takeOffset(input);
+  const withoutOffset = offset ? offsetText.replace(/[,;]?\s*remind me\s*/i, " ").trim() : offsetText;
   const { rest: text, repeat } = takeRepeat(withoutOffset);
   const results = chrono.parse(text, now, { forwardDate: true });
   const result = results[0];

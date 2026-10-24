@@ -13,12 +13,13 @@ export type Reminder = {
   done: boolean;
   fired: boolean;
   repeat?: Repeat | null;
+  history?: { at: number; action: string; due: number }[];
 };
 
 export type ReminderStore = {
   list(): Promise<Reminder[]>;
   add(text: string, due: number, project: string | null, from?: string, repeat?: Repeat): Promise<Reminder>;
-  update(id: string, change: { done?: boolean; due?: number; fired?: boolean }): Promise<void>;
+  update(id: string, change: { done?: boolean; due?: number; fired?: boolean; completed?: boolean }): Promise<void>;
   remove(id: string): Promise<void>;
   /** Shows the overlay while the pet is hidden (false puts it back). */
   peek(show: boolean): void;
@@ -35,7 +36,7 @@ export class Reminders {
   private list: Reminder[] = [];
   private showing = new Set<string>();
   /** Opens the Settings window's reminder list (desktop app only). */
-  manage?: () => void;
+  manage?: (id?: string) => void;
 
   constructor(
     private readonly companion: Companion,
@@ -49,7 +50,15 @@ export class Reminders {
   }
 
   async reload() {
-    this.list = await this.store.list();
+    const next = await this.store.list();
+    for (const old of this.list) {
+      const current = next.find((r) => r.id === old.id);
+      if (!current || current.done || current.due !== old.due || current.text !== old.text) {
+        this.companion.closeRequest(`reminder-${old.id}`);
+        this.unpeek(old);
+      }
+    }
+    this.list = next;
   }
 
   /** `remind me …` and `reminders` from a command bar. */
@@ -65,7 +74,22 @@ export class Reminders {
     if (kind === "new-reminder") return this.form();
     const parsed = parseReminder(text);
     if (!parsed) return this.askWhen(text.replace(/^(to|about)\s+/i, ""));
-    return this.add(parsed.what, parsed.due, parsed.repeat);
+    return this.propose(parsed.what, parsed.due, parsed.repeat, text);
+  }
+
+  private propose(what: string, due: Date, repeat?: Repeat, original = what) {
+    const bubble = this.companion.pet.bubble;
+    bubble.show({
+      id: "reminder-preview", who: `${this.companion.name} · new reminder`, title: what,
+      lines: [`${due.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}${repeat ? ` · ${describeRepeat(repeat, due)}` : ""}`],
+      choices: [{ label: "Save", value: "save", primary: true }, { label: "Change", value: "change" }],
+      onChoose: (value) => {
+        if (value === "change") return this.form(original);
+        if (due.getTime() <= Date.now()) { bubble.say("That time has passed. Choose a later one.", 5); return this.form(original); }
+        void this.add(what, due, repeat).catch((e) => bubble.say(`Not saved: ${e}`, 6, "fail"));
+      },
+    });
+    return "Review the reminder on the companion, then Save or Change.";
   }
 
   private async add(what: string, due: Date, repeat?: Repeat) {
@@ -93,20 +117,23 @@ export class Reminders {
       onChoose: async (value) => {
         bubble.close(id);
         if (value !== "undo") return;
-        await this.store.remove(reminder.id);
-        this.list = this.list.filter((r) => r.id !== reminder.id);
-        bubble.say("Removed.", 3);
+        try {
+          await this.store.remove(reminder.id);
+          this.list = this.list.filter((r) => r.id !== reminder.id);
+          bubble.say("Removed.", 3);
+        } catch (error) { bubble.say(`Couldn’t undo: ${error}`, 6, "fail"); }
       },
     });
     setTimeout(() => bubble.close(id), 8_000);
   }
 
   /** "New reminder…": one field that takes the time too, or asks for it next. */
-  private form() {
+  private form(value = "") {
     const on = this.companion.pet;
     on.bubble.prompt({
       who: `${on.name} · new reminder`,
       placeholder: "Call the bank tomorrow at 10",
+      value,
       suggestions: ["Stretch in 30 minutes", "Review the PR tomorrow at 10", "Standup Monday at 9:30"],
       preview: (text) => {
         const parsed = parseReminder(text);
@@ -114,7 +141,7 @@ export class Reminders {
       },
       submit: async (text) => {
         const parsed = parseReminder(text);
-        return parsed ? this.add(parsed.what, parsed.due, parsed.repeat) : this.askWhen(text);
+        return parsed ? this.propose(parsed.what, parsed.due, parsed.repeat, text) : this.askWhen(text);
       },
     });
   }
@@ -142,7 +169,7 @@ export class Reminders {
       title: `When should I remind you to ${what}?`,
       lines: ['Or type it with a time, like "tomorrow at 10".'],
       choices: options.map(([label], i) => ({ label, value: String(i), primary: i === 0 })),
-      onChoose: async (value) => on.bubble.say(await this.add(what, options[Number(value)][1]), 5),
+      onChoose: (value) => { this.propose(what, options[Number(value)][1]); },
     });
   }
 
@@ -180,8 +207,12 @@ export class Reminders {
         { label: "In 1 hour", value: "60" },
         { label: "Tomorrow 9:00", value: "tomorrow" },
         { label: "Done", value: "done", primary: true },
+        ...(this.manage ? [{ label: "Open", value: "open", quiet: true }] : []),
       ],
-      onChoose: (value) => void this.answer(r, value),
+      onChoose: (value) => {
+        if (value === "open") { this.unpeek(r); this.manage?.(r.id); return; }
+        void this.answer(r, value).catch((e) => { pet.bubble.say(`Not saved: ${e}`, 6, "fail"); this.show(r, missed); });
+      },
       // Closed without an answer: it stays in the window's Requests; a hidden companion hides again.
       onClose: () => this.unpeek(r),
     });
@@ -197,22 +228,25 @@ export class Reminders {
     this.unpeek(r);
     if (value === "done" && r.repeat) {
       // A repeating reminder isn't finished: it moves to its next time.
-      r.due = nextDue(new Date(r.due), r.repeat, new Date(Math.max(Date.now(), r.due))).getTime();
+      const due = nextDue(new Date(r.due), r.repeat, new Date(Math.max(Date.now(), r.due))).getTime();
+      await this.store.update(r.id, { due, completed: true });
+      r.due = due;
       r.fired = false;
-      return this.store.update(r.id, { due: r.due });
+      return;
     }
     if (value === "done") {
+      await this.store.update(r.id, { done: true });
       r.done = true;
-      return this.store.update(r.id, { done: true });
+      return;
     }
     const due = new Date();
     if (value === "tomorrow") {
       due.setDate(due.getDate() + 1);
       due.setHours(9, 0, 0, 0);
     } else due.setTime(due.getTime() + Number(value) * MINUTE);
+    await this.store.update(r.id, { due: due.getTime() });
     r.due = due.getTime();
     r.fired = false;
-    await this.store.update(r.id, { due: r.due });
   }
 
   private showList() {
@@ -238,7 +272,7 @@ export class Reminders {
 export function memoryStore(): ReminderStore {
   const list: Reminder[] = [];
   return {
-    list: async () => [...list],
+    list: async () => structuredClone(list),
     add: async (text, due, project, from = "you", repeat) => {
       const r = { id: `r${Date.now()}`, text, due, project: project ?? "", from, created: Date.now(), done: false, fired: false, repeat };
       list.push(r);

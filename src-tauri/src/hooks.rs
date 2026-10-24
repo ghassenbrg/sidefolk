@@ -184,10 +184,16 @@ async fn dev_resolve(State((_, shared)): State<Ctx>, headers: HeaderMap, body: B
 
 /// Forwards an action (for example "prompt" or "dismiss") to the page's dev harness.
 #[cfg(debug_assertions)]
-async fn dev_ui(State((app, _)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
+async fn dev_ui(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
     match payload(&headers, &body) {
         Ok(request) => {
             let action = text(&request, "action");
+            if action == "notifications" {
+                return axum::Json(crate::notifications::notification_status().await).into_response();
+            }
+            if action == "reminders" {
+                return axum::Json(shared.reminders.list()).into_response();
+            }
             if ["toggle", "call", "refit"].contains(&action.as_str()) {
                 let handle = app.clone();
                 let _ = app.run_on_main_thread(move || crate::tray::action(&handle, &action));

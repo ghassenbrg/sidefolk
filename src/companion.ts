@@ -150,7 +150,10 @@ export class Companion {
     const tracked: Card = {
       ...card,
       onChoose: (value) => {
-        this.closeRequest(card.id);
+        if (card.meta?.kind === "reminder" && value === "open") {
+          this.pet.bubble.close(card.id);
+          tracked.onClose?.();
+        } else this.closeRequest(card.id);
         card.onChoose(value);
       },
       // Closed with ×: the request still waits (window, menu bar), but Pip stops insisting.

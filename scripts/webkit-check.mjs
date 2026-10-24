@@ -58,6 +58,9 @@ for (const scheme of ["light", "dark"]) {
   assert.equal(await add.getByLabel("Every how many?").inputValue(), "2");
   await add.getByRole("button", { name: "Add reminder" }).click();
   const reminder = page.locator("article.reminder").filter({ hasText: "repeat acceptance" });
+  await reminder.getByRole("button", { name: "Open", exact: true }).click();
+  await page.getByRole("heading", { name: "History", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Back to Reminders" }).click();
   await reminder.getByRole("button", { name: "Edit", exact: true }).click();
   let edit = page.getByRole("form", { name: "Edit repeat acceptance" });
   assert.equal(await edit.getByLabel("Repeat", { exact: true }).inputValue(), "week");
@@ -93,6 +96,7 @@ await overlay.screenshot({ path: join(out, "overlay.png") });
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);
 await overlay.keyboard.press("r");
+await overlay.getByRole("button", { name: "Save", exact: true }).click();
 await overlay.getByRole("button", { name: "Undo", exact: true }).click();
 await overlay.keyboard.press("c");
 await overlay.locator(".bubble input").fill("reminders");

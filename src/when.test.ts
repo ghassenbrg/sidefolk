@@ -96,6 +96,11 @@ describe("offsets", () => {
     expect(at(r.due)).toEqual([23, 14, 50]);
     expect(r.what).toBe("the call");
   });
+  it("reads an offset after the event in voice-style capture", () => {
+    const r = parseReminder("meeting tomorrow at 3, remind me 10 minutes before", now)!;
+    expect(r.what).toBe("meeting");
+    expect(at(r.due)).toEqual([23, 14, 50]);
+  });
   it("reads an hour before", () => {
     const r = parseReminder("remind the team an hour before Friday at 10", now)!;
     expect(at(r.due)).toEqual([23, 9, 0]);

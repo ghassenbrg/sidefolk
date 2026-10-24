@@ -97,7 +97,14 @@ function fields(prefix: string, initial?: Reminder) {
 let editing: string | null = null;
 
 export function renderReminders(app: App, arg = "") {
-  if (arg && arg !== "new" && app.state.reminders.some((r) => r.id === arg && !r.done)) editing = arg;
+  if (arg && arg !== "new") {
+    const r = app.state.reminders.find((r) => r.id === arg);
+    const view = h("div", { class: "view" }, button("Back to Reminders", () => { editing = null; app.go("reminders"); }), ...header(r?.text ?? "Reminder no longer exists", "Reminder details"));
+    if (!r) return view;
+    view.append(r.done ? h("p", { text: "Completed" }) : editing === r.id ? editRow(app, r) : row(app, r, true));
+    view.append(h("h2", { text: "History" }), h("ol", {}, ...(r.history?.length ? r.history : [{ at: r.created, action: "Created", due: r.due }]).map((entry) => h("li", {}, `${longDate(new Date(entry.at))} · ${entry.action} · due ${longDate(new Date(entry.due))}`))));
+    return view;
+  }
   const view = h("div", { class: "view" }, ...header("Reminders", "Small things, remembered."));
   const add = fields("new");
   const form = h("form", { class: "card", "aria-label": "Add a reminder" }, add.node, h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Add reminder" })));
@@ -147,7 +154,7 @@ function rows(app: App): HTMLElement[] {
   return nodes;
 }
 
-function row(app: App, r: Reminder) {
+function row(app: App, r: Reminder, detail = false) {
   const due = new Date(r.due);
   const missed = r.due < Date.now();
   const by = r.from === "you" ? "" : ` · set by ${agentShort(r.from)}`;
@@ -171,6 +178,8 @@ function row(app: App, r: Reminder) {
       h(
         "div",
         { class: "actions" },
+        !detail ? button("Open", () => app.go("reminders", r.id), "quiet") : null,
+        button("Snooze 10 min", () => void update({ due: Date.now() + 600_000 }, "Snoozed for 10 minutes."), "quiet"),
         button("Edit", () => {
           editing = r.id;
           app.redraw(true);
@@ -193,7 +202,7 @@ function row(app: App, r: Reminder) {
             app.toast(String(error), undefined, true);
           }
         }, "quiet"),
-        button([icon("done"), "Mark complete"], () => void update(r.repeat ? { due: nextDue(due, r.repeat, new Date(Math.max(Date.now(), r.due))).getTime() } : { done: true }, r.repeat ? "Next repeat scheduled." : "Marked complete."), ""),
+        button([icon("done"), "Mark complete"], () => void update(r.repeat ? { due: nextDue(due, r.repeat, new Date(Math.max(Date.now(), r.due))).getTime(), completed: true } : { done: true }, r.repeat ? "Next repeat scheduled." : "Marked complete."), ""),
       ),
     ),
   );
