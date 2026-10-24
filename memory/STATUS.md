@@ -1,5 +1,25 @@
 # Status
 
+**Film bunny revision — Codex, 24 October (later):** User asked to make the 3D
+bunny fuller, expressive, alive, and suitable for later animation. Delivered in
+`output/mint-bunny-film/`: `bunny-film.blend` (short fur, sculpted head/body, freely
+deforming arms, glossy eyes, smile, folded/stiched scarf, cinematic studio),
+`bunny-film-rigged.glb` (21 skinned meshes, 7 materials, 27 bones), full portrait,
+wave pose, and a 3-second MP4/GIF greeting rendered from the actual rig. `Idle`
+and `Hello` clips merge body/ear/scarf motion and eye/lid blinking; facial morphs
+include Blink, Happy and Smile. Source is `art/blender/mint-bunny/build_film.py`,
+`export_film.py`, `render_film.py`; adjacent README documents use and limits.
+Verified: all 21 meshes have normalized skin weights; GLB binary weights, joints,
+clips and morph targets inspected; core closed meshes passed BlendRelay geometry
+checks; portrait, wave and full-close blink renders reviewed. The initial fused
+arm/hip web stretched on raising the paw, so the arms were rebuilt as separate
+smooth deforming surfaces overlapping within the shoulders; the final wave is
+clean. Particle evaluation is disabled temporarily for GLB export (0.8 s instead
+of 87 s). Fur/weave stay in Blender, not GLB. Basic FK rig, not a completed facial
+speech/film production rig. Original static asset below preserved. No app or
+global-config changes, no commit by this agent. Next step only if requested:
+user art review, then additional poses/facial controls/target-engine optimization.
+
 **Standalone asset — Codex, 24 October:** User requested a 3D model of the supplied
 cream bunny with charcoal ear tips and mint scarf, specifically through BlendRelay
 MCP. Source: `art/blender/mint-bunny/build_model.py` and adjacent README. Deliverables
@@ -64,8 +84,17 @@ lists today's meetings and reminders, then overnight agent work (src/away.ts `mo
 `<name>.sidefolk.png` sheet (transparent, template layout) that imports as it is; the importer's
 light outline is optional. Release build from the export commit is running.
 
-**Next for an agent (no user needed):** timers or other PLAN-V2 section 7 helpers; sizing the overlay to the companions (fixes black Mission Control
-previews even with "Hide from screen recordings" on, and saves GPU).
+**Next, approved by the user (24 Oct):** size the overlay window to the companions instead of the
+whole screen, "with full checks", once the usage window has reset. Why: with "Hide from screen
+recordings" on, only the companions' area is blanked in Mission Control instead of every
+desktop, and less GPU. Plan: keep screen coordinates in the page (Bounds = screen size, not
+innerWidth/innerHeight); the window frame follows the union of every companion, bubble, HUD and
+badge plus a margin (recomputed on bubble render, clip change and resize, throttled); while
+dragging, grow it to the full screen and shrink after release; translate the page by the
+window origin and add it to pointer clientX/Y in src/input.ts; keep click-through toggling. Check:
+overlay WebKit checks, the dev app's `[ui]` log (frame size, interactive), drag across the
+screen, multiple displays, Mission Control previews with the setting on and off, `npm run
+measure`. Then: timers or other PLAN-V2 section 7 helpers.
 
 ## PLAN PHASE: read this first (24 October, late)
 

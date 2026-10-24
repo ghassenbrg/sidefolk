@@ -30,7 +30,7 @@ This is a basic FK deformation rig. The checked greeting and idle poses work;
 extreme poses and a full facial/speech system need further character work. The
 short fur and procedural weave are Blender render features and are not in GLB.
 
-Rebuild through BlendRelay with `build_film.py`, then `export_film.py` and
+Rebuild in a fresh Blender file through BlendRelay with `build_film.py`, then `export_film.py` and
 `render_film.py`. The render script makes a full portrait and 36 small motion frames.
 Export disables particle evaluation temporarily while sampling animation, then
 restores it. The original static version below remains intact.
