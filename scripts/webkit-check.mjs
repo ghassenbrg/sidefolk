@@ -20,6 +20,7 @@ const views = [
   ["review", "/settings.html?tab=review:codex-1"],
   ["reminders", "/settings.html?tab=reminders"],
   ["settings", "/settings.html?tab=settings"],
+  ["appearance", "/settings.html?tab=settings:appearance"],
   ["setup", "/settings.html?tab=setup:start"],
   ["new-reminder", "/settings.html?tab=reminders:new"],
   ["notes", "/settings.html?tab=notes"],
@@ -37,7 +38,8 @@ const watch = (page, label) => {
 };
 
 for (const scheme of ["light", "dark"]) {
-  const page = await browser.newPage({ viewport: { width: 1040, height: 740 }, colorScheme: scheme });
+  const context = await browser.newContext({ viewport: { width: 1040, height: 740 }, colorScheme: scheme, timezoneId: "Asia/Tokyo" });
+  const page = await context.newPage();
   for (const [name, path] of views) {
     watch(page, `${scheme} ${name}`);
     await page.goto(base + path);
@@ -56,12 +58,12 @@ for (const scheme of ["light", "dark"]) {
   const result = (await page.locator(".result").textContent()) ?? "";
   if (!result.includes("Sent to Codex")) failures.push(`${scheme} answer: "${result.trim()}"`);
   // Full access is off by default, shown on each session, and switches both ways.
-  await page.goto(base + "/settings.html");
+  await page.goto(base + "/settings.html?tab=sessions");
   const toggle = page.getByRole("button", { name: "Asks first" }).first();
   await toggle.click();
   await page.getByRole("button", { name: "Full access" }).first().waitFor();
   await page.getByRole("button", { name: "Full access" }).first().click();
-  await page.getByRole("button", { name: "Asks first" }).nth(1).waitFor();
+  await page.getByRole("button", { name: "Asks first" }).first().waitFor();
   // A note added in the window shows up first, and Delete offers Undo.
   await page.goto(base + "/settings.html?tab=notes:evaluation-h2-2026");
   await page.locator("#note-text").fill("Ran the accessibility audit.");
@@ -70,6 +72,23 @@ for (const scheme of ["light", "dark"]) {
   await page.locator(".note").first().getByRole("button", { name: "Delete" }).click();
   await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
+  // Incoming companion notes preserve both capture and an unfinished entry edit.
+  await page.locator("#note-text").fill("Unfinished capture");
+  await page.locator(".note").first().getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("textbox", { name: "Edit note" }).fill("Unfinished edit");
+  await page.evaluate(async () => {
+    // Vite may version module URLs after an edit; use the page's actual API module.
+    const api = performance.getEntriesByType("resource").find((entry) => entry.name.includes("/src/dashboard/api.ts"));
+    if (!api) throw new Error("Preview API module was not loaded");
+    const { invoke } = await import(api.name);
+    await invoke("add_note", { notebook: "evaluation-h2-2026", text: "Arrived from companion", date: "2026-10-24", project: null });
+  });
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator("#note-text").inputValue(), "Unfinished capture");
+  assert.equal(await page.getByRole("textbox", { name: "Edit note" }).inputValue(), "Unfinished edit");
+  await page.locator(".note.editing").getByRole("button", { name: "Cancel" }).click();
+  await page.getByText("Arrived from companion", { exact: true }).waitFor();
+  await page.locator("#note-text").fill("");
   // Drafting with AI is explicit: it says what it sends, then shows the draft.
   await page.getByRole("button", { name: "Draft a summary…" }).click();
   await page.getByText("and nothing else", { exact: false }).waitFor();
@@ -77,6 +96,13 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("heading", { name: "Draft by Claude Code" }).waitFor();
   // A Spark added in the window shows up in the Sparks list with its color.
   await page.goto(base + "/settings.html?tab=sessions");
+  await page.getByRole("button", { name: "New session", exact: true }).click();
+  await page.locator("#new-session-folder").fill("");
+  await page.getByRole("dialog").getByRole("button", { name: "Browse…" }).click();
+  assert.equal(await page.locator("#new-session-folder").inputValue(), "/Users/you/git/api");
+  assert.equal(await page.locator("#new-session-full").isChecked(), false);
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  await page.getByText("Project companion options", { exact: true }).click();
   await page.locator("#spark-folder").fill("web");
   await page.getByRole("button", { name: "Add Spark" }).click();
   await page.getByText("Spark · web", { exact: true }).waitFor();
@@ -103,22 +129,23 @@ for (const scheme of ["light", "dark"]) {
   await page.goto(base + "/settings.html?tab=settings:calendar");
   await page.locator("#setting-calendar").check();
   await page.locator("#setting-calendar_lead_mins").waitFor();
-  await page.locator("nav").getByRole("button", { name: "Today" }).click();
+  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
   await page.getByText("Design review", { exact: true }).waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
   assert.match((await page.locator(".tell-preview").textContent()) ?? "", /Run `ls -la` in your home folder/);
   await page.locator(".tell-input").press("Enter");
-  await page.locator("#toast").getByRole("button", { name: "Run in terminal" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Run in terminal" }).click();
   await page.locator("#toast").getByText("Preview: nothing ran", { exact: false }).waitFor();
   // Repeat edits must survive saving, advancing, clearing, deleting and Undo.
   await page.goto(base + "/settings.html?tab=reminders");
+  await page.getByRole("button", { name: "Add reminder", exact: true }).click();
   const add = page.getByRole("form", { name: "Add a reminder" });
   await add.getByLabel("What would you like to remember?").fill("every 2 weeks tomorrow at 9 to repeat acceptance");
   assert.equal(await add.getByLabel("Repeat", { exact: true }).inputValue(), "week");
   assert.equal(await add.getByLabel("Every how many?").inputValue(), "2");
-  await add.getByRole("button", { name: "Add reminder" }).click();
+  await add.getByRole("button", { name: "Save reminder" }).click();
   const reminder = page.locator("article.reminder").filter({ hasText: "repeat acceptance" });
   await reminder.getByRole("button", { name: "Open", exact: true }).click();
   await page.getByRole("heading", { name: "History", exact: true }).waitFor();
@@ -141,7 +168,67 @@ for (const scheme of ["light", "dark"]) {
   await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
   await reminder.getByRole("button", { name: "Edit", exact: true }).click();
   assert.equal(await page.getByRole("form", { name: "Edit repeat acceptance" }).getByLabel("Repeat", { exact: true }).inputValue(), "");
-  await page.close();
+  // Theme overrides persist after reload, follow OS changes only in System,
+  // and propagate to another surface without changing that surface's OS appearance.
+  await page.goto(base + "/settings.html?tab=settings:appearance");
+  await page.getByRole("radio", { name: "Dark", exact: true }).check();
+  await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+  await page.reload();
+  await page.getByRole("radio", { name: "Dark", exact: true }).waitFor();
+  assert.equal(await page.getByRole("radio", { name: "Dark", exact: true }).isChecked(), true);
+  await page.emulateMedia({ colorScheme: "light" });
+  assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
+  const other = await page.context().newPage();
+  await other.goto(base + "/?zoom=1.4");
+  await other.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+  await page.getByRole("radio", { name: "Light", exact: true }).check();
+  await other.waitForFunction(() => document.documentElement.dataset.theme === "light");
+  await page.getByRole("radio", { name: "System", exact: true }).check();
+  await page.waitForFunction(() => !document.documentElement.dataset.theme);
+  await page.emulateMedia({ colorScheme: "dark" });
+  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim()), "#191c22");
+  await page.emulateMedia({ colorScheme: "light" });
+  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim()), "#f7f3ea");
+  await other.close();
+  // Search jumps to the owning category; all settings remain reachable.
+  await page.getByRole("searchbox", { name: "Search settings" }).fill("dark");
+  await page.getByRole("button", { name: "Appearance Appearance", exact: true }).click();
+  await page.getByRole("radio", { name: "System", exact: true }).waitFor();
+  for (const section of ["general", "companion", "calendar", "sound", "tools", "privacy", "accessibility", "help"]) {
+    await page.goto(base + `/settings.html?tab=settings:${section}`);
+    await page.locator(".settings-content h1").waitFor();
+    assert.equal(await page.locator(".settings-content .settings-group").count() > 0, true);
+  }
+  // The command review remains pending until explicitly dismissed or run.
+  await page.goto(base + "/settings.html");
+  await page.locator(".tell-input").fill("ls -la");
+  await page.locator(".tell-input").press("Enter");
+  await page.getByRole("dialog").waitFor();
+  await page.waitForTimeout(4500);
+  assert.equal(await page.getByRole("dialog").isVisible(), true);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  // The shortened setup completes a useful local action without an AI connection.
+  await page.goto(base + "/settings.html?tab=setup:start");
+  await page.getByRole("button", { name: "Set a two-minute reminder" }).click();
+  await page.getByText("Saved. Your companion will remind you to stretch in two minutes.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("heading", { name: "By your side." }).waitFor();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Start using Sidefolk" }).click();
+  await page.getByRole("heading", { name: "Today", exact: true }).waitFor();
+  // Narrow layouts retain all controls, including larger text and settings search.
+  await page.setViewportSize({ width: 520, height: 740 });
+  for (const target of ["today", "reminders", "notes:evaluation-h2-2026", "sessions", "settings:appearance", "review:codex-1"]) {
+    await page.goto(base + `/settings.html?tab=${target}`);
+    await page.locator("main h1:visible").first().waitFor();
+    await page.evaluate(() => document.documentElement.classList.add("large-text"));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector("main").scrollWidth <= document.querySelector("main").clientWidth), true, `narrow overflow in ${target}`);
+  }
+  await page.goto(base + "/settings.html?tab=settings:appearance");
+  await page.getByRole("radio", { name: "System", exact: true }).waitFor();
+  await page.screenshot({ path: join(out, `${scheme}-narrow-appearance.png`) });
+  await context.close();
 }
 
 const overlay = await browser.newPage({ viewport: { width: 1100, height: 800 } });

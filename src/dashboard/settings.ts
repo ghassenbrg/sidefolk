@@ -1,5 +1,6 @@
+import { applyTheme, themeOf } from "../theme";
 import { notificationSetting } from "./notifications";
-import { icon, type IconName } from "../icons";
+import { icon, mark, type IconName } from "../icons";
 import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
 import type { App } from "./app";
@@ -76,7 +77,7 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
   );
 }
 
-export function renderSettings(app: App, arg: string) {
+function settingsContents(app: App) {
   const { settings, integrations } = app.state;
   voices ?? void invoke<{ name: string; language: string }[]>("voices").then((v) => ((voices = v), app.redraw(true))).catch(() => (voices = []));
   if (!charactersLoaded) {
@@ -85,7 +86,6 @@ export function renderSettings(app: App, arg: string) {
   }
   terminals ?? void invoke<string[]>("terminals").then((t) => ((terminals = t), app.redraw(true))).catch(() => (terminals = []));
   // Settings don't change while being read; only saves (forced) redraw this page.
-  app.live(() => {});
 
   const view = h("div", { class: "view settings" }, ...header("Make Sidefolk comfortable.", "A few simple preferences. Everything here can change later."));
 
@@ -160,6 +160,7 @@ export function renderSettings(app: App, arg: string) {
       toggle(app, "sounds", "Sound cues", "Short sounds when a companion talks or something needs you."),
       row("Volume", null, volume, "setting-volume"),
       toggle(app, "speak", "Speak out loud", "Companions read their lines with a macOS voice instead of sounds. AI tools' text is read too."),
+      notificationSetting(app),
       row("Voice", "More voices: System Settings → Accessibility → Spoken Content.", h("div", { class: "inline" }, voice, button("Try", () => void invoke("speak", { text: "Pip here. Your reminder is due.", voice: voice.value }).catch((e) => app.toast(String(e), undefined, true)))), "setting-voice"),
     ),
   );
@@ -243,7 +244,6 @@ export function renderSettings(app: App, arg: string) {
       "settings",
       "startup",
       row("Summon shortcut", "Hides the companion, or calls it to your cursor.", shortcut),
-      notificationSetting(app),
       row("Start at login", "Opens Sidefolk when you log in.", button(integrations.start_at_login ? "Turn off" : "Turn on", () => void invoke("tray_action", { action: "login" }).then(() => app.refresh()))),
       toggle(app, "hide_from_dock", "Hide from Dock", "Sidefolk leaves the Dock and ⌘Tab; open this window from the menu bar icon instead."),
     ),
@@ -257,7 +257,7 @@ export function renderSettings(app: App, arg: string) {
       row("Sidefolk", `Version ${app.state.version}`, h("span")),
       row("Your data", `Your companion, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
       row("Logs", "Errors and crashes, to attach to a bug report.", button("Show in Finder", () => void invoke("reveal_data_dir", { logs: true }))),
-      row("Setup guide", "The five-step introduction from the first launch.", button("Run setup again", () => app.go("setup", "start"))),
+      row("Setup guide", "The short introduction from the first launch.", button("Run setup again", () => app.go("setup", "start"))),
       row(
         "Report a problem",
         "Copies a short report (versions, settings, recent errors; never your reminders, notes or names) to paste into an email or an issue.",
@@ -287,6 +287,123 @@ export function renderSettings(app: App, arg: string) {
     ),
   );
 
-  if (arg) requestAnimationFrame(() => view.querySelector(`#${CSS.escape(arg)}`)?.scrollIntoView({ block: "start" }));
+
+  view.append(appearance(app));
   return view;
 }
+
+
+type Category = { id: string; title: string; glyph: IconName; groups: string[]; words: string };
+const CATEGORIES: Category[] = [
+  { id: "general", title: "General", glyph: "settings", groups: ["startup"], words: "login startup dock shortcut keyboard" },
+  { id: "appearance", title: "Appearance", glyph: "idle", groups: ["appearance"], words: "theme dark light system colors" },
+  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop"], words: "pet pip name rename size look character import hide show" },
+  { id: "calendar", title: "Reminders & calendar", glyph: "reminders", groups: ["calendar"], words: "meeting join lead time repeat snooze" },
+  { id: "sound", title: "Notifications & sound", glyph: "reminders", groups: ["sound"], words: "notifications permission reminder volume speech voice speak" },
+  { id: "tools", title: "AI tools", glyph: "terminal", groups: ["tools", "terminal"], words: "claude codex connections terminal automation command cli spark project session access" },
+  { id: "privacy", title: "Privacy", glyph: "info", groups: ["privacy"], words: "screen recording capture sharing local" },
+  { id: "accessibility", title: "Accessibility", glyph: "crew", groups: ["accessibility"], words: "motion reduced calm text large sleep idle" },
+  { id: "help", title: "About & data", glyph: "info", groups: ["help"], words: "version help logs report export notebook data folder setup" },
+];
+let category = "general";
+try { category = localStorage.getItem("sidefolk-settings-category") ?? category; } catch { /* Optional convenience. */ }
+let query = "";
+let themeResult = "Changes save automatically.";
+
+function appearance(app: App) {
+  const selected = themeOf(app.state.settings.theme);
+  const choices = h("fieldset", { class: "theme-choices" }, h("legend", { text: "Theme" }));
+  const result = h("p", { class: "hint", role: "status", text: themeResult });
+  for (const [value, label] of [["system", "System"], ["light", "Light"], ["dark", "Dark"]] as const) {
+    const radio = h("input", { type: "radio", id: `theme-${value}`, name: "theme", value, checked: selected === value });
+    const tile = h("label", { class: `theme-choice ${value}`, for: radio.id },
+      h("span", { class: "theme-thumbnail", "aria-hidden": "true" }, h("span"), h("span"), h("span")),
+      h("span", { class: "inline" }, radio, h("strong", { text: label })),
+    );
+    radio.addEventListener("change", async () => {
+      for (const input of choices.querySelectorAll("input")) input.disabled = true;
+      result.textContent = "Saving…";
+      const before = themeOf(app.state.settings.theme);
+      applyTheme(value);
+      const saved = await app.save({ theme: value }, "Appearance saved.");
+      themeResult = saved ? "Saved automatically." : "Appearance wasn't saved. Choose a theme to retry.";
+      if (!saved) applyTheme(before);
+      app.redraw(true);
+      document.getElementById(`theme-${saved ? value : before}`)?.focus();
+    });
+    choices.append(tile);
+  }
+  return group("Theme", "idle", "appearance", choices,
+    h("p", { class: "muted", text: selected === "system" ? "Follows your Mac automatically, including changes during the day." : `Always use ${selected} appearance. Choose System to follow your Mac.` }),
+    h("div", { class: "card theme-preview" }, h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: "Review launch notes" })), h("p", { class: "meta", text: "Preview · Today at 15:00" })),
+    h("p", { class: "muted", text: "Applies to Sidefolk windows and companion cards. Your companion and logo keep their look." }), result,
+  );
+}
+
+/** One searchable settings surface; old deep links still land on their original group. */
+export function renderSettings(app: App, arg: string) {
+  const all = settingsContents(app);
+  const groups = new Map([...all.querySelectorAll<HTMLElement>("section[id]")].map((node) => [node.id, node]));
+  const wanted = CATEGORIES.find((c) => c.id === arg || c.groups.includes(arg));
+  if (wanted) category = wanted.id;
+  const selected = CATEGORIES.find((c) => c.id === category) ?? CATEGORIES[0];
+  category = selected.id;
+  try { localStorage.setItem("sidefolk-settings-category", category); } catch { /* Optional convenience. */ }
+  const content = h("section", { class: "settings-content" });
+  const search = h("input", { id: "settings-search", type: "search", placeholder: "Search settings", "aria-label": "Search settings", value: query });
+  const selectCategory = (c: Category) => { query = ""; app.go("settings", c.id); };
+  const mobile = h("select", { class: "settings-mobile", "aria-label": "Settings category" }, ...CATEGORIES.map((c) => h("option", { value: c.id, text: c.title })));
+  mobile.value = category;
+  mobile.addEventListener("change", () => selectCategory(CATEGORIES.find((c) => c.id === mobile.value)!));
+  const links = h("div", { class: "settings-categories", "aria-label": "Settings categories" });
+  for (const c of CATEGORIES) links.append(button([icon(c.glyph), c.title], () => selectCategory(c), "", { "aria-current": c.id === category ? "page" : undefined }));
+  const sidebar = h("aside", { class: "settings-sidebar" }, h("div", { class: "drag", "data-tauri-drag-region": true }),
+    h("div", { class: "brand" }, mark(30), h("span", { class: "wordmark", text: "sidefolk" })), h("h2", { text: "Settings" }), search, mobile, links,
+    button([icon("back"), "Back to Sidefolk"], () => { query = ""; app.go("today"); }, "back settings-back"));
+  const draw = () => {
+    content.replaceChildren(...header(query.trim() ? "Search settings" : selected.title, query.trim() ? undefined : "Everything here can change later."));
+    if (query.trim()) {
+      const words = query.toLowerCase().trim().split(/\s+/);
+      const results = h("div", { class: "settings-results" });
+      for (const c of CATEGORIES) {
+        const rows = c.groups.flatMap((id) => [...(groups.get(id)?.querySelectorAll<HTMLElement>(".setting") ?? [])]);
+        const matches = rows.filter((row) => words.every((w) => `${c.title} ${c.words} ${row.textContent}`.toLowerCase().includes(w)));
+        const broad = words.every((w) => `${c.title} ${c.words}`.toLowerCase().includes(w));
+        if (!matches.length && !broad) continue;
+        const hits = matches.length ? matches : [null];
+        for (const row of hits) {
+          const label = row?.querySelector("label, strong")?.textContent ?? c.title;
+          results.append(button(h("span", {}, h("strong", { text: label }), h("span", { class: "meta", text: c.title })), () => {
+            selectCategory(c);
+            const target = row?.querySelector<HTMLElement>("[id]")?.id;
+            if (target) requestAnimationFrame(() => document.getElementById(target)?.focus());
+          }, "settings-hit"));
+        }
+      }
+      content.append(h("p", { class: "hint", role: "status", text: results.childElementCount ? `${results.childElementCount} results` : "No settings match. Try theme, sound or shortcut." }), results,
+        button("Clear search", () => { query = ""; search.value = ""; draw(); search.focus(); }, "quiet"));
+      return;
+    }
+    for (const id of selected.groups) {
+      const group = groups.get(id);
+      if (group) content.append(group);
+    }
+    if (category === "companion") {
+      const rename = h("input", { id: "companion-name", type: "text", value: app.state.crew.main.name, maxlength: 24 });
+      content.append(h("form", { class: "card", onsubmit: async (event: Event) => {
+        event.preventDefault();
+        if (rename.value.trim()) { app.toast(await app.tell(`rename to ${rename.value.trim()}`)); await app.refresh(); }
+      } }, h("div", { class: "field" }, h("label", { for: rename.id, text: "Companion name" }), rename), h("div", { class: "actions" }, h("button", { type: "submit", text: "Save name" }))),
+      h("div", { class: "actions" }, button("Show companion", () => void invoke("tray_action", { action: "show" }).catch((e) => app.toast(String(e), undefined, true))), button("Hide companion", () => void app.tell("hide"))));
+    }
+    if (category === "calendar") content.append(h("div", { class: "card" }, h("h2", { text: "Your reminders" }), h("p", { class: "muted", text: "Manage repeating reminders, snooze and reminder history in Reminders." }), h("div", { class: "actions" }, button("Manage reminders", () => app.go("reminders")), button("Notification delivery", () => selectCategory(CATEGORIES[4])))));
+    if (category === "tools") content.append(h("div", { class: "actions" }, button("Sessions & project companions", () => app.go("sessions")), button("Saved actions", () => app.go("actions"))));
+    if (category === "help") content.append(h("div", { class: "actions" }, button("Notebooks & export", () => app.go("notes")), button("Saved actions", () => app.go("actions"))));
+  };
+  search.addEventListener("input", () => { query = search.value; draw(); });
+  draw();
+  return h("div", { class: "settings-layout" }, sidebar, content);
+}
+
+
+export function prepareSettings() { query = ""; }

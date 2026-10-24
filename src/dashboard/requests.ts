@@ -3,7 +3,7 @@ import type { Waiting } from "./api";
 import type { App } from "./app";
 import { agentName, agentShort, button, folder, h } from "./dom";
 import { attentionCard } from "./home";
-import { back, empty, header, identity, petOf, sessionLabel } from "./ui";
+import { back, empty, header, identity, petOf, sessionLabel, sessionRow } from "./ui";
 
 // Requests: everything waiting for you, grouped by project, and the review of one request
 // with its exact action. Choices are explicit clicks: nothing is preselected or focused, Back
@@ -24,7 +24,7 @@ export function renderRequests(app: App) {
     ),
   );
   if (!waiting.length) {
-    view.append(empty("You're all caught up.", "When an AI tool asks for something, it shows up here and on its companion.", button("Back to Home", () => app.go("home"))));
+    view.append(empty("You're all caught up.", "When an AI tool asks for something, it shows up here and on its companion.", button("Back to Today", () => app.go("home"))));
     return view;
   }
   // Grouped by project, so two similar requests are never confused.
@@ -56,7 +56,7 @@ function copyable(label: string, value: string) {
   return [h("span", { class: "fact-label", text: label }), h("div", { class: "fact" }, h("code", { text: value }), copy)];
 }
 
-export function renderReview(app: App, id: string) {
+function reviewDetail(app: App, id: string) {
   const live = app.state.status.waiting.find((x) => x.id === id);
   const phase = phases.get(id);
   const w = live ?? phase?.request;
@@ -94,6 +94,10 @@ export function renderReview(app: App, id: string) {
     const tick = () => {
       const left = Math.max(0, Math.round((expires - Date.now()) / 1000));
       countdown.textContent = left > 90 ? `${Math.round(left / 60)} minutes` : `${left} seconds`;
+      if (left === 0) {
+        for (const control of view.querySelectorAll<HTMLButtonElement>(".request-choices button, form button")) control.disabled = true;
+        if (!view.querySelector(".expired")) card.append(h("p", { class: "result expired", role: "status", text: "This request expired. Check the tool's own window." }));
+      }
     };
     if (expires) {
       tick();
@@ -152,17 +156,21 @@ export function renderReview(app: App, id: string) {
     if (phase.phase !== "failed") return view;
   }
   if (!live) return view;
+  if (Number(meta.expires) && Number(meta.expires) <= Date.now()) {
+    card.append(h("p", { class: "result", role: "status", text: "This request expired. Check the tool's own window." }));
+    return view;
+  }
 
   const choices =
-    meta.kind === "permission"
+    meta.kind === "permission" && !live.choices.some((c) => c.value === "allow" || c.value === "deny")
       ? [
           { label: "Decline", value: "deny", primary: false, quiet: false },
           { label: "Allow once", value: "allow", primary: true, quiet: false },
           ...(meta.canDefer === "true" ? [{ label: `Answer in ${agentName(source)}'s window`, value: "defer", primary: false, quiet: true }] : []),
         ]
       : live.choices.filter((c) => c.value !== "\u0000reply");
-  const row = h("div", { class: "actions equal" });
-  const quiet = h("div", { class: "actions" });
+  const row = h("div", { class: "actions equal request-choices" });
+  const quiet = h("div", { class: "actions request-choices" });
   for (const c of choices) (c.quiet ? quiet : row).append(button(c.label, () => void choose(app, live, c.value, c.label), c.quiet ? "quiet" : c.primary ? "primary" : ""));
   card.append(row);
   if (quiet.children.length) card.append(quiet);
@@ -203,4 +211,20 @@ async function choose(app: App, request: Waiting, value: string, label: string) 
   if (answer === "sent") setTimeout(() => phases.delete(id), 120_000);
   await app.refresh();
   app.redraw(true);
+}
+
+
+export function renderReview(app: App, id: string) {
+  const detail = reviewDetail(app, id);
+  const rail = h("section", { class: "review-rail", "aria-label": "Sessions and requests" }, ...header("Sessions"), button("All sessions", () => app.go("sessions"), "quiet"));
+  rail.append(h("h2", { class: "section-title", text: "Needs you" }));
+  const requests = h("div", { class: "card list" });
+  for (const w of app.state.status.waiting) requests.append(button(h("span", {}, h("strong", { text: folder(w.meta.project || w.who) }), h("span", { class: "meta", text: `${agentName(w.meta.source ?? "")} · ${sessionLabel(w.meta.session)}` }), h("span", { class: "meta", text: w.meta.title || w.title })), () => app.go("review", w.id), "list-button", { "aria-current": w.id === id ? "true" : undefined }));
+  if (!requests.childElementCount) requests.append(h("p", { class: "muted", text: "No pending requests." }));
+  rail.append(requests, h("h2", { class: "section-title", text: "Work sessions" }));
+  const sessions = h("div", { class: "card list" });
+  for (const s of app.state.status.pets.flatMap((p) => p.sessions)) sessions.append(sessionRow(app, s, true));
+  rail.append(sessions);
+  detail.append(h("p", { class: "muted", text: "Closing this view keeps unanswered requests pending." }));
+  return h("div", { class: "view review-layout" }, rail, detail);
 }

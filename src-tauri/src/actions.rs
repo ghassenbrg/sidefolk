@@ -13,6 +13,17 @@ use tauri::State;
 
 use crate::bus::Shared;
 
+/// A native folder chooser keeps creating a session usable without typing paths.
+#[tauri::command]
+pub async fn choose_project_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let (sender, receiver) = tokio::sync::oneshot::channel();
+    app.dialog().file().set_title("Choose a project folder").pick_folder(move |path| { let _ = sender.send(path); });
+    receiver.await.map_err(|e| e.to_string())?.map(|path| {
+        path.into_path().map(|p| p.to_string_lossy().into_owned()).map_err(|e| e.to_string())
+    }).transpose()
+}
+
 const MAX_COMMAND: usize = 500;
 /// Where people keep repositories; a folder named in "run … in api" is looked for here.
 const ROOTS: [&str; 7] = ["git", "Git", "code", "Code", "Developer", "Projects", "src"];

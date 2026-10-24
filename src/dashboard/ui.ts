@@ -1,6 +1,6 @@
 import { icon, mark, type IconName } from "../icons";
 import { badge, stateOf, type State } from "../states";
-import type { PetStatus, SessionInfo, Status, Waiting } from "./api";
+import { invoke, type PetStatus, type SessionInfo, type Status, type Waiting } from "./api";
 import type { App } from "./app";
 import { agentShort, button, folder, h } from "./dom";
 
@@ -95,7 +95,7 @@ export function navIcon(name: IconName) {
 }
 
 /** A live work session: tool · project, what it's doing, its permission mode and Open. */
-export function sessionRow(app: App, s: SessionInfo) {
+export function sessionRow(app: App, s: SessionInfo, compact = false) {
   return h(
     "div",
     { class: "row line" },
@@ -105,13 +105,28 @@ export function sessionRow(app: App, s: SessionInfo) {
       { class: "inline" },
       badge(stateOf(s.state)),
       // Off by default; the current mode is always shown, never changed silently.
-      s.id
+      s.id && !compact
         ? button(s.fullAccess ? "Full access" : "Asks first", () => void app.petAction({ action: "full-access", source: s.source, session: s.id, on: !s.fullAccess }, s.fullAccess ? "This session asks again." : "Full access on. Risky commands still ask."), `small access${s.fullAccess ? " on" : ""}`, {
             "aria-pressed": String(!!s.fullAccess),
             title: s.fullAccess ? "Requests from this session are allowed without asking, except risky ones. Click to ask again." : "This session asks before running commands or changing files. Click to give it full access.",
           })
         : null,
-      s.id ? button([icon("open"), "Open"], () => void app.openSession({ source: s.source, session: s.id, cwd: s.cwd || s.project }), "small") : null,
+      s.id ? button([icon("open"), s.state === "waiting" ? "Review" : "Open"], () => {
+        const request = app.state.status.waiting.find((w) => w.meta.session === s.id && w.meta.source === s.source);
+        if (request && s.state === "waiting") app.go("review", request.id);
+        else void app.openSession({ source: s.source, session: s.id, cwd: s.cwd || s.project });
+      }, "small") : null,
     ),
   );
+}
+
+
+export function folderPicker(app: App, input: HTMLInputElement) {
+  return h("div", { class: "inline folder-picker" }, input, button([icon("folder"), "Browse…"], async () => {
+    try {
+      const path = await invoke<string | null>("choose_project_folder");
+      if (path) { input.value = path; input.dispatchEvent(new Event("input", { bubbles: true })); }
+      input.focus();
+    } catch (error) { app.toast(String(error), undefined, true); }
+  }));
 }

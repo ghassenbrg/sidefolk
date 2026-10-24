@@ -98,7 +98,7 @@ mod native {
 
     pub fn upcoming(hours: u64) -> Result<Vec<Event>, String> {
         if status() != "allowed" {
-            return Err("Sidefolk can't read your calendars yet. Allow it in Settings → Calendar.".into());
+            return Err("Sidefolk can't read your calendars yet. Allow it in Settings → Reminders & calendar.".into());
         }
         let ms = |date: &NSDate| (date.timeIntervalSince1970() * 1000.0).max(0.0) as u64;
         let store = unsafe { EKEventStore::new() };

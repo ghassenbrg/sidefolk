@@ -10,6 +10,7 @@ export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in
 
 /** Mirrors `Settings` in src-tauri/src/settings.rs. */
 export type Settings = {
+  theme: import("../theme").Theme;
   shortcut: string;
   sleep_after_secs: number;
   pet_answers_permissions: boolean;
@@ -98,6 +99,7 @@ function preview(): typeof tauriInvoke {
       { id: "ideas", name: "Ideas", count: 0, updated: now - 3 * 86_400_000, path: `${notesDir}/ideas.md`, entries: [{ line: 2, date: "2026-10-20", text: "A weekly wins digest from the notebooks.", project: "" }] as NoteEntry[] },
     ],
     settings: {
+      theme: (() => { try { return localStorage.getItem("sidefolk-theme") ?? "system"; } catch { return "system"; } })(),
       shortcut: "CommandOrControl+Shift+Space",
       sleep_after_secs: 120,
       pet_answers_permissions: true,
@@ -132,7 +134,7 @@ function preview(): typeof tauriInvoke {
           out: true,
           clip: "alert",
           sessions: [
-            { source: "codex", id: "04c1e7d2", cwd: api, state: "waiting", verb: "needs you", detail: "", project: api, at: now },
+            { source: "codex", id: "04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d", cwd: api, state: "waiting", verb: "needs you", detail: "", project: api, at: now },
             { source: "claude", id: "7b3e9a10", cwd: web, state: "edit", verb: "editing", detail: "launch-notes.md", project: web, at: now - 60_000 },
           ],
           outcomes: [{ kind: "done", source: "claude", project: api, detail: "Rate limiting added; 14 tests pass.", at: now - 3_600_000, session: "9f2a", cwd: api }],
@@ -174,6 +176,7 @@ function preview(): typeof tauriInvoke {
       case "request_notifications":
         return { permission: "allowed", error: null };
       case "get_settings":
+        try { state.settings.theme = (localStorage.getItem("sidefolk-theme") ?? "system") as Settings["theme"]; } catch { /* Storage can be unavailable. */ }
         return state.settings;
       case "update_settings":
         return Object.assign(state.settings, a.change);
@@ -197,6 +200,8 @@ function preview(): typeof tauriInvoke {
         }
         return !!r;
       }
+      case "choose_project_folder":
+        return "/Users/you/git/api";
       case "resolve_folder": {
         const folder = (args as { folder?: string | null }).folder;
         return { path: "/Users/you", label: folder ? `~/git/${folder.split("/").pop()}` : "~" };

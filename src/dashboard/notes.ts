@@ -1,3 +1,4 @@
+import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { today, type NoteEntry, type Notebook } from "../notes";
 import { invoke, listen } from "./api";
@@ -54,17 +55,23 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
     h("div", { class: "field" }, h("label", { for: name.id, text: "New notebook" }), name),
     h("button", { type: "submit", class: "primary", text: "Create" }),
   );
+  let editor: { close: () => void } | null = null;
+  const openCreate = () => { editor = sheet("New notebook", create); name.focus(); };
   create.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!name.value.trim()) return name.focus();
+    const submit = create.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    if (submit.disabled) return;
+    submit.disabled = true;
     try {
       const book = await invoke<Notebook>("create_notebook", {
         name: name.value,
       });
+      editor?.close();
       app.go("notes", book.id);
     } catch (error) {
       app.toast(String(error), undefined, true);
-    }
+    } finally { submit.disabled = false; }
   });
 
   const search = h("input", {
@@ -131,14 +138,13 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
 
   view.replaceChildren(
     ...[
-      ...header("Notes", "Notebooks that collect over time. Tell your companion “note for evaluation: shipped the login migration” and it lands here, dated."),
+      h("div", { class: "page-heading" }, h("div", {}, ...header("Notes", "Ideas and small wins, collected over time.")), button([icon("plus"), "New notebook"], openCreate, "primary")),
       books.length ? h("div", { class: "field" }, search) : null,
       results,
       books.length ? shelf : empty("No notebooks yet", "Create one here, or tell your companion “note for ideas: …” and it starts one for you."),
-      create,
     ].filter((n): n is HTMLElement => !!n),
   );
-  if (focus) name.focus();
+  if (focus) requestAnimationFrame(openCreate);
 }
 
 async function notebook(app: App, view: HTMLElement, id: string) {
@@ -152,7 +158,11 @@ async function notebook(app: App, view: HTMLElement, id: string) {
     );
     return;
   }
-  changed = () => void notebook(app, view, id);
+  const fill = async () => {
+    try { page = await invoke<Page>("read_notebook", { id }); draw(); }
+    catch (error) { app.toast(String(error), undefined, true); }
+  };
+  changed = () => void fill();
   app.onLeave(() => (changed = null));
 
   const text = h("textarea", {
@@ -174,7 +184,8 @@ async function notebook(app: App, view: HTMLElement, id: string) {
   );
   add.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!text.value.trim()) return text.focus();
+    if (!text.value.trim() || text.disabled) return text.focus();
+    text.disabled = true;
     try {
       await invoke("add_note", {
         notebook: page.id,
@@ -183,9 +194,10 @@ async function notebook(app: App, view: HTMLElement, id: string) {
         project: null,
       });
       text.value = "";
+      await fill();
     } catch (error) {
       app.toast(String(error), undefined, true);
-    }
+    } finally { text.disabled = false; }
   });
   text.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) add.requestSubmit();
@@ -200,15 +212,17 @@ async function notebook(app: App, view: HTMLElement, id: string) {
   });
   const entries = h("section", { class: "card list", "aria-label": "Notes" });
   const draw = () => {
+    // Incoming notes must not replace a half-written edit. Refresh after Save or Cancel.
+    if (entries.querySelector(".note.editing")) return;
     const q = search.value.trim().toLowerCase();
     const shown = page.entries.filter((e) => !q || e.text.toLowerCase().includes(q) || e.project.toLowerCase().includes(q)).reverse();
     entries.replaceChildren(
       ...(shown.length
-        ? shown.map((e) => row(app, page, e))
+        ? shown.map((e) => row(app, page, e, draw))
         : [
             h("p", {
               class: "muted",
-              text: page.entries.length ? "Nothing matches." : "No notes yet. Add the first one above.",
+              text: page.entries.length ? "Nothing matches." : "No notes yet. Add your first one below.",
             }),
           ]),
     );
@@ -219,7 +233,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
   view.replaceChildren(
     ...[
       back("Notes", () => app.go("notes")),
-      ...header(page.name, `${page.entries.length} ${page.entries.length === 1 ? "note" : "notes"}, newest first. Saved as Markdown: ${page.path.replace(/^\/Users\/[^/]+/, "~")}`),
+      h("div", { class: "page-heading" }, h("div", {}, ...header(page.name, "Dated notes, collected over time.")), button([icon("plus"), "New note"], () => { text.scrollIntoView({ block: "center" }); text.focus(); }, "primary")),
       h(
         "div",
         { class: "actions" },
@@ -235,14 +249,22 @@ async function notebook(app: App, view: HTMLElement, id: string) {
         page.entries.length ? button("Draft a summary…", () => void draftPanel(app, page, draft)) : null,
       ),
       draft,
-      add,
       page.entries.length > 5 ? h("div", { class: "field" }, search) : null,
       entries,
+      add,
     ].filter((n): n is HTMLElement => !!n),
   );
+  const content = h("div", { class: "notebook-content" }, ...Array.from(view.childNodes));
+  const sidebar = h("aside", { class: "notebook-sidebar", "aria-label": "Notebooks" });
+  view.append(h("div", { class: "notebook-layout" }, sidebar, content));
+  void invoke<Notebook[]>("list_notebooks").then((books) => {
+    for (const book of books) sidebar.append(button([icon("notes"), book.name], () => app.go("notes", book.id), "", { "aria-current": book.id === id ? "page" : undefined }));
+    sidebar.append(button([icon("plus"), "New notebook"], () => app.go("notes", "new"), "quiet"));
+  }).catch(() => sidebar.append(button("All notebooks", () => app.go("notes"))));
+
 }
 
-function row(app: App, page: Page, entry: NoteEntry): HTMLElement {
+function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void): HTMLElement {
   const node = h(
     "div",
     { class: "row line note" },
@@ -290,18 +312,23 @@ function row(app: App, page: Page, entry: NoteEntry): HTMLElement {
       h(
         "div",
         { class: "inline" },
-        button("Cancel", () => form.replaceWith(row(app, page, entry)), "small"),
+        button("Cancel", () => { form.replaceWith(row(app, page, entry, redraw)); redraw?.(); }, "small"),
         h("button", { type: "submit", class: "small primary", text: "Save" }),
       ),
     );
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (field.disabled) return;
+      field.disabled = true;
       try {
         await invoke("edit_note", { id: page.id, entry, text: field.value });
+        form.replaceWith(row(app, page, { ...entry, text: field.value }, redraw));
+        redraw?.();
         app.toast("Saved.");
       } catch (error) {
         app.toast(String(error), undefined, true);
       }
+      field.disabled = false;
     });
     node.replaceWith(form);
     field.focus();

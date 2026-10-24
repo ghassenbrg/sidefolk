@@ -15,6 +15,14 @@ const WINDOW: &str = "settings";
 /// Logs are for the user to read or attach to a bug report; they never leave this Mac.
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
+pub fn apply_theme(app: &AppHandle, choice: &str) {
+    app.set_theme(match choice {
+        "light" => Some(tauri::Theme::Light),
+        "dark" => Some(tauri::Theme::Dark),
+        _ => None,
+    });
+}
+
 pub fn open(app: &AppHandle) -> tauri::Result<()> {
     open_at(app, "")
 }
@@ -65,6 +73,7 @@ pub fn answered(app: AppHandle, id: String, ok: bool, text: Option<String>) {
 #[derive(Deserialize, Default)]
 pub struct Change {
     shortcut: Option<String>,
+    theme: Option<String>,
     sleep_after_secs: Option<u64>,
     pet_answers_permissions: Option<bool>,
     hide_in_recordings: Option<bool>,
@@ -93,6 +102,7 @@ fn check(value: &Option<String>, name: &str, allowed: &[&str]) -> Result<(), Str
 /// Applies and saves a change from the Settings window or the onboarding card.
 #[tauri::command]
 pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: Change) -> Result<crate::settings::Settings, String> {
+    check(&change.theme, "Theme", &["system", "light", "dark"])?;
     check(&change.pet_size, "Pet size", &["small", "medium", "large"])?;
     check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
     if let Some(shortcut) = change.shortcut.as_deref() {
@@ -106,6 +116,9 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
         let mut store = shared.settings.lock().unwrap();
         store
             .update(|s| {
+                if let Some(theme) = change.theme {
+                    s.theme = theme;
+                }
                 if let Some(shortcut) = change.shortcut {
                     s.shortcut = shortcut;
                 }
@@ -162,6 +175,7 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || crate::app_menu::apply_dock(&handle));
     }
+    apply_theme(&app, &settings.theme);
     let _ = app.emit("settings-changed", &settings);
     let _ = crate::tray::refresh(&app);
     Ok(settings)
@@ -318,4 +332,19 @@ pub fn log_panics(dir: &Path) {
         append_log(&dir, "crash.log", &format!("{info}\n{}", std::backtrace::Backtrace::force_capture()));
         previous(info);
     }));
+}
+
+
+#[cfg(test)]
+mod theme_tests {
+    use super::*;
+    #[test]
+    fn accepts_only_supported_theme_overrides() {
+        for value in ["system", "light", "dark"] {
+            let change: Change = serde_json::from_value(serde_json::json!({"theme": value})).unwrap();
+            assert!(check(&change.theme, "Theme", &["system", "light", "dark"]).is_ok());
+        }
+        assert!(check(&Some("sepia".into()), "Theme", &["system", "light", "dark"]).is_err());
+        assert!(check(&None, "Theme", &["system", "light", "dark"]).is_ok());
+    }
 }

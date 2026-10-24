@@ -1,3 +1,4 @@
+import { applyTheme, type Theme } from "./theme";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -26,6 +27,7 @@ if (inTauri && !import.meta.env.DEV) {
 
 /** Mirrors `Settings` in src-tauri/src/settings.rs (the fields the overlay uses). */
 type Settings = {
+  theme: Theme;
   pet_x: number | null;
   sleep_after_secs: number;
   pet_size: "small" | "medium" | "large";
@@ -88,7 +90,7 @@ const host: Host = {
   },
   command: (text, kind) => reminders.command(text, kind),
   spark: (project, change) => sparks(project, change),
-  nextMeeting: () => (settings?.calendar_heads_up ? headsUp.next() : Promise.resolve("Turn on the calendar heads-up in Settings → Calendar first.")),
+  nextMeeting: () => (settings?.calendar_heads_up ? headsUp.next() : Promise.resolve("Turn on the calendar heads-up in Settings → Reminders & calendar first.")),
   note: (command) => (command.kind === "note" ? notes.take(command.text, command.notebook) : notes.create(command.name)),
   ...(inTauri && {
     hide: () => void invoke("tray_action", { action: "toggle" }),
@@ -138,6 +140,7 @@ const pet = companion.pet;
 
 /** Settings that apply without a restart. Companion size rebuilds it, so that reloads the page. */
 function applySettings(next: Settings | null) {
+  if (next) applyTheme(next.theme);
   document.body.classList.toggle("large-text", !!next?.large_text);
   const calm = !!next?.calm || reducedMotion.matches;
   document.body.classList.toggle("reduce-motion", calm);

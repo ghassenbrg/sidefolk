@@ -1,3 +1,4 @@
+import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { badge } from "../states";
 import { describeRepeat, nextDue, parseReminder, type Repeat } from "../when";
@@ -94,62 +95,70 @@ function fields(prefix: string, initial?: Reminder) {
   return { node, read, focus: () => text.focus() };
 }
 
-let editing: string | null = null;
+let filter = "upcoming";
 
 export function renderReminders(app: App, arg = "") {
   if (arg && arg !== "new") {
     const r = app.state.reminders.find((r) => r.id === arg);
-    const view = h("div", { class: "view" }, button("Back to Reminders", () => { editing = null; app.go("reminders"); }), ...header(r?.text ?? "Reminder no longer exists", "Reminder details"));
+    const view = h("div", { class: "view" }, button("Back to Reminders", () => app.go("reminders")), ...header(r?.text ?? "Reminder no longer exists", "Reminder details"));
     if (!r) return view;
-    view.append(r.done ? h("p", { text: "Completed" }) : editing === r.id ? editRow(app, r) : row(app, r, true));
+    view.append(r.done ? h("p", { text: "Completed" }) : row(app, r, true));
     view.append(h("h2", { text: "History" }), h("ol", {}, ...(r.history?.length ? r.history : [{ at: r.created, action: "Created", due: r.due }]).map((entry) => h("li", {}, `${longDate(new Date(entry.at))} · ${entry.action} · due ${longDate(new Date(entry.due))}`))));
     return view;
   }
-  const view = h("div", { class: "view" }, ...header("Reminders", "Small things, remembered."));
-  const add = fields("new");
-  const form = h("form", { class: "card", "aria-label": "Add a reminder" }, add.node, h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Add reminder" })));
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const value = add.read();
-    if (!value) return;
-    try {
-      const added = await invoke<Reminder>("add_reminder", { text: value.text, due: value.due.getTime(), project: null, repeat: value.repeat ?? null });
-      app.toast(`Reminder set for ${longDate(value.due)}${value.repeat ? `, then ${describeRepeat(value.repeat, value.due)}` : ""}.`, {
-        label: "Undo",
-        run: () => void invoke("remove_reminder", { id: added.id }).then(() => app.refresh()),
-      });
-      (document.activeElement as HTMLElement | null)?.blur();
-      await app.refresh();
-      app.redraw(true);
-    } catch (error) {
-      app.toast(`Not saved: ${error}`, undefined, true);
-    }
-  });
-  view.append(form);
-
-  const list = h("section", { "aria-label": "Your reminders" });
+  const view = h("div", { class: "view reminders" }, h("div", { class: "page-heading" }, h("div", {}, ...header("Reminders", "Small things, remembered.")), button([icon("plus"), "Add reminder"], () => addReminder(app), "primary")));
+  const filters = h("div", { class: "segmented", role: "group", "aria-label": "Filter reminders" });
+  for (const [value, label] of [["upcoming", "Upcoming"], ["repeating", "Repeating"], ["completed", "Completed"]]) filters.append(button(label, () => { filter = value; app.redraw(true); }, "", { "aria-pressed": String(filter === value) }));
+  const list = h("section", { class: "reminder-list", "aria-label": "Your reminders" });
   const fill = () => list.replaceChildren(...rows(app));
   fill();
-  // Live updates refresh the list and leave a half-typed reminder alone.
-  app.live(() => {
-    if (!editing) fill();
-  });
-  view.append(list);
-  // File → New Reminder (⌘N) lands here with the title field ready.
-  if (arg === "new") requestAnimationFrame(() => add.node.querySelector<HTMLInputElement>("#new-text")?.focus());
+  app.live(fill);
+  view.append(filters, list);
+  if (arg === "new") requestAnimationFrame(() => { app.go("reminders"); addReminder(app); });
   return view;
+}
+
+function addReminder(app: App) {
+  const add = fields("new");
+  const error = h("p", { class: "field-error", role: "alert" });
+  const submit = h("button", { type: "submit", class: "primary", text: "Save reminder" });
+  const form = h("form", { "aria-label": "Add a reminder" }, add.node, error);
+  const editor = sheet("Add reminder", form);
+  form.append(h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), submit));
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (submit.disabled) return;
+    const value = add.read();
+    if (!value) return;
+    submit.disabled = true;
+    try {
+      const added = await invoke<Reminder>("add_reminder", { text: value.text, due: value.due.getTime(), project: null, repeat: value.repeat ?? null });
+      filter = "upcoming";
+      editor.close();
+      await app.refresh();
+      app.redraw(true);
+      app.toast(`Reminder set for ${longDate(value.due)}.`, { label: "Undo", run: async () => { await invoke("remove_reminder", { id: added.id }); await app.refresh(); } });
+    } catch (reason) { error.textContent = `Not saved: ${reason}`; submit.disabled = false; }
+  });
+  requestAnimationFrame(add.focus);
 }
 
 function rows(app: App): HTMLElement[] {
   const all = app.state.reminders;
   const open = all.filter((r) => !r.done).sort((a, b) => a.due - b.due);
   const done = all.filter((r) => r.done).sort((a, b) => b.due - a.due).slice(0, 5);
-  const nodes: HTMLElement[] = [h("h2", { class: "section-title", text: "Coming up" })];
-  if (!open.length) nodes.push(h("section", { class: "card empty" }, h("strong", { text: "A little space for later." }), h("p", { text: "Your reminders will appear here. Add one above, or type “remind me…” to a companion." })));
-  for (const r of open) nodes.push(editing === r.id ? editRow(app, r) : row(app, r));
-  if (done.length) {
-    nodes.push(h("h2", { class: "section-title", text: "Completed" }));
-    for (const r of done) nodes.push(h("article", { class: "card reminder done" }, h("div", { class: "row" }, h("div", {}, h("strong", { text: r.text }), h("p", { class: "meta", text: longDate(new Date(r.due)) })), badge("done"))));
+  const nodes: HTMLElement[] = [];
+  const items = filter === "completed" ? done : filter === "repeating" ? open.filter((r) => r.repeat) : open;
+  if (!items.length) nodes.push(h("section", { class: "card empty" }, h("strong", { text: filter === "completed" ? "Nothing completed yet." : "A little space for later." }), h("p", { text: filter === "repeating" ? "Repeating reminders will appear here." : "Add a reminder, or tell your companion what to remember." })));
+  let group = "";
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(midnight); tomorrow.setDate(tomorrow.getDate() + 1);
+  const later = new Date(tomorrow); later.setDate(later.getDate() + 1);
+  for (const r of items) {
+    const title = filter === "completed" ? "Completed" : r.due < Date.now() ? "Overdue" : r.due < tomorrow.getTime() ? "Today" : r.due < later.getTime() ? "Tomorrow" : "Later";
+    if (title !== group) { nodes.push(h("h2", { class: "section-title", text: title })); group = title; }
+    if (r.done) nodes.push(h("article", { class: "card reminder done" }, h("strong", { text: r.text }), h("p", { class: "meta", text: longDate(new Date(r.due)) }), badge("done")));
+    else nodes.push(row(app, r));
   }
   return nodes;
 }
@@ -181,8 +190,9 @@ function row(app: App, r: Reminder, detail = false) {
         !detail ? button("Open", () => app.go("reminders", r.id), "quiet") : null,
         button("Snooze 10 min", () => void update({ due: Date.now() + 600_000 }, "Snoozed for 10 minutes."), "quiet"),
         button("Edit", () => {
-          editing = r.id;
-          app.redraw(true);
+          let close = () => {};
+          const editor = sheet("Edit reminder", editRow(app, r, () => close()));
+          close = editor.close;
         }, "quiet"),
         button("Delete", async () => {
           try {
@@ -208,26 +218,30 @@ function row(app: App, r: Reminder, detail = false) {
   );
 }
 
-function editRow(app: App, r: Reminder) {
+function editRow(app: App, r: Reminder, close: () => void) {
   const edit = fields(`edit-${r.id}`, r);
   const form = h(
     "form",
     { class: "card reminder editing", "aria-label": `Edit ${r.text}` },
     edit.node,
-    h("div", { class: "actions" }, button("Cancel", () => ((editing = null), app.go("reminders"))), h("button", { type: "submit", class: "primary", text: "Save changes" })),
+    h("div", { class: "actions" }, button("Cancel", close), h("button", { type: "submit", class: "primary", text: "Save changes" })),
   );
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const value = edit.read();
     if (!value) return;
+    const submit = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    if (submit.disabled) return;
+    submit.disabled = true;
     try {
       await invoke("update_reminder", { id: r.id, change: { text: value.text, due: value.due.getTime(), repeat: value.repeat ?? null, clear_repeat: !value.repeat } });
-      editing = null;
+      close();
       app.toast(`Saved for ${longDate(value.due)}.`);
       await app.refresh();
-      app.go("reminders");
+      app.redraw(true);
     } catch (error) {
       app.toast(`Not saved: ${error}`, undefined, true);
+      submit.disabled = false;
     }
   });
   requestAnimationFrame(edit.focus);

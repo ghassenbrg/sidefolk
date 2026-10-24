@@ -253,6 +253,7 @@ fn main() {
             hooks::sync_full_access,
             actions::resolve_folder,
             actions::run_command,
+            actions::choose_project_folder,
             resolve_permission,
             dispatch,
             overlay_typing,
@@ -308,6 +309,7 @@ fn main() {
             if let Some(sender) = notifications::install(app.handle()) {
                 shared.reminders.schedule_with(sender);
             }
+            prefs::apply_theme(app.handle(), &shared.settings.lock().unwrap().value.theme);
             app_menu::apply_dock(app.handle());
             app.set_menu(app_menu::build(app.handle())?)?;
             app.on_menu_event(|app, event| app_menu::handle(app, event.id().as_ref()));

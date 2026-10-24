@@ -151,3 +151,7 @@
 }
 .mark .eyes { fill: var(--surface); }
 .mark .signal { fill: var(--mint); }
+
+/* Forced appearance also sets native input/popover colors. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }

@@ -1,3 +1,4 @@
+import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { badge } from "../states";
 import { invoke } from "./api";
@@ -5,7 +6,7 @@ import type { App } from "./app";
 import { COLORS, colorName } from "../worker-colors";
 import { cachedCharacters, characters } from "./characters";
 import { agentShort, ago, button, folder, h } from "./dom";
-import { empty, header, sessionRow } from "./ui";
+import { empty, folderPicker, header, sessionRow } from "./ui";
 
 // Sessions: the Claude Code and Codex sessions the companion follows, the ones that finished
 // recently (one click continues them), and starting a new one in a folder. Everything here is
@@ -18,7 +19,11 @@ export function renderSessions(app: App) {
     charactersLoaded = true;
     void characters().then(() => app.redraw(true));
   }
-  const view = h("div", { class: "view sessions" }, ...header("Sessions", "Claude Code and Codex sessions your companion follows. Start one here, or tell it “start a claude session in api”."));
+  const view = h("div", { class: "view sessions" }, h("div", { class: "page-heading" }, h("div", {}, ...header("Sessions", "Pick up where your AI tools left off.")), button([icon("plus"), "New session"], () => {
+    let close = () => {};
+    const editor = sheet("New session", newSession(app, () => close()));
+    close = editor.close;
+  }, "primary")));
   const running = h("section", { class: "card list", "aria-label": "Running sessions" });
   const finished = h("section", { class: "card list", "aria-label": "Recently finished" });
   const fill = () => {
@@ -42,15 +47,16 @@ export function renderSessions(app: App) {
   fill();
 
   const workers = h("section", { "aria-label": "Sparks" });
+  const options = h("details", { class: "project-options" }, h("summary", { text: "Project companion options" }), workers);
   const fillWorkers = () => workers.replaceChildren(sparks(app));
   fillWorkers();
   app.live(() => {
-    if (!view.contains(document.activeElement) || document.activeElement === document.body) {
+    if (!view.contains(document.activeElement) || !document.activeElement?.matches("input, select, textarea")) {
       fill();
       fillWorkers();
     }
   });
-  view.append(h("h2", { class: "section-title", text: "Running" }), running, h("h2", { class: "section-title", text: "Recently finished" }), finished, newSession(app), workers);
+  view.append(h("h2", { class: "section-title", text: "Running" }), running, h("h2", { class: "section-title", text: "Recently finished" }), finished, options);
   if (!app.state.integrations.claude_hooks) view.append(empty("Claude Code isn't connected", "Connect it in Settings to see its sessions here and answer its requests.", button("Open Settings", () => app.go("settings", "tools"))));
   return view;
 }
@@ -89,7 +95,7 @@ function sparks(app: App) {
   const form = h(
     "form",
     { class: "form-grid spark-form", "aria-label": "Give a project a Spark" },
-    h("div", { class: "field wide" }, h("label", { for: where.id, text: "Project folder" }), where),
+    h("div", { class: "field wide" }, h("label", { for: where.id, text: "Project folder" }), folderPicker(app, where)),
     h("div", { class: "field" }, h("label", { for: name.id, text: "Name (optional)" }), name),
     h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Add Spark" })),
   );
@@ -103,7 +109,7 @@ function sparks(app: App) {
   return h("div", {}, h("h2", { class: "section-title", text: "Sparks" }), list);
 }
 
-function newSession(app: App) {
+function newSession(app: App, close: () => void) {
   const known = knownFolders(app);
   const tool = h("select", { id: "new-session-tool" }, h("option", { value: "claude", text: "Claude Code" }), h("option", { value: "codex", text: "Codex" }));
   const where = h("input", { type: "text", id: "new-session-folder", list: "known-folders", autocomplete: "off", placeholder: "~/git/api or api", value: known[0] ?? "" });
@@ -112,23 +118,31 @@ function newSession(app: App) {
   const form = h(
     "form",
     { class: "card", "aria-label": "New session" },
-    h("h2", { text: "New session" }),
+
     h(
       "div",
       { class: "form-grid" },
       h("div", { class: "field" }, h("label", { for: tool.id, text: "Tool" }), tool),
-      h("div", { class: "field wide" }, h("label", { for: where.id, text: "Folder" }), where, folders),
+      h("div", { class: "field wide" }, h("label", { for: where.id, text: "Folder" }), folderPicker(app, where), folders),
     ),
     h("div", { class: "setting" }, h("div", { class: "setting-text" }, h("label", { for: full.id, text: "Full access" }), h("p", { class: "muted", text: "Works without asking. Claude Code uses its auto mode; Codex stays sandboxed to the folder. Off: it asks first." })), full),
-    h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Start in terminal" })),
+    h("div", { class: "actions sheet-actions" }, button("Cancel", close), h("button", { type: "submit", class: "primary", text: "Start in terminal" })),
   );
+  const error = h("p", { class: "field-error", role: "alert" });
+  form.append(error);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const submit = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    if (submit.disabled) return;
+    submit.disabled = true;
     try {
       const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: where.value.trim() || null });
-      app.toast(await invoke<string>("start_session", { agent: tool.value, cwd: folder.path, fullAccess: full.checked }));
-    } catch (error) {
-      app.toast(String(error), undefined, true);
+      const done = await invoke<string>("start_session", { agent: tool.value, cwd: folder.path, fullAccess: full.checked });
+      close();
+      app.toast(done);
+    } catch (reason) {
+      error.textContent = String(reason);
+      submit.disabled = false;
     }
   });
   return form;

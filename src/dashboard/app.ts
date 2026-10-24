@@ -1,3 +1,4 @@
+import { applyTheme } from "../theme";
 import { knowCommands } from "../commands";
 import { icon, mark, type IconName } from "../icons";
 import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
@@ -9,7 +10,7 @@ import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
 import { renderRequests, renderReview } from "./requests";
 import { renderSessions } from "./sessions";
-import { renderSettings } from "./settings";
+import { prepareSettings, renderSettings } from "./settings";
 import { renderSetup } from "./setup";
 import { tellBar } from "./tell";
 
@@ -59,7 +60,7 @@ const NAV: [string, string, IconName][] = [
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "today", requests: "today", home: "today", characters: "settings" };
+const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today", characters: "settings" };
 
 const main = document.querySelector<HTMLElement>("main")!;
 const topbar = document.querySelector<HTMLElement>("#topbar")!;
@@ -82,6 +83,7 @@ const app: App = {
   },
   hold: false,
   go(view, arg = "") {
+    if (view === "settings") prepareSettings();
     leave();
     current = { view, arg };
     draw(true);
@@ -103,6 +105,7 @@ const app: App = {
     const snapshot = () => JSON.stringify([app.state.settings, app.state.integrations, app.state.crew, app.state.reminders, app.state.status]);
     const before = snapshot();
     Object.assign(app.state, { settings, integrations, crew: crew ?? app.state.crew, reminders, status: status?.pets ? status : app.state.status });
+    applyTheme(settings.theme);
     // Settings → Reduce motion applies to this window too.
     document.documentElement.classList.toggle("reduce-motion", !!settings.calm);
     document.documentElement.classList.toggle("large-text", !!settings.large_text);
@@ -119,6 +122,9 @@ const app: App = {
   async save(change, done = "Saved.") {
     try {
       app.state.settings = await invoke<Settings>("update_settings", { change });
+      applyTheme(app.state.settings.theme);
+      document.documentElement.classList.toggle("reduce-motion", !!app.state.settings.calm);
+      document.documentElement.classList.toggle("large-text", !!app.state.settings.large_text);
       app.toast(done);
       return true;
     } catch (error) {
@@ -209,6 +215,7 @@ function editing() {
 function draw(focus: boolean) {
   const { view, arg } = current;
   document.body.classList.toggle("setup-mode", view === "setup");
+  document.body.classList.toggle("settings-mode", view === "settings");
   const render =
     {
       today: renderHome,
@@ -223,14 +230,22 @@ function draw(focus: boolean) {
       settings: renderSettings,
       setup: renderSetup,
     }[view] ?? renderHome;
+  const active = document.activeElement instanceof HTMLElement && main.contains(document.activeElement) ? document.activeElement : null;
+  const activeId = active?.id;
+  const selection = active instanceof HTMLInputElement && ["text", "search"].includes(active.type) ? [active.selectionStart, active.selectionEnd] : null;
   const scroll = main.scrollTop;
   main.replaceChildren(render(app, arg));
   updateNav();
   // Navigation moves focus to the new heading; a live redraw keeps the reader's place.
   if (focus) {
     main.scrollTop = 0;
-    main.querySelector<HTMLElement>("h1")?.focus();
+    (main.querySelector<HTMLElement>(".review h1") ?? main.querySelector<HTMLElement>("h1"))?.focus();
   } else main.scrollTop = scroll;
+  if (!focus && activeId) {
+    const next = document.getElementById(activeId);
+    next?.focus({ preventScroll: true });
+    if (selection && next instanceof HTMLInputElement) next.setSelectionRange(selection[0], selection[1]);
+  }
 }
 
 function updateNav() {
@@ -239,6 +254,9 @@ function updateNav() {
     if (b.dataset.view === selected) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   }
+  const connected = app.state.integrations.claude_hooks || app.state.integrations.codex_tools || app.state.integrations.claude_tools || app.state.status.pets.some((p) => p.sessions.length);
+  const ai = nav.querySelector<HTMLElement>(".nav-ai");
+  if (ai) ai.hidden = !connected && !["sessions", "review", "requests"].includes(current.view);
   const count = app.state.status.waiting.length;
   const badge = nav.querySelector<HTMLElement>(".count")!;
   if (!topbar.firstChild && current.view !== "setup") topbar.append(tellBar(app));
@@ -249,13 +267,16 @@ function updateNav() {
 
 function buildNav() {
   const brand = h("div", { class: "brand" }, mark(30), h("span", { class: "wordmark", text: "sidefolk" }));
-  const list = h("div", { class: "nav-list" });
+  const list = h("div", { class: "nav-list nav-everyday" });
+  const ai = h("div", { class: "nav-list nav-ai" }, h("span", { class: "nav-label", text: "AI tools" }));
+  const utility = h("div", { class: "nav-list nav-utility" });
   for (const [view, label, glyph] of NAV) {
     const b = button([icon(glyph), h("span", { text: label })], () => app.go(view), "", { "data-view": view });
     if (view === "today") b.append(h("span", { class: "count", hidden: true }));
-    list.append(b);
+    (view === "sessions" ? ai : ["settings", "actions"].includes(view) ? utility : list).append(b);
   }
-  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list);
+  const pet = h("img", { class: "nav-pip", src: "/pip/idle.png", alt: "", width: 84, height: 76 });
+  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, ai, utility, pet);
 }
 
 /** "review:<id>", "requests", … from the companion, the tray or the URL. */
@@ -292,8 +313,19 @@ listen<{ id: string; ok: boolean; text?: string }>("answered", ({ id, ok, text }
 listen("reminders-changed", () => void app.refresh());
 listen<Settings>("settings-changed", (settings) => {
   app.state.settings = settings;
+  applyTheme(settings.theme);
+  document.documentElement.classList.toggle("reduce-motion", !!settings.calm);
+  document.documentElement.classList.toggle("large-text", !!settings.large_text);
   app.redraw();
 });
 // Confirmations happen in dialogs and pets change on the desktop; pick both up.
 addEventListener("focus", () => void app.refresh());
 setInterval(() => void app.refresh(), 3_000);
+
+// The same shortcut as the native menu also works in the browser preview.
+addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === ",") {
+    event.preventDefault();
+    app.go("settings");
+  }
+});

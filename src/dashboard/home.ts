@@ -1,3 +1,4 @@
+import type { Notebook } from "../notes";
 import { icon } from "../icons";
 import { badge } from "../states";
 import { describeDue } from "../when";
@@ -5,15 +6,10 @@ import type { CalendarEvent } from "../calendar";
 import { invoke, type Waiting } from "./api";
 import type { App } from "./app";
 import { agentShort, button, h } from "./dom";
-import { header, identity, petLine, petOf, requestTitle, sessionLabel, sessionRow } from "./ui";
+import { header, identity, petOf, requestTitle, sessionLabel, sessionRow } from "./ui";
 
 // Home: what needs you first, then the work sessions the companion follows, reminders coming
 // up, and a way to connect a tool when none is. No token counts, graphs or terminal output here.
-
-export function greeting(now = new Date()) {
-  const hour = now.getHours();
-  return hour < 5 ? "Working late" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-}
 
 /** One waiting thing as a card; requests open their review, offers and reminders answer here. */
 export function attentionCard(app: App, w: Waiting) {
@@ -24,7 +20,7 @@ export function attentionCard(app: App, w: Waiting) {
     "section",
     { class: "card attention" },
     h("div", { class: "row" }, identity(w.petName, w.meta.project || pet?.project || null, second), badge("alert")),
-    h("h2", { class: "request-title", text: requestTitle(w) }),
+    h("h2", { class: "request-title", text: w.meta.title || requestTitle(w) }),
   );
   const actions = h("div", { class: "actions" });
   if (w.meta.kind === "permission" || w.meta.kind === "question") {
@@ -54,60 +50,54 @@ export function attentionCard(app: App, w: Waiting) {
 export function renderHome(app: App) {
   const { status, reminders, integrations } = app.state;
   const waiting = status.waiting;
-  const lead =
-    waiting.length === 0 ? "You're all caught up." : waiting.length === 1 ? "One thing needs your attention." : `${waiting.length} things need your attention.`;
-  const view = h("div", { class: "view home" }, ...header(`${greeting()}.`, lead));
+  const view = h("div", { class: "view home" },
+    h("div", { class: "page-heading" }, h("div", {}, ...header("Today", new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" }))),
+      button([icon("plus"), "Add reminder"], () => app.go("reminders", "new"), "primary")));
+  const primary = h("div", { class: "home-primary" });
+  const secondary = h("div", { class: "home-secondary" });
+  view.append(h("div", { class: "home-grid" }, primary, secondary));
+  primary.append(h("h2", { class: "section-title", text: waiting.length ? "Needs you" : "You're all caught up." }));
+  for (const w of waiting.slice(0, 3)) primary.append(attentionCard(app, w));
+  if (waiting.length > 3) primary.append(button(`See all ${waiting.length} requests`, () => app.go("requests"), "wide"));
 
-  for (const w of waiting.slice(0, 3)) view.append(attentionCard(app, w));
-  if (waiting.length > 3) view.append(button(`See all ${waiting.length} requests`, () => app.go("requests"), "wide"));
-
-  const connected = integrations.claude_hooks || integrations.codex_tools || integrations.claude_tools;
-  if (!connected)
-    view.append(
-      h(
-        "section",
-        { class: "card notice-card" },
-        h("h2", { text: "Connect an AI tool to see its progress and requests here." }),
-        h("p", { text: "Claude Code and Codex aren't connected yet. Sidefolk explains each change before it makes it, and keeps a backup." }),
-        h("div", { class: "actions" }, button("Connect a tool", () => app.go("settings", "tools"), "primary"), button("Add a reminder", () => app.go("reminders"))),
-      ),
-    );
-
-  // Work sessions the companion is following, each one click from where it runs.
-  const pet = status.pets[0];
-  if (pet) {
-    view.append(h("h2", { class: "section-title", text: "Work sessions" }));
-    const list = h("section", { class: "card list" });
-    const sessions = status.pets.flatMap((p) => p.sessions);
-    for (const s of sessions) list.append(sessionRow(app, s));
-    if (!sessions.length) list.append(h("p", { class: "muted", text: petLine(pet) }));
-    view.append(list);
-  }
-
-  const next = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due).slice(0, 3);
-  view.append(h("h2", { class: "section-title", text: "Coming up" }));
-  const upcoming = h("section", { class: "card list" });
-  for (const r of next)
-    upcoming.append(h("div", { class: "row line" }, h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })), h("span", { class: "meta", text: describeDue(new Date(r.due)) })));
-  if (!next.length) upcoming.append(h("p", { class: "muted", text: "Nothing coming up. Add a reminder for your next small step." }));
-  // The next meetings, when the calendar heads-up is on (Settings → Calendar).
+  primary.append(h("h2", { class: "section-title", text: "Coming up" }));
+  const upcoming = h("section", { class: "card list", "aria-label": "Coming up" });
+  const next = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due).slice(0, 4);
+  for (const r of next) upcoming.append(button([
+    h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })),
+    h("span", { class: "meta", text: describeDue(new Date(r.due)) }), icon("chevron"),
+  ], () => app.go("reminders", r.id), "list-button"));
+  const emptyUpcoming = h("p", { class: "muted", text: "Nothing coming up. A little space for your next small step." });
+  if (!next.length) upcoming.append(emptyUpcoming);
   if (app.state.settings.calendar_heads_up)
-    void invoke<CalendarEvent[]>("upcoming_events", { hours: 8 })
-      .then((events) => {
-        const at = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        for (const e of events.slice(0, 3).reverse())
-          upcoming.prepend(
-            h(
-              "div",
-              { class: "row line" },
-              h("span", { class: "with-icon" }, icon("activity"), h("strong", { text: e.title })),
-              h("span", { class: "inline" }, h("span", { class: "meta", text: `${at(e.start)}${e.location ? ` · ${e.location}` : ""}` }), e.link ? button("Join", () => void invoke("open_target", { target: e.link }), "small") : null),
-            ),
-          );
-        upcoming.querySelector(".muted")?.remove();
-      })
-      .catch(() => {});
-  upcoming.append(h("div", { class: "actions" }, button("Add reminder", () => app.go("reminders"))));
-  view.append(upcoming);
+    void invoke<CalendarEvent[]>("upcoming_events", { hours: 8 }).then((events) => {
+      if (events.length) emptyUpcoming.remove();
+      for (const e of events.slice(0, 3).reverse()) upcoming.prepend(h("div", { class: "row line" },
+        h("span", { class: "with-icon" }, icon("activity"), h("strong", { text: e.title })),
+        h("div", { class: "inline" }, h("span", { class: "meta", text: new Date(e.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }),
+          e.link ? button("Join", () => void invoke("open_target", { target: e.link }).catch((error) => app.toast(String(error), undefined, true))) : null)));
+    }).catch(() => {});
+  upcoming.append(h("div", { class: "actions" }, button(["All reminders", icon("next")], () => app.go("reminders"), "quiet")));
+  primary.append(upcoming);
+
+  const sessions = status.pets.flatMap((p) => p.sessions);
+  const connected = integrations.claude_hooks || integrations.codex_tools || integrations.claude_tools || sessions.length;
+  if (connected) {
+    const list = h("section", { class: "card list", "aria-label": "Work sessions" });
+    for (const s of sessions.slice(0, 3)) list.append(sessionRow(app, s, true));
+    if (!sessions.length) list.append(h("p", { class: "muted", text: "Nothing running right now." }));
+    list.append(h("div", { class: "actions" }, button("All sessions", () => app.go("sessions"), "quiet")));
+    secondary.append(h("h2", { class: "section-title", text: "Work sessions" }), list);
+  }
+  const notes = h("section", { class: "card list", "aria-label": "Recent notes" }, h("p", { class: "muted", text: "Loading notebooks…" }));
+  secondary.append(h("h2", { class: "section-title", text: "Recent notes" }), notes);
+  void invoke<Notebook[]>("list_notebooks").then((books) => {
+    notes.replaceChildren();
+    for (const book of [...books].sort((a, b) => b.updated - a.updated).slice(0, 3)) notes.append(button([
+      h("span", { class: "with-icon" }, icon("notes"), h("span", {}, h("strong", { text: book.name }), h("span", { class: "meta", text: `${book.count} ${book.count === 1 ? "note" : "notes"}` }))), icon("chevron"),
+    ], () => app.go("notes", book.id), "list-button"));
+    if (!books.length) notes.append(h("p", { class: "muted", text: "Keep an idea or a small win. Your dated notes collect here." }));
+    notes.append(h("div", { class: "actions" }, button("Add note", () => app.go("notes"))));
+  }).catch(() => notes.replaceChildren(h("p", { class: "muted", text: "Couldn't load notebooks." }), button("Open Notes", () => app.go("notes"))));
   return view;
 }

@@ -1,8 +1,9 @@
+import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { invoke } from "./api";
 import type { App } from "./app";
 import { button, h } from "./dom";
-import { header } from "./ui";
+import { folderPicker, header } from "./ui";
 
 // Actions: commands and links you name once and run by name, here or on the companion
 // ("deploy staging"). A command runs in your terminal, or quietly with a done or failed note and
@@ -13,7 +14,8 @@ type Saved = { name: string; kind: "command" | "link"; value: string; folder: st
 const home = (path: string) => path.replace(/^\/Users\/[^/]+/, "~");
 
 export function renderActions(app: App) {
-  const view = h("div", { class: "view actions-page" }, ...header("Actions", "Name a command or a link once, then run it by name here or by telling your companion (“deploy staging”)."));
+  const view = h("div", { class: "view actions-page" }, h("div", { class: "page-heading" }, h("div", {}, ...header("Actions", "Commands and links, ready when you need them.")), button([icon("plus"), "New action"], () => { editor = sheet("New action", form); }, "primary")));
+  let editor: { close: () => void } | null = null;
   app.live(() => {});
   const list = h("section", { class: "card list", "aria-label": "Your actions" });
   const fill = async () => {
@@ -26,7 +28,7 @@ export function renderActions(app: App) {
   const name = h("input", { type: "text", id: "action-name", maxlength: 40, autocomplete: "off", placeholder: "deploy staging" });
   const value = h("input", { type: "text", id: "action-value", maxlength: 500, autocomplete: "off", spellcheck: false, placeholder: "npm run deploy -- staging" });
   const folder = h("input", { type: "text", id: "action-folder", autocomplete: "off", placeholder: "api or ~/git/api" });
-  const folderField = h("div", { class: "field" }, h("label", { for: folder.id, text: "Folder" }), folder);
+  const folderField = h("div", { class: "field" }, h("label", { for: folder.id, text: "Folder" }), folderPicker(app, folder));
   kind.addEventListener("change", () => {
     folderField.hidden = kind.value === "link";
     value.placeholder = kind.value === "link" ? "https://team.atlassian.net/board" : "npm run deploy -- staging";
@@ -34,7 +36,6 @@ export function renderActions(app: App) {
   const form = h(
     "form",
     { class: "card", "aria-label": "New action" },
-    h("h2", { text: "New action" }),
     h(
       "div",
       { class: "form-grid" },
@@ -43,20 +44,21 @@ export function renderActions(app: App) {
       h("div", { class: "field wide" }, h("label", { for: value.id, text: "Command or link" }), value),
       folderField,
     ),
-    h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Save action" })),
+    h("div", { class: "actions sheet-actions" }, button("Cancel", () => editor?.close()), h("button", { type: "submit", class: "primary", text: "Save action" })),
   );
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
       const saved = await invoke<Saved>("save_action", { name: name.value, kind: kind.value, value: value.value, folder: folder.value || null });
       app.toast(`Saved. Say “${saved.name}” to your companion, or run it here.`);
+      editor?.close();
       name.value = value.value = folder.value = "";
       await fill();
     } catch (error) {
       app.toast(String(error), undefined, true);
     }
   });
-  view.append(list, form);
+  view.append(list);
   return view;
 }
 

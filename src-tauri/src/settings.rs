@@ -15,6 +15,8 @@ pub struct Settings {
     pub display: Option<String>,
     pub hidden: bool,
     pub shortcut: String,
+    /// system | light | dark. System follows macOS while running.
+    pub theme: String,
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
     /// Keep the overlay out of screenshots, recordings and screen sharing. Off by default: macOS
@@ -53,6 +55,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            theme: "system".into(),
             pet_x: None,
             display: None,
             hidden: false,
@@ -165,6 +168,7 @@ mod tests {
         assert!(value.hidden && value.pet_answers_permissions && !value.hide_in_recordings);
         assert_eq!(value.sleep_after_secs, 120);
         assert_eq!(value.shortcut, Settings::default().shortcut);
+        assert_eq!(value.theme, "system");
     }
     #[test]
     fn old_installs_stop_blanking_mission_control_once() {
@@ -181,7 +185,8 @@ mod tests {
     fn saves_and_reloads() {
         let dir = std::env::temp_dir().join(format!("sidefolk-store-{}", std::process::id()));
         let mut store = Store::load(dir.clone()).unwrap();
-        store.update(|s| s.pet_x = Some(321.0)).unwrap();
+        store.update(|s| { s.pet_x = Some(321.0); s.theme = "dark".into(); }).unwrap();
+        assert_eq!(Store::load(dir.clone()).unwrap().value.theme, "dark");
         assert_eq!(Store::load(dir.clone()).unwrap().value.pet_x, Some(321.0));
         fs::remove_dir_all(dir).unwrap();
     }

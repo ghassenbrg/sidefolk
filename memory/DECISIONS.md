@@ -145,3 +145,11 @@ Newest last. Each entry: what, why, and what would change it.
     plain rules before any AI, then on-device, then the user's Claude/Codex; plain commands
     never go to AI; per-session full access. Supersedes the character and UI decisions 12, 27–35
     where they conflict.
+37. **UI/UX redesign approved (24 October 2026).** The user approved
+    `creative-design/review-2026-10-24/` for implementation, with the current logo
+    unchanged and System/Light/Dark in Settings. Everyday navigation first;
+    optional AI sessions; list-first creation flows; persistent action review;
+    searchable, categorized Settings with all supported configuration reachable.
+    Use existing tokens and status words in both app and overlay. System is the
+    default theme, overrides persist, native appearance and cards share it.
+    This approval supersedes the review package's earlier pending-review notes.

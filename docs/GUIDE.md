@@ -22,7 +22,7 @@ anything happens. The same field is at the top of the Sidefolk window ("Tell Pip
 | start a claude session in api | A new Claude Code (or Codex) session in your terminal. |
 | open session · open api session | Brings that work session forward, or continues it. |
 | give api a spark · send the api spark home | A worker companion for one project. |
-| next meeting | What's next on your calendar (Settings → Calendar turns on the heads-up). |
+| next meeting | What's next on your calendar (Settings → Reminders & calendar turns on the heads-up). |
 | rename to Bun · hide · help | |
 
 The first time you come back each day (or when Sidefolk starts in the morning), Pip says what's
@@ -40,26 +40,27 @@ Open it from the Dock, the menu bar icon, or "open Sidefolk".
   Claude Code or Codex to group a notebook by theme; it says what it sends first.
 - **Sessions** (⌘4): running and finished sessions, starting new ones, Sparks.
 - **Actions** (⌘5): your saved commands and links.
-- **Settings** (⌘,): size, look, sounds, privacy, connected tools, shortcut.
+- **Settings** (⌘,): searchable categories for appearance, companion, reminders and calendar, sound, AI tools, privacy, accessibility and your data.
+  **Appearance → Theme** offers System (default), Light and Dark. The choice saves automatically and applies to windows and companion cards. System follows your Mac while Sidefolk is running.
 
 ## Sparks and your own characters
 
 A Spark looks after one project: it acts out that project's sessions and brings their requests,
 in its own color with the project's name under its feet. Pip keeps everything else.
 
-Settings → Your companion → **Make your own…** turns a picture into a companion: save the template,
+Settings → Companion → **Make your own…** turns a picture into a companion: save the template,
 draw (or generate) your character in its boxes, import it, check the poses, save. Only the first
 box is required. It can be Pip's look or any Spark's.
 
 ## AI tools (optional)
 
-Settings → Connected tools connects Claude Code and Codex. Each change is explained first and a
+Settings → AI tools connects Claude Code and Codex. Each change is explained first and a
 backup of their settings is kept.
 
 - Requests come to the companion when you're not in a terminal or editor.
 - **Full access** per session (the "Asks first" button next to it): requests are allowed without
   asking, except risky ones like `rm -rf`, `sudo` or a force push.
-- `sidefolk here --name Backend` in a terminal gives that project a Spark (Settings → Connected
+- `sidefolk here --name Backend` in a terminal gives that project a Spark (Settings → AI
   tools → Command line tool installs the command).
 
 ## Privacy
@@ -71,5 +72,5 @@ it's off by default.
 
 ## Something wrong?
 
-Settings → About and help → **Copy report**, add what happened, and send it. It contains versions,
+Settings → About & data → **Copy report**, add what happened, and send it. It contains versions,
 settings and recent errors, never your reminders, notes or names.

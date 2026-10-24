@@ -1,8 +1,9 @@
+import { sheet } from "./dialog";
 import { explain, parse } from "../commands";
 import { icon } from "../icons";
 import { invoke } from "./api";
 import type { App } from "./app";
-import { agentShort, folder, h } from "./dom";
+import { agentShort, button, folder, h } from "./dom";
 
 // "Tell Pip…": the companion's field, in the window. Same commands, same preview of what Enter
 // will do, and the reply comes back from the companion itself, so both always agree.
@@ -11,7 +12,7 @@ export function tellBar(app: App) {
   const input = h("input", {
     type: "text",
     class: "tell-input",
-    placeholder: `Tell ${app.state.crew.main.name}… (remind me tomorrow at 9 to…)`,
+    placeholder: `Tell ${app.state.crew.main.name}…`,
     "aria-label": "Tell your companion",
     autocomplete: "off",
     spellcheck: false,
@@ -29,6 +30,7 @@ export function tellBar(app: App) {
       return input.blur();
     }
     if (event.key !== "Enter" || !input.value.trim()) return;
+    event.preventDefault();
     const text = input.value.trim();
     input.value = "";
     update();
@@ -39,17 +41,18 @@ export function tellBar(app: App) {
     if (reply) app.toast(reply);
     void app.refresh();
   });
-  return h("form", { class: "tell", onsubmit: (e: Event) => e.preventDefault() }, h("span", { class: "tell-icon" }, icon("requests")), input, preview);
+  const examples = h("details", { class: "tell-examples" }, h("summary", { text: "Examples" }));
+  const options = h("div", { class: "example-options" });
+  for (const text of ["remind me tomorrow at 9 to check the results", "note for Ideas: try a quieter morning", "open Sidefolk", "help"]) options.append(button(text, () => { input.value = text; examples.open = false; input.focus(); update(); }));
+  examples.append(options);
+  return h("form", { class: "tell", onsubmit: (e: Event) => e.preventDefault() }, h("div", { class: "tell-row" }, h("span", { class: "tell-icon" }, icon("requests")), input, examples), preview);
 }
 
 /** Same rule as on the companion: the exact command and folder first, then it runs where you can watch. */
 async function confirmRun(app: App, command: string, wanted: string | null) {
   try {
     const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: sessionFolder(app, wanted) ?? wanted });
-    app.toast(`Run \`${command}\` in ${folder.label}? It opens in your terminal.`, {
-      label: "Run in terminal",
-      run: () => void invoke<string>("run_command", { command, cwd: folder.path }).then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)),
-    });
+    review(app, "Run in your terminal?", command, folder.path, "Run in terminal", () => invoke<string>("run_command", { command, cwd: folder.path }));
   } catch (error) {
     app.toast(String(error), undefined, true);
   }
@@ -59,13 +62,23 @@ async function confirmStart(app: App, agent: "claude" | "codex", wanted: string 
   try {
     const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: sessionFolder(app, wanted) ?? wanted });
     const name = agent === "codex" ? "Codex" : "Claude Code";
-    app.toast(`Start ${name} in ${folder.label}${full ? " with full access" : " (asks first)"}?`, {
-      label: `Start ${name}`,
-      run: () => void invoke<string>("start_session", { agent, cwd: folder.path, fullAccess: full }).then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)),
-    });
+    review(app, `Start ${name}?`, `${name} · ${full ? "Full access" : "Asks first"}`, folder.path, `Start ${name}`, () => invoke<string>("start_session", { agent, cwd: folder.path, fullAccess: full }));
   } catch (error) {
     app.toast(String(error), undefined, true);
   }
+}
+
+function review(app: App, title: string, action: string, path: string, label: string, run: () => Promise<string>) {
+  const error = h("p", { class: "field-error", role: "alert" });
+  const content = h("div", {}, h("div", { class: "facts" }, h("span", { class: "fact-label", text: "Action" }), h("code", { text: action }), h("span", { class: "fact-label", text: "Folder" }), h("code", { text: path })), h("p", { class: "muted", text: "Opens in your configured terminal so you can see the output." }), error);
+  const editor = sheet(title, content);
+  const submit = button(label, async () => {
+    submit.disabled = true;
+    try { const done = await run(); editor.close(); app.toast(done); }
+    catch (reason) { error.textContent = String(reason); submit.disabled = false; }
+  }, "primary");
+  content.append(h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), submit));
+  // The dialog initially focuses its close control, never the action.
 }
 
 /** "run … in api": the folder of the api work session when there is one. */

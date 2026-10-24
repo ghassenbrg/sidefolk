@@ -156,3 +156,14 @@ Things that cost time to discover. Add to this when something surprises you.
   vertex colors stay exact; only the rendering interpolates between them.
 - A character picker should show characters in their own designed looks; showing every body
   in the current companion's coat made them hard to tell apart.
+
+## UI redesign verification (24 October 2026)
+
+- Prevent the Tell field's Enter default before awaiting a folder lookup and
+  opening a native HTML dialog: focus moves to its close button, and the original
+  Enter's default action can otherwise immediately close the new dialog.
+- A live notebook refresh should update entries, keeping capture text and an
+  unfinished edit. Defer entry redraw while editing, then refresh on Save/Cancel.
+- In Vite browser checks, dynamically importing an unversioned API URL after HMR
+  can create a separate preview store. Use the API resource URL already loaded by
+  the page when injecting an incoming event in a regression test.

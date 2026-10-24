@@ -1,5 +1,100 @@
 # Status
 
+**Approved UI/UX redesign implemented — Codex, 24 October:** User said “go ahead
+rework it like that” after the five review boards and theme/settings revision.
+The current production logo and icons are unchanged. No commit. Main changes:
+- Everyday-first navigation, conditional AI section, two-column Today at normal
+  desktop widths, recent notebooks, consistent token-based controls and dialogs.
+- Searchable Settings with nine categories, existing deep links, ⌘,, remembered
+  category and links to feature/project/session editors. System (default), Light,
+  Dark persists in Rust settings, follows OS changes in System, applies to native
+  app appearance and all page/card surfaces. CSS cache supports browser previews.
+- Reminder lists/filters/grouping before creation; add/edit sheets, inline date
+  errors and save guards; repeat/history/delete/Undo preserved. Actions and new
+  notebooks also create in sheets; notebooks have a sidebar and dated entries.
+- Session creation sheet and native folder Browse (existing dialog plugin),
+  project companion settings in a disclosure, session/request master-detail review,
+  actual request choices and expiry handling. Tell examples and persistent command
+  review; Enter cannot auto-dismiss the newly opened dialog. Three-step setup.
+- Incoming notes preserve capture text and an unfinished edit; redraw after
+  Save/Cancel. Updated docs/GUIDE.md and approved design package status.
+Verification on final sources: typecheck, **90 Vitest**, **31 Rust** (3 opt-in
+tests left ignored), full `npm run check:webkit` with both themes, theme override
+reload/live system changes/cross-surface sync, all settings categories/search,
+reminder repeat edits/Undo, incoming-note edit/capture, session Browse preview,
+three-step setup, persistent review and narrow/large-text layouts. All passed.
+`npm run build` succeeded, final 6.55 MiB bundle at
+`src-tauri/target/release/bundle/macos/Sidefolk.app`. WebKit screenshots:
+`output/playwright/redesign/`; CLI diagnostic logs moved under output/playwright.
+Vite preview remains on 127.0.0.1:1420 (this run's session 62382). User's existing
+release process 20594 was left running; **relaunch the built app to load the new
+UI**. No desktop capture or live model calls. Native folder chooser, native theme
+switching and OS permission prompts still require the repo's real-app hand check;
+do not describe browser sample data as native verification. Global agent configs,
+user data and pre-existing `art/blender/film-duo/` work were not modified.
+Next only if requested: native hand-check fixes, further visual adjustments, or
+commit. Current redesign is implemented and built; earlier pending-review notes
+below are historical and superseded by this entry and Decision 37.
+
+**Settings/theme design revision — Codex, 24 October:** User requested convenient
+System / Light / Dark selection and all app configuration accessible in Settings.
+Expanded `creative-design/review-2026-10-24/README.md` with a nine-category settings
+map, Settings search/⌘, access, central links to feature/project/session editors,
+autosave/error behavior, and detailed theme requirements (System default, live OS
+changes, persistent overrides, consistent windows/overlay, keyboard selection).
+New built-in imagegen board: `05-appearance-light-and-dark.png`; reviewed both
+appearances, all three theme choices and category labels. Production app icon
+was supplied as a reference; exact current logo assets remain unchanged in any
+implementation. Exact prompt appended to `prompts.json`. This is a design-only
+revision under the user's original request for mockup approval before coding;
+no application code/config/runtime changes and no commit. Next: user reviews
+the updated Settings board and overall proposal; implement only approved scope.
+
+**UI/UX redesign review — Codex, 24 October:** User requested a redesign with
+imagegen mockups and simpler usage, explicitly for approval before implementation.
+Created `creative-design/review-2026-10-24/`: four final PNG boards (Today;
+Reminders + Notes; Sessions + request review; desktop capture/reminder + Settings),
+README behavior proposal and exact generation prompts. Used built-in imagegen;
+reviewed every output and corrected a duplicated sidebar item in the Sessions
+board (the `-draft.png` is superseded). **User explicitly confirmed: keep the
+current logo exactly as it is.** Reuse existing production brand assets; generated
+logo variations are placeholders. Proposed list-first reminders, everyday-first
+navigation, conditional AI features, focused settings, persistent command review
+and one shared capture pattern. **No UI implementation is approved yet.** Next:
+user reviews the four boards and proposed journeys, then revise or implement only
+the approved scope. App code, running app, global configs and prior art untouched;
+no commit. Verified PNG files, prompt JSON and diff whitespace; no runtime tests
+needed or run for these design-only artifacts. Preserve earlier status entries.
+
+**Robot/penguin asset run — Codex, 24 October, finished:** User requested the
+same film-style 3D treatment for two attached references, then asked for strict
+reference fidelity and explicitly approved the robot ("for robot it looks good").
+Robot is finished and approved: `output/robot-film/` (blend, rigged GLB, portrait,
+3-second MP4/GIF); 33 mesh parts, 24 bones, Idle/Hello, blink/happy/smile controls.
+GLB and skin weights validated. Preserve its approved appearance.
+Penguin's first film interpretation is preserved in `output/penguin-film/` but is
+superseded by `output/penguin-film-reference/`: 12 meshes, 18 bones, no eyebrows,
+reference-sized button eyes and bill, wider body, lower badge, front orthographic
+camera with white background. Final deliverables include blend, rigged GLB,
+1200 px front portrait, 3-second MP4/GIF (36 frames at 12 fps), and validation JSONs.
+The small motion preview omits strand evaluation; the blend and portrait have
+the fine down enabled. Source: `art/blender/film-duo/` (build_characters.py,
+build_penguin_reference.py, finish_characters.py, preview_reference.py,
+check_exports.py). All 12 final penguin meshes passed BlendRelay geometry checks;
+both actors' skin weights, GLB joints/morphs/Idle+Hello clips were checked. Front
+portraits, wave poses and closed-eye preview frames reviewed; previews fit the
+whole moving limb. Robot stays approved; final penguin is delivered for user art
+review. No claim of pixel-identical or known hidden geometry from one front image.
+Working BlendRelay instance is
+`70bc69e516d447e19c0db5f8f02b6cbd`. The second instance paused on macOS Downloads
+access; its task-only/default-cube session was stopped with SIGTERM. The supplied
+reference was copied to `output/character-references/penguin.png` and the stricter
+model rebuilt in the working instance. Blender 5.2 compositor uses
+`scene.compositing_node_group` plus NodeGroupOutput, and AlphaOver sockets are
+Background/Foreground/Factor (use names, not legacy indices).
+No application/global-config changes or commit by this agent. Next work only if
+requested: user adjustments, more motion/facial controls or target-engine tuning.
+
 **Film bunny revision — Codex, 24 October (later):** User asked to make the 3D
 bunny fuller, expressive, alive, and suitable for later animation. Delivered in
 `output/mint-bunny-film/`: `bunny-film.blend` (short fur, sculpted head/body, freely
