@@ -5,10 +5,16 @@ yet: signing, notarizing and auto-update all need credentials only you should ho
 
 ## Ready in the repo
 
-- `npm run build` makes `src-tauri/target/release/bundle/macos/Sidefolk.app` (about 4 MB).
-- `src-tauri/Info.plist` sets `LSUIElement`, so there is no Dock icon, even at launch.
-- Settings window, first-run card, local crash and error logs (`<data dir>/logs`).
+- `npm run build` makes `src-tauri/target/release/bundle/macos/Sidefolk.app` (about 6.5 MB).
+- `scripts/release.sh` runs every check and builds a signed, notarized app and DMG once the
+  keys below are set (it refuses to build an unsigned release unless you pass `--unsigned`).
+- A Dock app with menus; `Info.plist` keeps `LSUIElement` so "Hide from Dock" never flashes an
+  icon at launch (the app sets its own activation policy right after).
+- Setup guide on first launch, local crash and error logs (`<data dir>/logs`), Settings → About
+  and help → Copy report for bug reports, and docs/GUIDE.md for people trying it.
 - The data directory is `~/Library/Application Support/dev.sidefolk.companion`.
+- CPU, 24 October 2026 (release build, running app plus its three web view processes, 60 s):
+  about 1.3% on average.
 
 ## 1. Sign and notarize (Developer ID)
 
@@ -48,11 +54,13 @@ public key.
 
 ## 3. Before each release
 
-- `npm run typecheck && npm test && (cd src-tauri && cargo test)`
-- `npm run model` if `art/blender/build_hero.py` changed.
-- `npm run measure` with the screen awake and unlocked; record the result in docs/PHASE1.md.
+- `scripts/release.sh` (or by hand: `npm run typecheck && npm test && (cd src-tauri && cargo test)`
+  and, with `npm run web` running, `npm run check:webkit`).
+- `npm run sprites` (and `npm run sprites -- spark`) if the sheets in `art/` changed.
+- `npm run measure` with the screen awake and unlocked and no other Sidefolk running.
 - Try a fresh data directory (`open` would drop the variable, so run the binary):
-  `SIDEFOLK_DATA_DIR=$(mktemp -d) Sidefolk.app/Contents/MacOS/sidefolk` shows the first-run card.
+  `SIDEFOLK_DATA_DIR=$(mktemp -d) Sidefolk.app/Contents/MacOS/sidefolk` shows the setup guide.
+- Hand checks in docs/REMINDER-CHECKS.md and the "done when" checks in docs/PLAN-V2.md section 6.
 
 ## Windows
 

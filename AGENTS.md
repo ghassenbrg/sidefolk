@@ -25,7 +25,7 @@ APP-UX.md) where PLAN-V2 doesn't say otherwise; v2 concept art is in creative-de
 Use the tokens in `src/tokens.css` and the status vocabulary in `src/states.ts`; don't add
 colors, sizes or state words of your own.
 
-Background reading: [README.md](README.md), [docs/PHASE0.md](docs/PHASE0.md),
+Background reading: [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) (what users see), [docs/PHASE0.md](docs/PHASE0.md),
 [docs/PHASE1.md](docs/PHASE1.md), [art/pip/README.md](art/pip/README.md),
 [docs/RELEASE.md](docs/RELEASE.md).
 

@@ -4,11 +4,11 @@ A desktop companion for macOS. Pip lives on your desktop, brings you your remind
 out what your AI tools (Claude Code, Codex) are doing: it brings you their requests and takes you
 back to their work sessions.
 
-**Where it's going:** [docs/PLAN-V2.md](docs/PLAN-V2.md), the plan agreed on 24 October 2026
-(reminders, notes, AI sessions with worker companions, quick actions, in a real Mac app). This
-README describes the app after phase 0 (the reset). Everything v0.1 had (a crew of 18
-characters, art styles, comfort presets…) is in git at the `v0.1-zoo` tag. The older Electron
-app is at `legacy-v0`.
+**How to use it:** [docs/GUIDE.md](docs/GUIDE.md), the short guide for people trying it.
+**The plan:** [docs/PLAN-V2.md](docs/PLAN-V2.md), agreed on 24 October 2026; phases 0–7 are built,
+phase 8 (signed beta) needs the release keys ([docs/RELEASE.md](docs/RELEASE.md)). Everything v0.1
+had (a crew of 18 characters, art styles, comfort presets…) is in git at the `v0.1-zoo` tag. The
+older Electron app is at `legacy-v0`.
 
 ## Run it
 
@@ -34,32 +34,24 @@ Releasing (signing, notarizing, auto-update): [docs/RELEASE.md](docs/RELEASE.md)
 **Pip stays where you put it.** Drag it anywhere; it never wanders. ⌘⇧Space hides it or
 calls it to your cursor. It falls asleep after a while without keyboard or mouse input.
 
-**Click Pip (or right-click) to talk to it.** One field; the line under it says what Enter
-will do before anything happens. Everything is understood on your Mac, without AI:
+**Click Pip (or right-click) to talk to it,** or use "Tell Pip…" at the top of the window. The
+line under the field says what Enter will do before anything happens. Everything is understood
+on your Mac, without AI; anything it doesn't know gets a short answer and is never sent to an AI
+tool. The full list is in [docs/GUIDE.md](docs/GUIDE.md): reminders (with repeats and "10 minutes
+before"), notes ("note for evaluation: …"), commands (`ls -la`, shown before they run), opening
+things, saved actions, starting and opening Claude Code / Codex sessions, Spark workers.
 
-| Type | What happens |
-|---|---|
-| `remind me tomorrow at 9 to check the results` | A reminder; Pip brings it at that time, even when hidden |
-| `reminders` | What's coming up |
-| `open session` · `open api session` | Bring a work session forward, or continue it in a terminal |
-| `open Sidefolk` · `hide` | The Sidefolk window, or hide the companion |
-| `rename to Bun` | A new name for your companion |
+**Every card closes** with its ×. A request you close stays in the window until it's answered or
+the tool stops waiting.
 
-Anything else gets a short answer; it's never sent to an AI tool.
+**The Sidefolk window** is a normal Mac app (Dock, menus, full screen): Today ⌘1, Reminders ⌘2,
+Notes ⌘3, Sessions ⌘4, Actions ⌘5, Settings ⌘,. First launch opens a five-step setup guide.
 
-**Every card closes** with its ×. A request you close stays in the Sidefolk window under
-Requests until it's answered or the tool stops waiting.
-
-**The Sidefolk window** (menu bar icon → Open Sidefolk…): Home (what needs you, your work
-sessions, reminders coming up), Requests (each one with its exact command, Decline / Allow
-once; "Sent" shows only once it went through), Reminders (add, edit, complete, delete with
-Undo) and Settings.
-
-**With Claude Code or Codex** (Settings → Connected tools): Pip shows what each work session is
-doing, brings you its requests when no terminal or editor is in front (Decline / Allow once, or
-answer in the tool's own window), and tells you when it finishes or fails. Companion tools let
-sessions send you a note, ask a question, set a reminder or check whether you're around (MCP:
-`notify`, `ask`, `remind`, `presence`).
+**With Claude Code or Codex** (Settings → Connected tools): Pip, or the project's Spark, shows
+what each session is doing, brings its requests (Decline / Allow once, Allow everything from this
+session, or answer in the tool's own window) and tells you when it finishes or fails. Per-session
+full access still stops risky commands. MCP tools for sessions: `notify`, `ask`, `remind`,
+`spark`, `presence`. `sidefolk here --name X` gives a project a Spark from a terminal.
 
 ## Settings and data
 

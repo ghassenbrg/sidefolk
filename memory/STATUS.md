@@ -1,5 +1,19 @@
 # Status
 
+**Standalone asset — Codex, 24 October:** User requested a 3D model of the supplied
+cream bunny with charcoal ear tips and mint scarf, specifically through BlendRelay
+MCP. Source: `art/blender/mint-bunny/build_model.py` and adjacent README. Deliverables
+are gitignored in `output/mint-bunny/`: editable `mint-bunny.blend`, character-only
+`mint-bunny.glb`, front and three-quarter Cycles PNGs. Fourteen separate static mesh
+parts, four character materials, 44,730 vertices / 89,408 triangles; no rig/clips.
+BlendRelay geometry validation passed for all parts (no open/non-manifold edges,
+degenerate faces/edges, nonfinite vertices). GLB structure checked (no studio/cube).
+The saved blend reopened successfully after Blender crashed during an export using
+a temporary context override; exporting from the active scene without that override
+works. Final renders reviewed. This is a separate art asset, with no app integration
+or roadmap change. No commit; pre-existing Rust edits were left alone. Next step only
+if requested: user art review, then rigging/animation or optimization for a target.
+
 Last updated: 2026-10-24 (evening) by Claude Code. The roadmap ([docs/ROADMAP.md](../docs/ROADMAP.md))
 is implemented through Phase 5, Phase 6 in part, plus a UI/UX pass with voices and a
 dashboard, and the creative-design system applied with "Open session" (below). Nothing since

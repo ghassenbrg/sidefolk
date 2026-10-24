@@ -322,8 +322,8 @@ Sizes: S ≈ a few days, M ≈ a week, L ≈ two weeks of focused work.
 | 4. Sessions basics ✓ built (24 Oct; hand checks pending) | Fix today's worst pains | Open session fixed for Terminal, Ghostty, iTerm and Claude desktop (tested end to end); plain commands run locally, never through AI; per-session full access; default terminal and session app in Settings | You open any session in one click, `ls -la` never reaches Codex, a full-access session doesn't ask | S–M |
 | 5. Notes ✓ built (24 Oct; hand checks pending) | Pillar 2 | Notebooks, one-sentence capture, prompts, search, Markdown export, optional AI draft | Section 6.2 checks pass | M |
 | 6. Sessions ✓ built (24 Oct; hand checks pending) | Pillar 3 | Sparks per project or session (color, badge), start/watch from the companion, `sidefolk` CLI, `/sidefolk` command in Claude Code and Codex | Section 6.3 checks pass with your setup at work and at home | L |
-| 7. Actions | Pillar 4 | Open folder/app/URL, run command with preview, saved actions | Section 6.4 checks pass | S–M |
-| 8. Beta | Ship it | Signing and notarization (your keys), auto-update, crash reports opt-in, a short guide | Two or three colleagues use it for a week | M |
+| 7. Actions ✓ built (24 Oct; hand checks pending) | Pillar 4 | Open folder/app/URL, run command with preview, saved actions | Section 6.4 checks pass | S–M |
+| 8. Beta: in progress (signing, auto-update and the colleague week need you) | Ship it | Signing and notarization (your keys), auto-update, crash reports opt-in, a short guide | Two or three colleagues use it for a week | M |
 | 9. Next | Section 7 | Calendar heads-up, morning brief, weekly wins, timers… | One at a time, by your pick | – |
 
 **Decided (order C):** reminders first, then the session basics that fix today's biggest pains,
