@@ -33,11 +33,13 @@ export type Card = {
   choices: Choice[];
   /** Choices as a full-width list (a pet's menu) instead of a row of buttons. */
   menu?: boolean;
-  /** Permission questions jump the queue and cannot be dismissed with ×. */
+  /** Requests jump the queue. Like every card they close with ×; the companion keeps the request. */
   urgent?: boolean;
   /** What the dashboard needs to show this card as a request (kind, source, session, …). */
   meta?: Record<string, string>;
   onChoose: (value: string) => void;
+  /** Closed with × without choosing. */
+  onClose?: () => void;
 };
 
 export type PromptOptions = {
@@ -215,15 +217,17 @@ export class Bubble {
     head.append(el("span", "name", card.who));
     // More waiting behind this one: the count stays visible.
     if (this.cards.length > 1) head.append(el("span", "count", `${this.cards.length - 1} more`));
-    if (!card.urgent) {
-      const close = el("button", "close");
-      close.type = "button";
-      close.title = "Close";
-      close.setAttribute("aria-label", "Close");
-      close.append(icon("failed", "icon"));
-      close.addEventListener("click", () => this.close(card.id));
-      head.append(close);
-    }
+    // Every card closes. A request closed here stays answerable in the Sidefolk window.
+    const close = el("button", "close");
+    close.type = "button";
+    close.title = card.urgent ? "Close (still in Sidefolk → Requests)" : "Close";
+    close.setAttribute("aria-label", close.title);
+    close.append(icon("failed", "icon"));
+    close.addEventListener("click", () => {
+      this.close(card.id);
+      card.onClose?.();
+    });
+    head.append(close);
     this.root.append(head);
     if (card.context) this.root.append(el("p", "context", card.context));
     this.root.append(el("p", "title", card.title));

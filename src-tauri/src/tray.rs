@@ -3,7 +3,7 @@ use crate::{bus::Shared, overlay};
 use std::sync::{Arc, Mutex};
 use tauri::{
     AppHandle, Emitter, Manager,
-    menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
 };
 use tauri_plugin_autostart::ManagerExt;
@@ -71,7 +71,6 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let shared = app.state::<Arc<Shared>>();
     let settings = shared.settings.lock().unwrap().value.clone();
     let hidden = settings.hidden;
-    let menubar_only = settings.presence == "menubar";
     let waiting = shared.status.lock().unwrap()["waiting"].as_array().map_or(0, Vec::len);
     // Requests stay one click away even when no pet is on screen.
     let requests = MenuItem::with_id(
@@ -88,11 +87,11 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let toggle = MenuItem::with_id(
         app,
         "toggle",
-        if hidden { "Show companions" } else { "Hide companions" },
-        !menubar_only,
+        if hidden { "Show companion" } else { "Hide companion" },
+        true,
         None::<&str>,
     )?;
-    let call = MenuItem::with_id(app, "call", "Call companions here", !menubar_only, None::<&str>)?;
+    let call = MenuItem::with_id(app, "call", "Call companion here", true, None::<&str>)?;
     let connected = crate::claude_setup::connected(app);
     let connect = MenuItem::with_id(
         app,
@@ -106,14 +105,6 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         None::<&str>,
     )?;
     let refit = MenuItem::with_id(app, "refit", "Move to this display", true, None::<&str>)?;
-    let crew = Submenu::with_id(app, "crew", "Crew", true)?;
-    let pets = crate::crew::menu_entries(&shared.crew.lock().unwrap());
-    if pets.is_empty() {
-        crew.append(&MenuItem::with_id(app, "crew-empty", "No crew yet", false, None::<&str>)?)?;
-    }
-    for (id, label) in pets {
-        crew.append(&MenuItem::with_id(app, format!("call:{id}"), format!("Call {label}"), true, None::<&str>)?)?;
-    }
     let reminder = MenuItem::with_id(app, "new-reminder", "New reminder…", true, None::<&str>)?;
     let preferences = MenuItem::with_id(app, "settings", "Open Sidefolk…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Sidefolk", true, None::<&str>)?;
@@ -121,7 +112,7 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let separator2 = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(
         app,
-        &[&preferences, &requests, &separator, &toggle, &call, &crew, &reminder, &separator2, &connect, &refit, &quit],
+        &[&preferences, &requests, &separator, &toggle, &call, &reminder, &separator2, &connect, &refit, &quit],
     )?;
     if let Some(error) = app
         .state::<TrayState>()
@@ -175,16 +166,6 @@ fn summon(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Brings a crew pet out; the page decides where it stands and what it says.
-fn call_pet(app: &AppHandle, id: &str) -> tauri::Result<()> {
-    let is_hidden = app.state::<Arc<Shared>>().settings.lock().unwrap().value.hidden;
-    if is_hidden {
-        hidden(app, false)?;
-    }
-    overlay::overlay(app).emit("call", serde_json::json!({ "id": id }))?;
-    Ok(())
-}
-
 /// Adds or removes a login item (a LaunchAgent), only when the user picks it in Settings.
 fn start_at_login(app: &AppHandle) -> tauri::Result<()> {
     let launcher = app.autolaunch();
@@ -204,10 +185,6 @@ pub fn action(app: &AppHandle, action: &str) {
         "quit" => {
             app.exit(0);
             return;
-        }
-        // Menu bar only: there are no pets to show; the shortcut opens Sidefolk instead.
-        "toggle" | "call" if app.state::<Arc<Shared>>().settings.lock().unwrap().value.presence == "menubar" => {
-            crate::prefs::open_at(app, "requests")
         }
         "requests" => crate::prefs::open_at(app, "requests"),
         "toggle" => {
@@ -246,7 +223,6 @@ pub fn action(app: &AppHandle, action: &str) {
             crate::mcp_setup::confirm(app, crate::mcp_setup::Agent::Codex);
             return;
         }
-        id if id.starts_with("call:") => call_pet(app, &id["call:".len()..]),
         "refit" => overlay::fit_to_cursor_display(app),
         "claude" => {
             crate::claude_setup::confirm(app);

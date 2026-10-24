@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 import { syllables, voiceFor } from "./sound";
 
 describe("voices", () => {
-  it("gives species their own register and names a small nudge", () => {
-    expect(voiceFor("cat", "Pip").pitch).toBeGreaterThan(voiceFor("fox", "Pip").pitch);
-    expect(voiceFor("bunny", "Pip").pitch).not.toBe(voiceFor("bunny", "Mochi").pitch);
-    expect(voiceFor("custom:x.glb", "Pip").pitch).toBeGreaterThan(0);
+  it("nudges the register by name", () => {
+    expect(voiceFor("Pip").pitch).not.toBe(voiceFor("Mochi").pitch);
+    expect(voiceFor("Pip").pitch).toBeGreaterThan(500);
   });
   it("babbles a few syllables per line, rising on questions", () => {
     const plain = syllables("Run a command");

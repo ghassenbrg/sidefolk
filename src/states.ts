@@ -1,9 +1,9 @@
 import { icon, type IconName } from "./icons";
 
-// One status vocabulary everywhere (pet badges, Home, Crew, Requests): a shape and a word for
+// One status vocabulary everywhere (the companion's badge, Home, Requests): a shape and a word for
 // each state. The orb's colors only decorate the shape; the word carries the meaning.
 
-export type State = "idle" | "think" | "work" | "alert" | "done" | "failed" | "sleep" | "resting";
+export type State = "idle" | "think" | "work" | "alert" | "done" | "failed" | "sleep";
 
 export const STATES: Record<State, { word: string; glyph: IconName }> = {
   idle: { word: "Idle", glyph: "idle" },
@@ -13,7 +13,6 @@ export const STATES: Record<State, { word: string; glyph: IconName }> = {
   done: { word: "Done", glyph: "done" },
   failed: { word: "Failed", glyph: "failed" },
   sleep: { word: "Asleep", glyph: "sleep" },
-  resting: { word: "Resting", glyph: "resting" },
 };
 
 /** An agent session's busy state (agents.ts) as a status. */
@@ -36,10 +35,3 @@ export function badge(state: State, text?: string): HTMLElement {
   node.append(glyph, word);
   return node;
 }
-
-/**
- * How much the pets' cards say (Settings → Card detail), for screens other people can see.
- * full: commands and paths · project: project and status · status: status only, no names.
- */
-export type Detail = "full" | "project" | "status";
-export const privacy = { detail: "full" as Detail };

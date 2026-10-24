@@ -25,7 +25,6 @@ const PATHS = {
   done: '<path d="m5 12.5 4.5 4.5L19 7.5" stroke-width="3"/>',
   failed: '<path d="m7 7 10 10M17 7 7 17" stroke-width="3"/>',
   sleep: '<path d="M19.5 14.5A7.5 7.5 0 1 1 9.5 4.5a6 6 0 0 0 10 10z" fill="currentColor"/>',
-  resting: '<path d="M5 20v-7a7 7 0 0 1 14 0v7M3 20h18"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

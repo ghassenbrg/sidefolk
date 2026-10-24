@@ -1,6 +1,6 @@
 import type { Bubble } from "./bubble";
 import type { Directive, Mind } from "./mind";
-import { badge, privacy, stateOf } from "./states";
+import { badge, stateOf } from "./states";
 
 /** Mirrors `AgentEvent` in src-tauri/src/bus.rs. */
 export type AgentEvent = {
@@ -75,8 +75,8 @@ export const folder = (path: string) => path.split("/").filter(Boolean).pop() ??
 /** A session ID as people can tell them apart: "Work session 3f2a". */
 export const sessionLabel = (id: string) => (id ? `Work session ${id.replace(/[^a-z0-9]/gi, "").slice(0, 4)}` : "Work session");
 
-/** " in api", or nothing when cards show status only. */
-const inProject = (project: string) => (privacy.detail === "status" || !project ? "" : ` in ${folder(project)}`);
+/** " in api", or nothing outside a project. */
+const inProject = (project: string) => (project ? ` in ${folder(project)}` : "");
 
 /**
  * Folds events from the sessions one pet speaks for into one thing it can act out:
@@ -111,7 +111,6 @@ export class Agents {
     const key = `${event.source}:${event.session}`;
     const name = AGENT_NAMES[event.source];
     const where = inProject(event.project || event.cwd);
-    const full = privacy.detail === "full";
     if (event.kind !== "waiting") this.announced.delete(key);
     switch (event.kind) {
       case "start":
@@ -137,11 +136,11 @@ export class Agents {
         });
         if (event.kind === "waiting" && !this.announced.has(key)) {
           this.announced.add(key);
-          if (!this.bubble.busy) this.bubble.say(full && event.detail ? event.detail : `${name} needs your answer${where}.`, 12);
+          if (!this.bubble.busy) this.bubble.say(event.detail || `${name} needs your answer${where}.`, 12);
         }
         break;
       case "message":
-        if (event.detail && full) this.bubble.say(event.detail, 7);
+        if (event.detail) this.bubble.say(event.detail, 7);
         break;
       case "done":
       case "failed":
@@ -158,11 +157,10 @@ export class Agents {
         // One short celebration (under 1.2 s); a failure says what and where to look.
         if (event.kind === "done") {
           this.mind.react("celebrate", 1.1);
-          this.bubble.say(`${name} finished${where}.${full && event.detail ? ` ${event.detail}` : ""}`, 9, "done");
+          this.bubble.say(`${name} finished${where}.${event.detail ? ` ${event.detail}` : ""}`, 9, "done");
         } else {
           this.mind.react("sad", 1.6);
-          const why = full ? `: ${event.detail || "no reason given"}` : "";
-          this.bubble.say(`${name} stopped with a problem${where}${why}. Click me to open the session.`, 12, "fail");
+          this.bubble.say(`${name} stopped with a problem${where}: ${event.detail || "no reason given"}. Open it from Sidefolk.`, 12, "fail");
         }
         break;
       case "idle":
@@ -203,8 +201,8 @@ export class Agents {
 
   private refresh() {
     const top = this.list[0];
-    if (this.openAsks > 0) this.mind.directive = { clip: "alert", come: true };
-    else this.mind.directive = top ? { clip: CLIP[top.state], come: top.state === "waiting" } : null;
+    if (this.openAsks > 0) this.mind.directive = { clip: "alert" };
+    else this.mind.directive = top ? { clip: CLIP[top.state] } : null;
 
     // While a question is open the bubble says it all.
     if (!top || this.openAsks > 0) {
@@ -213,19 +211,11 @@ export class Agents {
     }
     this.hud.hidden = false;
     const others = this.sessions.size - 1;
-    const what =
-      privacy.detail === "status"
-        ? ""
-        : `${AGENT_NAMES[top.source]}${privacy.detail === "full" && top.detail && top.state !== "waiting" ? ` · ${VERB[top.state]} ${top.detail}` : ""}`;
+    const what = `${AGENT_NAMES[top.source]}${top.detail && top.state !== "waiting" ? ` · ${VERB[top.state]} ${top.detail}` : ""}`;
     const next = badge(stateOf(top.state), [what, others > 0 ? `+${others}` : ""].filter(Boolean).join(" ") || undefined);
     next.classList.add("hud");
     this.hud.className = next.className;
     this.hud.dataset.state = next.dataset.state;
     this.hud.replaceChildren(...next.childNodes);
-  }
-
-  /** Redraws the badge (after the card detail setting changes). */
-  redraw() {
-    this.refresh();
   }
 }

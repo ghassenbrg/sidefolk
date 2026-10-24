@@ -35,14 +35,6 @@ pub struct Settings {
     pub speak: bool,
     /// A `say` voice name; empty for the system voice.
     pub voice: String,
-    /// Desktop presence: always | needed (pets come out only when something needs you) |
-    /// menubar (no pets; requests wait in the menu bar and the Sidefolk window).
-    pub presence: String,
-    /// What pet cards show: full (commands too) | project (project and status) | status.
-    pub detail: String,
-    /// The comfort preset picked last: friendly | professional | minimal. A label only; each
-    /// setting it suggested is stored on its own.
-    pub comfort: String,
     /// Where "Open session" continues a session: auto | terminal | iterm | ghostty.
     pub terminal: String,
 }
@@ -64,9 +56,6 @@ impl Default for Settings {
             volume: 60,
             speak: false,
             voice: String::new(),
-            presence: "always".into(),
-            detail: "full".into(),
-            comfort: "friendly".into(),
             terminal: "auto".into(),
         }
     }

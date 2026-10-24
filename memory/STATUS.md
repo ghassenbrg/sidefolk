@@ -13,8 +13,27 @@ asked to stop building and plan. [docs/PLAN-V2.md](../docs/PLAN-V2.md) is the pl
 section 11 decisions were made with the user on 24 October (Pip body B as personal companion,
 Sparks as color-coded workers; order: reset, companion, app shell, reminders, session basics,
 notes, sessions with Sparks, actions, beta; layered AI; Dock app; reset as listed; calendar right
-after the MVP). **Next: phase 0 (reset), only when the user says go.** Concept art for Pip and
-Spark is in creative-design/v2.
+after the MVP). Concept art for Pip and Spark is in creative-design/v2.
+
+**Phase 0 (reset) is done (24 October).** v0.1 was committed as `9d4d52c` and tagged
+`v0.1-zoo` (everything removed below is there). Then:
+- One companion (`src/companion.ts` replaces crew.ts): no crew, den, wandering or walking to
+  the cursor; Pip stays where it's put (drag still works). Click or right-click opens the one
+  field; double-click and menus are gone. Every card has ×; requests closed with × stay in
+  `Companion.requests` and the window's Requests until answered or expired.
+- Commands are local only (`src/commands.ts`): remind, reminders, open session, open Sidefolk,
+  rename, hide, help. Unknown text gets an answer and never reaches Codex.
+- Removed: 17 characters and their Blender builders (hero.glb only), looks/coats/styles/
+  accessories (look.ts), describe.ts, routing.ts, photo and glb import (models.rs), comfort
+  presets, presence modes, card-detail levels, notifications plugin, demo, the window's Crew,
+  welcome and Activity pages, 3D portraits, docs/CREATORS.md, docs/DESIGN-COMPLIANCE.md.
+- Kept: hooks, permissions, MCP tools and installers, reminders, journal, sessions.rs (still
+  has the Claude-desktop bug; fixed in phase 4), codex.rs (used again in phase 6), tokens, brand.
+- Verified: typecheck, 32 vitest tests, 20 Rust tests, `npm run check:webkit`, and a WebKit
+  behavior script (no movement in 40 s idle, click opens field, `ls -la` stays local, × keeps
+  the request listed).
+
+**Next: phase 1 (the 2D companion from creative-design/v2), when the user says go.**
 
 - PLAN-V2 = review, direction (companion assistant, value before customization), MVP pillars
   in order (Reminders, Notes, AI sessions, Quick actions), brainstorm, keep/rework/park,

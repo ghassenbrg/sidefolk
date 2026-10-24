@@ -9,7 +9,6 @@ mod hooks;
 mod journal;
 mod mcp;
 mod mcp_setup;
-mod models;
 mod prefs;
 mod overlay;
 #[cfg(target_os = "macos")]
@@ -119,34 +118,6 @@ fn restore_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, reminder: re
     Ok(())
 }
 
-fn data_dir(shared: &Shared) -> std::path::PathBuf {
-    shared.settings.lock().unwrap().dir.clone()
-}
-
-/// Picks a glb and copies it into the models folder; `None` if the user cancelled.
-#[tauri::command]
-async fn import_model(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Result<Option<String>, String> {
-    let Some(path) = models::pick(&app, "model") else { return Ok(None) };
-    models::import(&data_dir(&shared), &path).map(Some).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn list_models(shared: State<'_, Arc<Shared>>) -> Vec<String> {
-    models::list(&data_dir(&shared))
-}
-
-#[tauri::command]
-fn read_model(shared: State<'_, Arc<Shared>>, name: String) -> Result<tauri::ipc::Response, String> {
-    models::read(&data_dir(&shared), &name).map_err(|e| e.to_string())
-}
-
-/// Picks a photo and asks Claude for matching kit settings; `None` if the user cancelled.
-#[tauri::command]
-async fn describe_photo(app: AppHandle) -> Result<Option<String>, String> {
-    let Some(path) = models::pick(&app, "photo") else { return Ok(None) };
-    models::describe_photo(&path).await.map(Some)
-}
-
 /// The page's answer to an agent's tool call (see mcp.rs).
 #[tauri::command]
 fn mcp_reply(shared: State<'_, Arc<Shared>>, id: String, result: serde_json::Value) -> bool {
@@ -158,8 +129,7 @@ fn mcp_reply(shared: State<'_, Arc<Shared>>, id: String, result: serde_json::Val
 #[tauri::command]
 fn peek(app: AppHandle, shared: State<'_, Arc<Shared>>, show: bool) {
     let settings = shared.settings.lock().unwrap().value.clone();
-    // Menu bar only means no pets on screen; the page sends a notification instead.
-    if !settings.hidden || settings.presence == "menubar" {
+    if !settings.hidden {
         return;
     }
     let handle = app.clone();
@@ -233,7 +203,6 @@ fn main() {
     builder
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -257,17 +226,12 @@ fn main() {
             restore_reminder,
             peek,
             mcp_reply,
-            import_model,
-            list_models,
-            read_model,
-            describe_photo,
             prefs::update_settings,
             prefs::integrations,
             prefs::tray_action,
             prefs::reveal_data_dir,
             prefs::log_error,
             prefs::pet_action,
-            prefs::pick_project,
             prefs::app_info,
             prefs::publish_status,
             prefs::get_status,
@@ -275,7 +239,6 @@ fn main() {
             voice::voices,
             sessions::open_session,
             sessions::terminals,
-            prefs::notify,
             prefs::answered,
             prefs::open_tab
         ])
@@ -302,9 +265,11 @@ fn main() {
             overlay::setup(app.handle())?;
             tray::setup(app.handle())?;
             hooks::spawn(app.handle().clone(), shared.clone());
-            // The first minute happens in the Sidefolk window: welcome, comfort, connect.
+            // First launch: open the Sidefolk window so a new user sees where everything is.
+            // (The setup guide comes in phase 2 of docs/PLAN-V2.md.)
             if !shared.settings.lock().unwrap().value.onboarded {
-                prefs::open_at(app.handle(), "welcome")?;
+                shared.settings.lock().unwrap().update(|s| s.onboarded = true)?;
+                prefs::open_at(app.handle(), "home")?;
             }
             Ok(())
         })

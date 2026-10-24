@@ -1,61 +1,15 @@
-// Sample activity, so the pets can be tried without an AI tool and without model calls.
+// Browser preview only (npm run web): keys play fake agent events, so the companion can be
+// checked without an AI tool or model calls. Not loaded inside the desktop app.
 //
-// `play` is the onboarding's "Try a demo": a short, labelled sample session with a sample
-// request on the main pet. Its answer goes nowhere.
-//
-// `install` is the browser preview's harness: keys play fake agent events.
-//   1 think · 2 read · 3 edit · 4 run · 5 permission question · 6 done · 7 failed · 0 end
-//   p switches the fake project (api, web, docs) · c opens the main pet's command bar
+//   1 think · 2 read · 3 edit · 4 run · 5 permission request · 6 done · 7 failed · 0 end
+//   r a reminder due now · p switches the fake project (api, web, docs) · c opens the field
 
-import { sessionLabel, type AgentEvent } from "./agents";
-import type { Crew } from "./crew";
+import type { AgentEvent } from "./agents";
+import type { Companion } from "./companion";
 
 const projects = ["/Users/you/git/api", "/Users/you/git/web", "/Users/you/git/docs"];
 
-export function play(crew: Crew) {
-  const pet = crew.main;
-  const event = (kind: AgentEvent["kind"], detail = ""): AgentEvent => ({
-    source: "codex",
-    session: "demo-04",
-    kind,
-    detail,
-    cwd: "/demo/website",
-    project: "/demo/Website refresh",
-  });
-  const steps: [number, () => void][] = [
-    [0, () => pet.bubble.say("This is a demo. Nothing here is connected or run.", 4)],
-    [2500, () => pet.agents.handle(event("think"))],
-    [4500, () => pet.agents.handle(event("read", "package.json"))],
-    [7000, () => pet.agents.handle(event("edit", "index.html"))],
-    [
-      9500,
-      () =>
-        crew.question(pet, {
-          id: "demo-request",
-          who: `${pet.name} · Website refresh (demo)`,
-          context: `Codex · ${sessionLabel("04")}`,
-          title: "Run project tests?",
-          lines: ["Codex is asking to run this command in Website refresh."],
-          facts: [
-            { label: "Command", value: "npm test" },
-            { label: "Folder", value: "/work/website" },
-          ],
-          note: "Demo only: your answer is not sent anywhere.",
-          choices: [
-            { label: "Decline", value: "deny" },
-            { label: "Allow once", value: "allow", primary: true },
-          ],
-          onChoose: (value) => {
-            pet.bubble.say(`${value === "allow" ? "Allowed once" : "Declined"} — demo only. No command was run.`, 5);
-            setTimeout(() => pet.agents.handle(event(value === "allow" ? "done" : "end", "Tests pass (sample).")), 3000);
-          },
-        }),
-    ],
-  ];
-  for (const [at, step] of steps) setTimeout(step, at);
-}
-
-export function install(crew: Crew) {
+export function install(companion: Companion) {
   let project = 0;
   let asks = 0;
   const event = (kind: AgentEvent["kind"], detail = ""): AgentEvent => ({
@@ -67,12 +21,12 @@ export function install(crew: Crew) {
     project: projects[project],
   });
   const keys: Record<string, () => void> = {
-    "1": () => crew.handleEvent(event("think")),
-    "2": () => crew.handleEvent(event("read", "App.tsx")),
-    "3": () => crew.handleEvent(event("edit", "App.tsx")),
-    "4": () => crew.handleEvent(event("run", "npm test")),
+    "1": () => companion.handleEvent(event("think")),
+    "2": () => companion.handleEvent(event("read", "App.tsx")),
+    "3": () => companion.handleEvent(event("edit", "App.tsx")),
+    "4": () => companion.handleEvent(event("run", "npm test")),
     "5": () =>
-      crew.handleAsk({
+      companion.handleAsk({
         id: `demo-${asks++}`,
         source: "claude",
         session: `demo-${project}`,
@@ -84,15 +38,15 @@ export function install(crew: Crew) {
         kind: "command",
         expires: Date.now() + 60_000,
       }),
-    "6": () => crew.handleEvent(event("done", "Tests pass. 3 files changed.")),
-    "7": () => crew.handleEvent(event("failed", "rate_limit")),
-    "0": () => crew.handleEvent(event("end")),
-    d: () => play(crew),
+    "6": () => companion.handleEvent(event("done", "Tests pass. 3 files changed.")),
+    "7": () => companion.handleEvent(event("failed", "rate_limit")),
+    "0": () => companion.handleEvent(event("end")),
+    r: () => void companion.run("remind me in 0 minutes to stretch"),
     p: () => {
       project = (project + 1) % projects.length;
-      crew.main.bubble.say(`Demo project: ${projects[project].split("/").pop()}`, 2);
+      companion.pet.bubble.say(`Demo project: ${projects[project].split("/").pop()}`, 2);
     },
-    c: () => crew.openPrompt(crew.main),
+    c: () => companion.openPrompt(),
   };
   addEventListener("keydown", (e) => {
     if (e.target instanceof HTMLInputElement) return;

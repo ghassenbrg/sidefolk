@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { CLIPS, type ClipName } from "./clips";
-import { accessory, CUSTOM, recolor, SPECIES, type Look, type SpeciesName, type StyleName } from "./look";
 
 // The hero comes from art/blender/build_hero.py (npm run model). The glTF follows the rig
 // contract in art/HERO.md: these bone names, these clip names, a "Body" mesh that gets the
@@ -51,29 +50,6 @@ function toonRamp(steps: number[], smooth = false): THREE.DataTexture {
   return ramp;
 }
 
-/**
- * How each art style draws the same model. Soft 3D: round matte volumes (a smooth light
- * gradient) and a plum line. Ink & Geek: flat fills (the boards' 2D versions) and a heavy
- * charcoal line. Pocket Anime: hard cel shading, one crisp shadow band, a thin warm line.
- */
-const STYLE: Record<StyleName, { fill: (color?: string) => THREE.Material; line: number; ink: number }> = {
-  soft: {
-    fill: (color) => new THREE.MeshToonMaterial(color ? { color } : { vertexColors: true, gradientMap: toonRamp([120, 195, 255], true) }),
-    line: 0.03,
-    ink: OUTLINE,
-  },
-  ink: {
-    fill: (color) => new THREE.MeshBasicMaterial(color ? { color } : { vertexColors: true }),
-    line: 0.055,
-    ink: 0x272a33,
-  },
-  anime: {
-    fill: (color) => new THREE.MeshToonMaterial({ ...(color ? { color } : { vertexColors: true }), gradientMap: toonRamp([135, 255]) }),
-    line: 0.017,
-    ink: 0x4a3640,
-  },
-};
-
 /** Inverted-hull outline: back faces pushed out along normals, before skinning. */
 function outlineMaterial(width: number, color = OUTLINE): THREE.MeshBasicMaterial {
   const material = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide });
@@ -92,43 +68,28 @@ function skinnedMesh(root: THREE.Object3D, name: string): THREE.SkinnedMesh {
   return mesh;
 }
 
-const loaded = new Map<string, Promise<GLTF>>();
+/** Pip's model until the 2D companion replaces it (docs/PLAN-V2.md, phase 1). */
+const HERO_URL = "models/hero.glb";
+let hero: Promise<GLTF> | null = null;
 
-/** Reads an imported model's bytes; set by the desktop app. */
-let readCustom: (file: string) => Promise<ArrayBuffer> = () => Promise.reject(new Error("Imported models need the desktop app."));
-export function setCustomReader(reader: typeof readCustom) {
-  readCustom = reader;
-}
-
-/** Parses each model file once; every pet gets its own instance of it. */
-function load(species: string): Promise<GLTF> {
-  let gltf = loaded.get(species);
-  if (!gltf) {
-    gltf = species.startsWith(CUSTOM)
-      ? readCustom(species.slice(CUSTOM.length)).then((bytes) => new GLTFLoader().parseAsync(bytes, ""))
-      : new GLTFLoader().loadAsync((SPECIES[species as SpeciesName] ?? SPECIES.bunny).url);
-    loaded.set(species, gltf);
-    // A failed load (a bad import) should be retried, not cached.
-    gltf.catch(() => loaded.delete(species));
-  }
-  return gltf;
+function load(): Promise<GLTF> {
+  hero ??= new GLTFLoader().loadAsync(HERO_URL);
+  hero.catch(() => (hero = null));
+  return hero;
 }
 
 /**
- * An independent copy of the hero for one pet: its own skeleton, recolored vertex colors and
- * accessory. Clips are shared; each pet's mixer plays them on its own bones.
+ * A copy of the hero with its own skeleton and toon shading. Clips are shared; the pet's mixer
+ * plays them on its own bones.
  */
-export async function loadModel(look: Look): Promise<Model> {
-  const url = look.species;
-  const gltf = await load(look.species);
+export async function loadModel(): Promise<Model> {
+  const url = HERO_URL;
+  const gltf = await load();
   const scene = SkeletonUtils.clone(gltf.scene);
-  const style = STYLE[look.style] ?? STYLE.soft;
-  const toon = style.fill();
+  const toon = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonRamp([120, 195, 255], true) });
   const body = skinnedMesh(scene, "Body");
   const face = skinnedMesh(scene, "Face");
   for (const mesh of [body, face]) {
-    mesh.geometry = mesh.geometry.clone();
-    recolor(mesh.geometry, look.palette);
     mesh.material = toon;
     // Skinned bounds are computed from the bind pose; animation can leave them.
     mesh.frustumCulled = false;
@@ -137,7 +98,7 @@ export async function loadModel(look: Look): Promise<Model> {
   body.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.2, 0), 2.6);
   face.raycast = () => {};
 
-  const outline = new THREE.SkinnedMesh(body.geometry, outlineMaterial(style.line, style.ink));
+  const outline = new THREE.SkinnedMesh(body.geometry, outlineMaterial(0.03));
   outline.bind(body.skeleton, body.bindMatrix);
   outline.frustumCulled = false;
   outline.raycast = () => {};
@@ -159,10 +120,5 @@ export async function loadModel(look: Look): Promise<Model> {
     clips[name] = clip;
   }
 
-  const extra = accessory(look.accessory, style.ink, (color) => style.fill(color));
-  if (extra) {
-    extra.object.traverse((o) => (o.raycast = () => {}));
-    bones[extra.bone].add(extra.object);
-  }
   return { object: scene, body, bones, rest, clips };
 }

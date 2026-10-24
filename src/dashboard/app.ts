@@ -1,18 +1,14 @@
 import { icon, mark, type IconName } from "../icons";
-import { setCustomReader } from "../pet/model";
 import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
 import { button, h } from "./dom";
-import { renderActivity } from "./activity";
-import { renderCrew, renderPet } from "./crew";
 import { renderHome } from "./home";
 import { renderReminders } from "./reminders";
 import { renderRequests, renderReview } from "./requests";
 import { renderSettings } from "./settings";
-import { renderWelcome } from "./welcome";
 
-// The Sidefolk window: Home, Requests, Crew, Reminders and Settings, plus the views they lead
-// to (a request's review, a pet's page, activity, the first-run welcome). Changes go through
-// the app's commands; agent configs change only through its confirming installers.
+// The Sidefolk window: Home, Requests, Reminders and Settings, and a request's review. Changes
+// go through the app's commands; agent configs change only through its confirming installers.
+// It becomes the full app (sidebar, menus, setup guide) in phase 2 of docs/PLAN-V2.md.
 
 export type Answer = "sent" | "failed" | "gone";
 
@@ -37,9 +33,9 @@ export type App = {
   /** Answers a request on the pet; resolves when the pet confirms (or not). */
   answer(id: string, value: string): Promise<Answer>;
   openSession(ref: { source: string; session: string; cwd: string }, resume?: boolean): Promise<void>;
-  /** Runs when the current view is left (live previews stop). */
+  /** Runs when the current view is left (timers stop). */
   onLeave(cleanup: () => void): void;
-  /** The current view updates itself on live changes instead of being rebuilt (the pet page keeps its previews). */
+  /** The current view updates itself on live changes instead of being rebuilt (keeps a half-typed form). */
   live(update: () => void): void;
   /** Holds live redraws (a choice is being sent). */
   hold: boolean;
@@ -48,12 +44,11 @@ export type App = {
 const NAV: [string, string, IconName][] = [
   ["home", "Home", "home"],
   ["requests", "Requests", "requests"],
-  ["crew", "Crew", "crew"],
   ["reminders", "Reminders", "reminders"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "requests", pet: "crew", activity: "home" };
+const PARENT: Record<string, string> = { review: "requests" };
 
 const main = document.querySelector<HTMLElement>("main")!;
 const nav = document.querySelector<HTMLElement>("nav")!;
@@ -67,7 +62,7 @@ const app: App = {
   state: {
     settings: {} as Settings,
     integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, start_at_login: false },
-    crew: { main: { name: "Pip", look: { species: "bunny", palette: "snow", accessory: "none" } }, pets: [] },
+    crew: { main: { name: "Pip" } },
     reminders: [],
     status: { pets: [], waiting: [] },
     version: "",
@@ -182,19 +177,13 @@ function editing() {
 
 function draw(focus: boolean) {
   const { view, arg } = current;
-  const welcome = view === "welcome";
-  document.body.classList.toggle("welcome-mode", welcome);
   const render =
     {
       home: renderHome,
       requests: renderRequests,
       review: renderReview,
-      crew: renderCrew,
-      pet: renderPet,
       reminders: renderReminders,
       settings: renderSettings,
-      activity: renderActivity,
-      welcome: renderWelcome,
     }[view] ?? renderHome;
   const scroll = main.scrollTop;
   main.replaceChildren(render(app, arg));
@@ -230,12 +219,10 @@ function buildNav() {
   nav.replaceChildren(brand, list);
 }
 
-/** "review:<id>", "crew:<id>", "requests", … from the pets, the tray or the URL. */
+/** "review:<id>", "requests", … from the companion, the tray or the URL. */
 function route(target: string) {
   const [view, ...rest] = target.split(":");
-  const arg = rest.join(":");
-  if (view === "crew" && arg) return app.go("pet", arg);
-  app.go(view || "home", arg);
+  app.go(view || "home", rest.join(":"));
 }
 
 // Kept in <data dir>/logs/page.log with the overlay's, so a bug report can include them.
@@ -246,14 +233,13 @@ if (inTauri && !import.meta.env.DEV) {
 }
 
 buildNav();
-if (inTauri) setCustomReader((name) => invoke<ArrayBuffer>("read_model", { name }));
 await app.refresh().catch((error) => app.toast(String(error), undefined, true));
 void invoke<{ version: string; data_dir: string }>("app_info").then((info) => {
   app.state.version = info.version;
   app.state.dataDir = info.data_dir;
 });
 const params = new URLSearchParams(location.search);
-route(params.get("tab") ?? (app.state.settings.onboarded === false ? "welcome" : "home"));
+route(params.get("tab") ?? "home");
 
 listen<string>("navigate", route);
 listen<Status>("status", (status) => {

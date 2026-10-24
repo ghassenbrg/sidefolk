@@ -30,12 +30,6 @@ body.web {
   top: 0;
   left: 0;
   will-change: transform;
-  transition: opacity var(--motion-entrance) ease-out;
-}
-
-/* Coming out of the den or going back: a fade, not a walk across the screen. */
-.stage.out-of-view {
-  opacity: 0;
 }
 
 body.hover .stage {

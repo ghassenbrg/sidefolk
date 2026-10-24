@@ -315,7 +315,7 @@ Sizes: S ≈ a few days, M ≈ a week, L ≈ two weeks of focused work.
 
 | Phase | Goal | Delivers | Done when | Size |
 |---|---|---|---|---|
-| 0. Reset | Clean ground | Tag `v0.1-zoo`; remove parked features; one companion on screen that stays put and never wanders; every card closable | The desktop is calm and you can't get stuck | S |
+| 0. Reset ✓ (24 Oct) | Clean ground | Tag `v0.1-zoo`; remove parked features; one companion on screen that stays put and never wanders; every card closable | The desktop is calm and you can't get stuck | S |
 | 1. Companion | A character you like | Pip (body B) and Spark from the concept sheets: final character sheet → approval → 2D with the core states, drag to place, hide to edge | You'd keep it on your screen all day | M |
 | 2. App shell | A real app | Dock app, window with sidebar (Today, Reminders, Notes, Settings; others hidden until built), menus, setup guide, the one input | A new user gets through setup and finds everything | M |
 | 3. Reminders | Pillar 1 | Natural capture, confirm, repeats, offsets, note-holding arrival, notifications when quit, app views | Section 6.1 checks pass on your Mac | M |

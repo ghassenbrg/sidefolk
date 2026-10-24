@@ -4,20 +4,17 @@ import type { Familiar } from "./familiar";
 type Sample = { x: number; y: number; t: number };
 
 const DRAG_SLOP = 4;
-const DOUBLE_CLICK_MS = 320;
 const MAX_THROW = 2600;
 
 /**
- * Click-through: the overlay ignores the mouse unless the cursor is over a pet's actual
- * surface (a raycast against its skinned mesh) or over a bubble.
+ * Click-through: the overlay ignores the mouse unless the cursor is over the companion's actual
+ * surface (a raycast against its skinned mesh) or over its card.
  */
 export function wireInput(o: {
-  familiars: () => Familiar[];
+  familiar: Familiar;
   setInteractive: (on: boolean) => void;
-  /** A single click: the pet's status card. Petting never answers anything. */
-  onClick: (f: Familiar) => void;
-  onDoubleClick: (f: Familiar) => void;
-  onMenu: (f: Familiar) => void;
+  /** A click, left or right: the one place to talk to the companion. It never answers anything. */
+  onClick: () => void;
 }) {
   const raycaster = new THREE.Raycaster();
   const origin = new THREE.Vector3();
@@ -26,10 +23,8 @@ export function wireInput(o: {
   let pressed: { f: Familiar; x: number; y: number; dx: number; dy: number } | null = null;
   let dragging = false;
   let samples: Sample[] = [];
-  let lastClick = { f: null as Familiar | null, at: 0 };
 
   const overPet = (f: Familiar, x: number, y: number) => {
-    if (!f.out) return false;
     const world = f.stage.toWorld(x, y);
     // A box around the pet first: the skinned raycast checks every triangle.
     const { position, scale } = f.pet.holder;
@@ -38,21 +33,20 @@ export function wireInput(o: {
     raycaster.set(origin.set(world.x, world.y, 1000), down);
     return raycaster.intersectObject(f.pet.model.body, false).length > 0;
   };
-  const petAt = (x: number, y: number) => o.familiars().find((f) => overPet(f, x, y));
+  const petAt = (x: number, y: number) => (overPet(o.familiar, x, y) ? o.familiar : undefined);
 
   const refresh = (x: number, y: number) => {
-    const want = dragging || !!pressed || o.familiars().some((f) => f.out && f.bubble.contains(x, y)) || !!petAt(x, y);
+    const want = dragging || !!pressed || o.familiar.bubble.contains(x, y) || !!petAt(x, y);
     if (want === interactive) return;
     interactive = want;
     o.setInteractive(want);
     document.body.classList.toggle("hover", want);
   };
 
-  // The web view's own menu (Reload, Inspect) is no use here; a pet's menu replaces it.
+  // The web view's own menu (Reload, Inspect) is no use here; a right click opens the field too.
   addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    const f = petAt(event.clientX, event.clientY);
-    if (f) o.onMenu(f);
+    if (petAt(event.clientX, event.clientY)) o.onClick();
   });
 
   addEventListener("pointerdown", (event) => {
@@ -89,13 +83,8 @@ export function wireInput(o: {
         seconds > 0.01 ? clamp((last.y - first.y) / seconds) : 0,
       );
     } else if (pressed) {
-      const now = performance.now();
-      if (lastClick.f === pressed.f && now - lastClick.at < DOUBLE_CLICK_MS) o.onDoubleClick(pressed.f);
-      else {
-        pressed.f.mind.poke();
-        o.onClick(pressed.f);
-      }
-      lastClick = { f: pressed.f, at: now };
+      pressed.f.mind.poke();
+      o.onClick();
     }
     pressed = null;
     dragging = false;

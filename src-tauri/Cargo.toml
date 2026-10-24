@@ -17,7 +17,6 @@ tauri-plugin-global-shortcut = "2.4"
 tauri-plugin-autostart = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "sync", "time", "net"] }
 axum = "0.8"
-tauri-plugin-notification = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 tauri-nspanel = "2.1"

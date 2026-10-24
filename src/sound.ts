@@ -6,33 +6,14 @@
 export type Voice = { pitch: number; wave: OscillatorType };
 export type Cue = "poke" | "wave" | "celebrate" | "sad" | "alert" | "done" | "fail";
 
-const BASE: Record<string, number> = {
-  bunny: 640,
-  cat: 720,
-  fox: 560,
-  vale: 540,
-  sheep: 600,
-  turtle: 470,
-  robot: 680,
-  orbit: 620,
-  crt: 700,
-  raccoon: 580,
-  squid: 660,
-  courier: 610,
-  archivist: 650,
-  dragon: 600,
-  penguin: 520,
-  capsule: 600,
-  owl: 500,
-  bird: 760,
-};
 
-/** A pet's voice: its species sets the register, its name nudges it so two cats differ. */
-export function voiceFor(species: string, name: string): Voice {
+
+/** The companion's voice: its name nudges the register, so a renamed companion sounds its own. */
+export function voiceFor(name: string): Voice {
   let hash = 0;
   for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
   const nudge = 1 + ((hash % 17) - 8) / 100;
-  return { pitch: (BASE[species] ?? 600) * nudge, wave: species === "fox" ? "sawtooth" : "triangle" };
+  return { pitch: 640 * nudge, wave: "triangle" };
 }
 
 /** The syllables a line babbles: one per word-ish chunk, a pitch step per vowel, at most 14. */

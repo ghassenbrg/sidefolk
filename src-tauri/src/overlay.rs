@@ -94,12 +94,12 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Whether the pets' overlay is on screen: not hidden by the user, and not Menu bar only.
+/// Whether the companion's overlay is on screen: not hidden by the user.
 pub fn shown(settings: &crate::settings::Settings) -> bool {
-    !settings.hidden && settings.presence != "menubar"
+    !settings.hidden
 }
 
-/// Shows or hides the overlay to match the settings (after a presence change).
+/// Shows or hides the overlay to match the settings.
 pub fn apply_visibility(app: &AppHandle) -> tauri::Result<()> {
     let settings = app.state::<Arc<Shared>>().settings.lock().unwrap().value.clone();
     set_visible(app, shown(&settings))

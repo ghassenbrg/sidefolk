@@ -17,12 +17,8 @@ const views = [
   ["home", "/settings.html"],
   ["requests", "/settings.html?tab=requests"],
   ["review", "/settings.html?tab=review:codex-1"],
-  ["crew", "/settings.html?tab=crew"],
-  ["pet", "/settings.html?tab=crew:byte"],
   ["reminders", "/settings.html?tab=reminders"],
   ["settings", "/settings.html?tab=settings"],
-  ["activity", "/settings.html?tab=activity"],
-  ["welcome", "/settings.html?tab=welcome&welcome"],
 ];
 
 const browser = await webkit.launch();

@@ -138,7 +138,6 @@
 .badge[data-state="done"] .glyph { background: var(--orb-done); }
 .badge[data-state="failed"] .glyph { background: var(--orb-sad); }
 .badge[data-state="sleep"] .glyph { background: var(--orb-sleep); }
-.badge[data-state="resting"] .glyph { background: var(--border); color: var(--ink); }
 
 .icon {
   flex: none;

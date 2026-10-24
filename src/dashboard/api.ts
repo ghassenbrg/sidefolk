@@ -21,18 +21,13 @@ export type Settings = {
   volume: number;
   speak: boolean;
   voice: string;
-  presence: "always" | "needed" | "menubar";
-  detail: "full" | "project" | "status";
-  comfort: "friendly" | "professional" | "minimal";
   terminal: "auto" | "terminal" | "iterm" | "ghostty";
 };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
-export type Look = { species: string; palette: string; accessory: string; style?: string };
-export type Binding = { kind: string; key: string };
-export type PetRecord = { id: string; name: string; look: Look; bindings: Binding[] };
-export type CrewFile = { main: { name: string; look: Look }; pets: PetRecord[]; ignored?: string[] };
+/** crew.json: the companion's name. */
+export type CrewFile = { main: { name: string } };
 
-/** Mirrors `status()` in src/crew.ts. */
+/** Mirrors `status()` in src/companion.ts. */
 export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number };
 export type Outcome = { kind: "done" | "failed"; source: string; project: string; detail: string; at: number; session?: string; cwd?: string };
 export type PetStatus = {
@@ -41,7 +36,6 @@ export type PetStatus = {
   label: string;
   main: boolean;
   project: string | null;
-  look: Look;
   out: boolean;
   clip: string;
   sessions: SessionInfo[];
@@ -57,7 +51,7 @@ export type Waiting = {
   meta: Record<string, string>;
   choices: { label: string; value: string; primary: boolean; quiet: boolean }[];
 };
-export type Status = { pets: PetStatus[]; waiting: Waiting[]; presence?: string };
+export type Status = { pets: PetStatus[]; waiting: Waiting[] };
 export type { Reminder };
 
 type Handler = (payload: unknown) => void;
@@ -85,7 +79,7 @@ function preview(): typeof tauriInvoke {
       sleep_after_secs: 120,
       pet_answers_permissions: true,
       hide_in_recordings: true,
-      onboarded: !location.search.includes("welcome"),
+      onboarded: true,
       pet_size: "medium",
       calm: false,
       large_text: false,
@@ -93,57 +87,37 @@ function preview(): typeof tauriInvoke {
       volume: 60,
       speak: false,
       voice: "",
-      presence: "always",
-      detail: "full",
-      comfort: "friendly",
       terminal: "auto",
     } as Settings,
     integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false } as Integrations,
-    crew: {
-      main: { name: "Pip", look: { species: "bunny", palette: "snow", accessory: "none" } },
-      pets: [
-        { id: "byte", name: "Byte", look: { species: "cat", palette: "charcoal", accessory: "glasses" }, bindings: [{ kind: "project", key: api }] },
-        { id: "patch", name: "Patch", look: { species: "fox", palette: "terracotta", accessory: "none" }, bindings: [{ kind: "project", key: web }] },
-      ],
-    } as CrewFile,
+    crew: { main: { name: "Pip" } } as CrewFile,
     reminders: [
       { id: "r1", text: "Review launch notes", due: now + 3 * 3_600_000, project: "", from: "you", created: now, done: false, fired: false },
       { id: "r2", text: "Check the nightly build", due: now + 26 * 3_600_000, project: api, from: "claude", created: now, done: false, fired: false },
     ] as Reminder[],
     status: {
       pets: [
-        { id: "main", name: "Pip", label: "Pip", main: true, project: null, look: { species: "bunny", palette: "snow", accessory: "none" }, out: true, clip: "idle", sessions: [], outcomes: [] },
         {
-          id: "byte",
-          name: "Byte",
-          label: "Byte · api",
-          main: false,
-          project: api,
-          look: { species: "cat", palette: "charcoal", accessory: "glasses" },
+          id: "main",
+          name: "Pip",
+          label: "Pip",
+          main: true,
+          project: null,
           out: true,
           clip: "alert",
-          sessions: [{ source: "codex", id: "04c1e7d2", cwd: api, state: "waiting", verb: "needs you", detail: "", project: api, at: now }],
+          sessions: [
+            { source: "codex", id: "04c1e7d2", cwd: api, state: "waiting", verb: "needs you", detail: "", project: api, at: now },
+            { source: "claude", id: "7b3e9a10", cwd: web, state: "edit", verb: "editing", detail: "launch-notes.md", project: web, at: now - 60_000 },
+          ],
           outcomes: [{ kind: "done", source: "claude", project: api, detail: "Rate limiting added; 14 tests pass.", at: now - 3_600_000, session: "9f2a", cwd: api }],
-        },
-        {
-          id: "patch",
-          name: "Patch",
-          label: "Patch · website",
-          main: false,
-          project: web,
-          look: { species: "fox", palette: "terracotta", accessory: "none" },
-          out: false,
-          clip: "away",
-          sessions: [{ source: "claude", id: "7b3e9a10", cwd: web, state: "edit", verb: "editing", detail: "launch-notes.md", project: web, at: now - 60_000 }],
-          outcomes: [],
         },
       ],
       waiting: [
         {
           id: "codex-1",
-          pet: "byte",
-          petName: "Byte",
-          who: "Byte · api",
+          pet: "main",
+          petName: "Pip",
+          who: "Pip · api",
           title: "Run a command?",
           lines: ["Codex is asking to run this command in api."],
           meta: {
@@ -198,13 +172,6 @@ function preview(): typeof tauriInvoke {
         return null;
       case "get_status":
         return state.status;
-      case "journal_since":
-        return [
-          { at: now - 7_200_000, source: "claude", session: "9f2a", project: api, kind: "prompt", detail: "Add rate limiting to the login route" },
-          { at: now - 3_700_000, source: "claude", session: "9f2a", project: api, kind: "ask", detail: "Run a command? npm test" },
-          { at: now - 3_680_000, source: "claude", session: "9f2a", project: api, kind: "answer", detail: "allowed" },
-          { at: now - 3_600_000, source: "claude", session: "9f2a", project: api, kind: "done", detail: "Rate limiting added; 14 tests pass." },
-        ];
       case "pet_action":
         if (a.action.action === "answer") {
           state.status.waiting = state.status.waiting.filter((w) => w.id !== a.action.id);
@@ -220,12 +187,8 @@ function preview(): typeof tauriInvoke {
         ];
       case "terminals":
         return ["terminal", "ghostty"];
-      case "list_models":
-        return [];
       case "open_session":
         return { how: "focused", message: "Opened in Ghostty." };
-      case "pick_project":
-        return web;
       case "tray_action":
       case "reveal_data_dir":
       case "speak":

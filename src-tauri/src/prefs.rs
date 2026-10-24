@@ -19,7 +19,7 @@ pub fn open(app: &AppHandle) -> tauri::Result<()> {
     open_at(app, "")
 }
 
-/// Opens the Sidefolk window on a section ("requests", "review:<id>", "welcome", …).
+/// Opens the Sidefolk window on a section ("home", "requests", "review:<id>", …).
 pub fn open_at(app: &AppHandle, tab: &str) -> tauri::Result<()> {
     if let Some(window) = app.get_webview_window(WINDOW) {
         if !tab.is_empty() {
@@ -53,18 +53,6 @@ pub fn open_tab(app: AppHandle, tab: String) -> Result<(), String> {
     .map_err(|e| e.to_string())
 }
 
-/// A system notification, for Menu bar only (no pet on screen to show the card).
-#[tauri::command]
-pub fn notify(app: AppHandle, title: String, body: String) -> Result<(), String> {
-    use tauri_plugin_notification::NotificationExt;
-    app.notification()
-        .builder()
-        .title(crate::bus::clip(&title, 80))
-        .body(crate::bus::clip(&body, 200))
-        .show()
-        .map_err(|e| e.to_string())
-}
-
 /// The overlay applied (or could not apply) an answer sent from the dashboard.
 #[tauri::command]
 pub fn answered(app: AppHandle, id: String, ok: bool) {
@@ -85,9 +73,6 @@ pub struct Change {
     volume: Option<u8>,
     speak: Option<bool>,
     voice: Option<String>,
-    presence: Option<String>,
-    detail: Option<String>,
-    comfort: Option<String>,
     terminal: Option<String>,
 }
 
@@ -103,9 +88,6 @@ fn check(value: &Option<String>, name: &str, allowed: &[&str]) -> Result<(), Str
 #[tauri::command]
 pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: Change) -> Result<crate::settings::Settings, String> {
     check(&change.pet_size, "Pet size", &["small", "medium", "large"])?;
-    check(&change.presence, "Desktop presence", &["always", "needed", "menubar"])?;
-    check(&change.detail, "Card detail", &["full", "project", "status"])?;
-    check(&change.comfort, "Comfort", &["friendly", "professional", "minimal"])?;
     check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty"])?;
     if let Some(shortcut) = change.shortcut.as_deref() {
         crate::tray::register_shortcut(&app, shortcut)?;
@@ -113,7 +95,6 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
     if let Some(hide) = change.hide_in_recordings {
         overlay::overlay(&app).set_content_protected(hide).map_err(|e| e.to_string())?;
     }
-    let presence_changed = change.presence.is_some();
     let settings = {
         let mut store = shared.settings.lock().unwrap();
         store
@@ -154,15 +135,6 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
                 if let Some(voice) = change.voice {
                     s.voice = voice.chars().take(60).collect();
                 }
-                if let Some(presence) = change.presence {
-                    s.presence = presence;
-                }
-                if let Some(detail) = change.detail {
-                    s.detail = detail;
-                }
-                if let Some(comfort) = change.comfort {
-                    s.comfort = comfort;
-                }
                 if let Some(terminal) = change.terminal {
                     s.terminal = terminal;
                 }
@@ -172,12 +144,6 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
     };
     let _ = app.emit("settings-changed", &settings);
     let _ = crate::tray::refresh(&app);
-    if presence_changed {
-        let handle = app.clone();
-        let _ = app.run_on_main_thread(move || {
-            let _ = overlay::apply_visibility(&handle);
-        });
-    }
     Ok(settings)
 }
 
@@ -221,31 +187,21 @@ pub fn reveal_data_dir(shared: State<'_, Arc<Shared>>, logs: Option<bool>) -> Re
     std::process::Command::new("open").arg(dir).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
-/// Something for the pets to do, from the Settings window or the tray (see "pet-action" in
-/// main.ts): run a command, customize, create a project pet, open the reminder form.
+/// Something for the companion to do, from the Sidefolk window or the tray (see "pet-action" in
+/// main.ts): run a command, rename, answer a request, open a session, open the reminder form.
 #[tauri::command]
 pub fn pet_action(app: AppHandle, action: serde_json::Value) -> Result<(), String> {
     if !action.is_object() {
         return Err("A pet action is an object".into());
     }
-    // Only actions meant to be watched bring hidden pets back; answers, renames and looks
-    // work while they stay hidden.
-    if ["call", "create", "demo", "run", "open-session"].contains(&action["action"].as_str().unwrap_or_default()) {
+    // Only actions meant to be watched bring a hidden companion back; answers and renames work
+    // while it stays hidden.
+    if ["run", "open-session"].contains(&action["action"].as_str().unwrap_or_default()) {
         // The pets may be hidden; anything they are asked to do should be seen.
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || crate::tray::action(&handle, "show"));
     }
     overlay::overlay(&app).emit("pet-action", action).map_err(|e| e.to_string())
-}
-
-/// Picks a folder for a new project pet; returns its git root when it is inside a repository.
-#[tauri::command]
-pub async fn pick_project(app: AppHandle) -> Option<String> {
-    use tauri_plugin_dialog::DialogExt;
-    let folder = app.dialog().file().set_title("Choose a project folder").blocking_pick_folder()?.into_path().ok()?;
-    let folder = folder.display().to_string();
-    let root = crate::bus::project_root(&folder);
-    Some(if root.is_empty() { folder } else { root })
 }
 
 /// The overlay's live snapshot; kept for the dashboard and forwarded to it.

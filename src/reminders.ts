@@ -1,7 +1,5 @@
 import { folder } from "./agents";
-import type { Crew } from "./crew";
-import type { Familiar } from "./familiar";
-import { privacy } from "./states";
+import type { Companion } from "./companion";
 import { describeDue, parseReminder } from "./when";
 
 /** Mirrors `Reminder` in src-tauri/src/reminders.rs. */
@@ -38,7 +36,7 @@ export class Reminders {
   manage?: () => void;
 
   constructor(
-    private readonly crew: Crew,
+    private readonly companion: Companion,
     private readonly store: ReminderStore,
   ) {}
 
@@ -60,22 +58,23 @@ export class Reminders {
     return reminder;
   }
 
-  async command(text: string, kind: "remind" | "reminders" | "new-reminder", from: Familiar): Promise<string | void> {
-    if (kind === "reminders") return this.showList(from);
-    if (kind === "new-reminder") return this.form(from);
+  async command(text: string, kind: "remind" | "reminders" | "new-reminder"): Promise<string | void> {
+    if (kind === "reminders") return this.showList();
+    if (kind === "new-reminder") return this.form();
     const parsed = parseReminder(text);
-    if (!parsed) return this.askWhen(text.replace(/^(to|about)\s+/i, ""), from);
-    return this.add(parsed.what, parsed.due, from);
+    if (!parsed) return this.askWhen(text.replace(/^(to|about)\s+/i, ""));
+    return this.add(parsed.what, parsed.due);
   }
 
-  private async add(what: string, due: Date, from: Familiar) {
-    const reminder = await this.store.add(what, due.getTime(), from.project);
+  private async add(what: string, due: Date) {
+    const reminder = await this.store.add(what, due.getTime(), null);
     this.list.push(reminder);
     return `OK, ${describeDue(due)}: ${what}`;
   }
 
   /** "New reminder…": one field that takes the time too, or asks for it next. */
-  private form(on: Familiar) {
+  private form() {
+    const on = this.companion.pet;
     on.bubble.prompt({
       who: `${on.name} · new reminder`,
       placeholder: "Call the bank tomorrow at 10",
@@ -86,14 +85,15 @@ export class Reminders {
       },
       submit: async (text) => {
         const parsed = parseReminder(text);
-        return parsed ? this.add(parsed.what, parsed.due, on) : this.askWhen(text, on);
+        return parsed ? this.add(parsed.what, parsed.due) : this.askWhen(text);
       },
     });
   }
 
   /** The thing to remember is known but not when: offer the usual times. */
-  private askWhen(what: string, on: Familiar) {
-    if (!what.trim()) return this.form(on);
+  private askWhen(what: string) {
+    const on = this.companion.pet;
+    if (!what.trim()) return this.form();
     const at = (hours: number, minutes = 0, days = 0) => {
       const d = new Date();
       d.setDate(d.getDate() + days);
@@ -113,7 +113,7 @@ export class Reminders {
       title: `When should I remind you to ${what}?`,
       lines: ['Or type it with a time, like "tomorrow at 10".'],
       choices: options.map(([label], i) => ({ label, value: String(i), primary: i === 0 })),
-      onChoose: async (value) => on.bubble.say(await this.add(what, options[Number(value)][1], on), 5),
+      onChoose: async (value) => on.bubble.say(await this.add(what, options[Number(value)][1]), 5),
     });
   }
 
@@ -132,19 +132,19 @@ export class Reminders {
   }
 
   private show(r: Reminder, missed: boolean) {
-    const pet = r.project ? this.crew.petFor(r.project) : this.crew.main;
+    const pet = this.companion.pet;
     this.showing.add(r.id);
     r.fired = true;
     void this.store.update(r.id, { fired: true });
     if (this.showing.size === 1) this.store.peek(true);
     const by = r.from === "you" ? "" : ` (set by ${r.from === "codex" ? "Codex" : "Claude"})`;
     const due = describeDue(new Date(r.due));
-    pet.bubble.show({
+    this.companion.request({
       id: `reminder-${r.id}`,
       who: `${pet.name} · reminder${by}`,
-      title: privacy.detail === "status" ? "A reminder is due." : r.text,
+      title: r.text,
       // A reminder missed while the Mac slept says when it was due.
-      lines: [missed ? `Was due ${due}` : `Due ${due}`].concat(r.project && pet.isMain && privacy.detail !== "status" ? [folder(r.project)] : []),
+      lines: [missed ? `Was due ${due}` : `Due ${due}`].concat(r.project ? [folder(r.project)] : []),
       meta: { kind: "reminder", text: r.text, due: String(r.due), project: r.project },
       choices: [
         { label: "In 10 min", value: "10" },
@@ -153,15 +153,19 @@ export class Reminders {
         { label: "Done", value: "done", primary: true },
       ],
       onChoose: (value) => void this.answer(r, value),
+      // Closed without an answer: it stays in the window's Requests; a hidden companion hides again.
+      onClose: () => this.unpeek(r),
     });
     pet.mind.react("wave", 1.6);
-    pet.holdUntil = Math.max(pet.holdUntil, Date.now() + 5_000);
-    this.crew.tick();
+  }
+
+  private unpeek(r: Reminder) {
+    this.showing.delete(r.id);
+    if (this.showing.size === 0) this.store.peek(false);
   }
 
   private async answer(r: Reminder, value: string) {
-    this.showing.delete(r.id);
-    if (this.showing.size === 0) this.store.peek(false);
+    this.unpeek(r);
     if (value === "done") {
       r.done = true;
       return this.store.update(r.id, { done: true });
@@ -176,7 +180,8 @@ export class Reminders {
     await this.store.update(r.id, { due: r.due });
   }
 
-  private showList(on: Familiar) {
+  private showList() {
+    const on = this.companion.pet;
     const next = this.upcoming;
     const lines = next.slice(0, 6).map((r) => `${describeDue(new Date(r.due))} · ${r.text}`);
     if (next.length > 6) lines.push(`+${next.length - 6} more`);
@@ -189,7 +194,7 @@ export class Reminders {
         { label: "New reminder…", value: "new", primary: true },
         ...(this.manage ? [{ label: "Manage…", value: "manage" }] : []),
       ],
-      onChoose: (value) => (value === "new" ? this.form(on) : this.manage?.()),
+      onChoose: (value) => (value === "new" ? this.form() : this.manage?.()),
     });
   }
 }

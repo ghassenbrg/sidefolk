@@ -1,13 +1,13 @@
 import { icon } from "../icons";
-import { badge } from "../states";
+import { badge, stateOf } from "../states";
 import { describeDue } from "../when";
 import type { Waiting } from "./api";
 import type { App } from "./app";
-import { agentShort, button, h } from "./dom";
-import { header, identity, petLine, petOf, petState, requestTitle, sessionLabel, sessionOf } from "./ui";
+import { agentShort, button, folder, h } from "./dom";
+import { header, identity, petLine, petOf, requestTitle, sessionLabel } from "./ui";
 
-// Home: what needs you first, then each companion's plain status, reminders coming up, and a
-// way to connect a tool when none is. No token counts, graphs or terminal output here.
+// Home: what needs you first, then the work sessions the companion follows, reminders coming
+// up, and a way to connect a tool when none is. No token counts, graphs or terminal output here.
 
 export function greeting(now = new Date()) {
   const hour = now.getHours();
@@ -22,7 +22,7 @@ export function attentionCard(app: App, w: Waiting) {
   const card = h(
     "section",
     { class: "card attention" },
-    h("div", { class: "row" }, identity(pet?.look ?? null, w.petName, w.meta.project || pet?.project || null, second), badge("alert")),
+    h("div", { class: "row" }, identity(w.petName, w.meta.project || pet?.project || null, second), badge("alert")),
     h("h2", { class: "request-title", text: requestTitle(w) }),
   );
   const actions = h("div", { class: "actions" });
@@ -72,40 +72,33 @@ export function renderHome(app: App) {
       ),
     );
 
-  view.append(h("h2", { class: "section-title", text: "Your crew" }));
-  const grid = h("div", { class: "grid" });
-  for (const pet of status.pets) {
-    const state = petState(pet, waiting);
-    const session = sessionOf(pet);
-    const card = h(
-      "section",
-      { class: "card pet-card" },
-      h("div", { class: "row" }, identity(pet.look, pet.name, pet.project, pet.main ? "Main companion" : undefined), badge(state)),
-      h("p", { text: petLine(pet) }),
-    );
-    const actions = h("div", { class: "actions" });
-    if (session)
-      actions.append(
-        button(
-          [icon(session.live ? "open" : "terminal"), session.live ? "Open session" : "Continue"],
-          () => void app.openSession(session),
-          "",
-          { title: session.live ? "Bring this work session forward" : "Continue the last work session in a terminal" },
+  // Work sessions the companion is following, each one click from where it runs.
+  const pet = status.pets[0];
+  if (pet) {
+    view.append(h("h2", { class: "section-title", text: "Work sessions" }));
+    const list = h("section", { class: "card list" });
+    for (const s of pet.sessions) {
+      const state = stateOf(s.state);
+      list.append(
+        h(
+          "div",
+          { class: "row line" },
+          h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(s.source)} · ${folder(s.project || s.cwd)}` }), h("span", { class: "meta", text: `${sessionLabel(s.id)} · ${s.verb}${s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}` })),
+          h("div", { class: "inline" }, badge(state), s.id ? button([icon("open"), "Open"], () => void app.openSession({ source: s.source, session: s.id, cwd: s.cwd || s.project }), "small") : null),
         ),
       );
-    actions.append(button("Details", () => app.go("pet", pet.id), "quiet"));
-    card.append(actions);
-    grid.append(card);
+    }
+    if (!pet.sessions.length) list.append(h("p", { class: "muted", text: petLine(pet) }));
+    view.append(list);
   }
-  view.append(grid);
 
   const next = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due).slice(0, 3);
   view.append(h("h2", { class: "section-title", text: "Coming up" }));
-  const list = h("section", { class: "card list" });
+  const upcoming = h("section", { class: "card list" });
   for (const r of next)
-    list.append(h("div", { class: "row line" }, h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })), h("span", { class: "meta", text: describeDue(new Date(r.due)) })));
-  if (!next.length) list.append(h("p", { class: "muted", text: "Nothing coming up. Add a reminder for your next small step." }));
-  list.append(h("div", { class: "actions" }, button("Add reminder", () => app.go("reminders")), button(["Recent activity", icon("next")], () => app.go("activity"), "quiet")));
-  view.append(list);
+    upcoming.append(h("div", { class: "row line" }, h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })), h("span", { class: "meta", text: describeDue(new Date(r.due)) })));
+  if (!next.length) upcoming.append(h("p", { class: "muted", text: "Nothing coming up. Add a reminder for your next small step." }));
+  upcoming.append(h("div", { class: "actions" }, button("Add reminder", () => app.go("reminders"))));
+  view.append(upcoming);
   return view;
 }

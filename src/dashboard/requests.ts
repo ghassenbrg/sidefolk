@@ -75,7 +75,7 @@ export function renderReview(app: App, id: string) {
   const pet = w ? petOf(app.state.status, w.pet) : null;
   const source = meta.source ?? "";
   const agent = agentShort(source);
-  if (w) view.append(identity(pet?.look ?? null, w.petName, meta.project || pet?.project || null, `${agentName(source)} · ${sessionLabel(meta.session)}`));
+  if (w) view.append(identity(w.petName, meta.project || pet?.project || null, `${agentName(source)} · ${sessionLabel(meta.session)}`));
 
   const card = h("section", { class: "card" });
   view.append(card);

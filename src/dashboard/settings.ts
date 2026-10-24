@@ -2,9 +2,7 @@ import { icon, type IconName } from "../icons";
 import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
 import type { App } from "./app";
-import { PRESETS, lookAvailable, suggestions, type Comfort } from "./comfort";
 import { button, h } from "./dom";
-import { portraitImage } from "./portrait";
 import { header } from "./ui";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
@@ -13,8 +11,6 @@ import { header } from "./ui";
 
 let voices: { name: string; language: string }[] | null = null;
 let terminals: string[] | null = null;
-let draftComfort: Comfort | null = null;
-let unticked = new Set<string>();
 let recording = false;
 
 const TERMINAL_LABELS: Record<string, string> = { terminal: "Terminal", iterm: "iTerm", ghostty: "Ghostty" };
@@ -58,54 +54,6 @@ function segmented(app: App, key: keyof Settings, label: string, description: st
   return h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: label }), h("p", { class: "muted", text: description })), control);
 }
 
-function comfortGroup(app: App) {
-  const { settings } = app.state;
-  const chosen = draftComfort ?? settings.comfort;
-  const cards = h("div", { class: "choice-grid", role: "radiogroup", "aria-label": "Comfort" });
-  for (const [key, preset] of Object.entries(PRESETS) as [Comfort, (typeof PRESETS)[Comfort]][]) {
-    const available = lookAvailable(preset.look);
-    cards.append(
-      button(
-        [available ? portraitImage(preset.look, "", "thumb large") : h("span", { class: "thumb placeholder" }), h("strong", { text: preset.label }), h("small", { text: `${preset.who} · ${preset.describe}` })],
-        () => {
-          draftComfort = key;
-          unticked = new Set();
-          app.redraw(true);
-        },
-        "choice tall",
-        { role: "radio", "aria-checked": String(chosen === key) },
-      ),
-    );
-  }
-  const nodes: HTMLElement[] = [h("p", { class: "muted", text: "A starting point. You'll see each suggested change before anything is applied, and can change any of them later." }), cards];
-  if (draftComfort && draftComfort !== settings.comfort) {
-    const list = suggestions(draftComfort, settings);
-    const box = h("div", { class: "notice" }, h("strong", { text: list.length ? "Suggested changes" : "Nothing else changes." }));
-    for (const s of list) {
-      const id = `suggest-${s.key}`;
-      const check = h("input", { type: "checkbox", id, checked: !unticked.has(s.key) });
-      check.addEventListener("change", () => (check.checked ? unticked.delete(s.key) : unticked.add(s.key)));
-      box.append(h("div", { class: "check" }, check, h("label", { for: id, text: s.label })));
-    }
-    box.append(h("p", { class: "muted", text: "Looks never change what an AI tool is allowed to do." }));
-    nodes.push(
-      box,
-      h(
-        "div",
-        { class: "actions" },
-        button("Cancel", () => ((draftComfort = null), app.redraw(true))),
-        button(`Apply ${PRESETS[draftComfort].label}`, async () => {
-          const change: Partial<Settings> = { comfort: draftComfort! };
-          for (const s of list) if (!unticked.has(s.key)) Object.assign(change, s.change);
-          if (await app.save(change, `${PRESETS[draftComfort!].label} applied.`)) draftComfort = null;
-          app.redraw(true);
-        }, "primary"),
-      ),
-    );
-  }
-  return group("Comfort", "crew", "comfort", ...nodes);
-}
-
 function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools", action: string, title: string, what: string, change: string, stops: string) {
   const on = app.state.integrations[key];
   return h(
@@ -134,22 +82,11 @@ export function renderSettings(app: App, arg: string) {
 
   const view = h("div", { class: "view settings" }, ...header("Make Sidefolk comfortable.", "A few simple preferences. Everything here can change later."));
 
-  view.append(comfortGroup(app));
-
   view.append(
     group(
       "On your desktop",
       "home",
       "desktop",
-      segmented(app, "presence", "Desktop presence", {
-        always: "Your main companion stays on the desktop; others come out when their project needs you.",
-        needed: "Companions rest and come out only when something needs you. Requests also wait in the menu bar.",
-        menubar: "No companions on the desktop. Requests and reminders wait in the menu bar and arrive as notifications.",
-      }[settings.presence], [
-        ["always", "Always visible"],
-        ["needed", "Only when needed"],
-        ["menubar", "Menu bar only"],
-      ]),
       segmented(app, "pet_size", "Companion size", "Card text size is set separately, under Accessibility.", [
         ["small", "Small"],
         ["medium", "Medium"],
@@ -164,7 +101,7 @@ export function renderSettings(app: App, arg: string) {
       "info",
       "accessibility",
       toggle(app, "calm", "Reduce motion", "Companions stay put and changes happen at once, without hops or pulsing. Also on when macOS asks for reduced motion."),
-      toggle(app, "large_text", "Larger text", "Bigger cards and text, here and on the desktop, without changing the companions' size."),
+      toggle(app, "large_text", "Larger text", "Bigger cards and text, here and on the desktop, without changing the companion's size."),
       select(app, "sleep_after_secs", "Fall asleep after", "With no keyboard or mouse input.", [
         ["60", "1 minute"],
         ["120", "2 minutes"],
@@ -191,7 +128,7 @@ export function renderSettings(app: App, arg: string) {
       toggle(app, "sounds", "Sound cues", "Short sounds when a companion talks or something needs you."),
       row("Volume", null, volume, "setting-volume"),
       toggle(app, "speak", "Speak out loud", "Companions read their lines with a macOS voice instead of sounds. AI tools' text is read too."),
-      row("Voice", "More voices: System Settings → Accessibility → Spoken Content.", h("div", { class: "inline" }, voice, button("Try", () => void invoke("speak", { text: "Byte here. The tests are ready to run.", voice: voice.value }).catch((e) => app.toast(String(e), undefined, true)))), "setting-voice"),
+      row("Voice", "More voices: System Settings → Accessibility → Spoken Content.", h("div", { class: "inline" }, voice, button("Try", () => void invoke("speak", { text: "Pip here. Your reminder is due.", voice: voice.value }).catch((e) => app.toast(String(e), undefined, true)))), "setting-voice"),
     ),
   );
 
@@ -200,12 +137,7 @@ export function renderSettings(app: App, arg: string) {
       "Privacy",
       "info",
       "privacy",
-      toggle(app, "hide_in_recordings", "Hide from screen recordings", "Asks macOS to keep companions and their cards out of screenshots, recordings and screen sharing. Works with tools that respect it; some recording tools may still show them."),
-      select(app, "detail", "Card detail", "What companions' cards and notifications show to anyone who can see your screen. The Sidefolk window always shows everything.", [
-        ["full", "Full preview (commands and paths)"],
-        ["project", "Project and status"],
-        ["status", "Status only (no project names)"],
-      ]),
+      toggle(app, "hide_in_recordings", "Hide from screen recordings", "Asks macOS to keep the companion and its cards out of screenshots, recordings and screen sharing. Works with tools that respect it; some recording tools may still show them."),
     ),
   );
 
@@ -252,7 +184,7 @@ export function renderSettings(app: App, arg: string) {
       "Shortcut and startup",
       "settings",
       "startup",
-      row(settings.presence === "menubar" ? "Open Sidefolk" : "Summon shortcut", settings.presence === "menubar" ? "Opens your requests." : "Hides the companions, or calls them to your cursor.", shortcut),
+      row("Summon shortcut", "Hides the companion, or calls it to your cursor.", shortcut),
       row("Start at login", "Opens Sidefolk when you log in.", button(integrations.start_at_login ? "Turn off" : "Turn on", () => void invoke("tray_action", { action: "login" }).then(() => app.refresh()))),
     ),
   );
@@ -263,23 +195,22 @@ export function renderSettings(app: App, arg: string) {
       "info",
       "about",
       row("Sidefolk", `Version ${app.state.version}`, h("span")),
-      row("Your data", `Crew, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
+      row("Your data", `Your companion, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
       row("Logs", "Errors and crashes, to attach to a bug report.", button("Show in Finder", () => void invoke("reveal_data_dir", { logs: true }))),
-      row("Welcome tour", "The first-minute setup again: comfort, name, tools.", button("Start", () => app.go("welcome"))),
       h(
         "div",
         { class: "help" },
-        h("h3", { text: "Talking to companions" }),
-        h("p", { text: "Click a companion for its status and to open its work session. Right-click for everything it can do. Double-click to type; the line under the field says what Enter will do before anything happens." }),
+        h("h3", { text: "Talking to your companion" }),
+        h("p", { text: "Click the companion (or right-click) and type. The line under the field says what Enter will do before anything happens. Everything here is understood on your Mac, without AI." }),
         h(
           "table",
           {},
           ...[
-            ["open session · continue Byte", "Bring a work session forward, or continue it in a terminal"],
-            ["call Byte · send Byte home", "Bring a companion out, or back to rest"],
-            ["remind me tomorrow at 3 to …", "A reminder, from the right companion"],
-            ["Byte: run the tests", "Codex works in Byte's project (uses Codex quota)"],
-            ["Byte wear glasses · Byte become a fox", "Change a look without opening anything"],
+            ["remind me tomorrow at 9 to check the results", "A reminder; Pip brings it at that time"],
+            ["reminders", "What's coming up"],
+            ["open session · open api session", "Bring a work session forward, or continue it in a terminal"],
+            ["open Sidefolk · hide", "This window, or hide the companion"],
+            ["rename to Bun", "A new name for your companion"],
           ].map(([command, what]) => h("tr", {}, h("td", {}, h("code", { text: command })), h("td", { text: what }))),
         ),
       ),

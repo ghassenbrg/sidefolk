@@ -1,8 +1,7 @@
-import { icon, type IconName } from "../icons";
+import { icon, mark, type IconName } from "../icons";
 import { badge, stateOf, type State } from "../states";
-import type { Look, PetStatus, Status, Waiting } from "./api";
+import type { PetStatus, Status, Waiting } from "./api";
 import { agentShort, button, folder, h } from "./dom";
-import { portraitImage } from "./portrait";
 
 /** A page's heading: an h1 that takes focus after navigation, and a plain-language lead. */
 export function header(title: string, lead?: string, eyebrow?: string): HTMLElement[] {
@@ -17,11 +16,11 @@ export function back(label: string, run: () => void) {
   return button([icon("back"), label], run, "back");
 }
 
-/** Pet portrait + "Name · project" + a second line ("Codex · Work session 04c1"). */
-export function identity(look: Look | null, name: string, project: string | null, second?: string) {
+/** The companion's mark + "Name · project" + a second line ("Codex · Work session 04c1"). */
+export function identity(name: string, project: string | null, second?: string) {
   const text = h("div", { class: "identity-text" }, h("strong", {}, name, project ? h("span", { class: "project", text: ` · ${folder(project)}` }) : null));
   if (second) text.append(h("span", { class: "meta", text: second }));
-  return h("div", { class: "identity" }, look ? portraitImage(look, "", "avatar") : h("span", { class: "avatar" }), text);
+  return h("div", { class: "identity" }, h("span", { class: "avatar" }, mark(30, "")), text);
 }
 
 /** "Work session 04c1": the short form people can tell apart; the full ID is in details. */
@@ -32,7 +31,6 @@ export function petState(pet: PetStatus, waiting: Waiting[], now = Date.now()): 
   if (waiting.some((w) => w.pet === pet.id)) return "alert";
   const top = pet.sessions[0];
   if (top) return stateOf(top.state);
-  if (!pet.out) return "resting";
   if (pet.clip === "sleep") return "sleep";
   const last = pet.outcomes[0];
   if (last && now - last.at < 10 * 60_000) return last.kind === "done" ? "done" : "failed";
@@ -49,7 +47,7 @@ export function petLine(pet: PetStatus, now = Date.now()) {
     const when = m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
     return `${agentShort(last.source)} ${last.kind === "done" ? "finished" : "stopped with a problem"} ${when}${last.detail ? `: ${last.detail}` : "."}`;
   }
-  return pet.out ? "Nothing running right now." : "Resting. Comes out when this project needs you.";
+  return "Nothing running right now.";
 }
 
 /** The session "Open session" would open: the live one first, else the last that ended. */
