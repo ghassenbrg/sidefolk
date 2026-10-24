@@ -67,8 +67,8 @@ backup of their settings is kept.
 
 Your companion, reminders, notes, characters and logs stay in
 `~/Library/Application Support/dev.sidefolk.companion`. "Hide from screen recordings" keeps the
-companion out of screen sharing; while it's on, Mission Control's desktop previews go black, so
-it's off by default.
+companion out of screen sharing; while it's on, Mission Control shows a dark patch where the
+companion stands, so it's off by default.
 
 ## Something wrong?
 

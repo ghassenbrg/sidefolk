@@ -198,7 +198,7 @@ function settingsContents(app: App) {
       "Privacy",
       "info",
       "privacy",
-      toggle(app, "hide_in_recordings", "Hide from screen recordings", "Asks macOS to keep the companion and its cards out of screenshots, recordings and screen sharing. While it's on, Mission Control's desktop previews go black too, so it's off unless you need it."),
+      toggle(app, "hide_in_recordings", "Hide from screen recordings", "Asks macOS to keep the companion and its cards out of screenshots, recordings and screen sharing. While it's on, Mission Control shows a dark patch where the companion stands, so it's off unless you need it."),
     ),
   );
 

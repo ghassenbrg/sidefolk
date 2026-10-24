@@ -9,6 +9,7 @@ import { HeadsUp, type CalendarEvent } from "./calendar";
 import { knowCommands } from "./commands";
 import { Companion, type Ask, type Host } from "./companion";
 import { install } from "./demo";
+import { area, needed, place, shouldMove, type Rect } from "./frame";
 import { wireInput } from "./input";
 import { sound } from "./sound";
 import { memoryNotes, Notes, type NoteStore } from "./notes";
@@ -41,6 +42,10 @@ type Settings = {
   calendar_lead_mins: number;
 };
 const settings = inTauri ? await invoke<Settings>("get_settings") : null;
+// The window covers only the companions (frame.ts); a reloaded page starts where it is.
+const layout = inTauri ? await invoke<{ width: number; height: number; frame: Rect } | null>("overlay_area") : null;
+if (layout) place(layout.width, layout.height, layout.frame);
+else place(innerWidth, innerHeight);
 const SIZES = { small: 0.8, medium: 1, large: 1.3 };
 // Browser preview only: ?zoom=3 enlarges the companion for close inspection.
 const zoom = settings ? (SIZES[settings.pet_size] ?? 1) : Number(new URLSearchParams(location.search).get("zoom")) || 1;
@@ -296,7 +301,10 @@ if (inTauri) {
   void listen<AgentEvent>("agent", (e) => companion.handleEvent(e.payload));
   void listen<Ask>("permission", (e) => companion.handleAsk(e.payload));
   void listen<string>("permission-closed", (e) => companion.closeRequest(e.payload));
-  void listen("overlay-resized", () => companion.familiars.forEach((f) => f.resize()));
+  void listen<{ width: number; height: number }>("overlay-resized", (e) => {
+    place(e.payload.width, e.payload.height);
+    companion.familiars.forEach((f) => f.resize());
+  });
   // The Sidefolk window's live view: sent when something changed, checked once a second.
   let published = "";
   setInterval(() => {
@@ -370,11 +378,43 @@ async function briefing(since: number, onlyMorning = false) {
 function loop() {
   const now = performance.now();
   for (const f of companion.familiars) f.frame(now);
+  fitWindow(now);
   const wait = Math.min(...companion.familiars.map((f) => f.due(performance.now())));
   if (wait > 40) setTimeout(() => (document.hidden ? requestAnimationFrame(loop) : loop()), wait);
   else requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+/** Keeps the window around the companions and their cards; the whole work area while one is held or flying. */
+let moving = false;
+let lastFit = 0;
+function fitWindow(now: number, soon = false) {
+  if (!inTauri || moving) return;
+  const free = companion.familiars.some((f) => !f.mind.onGround);
+  if (!free && !soon && now - lastFit < 250) return;
+  lastFit = now;
+  const want = free ? { x: 0, y: 0, width: area.width, height: area.height } : needed(companion.familiars.flatMap((f) => f.rects()), area.width, area.height);
+  if (!shouldMove(area.frame, want)) return;
+  moving = true;
+  void invoke<Rect>("overlay_frame", { ...want })
+    .then((frame) => {
+      place(area.width, area.height, frame);
+      if (import.meta.env.DEV) void invoke("ui_log", { line: `frame ${frame.x},${frame.y} ${frame.width}x${frame.height} of ${area.width}x${area.height}` });
+    })
+    .catch(console.error)
+    .finally(() => (moving = false));
+}
+// A card or badge appearing or changing: refit once it's placed (the next frame), not 250 ms later.
+if (inTauri)
+  new MutationObserver((records) => {
+    // The companions' own frame swaps (hidden images) happen all the time and change nothing.
+    if (records.every((r) => r.target instanceof Element && r.target.closest(".pip"))) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => fitWindow(performance.now(), true)));
+  }).observe(document.body, {
+    subtree: true,
+    childList: true,
+    attributeFilter: ["hidden"],
+  });
 setInterval(() => companion.familiars.forEach((f) => f.agents.tick()), 30_000);
 
 if (import.meta.env.DEV) {
@@ -408,7 +448,7 @@ if (import.meta.env.DEV) {
       }
     });
     report(`overlay ${pet.bounds.width}x${pet.bounds.height} dpr=${devicePixelRatio}`);
-    void listen("overlay-resized", () => setTimeout(() => report(`refit ${innerWidth}x${innerHeight}`), 100));
+    void listen("overlay-resized", () => setTimeout(() => report(`refit ${area.width}x${area.height}`), 100));
     void listen<AgentEvent>("agent", (e) => report(`agent ${e.payload.source} ${e.payload.kind} ${e.payload.project} ${e.payload.detail}`));
     void listen<Ask>("permission", (e) => report(`ask ${e.payload.id} ${e.payload.title} ${e.payload.detail}`));
     let lastInteractive = false;

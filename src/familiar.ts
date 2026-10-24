@@ -1,19 +1,22 @@
 import { Agents } from "./agents";
 import { Bubble } from "./bubble";
+import { area, toScreen } from "./frame";
 import { Mind } from "./mind";
 import { DRAWN, FEET, HEIGHT, PipView, VIEW_H, VIEW_W } from "./pip";
 import { sound, voiceFor, type Cue } from "./sound";
 
-/** The overlay in CSS pixels; world space has y going up from the bottom edge. */
+/** The work area in CSS pixels (frame.ts); world space has y going up from the bottom edge. */
 export class Bounds {
-  width = innerWidth;
-  height = innerHeight;
+  width = area.width;
+  height = area.height;
   resize() {
-    this.width = innerWidth;
-    this.height = innerHeight;
+    this.width = area.width;
+    this.height = area.height;
   }
+  /** From window coordinates (pointer events). */
   toWorld(x: number, y: number) {
-    return { x, y: this.height - y };
+    const p = toScreen(x, y);
+    return { x: p.x, y: this.height - p.y };
   }
 }
 
@@ -117,7 +120,17 @@ export class Familiar {
     return Math.max(0, 1000 / this.mind.fps - (now - this.last));
   }
 
-  /** Whether a screen point is on the companion itself. */
+  /** Where its parts are on screen, for sizing the overlay window. */
+  rects() {
+    const parts = [this.view.el, this.badge, this.hud.hidden ? null : this.hud, this.bubble.root.hidden ? null : this.bubble.root];
+    return parts.flatMap((el) => {
+      if (!el) return [];
+      const r = el.getBoundingClientRect();
+      return [{ ...toScreen(r.left, r.top), width: r.width, height: r.height }];
+    });
+  }
+
+  /** Whether a point (window coordinates) is on the companion itself. */
   contains(x: number, y: number) {
     return this.view.contains(x, y);
   }

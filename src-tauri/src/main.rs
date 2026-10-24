@@ -257,6 +257,8 @@ fn main() {
             resolve_permission,
             dispatch,
             overlay_typing,
+            overlay::overlay_area,
+            overlay::overlay_frame,
             ui_log,
             get_settings,
             save_pet,

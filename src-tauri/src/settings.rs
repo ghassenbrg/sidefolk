@@ -20,8 +20,8 @@ pub struct Settings {
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
     /// Keep the overlay out of screenshots, recordings and screen sharing. Off by default: macOS
-    /// then also blanks it in Mission Control, and the overlay covers the whole screen, so every
-    /// desktop's preview turns black.
+    /// then also blanks the overlay window in Mission Control: a dark patch around the companions
+    /// (the window used to cover the screen, which turned every desktop's preview black).
     pub hide_in_recordings: bool,
     /// The one-time switch-off of `hide_in_recordings` (it used to be on by default) has run.
     /// Missing in older files, so it reads as false there and the switch-off runs once.

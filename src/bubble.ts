@@ -1,3 +1,4 @@
+import { area } from "./frame";
 import { icon } from "./icons";
 
 // A pet's speech bubble: short lines, cards with answer buttons (permission questions,
@@ -155,8 +156,8 @@ export class Bubble {
   place(x: number, bottom: number) {
     if (this.root.hidden) return;
     const width = this.root.offsetWidth;
-    const left = Math.min(innerWidth - width - 8, Math.max(8, x - width / 2));
-    this.root.style.transform = `translate(${Math.round(left)}px, ${Math.round(innerHeight - bottom - this.root.offsetHeight)}px)`;
+    const left = Math.min(area.width - width - 8, Math.max(8, x - width / 2));
+    this.root.style.transform = `translate(${Math.round(left)}px, ${Math.round(area.height - bottom - this.root.offsetHeight)}px)`;
   }
 
   contains(x: number, y: number) {

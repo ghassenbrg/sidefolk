@@ -179,17 +179,23 @@ lists today's meetings and reminders, then overnight agent work (src/away.ts `mo
 `<name>.sidefolk.png` sheet (transparent, template layout) that imports as it is; the importer's
 light outline is optional. Release build from the export commit is running.
 
-**Next, approved by the user (24 Oct):** size the overlay window to the companions instead of the
-whole screen, "with full checks", once the usage window has reset. Why: with "Hide from screen
-recordings" on, only the companions' area is blanked in Mission Control instead of every
-desktop, and less GPU. Plan: keep screen coordinates in the page (Bounds = screen size, not
-innerWidth/innerHeight); the window frame follows the union of every companion, bubble, HUD and
-badge plus a margin (recomputed on bubble render, clip change and resize, throttled); while
-dragging, grow it to the full screen and shrink after release; translate the page by the
-window origin and add it to pointer clientX/Y in src/input.ts; keep click-through toggling. Check:
-overlay WebKit checks, the dev app's `[ui]` log (frame size, interactive), drag across the
-screen, multiple displays, Mission Control previews with the setting on and off, `npm run
-measure`. Then: timers or other PLAN-V2 section 7 helpers.
+**Overlay sized to the companions (24 Oct, Claude):** the overlay window now covers only the
+companions, their cards and badges plus a 72 pt margin, and the whole work area while one is held
+or flying. src/frame.ts (`area`, `place`, `needed`, `shouldMove`, tests in frame.test.ts): the page
+still lays out in work-area coordinates; the body is translated by the window's origin and
+`Bounds.toWorld` adds it back to pointer coordinates (getBoundingClientRect and clientX stay in
+window coordinates, so hit tests are unchanged). src-tauri/src/overlay.rs keeps a `Layout` (work
+area + frame), `overlay_area` (a reloaded page starts where the window is), `overlay_frame` (sync
+command, main thread, position and size in one pass), refits compare against the stored work area
+and the cursor stream reads the origin each tick. main.ts `fitWindow`: every 250 ms, immediately
+when free (held/air), and on the frame after a card/badge/HUD change (MutationObserver ignoring
+the companions' own frame swaps). Verified: typecheck, 93 Vitest, 32 Rust, WebKit check, a WebKit
+simulation of a shifted 382×280 window (Pip and card shown, hit tests and world coordinates
+match), release build relaunched: the overlay window is 312×218 pt (CGWindowList), no page
+errors, about 1% CPU. Not yet hand-checked by the user: dragging and throwing across the screen,
+a second display, Mission Control with "Hide from screen recordings" on (expected: a dark patch
+only around the companion) and off. Possible glitch: when the window's origin moves, the content
+can be one frame out of place (rare: only when something leaves the window's slack).
 
 ## PLAN PHASE: read this first (24 October, late)
 
