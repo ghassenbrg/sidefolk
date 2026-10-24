@@ -836,3 +836,6 @@ button.access.on {
 .draft:not(:empty) {
   margin-bottom: var(--space-4);
 }
+.sessions form.card {
+  margin-top: var(--space-6);
+}

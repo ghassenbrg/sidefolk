@@ -23,6 +23,7 @@ const views = [
   ["setup", "/settings.html?tab=setup:start"],
   ["new-reminder", "/settings.html?tab=reminders:new"],
   ["notes", "/settings.html?tab=notes"],
+  ["sessions", "/settings.html?tab=sessions"],
   ["notebook", "/settings.html?tab=notes:evaluation-h2-2026"],
 ];
 

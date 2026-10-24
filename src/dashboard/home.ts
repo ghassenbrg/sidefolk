@@ -1,10 +1,10 @@
 import { icon } from "../icons";
-import { badge, stateOf } from "../states";
+import { badge } from "../states";
 import { describeDue } from "../when";
 import type { Waiting } from "./api";
 import type { App } from "./app";
-import { agentShort, button, folder, h } from "./dom";
-import { header, identity, petLine, petOf, requestTitle, sessionLabel } from "./ui";
+import { agentShort, button, h } from "./dom";
+import { header, identity, petLine, petOf, requestTitle, sessionLabel, sessionRow } from "./ui";
 
 // Home: what needs you first, then the work sessions the companion follows, reminders coming
 // up, and a way to connect a tool when none is. No token counts, graphs or terminal output here.
@@ -77,29 +77,7 @@ export function renderHome(app: App) {
   if (pet) {
     view.append(h("h2", { class: "section-title", text: "Work sessions" }));
     const list = h("section", { class: "card list" });
-    for (const s of pet.sessions) {
-      const state = stateOf(s.state);
-      list.append(
-        h(
-          "div",
-          { class: "row line" },
-          h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(s.source)} · ${folder(s.project || s.cwd)}` }), h("span", { class: "meta", text: `${sessionLabel(s.id)} · ${s.verb}${s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}` })),
-          h(
-            "div",
-            { class: "inline" },
-            badge(state),
-            // Off by default; the current mode is always shown, never changed silently.
-            s.id
-              ? button(s.fullAccess ? "Full access" : "Asks first", () => void app.petAction({ action: "full-access", source: s.source, session: s.id, on: !s.fullAccess }, s.fullAccess ? "This session asks again." : "Full access on. Risky commands still ask."), `small access${s.fullAccess ? " on" : ""}`, {
-                  "aria-pressed": String(!!s.fullAccess),
-                  title: s.fullAccess ? "Requests from this session are allowed without asking, except risky ones. Click to ask again." : "This session asks before running commands or changing files. Click to give it full access.",
-                })
-              : null,
-            s.id ? button([icon("open"), "Open"], () => void app.openSession({ source: s.source, session: s.id, cwd: s.cwd || s.project }), "small") : null,
-          ),
-        ),
-      );
-    }
+    for (const s of pet.sessions) list.append(sessionRow(app, s));
     if (!pet.sessions.length) list.append(h("p", { class: "muted", text: petLine(pet) }));
     view.append(list);
   }

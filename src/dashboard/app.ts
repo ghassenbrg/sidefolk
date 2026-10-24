@@ -6,6 +6,7 @@ import { renderHome } from "./home";
 import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
 import { renderRequests, renderReview } from "./requests";
+import { renderSessions } from "./sessions";
 import { renderSettings } from "./settings";
 import { renderSetup } from "./setup";
 import { tellBar } from "./tell";
@@ -51,6 +52,7 @@ const NAV: [string, string, IconName][] = [
   ["today", "Today", "home"],
   ["reminders", "Reminders", "reminders"],
   ["notes", "Notes", "notes"],
+  ["sessions", "Sessions", "terminal"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
@@ -212,6 +214,7 @@ function draw(focus: boolean) {
       review: renderReview,
       reminders: renderReminders,
       notes: renderNotes,
+      sessions: renderSessions,
       settings: renderSettings,
       setup: renderSetup,
     }[view] ?? renderHome;
