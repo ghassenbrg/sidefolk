@@ -9,6 +9,7 @@ import { cachedCharacters, characters as loadCharacters } from "./characters";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
 import { framesDir, MAIN_LOOK, ROSTER } from "../roster";
+import { COLORS, colorName } from "../worker-colors";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
 // the settings file is written. Connecting a tool opens the app's own confirmation, which
@@ -57,6 +58,14 @@ function segmented(app: App, key: keyof Settings, label: string, description: st
   for (const [value, text] of options)
     control.append(button(text, () => void app.save({ [key]: value }), "", { role: "radio", "aria-checked": String(app.state.settings[key] === value) }));
   return h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: label }), h("p", { class: "muted", text: description })), control);
+}
+
+/** Your companion's accent (scarf, lights, leaves), from the Spark colors; mint is its own. */
+function accentColor(app: App) {
+  const control = h("select", { id: "setting-accent", "aria-describedby": "setting-accent-help" }, ...COLORS.map(([name, hue]) => h("option", { value: String(hue), text: name })));
+  control.value = String(app.state.crew.main.hue ?? 0);
+  control.addEventListener("change", () => void app.petAction({ action: "color", hue: Number(control.value) }, `${app.state.crew.main.name} wears ${colorName(Number(control.value)).toLowerCase()} now.`));
+  return row("Accent color", "Turns only the mint parts: a scarf, lights, a hoodie, leaves. Characters you made keep their own colors.", control, "setting-accent");
 }
 
 /** The crew and the characters you made, as pictures to pick your companion's look from. */
@@ -114,6 +123,7 @@ function settingsContents(app: App) {
       "home",
       "companion",
       crewChoices(app),
+      accentColor(app),
       segmented(app, "art_style", "Style", "Soft 3D renders or flat 2D drawings of the same characters, for your companion and every Spark.", [
         ["3d", "3D"],
         ["2d", "2D"],

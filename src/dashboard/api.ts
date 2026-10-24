@@ -31,7 +31,7 @@ export type Settings = {
 };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
 /** crew.json: the companion's name and look, and its Spark workers. */
-export type CrewFile = { main: { name: string; look?: string }; workers?: { project: string; name: string; hue: number; look?: string }[] };
+export type CrewFile = { main: { name: string; look?: string; hue?: number }; workers?: { project: string; name: string; hue: number; look?: string }[] };
 
 /** Mirrors `status()` in src/companion.ts. */
 export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number; fullAccess?: boolean };
@@ -324,6 +324,7 @@ function preview(): typeof tauriInvoke {
           }, 100);
         }
         if (a.action.action === "look") state.crew.main.look = a.action.look ?? undefined;
+        if (a.action.action === "color") state.crew.main.hue = a.action.hue || undefined;
         if (a.action.action === "full-access") {
           for (const s of state.status.pets[0].sessions) if (s.id === a.action.session) s.fullAccess = !!a.action.on;
           setTimeout(() => emit("status", state.status), 100);

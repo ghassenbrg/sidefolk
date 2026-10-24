@@ -121,6 +121,11 @@ for (const scheme of ["light", "dark"]) {
     await page.getByRole("button", { name: "Export" }).first().click();
     await page.locator("#toast").getByText("sidefolk.png", { exact: false }).waitFor();
   }
+  // Settings → Companion: the crew in pictures, the accent color and the 3D/2D style.
+  await page.goto(base + "/settings.html?tab=settings:companion");
+  await page.locator(".crew-choice").nth(9).waitFor();
+  await page.locator("#setting-accent").selectOption({ label: "Coral" });
+  await page.locator("#toast").getByText("wears coral now", { exact: false }).waitFor();
   // A saved action runs quietly and offers its output.
   await page.goto(base + "/settings.html?tab=actions");
   await page.getByRole("button", { name: "Run quietly" }).first().click();

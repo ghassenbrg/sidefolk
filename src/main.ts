@@ -74,11 +74,11 @@ const webName = {
 };
 
 /** crew.json keeps the companion's name and its Spark workers (v0.1's other keys are dropped). */
-type Stored = { main?: { name?: string; look?: string }; workers?: unknown } | null;
+type Stored = { main?: { name?: string; look?: string; hue?: number }; workers?: unknown } | null;
 const stored = inTauri ? await invoke<Stored>("get_crew") : null;
 const storedName = inTauri ? stored?.main?.name : webName.load();
-const crew: { main: { name: string; look?: string }; workers: WorkerSpec[] } = {
-  main: { name: storedName?.trim() || "Pip", ...(stored?.main?.look ? { look: stored.main.look } : {}) },
+const crew: { main: { name: string; look?: string; hue?: number }; workers: WorkerSpec[] } = {
+  main: { name: storedName?.trim() || "Pip", ...(stored?.main?.look ? { look: stored.main.look } : {}), ...(stored?.main?.hue ? { hue: stored.main.hue } : {}) },
   workers: Array.isArray(stored?.workers) ? stored.workers.filter((w): w is WorkerSpec => typeof w?.project === "string" && typeof w?.name === "string" && typeof w?.hue === "number") : [],
 };
 const saveCrew = () => (inTauri ? invoke("save_crew", { crew }) : Promise.resolve());
@@ -152,7 +152,9 @@ async function lookOf(id: string | undefined, fallback: string): Promise<Look> {
   }
   return { folder: framesDir(member(id) ? id! : fallback, style) };
 }
-const companion = await Companion.start(crew.main.name, host, zoom, await lookOf(crew.main.look, MAIN_LOOK));
+// Your companion's accent color, like a Spark's; a made character keeps its own colors.
+const mainLook = await lookOf(crew.main.look, MAIN_LOOK);
+const companion = await Companion.start(crew.main.name, host, zoom, mainLook.frames ? mainLook : { ...mainLook, hue: crew.main.hue ?? 0 });
 const pet = companion.pet;
 
 /** Settings that apply without a restart. Companion size rebuilds it, so that reloads the page. */
@@ -259,6 +261,11 @@ if (inTauri) {
     if (action === "look" && !project) {
       if (look) crew.main.look = look;
       else delete crew.main.look;
+      void saveCrew().then(() => location.reload());
+    }
+    if (action === "color" && !project) {
+      if (hue) crew.main.hue = hue;
+      else delete crew.main.hue;
       void saveCrew().then(() => location.reload());
     }
     if (action === "spark" && project)

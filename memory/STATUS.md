@@ -194,7 +194,10 @@ idle.png…), sheets in any grid (found by gaps; square = the 4×4 template by c
 stay gaps) or one drawing; green fringes despilled. Old art/pip, art/spark, public/pip,
 public/spark removed. Verified: typecheck, 100 Vitest, 32 Rust, WebKit check (template import,
 settings both styles, Spark recolor), release build 8.6 MB relaunched: overlay 452×222, no errors.
-Hand checks for the user: pick each character and style on the desktop; a Spark in each color.
+Your companion also has an accent color (Settings → Companion → Accent color; crew.json
+`main.hue`, action "color" reloads the overlay). Gadgets (hats, headphones) are not built: they
+need per-pose anchor points. Hand checks for the user: pick each character and style on the
+desktop; a Spark in each color; an accent color on Pip.
 
 **Overlay sized to the companions (24 Oct, Claude):** the overlay window now covers only the
 companions, their cards and badges plus a 72 pt margin, and the whole work area while one is held
