@@ -8,7 +8,10 @@
   </head>
   <body>
     <nav aria-label="Sidefolk"></nav>
-    <main aria-label="Sidefolk content"></main>
+    <div class="pane">
+      <header id="topbar" data-tauri-drag-region></header>
+      <main aria-label="Sidefolk content"></main>
+    </div>
     <div id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="/src/dashboard/app.ts"></script>
   </body>

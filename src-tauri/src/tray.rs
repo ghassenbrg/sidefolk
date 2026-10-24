@@ -142,6 +142,11 @@ pub fn refresh(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Window → Show Companion.
+pub fn show_companion(app: &AppHandle) -> tauri::Result<()> {
+    hidden(app, false)
+}
+
 fn hidden(app: &AppHandle, hidden: bool) -> tauri::Result<()> {
     app.state::<Arc<Shared>>()
         .settings

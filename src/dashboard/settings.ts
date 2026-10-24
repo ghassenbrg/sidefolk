@@ -186,6 +186,7 @@ export function renderSettings(app: App, arg: string) {
       "startup",
       row("Summon shortcut", "Hides the companion, or calls it to your cursor.", shortcut),
       row("Start at login", "Opens Sidefolk when you log in.", button(integrations.start_at_login ? "Turn off" : "Turn on", () => void invoke("tray_action", { action: "login" }).then(() => app.refresh()))),
+      toggle(app, "hide_from_dock", "Hide from Dock", "Sidefolk leaves the Dock and ⌘Tab; open this window from the menu bar icon instead."),
     ),
   );
 
@@ -193,10 +194,11 @@ export function renderSettings(app: App, arg: string) {
     group(
       "About and help",
       "info",
-      "about",
+      "help",
       row("Sidefolk", `Version ${app.state.version}`, h("span")),
       row("Your data", `Your companion, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
       row("Logs", "Errors and crashes, to attach to a bug report.", button("Show in Finder", () => void invoke("reveal_data_dir", { logs: true }))),
+      row("Setup guide", "The five-step introduction from the first launch.", button("Run setup again", () => app.go("setup", "start"))),
       h(
         "div",
         { class: "help" },

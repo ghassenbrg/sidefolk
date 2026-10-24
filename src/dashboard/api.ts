@@ -22,6 +22,7 @@ export type Settings = {
   speak: boolean;
   voice: string;
   terminal: "auto" | "terminal" | "iterm" | "ghostty";
+  hide_from_dock: boolean;
 };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
 /** crew.json: the companion's name. */
@@ -88,6 +89,7 @@ function preview(): typeof tauriInvoke {
       speak: false,
       voice: "",
       terminal: "auto",
+      hide_from_dock: false,
     } as Settings,
     integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false } as Integrations,
     crew: { main: { name: "Pip" } } as CrewFile,
@@ -173,6 +175,7 @@ function preview(): typeof tauriInvoke {
       case "get_status":
         return state.status;
       case "pet_action":
+        if (a.action.action === "run") setTimeout(() => emit("answered", { id: a.action.id, ok: true, text: `Preview: "${a.action.text}" would go to the companion.` }), 200);
         if (a.action.action === "answer") {
           state.status.waiting = state.status.waiting.filter((w) => w.id !== a.action.id);
           setTimeout(() => emit("answered", { id: a.action.id, ok: true }), 400);

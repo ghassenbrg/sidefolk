@@ -142,7 +142,12 @@ if (inTauri) {
   void listen<Action>("pet-action", (e) => {
     const { action, text, id, name } = e.payload;
     const reply = (line?: string | void) => line && pet.bubble.say(line, 6);
-    if (action === "run" && text) void companion.run(text).then(reply);
+    // From the window's "Tell Pip…" bar: the same commands, and the reply goes back to it.
+    if (action === "run" && text)
+      void companion.run(text).then((line) => {
+        reply(line);
+        if (id) void invoke("answered", { id, ok: true, text: line ?? "" });
+      });
     if (action === "rename" && name) void companion.rename(name).then(reply);
     if (action === "open-session") void companion.openSession();
     if (action === "new-reminder") void reminders.command("", "new-reminder");

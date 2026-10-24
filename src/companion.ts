@@ -1,8 +1,7 @@
 import { AGENT_NAMES, VERB, folder, sessionLabel, type AgentEvent } from "./agents";
 import type { Card, Choice, Fact } from "./bubble";
-import { HELP, parse } from "./commands";
+import { explain, HELP, parse } from "./commands";
 import { Familiar } from "./familiar";
-import { describeDue, parseReminder } from "./when";
 
 /** Mirrors `PermissionAsk` in src-tauri/src/bus.rs. */
 export type Ask = {
@@ -217,31 +216,13 @@ export class Companion {
 
   /** What Enter would do with this text. */
   explain(text: string): string {
-    const command = parse(text);
-    switch (command.kind) {
-      case "help":
-        return "Show what I understand";
-      case "remind": {
-        const parsed = parseReminder(command.text);
-        return parsed ? `Remind you ${describeDue(parsed.due)}: ${parsed.what}` : "Set a reminder (then pick when)";
-      }
-      case "reminders":
-        return "Show your reminders";
-      case "open": {
-        const session = this.sessionOf(command.project);
-        if (!session) return command.project ? `No work session in ${command.project} yet` : "No work session to open yet";
-        const agent = AGENT_NAMES[session.source as keyof typeof AGENT_NAMES];
-        return session.live ? `Bring ${agent}'s session forward` : `Continue ${agent}'s last session in a terminal`;
-      }
-      case "sidefolk":
-        return "Open the Sidefolk window";
-      case "rename":
-        return `Rename me to ${command.name}`;
-      case "hide":
-        return "Hide until you press the shortcut";
-      case "unknown":
-        return "I don't know that one yet. Try “remind me…” or “help”";
-    }
+    return explain(text, {
+      name: this.name,
+      sessionFor: (project) => {
+        const s = this.sessionOf(project);
+        return s ? { agent: AGENT_NAMES[s.source as keyof typeof AGENT_NAMES], live: s.live } : null;
+      },
+    });
   }
 
   /** Runs what was typed. Returns what the companion says. */

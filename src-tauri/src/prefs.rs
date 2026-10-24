@@ -29,13 +29,15 @@ pub fn open_at(app: &AppHandle, tab: &str) -> tauri::Result<()> {
         return window.set_focus();
     }
     let url = if tab.is_empty() { "settings.html".to_string() } else { format!("settings.html?tab={tab}") };
-    let window = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App(url.into()))
+    let builder = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App(url.into()))
         .title("Sidefolk")
-        .inner_size(1040.0, 740.0)
-        .min_inner_size(520.0, 480.0)
-        .minimizable(false)
-        .center()
-        .build()?;
+        .inner_size(1100.0, 760.0)
+        .min_inner_size(640.0, 480.0)
+        .center();
+    // A modern Mac window: the sidebar runs under the traffic lights.
+    #[cfg(target_os = "macos")]
+    let builder = builder.title_bar_style(tauri::TitleBarStyle::Overlay).hidden_title(true);
+    let window = builder.build()?;
     // An accessory app's window opens behind the frontmost app unless it takes focus.
     window.set_focus()
 }
@@ -53,10 +55,11 @@ pub fn open_tab(app: AppHandle, tab: String) -> Result<(), String> {
     .map_err(|e| e.to_string())
 }
 
-/// The overlay applied (or could not apply) an answer sent from the dashboard.
+/// The overlay applied (or could not apply) an answer or command sent from the window; `text` is
+/// what the companion replied.
 #[tauri::command]
-pub fn answered(app: AppHandle, id: String, ok: bool) {
-    let _ = app.emit_to(WINDOW, "answered", serde_json::json!({ "id": id, "ok": ok }));
+pub fn answered(app: AppHandle, id: String, ok: bool, text: Option<String>) {
+    let _ = app.emit_to(WINDOW, "answered", serde_json::json!({ "id": id, "ok": ok, "text": text }));
 }
 
 #[derive(Deserialize, Default)]
@@ -74,6 +77,7 @@ pub struct Change {
     speak: Option<bool>,
     voice: Option<String>,
     terminal: Option<String>,
+    hide_from_dock: Option<bool>,
 }
 
 /// A choice-valued setting must be one of its choices.
@@ -95,6 +99,7 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
     if let Some(hide) = change.hide_in_recordings {
         overlay::overlay(&app).set_content_protected(hide).map_err(|e| e.to_string())?;
     }
+    let change_dock = change.hide_from_dock.is_some();
     let settings = {
         let mut store = shared.settings.lock().unwrap();
         store
@@ -138,10 +143,17 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
                 if let Some(terminal) = change.terminal {
                     s.terminal = terminal;
                 }
+                if let Some(hide) = change.hide_from_dock {
+                    s.hide_from_dock = hide;
+                }
             })
             .map_err(|e| e.to_string())?;
         store.value.clone()
     };
+    if change_dock {
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || crate::app_menu::apply_dock(&handle));
+    }
     let _ = app.emit("settings-changed", &settings);
     let _ = crate::tray::refresh(&app);
     Ok(settings)

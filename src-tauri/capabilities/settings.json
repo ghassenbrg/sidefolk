@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "settings",
-  "description": "The Settings window only calls Sidefolk's own commands.",
+  "description": "The Sidefolk window calls Sidefolk's own commands and can be dragged by its top bar.",
   "windows": ["settings"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:window:allow-start-dragging"]
 }

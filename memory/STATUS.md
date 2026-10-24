@@ -33,7 +33,26 @@ after the MVP). Concept art for Pip and Spark is in creative-design/v2.
   behavior script (no movement in 40 s idle, click opens field, `ls -la` stays local, × keeps
   the request listed).
 
-**Next: phase 1 (the 2D companion from creative-design/v2), when the user says go.**
+**Phase 1 done (commit 331e4a1):** Pip is 16 generated frames (art/pip, `npm run sprites`),
+src/pip.ts adds breathing/blinks/hop/sway/status light; three.js and Blender removed.
+
+**Goal set by the user (/goal):** keep working without asking until release-ready, choosing the
+best option each time; stop at 95% context so the user can compact. Signing/notarizing needs
+the user's Apple keys (the one step left for them).
+
+**Phase 2 done (24 October):** Sidefolk is a Dock app (Settings → Hide from Dock), with menus
+(Edit for copy/paste; View ⌘1 Today, ⌘2 Reminders; File ⌘N New Reminder lands on Reminders with
+the field focused; each later section adds its own item), Reopen from the Dock, a full-height
+window whose sidebar runs under the traffic lights, a "Tell Pip…" bar (src/dashboard/tell.ts)
+that runs the companion's own commands and shows its reply, and a five-step setup guide
+(src/dashboard/setup.ts: meet + name, try a real reminder, where it lives, AI tools (optional),
+done → onboarded). First launch opens the guide; Settings → About and help → Run setup again.
+Verified: typecheck, vitest, cargo test, `npm run check:webkit` (now also setup and
+reminders:new). Not yet checked in the real app (release build pending; the user's release
+build holds port 47821, so the dev app can't start while it runs).
+
+- Then phases 3–8 per docs/PLAN-V2.md section 10 (detailed design notes for each are in the
+  conversation summary).
 
 - PLAN-V2 = review, direction (companion assistant, value before customization), MVP pillars
   in order (Reminders, Notes, AI sessions, Quick actions), brainstorm, keep/rework/park,

@@ -1,6 +1,7 @@
 // Prevents an extra console window on Windows release builds.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod app_menu;
 mod bus;
 mod claude_setup;
 mod codex;
@@ -258,21 +259,27 @@ fn main() {
                 hosts: Default::default(),
             });
             app.manage(shared.clone());
-            // A desktop pet lives in the menu bar, not the Dock or app switcher.
-            #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            app_menu::apply_dock(app.handle());
+            app.set_menu(app_menu::build(app.handle())?)?;
+            app.on_menu_event(|app, event| app_menu::handle(app, event.id().as_ref()));
 
             overlay::setup(app.handle())?;
             tray::setup(app.handle())?;
             hooks::spawn(app.handle().clone(), shared.clone());
-            // First launch: open the Sidefolk window so a new user sees where everything is.
-            // (The setup guide comes in phase 2 of docs/PLAN-V2.md.)
+            // First launch: the setup guide (it sets `onboarded` when finished).
             if !shared.settings.lock().unwrap().value.onboarded {
-                shared.settings.lock().unwrap().update(|s| s.onboarded = true)?;
-                prefs::open_at(app.handle(), "home")?;
+                prefs::open_at(app.handle(), "setup")?;
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("Sidefolk failed to start");
+        .build(tauri::generate_context!())
+        .expect("Sidefolk failed to start")
+        .run(|app, event| {
+            // Clicking the Dock icon with no window open brings the Sidefolk window back.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { has_visible_windows: false, .. } = event {
+                let _ = prefs::open(app);
+            }
+            let _ = (app, event);
+        });
 }

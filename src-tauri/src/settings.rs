@@ -35,6 +35,8 @@ pub struct Settings {
     pub speak: bool,
     /// A `say` voice name; empty for the system voice.
     pub voice: String,
+    /// A menu-bar-only app (no Dock icon, not in ⌘Tab).
+    pub hide_from_dock: bool,
     /// Where "Open session" continues a session: auto | terminal | iterm | ghostty.
     pub terminal: String,
 }
@@ -57,6 +59,7 @@ impl Default for Settings {
             speak: false,
             voice: String::new(),
             terminal: "auto".into(),
+            hide_from_dock: false,
         }
     }
 }

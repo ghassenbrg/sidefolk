@@ -1,3 +1,5 @@
+import { describeDue, parseReminder } from "./when";
+
 // What the companion understands, all locally: no model call and no tokens. Anything else gets
 // a short answer saying what it can do; it is never sent to an AI tool behind your back
 // (docs/PLAN-V2.md: plain rules first, AI only when you ask for it).
@@ -34,3 +36,38 @@ export const HELP = [
   "open session · open api session",
   "open Sidefolk · hide · rename to Pip",
 ];
+
+/** What `explain` needs to know about the companion's sessions. */
+export type ExplainContext = {
+  name: string;
+  /** The session "open session" would open (in a project folder, if named). */
+  sessionFor(project: string | null): { agent: string; live: boolean } | null;
+};
+
+/** What Enter would do with this text; shown under every field that talks to the companion. */
+export function explain(text: string, ctx: ExplainContext): string {
+  const command = parse(text);
+  switch (command.kind) {
+    case "help":
+      return "Show what I understand";
+    case "remind": {
+      const parsed = parseReminder(command.text);
+      return parsed ? `Remind you ${describeDue(parsed.due)}: ${parsed.what}` : "Set a reminder (then pick when)";
+    }
+    case "reminders":
+      return "Show your reminders";
+    case "open": {
+      const session = ctx.sessionFor(command.project);
+      if (!session) return command.project ? `No work session in ${command.project} yet` : "No work session to open yet";
+      return session.live ? `Bring ${session.agent}'s session forward` : `Continue ${session.agent}'s last session in a terminal`;
+    }
+    case "sidefolk":
+      return "Open the Sidefolk window";
+    case "rename":
+      return `Rename ${ctx.name} to ${command.name}`;
+    case "hide":
+      return `Hide ${ctx.name} until you press the shortcut`;
+    case "unknown":
+      return "I don't know that one yet. Try “remind me…” or “help”";
+  }
+}

@@ -19,6 +19,8 @@ const views = [
   ["review", "/settings.html?tab=review:codex-1"],
   ["reminders", "/settings.html?tab=reminders"],
   ["settings", "/settings.html?tab=settings"],
+  ["setup", "/settings.html?tab=setup:start"],
+  ["new-reminder", "/settings.html?tab=reminders:new"],
 ];
 
 const browser = await webkit.launch();

@@ -5,10 +5,12 @@ import { renderHome } from "./home";
 import { renderReminders } from "./reminders";
 import { renderRequests, renderReview } from "./requests";
 import { renderSettings } from "./settings";
+import { renderSetup } from "./setup";
+import { tellBar } from "./tell";
 
-// The Sidefolk window: Home, Requests, Reminders and Settings, and a request's review. Changes
-// go through the app's commands; agent configs change only through its confirming installers.
-// It becomes the full app (sidebar, menus, setup guide) in phase 2 of docs/PLAN-V2.md.
+// The Sidefolk app window: a sidebar of sections, a "Tell Pip…" bar that runs the companion's
+// commands, and the first-launch setup guide. Changes go through the app's commands; agent
+// configs change only through its confirming installers.
 
 export type Answer = "sent" | "failed" | "gone";
 
@@ -32,6 +34,8 @@ export type App = {
   petAction(action: Record<string, unknown>, done?: string): Promise<boolean>;
   /** Answers a request on the pet; resolves when the pet confirms (or not). */
   answer(id: string, value: string): Promise<Answer>;
+  /** Runs a command through the companion (as if typed to it); resolves to its reply. */
+  tell(text: string): Promise<string>;
   openSession(ref: { source: string; session: string; cwd: string }, resume?: boolean): Promise<void>;
   /** Runs when the current view is left (timers stop). */
   onLeave(cleanup: () => void): void;
@@ -42,21 +46,21 @@ export type App = {
 };
 
 const NAV: [string, string, IconName][] = [
-  ["home", "Home", "home"],
-  ["requests", "Requests", "requests"],
+  ["today", "Today", "home"],
   ["reminders", "Reminders", "reminders"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "requests" };
+const PARENT: Record<string, string> = { review: "today", requests: "today", home: "today" };
 
 const main = document.querySelector<HTMLElement>("main")!;
+const topbar = document.querySelector<HTMLElement>("#topbar")!;
 const nav = document.querySelector<HTMLElement>("nav")!;
 const toastBox = document.querySelector<HTMLElement>("#toast")!;
 
 let current = { view: "home", arg: "" };
 let cleanups: (() => void)[] = [];
-const waiters = new Map<string, (ok: boolean) => void>();
+const waiters = new Map<string, (ok: boolean, text?: string) => void>();
 
 const app: App = {
   state: {
@@ -145,6 +149,25 @@ const app: App = {
       });
     });
   },
+  tell(text) {
+    const id = `run-${Date.now()}`;
+    return new Promise<string>((resolve) => {
+      const timer = setTimeout(() => {
+        waiters.delete(id);
+        resolve("The companion didn't answer. Is it running? (menu bar → Show companion)");
+      }, 4000);
+      waiters.set(id, (_ok, reply) => {
+        clearTimeout(timer);
+        waiters.delete(id);
+        resolve(reply ?? "");
+      });
+      invoke("pet_action", { action: { action: "run", id, text } }).catch((error) => {
+        clearTimeout(timer);
+        waiters.delete(id);
+        resolve(String(error));
+      });
+    });
+  },
   async openSession(ref, resume = false) {
     try {
       const opened = await invoke<{ message: string }>("open_session", { ...ref, resume });
@@ -177,13 +200,16 @@ function editing() {
 
 function draw(focus: boolean) {
   const { view, arg } = current;
+  document.body.classList.toggle("setup-mode", view === "setup");
   const render =
     {
+      today: renderHome,
       home: renderHome,
       requests: renderRequests,
       review: renderReview,
       reminders: renderReminders,
       settings: renderSettings,
+      setup: renderSetup,
     }[view] ?? renderHome;
   const scroll = main.scrollTop;
   main.replaceChildren(render(app, arg));
@@ -203,6 +229,7 @@ function updateNav() {
   }
   const count = app.state.status.waiting.length;
   const badge = nav.querySelector<HTMLElement>(".count")!;
+  if (!topbar.firstChild && current.view !== "setup") topbar.append(tellBar(app));
   badge.hidden = count === 0;
   badge.textContent = String(count);
   badge.setAttribute("aria-label", `${count} waiting`);
@@ -213,16 +240,16 @@ function buildNav() {
   const list = h("div", { class: "nav-list" });
   for (const [view, label, glyph] of NAV) {
     const b = button([icon(glyph), h("span", { text: label })], () => app.go(view), "", { "data-view": view });
-    if (view === "requests") b.append(h("span", { class: "count", hidden: true }));
+    if (view === "today") b.append(h("span", { class: "count", hidden: true }));
     list.append(b);
   }
-  nav.replaceChildren(brand, list);
+  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list);
 }
 
 /** "review:<id>", "requests", … from the companion, the tray or the URL. */
 function route(target: string) {
   const [view, ...rest] = target.split(":");
-  app.go(view || "home", rest.join(":"));
+  app.go(view || "today", rest.join(":"));
 }
 
 // Kept in <data dir>/logs/page.log with the overlay's, so a bug report can include them.
@@ -239,7 +266,7 @@ void invoke<{ version: string; data_dir: string }>("app_info").then((info) => {
   app.state.dataDir = info.data_dir;
 });
 const params = new URLSearchParams(location.search);
-route(params.get("tab") ?? "home");
+route(params.get("tab") ?? "today");
 
 listen<string>("navigate", route);
 listen<Status>("status", (status) => {
@@ -247,7 +274,7 @@ listen<Status>("status", (status) => {
   app.redraw();
   updateNav();
 });
-listen<{ id: string; ok: boolean }>("answered", ({ id, ok }) => waiters.get(id)?.(ok));
+listen<{ id: string; ok: boolean; text?: string }>("answered", ({ id, ok, text }) => waiters.get(id)?.(ok, text));
 listen("reminders-changed", () => void app.refresh());
 listen<Settings>("settings-changed", (settings) => {
   app.state.settings = settings;
