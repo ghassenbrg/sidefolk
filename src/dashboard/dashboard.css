@@ -777,3 +777,9 @@ button.keys.recording {
     gap: var(--space-2);
   }
 }
+
+/* A session's permission mode: "Asks first" (default) or "Full access", marked so it's noticed. */
+button.access.on {
+  border: 2px solid var(--terracotta);
+  font-weight: 650;
+}

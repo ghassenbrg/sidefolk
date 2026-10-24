@@ -78,6 +78,7 @@ const host: Host = {
     openSession: async (ref) => (await invoke<{ message: string }>("open_session", { ...ref })).message,
     resolveFolder: (folder) => invoke("resolve_folder", { folder }),
     runCommand: (command, cwd) => invoke<string>("run_command", { command, cwd }),
+    syncFullAccess: (keys) => void invoke("sync_full_access", { keys }).catch(() => {}),
   }),
   // Browser preview: the confirmation card can be looked at; nothing runs.
   ...(!inTauri && {
@@ -149,9 +150,9 @@ if (inTauri) {
   });
   // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
   // "Sent" only once the companion really passed the answer on.
-  type Action = { action: string; text?: string; id?: string; name?: string };
+  type Action = { action: string; text?: string; id?: string; name?: string; source?: string; session?: string; on?: boolean };
   void listen<Action>("pet-action", (e) => {
-    const { action, text, id, name } = e.payload;
+    const { action, text, id, name, source, session, on } = e.payload;
     const reply = (line?: string | void) => line && pet.bubble.say(line, 6);
     // From the window's "Tell Pip…" bar: the same commands, and the reply goes back to it.
     if (action === "run" && text)
@@ -161,6 +162,7 @@ if (inTauri) {
       });
     if (action === "rename" && name) void companion.rename(name).then(reply);
     if (action === "open-session") void companion.openSession();
+    if (action === "full-access" && source && session) companion.setFullAccess(source, session, !!on);
     if (action === "new-reminder") void reminders.command("", "new-reminder");
     if (action === "answer" && id && text) void invoke("answered", { id, ok: companion.answer(id, text) });
   });

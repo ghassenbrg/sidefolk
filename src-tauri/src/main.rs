@@ -215,6 +215,7 @@ fn main() {
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
             actions::path_commands,
+            hooks::sync_full_access,
             actions::resolve_folder,
             actions::run_command,
             resolve_permission,
@@ -255,6 +256,7 @@ fn main() {
             let store = settings::Store::load(settings::data_dir(app.handle())?)?;
             prefs::log_panics(&store.dir);
             let shared = Arc::new(Shared {
+                full_access: Default::default(),
                 crew: std::sync::Mutex::new(crew::load(&store.dir)),
                 status: Default::default(),
                 journal: journal::Journal::open(&store.dir),

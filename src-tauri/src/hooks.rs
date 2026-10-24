@@ -237,7 +237,18 @@ fn defer_to_app(bundle: &str) -> bool {
         .contains(&bundle)
 }
 
-async fn should_hold(app: &AppHandle, shared: &Shared) -> bool {
+/// The overlay's list of sessions with full access (src/access.ts), replaced whole on each change.
+#[tauri::command]
+pub fn sync_full_access(shared: tauri::State<'_, std::sync::Arc<Shared>>, keys: Vec<String>) {
+    *shared.full_access.lock().unwrap() = keys.into_iter().take(50).collect();
+}
+
+async fn should_hold(app: &AppHandle, shared: &Shared, session: &str) -> bool {
+    // Full access was the user's explicit choice for this session: the companion answers (and
+    // still asks for risky commands), wherever the user is looking.
+    if shared.full_access.lock().unwrap().contains(&format!("claude:{session}")) {
+        return true;
+    }
     if !shared
         .settings
         .lock()
@@ -266,7 +277,7 @@ async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): Connect
         Err(response) => return response,
     };
     shared.hosts.locate_claude(&app, &text(&hook, "session_id"), peer.port());
-    if !should_hold(&app, &shared).await {
+    if !should_hold(&app, &shared, &text(&hook, "session_id")).await {
         if cfg!(debug_assertions) {
             eprintln!("sidefolk: Claude permission deferred to agent UI");
         }

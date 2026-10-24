@@ -1,3 +1,4 @@
+import { FullAccess, sessionKey, stillAsk } from "./access";
 import { AGENT_NAMES, VERB, folder, sessionLabel, type AgentEvent } from "./agents";
 import type { Card, Choice, Fact } from "./bubble";
 import { explain, HELP, parse } from "./commands";
@@ -39,6 +40,8 @@ export type Host = {
   resolveFolder?(folder: string | null): Promise<{ path: string; label: string }>;
   /** Runs a confirmed command in the user's terminal. Resolves to what happened. */
   runCommand?(command: string, cwd: string): Promise<string>;
+  /** Tells the app which sessions have full access, so their requests always come here. */
+  syncFullAccess?(keys: string[]): void;
 };
 
 const ACTION: Record<string, [string, string]> = {
@@ -63,6 +66,7 @@ export class Companion {
     readonly pet: Familiar,
     private readonly host: Host,
   ) {
+    host.syncFullAccess?.(this.access.list());
     pet.bubble.onTyping = (typing) => {
       host.typing(typing);
       this.pose();
@@ -98,15 +102,31 @@ export class Companion {
     this.pet.agents.handle(event);
   }
 
+  /** Sessions the user gave full access ("do it and come back when you're done"). */
+  readonly access = new FullAccess();
+
   handleAsk(ask: Ask) {
-    this.request(this.askCard(ask));
+    const key = sessionKey(ask.source, ask.session);
+    const why = stillAsk(ask.kind, ask.detail);
+    if (this.access.has(key) && !why) {
+      this.host.resolvePermission(ask.id, "allow");
+      this.pet.bubble.say(`Allowed (full access): ${ask.detail.length > 60 ? `${ask.detail.slice(0, 57)}…` : ask.detail}`, 3);
+      return;
+    }
+    this.request(this.askCard(ask, this.access.has(key) ? why : null));
+  }
+
+  setFullAccess(source: string, session: string, on: boolean) {
+    this.access.set(sessionKey(source, session), on);
+    this.host.syncFullAccess?.(this.access.list());
+    this.pet.bubble.say(on ? `Full access on for this ${AGENT_NAMES[source as keyof typeof AGENT_NAMES] ?? "work"} session. Risky commands still ask.` : "Full access off. I'll ask again.", 4);
   }
 
   /**
    * A permission card: companion · project, tool · work session, the plain question, the exact
    * action and explicit choices, none preselected.
    */
-  private askCard(ask: Ask): Card {
+  private askCard(ask: Ask, why: string | null = null): Card {
     const agent = AGENT_NAMES[ask.source];
     const project = folder(ask.project || ask.cwd);
     const [action, label] = ACTION[ask.kind] ?? ACTION.tool;
@@ -114,6 +134,7 @@ export class Companion {
     const choices: Choice[] = [
       { label: "Decline", value: "deny" },
       { label: "Allow once", value: "allow", primary: true },
+      ...(why ? [] : [{ label: "Allow everything from this session", value: "always", quiet: true }]),
       ...(ask.canDefer ? [{ label: `Answer in ${agent}'s window`, value: "defer", quiet: true }] : []),
     ];
     return {
@@ -123,7 +144,7 @@ export class Companion {
       title: ask.title,
       lines: [`${agent} is asking to ${action} in ${project}.`],
       facts,
-      note: "Review it before allowing.",
+      note: why ?? "Review it before allowing.",
       choices,
       urgent: true,
       meta: {
@@ -139,6 +160,10 @@ export class Companion {
         canDefer: String(ask.canDefer),
       },
       onChoose: (value) => {
+        if (value === "always") {
+          this.setFullAccess(ask.source, ask.session, true);
+          value = "allow";
+        }
         this.host.resolvePermission(ask.id, value);
         // Answering in the agent's own window: take the user there.
         if (value === "defer") void this.openSession({ source: ask.source, session: ask.session, cwd: ask.cwd });
@@ -319,7 +344,7 @@ export class Companion {
           project: null,
           out: true,
           clip: pet.view.clip,
-          sessions: pet.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at })),
+          sessions: pet.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at, fullAccess: this.access.has(sessionKey(s.source, s.id)) })),
           outcomes: [...pet.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
         },
       ],

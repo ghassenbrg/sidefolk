@@ -50,6 +50,13 @@ for (const scheme of ["light", "dark"]) {
   await page.waitForTimeout(1200);
   const result = (await page.locator(".result").textContent()) ?? "";
   if (!result.includes("Sent to Codex")) failures.push(`${scheme} answer: "${result.trim()}"`);
+  // Full access is off by default, shown on each session, and switches both ways.
+  await page.goto(base + "/settings.html");
+  const toggle = page.getByRole("button", { name: "Asks first" }).first();
+  await toggle.click();
+  await page.getByRole("button", { name: "Full access" }).first().waitFor();
+  await page.getByRole("button", { name: "Full access" }).first().click();
+  await page.getByRole("button", { name: "Asks first" }).nth(1).waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
@@ -99,6 +106,11 @@ const card = (await overlay.locator(".bubble.urgent").first().innerText().catch(
 for (const part of ["Work session", "Run a command?", "Command", "Folder", "Decline", "Allow once"])
   if (!card.includes(part)) failures.push(`overlay permission card is missing "${part}"`);
 await overlay.screenshot({ path: join(out, "overlay.png") });
+// "Allow everything from this session" turns on full access; a risky command still asks.
+await overlay.getByRole("button", { name: "Allow everything from this session" }).click();
+await overlay.waitForTimeout(600);
+await overlay.keyboard.press("5");
+await overlay.getByText("Full access is on, but this one is hard to undo", { exact: false }).waitFor();
 // Browser key r creates a real in-memory reminder; Undo must remove it from the list.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);

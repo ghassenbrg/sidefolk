@@ -29,7 +29,7 @@ export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex
 export type CrewFile = { main: { name: string } };
 
 /** Mirrors `status()` in src/companion.ts. */
-export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number };
+export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number; fullAccess?: boolean };
 export type Outcome = { kind: "done" | "failed"; source: string; project: string; detail: string; at: number; session?: string; cwd?: string };
 export type PetStatus = {
   id: string;
@@ -193,6 +193,10 @@ function preview(): typeof tauriInvoke {
         if (a.action.action === "answer") {
           state.status.waiting = state.status.waiting.filter((w) => w.id !== a.action.id);
           setTimeout(() => emit("answered", { id: a.action.id, ok: true }), 400);
+        }
+        if (a.action.action === "full-access") {
+          for (const s of state.status.pets[0].sessions) if (s.id === a.action.session) s.fullAccess = !!a.action.on;
+          setTimeout(() => emit("status", state.status), 100);
         }
         return null;
       case "app_info":
