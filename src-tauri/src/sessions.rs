@@ -143,7 +143,7 @@ fn apple(text: &str) -> String {
     format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
-fn osascript(script: &str) -> bool {
+pub(crate) fn osascript(script: &str) -> bool {
     Command::new("/usr/bin/osascript").args(["-e", script]).output().is_ok_and(|o| o.status.success())
 }
 

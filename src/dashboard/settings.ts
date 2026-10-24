@@ -4,6 +4,7 @@ import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
 import type { App } from "./app";
 import { button, h } from "./dom";
+import { terminalControl } from "./setup";
 import { header } from "./ui";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
@@ -153,7 +154,8 @@ export function renderSettings(app: App, arg: string) {
       toolRow(app, "claude_tools", "tools-claude", "Companion tools for Claude Code", "Claude Code can send you a note, ask a question, set a reminder or check if you're around.", "Runs `claude mcp add` to register Sidefolk's tools for your user and keeps a backup of Claude's config.", "Claude Code can no longer reach you through a companion. Notes, questions and reminders from it stop."),
       toolRow(app, "codex_tools", "tools-codex", "Companion tools for Codex", "The same tools for Codex sessions.", "Runs `codex mcp add` to register Sidefolk's tools and keeps a backup of Codex's config.", "Codex can no longer reach you through a companion."),
       integrations.claude_hooks ? toggle(app, "pet_answers_permissions", "Answer requests on the companion", "When no terminal or editor is in front, the companion asks for up to 60 seconds. Otherwise the tool asks in its own window as usual.") : null,
-      select(app, "terminal", "Open sessions in", "Where “Continue” opens an ended work session. A running session always comes forward where it is.", terminalOptions),
+      select(app, "terminal", "Open sessions in", "Where “Continue” opens an ended work session and where commands run. A running session always comes forward where it is.", terminalOptions),
+      terminalControl(),
     ),
   );
 

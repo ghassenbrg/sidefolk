@@ -177,6 +177,8 @@ function preview(): typeof tauriInvoke {
         const folder = (args as { folder?: string | null }).folder;
         return { path: "/Users/you", label: folder ? `~/git/${folder.split("/").pop()}` : "~" };
       }
+      case "allow_terminal_control":
+        return "Sidefolk can open sessions and commands in Terminal. (Preview)";
       case "run_command":
         return "Running in Terminal. (Preview: nothing ran.)";
       case "remove_reminder": {

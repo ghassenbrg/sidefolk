@@ -214,6 +214,7 @@ fn main() {
         .manage(claude_setup::SetupState::default())
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
+            actions::allow_terminal_control,
             actions::path_commands,
             hooks::sync_full_access,
             actions::resolve_folder,

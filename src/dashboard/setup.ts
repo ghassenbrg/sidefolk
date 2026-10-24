@@ -103,6 +103,7 @@ export function renderSetup(app: App, arg: string) {
         connect(integrations.claude_hooks, "claude", "Claude Code", "See its sessions and answer its requests. Each change is explained first and a backup is kept."),
         connect(integrations.claude_tools, "tools-claude", "Companion tools for Claude Code", "Lets Claude Code send you a note, ask a question or set a reminder."),
         connect(integrations.codex_tools, "tools-codex", "Companion tools for Codex", "The same for Codex."),
+        terminalControl(),
       );
       actions.append(next("Skip or continue"));
       break;
@@ -133,3 +134,20 @@ export function renderSetup(app: App, arg: string) {
   );
 }
 
+/** macOS asks once before Sidefolk may control a terminal; better here, with the reason, than at
+ * the first "Open session". */
+export function terminalControl() {
+  const result = h("p", { class: "muted", "aria-live": "polite", text: "Opening a session or a command in Terminal or iTerm needs your OK once. macOS asks when you press Allow." });
+  return h(
+    "div",
+    { class: "setting tool" },
+    h("div", { class: "setting-text" }, h("strong", { text: "Open sessions in your terminal" }), result),
+    button("Allow…", async () => {
+      try {
+        result.textContent = await invoke<string>("allow_terminal_control");
+      } catch (error) {
+        result.textContent = String(error);
+      }
+    }),
+  );
+}

@@ -120,6 +120,25 @@ pub async fn run_command(shared: State<'_, std::sync::Arc<Shared>>, command: Str
     Ok(format!("Running in {name}."))
 }
 
+/// Asks macOS, while the user is reading why (setup, Settings), to let Sidefolk control their
+/// terminal: needed to open a command or session in Terminal or iTerm and to pick a session's tab.
+/// macOS shows its own prompt the first time; later calls just report the answer.
+#[tauri::command]
+pub async fn allow_terminal_control(shared: State<'_, std::sync::Arc<Shared>>) -> Result<String, String> {
+    let (name, app) = match crate::sessions::chosen_terminal(&shared) {
+        "ghostty" => return Ok("Ghostty opens sessions without extra permission.".into()),
+        "iterm" => ("iTerm", "iTerm2"),
+        _ => ("Terminal", "Terminal"),
+    };
+    let script = format!("tell application \"{app}\" to count windows");
+    let ok = tauri::async_runtime::spawn_blocking(move || crate::sessions::osascript(&script)).await.map_err(|e| e.to_string())?;
+    if ok {
+        Ok(format!("Sidefolk can open sessions and commands in {name}."))
+    } else {
+        Err(format!("Not allowed yet. Turn on Sidefolk → {name} in System Settings → Privacy & Security → Automation."))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
