@@ -86,8 +86,11 @@ export function renderReminders(app: App, arg = "") {
     const value = add.read();
     if (!value) return;
     try {
-      await invoke("add_reminder", { text: value.text, due: value.due.getTime(), project: null, repeat: value.repeat ?? null });
-      app.toast(`Reminder set for ${longDate(value.due)}${value.repeat ? `, then ${describeRepeat(value.repeat, value.due)}` : ""}.`);
+      const added = await invoke<Reminder>("add_reminder", { text: value.text, due: value.due.getTime(), project: null, repeat: value.repeat ?? null });
+      app.toast(`Reminder set for ${longDate(value.due)}${value.repeat ? `, then ${describeRepeat(value.repeat, value.due)}` : ""}.`, {
+        label: "Undo",
+        run: () => void invoke("remove_reminder", { id: added.id }).then(() => app.refresh()),
+      });
       (document.activeElement as HTMLElement | null)?.blur();
       await app.refresh();
       app.redraw(true);
