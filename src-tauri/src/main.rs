@@ -190,6 +190,11 @@ async fn ui_log(app: AppHandle, line: String, focus: Option<bool>) {
 }
 
 fn main() {
+    // `sidefolk here` / `sidefolk home` in a terminal (installed from Settings).
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if matches!(args.first().map(String::as_str), Some("here" | "home" | "help" | "--help")) {
+        std::process::exit(mcp::run_cli(&args));
+    }
     // `sidefolk --mcp` is the stdio MCP server agents start; it only talks to the running app.
     if std::env::args().any(|arg| arg == "--mcp") {
         return mcp::run_shim();
@@ -216,6 +221,7 @@ fn main() {
         .manage(mcp_setup::McpSetupState::default())
         .invoke_handler(tauri::generate_handler![
             actions::allow_terminal_control,
+            actions::install_cli,
             notes::list_notebooks,
             notes::read_notebook,
             notes::create_notebook,

@@ -134,12 +134,12 @@ fn alive(pid: u32) -> bool {
 }
 
 /// Shell single quotes.
-fn quote(text: &str) -> String {
+pub(crate) fn quote(text: &str) -> String {
     format!("'{}'", text.replace('\'', "'\\''"))
 }
 
 /// AppleScript double-quoted string.
-fn apple(text: &str) -> String {
+pub(crate) fn apple(text: &str) -> String {
     format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
 }
 

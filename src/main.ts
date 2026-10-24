@@ -231,7 +231,7 @@ if (inTauri) {
   });
   void listen("reminders-changed", () => void reminders.reload());
   // An agent called one of the companion's tools (MCP); Rust waits for the answer.
-  void listen<ToolCall>("mcp", (e) => handleToolCall(e.payload, companion, reminders, (result) => void invoke("mcp_reply", { id: e.payload.id, result })));
+  void listen<ToolCall>("mcp", (e) => handleToolCall(e.payload, companion, reminders, (result) => void invoke("mcp_reply", { id: e.payload.id, result }), sparks));
   void listen<string>("mcp-closed", (e) => companion.closeRequest(e.payload));
   if (settings!.pet_x !== null) pet.mind.x = settings!.pet_x;
   pet.mind.fitBounds();

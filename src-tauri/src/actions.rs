@@ -143,6 +143,28 @@ pub async fn start_session(shared: State<'_, std::sync::Arc<Shared>>, agent: Str
     Ok(format!("Started {agent} in {name}{}.", if full_access { " with full access" } else { "" }))
 }
 
+/// Puts `sidefolk` on the PATH (/usr/local/bin, like VS Code's `code`), on the user's click; macOS
+/// asks for an administrator password in its own dialog.
+#[tauri::command]
+pub async fn install_cli() -> Result<String, String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let exe = exe.to_string_lossy().to_string();
+    if !exe.contains(".app/Contents/MacOS/") {
+        return Err("Install the command from the Sidefolk app in Applications.".into());
+    }
+    let shell = format!("mkdir -p /usr/local/bin && ln -sf {} /usr/local/bin/sidefolk", crate::sessions::quote(&exe));
+    let script = format!(
+        "do shell script {} with prompt \"Sidefolk wants to add the sidefolk command to your terminal.\" with administrator privileges",
+        crate::sessions::apple(&shell)
+    );
+    let ok = tauri::async_runtime::spawn_blocking(move || crate::sessions::osascript(&script)).await.map_err(|e| e.to_string())?;
+    if ok {
+        Ok("Installed. In a terminal, try: sidefolk here --name Backend".into())
+    } else {
+        Err("Not installed (cancelled or not allowed).".into())
+    }
+}
+
 /// Asks macOS, while the user is reading why (setup, Settings), to let Sidefolk control their
 /// terminal: needed to open a command or session in Terminal or iTerm and to pick a session's tab.
 /// macOS shows its own prompt the first time; later calls just report the answer.

@@ -6,8 +6,8 @@ import { describeDue, parseWhen } from "./when";
 /** Mirrors the `mcp` event in src-tauri/src/mcp.rs: an agent called one of the pet's tools. */
 export type ToolCall = {
   id: string;
-  tool: "notify" | "ask" | "remind";
-  args: { text?: string; question?: string; choices?: string[]; when?: string };
+  tool: "notify" | "ask" | "remind" | "spark";
+  args: { text?: string; question?: string; choices?: string[]; when?: string; name?: string; remove?: boolean };
   project: string;
   cwd: string;
   source: "claude" | "codex" | "agent";
@@ -20,8 +20,9 @@ const agentName = (source: ToolCall["source"]) => (source === "agent" ? "An AI t
  * Shows an agent's tool call on the companion and answers it.
  * Agent text is untrusted: it only ever lands in bubbles as text.
  */
-export function handleToolCall(call: ToolCall, companion: Companion, reminders: Reminders, reply: (result: ToolResult) => void) {
-  const pet = companion.pet;
+export function handleToolCall(call: ToolCall, companion: Companion, reminders: Reminders, reply: (result: ToolResult) => void, spark?: (project: string, change: { name?: string; remove?: boolean }) => Promise<string>) {
+  // The project's Spark speaks for it when it has one.
+  const pet = companion.familiarFor(call.project);
   const agent = agentName(call.source);
   const who = `${pet.name} · ${folder(call.project || call.cwd)}`;
   switch (call.tool) {
@@ -62,6 +63,14 @@ export function handleToolCall(call: ToolCall, companion: Companion, reminders: 
           });
         },
       });
+    }
+    case "spark": {
+      if (!spark || !call.project) return reply({ text: "Sparks need the Sidefolk desktop app and a project folder.", isError: true });
+      void spark(call.project, { name: call.args.name || undefined, remove: !!call.args.remove }).then(
+        (text) => reply({ text, isError: false }),
+        (error) => reply({ text: String(error), isError: true }),
+      );
+      return;
     }
     case "remind": {
       const due = parseWhen(call.args.when ?? "");

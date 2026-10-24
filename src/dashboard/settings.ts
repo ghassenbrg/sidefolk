@@ -156,6 +156,7 @@ export function renderSettings(app: App, arg: string) {
       integrations.claude_hooks ? toggle(app, "pet_answers_permissions", "Answer requests on the companion", "When no terminal or editor is in front, the companion asks for up to 60 seconds. Otherwise the tool asks in its own window as usual.") : null,
       select(app, "terminal", "Open sessions in", "Where “Continue” opens an ended work session and where commands run. A running session always comes forward where it is.", terminalOptions),
       terminalControl(),
+      row("Command line tool", "In a project folder, “sidefolk here --name Backend” gives it a Spark; “sidefolk home” sends it home. Asks for your password once to install.", button("Install…", () => void invoke<string>("install_cli").then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)))),
     ),
   );
 
