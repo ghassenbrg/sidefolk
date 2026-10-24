@@ -42,6 +42,8 @@ export type Host = {
   runCommand?(command: string, cwd: string): Promise<string>;
   /** Starts a new agent session in a folder, in the user's terminal. Resolves to what happened. */
   startSession?(agent: "claude" | "codex", cwd: string, fullAccess: boolean): Promise<string>;
+  /** Gives a project its Spark worker, renames or recolors it, or sends it home (workers.ts). */
+  spark?(project: string, change: { name?: string; hue?: number; remove?: boolean }): Promise<string>;
   /** Note commands, handled by notes.ts. */
   note?(command: { kind: "note"; notebook: string | null; text: string } | { kind: "notebook"; name: string }): Promise<string | void>;
   /** Tells the app which sessions have full access, so their requests always come here. */
@@ -65,6 +67,10 @@ export class Companion {
   private readonly requests = new Map<string, Card>();
   /** Due reminders whose card is on screen: Pip holds the note while any is. */
   private readonly notes = new Set<string>();
+  /** Spark workers by project folder; a project without one is Pip's. */
+  readonly workers = new Map<string, Familiar>();
+  /** Which companion shows each open request. */
+  private readonly shownBy = new Map<string, Familiar>();
 
   private constructor(
     readonly pet: Familiar,
@@ -90,6 +96,49 @@ export class Companion {
     return this.pet.name;
   }
 
+  /** Every companion on the desktop, Pip first. */
+  get familiars(): Familiar[] {
+    return [this.pet, ...this.workers.values()];
+  }
+
+  /** The worker for a project (by folder path or name), else Pip. */
+  familiarFor(project: string | null | undefined): Familiar {
+    if (!project) return this.pet;
+    const exact = this.workers.get(project);
+    if (exact) return exact;
+    const name = folder(project).toLowerCase();
+    for (const [path, worker] of this.workers) if (folder(path).toLowerCase() === name || project.startsWith(`${path}/`)) return worker;
+    return this.pet;
+  }
+
+  addWorker(project: string, worker: Familiar) {
+    this.workers.get(project)?.remove();
+    this.workers.set(project, worker);
+    // It takes over its project's sessions from Pip, so the right companion acts them out.
+    worker.agents.adopt(this.pet.agents.extract((s) => this.familiarFor(s.project) === worker));
+    for (const [key, o] of this.pet.agents.outcomes) if (this.familiarFor(o.project) === worker) worker.agents.outcomes.set(key, o);
+  }
+
+  removeWorker(project: string) {
+    const worker = this.workers.get(project);
+    if (!worker) return;
+    this.workers.delete(project);
+    this.pet.agents.adopt(worker.agents.extract(() => true));
+    for (const [key, o] of worker.agents.outcomes) this.pet.agents.outcomes.set(key, o);
+    for (const [id, f] of this.shownBy) if (f === worker) this.reshow(id);
+    worker.remove();
+  }
+
+  /** A request whose companion left: Pip shows it instead. */
+  private reshow(id: string) {
+    const card = this.requests.get(id);
+    if (!card) return;
+    this.shownBy.set(id, this.pet);
+    this.pet.asks.add(id);
+    this.pet.bubble.show(card);
+    this.pet.agents.asking(this.pet.asks.size);
+  }
+
   get typing() {
     return this.pet.bubble.typing;
   }
@@ -98,12 +147,12 @@ export class Companion {
   seedOutcomes(entries: { at: number; source: string; session?: string; project: string; kind: string; detail: string }[]) {
     for (const e of entries) {
       if ((e.kind !== "done" && e.kind !== "failed") || (e.source !== "claude" && e.source !== "codex")) continue;
-      this.pet.agents.outcomes.set(e.project, { kind: e.kind, source: e.source, project: e.project, detail: e.detail, at: e.at, session: e.session, cwd: e.project });
+      this.familiarFor(e.project).agents.outcomes.set(e.project, { kind: e.kind, source: e.source, project: e.project, detail: e.detail, at: e.at, session: e.session, cwd: e.project });
     }
   }
 
   handleEvent(event: AgentEvent) {
-    this.pet.agents.handle(event);
+    this.familiarFor(event.project || event.cwd).agents.handle(event);
   }
 
   /** Sessions the user gave full access ("do it and come back when you're done"). */
@@ -114,7 +163,7 @@ export class Companion {
     const why = stillAsk(ask.kind, ask.detail);
     if (this.access.has(key) && !why) {
       this.host.resolvePermission(ask.id, "allow");
-      this.pet.bubble.say(`Allowed (full access): ${ask.detail.length > 60 ? `${ask.detail.slice(0, 57)}…` : ask.detail}`, 3);
+      this.familiarFor(ask.project).bubble.say(`Allowed (full access): ${ask.detail.length > 60 ? `${ask.detail.slice(0, 57)}…` : ask.detail}`, 3);
       return;
     }
     this.request(this.askCard(ask, this.access.has(key) ? why : null));
@@ -180,20 +229,23 @@ export class Companion {
    * the request stays here (and in the window) until it's answered or expires.
    */
   request(card: Card) {
+    const by = this.familiarFor(card.meta?.project);
+    this.shownBy.set(card.id, by);
     const tracked: Card = {
       ...card,
       onChoose: (value) => {
         if (card.meta?.kind === "reminder" && value === "open") {
-          this.pet.bubble.close(card.id);
+          this.shownBy.get(card.id)?.bubble.close(card.id);
           tracked.onClose?.();
         } else this.closeRequest(card.id);
         card.onChoose(value);
       },
       // Closed with ×: the request still waits (window, menu bar), but Pip stops insisting.
       onClose: () => {
+        const f = this.shownBy.get(card.id) ?? this.pet;
         this.notes.delete(card.id);
-        this.pet.asks.delete(card.id);
-        this.pet.agents.asking(this.pet.asks.size);
+        f.asks.delete(card.id);
+        f.agents.asking(f.asks.size);
         this.pose();
         card.onClose?.();
       },
@@ -201,9 +253,9 @@ export class Companion {
     if (card.meta?.kind === "reminder") this.notes.add(card.id);
     this.pose();
     this.requests.set(card.id, tracked);
-    this.pet.asks.add(card.id);
-    this.pet.bubble.show(tracked);
-    this.pet.agents.asking(this.pet.asks.size);
+    by.asks.add(card.id);
+    by.bubble.show(tracked);
+    by.agents.asking(by.asks.size);
   }
 
   /** The request ended elsewhere (answered in the terminal, expired, the agent went away). */
@@ -211,18 +263,20 @@ export class Companion {
     if (!this.requests.delete(id)) return;
     this.notes.delete(id);
     this.pose();
-    this.pet.asks.delete(id);
-    this.pet.bubble.close(id);
-    this.pet.agents.asking(this.pet.asks.size);
+    const f = this.shownBy.get(id) ?? this.pet;
+    this.shownBy.delete(id);
+    f.asks.delete(id);
+    f.bubble.close(id);
+    f.agents.asking(f.asks.size);
   }
 
   /** The session "open session" goes to: the most urgent live one (in a project, if named), else the last that ended. */
   sessionOf(project: string | null = null): (SessionRef & { live: boolean }) | null {
     const want = project?.toLowerCase();
     const matches = (p: string) => !want || folder(p).toLowerCase() === want;
-    const live = this.pet.agents.list.find((s) => s.id && matches(s.project));
+    const live = this.familiars.flatMap((f) => f.agents.list).find((s) => s.id && matches(s.project));
     if (live) return { source: live.source, session: live.id, cwd: live.cwd || live.project, live: true };
-    const last = [...this.pet.agents.outcomes.values()].filter((o) => o.session && matches(o.project)).sort((a, b) => b.at - a.at)[0];
+    const last = this.familiars.flatMap((f) => [...f.agents.outcomes.values()]).filter((o) => o.session && matches(o.project)).sort((a, b) => b.at - a.at)[0];
     return last ? { source: last.source, session: last.session!, cwd: last.cwd || last.project, live: false } : null;
   }
 
@@ -289,6 +343,8 @@ export class Companion {
         return this.host.openTab?.("notes");
       case "run":
         return this.confirmRun(command.command, command.folder);
+      case "spark":
+        return this.host.spark ? this.host.spark(command.project, { name: command.name ?? undefined, remove: command.remove }).catch((e) => String(e)) : "Sparks need the desktop app.";
       case "start":
         return this.confirmStart(command.agent, command.folder, command.full);
       case "unknown":
@@ -379,33 +435,36 @@ export class Companion {
     return `I'm ${name} now.`;
   }
 
-  /** What the Sidefolk window shows: the companion, its sessions, and what waits on you. */
+  /** What the Sidefolk window shows: the companions, their sessions, and what waits on you. */
   status() {
-    const pet = this.pet;
+    const describe = (f: Familiar, id: string, project: string | null) => ({
+      id,
+      name: f.name,
+      label: f.name,
+      main: f === this.pet,
+      project,
+      hue: f.look.hue ?? 0,
+      out: true,
+      clip: f.view.clip,
+      sessions: f.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at, fullAccess: this.access.has(sessionKey(s.source, s.id)) })),
+      outcomes: [...f.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
+    });
+    const idOf = (f: Familiar) => (f === this.pet ? "main" : `worker:${[...this.workers].find(([, w]) => w === f)?.[0]}`);
     return {
-      pets: [
-        {
-          id: "main",
-          name: pet.name,
-          label: pet.name,
-          main: true,
-          project: null,
-          out: true,
-          clip: pet.view.clip,
-          sessions: pet.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at, fullAccess: this.access.has(sessionKey(s.source, s.id)) })),
-          outcomes: [...pet.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
-        },
-      ],
-      waiting: [...this.requests.values()].map((c) => ({
-        id: c.id,
-        pet: "main",
-        petName: pet.name,
-        who: c.who,
-        title: c.title,
-        lines: c.lines ?? [],
-        meta: c.meta ?? {},
-        choices: c.choices.map(({ label, value, primary, quiet }) => ({ label, value, primary: !!primary, quiet: !!quiet })),
-      })),
+      pets: [describe(this.pet, "main", null), ...[...this.workers].map(([project, w]) => describe(w, `worker:${project}`, project))],
+      waiting: [...this.requests.values()].map((c) => {
+        const f = this.shownBy.get(c.id) ?? this.pet;
+        return {
+          id: c.id,
+          pet: idOf(f),
+          petName: f.name,
+          who: c.who,
+          title: c.title,
+          lines: c.lines ?? [],
+          meta: c.meta ?? {},
+          choices: c.choices.map(({ label, value, primary, quiet }) => ({ label, value, primary: !!primary, quiet: !!quiet })),
+        };
+      }),
     };
   }
 

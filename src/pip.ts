@@ -105,17 +105,23 @@ export class PipView {
   /** Reduce motion: no breathing, swaying, hops or pulses. */
   still = false;
 
-  constructor() {
+  /**
+   * `character` is the frame folder in public/ ("pip", "spark"); `hue` turns its colored parts
+   * (Pip's scarf, Spark's eyes and antenna) to a worker's color and leaves ivory and charcoal be.
+   */
+  constructor(character = "pip", hue = 0) {
     this.el = document.createElement("div");
     this.el.className = "pip";
     this.el.setAttribute("role", "img");
-    this.el.setAttribute("aria-label", "Pip");
+    this.el.setAttribute("aria-label", character === "pip" ? "Pip" : "Spark");
     this.body = document.createElement("div");
     this.body.className = "pip-body";
     for (const name of FRAMES) {
       const img = new Image();
-      img.src = `pip/${name}.png`;
+      img.src = `${character}/${name}.png`;
       img.alt = "";
+      // Only the drawing takes the worker's color; the status light keeps its exact color.
+      if (hue) img.style.filter = `hue-rotate(${hue}deg)`;
       img.draggable = false;
       img.hidden = name !== "idle";
       img.addEventListener("load", () => this.masks.set(name, mask(img)), { once: true });

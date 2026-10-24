@@ -12,6 +12,8 @@ export type Command =
   | { kind: "rename"; name: string }
   | { kind: "hide" }
   | { kind: "help" }
+  /** A Spark worker for a project (folder name or path), or sending it home. */
+  | { kind: "spark"; project: string; name: string | null; remove: boolean }
   /** A new Claude Code or Codex session in a folder, in the user's terminal. */
   | { kind: "start"; agent: "claude" | "codex"; folder: string | null; full: boolean }
   /** A dated note; `notebook` as typed ("evaluation"), or null to pick one. */
@@ -62,6 +64,13 @@ export function parse(input: string): Command {
   if ((m = kept.match(/^(?:note|jot|log|add)\s+(?:it\s+)?(?:for|to|in|into)\s+(?:my\s+|the\s+)?([^:]{1,60}?)\s*(?:notebook\s*)?:\s*(.+)$/is))) return { kind: "note", notebook: m[1], text: m[2].trim() };
   if ((m = kept.match(/^(?:note|jot down|write down)\s*(?::|that\s)\s*(.+)$/is))) return { kind: "note", notebook: null, text: m[1].trim() };
   if (/^(?:open|show)\s+(?:the\s+)?(?:sidefolk|dashboard|app|window)$/.test(lower)) return { kind: "sidefolk" };
+  // "give api a spark", "add a spark for ~/git/api called Backend", "send the api spark home".
+  if ((m = text.match(/^(?:give|get)\s+(?:the\s+)?(~?[\w./-]+?)(?:\s+project)?\s+an?\s+(?:spark|worker)(?:\s+(?:called|named)\s+(.+))?$/i)))
+    return { kind: "spark", project: m[1], name: m[2]?.trim() ?? null, remove: false };
+  if ((m = text.match(/^(?:add|new|create)\s+an?\s+(?:spark|worker)\s+(?:for|in)\s+(~?[\w./-]+)(?:\s+(?:called|named)\s+(.+))?$/i)))
+    return { kind: "spark", project: m[1], name: m[2]?.trim() ?? null, remove: false };
+  if ((m = text.match(/^(?:remove|send|dismiss)\s+(?:the\s+)?(~?[\w./-]+?)(?:'s)?\s+(?:spark|worker)(?:\s+home)?$/i)))
+    return { kind: "spark", project: m[1], name: null, remove: true };
   // "start a claude session in sidefolk", "new codex session in api with full access", "open a claude session".
   if ((m = text.match(/^(?:(?:start|new|launch|begin)\s+(?:an?\s+)?(?:new\s+)?|open\s+an?\s+(?:new\s+)?)(claude(?:\s+code)?|codex)(?:\s+session)?(?:\s+(?:in|for)\s+(~?[\w./-]+))?(\s+with\s+full\s+access)?$/i)))
     return { kind: "start", agent: m[1].toLowerCase().startsWith("codex") ? "codex" : "claude", folder: m[2] ?? null, full: !!m[3] };
@@ -84,6 +93,7 @@ export const HELP = [
   "open session · open api session · start a claude session in api",
   "open Sidefolk · hide · rename to Pip",
   "note for evaluation: shipped the login migration · notes",
+  "give api a spark · send the api spark home",
   "ls -la · run npm test in api (you confirm first)",
 ];
 
@@ -118,6 +128,8 @@ export function explain(text: string, ctx: ExplainContext): string {
       return `Rename ${ctx.name} to ${command.name}`;
     case "hide":
       return `Hide ${ctx.name} until you press the shortcut`;
+    case "spark":
+      return command.remove ? `Send the ${command.project} Spark home` : `Give ${command.project} its own Spark${command.name ? ` called ${command.name}` : ""}`;
     case "start":
       return `Start ${command.agent === "codex" ? "Codex" : "Claude Code"} in ${command.folder ?? "your home folder"}${command.full ? " with full access" : ""} (you confirm first)`;
     case "note":

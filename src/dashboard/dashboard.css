@@ -839,3 +839,8 @@ button.access.on {
 .sessions form.card {
   margin-top: var(--space-6);
 }
+.spark-form {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}

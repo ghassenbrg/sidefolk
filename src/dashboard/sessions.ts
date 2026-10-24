@@ -2,6 +2,7 @@ import { icon } from "../icons";
 import { badge } from "../states";
 import { invoke } from "./api";
 import type { App } from "./app";
+import { COLORS, colorName } from "../worker-colors";
 import { agentShort, ago, button, folder, h } from "./dom";
 import { empty, header, sessionRow } from "./ui";
 
@@ -14,10 +15,10 @@ export function renderSessions(app: App) {
   const running = h("section", { class: "card list", "aria-label": "Running sessions" });
   const finished = h("section", { class: "card list", "aria-label": "Recently finished" });
   const fill = () => {
-    const pet = app.state.status.pets[0];
-    const live = pet?.sessions.filter((s) => s.id) ?? [];
+    const pets = app.state.status.pets;
+    const live = pets.flatMap((p) => p.sessions).filter((s) => s.id);
     running.replaceChildren(...(live.length ? live.map((s) => sessionRow(app, s)) : [h("p", { class: "muted", text: "Nothing running. Sessions appear here as soon as Claude Code or Codex starts working." })]));
-    const ended = (pet?.outcomes ?? []).filter((o) => o.session).slice(0, 8);
+    const ended = pets.flatMap((p) => p.outcomes).filter((o) => o.session).sort((a, b) => b.at - a.at).slice(0, 8);
     finished.replaceChildren(
       ...(ended.length
         ? ended.map((o) =>
@@ -32,18 +33,67 @@ export function renderSessions(app: App) {
     );
   };
   fill();
-  app.live(() => {
-    if (!view.contains(document.activeElement) || document.activeElement === document.body) fill();
-  });
 
-  view.append(h("h2", { class: "section-title", text: "Running" }), running, h("h2", { class: "section-title", text: "Recently finished" }), finished, newSession(app));
+  const workers = h("section", { "aria-label": "Sparks" });
+  const fillWorkers = () => workers.replaceChildren(sparks(app));
+  fillWorkers();
+  app.live(() => {
+    if (!view.contains(document.activeElement) || document.activeElement === document.body) {
+      fill();
+      fillWorkers();
+    }
+  });
+  view.append(h("h2", { class: "section-title", text: "Running" }), running, h("h2", { class: "section-title", text: "Recently finished" }), finished, newSession(app), workers);
   if (!app.state.integrations.claude_hooks) view.append(empty("Claude Code isn't connected", "Connect it in Settings to see its sessions here and answer its requests.", button("Open Settings", () => app.go("settings", "tools"))));
   return view;
 }
 
+/** Folders the companions have seen sessions in, most useful first. */
+function knownFolders(app: App) {
+  const pets = app.state.status.pets;
+  return [...new Set([...pets.flatMap((p) => p.sessions.map((s) => s.cwd || s.project)), ...pets.flatMap((p) => p.outcomes.map((o) => o.cwd || o.project))].filter(Boolean))];
+}
+
+/** Spark workers: one per project you choose, in its own color, with the project under its feet. */
+function sparks(app: App) {
+  const pets = app.state.status.pets.filter((p) => !p.main && p.project);
+  const send = (change: Record<string, unknown>, done: string) => void app.petAction({ action: "spark", ...change }, done);
+  const list = h("div", { class: "card list" });
+  for (const p of pets) {
+    const color = h("select", { "aria-label": `Color of ${p.name}` }, ...COLORS.map(([name, hue]) => h("option", { value: String(hue), text: name })));
+    color.value = String(p.hue ?? 0);
+    color.addEventListener("change", () => send({ project: p.project, hue: Number(color.value) }, `${p.name} is ${colorName(Number(color.value)).toLowerCase()} now.`));
+    list.append(
+      h(
+        "div",
+        { class: "row line" },
+        h("div", { class: "identity-text" }, h("strong", { text: `${p.name} · ${folder(p.project!)}` }), h("span", { class: "meta", text: `${p.sessions.length ? `${p.sessions.length} running` : "Waiting for work"} · ${colorName(p.hue ?? 0)}` })),
+        h("div", { class: "inline" }, color, button("Remove", () => send({ project: p.project, remove: true }, `${p.name} went home.`), "small")),
+      ),
+    );
+  }
+  if (!pets.length) list.append(h("p", { class: "muted", text: "A Spark looks after one project: it acts out that project's sessions and brings their requests, in its own color. Pip keeps everything else." }));
+  const where = h("input", { type: "text", id: "spark-folder", list: "known-folders", autocomplete: "off", placeholder: "api or ~/git/api" });
+  const name = h("input", { type: "text", id: "spark-name", maxlength: 24, autocomplete: "off", placeholder: "Spark" });
+  const form = h(
+    "form",
+    { class: "form-grid spark-form", "aria-label": "Give a project a Spark" },
+    h("div", { class: "field wide" }, h("label", { for: where.id, text: "Project folder" }), where),
+    h("div", { class: "field" }, h("label", { for: name.id, text: "Name (optional)" }), name),
+    h("div", { class: "actions" }, h("button", { type: "submit", class: "primary", text: "Add Spark" })),
+  );
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!where.value.trim()) return where.focus();
+    send({ project: where.value.trim(), name: name.value.trim() || undefined }, "Your Spark is on its way to the desktop.");
+    where.value = name.value = "";
+  });
+  list.append(form);
+  return h("div", {}, h("h2", { class: "section-title", text: "Sparks" }), list);
+}
+
 function newSession(app: App) {
-  const pet = app.state.status.pets[0];
-  const known = [...new Set([...(pet?.sessions ?? []).map((s) => s.cwd || s.project), ...(pet?.outcomes ?? []).map((o) => o.cwd || o.project)].filter(Boolean))];
+  const known = knownFolders(app);
   const tool = h("select", { id: "new-session-tool" }, h("option", { value: "claude", text: "Claude Code" }), h("option", { value: "codex", text: "Codex" }));
   const where = h("input", { type: "text", id: "new-session-folder", list: "known-folders", autocomplete: "off", placeholder: "~/git/api or api", value: known[0] ?? "" });
   const folders = h("datalist", { id: "known-folders" }, ...known.map((path) => h("option", { value: path })));

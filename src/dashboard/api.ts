@@ -34,6 +34,8 @@ export type SessionInfo = { source: string; id: string; cwd: string; state: stri
 export type Outcome = { kind: "done" | "failed"; source: string; project: string; detail: string; at: number; session?: string; cwd?: string };
 export type PetStatus = {
   id: string;
+  /** A Spark worker's color (hue turn from mint); 0 for Pip. */
+  hue?: number;
   name: string;
   label: string;
   main: boolean;
@@ -252,6 +254,18 @@ function preview(): typeof tauriInvoke {
         if (a.action.action === "answer") {
           state.status.waiting = state.status.waiting.filter((w) => w.id !== a.action.id);
           setTimeout(() => emit("answered", { id: a.action.id, ok: true }), 400);
+        }
+        if (a.action.action === "spark") {
+          const pets = state.status.pets;
+          const project = a.action.project.startsWith("/") ? a.action.project : `/Users/you/git/${a.action.project}`;
+          const at = pets.findIndex((p) => p.project === project);
+          if (a.action.remove) pets.splice(at, 1);
+          else if (at >= 0) Object.assign(pets[at], { name: a.action.name ?? pets[at].name, hue: a.action.hue ?? pets[at].hue });
+          else pets.push({ id: `worker:${project}`, name: a.action.name ?? "Spark", label: "Spark", main: false, project, hue: 42, out: true, clip: "idle", sessions: [], outcomes: [] });
+          setTimeout(() => {
+            emit("status", state.status);
+            emit("answered", { id: a.action.id, ok: true, text: a.action.remove ? "Spark went home." : "Spark is on it." });
+          }, 100);
         }
         if (a.action.action === "full-access") {
           for (const s of state.status.pets[0].sessions) if (s.id === a.action.session) s.fullAccess = !!a.action.on;

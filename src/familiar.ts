@@ -17,13 +17,18 @@ export class Bounds {
   }
 }
 
+/** How a companion looks: Pip, or a Spark worker with its color and project badge. */
+export type Look = { character?: string; hue?: number; badge?: string };
+
 /**
- * The companion on the desktop: Pip's drawing, its mind, card and status badge, and the agent
+ * A companion on the desktop: its drawing, its mind, card and status badge, and the agent
  * sessions it speaks for. It stays where you put it.
  */
 export class Familiar {
   readonly bounds = new Bounds();
-  readonly view = new PipView();
+  readonly view: PipView;
+  /** A worker's project name under its feet; null for Pip. */
+  private readonly badge: HTMLElement | null = null;
   readonly mind: Mind;
   readonly bubble: Bubble;
   readonly hud: HTMLElement;
@@ -36,7 +41,9 @@ export class Familiar {
   private constructor(
     public name: string,
     zoom = 1,
+    readonly look: Look = {},
   ) {
+    this.view = new PipView(look.character, look.hue);
     this.unit = (HEIGHT * zoom) / DRAWN;
     this.view.el.style.width = `${VIEW_W * this.unit}px`;
     this.view.el.style.height = `${VIEW_H * this.unit}px`;
@@ -45,6 +52,13 @@ export class Familiar {
     this.hud.className = "hud";
     this.hud.hidden = true;
     document.body.append(this.view.el, this.hud, this.bubble.root);
+    if (look.badge) {
+      this.badge = document.createElement("div");
+      this.badge.className = "worker-badge";
+      this.badge.textContent = look.badge;
+      if (look.hue) this.badge.style.setProperty("--hue", `${look.hue}deg`);
+      document.body.append(this.badge);
+    }
     this.mind = new Mind(this.view, this.bounds);
     this.agents = new Agents(this.mind, this.bubble, this.hud);
     this.bubble.onShow = (text, urgent) => {
@@ -57,8 +71,8 @@ export class Familiar {
     };
   }
 
-  static async create(name: string, zoom = 1): Promise<Familiar> {
-    const f = new Familiar(name, zoom);
+  static async create(name: string, zoom = 1, look: Look = {}): Promise<Familiar> {
+    const f = new Familiar(name, zoom, look);
     await f.view.ready();
     return f;
   }
@@ -86,6 +100,8 @@ export class Familiar {
     const left = mind.x - (VIEW_W * this.unit) / 2;
     const top = this.bounds.height - mind.y - FEET * this.unit;
     view.el.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+    // Over the feet, like a name tag, so it stays on screen when the worker stands on the edge.
+    if (this.badge) this.badge.style.transform = `translate(${Math.round(mind.x - this.badge.offsetWidth / 2)}px, ${Math.round(this.bounds.height - mind.y - this.badge.offsetHeight - 2)}px)`;
     this.bubble.tick(now);
     const headTop = mind.y + this.height;
     const hudOffset = this.hud.hidden ? 0 : 30;
@@ -109,5 +125,13 @@ export class Familiar {
   resize() {
     this.bounds.resize();
     this.mind.fitBounds();
+  }
+
+  /** A worker leaving the desktop. */
+  remove() {
+    this.view.el.remove();
+    this.hud.remove();
+    this.bubble.root.remove();
+    this.badge?.remove();
   }
 }

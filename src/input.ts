@@ -10,7 +10,7 @@ const MAX_THROW = 2600;
  * (its frame's opaque pixels) or over its card.
  */
 export function wireInput(o: {
-  familiar: Familiar;
+  familiars: () => Familiar[];
   setInteractive: (on: boolean) => void;
   /** A click, left or right: the one place to talk to the companion. It never answers anything. */
   onClick: () => void;
@@ -21,10 +21,10 @@ export function wireInput(o: {
   let samples: Sample[] = [];
 
   const overPet = (f: Familiar, x: number, y: number) => f.contains(x, y);
-  const petAt = (x: number, y: number) => (overPet(o.familiar, x, y) ? o.familiar : undefined);
+  const petAt = (x: number, y: number) => o.familiars().find((f) => overPet(f, x, y));
 
   const refresh = (x: number, y: number) => {
-    const want = dragging || !!pressed || o.familiar.bubble.contains(x, y) || !!petAt(x, y);
+    const want = dragging || !!pressed || o.familiars().some((f) => f.bubble.contains(x, y)) || !!petAt(x, y);
     if (want === interactive) return;
     interactive = want;
     o.setInteractive(want);

@@ -57,4 +57,11 @@ describe("parse", () => {
     expect(parse("open a Claude Code session")).toEqual({ kind: "start", agent: "claude", folder: null, full: false });
     expect(parse("open the api session")).toEqual({ kind: "open", project: "api" });
   });
+
+  it("adds and removes Spark workers by project", () => {
+    expect(parse("give api a spark")).toEqual({ kind: "spark", project: "api", name: null, remove: false });
+    expect(parse("add a spark for ~/git/web called Frontend")).toEqual({ kind: "spark", project: "~/git/web", name: "Frontend", remove: false });
+    expect(parse("send the api spark home")).toEqual({ kind: "spark", project: "api", name: null, remove: true });
+    expect(parse("give me a minute").kind).toBe("unknown");
+  });
 });

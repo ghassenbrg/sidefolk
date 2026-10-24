@@ -77,8 +77,9 @@ export function renderHome(app: App) {
   if (pet) {
     view.append(h("h2", { class: "section-title", text: "Work sessions" }));
     const list = h("section", { class: "card list" });
-    for (const s of pet.sessions) list.append(sessionRow(app, s));
-    if (!pet.sessions.length) list.append(h("p", { class: "muted", text: petLine(pet) }));
+    const sessions = status.pets.flatMap((p) => p.sessions);
+    for (const s of sessions) list.append(sessionRow(app, s));
+    if (!sessions.length) list.append(h("p", { class: "muted", text: petLine(pet) }));
     view.append(list);
   }
 

@@ -73,6 +73,11 @@ for (const scheme of ["light", "dark"]) {
   await page.getByText("and nothing else", { exact: false }).waitFor();
   await page.getByRole("button", { name: "Draft with Claude Code" }).click();
   await page.getByRole("heading", { name: "Draft by Claude Code" }).waitFor();
+  // A Spark added in the window shows up in the Sparks list with its color.
+  await page.goto(base + "/settings.html?tab=sessions");
+  await page.locator("#spark-folder").fill("web");
+  await page.getByRole("button", { name: "Add Spark" }).click();
+  await page.getByText("Spark · web", { exact: true }).waitFor();
   // The Tell bar confirms a plain command itself and never hands it to an AI tool.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
@@ -160,6 +165,16 @@ await overlay.waitForTimeout(800);
 await overlay.screenshot({ path: join(out, "overlay-run.png") });
 await run.getByRole("button", { name: "Run in terminal" }).click();
 await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
+// "give api a spark" puts a second companion on the desktop with the project under its feet.
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("give api a spark");
+await overlay.locator(".bubble input").press("Enter");
+await overlay.locator(".worker-badge", { hasText: "api" }).waitFor();
+if ((await overlay.locator(".pip").count()) !== 2) failures.push("overlay: a Spark didn't join Pip");
+await overlay.waitForTimeout(600);
+await overlay.screenshot({ path: join(out, "overlay-spark.png") });
 // Starting a session shows the folder and the permission mode before anything starts.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);

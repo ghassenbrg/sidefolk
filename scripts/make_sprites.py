@@ -1,9 +1,9 @@
-"""Cuts Pip's generated sprite sheets into transparent frames for the app.
+"""Cuts a character's generated sprite sheets into transparent frames for the app.
 
-    python3 scripts/make_sprites.py
+    python3 scripts/make_sprites.py [pip|spark]
 
-art/pip/sheet-a.png and sheet-b.png are 4×2 grids generated with Codex image generation (the
-briefs are in art/pip/README.md) on a pure chroma-green background. Each figure is found from
+art/<name>/sheet-a.png and sheet-b.png are 4×2 grids generated with Codex image generation (the
+briefs are in art/<name>/README.md) on a pure chroma-green background. Each figure is found from
 the empty columns and rows between them (a pose may spill past its grid cell), the green is
 keyed out and its fringe removed, and every frame is placed on the same canvas with the feet on
 one baseline and the body centered, so swapping frames never makes Pip jump.
@@ -11,15 +11,18 @@ one baseline and the body centered, so swapping frames never makes Pip jump.
 A thin ivory outline goes around every figure, like a sticker, so the charcoal Pip stays
 readable on dark wallpapers too.
 
-Output: public/pip/<pose>.png (2× the on-screen size of the "medium" companion).
+Output: public/<name>/<pose>.png (2× the on-screen size of the "medium" companion).
 """
 
 import os
+import sys
 
 from PIL import Image, ImageChops, ImageFilter
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-OUT = os.path.join(ROOT, "public", "pip")
+# Which character: `npm run sprites` builds Pip, `npm run sprites -- spark` builds Spark.
+NAME = sys.argv[1] if len(sys.argv) > 1 else "pip"
+OUT = os.path.join(ROOT, "public", NAME)
 
 SHEETS = {
     "sheet-a.png": ["idle", "blink", "listen", "think", "work1", "work2", "alert", "sad"],
@@ -104,7 +107,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     scale = None
     for sheet, names in SHEETS.items():
-        rgb = Image.open(os.path.join(ROOT, "art", "pip", sheet)).convert("RGB")
+        rgb = Image.open(os.path.join(ROOT, "art", NAME, sheet)).convert("RGB")
         alpha = alpha_of(rgb)
         rgb = despill(rgb, alpha)
         boxes = figures(alpha)

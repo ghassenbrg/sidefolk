@@ -11,6 +11,7 @@ import { wireInput } from "./input";
 import { sound } from "./sound";
 import { memoryNotes, Notes, type NoteStore } from "./notes";
 import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
+import { Workers, type WorkerSpec } from "./workers";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 document.body.classList.toggle("web", !inTauri);
@@ -59,12 +60,22 @@ const webName = {
   },
 };
 
-/** crew.json keeps the companion's name (v0.1 also kept a crew there; that part is ignored). */
-type Stored = { main?: { name?: string } } | null;
-const storedName = inTauri ? (await invoke<Stored>("get_crew"))?.main?.name : webName.load();
+/** crew.json keeps the companion's name and its Spark workers (v0.1's other keys are dropped). */
+type Stored = { main?: { name?: string }; workers?: unknown } | null;
+const stored = inTauri ? await invoke<Stored>("get_crew") : null;
+const storedName = inTauri ? stored?.main?.name : webName.load();
+const crew: { main: { name: string }; workers: WorkerSpec[] } = {
+  main: { name: storedName?.trim() || "Pip" },
+  workers: Array.isArray(stored?.workers) ? stored.workers.filter((w): w is WorkerSpec => typeof w?.project === "string" && typeof w?.name === "string" && typeof w?.hue === "number") : [],
+};
+const saveCrew = () => (inTauri ? invoke("save_crew", { crew }) : Promise.resolve());
 
 const host: Host = {
-  saveName: async (name) => (inTauri ? invoke("save_crew", { crew: { main: { name } } }) : webName.save(name)),
+  saveName: async (name) => {
+    crew.main.name = name;
+    if (inTauri) await saveCrew();
+    else webName.save(name);
+  },
   resolvePermission: (id, decision) => {
     if (inTauri) void invoke("resolve_permission", { id, decision });
   },
@@ -73,6 +84,7 @@ const host: Host = {
     if (inTauri) void invoke("overlay_typing", { typing });
   },
   command: (text, kind) => reminders.command(text, kind),
+  spark: (project, change) => sparks(project, change),
   note: (command) => (command.kind === "note" ? notes.take(command.text, command.notebook) : notes.create(command.name)),
   ...(inTauri && {
     hide: () => void invoke("tray_action", { action: "toggle" }),
@@ -132,6 +144,30 @@ const noteStore: NoteStore = inTauri
   : memoryNotes();
 const notes = new Notes(companion, noteStore);
 reminders.writeNote = (text) => void notes.capture(text);
+
+// Spark's own frames once they're in public/spark; until then a worker is a recolored Pip.
+const character = await new Promise<string>((resolve) => {
+  const probe = new Image();
+  probe.onload = () => resolve("spark");
+  probe.onerror = () => resolve("pip");
+  probe.src = "spark/idle.png";
+});
+const workers = new Workers(companion, zoom, character, (specs) => {
+  crew.workers = specs;
+  return saveCrew();
+});
+await workers.load(crew.workers);
+/** "give api a spark", the window's Sparks list: a folder name or path becomes the project's root. */
+async function sparks(project: string, change: { name?: string; hue?: number; remove?: boolean }): Promise<string> {
+  if (change.remove) return workers.remove(project);
+  let path = project;
+  if (!project.startsWith("/")) {
+    const session = companion.sessionOf(project);
+    if (session) path = session.cwd;
+    else if (inTauri) path = (await invoke<{ path: string }>("resolve_folder", { folder: project })).path;
+  }
+  return workers.add(path, change.name, change.hue);
+}
 if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();
@@ -139,7 +175,7 @@ await reminders.start();
 const overlay = inTauri ? getCurrentWindow() : null;
 // One way to talk to it: a click (left or right) opens the field.
 const input = wireInput({
-  familiar: pet,
+  familiars: () => companion.familiars,
   setInteractive: (on) => void overlay?.setIgnoreCursorEvents(!on),
   onClick: () => companion.openPrompt(),
 });
@@ -164,9 +200,9 @@ if (inTauri) {
   });
   // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
   // "Sent" only once the companion really passed the answer on.
-  type Action = { action: string; text?: string; id?: string; name?: string; source?: string; session?: string; on?: boolean };
+  type Action = { action: string; text?: string; id?: string; name?: string; source?: string; session?: string; on?: boolean; project?: string; hue?: number; remove?: boolean };
   void listen<Action>("pet-action", (e) => {
-    const { action, text, id, name, source, session, on } = e.payload;
+    const { action, text, id, name, source, session, on, project, hue, remove } = e.payload;
     const reply = (line?: string | void) => line && pet.bubble.say(line, 6);
     // From the window's "Tell Pip…" bar: the same commands, and the reply goes back to it.
     if (action === "run" && text)
@@ -177,6 +213,11 @@ if (inTauri) {
     if (action === "rename" && name) void companion.rename(name).then(reply);
     if (action === "open-session") void companion.openSession();
     if (action === "full-access" && source && session) companion.setFullAccess(source, session, !!on);
+    if (action === "spark" && project)
+      void sparks(project, { name, hue, remove }).then(
+        (line) => id && void invoke("answered", { id, ok: true, text: line }),
+        (error) => id && void invoke("answered", { id, ok: false, text: String(error) }),
+      );
     if (action === "new-reminder") void reminders.command("", "new-reminder");
     if (action === "answer" && id && text) void invoke("answered", { id, ok: companion.answer(id, text) });
   });
@@ -205,7 +246,7 @@ if (inTauri) {
   }, 5_000);
   void listen<[number, number]>("cursor", (e) => onCursor(e.payload[0], e.payload[1]));
   void listen<{ x: number }>("summon", (e) => {
-    pet.resize();
+    for (const f of companion.familiars) f.resize();
     pet.mind.summon(e.payload.x);
     void invoke("save_pet", { x: pet.mind.x }).catch(console.error);
     void invoke("ui_log", { line: `summon x=${pet.mind.x.toFixed(0)}`, focus: true });
@@ -213,7 +254,7 @@ if (inTauri) {
   void listen<AgentEvent>("agent", (e) => companion.handleEvent(e.payload));
   void listen<Ask>("permission", (e) => companion.handleAsk(e.payload));
   void listen<string>("permission-closed", (e) => companion.closeRequest(e.payload));
-  void listen("overlay-resized", () => pet.resize());
+  void listen("overlay-resized", () => companion.familiars.forEach((f) => f.resize()));
   // The Sidefolk window's live view: sent when something changed, checked once a second.
   let published = "";
   setInterval(() => {
@@ -244,13 +285,14 @@ async function briefing(since: number) {
 // The companion renders only as often as its state needs. Between slow frames the page sleeps
 // instead of waking for every display refresh; rAF still stops by itself when hidden.
 function loop() {
-  pet.frame(performance.now());
-  const wait = pet.due(performance.now());
+  const now = performance.now();
+  for (const f of companion.familiars) f.frame(now);
+  const wait = Math.min(...companion.familiars.map((f) => f.due(performance.now())));
   if (wait > 40) setTimeout(() => (document.hidden ? requestAnimationFrame(loop) : loop()), wait);
   else requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-setInterval(() => pet.agents.tick(), 30_000);
+setInterval(() => companion.familiars.forEach((f) => f.agents.tick()), 30_000);
 
 if (import.meta.env.DEV) {
   Object.assign(window, { sidefolk: { companion } });
