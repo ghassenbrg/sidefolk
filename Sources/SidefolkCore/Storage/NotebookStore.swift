@@ -60,6 +60,13 @@ public struct NotebookStore: Sendable {
         return (created, true)
     }
 
+    /// Creates a collection with exactly this name (no fuzzy matching).
+    public func createCollection(name: String, kind: NotebookCollection.Kind, now: Date = Date()) async throws -> NotebookCollection {
+        let created = NotebookCollection(name: name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60), kind: kind, now: now)
+        try await db.writer.write { db in try created.insert(db) }
+        return created
+    }
+
     public func rename(collectionId: String, to name: String, now: Date = Date()) async throws {
         try await db.writer.write { db in
             guard var c = try NotebookCollection.fetchOne(db, key: collectionId) else { return }

@@ -265,9 +265,7 @@ final class NotebookModel {
 
     // MARK: Collections
 
-    /// Creates a collection with exactly this name. `NotebookStore.collection(named:)` also matches
-    /// prefixes ("Design" finds "Design system"), so it is created under a name nothing can match
-    /// and then renamed.
+    /// Creates a collection with exactly this name (refusing duplicates, case-insensitively).
     @discardableResult
     func createCollection(named name: String, kind: NotebookCollection.Kind) async -> Result<NotebookCollection, UserFacingError> {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -276,10 +274,8 @@ final class NotebookModel {
         if existing.contains(where: { $0.name.lowercased() == clean.lowercased() }) {
             return .failure(UserFacingError("There's already a collection called “\(clean)”.", recovery: "Pick another name."))
         }
-        let placeholder = String(repeating: "\u{2063}", count: 24)
         do {
-            let (created, _) = try await store.collection(named: placeholder, kind: kind)
-            try await store.rename(collectionId: created.id, to: clean)
+            let created = try await store.createCollection(name: clean, kind: kind)
             runtime.events.changed(.notebook)
             await reloadCollections()
             return .success(collection(id: created.id) ?? created)
