@@ -63,7 +63,7 @@ public actor AttentionCenter {
         guard env != before else { return }
         let returned = before.away && !env.away
         let calmer = (before.quiet && !env.quiet) || (before.fullscreen && !env.fullscreen)
-        if returned || calmer { reconsiderHeld(summarise: returned) }
+        if returned || calmer { Task { await reconsiderHeld(summarise: returned) } }
     }
 
     /// Posts and presents (or holds) an item; returns it.
@@ -73,7 +73,7 @@ public actor AttentionCenter {
                                  body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
                                  refId: request.refId, now: clock.now)
         try? await store.save(item)
-        consider(item)
+        await consider(item)
         return item
     }
 
@@ -112,7 +112,7 @@ public actor AttentionCenter {
         return handlers[item.source] ?? handlers[String(item.source.split(separator: ":").first ?? "")]
     }
 
-    private func consider(_ item: AttentionItem) {
+    private func consider(_ item: AttentionItem) async {
         let now = clock.now
         if let s = signals?() {
             env.lastKeyAt = now.addingTimeInterval(-s.secondsSinceKey)
@@ -123,7 +123,7 @@ public actor AttentionCenter {
         switch decision {
         case .present(let presentation):
             held[item.id] = nil
-            present(item, presentation)
+            await present(item, presentation)
         case .hold(let until):
             held[item.id] = item
             timers[item.id]?.cancel()
@@ -135,23 +135,22 @@ public actor AttentionCenter {
                     await self?.retry(id: id)
                 }
             }
-            Task { await publishBacklog() }
+            await publishBacklog()
         }
     }
 
-    private func retry(id: String) {
+    private func retry(id: String) async {
         timers[id] = nil
         guard let item = held[id] else { return }
-        consider(item)
+        await consider(item)
     }
 
-    private func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+    private func present(_ item: AttentionItem, _ presentation: AttentionPresentation) async {
         var shown = item
         shown.state = .shown
         shown.shownAt = clock.now
-        let store = self.store
         let saved = shown
-        Task { try? await store.save(saved) }
+        try? await store.save(saved)
         if case .attention = presentation { recent.append((item.source, clock.now)) }
         if case .system = presentation { recent.append((item.source, clock.now)) }
         recent = recent.filter { clock.now.timeIntervalSince($0.at) < AttentionPolicy.perSourceWindow }
@@ -166,7 +165,7 @@ public actor AttentionCenter {
                 await self?.renudge(id: id)
             }
         }
-        Task { await publishBacklog() }
+        await publishBacklog()
     }
 
     private func renudge(id: String) async {
@@ -174,7 +173,7 @@ public actor AttentionCenter {
         guard var item = try? await store.item(id: id), item.state == .shown, !item.renudged else { return }
         item.renudged = true
         try? await store.save(item)
-        consider(item)
+        await consider(item)
     }
 
     private func expire(id: String) async {
@@ -193,7 +192,7 @@ public actor AttentionCenter {
         events.publish(.attention(.withdraw(id: id)))
     }
 
-    private func reconsiderHeld(summarise: Bool) {
+    private func reconsiderHeld(summarise: Bool) async {
         let items = held.values.sorted { $0.createdAt < $1.createdAt }
         guard !items.isEmpty else { return }
         if summarise, items.count > 1 {
@@ -204,12 +203,11 @@ public actor AttentionCenter {
                                         title: "While you were away: \(items.count) things",
                                         body: titles + (items.count > 4 ? "\n…" : ""),
                                         actions: [AttentionAction(id: "open", title: "Show", isPrimary: true)], now: clock.now)
-            let store = self.store
-            Task { try? await store.save(summary) }
-            present(summary, .attention(expandFor: AttentionPolicy.expandSeconds))
+            try? await store.save(summary)
+            await present(summary, .attention(expandFor: AttentionPolicy.expandSeconds))
             return
         }
-        for i in items { consider(i) }
+        for i in items { await consider(i) }
     }
 
     private func publishBacklog() async {

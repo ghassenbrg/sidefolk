@@ -120,7 +120,7 @@ public final class SettingsStore: Sendable {
 
     public var current: AppSettings { cache.withLock { $0 } }
 
-    public func update(_ change: (inout AppSettings) -> Void) async {
+    public func update(_ change: @Sendable (inout AppSettings) -> Void) async {
         let next = cache.withLock { s -> AppSettings in
             change(&s)
             return s
