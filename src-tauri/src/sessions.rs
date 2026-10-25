@@ -61,10 +61,14 @@ impl Hosts {
     /// Finds where a Claude session runs from the hook request's sender: once, and again if the
     /// process it was found in has gone.
     pub fn locate_claude(&self, app: &AppHandle, session: &str, peer: Peer) {
+        self.locate(app, "claude", session, peer);
+    }
+
+    pub fn locate(&self, app: &AppHandle, source: &str, session: &str, peer: Peer) {
         if session.is_empty() {
             return;
         }
-        let key = format!("claude:{session}");
+        let key = format!("{source}:{session}");
         if self.get(&key).is_some_and(|host| alive(&host)) || !self.looking.lock().unwrap().insert(key.clone()) {
             return;
         }
@@ -403,18 +407,18 @@ pub async fn open_session(
     }
     let key = format!("{source}:{session}");
     let host = shared.hosts.get(&key);
-    if resume != Some(true) {
-        if let Some(host) = host.as_ref().filter(|h| h.app.is_some() && alive(h)) {
-            let host = host.clone();
-            let message = tauri::async_runtime::spawn_blocking(move || focus(&host)).await.map_err(|e| e.to_string())??;
-            // The user is going to the session: its waiting requests move to its own prompt there
-            // (docs/V1.md V1-D4).
-            for id in shared.requests.release_session(&source, &session) {
-                let _ = app.emit("permission-released", &id);
-            }
-            shared.requests.changed(&app);
-            return Ok(Opened { how: "focused", message });
+    if resume != Some(true)
+        && let Some(host) = host.as_ref().filter(|h| h.app.is_some() && alive(h))
+    {
+        let host = host.clone();
+        let message = tauri::async_runtime::spawn_blocking(move || focus(&host)).await.map_err(|e| e.to_string())??;
+        // The user is going to the session: its waiting requests move to its own prompt there
+        // (docs/V1.md V1-D4).
+        for id in shared.requests.release_session(&source, &session) {
+            let _ = app.emit("permission-released", &id);
         }
+        shared.requests.changed(&app);
+        return Ok(Opened { how: "focused", message });
     }
     if !Path::new(&cwd).is_dir() {
         return Err(format!("The session's folder is gone: {cwd}"));

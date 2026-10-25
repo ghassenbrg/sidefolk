@@ -107,7 +107,10 @@ async fn serve(app: &AppHandle, shared: &Shared, mut stream: UnixStream, owner: 
     let mut bytes = Vec::new();
     tokio::time::timeout(Duration::from_secs(10), (&mut stream).take(MAX).read_to_end(&mut bytes)).await.map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "no message"))??;
     let message: Value = serde_json::from_slice(&bytes).map_err(io::Error::other)?;
-    let reply = if let Some(hook) = message.get("hook") {
+    let reply = if let Some(hook) = message.get("codex_hook") {
+        crate::hooks::on_codex_event(app, shared, hook, Peer::Pid(peer.pid().unwrap_or_default() as u32));
+        None
+    } else if let Some(hook) = message.get("hook") {
         let from = Peer::Pid(peer.pid().unwrap_or_default() as u32);
         if hook.get("hook_event_name").and_then(Value::as_str) == Some("PermissionRequest") {
             crate::hooks::on_permission(app, shared, hook, from).await
@@ -136,10 +139,20 @@ pub fn send(data_dir: &Path, message: &Value, wait: Duration) -> Option<String> 
     stream.set_write_timeout(left()).ok()?;
     stream.write_all(message.to_string().as_bytes()).ok()?;
     stream.shutdown(std::net::Shutdown::Write).ok()?;
+    read_reply(stream, deadline)
+}
+
+fn read_reply(mut stream: std::os::unix::net::UnixStream, deadline: Instant) -> Option<String> {
     let (mut reply, mut chunk) = (Vec::new(), [0u8; 8192]);
     loop {
         // Each read gets only what's left, so a trickle of bytes can't stretch the wait.
-        stream.set_read_timeout(Some(left()?)).ok()?;
+        let left = deadline.checked_duration_since(Instant::now()).filter(|d| !d.is_zero())?;
+        if let Err(error) = stream.set_read_timeout(Some(left)) {
+            if error.kind() != io::ErrorKind::InvalidInput { return None; }
+            // macOS rejects SO_RCVTIMEO after the peer closes, even with a reply buffered.
+            // Drain without blocking; WouldBlock still fails closed within the deadline.
+            stream.set_nonblocking(true).ok()?;
+        }
         match stream.read(&mut chunk) {
             Ok(0) => break,
             Ok(n) if reply.len() + n <= REPLY_MAX => reply.extend_from_slice(&chunk[..n]),
@@ -160,6 +173,15 @@ pub fn run_hook(data_dir: &Path) -> i32 {
     {
         print!("{reply}");
     }
+    0
+}
+
+/// No Codex response is printed, even if a peer sends an approval-shaped reply.
+pub fn run_codex_hook(data_dir: &Path) -> i32 {
+    let mut input = Vec::new();
+    if io::stdin().take(MAX).read_to_end(&mut input).is_ok()
+        && let Ok(hook) = serde_json::from_slice::<Value>(&input)
+    { let _ = send(data_dir, &json!({"codex_hook": hook}), Duration::from_millis(750)); }
     0
 }
 
@@ -202,6 +224,22 @@ mod tests {
             let _ = stream.write_all(reply.as_bytes());
             serde_json::from_str(&message).unwrap()
         })
+    }
+
+    #[test]
+    fn a_buffered_reply_survives_the_peer_closing_before_the_read() {
+        let (client, mut peer) = std::os::unix::net::UnixStream::pair().unwrap();
+        peer.write_all(b"buffered reply").unwrap();
+        drop(peer);
+        // This is deterministic on macOS: the original read loop returned None here.
+        #[cfg(target_os = "macos")]
+        assert_eq!(client.set_read_timeout(Some(Duration::from_secs(1))).unwrap_err().kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(read_reply(client, Instant::now() + Duration::from_secs(1)).as_deref(), Some("buffered reply"));
+
+        let (client, mut peer) = std::os::unix::net::UnixStream::pair().unwrap();
+        peer.write_all(b"too late").unwrap();
+        drop(peer);
+        assert_eq!(read_reply(client, Instant::now()), None);
     }
 
     #[test]

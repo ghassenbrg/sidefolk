@@ -118,8 +118,8 @@ pub fn install(value: Value, exe: &Path) -> Value {
     let Some(root) = value.as_object_mut() else {
         return value;
     };
-    if !root.contains_key("hooks") {
-        if let Some(index) = hooks_index { root.shift_insert(index, "hooks".into(), json!({})); }
+    if !root.contains_key("hooks") && let Some(index) = hooks_index {
+        root.shift_insert(index, "hooks".into(), json!({}));
     }
     let Some(events) = root
         .entry("hooks")

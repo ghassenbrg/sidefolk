@@ -14,7 +14,7 @@ use axum::{
     routing::{get, post},
 };
 use serde_json::{Value, json};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::bus::{self, AgentEvent, Decision, Shared, clip};
 use crate::requests::End;
@@ -55,18 +55,18 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
 
 /// Claude Code posts JSON without an Origin header. Browsers always send Origin on
 /// cross-site POSTs and need a CORS preflight for JSON, so web pages cannot feed us events.
-fn payload(headers: &HeaderMap, body: &Bytes) -> Result<Value, Response> {
+fn payload(headers: &HeaderMap, body: &Bytes) -> Result<Value, StatusCode> {
     if headers.contains_key(header::ORIGIN) {
-        return Err(StatusCode::FORBIDDEN.into_response());
+        return Err(StatusCode::FORBIDDEN);
     }
     let json_body = headers
         .get(header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
         .is_some_and(|v| v.starts_with("application/json"));
     if !json_body {
-        return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE.into_response());
+        return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
-    serde_json::from_slice(body).map_err(|_| StatusCode::BAD_REQUEST.into_response())
+    serde_json::from_slice(body).map_err(|_| StatusCode::BAD_REQUEST)
 }
 
 fn text(value: &Value, key: &str) -> String {
@@ -80,7 +80,7 @@ fn text(value: &Value, key: &str) -> String {
 async fn event(State((app, shared)): State<Ctx>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, body: Bytes) -> Response {
     let hook = match payload(&headers, &body) {
         Ok(hook) => hook,
-        Err(response) => return response,
+        Err(status) => return status.into_response(),
     };
     on_event(&app, &shared, &hook, Peer::Port(peer.port()));
     // An empty 2xx body tells Claude Code to carry on unchanged.
@@ -134,6 +134,41 @@ fn claude_event(hook: &Value) -> Option<AgentEvent> {
     ))
 }
 
+/// Codex beta is observational only. Permission events never enter requests.rs and never
+/// produce a hook decision; the user's answer stays in Codex.
+pub fn on_codex_event(app: &AppHandle, shared: &Shared, hook: &Value, peer: Peer) {
+    let session = text(hook, "session_id");
+    if session.is_empty() { return; }
+    if let Some(state) = app.try_state::<crate::codex_setup::SetupState>()
+        && !state.heard.swap(true, std::sync::atomic::Ordering::Relaxed)
+    { let _ = app.emit("integrations-changed", ()); }
+    if hook["hook_event_name"] == "SessionEnd" { shared.hosts.forget(&format!("codex:{session}")); }
+    else { shared.hosts.locate(app, "codex", &session, peer); }
+    if let Some(event) = codex_event(hook) { bus::emit(app, event); }
+}
+
+fn codex_event(hook: &Value) -> Option<AgentEvent> {
+    if text(hook, "session_id").is_empty() { return None; }
+    let mut event = match hook["hook_event_name"].as_str()? {
+        "PermissionRequest" => AgentEvent::new("codex", &text(hook, "session_id"), "waiting", "Review this request in Codex.".into(), &text(hook, "cwd")),
+        "Interrupt" => AgentEvent::new("codex", &text(hook, "session_id"), "idle", String::new(), &text(hook, "cwd")),
+        _ => claude_event(hook)?,
+    };
+    event.source = "codex";
+    Some(event)
+}
+
+#[cfg(test)]
+mod codex_tests {
+    #[test]
+    fn codex_permission_is_only_status_and_keeps_raw_input_out() {
+        let event = super::codex_event(&serde_json::json!({"session_id":"s", "cwd":"/tmp", "hook_event_name":"PermissionRequest", "tool_input":{"command":"PRIVATE"}})).unwrap();
+        assert_eq!((event.source, event.kind), ("codex", "waiting"));
+        assert!(!event.detail.contains("PRIVATE"));
+        assert!(super::codex_event(&serde_json::json!({"hook_event_name":"Stop"})).is_none());
+    }
+}
+
 fn tool_activity(tool: &str, input: &Value) -> (&'static str, String) {
     let field = |key: &str| input.get(key).and_then(Value::as_str).unwrap_or_default();
     let file = |key: &str| {
@@ -159,7 +194,7 @@ fn tool_activity(tool: &str, input: &Value) -> (&'static str, String) {
 async fn dev_resolve(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
     let request = match payload(&headers, &body) {
         Ok(request) => request,
-        Err(response) => return response,
+        Err(status) => return status.into_response(),
     };
     let decision = match text(&request, "decision").as_str() {
         "allow" => Decision::Allow,
@@ -191,7 +226,7 @@ async fn dev_ui(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Byte
             }
             StatusCode::OK.into_response()
         }
-        Err(response) => response,
+        Err(status) => status.into_response(),
     }
 }
 
@@ -214,7 +249,7 @@ impl Drop for OpenRequest<'_> {
 /// looking at that very session (docs/V1.md V1-D4). Not knowing where it runs counts as not
 /// looking: the companion shows it.
 async fn should_hold(app: &AppHandle, shared: &Shared, session: &str) -> bool {
-    if !shared.settings.lock().unwrap().value.pet_answers_permissions {
+    if !crate::updates::may_hold(app) || !shared.settings.lock().unwrap().value.pet_answers_permissions {
         return false;
     }
     looking_at(app, shared, session).await != Some(true)
@@ -236,7 +271,7 @@ async fn looking_at(app: &AppHandle, shared: &Shared, session: &str) -> Option<b
 async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, body: Bytes) -> Response {
     let hook = match payload(&headers, &body) {
         Ok(hook) => hook,
-        Err(response) => return response,
+        Err(status) => return status.into_response(),
     };
     match on_permission(&app, &shared, &hook, Peer::Port(peer.port())).await {
         Some(decision) => axum::Json(decision).into_response(),
@@ -263,8 +298,11 @@ pub async fn on_permission(app: &AppHandle, shared: &Shared, hook: &Value, peer:
     let project = bus::project_root(&cwd);
     let expires = crate::journal::now_ms() + PERMISSION_WAIT.as_millis() as u64;
     // The tool's input is kept as it came; the card shows it whole or offers no Allow (requests.rs).
-    let Some((ask, answer)) = shared.requests.open("claude", &session, &cwd, &project, &tool, hook["tool_input"].clone(), true, expires) else {
-        // Already five open for this session: Claude asks in its own prompt.
+    // Focus lookup awaited above; policy may have changed while it was in flight.
+    let Some((ask, answer)) = crate::updates::guarded(app, || {
+        shared.requests.open("claude", &session, &cwd, &project, &tool, hook["tool_input"].clone(), true, expires)
+    }).flatten() else {
+        // Policy blocked the hold, or five are already open: Claude asks in its own prompt.
         return None;
     };
     bus::note(app, "claude", &session, &project, "ask", &clip(&format!("{} {}", ask.shown.title, ask.shown.text), 160));
