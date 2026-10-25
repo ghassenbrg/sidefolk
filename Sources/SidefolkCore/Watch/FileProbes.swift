@@ -58,15 +58,46 @@ enum WatchedPath {
 
     static func size(_ bytes: Double) -> String { ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file) }
 
-    /// Opening a downloaded program or script would run it; for those, "Open" shows the folder instead.
-    static let runnableExtensions: Set<String> = [
-        "app", "command", "tool", "terminal", "webloc", "fileloc", "scpt", "scptd", "workflow", "pkg", "mpkg",
-        "mobileconfig", "sh", "zsh", "bash", "py", "rb", "pl", "jar", "dmg", "action", "service", "prefpane",
+    /// Types that are safe to hand to the Mac to open: they are shown, never run. Everything else (programs,
+    /// scripts, installers, `.inetloc`/`.webloc`/`.fileloc` shortcuts, files with no extension) is shown in its
+    /// folder instead. An allow list, because a deny list always misses the next launchable type (docs/SECURITY.md T10).
+    static let openableExtensions: Set<String> = [
+        "pdf", "txt", "text", "md", "markdown", "rtf", "csv", "tsv", "log", "json", "xml", "yaml", "yml",
+        "png", "jpg", "jpeg", "gif", "heic", "heif", "tif", "tiff", "bmp", "webp", "svg",
+        "doc", "docx", "xls", "xlsx", "ppt", "pptx", "pages", "numbers", "key", "odt", "ods", "odp",
+        "html", "htm", "xhtml",
+        "mp3", "m4a", "wav", "aif", "aiff", "aac", "flac", "mp4", "m4v", "mov",
     ]
 
+    /// What "Open" on a notice should open: the file itself when it is plainly a document, otherwise the folder it
+    /// is in. Decided on the real file, so a link called `report.pdf` that leads to a script does not count.
     static func openable(_ path: String) -> String {
-        let ext = URL(fileURLWithPath: path).pathExtension.lowercased()
-        return runnableExtensions.contains(ext) ? (path as NSString).deletingLastPathComponent : path
+        let folder = (path as NSString).deletingLastPathComponent
+        let real = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        var st = stat()
+        guard stat(real, &st) == 0 else { return folder }
+        let names = [path, real].map { URL(fileURLWithPath: $0).pathExtension.lowercased() }
+
+        switch st.st_mode & S_IFMT {
+        case S_IFDIR:
+            // A plain folder opens in Finder; one with a suffix may be a program (`Tool.app`, `Thing.bundle`).
+            return names.allSatisfy(\.isEmpty) ? path : folder
+        case S_IFREG:
+            guard names.allSatisfy(openableExtensions.contains), st.st_mode & 0o111 == 0, !looksLaunchable(real) else { return folder }
+            return path
+        default:
+            return folder
+        }
+    }
+
+    /// A script (`#!`) or a program (Mach-O, universal or Java class) whatever its name says.
+    private static func looksLaunchable(_ path: String) -> Bool {
+        guard let handle = FileHandle(forReadingAtPath: path) else { return true }
+        defer { try? handle.close() }
+        let head = [UInt8]((try? handle.read(upToCount: 4)) ?? Data())
+        if head.starts(with: [0x23, 0x21]) { return true }
+        let magic: [[UInt8]] = [[0xFE, 0xED, 0xFA, 0xCE], [0xFE, 0xED, 0xFA, 0xCF], [0xCE, 0xFA, 0xED, 0xFE], [0xCF, 0xFA, 0xED, 0xFE], [0xCA, 0xFE, 0xBA, 0xBE]]
+        return magic.contains(head)
     }
 }
 
