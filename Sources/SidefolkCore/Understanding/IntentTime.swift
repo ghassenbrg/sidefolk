@@ -154,6 +154,10 @@ extension IntentParser {
         return s
     }
 
+    /// A time typed as the answer to "when?": reads the same spellings a reminder sentence does ("9h30", "half past 3",
+    /// "in about 5 minutes"). Check `remaining` is empty to know the whole answer was a time.
+    public func parseTime(_ text: String, now: Date) -> WhenResult? { when.parse(Self.rewriteTimeWords(text), now: now) }
+
     // MARK: Time words the parser did not understand
 
     private static let numWord = #"(?:\d+(?:\.\d+)?|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|sixty)"#

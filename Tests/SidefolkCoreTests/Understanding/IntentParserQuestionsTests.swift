@@ -112,6 +112,16 @@ import Testing
         #expect(intent("remind me in 2 hours to check the oven, thanks") == .remind(title: "Check the oven", when: at(2025, 10, 22, 12), recurrence: nil))
     }
 
+    @Test func theAnswerToWhenReadsTheSameSpellings() {
+        for (text, date) in [("half past 3", at(2025, 10, 22, 15, 30)), ("in about 5 minutes", at(2025, 10, 22, 10, 5)), ("tomorrow 9h30", at(2025, 10, 23, 9, 30)),
+                             ("at 5.30pm", at(2025, 10, 22, 17, 30)), ("tomorrow at 9ish", at(2025, 10, 23, 9))] {
+            let found = parser.parseTime(text, now: now)
+            #expect(found?.date == date && found?.remaining == "", "\(text) → \(found.map { TimeTest.show($0.date) } ?? "nil")")
+        }
+        #expect(parser.parseTime("never mind", now: now) == nil)
+        #expect(parser.parseTime("tomorrow at 10 dentist", now: now)?.remaining == "dentist", "more than a time: the caller can tell")
+    }
+
     // MARK: Urgency
 
     @Test(arguments: [
