@@ -321,14 +321,18 @@ final class CompanionWindowController {
     private func pointerMoved(_ p: NSPoint) {
         guard panel.isVisible else { return }
         let frame = panel.frame
-        // Click-through everywhere except the character's body and the folks.
+        // Click-through everywhere except the character's body and the folks. The silhouette is only
+        // tested when the pointer is inside the character's box, and the flag only written on change.
+        var ignore = !container.isDraggingFile
         if frame.insetBy(dx: -4, dy: -4).contains(p) {
             let local = container.convert(panel.convertPoint(fromScreen: p), from: nil)
-            let inCharacter = character.characterPath.contains(character.convert(local, from: container))
-            panel.ignoresMouseEvents = !(inCharacter || folk(at: local) != nil || container.isDraggingFile)
-        } else if !container.isDraggingFile {
-            panel.ignoresMouseEvents = true
+            if folk(at: local) != nil {
+                ignore = false
+            } else if character.frame.contains(local) {
+                ignore = ignore && !character.characterPath.contains(character.convert(local, from: container))
+            }
         }
+        if panel.ignoresMouseEvents != ignore { panel.ignoresMouseEvents = ignore }
         // Eyes follow the pointer when it is near (max 20 updates a second).
         guard eyesFollowPointer, !character.reducedMotion else { return }
         let now = Date()

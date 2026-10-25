@@ -29,6 +29,8 @@ public final class CharacterView: NSView {
         set { setState(newValue, animated: true) }
     }
 
+    private var occlusionObserver: NSObjectProtocol?
+
     public func setState(_ state: CharacterState, animated: Bool) {
         guard state != director.state else { return }
         director.show(state, animated: animated && window != nil)
@@ -36,8 +38,12 @@ public final class CharacterView: NSView {
     }
 
     public func play(_ gesture: CharacterGesture) {
+        director.wake()
         director.play(gesture)
     }
+
+    /// Breathing resumes for a while (e.g. the pointer came close); calm states settle again later.
+    public func wake() { director.wake() }
 
     /// Look direction, each axis -1...1 (x right, y up); nil looks straight ahead.
     /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy.
@@ -49,6 +55,7 @@ public final class CharacterView: NSView {
         default: break
         }
         gaze = next
+        if next != nil { director.wake() }
         director.setGaze(next)
     }
 
@@ -96,6 +103,17 @@ public final class CharacterView: NSView {
         super.viewDidMoveToWindow()
         placeStage()
         scheduleBlink()
+        occlusionObserver.map(NotificationCenter.default.removeObserver)
+        occlusionObserver = nil
+        guard let window else { return }
+        // Nothing animates while the companion can't be seen (hidden, covered, other Space, screen off).
+        occlusionObserver = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
+                                                                   object: window, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let window = self.window else { return }
+                self.director.setPaused(!window.occlusionState.contains(.visible))
+            }
+        }
     }
 
     public override func viewDidChangeBackingProperties() {

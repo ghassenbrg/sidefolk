@@ -23,6 +23,7 @@ final class AppCoordinator {
     private var roster = DutyRoster()
     private var backlog = 0
     private var rosterTask: Task<Void, Never>?
+    private var nowRefreshTask: Task<Void, Never>?
     let secrets: any SecretStore = KeychainSecretStore()
     private(set) var agent: AgentRuntime!
     var currentRun: String?
@@ -127,11 +128,12 @@ final class AppCoordinator {
         _ = await notificationsAuthorized()
         refreshRoster()
         statusItem.refreshNow()
+        Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {
+            // A beat after launch, so the companion has landed before it speaks.
             try? await Task.sleep(for: .seconds(1))
             onboarding.start()
         }
-        Log.shared.info("app", "ready")
     }
 
     // MARK: Companion
@@ -185,6 +187,16 @@ final class AppCoordinator {
         let fallback = await runtime.stop()
         notifier.scheduleFallback(fallback.map { (id: $0.id, title: $0.title, body: $0.body, date: $0.date) })
         Log.shared.info("app", "quit", ["fallbackReminders": String(fallback.count)])
+    }
+
+    /// Coalesces bursts of changes into one refresh of the menu bar list.
+    func scheduleNowRefresh() {
+        nowRefreshTask?.cancel()
+        nowRefreshTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            self?.statusItem.refreshNow()
+        }
     }
 
     /// The menu bar's "Now" list: what needs you, what's due soon, what's running.
@@ -347,7 +359,7 @@ final class AppCoordinator {
         case .approvalResolved(let id, _):
             ask.removeApproval(id: id)
         case .dataChanged(let domain):
-            statusItem.refreshNow()
+            if [.reminders, .watchers, .runs, .attention].contains(domain) { scheduleNowRefresh() }
             if [.reminders, .watchers, .runs, .attention].contains(domain) { refreshRoster() }
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {

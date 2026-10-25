@@ -49,6 +49,8 @@ public actor WatcherEngine {
     /// Watchers whose first look someone is waiting for, and what that look has found so far (see `firstLook`).
     var lookouts: [String: FirstLook] = [:]
     var hub: WatchEventHub?
+    /// What was last written for each watcher, so routine checks can skip the database (see `persist`).
+    var lastSaved: [String: (material: String, state: String, at: Date)] = [:]
 
     /// - Parameters:
     ///   - opener: opens a web address or a file for the "Open" button (the app's `PlatformBridge`).
@@ -166,6 +168,7 @@ public actor WatcherEngine {
     /// Stops watching and forgets the watcher. Returns it (so an undo can bring it back).
     @discardableResult
     public func remove(_ id: String) async -> Watcher? {
+        lastSaved[id] = nil
         await ensureLoaded()
         guard let w = watchers.removeValue(forKey: id) else { return nil }
         inflight.removeValue(forKey: id)?.cancel()
@@ -258,11 +261,30 @@ public actor WatcherEngine {
         for w in all where watchers[w.id] == nil { watchers[w.id] = w }
     }
 
+    /// Saves a watcher. Routine checks (only the timing changed) reach the database at most every few
+    /// minutes, so ten watchers don't grow the log all day; readers that show timing ask the engine (`list()`).
     func persist(_ w: Watcher) async {
+        let material = Self.materialFingerprint(w)
+        let state = w.lastState?.jsonString ?? ""
+        let now = clock.now
+        defer { events.changed(.watchers) }
+        if let saved = lastSaved[w.id], saved.material == material, saved.state == state,
+           now.timeIntervalSince(saved.at) < Self.routineSaveInterval {
+            return
+        }
         do { try await store.save(w) } catch {
             Log.shared.error("watch", "could not save a watcher", ["error": "\(error)"])
         }
-        events.changed(.watchers)
+        lastSaved[w.id] = (material, state, now)
+    }
+
+    static let routineSaveInterval: TimeInterval = 300
+
+    /// Everything but the timing: state, errors, firings, settings.
+    static func materialFingerprint(_ w: Watcher) -> String {
+        [w.state.rawValue, String(w.errorCount), String(w.fireCount), w.lastError ?? "", w.title, String(w.intervalS),
+         w.mode.rawValue, w.level.rawValue, w.expiresAt.map { String($0.timeIntervalSince1970) } ?? "",
+         w.config.jsonString, w.condition.jsonString].joined(separator: "|")
     }
 
     // MARK: Scheduling

@@ -59,7 +59,8 @@ final class NowModel {
         sessionsNeedingYou = needing
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
-        watchers = ((try? await rt.watcherStore.all()) ?? []).filter { [.active, .paused, .error].contains($0.state) }
+        // From the engine, not the database: routine check times are only saved every few minutes.
+        watchers = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
         jobs = (try? await rt.jobs.running()) ?? []
         recent = await loadRecent()
     }

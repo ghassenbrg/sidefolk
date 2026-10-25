@@ -19,6 +19,9 @@ import Testing
 
     func stored(_ id: String) async throws -> Watcher { try #require(try await env.store.watcher(id: id)) }
 
+    /// The engine's own copy: check times are only written to the database every few minutes.
+    func live(_ engine: WatcherEngine, _ id: String) async throws -> Watcher { try #require(await engine.watcher(id: id)) }
+
     func notice(titled title: String) async -> AttentionItem? { await env.notices().first { $0.title == title } }
 
     // MARK: Scheduling
@@ -57,6 +60,30 @@ import Testing
             if seen >= 2 { break }
         }
         #expect(seen >= 2)
+    }
+
+    @Test func routineChecksReachTheDatabaseOnlyEveryFewMinutes() async throws {
+        let n = Mutex(0)
+        let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: ["n": .number(Double(n.withLock { $0 }))]) }])
+        let w = try await engine.add(.make("fake", interval: 60, mode: .repeat, now: now))
+        let t0 = now
+        await engine.tick()
+        #expect(try await stored(w.id).lastCheckedAt == t0)
+
+        // Same answer a minute later: the engine knows, the database is not touched.
+        env.clock.advance(60)
+        await engine.tick()
+        #expect(try await live(engine, w.id).lastCheckedAt == t0.addingTimeInterval(60))
+        #expect(try await stored(w.id).lastCheckedAt == t0)
+
+        // A different answer is saved at once, and so is the timing after a few quiet minutes.
+        n.withLock { $0 = 1 }
+        env.clock.advance(60)
+        await engine.tick()
+        #expect(try await stored(w.id).lastState == ["n": 1])
+        env.clock.advance(WatcherEngine.routineSaveInterval)
+        await engine.tick()
+        #expect(try await stored(w.id).lastCheckedAt == now)
     }
 
     @Test func intervalsAreRaisedToTheFloorAndDefaultsFilledIn() async throws {
@@ -205,7 +232,7 @@ import Testing
         let b = try await engine.add(.make(WatchKind.urlChange, config: ["url": "https://example.com/b"], now: now))
         await engine.tick()
 
-        let results = [try await stored(a.id), try await stored(b.id)]
+        let results = [try await live(engine, a.id), try await live(engine, b.id)]
         let checked = results.filter { $0.lastState != nil }
         let waiting = results.filter { $0.lastState == nil }
         #expect(checked.count == 1 && waiting.count == 1, "one request a minute per host")
@@ -308,14 +335,14 @@ import Testing
         let t0 = now
         let w = try await engine.add(.make("fake", interval: 3600, now: now))
         await engine.tick()
-        var s = try await stored(w.id)
+        var s = try await live(engine, w.id)
         #expect(s.errorCount == 0 && s.lastError == nil)
         #expect(s.nextCheckAt == t0.addingTimeInterval(45))
 
         mode.withLock { $0 = 1 }
         env.clock.advance(45)
         await engine.tick()
-        s = try await stored(w.id)
+        s = try await live(engine, w.id)
         #expect(s.errorCount == 0)
         #expect(s.nextCheckAt == t0.addingTimeInterval(45 + 60), "try again in a minute")
         #expect(await env.notices().isEmpty)

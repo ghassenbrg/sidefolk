@@ -15,6 +15,11 @@ final class Director {
     private var badges: Set<CharacterBadge> = []
     private var prop: (kind: CharacterProp, rig: PropRig)?
     private var loops: [Loop] = []
+    /// Calm states stop their loops after a while so the window server can rest (blinks continue).
+    private var settleTimer: Timer?
+    /// Hidden or fully covered: no loops at all.
+    private var paused = false
+    static let settleAfter: TimeInterval = 20
 
     var reducedMotion = false {
         didSet { if oldValue != reducedMotion { refreshMotion() } }
@@ -142,9 +147,50 @@ final class Director {
     }
 
     private func startLoops() {
-        guard moving else { return }
+        settleTimer?.invalidate()
+        settleTimer = nil
+        guard moving, !paused else { return }
         loops = [breathing()] + Choreography.loops(for: state, rig: rig) + (prop?.rig.loops ?? [])
         loops.forEach { $0.layer.add($0.animation, forKey: $0.key) }
+        guard Self.settles(state) else { return }
+        let timer = Timer(timeInterval: Self.settleAfter, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.settle() }
+        }
+        timer.tolerance = 2
+        RunLoop.main.add(timer, forMode: .common)
+        settleTimer = timer
+    }
+
+    /// States whose motion carries no information after a while (busy states keep moving: that IS the message).
+    static func settles(_ state: CharacterState) -> Bool {
+        switch state {
+        case .idle, .sleeping, .listening: true
+        default: false
+        }
+    }
+
+    private func settle() {
+        settleTimer = nil
+        stopLoops(smooth: true)
+    }
+
+    /// Something happened (a gesture, the pointer came close): breathe again for a while.
+    func wake() {
+        guard loops.isEmpty, moving, !paused else { return }
+        startLoops()
+    }
+
+    /// The window is hidden or covered: stop everything; resume when visible again.
+    func setPaused(_ hidden: Bool) {
+        guard hidden != paused else { return }
+        paused = hidden
+        if hidden {
+            settleTimer?.invalidate()
+            settleTimer = nil
+            stopLoops(smooth: false)
+        } else {
+            startLoops()
+        }
     }
 
     /// Removes the running loops. When `smooth`, layers glide from where the loop left them

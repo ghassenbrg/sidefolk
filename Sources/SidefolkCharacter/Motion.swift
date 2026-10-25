@@ -56,7 +56,14 @@ enum Motion {
         animation.repeatCount = .infinity
         animation.timeOffset = phase
         animation.timingFunction = CAMediaTimingFunction(name: timing)
+        capFrameRate(animation)
         return animation
+    }
+
+    /// Slow loops look the same at 24 fps; at the display's 120 Hz the window server would redraw
+    /// the companion 5x as often for nothing.
+    static func capFrameRate(_ animation: CAAnimation) {
+        animation.preferredFrameRateRange = CAFrameRateRange(minimum: 10, maximum: 30, preferred: 24)
     }
 
     /// A forever-repeating keyframe cycle; `times` default to evenly spaced.
@@ -65,6 +72,7 @@ enum Motion {
         let animation = keyframes(keyPath, values, duration: duration, times: times, discrete: discrete)
         animation.repeatCount = .infinity
         animation.timeOffset = phase
+        capFrameRate(animation)
         return animation
     }
 
