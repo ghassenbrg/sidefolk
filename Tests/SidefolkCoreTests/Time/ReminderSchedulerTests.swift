@@ -359,6 +359,39 @@ import Testing
         #expect(await t.reminder(r.id)?.fireAt == t.date(2025, 3, 10, 9))
     }
 
+    @Test func aRepeatKeepsItsLocalTimeWhenTheTimeZoneChanges() async throws {
+        let ny = TimeTest.newYork
+        let paris = TimeTest.calendar("Europe/Paris")
+        let t = try await SchedulerEnv(now: TimeTest.date(2025, 10, 22, 8, in: ny), calendar: ny)
+        await t.scheduler.start()
+        let r = try await t.scheduler.create(title: "Standup", at: t.date(2025, 10, 22, 9), recurrence: Recurrence(frequency: .daily))
+        #expect(await t.reminder(r.id)?.timezone == "America/New_York")
+        await t.scheduler.stop()
+
+        // The Mac lands in Paris at 20:00 New York time (02:00 Thursday there) and the app relaunches.
+        t.clock.set(TimeTest.date(2025, 10, 23, 2, in: paris))
+        let inParis = ReminderScheduler(store: t.store, attention: t.attention, events: t.env.events, settings: t.settings, clock: t.clock, calendar: paris)
+        await inParis.start()
+        let moved = try #require(await t.reminder(r.id))
+        #expect(moved.timezone == "Europe/Paris")
+        #expect(moved.fireAt == TimeTest.date(2025, 10, 23, 9, in: paris))
+
+        t.clock.set(TimeTest.date(2025, 10, 23, 9, in: paris))
+        await inParis.tick()
+        #expect(await t.reminder(r.id)?.fireAt == TimeTest.date(2025, 10, 24, 9, in: paris))
+        #expect(await t.posted().count == 1)
+    }
+
+    @Test func aOneOffKeepsItsMomentWhenTheTimeZoneChanges() async throws {
+        let ny = TimeTest.newYork
+        let paris = TimeTest.calendar("Europe/Paris")
+        let t = try await SchedulerEnv(now: TimeTest.date(2025, 10, 22, 8, in: ny), calendar: ny)
+        let r = try await t.scheduler.create(title: "Call", at: t.date(2025, 10, 22, 15))
+        let inParis = ReminderScheduler(store: t.store, attention: t.attention, events: t.env.events, settings: t.settings, clock: t.clock, calendar: paris)
+        await inParis.start()
+        #expect(await t.reminder(r.id)?.fireAt == t.date(2025, 10, 22, 15))
+    }
+
     // MARK: Routines
 
     @Test func promptRemindersRunThePromptInsteadOfNotifying() async throws {

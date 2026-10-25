@@ -98,6 +98,7 @@ public actor ReminderScheduler {
         var prompts: [Reminder] = []
         repeat {
             tickRequested = false
+            await realignTimeZones()
             do {
                 let now = clock.now
                 for due in try await store.pending() where (due.nextDue ?? .distantFuture) <= now {
@@ -228,7 +229,7 @@ public actor ReminderScheduler {
             var when = max(due, now.addingTimeInterval(2))
             out.append(FallbackNotification(id: r.id, title: r.title, body: body, date: when))
             guard let rule = r.recurrence else { continue }
-            let anchor = await storedAnchor(for: r)
+            let anchor = await seriesAnchor(for: r)
             for k in 1...12 {
                 guard let next = RecurrenceMath.nextOccurrence(after: when, recurrence: rule, anchor: anchor, calendar: calendar), next <= end else { break }
                 when = next
@@ -250,7 +251,7 @@ public actor ReminderScheduler {
     /// Two overlapping ticks cannot fire the same reminder twice: the check and the change are one transaction.
     private func fire(_ id: String, now: Date) async throws -> Firing? {
         guard let current = try await store.reminder(id: id) else { return nil }
-        let anchor = await storedAnchor(for: current)
+        let anchor = await seriesAnchor(for: current)
         let cal = calendar
         let missedAfter = Self.missedAfter
         let outcome = try await store.db.writer.write { db -> Firing? in
@@ -369,6 +370,31 @@ public actor ReminderScheduler {
             return Date(timeIntervalSince1970: t)
         }
         return r.fireAt
+    }
+
+    /// The series anchor as wall-clock time in the current time zone (see `RecurrenceMath.floating`).
+    private func seriesAnchor(for r: Reminder) async -> Date {
+        let stored = await storedAnchor(for: r)
+        guard r.recurrence?.frequency != .hourly, let zone = TimeZone(identifier: r.timezone) else { return stored }
+        return RecurrenceMath.floating(stored, from: zone, to: calendar)
+    }
+
+    /// After a time zone change, repeating reminders keep their local time: move their next fire accordingly.
+    private func realignTimeZones() async {
+        let zone = calendar.timeZone.identifier
+        let now = clock.now
+        guard let pending = try? await store.pending() else { return }
+        for r in pending where r.timezone != zone {
+            guard let rule = r.recurrence, rule.frequency != .hourly else { continue }
+            let anchor = await seriesAnchor(for: r)
+            let next = RecurrenceMath.nextOccurrence(after: now, recurrence: rule, anchor: anchor, calendar: calendar) ?? r.fireAt
+            _ = try? await update(r.id) { r in
+                r.fireAt = next
+                r.timezone = zone
+                return true
+            }
+            try? await kv.set(Self.anchorKey(r.id), anchor.timeIntervalSince1970)
+        }
     }
 
     /// Reads, changes and writes a reminder in one transaction. `before` is nil when nothing existed.

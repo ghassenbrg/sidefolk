@@ -107,6 +107,16 @@ public enum RecurrenceMath {
 
     // MARK: Helpers
 
+    /// The same wall-clock moment in another time zone: a series created as "every day at 9" in New York
+    /// stays "at 9" after the Mac moves to Paris, instead of drifting to 15:00.
+    public static func floating(_ anchor: Date, from zone: TimeZone, to calendar: Calendar) -> Date {
+        guard zone != calendar.timeZone else { return anchor }
+        var source = calendar
+        source.timeZone = zone
+        let parts = source.dateComponents([.year, .month, .day, .hour, .minute, .second], from: anchor)
+        return calendar.date(from: parts) ?? anchor
+    }
+
     /// The anchor's time of day, applied to other days.
     struct WallClock {
         let hour: Int, minute: Int, second: Int

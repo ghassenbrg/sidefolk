@@ -476,4 +476,23 @@ struct WhenCase: Sendable, CustomTestStringConvertible {
             }
         }
     }
+
+    @Test func randomTimeWordsNeverCrashOrReturnThePast() {
+        let words = ["in", "at", "on", "every", "each", "other", "tomorrow", "tonight", "today", "next", "this", "coming", "week", "weekday", "weekdays", "weekend",
+                     "month", "year", "day", "days", "hour", "hours", "min", "mins", "5", "12", "17", "30", "24", "0", "1.5", "1st", "31st", "2025-10-22", "10:30",
+                     "5pm", "am", "pm", "noon", "midnight", "morning", "evening", "night", "monday", "fri", "sat", "mondays", "nov", "feb", "12", "and", "of", "the",
+                     ",", "-", "@", "a", "an", "half", "couple", "from", "now", "after", "eod", "end", "o'clock", "in the", "2025", "2026", "29", "last"]
+        var rng = SystemRandomNumberGenerator()
+        let nows = [now, TimeTest.date(2025, 10, 22, 23, 59), TimeTest.date(2025, 12, 31, 12), TimeTest.date(2028, 2, 28, 8), TimeTest.date(2025, 1, 31, 0, 1)]
+        for _ in 0..<20_000 {
+            let text = (0..<Int.random(in: 1...6, using: &rng)).map { _ in words.randomElement(using: &rng)! }.joined(separator: " ")
+            let at = nows.randomElement(using: &rng)!
+            if let r = parser.parse(text, now: at), !r.isExplicitInstant, r.confidence >= .medium {
+                #expect(r.date > at, "\(text) at \(TimeTest.show(at)) gave \(TimeTest.show(r.date))")
+                if let rule = r.recurrence {
+                    #expect(RecurrenceMath.nextOccurrence(after: at, recurrence: rule, anchor: r.anchor, calendar: TimeTest.utc) == r.date, "\(text)")
+                }
+            }
+        }
+    }
 }
