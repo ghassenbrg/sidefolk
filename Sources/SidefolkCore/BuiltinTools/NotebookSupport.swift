@@ -36,6 +36,15 @@ enum NotebookCollections {
         }
     }
 
+    /// The kind to give a collection that has to be created: a project unless the tool input says topic or list.
+    static func newKind(_ raw: JSONValue?) throws -> NotebookCollection.Kind {
+        guard let text = raw?.stringValue?.trimmedText.lowercased(), !text.isEmpty else { return .project }
+        guard let kind = NotebookCollection.Kind(rawValue: text), [.project, .topic, .list].contains(kind) else {
+            throw ToolError.invalidInput("“collection_kind” must be project, topic or list.")
+        }
+        return kind
+    }
+
     static func resolveOrCreate(_ name: String, kind: NotebookCollection.Kind = .project, notebook: NotebookStore,
                                 now: Date) async throws -> (collection: NotebookCollection, created: Bool) {
         if name.trimmedText.lowercased() == NotebookStore.inboxName.lowercased() {
@@ -101,7 +110,8 @@ enum NoteText {
     /// First line is the title, the rest the body. A first line too long for a title is clipped and
     /// the whole text kept as the body, so nothing is lost.
     static func split(_ text: String) -> (title: String, body: String) {
-        let all = text.trimmedText
+        // "\r\n" is a single Character to Swift and would never match "\n": pasted Windows text became one long title.
+        let all = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n").trimmedText
         let parts = all.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
         let first = String(parts.first ?? "").trimmedText
         let rest = parts.count > 1 ? String(parts[1]).trimmedText : ""

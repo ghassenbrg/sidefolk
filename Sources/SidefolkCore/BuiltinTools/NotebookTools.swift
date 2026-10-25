@@ -14,12 +14,14 @@ struct NotesSaveTool: Tool {
         description: """
             Save a note, idea, task or link in the user's notebook. The first line of `text` becomes the title and the \
             rest the body. Saves to the Inbox unless `collection` names a project or topic (it is created if it \
-            doesn't exist). Use this when the user asks to remember, save, jot down or capture something.
+            doesn't exist; `collection_kind` says what it is then). Use this when the user asks to remember, save, jot down or capture something.
             """,
         inputSchema: Schema.object([
             "text": Schema.string("What to save. First line = title, the rest = body."),
             "kind": kindSchema,
             "collection": Schema.string("Project, topic or list to file it in, e.g. “Sidefolk”. Defaults to the Inbox."),
+            "collection_kind": Schema.string("Only when `collection` has to be created: project (default), topic or list (shopping and to-do lists).",
+                                             enum: ["project", "topic", "list"]),
             "url": Schema.string("A web link this note is about (http or https)."),
             "tags": Schema.array("Short labels", items: Schema.string("One word or hyphenated phrase")),
         ], required: ["text"]),
@@ -53,7 +55,8 @@ struct NotesSaveTool: Tool {
 
         let target: (collection: NotebookCollection, created: Bool)
         if let name = input.string("collection") {
-            target = try await NotebookCollections.resolveOrCreate(name, notebook: notebook, now: context.now)
+            target = try await NotebookCollections.resolveOrCreate(name, kind: try NotebookCollections.newKind(input["collection_kind"]),
+                                                                   notebook: notebook, now: context.now)
         } else {
             target = (try await notebook.inbox(now: context.now), false)
         }
@@ -68,8 +71,8 @@ struct NotesSaveTool: Tool {
         var message = "Saved \(finalKind.rawValue) “\(title.clipped(80))” to \(target.collection.name) (id \(item.id))."
         var detail: String?
         if target.created {
-            message += " “\(target.collection.name)” didn't exist, so I created it as a new project."
-            detail = "New project “\(target.collection.name)” created."
+            message += " “\(target.collection.name)” didn't exist, so I created it as a new \(target.collection.kind.rawValue)."
+            detail = "New \(target.collection.kind.rawValue) “\(target.collection.name)” created."
         }
         let notebook = self.notebook, events = self.events, id = item.id
         return ToolResult(
@@ -264,7 +267,10 @@ struct NotesUpdateTool: Tool {
             text: message,
             card: ResultCard(kind: .note, title: "Updated note", subtitle: item.title.clipped(80), detail: changed.joined(separator: ", "), refId: item.id),
             undo: UndoAction(label: "Restored “\(previous.title.clipped(40))”") {
-                try await notebook.update(previous)
+                // Put the words back, not the note itself: if it was moved to the Trash since, it stays there.
+                var back = previous
+                if let current = try await notebook.item(id: previous.id) { back.deletedAt = current.deletedAt }
+                try await notebook.update(back)
                 events.changed(.notebook)
             })
     }
@@ -354,6 +360,12 @@ struct CollectionsCreateTool: Tool {
             kind = k
         }
         if NotebookCollections.isProfileName(name) { throw NotebookCollections.profileRefusal }
+        if name.lowercased() == NotebookStore.inboxName.lowercased() {
+            // The Inbox always exists (it is made on first use); a look-alike second one is never wanted.
+            let inbox = try await notebook.inbox(now: context.now)
+            return ToolResult(text: "“\(inbox.name)” already exists.",
+                              card: ResultCard(kind: .collection, title: inbox.name, subtitle: "Already exists", refId: inbox.id))
+        }
         // Reuse only an exact (case-insensitive) match here; fuzzy matching is for filing notes.
         let existing = try await NotebookCollections.filable(notebook).first { $0.name.lowercased() == name.lowercased() }
         if let existing {
