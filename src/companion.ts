@@ -1,4 +1,3 @@
-import { FullAccess, sessionKey, stillAsk } from "./access";
 import { AGENT_NAMES, VERB, folder, sessionLabel, type AgentEvent } from "./agents";
 import type { Card, Choice, Fact } from "./bubble";
 import { explain, HELP, parse } from "./commands";
@@ -44,21 +43,10 @@ export type Host = {
   startSession?(agent: "claude" | "codex", cwd: string, fullAccess: boolean): Promise<string>;
   /** Opens a folder in an app, a web address or an app; resolves to what opened. */
   open?(target: string, app: string | null): Promise<string>;
-  /** Saved actions (actions.rs): save one, find one by name, run it. */
-  actions?: {
-    save(name: string, kind: "command" | "link", value: string, folder: string | null): Promise<string>;
-    find(name: string): Promise<{ name: string; kind: string; value: string; folder: string } | null>;
-    run(name: string, background: boolean): Promise<{ ok: boolean; message: string; log: string | null }>;
-    showOutput(log: string): void;
-  };
-  /** "next meeting": the next calendar event, in a sentence (calendar.ts). */
-  nextMeeting?(): Promise<string>;
-  /** Gives a project its Spark worker, renames or recolors it, or sends it home (workers.ts). */
-  spark?(project: string, change: { name?: string; hue?: number; remove?: boolean }): Promise<string>;
+  /** Settings → Labs (docs/V1.md F-10, F-17): `$` commands and starting sessions, off by default. */
+  labs?(): { commands: boolean; sessions: boolean };
   /** Note commands, handled by notes.ts. */
   note?(command: { kind: "note"; notebook: string | null; text: string } | { kind: "notebook"; name: string }): Promise<string | void>;
-  /** Tells the app which sessions have full access, so their requests always come here. */
-  syncFullAccess?(keys: string[]): void;
 };
 
 const ACTION: Record<string, [string, string]> = {
@@ -69,25 +57,21 @@ const ACTION: Record<string, [string, string]> = {
 };
 
 /**
- * The one companion on the desktop: it acts out the agent sessions, brings you their requests
- * and your reminders, and understands a few local commands. Every request it shows is also
- * kept here, so closing a card never loses it: it stays answerable in the Sidefolk window.
+ * Pip, the one companion on the desktop: it acts out the agent sessions, brings you their
+ * requests and your reminders, and understands Quick add locally. It never answers a request on
+ * its own (docs/V1.md V1-D10). Every request it shows is also kept here, so closing a card never
+ * loses it: it stays answerable in the Sidefolk window.
  */
 export class Companion {
   /** Open requests (permissions, agent questions, due reminders), oldest first. */
   private readonly requests = new Map<string, Card>();
   /** Due reminders whose card is on screen: Pip holds the note while any is. */
   private readonly notes = new Set<string>();
-  /** Spark workers by project folder; a project without one is Pip's. */
-  readonly workers = new Map<string, Familiar>();
-  /** Which companion shows each open request. */
-  private readonly shownBy = new Map<string, Familiar>();
 
   private constructor(
     readonly pet: Familiar,
     private readonly host: Host,
   ) {
-    host.syncFullAccess?.(this.access.list());
     pet.bubble.onTyping = (typing) => {
       host.typing(typing);
       this.pose();
@@ -107,49 +91,9 @@ export class Companion {
     return this.pet.name;
   }
 
-  /** Every companion on the desktop, Pip first. */
+  /** Every companion on the desktop (Pip alone in v1). */
   get familiars(): Familiar[] {
-    return [this.pet, ...this.workers.values()];
-  }
-
-  /** The worker for a project (by folder path or name), else Pip. */
-  familiarFor(project: string | null | undefined): Familiar {
-    if (!project) return this.pet;
-    const exact = this.workers.get(project);
-    if (exact) return exact;
-    const name = folder(project).toLowerCase();
-    for (const [path, worker] of this.workers) if (folder(path).toLowerCase() === name || project.startsWith(`${path}/`)) return worker;
-    return this.pet;
-  }
-
-  addWorker(project: string, worker: Familiar) {
-    this.workers.get(project)?.remove();
-    this.workers.set(project, worker);
-    // Typing in a Spark's field needs the keyboard, as with Pip's.
-    worker.bubble.onTyping = (typing) => this.host.typing(typing);
-    // It takes over its project's sessions from Pip, so the right companion acts them out.
-    worker.agents.adopt(this.pet.agents.extract((s) => this.familiarFor(s.project) === worker));
-    for (const [key, o] of this.pet.agents.outcomes) if (this.familiarFor(o.project) === worker) worker.agents.outcomes.set(key, o);
-  }
-
-  removeWorker(project: string) {
-    const worker = this.workers.get(project);
-    if (!worker) return;
-    this.workers.delete(project);
-    this.pet.agents.adopt(worker.agents.extract(() => true));
-    for (const [key, o] of worker.agents.outcomes) this.pet.agents.outcomes.set(key, o);
-    for (const [id, f] of this.shownBy) if (f === worker) this.reshow(id);
-    worker.remove();
-  }
-
-  /** A request whose companion left: Pip shows it instead. */
-  private reshow(id: string) {
-    const card = this.requests.get(id);
-    if (!card) return;
-    this.shownBy.set(id, this.pet);
-    this.pet.asks.add(id);
-    this.pet.bubble.show(card);
-    this.pet.agents.asking(this.pet.asks.size);
+    return [this.pet];
   }
 
   get typing() {
@@ -160,39 +104,23 @@ export class Companion {
   seedOutcomes(entries: { at: number; source: string; session?: string; project: string; kind: string; detail: string }[]) {
     for (const e of entries) {
       if ((e.kind !== "done" && e.kind !== "failed") || (e.source !== "claude" && e.source !== "codex")) continue;
-      this.familiarFor(e.project).agents.outcomes.set(e.project, { kind: e.kind, source: e.source, project: e.project, detail: e.detail, at: e.at, session: e.session, cwd: e.project });
+      this.pet.agents.outcomes.set(e.project, { kind: e.kind, source: e.source, project: e.project, detail: e.detail, at: e.at, session: e.session, cwd: e.project });
     }
   }
 
   handleEvent(event: AgentEvent) {
-    this.familiarFor(event.project || event.cwd).agents.handle(event);
+    this.pet.agents.handle(event);
   }
-
-  /** Sessions the user gave full access ("do it and come back when you're done"). */
-  readonly access = new FullAccess();
 
   handleAsk(ask: Ask) {
-    const key = sessionKey(ask.source, ask.session);
-    const why = stillAsk(ask.kind, ask.detail);
-    if (this.access.has(key) && !why) {
-      this.host.resolvePermission(ask.id, "allow");
-      this.familiarFor(ask.project).bubble.say(`Allowed (full access): ${ask.detail.length > 60 ? `${ask.detail.slice(0, 57)}…` : ask.detail}`, 3);
-      return;
-    }
-    this.request(this.askCard(ask, this.access.has(key) ? why : null));
-  }
-
-  setFullAccess(source: string, session: string, on: boolean) {
-    this.access.set(sessionKey(source, session), on);
-    this.host.syncFullAccess?.(this.access.list());
-    this.pet.bubble.say(on ? `Full access on for this ${AGENT_NAMES[source as keyof typeof AGENT_NAMES] ?? "work"} session. Risky commands still ask.` : "Full access off. I'll ask again.", 4);
+    this.request(this.askCard(ask));
   }
 
   /**
    * A permission card: companion · project, tool · work session, the plain question, the exact
    * action and explicit choices, none preselected.
    */
-  private askCard(ask: Ask, why: string | null = null): Card {
+  private askCard(ask: Ask): Card {
     const agent = AGENT_NAMES[ask.source];
     const project = folder(ask.project || ask.cwd);
     const [action, label] = ACTION[ask.kind] ?? ACTION.tool;
@@ -200,7 +128,6 @@ export class Companion {
     const choices: Choice[] = [
       { label: "Decline", value: "deny" },
       { label: "Allow once", value: "allow", primary: true },
-      ...(why ? [] : [{ label: "Allow everything from this session", value: "always", quiet: true }]),
       ...(ask.canDefer ? [{ label: `Answer in ${agent}'s window`, value: "defer", quiet: true }] : []),
     ];
     return {
@@ -210,7 +137,7 @@ export class Companion {
       title: ask.title,
       lines: [`${agent} is asking to ${action} in ${project}.`],
       facts,
-      note: why ?? "Review it before allowing.",
+      note: "Review it before allowing.",
       choices,
       urgent: true,
       meta: {
@@ -226,10 +153,6 @@ export class Companion {
         canDefer: String(ask.canDefer),
       },
       onChoose: (value) => {
-        if (value === "always") {
-          this.setFullAccess(ask.source, ask.session, true);
-          value = "allow";
-        }
         this.host.resolvePermission(ask.id, value);
         // Answering in the agent's own window: take the user there.
         if (value === "defer") void this.openSession({ source: ask.source, session: ask.session, cwd: ask.cwd });
@@ -242,20 +165,19 @@ export class Companion {
    * the request stays here (and in the window) until it's answered or expires.
    */
   request(card: Card) {
-    const by = this.familiarFor(card.meta?.project);
-    this.shownBy.set(card.id, by);
+    const by = this.pet;
     const tracked: Card = {
       ...card,
       onChoose: (value) => {
         if (card.meta?.kind === "reminder" && value === "open") {
-          this.shownBy.get(card.id)?.bubble.close(card.id);
+          this.pet.bubble.close(card.id);
           tracked.onClose?.();
         } else this.closeRequest(card.id);
         card.onChoose(value);
       },
       // Closed with ×: the request still waits (window, menu bar), but Pip stops insisting.
       onClose: () => {
-        const f = this.shownBy.get(card.id) ?? this.pet;
+        const f = this.pet;
         this.notes.delete(card.id);
         f.asks.delete(card.id);
         f.agents.asking(f.asks.size);
@@ -276,8 +198,7 @@ export class Companion {
     if (!this.requests.delete(id)) return;
     this.notes.delete(id);
     this.pose();
-    const f = this.shownBy.get(id) ?? this.pet;
-    this.shownBy.delete(id);
+    const f = this.pet;
     f.asks.delete(id);
     f.bubble.close(id);
     f.agents.asking(f.asks.size);
@@ -306,19 +227,7 @@ export class Companion {
   }
 
   /** Clicking the companion: one field, with what Enter will do shown before anything happens. */
-  /** The field, on the companion that was clicked; a Spark's field works in its project. */
-  openPrompt(f: Familiar = this.pet) {
-    const project = this.projectOf(f);
-    if (project) {
-      f.bubble.prompt({
-        who: `Talk to ${f.name} · ${folder(project)}`,
-        placeholder: "Open session, ls, npm test…",
-        suggestions: ["Open session", "Start a claude session", "git status", "Open in VS Code"],
-        preview: (text) => this.explain(text),
-        submit: (text) => this.run(text, project),
-      });
-      return;
-    }
+  openPrompt() {
     const session = this.sessionOf();
     this.pet.bubble.prompt({
       who: `Talk to ${this.name}`,
@@ -327,11 +236,6 @@ export class Companion {
       preview: (text) => this.explain(text),
       submit: (text) => this.run(text),
     });
-  }
-
-  /** The project a Spark looks after; null for Pip. */
-  private projectOf(f: Familiar) {
-    return [...this.workers].find(([, w]) => w === f)?.[0] ?? null;
   }
 
   /** What Enter would do with this text. */
@@ -346,13 +250,8 @@ export class Companion {
   }
 
   /** Runs what was typed. Returns what the companion says. */
-  /** Runs what was typed; on a Spark, `project` fills in the folder when none is named. */
-  async run(text: string, project: string | null = null): Promise<string | void> {
-    const command = parse(project && /^open in /i.test(text.trim()) ? text.replace(/^open in /i, `open ${project} in `) : text);
-    if (project) {
-      if (command.kind === "open" && !command.project) command.project = folder(project);
-      if ((command.kind === "run" || command.kind === "start") && !command.folder) command.folder = project;
-    }
+  async run(text: string): Promise<string | void> {
+    const command = parse(text);
     switch (command.kind) {
       case "help":
         this.pet.bubble.show({ id: "help", who: this.name, title: "Things I understand", lines: HELP, choices: [{ label: "OK", value: "ok", primary: true }], onChoose: () => {} });
@@ -376,74 +275,38 @@ export class Companion {
         return this.host.note ? this.host.note(command) : "Notes need the desktop app.";
       case "notes":
         return this.host.openTab?.("notes");
-      case "calendar":
-        return this.host.nextMeeting ? this.host.nextMeeting().catch((e) => String(e)) : "The calendar needs the desktop app.";
       case "run":
+        if (!this.host.labs?.().commands) return "Commands are off. Turn them on in Settings → Labs.";
         return this.confirmRun(command.command, command.folder);
-      case "open-thing": {
-        // A saved link or action by that name comes first ("open jira").
-        const saved = await this.host.actions?.find(command.target).catch(() => null);
-        if (saved && !command.app) return this.runSaved(saved);
+      case "open-thing":
         if (!this.host.open) return "Opening things needs the desktop app.";
         return this.host.open(command.target, command.app).catch((e) => String(e));
-      }
-      case "save-action": {
-        if (!this.host.actions) return "Saved actions need the desktop app.";
-        return this.host.actions.save(command.name, command.link ? "link" : "command", command.value, command.folder).catch((e) => String(e));
-      }
-      case "spark":
-        return this.host.spark ? this.host.spark(command.project, { name: command.name ?? undefined, remove: command.remove }).catch((e) => String(e)) : "Sparks need the desktop app.";
       case "start":
+        if (!this.host.labs?.().sessions) return "Starting sessions is off. Turn it on in Settings → Labs.";
         return this.confirmStart(command.agent, command.folder, command.full);
-      case "unknown": {
-        // A saved action's name on its own runs it ("deploy staging").
-        const saved = await this.host.actions?.find(command.text).catch(() => null);
-        if (saved) return this.runSaved(saved);
-        return "I can set reminders, run commands and open your work sessions. Type “help” to see how.";
-      }
+      case "unknown":
+        return this.offerNote(command.text);
     }
   }
 
-  /** A saved link opens at once; a saved command shows what it runs and where, then runs. */
-  private async runSaved(saved: { name: string; kind: string; value: string; folder: string }): Promise<string | void> {
-    const actions = this.host.actions!;
-    if (saved.kind === "link") return (await actions.run(saved.name, false).catch((e) => ({ message: String(e) }))).message;
+  /** Text Pip has no rule for is never a dead end: it can become a note (docs/V1.md V1-Q2). */
+  private offerNote(text: string): string | void {
+    if (!this.host.note) return "I can hold reminders and notes, and open your work sessions. Type “help” to see how.";
     const bubble = this.pet.bubble;
     bubble.show({
-      id: "run-saved",
-      who: `${this.name} · ${saved.name}`,
-      title: `Run ${saved.name}?`,
-      facts: [
-        { label: "Command", value: saved.value },
-        { label: "Folder", value: saved.folder.replace(/^\/Users\/[^/]+/, "~") },
-      ],
+      id: "offer-note",
+      who: this.name,
+      title: "Save this as a note?",
+      lines: [text],
       choices: [
-        { label: "Cancel", value: "cancel" },
-        { label: "Quietly, tell me when done", value: "quiet" },
-        { label: "In terminal", value: "terminal", primary: true },
+        { label: "Not now", value: "no" },
+        { label: "Save as a note", value: "note", primary: true },
       ],
       onChoose: async (value) => {
-        bubble.close("run-saved");
-        if (value === "cancel") return;
-        if (value === "terminal") return bubble.say((await actions.run(saved.name, false).catch((e) => ({ message: String(e) }))).message, 4);
-        bubble.say(`Running ${saved.name}…`, 3);
-        this.pet.mind.react("think", 1.2);
-        try {
-          const result = await actions.run(saved.name, true);
-          this.pet.mind.react(result.ok ? "celebrate" : "sad", 1.6);
-          bubble.show({
-            id: "run-saved-result",
-            who: `${this.name} · ${saved.name}`,
-            title: result.message,
-            choices: [...(result.log ? [{ label: "Show output", value: "output" }] : []), { label: "OK", value: "ok", primary: true }],
-            onChoose: (choice) => {
-              bubble.close("run-saved-result");
-              if (choice === "output" && result.log) actions.showOutput(result.log);
-            },
-          });
-        } catch (error) {
-          bubble.say(String(error), 8, "fail");
-        }
+        bubble.close("offer-note");
+        if (value !== "note") return;
+        const reply = await this.host.note?.({ kind: "note", notebook: null, text });
+        if (reply) bubble.say(reply, 4);
       },
     });
   }
@@ -459,18 +322,21 @@ export class Companion {
       return error instanceof Error ? error.message : String(error);
     }
     const name = agent === "codex" ? "Codex" : "Claude Code";
-    const bubble = this.familiarFor(folder.path).bubble;
+    // The tool's own unattended mode, named in its own terms (docs/V1.md V1-D10); Sidefolk
+    // itself never answers for a session.
+    const own = agent === "codex" ? "Codex without approvals, sandboxed to this folder" : "Claude Code's auto mode (Claude decides what to ask)";
+    const bubble = this.pet.bubble;
     bubble.show({
       id: "start-session",
       who: `${this.name} · new session`,
       title: `Start ${name} here?`,
       facts: [
         { label: "Folder", value: folder.label },
-        { label: "Permissions", value: full ? "Full access: works without asking; risky actions still stop" : "Asks first (default)" },
+        { label: "Permissions", value: full ? own : "Asks you first (default)" },
       ],
       choices: [
         { label: "Cancel", value: "cancel" },
-        ...(full ? [{ label: "Start, but ask first", value: "ask" }] : [{ label: "Start with full access", value: "full" }]),
+        ...(full ? [{ label: "Start, but ask first", value: "ask" }] : [{ label: agent === "codex" ? "Start without approvals" : "Start in auto mode", value: "full" }]),
         { label: `Start ${name}`, value: full ? "full" : "ask", primary: true },
       ],
       onChoose: async (value) => {
@@ -487,8 +353,6 @@ export class Companion {
 
   /** A command runs only after you've seen it and its folder, and always where you can watch. */
   private async confirmRun(text: string, wanted: string | null): Promise<string | void> {
-    const saved = wanted ? null : await this.host.actions?.find(text).catch(() => null);
-    if (saved) return this.runSaved(saved);
     const { resolveFolder, runCommand } = this.host;
     if (!resolveFolder || !runCommand) return "Running commands needs the desktop app.";
     // A project named in "run … in api" is the folder of its work session when there is one.
@@ -499,7 +363,7 @@ export class Companion {
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
     }
-    const bubble = this.familiarFor(folder.path).bubble;
+    const bubble = this.pet.bubble;
     bubble.show({
       id: "run-command",
       who: `${this.name} · command`,
@@ -533,36 +397,33 @@ export class Companion {
     return `I'm ${name} now.`;
   }
 
-  /** What the Sidefolk window shows: the companions, their sessions, and what waits on you. */
+  /** What the Sidefolk window shows: the companion, its sessions, and what waits on you. */
   status() {
-    const describe = (f: Familiar, id: string, project: string | null) => ({
-      id,
-      name: f.name,
-      label: f.name,
-      main: f === this.pet,
-      project,
-      hue: f.look.hue ?? 0,
-      out: true,
-      clip: f.view.clip,
-      sessions: f.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at, fullAccess: this.access.has(sessionKey(s.source, s.id)) })),
-      outcomes: [...f.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
-    });
-    const idOf = (f: Familiar) => (f === this.pet ? "main" : `worker:${[...this.workers].find(([, w]) => w === f)?.[0]}`);
+    const f = this.pet;
     return {
-      pets: [describe(this.pet, "main", null), ...[...this.workers].map(([project, w]) => describe(w, `worker:${project}`, project))],
-      waiting: [...this.requests.values()].map((c) => {
-        const f = this.shownBy.get(c.id) ?? this.pet;
-        return {
-          id: c.id,
-          pet: idOf(f),
-          petName: f.name,
-          who: c.who,
-          title: c.title,
-          lines: c.lines ?? [],
-          meta: c.meta ?? {},
-          choices: c.choices.map(({ label, value, primary, quiet }) => ({ label, value, primary: !!primary, quiet: !!quiet })),
-        };
-      }),
+      pets: [
+        {
+          id: "main",
+          name: f.name,
+          label: f.name,
+          main: true,
+          project: null,
+          out: true,
+          clip: f.view.clip,
+          sessions: f.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at })),
+          outcomes: [...f.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
+        },
+      ],
+      waiting: [...this.requests.values()].map((c) => ({
+        id: c.id,
+        pet: "main",
+        petName: f.name,
+        who: c.who,
+        title: c.title,
+        lines: c.lines ?? [],
+        meta: c.meta ?? {},
+        choices: c.choices.map(({ label, value, primary, quiet }) => ({ label, value, primary: !!primary, quiet: !!quiet })),
+      })),
     };
   }
 

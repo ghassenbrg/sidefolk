@@ -1,9 +1,8 @@
-// A companion's body, from generated art (art/crew, cut by scripts/make_sprites.py) or a made
-// character's frames: one image per pose, all on the same canvas with the feet on one baseline.
+// A companion's body, from generated art (art/crew, cut by scripts/make_sprites.py): one image
+// per pose, all on the same canvas with the feet on one baseline.
 // Code adds the life: breathing, blinks, a short hop, squash when landing, a slight sway, and the
 // status light, drawn here so its colors are exact and it pulses only when it needs you.
 
-import { resolvePose, type Pose } from "./character-import";
 import { recolored } from "./recolor";
 
 export type ClipName =
@@ -108,14 +107,10 @@ export class PipView {
   /** Reduce motion: no breathing, swaying, hops or pulses. */
   still = false;
 
-  /**
-   * `folder` holds a crew member's frames in public/ (roster.ts), unless a made character's own
-   * `frames` are given; `hue` turns the mint accent to a worker's color (recolor.ts).
-   */
+  /** `folder` holds the frames in public/ (roster.ts); `hue` turns the mint accent to a worker's color (recolor.ts). */
   constructor(
     folder: string,
     private readonly hue = 0,
-    frames?: Partial<Record<string, string>>,
     label = "Companion",
   ) {
     this.el = document.createElement("div");
@@ -126,8 +121,7 @@ export class PipView {
     this.body.className = "pip-body";
     for (const name of FRAMES) {
       const img = new Image();
-      // A made character's own frames; a pose it lacks borrows another (character-import.ts).
-      img.src = frames ? frames[resolvePose(new Set(Object.keys(frames)), name as Pose)]! : `${folder}/${name}.webp`;
+      img.src = `${folder}/${name}.webp`;
       img.alt = "";
       img.draggable = false;
       img.hidden = name !== "idle";

@@ -1,7 +1,6 @@
 // The pets' voices, made on the fly with Web Audio: no sound files. When a bubble shows text
 // the pet "babbles" a few soft syllables (pitch and rhythm follow the words, like animal
-// chatter in games); reactions get small cues. With "Speak out loud" on, macOS reads the
-// words instead (see `speaker`).
+// chatter in games); reactions get small cues.
 
 export type Voice = { pitch: number; wave: OscillatorType };
 export type Cue = "poke" | "wave" | "celebrate" | "sad" | "alert" | "done" | "fail";
@@ -37,8 +36,6 @@ class Sound {
   enabled = true;
   /** 0..1 */
   volume = 0.6;
-  /** Set when "Speak out loud" is on: reads the text instead of babbling it. */
-  speaker: ((text: string, voice: Voice) => void) | null = null;
   private ctx: AudioContext | null = null;
   private out: GainNode | null = null;
   private busyUntil = 0;
@@ -85,10 +82,9 @@ class Sound {
     osc.stop(at + length + 0.02);
   }
 
-  /** A pet says something: babble, or read it aloud when speech is on. */
+  /** A pet says something: a soft babble. */
   say(text: string, voice: Voice) {
     if (!this.enabled) return;
-    if (this.speaker) return this.speaker(text, voice);
     const audio = this.context();
     if (!audio) return;
     // Don't talk over the previous line.

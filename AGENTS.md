@@ -1,8 +1,8 @@
 # Agent guide
 
-Sidefolk is a 3D desktop pet (Tauri 2 + three.js, macOS first) that gives AI agents a body:
-it lives on the desktop with zero token cost, acts out what Claude Code and Codex are doing,
-asks you for their permissions, and can hand them work.
+Sidefolk is a desktop companion (Tauri 2 + TypeScript + Rust, macOS first): Pip sits on your
+desktop, taps you when Claude Code or a reminder needs you, takes you to that exact session, and
+keeps a dated log of what you got done.
 
 ## Start here
 
@@ -16,12 +16,13 @@ Several agents (Claude Code, Codex, others) work on this repo in turns. Shared m
    STATUS.md so the next agent can continue without asking: what you changed, what is half
    done, the exact next step, how you verified things.
 
-Where the product is going and in what order: [docs/PLAN-V2.md](docs/PLAN-V2.md) (in review
-with the user; nothing gets built before they approve it). [docs/ROADMAP.md](docs/ROADMAP.md)
-is the v0.1 history.
+**The plan is [docs/V1.md](docs/V1.md)**, the binding v1 release contract: every feature's
+status, the requirements by ID, the release gates, the roadmap (phases P0–P8) and the guardrails
+(§13: one in one out, WIP = 1, agents never mark a gate passed). Read it before changing
+anything. PLAN-V2 and ROADMAP are history.
 
-UI work follows the design package in [creative-design/](creative-design/) (DESIGN-SYSTEM.md,
-APP-UX.md) where PLAN-V2 doesn't say otherwise; v2 concept art is in creative-design/v2.
+UI work follows docs/V1.md §9 and the approved mockups in creative-design/review-2026-10-24;
+Pip's look and voice follow [creative-design/PIP.md](creative-design/PIP.md) (frozen for v1).
 Use the tokens in `src/tokens.css` and the status vocabulary in `src/states.ts`; don't add
 colors, sizes or state words of your own.
 

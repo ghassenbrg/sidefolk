@@ -2,7 +2,7 @@ import { Agents } from "./agents";
 import { Bubble } from "./bubble";
 import { area, toScreen } from "./frame";
 import { Mind } from "./mind";
-import { framesDir, MAIN_LOOK } from "./roster";
+import { PIP_FRAMES } from "./roster";
 import { DRAWN, FEET, HEIGHT, PipView, VIEW_H, VIEW_W } from "./pip";
 import { sound, voiceFor, type Cue } from "./sound";
 
@@ -22,10 +22,10 @@ export class Bounds {
 }
 
 /**
- * How a companion looks: a crew member's frame folder (roster.ts) or a made character's frames,
- * and for a Spark worker its color and project badge.
+ * How a companion looks: a frame folder (roster.ts), and for a later Spark worker its color and
+ * project badge (docs/V1.md F-19).
  */
-export type Look = { folder?: string; hue?: number; badge?: string; frames?: Partial<Record<string, string>> };
+export type Look = { folder?: string; hue?: number; badge?: string };
 
 /**
  * A companion on the desktop: its drawing, its mind, card and status badge, and the agent
@@ -50,7 +50,7 @@ export class Familiar {
     zoom = 1,
     readonly look: Look = {},
   ) {
-    this.view = new PipView(look.folder ?? framesDir(MAIN_LOOK, "3d"), look.hue, look.frames, name);
+    this.view = new PipView(look.folder ?? PIP_FRAMES, look.hue, name);
     this.unit = (HEIGHT * zoom) / DRAWN;
     this.view.el.style.width = `${VIEW_W * this.unit}px`;
     this.view.el.style.height = `${VIEW_H * this.unit}px`;

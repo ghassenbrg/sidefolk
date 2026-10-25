@@ -17,8 +17,6 @@ pub struct Settings {
     pub shortcut: String,
     /// system | light | dark. System follows macOS while running.
     pub theme: String,
-    /// 3d | 2d: the crew's soft clay renders or their flat drawings (src/roster.ts).
-    pub art_style: String,
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
     /// Keep the overlay out of screenshots, recordings and screen sharing. Off by default: macOS
@@ -44,12 +42,11 @@ pub struct Settings {
     pub sounds: bool,
     /// 0..=100
     pub volume: u8,
-    /// Read lines aloud with a macOS voice instead of babbling.
-    pub speak: bool,
-    /// A `say` voice name; empty for the system voice.
-    pub voice: String,
     /// A menu-bar-only app (no Dock icon, not in ⌘Tab).
     pub hide_from_dock: bool,
+    /// Settings → Labs (docs/V1.md F-10, F-17): `$` commands and starting sessions, off by default.
+    pub labs_commands: bool,
+    pub labs_sessions: bool,
     /// The terminal sessions and commands open in: auto | terminal | iterm | ghostty | wezterm |
     /// kitty | alacritty.
     pub terminal: String,
@@ -58,7 +55,6 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             theme: "system".into(),
-            art_style: "3d".into(),
             pet_x: None,
             display: None,
             hidden: false,
@@ -75,9 +71,9 @@ impl Default for Settings {
             calendar_lead_mins: 5,
             sounds: true,
             volume: 60,
-            speak: false,
-            voice: String::new(),
             terminal: "auto".into(),
+            labs_commands: false,
+            labs_sessions: false,
             hide_from_dock: false,
         }
     }
@@ -93,24 +89,28 @@ pub fn data_dir(app: &AppHandle) -> tauri::Result<PathBuf> {
 pub struct Store {
     pub dir: PathBuf,
     pub value: Settings,
+    /// The file couldn't be read or set aside, so nothing may be written over it (store.rs).
+    blocked: bool,
 }
 impl Store {
-    pub fn load(dir: PathBuf) -> io::Result<Self> {
-        let value = match fs::read(dir.join("settings.json")) {
-            Ok(bytes) => serde_json::from_slice(&bytes)?,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => Settings::default(),
-            Err(e) => return Err(e),
-        };
-        let mut store = Self { dir, value };
+    /// Never fails: a damaged settings file is set aside and the defaults load (docs/V1.md V1-S6).
+    pub fn load(dir: PathBuf, problems: &crate::store::Problems) -> Self {
+        let path = dir.join("settings.json");
+        let loaded = crate::store::load::<Settings>(&path, |_, data| data);
+        problems.note(&path, &loaded);
+        let blocked = matches!(loaded, crate::store::Loaded::Corrupt { kept: None, .. });
+        let mut store = Self { dir, value: loaded.or_default(), blocked };
         // Older installs had it on without asking, which blacked out Mission Control; turn it
         // off once, and leave it alone from then on.
-        if !store.value.recordings_reset {
-            store.update(|s| {
+        if !store.value.recordings_reset
+            && let Err(error) = store.update(|s| {
                 s.hide_in_recordings = false;
                 s.recordings_reset = true;
-            })?;
+            })
+        {
+            eprintln!("sidefolk: settings not saved: {error}");
         }
-        Ok(store)
+        store
     }
     pub fn update(&mut self, change: impl FnOnce(&mut Settings)) -> io::Result<()> {
         let mut next = self.value.clone();
@@ -118,10 +118,10 @@ impl Store {
         if next == self.value {
             return Ok(());
         }
-        atomic_write(
-            &self.dir.join("settings.json"),
-            &serde_json::to_vec_pretty(&next)?,
-        )?;
+        if self.blocked {
+            return Err(io::Error::other("Your settings file couldn't be read, so I won't write over it."));
+        }
+        crate::store::save(&self.dir.join("settings.json"), 1, &next)?;
         self.value = next;
         Ok(())
     }
@@ -178,19 +178,30 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("sidefolk-settings-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("settings.json"), r#"{"hide_in_recordings":true}"#).unwrap();
-        let mut store = Store::load(dir.clone()).unwrap();
+        let mut store = Store::load(dir.clone(), &Default::default());
         assert!(!store.value.hide_in_recordings && store.value.recordings_reset);
         store.update(|s| s.hide_in_recordings = true).unwrap();
-        assert!(Store::load(dir.clone()).unwrap().value.hide_in_recordings);
+        assert!(Store::load(dir.clone(), &Default::default()).value.hide_in_recordings);
+        fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn damaged_settings_load_defaults_and_are_kept() {
+        let dir = std::env::temp_dir().join(format!("sidefolk-settings-bad-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("settings.json"), b"{ \"theme\": ").unwrap();
+        let problems = crate::store::Problems::default();
+        let store = Store::load(dir.clone(), &problems);
+        assert_eq!(store.value, Settings::default());
+        assert_eq!(problems.list()[0].file, "settings.json");
         fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn saves_and_reloads() {
         let dir = std::env::temp_dir().join(format!("sidefolk-store-{}", std::process::id()));
-        let mut store = Store::load(dir.clone()).unwrap();
+        let mut store = Store::load(dir.clone(), &Default::default());
         store.update(|s| { s.pet_x = Some(321.0); s.theme = "dark".into(); }).unwrap();
-        assert_eq!(Store::load(dir.clone()).unwrap().value.theme, "dark");
-        assert_eq!(Store::load(dir.clone()).unwrap().value.pet_x, Some(321.0));
+        assert_eq!(Store::load(dir.clone(), &Default::default()).value.theme, "dark");
+        assert_eq!(Store::load(dir.clone(), &Default::default()).value.pet_x, Some(321.0));
         fs::remove_dir_all(dir).unwrap();
     }
 }

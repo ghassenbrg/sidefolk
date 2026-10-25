@@ -18,9 +18,11 @@ pub struct Event {
 }
 
 /// Hosts of video calls people join from a calendar event.
+#[cfg_attr(not(feature = "calendar"), allow(dead_code))]
 const CALL_HOSTS: [&str; 8] = ["zoom.us/", "meet.google.com/", "teams.microsoft.com/", "teams.live.com/", "webex.com/", "whereby.com/", "around.co/", "facetime.apple.com/"];
 
 /// The first video-call link in some text ("Join: https://meet.google.com/abc-defg-hij").
+#[cfg_attr(not(feature = "calendar"), allow(dead_code))]
 fn call_link(text: &str) -> Option<String> {
     text.split(|c: char| c.is_whitespace() || "<>\"'()[]".contains(c))
         .filter(|t| t.starts_with("https://"))
@@ -31,38 +33,38 @@ fn call_link(text: &str) -> Option<String> {
 
 #[tauri::command]
 pub fn calendar_status() -> String {
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", feature = "calendar"))]
     return native::status().into();
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(all(target_os = "macos", feature = "calendar")))]
     "unavailable".into()
 }
 
 /// Asks macOS for read access to calendars; the user answers in macOS's own dialog.
 #[tauri::command]
 pub async fn request_calendar() -> Result<String, String> {
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", feature = "calendar"))]
     {
         tauri::async_runtime::spawn_blocking(native::request_blocking).await.map_err(|e| e.to_string())??;
         return Ok(native::status().into());
     }
-    #[cfg(not(target_os = "macos"))]
-    Err("Calendars are only available on macOS.".into())
+    #[cfg(not(all(target_os = "macos", feature = "calendar")))]
+    Err("The calendar heads-up comes in a later version.".into())
 }
 
 /// Events starting in the next `hours` (at most 24), soonest first; all-day and cancelled ones
 /// are left out.
 #[tauri::command]
 pub async fn upcoming_events(hours: Option<u64>) -> Result<Vec<Event>, String> {
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", feature = "calendar"))]
     return tauri::async_runtime::spawn_blocking(move || native::upcoming(hours.unwrap_or(3).min(24))).await.map_err(|e| e.to_string())?;
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(all(target_os = "macos", feature = "calendar")))]
     {
         let _ = hours;
         Ok(vec![])
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", feature = "calendar"))]
 mod native {
     use super::*;
     use block2::RcBlock;

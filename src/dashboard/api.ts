@@ -11,7 +11,6 @@ export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in
 /** Mirrors `Settings` in src-tauri/src/settings.rs. */
 export type Settings = {
   theme: import("../theme").Theme;
-  art_style: import("../roster").Style;
   shortcut: string;
   sleep_after_secs: number;
   pet_answers_permissions: boolean;
@@ -20,26 +19,25 @@ export type Settings = {
   pet_size: "small" | "medium" | "large";
   calm: boolean;
   large_text: boolean;
-  calendar_heads_up: boolean;
-  calendar_lead_mins: number;
   sounds: boolean;
   volume: number;
-  speak: boolean;
-  voice: string;
-  terminal: "auto" | "sidefolk" | "terminal" | "iterm" | "ghostty" | "wezterm" | "kitty" | "alacritty";
+  terminal: "auto" | "terminal" | "iterm" | "ghostty" | "wezterm" | "kitty" | "alacritty";
+  /** Settings → Labs (docs/V1.md F-10, F-17). */
+  labs_commands: boolean;
+  labs_sessions: boolean;
   hide_from_dock: boolean;
 };
+/** Mirrors `Problem` in src-tauri/src/store.rs: a file that couldn't be read at launch. */
+export type StoreProblem = { file: string; kept: string; error: string; backup: boolean };
 export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
-/** crew.json: the companion's name and look, and its Spark workers. */
-export type CrewFile = { main: { name: string; look?: string; hue?: number }; workers?: { project: string; name: string; hue: number; look?: string }[] };
+/** crew.json: the companion's name. */
+export type CrewFile = { main: { name: string } };
 
 /** Mirrors `status()` in src/companion.ts. */
-export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number; fullAccess?: boolean };
+export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number };
 export type Outcome = { kind: "done" | "failed"; source: string; project: string; detail: string; at: number; session?: string; cwd?: string };
 export type PetStatus = {
   id: string;
-  /** A Spark worker's color (hue turn from mint); 0 for Pip. */
-  hue?: number;
   name: string;
   label: string;
   main: boolean;
@@ -78,15 +76,11 @@ const emit = (event: string, payload: unknown) => handlers.get(event)?.forEach((
 
 /** Browser preview only: sample data so the window can be looked at without the app. */
 function preview(): typeof tauriInvoke {
-  const ptys = [{ id: 1, title: "claude · api", cwd: "/Users/you/git/api", alive: true }];
-  let ptyEnd = 40;
   const now = Date.now();
   const api = "/Users/you/git/api";
   const web = "/Users/you/git/website";
   const notesDir = "/Users/you/Library/Application Support/dev.sidefolk.companion/notes";
   const state = {
-    actions: [{ name: "deploy staging", kind: "command", value: "npm run deploy -- staging", folder: api }] as { name: string; kind: string; value: string; folder: string }[],
-    characters: [] as { id: string; name: string; poses: string[]; frames: Record<string, string> }[],
     notebooks: [
       {
         id: "evaluation-h2-2026",
@@ -103,7 +97,6 @@ function preview(): typeof tauriInvoke {
     ],
     settings: {
       theme: (() => { try { return localStorage.getItem("sidefolk-theme") ?? "system"; } catch { return "system"; } })(),
-      art_style: "3d",
       shortcut: "CommandOrControl+Shift+Space",
       sleep_after_secs: 120,
       pet_answers_permissions: true,
@@ -112,13 +105,11 @@ function preview(): typeof tauriInvoke {
       pet_size: "medium",
       calm: false,
       large_text: false,
-      calendar_heads_up: false,
-      calendar_lead_mins: 5,
       sounds: true,
       volume: 60,
-      speak: false,
-      voice: "",
       terminal: "auto",
+      labs_commands: false,
+      labs_sessions: false,
       hide_from_dock: false,
     } as Settings,
     integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false } as Integrations,
@@ -138,7 +129,7 @@ function preview(): typeof tauriInvoke {
           out: true,
           clip: "alert",
           sessions: [
-            { source: "codex", id: "04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d", cwd: api, state: "waiting", verb: "needs you", detail: "", project: api, at: now },
+            { source: "claude", id: "04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d", cwd: api, state: "waiting", verb: "needs you", detail: "", project: api, at: now },
             { source: "claude", id: "7b3e9a10", cwd: web, state: "edit", verb: "editing", detail: "launch-notes.md", project: web, at: now - 60_000 },
           ],
           outcomes: [{ kind: "done", source: "claude", project: api, detail: "Rate limiting added; 14 tests pass.", at: now - 3_600_000, session: "9f2a", cwd: api }],
@@ -146,27 +137,28 @@ function preview(): typeof tauriInvoke {
       ],
       waiting: [
         {
-          id: "codex-1",
+          id: "claude-1",
           pet: "main",
           petName: "Pip",
           who: "Pip · api",
           title: "Run a command?",
-          lines: ["Codex is asking to run this command in api."],
+          lines: ["Claude is asking to run this command in api."],
           meta: {
             kind: "permission",
             action: "command",
             title: "Run a command?",
             command: "npm test -- --run --reporter=verbose src/routes/login.test.ts",
-            source: "codex",
+            source: "claude",
             session: "04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d",
             project: api,
             cwd: api,
-            expires: String(now + 9 * 60_000),
-            canDefer: "false",
+            expires: String(now + 50_000),
+            canDefer: "true",
           },
           choices: [
             { label: "Decline", value: "deny", primary: false, quiet: false },
             { label: "Allow once", value: "allow", primary: true, quiet: false },
+            { label: "Answer in Claude's window", value: "defer", primary: false, quiet: true },
           ],
         },
       ],
@@ -245,53 +237,8 @@ function preview(): typeof tauriInvoke {
         setTimeout(() => emit("notes-changed", null), 50);
         return null;
       }
-      case "draft_tools":
-        return ["claude"];
-      case "draft_summary":
-        return "## Reliability (Sep–Oct 2026)\n- Led the login migration; errors down 40% [Sep 12]\n\n(Preview: no AI was used.)";
-      case "list_actions":
-        return state.actions;
-      case "save_action": {
-        const a = args as { name: string; kind: string; value: string; folder?: string | null };
-        const saved = { name: a.name.trim(), kind: a.kind, value: a.value.trim(), folder: a.kind === "link" ? "" : `/Users/you/git/${a.folder || "api"}` };
-        if (!saved.name || !saved.value) throw "An action needs a name and a one-line command or link.";
-        state.actions = [...state.actions.filter((x) => x.name !== saved.name), saved];
-        return saved;
-      }
-      case "remove_action":
-        state.actions = state.actions.filter((x) => x.name !== (args as { name: string }).name);
-        return null;
-      case "run_action": {
-        const a = args as { name: string; background?: boolean };
-        return a.background ? { ok: true, message: `${a.name} finished. (Preview: nothing ran.)`, log: "/preview.log" } : { ok: true, message: `Running ${a.name} in Terminal. (Preview: nothing ran.)`, log: null };
-      }
-      case "show_output":
-        return null;
-      case "list_characters":
-        return state.characters.map(({ frames, ...c }) => c);
-      case "character_frames":
-        return state.characters.find((c) => c.id === (args as { id: string }).id)?.frames ?? {};
-      case "save_character": {
-        const a = args as { name: string; frames: Record<string, string> };
-        const c = { id: a.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: a.name, poses: Object.keys(a.frames), frames: a.frames };
-        state.characters.push(c);
-        return c;
-      }
-      case "delete_character":
-        state.characters = state.characters.filter((c) => c.id !== (args as { id: string }).id);
-        return null;
-      case "save_template":
-        return `Saved to Downloads as ${(args as { name?: string }).name ? "character.sidefolk.png" : "sidefolk-character-template.png"}. (Preview: nothing saved.)`;
       case "problem_report":
         return "Sidefolk preview on macOS (preview)\n\nWhat happened, and what did you expect?\n";
-      case "calendar_status":
-        return "notRequested";
-      case "request_calendar":
-        return "allowed";
-      case "upcoming_events":
-        return [{ id: "e1@1", title: "Design review", start: now + 40 * 60_000, end: now + 70 * 60_000, location: "Room 4", link: "https://meet.google.com/abc-defg-hij", calendar: "Work" }];
-      case "install_cli":
-        return "Installed. (Preview: nothing changed.)";
       case "allow_terminal_control":
         return "Sidefolk can open sessions and commands in Terminal. (Preview)";
       case "start_session":
@@ -307,64 +254,24 @@ function preview(): typeof tauriInvoke {
         return null;
       case "get_status":
         return state.status;
+      // ?damaged shows the notice for a reminders file that couldn't be read.
+      case "store_problems":
+        return new URLSearchParams(location.search).has("damaged") ? [{ file: "reminders.json", kept: "/Users/you/Library/Application Support/dev.sidefolk.companion/reminders.json.corrupt-1792900000000", error: "expected value at line 1 column 3", backup: true }] : [];
       case "pet_action":
         if (a.action.action === "run") setTimeout(() => emit("answered", { id: a.action.id, ok: true, text: `Preview: "${a.action.text}" would go to the companion.` }), 200);
         if (a.action.action === "answer") {
           state.status.waiting = state.status.waiting.filter((w) => w.id !== a.action.id);
           setTimeout(() => emit("answered", { id: a.action.id, ok: true }), 400);
         }
-        if (a.action.action === "spark") {
-          const pets = state.status.pets;
-          const project = a.action.project.startsWith("/") ? a.action.project : `/Users/you/git/${a.action.project}`;
-          const at = pets.findIndex((p) => p.project === project);
-          if (a.action.remove) pets.splice(at, 1);
-          else if (at >= 0) Object.assign(pets[at], { name: a.action.name ?? pets[at].name, hue: a.action.hue ?? pets[at].hue });
-          else pets.push({ id: `worker:${project}`, name: a.action.name ?? "Spark", label: "Spark", main: false, project, hue: 42, out: true, clip: "idle", sessions: [], outcomes: [] });
-          setTimeout(() => {
-            emit("status", state.status);
-            emit("answered", { id: a.action.id, ok: true, text: a.action.remove ? "Spark went home." : "Spark is on it." });
-          }, 100);
-        }
-        if (a.action.action === "look") state.crew.main.look = a.action.look ?? undefined;
-        if (a.action.action === "color") state.crew.main.hue = a.action.hue || undefined;
-        if (a.action.action === "full-access") {
-          for (const s of state.status.pets[0].sessions) if (s.id === a.action.session) s.fullAccess = !!a.action.on;
-          setTimeout(() => emit("status", state.status), 100);
-        }
         return null;
       case "app_info":
         return { version: "preview", data_dir: "~/Library/Application Support/dev.sidefolk.companion" };
-      case "voices":
-        return [
-          { name: "Samantha", language: "en_US" },
-          { name: "Daniel", language: "en_GB" },
-        ];
       case "terminals":
-        return ["ghostty", "iterm", "terminal", "sidefolk"];
-      // A terminal inside Sidefolk that echoes what's typed; no shell runs in the preview.
-      case "pty_list":
-        return ptys;
-      case "pty_open":
-        ptys.push({ id: ptys.length + 1, title: "shell · you", cwd: "/Users/you", alive: true });
-        return null;
-      case "pty_attach":
-        return { data: "Preview: no shell runs here.\r\n$ ", end: ptyEnd, alive: true };
-      case "pty_write": {
-        const { id, data } = args as { id: number; data: string };
-        const end = (ptyEnd += data.length);
-        setTimeout(() => emit("pty-data", { id, data: data === "\r" ? "\r\n$ " : data, end }), 10);
-        return null;
-      }
-      case "pty_resize":
-        return null;
-      case "pty_close":
-        ptys.splice(ptys.findIndex((t) => t.id === (args as { id: number }).id), 1);
-        return null;
+        return ["ghostty", "iterm", "terminal"];
       case "open_session":
         return { how: "focused", message: "Opened in Ghostty." };
       case "tray_action":
       case "reveal_data_dir":
-      case "speak":
         return null;
     }
     throw new Error(`${command} needs the desktop app.`);

@@ -1,18 +1,14 @@
 import { applyTheme } from "../theme";
-import { knowCommands } from "../commands";
 import { icon, mark, type IconName } from "../icons";
 import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
 import { button, h } from "./dom";
 import { renderHome } from "./home";
-import { renderActions } from "./actions";
-import { renderCharacters } from "./characters";
 import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
 import { renderRequests, renderReview } from "./requests";
 import { renderSessions } from "./sessions";
 import { prepareSettings, renderSettings } from "./settings";
 import { renderSetup } from "./setup";
-import { renderTerminal } from "./terminal";
 import { tellBar } from "./tell";
 import { picture } from "../roster";
 
@@ -58,11 +54,10 @@ const NAV: [string, string, IconName][] = [
   ["reminders", "Reminders", "reminders"],
   ["notes", "Notes", "notes"],
   ["sessions", "Sessions", "terminal"],
-  ["actions", "Actions", "next"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today", characters: "settings", terminal: "sessions" };
+const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today" };
 
 const main = document.querySelector<HTMLElement>("main")!;
 const topbar = document.querySelector<HTMLElement>("#topbar")!;
@@ -227,9 +222,6 @@ function draw(focus: boolean) {
       reminders: renderReminders,
       notes: renderNotes,
       sessions: renderSessions,
-      characters: renderCharacters,
-      terminal: renderTerminal,
-      actions: renderActions,
       settings: renderSettings,
       setup: renderSetup,
     }[view] ?? renderHome;
@@ -276,9 +268,9 @@ function buildNav() {
   for (const [view, label, glyph] of NAV) {
     const b = button([icon(glyph), h("span", { text: label })], () => app.go(view), "", { "data-view": view });
     if (view === "today") b.append(h("span", { class: "count", hidden: true }));
-    (view === "sessions" ? ai : ["settings", "actions"].includes(view) ? utility : list).append(b);
+    (view === "sessions" ? ai : view === "settings" ? utility : list).append(b);
   }
-  const pet = h("img", { class: "nav-pip", src: picture(app.state.crew.main.look, app.state.settings.art_style), alt: "", width: 84, height: 76 });
+  const pet = h("img", { class: "nav-pip", src: picture(), alt: "", width: 84, height: 76 });
   nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, ai, utility, pet);
 }
 
@@ -296,8 +288,6 @@ if (inTauri && !import.meta.env.DEV) {
 }
 
 buildNav();
-// The Tell bar recognizes commands on your PATH the same way the companion does.
-if (inTauri) void invoke<string[]>("path_commands").then(knowCommands).catch(() => {});
 await app.refresh().catch((error) => app.toast(String(error), undefined, true));
 void invoke<{ version: string; data_dir: string }>("app_info").then((info) => {
   app.state.version = info.version;

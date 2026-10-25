@@ -1,5 +1,7 @@
 # Roadmap
 
+> **History.** The plan is [V1.md](V1.md).
+
 > **Superseded by [PLAN-V2.md](PLAN-V2.md)** once the user approves it (24 October 2026). This
 > file records how v0.1 was planned and built.
 

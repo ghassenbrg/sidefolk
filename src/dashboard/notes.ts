@@ -203,7 +203,6 @@ async function notebook(app: App, view: HTMLElement, id: string) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) add.requestSubmit();
   });
 
-  const draft = h("div", { class: "draft", "aria-live": "polite" });
   const search = h("input", {
     type: "search",
     placeholder: "Search this notebook",
@@ -246,9 +245,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
             ),
         ),
         button([icon("folder"), "Show in Finder"], () => void invoke("reveal_data_dir", { notes: true }).catch((e) => app.toast(String(e), undefined, true))),
-        page.entries.length ? button("Draft a summary…", () => void draftPanel(app, page, draft)) : null,
       ),
-      draft,
       page.entries.length > 5 ? h("div", { class: "field" }, search) : null,
       entries,
       add,
@@ -336,44 +333,3 @@ function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void): HTMLE
   return node;
 }
 
-const TOOL_NAMES: Record<string, string> = { claude: "Claude Code", codex: "Codex" };
-
-/** AI only when asked, and said plainly: which tool, what it gets, that it uses your plan. */
-async function draftPanel(app: App, page: Page, box: HTMLElement) {
-  const tools = await invoke<string[]>("draft_tools").catch(() => [] as string[]);
-  if (!tools.length) {
-    box.replaceChildren(h("section", { class: "card" }, h("p", { text: "Drafting needs Claude Code or Codex installed on this Mac. Your notes stay as they are either way." })));
-    return;
-  }
-  const run = async (tool: string) => {
-    box.replaceChildren(h("section", { class: "card" }, h("p", { class: "muted", text: `${TOOL_NAMES[tool]} is drafting from ${page.entries.length} notes… This can take a minute.` })));
-    try {
-      const text = await invoke<string>("draft_summary", { id: page.id, tool });
-      box.replaceChildren(
-        h(
-          "section",
-          { class: "card", "aria-label": "Draft" },
-          h("h2", { text: `Draft by ${TOOL_NAMES[tool]}` }),
-          h("pre", { class: "draft-text", text }),
-          h(
-            "div",
-            { class: "actions" },
-            button([icon("copy"), "Copy"], () => void navigator.clipboard.writeText(text).then(() => app.toast("Copied."))),
-            button("Close", () => box.replaceChildren()),
-          ),
-        ),
-      );
-    } catch (error) {
-      box.replaceChildren(h("section", { class: "card" }, h("p", { text: String(error) }), button("Close", () => box.replaceChildren())));
-    }
-  };
-  box.replaceChildren(
-    h(
-      "section",
-      { class: "card" },
-      h("h2", { text: "Draft a summary with AI" }),
-      h("p", { class: "muted", text: `Sends this notebook's ${page.entries.length} notes, and nothing else, to your own AI tool. It groups them by theme with dates and uses your plan's quota. Nothing changes in the notebook.` }),
-      h("div", { class: "actions" }, button("Cancel", () => box.replaceChildren()), ...tools.map((tool, i) => button(`Draft with ${TOOL_NAMES[tool]}`, () => void run(tool), i === 0 ? "primary" : ""))),
-    ),
-  );
-}

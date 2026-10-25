@@ -74,7 +74,6 @@ pub fn answered(app: AppHandle, id: String, ok: bool, text: Option<String>) {
 pub struct Change {
     shortcut: Option<String>,
     theme: Option<String>,
-    art_style: Option<String>,
     sleep_after_secs: Option<u64>,
     pet_answers_permissions: Option<bool>,
     hide_in_recordings: Option<bool>,
@@ -86,9 +85,9 @@ pub struct Change {
     calendar_lead_mins: Option<u64>,
     sounds: Option<bool>,
     volume: Option<u8>,
-    speak: Option<bool>,
-    voice: Option<String>,
     terminal: Option<String>,
+    labs_commands: Option<bool>,
+    labs_sessions: Option<bool>,
     hide_from_dock: Option<bool>,
 }
 
@@ -104,9 +103,8 @@ fn check(value: &Option<String>, name: &str, allowed: &[&str]) -> Result<(), Str
 #[tauri::command]
 pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: Change) -> Result<crate::settings::Settings, String> {
     check(&change.theme, "Theme", &["system", "light", "dark"])?;
-    check(&change.art_style, "Style", &["3d", "2d"])?;
     check(&change.pet_size, "Pet size", &["small", "medium", "large"])?;
-    check(&change.terminal, "Terminal", &["auto", "sidefolk", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
+    check(&change.terminal, "Terminal", &["auto", "terminal", "iterm", "ghostty", "wezterm", "kitty", "alacritty"])?;
     if let Some(shortcut) = change.shortcut.as_deref() {
         crate::tray::register_shortcut(&app, shortcut)?;
     }
@@ -120,9 +118,6 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
             .update(|s| {
                 if let Some(theme) = change.theme {
                     s.theme = theme;
-                }
-                if let Some(style) = change.art_style {
-                    s.art_style = style;
                 }
                 if let Some(shortcut) = change.shortcut {
                     s.shortcut = shortcut;
@@ -160,14 +155,14 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
                 if let Some(volume) = change.volume {
                     s.volume = volume.min(100);
                 }
-                if let Some(speak) = change.speak {
-                    s.speak = speak;
-                }
-                if let Some(voice) = change.voice {
-                    s.voice = voice.chars().take(60).collect();
-                }
                 if let Some(terminal) = change.terminal {
                     s.terminal = terminal;
+                }
+                if let Some(on) = change.labs_commands {
+                    s.labs_commands = on;
+                }
+                if let Some(on) = change.labs_sessions {
+                    s.labs_sessions = on;
                 }
                 if let Some(hide) = change.hide_from_dock {
                     s.hide_from_dock = hide;

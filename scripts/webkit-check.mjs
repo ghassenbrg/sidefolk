@@ -17,7 +17,7 @@ const out = process.argv[2] ?? mkdtempSync(join(tmpdir(), "sidefolk-webkit-"));
 const views = [
   ["home", "/settings.html"],
   ["requests", "/settings.html?tab=requests"],
-  ["review", "/settings.html?tab=review:codex-1"],
+  ["review", "/settings.html?tab=review:claude-1"],
   ["reminders", "/settings.html?tab=reminders"],
   ["settings", "/settings.html?tab=settings"],
   ["appearance", "/settings.html?tab=settings:appearance"],
@@ -25,8 +25,6 @@ const views = [
   ["new-reminder", "/settings.html?tab=reminders:new"],
   ["notes", "/settings.html?tab=notes"],
   ["sessions", "/settings.html?tab=sessions"],
-  ["characters", "/settings.html?tab=characters"],
-  ["actions", "/settings.html?tab=actions"],
   ["notebook", "/settings.html?tab=notes:evaluation-h2-2026"],
 ];
 
@@ -51,19 +49,16 @@ for (const scheme of ["light", "dark"]) {
   }
   // Answering from the window shows "Sent" only after the pet confirms.
   watch(page, `${scheme} answer`);
-  await page.goto(base + "/settings.html?tab=review:codex-1");
+  await page.goto(base + "/settings.html?tab=review:claude-1");
   await page.waitForTimeout(800);
   await page.getByRole("button", { name: "Allow once" }).click();
   await page.waitForTimeout(1200);
   const result = (await page.locator(".result").textContent()) ?? "";
-  if (!result.includes("Sent to Codex")) failures.push(`${scheme} answer: "${result.trim()}"`);
-  // Full access is off by default, shown on each session, and switches both ways.
+  if (!result.includes("Sent to Claude")) failures.push(`${scheme} answer: "${result.trim()}"`);
+  // No session has a "full access" switch: Sidefolk never answers for a session (V1-D10).
   await page.goto(base + "/settings.html?tab=sessions");
-  const toggle = page.getByRole("button", { name: "Asks first" }).first();
-  await toggle.click();
-  await page.getByRole("button", { name: "Full access" }).first().waitFor();
-  await page.getByRole("button", { name: "Full access" }).first().click();
-  await page.getByRole("button", { name: "Asks first" }).first().waitFor();
+  await page.getByRole("heading", { name: "Running" }).waitFor();
+  if (await page.getByRole("button", { name: /Asks first|Full access/ }).count()) failures.push("sessions: a full access switch is back");
   // A note added in the window shows up first, and Delete offers Undo.
   await page.goto(base + "/settings.html?tab=notes:evaluation-h2-2026");
   await page.locator("#note-text").fill("Ran the accessibility audit.");
@@ -89,63 +84,31 @@ for (const scheme of ["light", "dark"]) {
   await page.locator(".note.editing").getByRole("button", { name: "Cancel" }).click();
   await page.getByText("Arrived from companion", { exact: true }).waitFor();
   await page.locator("#note-text").fill("");
-  // Drafting with AI is explicit: it says what it sends, then shows the draft.
-  await page.getByRole("button", { name: "Draft a summary…" }).click();
-  await page.getByText("and nothing else", { exact: false }).waitFor();
-  await page.getByRole("button", { name: "Draft with Claude Code" }).click();
-  await page.getByRole("heading", { name: "Draft by Claude Code" }).waitFor();
-  // A Spark added in the window shows up in the Sparks list with its color.
+  // Labs: starting sessions is off by default; turned on, New session offers a folder and the
+  // tool's own mode, off by default.
   await page.goto(base + "/settings.html?tab=sessions");
+  if (await page.getByRole("button", { name: "New session", exact: true }).count()) failures.push("sessions: New session shows with Labs off");
+  await page.goto(base + "/settings.html?tab=settings:general");
+  await page.getByRole("switch", { name: "Start sessions" }).check();
+  await page.locator("#toast").getByText("Saved.", { exact: true }).waitFor();
+  // The preview keeps settings in the page, so stay in it.
+  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
+  await page.locator("nav").getByRole("button", { name: "Sessions" }).click();
   await page.getByRole("button", { name: "New session", exact: true }).click();
   await page.locator("#new-session-folder").fill("");
   await page.getByRole("dialog").getByRole("button", { name: "Browse…" }).click();
   assert.equal(await page.locator("#new-session-folder").inputValue(), "/Users/you/git/api");
   assert.equal(await page.locator("#new-session-full").isChecked(), false);
   await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
-  await page.getByText("Project companion options", { exact: true }).click();
-  await page.locator("#spark-folder").fill("web");
-  await page.getByRole("button", { name: "Add Spark" }).click();
-  await page.getByText("Spark · web", { exact: true }).waitFor();
-  // A filled-in template imports with every pose aligned; empty boxes borrow, and it saves.
-  if (scheme === "light") {
-    await page.goto(base + "/settings.html?tab=characters");
-    await page.locator("#character-file").setInputFiles(new URL("./fixtures/character-sheet.png", import.meta.url).pathname);
-    await page.locator(".pose-grid figure").nth(15).waitFor();
-    const borrowed = await page.locator(".pose-grid figure.borrowed").count();
-    if (borrowed !== 6) failures.push(`characters: expected 6 borrowed poses, got ${borrowed}`);
-    await page.getByText("6 of 16 poses are missing", { exact: false }).waitFor();
-    await page.screenshot({ path: join(out, "character-import.png"), fullPage: true });
-    await page.locator("#character-name").fill("Test Bot");
-    await page.getByRole("button", { name: "Save character" }).click();
-    await page.getByText("Test Bot", { exact: true }).waitFor();
-    await page.getByRole("button", { name: "Export" }).first().click();
-    await page.locator("#toast").getByText("sidefolk.png", { exact: false }).waitFor();
-  }
-  // Settings → Companion: the crew in pictures, the accent color and the 3D/2D style.
-  await page.goto(base + "/settings.html?tab=settings:companion");
-  await page.locator(".crew-choice").nth(9).waitFor();
-  await page.locator("#setting-accent").selectOption({ label: "Coral" });
-  await page.locator("#toast").getByText("wears coral now", { exact: false }).waitFor();
-  // A terminal inside Sidefolk: keys go to it and its output shows.
-  await page.goto(base + "/settings.html?tab=terminal:1");
-  await page.locator(".term-host .xterm-rows").waitFor();
-  await page.locator(".term-host").click();
-  await page.keyboard.type("echo hi");
-  await page.locator(".term-host .xterm-rows").getByText("echo hi", { exact: false }).waitFor();
-  if (scheme === "light") await page.screenshot({ path: join(out, "terminal.png") });
-  // A saved action runs quietly and offers its output.
-  await page.goto(base + "/settings.html?tab=actions");
-  await page.getByRole("button", { name: "Run quietly" }).first().click();
-  await page.locator("#toast").getByRole("button", { name: "Show output" }).waitFor();
-  // Turning on the calendar heads-up asks for access first, then shows the lead time choice.
-  await page.goto(base + "/settings.html?tab=settings:calendar");
-  await page.locator("#setting-calendar").check();
-  await page.locator("#setting-calendar_lead_mins").waitFor();
-  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
-  await page.getByText("Design review", { exact: true }).waitFor();
-  // The Tell bar confirms a plain command itself and never hands it to an AI tool.
+  // English never becomes a command; with Labs → Commands on, "$ …" is confirmed in the window.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
+  if (/Run `/.test((await page.locator(".tell-preview").textContent()) ?? "")) failures.push("tell bar: plain text was offered as a command");
+  await page.goto(base + "/settings.html?tab=settings:general");
+  await page.getByRole("switch", { name: "Commands" }).check();
+  await page.locator("#toast").getByText("Saved.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
+  await page.locator(".tell-input").fill("$ ls -la");
   assert.match((await page.locator(".tell-preview").textContent()) ?? "", /Run `ls -la` in your home folder/);
   await page.locator(".tell-input").press("Enter");
   await page.getByRole("dialog").getByRole("button", { name: "Run in terminal" }).click();
@@ -206,14 +169,16 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("searchbox", { name: "Search settings" }).fill("dark");
   await page.getByRole("button", { name: "Appearance Appearance", exact: true }).click();
   await page.getByRole("radio", { name: "System", exact: true }).waitFor();
-  for (const section of ["general", "companion", "calendar", "sound", "tools", "privacy", "accessibility", "help"]) {
+  for (const section of ["general", "companion", "sound", "tools", "privacy", "accessibility", "help"]) {
     await page.goto(base + `/settings.html?tab=settings:${section}`);
     await page.locator(".settings-content h1").waitFor();
     assert.equal(await page.locator(".settings-content .settings-group").count() > 0, true);
   }
   // The command review remains pending until explicitly dismissed or run.
-  await page.goto(base + "/settings.html");
-  await page.locator(".tell-input").fill("ls -la");
+  await page.goto(base + "/settings.html?tab=settings:general");
+  await page.getByRole("switch", { name: "Commands" }).check();
+  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
+  await page.locator(".tell-input").fill("$ ls -la");
   await page.locator(".tell-input").press("Enter");
   await page.getByRole("dialog").waitFor();
   await page.waitForTimeout(4500);
@@ -231,7 +196,7 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("heading", { name: "Today", exact: true }).waitFor();
   // Narrow layouts retain all controls, including larger text and settings search.
   await page.setViewportSize({ width: 520, height: 740 });
-  for (const target of ["today", "reminders", "notes:evaluation-h2-2026", "sessions", "settings:appearance", "review:codex-1"]) {
+  for (const target of ["today", "reminders", "notes:evaluation-h2-2026", "sessions", "settings:appearance", "review:claude-1"]) {
     await page.goto(base + `/settings.html?tab=${target}`);
     await page.locator("main h1:visible").first().waitFor();
     await page.evaluate(() => document.documentElement.classList.add("large-text"));
@@ -253,11 +218,8 @@ const card = (await overlay.locator(".bubble.urgent").first().innerText().catch(
 for (const part of ["Work session", "Run a command?", "Command", "Folder", "Decline", "Allow once"])
   if (!card.includes(part)) failures.push(`overlay permission card is missing "${part}"`);
 await overlay.screenshot({ path: join(out, "overlay.png") });
-// "Allow everything from this session" turns on full access; a risky command still asks.
-await overlay.getByRole("button", { name: "Allow everything from this session" }).click();
-await overlay.waitForTimeout(600);
-await overlay.keyboard.press("5");
-await overlay.getByText("Full access is on, but this one is hard to undo", { exact: false }).waitFor();
+// A request is only ever answered by the user: there is no "Allow everything" (V1-D8, V1-D10).
+if (await overlay.getByRole("button", { name: /Allow everything/ }).count()) failures.push("overlay: Allow everything is back");
 // Browser key r creates a real in-memory reminder; Undo must remove it from the list.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);
@@ -280,7 +242,7 @@ await overlay.getByText("Noted in evaluation.", { exact: true }).waitFor();
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);
 await overlay.keyboard.press("c");
-await overlay.locator(".bubble input").fill("run npm test in api");
+await overlay.locator(".bubble input").fill("$ npm test in api");
 await overlay.locator(".bubble input").press("Enter");
 const run = overlay.locator(".bubble").filter({ hasText: "Run this in your terminal?" });
 await run.waitFor();
@@ -291,26 +253,14 @@ await overlay.waitForTimeout(800);
 await overlay.screenshot({ path: join(out, "overlay-run.png") });
 await run.getByRole("button", { name: "Run in terminal" }).click();
 await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
-// "give api a spark" puts a second companion on the desktop with the project under its feet.
+// English never reaches the terminal card, even when it starts with a command's name.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);
 await overlay.keyboard.press("c");
-await overlay.locator(".bubble input").fill("give api a spark");
+await overlay.locator(".bubble input").fill("make coffee");
 await overlay.locator(".bubble input").press("Enter");
-await overlay.locator(".worker-badge", { hasText: "api" }).waitFor();
-if ((await overlay.locator(".pip").count()) !== 2) failures.push("overlay: a Spark didn't join Pip");
 await overlay.waitForTimeout(600);
-await overlay.screenshot({ path: join(out, "overlay-spark.png") });
-// Clicking the Spark opens its own field, which works in its project.
-await overlay.locator(".bubble").first().waitFor({ state: "hidden", timeout: 10_000 }).catch(() => {});
-const spark = await overlay.locator(".pip").nth(1).boundingBox();
-await overlay.mouse.click(spark.x + spark.width / 2, spark.y + spark.height * 0.55);
-await overlay.getByText("Talk to Spark · api", { exact: true }).waitFor();
-await overlay.locator(".bubble input").fill("git status");
-await overlay.locator(".bubble input").press("Enter");
-const scoped = overlay.locator(".bubble").filter({ hasText: "Run this in your terminal?" });
-await scoped.waitFor();
-if (!(await scoped.innerText()).includes("~/git/api")) failures.push("a Spark's command doesn't run in its project");
+if (await overlay.getByText("Run this in your terminal?").count()) failures.push("overlay: plain English was offered as a command");
 // Starting a session shows the folder and the permission mode before anything starts.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);
@@ -319,7 +269,7 @@ await overlay.locator(".bubble input").fill("start a claude session in api");
 await overlay.locator(".bubble input").press("Enter");
 const start = overlay.locator(".bubble").filter({ hasText: "Start Claude Code here?" });
 await start.waitFor();
-for (const part of ["~/git/api", "Asks first", "Start with full access"]) if (!(await start.innerText()).includes(part)) failures.push(`start card is missing "${part}"`);
+for (const part of ["~/git/api", "Asks you first", "Start in auto mode"]) if (!(await start.innerText()).includes(part)) failures.push(`start card is missing "${part}"`);
 await start.getByRole("button", { name: "Start Claude Code" }).click();
 await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
 await browser.close();

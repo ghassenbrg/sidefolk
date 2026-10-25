@@ -69,17 +69,6 @@ fn tools() -> Value {
             }
         },
         {
-            "name": "spark",
-            "description": "Only when the user asks: give this project its own Spark on their desktop (a small companion in its own color that shows this project's sessions and requests), rename it, or send it home.",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "name": { "type": "string", "description": "The Spark's name, e.g. \"Backend\" (optional)." },
-                    "remove": { "type": "boolean", "description": "true sends this project's Spark home." }
-                }
-            }
-        },
-        {
             "name": "presence",
             "description": "Whether the user is at their computer: active, idle (no input for a few minutes) or away.",
             "inputSchema": { "type": "object", "properties": {} }
@@ -166,22 +155,6 @@ pub fn run_shim() {
             break;
         }
     }
-}
-
-/// `sidefolk here [--name Backend]` gives the current folder's project a Spark; `sidefolk home`
-/// sends it home. Same path as the agents' `spark` tool, so it needs the app running.
-pub fn run_cli(args: &[String]) -> i32 {
-    let command = args.first().map(String::as_str).unwrap_or("help");
-    if !matches!(command, "here" | "home") {
-        println!("Usage:\n  sidefolk here [--name NAME]   give this project its own Spark\n  sidefolk home                 send this project's Spark home");
-        return if command == "help" || command == "--help" { 0 } else { 2 };
-    }
-    let name = args.iter().position(|a| a == "--name").and_then(|i| args.get(i + 1)).cloned().unwrap_or_default();
-    let cwd = std::env::current_dir().map(|d| d.display().to_string()).unwrap_or_default();
-    let params = json!({ "name": "spark", "arguments": { "name": name, "remove": command == "home" } });
-    let result = forward(&shim_data_dir(), "sidefolk cli", &cwd, &params);
-    println!("{}", result["content"][0]["text"].as_str().unwrap_or_default());
-    i32::from(result["isError"] == true)
 }
 
 fn tool_result(text: &str, error: bool) -> Value {
@@ -279,7 +252,6 @@ pub async fn call(State((app, shared)): State<(AppHandle, Arc<Shared>)>, headers
             }
             (json!({ "text": text, "when": when }), PAGE_WAIT)
         }
-        "spark" => (json!({ "name": field("name", 24), "remove": args["remove"].as_bool().unwrap_or(false) }), PAGE_WAIT),
         other => return reply(format!("Unknown tool {other}."), true),
     };
 
@@ -351,6 +323,6 @@ mod tests {
     #[test]
     fn lists_the_tools() {
         let names: Vec<_> = tools().as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap().to_string()).collect();
-        assert_eq!(names, ["notify", "ask", "remind", "spark", "presence"]);
+        assert_eq!(names, ["notify", "ask", "remind", "presence"]);
     }
 }

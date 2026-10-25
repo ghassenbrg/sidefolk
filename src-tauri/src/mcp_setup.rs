@@ -93,7 +93,7 @@ fn run(agent: Agent, add: bool, backups: &std::path::Path) -> io::Result<PathBuf
     let data_dir = std::env::var("SIDEFOLK_DATA_DIR").ok();
     let output = Command::new(agent.cli())
         .args(agent.args(add, &exe, data_dir.as_deref()))
-        .env("PATH", crate::codex::agent_path())
+        .env("PATH", agent_path())
         // Started from inside a Claude Code session, the CLI would think it is nested.
         .env_remove("CLAUDECODE")
         .env_remove("CLAUDE_CODE_ENTRYPOINT")
@@ -171,6 +171,23 @@ pub fn confirm(app: &AppHandle, agent: Agent) {
                 });
             });
         });
+}
+
+/// GUI apps on macOS start with a minimal PATH; agent CLIs live in the usual user locations.
+fn agent_path() -> String {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let mut parts: Vec<String> = std::env::var("PATH")
+        .unwrap_or_default()
+        .split(':')
+        .filter(|p| !p.is_empty())
+        .map(String::from)
+        .collect();
+    for extra in ["/usr/local/bin", "/opt/homebrew/bin", &format!("{home}/.local/bin")] {
+        if !parts.iter().any(|p| p == extra) {
+            parts.push(extra.to_string());
+        }
+    }
+    parts.join(":")
 }
 
 #[cfg(test)]

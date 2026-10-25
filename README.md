@@ -1,14 +1,14 @@
 # Sidefolk
 
-A desktop companion for macOS. Pip lives on your desktop, brings you your reminders, and acts
-out what your AI tools (Claude Code, Codex) are doing: it brings you their requests and takes you
-back to their work sessions.
+Pip sits on your desktop, taps you when Claude Code or a reminder needs you, takes you to that
+exact session, and keeps a dated log of what you got done. macOS 14+, Apple Silicon.
 
 **How to use it:** [docs/GUIDE.md](docs/GUIDE.md), the short guide for people trying it.
-**The plan:** [docs/PLAN-V2.md](docs/PLAN-V2.md), agreed on 24 October 2026; phases 0–7 are built,
-phase 8 (signed beta) needs the release keys ([docs/RELEASE.md](docs/RELEASE.md)). Everything v0.1
-had (a crew of 18 characters, art styles, comfort presets…) is in git at the `v0.1-zoo` tag. The
-older Electron app is at `legacy-v0`.
+**The plan:** [docs/V1.md](docs/V1.md) is the v1 release contract (25 October 2026), decided after
+two independent audits ([docs/audit-2026-10-25-claude/](docs/audit-2026-10-25-claude/),
+[docs/audit-2026-10-25/](docs/audit-2026-10-25/)). Everything cut for v1 (ten characters, the 2D
+style, Sparks, the terminal inside Sidefolk, saved actions, full access…) is in git at `76b38f1`;
+v0.1 is at the `v0.1-zoo` tag and the older Electron app at `legacy-v0`.
 
 ## Run it
 
@@ -24,7 +24,7 @@ npm run check:webkit  # with npm run web running: every view in WebKit, fails on
                       # (once: npx playwright install webkit)
 npm run build         # optimized src-tauri/target/release/bundle/macos/Sidefolk.app
 npm run measure       # CPU/RAM of the built app and its WebKit helpers
-npm run sprites -- pip 3d   # cut a crew character's frames from its sheets (art/crew/README.md)
+npm run sprites -- pip 3d   # cut Pip's frames from its sheets (art/crew/README.md)
 ```
 
 Releasing (signing, notarizing, auto-update): [docs/RELEASE.md](docs/RELEASE.md).
@@ -34,30 +34,29 @@ Releasing (signing, notarizing, auto-update): [docs/RELEASE.md](docs/RELEASE.md)
 **Pip stays where you put it.** Drag it anywhere; it never wanders. ⌘⇧Space hides it or
 calls it to your cursor. It falls asleep after a while without keyboard or mouse input.
 
-**Click Pip (or right-click) to talk to it,** or use "Tell Pip…" at the top of the window. The
-line under the field says what Enter will do before anything happens. Everything is understood
-on your Mac, without AI; anything it doesn't know gets a short answer and is never sent to an AI
-tool. The full list is in [docs/GUIDE.md](docs/GUIDE.md): reminders (with repeats and "10 minutes
-before"), notes ("note for evaluation: …"), commands (`ls -la`, shown before they run), opening
-things, saved actions, starting and opening Claude Code / Codex sessions, Spark workers.
+**Click Pip to talk to it,** or use the field at the top of the window. The line under the field
+says what Enter will do before anything happens. Everything is understood on your Mac, without
+AI, and nothing is ever sent to an AI tool. The full list is in [docs/GUIDE.md](docs/GUIDE.md):
+reminders (with repeats and "10 minutes before"), notes ("note for evaluation: …"), opening
+things, opening Claude Code sessions. Settings → Labs adds `$` commands (shown before they run)
+and starting sessions; plain sentences never run as commands.
 
 **Every card closes** with its ×. A request you close stays in the window until it's answered or
 the tool stops waiting.
 
 **The Sidefolk window** is a normal Mac app (Dock, menus, full screen): Today ⌘1, Reminders ⌘2,
-Notes ⌘3, Sessions ⌘4, Actions ⌘5, Settings ⌘,. First launch opens a five-step setup guide.
+Notes ⌘3, Sessions ⌘4, Settings ⌘,. First launch opens a three-step setup guide.
 
-**With Claude Code or Codex** (Settings → Connected tools): Pip, or the project's Spark, shows
-what each session is doing, brings its requests (Decline / Allow once, Allow everything from this
-session, or answer in the tool's own window) and tells you when it finishes or fails. Per-session
-full access still stops risky commands. MCP tools for sessions: `notify`, `ask`, `remind`,
-`spark`, `presence`. `sidefolk here --name X` gives a project a Spark from a terminal.
+**With Claude Code** (Settings → AI tools): Pip shows what each session is doing, brings its
+permission requests (Decline / Allow once, or answer in Claude's window; Pip never answers on its
+own) and tells you when it finishes or fails. MCP tools for Claude Code and Codex: `notify`,
+`ask`, `remind`, `presence`. Watching Codex sessions is not built yet (docs/V1.md F-14).
 
 ## Settings and data
 
-Settings: companion size, reduce motion, larger text, sleep time, sound and voice, hide from
-screen recordings (on by default), connected tools, where sessions open, the shortcut (press it
-to record) and start at login. Everything lives in
+Settings: companion size, reduce motion, larger text, sleep time, sounds, hide from screen
+recordings (off by default), AI tools, where sessions open, Labs, the shortcut (press it to
+record) and start at login. Everything lives in
 `~/Library/Application Support/dev.sidefolk.companion` and never leaves the Mac:
 
 | File | What |
@@ -104,14 +103,15 @@ src-tauri/src/       Rust core
   overlay.rs         transparent work-area window, refit, cursor and idle stream
   panel.rs           macOS non-activating panel on every Space, typing focus
   hooks.rs           127.0.0.1:47821: Claude Code hooks, /mcp/call, dev endpoints
-  codex.rs           codex app-server driver (used again in phase 6)
   sessions.rs        "Open session": finds where a session runs, focuses or resumes it
   mcp.rs             `sidefolk --mcp` stdio shim and the tool endpoint
   mcp_setup.rs       companion tools installer (claude/codex mcp add, with backups)
   claude_setup.rs    confirmed hook installer, backup and uninstall
-  journal.rs · reminders.rs · crew.rs · settings.rs · prefs.rs · tray.rs · voice.rs
+  actions.rs         `$` commands and "open …" (Labs), folder lookup, starting sessions
+  calendar.rs        meeting heads-up, behind the `calendar` Cargo feature (off until v1.1)
+  journal.rs · reminders.rs · notifications.rs · notes.rs · crew.rs · settings.rs · prefs.rs · tray.rs
 art/                 pip/ (generated sprite sheets and how to remake them), brand SVGs, icon
-creative-design/     the design package; v2/ holds the Pip and Spark concept sheets
-public/crew/         the ten characters' frames, 3d and 2d (`npm run sprites`)
+creative-design/     the design package; PIP.md is Pip's character bible (frozen for v1)
+public/crew/         Pip's frames (pip/3d), and Spark's kept for v1.2 (`npm run sprites`)
 scripts/             make_icons.py, make_sprites.py, measure.sh, webkit-check.mjs
 ```

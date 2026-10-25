@@ -2,8 +2,7 @@ import type { Notebook } from "../notes";
 import { icon } from "../icons";
 import { badge } from "../states";
 import { describeDue } from "../when";
-import type { CalendarEvent } from "../calendar";
-import { invoke, type Waiting } from "./api";
+import { invoke, type StoreProblem, type Waiting } from "./api";
 import type { App } from "./app";
 import { agentShort, button, h } from "./dom";
 import { header, identity, petOf, requestTitle, sessionLabel, sessionRow } from "./ui";
@@ -47,12 +46,33 @@ export function attentionCard(app: App, w: Waiting) {
   return card;
 }
 
+/** What each store holds, for the damaged-file notice (docs/V1.md V1-S2). */
+const STORE_NAMES: Record<string, string> = { "reminders.json": "reminders", "settings.json": "settings", "crew.json": "companion's name" };
+
+/** A file that couldn't be read at launch: it was kept aside, and the last good copy can come back. */
+function storeNotices(app: App, into: HTMLElement) {
+  void invoke<StoreProblem[]>("store_problems").then((problems) => {
+    for (const p of problems) {
+      const what = STORE_NAMES[p.file] ?? p.file;
+      into.append(h("section", { class: "card attention", role: "alert" },
+        h("h2", { text: `I couldn't read your ${what} file.` }),
+        h("p", { text: `Your data is safe: the file was kept as it was${p.kept ? ` (${p.kept.split("/").pop()})` : ""}, and nothing will be written over it.` }),
+        h("div", { class: "actions" },
+          p.backup ? button("Restore last good copy", () => void invoke("restore_store", { file: p.file }).catch((e) => app.toast(String(e), undefined, true)), "primary") : null,
+          button([icon("folder"), "Show in Finder"], () => void invoke("reveal_data_dir", {})))));
+    }
+  }).catch(() => {});
+}
+
 export function renderHome(app: App) {
   const { status, reminders, integrations } = app.state;
   const waiting = status.waiting;
   const view = h("div", { class: "view home" },
     h("div", { class: "page-heading" }, h("div", {}, ...header("Today", new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" }))),
       button([icon("plus"), "Add reminder"], () => app.go("reminders", "new"), "primary")));
+  const notices = h("div", { class: "notices" });
+  view.append(notices);
+  storeNotices(app, notices);
   const primary = h("div", { class: "home-primary" });
   const secondary = h("div", { class: "home-secondary" });
   view.append(h("div", { class: "home-grid" }, primary, secondary));
@@ -69,14 +89,6 @@ export function renderHome(app: App) {
   ], () => app.go("reminders", r.id), "list-button"));
   const emptyUpcoming = h("p", { class: "muted", text: "Nothing coming up. A little space for your next small step." });
   if (!next.length) upcoming.append(emptyUpcoming);
-  if (app.state.settings.calendar_heads_up)
-    void invoke<CalendarEvent[]>("upcoming_events", { hours: 8 }).then((events) => {
-      if (events.length) emptyUpcoming.remove();
-      for (const e of events.slice(0, 3).reverse()) upcoming.prepend(h("div", { class: "row line" },
-        h("span", { class: "with-icon" }, icon("activity"), h("strong", { text: e.title })),
-        h("div", { class: "inline" }, h("span", { class: "meta", text: new Date(e.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }),
-          e.link ? button("Join", () => void invoke("open_target", { target: e.link }).catch((error) => app.toast(String(error), undefined, true))) : null)));
-    }).catch(() => {});
   upcoming.append(h("div", { class: "actions" }, button(["All reminders", icon("next")], () => app.go("reminders"), "quiet")));
   primary.append(upcoming);
 
@@ -84,7 +96,7 @@ export function renderHome(app: App) {
   const connected = integrations.claude_hooks || integrations.codex_tools || integrations.claude_tools || sessions.length;
   if (connected) {
     const list = h("section", { class: "card list", "aria-label": "Work sessions" });
-    for (const s of sessions.slice(0, 3)) list.append(sessionRow(app, s, true));
+    for (const s of sessions.slice(0, 3)) list.append(sessionRow(app, s));
     if (!sessions.length) list.append(h("p", { class: "muted", text: "Nothing running right now." }));
     list.append(h("div", { class: "actions" }, button("All sessions", () => app.go("sessions"), "quiet")));
     secondary.append(h("h2", { class: "section-title", text: "Work sessions" }), list);

@@ -37,7 +37,6 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
         // Debug builds only: lets scripts drive the pet without clicking it.
         #[cfg(debug_assertions)]
         let router = router
-            .route("/dev/codex", post(dev_codex))
             .route("/dev/resolve", post(dev_resolve))
             .route("/dev/ui", post(dev_ui));
         let router = router.with_state((app, shared));
@@ -155,19 +154,6 @@ fn describe(tool: &str, input: &Value) -> (&'static str, String, String) {
 }
 
 #[cfg(debug_assertions)]
-async fn dev_codex(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
-    let request = match payload(&headers, &body) {
-        Ok(request) => request,
-        Err(response) => return response,
-    };
-    let cwd = Some(text(&request, "cwd")).filter(|c| !c.is_empty()).map(Into::into);
-    match crate::codex::dispatch(&app, shared, text(&request, "prompt"), cwd).await {
-        Ok(thread) => axum::Json(json!({ "thread": thread })).into_response(),
-        Err(error) => (StatusCode::CONFLICT, error).into_response(),
-    }
-}
-
-#[cfg(debug_assertions)]
 async fn dev_resolve(State((_, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
     let request = match payload(&headers, &body) {
         Ok(request) => request,
@@ -237,18 +223,7 @@ fn defer_to_app(bundle: &str) -> bool {
         .contains(&bundle)
 }
 
-/// The overlay's list of sessions with full access (src/access.ts), replaced whole on each change.
-#[tauri::command]
-pub fn sync_full_access(shared: tauri::State<'_, std::sync::Arc<Shared>>, keys: Vec<String>) {
-    *shared.full_access.lock().unwrap() = keys.into_iter().take(50).collect();
-}
-
-async fn should_hold(app: &AppHandle, shared: &Shared, session: &str) -> bool {
-    // Full access was the user's explicit choice for this session: the companion answers (and
-    // still asks for risky commands), wherever the user is looking.
-    if shared.full_access.lock().unwrap().contains(&format!("claude:{session}")) {
-        return true;
-    }
+async fn should_hold(app: &AppHandle, shared: &Shared) -> bool {
     if !shared
         .settings
         .lock()
@@ -277,7 +252,7 @@ async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): Connect
         Err(response) => return response,
     };
     shared.hosts.locate_claude(&app, &text(&hook, "session_id"), peer.port());
-    if !should_hold(&app, &shared, &text(&hook, "session_id")).await {
+    if !should_hold(&app, &shared).await {
         if cfg!(debug_assertions) {
             eprintln!("sidefolk: Claude permission deferred to agent UI");
         }

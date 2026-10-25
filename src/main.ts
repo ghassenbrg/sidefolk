@@ -4,9 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { handleToolCall, type ToolCall } from "./agent-tools";
 import type { AgentEvent } from "./agents";
-import { AWAY_SECS, firstToday, morning, weekly, weeklyDue, weekStart, welcomeBack, type JournalEntry } from "./away";
-import { HeadsUp, type CalendarEvent } from "./calendar";
-import { knowCommands } from "./commands";
+import { AWAY_SECS, weekly, weeklyDue, weekStart, welcomeBack, type JournalEntry } from "./away";
 import { Companion, type Ask, type Host } from "./companion";
 import { install } from "./demo";
 import { area, needed, place, shouldMove, type Rect } from "./frame";
@@ -14,9 +12,6 @@ import { wireInput } from "./input";
 import { sound } from "./sound";
 import { memoryNotes, Notes, type NoteStore } from "./notes";
 import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
-import { Workers, type WorkerSpec } from "./workers";
-import { framesDir, MAIN_LOOK, member, WORKER_LOOK, type Style } from "./roster";
-import type { Look } from "./familiar";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 document.body.classList.toggle("web", !inTauri);
@@ -31,7 +26,6 @@ if (inTauri && !import.meta.env.DEV) {
 /** Mirrors `Settings` in src-tauri/src/settings.rs (the fields the overlay uses). */
 type Settings = {
   theme: Theme;
-  art_style: Style;
   pet_x: number | null;
   sleep_after_secs: number;
   pet_size: "small" | "medium" | "large";
@@ -39,10 +33,8 @@ type Settings = {
   large_text: boolean;
   sounds: boolean;
   volume: number;
-  speak: boolean;
-  voice: string;
-  calendar_heads_up: boolean;
-  calendar_lead_mins: number;
+  labs_commands: boolean;
+  labs_sessions: boolean;
 };
 const settings = inTauri ? await invoke<Settings>("get_settings") : null;
 // The window covers only the companions (frame.ts); a reloaded page starts where it is.
@@ -73,14 +65,11 @@ const webName = {
   },
 };
 
-/** crew.json keeps the companion's name and its Spark workers (v0.1's other keys are dropped). */
-type Stored = { main?: { name?: string; look?: string; hue?: number }; workers?: unknown } | null;
+/** crew.json keeps the companion's name (older keys, such as looks and Sparks, are dropped). */
+type Stored = { main?: { name?: string } } | null;
 const stored = inTauri ? await invoke<Stored>("get_crew") : null;
 const storedName = inTauri ? stored?.main?.name : webName.load();
-const crew: { main: { name: string; look?: string; hue?: number }; workers: WorkerSpec[] } = {
-  main: { name: storedName?.trim() || "Pip", ...(stored?.main?.look ? { look: stored.main.look } : {}), ...(stored?.main?.hue ? { hue: stored.main.hue } : {}) },
-  workers: Array.isArray(stored?.workers) ? stored.workers.filter((w): w is WorkerSpec => typeof w?.project === "string" && typeof w?.name === "string" && typeof w?.hue === "number") : [],
-};
+const crew = { main: { name: storedName?.trim() || "Pip" } };
 const saveCrew = () => (inTauri ? invoke("save_crew", { crew }) : Promise.resolve());
 
 const host: Host = {
@@ -97,8 +86,8 @@ const host: Host = {
     if (inTauri) void invoke("overlay_typing", { typing });
   },
   command: (text, kind) => reminders.command(text, kind),
-  spark: (project, change) => sparks(project, change),
-  nextMeeting: () => (settings?.calendar_heads_up ? headsUp.next() : Promise.resolve("Turn on the calendar heads-up in Settings → Reminders & calendar first.")),
+  // The browser preview has Labs on, so its cards can be looked at (nothing runs there).
+  labs: () => ({ commands: settings ? settings.labs_commands : true, sessions: settings ? settings.labs_sessions : true }),
   note: (command) => (command.kind === "note" ? notes.take(command.text, command.notebook) : notes.create(command.name)),
   ...(inTauri && {
     hide: () => void invoke("tray_action", { action: "toggle" }),
@@ -106,18 +95,8 @@ const host: Host = {
     openSession: async (ref) => (await invoke<{ message: string }>("open_session", { ...ref })).message,
     resolveFolder: (folder) => invoke("resolve_folder", { folder }),
     runCommand: (command, cwd) => invoke<string>("run_command", { command, cwd }),
-    syncFullAccess: (keys) => void invoke("sync_full_access", { keys }).catch(() => {}),
     startSession: (agent, cwd, fullAccess) => invoke<string>("start_session", { agent, cwd, fullAccess }),
     open: (target, app) => invoke<string>("open_target", { target, app }),
-    actions: {
-      save: async (name, kind, value, folder) => {
-        const saved = await invoke<{ name: string }>("save_action", { name, kind, value, folder });
-        return `Saved. Say “${saved.name}” to ${kind === "link" ? "open" : "run"} it.`;
-      },
-      find: async (name) => (await invoke<{ name: string; kind: string; value: string; folder: string }[]>("list_actions")).find((a) => a.name.toLowerCase() === name.trim().toLowerCase()) ?? null,
-      run: (name, background) => invoke("run_action", { name, background }),
-      showOutput: (log) => void invoke("show_output", { log }),
-    },
   }),
   // Browser preview: the confirmation card can be looked at; nothing runs.
   ...(!inTauri && {
@@ -138,23 +117,7 @@ const reminderStore: ReminderStore = inTauri
   : memoryStore();
 const journal = (since: number) => (inTauri ? invoke<JournalEntry[]>("journal_since", { since }) : Promise.resolve([]));
 
-// What's on your PATH, so "terraform plan -out x" is a command and "say hi" stays a sentence.
-if (inTauri) void invoke<string[]>("path_commands").then(knowCommands).catch(() => {});
-/** A made character's frames (Settings → Characters); null if it was deleted. */
-const characterFrames = (id: string) => (inTauri ? invoke<Record<string, string>>("character_frames", { id }).catch(() => null) : Promise.resolve(null));
-// Browser preview only: ?style=2d shows the flat drawings.
-const style: Style = settings?.art_style ?? (new URLSearchParams(location.search).get("style") === "2d" ? "2d" : "3d");
-/** A look (a crew id or a made character's) as frames; a deleted made character falls back. */
-async function lookOf(id: string | undefined, fallback: string): Promise<Look> {
-  if (id && !member(id)) {
-    const frames = await characterFrames(id);
-    if (frames) return { frames };
-  }
-  return { folder: framesDir(member(id) ? id! : fallback, style) };
-}
-// Your companion's accent color, like a Spark's; a made character keeps its own colors.
-const mainLook = await lookOf(crew.main.look, MAIN_LOOK);
-const companion = await Companion.start(crew.main.name, host, zoom, mainLook.frames ? mainLook : { ...mainLook, hue: crew.main.hue ?? 0 });
+const companion = await Companion.start(crew.main.name, host, zoom);
 const pet = companion.pet;
 
 /** Settings that apply without a restart. Companion size rebuilds it, so that reloads the page. */
@@ -168,7 +131,6 @@ function applySettings(next: Settings | null) {
   pet.mind.sleepAfterSecs = next.sleep_after_secs;
   sound.enabled = next.sounds;
   sound.volume = next.volume / 100;
-  sound.speaker = next.speak ? (text, voice) => void invoke("speak", { text, voice: next.voice, pitch: voice.pitch / 640 }).catch(() => {}) : null;
 }
 applySettings(settings);
 reducedMotion.addEventListener("change", () => applySettings(settings));
@@ -183,34 +145,6 @@ const noteStore: NoteStore = inTauri
   : memoryNotes();
 const notes = new Notes(companion, noteStore);
 reminders.writeNote = (text) => void notes.capture(text);
-const headsUp = new HeadsUp(
-  companion,
-  () => (inTauri ? invoke<CalendarEvent[]>("upcoming_events", { hours: 3 }) : Promise.resolve([])),
-  (url) => void invoke("open_target", { target: url }),
-);
-if (settings) headsUp.set(settings.calendar_heads_up, settings.calendar_lead_mins);
-
-const workers = new Workers(
-  companion,
-  zoom,
-  (id) => lookOf(id, WORKER_LOOK),
-  (specs) => {
-    crew.workers = specs;
-    return saveCrew();
-  },
-);
-await workers.load(crew.workers);
-/** "give api a spark", the window's Sparks list: a folder name or path becomes the project's root. */
-async function sparks(project: string, change: { name?: string; hue?: number; remove?: boolean; look?: string | null }): Promise<string> {
-  if (change.remove) return workers.remove(project);
-  let path = project;
-  if (!project.startsWith("/")) {
-    const session = companion.sessionOf(project);
-    if (session) path = session.cwd;
-    else if (inTauri) path = (await invoke<{ path: string }>("resolve_folder", { folder: project })).path;
-  }
-  return workers.add(path, change.name, change.hue, change.look);
-}
 if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();
@@ -220,7 +154,7 @@ const overlay = inTauri ? getCurrentWindow() : null;
 const input = wireInput({
   familiars: () => companion.familiars,
   setInteractive: (on) => void overlay?.setIgnoreCursorEvents(!on),
-  onClick: (f) => companion.openPrompt(f),
+  onClick: () => companion.openPrompt(),
 });
 
 // Clicking the companion or a card button can make the panel key (web views ask for it).
@@ -237,16 +171,15 @@ const onCursor = (x: number, y: number) => {
 
 if (inTauri) {
   void listen<Settings>("settings-changed", (e) => {
-    if (e.payload.pet_size !== settings!.pet_size || e.payload.art_style !== settings!.art_style) return location.reload();
-    if (e.payload.calendar_heads_up !== settings!.calendar_heads_up || e.payload.calendar_lead_mins !== settings!.calendar_lead_mins) headsUp.set(e.payload.calendar_heads_up, e.payload.calendar_lead_mins);
+    if (e.payload.pet_size !== settings!.pet_size) return location.reload();
     Object.assign(settings!, e.payload);
     applySettings(settings);
   });
   // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
   // "Sent" only once the companion really passed the answer on.
-  type Action = { action: string; text?: string; id?: string; name?: string; source?: string; session?: string; on?: boolean; project?: string; hue?: number; remove?: boolean; look?: string | null };
+  type Action = { action: string; text?: string; id?: string; name?: string };
   void listen<Action>("pet-action", (e) => {
-    const { action, text, id, name, source, session, on, project, hue, remove, look } = e.payload;
+    const { action, text, id, name } = e.payload;
     const reply = (line?: string | void) => line && pet.bubble.say(line, 6);
     // From the window's "Tell Pip…" bar: the same commands, and the reply goes back to it.
     if (action === "run" && text)
@@ -256,29 +189,10 @@ if (inTauri) {
       });
     if (action === "rename" && name) void companion.rename(name).then(reply);
     if (action === "open-session") void companion.openSession();
-    if (action === "full-access" && source && session) companion.setFullAccess(source, session, !!on);
-    // A new look for Pip: saved, then the overlay starts over with it.
-    if (action === "look" && !project) {
-      if (look) crew.main.look = look;
-      else delete crew.main.look;
-      void saveCrew().then(() => location.reload());
-    }
-    if (action === "color" && !project) {
-      if (hue) crew.main.hue = hue;
-      else delete crew.main.hue;
-      void saveCrew().then(() => location.reload());
-    }
-    if (action === "spark" && project)
-      void sparks(project, { name, hue, remove, look }).then(
-        (line) => id && void invoke("answered", { id, ok: true, text: line }),
-        (error) => id && void invoke("answered", { id, ok: false, text: String(error) }),
-      );
     if (action === "new-reminder") void reminders.command("", "new-reminder");
     if (action === "answer" && id && text) void invoke("answered", { id, ok: companion.answer(id, text) });
   });
-  // Started in the morning (at login, usually): the day's brief, once.
-  if (new Date().getHours() < 12) setTimeout(() => void briefing(Date.now() - 12 * 3_600_000, true), 4000);
-  else setTimeout(() => void weeklyWins(), 6000);
+  setTimeout(() => void weeklyWins(), 6000);
   // Coming back after a long time away earns a briefing of what the agents did meanwhile.
   let lastIdle = 0;
   void listen<number>("idle", (e) => {
@@ -289,7 +203,7 @@ if (inTauri) {
   });
   void listen("reminders-changed", () => void reminders.reload());
   // An agent called one of the companion's tools (MCP); Rust waits for the answer.
-  void listen<ToolCall>("mcp", (e) => handleToolCall(e.payload, companion, reminders, (result) => void invoke("mcp_reply", { id: e.payload.id, result }), sparks));
+  void listen<ToolCall>("mcp", (e) => handleToolCall(e.payload, companion, reminders, (result) => void invoke("mcp_reply", { id: e.payload.id, result })));
   void listen<string>("mcp-closed", (e) => companion.closeRequest(e.payload));
   if (settings!.pet_x !== null) pet.mind.x = settings!.pet_x;
   pet.mind.fitBounds();
@@ -362,16 +276,8 @@ async function weeklyWins() {
   pet.mind.react("wave", 1.6);
 }
 
-/** `onlyMorning`: at launch, a morning brief if it's the day's first, and nothing otherwise. */
-async function briefing(since: number, onlyMorning = false) {
-  // The first one of the day is a morning brief: today's meetings and reminders come first.
-  if (firstToday(safeStorage())) {
-    const meetings = settings?.calendar_heads_up ? await invoke<CalendarEvent[]>("upcoming_events", { hours: 14 }).catch(() => []) : [];
-    const today = morning(await journal(since), reminders.upcoming, meetings);
-    if (today.length)
-      return pet.bubble.show({ id: "welcome", who: pet.name, title: "Good morning. Today:", lines: today, choices: [{ label: "OK", value: "ok", primary: true }], onChoose: () => {} });
-  }
-  if (onlyMorning) return;
+/** Coming back after a long time away: what the agents did meanwhile, and the next reminder. */
+async function briefing(since: number) {
   const lines = welcomeBack(await journal(since), reminders.upcoming);
   if (!lines.length) return;
   pet.bubble.show({

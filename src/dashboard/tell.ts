@@ -35,8 +35,9 @@ export function tellBar(app: App) {
     input.value = "";
     update();
     const command = parse(text);
-    if (command.kind === "run") return confirmRun(app, command.command, command.folder);
-    if (command.kind === "start") return confirmStart(app, command.agent, command.folder, command.full);
+    // Labs (docs/V1.md F-10, F-17): off, the companion's reply says how to turn them on.
+    if (command.kind === "run" && app.state.settings.labs_commands) return confirmRun(app, command.command, command.folder);
+    if (command.kind === "start" && app.state.settings.labs_sessions) return confirmStart(app, command.agent, command.folder, command.full);
     const reply = await app.tell(text);
     if (reply) app.toast(reply);
     void app.refresh();
@@ -62,7 +63,7 @@ async function confirmStart(app: App, agent: "claude" | "codex", wanted: string 
   try {
     const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: sessionFolder(app, wanted) ?? wanted });
     const name = agent === "codex" ? "Codex" : "Claude Code";
-    review(app, `Start ${name}?`, `${name} · ${full ? "Full access" : "Asks first"}`, folder.path, `Start ${name}`, () => invoke<string>("start_session", { agent, cwd: folder.path, fullAccess: full }));
+    review(app, `Start ${name}?`, `${name} · ${full ? (agent === "codex" ? "without approvals" : "auto mode") : "asks you first"}`, folder.path, `Start ${name}`, () => invoke<string>("start_session", { agent, cwd: folder.path, fullAccess: full }));
   } catch (error) {
     app.toast(String(error), undefined, true);
   }

@@ -223,7 +223,7 @@ export function renderReview(app: App, id: string) {
   if (!requests.childElementCount) requests.append(h("p", { class: "muted", text: "No pending requests." }));
   rail.append(requests, h("h2", { class: "section-title", text: "Work sessions" }));
   const sessions = h("div", { class: "card list" });
-  for (const s of app.state.status.pets.flatMap((p) => p.sessions)) sessions.append(sessionRow(app, s, true));
+  for (const s of app.state.status.pets.flatMap((p) => p.sessions)) sessions.append(sessionRow(app, s));
   rail.append(sessions);
   detail.append(h("p", { class: "muted", text: "Closing this view keeps unanswered requests pending." }));
   return h("div", { class: "view review-layout" }, rail, detail);

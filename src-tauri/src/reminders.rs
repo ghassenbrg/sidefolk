@@ -2,7 +2,7 @@
 //! reminders.json. The page decides when to show them; this module only keeps the list.
 use serde::{Deserialize, Serialize};
 use std::{
-    fs, io,
+    io,
     path::PathBuf,
     sync::{
         Mutex,
@@ -89,24 +89,29 @@ pub struct Change {
 
 pub struct Reminders {
     path: PathBuf,
+    /// The file couldn't be read or set aside, so nothing may be written over it (store.rs).
+    blocked: bool,
     list: Mutex<Vec<Reminder>>,
     notifications: Mutex<Option<std::sync::mpsc::Sender<Vec<Reminder>>>>,
 }
 
 impl Reminders {
-    pub fn load(data_dir: &std::path::Path) -> Self {
+    /// A damaged file is set aside and reported, never read as an empty list that the next save
+    /// would write over (docs/V1.md V1-S2).
+    pub fn load(data_dir: &std::path::Path, problems: &crate::store::Problems) -> Self {
         let path = data_dir.join("reminders.json");
         let now = now_ms();
-        let list: Vec<Reminder> = fs::read(&path)
-            .ok()
-            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-            .unwrap_or_default();
-        let list = list
+        let loaded = crate::store::load::<Vec<Reminder>>(&path, |_, data| data);
+        problems.note(&path, &loaded);
+        let blocked = matches!(loaded, crate::store::Loaded::Corrupt { kept: None, .. });
+        let list = loaded
+            .or_default()
             .into_iter()
             .filter(|r| !r.done || now.saturating_sub(r.due) < KEEP_DONE_MS)
             .collect();
         Self {
             path,
+            blocked,
             list: Mutex::new(list),
             notifications: Mutex::new(None),
         }
@@ -230,7 +235,10 @@ impl Reminders {
     }
 
     fn write(&self, list: &[Reminder]) -> io::Result<()> {
-        crate::settings::atomic_write(&self.path, &serde_json::to_vec_pretty(list)?)?;
+        if self.blocked {
+            return Err(io::Error::other("Your reminders file couldn't be read, so I won't write over it."));
+        }
+        crate::store::save(&self.path, 1, &list)?;
         self.schedule(list);
         Ok(())
     }
@@ -239,10 +247,11 @@ impl Reminders {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     #[test]
     fn every_saved_mutation_updates_the_notification_schedule() {
         let dir = std::env::temp_dir().join(format!("sidefolk-notification-store-{}", std::process::id()));
-        let store = Reminders::load(&dir);
+        let store = Reminders::load(&dir, &Default::default());
         let (tx, rx) = std::sync::mpsc::channel();
         store.schedule_with(tx);
         assert!(rx.recv().unwrap().is_empty());
@@ -267,18 +276,18 @@ mod tests {
     #[test]
     fn add_update_and_reload() {
         let dir = std::env::temp_dir().join(format!("sidefolk-reminders-{}", std::process::id()));
-        let store = Reminders::load(&dir);
+        let store = Reminders::load(&dir, &Default::default());
         assert!(store.add("   ", 1, "", "you", None).is_err());
         let r = store.add("review  the PR", now_ms() + 60_000, "/p", "claude", None).unwrap();
         assert_eq!(r.text, "review the PR");
         assert!(store.update(&r.id, &Change { fired: Some(true), ..Default::default() }).unwrap());
         assert!(store.update(&r.id, &Change { due: Some(5), ..Default::default() }).unwrap());
-        let reloaded = Reminders::load(&dir).list();
+        let reloaded = Reminders::load(&dir, &Default::default()).list();
         assert_eq!(reloaded.len(), 1);
         assert_eq!((reloaded[0].due, reloaded[0].fired), (5, false));
         // Done long ago: dropped on the next load.
         store.update(&r.id, &Change { done: Some(true), ..Default::default() }).unwrap();
-        assert!(Reminders::load(&dir).list().is_empty());
+        assert!(Reminders::load(&dir, &Default::default()).list().is_empty());
         assert!(!store.update("missing", &Change::default()).unwrap());
         let weekly = Repeat { every: "week".into(), n: 2 };
         let r = store.add("send the report", now_ms() + 60_000, "", "you", Some(weekly.clone())).unwrap();
@@ -289,7 +298,7 @@ mod tests {
         assert_eq!(store.list().iter().find(|x| x.id == r.id).unwrap().repeat.as_ref().unwrap().n, 3);
         assert!(store.update(&r.id, &serde_json::from_str::<Change>(r#"{"repeat":{"every":"day","n":0}}"#).unwrap()).is_err());
         store.update(&r.id, &serde_json::from_str::<Change>(r#"{"clear_repeat":true}"#).unwrap()).unwrap();
-        assert_eq!(Reminders::load(&dir).list().iter().find(|x| x.id == r.id).unwrap().repeat, None);
+        assert_eq!(Reminders::load(&dir, &Default::default()).list().iter().find(|x| x.id == r.id).unwrap().repeat, None);
         let odd = store.add("odd", now_ms() + 60_000, "", "you", Some(Repeat { every: "hour".into(), n: 1 })).unwrap();
         assert_eq!(odd.repeat, None);
         let r = store.add("call the bank", now_ms() + 60_000, "", "you", None).unwrap();
@@ -299,7 +308,7 @@ mod tests {
         assert_eq!(removed.text, "call mum");
         assert!(store.list().iter().all(|x| x.id != r.id));
         store.restore(removed).unwrap();
-        assert!(Reminders::load(&dir).list().iter().any(|x| x.id == r.id));
+        assert!(Reminders::load(&dir, &Default::default()).list().iter().any(|x| x.id == r.id));
         fs::remove_dir_all(dir).unwrap();
     }
 }

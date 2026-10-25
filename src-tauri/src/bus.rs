@@ -177,12 +177,10 @@ pub struct Shared {
     pub reminders: crate::reminders::Reminders,
     pub notes: crate::notes::Notes,
     pub permissions: Permissions,
-    pub codex: tokio::sync::Mutex<Option<std::sync::Arc<crate::codex::Codex>>>,
+    /// Stores that couldn't be read at launch (store.rs).
+    pub problems: crate::store::Problems,
     /// Where each agent session runs, for "Open session".
     pub hosts: crate::sessions::Hosts,
-    /// "claude:<session>" keys the user gave full access; the overlay owns the list and mirrors
-    /// it here so those sessions' requests reach the companion even with a terminal in front.
-    pub full_access: Mutex<std::collections::HashSet<String>>,
 }
 
 pub fn clip(text: &str, max: usize) -> String {

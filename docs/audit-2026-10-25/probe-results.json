@@ -1,0 +1,100 @@
+{
+  "auditedAt": "2026-10-25",
+  "timezone": "Asia/Tokyo",
+  "fixedNow": "2026-10-25 10:00:00 JST",
+  "observations": [
+    {
+      "id": "TIME-1",
+      "input": "at 3 to call mum",
+      "expected": "2026-10-25 15:00:00 JST",
+      "actual": "2026-10-26 15:00:00 JST",
+      "parseWhen": "2026-10-26 15:00:00 JST"
+    },
+    {
+      "id": "TIME-2",
+      "input": "2026-10-26T03:00 to check backup",
+      "expected": "2026-10-26 03:00:00 JST",
+      "actual": "2026-10-26 15:00:00 JST",
+      "parseWhen": "2026-10-26 03:00:00 JST"
+    },
+    {
+      "id": "TIME-3",
+      "input": "every Monday and Thursday at 9 to check reports",
+      "actual": {
+        "what": "and Thursday at 9 to check reports",
+        "due": "2026-10-26T00:00:00.000Z",
+        "repeat": {
+          "every": "week",
+          "n": 1
+        }
+      },
+      "note": "Only one weekly occurrence is parsed; Thursday remains task text."
+    },
+    {
+      "id": "TIME-4",
+      "input": "2026-10-20 at 9 to call the bank",
+      "actual": "2026-10-21 09:00:00 JST",
+      "note": "Still in the past; UI save guard prevents new reminders being saved at this date."
+    },
+    {
+      "id": "TIME-5",
+      "input": "Monday weekly reminder snoozed to Tuesday, then completed",
+      "expectedIfSnoozePreservesSchedule": "2026-11-02 09:00:00 JST",
+      "actual": "2026-11-03 09:00:00 JST"
+    },
+    {
+      "id": "LANGUAGE",
+      "input": "meeting at 3",
+      "actual": "unknown"
+    },
+    {
+      "id": "LANGUAGE",
+      "input": "I have a meeting at 3",
+      "actual": "unknown"
+    },
+    {
+      "id": "LANGUAGE",
+      "input": "remember I shipped the login migration",
+      "actual": "unknown"
+    },
+    {
+      "id": "LANGUAGE",
+      "input": "note for Ideas: try a quieter morning",
+      "actual": "note"
+    },
+    {
+      "id": "ACCESS",
+      "input": "git -C /tmp push --force",
+      "stillAsks": false
+    },
+    {
+      "id": "ACCESS",
+      "input": "git clean -fd",
+      "stillAsks": false
+    },
+    {
+      "id": "ACCESS",
+      "input": "rm --recursive /tmp/sidefolk-audit-only",
+      "stillAsks": false
+    },
+    {
+      "id": "ACCESS",
+      "input": "find /tmp/sidefolk-audit-only -delete",
+      "stillAsks": false
+    },
+    {
+      "id": "ACCESS-CLIP",
+      "characters": 2088,
+      "fullCommandStillAsks": true,
+      "first2000CharactersStillAsk": false,
+      "productionAlgorithmExcerptLength": 2000,
+      "productionAlgorithmExcerptStillAsks": false
+    },
+    {
+      "id": "DISPLAY-WHITESPACE",
+      "input": "echo \"a  b\"",
+      "displayed": "echo \"a b\"",
+      "note": "Pure reproduction of bus.rs display algorithm changes quoted argument whitespace."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 [package]
 name = "sidefolk"
 version = "0.1.0"
-description = "A 3D familiar that gives your AI agents a body"
+description = "Pip, a desktop companion for your reminders, your work log and your Claude Code sessions"
 edition = "2024"
 rust-version = "1.90"
 
@@ -17,14 +17,17 @@ tauri-plugin-global-shortcut = "2.4"
 tauri-plugin-autostart = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "sync", "time", "net"] }
 axum = "0.8"
-portable-pty = "0.9"
+
+[features]
+# The calendar heads-up (docs/V1.md F-21): kept for v1.1, off in v1 builds.
+calendar = ["dep:objc2-event-kit"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 tauri-nspanel = "2.1"
 objc2 = "0.6"
 objc2-foundation = { version = "0.3", features = ["NSArray", "NSBundle", "NSError", "NSString"] }
 objc2-user-notifications = "0.3"
-objc2-event-kit = "0.3"
+objc2-event-kit = { version = "0.3", optional = true }
 block2 = "0.6"
 
 [profile.release]

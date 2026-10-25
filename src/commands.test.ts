@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { knowCommands, parse } from "./commands";
+import { parse } from "./commands";
 
 describe("parse", () => {
   it.each([
@@ -21,24 +21,22 @@ describe("parse", () => {
     expect(parse("continue the refactor").kind).toBe("unknown");
   });
 
-  it("recognizes plain commands locally and never sends them to an AI tool", () => {
-    expect(parse("ls -la")).toEqual({ kind: "run", command: "ls -la", folder: null });
-    expect(parse("git pull")).toEqual({ kind: "run", command: "git pull", folder: null });
-    expect(parse("run npm test in api")).toEqual({ kind: "run", command: "npm test", folder: "api" });
-    expect(parse("run make build in ~/git/sidefolk")).toEqual({ kind: "run", command: "make build", folder: "~/git/sidefolk" });
-    expect(parse("$ du -sh *")).toEqual({ kind: "run", command: "du -sh *", folder: null });
+  it("runs a shell command only with an explicit $, never from English", () => {
+    expect(parse("$ ls -la")).toEqual({ kind: "run", command: "ls -la", folder: null });
+    expect(parse("$ npm test in api")).toEqual({ kind: "run", command: "npm test", folder: "api" });
+    expect(parse("$du -sh *")).toEqual({ kind: "run", command: "du -sh *", folder: null });
+    for (const english of ["ls -la", "git pull", "make coffee", "touch grass", "less email please", "run npm test in api", "make build", "say hello", "find my notes"])
+      expect(parse(english).kind).not.toBe("run");
   });
 
-  it("knows PATH commands written like commands, not sentences that start with one", () => {
-    knowCommands(["terraform", "open", "say", "make"]);
-    expect(parse("terraform plan -out x").kind).toBe("run");
-    expect(parse("terraform").kind).toBe("run");
-    expect(parse("open the team's Jira")).toEqual({ kind: "open-thing", target: "team's Jira", app: null }); // a saved link, if there is one
-    expect(parse("say hello").kind).toBe("unknown");
-    expect(parse("make a note about the release").kind).toBe("unknown");
-    expect(parse("find my notes").kind).toBe("unknown");
-    expect(parse("make build").kind).toBe("run");
-    knowCommands([]);
+  it("turns anything with a date or time into a reminder, and app questions into the app", () => {
+    expect(parse("call mom at 5pm")).toEqual({ kind: "remind", text: "call mom at 5pm" });
+    expect(parse("dentist thursday 2:30").kind).toBe("remind");
+    expect(parse("open enrollment closes friday 5pm").kind).toBe("remind");
+    expect(parse("what do I have today")).toEqual({ kind: "sidefolk" });
+    expect(parse("show my notes")).toEqual({ kind: "notes" });
+    expect(parse("show my reminders")).toEqual({ kind: "reminders" });
+    expect(parse("I finished the Q3 report").kind).toBe("unknown");
   });
 
   it("takes notes in one sentence", () => {
@@ -58,14 +56,7 @@ describe("parse", () => {
     expect(parse("open the api session")).toEqual({ kind: "open", project: "api" });
   });
 
-  it("adds and removes Spark workers by project", () => {
-    expect(parse("give api a spark")).toEqual({ kind: "spark", project: "api", name: null, remove: false });
-    expect(parse("add a spark for ~/git/web called Frontend")).toEqual({ kind: "spark", project: "~/git/web", name: "Frontend", remove: false });
-    expect(parse("send the api spark home")).toEqual({ kind: "spark", project: "api", name: null, remove: true });
-    expect(parse("give me a minute").kind).toBe("unknown");
-  });
-
-  it("opens folders in apps, links and apps, and saves actions", () => {
+  it("opens folders in apps, links and apps", () => {
     expect(parse("open api in VS Code")).toEqual({ kind: "open-thing", target: "api", app: "VS Code" });
     expect(parse("open a terminal in ~/git/x")).toEqual({ kind: "open-thing", target: "~/git/x", app: "terminal" });
     expect(parse("open github.com/me/x")).toEqual({ kind: "open-thing", target: "github.com/me/x", app: null });
@@ -73,7 +64,5 @@ describe("parse", () => {
     expect(parse("open session")).toEqual({ kind: "open", project: null });
     expect(parse("open sidefolk")).toEqual({ kind: "sidefolk" });
     expect(parse("open notes")).toEqual({ kind: "notes" });
-    expect(parse("save action deploy staging: npm run deploy -- staging in api")).toEqual({ kind: "save-action", name: "deploy staging", value: "npm run deploy -- staging", folder: "api", link: false });
-    expect(parse("save link jira: https://team.atlassian.net/board")).toEqual({ kind: "save-action", name: "jira", value: "https://team.atlassian.net/board", folder: null, link: true });
   });
 });

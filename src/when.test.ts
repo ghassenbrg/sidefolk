@@ -31,6 +31,39 @@ describe("parseReminder", () => {
   });
 });
 
+describe("everyday phrasing (docs/V1.md V1-Q3)", () => {
+  // Sunday 25 October 2026, 10:00 local time.
+  const sunday = new Date(2026, 9, 25, 10, 0);
+  it("reads a bare hour as the soonest one between 07:00 and 21:59, today when it can", () => {
+    const r = parseReminder("at 3 to call mum", sunday)!;
+    expect([r.what, ...at(r.due)]).toEqual(["call mum", 25, 15, 0]);
+    expect(at(parseReminder("call mom at 5pm", sunday)!.due)).toEqual([25, 17, 0]);
+    // "at 9" at 10:00 is ambiguous: tonight, with tomorrow morning as the other reading.
+    const nine = parseReminder("at 9 to send the report", sunday)!;
+    expect(at(nine.due)).toEqual([25, 21, 0]);
+    expect(at(nine.alternative!)).toEqual([26, 9, 0]);
+  });
+  it("keeps a time said apart from its date", () => {
+    const r = parseReminder("tomorrow standup 9:30", sunday)!;
+    expect([r.what, ...at(r.due)]).toEqual(["standup", 26, 9, 30]);
+  });
+  it("puts an offset reminder before today's meeting, not tomorrow's", () => {
+    const r = parseReminder("meeting at 3, remind me 10 minutes before", sunday)!;
+    expect([r.what, ...at(r.due)]).toEqual(["meeting", 25, 14, 50]);
+  });
+  it("reads named times of day", () => {
+    expect(at(parseReminder("tonight to water the plants", sunday)!.due)).toEqual([25, 20, 0]);
+    expect(at(parseReminder("send the invoice end of day", sunday)!.due)).toEqual([25, 17, 0]);
+    expect(at(parseReminder("tomorrow morning to call the bank", sunday)!.due)).toEqual([26, 9, 0]);
+    expect(at(parseReminder("this afternoon to review the PR", sunday)!.due)).toEqual([25, 15, 0]);
+    expect(at(parseReminder("lunch with Priya tomorrow at noon", sunday)!.due)).toEqual([26, 12, 0]);
+  });
+  it("reads a weekday with a time", () => {
+    const r = parseReminder("dentist thursday 2:30", sunday)!;
+    expect([r.what, ...at(r.due)]).toEqual(["dentist", 29, 14, 30]);
+  });
+});
+
 describe("parseWhen", () => {
   it("takes ISO times literally and plain words with the same rules", () => {
     expect(at(parseWhen("2026-10-23T03:00", now)!)).toEqual([23, 3, 0]);

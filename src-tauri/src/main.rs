@@ -4,13 +4,10 @@
 mod actions;
 mod app_menu;
 mod calendar;
-mod characters;
 mod bus;
 mod claude_setup;
-mod codex;
 mod crew;
 mod hooks;
-mod inside;
 mod journal;
 mod mcp;
 mod mcp_setup;
@@ -23,8 +20,8 @@ mod notes;
 mod notifications;
 mod sessions;
 mod settings;
+mod store;
 mod tray;
-mod voice;
 
 use std::sync::Arc;
 
@@ -127,6 +124,24 @@ fn restore_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, reminder: re
 }
 
 /// The page's answer to an agent's tool call (see mcp.rs).
+/// Stores that couldn't be read at launch (store.rs), for the window's banner.
+#[tauri::command]
+fn store_problems(shared: State<'_, Arc<Shared>>) -> Vec<store::Problem> {
+    shared.problems.list()
+}
+
+/// Puts a store's last good copy back, then starts Sidefolk again so everything reads it.
+#[tauri::command]
+fn restore_store(app: AppHandle, shared: State<'_, Arc<Shared>>, file: String) -> Result<(), String> {
+    if !shared.problems.list().iter().any(|p| p.file == file && p.backup) {
+        return Err("There's no last good copy of that file.".into());
+    }
+    let dir = shared.settings.lock().unwrap().dir.clone();
+    store::restore(&dir.join(&file)).map_err(|e| e.to_string())?;
+    app.restart();
+}
+
+/// The page's answer to an agent's tool call (see mcp.rs).
 #[tauri::command]
 fn mcp_reply(shared: State<'_, Arc<Shared>>, id: String, result: serde_json::Value) -> bool {
     shared.replies.resolve(&id, result)
@@ -156,21 +171,6 @@ fn resolve_permission(shared: State<'_, Arc<Shared>>, id: String, decision: Stri
     shared.permissions.resolve(&id, decision)
 }
 
-#[tauri::command]
-async fn dispatch(
-    app: AppHandle,
-    shared: State<'_, Arc<Shared>>,
-    prompt: String,
-    cwd: Option<String>,
-) -> Result<String, String> {
-    let prompt = prompt.trim();
-    if prompt.is_empty() {
-        return Err("Tell me what to ask Codex.".into());
-    }
-    let cwd = cwd.filter(|c| !c.is_empty()).map(std::path::PathBuf::from);
-    codex::dispatch(&app, shared.inner().clone(), prompt.to_string(), cwd).await
-}
-
 /// The bubble's text field opened or closed.
 #[tauri::command]
 fn overlay_typing(app: AppHandle, typing: bool) {
@@ -193,11 +193,6 @@ async fn ui_log(app: AppHandle, line: String, focus: Option<bool>) {
 }
 
 fn main() {
-    // `sidefolk here` / `sidefolk home` in a terminal (installed from Settings).
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    if matches!(args.first().map(String::as_str), Some("here" | "home" | "help" | "--help")) {
-        std::process::exit(mcp::run_cli(&args));
-    }
     // `sidefolk --mcp` is the stdio MCP server agents start; it only talks to the running app.
     if std::env::args().any(|arg| arg == "--mcp") {
         return mcp::run_shim();
@@ -228,12 +223,6 @@ fn main() {
             calendar::request_calendar,
             calendar::upcoming_events,
             prefs::problem_report,
-            characters::list_characters,
-            characters::save_character,
-            characters::character_frames,
-            characters::delete_character,
-            characters::save_template,
-            actions::install_cli,
             notes::list_notebooks,
             notes::read_notebook,
             notes::create_notebook,
@@ -241,30 +230,14 @@ fn main() {
             notes::edit_note,
             notes::remove_note,
             notes::restore_note,
-            notes::draft_tools,
-            notes::draft_summary,
-            actions::path_commands,
             actions::open_target,
-            actions::list_actions,
-            actions::save_action,
-            actions::remove_action,
-            actions::run_action,
-            actions::show_output,
             actions::start_session,
-            hooks::sync_full_access,
             actions::resolve_folder,
             actions::run_command,
             actions::choose_project_folder,
             resolve_permission,
-            dispatch,
             overlay_typing,
             overlay::overlay_area,
-            inside::pty_open,
-            inside::pty_list,
-            inside::pty_attach,
-            inside::pty_write,
-            inside::pty_resize,
-            inside::pty_close,
             overlay::overlay_frame,
             ui_log,
             get_settings,
@@ -281,6 +254,8 @@ fn main() {
             restore_reminder,
             peek,
             mcp_reply,
+            store_problems,
+            restore_store,
             prefs::update_settings,
             prefs::integrations,
             prefs::tray_action,
@@ -290,28 +265,26 @@ fn main() {
             prefs::app_info,
             prefs::publish_status,
             prefs::get_status,
-            voice::speak,
-            voice::voices,
             sessions::open_session,
             sessions::terminals,
             prefs::answered,
             prefs::open_tab
         ])
         .setup(move |app| {
-            let store = settings::Store::load(settings::data_dir(app.handle())?)?;
+            let problems = store::Problems::default();
+            let store = settings::Store::load(settings::data_dir(app.handle())?, &problems);
             prefs::log_panics(&store.dir);
             let shared = Arc::new(Shared {
-                full_access: Default::default(),
-                crew: std::sync::Mutex::new(crew::load(&store.dir)),
+                crew: std::sync::Mutex::new(crew::load(&store.dir, &problems)),
                 status: Default::default(),
                 journal: journal::Journal::open(&store.dir),
                 replies: Default::default(),
                 token: mcp::ensure_token(&store.dir)?,
-                reminders: reminders::Reminders::load(&store.dir),
+                reminders: reminders::Reminders::load(&store.dir, &problems),
+                problems,
                 notes: notes::Notes::new(&store.dir),
                 settings: std::sync::Mutex::new(store),
                 permissions: Default::default(),
-                codex: Default::default(),
                 hosts: Default::default(),
             });
             app.manage(shared.clone());
@@ -319,7 +292,6 @@ fn main() {
                 shared.reminders.schedule_with(sender);
             }
             prefs::apply_theme(app.handle(), &shared.settings.lock().unwrap().value.theme);
-            inside::init(app.handle());
             app_menu::apply_dock(app.handle());
             app.set_menu(app_menu::build(app.handle())?)?;
             app.on_menu_event(|app, event| app_menu::handle(app, event.id().as_ref()));

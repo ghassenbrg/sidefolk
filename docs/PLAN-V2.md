@@ -1,5 +1,7 @@
 # Sidefolk v2: review, product plan and roadmap
 
+> **Superseded for building by [V1.md](V1.md) (25 October 2026).** Sections 6–10 are history; V1 §15 lists what it reversed.
+
 24 October 2026 · Plan phase: nothing here is built yet. All six decisions in section 11 are
 made (24 October); it supersedes the build order in [ROADMAP.md](ROADMAP.md). Building starts
 with phase 0 when you say go.

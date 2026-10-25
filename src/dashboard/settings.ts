@@ -5,20 +5,15 @@ import { acceleratorFrom, shortcutLabel } from "../keys";
 import { invoke, type Settings } from "./api";
 import type { App } from "./app";
 import { button, h, TERMINAL_LABELS } from "./dom";
-import { cachedCharacters, characters as loadCharacters } from "./characters";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
-import { framesDir, MAIN_LOOK, ROSTER } from "../roster";
-import { COLORS, colorName } from "../worker-colors";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
 // the settings file is written. Connecting a tool opens the app's own confirmation, which
 // explains the file it changes and keeps a backup.
 
-let voices: { name: string; language: string }[] | null = null;
 let terminals: string[] | null = null;
 let recording = false;
-let charactersLoaded = false;
 
 
 function group(title: string, glyph: IconName, id: string, ...rows: (HTMLElement | null)[]) {
@@ -60,32 +55,6 @@ function segmented(app: App, key: keyof Settings, label: string, description: st
   return h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: label }), h("p", { class: "muted", text: description })), control);
 }
 
-/** Your companion's accent (scarf, lights, leaves), from the Spark colors; mint is its own. */
-function accentColor(app: App) {
-  const control = h("select", { id: "setting-accent", "aria-describedby": "setting-accent-help" }, ...COLORS.map(([name, hue]) => h("option", { value: String(hue), text: name })));
-  control.value = String(app.state.crew.main.hue ?? 0);
-  control.addEventListener("change", () => void app.petAction({ action: "color", hue: Number(control.value) }, `${app.state.crew.main.name} wears ${colorName(Number(control.value)).toLowerCase()} now.`));
-  return row("Accent color", "Turns only the mint parts: a scarf, lights, a hoodie, leaves. Characters you made keep their own colors.", control, "setting-accent");
-}
-
-/** The crew and the characters you made, as pictures to pick your companion's look from. */
-function crewChoices(app: App) {
-  const current = app.state.crew.main.look ?? MAIN_LOOK;
-  const choices = h("fieldset", { class: "crew-choices" }, h("legend", { text: "Looks like" }));
-  const choose = (id: string, name: string) => {
-    if (id === current) return;
-    void app.petAction({ action: "look", look: id === MAIN_LOOK ? null : id }, `${app.state.crew.main.name} looks like ${name} now.`);
-  };
-  const tile = (id: string, name: string, kind: string, picture: HTMLElement) => {
-    const radio = h("input", { type: "radio", id: `look-${id}`, name: "look", value: id, checked: id === current });
-    radio.addEventListener("change", () => choose(id, name));
-    return h("label", { class: "crew-choice", for: radio.id }, radio, picture, h("strong", { text: name }), h("span", { class: "muted", text: kind }));
-  };
-  for (const m of ROSTER) choices.append(tile(m.id, m.name, m.kind, h("img", { src: `${framesDir(m.id, app.state.settings.art_style)}/idle.webp`, alt: "" })));
-  for (const c of cachedCharacters()) choices.append(tile(c.id, c.name, "Made by you", h("span", { class: "crew-initial", "aria-hidden": "true", text: c.name.slice(0, 1).toUpperCase() })));
-  return choices;
-}
-
 function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools", action: string, title: string, what: string, change: string, stops: string) {
   const on = app.state.integrations[key];
   return h(
@@ -107,30 +76,12 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
 
 function settingsContents(app: App) {
   const { settings, integrations } = app.state;
-  voices ?? void invoke<{ name: string; language: string }[]>("voices").then((v) => ((voices = v), app.redraw(true))).catch(() => (voices = []));
-  if (!charactersLoaded) {
-    charactersLoaded = true;
-    void loadCharacters().then(() => app.redraw(true));
-  }
   terminals ?? void invoke<string[]>("terminals").then((t) => ((terminals = t), app.redraw(true))).catch(() => (terminals = []));
   // Settings don't change while being read; only saves (forced) redraw this page.
 
   const view = h("div", { class: "view settings" }, ...header("Make Sidefolk comfortable.", "A few simple preferences. Everything here can change later."));
 
-  view.append(
-    group(
-      "Your companion",
-      "home",
-      "companion",
-      crewChoices(app),
-      accentColor(app),
-      segmented(app, "art_style", "Style", "Soft 3D renders or flat 2D drawings of the same characters, for your companion and every Spark.", [
-        ["3d", "3D"],
-        ["2d", "2D"],
-      ]),
-      row("Your own", "Turn a drawing into a companion: one picture, or one per pose.", button("Make your own…", () => app.go("characters"))),
-    ),
-  );
+  view.append(group("Your companion", "home", "companion"));
 
   const terminalOptions: [string, string][] = [["auto", "Automatic"], ...(terminals ?? []).map((t): [string, string] => [t, TERMINAL_LABELS[t] ?? t])];
   view.append(
@@ -140,7 +91,6 @@ function settingsContents(app: App) {
       "terminal",
       select(app, "terminal", "Default terminal", "Where commands, new sessions and continued sessions open. Automatic uses the one your sessions run in, else a terminal you installed. A running session always comes forward where it is.", terminalOptions),
       terminalControl(),
-      row("Command line tool", "In a project folder, “sidefolk here --name Backend” gives it a Spark; “sidefolk home” sends it home. Asks for your password once to install.", button("Install…", () => void invoke<string>("install_cli").then((done) => app.toast(done), (error) => app.toast(String(error), undefined, true)))),
     ),
   );
 
@@ -177,11 +127,6 @@ function settingsContents(app: App) {
 
   const volume = h("input", { type: "range", id: "setting-volume", min: 0, max: 100, step: 5, value: String(settings.volume) });
   volume.addEventListener("change", () => void app.save({ volume: Number(volume.value) }));
-  const voice = h("select", { id: "setting-voice" }, h("option", { value: "", text: "System voice" }));
-  for (const v of [...(voices ?? [])].sort((a, b) => Number(!a.language.startsWith("en")) - Number(!b.language.startsWith("en")) || a.name.localeCompare(b.name)))
-    voice.append(h("option", { value: v.name, text: `${v.name} (${v.language.replace("_", "-")})` }));
-  voice.value = settings.voice;
-  voice.addEventListener("change", () => void app.save({ voice: voice.value }));
   view.append(
     group(
       "Sound",
@@ -189,37 +134,7 @@ function settingsContents(app: App) {
       "sound",
       toggle(app, "sounds", "Sound cues", "Short sounds when a companion talks or something needs you."),
       row("Volume", null, volume, "setting-volume"),
-      toggle(app, "speak", "Speak out loud", "Companions read their lines with a macOS voice instead of sounds. AI tools' text is read too."),
       notificationSetting(app),
-      row("Voice", "More voices: System Settings → Accessibility → Spoken Content.", h("div", { class: "inline" }, voice, button("Try", () => void invoke("speak", { text: "Pip here. Your reminder is due.", voice: voice.value }).catch((e) => app.toast(String(e), undefined, true)))), "setting-voice"),
-    ),
-  );
-
-  const calendarOn = h("input", { type: "checkbox", class: "switch", role: "switch", id: "setting-calendar", checked: settings.calendar_heads_up, "aria-describedby": "setting-calendar-help" });
-  const calendarNote = h("p", { class: "muted", "aria-live": "polite" });
-  calendarOn.addEventListener("change", async () => {
-    if (!calendarOn.checked) return void app.save({ calendar_heads_up: false });
-    // Asked here, with the reason on screen, the first time it's turned on.
-    const status = await invoke<string>("request_calendar").catch((e) => String(e));
-    if (status === "allowed") return void app.save({ calendar_heads_up: true }, "Calendar heads-up is on.");
-    calendarOn.checked = false;
-    calendarNote.textContent = status === "denied" ? "macOS says no. Allow Sidefolk in System Settings → Privacy & Security → Calendars, then turn this on again." : status;
-  });
-  view.append(
-    group(
-      "Calendar",
-      "reminders",
-      "calendar",
-      row("Meeting heads-up", "A few minutes before a meeting, your companion says so, with Join when there's a video link. Read from your Mac's calendars, never sent anywhere.", calendarOn, "setting-calendar"),
-      calendarNote,
-      settings.calendar_heads_up
-        ? select(app, "calendar_lead_mins", "How early", null, [
-            ["2", "2 minutes before"],
-            ["5", "5 minutes before"],
-            ["10", "10 minutes before"],
-            ["15", "15 minutes before"],
-          ], true)
-        : null,
     ),
   );
 
@@ -279,6 +194,17 @@ function settingsContents(app: App) {
     ),
   );
 
+  // Labs (docs/V1.md F-10, F-17): off by default, never needed for everyday use.
+  view.append(
+    group(
+      "Labs",
+      "settings",
+      "labs",
+      toggle(app, "labs_commands", "Commands", "Type “$ npm test in api” to Pip: you see the exact command and folder first, then it opens in your terminal. Plain sentences never run as commands."),
+      toggle(app, "labs_sessions", "Start sessions", "Start Claude Code or Codex in a folder from Pip or the Sessions page."),
+    ),
+  );
+
   view.append(
     group(
       "About and help",
@@ -325,12 +251,11 @@ function settingsContents(app: App) {
 
 type Category = { id: string; title: string; glyph: IconName; groups: string[]; words: string };
 const CATEGORIES: Category[] = [
-  { id: "general", title: "General", glyph: "settings", groups: ["startup"], words: "login startup dock shortcut keyboard" },
+  { id: "general", title: "General", glyph: "settings", groups: ["startup", "labs"], words: "login startup dock shortcut keyboard labs commands start sessions" },
   { id: "appearance", title: "Appearance", glyph: "idle", groups: ["appearance"], words: "theme dark light system colors" },
-  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop"], words: "pet pip name rename size look character import hide show" },
-  { id: "calendar", title: "Reminders & calendar", glyph: "reminders", groups: ["calendar"], words: "meeting join lead time repeat snooze" },
-  { id: "sound", title: "Notifications & sound", glyph: "reminders", groups: ["sound"], words: "notifications permission reminder volume speech voice speak" },
-  { id: "tools", title: "AI tools", glyph: "terminal", groups: ["tools", "terminal"], words: "claude codex connections terminal automation command cli spark project session access" },
+  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop"], words: "pet pip name rename size hide show" },
+  { id: "sound", title: "Notifications & sound", glyph: "reminders", groups: ["sound"], words: "notifications permission reminder volume mute quiet" },
+  { id: "tools", title: "AI tools", glyph: "terminal", groups: ["tools", "terminal"], words: "claude codex connections terminal automation session" },
   { id: "privacy", title: "Privacy", glyph: "info", groups: ["privacy"], words: "screen recording capture sharing local" },
   { id: "accessibility", title: "Accessibility", glyph: "crew", groups: ["accessibility"], words: "motion reduced calm text large sleep idle" },
   { id: "help", title: "About & data", glyph: "info", groups: ["help"], words: "version help logs report export notebook data folder setup" },
@@ -426,7 +351,6 @@ export function renderSettings(app: App, arg: string) {
       } }, h("div", { class: "field" }, h("label", { for: rename.id, text: "Companion name" }), rename), h("div", { class: "actions" }, h("button", { type: "submit", text: "Save name" }))),
       h("div", { class: "actions" }, button("Show companion", () => void invoke("tray_action", { action: "show" }).catch((e) => app.toast(String(e), undefined, true))), button("Hide companion", () => void app.tell("hide"))));
     }
-    if (category === "calendar") content.append(h("div", { class: "card" }, h("h2", { text: "Your reminders" }), h("p", { class: "muted", text: "Manage repeating reminders, snooze and reminder history in Reminders." }), h("div", { class: "actions" }, button("Manage reminders", () => app.go("reminders")), button("Notification delivery", () => selectCategory(CATEGORIES[4])))));
     if (category === "tools") content.append(h("div", { class: "actions" }, button("Sessions & project companions", () => app.go("sessions")), button("Saved actions", () => app.go("actions"))));
     if (category === "help") content.append(h("div", { class: "actions" }, button("Notebooks & export", () => app.go("notes")), button("Saved actions", () => app.go("actions"))));
   };

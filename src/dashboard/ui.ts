@@ -94,8 +94,8 @@ export function navIcon(name: IconName) {
   return icon(name);
 }
 
-/** A live work session: tool · project, what it's doing, its permission mode and Open. */
-export function sessionRow(app: App, s: SessionInfo, compact = false) {
+/** A live work session: tool · project, what it's doing, and Open. */
+export function sessionRow(app: App, s: SessionInfo) {
   return h(
     "div",
     { class: "row line" },
@@ -104,13 +104,6 @@ export function sessionRow(app: App, s: SessionInfo, compact = false) {
       "div",
       { class: "inline" },
       badge(stateOf(s.state)),
-      // Off by default; the current mode is always shown, never changed silently.
-      s.id && !compact
-        ? button(s.fullAccess ? "Full access" : "Asks first", () => void app.petAction({ action: "full-access", source: s.source, session: s.id, on: !s.fullAccess }, s.fullAccess ? "This session asks again." : "Full access on. Risky commands still ask."), `small access${s.fullAccess ? " on" : ""}`, {
-            "aria-pressed": String(!!s.fullAccess),
-            title: s.fullAccess ? "Requests from this session are allowed without asking, except risky ones. Click to ask again." : "This session asks before running commands or changing files. Click to give it full access.",
-          })
-        : null,
       s.id ? button([icon("open"), s.state === "waiting" ? "Review" : "Open"], () => {
         const request = app.state.status.waiting.find((w) => w.meta.session === s.id && w.meta.source === s.source);
         if (request && s.state === "waiting") app.go("review", request.id);

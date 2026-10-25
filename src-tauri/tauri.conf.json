@@ -48,11 +48,11 @@
       "icons/icon.png"
     ],
     "macOS": {
-      "minimumSystemVersion": "13.0"
+      "minimumSystemVersion": "14.0"
     },
     "category": "DeveloperTool",
-    "shortDescription": "Desktop pets that give your AI agents a body",
-    "longDescription": "A crew of 3D desktop pets that act out what Claude Code and Codex are doing, bring you their questions, remind you of things and let agents reach you.",
+    "shortDescription": "Pip, your desktop companion for reminders, a work log and Claude Code",
+    "longDescription": "Pip sits on your desktop, taps you when Claude Code or a reminder needs you, takes you to that exact session, and keeps a dated log of what you got done.",
     "copyright": "© 2026 Ghassen Bargougui"
   }
 }

@@ -163,3 +163,18 @@ Newest last. Each entry: what, why, and what would change it.
     space between poses. Would change if real-time customization (gadgets on bones) becomes a must;
     then a gadget layer anchored to the frames is the next step before any 3D runtime. Supersedes
     decision 36's "Pip (2D, body B)" character art; Pip is now the photo's bunny.
+39. **v1 release contract (25 October 2026): [docs/V1.md](../docs/V1.md).** After two independent
+    eight-seat audits (Claude: docs/audit-2026-10-25-claude/, Codex: docs/audit-2026-10-25/) a
+    three-seat supreme council (CEO, CTO, CPO) ruled; the user told the agents to implement it.
+    Developer-led v1 with a gated everyday path; one Pip (ivory clay, 3D only, logo unchanged);
+    Sidefolk never answers a request itself (full access deleted); plain English never becomes a
+    shell command (`$` only, Labs, off by default); stores never lose data (store.rs); state
+    moves into Rust before the window is re-implemented against the approved mockups. V1 §15
+    lists the earlier decisions it reverses (#21, #36 parts, #38, the terminal, TTS, accent,
+    morning brief, CLI). Supersedes PLAN-V2 §6–10 and ROADMAP as the plan. Changes only through
+    V1 §13 (one in, one out, founder's yes).
+40. **Bare hours (V1-Q3) differ for one-offs and repeats.** A one-off "at 9" is the soonest
+    09:00 or 21:00 between 07:00 and 21:59 (the other reading is kept as `alternative` for the
+    P3 choice UI); a repeat keeps working hours (1–7 is the afternoon), so "every weekday at 9"
+    stays 09:00. A date-only reminder whose 09:00 already passed asks when instead of saving a
+    past time.
