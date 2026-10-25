@@ -5,10 +5,14 @@ import Testing
 @Suite struct WatchToolsTests {
     let env: WatchEnv
     let engine: WatcherEngine
+    /// Xcode and two numbered processes are running, so a process watcher has something to look at.
+    let processes = FakeProcessTable()
 
     init() throws {
         env = try WatchEnv()
-        engine = env.engine()
+        processes.set([ProcessEntry(pid: 10, name: "Xcode", startedAt: 100), ProcessEntry(pid: 4312, name: "build", startedAt: 1),
+                       ProcessEntry(pid: 4313, name: "test", startedAt: 1)])
+        engine = env.engine(probes: WatchProbes.standard(fetcher: env.fetcher, throttle: env.throttle, processes: processes))
         env.base.registry.register(WatchTools.make(engine: engine))
     }
 
@@ -169,8 +173,6 @@ import Testing
             (["kind": "command", "target": "rm -rf /"], "kind"),
             (["kind": "url_change", "target": "ftp://example.com"], "http"),
             (["kind": "url_change", "target": "https://me:pw@example.com"], "password"),
-            (["kind": "url_change", "target": "http://169.254.169.254/latest"], "local network"),
-            (["kind": "url_change", "target": "http://localhost:3000"], "local network"),
             (["kind": "url_change", "target": "example.com", "mode": "forever"], "mode"),
             (["kind": "url_change", "target": "example.com", "level": "ambient"], "level"),
             (["kind": "url_change", "target": "example.com", "interval_minutes": -3], "interval"),
@@ -183,6 +185,118 @@ import Testing
         #expect(failure(await run("watch.create", ["kind": "url_change"])) != nil, "target is required")
         #expect(denial(await run("watch.create", ["kind": "file_changes", "target": "relative/path"])) != nil, "Guard refuses relative paths")
         #expect(await engine.list().isEmpty)
+    }
+
+    // MARK: The first look
+
+    @Test func aPageThatAnswersWithAnErrorIsReportedAtOnceAndStillWatched() async throws {
+        env.fetcher.say("nope", status: 404)
+        let r = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/pricing", "contains": "sold out"]))
+        let card = try #require(r.card)
+        #expect(card.title == "I can't reach example.com/pricing right now")
+        #expect(card.subtitle == "The page said “not found” (404). I'll keep trying.")
+        #expect(r.text.contains("The user has been told"))
+        let w = try #require(await engine.watcher(id: card.refId!))
+        #expect(w.state == .active, "kept: the page may well come back")
+        #expect(w.errorCount == 1)
+        #expect(w.lastError == "The page said “not found” (404).")
+        #expect(r.undo != nil)
+    }
+
+    @Test func anUnknownSiteIsReportedBeforeTheCardPromisesAnything() async throws {
+        env.fetcher.fail(URLError(.cannotFindHost))
+        let r = try result(await run("watch.create", ["kind": "site_status", "target": "doesnotexist.invalid/pricing", "becomes": "up"]))
+        let card = try #require(r.card)
+        #expect(card.title == "I can't reach doesnotexist.invalid/pricing right now")
+        #expect(card.subtitle == "I couldn't find that website. I'll keep checking and tell you when it's back up.")
+        #expect(try #require(await engine.watcher(id: card.refId!)).state == .active)
+    }
+
+    @Test func aServerThatIsDownRightNowIsNotAnErrorForAnUpWatcher() async throws {
+        env.fetcher.fail(URLError(.cannotConnectToHost))
+        let r = try result(await run("watch.create", ["kind": "site_status", "target": "localhost:3000", "becomes": "up"]))
+        #expect(r.card?.title == "I can't reach localhost:3000 right now")
+        #expect(r.card?.subtitle == "The site refused the connection. I'll keep checking and tell you when it's back up.")
+        let w = try #require(await engine.watcher(id: r.card!.refId!))
+        #expect(w.errorCount == 0 && w.lastError == nil, "waiting for it to come back is what was asked")
+    }
+
+    @Test func aSiteThatIsAlreadyUpGetsTheNormalCard() async throws {
+        env.fetcher.say("ok")
+        let r = try result(await run("watch.create", ["kind": "site_status", "target": "localhost:3000", "becomes": "down"]))
+        #expect(r.card?.title == "Watching localhost:3000 every 1 min")
+        #expect(r.card?.subtitle == "I'll tell you when it goes down")
+    }
+
+    @Test func aProgramThatIsNotRunningIsSaidSoAndStillWaitedFor() async throws {
+        let r = try result(await run("watch.create", ["kind": "process_exits", "target": "NoSuchApp"]))
+        #expect(r.card?.title == "NoSuchApp isn't running right now")
+        #expect(r.card?.subtitle == "I'll tell you if it starts and then quits.")
+        let id = r.card!.refId!
+        #expect(try #require(await engine.watcher(id: id)).state == .active, "not finished: it may start later")
+        #expect(await env.notices().isEmpty, "the card says it; no notice on top")
+
+        processes.set([ProcessEntry(pid: 9, name: "NoSuchApp", startedAt: 1)])
+        _ = await engine.checkNow(id)
+        processes.set([])
+        _ = await engine.checkNow(id)
+        #expect(try #require(await engine.watcher(id: id)).state == .triggered)
+        #expect(await env.notices().map(\.title) == ["NoSuchApp exited"])
+    }
+
+    @Test func aFolderThatIsNotThereIsReportedToo() async throws {
+        let box = try Sandbox()
+        defer { box.cleanUp() }
+        try await env.base.permissions.grantFolder(box.root, access: .read)
+        let r = try result(await run("watch.create", ["kind": "folder_new_file", "target": .string(box.path("nope"))]))
+        #expect(r.card?.title == "I can't check nope folder right now")
+        #expect(r.card?.subtitle?.hasSuffix("I'll keep trying.") == true)
+        #expect(try #require(await engine.watcher(id: r.card!.refId!)).state == .active)
+    }
+
+    @Test func aFileThatIsNotThereYetIsNotAProblem() async throws {
+        let box = try Sandbox()
+        defer { box.cleanUp() }
+        try await env.base.permissions.grantFolder(box.root, access: .read)
+        let r = try result(await run("watch.create", ["kind": "file_appears", "target": .string(box.path("report.pdf"))]))
+        #expect(r.card?.title == "Watching report.pdf every 30 s")
+    }
+
+    @Test func theFirstLookDoesNotSkipTheQueueForAgents() async throws {
+        env.fetcher.say("ok")
+        let agent = Caller.agent(runId: "r")
+        let first = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/a"], as: agent))
+        let second = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/b"], as: agent))
+        #expect(env.fetcher.requests.count == 1, "one request a minute to a site, even for a new watcher")
+        let deferred = try #require(await engine.watcher(id: second.card!.refId!))
+        #expect(deferred.errorCount == 0)
+        #expect(deferred.nextCheckAt.map { $0 > env.clock.now } == true, "it will look when its turn comes")
+        #expect(second.card?.title == "Watching example.com/b every 30 min")
+        _ = first
+    }
+
+    @Test func theUsersOwnFirstLookIsImmediate() async throws {
+        env.fetcher.say("ok")
+        _ = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/a"]))
+        _ = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/b"]))
+        #expect(env.fetcher.requests.count == 2)
+    }
+
+    @Test func aSlowSiteDoesNotHoldUpTheAnswer() async throws {
+        let slow = ScriptedProbe(kind: "fake") { _, _ in
+            try await Task.sleep(for: .seconds(0.8))
+            return ProbeResult(state: .object([:]), firstLookNote: "late")
+        }
+        let engine = env.engine(probes: [slow])
+        let w = try await engine.add(.make("fake", interval: 600, now: env.clock.now))
+        let started = Date()
+        let look = await engine.firstLook(of: w.id, polite: false, within: 0.2)
+        #expect(Date().timeIntervalSince(started) < 0.7)
+        #expect(!look.answered)
+        #expect(look.isFine)
+        // The look carries on and is saved like any other.
+        try await Task.sleep(for: .seconds(1.2))
+        #expect(try #require(await engine.watcher(id: w.id)).lastCheckedAt != nil)
     }
 
     // MARK: Who may do what
@@ -198,18 +312,50 @@ import Testing
         #expect(await engine.list().count == 1)
     }
 
-    @Test func onlyTheUserCanWatchTheirOwnMachine() async throws {
-        let r = try result(await run("watch.create", ["kind": "site_status", "target": "http://localhost:3000", "allow_local": true]))
-        let w = try #require(await engine.watcher(id: r.card!.refId!))
-        #expect(w.config["allow_local"]?.boolValue == true)
-        #expect(w.allowsLocal)
-        // Without asking for it, even the user does not get it by accident.
-        #expect(failure(await run("watch.create", ["kind": "site_status", "target": "http://localhost:4000"])) != nil)
-        // The flag is only for web kinds and is not stored on others.
+    @Test func theRefusalForLocalAddressesNamesTheNextStep() async throws {
+        let callers: [Caller] = [.agent(runId: "r"), .external(client: "codex"), .extension(id: "sample"), .routine(id: "morning")]
+        for caller in callers {
+            for target in ["http://localhost:3000", "http://169.254.169.254/latest", "127.0.0.1:8080", "printer.local", "http://192.168.1.5"] {
+                let message = failure(await run("watch.create", ["kind": "url_change", "target": .string(target)], as: caller))
+                #expect(message?.contains("Ask me directly to watch it") == true, "\(caller) \(target) → \(message ?? "no failure")")
+            }
+        }
+        #expect(await engine.list().isEmpty)
+    }
+
+    @Test func theUserCanWatchTheirOwnMachineAndNetwork() async throws {
+        let cases: [(JSONValue, String, String)] = [
+            (["kind": "site_status", "target": "http://localhost:3000"], "http://localhost:3000", "localhost:3000"),
+            (["kind": "site_status", "target": "localhost:3000"], "http://localhost:3000", "localhost:3000"),
+            (["kind": "site_status", "target": "127.0.0.1:8080"], "http://127.0.0.1:8080", "127.0.0.1:8080"),
+            (["kind": "site_status", "target": "myhost.local:5000"], "http://myhost.local:5000", "myhost.local:5000"),
+            (["kind": "url_change", "target": "192.168.1.5/status"], "http://192.168.1.5/status", "192.168.1.5/status"),
+            (["kind": "url_change", "target": "https://localhost:8443/x"], "https://localhost:8443/x", "localhost:8443/x"),
+            (["kind": "site_status", "target": "http://169.254.169.254/latest"], "http://169.254.169.254/latest", "169.254.169.254/latest"),
+        ]
+        for (input, url, name) in cases {
+            let r = try result(await run("watch.create", input))
+            let w = try #require(await engine.watcher(id: r.card!.refId!))
+            #expect(w.config.string("url") == url, "\(input.jsonString)")
+            #expect(w.allowsLocal, "\(input.jsonString)")
+            #expect(w.title == name)
+        }
+        // A public address typed without a scheme is still https.
+        let pub = try result(await run("watch.create", ["kind": "site_status", "target": "example.com:8443"]))
+        #expect(await engine.watcher(id: pub.card!.refId!)?.config.string("url") == "https://example.com:8443")
+    }
+
+    @Test func aTurnThatReadOutsideContentDoesNotGetLocalAddresses() async throws {
+        let outcome = await env.base.executor.execute(name: "watch.create", input: ["kind": "site_status", "target": "http://localhost:3000"],
+                                                      caller: .user, tainted: true, approvalTimeout: 1)
+        #expect(failure(outcome)?.contains("local network") == true)
+    }
+
+    @Test func theLocalOptionIsOnlyForWebKindsAndIsNotStoredOnOthers() async throws {
         let box = try Sandbox()
         defer { box.cleanUp() }
         try await env.base.permissions.grantFolder(box.root, access: .read)
-        let file = try result(await run("watch.create", ["kind": "file_changes", "target": .string(box.path("f")), "allow_local": true]))
+        let file = try result(await run("watch.create", ["kind": "file_changes", "target": .string(box.path("f"))]))
         #expect(await engine.watcher(id: file.card!.refId!)?.config["allow_local"] == nil)
     }
 

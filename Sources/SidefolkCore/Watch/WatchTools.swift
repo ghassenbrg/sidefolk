@@ -186,7 +186,7 @@ struct WatchCreateTool: Tool {
         guard let target = input.string("target") else { return .none }
         switch input.string("kind") {
         case WatchKind.urlChange, WatchKind.siteStatus:
-            let text = target.contains("://") ? target : "https://" + target
+            let text = target.contains("://") ? target : WebTarget.defaultScheme(for: target) + target
             return ToolScope(url: URL(string: text)?.absoluteString ?? text)
         case WatchKind.fileAppears, WatchKind.fileChanges, WatchKind.folderNewFile:
             return ToolScope(readPaths: [(target as NSString).expandingTildeInPath])
@@ -225,9 +225,10 @@ struct WatchCreateTool: Tool {
             if let pid = Int(digits.trimmingCharacters(in: .whitespaces)), pid > 0 { config = ["pid": .number(Double(pid))] }
             else { config = ["name": .string(target.trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))) ] }
         }
-        // Reaching this Mac or the local network is something only the user can ask for (docs/SECURITY.md T11);
-        // the option is not in the schema, and it is ignored unless the user themself made the call.
-        if context.caller == .user, input["allow_local"]?.boolValue == true, kind == WatchKind.urlChange || kind == WatchKind.siteStatus {
+        // Reaching this Mac or the local network is something only the user can ask for (docs/SECURITY.md T11).
+        // Their own typed request or button may ("tell me when localhost:3000 is up"); an agent, an external
+        // client, an extension or a turn that has read outside content may not. There is no such option in the schema.
+        if context.caller == .user, !context.tainted, kind == WatchKind.urlChange || kind == WatchKind.siteStatus {
             config = config.setting("allow_local", true)
         }
 
@@ -238,19 +239,28 @@ struct WatchCreateTool: Tool {
                               source: WatchSource.string(for: context.caller), now: context.now)
         let added: Watcher
         do { added = try await engine.add(watcher) } catch { throw WatchInput.watchError(error) }
-        return WatchResults.started(added, requested: requested, engine: engine)
+        let look = await engine.firstLook(of: added.id, polite: context.caller != .user)
+        return WatchResults.started(await engine.watcher(id: added.id) ?? added, requested: requested, engine: engine, look: look)
     }
 }
 
 enum WatchResults {
-    static func started(_ w: Watcher, requested: TimeInterval, engine: WatcherEngine) -> ToolResult {
+    static func started(_ w: Watcher, requested: TimeInterval, engine: WatcherEngine, look: FirstLook = FirstLook()) -> ToolResult {
         let every = WatchWords.every(w.intervalS)
         var text = "Watching \(w.title) every \(every); I'll tell the user \(WatchWords.promise(w)). Its id is \(w.id)."
+        var title = "Watching \(w.title) every \(every)"
+        var subtitle = "I'll tell you \(WatchWords.promise(w))"
+        // The first look has already gone wrong: say so instead of promising something that is not happening yet.
+        if let trouble = WatchTrouble(w, look) {
+            title = trouble.title
+            subtitle = trouble.subtitle
+            text = "Started watching \(w.title) (every \(every)), but \(trouble.forTheModel) The user has been told. Its id is \(w.id)."
+        }
         if requested > 0, w.intervalS > requested { text += " That's the shortest gap allowed for this kind of watcher." }
         if let expires = w.expiresAt {
             text += " It stops on its own after \(WatchWords.every(expires.timeIntervalSince(w.createdAt)))."
         }
-        let card = ResultCard(kind: .watcher, title: "Watching \(w.title) every \(every)", subtitle: "I'll tell you \(WatchWords.promise(w))",
+        let card = ResultCard(kind: .watcher, title: title, subtitle: subtitle,
                               detail: w.mode == .repeat ? "Keeps going until you stop it" : "Stops after telling you once",
                               refId: w.id, url: w.config.string("url"))
         let id = w.id
@@ -314,8 +324,46 @@ struct WatchCommandTool: Tool {
                               source: WatchSource.string(for: context.caller), now: context.now)
         let added: Watcher
         do { added = try await engine.add(watcher) } catch { throw WatchInput.watchError(error) }
-        return WatchResults.started(added, requested: requested, engine: engine)
+        let look = await engine.firstLook(of: added.id, polite: false)
+        return WatchResults.started(await engine.watcher(id: added.id) ?? added, requested: requested, engine: engine, look: look)
     }
+}
+
+/// How the card that confirms a new watcher words a first look that already went wrong. The watcher stays on
+/// (a site that is down is often exactly what someone wants to wait out); the person just hears it straight.
+struct WatchTrouble {
+    let title: String
+    let subtitle: String
+    /// The same thing as one sentence for the model, which should pass it on.
+    let forTheModel: String
+
+    init?(_ w: Watcher, _ look: FirstLook) {
+        guard let why = look.problem ?? look.note else { return nil }
+        let name = w.title
+        switch w.kind {
+        case WatchKind.siteStatus:
+            title = "I can't reach \(name) right now"
+            subtitle = w.condition.string("becomes") == "down"
+                ? "\(Self.sentence(why)) It's already down, so I'll tell you if it comes back and goes down again."
+                : "\(Self.sentence(why)) I'll keep checking and tell you when it's back up."
+            forTheModel = "it isn't answering right now (\(Self.plain(why))). I'll keep checking."
+        case WatchKind.urlChange:
+            title = "I can't reach \(name) right now"
+            subtitle = "\(Self.sentence(why)) I'll keep trying."
+            forTheModel = "I can't reach it right now (\(Self.plain(why))). I'll keep trying."
+        case WatchKind.processExits:
+            title = Self.plain(why)
+            subtitle = "I'll tell you if it starts and then quits."
+            forTheModel = "\(Self.plain(why)). I'll tell the user if it starts and then quits."
+        default:
+            title = "I can't check \(name) right now"
+            subtitle = "\(Self.sentence(why)) I'll keep trying."
+            forTheModel = "the first check failed (\(Self.plain(why))). I'll keep trying."
+        }
+    }
+
+    private static func plain(_ s: String) -> String { s.trimmingCharacters(in: CharacterSet(charactersIn: ". ")) }
+    private static func sentence(_ s: String) -> String { plain(s) + "." }
 }
 
 // MARK: watch.list / stop / pause / resume

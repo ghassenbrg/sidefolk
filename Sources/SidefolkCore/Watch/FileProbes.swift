@@ -220,7 +220,8 @@ public struct FolderNewFileProbe: WatcherProbe {
 
     /// How soon to look again at a file that might still be growing.
     let settleRecheck: TimeInterval
-    static let maxEntries = 5000
+    /// A big Downloads or Desktop folder is exactly where "tell me when the download finishes" is wanted; only names are kept (no per-file stat).
+    static let maxEntries = 20_000
     static let partialSuffixes = [".crdownload", ".download", ".part", ".tmp"]
 
     public init(settleRecheck: TimeInterval = 3) { self.settleRecheck = settleRecheck }

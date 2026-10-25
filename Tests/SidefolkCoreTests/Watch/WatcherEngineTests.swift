@@ -285,7 +285,7 @@ import Testing
         #expect(items.count == 1, "told once, on the third failure, not on every later one")
         let item = try #require(items.first)
         #expect(item.title == "I can't check example.com/pricing: the site didn't answer in time")
-        #expect(item.level == .gentle)
+        #expect(item.level == .attention, "something they asked to hear about stopped working")
         #expect(item.actions.map(\.id) == ["stop"])
 
         fail.withLock { $0 = false }

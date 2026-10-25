@@ -36,6 +36,7 @@ extension WatcherEngine {
     // MARK: Results
 
     func apply(_ result: ProbeResult, to w: inout Watcher, probe: any WatcherProbe, at now: Date) async {
+        if lookouts[w.id] != nil { lookouts[w.id] = FirstLook(answered: true, note: result.firstLookNote) }
         w.lastState = result.state
         w.lastCheckedAt = now
         w.errorCount = 0
@@ -84,6 +85,7 @@ extension WatcherEngine {
         }
 
         let reason = Self.reason(for: error)
+        if lookouts[w.id] != nil { lookouts[w.id] = FirstLook(answered: true, problem: reason) }
         Log.shared.info("watch", "check failed", ["kind": w.kind, "attempt": "\(w.errorCount + 1)", "reason": reason])
         w.lastCheckedAt = now
         w.errorCount += 1
@@ -95,8 +97,9 @@ extension WatcherEngine {
 
         if w.errorCount == WatchLimits.failuresBeforeNotice {
             let shortReason = reason.trimmingCharacters(in: CharacterSet(charactersIn: ". ")).lowercasedFirst
+            // Something the person asked to be told about has stopped working: that deserves more than a 6 s whisper.
             await attention.post(AttentionRequest(
-                level: .gentle, source: "watcher", title: "I can't check \(w.title): \(shortReason)",
+                level: .attention, source: "watcher", title: "I can't check \(w.title): \(shortReason)",
                 body: "I'll keep trying, a little less often each time.",
                 actions: [AttentionAction(id: "stop", title: "Stop watching")], refKind: "watcher", refId: w.id))
         }

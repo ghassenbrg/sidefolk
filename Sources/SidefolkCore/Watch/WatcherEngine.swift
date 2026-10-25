@@ -46,6 +46,8 @@ public actor WatcherEngine {
     var inflight: [String: Task<ProbeResult, any Error>] = [:]
     var cooldownUntil: [String: Date] = [:]
     var openTargets: [String: String] = [:]
+    /// Watchers whose first look someone is waiting for, and what that look has found so far (see `firstLook`).
+    var lookouts: [String: FirstLook] = [:]
     var hub: WatchEventHub?
 
     /// - Parameters:
