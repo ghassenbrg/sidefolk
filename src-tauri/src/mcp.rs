@@ -23,6 +23,9 @@ use tauri::{AppHandle, Emitter};
 
 use crate::bus::{self, Shared, clip};
 
+#[path = "mcp_control.rs"]
+mod control;
+
 pub const SERVER: &str = "sidefolk";
 const TOKEN_HEADER: &str = "x-sidefolk-token";
 /// How long `ask` waits for the user by default, and at most.
@@ -32,7 +35,7 @@ const ASK_WAIT_MAX: u64 = 600;
 const PAGE_WAIT: Duration = Duration::from_secs(15);
 
 fn tools() -> Value {
-    json!([
+    let mut tools = json!([
         {
             "name": "notify",
             "description": "Say one short sentence to the user through their desktop pet, for example that a long task finished or that you need them soon. Shows a speech bubble; does not wait.",
@@ -49,6 +52,7 @@ fn tools() -> Value {
                 "type": "object",
                 "properties": {
                     "question": { "type": "string" },
+                    "session_id": { "type": "string", "maxLength": 200, "description": "Your own session/thread ID if known; omit rather than guess another session." },
                     "choices": { "type": "array", "items": { "type": "string" }, "maxItems": 4, "description": "Up to 4 short answer labels." },
                     "timeout_seconds": { "type": "integer", "minimum": 10, "maximum": ASK_WAIT_MAX, "description": "How long to wait (default 120)." }
                 },
@@ -72,7 +76,9 @@ fn tools() -> Value {
             "description": "Whether the user is at their computer: active, idle (no input for a few minutes) or away.",
             "inputSchema": { "type": "object", "properties": {} }
         }
-    ])
+    ]);
+    tools.as_array_mut().unwrap().extend(control::tools());
+    tools
 }
 
 // ---------------------------------------------------------------- token
@@ -207,6 +213,12 @@ pub async fn call(State((app, shared)): State<(AppHandle, Arc<Shared>)>, headers
 /// caller has proven it holds the install's token. The page shows it and answers.
 pub async fn handle(app: &AppHandle, shared: &Shared, request: &Value) -> Value {
     let tool = request["tool"].as_str().unwrap_or_default();
+    if control::handles(tool) {
+        return match control::handle(app, shared, tool, &request["arguments"]).await {
+            Ok(value) => reply(value.to_string(), false),
+            Err(error) => reply(error, true),
+        };
+    }
     let args = &request["arguments"];
     let cwd = request["cwd"].as_str().unwrap_or_default();
     let client = request["client"].as_str().unwrap_or_default().to_lowercase();
@@ -248,10 +260,13 @@ pub async fn handle(app: &AppHandle, shared: &Shared, request: &Value) -> Value 
     if tool == "ask" {
         bus::note(app, source, "", &project, "ask", args["question"].as_str().unwrap_or_default());
     }
-    let (id, answer) = shared.replies.open();
+    let expires = crate::journal::now_ms().saturating_add(wait.as_millis() as u64);
+    let session = request["arguments"]["session_id"].as_str().unwrap_or_default().chars().take(200).collect::<String>();
+    let call = json!({ "tool": tool, "args": args, "project": project, "cwd": cwd, "source": source, "session": session, "expires": expires });
+    let Some((id, answer)) = shared.replies.open(call.clone(), expires) else { return reply("Too many pending calls. Wait for an answer and try again.", true); };
     let _ = app.emit(
         "mcp",
-        json!({ "id": id, "tool": tool, "args": args, "project": project, "cwd": cwd, "source": source }),
+        { let mut call = call; call["id"] = json!(id); call },
     );
     let result = tokio::time::timeout(wait, answer).await;
     shared.replies.close(&id);
@@ -312,6 +327,6 @@ mod tests {
     #[test]
     fn lists_the_tools() {
         let names: Vec<_> = tools().as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap().to_string()).collect();
-        assert_eq!(names, ["notify", "ask", "remind", "presence"]);
+        assert_eq!(names, ["notify", "ask", "remind", "presence", "sidefolk_status", "sidefolk_control", "sidefolk_reminders", "sidefolk_notes"]);
     }
 }
