@@ -1,4 +1,4 @@
-import { AGENT_NAMES, folder } from "./agents";
+import { AGENT_NAMES, folder, sessionLabel } from "./agents";
 import type { Companion } from "./companion";
 import type { Reminders } from "./reminders";
 import { describeDue, parseWhen } from "./when";
@@ -11,6 +11,8 @@ export type ToolCall = {
   project: string;
   cwd: string;
   source: "claude" | "codex" | "agent";
+  session?: string;
+  expires?: number;
 };
 export type ToolResult = { text: string; isError: boolean };
 
@@ -35,13 +37,15 @@ export function handleToolCall(call: ToolCall, companion: Companion, reminders: 
       return companion.request({
         id: call.id,
         who,
-        context: agent,
+        context: `${agent} · ${call.session ? sessionLabel(call.session) : "Session not supplied"}`,
         title: call.args.question ?? "",
         meta: {
           kind: "question",
           source: call.source,
           project: call.project,
           cwd: call.cwd,
+          session: call.session ?? "",
+          expires: String(call.expires ?? ""),
           question: call.args.question ?? "",
           // Without fixed choices the user may write an answer (Reply… on the pet).
           free: String(!call.args.choices?.length),
@@ -50,6 +54,7 @@ export function handleToolCall(call: ToolCall, companion: Companion, reminders: 
           ...choices.map((label, i) => ({ label, value: label, primary: i === 0 })),
           ...(call.args.choices?.length ? [] : [{ label: "Reply…", value: "\u0000reply" }]),
         ],
+        note: call.expires ? `Waiting until ${new Date(call.expires).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.` : undefined,
         onChoose: (value) => {
           if (value !== "\u0000reply") return answer(value);
           pet.bubble.prompt({

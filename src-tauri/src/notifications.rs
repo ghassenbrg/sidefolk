@@ -95,15 +95,15 @@ mod native {
             ) {
                 let id = response.notification().request().identifier().to_string();
                 // "reminder-<id>@<when>": the reminder's id comes first.
-                if let Some(id) = id.strip_prefix("reminder-").map(|rest| rest.split('@').next().unwrap_or(rest)) {
-                    if id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
-                        let app = self.ivars().clone();
-                        let tab = format!("reminders:{id}");
-                        let handle = app.clone();
-                        let _ = app.run_on_main_thread(move || {
-                            let _ = crate::prefs::open_at(&handle, &tab);
-                        });
-                    }
+                if let Some(id) = id.strip_prefix("reminder-").map(|rest| rest.split('@').next().unwrap_or(rest))
+                    && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+                {
+                    let app = self.ivars().clone();
+                    let tab = format!("reminders:{id}");
+                    let handle = app.clone();
+                    let _ = app.run_on_main_thread(move || {
+                        let _ = crate::prefs::open_at(&handle, &tab);
+                    });
                 }
                 completion.call(());
             }

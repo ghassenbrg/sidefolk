@@ -19,6 +19,7 @@ pub struct Settings {
     pub theme: String,
     pub sleep_after_secs: u64,
     pub pet_answers_permissions: bool,
+    pub answers_paused: bool,
     /// Keep the overlay out of screenshots, recordings and screen sharing. Off by default: macOS
     /// then also blanks the overlay window in Mission Control: a dark patch around the companions
     /// (the window used to cover the screen, which turned every desktop's preview black).
@@ -67,6 +68,7 @@ impl Default for Settings {
             shortcut: "CommandOrControl+Shift+Space".into(),
             sleep_after_secs: 120,
             pet_answers_permissions: true,
+            answers_paused: false,
             hide_in_recordings: false,
             recordings_reset: true,
             onboarded: false,

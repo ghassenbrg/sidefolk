@@ -282,7 +282,7 @@ fn stream_cursor(app: AppHandle) {
             let Some(window) = app.get_webview_window(OVERLAY) else {
                 return;
             };
-            if tick % REFIT_EVERY == 0 {
+            if tick.is_multiple_of(REFIT_EVERY) {
                 refit_if_needed(&window);
                 #[cfg(target_os = "macos")]
                 {

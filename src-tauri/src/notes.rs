@@ -120,7 +120,7 @@ impl Notes {
             .filter_map(|e| e.file_name().to_str()?.strip_suffix(".md").map(String::from))
             .filter_map(|id| self.lines(&id).and_then(|lines| self.info(&id, &lines)).ok())
             .collect();
-        books.sort_by(|a, b| b.updated.cmp(&a.updated));
+        books.sort_by_key(|book| std::cmp::Reverse(book.updated));
         books
     }
 
@@ -322,7 +322,7 @@ mod tests {
         let book = notes.create("Evaluation H2 2026").unwrap();
         assert_eq!((book.id.as_str(), book.name.as_str()), ("evaluation-h2-2026", "Evaluation H2 2026"));
         assert_eq!(notes.create("evaluation h2 2026").unwrap().id, book.id);
-        let first = notes.add(&book.id, "shipped the  login migration", "2026-10-24", "sidefolk").unwrap();
+        notes.add(&book.id, "shipped the  login migration", "2026-10-24", "sidefolk").unwrap();
         notes.add(&book.id, "mentored Sam", "2026-10-25", "").unwrap();
         let text = fs::read_to_string(dir.join("notes/evaluation-h2-2026.md")).unwrap();
         assert_eq!(text, "# Evaluation H2 2026\n\n- 2026-10-24 — shipped the login migration _(sidefolk)_\n- 2026-10-25 — mentored Sam\n");

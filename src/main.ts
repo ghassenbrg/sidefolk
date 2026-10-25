@@ -100,7 +100,7 @@ const host: Host = {
   labs: () => ({ commands: settings ? settings.labs_commands : true, sessions: settings ? settings.labs_sessions : true }),
   note: (command) => (command.kind === "note" ? notes.take(command.text, command.notebook) : notes.create(command.name)),
   ...(inTauri && {
-    hide: () => void invoke("tray_action", { action: "toggle" }),
+    hide: () => void invoke("hide_companion").catch(() => companion.pet.bubble.say("I couldn't hide. Try again.", 5, "fail")),
     openTab: (tab: string) => void invoke("open_tab", { tab }),
     openSession: async (ref) => (await invoke<{ message: string }>("open_session", { ...ref })).message,
     resolveFolder: (folder) => invoke("resolve_folder", { folder }),
@@ -120,6 +120,16 @@ const reminderStore: ReminderStore = inTauri
   ? {
       list: () => invoke<Reminder[]>("list_reminders"),
       add: (text, due, project, from, repeat) => invoke<Reminder>("add_reminder", { text, due, project, from, repeat }),
+      addEvent: (text, project) => invoke<Reminder>("add_event_reminder", { text, project }),
+      resolveProject: async (wanted) => {
+        const { resolveEventProject } = await import("./event-reminders");
+        const projects = companion.status().pets.flatMap((p) => [...p.sessions, ...p.outcomes].map((s) => s.project));
+        return resolveEventProject(wanted, projects, async (folder) => {
+          const resolved = await invoke<{ path: string; label: string }>("resolve_folder", { folder });
+          const path = await invoke<string>("resolve_event_project", { path: resolved.path });
+          return { path, label: path };
+        });
+      },
       update: async (id, change) => void (await invoke("update_reminder", { id, change })),
       remove: async (id) => void (await invoke("remove_reminder", { id })),
       answer: async (id, answer) => void (await invoke("answer_reminder", { id, ...answer })),
@@ -247,7 +257,12 @@ if (inTauri) {
   });
   void listen("reminders-changed", () => void reminders.reload());
   // An agent called one of the companion's tools (MCP); Rust waits for the answer.
-  void listen<ToolCall>("mcp", (e) => handleToolCall(e.payload, companion, reminders, (result) => void invoke("mcp_reply", { id: e.payload.id, result })));
+  const showTool = (call: ToolCall) => handleToolCall(call, companion, reminders, (result) => void invoke<boolean>("mcp_reply", { id: call.id, result }).then((sent) => {
+    if (!sent) pet.bubble.say("That question has expired. Ask the agent to try again.", 6);
+  }).catch(() => pet.bubble.say("I couldn't send that answer. Try again.", 6, "fail")));
+  await listen<ToolCall>("mcp", (e) => showTool(e.payload));
+  try { for (const call of await invoke<ToolCall[]>("pending_questions")) showTool(call); }
+  catch { pet.bubble.say("I couldn't restore waiting questions. New questions will appear here.", 6, "fail"); }
   void listen<string>("mcp-closed", (e) => companion.closeRequest(e.payload));
   if (settings!.pet_x !== null) pet.mind.x = settings!.pet_x;
   pet.mind.fitBounds();
@@ -270,7 +285,17 @@ if (inTauri) {
   void listen("focus-quick-add", () => companion.openPrompt());
   void listen("focus-card", () => pet.bubble.focusCard());
   void listen("undo", () => pet.bubble.undo());
-  void listen<AgentEvent>("agent", (e) => companion.handleEvent(e.payload));
+  let restoringAgents = true;
+  const arrived: AgentEvent[] = [];
+  await listen<AgentEvent>("agent", (e) => {
+    if (restoringAgents) arrived.push(e.payload);
+    else companion.handleEvent(e.payload);
+  });
+  try {
+    for (const event of await invoke<AgentEvent[]>("agent_snapshot")) pet.agents.handle(event, true);
+  } catch { pet.bubble.say("I couldn't restore the session display. New activity will appear here.", 6, "fail"); }
+  restoringAgents = false;
+  for (const event of arrived) companion.handleEvent(event);
   void listen<Ask>("permission", (e) => companion.handleAsk(e.payload));
   // Requests live in Rust (requests.rs): a reloaded overlay shows the ones still waiting.
   for (const ask of await invoke<Ask[]>("list_requests").catch(() => [] as Ask[])) companion.handleAsk(ask);

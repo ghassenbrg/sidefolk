@@ -42,6 +42,16 @@ impl AgentEvent {
 
 /// Shows the event on the pets, and keeps the ones worth a briefing in the journal.
 pub fn emit(app: &AppHandle, event: AgentEvent) {
+    if let Some(ledger) = app.try_state::<crate::agent_state::Ledger>() { ledger.record(&event, crate::journal::now_ms()); }
+    if event.kind == "done" && !event.project.is_empty()
+        && let Some(shared) = app.try_state::<std::sync::Arc<Shared>>()
+    {
+        match shared.reminders.project_done(&event.project, crate::journal::now_ms()) {
+            Ok(true) => { let _ = app.emit("reminders-changed", ()); }
+            Ok(false) => {}
+            Err(error) => eprintln!("sidefolk: project reminder: {error}"),
+        }
+    }
     if matches!(event.kind, "start" | "prompt" | "waiting" | "done" | "failed" | "end") {
         note(app, event.source, &event.session, &event.project, event.kind, &event.detail);
     }
@@ -112,26 +122,55 @@ pub enum Decision {
 #[derive(Default)]
 pub struct Replies {
     next: AtomicU64,
-    pending: Mutex<HashMap<String, oneshot::Sender<serde_json::Value>>>,
+    pending: Mutex<HashMap<String, PendingReply>>,
 }
+struct PendingReply { sender: oneshot::Sender<serde_json::Value>, call: serde_json::Value, deadline: u64 }
 
 impl Replies {
-    pub fn open(&self) -> (String, oneshot::Receiver<serde_json::Value>) {
+    pub fn open(&self, mut call: serde_json::Value, deadline: u64) -> Option<(String, oneshot::Receiver<serde_json::Value>)> {
+        let mut pending = self.pending.lock().unwrap();
+        if pending.len() >= 32 { return None; }
         let id = format!("mcp-{}", self.next.fetch_add(1, Ordering::Relaxed));
         let (tx, rx) = oneshot::channel();
-        self.pending.lock().unwrap().insert(id.clone(), tx);
-        (id, rx)
+        call["id"] = serde_json::json!(id);
+        pending.insert(id.clone(), PendingReply { sender: tx, call, deadline });
+        Some((id, rx))
+    }
+
+    /// Only questions replay. Replaying notify/remind could duplicate their side effect.
+    pub fn questions(&self, now: u64) -> Vec<serde_json::Value> {
+        self.pending.lock().unwrap().values().filter(|p| p.deadline > now && p.call["tool"] == "ask").map(|p| p.call.clone()).collect()
     }
 
     pub fn resolve(&self, id: &str, value: serde_json::Value) -> bool {
         match self.pending.lock().unwrap().remove(id) {
-            Some(tx) => tx.send(value).is_ok(),
+            Some(pending) if pending.deadline > crate::journal::now_ms() => pending.sender.send(value).is_ok(),
+            Some(_) => false,
             None => false,
         }
     }
 
     pub fn close(&self, id: &str) {
         self.pending.lock().unwrap().remove(id);
+    }
+}
+
+#[cfg(test)]
+mod reply_tests {
+    use super::*;
+    #[test]
+    fn questions_survive_reload_without_replaying_side_effects_or_late_answers() {
+        let replies = Replies::default();
+        let deadline = crate::journal::now_ms() + 60_000;
+        let (id, _rx) = replies.open(serde_json::json!({"tool":"ask","expires":deadline,"session":"s"}), deadline).unwrap();
+        let (_notify, _rx) = replies.open(serde_json::json!({"tool":"notify"}), deadline).unwrap();
+        assert_eq!(replies.questions(deadline - 1)[0]["id"], id);
+        assert_eq!(replies.questions(deadline - 1).len(), 1);
+        assert!(replies.questions(deadline).is_empty());
+        let (expired, _rx) = replies.open(serde_json::json!({"tool":"ask"}), 0).unwrap();
+        assert!(!replies.resolve(&expired, serde_json::json!({"text":"late"})));
+        replies.close(&id);
+        assert!(replies.questions(0).is_empty());
     }
 }
 

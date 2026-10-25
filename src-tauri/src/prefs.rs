@@ -13,6 +13,10 @@ use tauri_plugin_autostart::ManagerExt;
 
 pub(crate) const WINDOW: &str = "settings";
 const PREFERENCES: &str = "preferences";
+pub(crate) fn window_only(window: &tauri::WebviewWindow) -> Result<(), String> {
+    if matches!(window.label(), WINDOW | PREFERENCES) { Ok(()) }
+    else { Err("Open the Sidefolk window to do that.".into()) }
+}
 /// Logs are for the user to read or attach to a bug report; they never leave this Mac.
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
@@ -226,6 +230,7 @@ pub struct Integrations {
     claude_hooks: bool,
     claude_tools: bool,
     codex_tools: bool,
+    codex_health: &'static str,
     start_at_login: bool,
     /// Why Sidefolk can't hear Claude Code (its channel couldn't open), or None when it can.
     hook_error: Option<String>,
@@ -253,6 +258,15 @@ pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrati
         Installed::Current => "waiting",
     };
     Integrations {
+        codex_health: match crate::codex_setup::target(&app).ok().and_then(|path| {
+            crate::codex_setup::health(&path, &std::env::current_exe().ok()?, app.state::<crate::codex_setup::SetupState>().heard.load(std::sync::atomic::Ordering::Relaxed)).ok()
+        }) {
+            Some(crate::codex_setup::Health::Missing) => "off",
+            Some(crate::codex_setup::Health::AwaitingTrustOrEvent) => "waiting",
+            Some(crate::codex_setup::Health::Listening) if hook_error.is_none() => "working",
+            Some(crate::codex_setup::Health::Listening) => "unavailable",
+            _ => "repair",
+        },
         hook_error,
         claude_health,
         claude_disconnect_pending: pending,
@@ -265,7 +279,17 @@ pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrati
 
 /// Runs a tray action that asks for confirmation itself (connecting agents, login item).
 #[tauri::command]
-pub fn tray_action(app: AppHandle, action: String) -> Result<(), String> {
+pub async fn hide_companion(app: AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
+    if window.label() != crate::overlay::OVERLAY { return Err("Use the companion to hide it.".into()); }
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let handle = app.clone();
+    app.run_on_main_thread(move || { let _ = tx.send(crate::tray::hidden(&handle, true).map_err(|e| e.to_string())); }).map_err(|e| e.to_string())?;
+    rx.await.map_err(|_| "The companion could not hide. Try again.".to_string())?
+}
+
+#[tauri::command]
+pub fn tray_action(app: AppHandle, window: tauri::WebviewWindow, action: String) -> Result<(), String> {
+    window_only(&window)?;
     if !["claude", "tools-claude", "tools-codex", "login", "settings", "toggle", "show", "call", "refit"].contains(&action.as_str()) {
         return Err(format!("Unknown action {action}"));
     }
@@ -276,7 +300,8 @@ pub fn tray_action(app: AppHandle, action: String) -> Result<(), String> {
 
 /// Only journal files are cleared; reminders, Markdown notes and config backups stay.
 #[tauri::command(async)]
-pub fn clear_history(shared: State<'_, Arc<Shared>>) -> Result<(), String> {
+pub fn clear_history(window: tauri::WebviewWindow, shared: State<'_, Arc<Shared>>) -> Result<(), String> {
+    window_only(&window)?;
     shared.journal.clear().map_err(|e| e.to_string())
 }
 
@@ -299,28 +324,13 @@ pub fn reveal_data_dir(shared: State<'_, Arc<Shared>>, logs: Option<bool>, notes
 pub fn problem_report(shared: State<'_, Arc<Shared>>) -> String {
     let (dir, settings) = {
         let store = shared.settings.lock().unwrap();
-        (store.dir.clone(), serde_json::to_string_pretty(&store.value).unwrap_or_default())
+        (store.dir.clone(), store.value.clone())
     };
-    let macos = std::process::Command::new("sw_vers")
-        .arg("-productVersion")
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_default();
-    let mut logs = String::new();
-    for name in ["page.log", "crash.log"] {
-        if let Ok(text) = fs::read_to_string(dir.join("logs").join(name)) {
-            let lines: Vec<&str> = text.lines().collect();
-            logs.push_str(&format!("--- {name} (last {} lines)\n{}\n", lines.len().min(40), lines[lines.len().saturating_sub(40)..].join("\n")));
-        }
-    }
-    if logs.is_empty() {
-        logs.push_str("(no errors logged)\n");
-    }
-    format!(
-        "Sidefolk {} on macOS {macos} ({})\n\nWhat happened, and what did you expect?\n\n\n--- settings\n{settings}\n{logs}",
-        env!("CARGO_PKG_VERSION"),
-        std::env::consts::ARCH
-    )
+    let macos = std::process::Command::new("sw_vers").arg("-productVersion").output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string()).unwrap_or_default();
+    let page = fs::read_to_string(dir.join("logs/page.log")).unwrap_or_default();
+    let crash = fs::read_to_string(dir.join("logs/crash.log")).unwrap_or_default();
+    crate::report::report(env!("CARGO_PKG_VERSION"), &macos, std::env::consts::ARCH, &settings, &page, &crash)
 }
 
 /// Something for the companion to do, from the Sidefolk window or the tray (see "pet-action" in
@@ -341,6 +351,18 @@ pub fn pet_action(app: AppHandle, action: serde_json::Value) -> Result<(), Strin
 }
 
 /// The overlay's live snapshot; kept for the dashboard and forwarded to it.
+#[tauri::command]
+pub fn agent_snapshot(app: AppHandle, window: tauri::WebviewWindow) -> Result<Vec<crate::agent_state::Recorded>, String> {
+    if window.label() != crate::overlay::OVERLAY { return Err("Only the companion restores its session display.".into()); }
+    Ok(app.state::<crate::agent_state::Ledger>().snapshot(crate::journal::now_ms()))
+}
+
+#[tauri::command]
+pub fn pending_questions(window: tauri::WebviewWindow, shared: State<'_, Arc<Shared>>) -> Result<Vec<serde_json::Value>, String> {
+    if window.label() != crate::overlay::OVERLAY { return Err("Only the companion restores its questions.".into()); }
+    Ok(shared.replies.questions(crate::journal::now_ms()))
+}
+
 #[tauri::command]
 pub fn publish_status(app: AppHandle, shared: State<'_, Arc<Shared>>, status: serde_json::Value) {
     let waiting = status["waiting"].as_array().map_or(0, Vec::len);

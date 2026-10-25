@@ -2,21 +2,27 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod actions;
+mod agent_state;
 mod app_menu;
 mod calendar;
 mod bus;
 mod claude_setup;
+mod codex_setup;
 mod crew;
 mod hooks;
 mod journal;
 mod mcp;
 mod mcp_setup;
+mod skill_setup;
 mod prefs;
 mod overlay;
 #[cfg(target_os = "macos")]
 mod panel;
 mod reminders;
 mod requests;
+mod release;
+mod updates;
+mod report;
 mod notes;
 mod notifications;
 mod sessions;
@@ -102,6 +108,18 @@ fn add_reminder(
 }
 
 #[tauri::command(async)]
+fn resolve_event_project(path: String) -> Result<String, String> {
+    reminders::event_project(&path).map_err(|e| e.to_string())
+}
+
+#[tauri::command(async)]
+fn add_event_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, text: String, project: String) -> Result<reminders::Reminder, String> {
+    let reminder = shared.reminders.add_event(&text, &project, "you", journal::now_ms()).map_err(|e| e.to_string())?;
+    let _ = app.emit("reminders-changed", ());
+    Ok(reminder)
+}
+
+#[tauri::command(async)]
 fn update_reminder(
     app: AppHandle,
     shared: State<'_, Arc<Shared>>,
@@ -144,13 +162,24 @@ fn answer_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, id: String, a
 
 /// Disconnect & uninstall from the window: removes what Sidefolk added (with backups), then quits.
 /// The window asked first and said what happens.
-#[tauri::command(async)]
-fn uninstall_sidefolk(app: AppHandle, shared: State<'_, Arc<Shared>>, delete_data: bool) -> Vec<String> {
+#[derive(serde::Serialize)]
+struct UninstallResult { lines: Vec<String>, quitting: bool }
+#[tauri::command]
+async fn uninstall_sidefolk(app: AppHandle, window: tauri::WebviewWindow, shared: State<'_, Arc<Shared>>, delete_data: bool) -> Result<UninstallResult, String> {
     use tauri_plugin_autostart::ManagerExt;
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+    prefs::window_only(&window)?;
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog().message(if delete_data { "Remove Sidefolk’s connections, restore its agent skill files, stop opening at login, and move your local notes, reminders and backups to the Bin?" } else { "Remove Sidefolk’s connections, restore its agent skill files and stop opening at login? Your notes, reminders and backups stay on this Mac." })
+        .title("Disconnect & uninstall Sidefolk?")
+        .buttons(MessageDialogButtons::OkCancelCustom("Uninstall".into(), "Cancel".into()))
+        .show(move |yes| { let _ = tx.send(yes); });
+    if !rx.await.unwrap_or(false) { return Ok(UninstallResult { lines: Vec::new(), quitting: false }); }
     let _ = app.autolaunch().disable();
     let dir = shared.settings.lock().unwrap().dir.clone();
     let settings = claude_setup::target(&app).unwrap_or_else(|_| claude_setup::default_target());
     let mut outcome = uninstall::disconnect(&uninstall::Places::of_this_mac(dir.clone(), settings));
+    if !outcome.ok { outcome.said.push(uninstall::kept(&dir, delete_data)); return Ok(UninstallResult { lines: outcome.said, quitting: false }); }
     // The data moves as the app stops, never while it can still write there; and only when
     // everything else worked, since the settings' backups are in it.
     let move_data = delete_data && outcome.ok;
@@ -165,7 +194,7 @@ fn uninstall_sidefolk(app: AppHandle, shared: State<'_, Arc<Shared>>, delete_dat
         }
         handle.exit(0);
     });
-    outcome.said
+    Ok(UninstallResult { lines: outcome.said, quitting: true })
 }
 
 /// Stores that couldn't be read at launch (store.rs), for the window's banner.
@@ -176,7 +205,8 @@ fn store_problems(shared: State<'_, Arc<Shared>>) -> Vec<store::Problem> {
 
 /// Puts a store's last good copy back, then starts Sidefolk again so everything reads it.
 #[tauri::command(async)]
-fn restore_store(app: AppHandle, shared: State<'_, Arc<Shared>>, file: String) -> Result<(), String> {
+fn restore_store(app: AppHandle, window: tauri::WebviewWindow, shared: State<'_, Arc<Shared>>, file: String) -> Result<(), String> {
+    prefs::window_only(&window)?;
     if !shared.problems.list().iter().any(|p| p.file == file && p.backup) {
         return Err("There's no last good copy of that file.".into());
     }
@@ -214,7 +244,8 @@ fn resolve_permission(app: AppHandle, shared: State<'_, Arc<Shared>>, id: String
         "deny" => Decision::Deny,
         _ => Decision::Defer,
     };
-    let result = shared.requests.answer(&id, decision).map_err(|refused| refused.to_string());
+    let result = updates::guarded(&app, || shared.requests.answer(&id, decision).map_err(|refused| refused.to_string()))
+        .unwrap_or_else(|| { shared.requests.release(&id); let _ = app.emit("permission-released", &id); Err("Requests are paused or require a safe update. Answer in Claude Code.".into()) });
     if result.is_ok() {
         let _ = app.emit("permission-closed", &id);
     }
@@ -250,6 +281,9 @@ async fn ui_log(app: AppHandle, line: String, focus: Option<bool>) {
 }
 
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("hook-codex") {
+        std::process::exit(socket::run_codex_hook(&mcp::shim_data_dir()));
+    }
     // `sidefolk uninstall [--delete-data]`: works with the app quit or already deleted.
     if std::env::args().nth(1).as_deref() == Some("uninstall") {
         let args: Vec<String> = std::env::args().skip(2).collect();
@@ -281,18 +315,27 @@ fn main() {
     builder
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
         .manage(claude_setup::SetupState::default())
         .manage(mcp_setup::McpSetupState::default())
+        .manage(skill_setup::SkillSetupState::default())
+        .manage(codex_setup::SetupState::default())
+        .manage(agent_state::Ledger::default())
         .invoke_handler(tauri::generate_handler![
             actions::allow_terminal_control,
             calendar::calendar_status,
             calendar::request_calendar,
             calendar::upcoming_events,
             prefs::problem_report,
+            skill_setup::install_sidefolk_skill,
+            codex_setup::configure_codex,
+            updates::update_status,
+            updates::check_updates,
+            updates::install_update,
             notes::list_notebooks,
             notes::read_notebook,
             notes::create_notebook,
@@ -321,6 +364,8 @@ fn main() {
             notifications::request_notifications,
             list_reminders,
             add_reminder,
+            add_event_reminder,
+            resolve_event_project,
             update_reminder,
             remove_reminder,
             restore_reminder,
@@ -333,6 +378,7 @@ fn main() {
             prefs::update_settings,
             prefs::integrations,
             prefs::tray_action,
+            prefs::hide_companion,
             prefs::reveal_data_dir,
             prefs::clear_history,
             prefs::log_error,
@@ -340,6 +386,8 @@ fn main() {
             prefs::app_info,
             prefs::publish_status,
             prefs::get_status,
+            prefs::agent_snapshot,
+            prefs::pending_questions,
             sessions::open_session,
             sessions::terminals,
             sessions::session_hosts,
@@ -368,6 +416,7 @@ fn main() {
                 hosts: Default::default(),
             });
             app.manage(shared.clone());
+            updates::setup(app.handle(), &dir_for_socket, &shared.problems);
             if let Some(sender) = notifications::install(app.handle()) {
                 shared.reminders.schedule_with(sender);
             }

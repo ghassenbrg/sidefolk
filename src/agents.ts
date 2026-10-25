@@ -5,6 +5,8 @@ import { badge, stateOf } from "./states";
 
 /** Mirrors `AgentEvent` in src-tauri/src/bus.rs. */
 export type AgentEvent = {
+  /** Native snapshot timestamp; live browser fixtures may omit it. */
+  at?: number;
   source: "claude" | "codex";
   session: string;
   kind:
@@ -41,6 +43,7 @@ export type Session = {
 };
 export type Outcome = {
   kind: "done" | "failed";
+  firstPrompt?: string;
   source: AgentEvent["source"];
   project: string;
   detail: string;
@@ -117,7 +120,7 @@ export class Agents {
     return this.openAsks > 0 || this.list.some((s) => s.state === "waiting");
   }
 
-  handle(event: AgentEvent) {
+  handle(event: AgentEvent, silent = false) {
     const key = `${event.source}:${event.session}`;
     const name = AGENT_NAMES[event.source];
     const where = inProject(event.project || event.cwd);
@@ -125,8 +128,7 @@ export class Agents {
     if (event.kind === "prompt" && event.detail && !this.firstPrompt.has(key)) this.firstPrompt.set(key, event.detail.split("\n")[0].trim());
     switch (event.kind) {
       case "start":
-        this.bubble.say(`${name} started${where}.`, 3);
-        this.mind.react("wave", 1.4);
+        if (!silent) { this.bubble.say(`${name} started${where}.`, 3); this.mind.react("wave", 1.4); }
         break;
       case "prompt":
       case "think":
@@ -143,29 +145,31 @@ export class Agents {
           project: event.project,
           state: event.kind === "prompt" ? "think" : event.kind,
           detail: event.kind === "prompt" ? "" : event.detail,
-          at: Date.now(),
+          at: event.at ?? Date.now(),
         });
         if (event.kind === "waiting" && !this.announced.has(key)) {
           this.announced.add(key);
-          if (!this.bubble.busy) this.bubble.say(event.detail || `${name} needs your answer${where}.`, 12);
+          if (!silent && !this.bubble.busy) this.bubble.say(event.detail || `${name} needs your answer${where}.`, 12);
         }
         break;
       case "message":
-        if (event.detail) this.bubble.say(event.detail, 7);
+        if (!silent && event.detail) this.bubble.say(event.detail, 7);
         break;
       case "done":
       case "failed":
         this.sessions.delete(key);
         this.outcomes.set(event.project, {
           kind: event.kind,
+          firstPrompt: this.firstPrompt.get(key) ?? "",
           source: event.source,
           project: event.project,
           detail: event.detail,
-          at: Date.now(),
+          at: event.at ?? Date.now(),
           session: event.session,
           cwd: event.cwd,
         });
         // One short celebration (under 1.2 s); a failure says what and where to look.
+        if (silent) break;
         if (event.kind === "done") {
           this.mind.react("celebrate", 1.1);
           if (this.onDone) this.onDone(event, this.firstPrompt.get(key) ?? "");
@@ -182,7 +186,7 @@ export class Agents {
         break;
     }
     this.refresh();
-    this.onEvent(event);
+    if (!silent) this.onEvent(event);
   }
 
   /** Hands over sessions to a pet that was just created for them. */

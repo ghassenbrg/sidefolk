@@ -121,12 +121,13 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let reminder = MenuItem::with_id(app, "new-reminder", "New reminder…", true, None::<&str>)?;
     let preferences = MenuItem::with_id(app, "settings", "Open Sidefolk…", true, None::<&str>)?;
     let uninstall = MenuItem::with_id(app, "uninstall", "Disconnect & uninstall…", true, None::<&str>)?;
+    let pause = MenuItem::with_id(app, "pause-answers", if crate::updates::paused(app) { "Resume requests on companion" } else { "Pause requests on companion" }, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Sidefolk", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let separator2 = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(
         app,
-        &[&preferences, &requests, &separator, &toggle, &call, &reminder, &separator2, &connect, &refit, &uninstall, &quit],
+        &[&preferences, &requests, &pause, &separator, &toggle, &call, &reminder, &separator2, &connect, &refit, &uninstall, &quit],
     )?;
     if let Some(error) = app
         .state::<TrayState>()
@@ -164,7 +165,7 @@ pub fn show_companion(app: &AppHandle) -> tauri::Result<()> {
     hidden(app, false)
 }
 
-fn hidden(app: &AppHandle, hidden: bool) -> tauri::Result<()> {
+pub(crate) fn hidden(app: &AppHandle, hidden: bool) -> tauri::Result<()> {
     app.state::<Arc<Shared>>()
         .settings
         .lock()
@@ -209,6 +210,7 @@ pub fn action(app: &AppHandle, action: &str) {
             return;
         }
         "requests" => crate::prefs::open_at(app, "requests"),
+        "pause-answers" => crate::updates::toggle_pause(app),
         "toggle" => {
             let is_hidden = app
                 .state::<Arc<Shared>>()
