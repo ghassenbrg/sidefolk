@@ -53,8 +53,8 @@ import Testing
     }
 
     @Test func aMomentThatPassedAsksWhen() {
-        #expect(intent("remind me this morning to stretch") == .needsTime(title: "Stretch"))
-        #expect(intent("remind me 2020-01-01 to time travel") == .needsTime(title: "Time travel"))
+        #expect(intent("remind me this morning to stretch") == .needsTime(title: "Stretch", reason: "This morning has passed."))
+        #expect(intent("remind me 2020-01-01 to time travel") == .needsTime(title: "Time travel", reason: "2020-01-01 has passed."))
     }
 
     @Test func otherReminderForms() {
@@ -156,9 +156,10 @@ import Testing
 
     @Test func addToAList() {
         let p = parse("add oat milk to my groceries list")
-        #expect(p?.intent == .note(kind: .task, text: "oat milk", collection: "groceries"))
-        #expect(p?.hint == "Task → groceries · no AI")
-        #expect(intent("put eggs on the shopping list") == .note(kind: .task, text: "eggs", collection: "shopping"))
+        // A list that does not exist yet is made as a list, with a capital letter.
+        #expect(p?.intent == .note(kind: .task, text: "oat milk", collection: "Groceries", collectionKind: .list))
+        #expect(p?.hint == "Task → Groceries · no AI")
+        #expect(intent("put eggs on the shopping list") == .note(kind: .task, text: "eggs", collection: "Shopping", collectionKind: .list))
         #expect(intent("add renew passport to my todo list") == .note(kind: .task, text: "renew passport", collection: nil))
     }
 
@@ -190,7 +191,7 @@ import Testing
     }
 
     @Test func hyphenatedCollectionNamesSurvive() {
-        #expect(intent("save this idea to side-project: x") == .note(kind: .idea, text: "x", collection: "side-project"))
+        #expect(intent("save this idea to side-project: x") == .note(kind: .idea, text: "x", collection: "Side-project"))
     }
 
     @Test func rememberThatIAmAFactAboutYou() {
@@ -298,7 +299,6 @@ import Testing
     @Test func vagueWatchesAreLeftToTheAI() {
         #expect(parse("tell me when the build finishes") == nil)
         #expect(parse("tell me when it finishes") == nil)
-        #expect(parse("tell me when the server is back up") == nil)
         #expect(parse("tell me when pid 4312 exits") == nil)
         #expect(parse("tell me when my mom calls") == nil)
         #expect(parse("watch the game tonight") == nil)

@@ -9,9 +9,13 @@ import Foundation
 /// - Every pattern is anchored at the start of the text, after polite lead-ins ("please", "hey",
 ///   "can you", "could you", a companion name followed by a comma) are removed. A sentence that merely
 ///   contains the word "remind" or "note" somewhere is not a command.
-/// - Reminders start with "remind me", "reminder", "set a reminder" ("ping me", "nudge me" and
-///   "remember to" also count when a time is given). "tomorrow at 10 dentist" is not a reminder.
-///   A reminder without a usable time becomes `.needsTime` so the app can ask when.
+/// - Reminders start with "remind me", "reminder", "set a reminder" ("ping me", "nudge me", "tell me to" and
+///   "remember to" also count when a time is given). "tomorrow at 10 dentist" and "tell me a joke in 5 minutes" are not
+///   reminders. A reminder without a usable time becomes `.needsTime` so the app can ask when. "Urgent" and "important"
+///   make a reminder that interrupts quiet mode.
+/// - The contract for everything time-related is "exactly right, or left to the AI": a time the parser cannot read
+///   fully is never half-used (docs/DECISIONS.md D4), and time words never end up in a title.
+/// - Text saved as a note is kept exactly as typed: its punctuation, "thanks", line breaks and indentation.
 /// - Notes start with "note:", "idea:", "task:", "todo", "save this idea to X:", "add X to my Y list",
 ///   "jot down", "remember that". "remember that I ..." is a fact about the user; other facts are notes.
 /// - Watches start with "watch", "tell me when", "let me know when", "remind me when".
@@ -36,9 +40,9 @@ public struct IntentParser: Sendable {
 
     /// - Parameter knownCollections: names of the user's notebook collections, so "ideas for Sidefolk" can tell a collection from a search word.
     public func parse(_ text: String, now: Date, knownCollections: [String] = []) -> ParsedIntent? {
-        guard let t = prepare(text) else { return nil }
+        guard let p = prepare(text) else { return nil }
         let ctx = Context(now: now, known: knownCollections)
-        return quiet(t, ctx) ?? watch(t, ctx) ?? remind(t, ctx) ?? note(t, ctx) ?? find(t, ctx)
+        return quiet(p.command, ctx) ?? watch(p.command, ctx) ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
     }
 
     struct Context {
@@ -52,12 +56,22 @@ public struct IntentParser: Sendable {
         "i would like you to", "i'd like you to", "i need you to", "i want you to", "go ahead and", "could you", "would you", "can you",
         "will you", "could u", "can u", "please", "kindly", "hello", "okay", "hey", "pls", "plz", "just", "also", "yo", "ok", "hi", "so",
     ]
-    private static let closers = ["please", "pls", "plz", "thanks", "thank you", "thx", "ty"]
+    private static let closers = ["please", "pls", "plz"]
+    /// ", thanks!" after a command is politeness; "say thank you" is a task and keeps its words.
+    private static let thanks = Scan(#"\s*[,.;!\-–—]\s*(?:thanks|thank you|thx|ty)[\s.!?]*$"#)
 
-    func prepare(_ raw: String) -> String? {
+    /// The text as the command patterns see it, and as the person typed it.
+    struct Prepared {
+        /// Single-spaced, without trailing punctuation or polite closers.
+        let command: String
+        /// Without the polite lead-in only: line breaks, indentation, punctuation and "thanks" as typed. Notes are saved from this.
+        let typed: String
+    }
+
+    func prepare(_ raw: String) -> Prepared? {
         var t = raw.replacingOccurrences(of: "\u{2019}", with: "'").replacingOccurrences(of: "\u{2018}", with: "'")
             .replacingOccurrences(of: "\u{201C}", with: "\"").replacingOccurrences(of: "\u{201D}", with: "\"")
-        t = t.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty, t.count <= 2000, !t.hasPrefix("/") else { return nil }
 
         var changed = true
@@ -77,29 +91,44 @@ public struct IntentParser: Sendable {
                 changed = true
             }
         }
+        let typed = Self.tidy(t)
 
+        var command = typed.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        if let r = Self.thanks.firstRange(in: command) { command.removeSubrange(r) }
         changed = true
         while changed {
             changed = false
-            t = t.trimmingCharacters(in: CharacterSet(charactersIn: " .!?,;"))
-            let lower = t.lowercased()
+            command = command.trimmingCharacters(in: CharacterSet(charactersIn: " .!?,;"))
+            let lower = command.lowercased()
             for closer in Self.closers where lower.hasSuffix(" " + closer) {
-                t = String(t.dropLast(closer.count + 1))
+                command = String(command.dropLast(closer.count + 1))
                 changed = true
             }
         }
-        t = Self.fixRemindTypo(t)
-        return t.isEmpty ? nil : t
+        command = Self.fixRemindTypo(command)
+        guard !command.isEmpty, !typed.isEmpty else { return nil }
+        return Prepared(command: command, typed: typed)
+    }
+
+    /// Line breaks as "\n", runs of spaces inside a line collapsed, indentation and blank lines kept.
+    static func tidy(_ s: String) -> String {
+        let lines = s.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+            .split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
+                let indent = line.prefix { $0 == " " || $0 == "\t" }
+                let words = line.dropFirst(indent.count).split(whereSeparator: { $0 == " " || $0 == "\t" })
+                return words.isEmpty ? "" : String(indent) + words.joined(separator: " ")
+            }
+        return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func endsWord(_ s: String, at count: Int) -> Bool {
         guard s.count > count else { return false }
         let next = s[s.index(s.startIndex, offsetBy: count)]
-        return next == " " || next == "," || next == ":"
+        return next.isWhitespace || next == "," || next == ":"
     }
 
     private static func dropLead(_ s: String, count: Int) -> String {
-        String(s.dropFirst(count)).trimmingCharacters(in: CharacterSet(charactersIn: " ,:-"))
+        String(s.dropFirst(count)).trimmingCharacters(in: CharacterSet(charactersIn: " ,:-").union(.whitespacesAndNewlines))
     }
 
     /// "remnd me", "remindme", "reminde me" -> "remind me".
@@ -114,12 +143,18 @@ public struct IntentParser: Sendable {
     // MARK: Reminders
 
     private static let remindLead = IntentPattern(
-        #"(?:(?<strong>(?:set|create|add|make|schedule|new)\s+(?:me\s+)?(?:a\s+|another\s+|the\s+)?reminder(?:\s+for\s+me)?|remind\s+(?:me|myself)|reminder(?=\s*[:\-–—]|\s+(?:to|about|for|that)\s))|(?<weak>(?:ping|nudge|alert|notify|tell)\s+me|remember))(?:\s*[:,\-–—]\s*|\s+)(?<rest>.+)"#
+        #"(?:(?<strong>(?:set|create|add|make|schedule|new)\s+(?:me\s+)?(?:an?\s+|another\s+|the\s+)?(?:(?:urgent|important)\s+)?reminder(?:\s+for\s+me)?|remind\s+(?:me|myself)|reminder(?=\s*[:\-–—]|\s+(?:to|about|for|that)\s))|(?<weak>(?:ping|nudge|alert|notify)\s+me|tell\s+me\s+to|remember))(?:\s*[:,\-–—]\s*|\s+)(?<rest>.+)"#
     )
+    private static let everyFewMinutes = Scan(#"\bevery\s+(?:other\s+|few\s+|\d+\s+)?(?:minutes?|mins?|seconds?|secs?)\b"#)
+    private static let weekendWord = Scan(#"\bweekend\b"#)
+    private static let nightWord = Scan(#"\b(?:tonight|night|evening)\b"#)
 
-    private func remind(_ t: String, _ ctx: Context) -> ParsedIntent? {
+    private func remind(_ command: String, _ ctx: Context) -> ParsedIntent? {
+        let (t, leadingUrgency) = Self.stripUrgency(command, lead: Self.urgentLead)
         guard let c = Self.remindLead.match(t), var rest = c["rest"] else { return nil }
+        var important = leadingUrgency
         let strong = c["strong"] != nil
+        if let lead = c["strong"]?.lowercased(), lead.contains("urgent") || lead.contains("important") { important = true }
         if !strong {
             // "remember that ..." is a note; "remember to ..." is a reminder only with a time.
             guard c["weak"]?.lowercased() != "remember" || rest.lowercased().hasPrefix("to ") else { return nil }
@@ -127,28 +162,63 @@ public struct IntentParser: Sendable {
         if rest.lowercased().hasPrefix("for ") { rest = String(rest.dropFirst(4)) }
         // "every 30 minutes" is a schedule a Recurrence cannot hold (its smallest step is an hour):
         // better left to the AI than to ask "when?" about a time that was given.
-        if rest.range(of: #"\bevery\s+(?:other\s+|few\s+|\d+\s+)?(?:minutes?|mins?|seconds?|secs?)\b"#, options: [.regularExpression, .caseInsensitive]) != nil { return nil }
+        if Self.everyFewMinutes.found(in: rest) { return nil }
+        let urgency = Self.stripUrgency(rest, lead: Self.urgentRestLead, tail: Self.urgentTail)
+        rest = urgency.text
+        important = important || urgency.important
 
-        let found = when.parse(rest, now: ctx.now)
-        let title = Self.cleanTitle(found?.remaining ?? rest)
-        guard !title.isEmpty else { return nil }
+        // "yesterday", "later", "25:00": a time was said, but it cannot be used. Ask again, without those words in the title.
+        let unusable = unusableTime(in: rest)
+        if let unusable { rest = unusable.rest }
+        rest = Self.rewriteTimeWords(rest)
 
-        guard let found, found.confidence != .low, !(found.isExplicitInstant && found.date <= ctx.now) else {
-            // The words said "remind me" but the time is missing or already over: ask when.
-            guard strong else { return nil }
-            return ParsedIntent(intent: .needsTime(title: title), hint: "Reminder · I'll ask when · no AI")
+        guard let found = when.parse(rest, now: ctx.now) else {
+            // A time written in a way the parser does not know is the AI's to read; asking "when?" about a time that was given is worse.
+            guard !Self.looksLikeATime(rest) else { return nil }
+            let title = Self.cleanTitle(rest)
+            guard !title.isEmpty, strong else { return nil }
+            return ask(title: title, reason: unusable?.reason, important: important)
         }
-        var hint = "Reminder · \(TimeFormat.when(found.date, now: ctx.now, calendar: when.calendar))"
+        // Two statements about when ("yesterday ... at 5") are not for guessing.
+        guard unusable == nil else { return nil }
+        let title = Self.cleanTitle(found.remaining)
+        guard !title.isEmpty, !Self.leavesTimeWords(title: title, left: found.remaining, rest: rest) else { return nil }
+        // "this weekend" on a weekend rolls over a whole week; the person meant now.
+        if Self.weekendWord.found(in: found.matched), (6...7).contains(TimeFormat.isoWeekday(of: ctx.now, calendar: when.calendar)) { return nil }
+
+        guard found.confidence != .low, !(found.isExplicitInstant && found.date <= ctx.now) else {
+            // The words said "remind me" but the time is already over: ask when.
+            guard strong else { return nil }
+            return ask(title: title, reason: "\(found.matched.capitalizedFirst) has passed.", important: important)
+        }
+        var date = found.date
+        // "tonight at 12" is the midnight that ends tonight, not noon.
+        if Self.nightWord.found(in: found.matched), when.calendar.component(.hour, from: date) == 12,
+           when.calendar.component(.minute, from: date) == 0, let midnight = when.calendar.date(byAdding: .hour, value: 12, to: date) {
+            date = midnight
+        }
+        var hint = "Reminder · \(TimeFormat.when(date, now: ctx.now, calendar: when.calendar))"
         if let rule = found.recurrence { hint += " · \(TimeFormat.recurrence(rule))" }
-        return ParsedIntent(intent: .remind(title: title, when: found.date, recurrence: found.recurrence), hint: hint + " · no AI")
+        if important { hint += " · important" }
+        return ParsedIntent(intent: .remind(title: title, when: date, recurrence: found.recurrence, important: important), hint: hint + " · no AI")
+    }
+
+    private func ask(title: String, reason: String?, important: Bool) -> ParsedIntent {
+        ParsedIntent(intent: .needsTime(title: title, reason: reason, important: important), hint: "Reminder · I'll ask when · no AI")
     }
 
     private static let titleLeads: Set<String> = ["to", "that", "about", "of", "for", "me"]
+    private static let danglingPrepositions: Set<String> = ["on", "at", "in", "by", "for", "from", "until", "till", "around", "of"]
 
-    /// "to send the document" -> "Send the document".
+    /// "to send the document" -> "Send the document". A preposition the time parser left behind ("on to renew") goes too.
     static func cleanTitle(_ s: String) -> String {
         var words = s.split(separator: " ").map(String.init)
-        while let first = words.first, titleLeads.contains(first.lowercased().trimmingCharacters(in: .punctuationCharacters)) { words.removeFirst() }
+        func bare(_ w: String) -> String { w.lowercased().trimmingCharacters(in: .punctuationCharacters) }
+        while let first = words.first {
+            if titleLeads.contains(bare(first)) { words.removeFirst(); continue }
+            if danglingPrepositions.contains(bare(first)), words.count > 1, titleLeads.contains(bare(words[1])) { words.removeFirst(); continue }
+            break
+        }
         var title = words.joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,;:-\u{2013}\u{2014}.!?"))
         while let last = title.split(separator: " ").last.map(String.init), ["please", "pls", "plz"].contains(last.lowercased()) {
             title = String(title.dropLast(last.count)).trimmingCharacters(in: CharacterSet(charactersIn: " ,;:-"))

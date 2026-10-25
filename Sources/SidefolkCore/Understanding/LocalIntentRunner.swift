@@ -4,8 +4,12 @@ import Foundation
 public enum LocalOutcome: Sendable {
     case card(ResultCard, activityId: String, undo: Bool)
     case list(title: String, cards: [ResultCard])
-    /// A reminder without a usable time: ask the user when.
-    case needsTime(title: String)
+    /// A reminder without a usable time: ask the user when. `reason` says why the words given were no use (it is nil when
+    /// there were none) and `important` must be carried into the reminder made from the answer.
+    case needsTime(title: String, reason: String?, important: Bool)
+    /// A watch without an address ("tell me when the server is back up"): ask which address, e.g. "localhost:3000", then
+    /// finish with `IntentParser.watch(address:kind:becomes:)`.
+    case needsTarget(kind: String, becomes: String?)
     case info(String)
     case failed(UserFacingError)
 }
@@ -28,7 +32,12 @@ public struct LocalIntentRunner: Sendable {
         case "todo", "task", "t": return "todo: \(rest)"
         case "remind", "r": return "remind me \(rest)"
         case "watch", "w": return "watch \(rest)"
-        case "quiet", "q": return rest.lowercased() == "off" ? "quiet off" : (rest.isEmpty ? "be quiet" : "quiet for \(rest)")
+        case "quiet", "q":
+            // "/quiet 1h" means for an hour; "/quiet until 5pm" and "/quiet for 1 hour" already say which.
+            let lower = rest.lowercased()
+            if lower == "off" { return "quiet off" }
+            if rest.isEmpty { return "be quiet" }
+            return ["for ", "until ", "till ", "til "].contains { lower.hasPrefix($0) } ? "quiet \(rest)" : "quiet for \(rest)"
         case "find", "f", "search": return "find \(rest)"
         default: return t
         }
@@ -41,17 +50,21 @@ public struct LocalIntentRunner: Sendable {
 
     public func run(_ intent: LocalIntent) async -> LocalOutcome {
         switch intent {
-        case .remind(let title, let when, let recurrence):
+        case .remind(let title, let when, let recurrence, let important):
             var input: [String: JSONValue] = ["title": .string(title), "when": .string(ISO8601DateFormatter().string(from: when))]
+            // Only important reminders interrupt during quiet mode.
+            if important { input["level"] = .string("critical") }
             if let r = recurrence {
                 var rec: [String: JSONValue] = ["frequency": .string(r.frequency.rawValue), "interval": .number(Double(r.interval))]
                 if !r.weekdays.isEmpty { rec["weekdays"] = .array(r.weekdays.map { .number(Double($0)) }) }
                 input["recurrence"] = .object(rec)
             }
             return await execute("reminders.create", .object(input))
-        case .note(let kind, let text, let collection):
-            var input: [String: JSONValue] = ["text": .string(text), "kind": .string(kind.rawValue)]
+        case .note(let kind, let text, let collection, let collectionKind):
+            // The words are kept as typed; the title gets its capital letter here, like a reminder's.
+            var input: [String: JSONValue] = ["text": .string(IntentParser.capitalizedNote(text)), "kind": .string(kind.rawValue)]
             if let collection { input["collection"] = .string(collection) }
+            if collection != nil, let collectionKind { input["collection_kind"] = .string(collectionKind.rawValue) }
             return await execute("notes.save", .object(input))
         case .aboutMe(let fact):
             return await execute("profile.remember", ["fact": .string(fact)])
@@ -75,8 +88,10 @@ public struct LocalIntentRunner: Sendable {
             return .card(ResultCard(kind: .info, title: "Quiet is off."), activityId: "", undo: false)
         case .find(let query, let kind, let collection):
             return await find(query: query, kind: kind, collection: collection)
-        case .needsTime(let title):
-            return .needsTime(title: title)
+        case .needsTime(let title, let reason, let important):
+            return .needsTime(title: title, reason: reason, important: important)
+        case .needsTarget(let kind, let becomes):
+            return .needsTarget(kind: kind, becomes: becomes)
         }
     }
 

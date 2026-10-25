@@ -34,6 +34,15 @@ extension IntentParser {
     private static let newFile = IntentPattern(#"(?:a\s+|any\s+|the\s+)?(?:new\s+)?(?:file|files|something|anything|document|documents)"#)
     private static let changeWords = IntentPattern(#"(?:any\s+)?(?:changes?|updates?|news|new\s+content)"#)
 
+    /// "the server is back up", "my site goes down", "the dev api is up again": a site is meant but no address is given.
+    private static let anySiteStatus = IntentPattern(
+        #"(?:(?:the|my|our|this|that)\s+)?(?:[\w-]+\s+){0,2}?(?:server|site|website|web\s*site|api|app|service|backend|frontend|host|localhost|database|db)\s+(?:(?:is|are|goes|comes|gets|came|went)\s+)?(?:(?:back\s+)?(?<state>up|online|down|offline|unreachable|available|reachable|live|working|responding|alive)|back)(?:\s+again)?"#
+    )
+    /// "my site changes", "the pricing page updates": a page is meant but no address is given.
+    private static let anyPageChanges = IntentPattern(
+        #"(?:(?:the|my|our|this|that)\s+)?(?:[\w-]+\s+){0,2}?(?:site|website|web\s*site|page|web\s*page|docs|documentation|blog)\s+(?:changes|changed|updates|is\s+updated|gets\s+updated|has\s+changed|has\s+been\s+(?:updated|changed)|is\s+modified|gets\s+modified)"#
+    )
+
     /// Words that are not the name of a program.
     private static let notAProcess: Set<String> = [
         "it", "this", "that", "everything", "build", "test", "tests", "job", "task", "command", "process", "upload", "export", "install",
@@ -58,8 +67,41 @@ extension IntentParser {
             if let what = c["what"], Self.changeWords.match(what) == nil { contains = what.unquoted }
             return parsed(WatchIntent(kind: "url_change", target: url, contains: contains))
         }
-        if let c = Self.tellMe.match(t), let rest = c["rest"], let intent = classify(rest) { return parsed(intent) }
+        if let c = Self.tellMe.match(t), let rest = c["rest"] {
+            if let intent = classify(rest) { return parsed(intent) }
+            if let ask = needsTarget(rest) { return ask }
+        }
         return nil
+    }
+
+    /// A site or page is meant, but where is not said: ask for the address instead of sending the question to the AI.
+    private func needsTarget(_ rest: String) -> ParsedIntent? {
+        let hint = "Watch · which address? · no AI"
+        if let c = Self.anySiteStatus.match(rest) {
+            let down = ["down", "offline", "unreachable"].contains(c["state"]?.lowercased() ?? "")
+            return ParsedIntent(intent: .needsTarget(kind: WatchKind.siteStatus, becomes: down ? "down" : "up"), hint: hint)
+        }
+        if Self.anyPageChanges.match(rest) != nil {
+            return ParsedIntent(intent: .needsTarget(kind: WatchKind.urlChange, becomes: nil), hint: hint)
+        }
+        return nil
+    }
+
+    /// Finishes a `.needsTarget` once the person has typed the address: "localhost:3000", "3000", "example.com/status".
+    /// Nil when what they typed is not an address (the app can ask again).
+    public func watch(address: String, kind: String, becomes: String?) -> ParsedIntent? {
+        let typed = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A bare port number means a server on this Mac.
+        let word = typed.allSatisfy(\.isNumber) && (2...5).contains(typed.count) && (Int(typed) ?? 0) <= 65535 ? "localhost:" + typed : typed
+        guard let url = urlTarget(word) else { return nil }
+        switch kind {
+        case WatchKind.siteStatus:
+            return parsed(WatchIntent(kind: kind, target: url, contains: becomes == "down" ? "down" : nil))
+        case WatchKind.urlChange:
+            return parsed(WatchIntent(kind: kind, target: url))
+        default:
+            return nil
+        }
     }
 
     private func classify(_ rest: String) -> WatchIntent? {
@@ -108,9 +150,9 @@ extension IntentParser {
 
     // MARK: Targets
 
-    /// A web address from one word: "https://example.com/x", "example.com/pricing", "localhost:3000".
+    /// A web address from one word: "https://example.com/x", "example.com/pricing", "localhost:3000", "printer.local:631".
     func urlTarget(_ word: String) -> String? {
-        let w = word.trimmingCharacters(in: CharacterSet(charactersIn: "\"'<>()[]`,;!?")).trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        let w = Self.trimmedAddress(word)
         guard !w.isEmpty, !w.contains(" ") else { return nil }
         let lower = w.lowercased()
         if lower.hasPrefix("http://") || lower.hasPrefix("https://") {
@@ -121,11 +163,23 @@ extension IntentParser {
         let host = authority.split(separator: ":", maxSplits: 1).first.map(String.init) ?? authority
         let labels = host.split(separator: ".", omittingEmptySubsequences: false)
         guard labels.allSatisfy({ !$0.isEmpty && $0.allSatisfy { $0.isLetter || $0.isNumber || $0 == "-" } }) else { return nil }
-        let isLocal = host == "localhost" || Self.isIPv4(host)
+        // This Mac, a private address or a name on the home network: plain http, as a dev server or a gadget would speak.
+        let isLocal = host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local") || Self.isIPv4(host)
         if !isLocal {
             guard labels.count >= 2, let tld = labels.last, Self.domains.contains(String(tld)) else { return nil }
         }
         return (isLocal ? "http://" : "https://") + w
+    }
+
+    /// Strips quotes, brackets and sentence punctuation around an address, but keeps a ")" that closes a "(" inside it
+    /// (".../Swift_(programming_language)").
+    private static func trimmedAddress(_ word: String) -> String {
+        var w = word.trimmingCharacters(in: CharacterSet(charactersIn: "\"'<>`,;!?"))
+        while w.hasPrefix("(") || w.hasPrefix("[") { w.removeFirst() }
+        func count(_ c: Character) -> Int { w.filter { $0 == c }.count }
+        while w.hasSuffix(")"), count(")") > count("(") { w.removeLast() }
+        while w.hasSuffix("]"), count("]") > count("[") { w.removeLast() }
+        return w.trimmingCharacters(in: CharacterSet(charactersIn: "\"'<>`,;!?")).trimmingCharacters(in: CharacterSet(charactersIn: "."))
     }
 
     private static func isIPv4(_ s: String) -> Bool {
