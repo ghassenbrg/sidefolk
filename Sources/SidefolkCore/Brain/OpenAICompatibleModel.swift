@@ -33,7 +33,7 @@ public struct OpenAICompatibleModel: TurnModel {
         do {
             let response = try await http.send(get, timeBudget: 20)
             guard response.status == 200 else { return .failure(error(for: response, model: model)) }
-            let json = try? JSONDecoder().decode(JSONValue.self, from: response.body)
+            let json = try? JSONValue.parse(response.body)
             let ids = (json?["data"]?.arrayValue ?? json?["models"]?.arrayValue ?? []).compactMap { $0.string("id") ?? $0.string("name") }
             guard !model.isEmpty else { return .success("Connected to \(providerName).") }
             guard Self.lists(model, in: ids) else {
@@ -77,9 +77,16 @@ public struct OpenAICompatibleModel: TurnModel {
         return url
     }
 
+    /// Literally this Mac: "localhost", `::1`, or an IPv4 address in 127.0.0.0/8 (SECURITY T18).
+    /// A name such as "127.0.0.1.example.com" is a public host, so it doesn't count.
     static func isLoopback(_ host: String?) -> Bool {
         guard let host = host?.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]")) else { return false }
-        return host == "localhost" || host == "::1" || host.hasPrefix("127.")
+        if host == "localhost" { return true }
+        switch IPAddress.parse(host) {
+        case .v4(let value)?: return value >> 24 == 127
+        case .v6(let bytes)?: return bytes == Array(repeating: 0, count: 15) + [1]
+        case nil: return false
+        }
     }
 
     static func displayName(for url: URL) -> String {
@@ -143,7 +150,7 @@ public struct OpenAICompatibleModel: TurnModel {
     }
 
     static func parse(_ data: Data, provider: String) throws(UserFacingError) -> ModelTurn {
-        guard let json = try? JSONDecoder().decode(JSONValue.self, from: data), let choice = json["choices"]?.arrayValue?.first,
+        guard let json = try? JSONValue.parse(data), let choice = json["choices"]?.arrayValue?.first,
               let message = choice["message"]
         else {
             throw UserFacingError("\(provider) sent an answer I couldn't read. Nothing was changed.", recovery: "Try again in a moment.",

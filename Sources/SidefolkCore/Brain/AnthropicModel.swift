@@ -32,7 +32,7 @@ public struct AnthropicModel: TurnModel {
         do {
             let response = try await http.send(get, timeBudget: 20)
             guard response.status == 200 else { return .failure(Self.error(for: response, model: name)) }
-            let json = try? JSONDecoder().decode(JSONValue.self, from: response.body)
+            let json = try? JSONValue.parse(response.body)
             let display = json?.string("display_name") ?? name
             return .success("Connected to Anthropic. \(display) is ready.")
         } catch let e as UserFacingError {
@@ -96,7 +96,7 @@ public struct AnthropicModel: TurnModel {
     }
 
     static func parse(_ data: Data) throws(UserFacingError) -> ModelTurn {
-        guard let json = try? JSONDecoder().decode(JSONValue.self, from: data), let content = json["content"]?.arrayValue else {
+        guard let json = try? JSONValue.parse(data), let content = json["content"]?.arrayValue else {
             throw UserFacingError("Anthropic sent an answer I couldn't read. Nothing was changed.", recovery: "Try again in a moment.",
                                   detail: "unreadable response")
         }

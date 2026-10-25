@@ -10,6 +10,12 @@ public enum JSONValue: Sendable, Hashable {
     case object([String: JSONValue])
 }
 
+/// JSON nested deeper than `JSONValue.maxDepth`.
+public struct JSONDepthError: Error, Sendable, CustomStringConvertible {
+    public init() {}
+    public var description: String { "The JSON is nested more than \(JSONValue.maxDepth) levels deep." }
+}
+
 extension JSONValue: Codable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
@@ -92,7 +98,39 @@ public extension JSONValue {
     }
 
     static func parse(_ text: String) throws -> JSONValue {
-        try JSONDecoder().decode(JSONValue.self, from: Data(text.utf8))
+        try parse(Data(text.utf8))
+    }
+
+    /// Parses JSON that came from outside (extensions, the socket, model replies, files). Nesting is
+    /// checked first: a 1 KB message of a few hundred `[` would otherwise recurse deep enough to
+    /// overflow a task's stack and take the whole app down.
+    static func parse(_ data: Data) throws -> JSONValue {
+        try checkDepth(data)
+        return try JSONDecoder().decode(JSONValue.self, from: data)
+    }
+
+    /// Deepest nesting of arrays and objects Sidefolk accepts.
+    static let maxDepth = 64
+
+    /// Throws `JSONDepthError` when arrays and objects nest deeper than `maxDepth` (string contents are skipped).
+    static func checkDepth(_ data: Data) throws {
+        var depth = 0
+        var inString = false
+        var escaped = false
+        for byte in data {
+            if inString {
+                if escaped { escaped = false } else if byte == 0x5C { escaped = true } else if byte == 0x22 { inString = false }
+                continue
+            }
+            switch byte {
+            case 0x22: inString = true
+            case 0x5B, 0x7B:
+                depth += 1
+                if depth > maxDepth { throw JSONDepthError() }
+            case 0x5D, 0x7D: depth -= 1
+            default: break
+            }
+        }
     }
 
     /// Compact, key-sorted JSON text.

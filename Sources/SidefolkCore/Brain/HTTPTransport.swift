@@ -167,7 +167,7 @@ struct ProviderHTTP: Sendable {
 
     /// The provider's error message from a JSON error body, in any of the usual shapes.
     static func errorMessage(_ body: Data) -> (type: String?, message: String?) {
-        guard let json = try? JSONDecoder().decode(JSONValue.self, from: body) else {
+        guard let json = try? JSONValue.parse(body) else {
             let text = String(decoding: body.prefix(300), as: UTF8.self)
             return (nil, text.isEmpty ? nil : text)
         }
