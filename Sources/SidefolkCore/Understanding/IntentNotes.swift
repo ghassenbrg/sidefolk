@@ -55,29 +55,29 @@ extension IntentParser {
 
     // MARK: Saving
 
-    private static let noteColon = Pattern(
+    private static let noteColon = IntentPattern(
         "(?<kind>note|idea|task|todo|to-do|to\\s+do|link|bookmark|thought)s?(?:\\s+(?:for|in|to|about|on)\\s+(?<coll>[^:]{1,40}?))?\\s*" + sep + "\\s*(?<text>.+)"
     )
-    private static let saveTo = Pattern(
+    private static let saveTo = IntentPattern(
         "(?:save|add|put|file|store|keep|stash|drop|capture)\\s+(?:(?:this|that|the|my|a|an|it)\\s+)?(?:(?<kind>note|idea|task|link|thought|todo)\\s+)?"
             + "(?:to|in|into|under|for|on)\\s+(?:(?:my|the)\\s+)?(?<coll>[^:]{1,40}?)\\s*" + sep + "\\s*(?<text>.+)"
     )
-    private static let saveKind = Pattern(
+    private static let saveKind = IntentPattern(
         "(?:save|add|capture|jot|put)\\s+(?:(?:this|that|a|an|the|my)\\s+)?(?<kind>note|idea|task|link|thought|todo)\\s*" + sep + "\\s*(?<text>.+)"
     )
-    private static let addToList = Pattern(
+    private static let addToList = IntentPattern(
         "(?:add|put)\\s+(?<text>.+?)\\s+(?:to|on|onto|in)\\s+(?:(?:my|the|our)\\s+)?(?<coll>.+?)\\s+(?:list|checklist)"
     )
-    private static let addToCollection = Pattern("(?:add|put)\\s+(?<text>.+?)\\s+(?:to|on|onto|in)\\s+(?:(?:my|the|our)\\s+)?(?<coll>.+)")
-    private static let noteVerb = Pattern(
+    private static let addToCollection = IntentPattern("(?:add|put)\\s+(?<text>.+?)\\s+(?:to|on|onto|in)\\s+(?:(?:my|the|our)\\s+)?(?<coll>.+)")
+    private static let noteVerb = IntentPattern(
         "(?:(?:make|take)\\s+a\\s+note(?:\\s+(?:that|of|to\\s+self))?\\s*[:,]?|note\\s+(?:that|down|to\\s+self)|jot(?:\\s+down)?)\\s+(?<text>.+)"
     )
-    private static let todoWord = Pattern("(?:todo|to-do)\\s+(?<text>.+)")
-    private static let remember = Pattern("(?:remember|keep\\s+in\\s+mind)(?:\\s*[:,]\\s*|\\s+that\\s+|\\s+)(?<fact>.+)")
-    private static let aboutMe = Pattern("about\\s+me\\s*" + sep + "\\s*(?<fact>.+)")
+    private static let todoWord = IntentPattern("(?:todo|to-do)\\s+(?<text>.+)")
+    private static let remember = IntentPattern("(?:remember|keep\\s+in\\s+mind)(?:\\s*[:,]\\s*|\\s+that\\s+|\\s+)(?<fact>.+)")
+    private static let aboutMe = IntentPattern("about\\s+me\\s*" + sep + "\\s*(?<fact>.+)")
     /// Just a kind word on its own is not a thing to save.
-    private static let bareKind = Pattern("(?:a\\s+|an\\s+|this\\s+|that\\s+|the\\s+)?(?:note|idea|task|link|thought)s?")
-    private static let firstPerson = Pattern("(?:i|i'm|im|i've|i'd|i'll|my|we|we're|we've|our)\\b.*")
+    private static let bareKind = IntentPattern("(?:a\\s+|an\\s+|this\\s+|that\\s+|the\\s+)?(?:note|idea|task|link|thought)s?")
+    private static let firstPerson = IntentPattern("(?:i|i'm|im|i've|i'd|i'll|my|we|we're|we've|our)\\b.*")
 
     func note(_ t: String, _ ctx: Context) -> ParsedIntent? {
         if let c = Self.noteColon.match(t), let text = c["text"] {
@@ -134,13 +134,13 @@ extension IntentParser {
 
     private static let kinds = #"(?<kind>ideas?|notes?|tasks?|to-?dos?|links?|bookmarks?)"#
     private static let about = #"(?:for|in|about|on|from|under|of|regarding|mentioning|to)"#
-    private static let findPatterns: [Pattern] = [
-        Pattern(#"what\s+"# + kinds + #"\s+(?:did|do|have)\s+i\s+(?:save|saved|add|added|write|wrote|capture|captured|jot|jotted|note|noted|have|store|stored)(?:\s+down)?(?:\s+"# + about + #"\s+(?<q>.+))?"#),
-        Pattern(#"what\s+did\s+i\s+(?:save|add|write|note|capture|jot\s+down|store)\s+(?:for|about|on|regarding|in)\s+(?<q>.+)"#),
-        Pattern(#"what\s+(?:are|is)\s+my\s+(?:open\s+)?"# + kinds + #"(?:\s+"# + about + #"\s+(?<q>.+))?"#),
-        Pattern(#"(?:show|list|get|open|see|display|find)\s+(?:me\s+)?(?:all\s+)?(?:(?:of\s+)?my\s+|the\s+)?(?:open\s+)?"# + kinds + #"(?:\s+"# + about + #"\s+(?<q>.+))?"#),
-        Pattern(#"search\s+(?:(?:in\s+)?(?:my\s+)?(?:notes|notebook|ideas|tasks|everything)\s+)?(?:for\s+|about\s+)?(?<q>.+)"#),
-        Pattern(#"find\s+(?:me\s+)?(?:my\s+)?(?:"# + kinds + #"\s+)?(?:(?:about|for|on|mentioning|with|containing)\s+)?(?<q>.+)"#),
+    private static let findPatterns: [IntentPattern] = [
+        IntentPattern(#"what\s+"# + kinds + #"\s+(?:did|do|have)\s+i\s+(?:save|saved|add|added|write|wrote|capture|captured|jot|jotted|note|noted|have|store|stored)(?:\s+down)?(?:\s+"# + about + #"\s+(?<q>.+))?"#),
+        IntentPattern(#"what\s+did\s+i\s+(?:save|add|write|note|capture|jot\s+down|store)\s+(?:for|about|on|regarding|in)\s+(?<q>.+)"#),
+        IntentPattern(#"what\s+(?:are|is)\s+my\s+(?:open\s+)?"# + kinds + #"(?:\s+"# + about + #"\s+(?<q>.+))?"#),
+        IntentPattern(#"(?:show|list|get|open|see|display|find)\s+(?:me\s+)?(?:all\s+)?(?:(?:of\s+)?my\s+|the\s+)?(?:open\s+)?"# + kinds + #"(?:\s+"# + about + #"\s+(?<q>.+))?"#),
+        IntentPattern(#"search\s+(?:(?:in\s+)?(?:my\s+)?(?:notes|notebook|ideas|tasks|everything)\s+)?(?:for\s+|about\s+)?(?<q>.+)"#),
+        IntentPattern(#"find\s+(?:me\s+)?(?:my\s+)?(?:"# + kinds + #"\s+)?(?:(?:about|for|on|mentioning|with|containing)\s+)?(?<q>.+)"#),
     ]
     /// "find out why...", "find me a good restaurant", "search the web for...": a request for reasoning or the web, not a notebook search.
     private static let notASearch: Set<String> = [

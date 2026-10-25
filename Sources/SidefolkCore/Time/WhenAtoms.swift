@@ -1,35 +1,35 @@
 import Foundation
 
-enum Meridiem: Sendable, Equatable { case am, pm }
-enum DayPart: String, Sendable, Equatable { case morning, afternoon, evening, night }
+enum WhenMeridiem: Sendable, Equatable { case am, pm }
+enum WhenDayPart: String, Sendable, Equatable { case morning, afternoon, evening, night }
 
 /// "in 2 hours" is exact seconds; "in 3 days" is calendar arithmetic and keeps the date semantics.
-struct SpanDuration: Sendable, Equatable {
+struct WhenSpan: Sendable, Equatable {
     var seconds = 0.0
     var days = 0
     var months = 0
     var years = 0
 }
 
-enum DaySpec: Sendable, Equatable {
+enum WhenDay: Sendable, Equatable {
     case today, tomorrow, dayAfterTomorrow
     case weekday(Int, next: Bool)
     case nextWeek, nextMonth, nextYear, weekend
     case date(month: Int, day: Int, year: Int?)
     case dayOfMonth(Int)
     case relative(days: Int, months: Int, years: Int)
-    case iso(ISOStamp)
+    case iso(WhenISOStamp)
 }
 
-enum TimeSpec: Sendable, Equatable {
-    case clock(hour: Int, minute: Int, meridiem: Meridiem?, exact24: Bool)
+enum WhenTime: Sendable, Equatable {
+    case clock(hour: Int, minute: Int, meridiem: WhenMeridiem?, exact24: Bool)
     case noon, midnight
-    case part(DayPart)
+    case part(WhenDayPart)
     /// The time comes with the ISO stamp.
     case fromISO
 }
 
-struct RepeatSpec: Sendable, Equatable {
+struct WhenRepeat: Sendable, Equatable {
     var frequency: Recurrence.Frequency
     var interval = 1
     var weekdays: [Int] = []
@@ -41,18 +41,18 @@ struct RepeatSpec: Sendable, Equatable {
 }
 
 /// One recognised piece of a time phrase and the tokens it covers (`start..<end`).
-struct Atom: Sendable {
-    var day: DaySpec?
-    var time: TimeSpec?
+struct WhenAtom: Sendable {
+    var day: WhenDay?
+    var time: WhenTime?
     /// "tomorrow evening at 7": the part of day that decides am/pm for the clock time.
-    var partHint: DayPart?
-    var duration: SpanDuration?
-    var repeats: RepeatSpec?
+    var partHint: WhenDayPart?
+    var duration: WhenSpan?
+    var repeats: WhenRepeat?
     var start = 0
     var end = 0
 
     /// Combines two atoms of one phrase ("tomorrow" + "at 5"); nil when they contradict each other.
-    func merged(with next: Atom) -> Atom? {
+    func merged(with next: WhenAtom) -> WhenAtom? {
         var out = self
         out.end = max(end, next.end)
         if duration != nil || next.duration != nil { return nil }
@@ -105,8 +105,8 @@ struct WhenScanner {
 
     // MARK: Scanning
 
-    func atoms() -> [Atom] {
-        var out: [Atom] = []
+    func atoms() -> [WhenAtom] {
+        var out: [WhenAtom] = []
         var i = 0
         while i < tokens.count {
             if var atom = match(at: i, previous: out.last) {
@@ -120,11 +120,11 @@ struct WhenScanner {
         return out
     }
 
-    private func match(at i: Int, previous: Atom?) -> Atom? {
+    private func match(at i: Int, previous: WhenAtom?) -> WhenAtom? {
         if let a = matchRepeat(i) { return a }
         if let a = matchOffset(i) { return a }
         if tokens[i].kind == .iso, let stamp = tokens[i].iso {
-            return Atom(day: .iso(stamp), time: stamp.hasTime ? .fromISO : nil, end: i + 1)
+            return WhenAtom(day: .iso(stamp), time: stamp.hasTime ? .fromISO : nil, end: i + 1)
         }
         if let a = matchTime(i, previous: previous) { return a }
         return matchDay(i)
@@ -144,8 +144,8 @@ struct WhenScanner {
         tokens.indices.contains(i) && tokens[i].kind == .number ? tokens[i] : nil
     }
 
-    private func partWord(_ i: Int) -> DayPart? {
-        word(i).flatMap(DayPart.init(rawValue:))
+    private func partWord(_ i: Int) -> WhenDayPart? {
+        word(i).flatMap(WhenDayPart.init(rawValue:))
     }
 
     private func weekdayWord(_ i: Int) -> (iso: Int, plural: Bool, abbreviated: Bool)? {
@@ -169,12 +169,12 @@ struct WhenScanner {
     private static let unitNames: Set<String> = ["second", "minute", "hour", "day", "week", "month", "year"]
 
     /// "in 20 min", "in an hour and a half", "in 1 hour 30 minutes", "20 minutes from now".
-    private func matchOffset(_ i: Int) -> Atom? {
+    private func matchOffset(_ i: Int) -> WhenAtom? {
         var j = i
         let hasIn = ["in", "after", "within"].contains(word(j) ?? "")
         if hasIn { j += 1 } else if readQuantity(j) == nil { return nil }
 
-        var span = SpanDuration()
+        var span = WhenSpan()
         var parsed = false
         while let (amount, afterAmount) = readQuantity(j), let (name, afterUnit) = readUnit(afterAmount, afterNumber: tokens[j].kind == .number) {
             guard add(amount, name, to: &span) else { return nil }
@@ -198,9 +198,9 @@ struct WhenScanner {
             j += 2
         }
         if span.seconds == 0 {
-            return Atom(day: .relative(days: span.days, months: span.months, years: span.years), end: j)
+            return WhenAtom(day: .relative(days: span.days, months: span.months, years: span.years), end: j)
         }
-        return Atom(duration: span, end: j)
+        return WhenAtom(duration: span, end: j)
     }
 
     /// How many: "20", "an", "half an", "a couple of", "two".
@@ -235,7 +235,7 @@ struct WhenScanner {
         return nil
     }
 
-    private func add(_ amount: Double, _ unit: String, to span: inout SpanDuration) -> Bool {
+    private func add(_ amount: Double, _ unit: String, to span: inout WhenSpan) -> Bool {
         let whole = amount == amount.rounded()
         switch unit {
         case "second": span.seconds += amount
@@ -264,14 +264,14 @@ struct WhenScanner {
         "degrees", "miles", "km", "kg", "pounds", "cards", "tabs", "emails", "messages", "calls", "meetings",
     ]
 
-    private func matchTime(_ i: Int, previous: Atom?) -> Atom? {
+    private func matchTime(_ i: Int, previous: WhenAtom?) -> WhenAtom? {
         // "in the morning/afternoon/evening", "in the night"
         if word(i) == "in", word(i + 1) == "the", let p = partWord(i + 2) {
-            return Atom(time: .part(p), end: i + 3)
+            return WhenAtom(time: .part(p), end: i + 3)
         }
         // a part of the day right after a day ("tomorrow morning")
         if let p = partWord(i), let prev = previous, prev.end == i, prev.day != nil, prev.time == nil {
-            return Atom(time: .part(p), end: i + 1)
+            return WhenAtom(time: .part(p), end: i + 1)
         }
 
         var k = i
@@ -280,15 +280,15 @@ struct WhenScanner {
         else if punct(k) == "@" { explicitAt = true; k += 1 }
 
         // "end of (the) day", "eod", "cob": the working day ends at 17:00
-        if word(k) == "eod" || word(k) == "cob" { return Atom(time: .clock(hour: 17, minute: 0, meridiem: nil, exact24: true), end: k + 1) }
+        if word(k) == "eod" || word(k) == "cob" { return WhenAtom(time: .clock(hour: 17, minute: 0, meridiem: nil, exact24: true), end: k + 1) }
         if word(k) == "end", word(k + 1) == "of" {
             let dayAt = word(k + 2) == "the" ? k + 3 : k + 2
-            if word(dayAt) == "day" { return Atom(time: .clock(hour: 17, minute: 0, meridiem: nil, exact24: true), end: dayAt + 1) }
+            if word(dayAt) == "day" { return WhenAtom(time: .clock(hour: 17, minute: 0, meridiem: nil, exact24: true), end: dayAt + 1) }
         }
         if let w = word(k) {
-            if w == "noon" { return Atom(time: .noon, end: k + 1) }
-            if w == "midnight" { return Atom(time: .midnight, end: k + 1) }
-            if explicitAt, let p = partWord(k) { return Atom(time: .part(p), end: k + 1) }
+            if w == "noon" { return WhenAtom(time: .noon, end: k + 1) }
+            if w == "midnight" { return WhenAtom(time: .midnight, end: k + 1) }
+            if explicitAt, let p = partWord(k) { return WhenAtom(time: .part(p), end: k + 1) }
             if explicitAt, let spelled = WhenLexicon.numberWords[w], spelled <= 12 {
                 return clock(hour: Int(spelled), minute: 0, hasColon: false, leadingZero: false, tokenAt: k, explicitAt: true)
             }
@@ -307,10 +307,10 @@ struct WhenScanner {
     }
 
     /// Reads what follows the hour/minute token: am/pm, "o'clock", "in the evening", "sharp".
-    private func clock(hour: Int, minute: Int, hasColon: Bool, leadingZero: Bool, tokenAt k: Int, explicitAt: Bool) -> Atom? {
+    private func clock(hour: Int, minute: Int, hasColon: Bool, leadingZero: Bool, tokenAt k: Int, explicitAt: Bool) -> WhenAtom? {
         var j = k + 1
-        var meridiem: Meridiem?
-        var hint: DayPart?
+        var meridiem: WhenMeridiem?
+        var hint: WhenDayPart?
         var oclock = false
         if let w = word(j), w == "am" || w == "pm" {
             guard (1...12).contains(hour) else { return nil }
@@ -331,7 +331,7 @@ struct WhenScanner {
         if meridiem == nil, !hasColon, hint == nil, let follower = word(j), Self.unitNouns.contains(follower) { return nil }
 
         let exact24 = hour == 0 || hour >= 13 || leadingZero
-        var atom = Atom(time: .clock(hour: hour, minute: minute, meridiem: meridiem, exact24: exact24), end: j)
+        var atom = WhenAtom(time: .clock(hour: hour, minute: minute, meridiem: meridiem, exact24: exact24), end: j)
         atom.partHint = hint
         return atom
     }
@@ -340,12 +340,12 @@ struct WhenScanner {
 
     private static let dayPrefixes: Set<String> = ["on", "by", "this", "next", "coming", "upcoming"]
 
-    private func matchDay(_ i: Int) -> Atom? {
+    private func matchDay(_ i: Int) -> WhenAtom? {
         // "(the) day after tomorrow"
         var s = i
         if word(s) == "the" { s += 1 }
         if word(s) == "day", word(s + 1) == "after", word(s + 2) == "tomorrow" {
-            return Atom(day: .dayAfterTomorrow, end: s + 3)
+            return WhenAtom(day: .dayAfterTomorrow, end: s + 3)
         }
 
         var k = i
@@ -359,26 +359,26 @@ struct WhenScanner {
         if word(the) == "the", prefix == nil || prefix == "on" { the += 1 }
 
         if let w = word(k) {
-            if !isNext, !isThis, w == "tomorrow" { return Atom(day: .tomorrow, end: k + 1) }
-            if prefix != "next", w == "today" { return Atom(day: .today, end: k + 1) }
-            if prefix == nil, w == "tonight" { return Atom(day: .today, time: .part(.night), end: k + 1) }
-            if isThis, let p = partWord(k) { return Atom(day: .today, time: .part(p), end: k + 1) }
-            if isNext, w == "week" { return Atom(day: .nextWeek, end: k + 1) }
-            if isNext, w == "month" { return Atom(day: .nextMonth, end: k + 1) }
-            if isNext, w == "year" { return Atom(day: .nextYear, end: k + 1) }
+            if !isNext, !isThis, w == "tomorrow" { return WhenAtom(day: .tomorrow, end: k + 1) }
+            if prefix != "next", w == "today" { return WhenAtom(day: .today, end: k + 1) }
+            if prefix == nil, w == "tonight" { return WhenAtom(day: .today, time: .part(.night), end: k + 1) }
+            if isThis, let p = partWord(k) { return WhenAtom(day: .today, time: .part(p), end: k + 1) }
+            if isNext, w == "week" { return WhenAtom(day: .nextWeek, end: k + 1) }
+            if isNext, w == "month" { return WhenAtom(day: .nextMonth, end: k + 1) }
+            if isNext, w == "year" { return WhenAtom(day: .nextYear, end: k + 1) }
         }
-        if word(the) == "weekend", prefix != "by" { return Atom(day: .weekend, end: the + 1) }
+        if word(the) == "weekend", prefix != "by" { return WhenAtom(day: .weekend, end: the + 1) }
 
         if let wd = weekdayWord(k), !wd.plural {
             // "sat" and "sun" are also ordinary words: trust them only with a day word before or a time after.
             if wd.abbreviated, prefix == nil, !timeStarts(at: k + 1) { return nil }
-            return Atom(day: .weekday(wd.iso, next: isNext), end: k + 1)
+            return WhenAtom(day: .weekday(wd.iso, next: isNext), end: k + 1)
         }
 
         if prefix == nil || prefix == "on" || prefix == "by" {
-            if let md = monthDay(at: the) { return Atom(day: .date(month: md.month, day: md.day, year: md.year), end: md.end) }
+            if let md = monthDay(at: the) { return WhenAtom(day: .date(month: md.month, day: md.day, year: md.year), end: md.end) }
             if prefix == "on", let n = number(the), n.ordinal, (1...31).contains(Int(n.number)) {
-                return Atom(day: .dayOfMonth(Int(n.number)), end: the + 1)
+                return WhenAtom(day: .dayOfMonth(Int(n.number)), end: the + 1)
             }
         }
         return nil
@@ -413,32 +413,32 @@ struct WhenScanner {
 
     // MARK: Repeating
 
-    private func matchRepeat(_ i: Int) -> Atom? {
+    private func matchRepeat(_ i: Int) -> WhenAtom? {
         guard let w = word(i) else { return nil }
         switch w {
         case "every", "each": return matchEvery(i)
-        case "daily", "everyday": return adverb(RepeatSpec(frequency: .daily), from: i, to: i + 1)
-        case "hourly": return adverb(RepeatSpec(frequency: .hourly), from: i, to: i + 1)
-        case "weekdays": return adverb(RepeatSpec(frequency: .weekdays), from: i, to: i + 1)
-        case "fortnightly": return adverb(RepeatSpec(frequency: .weekly, interval: 2), from: i, to: i + 1)
+        case "daily", "everyday": return adverb(WhenRepeat(frequency: .daily), from: i, to: i + 1)
+        case "hourly": return adverb(WhenRepeat(frequency: .hourly), from: i, to: i + 1)
+        case "weekdays": return adverb(WhenRepeat(frequency: .weekdays), from: i, to: i + 1)
+        case "fortnightly": return adverb(WhenRepeat(frequency: .weekly, interval: 2), from: i, to: i + 1)
         case "weekly":
-            if let (days, end) = onWeekdays(i + 1) { return adverb(RepeatSpec(frequency: .weekly, weekdays: days), from: i, to: end) }
-            return adverb(RepeatSpec(frequency: .weekly), from: i, to: i + 1)
+            if let (days, end) = onWeekdays(i + 1) { return adverb(WhenRepeat(frequency: .weekly, weekdays: days), from: i, to: end) }
+            return adverb(WhenRepeat(frequency: .weekly), from: i, to: i + 1)
         case "monthly":
-            if let (day, end) = onDayOfMonth(i + 1) { return adverb(RepeatSpec(frequency: .monthly, dayOfMonth: day), from: i, to: end) }
-            return adverb(RepeatSpec(frequency: .monthly), from: i, to: i + 1)
+            if let (day, end) = onDayOfMonth(i + 1) { return adverb(WhenRepeat(frequency: .monthly, dayOfMonth: day), from: i, to: end) }
+            return adverb(WhenRepeat(frequency: .monthly), from: i, to: i + 1)
         case "yearly", "annually":
-            if let (md, end) = onDate(i + 1) { return adverb(RepeatSpec(frequency: .yearly, month: md.month, day: md.day), from: i, to: end) }
-            return adverb(RepeatSpec(frequency: .yearly), from: i, to: i + 1)
+            if let (md, end) = onDate(i + 1) { return adverb(WhenRepeat(frequency: .yearly, month: md.month, day: md.day), from: i, to: end) }
+            return adverb(WhenRepeat(frequency: .yearly), from: i, to: i + 1)
         case "on":
             // "on mondays", "on tuesdays and thursdays"
             if let wd = weekdayWord(i + 1), wd.plural, let (days, end) = weekdayList(i + 1) {
-                return Atom(repeats: RepeatSpec(frequency: .weekly, weekdays: days), end: end)
+                return WhenAtom(repeats: WhenRepeat(frequency: .weekly, weekdays: days), end: end)
             }
             return nil
         default:
             if let wd = weekdayWord(i), wd.plural, let (days, end) = weekdayList(i) {
-                return adverb(RepeatSpec(frequency: .weekly, weekdays: days), from: i, to: end)
+                return adverb(WhenRepeat(frequency: .weekly, weekdays: days), from: i, to: end)
             }
             return nil
         }
@@ -446,14 +446,14 @@ struct WhenScanner {
 
     /// "daily" or "weekly" as a bare word is only a schedule at the edge of the sentence or before a time;
     /// "the weekly report" is not one.
-    private func adverb(_ spec: RepeatSpec, from i: Int, to end: Int) -> Atom? {
+    private func adverb(_ spec: WhenRepeat, from i: Int, to end: Int) -> WhenAtom? {
         let atEdge = i <= firstContent || end > lastContent
         let beforeTime = word(end) == "at" || word(end) == "on" || punct(end) == "@" || (tokens.indices.contains(end) && tokens[end].kind == .clock)
         guard atEdge || beforeTime else { return nil }
-        return Atom(repeats: spec, end: end)
+        return WhenAtom(repeats: spec, end: end)
     }
 
-    private func matchEvery(_ i: Int) -> Atom? {
+    private func matchEvery(_ i: Int) -> WhenAtom? {
         var k = i + 1
         var interval = 1
         if word(k) == "other" {
@@ -468,31 +468,31 @@ struct WhenScanner {
         }
         guard let u = word(k) else { return nil }
         switch u {
-        case "day": return Atom(repeats: RepeatSpec(frequency: .daily, interval: interval), end: k + 1)
-        case "hour": return Atom(repeats: RepeatSpec(frequency: .hourly, interval: interval), end: k + 1)
+        case "day": return WhenAtom(repeats: WhenRepeat(frequency: .daily, interval: interval), end: k + 1)
+        case "hour": return WhenAtom(repeats: WhenRepeat(frequency: .hourly, interval: interval), end: k + 1)
         case "week":
             let (days, end) = onWeekdays(k + 1) ?? ([], k + 1)
-            return Atom(repeats: RepeatSpec(frequency: .weekly, interval: interval, weekdays: days), end: end)
+            return WhenAtom(repeats: WhenRepeat(frequency: .weekly, interval: interval, weekdays: days), end: end)
         case "month":
             let (day, end) = onDayOfMonth(k + 1) ?? (nil, k + 1)
-            return Atom(repeats: RepeatSpec(frequency: .monthly, interval: interval, dayOfMonth: day), end: end)
+            return WhenAtom(repeats: WhenRepeat(frequency: .monthly, interval: interval, dayOfMonth: day), end: end)
         case "year":
             let (md, end) = onDate(k + 1) ?? (nil, k + 1)
-            return Atom(repeats: RepeatSpec(frequency: .yearly, interval: interval, month: md?.month, day: md?.day), end: end)
+            return WhenAtom(repeats: WhenRepeat(frequency: .yearly, interval: interval, month: md?.month, day: md?.day), end: end)
         case "weekday", "weekdays":
-            return interval == 1 ? Atom(repeats: RepeatSpec(frequency: .weekdays), end: k + 1) : nil
+            return interval == 1 ? WhenAtom(repeats: WhenRepeat(frequency: .weekdays), end: k + 1) : nil
         case "weekend":
-            return Atom(repeats: RepeatSpec(frequency: .weekly, interval: interval, weekdays: [6, 7]), end: k + 1)
+            return WhenAtom(repeats: WhenRepeat(frequency: .weekly, interval: interval, weekdays: [6, 7]), end: k + 1)
         case "working", "business":
-            return word(k + 1) == "day" && interval == 1 ? Atom(repeats: RepeatSpec(frequency: .weekdays), end: k + 2) : nil
+            return word(k + 1) == "day" && interval == 1 ? WhenAtom(repeats: WhenRepeat(frequency: .weekdays), end: k + 2) : nil
         case "morning", "afternoon", "evening", "night":
-            return Atom(time: .part(DayPart(rawValue: u)!), repeats: RepeatSpec(frequency: .daily, interval: interval), end: k + 1)
+            return WhenAtom(time: .part(WhenDayPart(rawValue: u)!), repeats: WhenRepeat(frequency: .daily, interval: interval), end: k + 1)
         default:
             if weekdayWord(k) != nil, let (days, end) = weekdayList(k) {
-                return Atom(repeats: RepeatSpec(frequency: .weekly, interval: interval, weekdays: days), end: end)
+                return WhenAtom(repeats: WhenRepeat(frequency: .weekly, interval: interval, weekdays: days), end: end)
             }
             if let md = monthDay(at: k) {
-                return Atom(repeats: RepeatSpec(frequency: .yearly, interval: interval, month: md.month, day: md.day), end: md.end)
+                return WhenAtom(repeats: WhenRepeat(frequency: .yearly, interval: interval, month: md.month, day: md.day), end: md.end)
             }
             return nil
         }

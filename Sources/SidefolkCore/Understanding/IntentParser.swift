@@ -113,7 +113,7 @@ public struct IntentParser: Sendable {
 
     // MARK: Reminders
 
-    private static let remindLead = Pattern(
+    private static let remindLead = IntentPattern(
         #"(?:(?<strong>(?:set|create|add|make|schedule|new)\s+(?:me\s+)?(?:a\s+|another\s+|the\s+)?reminder(?:\s+for\s+me)?|remind\s+(?:me|myself)|reminder(?=\s*[:\-–—]|\s+(?:to|about|for|that)\s))|(?<weak>(?:ping|nudge|alert|notify|tell)\s+me|remember))(?:\s*[:,\-–—]\s*|\s+)(?<rest>.+)"#
     )
 
@@ -156,15 +156,15 @@ public struct IntentParser: Sendable {
     // MARK: Quiet mode
 
     private static let quietName = #"(?:quiet(?:\s+mode)?|silent\s+mode|dnd|do\s+not\s+disturb|don't\s+disturb(?:\s+me)?|focus\s+mode)"#
-    private static let quietOff: [Pattern] = [
-        Pattern(#"(?:turn|switch|set)\s+"# + quietName + #"\s+off"#),
-        Pattern(#"(?:turn|switch)\s+off\s+"# + quietName),
-        Pattern(#"(?:stop|end|disable|cancel|exit|leave|finish)\s+"# + quietName),
-        Pattern(quietName + #"\s+(?:off|stop|end|over|done)"#),
+    private static let quietOff: [IntentPattern] = [
+        IntentPattern(#"(?:turn|switch|set)\s+"# + quietName + #"\s+off"#),
+        IntentPattern(#"(?:turn|switch)\s+off\s+"# + quietName),
+        IntentPattern(#"(?:stop|end|disable|cancel|exit|leave|finish)\s+"# + quietName),
+        IntentPattern(quietName + #"\s+(?:off|stop|end|over|done)"#),
     ]
-    private static let quietOn: [Pattern] = [
-        Pattern(#"(?:go|be|stay|keep)\s+(?:quiet|silent)(?:\s+(?<prep>for|until|till|til)\s+(?<rest>.+))?"#),
-        Pattern(#"(?:(?:turn|switch|set)\s+(?:on\s+)?|enable\s+|start\s+|activate\s+)?"# + quietName
+    private static let quietOn: [IntentPattern] = [
+        IntentPattern(#"(?:go|be|stay|keep)\s+(?:quiet|silent)(?:\s+(?<prep>for|until|till|til)\s+(?<rest>.+))?"#),
+        IntentPattern(#"(?:(?:turn|switch|set)\s+(?:on\s+)?|enable\s+|start\s+|activate\s+)?"# + quietName
             + #"(?:\s+on)?(?:\s+(?<prep>for|until|till|til)\s+(?<rest>.+))?"#),
     ]
 

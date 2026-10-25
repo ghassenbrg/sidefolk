@@ -20,7 +20,7 @@ struct WhenResolver {
         var exact: Bool
     }
 
-    func resolve(_ atom: Atom) -> Outcome? {
+    func resolve(_ atom: WhenAtom) -> Outcome? {
         if let span = atom.duration { return offset(span) }
         if atom.repeats != nil { return repeating(atom) }
         return single(atom)
@@ -40,7 +40,7 @@ struct WhenResolver {
 
     private func isoWeekday(_ date: Date) -> Int { TimeFormat.isoWeekday(of: date, calendar: calendar) }
 
-    private func hour(for part: DayPart) -> Int {
+    private func hour(for part: WhenDayPart) -> Int {
         switch part {
         case .morning: morning
         case .afternoon: afternoon
@@ -56,7 +56,7 @@ struct WhenResolver {
         var alternate: (hour: Int, minute: Int)?
     }
 
-    private func choice(_ atom: Atom) -> Choice {
+    private func choice(_ atom: WhenAtom) -> Choice {
         switch atom.time {
         case nil, .fromISO: return Choice(primary: (morning, 0))
         case .noon: return Choice(primary: (12, 0))
@@ -74,7 +74,7 @@ struct WhenResolver {
 
     // MARK: Offsets
 
-    private func offset(_ span: SpanDuration) -> Outcome? {
+    private func offset(_ span: WhenSpan) -> Outcome? {
         var base = now
         if span.days != 0 || span.months != 0 || span.years != 0 {
             guard let moved = calendar.date(byAdding: DateComponents(year: span.years, month: span.months, day: span.days), to: now) else { return nil }
@@ -86,7 +86,7 @@ struct WhenResolver {
 
     // MARK: One-off dates
 
-    private func single(_ atom: Atom) -> Outcome? {
+    private func single(_ atom: WhenAtom) -> Outcome? {
         let pick = choice(atom)
         let hasTime = atom.time != nil
         func out(_ date: Date, _ confidence: WhenResult.Confidence = .high, exact: Bool = false) -> Outcome {
@@ -181,7 +181,7 @@ struct WhenResolver {
         return nil
     }
 
-    private func isoDate(_ s: ISOStamp) -> Date? {
+    private func isoDate(_ s: WhenISOStamp) -> Date? {
         var cal = calendar
         if let offset = s.offset, let zone = TimeZone(secondsFromGMT: offset) { cal.timeZone = zone }
         var c = DateComponents()
@@ -193,7 +193,7 @@ struct WhenResolver {
 
     // MARK: Repeating
 
-    private func repeating(_ atom: Atom) -> Outcome? {
+    private func repeating(_ atom: WhenAtom) -> Outcome? {
         guard let spec = atom.repeats else { return nil }
         let time = choice(atom).primary
         var rule = Recurrence(frequency: spec.frequency, interval: spec.interval, weekdays: spec.weekdays)
@@ -248,7 +248,7 @@ struct WhenResolver {
     /// Monthly and yearly series: the anchor is placed on a real date that has the wanted day (a month or
     /// year earlier if need be, such as the 31st or 29 February), so later months keep that day and
     /// only clamp when they are too short.
-    private func anchored(rule: Recurrence, time: (hour: Int, minute: Int), atom: Atom, anchorDay: (Int) -> Date?) -> Outcome? {
+    private func anchored(rule: Recurrence, time: (hour: Int, minute: Int), atom: WhenAtom, anchorDay: (Int) -> Date?) -> Outcome? {
         var everyOne = rule
         everyOne.interval = 1
         for back in 0...8 {

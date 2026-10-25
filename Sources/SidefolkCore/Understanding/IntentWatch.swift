@@ -4,35 +4,35 @@ import Foundation
 extension IntentParser {
     // MARK: Patterns
 
-    private static let tellMe = Pattern(
+    private static let tellMe = IntentPattern(
         #"(?:tell|let|notify|ping|alert|message|remind)\s+me(?:\s+know)?,?\s+(?:when|once|if|as\s+soon\s+as|the\s+moment|the\s+second)\s+(?<rest>.+)"#
     )
-    private static let watchDirect = Pattern(
+    private static let watchDirect = IntentPattern(
         #"(?:watch|monitor|keep\s+an\s+eye\s+on|keep\s+watching|track\s+changes\s+(?:on|to))\s+(?:the\s+|this\s+|that\s+)?(?:(?:page|site|website|url|link)\s+)?(?<target>\S+)(?:\s+for\s+(?<what>.+))?"#
     )
-    private static let watchFolder = Pattern(#"(?:watch|monitor|keep\s+an\s+eye\s+on)\s+(?:my\s+|the\s+)?(?<place>downloads|desktop|documents)(?:\s+folder)?"#)
+    private static let watchFolder = IntentPattern(#"(?:watch|monitor|keep\s+an\s+eye\s+on)\s+(?:my\s+|the\s+)?(?<place>downloads|desktop|documents)(?:\s+folder)?"#)
 
-    private static let downloadDone = Pattern(
+    private static let downloadDone = IntentPattern(
         #"(?:the\s+|my\s+|this\s+|that\s+|a\s+|the\s+current\s+)?downloads?\s+(?:finish(?:es)?|is\s+(?:finished|done|complete|completed)|complete[sd]?|ends?|done)"#
     )
-    private static let fileAppears = Pattern(
+    private static let fileAppears = IntentPattern(
         #"(?<file>.+?)\s+(?:appears|shows\s+up|arrives|lands|is\s+created|gets\s+created|is\s+downloaded|gets\s+downloaded|is\s+there|exists|is\s+saved|is\s+added|gets\s+added)(?:\s+(?:in|on|to|at|under|inside)\s+(?<place>.+))?"#
     )
-    private static let siteStatus = Pattern(
+    private static let siteStatus = IntentPattern(
         #"(?<target>\S+)\s+(?:(?:is|are|goes|comes|gets|came|went)\s+)?(?:back\s+)?(?<state>up|online|down|offline|unreachable|available|reachable|live|working|responding|alive)(?:\s+again)?"#
     )
-    private static let urlChanges = Pattern(
+    private static let urlChanges = IntentPattern(
         #"(?<target>\S+)\s+(?:changes|changed|is\s+changed|updates|is\s+updated|gets\s+updated|has\s+changed|has\s+been\s+(?:updated|changed)|is\s+modified|gets\s+modified)"#
     )
-    private static let anythingChanges = Pattern(
+    private static let anythingChanges = IntentPattern(
         #"(?:anything|something|there(?:'s|\s+is)\s+(?:a|any)\s+change)\s+(?:changes\s+|changed\s+)?(?:on|at|in|to)\s+(?<target>\S+)"#
     )
-    private static let urlContains = Pattern(#"(?<target>\S+)\s+(?:contains|mentions|says|has|includes|shows|lists)\s+(?<text>.+)"#)
-    private static let processExits = Pattern(
+    private static let urlContains = IntentPattern(#"(?<target>\S+)\s+(?:contains|mentions|says|has|includes|shows|lists)\s+(?<text>.+)"#)
+    private static let processExits = IntentPattern(
         #"(?:the\s+)?(?<name>[\w.\-]+)(?:\s+(?:process|command|job|program))?\s+(?:finishes|finished|exits|exited|ends|ended|completes|completed|stops|stopped|quits|terminates|is\s+(?:done|finished|complete|completed))"#
     )
-    private static let newFile = Pattern(#"(?:a\s+|any\s+|the\s+)?(?:new\s+)?(?:file|files|something|anything|document|documents)"#)
-    private static let changeWords = Pattern(#"(?:any\s+)?(?:changes?|updates?|news|new\s+content)"#)
+    private static let newFile = IntentPattern(#"(?:a\s+|any\s+|the\s+)?(?:new\s+)?(?:file|files|something|anything|document|documents)"#)
+    private static let changeWords = IntentPattern(#"(?:any\s+)?(?:changes?|updates?|news|new\s+content)"#)
 
     /// Words that are not the name of a program.
     private static let notAProcess: Set<String> = [

@@ -1,7 +1,7 @@
 import Foundation
 
 /// An ISO 8601 date or date-time found in the text.
-struct ISOStamp: Sendable, Equatable {
+struct WhenISOStamp: Sendable, Equatable {
     var year: Int, month: Int, day: Int
     var hour = 0, minute = 0, second = 0
     var hasTime = false
@@ -24,7 +24,7 @@ struct WhenToken: Sendable {
     var leadingZero = false
     /// Weekday or month written short ("fri", "nov"); only trusted next to other date words.
     var abbreviated = false
-    var iso: ISOStamp?
+    var iso: WhenISOStamp?
 
     var isInteger: Bool { kind == .number && number == number.rounded() }
 }
@@ -230,7 +230,7 @@ enum WhenTokenizer {
     }
 
     /// 2025-11-12, 2025-11-12T09:30, 2025-11-12 09:30:15, with optional fraction and Z / +01:00.
-    static func scanISO(_ text: String, from start: String.Index) -> (ISOStamp, Int)? {
+    static func scanISO(_ text: String, from start: String.Index) -> (WhenISOStamp, Int)? {
         let chars = Array(text[start...].prefix(40))
         func digits(_ from: Int, _ count: Int) -> Int? {
             guard from + count <= chars.count else { return nil }
@@ -243,7 +243,7 @@ enum WhenTokenizer {
         }
         guard chars.count >= 10, let y = digits(0, 4), chars[4] == "-", let m = digits(5, 2), chars[7] == "-", let d = digits(8, 2),
               (1...12).contains(m), (1...31).contains(d) else { return nil }
-        var stamp = ISOStamp(year: y, month: m, day: d)
+        var stamp = WhenISOStamp(year: y, month: m, day: d)
         var length = 10
         if chars.count >= 16, "Tt ".contains(chars[10]), let h = digits(11, 2), chars[13] == ":", let mi = digits(14, 2), h < 24, mi < 60 {
             stamp.hasTime = true

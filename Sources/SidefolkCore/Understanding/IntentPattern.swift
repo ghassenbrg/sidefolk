@@ -2,7 +2,7 @@ import Foundation
 
 /// A whole-text, case-insensitive pattern with named groups. The intent parser is a list of these,
 /// tried in a fixed order; anything that matches none of them is left to the AI.
-struct Pattern: Sendable {
+struct IntentPattern: Sendable {
     private let regex: NSRegularExpression
 
     init(_ pattern: String) {
@@ -10,14 +10,14 @@ struct Pattern: Sendable {
         regex = try! NSRegularExpression(pattern: "^(?:" + pattern + ")$", options: [.caseInsensitive])
     }
 
-    func match(_ text: String) -> Captures? {
+    func match(_ text: String) -> IntentCaptures? {
         let whole = NSRange(text.startIndex..., in: text)
         guard let m = regex.firstMatch(in: text, options: [], range: whole) else { return nil }
-        return Captures(text: text, match: m)
+        return IntentCaptures(text: text, match: m)
     }
 }
 
-struct Captures {
+struct IntentCaptures {
     let text: String
     let match: NSTextCheckingResult
 

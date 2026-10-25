@@ -74,7 +74,7 @@ public struct WhenParser: Sendable {
 
         let first = groups.first { $0.start <= scanner.firstContent }
         let last = groups.last { $0.end > scanner.lastContent }
-        var candidates: [(Atom, [Range<Int>])] = []
+        var candidates: [(WhenAtom, [Range<Int>])] = []
         if let first, let last, first.start != last.start, let both = first.merged(with: last) {
             candidates.append((both, [first.start..<first.end, last.start..<last.end]))
         }
@@ -101,7 +101,7 @@ public struct WhenParser: Sendable {
     private static let connectors: Set<String> = ["on", "at", "the", "of"]
 
     /// Joins neighbouring atoms that fit together ("friday" + "at 3pm") into phrases.
-    private func phrases(_ atoms: [Atom], _ tokens: [WhenToken]) -> [Atom] {
+    private func phrases(_ atoms: [WhenAtom], _ tokens: [WhenToken]) -> [WhenAtom] {
         func onlyConnectors(from a: Int, to b: Int) -> Bool {
             tokens[a..<b].allSatisfy { t in
                 switch t.kind {
@@ -111,8 +111,8 @@ public struct WhenParser: Sendable {
                 }
             }
         }
-        var out: [Atom] = []
-        var current: Atom?
+        var out: [WhenAtom] = []
+        var current: WhenAtom?
         for atom in atoms {
             if let c = current, onlyConnectors(from: c.end, to: atom.start), let joined = c.merged(with: atom) {
                 current = joined
