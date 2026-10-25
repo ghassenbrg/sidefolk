@@ -1,0 +1,195 @@
+import AppKit
+import SidefolkCore
+import SwiftUI
+
+/// Renders the Home and Settings windows with sample data to PNGs, in light and dark, then exits:
+/// `SidefolkApp --ui-snapshots <dir>`. Lets agents (who can't see the screen) review the UI.
+/// Uses an in-memory database, a temp home and fixture services: no real data is read or touched.
+///
+/// - `window-*`: the real windows, titlebar and toolbar included, as the controllers build them.
+/// - `page-*`: a page at its full height, to review everything below the fold.
+/// - `sheet-*`: sheets on their own.
+enum UISnapshots {
+    static func runIfRequested() {
+        let args = CommandLine.arguments
+        guard let flag = args.firstIndex(of: "--ui-snapshots"), flag + 1 < args.count else { return }
+        let dir = URL(fileURLWithPath: args[flag + 1], isDirectory: true)
+        let app = NSApplication.shared
+        // Prohibited: no Dock icon, no menu bar, never takes focus from the user.
+        app.setActivationPolicy(.prohibited)
+        Task {
+            do {
+                try await render(into: dir)
+                exit(0)
+            } catch {
+                FileHandle.standardError.write(Data("ui-snapshots failed: \(error)\n".utf8))
+                exit(1)
+            }
+        }
+        app.run()
+    }
+
+    private static func render(into dir: URL) async throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let (full, filled) = try await makeHome(empty: false)
+        let (empty, _) = try await makeHome(empty: true)
+        let settings = try await makeSettings()
+        guard let sample = filled else { return }
+
+        for dark in [false, true] {
+            let suffix = dark ? "dark" : "light"
+            func file(_ name: String) -> URL { dir.appendingPathComponent("\(name)-\(suffix).png") }
+
+            // Home, as a real window.
+            let home = SnapshotWindow()
+            HomeWindowController.configure(home, model: full)
+            func homeShot(_ name: String, size: CGSize = CGSize(width: 1100, height: 720)) async throws {
+                try await capture(home, size: size, dark: dark, to: file("window-home-\(name)"))
+            }
+            full.selection = .now
+            try await homeShot("now")
+            await full.reveal(sample.selectedItem)
+            try await homeShot("notebook")
+            await full.reveal(sample.profileItem)
+            try await homeShot("about-you")
+            full.selection = .trash
+            try await homeShot("trash")
+            full.selection = .activity
+            try await homeShot("activity")
+            // The smallest window Home allows, to catch clipping and overflow.
+            let small = CGSize(width: 860, height: 560)
+            try await homeShot("activity-small", size: small)
+            full.selection = .now
+            try await homeShot("now-small", size: small)
+            await full.reveal(sample.selectedItem)
+            try await homeShot("notebook-small", size: small)
+            home.orderOut(nil)
+
+            let blank = SnapshotWindow()
+            HomeWindowController.configure(blank, model: empty)
+            empty.selection = .now
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-now-empty"))
+            if let inbox = empty.notebook.inboxId {
+                empty.selection = .collection(inbox)
+                await empty.notebook.show(collectionId: inbox)
+            }
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-notebook-empty"))
+            empty.selection = .activity
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-activity-empty"))
+            blank.orderOut(nil)
+
+            // Settings, as a real window, one picture per tab.
+            let settingsWindow = SnapshotWindow()
+            let tabs = SettingsWindowController.configure(settingsWindow, model: settings)
+            for (index, tab) in SettingsTab.allCases.enumerated() {
+                tabs.selectedTabViewItemIndex = index
+                try await capture(settingsWindow, size: CGSize(width: SettingsWindowController.width, height: 620), dark: dark,
+                                  to: file("window-settings-\(tab.rawValue)"))
+            }
+            settingsWindow.orderOut(nil)
+
+            // Full pages.
+            func page(_ name: String, _ view: some View, width: CGFloat) async throws {
+                try await capturePage(view, width: width, dark: dark, to: file(name))
+            }
+            try await page("page-now", NowView(model: full.now), width: 870)
+            let width = SettingsWindowController.width
+            for tab in SettingsTab.allCases {
+                try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
+            }
+            for kind in [ProviderKind.anthropic, .openAICompatible, .none] {
+                settings.setProvider(kind)
+                try await page("page-settings-ai-\(kind.rawValue)", SettingsTabContent(tab: .ai, model: settings), width: width)
+            }
+            settings.setProvider(.claudeCode)
+            await settings.checkProvider()
+            try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
+
+            // Sheets.
+            try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
+            try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
+            try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
+            try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
+        }
+        print("ui-snapshots: wrote \(dir.path)")
+    }
+
+    // MARK: Fixtures
+
+    private static func runtime() async throws -> SidefolkRuntime {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-ui-\(UUID().uuidString)", isDirectory: true)
+        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform())
+        try await rt.notebook.inbox()
+        return rt
+    }
+
+    private static func makeHome(empty: Bool) async throws -> (HomeModel, SampleData.Created?) {
+        let rt = try await runtime()
+        let model = HomeModel(services: FixtureServices(runtime: rt))
+        let sample = empty ? nil : try await SampleData.fill(rt, notebook: model.notebook)
+        await model.reloadAll()
+        return (model, sample)
+    }
+
+    private static func makeSettings() async throws -> SettingsModel {
+        let rt = try await runtime()
+        let services = FixtureServices(runtime: rt, keys: [.anthropic])
+        _ = try await SampleData.fill(rt, notebook: NotebookModel(services: services))
+        let model = SettingsModel(services: services)
+        await model.refresh()
+        return model
+    }
+
+    // MARK: Rendering
+    //
+    // AppKit draws the pictures (cacheDisplay): ImageRenderer can't draw AppKit-backed controls
+    // such as switches, pop-up buttons, text fields and split views.
+
+    /// A window that draws as if focused, so controls show their active look. Never shown on screen.
+    private final class SnapshotWindow: NSWindow {
+        override var isKeyWindow: Bool { true }
+        override var isMainWindow: Bool { true }
+    }
+
+    /// The whole window, titlebar and toolbar included.
+    private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, to url: URL) async throws {
+        window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        window.setContentSize(size)
+        window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
+        window.orderFrontRegardless()
+        try await Task.sleep(for: .milliseconds(400))
+        window.makeFirstResponder(nil) // no field focused, as when Settings opens
+        guard let frame = window.contentView?.superview else { throw SnapshotError.render(url.lastPathComponent) }
+        try write(frame, to: url)
+    }
+
+    /// A view at its full height in a borderless window.
+    private static func capturePage(_ view: some View, width: CGFloat, dark: Bool, to url: URL) async throws {
+        let host = NSHostingView(rootView: view
+            .environment(\.rendersFullPage, true)
+            .frame(width: width)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(Theme.surface))
+        let window = SnapshotWindow(contentRect: NSRect(x: -20000, y: -20000, width: width, height: 200),
+                                    styleMask: [.borderless], backing: .buffered, defer: false)
+        window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        window.isReleasedWhenClosed = false
+        window.contentView = host
+        window.orderFrontRegardless()
+        try await Task.sleep(for: .milliseconds(250))
+        window.setContentSize(NSSize(width: width, height: max(host.fittingSize.height, 100)))
+        try await Task.sleep(for: .milliseconds(250))
+        try write(host, to: url)
+        window.orderOut(nil)
+    }
+
+    private static func write(_ view: NSView, to url: URL) throws {
+        view.layoutSubtreeIfNeeded()
+        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { throw SnapshotError.render(url.lastPathComponent) }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        guard let png = rep.representation(using: .png, properties: [:]) else { throw SnapshotError.render(url.lastPathComponent) }
+        try png.write(to: url)
+    }
+
+    enum SnapshotError: Error { case render(String) }
+}
