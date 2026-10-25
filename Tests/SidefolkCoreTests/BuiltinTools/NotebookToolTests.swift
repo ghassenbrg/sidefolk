@@ -17,7 +17,7 @@ import Testing
         #expect(items[0].title == "Buy oat milk")
         #expect(items[0].body == "2 liters, the barista kind")
         #expect(items[0].kind == .note)
-        #expect(items[0].source == "agent")
+        #expect(items[0].source == "user:agent")
         #expect(items[0].tagList == ["groceries", "weekly-shop"])
 
         // Undo is offered and moves it to the Trash (not a hard delete).

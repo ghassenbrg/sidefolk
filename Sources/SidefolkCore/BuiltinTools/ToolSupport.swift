@@ -5,15 +5,6 @@ import Foundation
 
 extension Caller {
     /// Provenance stored on notes and facts: `user | agent | routine | external:<client> | extension:<id>`.
-    var provenanceTag: String {
-        switch self {
-        case .user: "user"
-        case .agent: "agent"
-        case .routine: "routine"
-        case .external(let client): "external:\(client)"
-        case .extension(let id): "extension:\(id)"
-        }
-    }
 }
 
 enum ItemProvenance {

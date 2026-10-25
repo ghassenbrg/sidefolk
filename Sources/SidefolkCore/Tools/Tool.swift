@@ -158,9 +158,24 @@ public struct ToolResult: Sendable {
 public struct ToolContext: Sendable {
     public var caller: Caller
     public var now: Date
-    public init(caller: Caller, now: Date) {
+    /// Untrusted content was in play when this call was made (docs/SECURITY.md T2, T3).
+    public var tainted: Bool
+    public init(caller: Caller, now: Date, tainted: Bool = false) {
         self.caller = caller
         self.now = now
+        self.tainted = tainted
+    }
+
+    /// Where something a tool writes came from. Sidefolk's own agent acting in a clean turn acts for
+    /// the user ("user:agent"); in a tainted turn its writes stay marked as the agent's.
+    public var provenanceTag: String {
+        switch caller {
+        case .user: "user"
+        case .agent: tainted ? "agent" : "user:agent"
+        case .routine: "routine"
+        case .external(let client): "external:\(client)"
+        case .extension(let id): "extension:\(id)"
+        }
     }
 }
 

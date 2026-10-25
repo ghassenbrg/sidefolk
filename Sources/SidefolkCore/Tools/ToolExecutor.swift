@@ -104,7 +104,7 @@ public final class ToolExecutor: Sendable {
                     try? await permissions.touchGrant(id: g.id)
                 }
                 if decisionTag == .auto { decisionTag = tag }
-                return await run(tool, input: input, caller: caller, activity: act, decision: decisionTag, timeout: timeout)
+                return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag, timeout: timeout)
             case .deny(let why):
                 await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
                 act.error = why
@@ -133,18 +133,18 @@ public final class ToolExecutor: Sendable {
                     try? await permissions.addGrant(Grant(tool: spec.name, scope: PermissionEngine.grantScope(for: scope), callerKind: caller.kind))
                     events.changed(.permissions)
                 }
-                return await run(tool, input: input, caller: caller, activity: act, decision: decisionTag, timeout: timeout)
+                return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag, timeout: timeout)
             }
         }
         act.error = "Permission loop"
         return ToolOutcome(activity: act, status: .denied("Sidefolk couldn't settle the permissions for this action."))
     }
 
-    private func run(_ tool: any Tool, input: JSONValue, caller: Caller, activity act: ToolActivity,
+    private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,
                      decision: ActivityEntry.Decision, timeout: TimeInterval) async -> ToolOutcome {
         var act = act
         events.publish(.toolStarted(act))
-        let context = ToolContext(caller: caller, now: clock.now)
+        let context = ToolContext(caller: caller, now: clock.now, tainted: tainted)
         do {
             let result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
             act.card = result.card

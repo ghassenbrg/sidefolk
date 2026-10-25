@@ -68,7 +68,7 @@ struct ProfileRememberTool: Tool {
         let (title, body) = NoteText.split(fact)
         // Sidefolk's own agent remembers on the user's behalf, so its facts carry "user:agent": the context builder
         // only offers user-sourced facts to the model, and this keeps the origin visible. Outsiders keep their own tag.
-        let source = context.caller.runId != nil ? "user:agent" : context.caller.provenanceTag
+        let source = context.provenanceTag
         let item = NotebookItem(collectionId: profile.id, kind: .note, title: title, body: body, source: source, now: context.now)
         try await notebook.add(item)
         events.changed(.notebook)
