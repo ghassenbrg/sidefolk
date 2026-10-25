@@ -1,4 +1,4 @@
-import { STATES, stateOf } from "./states";
+import { STATES, stateOf, badge } from "./states";
 import { Agents } from "./agents";
 import { Bubble } from "./bubble";
 import { area, toScreen } from "./frame";
@@ -43,6 +43,7 @@ export class Familiar {
   readonly agents: Agents;
   /** Requests this companion is showing, so it keeps its "needs you" pose until they're answered. */
   readonly asks = new Set<string>();
+  heldNotes = 0;
   private last = 0;
   private readonly unit: number;
 
@@ -114,6 +115,13 @@ export class Familiar {
     // Over the feet, like a name tag, so it stays on screen when the worker stands on the edge.
     if (this.badge) this.badge.style.transform = `translate(${Math.round(mind.x - this.badge.offsetWidth / 2)}px, ${Math.round(this.bounds.height - mind.y - this.badge.offsetHeight - 2)}px)`;
     this.bubble.tick(now);
+    if (this.heldNotes && !this.bubble.busy) {
+      if (this.hud.dataset.held !== String(this.heldNotes)) {
+        this.hud.replaceChildren(badge("alert", `${this.heldNotes} ${this.heldNotes === 1 ? "reminder" : "reminders"}`));
+        this.hud.dataset.held = String(this.heldNotes);
+      }
+      this.hud.hidden = false;
+    } else if (this.hud.dataset.held) { delete this.hud.dataset.held; this.hud.hidden = true; }
     const headTop = mind.y + this.height;
     const hudOffset = this.hud.hidden ? 0 : 30;
     if (!this.hud.hidden) {

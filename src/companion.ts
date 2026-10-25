@@ -96,6 +96,7 @@ export class Companion {
   /** Listening while you type beats holding a reminder's note, which beats everything else. */
   private pose() {
     this.pet.mind.pose = this.pet.bubble.typing ? "listen" : this.notes.size ? "note" : null;
+    this.pet.heldNotes = [...this.notes].reduce((n, id) => n + Math.max(1, Number(this.requests.get(id)?.meta?.count) || 1), 0);
   }
 
   static async start(name: string, host: Host, zoom = 1, look: Look = {}): Promise<Companion> {
@@ -213,9 +214,15 @@ export class Companion {
         this.onChange();
       },
     };
-    if (card.meta?.kind === "reminder") this.notes.add(card.id);
-    this.pose();
     this.requests.set(card.id, tracked);
+    if (card.meta?.kind === "reminder") {
+      this.notes.add(card.id);
+      // A reminder folds without invoking Close: the note/count and answer remain available.
+      setTimeout(() => { if (this.requests.get(card.id) === tracked && by.bubble.has(card.id)) {
+        by.bubble.close(card.id); this.pose(); this.onChange();
+      } }, 120_000);
+    }
+    this.pose();
     by.asks.add(card.id);
     by.bubble.show(tracked);
     by.agents.asking(by.asks.size);
@@ -366,6 +373,7 @@ export class Companion {
 
   /** A new session: which tool, which folder, and whether it asks first; you choose before it starts. */
   private async confirmStart(agent: "claude" | "codex", wanted: string | null, full: boolean): Promise<string | void> {
+    if (agent !== "claude") return "Starting Codex sessions is not available yet.";
     const { resolveFolder, startSession } = this.host;
     if (!resolveFolder || !startSession) return "Starting sessions needs the desktop app.";
     let folder: { path: string; label: string };
@@ -374,10 +382,10 @@ export class Companion {
     } catch (error) {
       return problem(error);
     }
-    const name = agent === "codex" ? "Codex" : "Claude Code";
+    const name = "Claude Code";
     // The tool's own unattended mode, named in its own terms (docs/V1.md V1-D10); Sidefolk
     // itself never answers for a session.
-    const own = agent === "codex" ? "Codex without approvals, sandboxed to this folder" : "Claude Code's auto mode (Claude decides what to ask)";
+    const own = "Claude Code’s auto mode (Claude decides what to ask)";
     const bubble = this.pet.bubble;
     bubble.show({
       id: "start-session",
@@ -389,7 +397,7 @@ export class Companion {
       ],
       choices: [
         { label: "Cancel", value: "cancel" },
-        ...(full ? [{ label: "Start, but ask first", value: "ask" }] : [{ label: agent === "codex" ? "Start without approvals" : "Start in auto mode", value: "full" }]),
+        ...(full ? [{ label: "Start, but ask first", value: "ask" }] : [{ label: "Start in auto mode", value: "full" }]),
         { label: `Start ${name}`, value: full ? "full" : "ask", primary: true },
       ],
       onChoose: async (value) => {
@@ -464,7 +472,7 @@ export class Companion {
           project: null,
           out: true,
           clip: f.view.clip,
-          sessions: f.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, project: s.project, at: s.at })),
+          sessions: f.agents.list.map((s) => ({ source: s.source, id: s.id, cwd: s.cwd, state: s.state, verb: VERB[s.state], detail: s.detail, firstPrompt: f.agents.firstLine(s.key), project: s.project, at: s.at })),
           outcomes: [...f.agents.outcomes.values()].sort((a, b) => b.at - a.at).slice(0, 5),
         },
       ],

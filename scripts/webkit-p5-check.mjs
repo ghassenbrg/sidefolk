@@ -46,6 +46,12 @@ try {
   await page.getByRole("button", { name: "Clear history…" }).click();
   await dialog.getByRole("button", { name: "Clear history", exact: true }).click();
   await page.locator("#toast").getByText("Session history cleared.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Preview report…" }).click();
+  const report = page.getByRole("dialog", { name: "Problem report" });
+  const reportText = report.getByRole("textbox", { name: "Problem report" });
+  assert.equal(await reportText.getAttribute("readonly"), "");
+  assert.ok((await reportText.inputValue()).length > 0);
+  await report.getByRole("button", { name: "Cancel", exact: true }).click();
 
   // A failed Undo stays on the stack and is retried; busy actions cannot run twice.
   const feedback = await page.evaluate(async () => {
@@ -85,6 +91,46 @@ try {
   });
   assert.deepEqual(focus, { root: true, answered: 0 });
 
+  const restored = await page.evaluate(() => {
+    const agents = window.sidefolk.companion.pet.agents;
+    let notifications = 0;
+    const onEvent = agents.onEvent, onDone = agents.onDone;
+    agents.onEvent = () => notifications++;
+    agents.onDone = () => notifications++;
+    const at = Date.now() - 1000;
+    const base = { at, source: "claude", session: "restored", cwd: "/tmp/restored", project: "/tmp/restored" };
+    agents.handle({ ...base, kind: "prompt", detail: "First request" }, true);
+    agents.handle({ ...base, kind: "waiting", detail: "" }, true);
+    const live = agents.list.find((s) => s.id === "restored");
+    agents.handle({ ...base, kind: "done", detail: "" }, true);
+    const outcome = agents.outcomes.get(base.project);
+    agents.onEvent = onEvent; agents.onDone = onDone;
+    return { notifications, at: live.at, firstPrompt: outcome.firstPrompt };
+  });
+  assert.equal(restored.notifications, 0, "Restoring native state must not replay notices or Log it cards");
+  assert.equal(restored.firstPrompt, "First request");
+  assert.ok(restored.at > 0);
+
+  // Reminder folds keep the request and counted note, without choosing or re-nagging.
+  await page.clock.install();
+  await page.evaluate(() => {
+    const companion = window.sidefolk.companion;
+    companion.pet.bubble.close("focus-test");
+    companion.request({ id: "fold-test", who: "Pip", title: "Folded reminder", meta: { kind: "reminder", count: "2" }, choices: [{ label: "Done", value: "done" }], onChoose: () => { throw Error("Fold must not choose"); } });
+  });
+  await page.clock.fastForward(120_001);
+  await page.clock.runFor(250);
+  assert.equal(await page.evaluate(() => window.sidefolk.companion.status().waiting.some((w) => w.id === "fold-test")), true);
+  assert.equal(await page.getByText("Folded reminder", { exact: true }).count(), 0);
+  const folded = await page.evaluate(() => {
+    const pet = window.sidefolk.companion.pet;
+    pet.frame(performance.now() + 1000);
+    return { held: pet.heldNotes, open: pet.bubble.open.map((c) => c.id), hud: pet.hud.textContent };
+  });
+  assert.equal(folded.held, 2);
+  assert.deepEqual(folded.open, []);
+  await page.locator(".hud").getByText("Needs you · 2 reminders", { exact: true }).waitFor();
+  await page.clock.resume();
   // Both existing characters at their shipped 150px size, on three wallpapers.
   await page.setViewportSize({ width: 480, height: 300 });
   for (const look of ["pip", "spark"]) for (const [wall, color, theme] of [["light", "#f7f3ea", "light"], ["mid", "#858581", "light"], ["dark", "#191c22", "dark"]]) {
