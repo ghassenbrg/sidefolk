@@ -51,6 +51,19 @@ import Testing
         #expect(decide(.low, tainted: true) == .allow(.auto))
     }
 
+    @Test func taintedTurnsAskBeforeCarryingContentOut() {
+        guard case .ask = decide(.low, tainted: true, caps: [.apps]) else { Issue.record("open while tainted must ask"); return }
+        guard case .ask = decide(.low, tainted: true, caps: [.memory]) else { Issue.record("remember while tainted must ask"); return }
+        guard case .ask = decide(.low, tainted: true, caps: [.clipboard]) else { Issue.record("clipboard write while tainted must ask"); return }
+        #expect(decide(.low, tainted: false, caps: [.memory]) == .allow(.auto))
+    }
+
+    @Test func provenanceFollowsTaint() {
+        #expect(ToolContext(caller: .agent(runId: "r"), now: Date()).provenanceTag == "user:agent")
+        #expect(ToolContext(caller: .agent(runId: "r"), now: Date(), tainted: true).provenanceTag == "agent")
+        #expect(ToolContext(caller: .external(client: "codex"), now: Date()).provenanceTag == "external:codex")
+    }
+
     @Test func highRiskAlwaysAsksUnlessExactCommandGranted() {
         guard case .ask(let r) = decide(.high) else { Issue.record("expected ask"); return }
         #expect(!r.canAlways)
