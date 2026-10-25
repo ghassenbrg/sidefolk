@@ -107,6 +107,12 @@ import Testing
         #expect(parse("remember the milk") != nil)  // a note, see below
     }
 
+    @Test func schedulesTooFineForARecurrenceAreLeftToTheAI() {
+        #expect(parse("remind me every 30 minutes to stretch") == nil)
+        #expect(parse("remind me to drink water every 20 min") == nil)
+        #expect(intent("remind me every 2 hours to stretch") != nil)
+    }
+
     @Test func typosInTheLeadWord() {
         #expect(intent("remnd me tomorrow to call mom") == .remind(title: "Call mom", when: at(2025, 10, 23, 9), recurrence: nil))
         #expect(intent("remid me in 5 min to stretch") == .remind(title: "Stretch", when: at(2025, 10, 22, 10, 5), recurrence: nil))

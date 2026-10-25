@@ -125,6 +125,9 @@ public struct IntentParser: Sendable {
             guard c["weak"]?.lowercased() != "remember" || rest.lowercased().hasPrefix("to ") else { return nil }
         }
         if rest.lowercased().hasPrefix("for ") { rest = String(rest.dropFirst(4)) }
+        // "every 30 minutes" is a schedule a Recurrence cannot hold (its smallest step is an hour):
+        // better left to the AI than to ask "when?" about a time that was given.
+        if rest.range(of: #"\bevery\s+(?:other\s+|few\s+|\d+\s+)?(?:minutes?|mins?|seconds?|secs?)\b"#, options: [.regularExpression, .caseInsensitive]) != nil { return nil }
 
         let found = when.parse(rest, now: ctx.now)
         let title = Self.cleanTitle(found?.remaining ?? rest)
