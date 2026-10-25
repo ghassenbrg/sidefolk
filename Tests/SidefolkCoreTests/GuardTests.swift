@@ -79,15 +79,23 @@ import Testing
         try FileManager.default.createDirectory(at: granted, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: base) }
-        let folders = [GrantedFolder(path: FolderAccess.canonical(granted.path), access: .readwrite)]
+        let folders = [GrantedFolder(path: FolderAccess.canonical(granted.path)!, access: .readwrite)]
 
         let inside = ToolScope(writePaths: [granted.appendingPathComponent("a.txt").path])
         #expect(decide(.low, scope: inside, folders: folders) == .allow(.auto))
 
-        // Traversal out of the granted folder.
+        // Traversal components are refused outright.
         let traversal = ToolScope(writePaths: [granted.path + "/../other/b.txt"])
-        guard case .ask(let r) = decide(.low, scope: traversal, folders: folders),
-              case .folderAccess = r.details else { Issue.record("traversal must need access"); return }
+        guard case .deny = decide(.low, scope: traversal, folders: folders) else { Issue.record("traversal must be denied"); return }
+
+        // A dangling symlink inside the grant pointing outside it.
+        let dangling = granted.appendingPathComponent("dangling")
+        try FileManager.default.createSymbolicLink(atPath: dangling.path, withDestinationPath: other.appendingPathComponent("new.txt").path)
+        guard case .deny = decide(.low, scope: ToolScope(writePaths: [dangling.path]), folders: folders) else {
+            Issue.record("dangling link must be denied"); return
+        }
+        // link/../x is not collapsed lexically.
+        #expect(FolderAccess.canonical(granted.path + "/link/../x") == nil)
 
         // A symlink inside the granted folder pointing outside it.
         let link = granted.appendingPathComponent("link")
@@ -97,6 +105,24 @@ import Testing
 
         // Similar prefix is not inside.
         #expect(!FolderAccess.isInside(granted.path + "-evil/x", folder: granted.path))
+    }
+
+    @Test func hiddenAndBroadLocations() {
+        guard case .deny = decide(.low, caller: .user, scope: ToolScope(readPaths: [NSHomeDirectory() + "/.claude/settings.json"])) else {
+            Issue.record("hidden must be denied"); return
+        }
+        guard case .deny = decide(.low, caller: .user, scope: ToolScope(writePaths: [NSHomeDirectory() + "/Library/LaunchAgents/x.plist"])) else {
+            Issue.record("Library must be denied"); return
+        }
+        #expect(!FolderAccess.isGrantable(NSHomeDirectory()))
+        #expect(!FolderAccess.isGrantable("/"))
+        #expect(FolderAccess.canonical("relative/path") == nil)
+        #expect(FolderAccess.canonical("/tmp") == "/private/tmp")
+    }
+
+    @Test func externalCallersCannotGetFolderPrompts() {
+        let scope = ToolScope(readPaths: [FileManager.default.temporaryDirectory.appendingPathComponent("x").path])
+        guard case .deny = decide(.low, caller: .external(client: "codex"), scope: scope) else { Issue.record("expected deny"); return }
     }
 
     @Test func protectedLocationsAreDenied() {

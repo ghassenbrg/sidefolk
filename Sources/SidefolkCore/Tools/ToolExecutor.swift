@@ -125,7 +125,7 @@ public final class ToolExecutor: Sendable {
                         try? await permissions.grantFolder(folder, access: access)
                         events.changed(.permissions)
                     } else {
-                        extraFolders.append(GrantedFolder(path: FolderAccess.canonical(folder), access: access))
+                        extraFolders.append(GrantedFolder(path: FolderAccess.canonical(folder) ?? folder, access: access))
                     }
                     continue
                 }
