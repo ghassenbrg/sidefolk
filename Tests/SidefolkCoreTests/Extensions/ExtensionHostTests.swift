@@ -14,13 +14,13 @@ struct ExtensionHostTests {
         #expect(info.watchers.map(\.watcher) == ["battery_low", "disk_low"])
 
         let battery = await h.call("ext.system-vitals.battery")
-        let text = try #require(battery.text, "\(String(describing: battery.failure))")
+        let text = try #require(battery.okText, "\(String(describing: battery.failure))")
         #expect(text.hasPrefix("Battery at") || text.hasPrefix("This Mac has no battery"), "\(text)")
         #expect(battery.untrusted)
 
-        let disk = try #require(await h.call("ext.system-vitals.disk").text)
+        let disk = try #require(await h.call("ext.system-vitals.disk").okText)
         #expect(disk.contains("GB free of"), "\(disk)")
-        let memory = try #require(await h.call("ext.system-vitals.memory").text)
+        let memory = try #require(await h.call("ext.system-vitals.memory").okText)
         #expect(memory.contains("memory pressure is"), "\(memory)")
         #expect(!memory.contains("unknown"))
 
@@ -65,7 +65,7 @@ struct ExtensionHostTests {
             "secret": .string(secret.path), "outside": .string(h.root.appendingPathComponent("written.txt").path),
             "granted": .string(granted.appendingPathComponent("note.txt").path),
         ])
-        let text = try #require(outcome.text, "\(String(describing: outcome.failure))")
+        let text = try #require(outcome.okText, "\(String(describing: outcome.failure))")
         let r = try JSONValue.parse(text.replacingOccurrences(of: "\u{200B}", with: ""))
         #expect(r["network"] == "EPERM")
         #expect(r["unix_socket"] == "EPERM")
@@ -166,7 +166,7 @@ struct ExtensionHostTests {
     @Test func serverInitiatedSamplingIsRefused() async throws {
         let h = try HostEnv()
         try await h.host.install(from: h.source("sampling", manifest: ExtFixtures.manifest(args: ["server.py", "sampling"])))
-        let text = try #require(await h.call("ext.sample.echo").text)
+        let text = try #require(await h.call("ext.sample.echo").okText)
         let reply = try JSONValue.parse(text)
         #expect(reply["id"] == "s1")
         #expect(reply["error"]?["code"] == -32601)
@@ -207,7 +207,9 @@ struct ExtensionHostTests {
 
         try await h.host.approveToolChanges(id: info.id)
         let tool = try #require(h.env.registry.tool(named: "ext.sample.echo"))
-        #expect(tool.spec.description.contains("Ignore previous instructions"))
+        // Approved for the extension, but its description never reaches the model (SECURITY T2).
+        #expect(!tool.spec.description.contains("Ignore previous instructions"))
+        #expect(tool.spec.description.contains("“Sample”"))
         #expect(await h.call("ext.sample.echo").okText?.contains("echoed") == true)
         await h.host.shutdown()
     }
@@ -252,7 +254,7 @@ struct ExtensionHostTests {
         #expect(await h.host.isRunning("dev.test.sample"))
         try await Task.sleep(for: .seconds(1.5))
         #expect(await h.host.isRunning("dev.test.sample") == false)
-        #expect(await h.call("ext.sample.echo").text != nil)
+        #expect(await h.call("ext.sample.echo").okText != nil)
         await h.host.shutdown()
     }
 

@@ -37,11 +37,15 @@ cp -R extensions/hello-folk ~/my-folk
 cd ~/my-folk
 # 1. Edit sidefolk-extension.json: give it your own id (com.yourname.my-folk) and name.
 # 2. Edit main.py: add your tools.
-# 3. Try the protocol by hand:
-printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python3 main.py
-# 4. Check the manifest:
+# 3. Try the protocol by hand, from a scratch folder (install copies everything in ~/my-folk,
+#    so files your program writes while you test would ship with it):
+cd "$(mktemp -d)" && printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python3 -I ~/my-folk/main.py
+# 4. Check the manifest, then start it in its sandbox and list its tools:
 sidefolk ext validate ~/my-folk
 ```
+
+The `sidefolk` helper is built with `swift build --product sidefolk` (then `.build/debug/sidefolk`);
+the app also installs it in `~/.local/bin`.
 
 Then install it from **Settings › Extensions › Install from folder…** (or drop the folder on the
 companion), read the permission sheet, and click Install. Ask Sidefolk to use it: "say hello to Ada".
@@ -128,7 +132,11 @@ program **can** do:
   `HOME` and `TMPDIR` point inside it, and so does the working directory. It survives updates and is
   deleted when the extension is uninstalled.
 - Read the folders in `files.read`; read and write the folders in `files.write`.
-- Run the interpreter, and the programs in `exec`. Children inherit the same sandbox.
+- Run the interpreter, and the programs in `exec`. Children inherit the same sandbox. Only an
+  extension whose manifest lists programs in `exec` may start processes at all (`fork`, and
+  `subprocess` in Python, fail with `EPERM` otherwise; `sh` extensions may fork for pipelines).
+  Every process it starts is stopped with it, including ones that leave its process group, and at
+  most 32 may run at once.
 - Read system libraries, time zone data and `/dev/urandom`; `stat` any path.
 - Use the network, if `network` is `true`.
 
@@ -187,9 +195,24 @@ the last 16 KB for its diagnostics.
      "inputSchema":{"type":"object","properties":{},"additionalProperties":false}}]}}
 ```
 
-`nextCursor` pagination is supported. Write descriptions for the model: what the tool does and
-when to use it. If your tool list can change while running, send
+`nextCursor` pagination is supported. If your tool list can change while running, send
 `{"jsonrpc":"2.0","method":"notifications/tools/list_changed"}`.
+
+**The model doesn't see your descriptions.** A tool description is offered to every request before
+anything has been read, so a hostile one could steer the model unnoticed. Sidefolk shows the user
+your descriptions on the install sheet and in Settings, but tells the model only "“Battery status”,
+a tool from the extension “System Vitals”", plus your input schema with its free text
+(`description`, `title`, `examples`, `default`) removed. Give tools clear titles (the manifest's
+`tools.<name>.title`, else the program's `title`) and parameters self-explanatory names
+(`below_percent`, not `n`); types, `enum`, `minimum`/`maximum` and `maxLength` stay and are enforced.
+
+**Inputs are checked against your schema** before the call reaches you: wrong types, values outside
+an `enum` or a bound, strings longer than `maxLength` (100,000 characters at most), and, with
+`"additionalProperties": false`, unknown keys are refused with a message the model can act on.
+
+**Manifest metadata is matched by tool name.** A manifest `tools` entry the program doesn't offer,
+or a tool the manifest doesn't describe (which then runs as medium risk with default settings), is
+reported by `sidefolk ext validate` and at install.
 
 ### Calling a tool
 
@@ -198,8 +221,11 @@ when to use it. If your tool list can change while running, send
 ← {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"Battery at 72%, discharging (3:12 left)."}]}}
 ```
 
-Return text content. For a failure the model should see, return `"isError": true`; for a broken
-request, a JSON-RPC `error`. Image and audio content is not shown to the model yet.
+Return text content. For a failure the model should see, return `"isError": true` with a short
+explanation as text: the model reads it (as untrusted content, cut at 4 KB) and can fix its call,
+the user sees "“Start a focus session” reported a problem", and the call counts as failed without
+claiming that nothing changed. For a broken request, return a JSON-RPC `error`; its message goes
+only to the log. Image and audio content is not shown to the model yet.
 
 ### Checking a watcher (Sidefolk extension to MCP)
 
@@ -251,6 +277,15 @@ a tool claims to do after you installed it.
 A watcher kind turns settings and the previous state into "did something happen?". Sidefolk's
 watcher engine decides when to check and what to do when a check says `triggered`.
 
+- **Checks are minutes apart.** The agent starts a watcher with the `watch.extension` tool
+  (`extension`, `watcher`, `settings` (the manifest calls them `config`), `interval_minutes`,
+  `mode`). The interval is **at least 5 minutes and 15 by default**, never faster, so don't use a
+  watcher as a timer: a 25-minute focus session would be noticed up to 15 minutes late. For
+  something due at a time, let the user set a reminder instead.
+- `mode` is `once` (the default: the watcher ends after its first trigger) or `repeat` (it keeps
+  checking, and your `state` carries over between checks).
+- Extensions read the real clock, so a test of a time-based watcher has to wait or pass the time
+  in its settings.
 - Make checks **quick and deterministic**; 30 seconds is the hard limit.
 - **Trigger on change, not on level.** Keep what you need in `state` (at most 64 KB of JSON) and
   return `triggered: true` only when something new happened: `battery_low` fires once when the
@@ -269,10 +304,16 @@ watcher engine decides when to check and what to do when a check says `triggered
      '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"disk","arguments":{}}}' \
      | python3 -I main.py
    ```
-2. **Validate the manifest:** `sidefolk ext validate <folder>` prints the resolved interpreter, the
-   permission sheet, each tool's effective risk, warnings and errors, and exits non-zero on errors.
-3. **Install it** and watch Sidefolk's log (`~/Library/Logs/Sidefolk/`, category `extensions`) for
-   start-up errors and your program's stderr.
+   Run it from a scratch folder (`cd "$(mktemp -d)"`), as in the quick start: anything it writes
+   next to your source would be copied in at install.
+2. **Validate and start it:** `sidefolk ext validate <folder>` prints the resolved interpreter, the
+   permission sheet, each tool's effective risk, warnings and errors. If the manifest is valid it
+   then installs a throwaway copy, starts it in its real sandbox (`initialize`, `tools/list`), and
+   prints the tools it offers, any mismatch with the manifest's `tools`, or why it didn't start
+   (exit status and the last line it printed to stderr). It exits non-zero on errors; `--no-run`
+   skips the start.
+3. **Install it** and watch Sidefolk's log (`~/Library/Logs/Sidefolk/`, or `<SIDEFOLK_HOME>/Logs`
+   when `SIDEFOLK_HOME` is set; category `extensions`) for start-up errors and your program's stderr.
 4. **Reproduce the sandbox.** The profile Sidefolk generated is in
    `~/Library/Application Support/Sidefolk/Sandbox/<id>.sb`; with debug logging on, the log shows the
    full `sandbox-exec` command line. Denials appear in Console.app (filter on `Sandbox`).
@@ -325,7 +366,8 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | `ModuleNotFoundError` for your own module | Python's isolated mode; add your folder to `sys.path` (see above). |
 | `PermissionError: [Errno 1] Operation not permitted` | The sandbox blocked it. Add the folder to `files`, the program to `exec`, or set `network`. |
 | A program in `exec` runs but returns nothing useful | It may need a system service the sandbox doesn't open; tell us which program. |
-| "… didn't start" | The program crashed or printed something that isn't JSON before answering `initialize`. Run it by hand and check stderr in the log. |
+| "… didn't start (it exited with status 1)" | The program crashed or printed something that isn't JSON before answering `initialize`. The message shows the last line it wrote to stderr; `sidefolk ext validate <folder>` starts it in the same sandbox and prints the rest. |
+| `OSError: [Errno 1]` from `fork` or `subprocess` | Only extensions that list programs in `exec` may start processes. |
 | "… changed since you approved it, so it is on hold" | The tool's description or schema changed. Review and approve in Settings › Extensions. |
 | "… was changed on disk, so I turned it off" | Files in the installed copy changed. Install the extension again. |
 | "… kept crashing, so I turned it off" | It exited 3 times in 5 minutes, used too much memory or CPU, or wrote a line over 1 MiB. Check the log, fix, turn it back on. |
@@ -343,7 +385,9 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Requests in flight | 16 |
 | Time per request | 30 s |
 | Tool description / input schema | 1 KB / 16 KB |
-| Tool result shown to the model | 20 KB |
+| Tool result shown to the model | 20 KB (an `isError` explanation: 4 KB) |
+| Processes running at once | 32, the program included |
+| Watcher interval | at least 5 minutes, 15 by default |
 | Watcher summary / state | 200 characters / 64 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |
 | Idle stop | 5 minutes |

@@ -80,6 +80,8 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var command: String?
     public var tools: [ExtensionToolInfo]
     public var watchers: [ExtensionWatcherKind]
+    /// Where the manifest's `tools` and the program's `tools/list` disagree (a typo, a forgotten entry).
+    public var toolWarnings: [String] = []
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

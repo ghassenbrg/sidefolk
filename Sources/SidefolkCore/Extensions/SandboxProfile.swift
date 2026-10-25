@@ -30,15 +30,20 @@ public struct SandboxProfile: Sendable, Hashable {
         public var reexec: String?
         public var runtime: [String]
         public var permissions: ExtensionPermissions
+        /// Whether the extension may create processes. Nil means: only when the manifest lists
+        /// programs to run (`exec`), which the install sheet names. Without fork, an extension can't
+        /// leave a process behind (SECURITY T15).
+        public var allowFork: Bool?
 
         public init(extensionDir: String, dataDir: String, executable: String, reexec: String? = nil,
-                    runtime: [String] = [], permissions: ExtensionPermissions) {
+                    runtime: [String] = [], permissions: ExtensionPermissions, allowFork: Bool? = nil) {
             self.extensionDir = extensionDir
             self.dataDir = dataDir
             self.executable = executable
             self.reexec = reexec
             self.runtime = runtime
             self.permissions = permissions
+            self.allowFork = allowFork
         }
     }
 
@@ -85,6 +90,10 @@ public struct SandboxProfile: Sendable, Hashable {
         execs += exec.enumerated().map { "  (literal \(add("EXEC_\($0.offset)", $0.element)))" }
         sb += execs.joined(separator: "\n") + ")\n"
 
+        if inputs.allowFork ?? !exec.isEmpty {
+            sb += "\n;; new processes (it runs programs; children inherit this sandbox)\n(allow process-fork)\n"
+        }
+
         let services = exec.flatMap { servicesForExec[$0] ?? [] }
         if !services.isEmpty {
             sb += "\n;; services the listed programs need\n(allow mach-lookup\n"
@@ -101,8 +110,7 @@ public struct SandboxProfile: Sendable, Hashable {
     (version 1)
     (deny default)
 
-    ;; process basics
-    (allow process-fork)
+    ;; process basics (fork only when the manifest lists programs to run)
     (allow signal (target same-sandbox))
     (allow sysctl-read)
     (allow mach-lookup
