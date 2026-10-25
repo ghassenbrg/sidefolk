@@ -110,7 +110,7 @@ import Testing
         await #expect(throws: ProbeError.failed("The site didn't answer in time.")) { try await probe.step(&w) }
 
         fetcher.reset()
-        fetcher.fail(URLPolicyError.privateAddress("evil.example"))
+        fetcher.fail(URLPolicy.Violation.privateDestination("evil.example"))
         await #expect(throws: ProbeError.self) { try await probe.step(&w) }
     }
 
@@ -170,6 +170,11 @@ import Testing
         #expect(throws: WatchError.self) { _ = try watcher(url: "file:///etc/passwd") }
         #expect(throws: WatchError.self) { _ = try watcher(url: "http://169.254.169.254/") }
         #expect(throws: WatchError.self) { _ = try watcher(url: "") }
+        #expect(throws: WatchError.self) { _ = try watcher(url: "mailto:someone@example.com") }
+        #expect(throws: WatchError.self) { _ = try watcher(url: "javascript:alert(1)") }
+        #expect(throws: WatchError.self) { _ = try watcher(url: "localhost:3000") }
+        #expect(throws: WatchError.self) { _ = try watcher(url: "http://127.0.0.1:8080/") }
+        #expect(try watcher(url: "example.com:8080/x").config.string("url") == "https://example.com:8080/x")
         #expect(throws: WatchError.self) { _ = try watcher(["changed": false]) }
         #expect(throws: WatchError.self) { _ = try watcher(["contains": .string(String(repeating: "x", count: 201))]) }
         #expect(probe.minimumInterval == 300)
@@ -259,7 +264,7 @@ import Testing
 
     @Test func policyRefusalsAreErrorsNotOutages() async throws {
         var w = try watcher()
-        fetcher.fail(URLPolicyError.privateAddress("example.com"))
+        fetcher.fail(URLPolicy.Violation.privateDestination("example.com"))
         await #expect(throws: ProbeError.self) { try await probe.step(&w) }
         #expect(probe.minimumInterval == 60)
         #expect(probe.defaultInterval == 60)
@@ -267,5 +272,23 @@ import Testing
 
     @Test func becomesMustBeUpDownOrAny() throws {
         #expect(throws: WatchError.self) { _ = try watcher(becomes: "sideways") }
+    }
+}
+
+@Suite struct HostThrottleTests {
+    @Test func eachHostGetsOneRequestAMinute() {
+        let throttle = HostThrottle()
+        let t0 = TestEnv.referenceDate
+        #expect(throttle.reserve(host: "a.example", now: t0) == nil)
+        #expect(throttle.reserve(host: "b.example", now: t0) == nil)
+        #expect(throttle.reserve(host: "a.example", now: t0.addingTimeInterval(20)) == t0.addingTimeInterval(60))
+        // A watcher on a 60 s interval is not pushed back by a little scheduling jitter.
+        #expect(throttle.reserve(host: "a.example", now: t0.addingTimeInterval(59)) == nil)
+        #expect(throttle.reserve(host: "a.example", now: t0.addingTimeInterval(59.5)) != nil)
+    }
+
+    @Test func namesForDisplayAndTurnTakingIgnoreCaseAndTrailingDots() throws {
+        #expect(WebTarget.host(of: URL(string: "https://Example.COM./x")!) == "example.com")
+        #expect(WebTarget.displayName(URL(string: "https://example.com:8080/pricing/?a=1")!) == "example.com:8080/pricing?…")
     }
 }

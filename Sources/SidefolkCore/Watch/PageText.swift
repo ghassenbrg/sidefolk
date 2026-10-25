@@ -54,72 +54,18 @@ public enum PageText {
         for (regex, template) in [(comments, ""), (hidden, " "), (spaces, " "), (lineBreaks, "\n"), (cells, " "), (tags, "")] {
             s = regex.stringByReplacingMatches(in: s, range: NSRange(s.startIndex..., in: s), withTemplate: template)
         }
-        return decodeEntities(s).components(separatedBy: .newlines)
+        return HTMLEntities.decode(s).components(separatedBy: .newlines)
     }
 
     // MARK: Decoding
 
-    static func decode(_ data: Data, contentType: String?) -> String {
-        if let name = charset(in: contentType) {
-            let cf = CFStringConvertIANACharSetNameToEncoding(name as CFString)
-            if cf != kCFStringEncodingInvalidId {
-                let encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(cf))
-                if let s = String(data: data, encoding: encoding) { return s }
-            }
-        }
-        return String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) ?? ""
-    }
-
-    private static func charset(in contentType: String?) -> String? {
-        guard let contentType, let r = contentType.range(of: "charset=", options: .caseInsensitive) else { return nil }
-        let rest = contentType[r.upperBound...]
-        let name = rest.prefix { !$0.isWhitespace && $0 != ";" && $0 != "\"" && $0 != "'" }
-        return name.isEmpty ? nil : String(name)
-    }
+    static func decode(_ data: Data, contentType: String?) -> String { WebContent.decode(data, contentType: contentType) }
 
     private static func prettyJSON(_ data: Data) -> String? {
         guard let object = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
               let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .fragmentsAllowed])
         else { return nil }
         return String(data: pretty, encoding: .utf8)
-    }
-
-    private static let named: [String: String] = [
-        "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": " ", "copy": "©", "reg": "®", "trade": "™",
-        "mdash": "—", "ndash": "–", "hellip": "…", "lsquo": "‘", "rsquo": "’", "ldquo": "“", "rdquo": "”", "bull": "•",
-        "middot": "·", "euro": "€", "pound": "£", "yen": "¥", "cent": "¢", "laquo": "«", "raquo": "»", "times": "×",
-        "deg": "°", "plusmn": "±", "frac12": "½", "sect": "§", "para": "¶", "larr": "←", "rarr": "→", "check": "✓",
-    ]
-
-    static func decodeEntities(_ text: String) -> String {
-        guard text.contains("&") else { return text }
-        var out = ""
-        var i = text.startIndex
-        while i < text.endIndex {
-            let c = text[i]
-            if c == "&", let semi = text[i...].prefix(12).firstIndex(of: ";") {
-                let body = String(text[text.index(after: i)..<semi])
-                if let decoded = entity(body) {
-                    out += decoded
-                    i = text.index(after: semi)
-                    continue
-                }
-            }
-            out.append(c)
-            i = text.index(after: i)
-        }
-        return out
-    }
-
-    private static func entity(_ body: String) -> String? {
-        if body.hasPrefix("#") {
-            let digits = body.dropFirst()
-            let value: UInt32?
-            if digits.hasPrefix("x") || digits.hasPrefix("X") { value = UInt32(digits.dropFirst(), radix: 16) } else { value = UInt32(digits) }
-            guard let value, let scalar = Unicode.Scalar(value) else { return nil }
-            return scalar.value == 0xA0 ? " " : String(scalar)
-        }
-        return named[body.lowercased()] ?? named[body]
     }
 }
 

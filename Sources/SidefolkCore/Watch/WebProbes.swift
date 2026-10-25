@@ -4,22 +4,35 @@ import Foundation
 // MARK: Shared web plumbing
 
 enum WebTarget {
-    /// A web address typed by a person: "example.com/pricing" means https.
+    /// A web address typed by a person: "example.com/pricing" means https. Syntax and host rules come from
+    /// the shared `URLPolicy`; the DNS check happens at every request, where it cannot go stale.
     static func normalise(_ text: String?, allowLocal: Bool) throws -> URL {
         guard var s = text?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
             throw WatchError.invalid("Tell me which web address to watch.")
         }
-        if !s.contains("://") { s = "https://" + s }
-        guard let url = URL(string: s) else { throw WatchError.invalid(URLPolicyError.noHost.description) }
-        do { try URLPolicy.checkSyntax(url, allowLocal: allowLocal) } catch { throw WatchError.invalid(String(describing: error)) }
-        return url
+        // No scheme typed ("example.com/x", "localhost:3000"): assume https. "mailto:x" or "javascript:x" stay as they are and are refused.
+        if !s.contains("://"), s.range(of: #"^[^/:\s]+:(?!\d+(?:/|$))"#, options: .regularExpression) == nil { s = "https://" + s }
+        do {
+            let url = try URLPolicy.parseWebURL(s)
+            try URLPolicy.checkHost(url, allowPrivate: allowLocal)
+            return url
+        } catch let violation as URLPolicy.Violation {
+            throw WatchError.invalid(violation.message)
+        }
     }
 
     static func url(in config: JSONValue) -> URL? { config.string("url").flatMap(URL.init(string:)) }
 
+    /// Lower-cased host without a trailing dot, used to take turns per site.
+    static func host(of url: URL) -> String? {
+        guard var host = url.host?.lowercased(), !host.isEmpty else { return nil }
+        if host.hasSuffix("."), host.count > 1 { host.removeLast() }
+        return host
+    }
+
     /// "example.com/pricing": what a person would call the page.
     static func displayName(_ url: URL) -> String {
-        var name = URLPolicy.hostName(of: url) ?? url.absoluteString
+        var name = host(of: url) ?? url.absoluteString
         if let port = url.port { name += ":\(port)" }
         let path = url.path
         if path.count > 1 { name += path.hasSuffix("/") ? String(path.dropLast()) : path }
@@ -35,19 +48,19 @@ enum FetchOutcome {
 }
 
 /// Fetching with the politeness rules: one request a minute per host, friendly errors.
-struct WebFetching: Sendable {
+struct ProbeFetching: Sendable {
     let fetcher: any WatchFetcher
     let throttle: HostThrottle
 
     func fetch(_ request: FetchRequest, now: Date, throttled: Bool = true) async throws -> FetchOutcome {
-        if throttled, !WatchContext.isManualCheck, let host = URLPolicy.hostName(of: request.url),
+        if throttled, !WatchContext.isManualCheck, let host = WebTarget.host(of: request.url),
            let later = throttle.reserve(host: host, now: now) {
             throw ProbeError.deferred(until: later)
         }
         do {
             return .response(try await fetcher.fetch(request))
-        } catch let error as URLPolicyError {
-            throw ProbeError.failed(error.description)
+        } catch let violation as URLPolicy.Violation {
+            throw ProbeError.failed(violation.message)
         } catch let error as URLError {
             switch error.code {
             case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff: throw ProbeError.offline
@@ -99,10 +112,10 @@ public struct UrlChangeProbe: WatcherProbe {
     public var defaultInterval: TimeInterval { 30 * 60 }
     public var minimumInterval: TimeInterval { 5 * 60 }
 
-    let web: WebFetching
+    let web: ProbeFetching
 
     public init(fetcher: any WatchFetcher, throttle: HostThrottle = HostThrottle()) {
-        web = WebFetching(fetcher: fetcher, throttle: throttle)
+        web = ProbeFetching(fetcher: fetcher, throttle: throttle)
     }
 
     public func prepare(_ watcher: Watcher) throws -> Watcher {
@@ -132,7 +145,7 @@ public struct UrlChangeProbe: WatcherProbe {
         }
         if response.status == 304, let previous { return ProbeResult(state: previous) }
         guard (200..<300).contains(response.status) else {
-            throw ProbeError.failed("The page said \(WebFetching.httpWords(response.status)).")
+            throw ProbeError.failed("The page said \(ProbeFetching.httpWords(response.status)).")
         }
 
         let text = PageText.normalise(response.body, contentType: response.contentType)
@@ -190,10 +203,10 @@ public struct SiteStatusProbe: WatcherProbe {
     /// A site that flaps should not ring every few minutes; two confirmations already filter blips.
     public var repeatCooldown: TimeInterval { 5 * 60 }
 
-    let web: WebFetching
+    let web: ProbeFetching
 
     public init(fetcher: any WatchFetcher, throttle: HostThrottle = HostThrottle()) {
-        web = WebFetching(fetcher: fetcher, throttle: throttle)
+        web = ProbeFetching(fetcher: fetcher, throttle: throttle)
     }
 
     public func prepare(_ watcher: Watcher) throws -> Watcher {
@@ -223,7 +236,7 @@ public struct SiteStatusProbe: WatcherProbe {
                     r = again
                 }
             }
-            observed = r.status < 400 ? (true, "") : (false, "It answered \(WebFetching.httpWords(r.status)).")
+            observed = r.status < 400 ? (true, "") : (false, "It answered \(ProbeFetching.httpWords(r.status)).")
         }
 
         let observation = observed.up ? "up" : "down"

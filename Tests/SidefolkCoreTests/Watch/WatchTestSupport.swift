@@ -44,14 +44,6 @@ final class FakeFetcher: WatchFetcher {
     }
 }
 
-struct StubResolver: HostResolver {
-    var table: [String: [IPAddress]]
-    func resolve(_ host: String) async throws -> [IPAddress] {
-        guard let a = table[host] else { throw URLPolicyError.unresolvable(host) }
-        return a
-    }
-}
-
 /// A probe whose behaviour the test writes.
 struct ScriptedProbe: WatcherProbe {
     var kind = "fake"

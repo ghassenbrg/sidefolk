@@ -104,7 +104,7 @@ extension WatcherEngine {
         switch error {
         case let e as ProbeError: e.description
         case let e as WatchError: e.description
-        case let e as URLPolicyError: e.description
+        case let e as URLPolicy.Violation: e.message
         case let e as UserFacingError: e.message
         default: "Something went wrong while checking."
         }

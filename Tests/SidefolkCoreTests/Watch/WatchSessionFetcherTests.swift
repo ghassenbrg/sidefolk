@@ -3,7 +3,7 @@ import Testing
 @testable import SidefolkCore
 
 /// The one test that touches the network stack: a server on 127.0.0.1, nothing leaves the machine.
-@Suite struct URLSessionFetcherTests {
+@Suite struct WatchSessionFetcherTests {
     @Test func theRealFetcherFollowsTheRules() async throws {
         let server = try LocalHTTPServer { req in
             let path = req.line.split(separator: " ").dropFirst().first.map(String.init) ?? "/"
@@ -27,7 +27,7 @@ import Testing
             }
         }
         defer { server.stop() }
-        let fetcher = URLSessionFetcher(policy: URLPolicy(resolver: StubResolver(table: [:])), timeout: 5, maxBytes: 100_000)
+        let fetcher = WatchSessionFetcher(resolver: StubHostResolver(table: [:]), timeout: 5, maxBytes: 100_000)
         let base = "http://127.0.0.1:\(server.port)"
         func get(_ path: String, _ configure: (inout FetchRequest) -> Void = { _ in }) async throws -> FetchResponse {
             var request = FetchRequest(url: URL(string: base + path)!, allowLocal: true)
@@ -36,7 +36,7 @@ import Testing
         }
 
         // Without the user's opt-in, this Mac is off limits and nothing is even sent.
-        await #expect(throws: URLPolicyError.privateAddress("127.0.0.1")) { try await fetcher.fetch(FetchRequest(url: URL(string: base + "/page")!)) }
+        await #expect(throws: URLPolicy.Violation.privateDestination("127.0.0.1")) { try await fetcher.fetch(FetchRequest(url: URL(string: base + "/page")!)) }
         #expect(server.requests.isEmpty)
 
         // Text comes back whole, with lower-cased headers, and we say who we are but nothing more.
@@ -63,7 +63,7 @@ import Testing
         #expect(moved.status == 200 && moved.finalURL.path == "/new")
         #expect(String(decoding: moved.body, as: UTF8.self) == "arrived")
         // ...but not forever.
-        await #expect(throws: URLPolicyError.self) { try await get("/loop") }
+        await #expect(throws: URLPolicy.Violation.tooManyRedirects) { try await get("/loop") }
 
         // Big pages are cut at the cap; only text-like content is read.
         let big = try await get("/big")
@@ -83,7 +83,7 @@ import Testing
         #expect(server.requests.allSatisfy { $0.headers["authorization"] == nil })
 
         // A server that stalls is given up on.
-        let quick = URLSessionFetcher(policy: URLPolicy(resolver: StubResolver(table: [:])), timeout: 0.5)
+        let quick = WatchSessionFetcher(resolver: StubHostResolver(table: [:]), timeout: 0.5)
         let started = Date()
         await #expect(throws: URLError.self) { try await quick.fetch(FetchRequest(url: URL(string: base + "/slow")!, allowLocal: true)) }
         #expect(Date().timeIntervalSince(started) < 2.5)

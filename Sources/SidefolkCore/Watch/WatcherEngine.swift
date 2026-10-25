@@ -2,7 +2,7 @@ import Foundation
 
 /// The probes Sidefolk ships with.
 public enum WatchProbes {
-    public static func standard(fetcher: any WatchFetcher = URLSessionFetcher(), throttle: HostThrottle = HostThrottle(),
+    public static func standard(fetcher: any WatchFetcher = WatchSessionFetcher(), throttle: HostThrottle = HostThrottle(),
                                 processes: any ProcessTable = LibprocTable()) -> [any WatcherProbe] {
         [
             UrlChangeProbe(fetcher: fetcher, throttle: throttle),

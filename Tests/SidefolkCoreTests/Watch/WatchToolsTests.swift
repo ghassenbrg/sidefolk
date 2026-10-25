@@ -168,9 +168,9 @@ import Testing
             (["kind": "telepathy", "target": "x"], "kind"),
             (["kind": "command", "target": "rm -rf /"], "kind"),
             (["kind": "url_change", "target": "ftp://example.com"], "http"),
-            (["kind": "url_change", "target": "https://me:pw@example.com"], "username"),
-            (["kind": "url_change", "target": "http://169.254.169.254/latest"], "Mac or network"),
-            (["kind": "url_change", "target": "http://localhost:3000"], "Mac or network"),
+            (["kind": "url_change", "target": "https://me:pw@example.com"], "password"),
+            (["kind": "url_change", "target": "http://169.254.169.254/latest"], "local network"),
+            (["kind": "url_change", "target": "http://localhost:3000"], "local network"),
             (["kind": "url_change", "target": "example.com", "mode": "forever"], "mode"),
             (["kind": "url_change", "target": "example.com", "level": "ambient"], "level"),
             (["kind": "url_change", "target": "example.com", "interval_minutes": -3], "interval"),
@@ -194,7 +194,7 @@ import Testing
 
         // Asking for the local network anyway changes nothing: the option does not exist for agents.
         let sneaky = await run("watch.create", ["kind": "site_status", "target": "http://localhost:3000", "allow_local": true], as: agent)
-        #expect(failure(sneaky)?.contains("Mac or network") == true)
+        #expect(failure(sneaky)?.contains("local network") == true)
         #expect(await engine.list().count == 1)
     }
 
