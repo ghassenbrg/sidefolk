@@ -1,4 +1,6 @@
-import { icon, mark, type IconName } from "../icons";
+import { picture } from "../roster";
+import { problem } from "../voice";
+import { icon, type IconName } from "../icons";
 import { badge, stateOf, type State } from "../states";
 import { invoke, type PetStatus, type SessionInfo, type Status, type Waiting } from "./api";
 import type { App } from "./app";
@@ -18,10 +20,10 @@ export function back(label: string, run: () => void) {
 }
 
 /** The companion's mark + "Name · project" + a second line ("Codex · Work session 04c1"). */
-export function identity(name: string, project: string | null, second?: string) {
+export function identity(name: string, project: string | null, second?: string, look?: string) {
   const text = h("div", { class: "identity-text" }, h("strong", {}, name, project ? h("span", { class: "project", text: ` · ${folder(project)}` }) : null));
   if (second) text.append(h("span", { class: "meta", text: second }));
-  return h("div", { class: "identity" }, h("span", { class: "avatar" }, mark(30, "")), text);
+  return h("div", { class: "identity" }, h("img", { class: "avatar", src: picture(look), alt: "" }), text);
 }
 
 /** "Work session 04c1": the short form people can tell apart; the full ID is in details. */
@@ -46,7 +48,7 @@ export function petLine(pet: PetStatus, now = Date.now()) {
   if (last) {
     const m = Math.round((now - last.at) / 60_000);
     const when = m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
-    return `${agentShort(last.source)} ${last.kind === "done" ? "finished" : "stopped with a problem"} ${when}${last.detail ? `: ${last.detail}` : "."}`;
+    return `${agentShort(last.source)} ${last.kind === "done" ? "finished" : "stopped with a problem"} ${when}${last.kind !== "failed" && last.detail ? `: ${last.detail}` : "."}`;
   }
   return "Nothing running right now.";
 }
@@ -98,7 +100,7 @@ export function navIcon(name: IconName) {
 export function sessionRow(app: App, s: SessionInfo) {
   return h(
     "div",
-    { class: "row line" },
+    { class: "row line session-row" },
     h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(s.source)} · ${folder(s.project || s.cwd)}` }), h("span", { class: "meta", text: `${sessionLabel(s.id)}${app.state.hosts[`${s.source}:${s.id}`] ? ` · in ${app.state.hosts[`${s.source}:${s.id}`]}` : ""} · ${s.verb}${s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}` })),
     h(
       "div",
@@ -108,7 +110,7 @@ export function sessionRow(app: App, s: SessionInfo) {
         const request = app.state.status.waiting.find((w) => w.meta.session === s.id && w.meta.source === s.source);
         if (request && s.state === "waiting") app.go("review", request.id);
         else void app.openSession({ source: s.source, session: s.id, cwd: s.cwd || s.project });
-      }, "small") : null,
+      }, "small", { "aria-label": `${s.state === "waiting" ? "Review" : "Open"} ${agentShort(s.source)} in ${folder(s.project || s.cwd)}` }) : null,
     ),
   );
 }
@@ -120,6 +122,6 @@ export function folderPicker(app: App, input: HTMLInputElement) {
       const path = await invoke<string | null>("choose_project_folder");
       if (path) { input.value = path; input.dispatchEvent(new Event("input", { bubbles: true })); }
       input.focus();
-    } catch (error) { app.toast(String(error), undefined, true); }
+    } catch (error) { app.toast(problem(error), undefined, true); }
   }));
 }

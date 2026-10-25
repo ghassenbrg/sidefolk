@@ -1,3 +1,5 @@
+import { problem } from "../voice";
+import { overflow, dataState } from "./kit";
 import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { LOG, matchesNote, mondayOf, today, type NoteEntry, type Notebook } from "../notes";
@@ -12,8 +14,15 @@ import { back, empty, header } from "./ui";
 
 type Page = Notebook & { entries: NoteEntry[]; path: string };
 
+const drafts = new Map<string, string>();
+let searchText = "";
+let notebookFilter = "";
 let changed: (() => void) | null = null;
 listen("notes-changed", () => changed?.());
+
+function focusHeading(view: HTMLElement) {
+  requestAnimationFrame(() => { if (view.isConnected && document.activeElement === document.body) view.querySelector<HTMLElement>("h1")?.focus(); });
+}
 
 const longDay = (date: string) =>
   new Date(`${date}T12:00:00`).toLocaleDateString([], {
@@ -32,7 +41,7 @@ export function renderNotes(app: App, arg: string) {
   app.live(() => {});
   const [id] = arg.split(":");
   if (id && id !== "new") void notebook(app, view, id);
-  else void list(app, view, id === "new");
+  else void list(app, view, id === "new").catch((error) => view.replaceChildren(dataState("Couldn’t load your work log.", problem(error), () => app.redraw(true))));
   return view;
 }
 
@@ -53,8 +62,11 @@ function timeline(app: App, hits: { p: Page; e: NoteEntry }[]) {
 
 async function list(app: App, view: HTMLElement, focus: boolean) {
   const books = shelfOrder(await invoke<Notebook[]>("list_notebooks"));
-  const pages = await Promise.all(books.map((b) => invoke<Page>("read_notebook", { id: b.id }).catch(() => null))).then((all) => all.filter((p): p is Page => !!p));
-  const fill = () => void list(app, view, false);
+  const pages = await Promise.all(books.map((b) => invoke<Page>("read_notebook", { id: b.id }))).then((all) => all.filter((p): p is Page => !!p));
+  const fill = () => {
+    if (view.querySelector(".note.editing") || document.querySelector("dialog[open]")) return;
+    void list(app, view, false).catch((error) => app.toast(problem(error), undefined, true));
+  };
   changed = fill;
   app.onLeave(() => (changed = null));
 
@@ -86,7 +98,7 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
       editor?.close();
       app.go("notes", book.id);
     } catch (error) {
-      app.toast(String(error), undefined, true);
+      app.toast(problem(error), undefined, true);
     } finally { submit.disabled = false; }
   });
 
@@ -94,20 +106,22 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
   // and the date ("evaluation october", "last week", "2026-04").
   const search = h("input", {
     type: "search",
+    value: searchText,
     id: "notes-search",
     placeholder: "Search notes, notebooks or dates (“october”, “last week”)",
     autocomplete: "off",
     "aria-label": "Search all notes",
   });
   const only = h("select", { id: "notes-notebook", "aria-label": "Show notes from" }, h("option", { value: "", text: "All notebooks" }), ...pages.map((p) => h("option", { value: p.id, text: p.name })));
+  only.value = notebookFilter;
   const stream = h("section", { "aria-label": "All entries", "aria-live": "polite" });
   const draw = () => {
     const q = search.value.trim();
     const hits = pages.filter((p) => !only.value || p.id === only.value).flatMap((p) => p.entries.filter((e) => matchesNote(e, p.name, q)).map((e) => ({ p, e })));
     stream.replaceChildren(...(hits.length ? timeline(app, hits.slice(0, 300)) : [h("p", { class: "muted", text: q ? "Nothing matches." : "No notes yet." })]));
   };
-  search.addEventListener("input", draw);
-  only.addEventListener("change", draw);
+  search.addEventListener("input", () => { searchText = search.value; draw(); });
+  only.addEventListener("change", () => { notebookFilter = only.value; draw(); });
 
   const shelf = h("section", { class: "card list", "aria-label": "Notebooks" });
   for (const b of books)
@@ -138,6 +152,7 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
     ].filter((n): n is HTMLElement => !!n),
   );
   draw();
+  focusHeading(view);
   if (focus) requestAnimationFrame(openCreate);
 }
 
@@ -148,23 +163,25 @@ async function notebook(app: App, view: HTMLElement, id: string) {
   } catch (error) {
     view.replaceChildren(
       back("Notes", () => app.go("notes")),
-      empty("Notebook not found", String(error)),
+      dataState("Couldn’t open this notebook.", problem(error), () => app.go("notes", id)),
     );
     return;
   }
   const fill = async () => {
     try { page = await invoke<Page>("read_notebook", { id }); draw(); }
-    catch (error) { app.toast(String(error), undefined, true); }
+    catch (error) { app.toast(problem(error), undefined, true); }
   };
   changed = () => void fill();
   app.onLeave(() => (changed = null));
 
   const text = h("textarea", {
     id: "note-text",
+    value: drafts.get(id) ?? "",
     rows: 2,
     maxlength: 2000,
     placeholder: "Shipped the login migration; errors down 40%",
   });
+  text.value = drafts.get(id) ?? "";
   const add = h(
     "form",
     { class: "card", "aria-label": `Add to ${page.name}` },
@@ -188,11 +205,13 @@ async function notebook(app: App, view: HTMLElement, id: string) {
         project: null,
       });
       text.value = "";
+      drafts.delete(id);
       await fill();
     } catch (error) {
-      app.toast(String(error), undefined, true);
-    } finally { text.disabled = false; }
+      app.toast(problem(error), undefined, true);
+    } finally { text.disabled = false; text.focus(); }
   });
+  text.addEventListener("input", () => drafts.set(id, text.value));
   text.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) add.requestSubmit();
   });
@@ -219,9 +238,11 @@ async function notebook(app: App, view: HTMLElement, id: string) {
             }),
           ]),
     );
+    focusHeading(view);
   };
   search.addEventListener("input", draw);
   draw();
+  focusHeading(view);
 
   view.replaceChildren(
     ...[
@@ -238,7 +259,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
               () => app.toast("Couldn't copy.", undefined, true),
             ),
         ),
-        button([icon("folder"), "Show in Finder"], () => void invoke("reveal_data_dir", { notes: true }).catch((e) => app.toast(String(e), undefined, true))),
+        button([icon("folder"), "Show in Finder"], () => void invoke("reveal_data_dir", { notes: true }).catch((e) => app.toast(problem(e), undefined, true))),
       ),
       page.entries.length > 5 ? h("div", { class: "field" }, search) : null,
       entries,
@@ -270,7 +291,7 @@ async function move(app: App, page: Page, entry: NoteEntry) {
       editor.close();
       app.toast(`Moved to ${book.name}.`);
     } catch (error) {
-      app.toast(String(error), undefined, true);
+      app.toast(problem(error), undefined, true);
     }
   });
 }
@@ -292,22 +313,17 @@ function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void, withNo
       "div",
       { class: "inline" },
       button("Edit", () => edit(), "small", { "aria-label": `Edit note from ${longDay(entry.date)}` }),
-      button("Move…", () => void move(app, page, entry), "small", { "aria-label": `Move note from ${longDay(entry.date)}` }),
-      button(
-        "Delete",
-        async () => {
+      overflow(`note from ${longDay(entry.date)}`, [{ label: "Move…", run: () => void move(app, page, entry).catch((e) => app.toast(problem(e), undefined, true)) }, { label: "Delete", destructive: true, run: () => void (async () => {
           try {
             await invoke("remove_note", { id: page.id, entry });
             app.toast("Note deleted.", {
               label: "Undo",
-              run: () => void invoke("restore_note", { id: page.id, entry }),
+              run: async () => { await invoke("restore_note", { id: page.id, entry }); },
             });
           } catch (error) {
-            app.toast(String(error), undefined, true);
+            app.toast(problem(error), undefined, true);
           }
-        },
-        "small",
-      ),
+        })() }]),
     ),
   );
   const edit = () => {
@@ -337,8 +353,9 @@ function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void, withNo
         form.replaceWith(row(app, page, { ...entry, text: field.value }, redraw));
         redraw?.();
         app.toast("Saved.");
+        focusHeading(node.closest(".view") ?? form.closest(".view") ?? document.querySelector<HTMLElement>("main")!);
       } catch (error) {
-        app.toast(String(error), undefined, true);
+        app.toast(problem(error), undefined, true);
       }
       field.disabled = false;
     });

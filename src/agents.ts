@@ -1,3 +1,4 @@
+import { agentProblem } from "./voice";
 import type { Bubble } from "./bubble";
 import type { Directive, Mind } from "./mind";
 import { badge, stateOf } from "./states";
@@ -171,7 +172,7 @@ export class Agents {
           else this.bubble.say(`${name} finished${where}.${event.detail ? ` ${event.detail}` : ""}`, 9, "done");
         } else {
           this.mind.react("sad", 1.6);
-          this.bubble.say(`${name} stopped with a problem${where}: ${event.detail || "no reason given"}. Open it from Sidefolk.`, 12, "fail");
+          this.bubble.say(agentProblem(name, event.detail ?? "", event.project.split("/").pop() ?? ""), 12, "fail");
         }
         break;
       case "idle":

@@ -47,7 +47,7 @@ the tool stops waiting.
 **The Sidefolk window** is a normal Mac app (Dock, menus, full screen): Today ⌘1, Reminders ⌘2,
 Notes ⌘3, Sessions ⌘4, Settings ⌘,. First launch opens a three-step setup guide.
 
-**With Claude Code** (Settings → AI tools): Pip shows what each session is doing, brings its
+**With Claude Code** (Settings → Agents): Pip shows what each session is doing, brings its
 permission requests (Decline / Allow once, or answer in Claude's window; Pip never answers on its
 own) and tells you when it finishes or fails. MCP tools for Claude Code and Codex: `notify`,
 `ask`, `remind`, `presence`. Watching Codex sessions is not built yet (docs/V1.md F-14).
@@ -55,7 +55,7 @@ own) and tells you when it finishes or fails. MCP tools for Claude Code and Code
 ## Settings and data
 
 Settings: companion size, reduce motion, larger text, sleep time, sounds, hide from screen
-recordings (off by default), AI tools, where sessions open, Labs, the shortcut (press it to
+recordings (off by default), agent connections, where sessions open, Labs, the shortcut (press it to
 record) and start at login. Everything lives in
 `~/Library/Application Support/dev.sidefolk.companion` and never leaves the Mac:
 

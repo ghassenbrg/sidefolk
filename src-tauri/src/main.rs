@@ -334,6 +334,7 @@ fn main() {
             prefs::integrations,
             prefs::tray_action,
             prefs::reveal_data_dir,
+            prefs::clear_history,
             prefs::log_error,
             prefs::pet_action,
             prefs::app_info,
@@ -343,7 +344,8 @@ fn main() {
             sessions::terminals,
             sessions::session_hosts,
             prefs::answered,
-            prefs::open_tab
+            prefs::open_tab,
+            prefs::open_preferences
         ])
         .setup(move |app| {
             let problems = store::Problems::default();
@@ -372,6 +374,7 @@ fn main() {
             // Series move past occurrences that came and went, now and every 20 seconds after.
             let (handle, ticking) = (app.handle().clone(), shared.clone());
             std::thread::spawn(move || loop {
+                ticking.journal.prune_expired();
                 match ticking.reminders.tick(journal::now_ms(), &jiff::tz::TimeZone::system()) {
                     Ok(true) => {
                         let _ = handle.emit("reminders-changed", ());

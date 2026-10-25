@@ -40,6 +40,10 @@ pub struct Settings {
     pub calendar_lead_mins: u64,
     /// Babble and little sounds.
     pub sounds: bool,
+    pub journal_enabled: bool,
+    /// A failed explicit disconnect must resume disconnecting, never silently reconnect.
+    pub claude_disconnect_pending: bool,
+    pub snooze_mins: u64,
     /// 0..=100
     pub volume: u8,
     /// A menu-bar-only app (no Dock icon, not in ⌘Tab).
@@ -71,7 +75,10 @@ impl Default for Settings {
             large_text: false,
             calendar_heads_up: false,
             calendar_lead_mins: 5,
-            sounds: true,
+            sounds: false,
+            journal_enabled: true,
+            claude_disconnect_pending: false,
+            snooze_mins: 10,
             volume: 60,
             terminal: "auto".into(),
             labs_commands: false,

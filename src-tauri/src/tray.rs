@@ -25,6 +25,14 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         .shortcut
         .clone();
     let _ = register_shortcut(app, &shortcut);
+    if let Err(error) = app.global_shortcut().on_shortcut("CommandOrControl+Shift+Enter", |app, _, event| {
+        if event.state == ShortcutState::Pressed {
+            let handle = app.clone();
+            let _ = app.run_on_main_thread(move || action(&handle, "focus-card"));
+        }
+    }) {
+        *app.state::<TrayState>().shortcut_error.lock().unwrap() = Some(format!("Request shortcut unavailable: {error}"));
+    }
     // A template image: macOS tints it to match light and dark menu bars.
     TrayIconBuilder::with_id("sidefolk")
         .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray.png"))?)
@@ -41,12 +49,17 @@ pub fn register_shortcut(app: &AppHandle, shortcut: &str) -> Result<(), String> 
     let shortcuts = app.global_shortcut();
     let state = app.state::<TrayState>();
     let previous = app.state::<Arc<Shared>>().settings.lock().unwrap().value.shortcut.clone();
-    let _ = shortcuts.unregister_all();
+    use std::str::FromStr;
+    use tauri_plugin_global_shortcut::Shortcut;
+    let parsed = Shortcut::from_str(shortcut).map_err(|_| "Choose a valid shortcut.".to_string())?;
+    let reserved = Shortcut::from_str("CommandOrControl+Shift+Enter").unwrap();
+    if parsed == reserved { return Err("That shortcut focuses requests. Choose another for Quick add.".into()); }
+    let _ = shortcuts.unregister(previous.as_str());
     let register = |keys: &str| {
         shortcuts.on_shortcut(keys, |app, _, event| {
             if event.state == ShortcutState::Pressed {
                 let handle = app.clone();
-                let _ = app.run_on_main_thread(move || action(&handle, "toggle"));
+                let _ = app.run_on_main_thread(move || action(&handle, "quick-add"));
             }
         })
     };
@@ -211,6 +224,8 @@ pub fn action(app: &AppHandle, action: &str) {
             }
         }
         "call" => summon(app),
+        "quick-add" => summon(app).and_then(|_| overlay::overlay(app).emit("focus-quick-add", ())),
+        "focus-card" => hidden(app, false).and_then(|_| overlay::overlay(app).emit("focus-card", ())),
         "login" => start_at_login(app),
         "settings" => crate::prefs::open(app),
         // The window explains what uninstalling does before anything happens.
@@ -227,7 +242,7 @@ pub fn action(app: &AppHandle, action: &str) {
             overlay::overlay(app).emit("pet-action", serde_json::json!({ "action": "new-reminder" }))
         }
         "tools-claude" => {
-            crate::mcp_setup::confirm(app, crate::mcp_setup::Agent::Claude);
+            crate::claude_setup::confirm(app);
             return;
         }
         "tools-codex" => {

@@ -50,6 +50,14 @@
   --radius-card: 18px;
   --radius-panel: 24px;
   --target: 44px;
+  --window-target: 28px;
+  --window-text: 13pt;
+  --window-text-secondary: 16px;
+  --window-text-meta: 14px;
+  --palette-light-canvas: #f7f3ea;
+  --palette-light-border: #dad6cd;
+  --palette-dark-canvas: #191c22;
+  --palette-dark-border: #4b515d;
 
   --motion-control: 140ms;
   --motion-card: 200ms;

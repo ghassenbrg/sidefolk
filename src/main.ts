@@ -34,6 +34,7 @@ type Settings = {
   calm: boolean;
   large_text: boolean;
   sounds: boolean;
+  snooze_mins: number;
   volume: number;
   labs_commands: boolean;
   labs_sessions: boolean;
@@ -145,6 +146,7 @@ function applySettings(next: Settings | null) {
 applySettings(settings);
 reducedMotion.addEventListener("change", () => applySettings(settings));
 const reminders = new Reminders(companion, reminderStore);
+reminders.snoozeMinutes = settings?.snooze_mins ?? 10;
 const noteStore: NoteStore = inTauri
   ? {
       list: () => invoke("list_notebooks"),
@@ -206,6 +208,7 @@ if (inTauri) {
     if (e.payload.pet_size !== settings!.pet_size) return location.reload();
     Object.assign(settings!, e.payload);
     applySettings(settings);
+    reminders.snoozeMinutes = settings?.snooze_mins ?? 10;
   });
   // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
   // "Sent" only once the companion really passed the answer on.
@@ -264,6 +267,9 @@ if (inTauri) {
     void invoke("save_pet", { x: pet.mind.x }).catch(console.error);
     void invoke("ui_log", { line: `summon x=${pet.mind.x.toFixed(0)}`, focus: true });
   });
+  void listen("focus-quick-add", () => companion.openPrompt());
+  void listen("focus-card", () => pet.bubble.focusCard());
+  void listen("undo", () => pet.bubble.undo());
   void listen<AgentEvent>("agent", (e) => companion.handleEvent(e.payload));
   void listen<Ask>("permission", (e) => companion.handleAsk(e.payload));
   // Requests live in Rust (requests.rs): a reloaded overlay shows the ones still waiting.

@@ -51,16 +51,33 @@ pub fn emit(app: &AppHandle, event: AgentEvent) {
 /// Adds a journal entry. A full disk must not stop the pet, so failures are only logged.
 pub fn note(app: &AppHandle, source: &str, session: &str, project: &str, kind: &str, detail: &str) {
     let Some(shared) = app.try_state::<std::sync::Arc<Shared>>() else { return };
+    if !shared.settings.lock().unwrap().value.journal_enabled { return; }
     let entry = crate::journal::Entry {
         at: crate::journal::now_ms(),
         source: source.into(),
         session: session.into(),
         project: project.into(),
         kind: kind.into(),
-        detail: detail.into(),
+        detail: journal_detail(kind, detail),
     };
     if let Err(error) = shared.journal.record(&entry) {
         eprintln!("sidefolk: journal: {error}");
+    }
+}
+
+pub(crate) fn journal_detail(kind: &str, detail: &str) -> String {
+    if kind == "prompt" { detail.lines().next().unwrap_or_default().chars().take(500).collect() } else { String::new() }
+}
+
+#[cfg(test)]
+mod privacy_tests {
+    #[test]
+    fn journal_keeps_only_the_first_prompt_line() {
+        assert_eq!(super::journal_detail("prompt", "First line\nsecret second line"), "First line");
+        assert_eq!(super::journal_detail("prompt", &"é".repeat(501)).chars().count(), 500);
+        for event in ["done", "failed", "ask", "answer", "waiting"] {
+            assert_eq!(super::journal_detail(event, "private output"), "");
+        }
     }
 }
 

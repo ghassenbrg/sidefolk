@@ -34,6 +34,11 @@ your terminal. Plain sentences never run as commands.
 session in api" opens a new Claude Code (or Codex) session in your terminal.
 
 Every card has ×. Closing a request only hides it; it waits in the window until it's answered.
+The summon shortcut (⌘⇧Space by default) focuses Quick add; pressing it again keeps your draft.
+⌘⇧Return focuses the newest card without choosing an answer. Escape returns keyboard focus.
+In the window, Undo stays until you use or dismiss it, including after navigation. ⌘Z invokes the
+latest Undo outside a text field; inside a field it keeps the usual text-editing meaning.
+Closing or reloading the window ends that window’s Undo stack.
 
 ## The window
 
@@ -48,18 +53,19 @@ Open it from the Dock, the menu bar icon, or "open Sidefolk".
 - **Work log** (⌘3): your Log and the notebooks you name, one timeline of every entry by week,
   search by words or dates ("october", "last week"), edit, move to another notebook, copy as
   Markdown. **Your week** lists what you logged and finished this week, ready to copy; on Friday
-  from 4 PM your companion offers it (Settings → General → Your week).
+  from 4 PM your companion offers it (Settings → General → Labs → Your week).
 - When a Claude Code session finishes, its card offers **Log it**: the project and your first
   request, editable, go to your Log.
 - **Sessions** (⌘4): running and finished Claude Code sessions. It appears once Claude Code is
   connected.
-- **Settings** (⌘,): searchable categories. **Appearance → Theme** offers System (the default),
+- **Settings** (⌘,): a separate window with four searchable panes: General, Companion, Agents, and Privacy & data. **General → Theme** offers System (the default),
   Light and Dark.
 
 ## Claude Code (optional)
 
-Settings → AI tools connects Claude Code. Each change is explained first, and a backup of its
-settings is kept.
+Settings → Agents connects Claude Code. Each change is explained first, and a backup of its
+settings is kept. Hooks and companion tools connect together. If disconnecting fails partway,
+**Finish disconnecting** completes the removal; retrying does not reconnect it.
 
 - When a session asks for permission and you aren't looking at it, Pip shows the request: the
   full command and folder, then Decline, Allow once, or Answer in Claude's window. Pip never
@@ -71,7 +77,7 @@ settings is kept.
   tmux or over ssh, Pip always asks.
 - Click Pip to see your sessions above the field, with what each is doing; click one to open
   it.
-- Settings → AI tools says how Claude Code's connection is doing: Connected (nothing heard
+- Settings → Agents says how Claude Code's connection is doing: Connected (nothing heard
   yet), Working, Needs repair (Sidefolk moved or was updated; press Repair), or Can't listen.
 - If Sidefolk isn't running, or you deleted it, Claude Code carries on as if it weren't
   installed.
@@ -83,7 +89,7 @@ settings is kept.
 
 ## Uninstalling
 
-Settings → About & data → **Disconnect & uninstall** (also in the menu bar). It removes only
+Settings → Privacy & data → **Disconnect & uninstall** (also in the menu bar). It removes only
 what Sidefolk added to Claude Code and Codex, keeping a backup of each settings file. It also
 stops Sidefolk opening at login, then quits; drag Sidefolk to the Bin afterwards. Your reminders
 and notes stay unless you tick "Also move my reminders, notes and backups to the Bin". Without
@@ -98,5 +104,21 @@ off by default.
 
 ## Something wrong?
 
-Settings → About & data → **Copy report**, add what happened, and send it. The report contains
+Settings → Privacy & data → **Copy report**, add what happened, and send it. The report contains
 versions, settings and recent errors, never your reminders, notes or names.
+
+## Privacy and quiet
+
+General has Quiet, volume and the default snooze. New installations start Quiet; changing it
+does not change macOS notification settings. A snooze moves one occurrence, keeping repeats
+anchored to their original schedule.
+
+Privacy & data explains what stays on this Mac. New session history keeps the first prompt
+line (up to 500 characters) and dated events for seven UTC calendar days, including today;
+tool input, answers and agent output are not added. Turn off **Keep session history** to stop
+new records. **Clear history…** asks before removing journal files; it keeps notebooks,
+reminders and backups. Older history can contain more detail until it is cleared or expires.
+Use Work log’s **Copy as Markdown** to export a notebook, or **Your week** to copy the week.
+
+Recording protection stays off pending the Mission Control hand check. Setup offers the choice,
+and Privacy & data lets you change it later. A browser preview cannot verify screen sharing.

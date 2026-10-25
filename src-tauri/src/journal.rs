@@ -1,5 +1,5 @@
 //! What happened while you were away: sessions starting and ending, prompts, outcomes and
-//! questions, per project. One JSON line per entry, one file per UTC day, kept 30 days.
+//! questions, per project. One JSON line per entry, one file per UTC day, kept 7 days.
 //! It stays on this Mac; tool-by-tool activity is not recorded.
 use serde::{Deserialize, Serialize};
 use std::{
@@ -10,7 +10,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-const KEEP_DAYS: u64 = 30;
+const KEEP_DAYS: u64 = 7;
 const DAY_MS: u64 = 86_400_000;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -68,6 +68,7 @@ impl Journal {
 
     pub fn record(&self, entry: &Entry) -> io::Result<()> {
         let _guard = self.write.lock().unwrap();
+        self.prune(now_ms() / DAY_MS);
         fs::create_dir_all(&self.dir)?;
         let mut line = serde_json::to_vec(entry)?;
         line.push(b'\n');
@@ -84,7 +85,7 @@ impl Journal {
     /// Entries at or after `since` (Unix ms), oldest first. Unreadable lines are skipped.
     pub fn since(&self, since: u64) -> Vec<Entry> {
         let today = now_ms() / DAY_MS;
-        let first = (since / DAY_MS).max(today.saturating_sub(KEEP_DAYS));
+        let first = (since / DAY_MS).max(today.saturating_sub(KEEP_DAYS - 1));
         (first..=today)
             .filter_map(|day| fs::read_to_string(self.file(day)).ok())
             .flat_map(|text| {
@@ -96,17 +97,42 @@ impl Journal {
             .collect()
     }
 
+    pub fn clear(&self) -> io::Result<()> {
+        let _guard = self.write.lock().unwrap();
+        let files = match fs::read_dir(&self.dir) {
+            Ok(files) => files,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => return Err(e),
+        };
+        for file in files {
+            let file = file?;
+            if dated_file(&file.file_name().to_string_lossy()) { fs::remove_file(file.path())?; }
+        }
+        Ok(())
+    }
+
+    /// Cleanup is independent of recording, so turning history off does not freeze old files.
+    pub fn prune_expired(&self) {
+        let _guard = self.write.lock().unwrap();
+        self.prune(now_ms() / DAY_MS);
+    }
+
     fn prune(&self, today: u64) {
         let Ok(files) = fs::read_dir(&self.dir) else { return };
-        let oldest = date(today.saturating_sub(KEEP_DAYS));
+        let oldest = date(today.saturating_sub(KEEP_DAYS - 1));
         for file in files.flatten() {
             let name = file.file_name().to_string_lossy().into_owned();
             // Dated names sort as text; anything else in the folder is left alone.
-            if name.len() == "2026-10-24.jsonl".len() && name.ends_with(".jsonl") && name.as_str() < oldest.as_str() {
+            if dated_file(&name) && name.as_str() < oldest.as_str() {
                 let _ = fs::remove_file(file.path());
             }
         }
     }
+}
+
+fn dated_file(name: &str) -> bool {
+    name.len() == 16 && name.ends_with(".jsonl")
+        && name.get(..10).is_some_and(|date| date.parse::<jiff::civil::Date>().is_ok())
 }
 
 #[cfg(test)]
@@ -136,8 +162,12 @@ mod tests {
         journal.record(&entry(now - 40 * DAY_MS)).unwrap();
         assert_eq!(journal.since(now - 500), vec![entry(now)]);
         assert_eq!(journal.since(0).len(), 2);
-        Journal::open(&dir);
+        journal.prune_expired();
         assert_eq!(fs::read_dir(dir.join("journal")).unwrap().count(), 1 + usize::from(now / DAY_MS != (now - 1000) / DAY_MS));
+        fs::write(dir.join("journal/keep.jsonl"), b"user file").unwrap();
+        journal.clear().unwrap();
+        assert!(journal.since(0).is_empty());
+        assert_eq!(fs::read(dir.join("journal/keep.jsonl")).unwrap(), b"user file");
         fs::remove_dir_all(dir).unwrap();
     }
 }

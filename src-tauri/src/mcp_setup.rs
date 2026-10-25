@@ -61,6 +61,15 @@ impl Agent {
         }
     }
 
+    /// Claude's tools must point at this installed copy, not an older or moved binary.
+    pub fn current(self) -> bool {
+        if self != Agent::Claude { return self.installed(); }
+        let Ok(text) = fs::read_to_string(self.config()) else { return false; };
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) else { return false; };
+        let Ok(exe) = std::env::current_exe() else { return false; };
+        claude_server_current(&value["mcpServers"][crate::mcp::SERVER], &exe)
+    }
+
     /// The agent CLI's arguments to add or remove the server.
     pub fn args(self, add: bool, exe: &str, data_dir: Option<&str>) -> Vec<String> {
         let mut args: Vec<String> = vec!["mcp".into(), if add { "add" } else { "remove" }.into()];
@@ -78,6 +87,13 @@ impl Agent {
         }
         args
     }
+}
+
+fn claude_server_current(value: &serde_json::Value, exe: &std::path::Path) -> bool {
+    value["command"].as_str() == exe.to_str()
+        && value["args"] == serde_json::json!(["--mcp"])
+        && value["env"].get("SIDEFOLK_DATA_DIR").and_then(serde_json::Value::as_str)
+            == std::env::var("SIDEFOLK_DATA_DIR").ok().as_deref()
 }
 
 pub(crate) fn run(agent: Agent, add: bool, backups: &std::path::Path) -> io::Result<PathBuf> {
@@ -162,7 +178,7 @@ pub fn confirm(app: &AppHandle, agent: Agent) {
                         Err(error) => {
                             eprintln!("sidefolk: pet tools: {error}");
                             app.dialog()
-                                .message(error.to_string())
+                                .message("I couldn’t finish connecting; check Settings → Agents and try again.")
                                 .title("Companion tools")
                                 .kind(MessageDialogKind::Error)
                                 .show(|_| {});
@@ -193,6 +209,16 @@ fn agent_path() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn claude_tools_need_this_binary_and_its_data_directory() {
+        let exe = std::path::Path::new("/Applications/Sidefolk.app/Contents/MacOS/sidefolk");
+        let mut server = serde_json::json!({"command":exe, "args":["--mcp"], "env":{}});
+        if let Ok(dir) = std::env::var("SIDEFOLK_DATA_DIR") { server["env"]["SIDEFOLK_DATA_DIR"] = dir.into(); }
+        assert!(claude_server_current(&server, exe));
+        assert!(!claude_server_current(&server, std::path::Path::new("/old/sidefolk")));
+        server["args"] = serde_json::json!([]);
+        assert!(!claude_server_current(&server, exe));
+    }
     #[test]
     fn builds_cli_arguments() {
         assert_eq!(

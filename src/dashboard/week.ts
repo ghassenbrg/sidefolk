@@ -1,3 +1,5 @@
+import { problem } from "../voice";
+import { dataState } from "./kit";
 import { icon } from "../icons";
 import { mondayOf, today, type NoteEntry, type Notebook } from "../notes";
 import type { Reminder } from "../reminders";
@@ -29,14 +31,14 @@ export function weekMarkdown(monday: string, items: WeekItem[]) {
 
 export function renderWeek(app: App) {
   const view = h("div", { class: "view week" });
-  void fill(app, view);
+  void fill(app, view).catch((error) => view.replaceChildren(dataState("Couldn’t load your week.", problem(error), () => app.redraw(true))));
   return view;
 }
 
 async function fill(app: App, view: HTMLElement) {
   const monday = mondayOf(today());
-  const books = await invoke<Notebook[]>("list_notebooks").catch(() => [] as Notebook[]);
-  const pages = (await Promise.all(books.map((b) => invoke<Page>("read_notebook", { id: b.id }).catch(() => null)))).filter((p): p is Page => !!p);
+  const books = await invoke<Notebook[]>("list_notebooks");
+  const pages = (await Promise.all(books.map((b) => invoke<Page>("read_notebook", { id: b.id })))).filter((p): p is Page => !!p);
   const items = weekItems(pages, app.state.reminders, monday);
   const list = h("section", { class: "card list", "aria-label": "This week" });
   for (const i of items)

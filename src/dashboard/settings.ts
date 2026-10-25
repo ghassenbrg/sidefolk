@@ -1,8 +1,9 @@
+import { problem } from "../voice";
 import { applyTheme, themeOf } from "../theme";
 import { notificationSetting } from "./notifications";
 import { icon, mark, type IconName } from "../icons";
 import { acceleratorFrom, shortcutLabel } from "../keys";
-import { invoke, type Settings } from "./api";
+import { invoke, inTauri, type Settings } from "./api";
 import type { App } from "./app";
 import { button, h, TERMINAL_LABELS } from "./dom";
 import { terminalControl } from "./setup";
@@ -44,16 +45,19 @@ function select(app: App, key: keyof Settings, label: string, description: strin
   for (const [value, text] of options) control.append(h("option", { value, text }));
   control.value = String(app.state.settings[key] ?? "");
   control.addEventListener("change", () => {
-    control.blur();
     void app.save({ [key]: numeric ? Number(control.value) : control.value });
   });
   return row(label, description, control, id);
 }
 
 function segmented(app: App, key: keyof Settings, label: string, description: string, options: [string, string][]) {
-  const control = h("div", { class: "segmented", role: "radiogroup", "aria-label": label });
-  for (const [value, text] of options)
-    control.append(button(text, () => void app.save({ [key]: value }), "", { role: "radio", "aria-checked": String(app.state.settings[key] === value) }));
+  const control = h("fieldset", { class: "segmented", "aria-label": label });
+  for (const [value, text] of options) {
+    const id = `${key}-${value}`;
+    const radio = h("input", { type: "radio", id, name: String(key), value, checked: app.state.settings[key] === value });
+    radio.addEventListener("change", () => void app.save({ [key]: value }));
+    control.append(h("label", { for: id }, radio, text));
+  }
   return h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: label }), h("p", { class: "muted", text: description })), control);
 }
 
@@ -76,7 +80,7 @@ const HEALTH: Record<string, [string, string]> = {
   off: ["Not connected", ""],
   waiting: ["Connected", "Waiting for your first Claude Code session."],
   working: ["Working", "Hearing your Claude Code sessions."],
-  repair: ["Needs repair", "Sidefolk's hooks are from an older version, or Sidefolk has moved. Repair to keep hearing Claude Code."],
+  repair: ["Needs repair", "Part of the connection is missing, outdated, or points to a moved Sidefolk. Repair hooks and companion tools together."],
   unavailable: ["Can't listen", ""],
 };
 
@@ -92,11 +96,11 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
         "div",
         { class: "setting-text" },
         h("strong", {}, title, " ", h("span", { class: `pill${health === "working" || health === "waiting" ? " on" : ""}`, text: word })),
-        h("p", { class: "muted", text: health === "unavailable" ? (app.state.integrations.hook_error ?? "") : line || what }),
+        h("p", { class: "muted", text: health === "unavailable" ? (problem(app.state.integrations.hook_error)) : line || what }),
         h("details", {}, h("summary", { text: "What disconnecting does" }), h("p", { class: "muted", text: stops })),
       ),
-      button(health === "repair" ? "Repair…" : "Disconnect…", () => {
-        void invoke("tray_action", { action }).catch((e) => app.toast(String(e), undefined, true));
+      button(app.state.integrations.claude_disconnect_pending ? "Finish disconnecting…" : health === "repair" ? "Repair…" : "Disconnect…", () => {
+        void invoke("tray_action", { action }).catch((e) => app.toast(problem(e), undefined, true));
         app.toast("Confirm in the dialog that opened.");
       }, health === "repair" ? "primary" : ""),
     );
@@ -112,7 +116,7 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
       h("details", {}, h("summary", { text: on ? "What disconnecting does" : "What setting up changes" }), h("p", { class: "muted", text: on ? stops : change })),
     ),
     button(on ? "Disconnect…" : "Set up…", () => {
-      void invoke("tray_action", { action }).catch((e) => app.toast(String(e), undefined, true));
+      void invoke("tray_action", { action }).catch((e) => app.toast(problem(e), undefined, true));
       app.toast("Confirm in the dialog that opened.");
     }, on ? "" : "primary"),
   );
@@ -138,7 +142,7 @@ function uninstallSheet() {
       const lines = await invoke<string[]>("uninstall_sidefolk", { deleteData: remove.checked });
       done.replaceChildren(...[...lines, "Sidefolk quits in a few seconds. Then drag it from Applications to the Bin."].map((line) => h("li", { text: line })));
     } catch (error) {
-      done.replaceChildren(h("li", { text: String(error) }));
+      done.replaceChildren(h("li", { text: problem(error) }));
       go.disabled = false;
     }
   });
@@ -161,6 +165,20 @@ function settingsContents(app: App) {
       "terminal",
       select(app, "terminal", "Default terminal", "Where commands, new sessions and continued sessions open. Automatic uses the one your sessions run in, else a terminal you installed. A running session always comes forward where it is.", terminalOptions),
       terminalControl(),
+      h("table", { class: "host-matrix" }, h("caption", { text: "Host support" }),
+        h("thead", {}, h("tr", {}, ...["Host", "Open", "That session is focused"].map((text) => h("th", { scope: "col", text })))),
+        h("tbody", {}, ...[
+          ["Terminal.app", "Exact tab (tty)", "Exact: frontmost and the selected tab’s tty"],
+          ["iTerm2", "Exact tab (tty)", "Exact"],
+          ["Ghostty 1.3+", "Bring forward + select the session there", "Only if frontmost and it hosts exactly one live Claude session"],
+          ["WezTerm", "Bring forward", "As Ghostty"],
+          ["VS Code / Cursor", "Bring that project’s window forward, else the app", "As Ghostty"],
+          ["Warp", "Bring forward", "Never"],
+          ["Claude desktop", "Bring forward", "Never"],
+          ["tmux / ssh / unknown", "Running in tmux on ttys004 · Copy attach command", "Never"],
+          ["Ended session", "claude --resume <id> in the default terminal", "—"],
+        ].map(([host, open, focus]) => h("tr", {}, h("th", { scope: "row", text: host }), h("td", { text: open }), h("td", { text: focus }))))),
+      h("p", { class: "muted", text: "Ghostty has no tty in its scripting dictionary. Exact WezTerm panes are not verified. Codex beta offers companion tools; approvals stay in Codex." }),
     ),
   );
 
@@ -184,6 +202,8 @@ function settingsContents(app: App) {
       "accessibility",
       toggle(app, "calm", "Reduce motion", "Companions stay put and changes happen at once, without hops or pulsing. Also on when macOS asks for reduced motion."),
       toggle(app, "large_text", "Larger text", "Bigger cards and text, here and on the desktop, without changing the companion's size."),
+    ),
+    group("Sleep", "idle", "sleep",
       select(app, "sleep_after_secs", "Fall asleep after", "With no keyboard or mouse input.", [
         ["60", "1 minute"],
         ["120", "2 minutes"],
@@ -202,7 +222,12 @@ function settingsContents(app: App) {
       "Sound",
       "reminders",
       "sound",
-      toggle(app, "sounds", "Sound cues", "Short sounds when a companion talks or something needs you."),
+      (() => {
+        const quiet = h("input", { type: "checkbox", class: "switch", role: "switch", id: "setting-quiet", checked: !settings.sounds });
+        quiet.addEventListener("change", () => void app.save({ sounds: !quiet.checked }));
+        return row("Quiet", "Stops all companion sounds. Notifications still follow your Mac’s settings.", quiet, quiet.id);
+      })(),
+      select(app, "snooze_mins", "Default snooze", "Moves only the current reminder, leaving repeats anchored.", [["10", "10 minutes"], ["30", "30 minutes"], ["60", "1 hour"]], true),
       row("Volume", null, volume, "setting-volume"),
       notificationSetting(app),
     ),
@@ -213,6 +238,18 @@ function settingsContents(app: App) {
       "Privacy",
       "info",
       "privacy",
+      h("p", { text: "Your notes, reminders and settings stay on this Mac. Sidefolk does not upload them. Agent connections run locally; each agent has its own privacy policy." }),
+      toggle(app, "journal_enabled", "Keep session history", "New history keeps the first prompt line (up to 500 characters) and dated events for 7 days, without tool input or agent output. Off stops new records. Older history may contain more detail; Clear removes it."),
+      row("Session history", "Clear dated session history now. Your work log, reminders and backups stay.", button("Clear history…", () => {
+        const body = h("div", {}, h("p", { text: "Remove session history from this Mac? This cannot be undone. Your work log, reminders and backups stay." }));
+        const editor = sheet("Clear session history?", body);
+        const clear = button("Clear history", async () => {
+          clear.disabled = true;
+          try { await invoke("clear_history"); editor.close(); app.toast("Session history cleared."); }
+          catch (error) { app.toast(problem(error), undefined, true); clear.disabled = false; }
+        }, "danger");
+        body.append(h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), clear));
+      })),
       toggle(app, "hide_in_recordings", "Hide from screen recordings", "Asks macOS to keep the companion and its cards out of screenshots, recordings and screen sharing. While it's on, Mission Control shows a dark patch where the companion stands, so it's off unless you need it."),
     ),
   );
@@ -223,11 +260,10 @@ function settingsContents(app: App) {
       "terminal",
       "tools",
       h("p", { class: "muted", text: "Connect an AI tool to see its progress and requests here. Each change is explained first and a backup is kept." }),
-      integrations.hook_error ? h("p", { class: "field-error", role: "alert", text: integrations.hook_error }) : null,
-      toolRow(app, "claude_hooks", "claude", "Claude Code", "Companions see Claude Code's work sessions and bring you its requests.", "Adds Sidefolk's hooks to Claude Code's settings (~/.claude/settings.json) and keeps a backup next to it.", "Companions stop seeing Claude Code sessions, and requests stay in Claude Code's own window. Only Sidefolk's hooks are removed; a backup is kept."),
-      toolRow(app, "claude_tools", "tools-claude", "Companion tools for Claude Code", "Claude Code can send you a note, ask a question, set a reminder or check if you're around.", "Runs `claude mcp add` to register Sidefolk's tools for your user and keeps a backup of Claude's config.", "Claude Code can no longer reach you through a companion. Notes, questions and reminders from it stop."),
+      integrations.hook_error ? h("p", { class: "field-error", role: "alert", text: problem(integrations.hook_error) }) : null,
+      toolRow(app, "claude_hooks", "claude", "Claude Code", "Follow Claude Code sessions, review requests, and receive its notes and reminders.", "Adds local session hooks and companion tools through Claude Code’s CLI. Each config is backed up before changing it.", "Disconnects Sidefolk’s hooks and companion tools, with backups. Requests stay in Claude Code’s own window."),
       toolRow(app, "codex_tools", "tools-codex", "Companion tools for Codex", "The same tools for Codex sessions.", "Runs `codex mcp add` to register Sidefolk's tools and keeps a backup of Codex's config.", "Codex can no longer reach you through a companion."),
-      integrations.claude_hooks ? toggle(app, "pet_answers_permissions", "Answer requests on the companion", "When no terminal or editor is in front, the companion asks for up to 60 seconds. Otherwise the tool asks in its own window as usual.") : null,
+      integrations.claude_hooks ? toggle(app, "pet_answers_permissions", "Answer requests on the companion", "When you are away from that exact session, your companion holds the request. Returning to the session releases it there. If time runs out, Claude Code asks in its own window.") : null,
     ),
   );
 
@@ -259,10 +295,10 @@ function settingsContents(app: App) {
       "Shortcut and startup",
       "settings",
       "startup",
-      row("Summon shortcut", "Hides the companion, or calls it to your cursor.", shortcut),
+      row("Summon shortcut", "Calls the companion to your cursor and focuses Quick add.", shortcut),
       row("Start at login", "Opens Sidefolk when you log in.", button(integrations.start_at_login ? "Turn off" : "Turn on", () => void invoke("tray_action", { action: "login" }).then(() => app.refresh()))),
       toggle(app, "hide_from_dock", "Hide from Dock", "Sidefolk leaves the Dock and ⌘Tab; open this window from the menu bar icon instead."),
-      toggle(app, "your_week", "Your week", "On Friday from 4 PM, your companion shows what you logged this week, ready to copy."),
+
     ),
   );
 
@@ -272,6 +308,7 @@ function settingsContents(app: App) {
       "Labs",
       "settings",
       "labs",
+      toggle(app, "your_week", "Your week", "On Friday from 4 PM, your companion shows what you logged this week, ready to copy."),
       toggle(app, "labs_commands", "Commands", "Type “$ npm test in api” to Pip: you see the exact command and folder first, then it opens in your terminal. Plain sentences never run as commands."),
       toggle(app, "labs_sessions", "Start sessions", "Start Claude Code or Codex in a folder from Pip or the Sessions page."),
     ),
@@ -293,7 +330,7 @@ function settingsContents(app: App) {
         button("Copy report", () =>
           void invoke<string>("problem_report")
             .then((report) => navigator.clipboard.writeText(report))
-            .then(() => app.toast("Report copied. Add what happened at the top, then send it."), (error) => app.toast(String(error), undefined, true)),
+            .then(() => app.toast("Report copied. Add what happened at the top, then send it."), (error) => app.toast(problem(error), undefined, true)),
         ),
       ),
       h(
@@ -324,15 +361,12 @@ function settingsContents(app: App) {
 
 type Category = { id: string; title: string; glyph: IconName; groups: string[]; words: string };
 const CATEGORIES: Category[] = [
-  { id: "general", title: "General", glyph: "settings", groups: ["startup", "labs"], words: "login startup dock shortcut keyboard labs commands start sessions" },
-  { id: "appearance", title: "Appearance", glyph: "idle", groups: ["appearance"], words: "theme dark light system colors" },
-  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop"], words: "pet pip spark robot bunny character look name rename size hide show" },
-  { id: "sound", title: "Notifications & sound", glyph: "reminders", groups: ["sound"], words: "notifications permission reminder volume mute quiet" },
-  { id: "tools", title: "AI tools", glyph: "terminal", groups: ["tools", "terminal"], words: "claude codex connections terminal automation session" },
-  { id: "privacy", title: "Privacy", glyph: "info", groups: ["privacy"], words: "screen recording capture sharing local" },
-  { id: "accessibility", title: "Accessibility", glyph: "crew", groups: ["accessibility"], words: "motion reduced calm text large sleep idle" },
-  { id: "help", title: "About & data", glyph: "info", groups: ["help"], words: "version help logs report export notebook data folder setup" },
+  { id: "general", title: "General", glyph: "settings", groups: ["startup", "appearance", "accessibility", "sound", "labs"], words: "login startup dock shortcut keyboard theme dark light motion text sound notifications labs commands" },
+  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop", "sleep"], words: "pet pip spark robot bunny character name rename size position sleep hide show" },
+  { id: "agents", title: "Agents", glyph: "terminal", groups: ["tools", "terminal"], words: "claude codex connections terminal automation session hooks health repair" },
+  { id: "privacy", title: "Privacy & data", glyph: "info", groups: ["privacy", "help"], words: "screen recording capture sharing local version help logs report export notebook data folder setup uninstall" },
 ];
+const ALIASES: Record<string, string> = { appearance: "general", sound: "general", accessibility: "general", tools: "agents", help: "privacy" };
 let category = "general";
 try { category = localStorage.getItem("sidefolk-settings-category") ?? category; } catch { /* Optional convenience. */ }
 let query = "";
@@ -372,9 +406,9 @@ function appearance(app: App) {
 export function renderSettings(app: App, arg: string) {
   const all = settingsContents(app);
   const groups = new Map([...all.querySelectorAll<HTMLElement>("section[id]")].map((node) => [node.id, node]));
-  const wanted = CATEGORIES.find((c) => c.id === arg || c.groups.includes(arg));
+  const wanted = CATEGORIES.find((c) => c.id === (ALIASES[arg] ?? arg) || c.groups.includes(arg));
   if (wanted) category = wanted.id;
-  const selected = CATEGORIES.find((c) => c.id === category) ?? CATEGORIES[0];
+  const selected = CATEGORIES.find((c) => c.id === (ALIASES[category] ?? category)) ?? CATEGORIES[0];
   category = selected.id;
   try { localStorage.setItem("sidefolk-settings-category", category); } catch { /* Optional convenience. */ }
   const content = h("section", { class: "settings-content" });
@@ -387,7 +421,7 @@ export function renderSettings(app: App, arg: string) {
   for (const c of CATEGORIES) links.append(button([icon(c.glyph), c.title], () => selectCategory(c), "", { "aria-current": c.id === category ? "page" : undefined }));
   const sidebar = h("aside", { class: "settings-sidebar" }, h("div", { class: "drag", "data-tauri-drag-region": true }),
     h("div", { class: "brand" }, mark(30), h("span", { class: "wordmark", text: "sidefolk" })), h("h2", { text: "Settings" }), search, mobile, links,
-    button([icon("back"), "Back to Sidefolk"], () => { query = ""; app.go("today"); }, "back settings-back"));
+    inTauri ? null : button("Close Settings", () => { query = ""; app.go("today"); }, "back settings-back"));
   const draw = () => {
     content.replaceChildren(...header(query.trim() ? "Search settings" : selected.title, query.trim() ? undefined : "Everything here can change later."));
     if (query.trim()) {
@@ -395,7 +429,7 @@ export function renderSettings(app: App, arg: string) {
       const results = h("div", { class: "settings-results" });
       for (const c of CATEGORIES) {
         const rows = c.groups.flatMap((id) => [...(groups.get(id)?.querySelectorAll<HTMLElement>(".setting") ?? [])]);
-        const matches = rows.filter((row) => words.every((w) => `${c.title} ${c.words} ${row.textContent}`.toLowerCase().includes(w)));
+        const matches = rows.filter((row) => words.every((w) => `${c.title} ${row.textContent}`.toLowerCase().includes(w)));
         const broad = words.every((w) => `${c.title} ${c.words}`.toLowerCase().includes(w));
         if (!matches.length && !broad) continue;
         const hits = matches.length ? matches : [null];
@@ -422,10 +456,10 @@ export function renderSettings(app: App, arg: string) {
         event.preventDefault();
         if (rename.value.trim()) { app.toast(await app.tell(`rename to ${rename.value.trim()}`)); await app.refresh(); }
       } }, h("div", { class: "field" }, h("label", { for: rename.id, text: "Companion name" }), rename), h("div", { class: "actions" }, h("button", { type: "submit", text: "Save name" }))),
-      h("div", { class: "actions" }, button("Show companion", () => void invoke("tray_action", { action: "show" }).catch((e) => app.toast(String(e), undefined, true))), button("Hide companion", () => void app.tell("hide"))));
+      h("div", { class: "actions" }, button("Show companion", () => void invoke("tray_action", { action: "show" }).catch((e) => app.toast(problem(e), undefined, true))), button("Hide companion", () => void app.tell("hide")), button("Move to cursor", () => void invoke("tray_action", { action: "call" }).catch((e) => app.toast(problem(e), undefined, true)))));
     }
-    if (category === "tools") content.append(h("div", { class: "actions" }, button("Sessions", () => app.go("sessions"))));
-    if (category === "help") content.append(h("div", { class: "actions" }, button("Notebooks & export", () => app.go("notes"))));
+    if (category === "agents") content.append(h("div", { class: "actions" }, button("Sessions", () => app.go("sessions"))));
+    if (category === "privacy") content.append(h("div", { class: "actions" }, button("Notebooks & export", () => app.go("notes"))));
   };
   search.addEventListener("input", () => { query = search.value; draw(); });
   draw();

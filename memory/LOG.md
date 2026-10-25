@@ -744,3 +744,53 @@ Verified: 70 vitest tests, 23 Rust tests, `npm run check:webkit`, contact sheets
 character and style rendered in WebKit and reviewed against the boards, release build.
 Hand checks to add: Crew → a companion → try a few characters and all three art styles; check
 they read on light and dark wallpapers at the real desktop size.
+
+
+## P4 Claude Code trust (25 October, Claude Code): built, verified, reviewed by Codex
+
+- **Sidecar over a Unix socket** (`socket.rs`, DECISIONS #45):
+  - Claude Code runs `test -x '<exe>' && exec '<exe>' hook || exit 0 # sidefolk-hook`.
+  - `sidefolk hook` forwards stdin to `<data>/hook.sock` (folder 0700, socket 0600,
+    same-uid peer). It prints only a well-formed permission answer, else nothing, and always
+    exits 0 (about 10 ms with no app).
+  - MCP calls go over the socket with the token. HTTP on 47821 is kept for legacy hooks and
+    `/dev/*`.
+- **Setup** (`claude_setup.rs`): installs command hooks and knows Missing, Current and
+  NeedsRepair (legacy HTTP or a moved app). Repair is in Settings, and setup refuses a
+  translocated app.
+- **Uninstall** (`uninstall.rs`): window (About & data), menu bar, `sidefolk uninstall
+  [--delete-data]`. It removes only our hooks and MCP entries (with backups) and the login
+  item; data goes to the Bin only when asked.
+- **Routing:**
+  - Requests are held on Pip unless that session is focused (`Hosts::focused`, the host
+    matrix in V1 §7.2).
+  - While held, a 500 ms watch releases the request when the user goes there. Pip says "Moved
+    to your terminal".
+  - Open releases too.
+- **Identity:** clicking Pip lists up to 4 live sessions (folder, first prompt line, state)
+  above the field. The window's session rows say where each runs ("in Ghostty").
+- **Health:** Settings → AI tools shows one state (Connected / Working / Needs repair / Can't
+  listen) with Repair.
+- **Spikes:** docs/SPIKES-P4.md. Ghostty has no tty in its dictionary, so the fallback stays;
+  WezTerm isn't installed here. **Codex 0.160 has stable documented hooks, including
+  `PermissionRequest`**: F-14 can use the sidecar in P6 (founder decision needed on V1-D2).
+- **Codex review:** 11 findings. Fixed with tests:
+  - exact answer schema;
+  - `CLAUDE_CONFIG_DIR`;
+  - osascript 2 s deadline with a shared 400 ms cache;
+  - one hook deadline with a 64 KB reply cap;
+  - only a stale socket is ever replaced, never through a link;
+  - 32 connections;
+  - uninstall keeps data on any failure and moves it only as the app quits; the CLI refuses
+    while the app runs;
+  - pid reuse, wrapper shells, SessionEnd forgets;
+  - per-event install check;
+  - the ignored test canonicalizes.
+
+  Accepted (DECISIONS #45): same-user trust, and an older binary at the hook path.
+- **Verified:** typecheck, 88 Vitest, 64 Rust, clippy (only the 6 older warnings), release
+  build 5.11 MiB (hook mode with no app: silent, exit 0, 10 ms),
+  WebKit (health pill, "Can't listen", uninstall sheet keeps data by default, Pip's session
+  list).
+  - **Not hand-checked:** a real Claude Code session going through the sidecar, release on
+    focus, and Repair after moving the app (G2-agent).

@@ -1,3 +1,4 @@
+import { STATES, stateOf } from "./states";
 import { Agents } from "./agents";
 import { Bubble } from "./bubble";
 import { area, toScreen } from "./frame";
@@ -102,6 +103,9 @@ export class Familiar {
     const { mind, view } = this;
     mind.update(dt);
     view.still = mind.calm;
+    view.activeAgent = mind.directive !== null;
+    const state = this.asks.size ? "alert" : mind.directive ? stateOf(mind.directive.clip === "alert" ? "waiting" : mind.directive.clip) : view.clip === "sleep" ? "sleep" : "idle";
+    view.el.setAttribute("aria-label", `${this.name}: ${STATES[state].word}`);
     const eyeY = mind.y + this.height * 0.62;
     view.update(dt, mind.target ? { x: mind.target.x - mind.x, y: eyeY - mind.target.y } : null);
     const left = mind.x - (VIEW_W * this.unit) / 2;

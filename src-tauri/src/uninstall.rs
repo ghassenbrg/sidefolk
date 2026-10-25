@@ -109,7 +109,7 @@ pub fn run_cli(args: &[String]) -> i32 {
     let data_dir = crate::mcp::shim_data_dir();
     // A running Sidefolk would write its data and hooks back; it uninstalls itself from its window.
     if std::os::unix::net::UnixStream::connect(crate::socket::path(&data_dir)).is_ok() {
-        eprintln!("Sidefolk is running. Use Settings → About & data → Disconnect & uninstall, or quit Sidefolk and run this again.");
+        eprintln!("Sidefolk is running. Use Settings → Privacy & data → Disconnect & uninstall, or quit Sidefolk and run this again.");
         return 1;
     }
     let outcome = run(&Places::of_this_mac(data_dir, crate::claude_setup::default_target()), delete);

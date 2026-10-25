@@ -2,6 +2,9 @@ import { applyTheme } from "../theme";
 import { icon, mark, type IconName } from "../icons";
 import { invoke, inTauri, listen, type Ask, type CrewFile, type Integrations, type Reminder, type Settings, type Status, type Waiting } from "./api";
 import { button, h } from "./dom";
+import { Feedback } from "./feedback";
+import { dataState } from "./kit";
+import { problem } from "../voice";
 import { renderHome } from "./home";
 import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
@@ -37,7 +40,7 @@ export type App = {
   /** Redraws the current view with the latest state (skipped while a field is being edited). */
   redraw(force?: boolean): void;
   refresh(): Promise<void>;
-  toast(text: string, action?: { label: string; run: () => void }, error?: boolean): void;
+  toast(text: string, action?: { label: string; run: () => void | Promise<void> }, error?: boolean): void;
   /** Saves settings; true once they are on disk. */
   save(change: Partial<Settings>, done?: string): Promise<boolean>;
   petAction(action: Record<string, unknown>, done?: string): Promise<boolean>;
@@ -56,9 +59,9 @@ export type App = {
 
 const NAV: [string, string, IconName][] = [
   ["today", "Today", "home"],
+  ["sessions", "Sessions", "terminal"],
   ["reminders", "Reminders", "reminders"],
   ["notes", "Work log", "notes"],
-  ["sessions", "Sessions", "terminal"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
@@ -68,6 +71,8 @@ const main = document.querySelector<HTMLElement>("main")!;
 const topbar = document.querySelector<HTMLElement>("#topbar")!;
 const nav = document.querySelector<HTMLElement>("nav")!;
 const toastBox = document.querySelector<HTMLElement>("#toast")!;
+const feedback = new Feedback(toastBox);
+const preferences = new URLSearchParams(location.search).get("window") === "preferences";
 
 let current = { view: "home", arg: "" };
 let cleanups: (() => void)[] = [];
@@ -87,7 +92,15 @@ const app: App = {
   },
   hold: false,
   go(view, arg = "") {
-    if (view === "settings") prepareSettings();
+    if (inTauri && view === "settings" && !preferences) {
+      void invoke("open_preferences", { category: arg || "general" }).catch((error) => app.toast(problem(error), undefined, true));
+      return;
+    }
+    if (inTauri && preferences && view !== "settings") {
+      void invoke("open_tab", { tab: `${view}${arg ? `:${arg}` : ""}` }).catch((error) => app.toast(problem(error), undefined, true));
+      return;
+    }
+    if (view === "settings" && current.view !== "settings") prepareSettings();
     leave();
     current = { view, arg };
     draw(true);
@@ -121,11 +134,14 @@ const app: App = {
     updateNav();
   },
   toast(text, action, error = false) {
-    toastBox.replaceChildren(h("span", { text }));
-    if (action) toastBox.append(button(action.label, () => (toastBox.replaceChildren(), action.run())));
-    toastBox.classList.toggle("error", error);
-    clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => toastBox.replaceChildren(), action ? 9000 : 4500);
+    const dialog = document.querySelector("dialog[open]");
+    if (error && dialog && !action) {
+      let notice = dialog.querySelector<HTMLElement>(".sheet-error");
+      if (!notice) { notice = h("p", { class: "field-error sheet-error", role: "alert" }); dialog.append(notice); }
+      notice.textContent = problem(text);
+      return;
+    }
+    feedback.show(text, action, error);
   },
   async save(change, done = "Saved.") {
     try {
@@ -136,7 +152,7 @@ const app: App = {
       app.toast(done);
       return true;
     } catch (error) {
-      app.toast(`Not saved: ${error}`, undefined, true);
+      app.toast(problem(error), undefined, true);
       return false;
     } finally {
       app.redraw(true);
@@ -148,7 +164,7 @@ const app: App = {
       if (done) app.toast(done);
       return true;
     } catch (error) {
-      app.toast(String(error), undefined, true);
+      app.toast(problem(error), undefined, true);
       return false;
     }
   },
@@ -192,7 +208,7 @@ const app: App = {
       invoke("pet_action", { action: { action: "run", id, text } }).catch((error) => {
         clearTimeout(timer);
         waiters.delete(id);
-        resolve(String(error));
+        resolve(problem(error));
       });
     });
   },
@@ -201,7 +217,7 @@ const app: App = {
       const opened = await invoke<{ message: string }>("open_session", { ...ref, resume });
       app.toast(opened.message);
     } catch (error) {
-      app.toast(String(error), undefined, true);
+      app.toast(problem(error), undefined, true);
     }
   },
   onLeave(cleanup) {
@@ -233,7 +249,7 @@ function waitingOf(a: Ask): Waiting {
 function merged(): Status {
   return { pets: companionStatus.pets, waiting: [...app.state.requests.map(waitingOf), ...companionStatus.waiting.filter((w) => w.meta.kind !== "permission")] };
 }
-let toastTimer = 0;
+
 
 function leave() {
   for (const cleanup of cleanups) cleanup();
@@ -277,9 +293,10 @@ function draw(focus: boolean) {
   } else main.scrollTop = scroll;
   if (!focus && activeId) {
     const next = document.getElementById(activeId);
-    next?.focus({ preventScroll: true });
+    (next ?? main.querySelector<HTMLElement>("h1"))?.focus({ preventScroll: true });
     if (selection && next instanceof HTMLInputElement) next.setSelectionRange(selection[0], selection[1]);
   }
+  if (!focus && document.activeElement === document.body) main.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
 }
 
 function updateNav() {
@@ -302,15 +319,15 @@ function updateNav() {
 function buildNav() {
   const brand = h("div", { class: "brand" }, mark(30), h("span", { class: "wordmark", text: "sidefolk" }));
   const list = h("div", { class: "nav-list nav-everyday" });
-  const ai = h("div", { class: "nav-list nav-ai" }, h("span", { class: "nav-label", text: "AI tools" }));
   const utility = h("div", { class: "nav-list nav-utility" });
   for (const [view, label, glyph] of NAV) {
     const b = button([icon(glyph), h("span", { text: label })], () => app.go(view), "", { "data-view": view });
     if (view === "today") b.append(h("span", { class: "count", hidden: true }));
-    (view === "sessions" ? ai : view === "settings" ? utility : list).append(b);
+    (view === "settings" ? utility : list).append(b);
+    if (view === "sessions") b.classList.add("nav-ai");
   }
   const pet = h("img", { class: "nav-pip", src: picture(app.state.crew.main.look), alt: "", width: 84, height: 76 });
-  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, ai, utility, pet);
+  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, utility, pet);
 }
 
 /** "review:<id>", "requests", … from the companion, the tray or the URL. */
@@ -327,13 +344,15 @@ if (inTauri && !import.meta.env.DEV) {
 }
 
 buildNav();
-await app.refresh().catch((error) => app.toast(String(error), undefined, true));
+let startupError: unknown;
+try { await app.refresh(); } catch (error) { startupError = error; }
 void invoke<{ version: string; data_dir: string }>("app_info").then((info) => {
   app.state.version = info.version;
   app.state.dataDir = info.data_dir;
 });
 const params = new URLSearchParams(location.search);
-route(params.get("tab") ?? "today");
+route(params.get("tab") ?? (preferences ? "settings:general" : "today"));
+if (startupError) main.replaceChildren(dataState("I couldn't load your day.", problem(startupError), () => location.reload()));
 
 listen<string>("navigate", route);
 listen<Status>("status", (status) => {
@@ -349,7 +368,7 @@ listen<Ask[]>("requests", (requests) => {
   updateNav();
 });
 listen<{ id: string; ok: boolean; text?: string }>("answered", ({ id, ok, text }) => waiters.get(id)?.(ok, text));
-listen("reminders-changed", () => void app.refresh());
+listen("reminders-changed", () => void app.refresh().catch((error) => app.toast(problem(error), undefined, true)));
 listen<Settings>("settings-changed", (settings) => {
   app.state.settings = settings;
   applyTheme(settings.theme);
@@ -359,12 +378,30 @@ listen<Settings>("settings-changed", (settings) => {
 });
 // Confirmations happen in dialogs and the companion changes on the desktop: each says so with an
 // event, and coming back to the window reads everything again. No polling (docs/V1.md §11).
-addEventListener("focus", () => void app.refresh());
-listen("integrations-changed", () => void app.refresh());
+addEventListener("focus", () => void app.refresh().catch((error) => app.toast(problem(error), undefined, true)));
+listen("integrations-changed", () => void app.refresh().catch((error) => app.toast(problem(error), undefined, true)));
+
+// macOS menu commands need an explicit bridge: native field Undo otherwise consumes CmdZ
+// even when a list, rather than an editor, has focus.
+listen("undo", () => {
+  const editing = document.activeElement?.closest("input, textarea, [contenteditable=true]");
+  if (editing) document.execCommand("undo");
+  else void feedback.latest();
+});
 
 // The same shortcut as the native menu also works in the browser preview.
 addEventListener("keydown", (event) => {
-  if ((event.metaKey || event.ctrlKey) && event.key === ",") {
+  const command = event.metaKey || event.ctrlKey;
+  const editing = (event.target as HTMLElement | null)?.closest("input, textarea, [contenteditable=true]");
+  if (command && event.key.toLowerCase() === "z" && !event.shiftKey && !editing) {
+    event.preventDefault();
+    void feedback.latest();
+  }
+  if (command && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    document.querySelector<HTMLInputElement>(".tell-input")?.focus();
+  }
+  if (command && event.key === ",") {
     event.preventDefault();
     app.go("settings");
   }

@@ -12,7 +12,8 @@
     "measure": "scripts/measure.sh",
     "test": "vitest run",
     "check:webkit": "node scripts/webkit-check.mjs",
-    "sprites": "python3 scripts/make_sprites.py"
+    "sprites": "python3 scripts/make_sprites.py",
+    "check:webkit:p5": "node scripts/webkit-p5-check.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",

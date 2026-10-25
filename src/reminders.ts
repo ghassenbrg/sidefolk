@@ -1,3 +1,4 @@
+import { problem } from "./voice";
 import { folder } from "./agents";
 import type { Companion } from "./companion";
 import { describeDue, describeRepeat, parseReminder, type Repeat } from "./when";
@@ -41,6 +42,7 @@ const MINUTE = 60_000;
  * otherwise). Ones that came due while Sidefolk was not running are delivered at start.
  */
 export class Reminders {
+  snoozeMinutes = 10;
   private list: Reminder[] = [];
   private showing = new Set<string>();
   /** Late reminders gathered into one "While you were away" card; they stay overdue in the window. */
@@ -101,7 +103,7 @@ export class Reminders {
     const when = (d: Date) => d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
     const save = (at: Date) => {
       if (at.getTime() <= Date.now()) { bubble.say("That time has passed. Choose a later one.", 5); return this.form(original); }
-      void this.add(what, at, repeat).catch((e) => bubble.say(`Not saved: ${e}`, 6, "fail"));
+      void this.add(what, at, repeat).catch((e) => bubble.say(problem(e), 6, "fail"));
     };
     bubble.show({
       id: "reminder-preview", who: `${this.companion.name} · new reminder`, title: what,
@@ -127,7 +129,7 @@ export class Reminders {
     return reply;
   }
 
-  /** The saved reminder, with Undo for a few seconds (a misheard time is fixed in one click). */
+  /** The saved reminder, with Undo until dismissed (a misheard time is fixed in one click). */
   private confirm(reminder: Reminder, reply: string) {
     const bubble = this.companion.pet.bubble;
     const id = `reminder-added-${reminder.id}`;
@@ -146,10 +148,9 @@ export class Reminders {
           await this.store.remove(reminder.id);
           this.list = this.list.filter((r) => r.id !== reminder.id);
           bubble.say("Removed.", 3);
-        } catch (error) { bubble.say(`Couldn’t undo: ${error}`, 6, "fail"); }
+        } catch (error) { bubble.say(problem(error), 6, "fail"); }
       },
     });
-    setTimeout(() => bubble.close(id), 8_000);
   }
 
   /** "New reminder…": one field that takes the time too, or asks for it next. */
@@ -256,8 +257,8 @@ export class Reminders {
       lines: [missed ? `Was due ${due}` : `Due ${due}`].concat(r.project ? [folder(r.project)] : []),
       meta: { kind: "reminder", text: r.text, due: String(r.due), project: r.project },
       choices: [
-        { label: "In 10 min", value: "10" },
-        { label: "In 1 hour", value: "60" },
+        { label: `In ${this.snoozeMinutes} min`, value: String(this.snoozeMinutes) },
+        ...(this.snoozeMinutes === 60 ? [] : [{ label: "In 1 hour", value: "60" }]),
         ...(new Date().getHours() < 17 ? [{ label: "This evening", value: "evening" }] : []),
         { label: "Tomorrow 9:00", value: "tomorrow" },
         ...(r.repeat ? [{ label: "Skip this one", value: "skip", quiet: true }] : []),
@@ -269,7 +270,7 @@ export class Reminders {
         if (value === "open") { this.unpeek(r); this.manage?.(r.id); return; }
         if (value === "write") this.writeNote?.(r.text);
         if (value === "write") value = "done";
-        void this.answer(r, value).catch((e) => { pet.bubble.say(`Not saved: ${e}`, 6, "fail"); this.show(r, missed); });
+        void this.answer(r, value).catch((e) => { pet.bubble.say(problem(e), 6, "fail"); this.show(r, missed); });
       },
       // Closed without an answer: it stays in the window's Requests; a hidden companion hides again.
       onClose: () => this.unpeek(r),

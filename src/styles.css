@@ -414,3 +414,24 @@ body.large-text .bubble button {
   flex: none;
   color: var(--muted);
 }
+
+/* The card points to its companion; hit testing remains on the card itself. */
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  left: var(--tail-x, 50%);
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-right: 1px solid var(--control-border);
+  border-bottom: 1px solid var(--control-border);
+  transform: translateX(-50%) rotate(45deg);
+}
+.pip-light[hidden] { display: none; }
+
+/* A restrained warm rim keeps the charcoal ear tips visible on dark wallpapers. */
+:root[data-theme=dark] .pip-body img { filter: drop-shadow(0 0 1px var(--palette-light-canvas)); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) .pip-body img { filter: drop-shadow(0 0 1px var(--palette-light-canvas)); }
+}

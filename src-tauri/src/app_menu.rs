@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use tauri::{
-    AppHandle, Manager,
+    AppHandle, Emitter, Manager,
     menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu},
 };
 
@@ -49,7 +49,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         "Edit",
         true,
         &[
-            &PredefinedMenuItem::undo(app, None)?,
+            &item("undo", "Undo", Some("CmdOrCtrl+Z"))?,
             &PredefinedMenuItem::redo(app, None)?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::cut(app, None)?,
@@ -91,6 +91,10 @@ pub fn handle(app: &AppHandle, id: &str) {
     let Some(id) = id.strip_prefix("app:") else { return };
     let result = if let Some(tab) = id.strip_prefix("go:") {
         crate::prefs::open_at(app, tab)
+    } else if id == "undo" {
+        if let Some(window) = app.webview_windows().values().find(|window| window.is_focused().unwrap_or(false)) {
+            window.emit("undo", ())
+        } else { Ok(()) }
     } else if id == "companion" {
         crate::tray::show_companion(app)
     } else {

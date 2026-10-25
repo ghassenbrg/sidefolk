@@ -11,6 +11,7 @@ export type ClipName =
   | "sit"
   | "sleep"
   | "wave"
+  | "puzzled"
   | "think"
   | "read"
   | "work"
@@ -32,6 +33,9 @@ const CLIP_FRAMES: Record<ClipName, Frame[]> = {
   sit: ["sit"],
   sleep: ["sleep"],
   wave: ["wave"],
+  // The approved listen frame already has the folded ear; a separate clip gives it a clear
+  // puzzled meaning without changing Pip’s frozen artwork.
+  puzzled: ["listen"],
   think: ["think"],
   read: ["work1", "work2"],
   work: ["work1", "work2"],
@@ -51,6 +55,7 @@ const CLIP_LIGHT: Record<ClipName, Light> = {
   sit: "idle",
   sleep: "sleep",
   wave: "idle",
+  puzzled: "idle",
   think: "think",
   read: "work",
   work: "work",
@@ -104,8 +109,10 @@ export class PipView {
   private hop = 0;
   private sway = 0;
   private lightColor = "";
+  private fade: { from: Frame; outgoing: Animation; incoming: Animation } | null = null;
   /** Reduce motion: no breathing, swaying, hops or pulses. */
   still = false;
+  activeAgent = false;
 
   /**
    * `folder` holds the frames in public/ (roster.ts); `hue` turns the mint accent to a worker's
@@ -192,10 +199,32 @@ export class PipView {
     }
     this.blinking = Math.max(0, this.blinking - dt);
     if (frame === "idle" && this.blinking > 0) frame = "blink";
+    if (this.still && this.fade) {
+      this.fade.outgoing.cancel();
+      this.fade.incoming.cancel();
+      this.images.get(this.fade.from)!.hidden = true;
+      this.fade = null;
+    }
     if (frame !== this.shown) {
-      this.images.get(this.shown)!.hidden = true;
-      this.images.get(frame)!.hidden = false;
+      this.fade?.outgoing.cancel();
+      this.fade?.incoming.cancel();
+      const previous = this.shown;
+      const before = this.images.get(previous)!;
+      const next = this.images.get(frame)!;
+      for (const [name, image] of this.images) image.hidden = name !== frame && name !== previous;
       this.shown = frame;
+      // Blinks stay crisp; only real pose changes fade. Reduced motion changes immediately.
+      if (this.still || previous === "blink" || frame === "blink") {
+        before.hidden = true;
+        this.fade = null;
+      } else {
+        const duration = Number.parseFloat(getComputedStyle(this.el).getPropertyValue("--motion-control")) || 0;
+        const outgoing = before.animate([{ opacity: 1 }, { opacity: 0 }], { duration });
+        const incoming = next.animate([{ opacity: 0 }, { opacity: 1 }], { duration });
+        void incoming.finished.catch(() => {});
+        this.fade = { from: previous, outgoing, incoming };
+        void outgoing.finished.then(() => { if (this.shown !== previous) before.hidden = true; }).catch(() => {});
+      }
     }
 
     const still = this.still;
@@ -204,7 +233,7 @@ export class PipView {
     const hopping = (this.current === "celebrate" || this.current === "wave") && !still && this.clipTime < 1.1;
     this.hop = hopping ? Math.abs(Math.sin(this.clipTime * Math.PI * 1.8)) * 10 * (1 - this.clipTime / 1.1) : spring(this.hop, 0, 12, dt);
     const lean = gaze && !still ? Math.max(-1, Math.min(1, gaze.x / 400)) * 2 : 0;
-    const swayTarget = still ? 0 : this.current === "listen" ? 3 + lean : this.current === "think" ? -2.5 : this.current === "wave" ? Math.sin(this.clipTime * 6) * 2 : lean;
+    const swayTarget = still ? 0 : this.current === "listen" ? 3 + lean : this.current === "puzzled" ? 5 : this.current === "think" ? -2.5 : this.current === "wave" ? Math.sin(this.clipTime * 6) * 2 : lean;
     this.sway = spring(this.sway, swayTarget, 5, dt);
     const breath = still || this.current === "dangle" ? 0 : Math.sin(this.time * 2.2) * 0.012;
     const sy = 1 - this.squashAmount + breath;
@@ -212,6 +241,7 @@ export class PipView {
     this.body.style.transform = `translateY(${(-this.hop).toFixed(2)}%) rotate(${this.sway.toFixed(2)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
 
     // The status light: exact color, a gentle bob, a pulse only when it needs you.
+    this.light.hidden = !this.activeAgent && ["idle", "sit", "listen", "puzzled", "think", "wave"].includes(this.current);
     const light = CLIP_LIGHT[this.current];
     const color = LIGHT[light];
     if (color !== this.lightColor) {

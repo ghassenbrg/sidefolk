@@ -1,3 +1,4 @@
+import { problem } from "../voice";
 import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { badge } from "../states";
@@ -29,7 +30,7 @@ export function renderSessions(app: App) {
             h(
               "div",
               { class: "row line" },
-              h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(o.source)} · ${folder(o.project || o.cwd || "")}` }), h("span", { class: "meta", text: `${o.kind === "done" ? "Finished" : "Stopped with a problem"} ${ago(o.at)}${o.detail ? ` · ${o.detail}` : ""}` })),
+              h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(o.source)} · ${folder(o.project || o.cwd || "")}` }), h("span", { class: "meta", text: `${o.kind === "done" ? "Finished" : "Stopped with a problem"} ${ago(o.at)}${o.kind === "done" && o.detail ? ` · ${o.detail}` : ""}` })),
               h("div", { class: "inline" }, badge(o.kind === "done" ? "done" : "failed"), button([icon("terminal"), "Continue"], () => void app.openSession({ source: o.source, session: o.session!, cwd: o.cwd || o.project }, true), "small")),
             ),
           )
@@ -84,7 +85,7 @@ function newSession(app: App, close: () => void) {
       close();
       app.toast(done);
     } catch (reason) {
-      error.textContent = String(reason);
+      error.textContent = problem(reason);
       submit.disabled = false;
     }
   });

@@ -1,3 +1,4 @@
+import { problem } from "../voice";
 import { sheet } from "./dialog";
 import { explain, HELP, parse, type Command } from "../commands";
 import { icon } from "../icons";
@@ -66,7 +67,7 @@ async function finish(app: App, command: Command, text: string) {
         const book = await invoke<Notebook>("create_notebook", { name: command.name });
         return app.go("notes", book.id);
       } catch (error) {
-        return app.toast(String(error), undefined, true);
+        return app.toast(problem(error), undefined, true);
       }
     case "notes":
       return app.go("notes");
@@ -84,7 +85,7 @@ async function finish(app: App, command: Command, text: string) {
     case "open-thing":
       return invoke<string>("open_target", { target: command.target, app: command.app }).then(
         (done) => app.toast(done),
-        (error) => app.toast(String(error), undefined, true),
+        (error) => app.toast(problem(error), undefined, true),
       );
     case "chat":
       return app.toast(command.reply);
@@ -114,7 +115,7 @@ async function remind(app: App, text: string) {
         run: () => void invoke("remove_reminder", { id: added.id }).then(() => app.refresh()),
       });
     } catch (error) {
-      app.toast(`Not saved: ${error}`, undefined, true);
+      app.toast(problem(error), undefined, true);
     }
   };
   const alternative = parsed.alternative;
@@ -146,7 +147,7 @@ async function note(app: App, wanted: string | null, text: string) {
       const [book, entry] = await invoke<[Notebook, NoteEntry]>("add_note", { notebook, text, date: today(), project: null, create });
       app.toast(`Noted in ${book.name}.`, { label: "Undo", run: () => void invoke("remove_note", { id: book.id, entry }) });
     } catch (error) {
-      app.toast(String(error), undefined, true);
+      app.toast(problem(error), undefined, true);
     }
   };
   if (!wanted) return write(LOG, true);
@@ -206,7 +207,7 @@ async function confirmRun(app: App, command: string, wanted: string | null) {
     const folder = await invoke<{ path: string; label: string }>("resolve_folder", { folder: sessionFolder(app, wanted) ?? wanted });
     review(app, "Run in your terminal?", command, folder.path, "Run in terminal", () => invoke<string>("run_command", { command, cwd: folder.path }));
   } catch (error) {
-    app.toast(String(error), undefined, true);
+    app.toast(problem(error), undefined, true);
   }
 }
 
@@ -216,7 +217,7 @@ async function confirmStart(app: App, agent: "claude" | "codex", wanted: string 
     const name = agent === "codex" ? "Codex" : "Claude Code";
     review(app, `Start ${name}?`, `${name} · ${full ? (agent === "codex" ? "without approvals" : "auto mode") : "asks you first"}`, folder.path, `Start ${name}`, () => invoke<string>("start_session", { agent, cwd: folder.path, fullAccess: full }));
   } catch (error) {
-    app.toast(String(error), undefined, true);
+    app.toast(problem(error), undefined, true);
   }
 }
 

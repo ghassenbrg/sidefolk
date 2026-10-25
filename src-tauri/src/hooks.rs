@@ -96,7 +96,9 @@ pub fn on_event(app: &AppHandle, shared: &Shared, hook: &Value, peer: Peer) {
     } else {
         shared.hosts.locate_claude(app, &text(hook, "session_id"), peer);
     }
-    shared.heard.store(true, std::sync::atomic::Ordering::Relaxed);
+    if !shared.heard.swap(true, std::sync::atomic::Ordering::Relaxed) {
+        let _ = app.emit("integrations-changed", ());
+    }
     if let Some(event) = claude_event(hook) {
         bus::emit(app, event);
     }
@@ -105,7 +107,7 @@ pub fn on_event(app: &AppHandle, shared: &Shared, hook: &Value, peer: Peer) {
 fn claude_event(hook: &Value) -> Option<AgentEvent> {
     let (kind, detail) = match hook.get("hook_event_name")?.as_str()? {
         "SessionStart" => ("start", text(hook, "source")),
-        "UserPromptSubmit" => ("prompt", clip(&text(hook, "prompt"), 120)),
+        "UserPromptSubmit" => ("prompt", clip(text(hook, "prompt").lines().next().unwrap_or_default(), 500)),
         "PreToolUse" => tool_activity(&text(hook, "tool_name"), &hook["tool_input"]),
         "PostToolUse" | "PostToolUseFailure" => ("think", String::new()),
         "Notification" => {
@@ -246,7 +248,9 @@ async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): Connect
 /// Claude Code, or None: Claude asks in its own prompt.
 pub async fn on_permission(app: &AppHandle, shared: &Shared, hook: &Value, peer: Peer) -> Option<Value> {
     shared.hosts.locate_claude(app, &text(hook, "session_id"), peer);
-    shared.heard.store(true, std::sync::atomic::Ordering::Relaxed);
+    if !shared.heard.swap(true, std::sync::atomic::Ordering::Relaxed) {
+        let _ = app.emit("integrations-changed", ());
+    }
     let session = text(hook, "session_id");
     if !should_hold(app, shared, &session).await {
         if cfg!(debug_assertions) {
@@ -319,6 +323,8 @@ mod tests {
     fn hook_events_become_agent_events() {
         let event = claude_event(&json!({ "hook_event_name": "UserPromptSubmit", "session_id": "s", "prompt": "add rate limiting", "cwd": "/tmp" })).unwrap();
         assert_eq!((event.kind, event.detail.as_str()), ("prompt", "add rate limiting"));
+        let multiline = claude_event(&json!({ "hook_event_name":"UserPromptSubmit", "session_id":"s", "prompt":"Review this\nSECRET second line", "cwd":"/tmp" })).unwrap();
+        assert_eq!(crate::bus::journal_detail(multiline.kind, &multiline.detail), "Review this");
         assert!(claude_event(&json!({ "hook_event_name": "Unknown" })).is_none());
     }
 }

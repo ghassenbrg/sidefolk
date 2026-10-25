@@ -247,11 +247,37 @@ fn settings_in(home: &Path) -> PathBuf {
 
 fn show_error(app: &AppHandle, error: impl std::fmt::Display) {
     eprintln!("sidefolk: Claude setup: {error}");
+    let detail = error.to_string();
+    let message = if detail.starts_with("Move Sidefolk") {
+        "Move Sidefolk to Applications, then reopen it before connecting."
+    } else if detail.contains("changed while the dialog") {
+        "Claude’s settings changed; reopen the connection dialog and try again."
+    } else {
+        "I couldn’t finish; check the connection in Settings → Agents."
+    };
     app.dialog()
-        .message(error.to_string())
+        .message(message)
         .title("Claude Code connection")
         .kind(MessageDialogKind::Error)
         .show(|_| {});
+}
+
+fn wants_connect(current: Installed, tools_current: bool, pending_disconnect: bool) -> bool {
+    !pending_disconnect && (current != Installed::Current || !tools_current)
+}
+
+fn apply_connection(snapshot: Snapshot, dir: &Path, connect: bool, exe: &Path, tools: impl FnOnce() -> io::Result<()>) -> io::Result<PathBuf> {
+    let backup = write(snapshot, dir, connect, exe)?;
+    tools()?;
+    Ok(backup)
+}
+
+/// Persistence callbacks finish and release their lock before any external work begins.
+fn change_connection(snapshot: Snapshot, dir: &Path, connect: bool, exe: &Path, mut persist: impl FnMut(bool) -> io::Result<()>, tools: impl FnOnce() -> io::Result<()>) -> io::Result<PathBuf> {
+    persist(!connect)?;
+    let backup = apply_connection(snapshot, dir, connect, exe, tools)?;
+    persist(false)?;
+    Ok(backup)
 }
 
 pub fn confirm(app: &AppHandle) {
@@ -277,9 +303,13 @@ pub fn confirm(app: &AppHandle) {
     }
     // Hooks from an older version, or a Sidefolk that moved: connecting again repairs them.
     let current = state(&snapshot.value, &exe);
-    let connect = current != Installed::Current;
-    let verb = if current == Installed::NeedsRepair { "Repair" } else if connect { "Connect" } else { "Disconnect" };
-    let change = if current == Installed::NeedsRepair {
+    let tools = crate::mcp_setup::Agent::Claude;
+    let pending = app.state::<Arc<Shared>>().settings.lock().unwrap().value.claude_disconnect_pending;
+    let connect = wants_connect(current, tools.current(), pending);
+    let verb = if pending { "Finish disconnecting" } else if current == Installed::NeedsRepair || (current == Installed::Current && connect) { "Repair" } else if connect { "Connect" } else { "Disconnect" };
+    let change = if pending {
+        "The previous disconnect did not finish. Sidefolk will finish removing its hooks and companion tools. It will not reconnect them."
+    } else if current == Installed::NeedsRepair {
         "Sidefolk's hooks in Claude Code are from an older version, or Sidefolk has moved. Repairing replaces them with ones for this copy, so Claude Code keeps reaching you.\n\nYour other hooks and preferences stay as they are."
     } else if connect {
         "Companions will see Claude Code's work sessions and bring you its requests.\n\nSidefolk adds its own local hooks to Claude Code's settings. Your other hooks and preferences stay as they are."
@@ -294,9 +324,12 @@ pub fn confirm(app: &AppHandle) {
         .dir
         .clone();
     let message = format!(
-        "{change}\n\nSettings: {}\nApplies to new Claude Code sessions.\nAn exact backup is saved before writing in:\n{}",
+        "{change}\n\nThis also {tools_change} Sidefolk’s companion tools through `claude mcp {tools_command} --scope user`. A backup of {} is kept before each CLI change. If either step fails, Settings shows Needs repair; retry to finish.\n\nSettings: {}\nApplies to new Claude Code sessions.\nAn exact backup is saved before writing in:\n{}",
+        tools.config().display(),
         snapshot.path.display(),
-        dir.join("backups").display()
+        dir.join("backups").display(),
+        tools_change = if connect { "connects or repairs" } else { "disconnects" },
+        tools_command = if connect { "add" } else { "remove" },
     );
     let handle = app.clone();
     app.dialog()
@@ -316,7 +349,22 @@ pub fn confirm(app: &AppHandle) {
             }
             // File I/O does not hold the UI thread while the dialog closes.
             std::thread::spawn(move || {
-                let result = write(snapshot, &dir, connect, &exe);
+                // Persist the user's direction before touching either external config. A failure
+                // or an app restart can then offer the same operation instead of reversing it.
+                let result = change_connection(snapshot, &dir, connect, &exe, |pending| {
+                    let shared = handle.state::<Arc<Shared>>();
+                    let mut store = shared.settings.lock().unwrap();
+                    store.update(|s| s.claude_disconnect_pending = pending)
+                }, || {
+                    // A moved executable needs remove then add, each with its own backup.
+                    if tools.installed() && (!connect || !tools.current()) {
+                        crate::mcp_setup::run(tools, false, &dir.join("backups"))?;
+                    }
+                    if connect && !tools.current() {
+                        crate::mcp_setup::run(tools, true, &dir.join("backups"))?;
+                    }
+                    Ok(())
+                });
                 let app = handle.clone();
                 let _ = handle.run_on_main_thread(move || {
                     app.state::<SetupState>()
@@ -346,6 +394,58 @@ mod tests {
     }
     fn user_shape() -> Value {
         serde_json::from_str(r#"{"hooks":{"SessionStart":[{"matcher":"startup","hooks":[{"type":"command","command":"echo ready"}]}]},"enabledPlugins":{"example@market":true},"theme":"dark","permissions":{"allow":["Read"]}}"#).unwrap()
+    }
+    #[test]
+    fn persistence_and_hook_failures_do_not_run_external_work_or_reverse_intent() {
+        use std::{cell::Cell, sync::Mutex};
+        for failed_at in 0..3 {
+            let dir = std::env::temp_dir().join(format!("sidefolk-connect-fault-{}-{failed_at}", std::process::id()));
+            fs::create_dir_all(&dir).unwrap();
+            let config = dir.join("claude-settings.json");
+            fs::write(&config, serde_json::to_vec(&install(user_shape(), &exe())).unwrap()).unwrap();
+            let snapshot = read(&config).unwrap();
+            let store = Mutex::new(crate::settings::Store::load(dir.join("data"), &crate::store::Problems::default()));
+            let persisted = Cell::new(0);
+            let external = Cell::new(false);
+            if failed_at == 1 { fs::write(&config, b"{}").unwrap(); } // stale hook snapshot
+            let result = change_connection(snapshot, &dir, false, &exe(), |pending| {
+                let call = persisted.get(); persisted.set(call + 1);
+                if (failed_at == 0 && call == 0) || (failed_at == 2 && call == 1) { return Err(io::Error::other("injected settings write failure")); }
+                store.lock().unwrap().update(|s| s.claude_disconnect_pending = pending)
+            }, || {
+                assert!(store.try_lock().is_ok(), "settings lock must be released before external work");
+                external.set(true); Ok(())
+            });
+            assert!(result.is_err());
+            assert_eq!(external.get(), failed_at == 2);
+            let restarted = crate::settings::Store::load(dir.join("data"), &crate::store::Problems::default());
+            assert_eq!(restarted.value.claude_disconnect_pending, failed_at != 0);
+            if failed_at == 0 { assert_eq!(state(&read(&config).unwrap().value, &exe()), Installed::Current); }
+            if failed_at == 1 { assert_eq!(fs::read(&config).unwrap(), b"{}"); }
+            if failed_at == 2 { assert_eq!(read(&config).unwrap().value, user_shape()); assert!(!wants_connect(Installed::Missing, true, restarted.value.claude_disconnect_pending)); }
+            fs::remove_dir_all(dir).unwrap();
+        }
+    }
+    #[test]
+    fn a_failed_disconnect_keeps_its_direction_after_restart() {
+        let dir = std::env::temp_dir().join(format!("sidefolk-disconnect-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let config = dir.join("claude-settings.json");
+        let mut store = crate::settings::Store::load(dir.join("data"), &crate::store::Problems::default());
+        fs::write(&config, serde_json::to_vec(&install(user_shape(), &exe())).unwrap()).unwrap();
+        store.update(|s| s.claude_disconnect_pending = true).unwrap();
+        let failed = apply_connection(read(&config).unwrap(), &dir, false, &exe(), || Err(io::Error::other("fake MCP failure")));
+        assert!(failed.is_err());
+        assert_eq!(state(&read(&config).unwrap().value, &exe()), Installed::Missing);
+        let mut restarted = crate::settings::Store::load(dir.join("data"), &crate::store::Problems::default());
+        assert!(restarted.value.claude_disconnect_pending);
+        let connect = wants_connect(Installed::Missing, true, restarted.value.claude_disconnect_pending);
+        assert!(!connect, "retry must not reconnect hooks");
+        apply_connection(read(&config).unwrap(), &dir, connect, &exe(), || Ok(())).unwrap();
+        restarted.update(|s| s.claude_disconnect_pending = false).unwrap();
+        assert_eq!(read(&config).unwrap().value, user_shape());
+        assert!(!restarted.value.claude_disconnect_pending);
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn the_hook_line_fails_closed_and_quotes_the_path() {

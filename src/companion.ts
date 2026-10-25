@@ -1,3 +1,4 @@
+import { problem } from "./voice";
 import { AGENT_NAMES, VERB, folder, sessionLabel, type AgentEvent } from "./agents";
 import type { Card, Choice, Fact } from "./bubble";
 import { explain, HELP, parse } from "./commands";
@@ -258,13 +259,14 @@ export class Companion {
     try {
       bubble.say(await this.host.openSession(target), 3);
     } catch (error) {
-      bubble.say(error instanceof Error ? error.message : String(error), 8, "fail");
+      bubble.say(problem(error), 8, "fail");
     }
   }
 
   /** Clicking the companion: one field, with what Enter will do shown before anything happens,
    * and the work sessions above it, most urgent first (docs/V1.md V1-D11). */
   openPrompt() {
+    if (this.pet.bubble.focusPrompt()) return;
     const session = this.sessionOf();
     const live = this.pet.agents.list.filter((s) => s.id).slice(0, 4);
     this.pet.bubble.prompt({
@@ -326,7 +328,7 @@ export class Companion {
         return this.confirmRun(command.command, command.folder);
       case "open-thing":
         if (!this.host.open) return "Opening things needs the desktop app.";
-        return this.host.open(command.target, command.app).catch((e) => String(e));
+        return this.host.open(command.target, command.app).catch((e) => problem(e));
       case "start":
         if (!this.host.labs?.().sessions) return "Starting sessions is off. Turn it on in Settings → Labs.";
         return this.confirmStart(command.agent, command.folder, command.full);
@@ -341,6 +343,7 @@ export class Companion {
 
   /** Text Pip has no rule for is never a dead end: it can become a note (docs/V1.md V1-Q2). */
   private offerNote(text: string): string | void {
+    this.pet.mind.react("puzzled", 2.5);
     if (!this.host.note) return "I can hold reminders and notes, and open your work sessions. Type “help” to see how.";
     const bubble = this.pet.bubble;
     bubble.show({
@@ -369,7 +372,7 @@ export class Companion {
     try {
       folder = await resolveFolder(wanted);
     } catch (error) {
-      return error instanceof Error ? error.message : String(error);
+      return problem(error);
     }
     const name = agent === "codex" ? "Codex" : "Claude Code";
     // The tool's own unattended mode, named in its own terms (docs/V1.md V1-D10); Sidefolk
@@ -395,7 +398,7 @@ export class Companion {
         try {
           bubble.say(await startSession(agent, folder.path, value === "full"), 4);
         } catch (error) {
-          bubble.say(error instanceof Error ? error.message : String(error), 8, "fail");
+          bubble.say(problem(error), 8, "fail");
         }
       },
     });
@@ -411,7 +414,7 @@ export class Companion {
     try {
       folder = await resolveFolder(session?.cwd ?? wanted);
     } catch (error) {
-      return error instanceof Error ? error.message : String(error);
+      return problem(error);
     }
     const bubble = this.pet.bubble;
     bubble.show({
@@ -433,7 +436,7 @@ export class Companion {
         try {
           bubble.say(await runCommand(text, folder.path), 4);
         } catch (error) {
-          bubble.say(error instanceof Error ? error.message : String(error), 8, "fail");
+          bubble.say(problem(error), 8, "fail");
         }
       },
     });

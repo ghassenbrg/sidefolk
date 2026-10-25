@@ -12,6 +12,7 @@ use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder
 use tauri_plugin_autostart::ManagerExt;
 
 pub(crate) const WINDOW: &str = "settings";
+const PREFERENCES: &str = "preferences";
 /// Logs are for the user to read or attach to a bug report; they never leave this Mac.
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
@@ -29,6 +30,9 @@ pub fn open(app: &AppHandle) -> tauri::Result<()> {
 
 /// Opens the Sidefolk window on a section ("home", "requests", "review:<id>", …).
 pub fn open_at(app: &AppHandle, tab: &str) -> tauri::Result<()> {
+    if tab == "settings" || tab.starts_with("settings:") {
+        return preferences(app, tab.strip_prefix("settings:").unwrap_or("general"));
+    }
     if let Some(window) = app.get_webview_window(WINDOW) {
         if !tab.is_empty() {
             window.emit("navigate", tab)?;
@@ -50,24 +54,52 @@ pub fn open_at(app: &AppHandle, tab: &str) -> tauri::Result<()> {
     window.set_focus()
 }
 
+/// Preferences has its own native window: opening it never replaces the day or a draft.
+fn preferences(app: &AppHandle, category: &str) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window(PREFERENCES) {
+        window.emit("navigate", format!("settings:{category}"))?;
+        window.show()?;
+        return window.set_focus();
+    }
+    let url = format!("settings.html?window=preferences&tab=settings:{category}");
+    let window = WebviewWindowBuilder::new(app, PREFERENCES, WebviewUrl::App(url.into()))
+        .title("Sidefolk Settings")
+        .inner_size(860.0, 700.0)
+        .min_inner_size(640.0, 480.0)
+        .center()
+        .build()?;
+    window.set_focus()
+}
+
+#[tauri::command]
+pub async fn open_preferences(app: AppHandle, category: Option<String>) -> Result<(), String> {
+    let category = category.unwrap_or_else(|| "general".into());
+    if category.len() > 120 || !category.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return Err("Unknown settings category".into());
+    }
+    let handle = app.clone();
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.run_on_main_thread(move || { let _ = tx.send(preferences(&handle, &category).map_err(|e| e.to_string())); }).map_err(|e| e.to_string())?;
+    rx.await.map_err(|_| "The Settings window could not open. Try again.".to_string())?
+}
+
 /// The overlay asks for the Sidefolk window, e.g. "Review…" on a pet's card.
 #[tauri::command]
-pub fn open_tab(app: AppHandle, tab: String) -> Result<(), String> {
+pub async fn open_tab(app: AppHandle, tab: String) -> Result<(), String> {
     if !tab.chars().all(|c| c.is_ascii_alphanumeric() || "-_:.".contains(c)) || tab.len() > 120 {
         return Err("Unknown section".into());
     }
     let handle = app.clone();
-    app.run_on_main_thread(move || {
-        let _ = open_at(&handle, &tab);
-    })
-    .map_err(|e| e.to_string())
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.run_on_main_thread(move || { let _ = tx.send(open_at(&handle, &tab).map_err(|e| e.to_string())); }).map_err(|e| e.to_string())?;
+    rx.await.map_err(|_| "The window could not open. Try again.".to_string())?
 }
 
 /// The overlay applied (or could not apply) an answer or command sent from the window; `text` is
 /// what the companion replied.
 #[tauri::command]
 pub fn answered(app: AppHandle, id: String, ok: bool, text: Option<String>) {
-    let _ = app.emit_to(WINDOW, "answered", serde_json::json!({ "id": id, "ok": ok, "text": text }));
+    let _ = app.emit("answered", serde_json::json!({ "id": id, "ok": ok, "text": text }));
 }
 
 #[derive(Deserialize, Default)]
@@ -84,6 +116,8 @@ pub struct Change {
     calendar_heads_up: Option<bool>,
     calendar_lead_mins: Option<u64>,
     sounds: Option<bool>,
+    journal_enabled: Option<bool>,
+    snooze_mins: Option<u64>,
     volume: Option<u8>,
     terminal: Option<String>,
     labs_commands: Option<bool>,
@@ -150,6 +184,8 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
                 if let Some(large) = change.large_text {
                     s.large_text = large;
                 }
+                if let Some(on) = change.journal_enabled { s.journal_enabled = on; }
+                if let Some(mins) = change.snooze_mins { s.snooze_mins = mins.clamp(1, 1440); }
                 if let Some(sounds) = change.sounds {
                     s.sounds = sounds;
                 }
@@ -195,6 +231,7 @@ pub struct Integrations {
     hook_error: Option<String>,
     /// off | waiting | working | repair | unavailable (docs/V1.md V1-D13).
     claude_health: &'static str,
+    claude_disconnect_pending: bool,
 }
 
 /// Reads the agents' config files, so it runs off the main thread.
@@ -203,9 +240,14 @@ pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrati
     use crate::claude_setup::Installed;
     let installed = crate::claude_setup::installed(&app);
     let hook_error = shared.hook_error.lock().unwrap().clone();
+    let tools_current = Agent::Claude.current();
+    let pending = shared.settings.lock().unwrap().value.claude_disconnect_pending;
     let claude_health = match installed {
+        _ if pending => "repair",
+        Installed::Missing if Agent::Claude.installed() => "repair",
         Installed::Missing => "off",
         Installed::NeedsRepair => "repair",
+        Installed::Current if !tools_current => "repair",
         Installed::Current if hook_error.is_some() => "unavailable",
         Installed::Current if shared.heard.load(std::sync::atomic::Ordering::Relaxed) => "working",
         Installed::Current => "waiting",
@@ -213,6 +255,7 @@ pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrati
     Integrations {
         hook_error,
         claude_health,
+        claude_disconnect_pending: pending,
         claude_hooks: installed != Installed::Missing,
         claude_tools: Agent::Claude.installed(),
         codex_tools: Agent::Codex.installed(),
@@ -223,12 +266,18 @@ pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrati
 /// Runs a tray action that asks for confirmation itself (connecting agents, login item).
 #[tauri::command]
 pub fn tray_action(app: AppHandle, action: String) -> Result<(), String> {
-    if !["claude", "tools-claude", "tools-codex", "login", "settings", "toggle"].contains(&action.as_str()) {
+    if !["claude", "tools-claude", "tools-codex", "login", "settings", "toggle", "show", "call", "refit"].contains(&action.as_str()) {
         return Err(format!("Unknown action {action}"));
     }
     let handle = app.clone();
     app.run_on_main_thread(move || crate::tray::action(&handle, &action))
         .map_err(|e| e.to_string())
+}
+
+/// Only journal files are cleared; reminders, Markdown notes and config backups stay.
+#[tauri::command(async)]
+pub fn clear_history(shared: State<'_, Arc<Shared>>) -> Result<(), String> {
+    shared.journal.clear().map_err(|e| e.to_string())
 }
 
 /// Opens the data folder (or its `logs` subfolder) in Finder.
@@ -297,7 +346,7 @@ pub fn publish_status(app: AppHandle, shared: State<'_, Arc<Shared>>, status: se
     let waiting = status["waiting"].as_array().map_or(0, Vec::len);
     let before = shared.status.lock().unwrap()["waiting"].as_array().map_or(0, Vec::len);
     *shared.status.lock().unwrap() = status.clone();
-    let _ = app.emit_to(WINDOW, "status", status);
+    let _ = app.emit("status", status);
     // The menu bar shows how many requests wait, so they stay reachable with the pets hidden.
     if waiting != before {
         let handle = app.clone();

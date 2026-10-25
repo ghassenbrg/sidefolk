@@ -72,11 +72,27 @@ for (const scheme of ["light", "dark"]) {
   await page.locator("#note-text").fill("Ran the accessibility audit.");
   await page.getByRole("button", { name: "Add note" }).click();
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
-  await page.locator(".note").first().getByRole("button", { name: "Delete" }).click();
-  await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
+  const noteMenu = page.locator(".note").first().getByRole("button", { name: /^More actions/ });
+  await noteMenu.click();
+  await page.keyboard.press("End");
+  assert.match(await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? ""), /^Delete note/);
+  await page.keyboard.press("Escape");
+  assert.equal(await noteMenu.evaluate((el) => el === document.activeElement), true);
+  await noteMenu.click();
+  await page.getByRole("menuitem", { name: /^Delete note/ }).click();
+  await page.waitForTimeout(9500);
+  await page.locator("nav").getByRole("button", { name: "Reminders", exact: true }).click();
+  await page.getByRole("heading", { name: "Reminders", exact: true }).waitFor();
+  await page.keyboard.press("Control+z");
+  await page.locator("nav").getByRole("button", { name: "Work log", exact: true }).click();
+  await page.getByRole("button", { name: "Open", exact: true }).first().click();
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
   // Incoming companion notes preserve both capture and an unfinished entry edit.
   await page.locator("#note-text").fill("Unfinished capture");
+  await page.locator("nav").getByRole("button", { name: "Reminders", exact: true }).click();
+  await page.locator("nav").getByRole("button", { name: "Work log", exact: true }).click();
+  await page.getByRole("button", { name: "Open", exact: true }).first().click();
+  assert.equal(await page.locator("#note-text").inputValue(), "Unfinished capture");
   await page.locator(".note").first().getByRole("button", { name: /^Edit note/ }).click();
   await page.getByRole("textbox", { name: "Edit note" }).fill("Unfinished edit");
   await page.evaluate(async () => {
@@ -100,7 +116,7 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("switch", { name: "Start sessions" }).check();
   await page.locator("#toast").getByText("Saved.", { exact: true }).waitFor();
   // The preview keeps settings in the page, so stay in it.
-  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
+  await page.getByRole("button", { name: "Close Settings" }).click();
   await page.locator("nav").getByRole("button", { name: "Sessions" }).click();
   await page.getByRole("button", { name: "New session", exact: true }).click();
   await page.locator("#new-session-folder").fill("");
@@ -159,7 +175,7 @@ for (const scheme of ["light", "dark"]) {
   await page.goto(base + "/settings.html?tab=settings:general");
   await page.getByRole("switch", { name: "Commands" }).check();
   await page.locator("#toast").getByText("Saved.", { exact: true }).waitFor();
-  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
+  await page.getByRole("button", { name: "Close Settings" }).click();
   await page.locator(".tell-input").fill("$ ls -la");
   assert.match((await page.locator(".tell-preview").textContent()) ?? "", /Run `ls -la` in your home folder/);
   await page.locator(".tell-input").press("Enter");
@@ -174,10 +190,11 @@ for (const scheme of ["light", "dark"]) {
   assert.equal(await add.getByLabel("Every how many?").inputValue(), "2");
   await add.getByRole("button", { name: "Save reminder" }).click();
   const reminder = page.locator("article.reminder").filter({ hasText: "repeat acceptance" });
-  await reminder.getByRole("button", { name: "Open", exact: true }).click();
+  await reminder.getByRole("button", { name: "repeat acceptance", exact: true }).click();
   await page.getByRole("heading", { name: "History", exact: true }).waitFor();
   await page.getByRole("button", { name: "Back to Reminders" }).click();
-  await reminder.getByRole("button", { name: "Edit", exact: true }).click();
+  await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Edit repeat acceptance", exact: true }).click();
   let edit = page.getByRole("form", { name: "Edit repeat acceptance" });
   assert.equal(await edit.getByLabel("Repeat", { exact: true }).inputValue(), "week");
   await edit.getByLabel("Repeat", { exact: true }).selectOption("day");
@@ -185,15 +202,18 @@ for (const scheme of ["light", "dark"]) {
   const originalDate = await edit.getByLabel("Date", { exact: true }).inputValue();
   await edit.getByRole("button", { name: "Save changes" }).click();
   await reminder.getByRole("button", { name: "Mark repeat acceptance complete" }).click();
-  await reminder.getByRole("button", { name: "Edit", exact: true }).click();
+  await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Edit repeat acceptance", exact: true }).click();
   edit = page.getByRole("form", { name: "Edit repeat acceptance" });
   assert.notEqual(await edit.getByLabel("Date", { exact: true }).inputValue(), originalDate);
   await edit.getByLabel("Repeat", { exact: true }).selectOption("");
   await edit.getByRole("button", { name: "Save changes" }).click();
   assert.equal((await reminder.innerText()).includes("then every"), false);
-  await reminder.getByRole("button", { name: "Delete", exact: true }).click();
+  await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Delete repeat acceptance", exact: true }).click();
   await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
-  await reminder.getByRole("button", { name: "Edit", exact: true }).click();
+  await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Edit repeat acceptance", exact: true }).click();
   assert.equal(await page.getByRole("form", { name: "Edit repeat acceptance" }).getByLabel("Repeat", { exact: true }).inputValue(), "");
   // Theme overrides persist after reload, follow OS changes only in System,
   // and propagate to another surface without changing that surface's OS appearance.
@@ -217,9 +237,10 @@ for (const scheme of ["light", "dark"]) {
   await page.emulateMedia({ colorScheme: "light" });
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim()), "#f7f3ea");
   await other.close();
+  assert.equal(await page.locator(".settings-categories button").count(), 4);
   // Search jumps to the owning category; all settings remain reachable.
   await page.getByRole("searchbox", { name: "Search settings" }).fill("dark");
-  await page.getByRole("button", { name: "Appearance Appearance", exact: true }).click();
+  await page.getByRole("button", { name: "General General", exact: true }).click();
   await page.getByRole("radio", { name: "System", exact: true }).waitFor();
   for (const section of ["general", "companion", "sound", "tools", "privacy", "accessibility", "help"]) {
     await page.goto(base + `/settings.html?tab=settings:${section}`);
@@ -229,7 +250,7 @@ for (const scheme of ["light", "dark"]) {
   // The command review remains pending until explicitly dismissed or run.
   await page.goto(base + "/settings.html?tab=settings:general");
   await page.getByRole("switch", { name: "Commands" }).check();
-  await page.getByRole("button", { name: "Back to Sidefolk" }).click();
+  await page.getByRole("button", { name: "Close Settings" }).click();
   await page.locator(".tell-input").fill("$ ls -la");
   await page.locator(".tell-input").press("Enter");
   await page.getByRole("dialog").waitFor();
@@ -240,12 +261,13 @@ for (const scheme of ["light", "dark"]) {
   // The shortened setup completes a useful local action without an AI connection.
   await page.goto(base + "/settings.html?tab=setup:start");
   await page.getByRole("button", { name: "Set a two-minute reminder" }).click();
-  await page.getByText("Saved. Your companion will remind you to stretch in two minutes.", { exact: true }).waitFor();
+  await page.getByText(/^Saved for .*stretch/).waitFor();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("heading", { name: "By your side." }).waitFor();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Start using Sidefolk" }).click();
   await page.getByRole("heading", { name: "Today", exact: true }).waitFor();
+  console.log(`WebKit ${scheme}: core journeys passed`);
   // Narrow layouts retain all controls, including larger text and settings search.
   await page.setViewportSize({ width: 520, height: 740 });
   for (const target of ["today", "reminders", "notes:evaluation-h2-2026", "sessions", "settings:appearance", "review:claude-1"]) {

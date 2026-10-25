@@ -1,3 +1,5 @@
+import { problem } from "../voice";
+import { overflow } from "./kit";
 import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { badge } from "../states";
@@ -195,49 +197,39 @@ function row(app: App, r: Reminder, detail = false) {
       app.toast(done);
       await app.refresh();
     } catch (error) {
-      app.toast(`Not saved: ${error}`, undefined, true);
+      app.toast(problem(error), undefined, true);
     }
   };
-  return h(
-    "article",
-    { class: "card reminder" },
-    h(
-      "div",
-      { class: "row" },
-      h("div", {}, h("strong", { text: r.text }), h("p", { class: "meta", text: `${missed ? "Was due " : ""}${longDate(due)}${r.repeat ? `, then ${describeRepeat(r.repeat, new Date(r.anchor || r.due))}` : ""}${where}${by}` })),
-      h(
-        "div",
-        { class: "actions" },
-        !detail ? button("Open", () => app.go("reminders", r.id), "quiet") : null,
-        button("Snooze 10 min", () => void update({ action: "snooze", until: Date.now() + 600_000 }, "Snoozed for 10 minutes."), "quiet", { "aria-label": `Snooze ${r.text} for 10 minutes` }),
-        detail && r.repeat ? button("Skip this one", () => void update({ action: "skip" }, "Skipped. The next one is scheduled."), "quiet") : null,
-        button("Edit", () => {
-          let close = () => {};
-          const editor = sheet("Edit reminder", editRow(app, r, () => close()));
-          close = editor.close;
-        }, "quiet"),
-        button("Delete", async () => {
-          try {
-            const removed = await invoke<Reminder | null>("remove_reminder", { id: r.id });
-            await app.refresh();
-            app.redraw(true);
-            if (removed)
-              app.toast("Reminder deleted.", {
-                label: "Undo",
-                run: async () => {
-                  await invoke("restore_reminder", { reminder: removed });
-                  await app.refresh();
-                  app.redraw(true);
-                },
-              });
-          } catch (error) {
-            app.toast(String(error), undefined, true);
-          }
-        }, "quiet"),
-        button([icon("done"), "Mark complete"], () => void update({ action: "done" }, r.repeat ? "Next repeat scheduled." : "Marked complete."), "", { "aria-label": `Mark ${r.text} complete` }),
-      ),
-    ),
-  );
+  const edit = () => {
+    let close = () => {};
+    const editor = sheet("Edit reminder", editRow(app, r, () => close()));
+    close = editor.close;
+  };
+  const remove = async () => {
+    try {
+      const removed = await invoke<Reminder | null>("remove_reminder", { id: r.id });
+      await app.refresh();
+      app.redraw(true);
+      if (removed) app.toast("Reminder deleted.", { label: "Undo", run: async () => {
+        await invoke("restore_reminder", { reminder: removed });
+        await app.refresh();
+        app.redraw(true);
+      } });
+    } catch (error) { app.toast(problem(error), undefined, true); }
+  };
+  const menu = [
+    { label: `Snooze ${app.state.settings.snooze_mins} min`, run: () => void update({ action: "snooze", until: Date.now() + app.state.settings.snooze_mins * 60_000 }, `Snoozed for ${app.state.settings.snooze_mins} minutes.`) },
+    ...(r.repeat ? [{ label: "Skip this one", run: () => void update({ action: "skip" }, "Skipped. The next one is scheduled.") }] : []),
+    { label: "Edit", run: edit },
+    { label: "Delete", run: () => void remove(), destructive: true },
+  ];
+  return h("article", { class: "card reminder" }, h("div", { class: "row" },
+    h("div", { class: "identity-text" },
+      detail ? h("strong", { text: r.text }) : button(r.text, () => app.go("reminders", r.id), "text-button"),
+      h("p", { class: "meta", text: `${missed ? "Was due " : ""}${longDate(due)}${r.repeat ? `, then ${describeRepeat(r.repeat, new Date(r.anchor || r.due))}` : ""}${where}${by}` })),
+    h("div", { class: "inline" },
+      button(icon("done"), () => void update({ action: "done" }, r.repeat ? "Next repeat scheduled." : "Marked complete."), "icon-button", { "aria-label": `Mark ${r.text} complete` }),
+      overflow(r.text, menu))));
 }
 
 function editRow(app: App, r: Reminder, close: () => void) {
@@ -262,7 +254,7 @@ function editRow(app: App, r: Reminder, close: () => void) {
       await app.refresh();
       app.redraw(true);
     } catch (error) {
-      app.toast(`Not saved: ${error}`, undefined, true);
+      app.toast(problem(error), undefined, true);
       submit.disabled = false;
     }
   });

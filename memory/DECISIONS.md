@@ -272,3 +272,33 @@ Newest last. Each entry: what, why, and what would change it.
     - **Spikes:** docs/SPIKES-P4.md. Codex has stable, documented hooks, including
       `PermissionRequest`, which can answer. V1-D2 ("Pip never answers Codex approvals") stands
       until the founder decides.
+
+46. **P5 Window and Pip (25 October 2026).**
+    - Separate native Preferences (`preferences`); the existing `settings` window label remains
+      the main app for compatibility. Both use settings.html, with explicit routing. Existing
+      capability covers the second window; no dependency, entitlement or new permission.
+    - Four Settings panes; aliases keep old deep links working. Claude hooks and MCP share one
+      confirmed, backed-up connect/repair/disconnect flow. A durable pending-disconnect bit is
+      saved before edits so failures and restarts cannot reverse the user's choice.
+    - `window.css` replaces both old window stylesheets. Desktop controls use 28px targets and
+      the contracted 13pt base; the newer 13 CSS px proposal has not been adopted. Overlay stays
+      44px. Overflow menus, sheets, radio controls and failure states share the kit.
+    - Undo survives navigation and later messages until used/dismissed; it awaits success and
+      remains retryable on failure. It is scoped to the open webview, not persisted across quit.
+      Notebook capture drafts survive navigation. Native text Undo keeps its normal meaning.
+    - Summon focuses Quick add and preserves an already open draft. Reserved ⌘⇧Return focuses
+      the newest card's container, never Allow. Rebinding summon never removes that shortcut.
+    - Setup requires one saved reminder, then explicit desktop choices; Claude connection
+      completion requires a real first event. Skip remains available. First-heard emits health.
+    - New installs start Quiet. Default snooze is configurable and used on both surfaces.
+      Journal policy is seven UTC calendar days, first prompt line only (500 characters), no
+      tool/answer/output detail, with an off switch and confirmed Clear. Old records expire or
+      can be cleared; no claim that old records were rewritten.
+    - Errors use `voice.ts`; native installer dialogs use short static recovery copy and log
+      raw diagnostics. Idle/listening/puzzled have no agent activity light.
+    - Puzzled reuses the approved folded-ear listen frame with a distinct tilt/behavior;
+      no new raster poses or six-frame quota. Pose fades, gaze and breathing supply movement;
+      reduced motion changes immediately. Both Pip and Spark stay. The permitted six extra
+      micro-frames remain a cap, not an obligation to regenerate the frozen artwork.
+    - Recording protection stays off while the founder's Mission Control spike is pending;
+      setup exposes the choice. Browser screenshots are evidence of layout only, not G4/G2.

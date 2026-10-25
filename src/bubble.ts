@@ -1,3 +1,4 @@
+import { problem } from "./voice";
 import { area } from "./frame";
 import { icon } from "./icons";
 
@@ -76,6 +77,7 @@ const reducedMotion = () =>
 
 export class Bubble {
   private cards: Card[] = [];
+  private keyboardCard = false;
   private line: { text: string; tone: Tone; until: number } | null = null;
   private prompting: PromptOptions | null = null;
   private rendered = "";
@@ -90,6 +92,20 @@ export class Bubble {
     root.hidden = true;
     // Lines are announced by screen readers; cards and the prompt are labelled dialogs.
     root.setAttribute("aria-live", "polite");
+    root.tabIndex = -1;
+    root.addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey && !(event.target as HTMLElement)?.matches("input, textarea")) {
+        event.preventDefault(); this.undo(); return;
+      }
+      if (event.key === "Escape" && this.keyboardCard) {
+        event.preventDefault();
+        this.keyboardCard = false;
+        this.onTyping(false);
+      }
+    });
+    root.addEventListener("focusout", () => setTimeout(() => {
+      if (this.prompting && !root.contains(document.activeElement)) this.endPrompt();
+    }, 150));
   }
 
   get typing() {
@@ -124,12 +140,48 @@ export class Bubble {
 
   close(id: string) {
     this.cards = this.cards.filter((c) => c.id !== id);
+    if (!this.cards.length && this.keyboardCard) {
+      this.keyboardCard = false;
+      this.onTyping(false);
+    }
     this.render();
   }
 
+  /** Action Undo never chooses a request answer; input fields keep native text Undo. */
+  undo() {
+    if (this.root.contains(document.activeElement) && document.activeElement?.matches("input, textarea")) {
+      document.execCommand("undo"); return;
+    }
+    const card = [...this.cards].reverse().find((card) => card.choices.some((choice) => choice.value === "undo"));
+    if (!card) return;
+    this.close(card.id);
+    Promise.resolve(card.onChoose("undo")).catch((error) => this.show({ ...card, note: problem(error) }));
+  }
+
+  /** Keyboard entry focuses the card container, never its Allow button. */
+  focusCard() {
+    const latest = [...this.cards].reverse().find((card) => card.urgent) ?? this.cards.at(-1);
+    if (!latest) return;
+    this.prompting = null;
+    this.cards = [latest, ...this.cards.filter((card) => card !== latest)];
+    this.keyboardCard = true;
+    this.onTyping(true);
+    this.rendered = "";
+    this.render();
+    requestAnimationFrame(() => this.root.focus());
+  }
+
   say(text: string, seconds = 5, tone: Tone = "info") {
+    if (tone === "fail") text = problem(text);
     this.line = { text, tone, until: performance.now() + seconds * 1000 };
     this.render();
+  }
+
+  focusPrompt() {
+    if (!this.prompting) return false;
+    this.onTyping(true);
+    this.root.querySelector<HTMLInputElement>("input")?.focus();
+    return true;
   }
 
   prompt(options: PromptOptions) {
@@ -161,6 +213,7 @@ export class Bubble {
     if (this.root.hidden) return;
     const width = this.root.offsetWidth;
     const left = Math.min(area.width - width - 8, Math.max(8, x - width / 2));
+    this.root.style.setProperty("--tail-x", `${Math.max(16, Math.min(width - 16, x - left))}px`);
     this.root.style.transform = `translate(${Math.round(left)}px, ${Math.round(area.height - bottom - this.root.offsetHeight)}px)`;
   }
 
@@ -251,7 +304,7 @@ export class Bubble {
       b.type = "button";
       b.addEventListener("click", () => {
         this.close(card.id);
-        card.onChoose(choice.value);
+        Promise.resolve(card.onChoose(choice.value)).catch((error) => this.show({ ...card, note: problem(error) }));
       });
       return b;
     };
@@ -306,10 +359,10 @@ export class Bubble {
         const reply = await options.submit(text);
         if (reply) this.say(reply, 6);
       } catch (error) {
-        this.say(error instanceof Error ? error.message : String(error), 7, "fail");
+        this.say(problem(error), 7, "fail");
       }
     });
-    input.addEventListener("blur", () => setTimeout(() => this.prompting && !input.disabled && this.endPrompt(), 150));
+    input.addEventListener("blur", () => setTimeout(() => this.prompting && !input.disabled && !this.root.contains(document.activeElement) && this.endPrompt(), 150));
     const head = el("div", "who");
     head.append(el("span", "name", options.who));
     const sessions = el("div", "sessions");

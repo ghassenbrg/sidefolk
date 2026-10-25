@@ -20,6 +20,8 @@ export type Settings = {
   calm: boolean;
   large_text: boolean;
   sounds: boolean;
+  journal_enabled: boolean;
+  snooze_mins: number;
   volume: number;
   terminal: "auto" | "terminal" | "iterm" | "ghostty" | "wezterm" | "kitty" | "alacritty";
   /** Settings → Labs (docs/V1.md F-10, F-17). */
@@ -32,7 +34,7 @@ export type Settings = {
 /** Mirrors `Problem` in src-tauri/src/store.rs: a file that couldn't be read at launch. */
 export type StoreProblem = { file: string; kept: string; error: string; backup: boolean };
 /** `hook_error`: why Sidefolk can't hear Claude Code (its port is taken), or null. */
-export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean; hook_error: string | null; claude_health: "off" | "waiting" | "working" | "repair" | "unavailable" };
+export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean; hook_error: string | null; claude_disconnect_pending?: boolean; claude_health: "off" | "waiting" | "working" | "repair" | "unavailable" };
 /** crew.json: the companion's name, and `look: "spark"` when it's Spark. */
 export type CrewFile = { main: { name: string; look?: string } };
 
@@ -110,7 +112,9 @@ function preview(): typeof tauriInvoke {
       pet_size: "medium",
       calm: false,
       large_text: false,
-      sounds: true,
+      sounds: false,
+      journal_enabled: true,
+      snooze_mins: 10,
       volume: 60,
       terminal: "auto",
       labs_commands: false,
@@ -118,7 +122,7 @@ function preview(): typeof tauriInvoke {
       your_week: true,
       hide_from_dock: false,
     } as Settings,
-    integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null, claude_health: "working" } as Integrations,
+    integrations: { claude_hooks: true, claude_tools: true, codex_tools: false, start_at_login: false, hook_error: null, claude_health: "working" } as Integrations,
     crew: { main: { name: "Pip" } } as CrewFile,
     reminders: [
       { id: "r1", text: "Review launch notes", due: now + 3 * 3_600_000, project: "", from: "you", created: now, done: false, fired: false },
@@ -161,6 +165,7 @@ function preview(): typeof tauriInvoke {
       },
     ] as import("../companion").Ask[],
   };
+  if (new URLSearchParams(location.search).has("waiting")) state.integrations.claude_health = "waiting";
   return (async (command: string, args?: Record<string, unknown>) => {
     const a = (args ?? {}) as Record<string, any>;
     switch (command) {
@@ -174,6 +179,10 @@ function preview(): typeof tauriInvoke {
       case "update_settings":
         return Object.assign(state.settings, a.change);
       // ?portbusy shows the notice for a hook port another app holds.
+      case "preview_claude_event":
+        state.integrations = { ...state.integrations, claude_health: "working" };
+        emit("integrations-changed", null);
+        return null;
       case "integrations":
         return new URLSearchParams(location.search).has("portbusy") ? { ...state.integrations, claude_health: "unavailable", hook_error: "Sidefolk can't open its private channel for Claude Code. Quit any other copy of Sidefolk, or restart your Mac." } : state.integrations;
       case "get_crew":
@@ -250,6 +259,7 @@ function preview(): typeof tauriInvoke {
         setTimeout(() => emit("notes-changed", null), 50);
         return null;
       }
+      case "clear_history": return null as never;
       case "uninstall_sidefolk":
         return ["Removed Sidefolk's hooks from Claude Code (a backup is kept). (Preview: nothing changed.)", "Your reminders, notes and backups are still in your data folder."];
       case "problem_report":

@@ -1,3 +1,5 @@
+import { problem } from "../voice";
+import { sheet } from "./dialog";
 import type { Notebook } from "../notes";
 import { icon } from "../icons";
 import { badge } from "../states";
@@ -18,7 +20,7 @@ export function attentionCard(app: App, w: Waiting) {
   const card = h(
     "section",
     { class: "card attention" },
-    h("div", { class: "row" }, identity(w.petName, w.meta.project || pet?.project || null, second), badge("alert")),
+    h("div", { class: "row" }, identity(w.petName, w.meta.project || pet?.project || null, second, app.state.crew.main.look), badge("alert")),
     h("h2", { class: "request-title", text: w.meta.title || requestTitle(w) }),
   );
   const actions = h("div", { class: "actions" });
@@ -58,7 +60,11 @@ function storeNotices(app: App, into: HTMLElement) {
         h("h2", { text: `I couldn't read your ${what} file.` }),
         h("p", { text: `Your data is safe: the file was kept as it was${p.kept ? ` (${p.kept.split("/").pop()})` : ""}, and nothing will be written over it.` }),
         h("div", { class: "actions" },
-          p.backup ? button("Restore last good copy", () => void invoke("restore_store", { file: p.file }).catch((e) => app.toast(String(e), undefined, true)), "primary") : null,
+          p.backup ? button("Restore last good copy", () => {
+            const body = h("div", {}, h("p", { text: "Sidefolk will restore the last good backup and restart. The damaged file stays in your data folder for recovery." }));
+            const dialog = sheet(`Restore ${what}?`, body);
+            body.append(h("div", { class: "actions sheet-actions" }, button("Cancel", dialog.close), button("Restore and restart", () => void invoke("restore_store", { file: p.file }).catch((e) => app.toast(problem(e), undefined, true)), "primary")));
+          }, "primary") : null,
           button([icon("folder"), "Show in Finder"], () => void invoke("reveal_data_dir", {})))));
     }
   }).catch(() => {});
@@ -75,26 +81,29 @@ export function renderHome(app: App) {
   storeNotices(app, notices);
   // Connected but not listening: requests and sessions can't arrive, so say so first.
   if (integrations.claude_hooks && integrations.hook_error)
-    notices.append(h("section", { class: "card attention", role: "alert" }, h("h2", { text: "I can't hear Claude Code right now." }), h("p", { text: integrations.hook_error })));
+    notices.append(h("section", { class: "card attention", role: "alert" }, h("h2", { text: "I can't hear Claude Code right now." }), h("p", { text: problem(integrations.hook_error) })));
   const primary = h("div", { class: "home-primary" });
   const secondary = h("div", { class: "home-secondary" });
   view.append(h("div", { class: "home-grid" }, primary, secondary));
-  primary.append(h("h2", { class: "section-title", text: waiting.length ? "Needs you" : "You're all caught up." }));
+  const pending = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due);
+  const overdue = pending.filter((r) => r.due < Date.now());
+  const agenda = (title: string, items: typeof reminders) => {
+    primary.append(h("h2", { class: "section-title", text: title }));
+    const list = h("section", { class: "card list", "aria-label": title });
+    for (const r of items.slice(0, 4)) list.append(button([
+      h("span", { class: "agenda-time", text: new Date(r.due).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }),
+      h("span", {}, h("strong", { text: r.text }), h("span", { class: "meta", text: describeDue(new Date(r.due)) })), icon("chevron"),
+    ], () => app.go("reminders", r.id), "list-button"));
+    if (!items.length) list.append(h("p", { class: "muted", text: "Nothing coming up. A little space for your next small step." }));
+    list.append(h("div", { class: "actions" }, button(items.length > 4 ? `All ${items.length} reminders` : "All reminders", () => app.go("reminders"), "quiet")));
+    primary.append(list);
+  };
+  if (overdue.length) agenda("Overdue", overdue);
+  if (waiting.length) primary.append(h("h2", { class: "section-title", text: "Needs you" }));
+  else if (!overdue.length) primary.append(h("h2", { class: "section-title", text: "You're all caught up." }));
   for (const w of waiting.slice(0, 3)) primary.append(attentionCard(app, w));
   if (waiting.length > 3) primary.append(button(`See all ${waiting.length} requests`, () => app.go("requests"), "wide"));
-
-  primary.append(h("h2", { class: "section-title", text: "Coming up" }));
-  const upcoming = h("section", { class: "card list", "aria-label": "Coming up" });
-  const next = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due).slice(0, 4);
-  for (const r of next) upcoming.append(button([
-    h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })),
-    // A one-off stays overdue here until it's answered (docs/V1.md V1-R6).
-    h("span", { class: "meta", text: r.due < Date.now() ? `Overdue · ${describeDue(new Date(r.due))}` : describeDue(new Date(r.due)) }), icon("chevron"),
-  ], () => app.go("reminders", r.id), "list-button"));
-  const emptyUpcoming = h("p", { class: "muted", text: "Nothing coming up. A little space for your next small step." });
-  if (!next.length) upcoming.append(emptyUpcoming);
-  upcoming.append(h("div", { class: "actions" }, button(["All reminders", icon("next")], () => app.go("reminders"), "quiet")));
-  primary.append(upcoming);
+  agenda("Coming up", pending.filter((r) => r.due >= Date.now()));
 
   const sessions = status.pets.flatMap((p) => p.sessions);
   const connected = integrations.claude_hooks || integrations.codex_tools || integrations.claude_tools || sessions.length;
