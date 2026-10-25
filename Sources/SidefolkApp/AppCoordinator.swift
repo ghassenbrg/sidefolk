@@ -78,7 +78,7 @@ final class AppCoordinator {
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
         monitor.onWake = { [weak self] in
             guard let self else { return }
-            Task { await self.runtime.scheduler.reschedule() }
+            Task { await self.runtime.rearm() }
         }
         monitor.onClockChange = monitor.onWake
         monitor.start()
@@ -97,7 +97,16 @@ final class AppCoordinator {
         DebugSnapshots.handler = { [weak self] command in self?.runDevCommand(command) }
         #endif
         await runtime.housekeeping()
-        await runtime.start()
+        do {
+            try await runtime.start()
+        } catch BridgeError.alreadyRunning {
+            AlreadyRunning.showAndQuit()
+            return
+        } catch {
+            // Without the socket, agents can't reach Sidefolk; everything else still works.
+            Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
+        }
+        installHelperLink()
         await refreshCollections()
         _ = await notificationsAuthorized()
         refreshRoster()
@@ -249,7 +258,7 @@ final class AppCoordinator {
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {
                 applyCompanionSettings()
-                Task { await runtime.scheduler.reschedule() }
+                Task { await runtime.rearm() }
             }
             if domain == .notebook { Task { await refreshCollections() } }
         default:

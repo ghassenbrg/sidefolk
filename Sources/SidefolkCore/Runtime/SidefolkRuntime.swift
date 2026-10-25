@@ -27,6 +27,12 @@ public final class SidefolkRuntime: Sendable {
     public let attention: AttentionCenter
     public let scheduler: ReminderScheduler
     public let brief: MorningBrief
+    public let watchers: WatcherEngine
+    public let tokens: BrainTokenRegistry
+    public let gateway: ExternalToolGateway
+    public let sessionTracker: SessionTracker
+    public let jobTracker: JobTracker
+    private let server: LocalAPIServer
 
     public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock()) async {
         self.paths = paths
@@ -56,8 +62,23 @@ public final class SidefolkRuntime: Sendable {
         brief = MorningBrief(db: db, attention: attention, settings: settings, clock: clock)
         scheduler = ReminderScheduler(store: reminderStore, attention: attention, events: events, settings: settings,
                                       clock: clock, brief: brief)
+        watchers = WatcherEngine(store: watcherStore, attention: attention, events: events, clock: clock,
+                                 opener: { url in _ = await platform.open(url: url) })
+        tokens = BrainTokenRegistry()
+        gateway = ExternalToolGateway(registry: registry, permissions: permissions, broker: broker, activity: activity,
+                                      events: events, watchers: watcherStore, clock: clock)
+        sessionTracker = SessionTracker(store: sessions, attention: attention, events: events, clock: clock, open: { session in
+            _ = await platform.activateApplication(pid: session.hostPid, bundleId: session.hostApp)
+        })
+        jobTracker = JobTracker(store: jobs, attention: attention, events: events, clock: clock)
+        server = LocalAPIServer(socket: paths.socket, services: BridgeServices(
+            tools: gateway, tokens: tokens, sessions: sessionTracker, jobs: jobTracker, status: StatusReader(db: db)))
+
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
+        registry.register(WatchTools.make(engine: watchers))
+        registry.register(AgentFacingTools.make(attention: attention))
+        registry.register(AgentFacingTools.status(StatusReader(db: db)))
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening".
@@ -66,15 +87,29 @@ public final class SidefolkRuntime: Sendable {
         return IntentParser(morningHour: s.morningHour, afternoonHour: s.afternoonHour, eveningHour: s.eveningHour)
     }
 
-    /// Starts the background engines (reminders now; watchers, extensions and the bridge as they join).
-    public func start() async {
+    /// Starts the background engines and the local API other agents connect to.
+    /// Throws `BridgeError.alreadyRunning` when another Sidefolk owns the socket.
+    public func start() async throws {
+        try server.start()
         await scheduler.start()
+        await watchers.start()
+        await sessionTracker.start()
+        _ = await jobTracker.reconcile()
     }
 
-    /// Before quitting: stop timers and return what system notifications should cover while Sidefolk is off.
+    /// After sleep or a clock change: re-arm timers.
+    public func rearm() async {
+        await scheduler.reschedule()
+        await watchers.rearm()
+    }
+
+    /// Before quitting: stop timers and the socket, and return what system notifications should cover
+    /// while Sidefolk is off.
     public func stop() async -> [FallbackNotification] {
         let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400)
         await scheduler.stop()
+        await watchers.stop()
+        server.stop()
         return fallback
     }
 

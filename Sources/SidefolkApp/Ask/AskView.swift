@@ -152,7 +152,10 @@ private struct EntryView: View {
             SFCard(accent: Theme.coral) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(error.message).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    if let r = error.recovery { Text(r).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted) }
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let r = error.recovery {
+                        Text(r).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         case .needsBrain(let text):
@@ -183,12 +186,15 @@ struct ResultCardView<Actions: View>: View {
                 HStack(spacing: 6) {
                     Image(systemName: Self.symbol(for: card.kind)).foregroundStyle(Self.accent(for: card.kind))
                     Text(card.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if let subtitle = card.subtitle {
                     Text(subtitle).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if let detail = card.detail {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(4)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(spacing: 6) { actions }
             }
@@ -233,6 +239,7 @@ private struct AnswerCard: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 Text(markdown).font(Theme.Font.body).foregroundStyle(Theme.ink)
                     .lineLimit(expanded ? nil : 8).textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 6) {
                     if text.count > 400 {
                         Button(expanded ? "Less" : "More") { expanded.toggle() }.buttonStyle(.sf(.secondary))

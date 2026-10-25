@@ -44,6 +44,16 @@ final class MacPlatform: PlatformBridge {
         await MainActor.run { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
     }
 
+    nonisolated func activateApplication(pid: Int?, bundleId: String?) async -> Bool {
+        await MainActor.run {
+            if let pid, let app = NSRunningApplication(processIdentifier: pid_t(pid)) { return app.activate() }
+            if let bundleId, let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
+                return app.activate()
+            }
+            return false
+        }
+    }
+
     nonisolated func frontmostApplication() async -> FrontmostApp? {
         await MainActor.run {
             guard let app = NSWorkspace.shared.frontmostApplication else { return nil }

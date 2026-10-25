@@ -11,7 +11,12 @@ extension AppCoordinator {
             skills: { [] }
         )
         let context = ContextBuilder(notebook: runtime.notebook, exchanges: runtime.exchanges, sources: sources)
-        let factory = BrainFactory.standard(secrets: secrets, claudeCodeBackend: { _ in nil })
+        let paths = runtime.paths
+        let helper = helperPath
+        let tokens = runtime.tokens
+        let factory = BrainFactory.standard(secrets: secrets, claudeCodeBackend: { provider in
+            ClaudeCodeBackend.make(provider: provider, paths: paths, helperPath: helper, registry: tokens)
+        })
         let settings = runtime.settings
         return AgentRuntime(executor: runtime.executor, db: runtime.db, events: runtime.events, context: context,
                             factory: factory, settings: { settings.current })

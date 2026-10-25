@@ -21,6 +21,12 @@ public protocol PlatformBridge: Sendable {
     func openApplication(_ nameOrBundleId: String) async -> Bool
     func reveal(path: String) async
     func frontmostApplication() async -> FrontmostApp?
+    /// Brings a running app to the front (by pid, else by bundle id). Returns false if it isn't running.
+    func activateApplication(pid: Int?, bundleId: String?) async -> Bool
+}
+
+public extension PlatformBridge {
+    func activateApplication(pid: Int?, bundleId: String?) async -> Bool { false }
 }
 
 /// A platform that does nothing; used in tests and command-line contexts.
@@ -32,4 +38,5 @@ public struct NullPlatform: PlatformBridge {
     public func openApplication(_ nameOrBundleId: String) async -> Bool { false }
     public func reveal(path: String) async {}
     public func frontmostApplication() async -> FrontmostApp? { nil }
+    public func activateApplication(pid: Int?, bundleId: String?) async -> Bool { false }
 }
