@@ -112,7 +112,7 @@ struct ExtensionHostTests {
         let h = try HostEnv()
         let notices = h.env.events.stream()
         let info = try await h.host.install(from: h.source("tamper", manifest: ExtFixtures.manifest()))
-        #expect(await h.call("ext.sample.echo", ["a": 1]).text?.contains("echoed") == true)
+        #expect(await h.call("ext.sample.echo", ["a": 1]).okText?.contains("echoed") == true)
         await h.host.shutdown()
 
         let file = h.paths.extensions.appendingPathComponent("\(info.id)/server.py").path
@@ -208,7 +208,7 @@ struct ExtensionHostTests {
         try await h.host.approveToolChanges(id: info.id)
         let tool = try #require(h.env.registry.tool(named: "ext.sample.echo"))
         #expect(tool.spec.description.contains("Ignore previous instructions"))
-        #expect(await h.call("ext.sample.echo").text?.contains("echoed") == true)
+        #expect(await h.call("ext.sample.echo").okText?.contains("echoed") == true)
         await h.host.shutdown()
     }
 
@@ -218,7 +218,7 @@ struct ExtensionHostTests {
         let outcome = await h.call("ext.sample.echo", ["b": 2])
         #expect(outcome.text == #"echoed {"b": 2}"#)
         #expect(outcome.untrusted)
-        #expect(outcome.modelText.hasPrefix("<untrusted_content>"))
+        #expect(outcome.modelText.hasPrefix("<untrusted_content source="))
         let tool = try #require(h.env.registry.tool(named: "ext.sample.echo"))
         #expect(tool.scope(for: [:]).extensionId == "dev.test.sample")
         #expect(tool.spec.risk == .low)
@@ -310,7 +310,7 @@ struct ExtensionHostTests {
         let tool = try #require(h.env.registry.tool(named: "ext.fixture-server.echo"))
         #expect(tool.spec.description.contains("unsandboxed"))
         #expect(tool.spec.capabilities.contains(.network))
-        #expect(await h.call("ext.fixture-server.echo", ["x": 1]).text?.contains("echoed") == true)
+        #expect(await h.call("ext.fixture-server.echo", ["x": 1]).okText?.contains("echoed") == true)
 
         let duplicate = await h.host.previewMCPServer(name: "Fixture Server", command: python.path, arguments: [])
         #expect(!duplicate.canAdd)

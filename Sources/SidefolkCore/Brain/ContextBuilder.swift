@@ -15,14 +15,6 @@ public struct AgentAttachment: Sendable, Hashable {
     }
 }
 
-public struct SkillSummary: Sendable, Hashable {
-    public var name: String
-    public var description: String
-    public init(name: String, description: String) {
-        self.name = name
-        self.description = description
-    }
-}
 
 /// Live inputs the app provides. Each is optional; the defaults contribute nothing.
 public struct ContextSources: Sendable {
@@ -113,7 +105,11 @@ public struct ContextBuilder: Sendable {
         }
         add("notebook", "# From the notebook (may relate to this request)",
             await relevant(to: text, excluding: profiles, names: names), share: 0.35)
-        let skills = await sources.skills().map { "- \(Self.oneLine($0.name).clipped(60)): \(Self.oneLine($0.description).clipped(140))" }
+        // Descriptions of skills someone else wrote are not repeated here (SECURITY T3); loading one is untrusted.
+        let skills = await sources.skills().map { s in
+            s.trusted ? "- \(Self.oneLine(s.name).clipped(60)): \(Self.oneLine(s.description).clipped(140))"
+                : "- \(Self.oneLine(s.name).clipped(60)) (written by an agent; load to read)"
+        }
         add("skills", "# Skills (load one with the skills tool before following it)", skills, share: 0.15)
 
         let (history, historyTainted) = await self.history(threadId: threadId,

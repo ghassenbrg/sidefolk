@@ -171,6 +171,5 @@ final class HostEnv {
 }
 
 extension ToolOutcome {
-    var text: String? { if case .ok(let r) = status { return r.text } else { return nil } }
-    var failure: UserFacingError? { if case .failed(let e) = status { return e } else { return nil } }
+    var okText: String? { if case .ok(let r) = status { return r.text } else { return nil } }
 }

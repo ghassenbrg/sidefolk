@@ -22,10 +22,17 @@ public struct Skill: Sendable, Hashable {
     public var trusted: Bool { origin == .bundled || source == "user" }
 }
 
+/// A skill as listed for the model (name and one line); untrusted skills were written by someone
+/// other than the user or Sidefolk's bundle.
 public struct SkillSummary: Sendable, Hashable {
     public var name: String
     public var description: String
     public var trusted: Bool
+    public init(name: String, description: String, trusted: Bool = true) {
+        self.name = name
+        self.description = description
+        self.trusted = trusted
+    }
 }
 
 /// Reads skills from the user's Skills folder and the bundled `Resources/Skills`, and writes new ones.
