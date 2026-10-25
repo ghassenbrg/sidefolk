@@ -1,4 +1,0 @@
-interface:
-  display_name: "Sidefolk"
-  short_description: "Control Sidefolk and manage reminders or notes"
-  default_prompt: "Use $sidefolk to carry out this Sidefolk request."

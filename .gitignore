@@ -1,8 +1,0 @@
-node_modules/
-dist/
-src-tauri/target/
-src-tauri/gen/
-output/
-release/
-.DS_Store
-*.blend1
