@@ -290,6 +290,12 @@ public actor ReminderScheduler {
         var lines: [String] = []
         if firing.missed { lines.append(missedText(firing.dueAt)) }
         if let notes = r.notes, !notes.isEmpty { lines.append(notes) }
+        // "You asked yesterday 18:20." — context for one-off reminders set a while ago.
+        if r.recurrence == nil, !firing.missed, firing.dueAt.timeIntervalSince(r.createdAt) > 120 {
+            var set = TimeFormat.when(r.createdAt, now: clock.now, calendar: calendar)
+            if set.hasPrefix("Today") || set.hasPrefix("Yesterday") { set = set.prefix(1).lowercased() + set.dropFirst() }
+            lines.append("You asked \(set).")
+        }
         await attention.post(AttentionRequest(
             level: r.level, source: "reminder", title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
             actions: [

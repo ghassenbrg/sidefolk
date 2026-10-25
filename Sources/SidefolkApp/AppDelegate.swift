@@ -4,6 +4,9 @@ import SidefolkCore
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: AppCoordinator?
 
+    @objc func openSettings(_ sender: Any?) { coordinator?.openSettings() }
+    @objc func openAsk(_ sender: Any?) { coordinator?.showAsk() }
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         // Files Sidefolk creates are private to the user (docs/SECURITY.md T6, T19).
         umask(0o077)
@@ -77,6 +80,13 @@ enum MainMenu {
         let main = NSMenu()
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "About Sidefolk", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings(_:)), keyEquivalent: ",")
+        appMenu.addItem(withTitle: "Ask Sidefolk…", action: #selector(AppDelegate.openAsk(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Hide Sidefolk", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit Sidefolk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         main.addItem(appItem)

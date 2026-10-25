@@ -120,6 +120,9 @@ protocol AppServices: AnyObject {
     func disconnectClaudeCode() async -> UserFacingError?
     func connectCodex() async -> UserFacingError?
     func disconnectCodex() async -> UserFacingError?
+    /// Links the `sidefolk` command into ~/.local/bin (after confirmation), so `sidefolk run` works in a terminal.
+    func installCommandLineTool() async -> UserFacingError?
+    func removeCommandLineTool() async -> UserFacingError?
 
     // Privacy and data
     func storageSummary() async -> StorageSummary

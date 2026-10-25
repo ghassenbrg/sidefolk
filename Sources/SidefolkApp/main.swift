@@ -1,6 +1,8 @@
 import AppKit
 
+#if DEBUG
 UISnapshots.runIfRequested()
+#endif
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

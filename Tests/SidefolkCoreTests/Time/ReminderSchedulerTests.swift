@@ -28,7 +28,7 @@ import Testing
         #expect(item.refKind == "reminder")
         #expect(item.refId == r.id)
         #expect(item.level == .attention)
-        #expect(item.body == nil)
+        #expect(item.body?.hasPrefix("You asked") == true)
         #expect(item.actions.map(\.id) == ["done", "snooze10", "tomorrow"])
         #expect(item.actions.map(\.title) == ["Done", "10 min", "Tomorrow"])
         #expect(item.actions.first?.isPrimary == true)

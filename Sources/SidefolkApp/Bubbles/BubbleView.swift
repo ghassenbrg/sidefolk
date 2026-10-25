@@ -18,8 +18,11 @@ struct BubbleView: View {
         if let item = model.item {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(alignment: .top, spacing: Theme.Space.s) {
-                    Image(systemName: symbol(for: item)).foregroundStyle(accent(for: item)).font(.system(size: 14, weight: .semibold))
-                        .padding(.top, 1)
+                    // The companion's own voice needs no icon; notices from things it watches get one.
+                    if item.source != "onboarding" {
+                        Image(systemName: symbol(for: item)).foregroundStyle(accent(for: item)).font(.system(size: 14, weight: .semibold))
+                            .padding(.top, 1)
+                    }
                     VStack(alignment: .leading, spacing: 3) {
                         Text(item.title).font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)
@@ -35,7 +38,8 @@ struct BubbleView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Dismiss")
                 }
-                if model.expanded, !item.actions.isEmpty {
+                // Buttons stay when the bubble shrinks: a collapsed reminder can still be answered.
+                if !item.actions.isEmpty {
                     HStack(spacing: 6) {
                         ForEach(item.actions.prefix(3), id: \.id) { action in
                             Button(action.title) { model.respond?(item, action.id) }
@@ -49,10 +53,13 @@ struct BubbleView: View {
             }
             .padding(Theme.Space.m)
             .frame(width: 300, alignment: .leading)
-            .background(.regularMaterial)
-            .background(Theme.surface.opacity(0.6))
+            .background(Theme.surface)
+            .contentShape(Rectangle())
+            .onTapGesture { model.expanded = true }
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.bubble, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.bubble, style: .continuous).strokeBorder(accent(for: item).opacity(0.45), lineWidth: 1))
+            .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+            .padding(10)
             .onHover { model.hovering = $0 }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(item.title)

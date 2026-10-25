@@ -113,6 +113,7 @@ final class SettingsModel {
         await loadPermissions()
         storage = await services.storageSummary()
         extensions = await services.extensions()
+        samples = await services.sampleExtensions()
         skills = await services.skills()
         integration = await services.integrationStatus()
         contextPreview = await services.lastContextPreview()
@@ -378,6 +379,8 @@ final class SettingsModel {
 
     func disconnectClaudeCode() async { await integrate { await $0.disconnectClaudeCode() } }
     func connectCodex() async { await integrate { await $0.connectCodex() } }
+    func installCommandLineTool() async { await integrate { await $0.installCommandLineTool() } }
+    func removeCommandLineTool() async { await integrate { await $0.removeCommandLineTool() } }
     func disconnectCodex() async { await integrate { await $0.disconnectCodex() } }
 
     private func integrate(_ action: @MainActor (AppServices) async -> UserFacingError?) async {

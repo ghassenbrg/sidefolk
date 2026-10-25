@@ -102,7 +102,14 @@ public final class SidefolkRuntime: Sendable {
     /// Starts the background engines and the local API other agents connect to.
     /// Throws `BridgeError.alreadyRunning` when another Sidefolk owns the socket.
     public func start() async throws {
-        try server.start()
+        do {
+            try server.start()
+        } catch BridgeError.alreadyRunning {
+            throw BridgeError.alreadyRunning
+        } catch {
+            // Agents can't reach Sidefolk without the socket, but reminders and watchers must still run.
+            Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
+        }
         await scheduler.start()
         await extensions.start()
         await watchers.register(ExtensionWatcherProbe(host: extensions))

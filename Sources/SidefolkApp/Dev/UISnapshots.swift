@@ -1,3 +1,4 @@
+#if DEBUG
 import AppKit
 import SidefolkCore
 import SwiftUI
@@ -193,3 +194,4 @@ enum UISnapshots {
 
     enum SnapshotError: Error { case render(String) }
 }
+#endif

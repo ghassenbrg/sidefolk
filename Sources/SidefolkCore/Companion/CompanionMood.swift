@@ -49,7 +49,8 @@ public struct CompanionMood: Sendable {
             asleep = false
         case .toolFinished(let a, let ok):
             working[a.id] = nil
-            if working.isEmpty { flash(ok ? .success : .error, now: now) }
+            // Reading something isn't an accomplishment; the body cheers only for changes.
+            if working.isEmpty, !ok || a.mutates { flash(ok ? .success : .error, now: now) }
         case .approvalRequested(let r):
             approvals.insert(r.id)
             asleep = false

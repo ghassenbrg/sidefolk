@@ -5,8 +5,15 @@ import Testing
 @Suite struct CompanionMoodTests {
     let now = Date(timeIntervalSince1970: 1_000_000)
 
-    func activity(_ id: String, _ category: ToolCategory = .notes) -> ToolActivity {
-        ToolActivity(id: id, tool: "t", title: "T", summary: "", category: category, caller: .user)
+    func activity(_ id: String, _ category: ToolCategory = .notes, mutates: Bool = true) -> ToolActivity {
+        ToolActivity(id: id, tool: "t", title: "T", summary: "", category: category, caller: .user, mutates: mutates)
+    }
+
+    @Test func readingDoesNotCelebrate() {
+        var m = CompanionMood()
+        m.apply(.toolStarted(activity("a", .notes, mutates: false)), now: now)
+        m.apply(.toolFinished(activity("a", .notes, mutates: false), ok: true), now: now)
+        #expect(m.pose(at: now) == .idle)
     }
 
     @Test func idleByDefaultAndSleepsWhenAsked() {
