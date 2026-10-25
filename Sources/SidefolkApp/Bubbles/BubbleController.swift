@@ -11,6 +11,8 @@ final class BubbleController {
     private var timer: Task<Void, Never>?
     var anchorProvider: (() -> (NSRect, NSScreen)?)?
     var onRespond: ((AttentionItem, String?) -> Void)?
+    /// A gentle notice faded on its own: it needed no decision, so it is done.
+    var onAutoDismiss: ((AttentionItem) -> Void)?
 
     init() {
         hosted = HostedPanel(rootView: BubbleView(model: model), allowsKey: false)
@@ -66,7 +68,8 @@ final class BubbleController {
         case .gentle(let seconds):
             schedule(after: seconds) { [weak self] in self?.autoDismiss(id: item.id) }
         case .attention(let expandFor):
-            schedule(after: expandFor) { [weak self] in self?.collapse(id: item.id) }
+            // Questions and approvals never shrink: their answers must stay one click away.
+            if item.refKind != "ask" { schedule(after: expandFor) { [weak self] in self?.collapse(id: item.id) } }
         case .system(_, alsoOnDesktop: true):
             schedule(after: AttentionPolicy.expandSeconds) { [weak self] in self?.collapse(id: item.id) }
         default:
@@ -85,8 +88,9 @@ final class BubbleController {
     }
 
     private func autoDismiss(id: String) {
-        guard model.item?.id == id else { return }
+        guard let item = model.item, item.id == id else { return }
         dismiss(id: id)
+        onAutoDismiss?(item)
     }
 
     /// Attention items shrink to their title and stay until answered.

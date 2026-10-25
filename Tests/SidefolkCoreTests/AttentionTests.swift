@@ -46,11 +46,13 @@ import Testing
 
     @Test func rateLimits() {
         let recent = [(source: "watcher", at: now.addingTimeInterval(-30))]
-        guard case .hold(let until) = decide(.attention, recent: recent) else { Issue.record("spacing"); return }
+        guard case .hold(let until) = decide(.attention, source: "job", recent: recent) else { Issue.record("spacing"); return }
         #expect(until == now.addingTimeInterval(60))
         let burst = (1...3).map { (source: "watcher", at: now.addingTimeInterval(-Double(100 * $0 + 100))) }
         guard case .hold = decide(.attention, source: "watcher", recent: burst) else { Issue.record("per source"); return }
-        #expect(decide(.attention, source: "reminder", recent: burst) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)))
+        #expect(decide(.attention, source: "job", recent: burst) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)))
+        // Reminders are never spaced out: they arrive when the user asked.
+        #expect(decide(.attention, source: "reminder", recent: recent) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)))
     }
 
     @Test func menuBarOnlyMode() {

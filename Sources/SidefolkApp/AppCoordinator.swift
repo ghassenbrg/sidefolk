@@ -64,6 +64,10 @@ final class AppCoordinator {
 
         bubbles.anchorProvider = { [weak self] in self?.anchor() }
         bubbles.onRespond = { [weak self] item, action in self?.respond(to: item, action: action) }
+        bubbles.onAutoDismiss = { [weak self] item in
+            guard let self, item.source != Onboarding.source else { return }
+            Task { await self.runtime.attention.respond(id: item.id, actionId: nil) }
+        }
 
         let template = CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2)
         statusItem.install(image: NSImage(cgImage: template, size: NSSize(width: 18, height: 18)))
@@ -122,6 +126,7 @@ final class AppCoordinator {
         await refreshCollections()
         _ = await notificationsAuthorized()
         refreshRoster()
+        statusItem.refreshNow()
         if !runtime.settings.current.onboardingDone {
             try? await Task.sleep(for: .seconds(1))
             onboarding.start()
@@ -190,8 +195,13 @@ final class AppCoordinator {
             entries.append(.init(title: "\(s.agent == "codex" ? "Codex" : "Claude") needs you", detail: s.projectName ?? "a session",
                                  symbol: "hand.raised", action: { [weak self] in self?.openSession(s) }))
         }
+        let open = await runtime.attention.open().filter { $0.level >= .attention }
+        if !open.isEmpty {
+            entries.append(.init(title: "Needs you (\(open.count))", detail: open[0].title.clipped(30), symbol: "tray.full",
+                                 action: { [weak self] in self?.openHome() }))
+        }
         for r in ((try? await runtime.reminderStore.pending()) ?? []).prefix(3) {
-            guard let due = r.nextDue else { continue }
+            guard let due = r.nextDue, due.timeIntervalSince(now) < 6 * 3600 else { continue }
             entries.append(.init(title: r.title.clipped(40), detail: TimeFormat.when(due, now: now, calendar: .autoupdatingCurrent),
                                  symbol: "alarm", action: { [weak self] in self?.openHome() }))
         }
@@ -210,6 +220,16 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command.hasPrefix("drop:") {
+            let value = String(command.dropFirst(5))
+            if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
+                companionReceived(Attachment(kind: .url(url), label: url.host ?? value, text: value))
+            } else {
+                let file = URL(fileURLWithPath: value)
+                companionReceived(Attachment(kind: .file(file), label: file.lastPathComponent, text: nil))
+            }
+            return
+        }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
             return
@@ -260,11 +280,21 @@ final class AppCoordinator {
         showAsk()
     }
 
-    func showAsk(prefill: String? = nil) {
+    func showAsk(prefill: String? = nil, focus: Bool = true) {
         if let prefill { ask.text = prefill }
         companion.keepRaised(true)
         guard let (frame, screen) = anchor() else { return }
-        askPanel.show(beside: frame, on: screen)
+        askPanel.show(beside: frame, on: screen, focus: focus)
+    }
+
+    /// An agent saved or set something through Sidefolk: say so, briefly, and credit it.
+    private func creditExternal(_ activity: ToolActivity, ok: Bool) {
+        guard ok, activity.mutates, case .external(let client) = activity.caller, let card = activity.card else { return }
+        let name = AgentFacingTools.displayName(client)
+        let item = AttentionItem(level: .gentle, source: "external:\(client)", title: "\(name): \(card.title)",
+                                 body: card.subtitle, refKind: "credit")
+        companion.character.play(.nod)
+        bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
     }
 
     func openHome() {
@@ -301,6 +331,7 @@ final class AppCoordinator {
         case .attention(.withdraw(let id)):
             bubbles.withdraw(id: id)
             notifier.withdraw(id: id)
+            ask.removeQuestion(id: id)
         case .attention(.backlog(let count)):
             backlog = count
             bubbles.setBacklog(count)
@@ -308,7 +339,11 @@ final class AppCoordinator {
             companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: count)
         case .approvalRequested(let request):
             ask.add(.approval(request))
-            if !askPanel.isVisible { showAsk() }
+            // Other apps' requests appear without taking the keyboard, so a stray Return can't approve them.
+            let trusted = request.caller.kind == "user" || request.caller.kind == "agent"
+            if !askPanel.isVisible { showAsk(focus: trusted) }
+        case .toolFinished(let activity, let ok):
+            creditExternal(activity, ok: ok)
         case .approvalResolved(let id, _):
             ask.removeApproval(id: id)
         case .dataChanged(let domain):
@@ -326,6 +361,14 @@ final class AppCoordinator {
     }
 
     private func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+        // Questions that want a typed answer (and all of Sidefolk's own) go in the panel, where the user can type.
+        if item.refKind == "ask", item.source == "agent" || item.actions.isEmpty {
+            ask.add(.question(item))
+            let own = item.source == "agent"
+            if !askPanel.isVisible { showAsk(focus: own) }
+            if own { ask.focusRequest += 1 }
+            return
+        }
         switch presentation {
         case .ambient:
             break

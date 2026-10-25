@@ -82,6 +82,8 @@ protocol AppServices: AnyObject {
     func snoozeReminder(_ id: String, until: Date) async
     func cancelReminder(_ id: String) async
     func createReminder(title: String, when: String) async -> UserFacingError?
+    /// Renames and/or re-times a reminder; `when` is natural language ("tomorrow 9am"), empty keeps the time.
+    func editReminder(_ id: String, title: String, when: String) async -> UserFacingError?
 
     // Watchers
     func pauseWatcher(_ id: String) async
@@ -120,6 +122,9 @@ protocol AppServices: AnyObject {
     func disconnectClaudeCode() async -> UserFacingError?
     func connectCodex() async -> UserFacingError?
     func disconnectCodex() async -> UserFacingError?
+    /// Links the `sidefolk` command into ~/.local/bin (after confirmation), so `sidefolk run` works in a terminal.
+    func installCommandLineTool() async -> UserFacingError?
+    func removeCommandLineTool() async -> UserFacingError?
 
     // Privacy and data
     func storageSummary() async -> StorageSummary
@@ -136,4 +141,6 @@ protocol AppServices: AnyObject {
     func settingsChanged()
     func showCompanion(_ visible: Bool)
     func replayOnboarding()
+    /// Opens Settings › Agents (connect Claude Code / Codex, install the sidefolk command).
+    func openAgentSettings()
 }

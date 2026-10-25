@@ -26,12 +26,14 @@ final class AskPanelController {
         hosted.host.rootView = AskView(model: model, companionName: companionName, hotkey: hotkey)
     }
 
-    func show(beside anchor: NSRect, on screen: NSScreen) {
+    func show(beside anchor: NSRect, on screen: NSScreen, focus: Bool = true) {
         model.freshenIfStale()
         hosted.place(beside: anchor, on: screen)
         hosted.panel.orderFrontRegardless()
-        hosted.panel.makeKey()
-        model.focusRequest += 1
+        if focus {
+            hosted.panel.makeKey()
+            model.focusRequest += 1
+        }
         onVisibilityChange?(true)
     }
 
@@ -53,7 +55,6 @@ final class AskPanelController {
 
     private func didResignKey() {
         // Stay up while work or a question is pending; otherwise get out of the way.
-        let pendingApproval = model.entries.contains { if case .approval = $0.content { return true } else { return false } }
-        if !model.busy && !pendingApproval { hide() }
+        if !model.busy && !model.entries.contains(where: \.isPinned) { hide() }
     }
 }

@@ -11,6 +11,18 @@ public enum AgentFacingTools {
 
     public static func status(_ reader: StatusReader) -> any Tool { StatusTool(reader: reader) }
 
+    /// An answer the user typed (instead of picking an option) arrives as this prefix + the text.
+    public static let typedAnswerPrefix = "text:"
+
+    /// "Claude Code" for "claude-code", "Codex" for "codex"; other names as given.
+    public static func displayName(_ client: String) -> String {
+        switch client.lowercased() {
+        case "claude-code", "claude code", "claude": "Claude Code"
+        case "codex", "codex-mcp-client", "codex_cli": "Codex"
+        default: client.clipped(30)
+        }
+    }
+
     /// Where an attention item from this caller says it comes from.
     static func source(for caller: Caller) -> String {
         switch caller {
@@ -58,12 +70,13 @@ struct AskUserTool: Tool {
     var spec: ToolSpec {
         ToolSpec(
             name: "ask.user", title: "Ask the user",
-            description: "Ask the user a short question with 2 to 4 answer buttons and wait for their choice. Returns the chosen option, or \"no answer\".",
+            description: "Ask the user a short question and wait for the answer. Offer 2 to 4 answer buttons when the choices are known; "
+                + "leave options out to let them type the answer. Returns the chosen option, what they typed, or \"no answer\".",
             inputSchema: Schema.object([
                 "question": Schema.string("The question, at most 200 characters."),
-                "options": Schema.array("2 to 4 short answers (at most 40 characters each).", items: Schema.string("An answer")),
+                "options": Schema.array("Optional: 2 to 4 short answers (at most 40 characters each).", items: Schema.string("An answer")),
                 "timeout_seconds": Schema.integer("How long to wait, at most 600 (default 300).", minimum: 10, maximum: 600),
-            ], required: ["question", "options"]),
+            ], required: ["question"]),
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
@@ -72,18 +85,24 @@ struct AskUserTool: Tool {
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let question = input.string("question") else { throw ToolError.invalidInput("a question is needed") }
         let options = (input["options"]?.arrayValue ?? []).compactMap { $0.stringValue?.clipped(40) }.filter { !$0.isEmpty }
-        guard (2...4).contains(options.count), Set(options).count == options.count else {
-            throw ToolError.invalidInput("give 2 to 4 different options")
+        guard options.isEmpty || ((2...4).contains(options.count) && Set(options).count == options.count) else {
+            throw ToolError.invalidInput("give 2 to 4 different options, or none to let the user type an answer")
         }
         var timeout = min(Double(input["timeout_seconds"]?.intValue ?? 300), AgentFacingTools.maxAskSeconds)
         // Sidefolk's own brain calls tools with the executor's default 90 s timeout.
         if case .agent = context.caller { timeout = min(timeout, 80) }
         let actions = options.enumerated().map { AttentionAction(id: "option-\($0.offset)", title: $0.element, isPrimary: $0.offset == 0) }
+        // Who is asking is shown with the question; agents must not pose as Sidefolk or the user.
+        var asker: String?
+        if case .external(let client) = context.caller { asker = "\(AgentFacingTools.displayName(client)) asks" }
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
-                                                          title: question.clipped(200), actions: actions, refKind: "ask"),
+                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask"),
                                          timeout: max(10, timeout))
-        guard let answer, answer.hasPrefix("option-"), let index = Int(answer.dropFirst("option-".count)),
-              options.indices.contains(index) else {
+        guard let answer else { return ToolResult(text: "no answer") }
+        if answer.hasPrefix(AgentFacingTools.typedAnswerPrefix) {
+            return ToolResult(text: String(answer.dropFirst(AgentFacingTools.typedAnswerPrefix.count)).clipped(1000))
+        }
+        guard answer.hasPrefix("option-"), let index = Int(answer.dropFirst("option-".count)), options.indices.contains(index) else {
             return ToolResult(text: "no answer")
         }
         return ToolResult(text: options[index])

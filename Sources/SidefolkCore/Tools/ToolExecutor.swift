@@ -80,7 +80,8 @@ public final class ToolExecutor: Sendable {
         let spec = tool.spec
         let input = input.objectValue == nil ? .object([:]) : input
         let summary = tool.summary(for: input).clipped(240)
-        var act = ToolActivity(id: callId, tool: spec.name, title: spec.title, summary: summary, category: spec.category, caller: caller)
+        var act = ToolActivity(id: callId, tool: spec.name, title: spec.title, summary: summary, category: spec.category, caller: caller,
+                               mutates: spec.mutates)
 
         if let missing = Self.missingRequired(spec.inputSchema, input) {
             act.error = "Missing \(missing)"

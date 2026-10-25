@@ -54,7 +54,8 @@ final class NowModel {
         let needing = live.filter { $0.state == .needsYou }
         // A session that needs you may also have posted an attention item; show it once, as the session.
         let sessionIds = Set(needing.map(\.id))
-        attention = open.filter { !($0.refKind == "session" && sessionIds.contains($0.refId ?? "")) }
+        // Only things that need a decision: informational notices (gentle) live in Recently, not here.
+        attention = open.filter { $0.level >= .attention && !($0.refKind == "session" && sessionIds.contains($0.refId ?? "")) }
         sessionsNeedingYou = needing
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
@@ -128,6 +129,12 @@ final class NowModel {
     func snooze(_ r: Reminder, _ option: Snooze) async {
         await services.snoozeReminder(r.id, until: date(for: option))
         await reload()
+    }
+
+    func edit(_ r: Reminder, title: String, when: String) async -> UserFacingError? {
+        let error = await services.editReminder(r.id, title: title, when: when)
+        await reload()
+        return error
     }
 
     func cancel(_ r: Reminder) async {

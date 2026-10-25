@@ -17,9 +17,11 @@ public struct ToolActivity: Sendable, Hashable {
     public var card: ResultCard?
     public var error: String?
     public var undoAvailable: Bool
+    /// The tool changes something (vs. only reading); read-only results feed answers, not cards.
+    public var mutates: Bool
 
     public init(id: String, tool: String, title: String, summary: String, category: ToolCategory, caller: Caller,
-                card: ResultCard? = nil, error: String? = nil, undoAvailable: Bool = false) {
+                card: ResultCard? = nil, error: String? = nil, undoAvailable: Bool = false, mutates: Bool = false) {
         self.id = id
         self.tool = tool
         self.title = title
@@ -29,6 +31,7 @@ public struct ToolActivity: Sendable, Hashable {
         self.card = card
         self.error = error
         self.undoAvailable = undoAvailable
+        self.mutates = mutates
     }
 }
 

@@ -28,7 +28,9 @@ struct ApprovalCard: View {
                     Label("This came up while reading outside content. Check it carefully.", systemImage: "exclamationmark.triangle")
                         .font(Theme.Font.caption).foregroundStyle(Theme.danger)
                 }
-                Text("Asked by \(request.caller.description)").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                if request.caller != .user {
+                    Text("Asked by \(askerName)").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                }
                 HStack(spacing: 6) {
                     Button("Not now") { decide(.deny) }
                         .buttonStyle(.sf(.secondary))
@@ -54,10 +56,23 @@ struct ApprovalCard: View {
         let button = Button(allowTitle) { decide(.allowOnce) }
             .buttonStyle(.sf(request.risk == .high ? .destructive : .primary))
             .disabled(!armed)
+        // Return approves only your own and Sidefolk's medium requests; other agents need a click (or ⌘⏎ for high).
         if request.risk == .high {
             button.keyboardShortcut(.return, modifiers: .command)
-        } else {
+        } else if request.caller.kind == "user" || request.caller.kind == "agent" {
             button.keyboardShortcut(.defaultAction)
+        } else {
+            button
+        }
+    }
+
+    private var askerName: String {
+        switch request.caller {
+        case .external(let client): "\(AgentFacingTools.displayName(client)) (another app)"
+        case .extension(let id): "the extension \(id)"
+        case .agent: "Sidefolk"
+        case .routine: "a routine"
+        case .user: "you"
         }
     }
 
