@@ -1,0 +1,70 @@
+name: Release candidate (no publishing)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: macos-14
+    timeout-minutes: 60
+    # Configure required reviewers on this environment. Secrets are never used on PRs.
+    environment: release
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '14.0'
+      CLAUDE_CONFIG_DIR: ${{ runner.temp }}/sidefolk-claude
+      CODEX_HOME: ${{ runner.temp }}/sidefolk-codex
+      SIDEFOLK_DATA_DIR: ${{ runner.temp }}/sidefolk-data
+      SIDEFOLK_CLAUDE_SETTINGS: ${{ runner.temp }}/sidefolk-claude/settings.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: aarch64-apple-darwin
+      - run: npm ci
+      - run: npx playwright install webkit
+      - name: Build signed review artifacts
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          SIDEFOLK_UPDATER_PUBLIC_KEY: ${{ vars.SIDEFOLK_UPDATER_PUBLIC_KEY }}
+          SIDEFOLK_RELEASE_FEED: ${{ vars.SIDEFOLK_RELEASE_FEED }}
+          SIDEFOLK_RELEASE_WIRING_REVIEWED: ${{ vars.SIDEFOLK_RELEASE_WIRING_REVIEWED }}
+          SIDEFOLK_MIN_SAFE_VERSION: ${{ vars.SIDEFOLK_MIN_SAFE_VERSION }}
+          SIDEFOLK_RELEASE_NOTES_FILE: ${{ vars.SIDEFOLK_RELEASE_NOTES_FILE }}
+        run: |
+          set -euo pipefail
+          : "${APPLE_CERTIFICATE:?Missing Developer ID certificate}"
+          : "${APPLE_CERTIFICATE_PASSWORD:?Missing certificate password}"
+          : "${NOTARY_API_KEY:?Missing notary API private key}"
+          export APPLE_API_KEY_PATH="$RUNNER_TEMP/notary.p8"
+          node scripts/release-readiness.mjs
+          release_keychain="$RUNNER_TEMP/sidefolk-signing.keychain-db"
+          release_keychain_password=$(openssl rand -hex 24)
+          trap 'security delete-keychain "$release_keychain" 2>/dev/null || true; rm -f "$APPLE_API_KEY_PATH" "$RUNNER_TEMP/sidefolk.p12"' EXIT
+          umask 077
+          printf '%s' "$NOTARY_API_KEY" > "$APPLE_API_KEY_PATH"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/sidefolk.p12"
+          security create-keychain -p "$release_keychain_password" "$release_keychain"
+          security default-keychain -s "$release_keychain"
+          security unlock-keychain -p "$release_keychain_password" "$release_keychain"
+          security set-keychain-settings -t 3600 -u "$release_keychain"
+          security import "$RUNNER_TEMP/sidefolk.p12" -k "$release_keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$release_keychain_password" "$release_keychain" >/dev/null
+          bash scripts/release-build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sidefolk-arm64-${{ github.sha }}
+          path: src-tauri/target/aarch64-apple-darwin/release/p6/
+          if-no-files-found: error
+          retention-days: 30

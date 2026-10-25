@@ -13,7 +13,11 @@
     "test": "vitest run",
     "check:webkit": "node scripts/webkit-check.mjs",
     "sprites": "python3 scripts/make_sprites.py",
-    "check:webkit:p5": "node scripts/webkit-p5-check.mjs"
+    "check:webkit:p5": "node scripts/webkit-p5-check.mjs",
+    "check:reminders": "node src/dashboard/reminders.webkit.mjs",
+    "release:check": "bash scripts/release-checks.sh",
+    "release:ready": "node scripts/release-readiness.mjs",
+    "release:candidate": "bash scripts/release-build.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",
