@@ -17,7 +17,7 @@ The first version of Sidefolk: a friendly AI companion that lives on your Mac.
 - Home window (Now, Notebook, Activity, Trash) and Settings; export or delete all your data.
 
 ## Requirements
-macOS 15 or later, Apple Silicon or Intel. Claude Code, an API key or Ollama for AI features (optional).
+macOS 15 or later on Apple Silicon (the build script produces arm64; a universal build is a release-time option). Claude Code, an API key or Ollama for AI features (optional).
 
 ## Known limitations
 English language understanding only; no voice input or calendar awareness yet; watchers and reminders
