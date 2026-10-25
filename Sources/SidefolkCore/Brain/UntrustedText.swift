@@ -49,12 +49,7 @@ public enum UntrustedText {
 }
 
 public extension ToolOutcome {
-    /// What the model reads for this call: `modelText`, with untrusted results passed through
+    /// What the model reads for this call: `modelText`, whose untrusted results pass through
     /// `UntrustedText` (source label, stripped invisibles, size cap, unforgeable closing tag).
-    var promptText: String {
-        if case .ok(let result) = status, result.untrusted {
-            return UntrustedText.wrap(result.text, source: activity.tool)
-        }
-        return modelText
-    }
+    var promptText: String { modelText }
 }

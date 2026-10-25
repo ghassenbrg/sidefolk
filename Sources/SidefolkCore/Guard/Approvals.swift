@@ -56,7 +56,25 @@ public actor ApprovalBroker {
 
     public init(events: EventBus) { self.events = events }
 
+    /// Other agents get one card at a time between them (SECURITY T1): while one waits, further
+    /// requests are refused at once instead of burying the user in cards. Their names are
+    /// self-chosen, so the limit is shared rather than per name.
+    public static let maxPendingExternal = 1
+
+    /// Whether a card for this caller may be shown now.
+    public func hasRoom(for caller: Caller) -> Bool {
+        caller.kind != "external" || requests.values.filter { $0.caller.kind == "external" }.count < Self.maxPendingExternal
+    }
+
+    /// Shows the card and waits for the answer. A request `hasRoom` refuses is denied at once.
     public func request(_ req: ApprovalRequest, timeout: TimeInterval) async -> ApprovalDecision {
+        await requestIfRoom(req, timeout: timeout) ?? .deny
+    }
+
+    /// Shows the card and waits for the answer; nil, without a card, when `hasRoom` refuses it. The
+    /// check and the registration happen in one step, so parallel requests can't both find room.
+    public func requestIfRoom(_ req: ApprovalRequest, timeout: TimeInterval) async -> ApprovalDecision? {
+        guard hasRoom(for: req.caller) else { return nil }
         requests[req.id] = req
         events.publish(.approvalRequested(req))
         let id = req.id
@@ -78,6 +96,11 @@ public actor ApprovalBroker {
         requests[id] = nil
         events.publish(.approvalResolved(id: id, decision: decision))
         c.resume(returning: decision)
+    }
+
+    /// Denies every request a run is still waiting on: once the run ended, a later Allow must not act for it.
+    public func cancel(runId: String) {
+        for (id, req) in requests where req.caller.runId == runId { resolve(id: id, decision: .deny) }
     }
 
     public func pending() -> [ApprovalRequest] {

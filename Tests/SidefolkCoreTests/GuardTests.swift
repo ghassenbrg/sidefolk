@@ -68,7 +68,7 @@ import Testing
         guard case .ask(let r) = decide(.high) else { Issue.record("expected ask"); return }
         #expect(!r.canAlways)
         let scope = ToolScope(command: "npm test")
-        let g = Grant(tool: "t.x", scope: ["command": "npm test"], callerKind: "agent")
+        let g = Grant(tool: "t.x", scope: PermissionEngine.grantScope(for: scope), callerKind: "agent")
         #expect(decide(.high, scope: scope, grants: [g]) == .allow(.always))
         guard case .ask = decide(.high, scope: ToolScope(command: "npm test; rm -rf ~"), grants: [g]) else {
             Issue.record("different command must ask"); return

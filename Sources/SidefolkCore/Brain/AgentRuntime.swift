@@ -211,7 +211,8 @@ public actor AgentRuntime {
                              meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted), now: start)
         await persist { try await exchanges.append(asked) }
 
-        let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted, emit: emit)
+        let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted,
+                                   mentions: Self.mentions(in: request), emit: emit)
         let task = BrainTask(runId: runId, threadId: threadId, system: built.system, messages: built.messages, model: choice.model,
                              maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))
         var outcome = "ok"
@@ -232,6 +233,7 @@ public actor AgentRuntime {
                                 meta: ["runId": .string(runId), "outcome": .string(outcome)], now: later(than: asked))
             await persist { try await exchanges.append(note) }
         }
+        await toolbox.close()
 
         let usage = (choice.backend as? any BrainUsageReporting)?.takeUsage(runId: runId)
         if outcome == "ok", let limit = usage?.limit { outcome = "limit:\(limit)" }
@@ -252,6 +254,13 @@ public actor AgentRuntime {
     /// Records must land even for a cancelled run, and GRDB's async access throws once its task is cancelled.
     private nonisolated func persist(_ work: @escaping @Sendable () async throws -> Void) async {
         await Task.detached { try? await work() }.value
+    }
+
+    /// Links the user typed: the request itself and an attachment they wrote, never dropped content.
+    static func mentions(in request: AgentRequest) -> UserMentions {
+        var typed = request.text
+        if let a = request.attachment, !a.untrusted { typed += "\n" + a.text }
+        return UserMentions(text: typed)
     }
 
     private func offeredTools() -> [ToolSpec] {

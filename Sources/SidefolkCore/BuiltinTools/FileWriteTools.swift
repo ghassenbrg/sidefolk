@@ -23,19 +23,20 @@ private enum WriteChecks {
 
     /// Canonical paths of items that may be moved, renamed or trashed. Everything is checked before
     /// anything is touched, so a bad entry fails the whole call.
-    static func sources(_ raw: [String]?) throws -> [String] {
+    /// - Parameter moving: the items will end up somewhere else (move, rename), as opposed to the Trash.
+    static func sources(_ raw: [String]?, moving: Bool) throws -> [String] {
         guard let raw, !raw.isEmpty else { throw ToolError.invalidInput("“paths” needs at least one path.") }
         guard raw.count <= maxItems else { throw UserFacingError("That's too many items at once (the limit is \(maxItems)).") }
         var seen = Set<String>()
         var out: [String] = []
         for entry in raw {
-            let path = try source(entry)
+            let path = try source(entry, moving: moving)
             if seen.insert(path).inserted { out.append(path) }
         }
         return out
     }
 
-    static func source(_ raw: String) throws -> String {
+    static func source(_ raw: String, moving: Bool) throws -> String {
         let path = try FilePaths.resolve(raw)
         guard FilePaths.exists(path) else { throw ToolError.notFound(FilePaths.display(path)) }
         guard !FilePaths.isLink(raw) else {
@@ -43,6 +44,10 @@ private enum WriteChecks {
         }
         guard !FilePaths.isHomeTopLevel(path) else {
             throw UserFacingError("I won't move, rename or delete \(FilePaths.display(path)). It's one of the main folders in your home folder.")
+        }
+        if moving {
+            var st = stat()
+            if lstat(path, &st) == 0 { try FilePaths.refuseHardLink(st, path: path) }
         }
         return path
     }
@@ -79,9 +84,15 @@ struct FilesMoveTool: Tool {
         guard FilePaths.isDirectory(destination) else {
             throw UserFacingError("The folder \(FilePaths.display(destination)) doesn't exist.", recovery: "Create it first with files.mkdir.")
         }
-        let sources = try WriteChecks.sources(input.textList("paths"))
+        let sources = try WriteChecks.sources(input.textList("paths"), moving: true)
         for source in sources where destination == source || destination.hasPrefix(source + "/") {
             throw UserFacingError("I can't move \(FilePaths.display(source)) into itself.")
+        }
+        // Items that run code when opened (an app, a .command) stay where they are: put on the
+        // Desktop or into a synced folder, one click runs them (SECURITY T10.5).
+        for source in sources where FilePaths.isRisky(name: FilePaths.name(source)) {
+            throw UserFacingError("I won't move \(FilePaths.display(source)), because that kind of item can run programs.",
+                                  recovery: "Move it yourself in Finder if you meant to.")
         }
 
         var moved: [(from: String, to: String)] = []
@@ -143,7 +154,7 @@ struct FilesRenameTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let raw = try input.requiredText("path", limit: 1_024)
-        let source = try WriteChecks.source(raw)
+        let source = try WriteChecks.source(raw, moving: true)
         let newName = try FilePaths.validateName(try input.requiredText("new_name", limit: 255))
         let oldName = FilePaths.name(source)
         guard newName != oldName else { throw UserFacingError("It's already called “\(oldName)”.") }
@@ -220,6 +231,8 @@ struct FilesMkdirTool: Tool {
                 Self.remove(created)   // leave nothing half made
                 throw FileFailure.make(code, path: dir, action: "create that folder")
             }
+            // Sidefolk runs with umask 077; a folder in the user's own files is an ordinary 0755 one.
+            _ = chmod(dir, 0o755)
             created.append(dir)
         }
         let made = created
@@ -267,7 +280,7 @@ struct FilesTrashTool: Tool {
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let sources = try WriteChecks.sources(input.textList("paths"))
+        let sources = try WriteChecks.sources(input.textList("paths"), moving: false)
         var trashed: [(original: String, inTrash: String)] = []
         var failures: [String] = []
         for source in sources {

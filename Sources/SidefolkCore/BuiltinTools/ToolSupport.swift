@@ -9,14 +9,17 @@ extension Caller {
 
 enum ItemProvenance {
     /// Content written by an external agent, an extension or an unattended routine is not the
-    /// user's own words, so reading it back taints the turn (docs/SECURITY.md T3).
+    /// user's own words, so reading it back taints the turn (docs/SECURITY.md T3). Nor is what
+    /// Sidefolk's agent wrote while untrusted content steered its turn: that is recorded as plain
+    /// "agent" (a clean turn records "user:agent").
     static func isForeign(_ source: String) -> Bool {
-        source.hasPrefix("external") || source.hasPrefix("extension") || source.hasPrefix("routine")
+        source.hasPrefix("external") || source.hasPrefix("extension") || source.hasPrefix("routine") || source == "agent"
     }
 
     /// "from codex" for foreign sources, nil for the user's own and Sidefolk's.
     static func note(for source: String) -> String? {
         guard isForeign(source) else { return nil }
+        if source == "agent" { return "written while reading untrusted content" }
         let name = source.split(separator: ":", maxSplits: 1).dropFirst().first.map(String.init)
         return "from \(name ?? source)"
     }
