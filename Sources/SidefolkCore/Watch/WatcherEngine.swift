@@ -83,7 +83,7 @@ public actor WatcherEngine {
     /// came due while the app was closed is checked right away.
     public func start() async {
         await ensureLoaded()
-        await attention.onAction(kind: "watcher") { [weak self] item, action in await self?.handleAction(item, action) }
+        await connectAttention()
         started = true
         hub = WatchEventHub { [weak self] ids in
             guard let self else { return }
@@ -91,6 +91,11 @@ public actor WatcherEngine {
         }
         for w in watchers.values { refreshEvents(w) }
         arm()
+    }
+
+    /// Routes the buttons on watcher notices (Open, Keep watching, Stop) back here.
+    func connectAttention() async {
+        await attention.onAction(kind: "watcher") { [weak self] item, action in await self?.handleAction(item, action) }
     }
 
     /// Call when the app quits: nothing runs afterwards and checks in flight are abandoned.

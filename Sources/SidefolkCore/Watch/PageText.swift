@@ -38,6 +38,7 @@ public enum PageText {
 
     private static let comments = re(#"<!--[\s\S]*?-->"#)
     private static let hidden = re(#"<(script|style|noscript|template|svg|iframe|object|canvas)\b[\s\S]*?</\1\s*>"#)
+    private static let spaces = re(#"\s+"#)
     private static let lineBreaks = re(#"</?(?:p|div|br|li|tr|h[1-6]|section|article|header|footer|table|ul|ol|form|hr|nav|main|aside|blockquote|pre|dd|dt|dl|figure|figcaption|option|title)\b[^>]*>"#)
     private static let cells = re(#"</?(?:td|th)\b[^>]*>"#)
     private static let tags = re(#"<[^>]*>"#)
@@ -49,7 +50,8 @@ public enum PageText {
 
     static func htmlLines(_ html: String) -> [String] {
         var s = html
-        for (regex, template) in [(comments, ""), (hidden, " "), (lineBreaks, "\n"), (cells, " "), (tags, "")] {
+        // Newlines inside HTML text are just spaces; only block-level tags start a new line.
+        for (regex, template) in [(comments, ""), (hidden, " "), (spaces, " "), (lineBreaks, "\n"), (cells, " "), (tags, "")] {
             s = regex.stringByReplacingMatches(in: s, range: NSRange(s.startIndex..., in: s), withTemplate: template)
         }
         return decodeEntities(s).components(separatedBy: .newlines)

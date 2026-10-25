@@ -247,20 +247,24 @@ public struct FolderNewFileProbe: WatcherProbe {
                 pending[name] = facts.size
             }
         }
-        for name in settled where Self.partialSuffixes.contains(where: { partialsBefore.contains(name + $0) }) { downloaded.insert(name) }
-        // A file seen growing between two looks was being written or downloaded.
+        // A name that was a partial download a moment ago (report.pdf.crdownload → report.pdf), or that was seen
+        // growing between two looks, was being downloaded or written.
+        for name in settled + Array(pending.keys) where Self.partialSuffixes.contains(where: { partialsBefore.contains(name + $0) }) {
+            downloaded.insert(name)
+        }
         for name in pendingBefore.keys where pending[name] != nil && pending[name] != pendingBefore[name] { downloaded.insert(name) }
 
+        let growingBefore = Set(previous["growing"]?.arrayValue?.compactMap(\.stringValue) ?? [])
+        let stillGrowing = downloaded.union(growingBefore).filter { pending[$0] != nil }
         var state: [String: JSONValue] = [
             "seen": .array(visible.filter { pending[$0] == nil }.sorted().map { .string($0) }),
             "partials": .array(partials.map { .string($0) }),
         ]
         if !pending.isEmpty { state["pending"] = .object(pending.mapValues { .number($0) }) }
-        if !downloaded.isEmpty { state["growing"] = .array(downloaded.sorted().map { .string($0) }) }
+        if !stillGrowing.isEmpty { state["growing"] = .array(stillGrowing.sorted().map { .string($0) }) }
         let recheck: TimeInterval? = pending.isEmpty ? nil : settleRecheck
         guard !settled.isEmpty else { return ProbeResult(state: .object(state), recheckIn: recheck) }
 
-        let growingBefore = Set(previous["growing"]?.arrayValue?.compactMap(\.stringValue) ?? [])
         let folder = WatchedPath.name(dir)
         if settled.count == 1, let only = settled.first {
             let label = only.displaySafe.clipped(80)

@@ -86,7 +86,7 @@ public struct CommandProbe: WatcherProbe {
         do { result = try await ShellRunner.run(command, cwd: cwd ?? "/", timeout: timeout, grace: grace) } catch {
             throw ProbeError.failed("I couldn't start the command.")
         }
-        if result.timedOut { throw ProbeError.failed("The command took longer than \(Int(timeout)) seconds, so I stopped it.") }
+        if result.timedOut { throw ProbeError.failed("The command took longer than \(Int(timeout.rounded(.up))) seconds, so I stopped it.") }
 
         let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
         let hash = SHA256.hash(data: Data(output.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
