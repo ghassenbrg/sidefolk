@@ -20,7 +20,10 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
     let registry: any RunTokenRegistry
     private let baseEnvironment: [String: String]
     private let ledger = UsageLedger()
-    private let disabledReason = Mutex<String?>(nil)
+    /// Binaries that failed the isolation check, process-wide: the app may build a new backend
+    /// per run, and a disabled CLI must stay disabled until Sidefolk restarts.
+    private static let disabled = Mutex<[String: String]>([:])
+    private var disabledReason: String? { Self.disabled.withLock { $0[claudePath] } }
 
     /// - Parameters:
     ///   - claudePath: a path that passed `ClaudeBinary.locate`.
@@ -51,12 +54,12 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
 
     /// Binary, version and flag probe only: never a prompt.
     public func check() async -> Result<String, UserFacingError> {
-        if let reason = disabledReason.withLock({ $0 }) { return .failure(Self.disabledError(reason)) }
+        if let reason = disabledReason { return .failure(Self.disabledError(reason)) }
         return await install().map { "Claude Code \($0.version) at \(FolderAccess.displayPath($0.path))" }
     }
 
     public func run(_ task: BrainTask, toolbox: BrainToolbox, emit: @escaping @Sendable (AgentEvent) -> Void) async throws -> AgentReply {
-        if let reason = disabledReason.withLock({ $0 }) { throw Self.disabledError(reason) }
+        if let reason = disabledReason { throw Self.disabledError(reason) }
         emit(.phase(.thinking))
         let install = try await install().get()
 
@@ -105,7 +108,7 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
             let text = result.text.isEmpty ? texts.joined(separator: "\n\n") : result.text
             return AgentReply(text: text, cards: LoopBackend.cards(toolbox.outcomes))
         case .isolationBroken(let reason):
-            disabledReason.withLock { $0 = reason }
+            Self.disabled.withLock { $0[claudePath] = reason }
             Log.shared.error("brain", "claude code isolation check failed; backend disabled", ["reason": reason])
             throw Self.disabledError(reason)
         case .bridgeFailed:

@@ -348,11 +348,12 @@ struct BackendHarness {
         #expect(Date().timeIntervalSince(started) < 10)
         let pid = try #require(pid_t(fake.captured("pid")))
         #expect(await pollUntil { kill(pid, 0) != 0 })
-        // Disabled from now on, without starting the CLI again.
+        // Disabled from now on, even for a backend built afresh, without starting the CLI again.
         try FileManager.default.removeItem(atPath: fake.capture + "/pid")
-        await #expect(throws: UserFacingError.self) { _ = try await backend.run(task, toolbox: h.toolbox(task.runId), emit: { _ in }) }
+        let fresh = h.backend(fake)
+        await #expect(throws: UserFacingError.self) { _ = try await fresh.run(task, toolbox: h.toolbox(task.runId), emit: { _ in }) }
         #expect(fake.captured("pid").isEmpty)
-        guard case .failure = await backend.check() else { Issue.record("check must fail"); return }
+        guard case .failure = await fresh.check() else { Issue.record("check must fail"); return }
     }
 
     @Test func deadlineStopsTheRun() async throws {
