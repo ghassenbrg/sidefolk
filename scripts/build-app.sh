@@ -31,6 +31,7 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 [[ -f Resources/Icon/Sidefolk.icns ]] && cp Resources/Icon/Sidefolk.icns "$APP/Contents/Resources/Sidefolk.icns"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$APP/Contents/Resources/Skills"
+cp THIRD_PARTY_NOTICES.md LICENSE "$APP/Contents/Resources/" 2>/dev/null || true
 [[ -d extensions ]] && cp -R extensions "$APP/Contents/Resources/Extensions"
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.
 for b in "$BIN"/*.bundle; do [[ -e "$b" ]] && cp -R "$b" "$APP/Contents/Resources/"; done

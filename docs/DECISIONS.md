@@ -95,3 +95,26 @@ never decide its own permission" taken literally.
 Sparkle needs a signing identity, EdDSA keys and a hosted feed, none of which exist yet. Shipping a
 "Check for updates" that cannot work would be a fake feature. Data migrations are versioned so a
 later update path is safe.
+
+### D16 — Agent integrations edit the config files directly, with confirmation and backup (2026-10-26)
+**Decision:** connecting Claude Code / Codex edits `~/.claude.json`, `~/.claude/settings.json` and
+`~/.codex/config.toml` directly (ordered JSON / TOML section edit, timestamped backup beside the file,
+atomic replace, exact removal) instead of shelling out to `claude mcp add`. Only on the user's click,
+after a dialog that lists every change and the backup path.
+**Why:** predictable and testable, no CLI on PATH needed, same backup/removal semantics everywhere.
+
+### D17 — Proprietary license until the founder decides (2026-10-26)
+**Decision:** LICENSE reserves all rights. Dependencies (GRDB, KeyboardShortcuts) are MIT and listed in
+THIRD_PARTY_NOTICES.md (bundled in the app). Choosing an open-source license later is a one-file change;
+choosing one tonight would be irreversible for the founder.
+
+### D18 — Test suite runs serially by default (2026-10-26)
+**Decision:** `make test` and `release.sh` use `swift test --no-parallel` (~25 s). Under parallel
+execution a few process-spawning integration tests occasionally fail because freshly written fixture
+executables stall at launch under heavy contention; serial runs are reliable. Production spawning was
+hardened anyway (spawn lock, close-on-exec pipes, ETXTBSY retry, probe retry).
+
+### D19 — Extension watchers run through one "extension" probe kind (2026-10-26)
+**Decision:** the watcher engine knows one generic kind that calls an extension's `sidefolk/watch.check`;
+`watch.extension` (medium risk) starts them, validated against the manifest's config fields, never louder
+than "attention". The agent sees available extension watchers in its context.
