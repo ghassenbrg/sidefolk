@@ -167,3 +167,24 @@ Things that cost time to discover. Add to this when something surprises you.
 - In Vite browser checks, dynamically importing an unversioned API URL after HMR
   can create a separate preview store. Use the API resource URL already loaded by
   the page when injecting an incoming event in a regression test.
+
+## Tests must never reach the user's real files (25 October 2026, Claude Code)
+
+A first version of the uninstall test called code that reads `~/.claude.json` and
+`~/.codex/config.toml`, runs `claude mcp remove` / `codex mcp remove`, and deletes
+`~/Library/LaunchAgents/Sidefolk.plist`. `cargo test` then removed the user's real Sidefolk MCP
+entries and login item. The backups went into the test's temp folder, which the test deleted.
+
+Rules:
+- Any function that touches agent configs, the login item or other paths under `$HOME` takes
+  those paths as arguments (`uninstall::Places`). Tests pass temp paths and an empty agent list.
+- Never call `Agent::installed()`, `mcp_setup::run()` or the autostart plugin from a test.
+- A test that is much slower than the others (seconds rather than milliseconds) probably spawned
+  a CLI: stop and check what it touched (`stat` on `~/.claude.json`, `~/.codex/config.toml`).
+
+## Claude Code must only run a Sidefolk that knows `hook` (25 October 2026)
+
+The hook line runs `<app> hook`. A binary from before command hooks doesn't know `hook` and
+starts the whole app instead, once per tool call. Only new versions install the line, so the risk
+is a downgrade after installing. Don't test `hook` against an old binary (a stale
+`target/release/sidefolk` started a full app copy this way).

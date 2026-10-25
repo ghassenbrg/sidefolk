@@ -237,3 +237,38 @@ Newest last. Each entry: what, why, and what would change it.
       form keeps them.
     - **Reminder form defaults** are the next full hour, or tomorrow 09:00 outside 07:00–21:59
       (B7).
+45. **P4 Claude Code trust (25 October 2026).**
+    - **Transport.** Hooks and MCP calls reach the app over `<data>/hook.sock`: folder 0700,
+      socket 0600, and the peer must be the same user. TCP 47821 now only serves legacy HTTP
+      hooks and the dev endpoints.
+    - **Hook line.** Claude Code runs
+      `test -x '<exe>' && exec '<exe>' hook || exit 0 # sidefolk-hook`, which is Sidefolk's own
+      binary in hook mode, not a separate `externalBin`.
+      - One signed binary, nothing extra to notarize.
+      - Hook mode runs before Tauri starts (about 10 ms) and fails closed: no app, a deleted app,
+        bad JSON or a malformed answer means it prints nothing and exits 0.
+      - The `# sidefolk-hook` marker is how setup tells current, legacy (HTTP) and needs-repair
+        (moved app) apart. Setup refuses a translocated app.
+    - **Routing.**
+      - A request is held on Pip unless the user is looking at that session. Terminal and iTerm
+        check the tty of the selected tab.
+      - Ghostty, WezTerm, VS Code and Cursor count only if they are in front and host exactly
+        one live session; Warp, the Claude app and tmux never count.
+      - While a request is held, a 500 ms watch releases it (no answer printed) when the user
+        goes to that session. The card closes with "Moved to your terminal".
+    - **Health.** off / waiting (connected, nothing heard yet) / working / repair / unavailable
+      (the socket couldn't open), with Repair in Settings.
+    - **Uninstall.** In the window, the menu bar, and `sidefolk uninstall [--delete-data]`. It
+      removes only our marked hooks and our MCP entries (with backups) and the login item. Data
+      goes to the Bin only when asked.
+      - Everything it touches is passed in (`uninstall::Places`), so tests never reach real
+        files.
+    - **Accepted after Codex's review:**
+      - The trust boundary is the user account. The hook doesn't authenticate the process
+        answering on the socket (a same-user process could edit Claude's settings anyway); it
+        only accepts the exact answer shape.
+      - Putting an older Sidefolk at the hook's path makes hooks start that old app; Repair
+        notices a moved app, not a downgrade.
+    - **Spikes:** docs/SPIKES-P4.md. Codex has stable, documented hooks, including
+      `PermissionRequest`, which can answer. V1-D2 ("Pip never answers Codex approvals") stands
+      until the founder decides.

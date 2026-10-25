@@ -53,6 +53,8 @@ export type PromptOptions = {
   preview?: (text: string) => string;
   /** One-tap starters shown under an empty field. */
   suggestions?: string[];
+  /** The work sessions, above the field ("api · needs you"); a tap opens one (docs/V1.md V1-D11). */
+  sessions?: { label: string; state: string; open: () => void }[];
   /** Resolves to what the pet says afterwards. */
   submit: (text: string) => Promise<string | void>;
 };
@@ -310,7 +312,21 @@ export class Bubble {
     input.addEventListener("blur", () => setTimeout(() => this.prompting && !input.disabled && this.endPrompt(), 150));
     const head = el("div", "who");
     head.append(el("span", "name", options.who));
-    this.root.append(head, input, chips, preview);
+    const sessions = el("div", "sessions");
+    sessions.setAttribute("aria-label", "Work sessions");
+    for (const s of options.sessions ?? []) {
+      const row = el("button", "session-row");
+      row.type = "button";
+      row.append(el("span", "session-label", s.label), el("span", "session-state", s.state));
+      row.addEventListener("mousedown", (e) => e.preventDefault());
+      row.addEventListener("click", () => {
+        this.endPrompt();
+        s.open();
+      });
+      sessions.append(row);
+    }
+    sessions.hidden = !options.sessions?.length;
+    this.root.append(head, sessions, input, chips, preview);
     update();
     requestAnimationFrame(() => input.focus());
   }

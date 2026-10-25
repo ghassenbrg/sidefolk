@@ -99,7 +99,7 @@ export function sessionRow(app: App, s: SessionInfo) {
   return h(
     "div",
     { class: "row line" },
-    h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(s.source)} · ${folder(s.project || s.cwd)}` }), h("span", { class: "meta", text: `${sessionLabel(s.id)} · ${s.verb}${s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}` })),
+    h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(s.source)} · ${folder(s.project || s.cwd)}` }), h("span", { class: "meta", text: `${sessionLabel(s.id)}${app.state.hosts[`${s.source}:${s.id}`] ? ` · in ${app.state.hosts[`${s.source}:${s.id}`]}` : ""} · ${s.verb}${s.detail && s.state !== "waiting" ? ` ${s.detail}` : ""}` })),
     h(
       "div",
       { class: "inline" },

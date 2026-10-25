@@ -375,3 +375,42 @@ body.large-text .bubble button {
   pointer-events: none;
   filter: hue-rotate(var(--hue, 0deg));
 }
+
+/* The work sessions above the field: one tap opens one (docs/V1.md V1-D11). */
+.bubble .sessions {
+  display: grid;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+.bubble .sessions[hidden] {
+  display: none;
+}
+.bubble .session-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--canvas);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.bubble .session-row:hover,
+.bubble .session-row:focus-visible {
+  background: var(--mint-soft);
+  color: var(--on-mint-soft);
+}
+.bubble .session-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bubble .session-state {
+  flex: none;
+  color: var(--muted);
+}

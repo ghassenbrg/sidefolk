@@ -61,14 +61,33 @@ Open it from the Dock, the menu bar icon, or "open Sidefolk".
 Settings → AI tools connects Claude Code. Each change is explained first, and a backup of its
 settings is kept.
 
-- When a session asks for permission and you aren't in a terminal or editor, Pip shows the request:
-  the full command and folder, then Decline, Allow once, or Answer in Claude's window. Pip never
-  answers on its own.
+- When a session asks for permission and you aren't looking at it, Pip shows the request: the
+  full command and folder, then Decline, Allow once, or Answer in Claude's window. Pip never
+  answers on its own. If you go to that session while Pip is asking, the request moves there
+  ("Moved to your terminal"). If nobody answers, Claude Code asks in its own window after
+  about a minute.
+- "Looking at it" means its tab is in front in Terminal or iTerm. In Ghostty, WezTerm, VS Code
+  and Cursor it means the app is in front with only that one session running there; in Warp,
+  tmux or over ssh, Pip always asks.
+- Click Pip to see your sessions above the field, with what each is doing; click one to open
+  it.
+- Settings → AI tools says how Claude Code's connection is doing: Connected (nothing heard
+  yet), Working, Needs repair (Sidefolk moved or was updated; press Repair), or Can't listen.
+- If Sidefolk isn't running, or you deleted it, Claude Code carries on as if it weren't
+  installed.
 - When a session finishes or fails, Pip says so once.
 - "Open" brings the session forward. In Terminal and iTerm it selects its tab; other apps come
   forward, and you pick the session there.
 - Codex: its companion tools (notes, questions, reminders) can be connected too. Watching Codex
   sessions is not available yet.
+
+## Uninstalling
+
+Settings → About & data → **Disconnect & uninstall** (also in the menu bar). It removes only
+what Sidefolk added to Claude Code and Codex, keeping a backup of each settings file. It also
+stops Sidefolk opening at login, then quits; drag Sidefolk to the Bin afterwards. Your reminders
+and notes stay unless you tick "Also move my reminders, notes and backups to the Bin". Without
+the app: `/Applications/Sidefolk.app/Contents/MacOS/sidefolk uninstall`.
 
 ## Privacy
 

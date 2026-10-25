@@ -5,9 +5,9 @@
 //! runs nowhere visible (tmux, ssh) or is a Codex thread Sidefolk started in the background
 //! continues in a new terminal window with `claude --resume` or `codex resume`.
 //!
-//! Where a session runs is found once per session: the hook server knows the TCP port Claude
-//! Code connected from, `lsof` names the process that owns it, and the process tree leads up
-//! to the app hosting it.
+//! Where a session runs is found once per session: a hook arrives over the socket from a process
+//! whose parent is Claude Code (or, from older HTTP hooks, from a TCP port `lsof` names), and the
+//! process tree leads up to the app hosting it.
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -23,16 +23,28 @@ use crate::bus::Shared;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Host {
     pub pid: u32,
+    /// The executable at `pid` when it was found, so a reused pid isn't taken for the session.
+    pub comm: String,
     /// The outermost .app the session runs in; `None` for tmux, ssh and other detached shells.
     pub app: Option<PathBuf>,
     /// `/dev/ttys004`, to pick the right tab in Terminal or iTerm.
     pub tty: Option<String>,
 }
 
+/// Who sent a hook request: the TCP port of an older HTTP hook, or the process on the socket.
+#[derive(Clone, Copy, Debug)]
+pub enum Peer {
+    Port(u16),
+    Pid(u32),
+}
+
 #[derive(Default)]
 pub struct Hosts {
     known: Mutex<HashMap<String, Host>>,
     looking: Mutex<HashSet<String>>,
+    /// The last answer of each tab script, shared by every request held at once (each one
+    /// checks every 500 ms).
+    tabs: Mutex<HashMap<&'static str, (std::time::Instant, Option<String>)>>,
 }
 
 impl Hosts {
@@ -40,18 +52,34 @@ impl Hosts {
         self.known.lock().unwrap().get(key).cloned()
     }
 
-    /// Finds where a Claude session runs from the port its hook request came from, once.
-    pub fn locate_claude(&self, app: &AppHandle, session: &str, peer_port: u16) {
+    /// Forgets a session that ended: Open then resumes it instead of focusing whatever reuses
+    /// its pid.
+    pub fn forget(&self, key: &str) {
+        self.known.lock().unwrap().remove(key);
+    }
+
+    /// Finds where a Claude session runs from the hook request's sender: once, and again if the
+    /// process it was found in has gone.
+    pub fn locate_claude(&self, app: &AppHandle, session: &str, peer: Peer) {
         if session.is_empty() {
             return;
         }
         let key = format!("claude:{session}");
-        if self.known.lock().unwrap().contains_key(&key) || !self.looking.lock().unwrap().insert(key.clone()) {
+        if self.get(&key).is_some_and(|host| alive(&host)) || !self.looking.lock().unwrap().insert(key.clone()) {
             return;
         }
         let app = app.clone();
         tauri::async_runtime::spawn_blocking(move || {
-            let host = owner_of_port(peer_port).and_then(host_of);
+            let claude = match peer {
+                Peer::Port(port) => owner_of_port(port),
+                // The hook line `exec`s Sidefolk, so the sender's parent is Claude Code, unless
+                // a shell sits in between.
+                Peer::Pid(pid) => {
+                    let table = processes();
+                    table.get(&pid).and_then(|(parent, _, _)| past_shells(*parent, &table))
+                }
+            };
+            let host = claude.and_then(host_of);
             let hosts = &app.state::<std::sync::Arc<Shared>>().hosts;
             if let Some(host) = host {
                 if cfg!(debug_assertions) {
@@ -109,28 +137,119 @@ fn bundle_of(executable: &str) -> Option<PathBuf> {
     Some(bundle)
 }
 
+/// The first process from `pid` up that isn't a shell.
+fn past_shells(pid: u32, table: &HashMap<u32, Process>) -> Option<u32> {
+    let mut current = pid;
+    for _ in 0..8 {
+        let (parent, _, comm) = table.get(&current)?;
+        let name = comm.rsplit('/').next().unwrap_or(comm).trim_start_matches('-');
+        if !matches!(name, "sh" | "bash" | "zsh" | "dash" | "fish") {
+            return Some(current);
+        }
+        current = *parent;
+    }
+    None
+}
+
 fn host_of(pid: u32) -> Option<Host> {
     walk(pid, &processes())
 }
 
 fn walk(pid: u32, table: &HashMap<u32, Process>) -> Option<Host> {
-    let (_, tty, _) = table.get(&pid)?;
+    let (_, tty, own) = table.get(&pid)?;
     let mut current = pid;
     for _ in 0..32 {
         let (parent, _, comm) = table.get(&current)?;
         if let Some(app) = bundle_of(comm) {
-            return Some(Host { pid, app: Some(app), tty: tty.clone() });
+            return Some(Host { pid, comm: own.clone(), app: Some(app), tty: tty.clone() });
         }
         if *parent <= 1 {
             break;
         }
         current = *parent;
     }
-    Some(Host { pid, app: None, tty: tty.clone() })
+    Some(Host { pid, comm: own.clone(), app: None, tty: tty.clone() })
 }
 
-fn alive(pid: u32) -> bool {
-    Command::new("/bin/ps").args(["-p", &pid.to_string()]).output().is_ok_and(|o| o.status.success())
+/// The session's process still runs: its pid is there with the same executable.
+fn alive(host: &Host) -> bool {
+    Command::new("/bin/ps").args(["-p", &host.pid.to_string(), "-o", "comm="]).output().is_ok_and(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).trim() == host.comm)
+}
+
+/// How each host's frontmost window is matched to a session (docs/V1.md §7.2): the bundle that
+/// must be in front, and whether its selected tab's tty can be read (Terminal, iTerm).
+fn host_kind(app: &Path) -> Option<(&'static str, Option<&'static str>)> {
+    Some(match app_name(app).as_str() {
+        "Terminal" => ("com.apple.Terminal", Some("tell application \"Terminal\" to get tty of selected tab of front window")),
+        "iTerm" | "iTerm2" => ("com.googlecode.iterm2", Some("tell application \"iTerm2\" to get tty of current session of current window")),
+        "Ghostty" => ("com.mitchellh.ghostty", None),
+        "WezTerm" => ("com.github.wez.wezterm", None),
+        "Visual Studio Code" => ("com.microsoft.VSCode", None),
+        "Cursor" => ("com.todesktop.230313mzl4w4u92", None),
+        // Warp, the Claude app, and anything else: never treated as looking at the session.
+        _ => return None,
+    })
+}
+
+/// Where each known session runs, by name ("Ghostty", "tmux or ssh"), for the window's labels.
+#[tauri::command]
+pub fn session_hosts(shared: State<'_, std::sync::Arc<Shared>>) -> HashMap<String, String> {
+    shared.hosts.known.lock().unwrap().iter().map(|(key, host)| (key.clone(), host.app.as_deref().map_or_else(|| "tmux or ssh".to_string(), app_name))).collect()
+}
+
+impl Hosts {
+    /// Whether the user is looking at this session now: its app is in front and, where the app
+    /// can say, its tab is the selected one. Elsewhere the app must host this one live Claude
+    /// session only. None when it isn't known where the session runs.
+    pub fn focused(&self, session_key: &str, frontmost: Option<&str>) -> Option<bool> {
+        let host = self.get(session_key)?;
+        let app = host.app.as_ref()?;
+        let Some((bundle, tty_script)) = host_kind(app) else { return Some(false) };
+        if frontmost != Some(bundle) {
+            return Some(false);
+        }
+        if let (Some(script), Some(tty)) = (tty_script, host.tty.as_deref()) {
+            return Some(self.selected_tty(script).as_deref() == Some(tty));
+        }
+        // Ghostty, WezTerm, VS Code: no tab to read yet, so only one live session there counts.
+        let same_app = self.known.lock().unwrap().values().filter(|h| h.app.as_ref() == Some(app)).cloned().collect::<Vec<_>>();
+        Some(same_app.iter().filter(|h| alive(h)).count() == 1)
+    }
+
+    /// The selected tab's tty, asked at most every 400 ms whoever asks, and never waiting more
+    /// than 2 s on an app that doesn't answer.
+    fn selected_tty(&self, script: &'static str) -> Option<String> {
+        if let Some((at, answer)) = self.tabs.lock().unwrap().get(script)
+            && at.elapsed() < std::time::Duration::from_millis(400)
+        {
+            return answer.clone();
+        }
+        let answer = osascript_within(script, std::time::Duration::from_secs(2));
+        self.tabs.lock().unwrap().insert(script, (std::time::Instant::now(), answer.clone()));
+        answer
+    }
+}
+
+/// An AppleScript's output, or None if it fails or takes longer than `limit` (it is stopped).
+fn osascript_within(script: &str, limit: std::time::Duration) -> Option<String> {
+    let mut child = Command::new("/usr/bin/osascript").args(["-e", script]).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::null()).spawn().ok()?;
+    let started = std::time::Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) if status.success() => {
+                let mut out = String::new();
+                std::io::Read::read_to_string(child.stdout.as_mut()?, &mut out).ok()?;
+                return Some(out.trim().to_string());
+            }
+            Ok(None) if started.elapsed() < limit => std::thread::sleep(std::time::Duration::from_millis(20)),
+            Ok(None) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return None;
+            }
+            _ => return None,
+        }
+    }
 }
 
 /// Shell single quotes.
@@ -285,13 +404,13 @@ pub async fn open_session(
     let key = format!("{source}:{session}");
     let host = shared.hosts.get(&key);
     if resume != Some(true) {
-        if let Some(host) = host.as_ref().filter(|h| h.app.is_some() && alive(h.pid)) {
+        if let Some(host) = host.as_ref().filter(|h| h.app.is_some() && alive(h)) {
             let host = host.clone();
             let message = tauri::async_runtime::spawn_blocking(move || focus(&host)).await.map_err(|e| e.to_string())??;
             // The user is going to the session: its waiting requests move to its own prompt there
             // (docs/V1.md V1-D4).
             for id in shared.requests.release_session(&source, &session) {
-                let _ = app.emit("permission-closed", &id);
+                let _ = app.emit("permission-released", &id);
             }
             shared.requests.changed(&app);
             return Ok(Opened { how: "focused", message });
@@ -326,6 +445,49 @@ pub fn terminals() -> Vec<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_session_counts_as_looked_at_only_in_its_own_app_and_tab() {
+        let hosts = Hosts::default();
+        let me = std::process::id();
+        let ghostty = PathBuf::from("/Applications/Ghostty.app");
+        let comm = Command::new("/bin/ps").args(["-p", &me.to_string(), "-o", "comm="]).output().map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string()).unwrap();
+        hosts.known.lock().unwrap().insert("claude:a".into(), Host { pid: me, comm: comm.clone(), app: Some(ghostty.clone()), tty: None });
+        // Unknown session: not known to be looked at.
+        assert_eq!(hosts.focused("claude:nope", Some("com.mitchellh.ghostty")), None);
+        // Another app in front: not looked at.
+        assert_eq!(hosts.focused("claude:a", Some("com.apple.Safari")), Some(false));
+        // Ghostty in front with one live session there: looked at.
+        assert_eq!(hosts.focused("claude:a", Some("com.mitchellh.ghostty")), Some(true));
+        // Two live sessions in Ghostty: it can't tell which tab, so neither counts.
+        hosts.known.lock().unwrap().insert("claude:b".into(), Host { pid: me, comm: comm.clone(), app: Some(ghostty), tty: None });
+        assert_eq!(hosts.focused("claude:a", Some("com.mitchellh.ghostty")), Some(false));
+        // The Claude app and Warp are never treated as looking at a session.
+        hosts.known.lock().unwrap().insert("claude:c".into(), Host { pid: me, comm: comm.clone(), app: Some(PathBuf::from("/Applications/Claude.app")), tty: None });
+        assert_eq!(hosts.focused("claude:c", Some("com.anthropic.claudefordesktop")), Some(false));
+        // A pid now running something else is not the session any more.
+        let gone = Host { pid: me, comm: "/usr/local/bin/claude".into(), app: None, tty: None };
+        assert!(!alive(&gone));
+    }
+
+    #[test]
+    fn skips_the_shells_between_claude_and_the_hook() {
+        let table = parse_ps(
+            "  1     0 ??       /sbin/launchd\n\
+             600     1 ttys004  /Users/me/.local/bin/claude\n\
+             601   600 ttys004  /bin/sh\n\
+             602   601 ttys004  -zsh\n",
+        );
+        assert_eq!(past_shells(602, &table), Some(600));
+        assert_eq!(past_shells(600, &table), Some(600));
+    }
+
+    #[test]
+    fn a_script_that_hangs_is_stopped() {
+        let started = std::time::Instant::now();
+        assert_eq!(osascript_within("delay 5", std::time::Duration::from_millis(300)), None);
+        assert!(started.elapsed() < std::time::Duration::from_secs(2));
+    }
 
     #[test]
     fn finds_the_app_hosting_a_session() {

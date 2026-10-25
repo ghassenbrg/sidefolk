@@ -7,6 +7,7 @@ import type { App } from "./app";
 import { button, h, TERMINAL_LABELS } from "./dom";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
+import { sheet } from "./dialog";
 import { CHARACTERS, lookOf, picture } from "../roster";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
@@ -70,8 +71,36 @@ function characterChoices(app: App) {
   return choices;
 }
 
+/** Claude Code's connection in words (docs/V1.md V1-D13): one state, and Repair when it needs it. */
+const HEALTH: Record<string, [string, string]> = {
+  off: ["Not connected", ""],
+  waiting: ["Connected", "Waiting for your first Claude Code session."],
+  working: ["Working", "Hearing your Claude Code sessions."],
+  repair: ["Needs repair", "Sidefolk's hooks are from an older version, or Sidefolk has moved. Repair to keep hearing Claude Code."],
+  unavailable: ["Can't listen", ""],
+};
+
 function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools", action: string, title: string, what: string, change: string, stops: string) {
   const on = app.state.integrations[key];
+  const health = key === "claude_hooks" ? app.state.integrations.claude_health : null;
+  if (health === "repair" || health === "unavailable" || health === "waiting" || health === "working") {
+    const [word, line] = HEALTH[health];
+    return h(
+      "div",
+      { class: "setting tool" },
+      h(
+        "div",
+        { class: "setting-text" },
+        h("strong", {}, title, " ", h("span", { class: `pill${health === "working" || health === "waiting" ? " on" : ""}`, text: word })),
+        h("p", { class: "muted", text: health === "unavailable" ? (app.state.integrations.hook_error ?? "") : line || what }),
+        h("details", {}, h("summary", { text: "What disconnecting does" }), h("p", { class: "muted", text: stops })),
+      ),
+      button(health === "repair" ? "Repair…" : "Disconnect…", () => {
+        void invoke("tray_action", { action }).catch((e) => app.toast(String(e), undefined, true));
+        app.toast("Confirm in the dialog that opened.");
+      }, health === "repair" ? "primary" : ""),
+    );
+  }
   return h(
     "div",
     { class: "setting tool" },
@@ -87,6 +116,32 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
       app.toast("Confirm in the dialog that opened.");
     }, on ? "" : "primary"),
   );
+}
+
+/** Disconnect & uninstall (docs/V1.md V1-X2): says exactly what happens, then does it and quits. */
+function uninstallSheet() {
+  const remove = h("input", { type: "checkbox", id: "uninstall-delete-data" });
+  const body = h(
+    "form",
+    { "aria-label": "Disconnect and uninstall" },
+    h("p", { text: "Sidefolk will remove its hooks from Claude Code and its tools from Claude Code and Codex, keeping a backup of each settings file. Your other settings stay as they are. It also stops opening at login, then quits." }),
+    h("div", { class: "setting" }, h("div", { class: "setting-text" }, h("label", { for: remove.id, text: "Also move my reminders, notes and backups to the Bin" }), h("p", { class: "muted", text: "Off: they stay in your data folder, and come back if you install Sidefolk again." })), remove),
+  );
+  const editor = sheet("Disconnect & uninstall?", body);
+  const done = h("ul", { class: "help-list", "aria-live": "polite" });
+  const go = h("button", { type: "submit", class: "danger", text: "Uninstall" });
+  body.append(done, h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), go));
+  body.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    go.disabled = true;
+    try {
+      const lines = await invoke<string[]>("uninstall_sidefolk", { deleteData: remove.checked });
+      done.replaceChildren(...[...lines, "Sidefolk quits in a few seconds. Then drag it from Applications to the Bin."].map((line) => h("li", { text: line })));
+    } catch (error) {
+      done.replaceChildren(h("li", { text: String(error) }));
+      go.disabled = false;
+    }
+  });
 }
 
 function settingsContents(app: App) {
@@ -231,6 +286,7 @@ function settingsContents(app: App) {
       row("Your data", `Your companion, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
       row("Logs", "Errors and crashes, to attach to a bug report.", button("Show in Finder", () => void invoke("reveal_data_dir", { logs: true }))),
       row("Setup guide", "The short introduction from the first launch.", button("Run setup again", () => app.go("setup", "start"))),
+      row("Disconnect & uninstall", "Removes what Sidefolk added to Claude Code and Codex (with backups), turns off opening at login, and quits. Your data stays unless you choose otherwise.", button("Disconnect & uninstall…", () => uninstallSheet(), "danger")),
       row(
         "Report a problem",
         "Copies a short report (versions, settings, recent errors; never your reminders, notes or names) to paste into an email or an issue.",

@@ -21,79 +21,73 @@ the comparison with Codex's audit, and the supreme council's papers and RULING.m
   - requests in Rust, with Codex's review fixes
   - no polling, single instance
   - Pip and Spark
-- Release build 5.05 MiB at P3; not relaunched on the user's Mac.
+- **P2 and P3 are committed** (`ad8d98a`, `b69a91e`); their notes moved to [LOG.md](LOG.md). P4 is below.
+- Release build 5.11 MiB at P4; not relaunched on the user's Mac.
 
-## P2 Reminders & work log (25 October, Claude Code): built, verified in WebKit
+## P4 Claude Code trust (25 October, Claude Code): built, verified, reviewed by Codex
 
-- **Series engine in Rust** (`series.rs`, `reminders.rs`; DECISIONS #43):
-  - The anchor and occurrence are separate, and a snooze moves only `due`.
-  - Done and Skip move to the next occurrence counted from the anchor.
-  - A 20 s tick records missed occurrences and keeps the latest.
-  - DST in Paris and New York, month ends and weekdays are tested.
-- **Notifications:** macOS holds up to 60 (`queue`): every one-off, then each series' next
-  occurrences in turn. Clicking one opens that reminder.
-- **Answers:** the overlay card adds "This evening" before 17:00 and "Skip this one" for
-  repeats. The window's Snooze and Mark complete go through `answer_reminder`, and the detail
-  view has Skip.
-- **Overdue and away:** after a quit or sleep, late reminders are gathered on one "While you
-  were away" card. Today labels overdue reminders.
-- **Work log:**
-  - "note: …" and "log …" go to Log; `matchNotebook` is exact-or-ask.
-  - "Noted in X" has Undo and Move, and stays until it's closed.
-  - `move_note` in Rust.
-  - Notes page: Log first, the "All entries" timeline by week with a notebook filter, and
-    date-aware search (`matchesNote`). Move on every entry.
-  - The sidebar and menu say "Work log".
-- **Your week:** a view (route `week`) and a Friday 16:00 card (setting `your_week`, default
-  on).
-- **Log it:** a finished session's card stores the project and the first prompt line in Log.
-- **Verified:** typecheck, 80 Vitest, 53 Rust, WebKit (Log capture, exact-or-ask, timeline
-  search, Your week, renamed accessible buttons). Not hand-checked: real notifications after
-  quit or sleep, and DST on a real Mac (G2-core).
+- **Sidecar over a Unix socket** (`socket.rs`, DECISIONS #45):
+  - Claude Code runs `test -x '<exe>' && exec '<exe>' hook || exit 0 # sidefolk-hook`.
+  - `sidefolk hook` forwards stdin to `<data>/hook.sock` (folder 0700, socket 0600,
+    same-uid peer). It prints only a well-formed permission answer, else nothing, and always
+    exits 0 (about 10 ms with no app).
+  - MCP calls go over the socket with the token. HTTP on 47821 is kept for legacy hooks and
+    `/dev/*`.
+- **Setup** (`claude_setup.rs`): installs command hooks and knows Missing, Current and
+  NeedsRepair (legacy HTTP or a moved app). Repair is in Settings, and setup refuses a
+  translocated app.
+- **Uninstall** (`uninstall.rs`): window (About & data), menu bar, `sidefolk uninstall
+  [--delete-data]`. It removes only our hooks and MCP entries (with backups) and the login
+  item; data goes to the Bin only when asked.
+- **Routing:**
+  - Requests are held on Pip unless that session is focused (`Hosts::focused`, the host
+    matrix in V1 §7.2).
+  - While held, a 500 ms watch releases the request when the user goes there. Pip says "Moved
+    to your terminal".
+  - Open releases too.
+- **Identity:** clicking Pip lists up to 4 live sessions (folder, first prompt line, state)
+  above the field. The window's session rows say where each runs ("in Ghostty").
+- **Health:** Settings → AI tools shows one state (Connected / Working / Needs repair / Can't
+  listen) with Repair.
+- **Spikes:** docs/SPIKES-P4.md. Ghostty has no tty in its dictionary, so the fallback stays;
+  WezTerm isn't installed here. **Codex 0.160 has stable documented hooks, including
+  `PermissionRequest`**: F-14 can use the sidecar in P6 (founder decision needed on V1-D2).
+- **Codex review:** 11 findings. Fixed with tests:
+  - exact answer schema;
+  - `CLAUDE_CONFIG_DIR`;
+  - osascript 2 s deadline with a shared 400 ms cache;
+  - one hook deadline with a 64 KB reply cap;
+  - only a stale socket is ever replaced, never through a link;
+  - 32 connections;
+  - uninstall keeps data on any failure and moves it only as the app quits; the CLI refuses
+    while the app runs;
+  - pid reuse, wrapper shells, SessionEnd forgets;
+  - per-event install check;
+  - the ignored test canonicalizes.
 
-## P3 Quick add (25 October, Claude Code): built, verified
-
-- **The corpus** (`src/corpus.test.ts`): 300 phrases, two time zones plus the DST night. All
-  three gates hold: 100% on the corpus (≥95% required), no shell without `$`, no silently wrong
-  time.
-- **Parser fixes the corpus found:**
-  - `$` comes first.
-  - "?" means help.
-  - "tonight at 9" is 21:00.
-  - "14h" and "14h30" are read.
-  - "on the 1st" is the next 1st.
-  - A vague "the week" loses to a named day.
-  - "every evening" gets its time.
-  - A repeat with no time starts at the next 09:00.
-  - Weekday lists work (`Repeat.days`, `series.rs`).
-- **Small talk** (kind `chat`): about 20 replies with a pose ("good night" sleeps, praise
-  cheers).
-- **Ambiguous hours** offer both readings as buttons, on the companion and in the window.
-- **The window's Quick add finishes in the window** (`dashboard/tell.ts` `finish`): reminder
-  sheet with Undo, notes exact-or-ask, notebooks, navigation, open session and open things,
-  small talk, and "Save as a note?". Rename and hide still go to the companion.
-- **The Add reminder form** always holds a real date and time (B7 fixed).
-- **Verified:** typecheck, 88 Vitest (corpus included), 54 Rust, WebKit (window Quick add:
-  reminder, ambiguous, Log note, small talk; companion ambiguous card).
+  Accepted (DECISIONS #45): same-user trust, and an older binary at the hook path.
+- **Verified:** typecheck, 88 Vitest, 64 Rust, clippy (only the 6 older warnings), release
+  build 5.11 MiB (hook mode with no app: silent, exit 0, 10 ms),
+  WebKit (health pill, "Can't listen", uninstall sheet keeps data by default, Pip's session
+  list).
+  - **Not hand-checked:** a real Claude Code session going through the sidecar, release on
+    focus, and Repair after moving the app (G2-agent).
 
 ## Next step (exact)
 
-**P4 Claude Code trust** (V1 §7, §10, §14), the agent track. In order:
-1. The sidecar hook binary `sidefolk-hook` (Tauri `externalBin`) on a 0700 Unix socket with a
-   same-uid peer check, plus the guarded wrapper line `test -x … && exec … hook || exit 0`.
-   `claude_setup.rs` then installs command hooks instead of HTTP ones (V1-X1). Uninstall goes
-   in the same step (V1-X2). Needs Codex's review (guardrail 5).
-2. Routing (V1-D4): track which session is focused per the host matrix (Terminal and iTerm by
-   tty; Ghostty, WezTerm and VS Code after their spikes), hold unless focused, and release
-   within 1 s when the user goes there (`requests.release_session` exists).
-3. Identity and the session list on the companion (V1-D11); health states (V1-D13).
-4. Spikes: Codex `notify` (2 days, beta only), Ghostty tty, WezTerm cli, VS Code window.
+**P5 Window & Pip** (V1 §8, §14):
+1. Component kit and re-implemented views on `src/tokens.css`. Read the design handoff in
+   `creative-design/review-2026-10-25/` first.
+2. A separate Settings window with 4 categories, setup, keyboard/VoiceOver, durable Undo.
+3. Pip's voice table, the puzzled pose, micro-frames; the recordings spike (V1-X8).
+4. Before P5, ask the founder about V1-D2 (Codex approvals on Pip) and the Ghostty working
+   directory check (docs/SPIKES-P4.md).
 
 ## Waiting on the founder (V1 §16)
 
 - Veto any reversal in V1 §15, or let it stand.
-- Commit: nothing is committed. The staged `art/blender/film-duo/` files are untouched and
-  still staged; V1 F-41 says they move to branch `art/film-duo`, on the founder's word.
+- The staged `art/blender/film-duo/` files are kept out of the phase commits and stay staged;
+  V1 F-41 says they move to branch `art/film-duo`, on the founder's word.
 - Apple Developer Program enrolment (critical path for G5); the wave-1 testers (8 developers +
   3 people with no agents); a domain; making the repo public under MIT.
 - Hand checks in the real app once P1–P5 land (gates G2, G4), and the Mission Control spike
@@ -101,11 +95,9 @@ the comparison with Codex's audit, and the supreme council's papers and RULING.m
 
 ## Known gaps (not done, do not claim)
 
-- A request still skips Pip whenever any terminal is frontmost (B2): that's P4 (`release` is
-  ready for focus tracking).
-- Codex sessions are not watched (P4 spike).
+- Codex sessions are not watched; the spike found documented hooks (P6).
 - The window is still the old CSS (P5). Settings still has 8 categories, not 4 (P5).
-- No signing, updater or uninstall (P6). The hooks are still HTTP on 47821 (P4).
+- No signing or updater (P6). Existing HTTP hooks show "Needs repair" until Repair is pressed.
 - Clippy shows 6 older warnings; CI with `-D warnings` comes in P6.
 
 ## Design handoff (25 Oct, Codex; founder requested a UI/UX team)

@@ -93,6 +93,11 @@ export class Agents {
   onEvent: (event: AgentEvent) => void = () => {};
   /** Each session's first prompt line, for "Log it" when it finishes (docs/V1.md V1-L7). */
   private readonly firstPrompt = new Map<string, string>();
+  /** A session's first request, to tell sessions apart ("add rate limiting"). */
+  firstLine(key: string): string {
+    return this.firstPrompt.get(key) ?? "";
+  }
+
   /** A finished session's card; null keeps the plain line. Given the session's first prompt line. */
   onDone: ((event: AgentEvent, firstPrompt: string) => void) | null = null;
 

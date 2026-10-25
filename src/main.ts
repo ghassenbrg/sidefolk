@@ -269,6 +269,8 @@ if (inTauri) {
   // Requests live in Rust (requests.rs): a reloaded overlay shows the ones still waiting.
   for (const ask of await invoke<Ask[]>("list_requests").catch(() => [] as Ask[])) companion.handleAsk(ask);
   void listen<string>("permission-closed", (e) => companion.closeRequest(e.payload));
+  // Handed back because the user went to the session (docs/V1.md V1-D4).
+  void listen<string>("permission-released", (e) => companion.released(e.payload));
   void listen<{ width: number; height: number }>("overlay-resized", (e) => {
     place(e.payload.width, e.payload.height);
     companion.familiars.forEach((f) => f.resize());

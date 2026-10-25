@@ -191,16 +191,29 @@ pub struct Integrations {
     claude_tools: bool,
     codex_tools: bool,
     start_at_login: bool,
-    /// Why Sidefolk can't hear Claude Code (its port is taken), or None when it can.
+    /// Why Sidefolk can't hear Claude Code (its channel couldn't open), or None when it can.
     hook_error: Option<String>,
+    /// off | waiting | working | repair | unavailable (docs/V1.md V1-D13).
+    claude_health: &'static str,
 }
 
 /// Reads the agents' config files, so it runs off the main thread.
 #[tauri::command(async)]
 pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrations {
+    use crate::claude_setup::Installed;
+    let installed = crate::claude_setup::installed(&app);
+    let hook_error = shared.hook_error.lock().unwrap().clone();
+    let claude_health = match installed {
+        Installed::Missing => "off",
+        Installed::NeedsRepair => "repair",
+        Installed::Current if hook_error.is_some() => "unavailable",
+        Installed::Current if shared.heard.load(std::sync::atomic::Ordering::Relaxed) => "working",
+        Installed::Current => "waiting",
+    };
     Integrations {
-        hook_error: shared.hook_error.lock().unwrap().clone(),
-        claude_hooks: crate::claude_setup::connected(&app),
+        hook_error,
+        claude_health,
+        claude_hooks: installed != Installed::Missing,
         claude_tools: Agent::Claude.installed(),
         codex_tools: Agent::Codex.installed(),
         start_at_login: app.autolaunch().is_enabled().unwrap_or(false),

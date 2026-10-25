@@ -80,7 +80,7 @@ impl Agent {
     }
 }
 
-fn run(agent: Agent, add: bool, backups: &std::path::Path) -> io::Result<PathBuf> {
+pub(crate) fn run(agent: Agent, add: bool, backups: &std::path::Path) -> io::Result<PathBuf> {
     let config = agent.config();
     let stamp = crate::journal::now_ms();
     let backup = backups.join(format!("{}-{stamp}.bak", agent.cli()));

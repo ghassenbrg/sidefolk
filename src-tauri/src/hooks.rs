@@ -18,6 +18,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::bus::{self, AgentEvent, Decision, Shared, clip};
 use crate::requests::End;
+use crate::sessions::Peer;
 
 pub const PORT: u16 = 47821;
 /// How long the pet holds a permission before the terminal prompt takes over.
@@ -38,12 +39,9 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
             .route("/dev/resolve", post(dev_resolve))
             .route("/dev/ui", post(dev_ui));
         let router = router.with_state((app.clone(), shared.clone()));
-        // A failure is shown in the window (Today and AI tools), not only written to the log.
-        let failed = |why: String| {
-            eprintln!("sidefolk: {why}");
-            *shared.hook_error.lock().unwrap() = Some(why);
-            let _ = app.emit("integrations-changed", ());
-        };
+        // Claude Code reaches Sidefolk over the socket now (socket.rs); this port serves only hooks
+        // from older versions until they're repaired, so a failure here is only logged.
+        let failed = |why: String| eprintln!("sidefolk: {why}");
         match tokio::net::TcpListener::bind(("127.0.0.1", PORT)).await {
             Ok(listener) => {
                 if let Err(error) = axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await {
@@ -84,13 +82,24 @@ async fn event(State((app, shared)): State<Ctx>, ConnectInfo(peer): ConnectInfo<
         Ok(hook) => hook,
         Err(response) => return response,
     };
-    // Remembers where this session runs, for "Open session".
-    shared.hosts.locate_claude(&app, &text(&hook, "session_id"), peer.port());
-    if let Some(event) = claude_event(&hook) {
-        bus::emit(&app, event);
-    }
+    on_event(&app, &shared, &hook, Peer::Port(peer.port()));
     // An empty 2xx body tells Claude Code to carry on unchanged.
     StatusCode::OK.into_response()
+}
+
+/// A Claude Code hook event, from the socket or the older HTTP hooks.
+pub fn on_event(app: &AppHandle, shared: &Shared, hook: &Value, peer: Peer) {
+    // Remembers where this session runs, for "Open session" and for routing requests, until it
+    // ends.
+    if hook.get("hook_event_name").and_then(Value::as_str) == Some("SessionEnd") {
+        shared.hosts.forget(&format!("claude:{}", text(hook, "session_id")));
+    } else {
+        shared.hosts.locate_claude(app, &text(hook, "session_id"), peer);
+    }
+    shared.heard.store(true, std::sync::atomic::Ordering::Relaxed);
+    if let Some(event) = claude_event(hook) {
+        bus::emit(app, event);
+    }
 }
 
 fn claude_event(hook: &Value) -> Option<AgentEvent> {
@@ -199,45 +208,27 @@ impl Drop for OpenRequest<'_> {
     }
 }
 
-fn defer_to_app(bundle: &str) -> bool {
-    bundle.starts_with("com.jetbrains.")
-        || [
-            "com.apple.Terminal",
-            "com.googlecode.iterm2",
-            "dev.warp.Warp-Stable",
-            "com.mitchellh.ghostty",
-            "net.kovidgoyal.kitty",
-            "org.alacritty",
-            "com.microsoft.VSCode",
-            "com.todesktop.230313mzl4w4u92",
-            "dev.zed.Zed",
-            "co.zeit.hyper",
-            "com.anthropic.claudefordesktop",
-        ]
-        .contains(&bundle)
-}
-
-async fn should_hold(app: &AppHandle, shared: &Shared) -> bool {
-    if !shared
-        .settings
-        .lock()
-        .unwrap()
-        .value
-        .pet_answers_permissions
-    {
+/// Whether a request waits on the companion: unless the user turned that off, or is already
+/// looking at that very session (docs/V1.md V1-D4). Not knowing where it runs counts as not
+/// looking: the companion shows it.
+async fn should_hold(app: &AppHandle, shared: &Shared, session: &str) -> bool {
+    if !shared.settings.lock().unwrap().value.pet_answers_permissions {
         return false;
     }
+    looking_at(app, shared, session).await != Some(true)
+}
+
+async fn looking_at(app: &AppHandle, shared: &Shared, session: &str) -> Option<bool> {
     #[cfg(target_os = "macos")]
-    {
-        crate::panel::frontmost_bundle(app)
-            .await
-            .is_some_and(|id| !defer_to_app(&id))
-    }
+    let frontmost = crate::panel::frontmost_bundle(app).await;
     #[cfg(not(target_os = "macos"))]
-    {
+    let frontmost: Option<String> = {
         let _ = app;
-        false
-    }
+        None
+    };
+    let key = format!("claude:{session}");
+    // osascript and ps block (osascript for at most 2 s), so this runs where blocking is allowed.
+    tokio::task::block_in_place(|| shared.hosts.focused(&key, frontmost.as_deref()))
 }
 
 async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, body: Bytes) -> Response {
@@ -245,39 +236,68 @@ async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): Connect
         Ok(hook) => hook,
         Err(response) => return response,
     };
-    shared.hosts.locate_claude(&app, &text(&hook, "session_id"), peer.port());
-    if !should_hold(&app, &shared).await {
+    match on_permission(&app, &shared, &hook, Peer::Port(peer.port())).await {
+        Some(decision) => axum::Json(decision).into_response(),
+        None => StatusCode::OK.into_response(),
+    }
+}
+
+/// A Claude Code permission request, from the socket or the older HTTP hooks. The decision for
+/// Claude Code, or None: Claude asks in its own prompt.
+pub async fn on_permission(app: &AppHandle, shared: &Shared, hook: &Value, peer: Peer) -> Option<Value> {
+    shared.hosts.locate_claude(app, &text(hook, "session_id"), peer);
+    shared.heard.store(true, std::sync::atomic::Ordering::Relaxed);
+    let session = text(hook, "session_id");
+    if !should_hold(app, shared, &session).await {
         if cfg!(debug_assertions) {
             eprintln!("sidefolk: Claude permission deferred to agent UI");
         }
-        return StatusCode::OK.into_response();
+        return None;
     }
-    let tool = text(&hook, "tool_name");
-    let session = text(&hook, "session_id");
-    let cwd = text(&hook, "cwd");
+    let tool = text(hook, "tool_name");
+    let cwd = text(hook, "cwd");
     let project = bus::project_root(&cwd);
     let expires = crate::journal::now_ms() + PERMISSION_WAIT.as_millis() as u64;
     // The tool's input is kept as it came; the card shows it whole or offers no Allow (requests.rs).
     let Some((ask, answer)) = shared.requests.open("claude", &session, &cwd, &project, &tool, hook["tool_input"].clone(), true, expires) else {
         // Already five open for this session: Claude asks in its own prompt.
-        return StatusCode::OK.into_response();
+        return None;
     };
-    bus::note(&app, "claude", &session, &project, "ask", &clip(&format!("{} {}", ask.shown.title, ask.shown.text), 160));
+    bus::note(app, "claude", &session, &project, "ask", &clip(&format!("{} {}", ask.shown.title, ask.shown.text), 160));
     let _open = OpenRequest {
-        app: &app,
-        shared: &shared,
+        app,
+        shared,
         id: ask.id.clone(),
     };
     let _ = app.emit("permission", &ask);
-    shared.requests.changed(&app);
-    let end = tokio::time::timeout(PERMISSION_WAIT, answer).await;
+    shared.requests.changed(app);
+    // Going to the session hands the request back to its own prompt within a second (V1-D4).
+    let watch = async {
+        loop {
+            tokio::time::sleep(Duration::from_millis(500)).await;
+            if looking_at(app, shared, &session).await == Some(true) {
+                return;
+            }
+        }
+    };
+    let mut answer = answer;
+    let end = tokio::select! {
+        end = tokio::time::timeout(PERMISSION_WAIT, &mut answer) => end,
+        () = watch => {
+            if shared.requests.release(&ask.id) {
+                let _ = app.emit("permission-released", &ask.id);
+                shared.requests.changed(app);
+            }
+            Ok(answer.await)
+        }
+    };
     let answered = match end {
         Ok(Ok(End::Answered(Decision::Allow))) => "allowed",
         Ok(Ok(End::Answered(Decision::Deny))) => "denied",
         Ok(Ok(_)) => "left to the terminal",
         _ => "not answered on the pet",
     };
-    bus::note(&app, "claude", &session, &project, "answer", answered);
+    bus::note(app, "claude", &session, &project, "answer", answered);
     let behavior = match end {
         Ok(Ok(End::Answered(Decision::Allow))) => json!({ "behavior": "allow" }),
         Ok(Ok(End::Answered(Decision::Deny))) => json!({
@@ -285,36 +305,20 @@ async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): Connect
             "message": "The user declined this from the Sidefolk pet."
         }),
         // Released, expired, or dropped: Claude Code shows its own prompt.
-        _ => return StatusCode::OK.into_response(),
+        _ => return None,
     };
-    axum::Json(json!({
+    Some(json!({
         "hookSpecificOutput": { "hookEventName": "PermissionRequest", "decision": behavior }
     }))
-    .into_response()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn agent_frontends_defer_but_unrelated_apps_do_not() {
-        for id in [
-            "com.apple.Terminal",
-            "com.googlecode.iterm2",
-            "dev.warp.Warp-Stable",
-            "com.mitchellh.ghostty",
-            "net.kovidgoyal.kitty",
-            "org.alacritty",
-            "com.microsoft.VSCode",
-            "com.todesktop.230313mzl4w4u92",
-            "dev.zed.Zed",
-            "com.jetbrains.intellij",
-            "co.zeit.hyper",
-            "com.anthropic.claudefordesktop",
-        ] {
-            assert!(defer_to_app(id), "{id}");
-        }
-        assert!(!defer_to_app("com.apple.Safari"));
-        assert!(!defer_to_app("com.jetbrainsOther"));
+    fn hook_events_become_agent_events() {
+        let event = claude_event(&json!({ "hook_event_name": "UserPromptSubmit", "session_id": "s", "prompt": "add rate limiting", "cwd": "/tmp" })).unwrap();
+        assert_eq!((event.kind, event.detail.as_str()), ("prompt", "add rate limiting"));
+        assert!(claude_event(&json!({ "hook_event_name": "Unknown" })).is_none());
     }
 }

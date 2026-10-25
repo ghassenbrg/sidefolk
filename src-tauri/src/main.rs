@@ -20,10 +20,12 @@ mod requests;
 mod notes;
 mod notifications;
 mod sessions;
+mod socket;
 mod series;
 mod settings;
 mod store;
 mod tray;
+mod uninstall;
 
 use std::sync::Arc;
 
@@ -140,6 +142,32 @@ fn answer_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, id: String, a
     Ok(answered)
 }
 
+/// Disconnect & uninstall from the window: removes what Sidefolk added (with backups), then quits.
+/// The window asked first and said what happens.
+#[tauri::command(async)]
+fn uninstall_sidefolk(app: AppHandle, shared: State<'_, Arc<Shared>>, delete_data: bool) -> Vec<String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let _ = app.autolaunch().disable();
+    let dir = shared.settings.lock().unwrap().dir.clone();
+    let settings = claude_setup::target(&app).unwrap_or_else(|_| claude_setup::default_target());
+    let mut outcome = uninstall::disconnect(&uninstall::Places::of_this_mac(dir.clone(), settings));
+    // The data moves as the app stops, never while it can still write there; and only when
+    // everything else worked, since the settings' backups are in it.
+    let move_data = delete_data && outcome.ok;
+    outcome.said.push(if move_data { "Your data goes to the Bin as Sidefolk quits.".to_string() } else { uninstall::kept(&dir, delete_data) });
+    let handle = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(6));
+        if move_data {
+            let _ = uninstall::to_bin(&dir);
+            // Straight out: a normal exit would save the stores into a fresh data folder.
+            std::process::exit(0);
+        }
+        handle.exit(0);
+    });
+    outcome.said
+}
+
 /// Stores that couldn't be read at launch (store.rs), for the window's banner.
 #[tauri::command(async)]
 fn store_problems(shared: State<'_, Arc<Shared>>) -> Vec<store::Problem> {
@@ -222,6 +250,15 @@ async fn ui_log(app: AppHandle, line: String, focus: Option<bool>) {
 }
 
 fn main() {
+    // `sidefolk uninstall [--delete-data]`: works with the app quit or already deleted.
+    if std::env::args().nth(1).as_deref() == Some("uninstall") {
+        let args: Vec<String> = std::env::args().skip(2).collect();
+        std::process::exit(uninstall::run_cli(&args));
+    }
+    // `sidefolk hook` is what Claude Code runs for each hook event (socket.rs).
+    if std::env::args().nth(1).as_deref() == Some("hook") {
+        std::process::exit(socket::run_hook(&mcp::shim_data_dir()));
+    }
     // `sidefolk --mcp` is the stdio MCP server agents start; it only talks to the running app.
     if std::env::args().any(|arg| arg == "--mcp") {
         return mcp::run_shim();
@@ -291,6 +328,7 @@ fn main() {
             peek,
             mcp_reply,
             store_problems,
+            uninstall_sidefolk,
             restore_store,
             prefs::update_settings,
             prefs::integrations,
@@ -303,12 +341,14 @@ fn main() {
             prefs::get_status,
             sessions::open_session,
             sessions::terminals,
+            sessions::session_hosts,
             prefs::answered,
             prefs::open_tab
         ])
         .setup(move |app| {
             let problems = store::Problems::default();
             let store = settings::Store::load(settings::data_dir(app.handle())?, &problems);
+            let dir_for_socket = store.dir.clone();
             prefs::log_panics(&store.dir);
             let shared = Arc::new(Shared {
                 crew: std::sync::Mutex::new(crew::load(&store.dir, &problems)),
@@ -319,6 +359,7 @@ fn main() {
                 reminders: reminders::Reminders::load(&store.dir, &problems),
                 problems,
                 hook_error: Default::default(),
+                heard: Default::default(),
                 notes: notes::Notes::new(&store.dir),
                 settings: std::sync::Mutex::new(store),
                 requests: Default::default(),
@@ -348,6 +389,7 @@ fn main() {
             overlay::setup(app.handle())?;
             tray::setup(app.handle())?;
             hooks::spawn(app.handle().clone(), shared.clone());
+            socket::spawn(app.handle().clone(), shared.clone(), dir_for_socket);
             // First launch: the setup guide (it sets `onboarded` when finished).
             if !shared.settings.lock().unwrap().value.onboarded {
                 prefs::open_at(app.handle(), "setup")?;

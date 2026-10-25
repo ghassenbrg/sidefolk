@@ -28,6 +28,8 @@ export type App = {
     status: Status;
     /** Permission requests, from Rust (requests.rs); merged into `status.waiting`. */
     requests: Ask[];
+    /** Where each session runs, by "source:session" ("Ghostty"), for labels. */
+    hosts: Record<string, string>;
     version: string;
     dataDir: string;
   };
@@ -74,11 +76,12 @@ const waiters = new Map<string, (ok: boolean, text?: string) => void>();
 const app: App = {
   state: {
     settings: {} as Settings,
-    integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null },
+    integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null, claude_health: "off" },
     crew: { main: { name: "Pip" } },
     reminders: [],
     status: { pets: [], waiting: [] },
     requests: [],
+    hosts: {},
     version: "",
     dataDir: "",
   },
@@ -104,6 +107,7 @@ const app: App = {
       invoke<Status | null>("get_status"),
       invoke<Ask[]>("list_requests"),
     ]);
+    app.state.hosts = await invoke<Record<string, string>>("session_hosts").catch(() => ({}));
     const snapshot = () => JSON.stringify([app.state.settings, app.state.integrations, app.state.crew, app.state.reminders, app.state.status]);
     const before = snapshot();
     Object.assign(app.state, { settings, integrations, crew: crew ?? app.state.crew, reminders, requests });

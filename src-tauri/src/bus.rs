@@ -134,6 +134,8 @@ pub struct Shared {
     pub requests: crate::requests::Requests,
     /// Why the hook server isn't listening (hooks.rs), shown in the window instead of only logged.
     pub hook_error: Mutex<Option<String>>,
+    /// A Claude Code hook arrived since launch (health: "connected, waiting" vs "working").
+    pub heard: std::sync::atomic::AtomicBool,
     /// Stores that couldn't be read at launch (store.rs).
     pub problems: crate::store::Problems,
     /// Where each agent session runs, for "Open session".

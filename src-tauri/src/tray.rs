@@ -92,7 +92,7 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         None::<&str>,
     )?;
     let call = MenuItem::with_id(app, "call", "Call companion here", true, None::<&str>)?;
-    let connected = crate::claude_setup::connected(app);
+    let connected = crate::claude_setup::installed(app) != crate::claude_setup::Installed::Missing;
     let connect = MenuItem::with_id(
         app,
         "claude",
@@ -107,12 +107,13 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let refit = MenuItem::with_id(app, "refit", "Move to this display", true, None::<&str>)?;
     let reminder = MenuItem::with_id(app, "new-reminder", "New reminder…", true, None::<&str>)?;
     let preferences = MenuItem::with_id(app, "settings", "Open Sidefolk…", true, None::<&str>)?;
+    let uninstall = MenuItem::with_id(app, "uninstall", "Disconnect & uninstall…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Sidefolk", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let separator2 = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(
         app,
-        &[&preferences, &requests, &separator, &toggle, &call, &reminder, &separator2, &connect, &refit, &quit],
+        &[&preferences, &requests, &separator, &toggle, &call, &reminder, &separator2, &connect, &refit, &uninstall, &quit],
     )?;
     if let Some(error) = app
         .state::<TrayState>()
@@ -212,6 +213,8 @@ pub fn action(app: &AppHandle, action: &str) {
         "call" => summon(app),
         "login" => start_at_login(app),
         "settings" => crate::prefs::open(app),
+        // The window explains what uninstalling does before anything happens.
+        "uninstall" => crate::prefs::open_at(app, "settings:help"),
         "show" => {
             let is_hidden = app.state::<Arc<Shared>>().settings.lock().unwrap().value.hidden;
             if is_hidden { hidden(app, false) } else { Ok(()) }

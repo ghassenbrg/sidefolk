@@ -32,7 +32,7 @@ export type Settings = {
 /** Mirrors `Problem` in src-tauri/src/store.rs: a file that couldn't be read at launch. */
 export type StoreProblem = { file: string; kept: string; error: string; backup: boolean };
 /** `hook_error`: why Sidefolk can't hear Claude Code (its port is taken), or null. */
-export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean; hook_error: string | null };
+export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean; hook_error: string | null; claude_health: "off" | "waiting" | "working" | "repair" | "unavailable" };
 /** crew.json: the companion's name, and `look: "spark"` when it's Spark. */
 export type CrewFile = { main: { name: string; look?: string } };
 
@@ -118,7 +118,7 @@ function preview(): typeof tauriInvoke {
       your_week: true,
       hide_from_dock: false,
     } as Settings,
-    integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null } as Integrations,
+    integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null, claude_health: "working" } as Integrations,
     crew: { main: { name: "Pip" } } as CrewFile,
     reminders: [
       { id: "r1", text: "Review launch notes", due: now + 3 * 3_600_000, project: "", from: "you", created: now, done: false, fired: false },
@@ -175,7 +175,7 @@ function preview(): typeof tauriInvoke {
         return Object.assign(state.settings, a.change);
       // ?portbusy shows the notice for a hook port another app holds.
       case "integrations":
-        return new URLSearchParams(location.search).has("portbusy") ? { ...state.integrations, hook_error: "Another app is using port 47821, so Sidefolk can't hear Claude Code. Quit the other copy of Sidefolk, or restart your Mac." } : state.integrations;
+        return new URLSearchParams(location.search).has("portbusy") ? { ...state.integrations, claude_health: "unavailable", hook_error: "Sidefolk can't open its private channel for Claude Code. Quit any other copy of Sidefolk, or restart your Mac." } : state.integrations;
       case "get_crew":
         return state.crew;
       case "list_reminders":
@@ -250,6 +250,8 @@ function preview(): typeof tauriInvoke {
         setTimeout(() => emit("notes-changed", null), 50);
         return null;
       }
+      case "uninstall_sidefolk":
+        return ["Removed Sidefolk's hooks from Claude Code (a backup is kept). (Preview: nothing changed.)", "Your reminders, notes and backups are still in your data folder."];
       case "problem_report":
         return "Sidefolk preview on macOS (preview)\n\nWhat happened, and what did you expect?\n";
       case "allow_terminal_control":
@@ -268,6 +270,8 @@ function preview(): typeof tauriInvoke {
       case "get_status":
         return state.status;
       // ?longrequest adds a request too long to read without scrolling.
+      case "session_hosts":
+        return { "claude:04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d": "Ghostty", "claude:7b3e9a10": "iTerm" };
       case "list_requests":
         if (new URLSearchParams(location.search).has("longrequest") && !state.requests.some((r) => r.id === "claude-2"))
           state.requests.push({ ...state.requests[0], id: "claude-2", text: `${Array.from({ length: 120 }, (_, i) => `echo step ${i}`).join("\n")}\nrm -rf build` });

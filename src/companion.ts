@@ -157,7 +157,8 @@ export class Companion {
       lines: [`${agent} is asking to ${action} in ${project}.`],
       facts,
       wholeFacts: whole,
-      note: whole ? "Review it before allowing." : ask.complete ? "It's longer than this card. Review all of it in Sidefolk before allowing." : `It's too long to show here. Answer it in ${agent}'s window.`,
+      // How long the agent waits, said once (docs/V1.md V1-D5).
+      note: `${whole ? "Review it before allowing." : ask.complete ? "It's longer than this card. Review all of it in Sidefolk before allowing." : `It's too long to show here. Answer it in ${agent}'s window.`} ${agent} waits about a minute, then asks in its own window.`,
       choices,
       urgent: true,
       meta: {
@@ -220,6 +221,13 @@ export class Companion {
     this.onChange();
   }
 
+  /** The user went to the session, so its own prompt asks now. */
+  released(id: string) {
+    if (!this.requests.has(id)) return;
+    this.closeRequest(id);
+    this.pet.bubble.say("Moved to your terminal.", 4);
+  }
+
   /** The request ended elsewhere (answered in the terminal, expired, the agent went away). */
   closeRequest(id: string) {
     if (!this.requests.delete(id)) return;
@@ -254,10 +262,20 @@ export class Companion {
     }
   }
 
-  /** Clicking the companion: one field, with what Enter will do shown before anything happens. */
+  /** Clicking the companion: one field, with what Enter will do shown before anything happens,
+   * and the work sessions above it, most urgent first (docs/V1.md V1-D11). */
   openPrompt() {
     const session = this.sessionOf();
+    const live = this.pet.agents.list.filter((s) => s.id).slice(0, 4);
     this.pet.bubble.prompt({
+      sessions: live.map((s) => {
+        const first = this.pet.agents.firstLine(s.key);
+        return {
+          label: `${folder(s.project || s.cwd)}${first ? ` · ${first.length > 28 ? `${first.slice(0, 27)}…` : first}` : ""}`,
+          state: VERB[s.state],
+          open: () => void this.openSession({ source: s.source, session: s.id, cwd: s.cwd || s.project }),
+        };
+      }),
       who: `Talk to ${this.name}`,
       placeholder: "Remind me tomorrow at 9 to…",
       suggestions: ["Remind me in 10 minutes to …", "Reminders", ...(session ? ["Open session"] : []), "Open Sidefolk"],

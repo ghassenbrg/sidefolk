@@ -151,3 +151,6 @@ nav { overflow-y: auto; }
 .notes-filters { align-items: end; }
 .notes-filters .grow { flex: 1; min-width: 0; }
 .notes-filters .grow input { width: 100%; }
+/* A destructive action reads as one (Disconnect & uninstall). */
+button.danger { color: var(--error); border-color: var(--error); }
+button.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--error) 10%, transparent); }

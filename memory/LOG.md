@@ -2,6 +2,59 @@
 
 History moved out of STATUS.md (docs/V1.md §13.9: STATUS stays under 150 lines). Newest first.
 
+## P3 Quick add (25 October, Claude Code): built, verified
+
+- **The corpus** (`src/corpus.test.ts`): 300 phrases, two time zones plus the DST night. All
+  three gates hold: 100% on the corpus (≥95% required), no shell without `$`, no silently wrong
+  time.
+- **Parser fixes the corpus found:**
+  - `$` comes first.
+  - "?" means help.
+  - "tonight at 9" is 21:00.
+  - "14h" and "14h30" are read.
+  - "on the 1st" is the next 1st.
+  - A vague "the week" loses to a named day.
+  - "every evening" gets its time.
+  - A repeat with no time starts at the next 09:00.
+  - Weekday lists work (`Repeat.days`, `series.rs`).
+- **Small talk** (kind `chat`): about 20 replies with a pose ("good night" sleeps, praise
+  cheers).
+- **Ambiguous hours** offer both readings as buttons, on the companion and in the window.
+- **The window's Quick add finishes in the window** (`dashboard/tell.ts` `finish`): reminder
+  sheet with Undo, notes exact-or-ask, notebooks, navigation, open session and open things,
+  small talk, and "Save as a note?". Rename and hide still go to the companion.
+- **The Add reminder form** always holds a real date and time (B7 fixed).
+- **Verified:** typecheck, 88 Vitest (corpus included), 54 Rust, WebKit (window Quick add:
+  reminder, ambiguous, Log note, small talk; companion ambiguous card).
+
+## P2 Reminders & work log (25 October, Claude Code): built, verified in WebKit
+
+- **Series engine in Rust** (`series.rs`, `reminders.rs`; DECISIONS #43):
+  - The anchor and occurrence are separate, and a snooze moves only `due`.
+  - Done and Skip move to the next occurrence counted from the anchor.
+  - A 20 s tick records missed occurrences and keeps the latest.
+  - DST in Paris and New York, month ends and weekdays are tested.
+- **Notifications:** macOS holds up to 60 (`queue`): every one-off, then each series' next
+  occurrences in turn. Clicking one opens that reminder.
+- **Answers:** the overlay card adds "This evening" before 17:00 and "Skip this one" for
+  repeats. The window's Snooze and Mark complete go through `answer_reminder`, and the detail
+  view has Skip.
+- **Overdue and away:** after a quit or sleep, late reminders are gathered on one "While you
+  were away" card. Today labels overdue reminders.
+- **Work log:**
+  - "note: …" and "log …" go to Log; `matchNotebook` is exact-or-ask.
+  - "Noted in X" has Undo and Move, and stays until it's closed.
+  - `move_note` in Rust.
+  - Notes page: Log first, the "All entries" timeline by week with a notebook filter, and
+    date-aware search (`matchesNote`). Move on every entry.
+  - The sidebar and menu say "Work log".
+- **Your week:** a view (route `week`) and a Friday 16:00 card (setting `your_week`, default
+  on).
+- **Log it:** a finished session's card stores the project and the first prompt line in Log.
+- **Verified:** typecheck, 80 Vitest, 53 Rust, WebKit (Log capture, exact-or-ask, timeline
+  search, Your week, renamed accessible buttons). Not hand-checked: real notifications after
+  quit or sleep, and DST on a real Mac (G2-core).
+
 ## P0 and P1 (25 October 2026, Claude Code)
 
 **P0 Reset: done (code), uncommitted.**

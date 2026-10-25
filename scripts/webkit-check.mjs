@@ -109,6 +109,19 @@ for (const scheme of ["light", "dark"]) {
   assert.equal(await page.locator("#new-session-full").isChecked(), false);
   await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
   // Your companion is Pip or Spark, always both (DECISIONS #41).
+  // Claude Code's connection says one state (V1-D13); a port another app holds says why.
+  await page.goto(base + "/settings.html?tab=settings:tools");
+  await page.locator(".setting.tool .pill", { hasText: "Working" }).first().waitFor();
+  await page.goto(base + "/settings.html?portbusy&tab=settings:tools");
+  await page.locator(".setting.tool .pill", { hasText: "Can't listen" }).first().waitFor();
+  // Uninstall says what it does and keeps data unless asked (V1-X2).
+  await page.goto(base + "/settings.html?tab=settings:help");
+  await page.getByRole("button", { name: "Disconnect & uninstall…" }).click();
+  const uninstall = page.getByRole("form", { name: "Disconnect and uninstall" });
+  await uninstall.waitFor();
+  if (await page.locator("#uninstall-delete-data").isChecked()) failures.push("uninstall: deleting data is on by default");
+  await uninstall.getByRole("button", { name: "Uninstall" }).click();
+  await uninstall.getByText("still in", { exact: false }).waitFor();
   await page.goto(base + "/settings.html?tab=settings:companion");
   if ((await page.locator(".crew-choice").count()) !== 2) failures.push("settings: Pip and Spark aren't both offered");
   await page.locator("label[for=look-spark]").click();
@@ -333,6 +346,16 @@ await start.waitFor();
 for (const part of ["~/git/api", "Asks you first", "Start in auto mode"]) if (!(await start.innerText()).includes(part)) failures.push(`start card is missing "${part}"`);
 await start.getByRole("button", { name: "Start Claude Code" }).click();
 await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
+// Pip lists the live work sessions above its field (V1-D11).
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("1");
+await overlay.waitForTimeout(300);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble .session-row").first().waitFor();
+if (!/thinking/i.test(await overlay.locator(".bubble .session-row").first().innerText())) failures.push("overlay: the session row doesn't say what the session is doing");
+await overlay.waitForTimeout(800);
+await overlay.screenshot({ path: join(out, "overlay-sessions.png") });
 await browser.close();
 
 console.log(`screenshots: ${out}`);

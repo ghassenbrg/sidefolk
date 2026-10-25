@@ -1,13 +1,12 @@
 //! Pet tools for agents (MCP). Claude Code and Codex start `sidefolk --mcp` as a stdio MCP
-//! server in the session's folder. That process forwards tool calls to the running app on
-//! 127.0.0.1:47821 with a per-install token, and the folder decides which pet speaks.
+//! server in the session's folder. That process forwards tool calls to the running app over its
+//! private socket (socket.rs) with the per-install token, and the folder says which project.
 //!
 //! The tools: `notify` (say something), `ask` (a question with answer buttons), `remind`
 //! (a reminder for the user) and `presence` (is the user around).
 
 use std::{
     io::{self, BufRead, Read, Write},
-    net::TcpStream,
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
@@ -97,7 +96,7 @@ pub fn ensure_token(data_dir: &Path) -> io::Result<String> {
     Ok(token)
 }
 
-fn same(a: &str, b: &str) -> bool {
+pub(crate) fn same(a: &str, b: &str) -> bool {
     // Constant time, so the token cannot be guessed byte by byte.
     a.len() == b.len() && a.bytes().zip(b.bytes()).fold(0, |acc, (x, y)| acc | (x ^ y)) == 0
 }
@@ -105,7 +104,7 @@ fn same(a: &str, b: &str) -> bool {
 // ---------------------------------------------------------------- shim (`sidefolk --mcp`)
 
 /// The app's data directory, computed the way Tauri does, since the shim has no app.
-fn shim_data_dir() -> PathBuf {
+pub(crate) fn shim_data_dir() -> PathBuf {
     if let Some(dir) = std::env::var_os("SIDEFOLK_DATA_DIR") {
         return dir.into();
     }
@@ -166,34 +165,18 @@ fn forward(data_dir: &Path, client: &str, cwd: &str, params: &Value) -> Value {
     let Ok(token) = std::fs::read_to_string(token_path(data_dir)) else {
         return tool_result("Sidefolk is not set up on this computer (no token found).", true);
     };
-    let body = json!({
+    let call = json!({
         "tool": params["name"],
         "arguments": params.get("arguments").cloned().unwrap_or(json!({})),
         "cwd": cwd,
         "client": client,
-    })
-    .to_string();
-    let request = format!(
-        "POST /mcp/call HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n{TOKEN_HEADER}: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-        token.trim(),
-        body.len()
-    );
-    let response = (|| -> io::Result<String> {
-        let mut stream = TcpStream::connect(("127.0.0.1", crate::hooks::PORT))?;
-        stream.set_read_timeout(Some(Duration::from_secs(ASK_WAIT_MAX + 30)))?;
-        stream.write_all(request.as_bytes())?;
-        let mut response = String::new();
-        stream.read_to_string(&mut response)?;
-        Ok(response)
-    })();
-    let Ok(response) = response else {
+    });
+    // Over the private socket (socket.rs); the token proves this is the install's own shim.
+    let message = json!({ "mcp": call, "token": token.trim() });
+    let Some(reply) = crate::socket::send(data_dir, &message, Duration::from_secs(ASK_WAIT_MAX + 30)) else {
         return tool_result("Sidefolk is not running, so the pet cannot hear you.", true);
     };
-    let (head, body) = response.split_once("\r\n\r\n").unwrap_or((&response, ""));
-    if !head.starts_with("HTTP/1.1 200") {
-        return tool_result(&format!("Sidefolk refused the call: {}", head.lines().next().unwrap_or("")), true);
-    }
-    match serde_json::from_str::<Value>(body) {
+    match serde_json::from_str::<Value>(&reply) {
         Ok(reply) => tool_result(reply["text"].as_str().unwrap_or_default(), reply["isError"] == true),
         Err(_) => tool_result("Sidefolk sent an unreadable reply.", true),
     }
@@ -201,8 +184,8 @@ fn forward(data_dir: &Path, client: &str, cwd: &str, params: &Value) -> Value {
 
 // ---------------------------------------------------------------- app endpoint
 
-fn reply(text: impl Into<String>, error: bool) -> Response {
-    axum::Json(json!({ "text": text.into(), "isError": error })).into_response()
+fn reply(text: impl Into<String>, error: bool) -> Value {
+    json!({ "text": text.into(), "isError": error })
 }
 
 /// POST /mcp/call from the shim. The page shows the call and answers through `mcp_reply`.
@@ -217,6 +200,12 @@ pub async fn call(State((app, shared)): State<(AppHandle, Arc<Shared>)>, headers
     let Ok(request) = serde_json::from_slice::<Value>(&body) else {
         return StatusCode::BAD_REQUEST.into_response();
     };
+    axum::Json(handle(&app, &shared, &request).await).into_response()
+}
+
+/// A tool call from an agent, by either way in (the socket or the older HTTP endpoint), once the
+/// caller has proven it holds the install's token. The page shows it and answers.
+pub async fn handle(app: &AppHandle, shared: &Shared, request: &Value) -> Value {
     let tool = request["tool"].as_str().unwrap_or_default();
     let args = &request["arguments"];
     let cwd = request["cwd"].as_str().unwrap_or_default();
@@ -257,7 +246,7 @@ pub async fn call(State((app, shared)): State<(AppHandle, Arc<Shared>)>, headers
 
     let project = bus::project_root(cwd);
     if tool == "ask" {
-        bus::note(&app, source, "", &project, "ask", args["question"].as_str().unwrap_or_default());
+        bus::note(app, source, "", &project, "ask", args["question"].as_str().unwrap_or_default());
     }
     let (id, answer) = shared.replies.open();
     let _ = app.emit(
@@ -269,14 +258,14 @@ pub async fn call(State((app, shared)): State<(AppHandle, Arc<Shared>)>, headers
     match result {
         Ok(Ok(result)) => {
             if tool == "ask" {
-                bus::note(&app, source, "", &project, "answer", result["text"].as_str().unwrap_or_default());
+                bus::note(app, source, "", &project, "answer", result["text"].as_str().unwrap_or_default());
             }
-            axum::Json(result).into_response()
+            result
         }
         _ => {
             let _ = app.emit("mcp-closed", &id);
             if tool == "ask" {
-                bus::note(&app, source, "", &project, "answer", "not answered on the pet");
+                bus::note(app, source, "", &project, "answer", "not answered on the pet");
                 reply("Nobody answered in time; the user may be away. Decide yourself or ask again later.", false)
             } else {
                 reply("The pet did not respond.", true)
