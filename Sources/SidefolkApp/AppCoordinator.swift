@@ -220,6 +220,16 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command.hasPrefix("drop:") {
+            let value = String(command.dropFirst(5))
+            if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
+                companionReceived(Attachment(kind: .url(url), label: url.host ?? value, text: value))
+            } else {
+                let file = URL(fileURLWithPath: value)
+                companionReceived(Attachment(kind: .file(file), label: file.lastPathComponent, text: nil))
+            }
+            return
+        }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
             return

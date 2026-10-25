@@ -31,7 +31,7 @@ struct AskView: View {
             Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
             Spacer()
             Button { model.actions?.openHome() } label: {
-                Image(systemName: "square.grid.2x2").imageScale(.small)
+                Image(systemName: "house").imageScale(.small)
             }
             .buttonStyle(.sfPlain)
             .help("Open Sidefolk")
@@ -195,15 +195,18 @@ private struct EntryView: View {
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
                     Text(guess == nil ? "That needs AI, which isn't set up." : "That needs AI — or I can do this:")
                         .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    HStack(spacing: 6) {
-                        if let guess {
-                            Button(guess.label) { model.actions?.remind(guess, in: model) }.buttonStyle(.sf(.primary))
+                    if let guess {
+                        Button {
+                            model.actions?.remind(guess, in: model)
+                        } label: {
+                            Label("\(guess.label): \(guess.title)", systemImage: "alarm").lineLimit(1)
                         }
+                        .buttonStyle(.sf(.primary))
+                    }
+                    HStack(spacing: 6) {
                         Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary))
                         Button("Save as note") { model.actions?.saveAnswer(text, in: model) }.buttonStyle(.sf(.secondary))
-                    }
-                    HStack(spacing: 4) {
-                        Text("Notes, reminders and watches work without AI.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        Spacer(minLength: 0)
                         Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
                     }
                 }

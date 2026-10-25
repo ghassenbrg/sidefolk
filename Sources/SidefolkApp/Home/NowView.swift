@@ -300,7 +300,7 @@ private struct ReminderRow: View {
     private var overdue: Bool { due < Date() }
 
     private var when: String {
-        let time = due.formatted(date: .omitted, time: .shortened)
+        let time = TimeFormat.clock(due, calendar: .autoupdatingCurrent)
         if overdue { return "Overdue since \(TimeText.short(due))" }
         if reminder.state == .snoozed { return "Snoozed until \(group == "Later" ? TimeText.short(due) : time)" }
         return group == "Later" ? TimeText.short(due) : time
