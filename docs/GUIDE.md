@@ -1,6 +1,7 @@
 # Sidefolk guide
 
-Sidefolk puts Pip, a small companion, on your Mac's desktop. Pip holds your reminders and a dated
+Sidefolk puts Pip, a small companion, on your Mac's desktop (or Spark, the robot: Settings →
+Companion). Pip holds your reminders and a dated
 log of what you got done. If you use Claude Code, Pip also taps you when a session needs you and
 takes you back to it. Everything stays on your Mac, and nothing uses AI unless you ask for it.
 

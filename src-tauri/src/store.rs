@@ -62,6 +62,11 @@ impl Problems {
     pub fn list(&self) -> Vec<Problem> {
         self.0.lock().unwrap().clone()
     }
+    /// Whether this file couldn't be set aside, so nothing may be written over it.
+    pub fn blocks(&self, path: &Path) -> bool {
+        let file = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        self.0.lock().unwrap().iter().any(|p| p.file == file && p.kept.is_empty())
+    }
 }
 
 pub fn backup_of(path: &Path) -> PathBuf {
@@ -72,15 +77,24 @@ fn now_ms() -> u128 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or_default()
 }
 
-/// Reads `path`. `migrate` turns an older version's data into the current shape.
-pub fn load<T: DeserializeOwned>(path: &Path, migrate: impl FnOnce(u64, Value) -> Value) -> Loaded<T> {
+/// Reads `path`, written at most at `current` version. `shape` says whether the data looks like
+/// this store's at all (an array, an object…): serde would read `[]` or `null` as an empty value
+/// and that empty value would then replace the last good copy. `migrate` turns an older
+/// version's data into the current shape.
+pub fn load<T: DeserializeOwned>(path: &Path, current: u64, shape: impl FnOnce(&Value) -> bool, migrate: impl FnOnce(u64, Value) -> Value) -> Loaded<T> {
     let bytes = match fs::read(path) {
         Ok(bytes) => bytes,
         Err(e) if e.kind() == io::ErrorKind::NotFound => return Loaded::Missing,
         Err(e) => return set_aside(path, e.to_string()),
     };
     let parsed = serde_json::from_slice::<Value>(&bytes).map_err(|e| e.to_string()).and_then(|value| {
-        let (version, data) = unwrap_envelope(value);
+        let (version, data) = unwrap_envelope(value)?;
+        if version > current {
+            return Err(format!("written by a newer Sidefolk (version {version})"));
+        }
+        if !shape(&data) {
+            return Err("not the shape this file should have".into());
+        }
         serde_json::from_value::<T>(migrate(version, data)).map_err(|e| e.to_string())
     });
     match parsed {
@@ -93,14 +107,18 @@ pub fn load<T: DeserializeOwned>(path: &Path, migrate: impl FnOnce(u64, Value) -
     }
 }
 
-/// `{ "version": n, "data": … }`, or a file from before envelopes (version 0).
-fn unwrap_envelope(value: Value) -> (u64, Value) {
+/// `{ "version": n, "data": … }`, or a file from before envelopes (version 0). An object that
+/// has either key but isn't exactly an envelope is damage, not old data.
+fn unwrap_envelope(value: Value) -> Result<(u64, Value), String> {
     match value {
-        Value::Object(mut map) if map.len() == 2 && map.contains_key("data") && map.get("version").is_some_and(Value::is_u64) => {
-            let version = map.get("version").and_then(Value::as_u64).unwrap_or_default();
-            (version, map.remove("data").unwrap_or(Value::Null))
+        Value::Object(mut map) if map.contains_key("version") || map.contains_key("data") => {
+            let version = map.get("version").and_then(Value::as_u64);
+            match (version, map.len(), map.remove("data")) {
+                (Some(version), 2, Some(data)) => Ok((version, data)),
+                _ => Err("a damaged version envelope".into()),
+            }
         }
-        other => (0, other),
+        other => Ok((0, other)),
     }
 }
 
@@ -145,11 +163,11 @@ mod tests {
     fn missing_starts_empty_and_saved_data_reads_back() {
         let dir = temp("roundtrip");
         let path = dir.join("thing.json");
-        assert!(matches!(load::<Thing>(&path, |_, v| v), Loaded::Missing));
+        assert!(matches!(load::<Thing>(&path, 1, Value::is_object, |_, v| v), Loaded::Missing));
         save(&path, 1, &Thing { name: "Pip".into() }).unwrap();
         let text = fs::read_to_string(&path).unwrap();
         assert!(text.contains("\"version\": 1") && text.contains("\"data\""));
-        let Loaded::Ok(thing) = load::<Thing>(&path, |_, v| v) else { panic!("not ok") };
+        let Loaded::Ok(thing) = load::<Thing>(&path, 1, Value::is_object, |_, v| v) else { panic!("not ok") };
         assert_eq!(thing.name, "Pip");
         assert!(backup_of(&path).exists());
         fs::remove_dir_all(dir).unwrap();
@@ -161,7 +179,7 @@ mod tests {
         let path = dir.join("thing.json");
         fs::write(&path, r#"{"name":"Old"}"#).unwrap();
         let mut seen = 99;
-        let Loaded::Ok(thing) = load::<Thing>(&path, |v, data| {
+        let Loaded::Ok(thing) = load::<Thing>(&path, 1, Value::is_object, |v, data| {
             seen = v;
             data
         }) else {
@@ -176,10 +194,10 @@ mod tests {
         let dir = temp("corrupt");
         let path = dir.join("thing.json");
         save(&path, 1, &Thing { name: "Good".into() }).unwrap();
-        assert!(matches!(load::<Thing>(&path, |_, v| v), Loaded::Ok(_)));
+        assert!(matches!(load::<Thing>(&path, 1, Value::is_object, |_, v| v), Loaded::Ok(_)));
         fs::write(&path, b"{ not json").unwrap();
         let problems = Problems::default();
-        let loaded = load::<Thing>(&path, |_, v| v);
+        let loaded = load::<Thing>(&path, 1, Value::is_object, |_, v| v);
         problems.note(&path, &loaded);
         let Loaded::Corrupt { kept: Some(kept), .. } = loaded else { panic!("not corrupt") };
         // The damaged bytes are kept as they were, and the file itself is gone (nothing to overwrite).
@@ -192,8 +210,24 @@ mod tests {
         assert_eq!(fs::read(&kept).unwrap(), b"{ not json");
         // The last good copy comes back.
         restore(&path).unwrap();
-        let Loaded::Ok(thing) = load::<Thing>(&path, |_, v| v) else { panic!("not ok") };
+        let Loaded::Ok(thing) = load::<Thing>(&path, 1, Value::is_object, |_, v| v) else { panic!("not ok") };
         assert_eq!(thing.name, "Good");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_damaged_envelope_or_a_newer_version_is_damage_and_keeps_the_good_backup() {
+        let dir = temp("envelope");
+        let path = dir.join("thing.json");
+        save(&path, 1, &Thing { name: "Good".into() }).unwrap();
+        assert!(matches!(load::<Thing>(&path, 1, Value::is_object, |_, v| v), Loaded::Ok(_)));
+        for bad in [r#"{"version":1,"data":{"name":"x"},"extra":0}"#, r#"{"version":"1","data":{}}"#, r#"{"data":{"name":"x"}}"#, r#"{"version":9,"data":{"name":"x"}}"#, "null", "[]"] {
+            fs::write(&path, bad).unwrap();
+            assert!(matches!(load::<Thing>(&path, 1, Value::is_object, |_, v| v), Loaded::Corrupt { kept: Some(_), .. }), "{bad}");
+            restore(&path).unwrap();
+            let Loaded::Ok(thing) = load::<Thing>(&path, 1, Value::is_object, |_, v| v) else { panic!("backup lost after {bad}") };
+            assert_eq!(thing.name, "Good");
+        }
         fs::remove_dir_all(dir).unwrap();
     }
 
@@ -202,7 +236,7 @@ mod tests {
         let dir = temp("shape");
         let path = dir.join("thing.json");
         fs::write(&path, r#"[1, 2, 3]"#).unwrap();
-        assert!(matches!(load::<Thing>(&path, |_, v| v), Loaded::Corrupt { kept: Some(_), .. }));
+        assert!(matches!(load::<Thing>(&path, 1, Value::is_object, |_, v| v), Loaded::Corrupt { kept: Some(_), .. }));
         fs::remove_dir_all(dir).unwrap();
     }
 }

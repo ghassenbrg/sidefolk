@@ -87,8 +87,10 @@ function reviewDetail(app: App, id: string) {
     card.append(
       h("h2", { class: "request-title", text: meta.title }),
       h("p", { text: `${agent} is asking to ${action}${where ? ` in ${where}` : ""}.` }),
-      h("div", { class: "facts" }, ...copyable(label, meta.command ?? ""), ...(meta.cwd ? copyable("Working folder", meta.cwd) : [])),
+      // The whole operation, as it would run (src-tauri/src/requests.rs); it scrolls here, never cut.
+      h("div", { class: "facts full" }, ...(meta.path ? copyable("File", meta.path) : []), ...(meta.command ? copyable(meta.action === "file" ? "Change" : label, meta.command) : []), ...(meta.cwd ? copyable("Working folder", meta.cwd) : [])),
     );
+    if (meta.complete === "false") card.append(h("p", { class: "note", text: `It's too long to show here, so it can't be allowed from Sidefolk. Answer it in ${agentName(source)}'s window.` }));
     const expires = Number(meta.expires);
     const countdown = h("span");
     const tick = () => {
@@ -165,15 +167,16 @@ function reviewDetail(app: App, id: string) {
     meta.kind === "permission" && !live.choices.some((c) => c.value === "allow" || c.value === "deny")
       ? [
           { label: "Decline", value: "deny", primary: false, quiet: false },
-          { label: "Allow once", value: "allow", primary: true, quiet: false },
+          ...(meta.complete === "false" ? [] : [{ label: "Allow once", value: "allow", primary: true, quiet: false }]),
           ...(meta.canDefer === "true" ? [{ label: `Answer in ${agentName(source)}'s window`, value: "defer", primary: false, quiet: true }] : []),
         ]
       : live.choices.filter((c) => c.value !== "\u0000reply");
   const row = h("div", { class: "actions equal request-choices" });
   const quiet = h("div", { class: "actions request-choices" });
-  for (const c of choices) (c.quiet ? quiet : row).append(button(c.label, () => void choose(app, live, c.value, c.label), c.quiet ? "quiet" : c.primary ? "primary" : ""));
+  for (const c of choices) (c.quiet ? quiet : row).append(button(c.label, () => void choose(app, live, c.value, c.label), c.quiet ? "quiet" : c.primary ? "primary" : "", { "data-value": c.value }));
   card.append(row);
   if (quiet.children.length) card.append(quiet);
+  if (meta.kind === "permission") untilRead(app, card, row);
 
   // A question without fixed choices takes a written answer.
   if (meta.kind === "question" && meta.free === "true") {
@@ -192,6 +195,29 @@ function reviewDetail(app: App, id: string) {
     card.append(form);
   }
   return view;
+}
+
+/** Allow stays off until every scrolling part of the operation has been scrolled to its end:
+ * what you allow is what you saw (docs/V1.md V1-D7). */
+function untilRead(app: App, card: HTMLElement, row: HTMLElement) {
+  const allow = row.querySelector<HTMLButtonElement>("[data-value=allow]");
+  if (!allow) return;
+  const hint = h("p", { class: "note", text: "Scroll to the end of it to allow it." });
+  const check = () => {
+    const unread = [...card.querySelectorAll<HTMLElement>(".facts.full code")].some((code) => code.scrollTop + code.clientHeight < code.scrollHeight - 2);
+    allow.disabled = unread || !!card.querySelector(".expired");
+    hint.hidden = !unread;
+  };
+  row.before(hint);
+  // Off until measured: the view is built before it's on screen, where nothing has a height yet.
+  allow.disabled = true;
+  hint.hidden = true;
+  const sized = new ResizeObserver(check);
+  app.onLeave(() => sized.disconnect());
+  for (const code of card.querySelectorAll<HTMLElement>(".facts.full code")) {
+    code.addEventListener("scroll", check, { passive: true });
+    sized.observe(code);
+  }
 }
 
 async function choose(app: App, request: Waiting, value: string, label: string) {

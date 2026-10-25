@@ -67,25 +67,54 @@ user's running copy is older.
 
 Nothing native was checked in the real app.
 
+## P1 Foundation (25 October, Claude Code): built, verified in WebKit
+
+- `src-tauri/src/requests.rs` is the one request lifecycle. It keeps the raw tool input apart
+  from the display.
+  - Commands are shown byte for byte; Edit shows a diff, Write the whole content.
+  - Control and bidi characters are shown as visible escapes.
+  - Anything over 50,000 characters can't be allowed.
+  - At most 5 open per session.
+  - A released or forgotten request can never become an Allow.
+- `hooks.rs` uses it. The old `bus::Permissions`, `PermissionAsk` and `describe` are gone.
+- Opening a live session releases its waiting requests to the session's own prompt.
+- The window gets requests from Rust (`list_requests` plus the `requests` event) and answers in
+  Rust. It works with the overlay hidden, and a reloaded overlay re-shows open requests.
+- Pip's card shows Allow only if the operation fits on the card; otherwise it shows "Review all
+  of it". Preview key 8 makes a long request.
+- No polling: the overlay publishes status on change; the window refreshes on focus and events.
+- Single instance (DECISIONS #42).
+- A port bind failure is shown on Today and in Settings → AI tools (preview: `?portbusy`).
+- File-IO commands run off the main thread (`#[tauri::command(async)]`).
+- **Pip and Spark (founder, DECISIONS #41):**
+  - Settings → Companion picks Pip or Spark (crew.json `main.look`); preview: `?look=spark`.
+  - Spark's status light follows its antenna tip in every pose (`src/pip.ts` `tip`).
+  - V1 F-24, C1 and C8 and PIP.md are updated.
+- Verified: typecheck, 78 Vitest, 41 Rust, `npm run check:webkit` (adds long-request card, Pip and
+  Spark choice).
+- Codex's adversarial review (guardrail 5) found 3 blockers and 6 majors, all fixed with tests:
+  - Edit `replace_all` and unknown fields are now shown, not hidden.
+  - Allow appears only once the whole operation is on screen: the card shows the full height,
+    and the window's Allow stays off until you scroll to the end.
+  - Past its deadline, a request is refused even before the timer fires.
+  - Paths and more invisible characters (U+2060, U+061C, NBSP, tags…) are escaped.
+  - Diffs keep CRLF and say when a final newline is missing.
+  - A store envelope must be exactly `{version, data}` with a known version.
+  - Store shapes are checked, so `[]` or `null` is damage.
+  - A crew.json that couldn't be set aside is never written over.
+- Verified after the fixes: typecheck, 78 Vitest, 45 Rust, WebKit (including read-to-the-end),
+  release build 4.83 MiB. Nothing native was hand-checked.
+
 ## Next step (exact)
 
-WIP = 1. Continue **P1 Foundation** (V1 §14):
-1. `src-tauri/src/requests.rs`: one request lifecycle (pending → answered / released /
-   expired). It keeps the raw tool input apart from the display and caps 5 per session; a
-   released or expired request can never become an Allow. Move the lifecycle out of `hooks.rs`
-   and `bus.rs` (Permissions). Test: a long prefix can't change the outcome.
-2. Typed events and state in Rust instead of `publish_status` polling (`prefs.rs`,
-   `src/main.ts` setInterval, `src/dashboard/app.ts` 3 s refresh). The window must work with
-   the overlay hidden (V1-Q1, Codex F07). A look or size change must not drop open cards.
-3. Single instance (tauri-plugin-single-instance; needs a DECISIONS line, guardrail 6), a port
-   bind failure shown in the UI, IO commands made async.
-
-Then P2 (series engine in Rust, Log notebook + exact-or-ask, timeline, Your week), P3 (corpus of
-300 phrases, choice UI for `alternative`, same-surface finishing), P4 (sidecar hook over a Unix
-socket, routing so a request reaches Pip unless that session's tab is focused, raw display and
-diffs, host matrix spikes), P5 (component kit, view re-implementation, ⌘, Settings window with 4
-panes, setup, keyboard/VoiceOver, voice table, puzzled pose), and P6 in parallel (signing,
-updater, kill switch, uninstall, CI).
+P1 is done apart from moving reminders and companion state fully into Rust, which falls under
+P2's series engine. Continue **P2 Reminders & log** (V1 §4, §5, §14):
+1. The series engine in Rust (`reminders.rs`). The series anchor and occurrence overrides are
+   separate, so snooze never moves the series. Repeats fire without Done; Skip next.
+2. Pre-schedule up to 60 notifications (`notifications.rs`), and show "While you were away" for
+   late ones.
+3. The Log notebook as the inbox, exact-or-ask notebook matching (`src/notes.ts` matchNotebook:
+   delete the most-recently-updated guess), Move, the timeline and date search, Your week.
 
 ## Waiting on the founder (V1 §16)
 
@@ -99,7 +128,8 @@ updater, kill switch, uninstall, CI).
 
 ## Known gaps (not done, do not claim)
 
-- A request still skips Pip whenever any terminal is frontmost (B2): that's P4.
+- A request still skips Pip whenever any terminal is frontmost (B2): that's P4 (`release` is
+  ready for focus tracking).
 - Codex sessions are not watched. Reminders still advance only on Done; snooze moves the series
   (F05): that's P2.
 - A notebook's partial name still picks the most recently updated match (F06): that's P2.

@@ -112,6 +112,6 @@ src-tauri/src/       Rust core
   journal.rs · reminders.rs · notifications.rs · notes.rs · crew.rs · settings.rs · prefs.rs · tray.rs
 art/                 pip/ (generated sprite sheets and how to remake them), brand SVGs, icon
 creative-design/     the design package; PIP.md is Pip's character bible (frozen for v1)
-public/crew/         Pip's frames (pip/3d), and Spark's kept for v1.2 (`npm run sprites`)
+public/crew/         the two companions' frames, Pip and Spark (3d; `npm run sprites`)
 scripts/             make_icons.py, make_sprites.py, measure.sh, webkit-check.mjs
 ```

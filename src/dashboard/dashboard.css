@@ -644,9 +644,16 @@ summary {
 }
 .fact code {
   flex: 1;
+  min-width: 0;
   padding: 10px 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   user-select: text;
+}
+/* A long command or diff scrolls in place; nothing of it is cut (docs/V1.md V1-D6). */
+.facts.full .fact code {
+  max-height: 50vh;
+  overflow: auto;
 }
 dl.tech {
   display: grid;

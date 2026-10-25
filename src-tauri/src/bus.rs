@@ -1,4 +1,4 @@
-//! Shapes shared by every agent source, and the pending-permission registry.
+//! Shapes shared by every agent source, and the state the app shares between its parts.
 
 use std::{
     collections::HashMap,
@@ -83,58 +83,12 @@ pub fn project_root(cwd: &str) -> String {
     root
 }
 
-#[derive(Serialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PermissionAsk {
-    pub id: String,
-    pub source: &'static str,
-    pub session: String,
-    pub title: String,
-    pub detail: String,
-    pub cwd: String,
-    pub project: String,
-    /// Whether "answer in the terminal instead" is meaningful for this source.
-    pub can_defer: bool,
-    /// command | file | web | tool: lets the card say what is being asked in plain words.
-    pub kind: &'static str,
-    /// Unix ms when the agent stops waiting (the card then says it expired).
-    pub expires: u64,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Decision {
     Allow,
     Deny,
     /// Leave the decision to the agent's own UI (the terminal prompt).
     Defer,
-}
-
-#[derive(Default)]
-pub struct Permissions {
-    next: AtomicU64,
-    pending: Mutex<HashMap<String, oneshot::Sender<Decision>>>,
-}
-
-impl Permissions {
-    pub fn open(&self, prefix: &str) -> (String, oneshot::Receiver<Decision>) {
-        let id = format!("{prefix}-{}", self.next.fetch_add(1, Ordering::Relaxed));
-        let (tx, rx) = oneshot::channel();
-        self.pending.lock().unwrap().insert(id.clone(), tx);
-        (id, rx)
-    }
-
-    pub fn resolve(&self, id: &str, decision: Decision) -> bool {
-        match self.pending.lock().unwrap().remove(id) {
-            Some(tx) => tx.send(decision).is_ok(),
-            None => false,
-        }
-    }
-
-    /// Drops a request that ended without an answer (timeout or the agent went away).
-    pub fn close(&self, app: &AppHandle, id: &str) {
-        self.pending.lock().unwrap().remove(id);
-        let _ = app.emit("permission-closed", id);
-    }
 }
 
 /// Tool calls from agents (MCP) waiting for the page to answer.
@@ -176,7 +130,10 @@ pub struct Shared {
     pub token: String,
     pub reminders: crate::reminders::Reminders,
     pub notes: crate::notes::Notes,
-    pub permissions: Permissions,
+    /// Permission requests waiting on the user (requests.rs).
+    pub requests: crate::requests::Requests,
+    /// Why the hook server isn't listening (hooks.rs), shown in the window instead of only logged.
+    pub hook_error: Mutex<Option<String>>,
     /// Stores that couldn't be read at launch (store.rs).
     pub problems: crate::store::Problems,
     /// Where each agent session runs, for "Open session".

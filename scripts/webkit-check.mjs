@@ -55,6 +55,14 @@ for (const scheme of ["light", "dark"]) {
   await page.waitForTimeout(1200);
   const result = (await page.locator(".result").textContent()) ?? "";
   if (!result.includes("Sent to Claude")) failures.push(`${scheme} answer: "${result.trim()}"`);
+  // A long operation can be allowed only after it was scrolled to its end (V1-D7).
+  await page.goto(base + "/settings.html?longrequest&tab=review:claude-2");
+  const allowLong = page.getByRole("button", { name: "Allow once" });
+  await allowLong.waitFor();
+  if (!(await allowLong.isDisabled())) failures.push(`${scheme} review: Allow on before the operation was read`);
+  await page.evaluate(() => document.querySelectorAll(".facts.full code").forEach((code) => (code.scrollTop = code.scrollHeight)));
+  await page.waitForTimeout(200);
+  if (await allowLong.isDisabled()) failures.push(`${scheme} review: Allow still off after reading to the end`);
   // No session has a "full access" switch: Sidefolk never answers for a session (V1-D10).
   await page.goto(base + "/settings.html?tab=sessions");
   await page.getByRole("heading", { name: "Running" }).waitFor();
@@ -100,6 +108,11 @@ for (const scheme of ["light", "dark"]) {
   assert.equal(await page.locator("#new-session-folder").inputValue(), "/Users/you/git/api");
   assert.equal(await page.locator("#new-session-full").isChecked(), false);
   await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  // Your companion is Pip or Spark, always both (DECISIONS #41).
+  await page.goto(base + "/settings.html?tab=settings:companion");
+  if ((await page.locator(".crew-choice").count()) !== 2) failures.push("settings: Pip and Spark aren't both offered");
+  await page.locator("label[for=look-spark]").click();
+  await page.locator("#toast").getByText("Your companion is Spark now.", { exact: true }).waitFor();
   // English never becomes a command; with Labs → Commands on, "$ …" is confirmed in the window.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
@@ -220,6 +233,13 @@ for (const part of ["Work session", "Run a command?", "Command", "Folder", "Decl
 await overlay.screenshot({ path: join(out, "overlay.png") });
 // A request is only ever answered by the user: there is no "Allow everything" (V1-D8, V1-D10).
 if (await overlay.getByRole("button", { name: /Allow everything/ }).count()) failures.push("overlay: Allow everything is back");
+// A request longer than the card is reviewed whole in the window before it can be allowed (V1-D7).
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("8");
+const long = overlay.locator(".bubble.urgent").first();
+await long.getByRole("button", { name: "Review all of it" }).waitFor();
+if (await long.getByRole("button", { name: "Allow once" }).count()) failures.push("overlay: Allow offered on a request longer than its card");
 // Browser key r creates a real in-memory reminder; Undo must remove it from the list.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);

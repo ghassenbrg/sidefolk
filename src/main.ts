@@ -12,6 +12,7 @@ import { wireInput } from "./input";
 import { sound } from "./sound";
 import { memoryNotes, Notes, type NoteStore } from "./notes";
 import { memoryStore, Reminders, type Reminder, type ReminderStore } from "./reminders";
+import { lookOf } from "./roster";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 document.body.classList.toggle("web", !inTauri);
@@ -65,11 +66,13 @@ const webName = {
   },
 };
 
-/** crew.json keeps the companion's name (older keys, such as looks and Sparks, are dropped). */
-type Stored = { main?: { name?: string } } | null;
+/** crew.json keeps the companion's name and whether it's Pip or Spark (older keys are dropped). */
+type Stored = { main?: { name?: string; look?: string } } | null;
 const stored = inTauri ? await invoke<Stored>("get_crew") : null;
 const storedName = inTauri ? stored?.main?.name : webName.load();
-const crew = { main: { name: storedName?.trim() || "Pip" } };
+// Browser preview: ?look=spark shows Spark.
+const look = lookOf(inTauri ? stored?.main?.look : new URLSearchParams(location.search).get("look"));
+const crew: { main: { name: string; look?: string } } = { main: { name: storedName?.trim() || (look === "spark" ? "Spark" : "Pip"), ...(look === "spark" ? { look } : {}) } };
 const saveCrew = () => (inTauri ? invoke("save_crew", { crew }) : Promise.resolve());
 
 const host: Host = {
@@ -78,8 +81,12 @@ const host: Host = {
     if (inTauri) await saveCrew();
     else webName.save(name);
   },
-  resolvePermission: (id, decision) => {
-    if (inTauri) void invoke("resolve_permission", { id, decision });
+  resolvePermission: async (id, decision) => {
+    if (!inTauri) return null;
+    return invoke("resolve_permission", { id, decision }).then(
+      () => null,
+      (refused) => String(refused),
+    );
   },
   // Takes keyboard focus without activating Sidefolk, and hands it back afterwards.
   typing: (typing) => {
@@ -117,7 +124,7 @@ const reminderStore: ReminderStore = inTauri
   : memoryStore();
 const journal = (since: number) => (inTauri ? invoke<JournalEntry[]>("journal_since", { since }) : Promise.resolve([]));
 
-const companion = await Companion.start(crew.main.name, host, zoom);
+const companion = await Companion.start(crew.main.name, host, zoom, { character: look });
 const pet = companion.pet;
 
 /** Settings that apply without a restart. Companion size rebuilds it, so that reloads the page. */
@@ -177,9 +184,16 @@ if (inTauri) {
   });
   // From the Sidefolk window and the tray. Answers are acknowledged, so the window shows
   // "Sent" only once the companion really passed the answer on.
-  type Action = { action: string; text?: string; id?: string; name?: string };
+  type Action = { action: string; text?: string; id?: string; name?: string; look?: string };
   void listen<Action>("pet-action", (e) => {
-    const { action, text, id, name } = e.payload;
+    const { action, text, id, name, look } = e.payload;
+    // Pip or Spark: saved, then the overlay starts over with it. Open requests live in Rust and
+    // come back after the reload (requests.rs).
+    if (action === "look") {
+      if (lookOf(look) === "spark") crew.main.look = "spark";
+      else delete crew.main.look;
+      void saveCrew().then(() => location.reload());
+    }
     const reply = (line?: string | void) => line && pet.bubble.say(line, 6);
     // From the window's "Tell Pip…" bar: the same commands, and the reply goes back to it.
     if (action === "run" && text)
@@ -198,6 +212,8 @@ if (inTauri) {
   void listen<number>("idle", (e) => {
     const idle = e.payload;
     pet.mind.setOsIdle(idle);
+    // Falling asleep or waking shows in the window too.
+    companion.onChange();
     if (lastIdle >= AWAY_SECS && idle < 1) void briefing(Date.now() - lastIdle * 1000).then(weeklyWins);
     lastIdle = idle;
   });
@@ -225,20 +241,31 @@ if (inTauri) {
   });
   void listen<AgentEvent>("agent", (e) => companion.handleEvent(e.payload));
   void listen<Ask>("permission", (e) => companion.handleAsk(e.payload));
+  // Requests live in Rust (requests.rs): a reloaded overlay shows the ones still waiting.
+  for (const ask of await invoke<Ask[]>("list_requests").catch(() => [] as Ask[])) companion.handleAsk(ask);
   void listen<string>("permission-closed", (e) => companion.closeRequest(e.payload));
   void listen<{ width: number; height: number }>("overlay-resized", (e) => {
     place(e.payload.width, e.payload.height);
     companion.familiars.forEach((f) => f.resize());
   });
-  // The Sidefolk window's live view: sent when something changed, checked once a second.
+  // The Sidefolk window's live view: sent when the companion says something changed, at most once
+  // per frame, and only when it differs from what was sent (no polling; docs/V1.md §11).
   let published = "";
-  setInterval(() => {
-    const status = companion.status();
-    const json = JSON.stringify(status);
-    if (json === published) return;
-    published = json;
-    void invoke("publish_status", { status }).catch(() => {});
-  }, 1_000);
+  let queued = false;
+  const publish = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      const status = companion.status();
+      const json = JSON.stringify(status);
+      if (json === published) return;
+      published = json;
+      void invoke("publish_status", { status }).catch(() => {});
+    });
+  };
+  companion.onChange = publish;
+  publish();
 } else {
   addEventListener("pointermove", (e) => onCursor(e.clientX, e.clientY));
   install(companion);
@@ -332,7 +359,10 @@ if (inTauri)
     childList: true,
     attributeFilter: ["hidden"],
   });
-setInterval(() => companion.familiars.forEach((f) => f.agents.tick()), 30_000);
+setInterval(() => {
+  companion.familiars.forEach((f) => f.agents.tick());
+  companion.onChange();
+}, 30_000);
 
 if (import.meta.env.DEV) {
   Object.assign(window, { sidefolk: { companion } });
@@ -367,7 +397,7 @@ if (import.meta.env.DEV) {
     report(`overlay ${pet.bounds.width}x${pet.bounds.height} dpr=${devicePixelRatio}`);
     void listen("overlay-resized", () => setTimeout(() => report(`refit ${area.width}x${area.height}`), 100));
     void listen<AgentEvent>("agent", (e) => report(`agent ${e.payload.source} ${e.payload.kind} ${e.payload.project} ${e.payload.detail}`));
-    void listen<Ask>("permission", (e) => report(`ask ${e.payload.id} ${e.payload.title} ${e.payload.detail}`));
+    void listen<Ask>("permission", (e) => report(`ask ${e.payload.id} ${e.payload.title} ${e.payload.complete ? "" : "(too long) "}${e.payload.text.slice(0, 200)}`));
     let lastInteractive = false;
     setInterval(() => {
       const interactive = document.body.classList.contains("hover");

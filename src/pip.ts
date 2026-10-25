@@ -81,8 +81,6 @@ export const FEET = 366;
 export const DRAWN = 300;
 /** On-screen height of a standing Pip at size "medium", in CSS pixels. */
 export const HEIGHT = 150;
-/** The status light's place beside the right ear, in frame pixels. */
-const LIGHT_AT = { x: 290, y: 78 };
 /** Hit-test masks are kept at a quarter of the frame size. */
 const MASK = 4;
 
@@ -93,6 +91,8 @@ export class PipView {
   private readonly body: HTMLDivElement;
   private readonly images = new Map<Frame, HTMLImageElement>();
   private readonly masks = new Map<Frame, Uint8Array>();
+  /** The top of each frame (an antenna's tip), in frame pixels. */
+  private readonly tips = new Map<Frame, { x: number; y: number }>();
   private readonly light: HTMLDivElement;
   private current: ClipName = "idle";
   private shown: Frame = "idle";
@@ -107,11 +107,16 @@ export class PipView {
   /** Reduce motion: no breathing, swaying, hops or pulses. */
   still = false;
 
-  /** `folder` holds the frames in public/ (roster.ts); `hue` turns the mint accent to a worker's color (recolor.ts). */
+  /**
+   * `folder` holds the frames in public/ (roster.ts); `hue` turns the mint accent to a worker's
+   * color (recolor.ts); `lightAt` is the status light's place in frame pixels, or "antenna" for
+   * the top of each frame (Spark's antenna moves with its pose).
+   */
   constructor(
     folder: string,
     private readonly hue = 0,
     label = "Companion",
+    private readonly lightAt: { x: number; y: number } | "antenna" = { x: 290, y: 78 },
   ) {
     this.el = document.createElement("div");
     this.el.className = "pip";
@@ -146,7 +151,9 @@ export class PipView {
             img.src = recolored(img, this.hue);
             await img.decode();
           }
-          this.masks.set(name, mask(img));
+          const m = mask(img);
+          this.masks.set(name, m);
+          this.tips.set(name, tip(m));
         } catch {
           // A missing frame stays hidden; hit tests treat it as solid.
         }
@@ -213,8 +220,9 @@ export class PipView {
     }
     const bob = still ? 0 : Math.sin(this.time * 1.7) * 1.2;
     const pulse = light === "alert" && !still ? 0.5 + 0.5 * Math.sin(this.time * 4) : 0;
-    const top = this.current === "sleep" || this.current === "sad" ? LIGHT_AT.y + 60 : LIGHT_AT.y;
-    this.light.style.left = `${(LIGHT_AT.x / VIEW_W) * 100}%`;
+    const at = this.lightAt === "antenna" ? (this.tips.get(this.shown) ?? { x: 224, y: 78 }) : this.lightAt;
+    const top = this.lightAt !== "antenna" && (this.current === "sleep" || this.current === "sad") ? at.y + 60 : at.y;
+    this.light.style.left = `${(at.x / VIEW_W) * 100}%`;
     this.light.style.top = `${((top + bob * 4) / VIEW_H) * 100}%`;
     this.light.style.setProperty("--pulse", pulse.toFixed(2));
     this.light.style.opacity = light === "sleep" ? "0.6" : "1";
@@ -240,6 +248,16 @@ export class PipView {
 }
 
 /** A small opaque/transparent map of a frame, for hit testing. */
+/** The middle of the frame's topmost part (an antenna's ball), in frame pixels. */
+function tip(m: Uint8Array): { x: number; y: number } {
+  const w = VIEW_W / MASK;
+  const top = Math.floor(m.indexOf(1) / w);
+  if (top < 0) return { x: 224, y: 78 };
+  const xs: number[] = [];
+  for (let y = top; y < top + 5; y++) for (let x = 0; x < w; x++) if (m[y * w + x]) xs.push(x);
+  return { x: ((Math.min(...xs) + Math.max(...xs) + 1) / 2) * MASK, y: top * MASK + 12 };
+}
+
 function mask(img: HTMLImageElement): Uint8Array {
   const w = VIEW_W / MASK;
   const h = VIEW_H / MASK;

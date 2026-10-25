@@ -187,11 +187,15 @@ pub struct Integrations {
     claude_tools: bool,
     codex_tools: bool,
     start_at_login: bool,
+    /// Why Sidefolk can't hear Claude Code (its port is taken), or None when it can.
+    hook_error: Option<String>,
 }
 
-#[tauri::command]
-pub fn integrations(app: AppHandle) -> Integrations {
+/// Reads the agents' config files, so it runs off the main thread.
+#[tauri::command(async)]
+pub fn integrations(app: AppHandle, shared: State<'_, Arc<Shared>>) -> Integrations {
     Integrations {
+        hook_error: shared.hook_error.lock().unwrap().clone(),
         claude_hooks: crate::claude_setup::connected(&app),
         claude_tools: Agent::Claude.installed(),
         codex_tools: Agent::Codex.installed(),
@@ -225,7 +229,7 @@ pub fn reveal_data_dir(shared: State<'_, Arc<Shared>>, logs: Option<bool>, notes
 /// "Report a problem": what someone helping needs, as plain text the user copies and sends
 /// themselves. Versions, settings, which tools are connected and the latest error lines; never
 /// reminders, notes, names or agent text.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn problem_report(shared: State<'_, Arc<Shared>>) -> String {
     let (dir, settings) = {
         let store = shared.settings.lock().unwrap();

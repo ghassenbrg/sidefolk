@@ -16,6 +16,7 @@ mod overlay;
 #[cfg(target_os = "macos")]
 mod panel;
 mod reminders;
+mod requests;
 mod notes;
 mod notifications;
 mod sessions;
@@ -33,7 +34,7 @@ fn get_settings(shared: State<'_, Arc<Shared>>) -> settings::Settings {
     shared.settings.lock().unwrap().value.clone()
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn save_pet(shared: State<'_, Arc<Shared>>, x: f64) -> Result<(), String> {
     if !x.is_finite() {
         return Err("Pet position must be finite".into());
@@ -51,10 +52,10 @@ fn get_crew(shared: State<'_, Arc<Shared>>) -> serde_json::Value {
     shared.crew.lock().unwrap().clone()
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn save_crew(app: AppHandle, shared: State<'_, Arc<Shared>>, crew: serde_json::Value) -> Result<(), String> {
     let dir = shared.settings.lock().unwrap().dir.clone();
-    crew::save(&dir, &crew).map_err(|e| e.to_string())?;
+    crew::save(&dir, &crew, &shared.problems).map_err(|e| e.to_string())?;
     *shared.crew.lock().unwrap() = crew;
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
@@ -73,7 +74,7 @@ fn list_reminders(shared: State<'_, Arc<Shared>>) -> Vec<reminders::Reminder> {
     shared.reminders.list()
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn add_reminder(
     app: AppHandle,
     shared: State<'_, Arc<Shared>>,
@@ -97,7 +98,7 @@ fn add_reminder(
     Ok(reminder)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn update_reminder(
     app: AppHandle,
     shared: State<'_, Arc<Shared>>,
@@ -109,14 +110,14 @@ fn update_reminder(
     Ok(updated)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn remove_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, id: String) -> Result<Option<reminders::Reminder>, String> {
     let removed = shared.reminders.remove(&id).map_err(|e| e.to_string())?;
     let _ = app.emit("reminders-changed", ());
     Ok(removed)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn restore_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, reminder: reminders::Reminder) -> Result<(), String> {
     shared.reminders.restore(reminder).map_err(|e| e.to_string())?;
     let _ = app.emit("reminders-changed", ());
@@ -125,13 +126,13 @@ fn restore_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, reminder: re
 
 /// The page's answer to an agent's tool call (see mcp.rs).
 /// Stores that couldn't be read at launch (store.rs), for the window's banner.
-#[tauri::command]
+#[tauri::command(async)]
 fn store_problems(shared: State<'_, Arc<Shared>>) -> Vec<store::Problem> {
     shared.problems.list()
 }
 
 /// Puts a store's last good copy back, then starts Sidefolk again so everything reads it.
-#[tauri::command]
+#[tauri::command(async)]
 fn restore_store(app: AppHandle, shared: State<'_, Arc<Shared>>, file: String) -> Result<(), String> {
     if !shared.problems.list().iter().any(|p| p.file == file && p.backup) {
         return Err("There's no last good copy of that file.".into());
@@ -161,14 +162,27 @@ fn peek(app: AppHandle, shared: State<'_, Arc<Shared>>, show: bool) {
     });
 }
 
+/// The user's answer from either window. Allow is refused for a request that isn't waiting or
+/// couldn't be shown whole (requests.rs); the reason comes back to say so.
 #[tauri::command]
-fn resolve_permission(shared: State<'_, Arc<Shared>>, id: String, decision: String) -> bool {
+fn resolve_permission(app: AppHandle, shared: State<'_, Arc<Shared>>, id: String, decision: String) -> Result<(), String> {
     let decision = match decision.as_str() {
         "allow" => Decision::Allow,
         "deny" => Decision::Deny,
         _ => Decision::Defer,
     };
-    shared.permissions.resolve(&id, decision)
+    let result = shared.requests.answer(&id, decision).map_err(|refused| refused.to_string());
+    if result.is_ok() {
+        let _ = app.emit("permission-closed", &id);
+    }
+    shared.requests.changed(&app);
+    result
+}
+
+/// Requests waiting on the user, for a window that just opened or reloaded.
+#[tauri::command]
+fn list_requests(shared: State<'_, Arc<Shared>>) -> Vec<requests::Ask> {
+    shared.requests.list()
 }
 
 /// The bubble's text field opened or closed.
@@ -205,7 +219,11 @@ fn main() {
         // SAFETY: no other threads exist yet.
         unsafe { std::env::set_var("Malloc", "1") };
     }
-    let builder = tauri::Builder::default();
+    // A second launch opens the running Sidefolk's window instead of starting another copy that
+    // would fight it for the hook port (docs/V1.md V1-X15). Registered first, as the plugin asks.
+    let builder = tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        let _ = prefs::open(app);
+    }));
     #[cfg(target_os = "macos")]
     let builder = builder.plugin(tauri_nspanel::init());
     builder
@@ -236,6 +254,7 @@ fn main() {
             actions::run_command,
             actions::choose_project_folder,
             resolve_permission,
+            list_requests,
             overlay_typing,
             overlay::overlay_area,
             overlay::overlay_frame,
@@ -282,9 +301,10 @@ fn main() {
                 token: mcp::ensure_token(&store.dir)?,
                 reminders: reminders::Reminders::load(&store.dir, &problems),
                 problems,
+                hook_error: Default::default(),
                 notes: notes::Notes::new(&store.dir),
                 settings: std::sync::Mutex::new(store),
-                permissions: Default::default(),
+                requests: Default::default(),
                 hosts: Default::default(),
             });
             app.manage(shared.clone());

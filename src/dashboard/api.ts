@@ -29,9 +29,10 @@ export type Settings = {
 };
 /** Mirrors `Problem` in src-tauri/src/store.rs: a file that couldn't be read at launch. */
 export type StoreProblem = { file: string; kept: string; error: string; backup: boolean };
-export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean };
-/** crew.json: the companion's name. */
-export type CrewFile = { main: { name: string } };
+/** `hook_error`: why Sidefolk can't hear Claude Code (its port is taken), or null. */
+export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean; hook_error: string | null };
+/** crew.json: the companion's name, and `look: "spark"` when it's Spark. */
+export type CrewFile = { main: { name: string; look?: string } };
 
 /** Mirrors `status()` in src/companion.ts. */
 export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number };
@@ -58,6 +59,8 @@ export type Waiting = {
   choices: { label: string; value: string; primary: boolean; quiet: boolean }[];
 };
 export type Status = { pets: PetStatus[]; waiting: Waiting[] };
+/** Mirrors `Ask` in src-tauri/src/requests.rs. */
+export type Ask = import("../companion").Ask;
 export type { Reminder };
 
 type Handler = (payload: unknown) => void;
@@ -112,7 +115,7 @@ function preview(): typeof tauriInvoke {
       labs_sessions: false,
       hide_from_dock: false,
     } as Settings,
-    integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false } as Integrations,
+    integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null } as Integrations,
     crew: { main: { name: "Pip" } } as CrewFile,
     reminders: [
       { id: "r1", text: "Review launch notes", due: now + 3 * 3_600_000, project: "", from: "you", created: now, done: false, fired: false },
@@ -135,34 +138,25 @@ function preview(): typeof tauriInvoke {
           outcomes: [{ kind: "done", source: "claude", project: api, detail: "Rate limiting added; 14 tests pass.", at: now - 3_600_000, session: "9f2a", cwd: api }],
         },
       ],
-      waiting: [
-        {
-          id: "claude-1",
-          pet: "main",
-          petName: "Pip",
-          who: "Pip · api",
-          title: "Run a command?",
-          lines: ["Claude is asking to run this command in api."],
-          meta: {
-            kind: "permission",
-            action: "command",
-            title: "Run a command?",
-            command: "npm test -- --run --reporter=verbose src/routes/login.test.ts",
-            source: "claude",
-            session: "04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d",
-            project: api,
-            cwd: api,
-            expires: String(now + 50_000),
-            canDefer: "true",
-          },
-          choices: [
-            { label: "Decline", value: "deny", primary: false, quiet: false },
-            { label: "Allow once", value: "allow", primary: true, quiet: false },
-            { label: "Answer in Claude's window", value: "defer", primary: false, quiet: true },
-          ],
-        },
-      ],
+      waiting: [],
     } as Status,
+    requests: [
+      {
+        id: "claude-1",
+        source: "claude",
+        session: "04c1e7d2-5b8a-4f0e-9c1d-2e3f4a5b6c7d",
+        cwd: api,
+        project: api,
+        tool: "Bash",
+        kind: "command",
+        title: "Run a command?",
+        text: "npm test -- --run --reporter=verbose src/routes/login.test.ts",
+        path: null,
+        complete: true,
+        canDefer: true,
+        expires: now + 50_000,
+      },
+    ] as import("../companion").Ask[],
   };
   return (async (command: string, args?: Record<string, unknown>) => {
     const a = (args ?? {}) as Record<string, any>;
@@ -176,8 +170,9 @@ function preview(): typeof tauriInvoke {
         return state.settings;
       case "update_settings":
         return Object.assign(state.settings, a.change);
+      // ?portbusy shows the notice for a hook port another app holds.
       case "integrations":
-        return state.integrations;
+        return new URLSearchParams(location.search).has("portbusy") ? { ...state.integrations, hook_error: "Another app is using port 47821, so Sidefolk can't hear Claude Code. Quit the other copy of Sidefolk, or restart your Mac." } : state.integrations;
       case "get_crew":
         return state.crew;
       case "list_reminders":
@@ -254,11 +249,24 @@ function preview(): typeof tauriInvoke {
         return null;
       case "get_status":
         return state.status;
+      // ?longrequest adds a request too long to read without scrolling.
+      case "list_requests":
+        if (new URLSearchParams(location.search).has("longrequest") && !state.requests.some((r) => r.id === "claude-2"))
+          state.requests.push({ ...state.requests[0], id: "claude-2", text: `${Array.from({ length: 120 }, (_, i) => `echo step ${i}`).join("\n")}\nrm -rf build` });
+        return state.requests;
+      case "resolve_permission": {
+        const at = state.requests.findIndex((r) => r.id === a.id);
+        if (at < 0) throw "That request isn't waiting anymore.";
+        state.requests.splice(at, 1);
+        setTimeout(() => emit("requests", state.requests), 50);
+        return null;
+      }
       // ?damaged shows the notice for a reminders file that couldn't be read.
       case "store_problems":
         return new URLSearchParams(location.search).has("damaged") ? [{ file: "reminders.json", kept: "/Users/you/Library/Application Support/dev.sidefolk.companion/reminders.json.corrupt-1792900000000", error: "expected value at line 1 column 3", backup: true }] : [];
       case "pet_action":
         if (a.action.action === "run") setTimeout(() => emit("answered", { id: a.action.id, ok: true, text: `Preview: "${a.action.text}" would go to the companion.` }), 200);
+        if (a.action.action === "look") state.crew.main.look = a.action.look === "spark" ? "spark" : undefined;
         if (a.action.action === "answer") {
           state.status.waiting = state.status.waiting.filter((w) => w.id !== a.action.id);
           setTimeout(() => emit("answered", { id: a.action.id, ok: true }), 400);

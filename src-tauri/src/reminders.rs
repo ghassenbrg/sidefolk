@@ -101,7 +101,7 @@ impl Reminders {
     pub fn load(data_dir: &std::path::Path, problems: &crate::store::Problems) -> Self {
         let path = data_dir.join("reminders.json");
         let now = now_ms();
-        let loaded = crate::store::load::<Vec<Reminder>>(&path, |_, data| data);
+        let loaded = crate::store::load::<Vec<Reminder>>(&path, 1, serde_json::Value::is_array, |_, data| data);
         problems.note(&path, &loaded);
         let blocked = matches!(loaded, crate::store::Loaded::Corrupt { kept: None, .. });
         let list = loaded

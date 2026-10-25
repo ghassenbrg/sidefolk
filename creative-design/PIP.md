@@ -2,6 +2,11 @@
 
 Contract: [docs/V1.md §8](../docs/V1.md). Changes need the change process in V1 §13.
 
+**Pip and Spark are always in the app** (founder, 25 October 2026). Pip is the default and the
+character this bible describes. Spark is the clay robot: the same poses, voice rules and "never"
+list apply, its status light sits on its antenna tip, and the user picks either one in Settings →
+Companion.
+
 ## Who Pip is
 
 Pip is a quiet desk-mate and messenger, **not an AI**. Pip holds things for you: your reminders,

@@ -178,3 +178,21 @@ Newest last. Each entry: what, why, and what would change it.
     P3 choice UI); a repeat keeps working hours (1–7 is the afternoon), so "every weekday at 9"
     stays 09:00. A date-only reminder whose 09:00 already passed asks when instead of saving a
     past time.
+41. **Pip and Spark are always there (founder, 25 October 2026).** "For Spark character and Pip,
+    they should be there always, whatever the decision was." Your companion is Pip (default) or
+    Spark, chosen in Settings → Companion (crew.json `main.look`); both are 3D clay frames with all
+    16 poses. Spark's status light follows its antenna tip per pose (src/pip.ts `tip`). Overrides
+    the ruling's "Pip only" (V1 F-24, V1-C1, C8). Spark *workers* per project stay LATER (F-19)
+    unless the founder says otherwise.
+42. **P1 foundation choices (25 October 2026).**
+    - `tauri-plugin-single-instance` is added (V1-X15): a second launch opens the running app's
+      window instead of a second copy fighting for the hook port. This is the dependency line
+      guardrail 6 asks for.
+    - Permission requests live in Rust (`requests.rs`), not the overlay. Window answers go
+      straight to Rust (`resolve_permission`, which says why it refused).
+    - Pip's card shows Allow only when the whole operation fits on it (12 lines, 600
+      characters); a longer one offers "Review all of it" in the window.
+    - Opening a session releases its waiting requests to the session's own prompt.
+    - No status polling: the overlay publishes on change, and the window refreshes on focus and
+      on events (`integrations-changed` from `tray::refresh`, `requests`, `status`,
+      `settings-changed`, `reminders-changed`, `notes-changed`).

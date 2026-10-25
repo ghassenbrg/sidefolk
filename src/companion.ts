@@ -3,21 +3,32 @@ import type { Card, Choice, Fact } from "./bubble";
 import { explain, HELP, parse } from "./commands";
 import { Familiar, type Look } from "./familiar";
 
-/** Mirrors `PermissionAsk` in src-tauri/src/bus.rs. */
+/** Mirrors `Ask` in src-tauri/src/requests.rs: a permission request, shown exactly as it would run. */
 export type Ask = {
   id: string;
   source: "claude" | "codex";
   session: string;
-  title: string;
-  detail: string;
   cwd: string;
   project: string;
-  canDefer: boolean;
+  tool: string;
   /** command | file | web | tool */
   kind: string;
+  title: string;
+  /** The command byte for byte, the diff or the file's content, hidden characters made visible. */
+  text: string;
+  /** The file an edit or write touches. */
+  path: string | null;
+  /** Everything the agent will do is in `text`; when false there's no Allow outside the terminal. */
+  complete: boolean;
+  canDefer: boolean;
   /** Unix ms when the agent stops waiting. */
   expires: number;
 };
+
+/** What fits on a card whole; anything longer is reviewed in the window before it can be allowed. */
+const CARD_CHARS = 600;
+const CARD_LINES = 12;
+export const fitsCard = (text: string) => text.length <= CARD_CHARS && text.split("\n").length <= CARD_LINES;
 
 /** A session the companion can open: live where it runs, or resumed in a terminal. */
 export type SessionRef = { source: string; session: string; cwd: string };
@@ -25,7 +36,8 @@ export type SessionRef = { source: string; session: string; cwd: string };
 /** Side effects the companion needs from the desktop app (or the browser preview). */
 export type Host = {
   saveName(name: string): Promise<void>;
-  resolvePermission(id: string, decision: string): void;
+  /** Sends the user's answer; resolves to why it wasn't taken, or null. */
+  resolvePermission(id: string, decision: string): Promise<string | null>;
   typing(typing: boolean): void;
   /** Reminder commands, handled by reminders.ts. */
   command?(text: string, kind: "remind" | "reminders" | "new-reminder"): Promise<string | void>;
@@ -67,6 +79,8 @@ export class Companion {
   private readonly requests = new Map<string, Card>();
   /** Due reminders whose card is on screen: Pip holds the note while any is. */
   private readonly notes = new Set<string>();
+  /** Called after anything the window shows changed (sessions, requests, the name). */
+  onChange: () => void = () => {};
 
   private constructor(
     readonly pet: Familiar,
@@ -110,6 +124,7 @@ export class Companion {
 
   handleEvent(event: AgentEvent) {
     this.pet.agents.handle(event);
+    this.onChange();
   }
 
   handleAsk(ask: Ask) {
@@ -118,18 +133,22 @@ export class Companion {
 
   /**
    * A permission card: companion · project, tool · work session, the plain question, the exact
-   * action and explicit choices, none preselected.
+   * operation and explicit choices, none preselected. Allow is offered only when the whole
+   * operation is on the card; a longer one is reviewed in the window first (docs/V1.md V1-D7).
    */
   private askCard(ask: Ask): Card {
     const agent = AGENT_NAMES[ask.source];
     const project = folder(ask.project || ask.cwd);
     const [action, label] = ACTION[ask.kind] ?? ACTION.tool;
-    const facts: Fact[] = [{ label, value: ask.detail }, ...(ask.cwd ? [{ label: "Folder", value: ask.cwd }] : [])];
-    const choices: Choice[] = [
-      { label: "Decline", value: "deny" },
-      { label: "Allow once", value: "allow", primary: true },
-      ...(ask.canDefer ? [{ label: `Answer in ${agent}'s window`, value: "defer", quiet: true }] : []),
+    const whole = ask.complete && fitsCard(ask.text) && (ask.path ?? "").length <= 200;
+    const shown = whole ? ask.text : `${ask.text.split("\n").slice(0, 8).join("\n").slice(0, CARD_CHARS)}\n…`;
+    const facts: Fact[] = [
+      ...(ask.path ? [{ label: "File", value: ask.path }] : []),
+      ...(ask.text ? [{ label: ask.kind === "file" ? "Change" : label, value: shown }] : []),
+      ...(ask.cwd ? [{ label: "Folder", value: ask.cwd }] : []),
     ];
+    const go: Choice[] = whole ? [{ label: "Allow once", value: "allow", primary: true }] : ask.complete ? [{ label: "Review all of it", value: "review", primary: true }] : [];
+    const choices: Choice[] = [{ label: "Decline", value: "deny" }, ...go, ...(ask.canDefer ? [{ label: `Answer in ${agent}'s window`, value: "defer", quiet: true }] : [])];
     return {
       id: ask.id,
       who: `${this.name} · ${project}`,
@@ -137,14 +156,18 @@ export class Companion {
       title: ask.title,
       lines: [`${agent} is asking to ${action} in ${project}.`],
       facts,
-      note: "Review it before allowing.",
+      wholeFacts: whole,
+      note: whole ? "Review it before allowing." : ask.complete ? "It's longer than this card. Review all of it in Sidefolk before allowing." : `It's too long to show here. Answer it in ${agent}'s window.`,
       choices,
       urgent: true,
       meta: {
         kind: "permission",
         action: ask.kind,
         title: ask.title,
-        command: ask.detail,
+        command: ask.text,
+        path: ask.path ?? "",
+        complete: String(ask.complete),
+        tool: ask.tool,
         source: ask.source,
         session: ask.session,
         project: ask.project,
@@ -153,7 +176,8 @@ export class Companion {
         canDefer: String(ask.canDefer),
       },
       onChoose: (value) => {
-        this.host.resolvePermission(ask.id, value);
+        if (value === "review") return this.host.openTab?.(`review:${ask.id}`);
+        void this.host.resolvePermission(ask.id, value).then((refused) => refused && this.pet.bubble.say(refused, 6, "fail"));
         // Answering in the agent's own window: take the user there.
         if (value === "defer") void this.openSession({ source: ask.source, session: ask.session, cwd: ask.cwd });
       },
@@ -169,7 +193,8 @@ export class Companion {
     const tracked: Card = {
       ...card,
       onChoose: (value) => {
-        if (card.meta?.kind === "reminder" && value === "open") {
+        // Opening a reminder's details or reviewing a long request keeps it waiting.
+        if ((card.meta?.kind === "reminder" && value === "open") || (card.meta?.kind === "permission" && value === "review")) {
           this.pet.bubble.close(card.id);
           tracked.onClose?.();
         } else this.closeRequest(card.id);
@@ -183,6 +208,7 @@ export class Companion {
         f.agents.asking(f.asks.size);
         this.pose();
         card.onClose?.();
+        this.onChange();
       },
     };
     if (card.meta?.kind === "reminder") this.notes.add(card.id);
@@ -191,6 +217,7 @@ export class Companion {
     by.asks.add(card.id);
     by.bubble.show(tracked);
     by.agents.asking(by.asks.size);
+    this.onChange();
   }
 
   /** The request ended elsewhere (answered in the terminal, expired, the agent went away). */
@@ -202,6 +229,7 @@ export class Companion {
     f.asks.delete(id);
     f.bubble.close(id);
     f.agents.asking(f.asks.size);
+    this.onChange();
   }
 
   /** The session "open session" goes to: the most urgent live one (in a project, if named), else the last that ended. */
@@ -394,6 +422,7 @@ export class Companion {
     if (!name) return "A name needs at least one letter.";
     this.pet.name = name;
     await this.host.saveName(name);
+    this.onChange();
     return `I'm ${name} now.`;
   }
 

@@ -173,6 +173,12 @@ body.hover .stage {
   -webkit-user-select: text;
 }
 
+/* A permission card with Allow shows the whole operation (docs/V1.md V1-D7); fitsCard keeps it short. */
+.bubble .facts.whole .value {
+  max-height: none;
+  overflow: visible;
+}
+
 .bubble .note {
   margin-top: var(--space-3);
   color: var(--muted);

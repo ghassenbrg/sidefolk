@@ -16,14 +16,12 @@ use axum::{
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
 
-use crate::bus::{self, AgentEvent, Decision, PermissionAsk, Shared, clip};
+use crate::bus::{self, AgentEvent, Decision, Shared, clip};
+use crate::requests::End;
 
 pub const PORT: u16 = 47821;
 /// How long the pet holds a permission before the terminal prompt takes over.
 const PERMISSION_WAIT: Duration = Duration::from_secs(60);
-
-/// Longest command or input a permission card shows; longer ones are cut with an ellipsis.
-pub const ACTION_MAX: usize = 2000;
 
 type Ctx = (AppHandle, Arc<Shared>);
 
@@ -39,14 +37,20 @@ pub fn spawn(app: AppHandle, shared: Arc<Shared>) {
         let router = router
             .route("/dev/resolve", post(dev_resolve))
             .route("/dev/ui", post(dev_ui));
-        let router = router.with_state((app, shared));
+        let router = router.with_state((app.clone(), shared.clone()));
+        // A failure is shown in the window (Today and AI tools), not only written to the log.
+        let failed = |why: String| {
+            eprintln!("sidefolk: {why}");
+            *shared.hook_error.lock().unwrap() = Some(why);
+            let _ = app.emit("integrations-changed", ());
+        };
         match tokio::net::TcpListener::bind(("127.0.0.1", PORT)).await {
             Ok(listener) => {
                 if let Err(error) = axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await {
-                    eprintln!("sidefolk: hook server stopped: {error}");
+                    failed(format!("Sidefolk stopped listening to Claude Code ({error}). Restart Sidefolk."));
                 }
             }
-            Err(error) => eprintln!("sidefolk: cannot listen on 127.0.0.1:{PORT}: {error}"),
+            Err(error) => failed(format!("Another app is using port {PORT}, so Sidefolk can't hear Claude Code ({error}). Quit the other copy of Sidefolk, or restart your Mac.")),
         }
     });
 }
@@ -140,21 +144,8 @@ fn tool_activity(tool: &str, input: &Value) -> (&'static str, String) {
     }
 }
 
-/// What a permission request would do: its kind, a plain question and the exact action.
-/// The action is kept whole (up to `ACTION_MAX`): the card must not hide its meaningful end.
-fn describe(tool: &str, input: &Value) -> (&'static str, String, String) {
-    let field = |key: &str| input.get(key).and_then(Value::as_str).unwrap_or_default();
-    match tool {
-        "Bash" => ("command", "Run a command?".into(), clip(field("command"), ACTION_MAX)),
-        "Edit" | "MultiEdit" => ("file", "Edit a file?".into(), field("file_path").into()),
-        "Write" => ("file", "Write a file?".into(), field("file_path").into()),
-        "WebFetch" => ("web", "Open a web page?".into(), clip(field("url"), ACTION_MAX)),
-        other => ("tool", format!("Use {other}?"), clip(&input.to_string(), ACTION_MAX)),
-    }
-}
-
 #[cfg(debug_assertions)]
-async fn dev_resolve(State((_, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
+async fn dev_resolve(State((app, shared)): State<Ctx>, headers: HeaderMap, body: Bytes) -> Response {
     let request = match payload(&headers, &body) {
         Ok(request) => request,
         Err(response) => return response,
@@ -164,7 +155,8 @@ async fn dev_resolve(State((_, shared)): State<Ctx>, headers: HeaderMap, body: B
         "deny" => Decision::Deny,
         _ => Decision::Defer,
     };
-    let resolved = shared.permissions.resolve(&text(&request, "id"), decision);
+    let resolved = shared.requests.answer(&text(&request, "id"), decision).is_ok();
+    shared.requests.changed(&app);
     axum::Json(json!({ "resolved": resolved })).into_response()
 }
 
@@ -201,7 +193,9 @@ struct OpenRequest<'a> {
 
 impl Drop for OpenRequest<'_> {
     fn drop(&mut self) {
-        self.shared.permissions.close(self.app, &self.id);
+        self.shared.requests.forget(&self.id);
+        let _ = self.app.emit("permission-closed", &self.id);
+        self.shared.requests.changed(self.app);
     }
 }
 
@@ -259,46 +253,38 @@ async fn permission(State((app, shared)): State<Ctx>, ConnectInfo(peer): Connect
         return StatusCode::OK.into_response();
     }
     let tool = text(&hook, "tool_name");
-    let (kind, title, detail) = describe(&tool, &hook["tool_input"]);
     let session = text(&hook, "session_id");
-    let project = bus::project_root(&text(&hook, "cwd"));
-    bus::note(&app, "claude", &session, &project, "ask", &format!("{title} {detail}"));
-    let (id, answer) = shared.permissions.open("claude");
+    let cwd = text(&hook, "cwd");
+    let project = bus::project_root(&cwd);
+    let expires = crate::journal::now_ms() + PERMISSION_WAIT.as_millis() as u64;
+    // The tool's input is kept as it came; the card shows it whole or offers no Allow (requests.rs).
+    let Some((ask, answer)) = shared.requests.open("claude", &session, &cwd, &project, &tool, hook["tool_input"].clone(), true, expires) else {
+        // Already five open for this session: Claude asks in its own prompt.
+        return StatusCode::OK.into_response();
+    };
+    bus::note(&app, "claude", &session, &project, "ask", &clip(&format!("{} {}", ask.shown.title, ask.shown.text), 160));
     let _open = OpenRequest {
         app: &app,
         shared: &shared,
-        id: id.clone(),
+        id: ask.id.clone(),
     };
-    let _ = app.emit(
-        "permission",
-        PermissionAsk {
-            id,
-            source: "claude",
-            session: session.clone(),
-            title,
-            detail,
-            project: project.clone(),
-            cwd: text(&hook, "cwd"),
-            can_defer: true,
-            kind,
-            expires: crate::journal::now_ms() + PERMISSION_WAIT.as_millis() as u64,
-        },
-    );
-    let decision = tokio::time::timeout(PERMISSION_WAIT, answer).await;
-    let answered = match decision {
-        Ok(Ok(Decision::Allow)) => "allowed",
-        Ok(Ok(Decision::Deny)) => "denied",
-        Ok(Ok(Decision::Defer)) => "left to the terminal",
+    let _ = app.emit("permission", &ask);
+    shared.requests.changed(&app);
+    let end = tokio::time::timeout(PERMISSION_WAIT, answer).await;
+    let answered = match end {
+        Ok(Ok(End::Answered(Decision::Allow))) => "allowed",
+        Ok(Ok(End::Answered(Decision::Deny))) => "denied",
+        Ok(Ok(_)) => "left to the terminal",
         _ => "not answered on the pet",
     };
     bus::note(&app, "claude", &session, &project, "answer", answered);
-    let behavior = match decision {
-        Ok(Ok(Decision::Allow)) => json!({ "behavior": "allow" }),
-        Ok(Ok(Decision::Deny)) => json!({
+    let behavior = match end {
+        Ok(Ok(End::Answered(Decision::Allow))) => json!({ "behavior": "allow" }),
+        Ok(Ok(End::Answered(Decision::Deny))) => json!({
             "behavior": "deny",
             "message": "The user declined this from the Sidefolk pet."
         }),
-        // Deferred, timed out, or dropped: Claude Code shows its own prompt.
+        // Released, expired, or dropped: Claude Code shows its own prompt.
         _ => return StatusCode::OK.into_response(),
     };
     axum::Json(json!({

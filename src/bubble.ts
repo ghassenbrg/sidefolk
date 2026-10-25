@@ -29,6 +29,8 @@ export type Card = {
   title: string;
   lines?: string[];
   facts?: Fact[];
+  /** The facts are shown at full height, never in a scrolling box: what Allow answers is all on screen. */
+  wholeFacts?: boolean;
   /** A short instruction above the choices ("Review the command before allowing it."). */
   note?: string;
   choices: Choice[];
@@ -235,7 +237,7 @@ export class Bubble {
     this.root.append(el("p", "title", card.title));
     for (const line of card.lines ?? []) this.root.append(el("p", "info", line));
     if (card.facts?.length) {
-      const box = el("div", "facts");
+      const box = el("div", card.wholeFacts ? "facts whole" : "facts");
       for (const fact of card.facts) box.append(el("span", "label", fact.label), el("code", "value", fact.value));
       this.root.append(box);
     }

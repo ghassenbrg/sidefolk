@@ -139,6 +139,9 @@ pub fn refresh(app: &AppHandle) -> tauri::Result<()> {
         let waiting = app.state::<Arc<Shared>>().status.lock().unwrap()["waiting"].as_array().map_or(0, Vec::len);
         tray.set_title((waiting > 0).then(|| waiting.to_string()))?;
     }
+    // Connections, the login item and the companion's name changed: the window reads them again
+    // instead of polling (docs/V1.md §11).
+    let _ = app.emit("integrations-changed", ());
     Ok(())
 }
 

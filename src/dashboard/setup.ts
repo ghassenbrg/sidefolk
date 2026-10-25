@@ -57,7 +57,7 @@ export function renderSetup(app: App, arg: string) {
       if (await app.save({ onboarded: true }, "Welcome!")) { step = 0; app.go("today"); }
     }, "primary"));
   }
-  return h("div", { class: "view setup" }, h("img", { class: "setup-pip", src: picture("wave"), alt: "", width: 168, height: 152 }), progress, body, actions);
+  return h("div", { class: "view setup" }, h("img", { class: "setup-pip", src: picture(app.state.crew.main.look, "wave"), alt: "", width: 168, height: 152 }), progress, body, actions);
 }
 
 /** macOS asks once before Sidefolk may control a terminal; better here, with the reason, than at

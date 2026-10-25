@@ -7,6 +7,7 @@ import type { App } from "./app";
 import { button, h, TERMINAL_LABELS } from "./dom";
 import { terminalControl } from "./setup";
 import { header } from "./ui";
+import { CHARACTERS, lookOf, picture } from "../roster";
 
 // Settings in plain language. Each control saves when it changes and says "Saved." only after
 // the settings file is written. Connecting a tool opens the app's own confirmation, which
@@ -55,6 +56,20 @@ function segmented(app: App, key: keyof Settings, label: string, description: st
   return h("div", { class: "setting stack" }, h("div", { class: "setting-text" }, h("strong", { text: label }), h("p", { class: "muted", text: description })), control);
 }
 
+/** Pip or Spark, as pictures; the companion on the desktop changes at once. */
+function characterChoices(app: App) {
+  const current = lookOf(app.state.crew.main.look);
+  const choices = h("fieldset", { class: "crew-choices" }, h("legend", { text: "Your companion is" }));
+  for (const c of CHARACTERS) {
+    const radio = h("input", { type: "radio", id: `look-${c.id}`, name: "look", value: c.id, checked: c.id === current });
+    radio.addEventListener("change", () => {
+      if (c.id !== current) void app.petAction({ action: "look", look: c.id }, `Your companion is ${c.name} now.`);
+    });
+    choices.append(h("label", { class: "crew-choice", for: radio.id }, radio, h("img", { src: picture(c.id), alt: "" }), h("strong", { text: c.name }), h("span", { class: "muted", text: c.kind })));
+  }
+  return choices;
+}
+
 function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools", action: string, title: string, what: string, change: string, stops: string) {
   const on = app.state.integrations[key];
   return h(
@@ -81,7 +96,7 @@ function settingsContents(app: App) {
 
   const view = h("div", { class: "view settings" }, ...header("Make Sidefolk comfortable.", "A few simple preferences. Everything here can change later."));
 
-  view.append(group("Your companion", "home", "companion"));
+  view.append(group("Your companion", "home", "companion", characterChoices(app)));
 
   const terminalOptions: [string, string][] = [["auto", "Automatic"], ...(terminals ?? []).map((t): [string, string] => [t, TERMINAL_LABELS[t] ?? t])];
   view.append(
@@ -153,6 +168,7 @@ function settingsContents(app: App) {
       "terminal",
       "tools",
       h("p", { class: "muted", text: "Connect an AI tool to see its progress and requests here. Each change is explained first and a backup is kept." }),
+      integrations.hook_error ? h("p", { class: "field-error", role: "alert", text: integrations.hook_error }) : null,
       toolRow(app, "claude_hooks", "claude", "Claude Code", "Companions see Claude Code's work sessions and bring you its requests.", "Adds Sidefolk's hooks to Claude Code's settings (~/.claude/settings.json) and keeps a backup next to it.", "Companions stop seeing Claude Code sessions, and requests stay in Claude Code's own window. Only Sidefolk's hooks are removed; a backup is kept."),
       toolRow(app, "claude_tools", "tools-claude", "Companion tools for Claude Code", "Claude Code can send you a note, ask a question, set a reminder or check if you're around.", "Runs `claude mcp add` to register Sidefolk's tools for your user and keeps a backup of Claude's config.", "Claude Code can no longer reach you through a companion. Notes, questions and reminders from it stop."),
       toolRow(app, "codex_tools", "tools-codex", "Companion tools for Codex", "The same tools for Codex sessions.", "Runs `codex mcp add` to register Sidefolk's tools and keeps a backup of Codex's config.", "Codex can no longer reach you through a companion."),
@@ -253,7 +269,7 @@ type Category = { id: string; title: string; glyph: IconName; groups: string[]; 
 const CATEGORIES: Category[] = [
   { id: "general", title: "General", glyph: "settings", groups: ["startup", "labs"], words: "login startup dock shortcut keyboard labs commands start sessions" },
   { id: "appearance", title: "Appearance", glyph: "idle", groups: ["appearance"], words: "theme dark light system colors" },
-  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop"], words: "pet pip name rename size hide show" },
+  { id: "companion", title: "Companion", glyph: "home", groups: ["companion", "desktop"], words: "pet pip spark robot bunny character look name rename size hide show" },
   { id: "sound", title: "Notifications & sound", glyph: "reminders", groups: ["sound"], words: "notifications permission reminder volume mute quiet" },
   { id: "tools", title: "AI tools", glyph: "terminal", groups: ["tools", "terminal"], words: "claude codex connections terminal automation session" },
   { id: "privacy", title: "Privacy", glyph: "info", groups: ["privacy"], words: "screen recording capture sharing local" },
@@ -351,8 +367,8 @@ export function renderSettings(app: App, arg: string) {
       } }, h("div", { class: "field" }, h("label", { for: rename.id, text: "Companion name" }), rename), h("div", { class: "actions" }, h("button", { type: "submit", text: "Save name" }))),
       h("div", { class: "actions" }, button("Show companion", () => void invoke("tray_action", { action: "show" }).catch((e) => app.toast(String(e), undefined, true))), button("Hide companion", () => void app.tell("hide"))));
     }
-    if (category === "tools") content.append(h("div", { class: "actions" }, button("Sessions & project companions", () => app.go("sessions")), button("Saved actions", () => app.go("actions"))));
-    if (category === "help") content.append(h("div", { class: "actions" }, button("Notebooks & export", () => app.go("notes")), button("Saved actions", () => app.go("actions"))));
+    if (category === "tools") content.append(h("div", { class: "actions" }, button("Sessions", () => app.go("sessions"))));
+    if (category === "help") content.append(h("div", { class: "actions" }, button("Notebooks & export", () => app.go("notes"))));
   };
   search.addEventListener("input", () => { query = search.value; draw(); });
   draw();

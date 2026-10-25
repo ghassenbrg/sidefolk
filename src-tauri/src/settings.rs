@@ -96,7 +96,7 @@ impl Store {
     /// Never fails: a damaged settings file is set aside and the defaults load (docs/V1.md V1-S6).
     pub fn load(dir: PathBuf, problems: &crate::store::Problems) -> Self {
         let path = dir.join("settings.json");
-        let loaded = crate::store::load::<Settings>(&path, |_, data| data);
+        let loaded = crate::store::load::<Settings>(&path, 1, serde_json::Value::is_object, |_, data| data);
         problems.note(&path, &loaded);
         let blocked = matches!(loaded, crate::store::Loaded::Corrupt { kept: None, .. });
         let mut store = Self { dir, value: loaded.or_default(), blocked };

@@ -203,7 +203,8 @@ impl Notes {
     }
 }
 
-// Commands for the window and the companion. Every change emits "notes-changed" to both.
+// Commands for the window and the companion, off the main thread (they read and write files).
+// Every change emits "notes-changed" to both.
 
 type Shared<'a> = tauri::State<'a, std::sync::Arc<crate::bus::Shared>>;
 
@@ -214,23 +215,23 @@ fn changed<T>(app: &tauri::AppHandle, result: io::Result<T>) -> Result<T, String
     Ok(value)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_notebooks(shared: Shared<'_>) -> Vec<Notebook> {
     shared.notes.list()
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_notebook(shared: Shared<'_>, id: String) -> Result<Page, String> {
     shared.notes.read(&id).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn create_notebook(app: tauri::AppHandle, shared: Shared<'_>, name: String) -> Result<Notebook, String> {
     changed(&app, shared.notes.create(&name))
 }
 
 /// Adds a note to a notebook by id or name, creating it when `create` is set ("new notebook").
-#[tauri::command]
+#[tauri::command(async)]
 pub fn add_note(app: tauri::AppHandle, shared: Shared<'_>, notebook: String, text: String, date: String, project: Option<String>, create: Option<bool>) -> Result<(Notebook, Entry), String> {
     let book = match shared.notes.find(&notebook) {
         Some(book) => book,
@@ -241,17 +242,17 @@ pub fn add_note(app: tauri::AppHandle, shared: Shared<'_>, notebook: String, tex
     Ok((book, entry))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn edit_note(app: tauri::AppHandle, shared: Shared<'_>, id: String, entry: EntryRef, text: String) -> Result<Entry, String> {
     changed(&app, shared.notes.edit(&id, &entry.into(), &text))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn remove_note(app: tauri::AppHandle, shared: Shared<'_>, id: String, entry: EntryRef) -> Result<(), String> {
     changed(&app, shared.notes.remove(&id, &entry.into()))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn restore_note(app: tauri::AppHandle, shared: Shared<'_>, id: String, entry: EntryRef) -> Result<(), String> {
     changed(&app, shared.notes.restore(&id, &entry.into()))
 }

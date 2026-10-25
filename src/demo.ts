@@ -1,7 +1,8 @@
 // Browser preview only (npm run web): keys play fake agent events, so the companion can be
 // checked without an AI tool or model calls. Not loaded inside the desktop app.
 //
-//   1 think · 2 read · 3 edit · 4 run · 5 permission request · 6 done · 7 failed · 0 end
+//   1 think · 2 read · 3 edit · 4 run · 5 permission request · 8 a request too long for the card
+//   6 done · 7 failed · 0 end
 //   r a reminder due now · p switches the fake project (api, web, docs) · c opens the field
 
 import type { AgentEvent } from "./agents";
@@ -25,17 +26,38 @@ export function install(companion: Companion) {
     "2": () => companion.handleEvent(event("read", "App.tsx")),
     "3": () => companion.handleEvent(event("edit", "App.tsx")),
     "4": () => companion.handleEvent(event("run", "npm test")),
-    "5": () =>
+    "5": () => {
+      const command = "rm -rf node_modules && npm ci && npm test -- --coverage --reporter=verbose";
       companion.handleAsk({
         id: `demo-${asks++}`,
         source: "claude",
         session: `demo-${project}`,
-        title: "Run a command?",
-        detail: "rm -rf node_modules && npm ci && npm test -- --coverage --reporter=verbose",
         cwd: projects[project],
         project: projects[project],
-        canDefer: true,
+        tool: "Bash",
         kind: "command",
+        title: "Run a command?",
+        text: command,
+        path: null,
+        complete: true,
+        canDefer: true,
+        expires: Date.now() + 60_000,
+      });
+    },
+    "8": () =>
+      companion.handleAsk({
+        id: `demo-${asks++}`,
+        source: "claude",
+        session: `demo-${project}`,
+        cwd: projects[project],
+        project: projects[project],
+        tool: "Bash",
+        kind: "command",
+        title: "Run a command?",
+        text: `echo ${"x".repeat(700)}; rm -rf build`,
+        path: null,
+        complete: true,
+        canDefer: true,
         expires: Date.now() + 60_000,
       }),
     "6": () => companion.handleEvent(event("done", "Tests pass. 3 files changed.")),

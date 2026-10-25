@@ -73,6 +73,9 @@ export function renderHome(app: App) {
   const notices = h("div", { class: "notices" });
   view.append(notices);
   storeNotices(app, notices);
+  // Connected but not listening: requests and sessions can't arrive, so say so first.
+  if (integrations.claude_hooks && integrations.hook_error)
+    notices.append(h("section", { class: "card attention", role: "alert" }, h("h2", { text: "I can't hear Claude Code right now." }), h("p", { text: integrations.hook_error })));
   const primary = h("div", { class: "home-primary" });
   const secondary = h("div", { class: "home-secondary" });
   view.append(h("div", { class: "home-grid" }, primary, secondary));

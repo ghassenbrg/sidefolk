@@ -16,7 +16,7 @@ use std::{
 };
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::bus::Shared;
 
@@ -272,6 +272,7 @@ pub struct Opened {
 /// Opens an agent session: the live one where it runs, otherwise a resumed one in a terminal.
 #[tauri::command]
 pub async fn open_session(
+    app: AppHandle,
     shared: State<'_, std::sync::Arc<Shared>>,
     source: String,
     session: String,
@@ -287,6 +288,12 @@ pub async fn open_session(
         if let Some(host) = host.as_ref().filter(|h| h.app.is_some() && alive(h.pid)) {
             let host = host.clone();
             let message = tauri::async_runtime::spawn_blocking(move || focus(&host)).await.map_err(|e| e.to_string())??;
+            // The user is going to the session: its waiting requests move to its own prompt there
+            // (docs/V1.md V1-D4).
+            for id in shared.requests.release_session(&source, &session) {
+                let _ = app.emit("permission-closed", &id);
+            }
+            shared.requests.changed(&app);
             return Ok(Opened { how: "focused", message });
         }
     }

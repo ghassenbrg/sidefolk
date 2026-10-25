@@ -1,6 +1,6 @@
 import { applyTheme } from "../theme";
 import { icon, mark, type IconName } from "../icons";
-import { invoke, inTauri, listen, type CrewFile, type Integrations, type Reminder, type Settings, type Status } from "./api";
+import { invoke, inTauri, listen, type Ask, type CrewFile, type Integrations, type Reminder, type Settings, type Status, type Waiting } from "./api";
 import { button, h } from "./dom";
 import { renderHome } from "./home";
 import { renderNotes } from "./notes";
@@ -25,6 +25,8 @@ export type App = {
     crew: CrewFile;
     reminders: Reminder[];
     status: Status;
+    /** Permission requests, from Rust (requests.rs); merged into `status.waiting`. */
+    requests: Ask[];
     version: string;
     dataDir: string;
   };
@@ -71,10 +73,11 @@ const waiters = new Map<string, (ok: boolean, text?: string) => void>();
 const app: App = {
   state: {
     settings: {} as Settings,
-    integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, start_at_login: false },
+    integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null },
     crew: { main: { name: "Pip" } },
     reminders: [],
     status: { pets: [], waiting: [] },
+    requests: [],
     version: "",
     dataDir: "",
   },
@@ -92,16 +95,19 @@ const app: App = {
     draw(false);
   },
   async refresh() {
-    const [settings, integrations, crew, reminders, status] = await Promise.all([
+    const [settings, integrations, crew, reminders, status, requests] = await Promise.all([
       invoke<Settings>("get_settings"),
       invoke<Integrations>("integrations"),
       invoke<CrewFile | null>("get_crew"),
       invoke<Reminder[]>("list_reminders"),
       invoke<Status | null>("get_status"),
+      invoke<Ask[]>("list_requests"),
     ]);
     const snapshot = () => JSON.stringify([app.state.settings, app.state.integrations, app.state.crew, app.state.reminders, app.state.status]);
     const before = snapshot();
-    Object.assign(app.state, { settings, integrations, crew: crew ?? app.state.crew, reminders, status: status?.pets ? status : app.state.status });
+    Object.assign(app.state, { settings, integrations, crew: crew ?? app.state.crew, reminders, requests });
+    if (status?.pets) companionStatus = status;
+    app.state.status = merged();
     applyTheme(settings.theme);
     // Settings → Reduce motion applies to this window too.
     document.documentElement.classList.toggle("reduce-motion", !!settings.calm);
@@ -143,6 +149,12 @@ const app: App = {
   },
   answer(id, value) {
     if (!app.state.status.waiting.some((w) => w.id === id)) return Promise.resolve("gone");
+    // Permission requests are answered in Rust, which says whether it took the answer.
+    if (app.state.requests.some((r) => r.id === id))
+      return invoke("resolve_permission", { id, decision: value }).then(
+        () => "sent" as const,
+        (refused) => (String(refused).includes("isn't waiting") ? "gone" : "failed"),
+      );
     return new Promise<Answer>((resolve) => {
       const timer = setTimeout(() => {
         waiters.delete(id);
@@ -195,6 +207,27 @@ const app: App = {
   },
 };
 let liveUpdate: (() => void) | null = null;
+/** The companion's own view (sessions, reminders and questions it shows); requests come from Rust. */
+let companionStatus: Status = { pets: [], waiting: [] };
+
+/** A permission request as the window's lists show it. */
+function waitingOf(a: Ask): Waiting {
+  return {
+    id: a.id,
+    pet: "main",
+    petName: app.state.crew.main.name,
+    who: `${app.state.crew.main.name} · ${a.project.split("/").pop() || a.cwd}`,
+    title: a.title,
+    lines: [],
+    meta: { kind: "permission", action: a.kind, title: a.title, command: a.text, path: a.path ?? "", complete: String(a.complete), tool: a.tool, source: a.source, session: a.session, project: a.project, cwd: a.cwd, expires: String(a.expires), canDefer: String(a.canDefer) },
+    choices: [],
+  };
+}
+
+/** Requests first (from Rust, oldest first), then what the companion holds. */
+function merged(): Status {
+  return { pets: companionStatus.pets, waiting: [...app.state.requests.map(waitingOf), ...companionStatus.waiting.filter((w) => w.meta.kind !== "permission")] };
+}
 let toastTimer = 0;
 
 function leave() {
@@ -270,7 +303,7 @@ function buildNav() {
     if (view === "today") b.append(h("span", { class: "count", hidden: true }));
     (view === "sessions" ? ai : view === "settings" ? utility : list).append(b);
   }
-  const pet = h("img", { class: "nav-pip", src: picture(), alt: "", width: 84, height: 76 });
+  const pet = h("img", { class: "nav-pip", src: picture(app.state.crew.main.look), alt: "", width: 84, height: 76 });
   nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, ai, utility, pet);
 }
 
@@ -298,7 +331,14 @@ route(params.get("tab") ?? "today");
 
 listen<string>("navigate", route);
 listen<Status>("status", (status) => {
-  app.state.status = status;
+  companionStatus = status;
+  app.state.status = merged();
+  app.redraw();
+  updateNav();
+});
+listen<Ask[]>("requests", (requests) => {
+  app.state.requests = requests;
+  app.state.status = merged();
   app.redraw();
   updateNav();
 });
@@ -311,9 +351,10 @@ listen<Settings>("settings-changed", (settings) => {
   document.documentElement.classList.toggle("large-text", !!settings.large_text);
   app.redraw();
 });
-// Confirmations happen in dialogs and pets change on the desktop; pick both up.
+// Confirmations happen in dialogs and the companion changes on the desktop: each says so with an
+// event, and coming back to the window reads everything again. No polling (docs/V1.md §11).
 addEventListener("focus", () => void app.refresh());
-setInterval(() => void app.refresh(), 3_000);
+listen("integrations-changed", () => void app.refresh());
 
 // The same shortcut as the native menu also works in the browser preview.
 addEventListener("keydown", (event) => {
