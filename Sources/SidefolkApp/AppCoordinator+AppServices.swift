@@ -1,0 +1,292 @@
+import AppKit
+import SidefolkCore
+
+/// What the Home and Settings windows can ask of Sidefolk (see Services/AppServices.swift).
+extension AppCoordinator: AppServices {
+    // MARK: Reminders
+
+    func completeReminder(_ id: String) async { _ = try? await runtime.scheduler.complete(id: id) }
+    func snoozeReminder(_ id: String, until: Date) async { _ = try? await runtime.scheduler.snooze(id: id, until: until) }
+    func cancelReminder(_ id: String) async { _ = try? await runtime.scheduler.cancel(id: id) }
+
+    func createReminder(title: String, when: String) async -> UserFacingError? {
+        let out = await runtime.executor.execute(name: "reminders.create", input: ["title": .string(title), "when": .string(when)],
+                                                 caller: .user)
+        switch out.status {
+        case .ok: return nil
+        case .denied(let why): return UserFacingError(why)
+        case .failed(let e): return e
+        }
+    }
+
+    // MARK: Watchers
+
+    func pauseWatcher(_ id: String) async { _ = try? await runtime.watchers.pause(id) }
+    func resumeWatcher(_ id: String) async { _ = try? await runtime.watchers.resume(id) }
+    func stopWatcher(_ id: String) async { _ = await runtime.watchers.remove(id) }
+    func checkWatcherNow(_ id: String) async { _ = await runtime.watchers.checkNow(id) }
+
+    // MARK: Sessions, notebook
+
+    func openSession(_ session: AgentSession) {
+        let platform = runtime.platform
+        Task { _ = await platform.activateApplication(pid: session.hostPid, bundleId: session.hostApp) }
+    }
+
+    func open(item: NotebookItem) { openHome(item: item) }
+
+    // MARK: Extensions and skills
+
+    func extensions() async -> [ExtensionInfo] {
+        let bundledIds = Set(Self.sampleManifests().map(\.id))
+        return await runtime.extensions.extensions().map { Self.info($0, bundled: bundledIds.contains($0.id)) }
+    }
+
+    func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
+        let preview = await runtime.extensions.preview(folder: folder)
+        guard let manifest = preview.report.manifest else {
+            return .failure(UserFacingError("That folder isn't a Sidefolk extension.", recovery: preview.report.text.clipped(400)))
+        }
+        guard preview.canInstall else {
+            return .failure(UserFacingError(preview.conflict ?? "That extension has problems.", recovery: preview.report.text.clipped(400)))
+        }
+        let summary = preview.report.summary
+        var warnings = (summary?.warnings ?? []) + preview.report.warnings
+        if let diff = preview.update {
+            warnings.insert("Updates \(diff.fromVersion) to \(diff.toVersion).", at: 0)
+            warnings += diff.addedPermissions.map { "New permission: \($0)" }
+        }
+        return .success(ExtensionInstallPreview(
+            id: manifest.id, name: manifest.name, version: manifest.version, description: manifest.description ?? "",
+            sourceFolder: folder, permissionLines: summary?.lines.map(\.text) ?? [], warnings: warnings,
+            toolNames: manifest.tools.keys.sorted(), watcherNames: manifest.watchers.keys.sorted(), isUpdate: preview.update != nil))
+    }
+
+    func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? {
+        do {
+            _ = try await runtime.extensions.install(from: preview.sourceFolder)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't install \(preview.name).")
+        }
+    }
+
+    func setExtensionEnabled(_ id: String, _ enabled: Bool) async { try? await runtime.extensions.setEnabled(enabled, id: id) }
+
+    func uninstallExtension(_ id: String) async -> UserFacingError? {
+        do {
+            try await runtime.extensions.uninstall(id: id)
+            try? MCPServerSecrets.save([:], for: id, store: secrets)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't remove that extension.")
+        }
+    }
+
+    func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError? {
+        let preview = await runtime.extensions.previewMCPServer(name: name, command: command, arguments: arguments)
+        if let problem = preview.errors.first { return UserFacingError(problem) }
+        do {
+            _ = try await runtime.extensions.addMCPServer(name: name, command: command, arguments: arguments)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't add that MCP server.")
+        }
+    }
+
+    func skills() async -> [SkillInfo] {
+        runtime.skills.skills().map { SkillInfo(name: $0.name, description: $0.description, bundled: $0.origin == .bundled) }
+    }
+
+    func deleteSkill(_ name: String) async { _ = try? runtime.skills.delete(name: name) }
+
+    // MARK: AI
+
+    func detectProviders() async -> ProviderDetection {
+        var detection = ProviderDetection(claudePath: nil, claudeVersion: nil, ollamaRunning: false, ollamaModels: [])
+        if case .success(let path) = ClaudeBinary.locate(configured: runtime.settings.current.provider.claudePath) {
+            detection.claudePath = FolderAccess.displayPath(path)
+            let cwd = runtime.paths.brainWorkdir.path
+            let env = ["HOME": NSHomeDirectory(), "PATH": "/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin:" + (path as NSString).deletingLastPathComponent]
+            if case .success(let install) = await ClaudeBinary.probe(path, environment: env, cwd: cwd) {
+                detection.claudeVersion = install.version
+            }
+        }
+        // Ollama answers locally without a key; a short timeout keeps Settings snappy when it isn't running.
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:11434/api/tags")!)
+        request.timeoutInterval = 1.5
+        if let (data, response) = try? await URLSession(configuration: .ephemeral).data(for: request),
+           (response as? HTTPURLResponse)?.statusCode == 200 {
+            detection.ollamaRunning = true
+            let models = (try? JSONValue.parse(String(decoding: data, as: UTF8.self)))?["models"]?.arrayValue ?? []
+            detection.ollamaModels = models.compactMap { $0.string("name") }.prefix(20).map { $0 }
+        }
+        return detection
+    }
+
+    func checkProvider() async -> Result<String, UserFacingError> { await agent.checkProvider() }
+
+    func hasAPIKey(for kind: ProviderKind) -> Bool {
+        switch kind {
+        case .anthropic: return (try? secrets.get(SecretKey.anthropicAPIKey)) != nil
+        case .openAICompatible: return (try? secrets.get(SecretKey.openAIAPIKey)) != nil
+        default: return false
+        }
+    }
+
+    func setAPIKey(_ key: String?, for kind: ProviderKind) {
+        let keys = ProviderKeys(store: secrets)
+        switch kind {
+        case .anthropic:
+            if let key, !key.isEmpty {
+                try? keys.save(Secret(key), account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost)
+            } else {
+                try? secrets.delete(SecretKey.anthropicAPIKey)
+            }
+        case .openAICompatible:
+            let base = URL(string: runtime.settings.current.provider.baseURL) ?? URL(string: "https://api.openai.com/v1")!
+            if let key, !key.isEmpty {
+                try? keys.save(Secret(key), account: SecretKey.openAIAPIKey, host: ProviderKeys.host(of: base))
+            } else {
+                try? secrets.delete(SecretKey.openAIAPIKey)
+            }
+        default:
+            break
+        }
+        runtime.events.changed(.settings)
+    }
+
+    func lastContextPreview() async -> String? {
+        guard let p = await agent.lastSent() else { return nil }
+        var text = "Sent to \(p.provider) (\(p.model.isEmpty ? "default model" : p.model)) at "
+            + p.at.formatted(date: .abbreviated, time: .standard) + (p.tainted ? " — included outside content" : "") + "\n\n"
+        text += "SYSTEM\n" + p.system + "\n\n"
+        for m in p.messages { text += m.role.rawValue.uppercased() + "\n" + m.text + "\n\n" }
+        text += "TOOLS\n" + p.tools.joined(separator: ", ")
+        return text
+    }
+
+    // MARK: Privacy and data
+
+    func storageSummary() async -> StorageSummary {
+        let porter = DataPorter(runtime: runtime)
+        let c = await porter.counts()
+        return StorageSummary(dataFolder: FolderAccess.displayPath(runtime.paths.home.path),
+                              logsFolder: FolderAccess.displayPath(runtime.paths.logs.path),
+                              notes: c.notes, reminders: c.reminders, watchers: c.watchers, activity: c.activity,
+                              exchanges: c.exchanges, databaseBytes: porter.databaseBytes)
+    }
+
+    func exportData(to url: URL) async -> UserFacingError? {
+        do {
+            try await DataPorter(runtime: runtime).export(to: url)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't export your data.")
+        }
+    }
+
+    func deleteAllData() async -> UserFacingError? {
+        do {
+            _ = await runtime.stop()
+            try await DataPorter(runtime: runtime).deleteEverything()
+            for key in [SecretKey.anthropicAPIKey, SecretKey.openAIAPIKey] { try? secrets.delete(key) }
+            for ext in (try? await runtime.extensionStore.all()) ?? [] { try? MCPServerSecrets.save([:], for: ext.id, store: secrets) }
+            _ = LoginItem.set(false)
+            UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier ?? "app.sidefolk")
+            Log.shared.info("app", "all data deleted")
+            NSApp.terminate(nil)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't delete everything.")
+        }
+    }
+
+    func revealDataFolder() { NSWorkspace.shared.activateFileViewerSelecting([runtime.paths.home]) }
+
+    /// Logs plus a summary without personal content (versions, settings minus secrets, counts).
+    func exportDiagnostics(to url: URL) async -> UserFacingError? {
+        let fm = FileManager.default
+        let staging = fm.temporaryDirectory.appendingPathComponent("sidefolk-diagnostics-\(UUID().uuidString)")
+        do {
+            try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+            defer { try? fm.removeItem(at: staging) }
+            if fm.fileExists(atPath: runtime.paths.logs.path) {
+                try fm.copyItem(at: runtime.paths.logs, to: staging.appendingPathComponent("Logs"))
+            }
+            var s = runtime.settings.current
+            s.companionName = "(hidden)"
+            let c = await DataPorter(runtime: runtime).counts()
+            let summary: JSONValue = [
+                "app": .string(SidefolkVersion.current),
+                "macOS": .string(ProcessInfo.processInfo.operatingSystemVersionString),
+                "settings": (try? JSONValue.from(s)) ?? .null,
+                "counts": ["notes": .number(Double(c.notes)), "reminders": .number(Double(c.reminders)),
+                           "watchers": .number(Double(c.watchers)), "activity": .number(Double(c.activity))],
+                "extensions": .array(((try? await runtime.extensionStore.all()) ?? []).map {
+                    ["id": .string($0.id), "version": .string($0.version), "enabled": .bool($0.enabled), "lastError": .string($0.lastError ?? "")]
+                }),
+            ]
+            try Data(summary.jsonString.utf8).write(to: staging.appendingPathComponent("summary.json"))
+            try? fm.removeItem(at: url)
+            let ditto = Process()
+            ditto.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+            ditto.arguments = ["-c", "-k", "--sequesterRsrc", staging.path, url.path]
+            try SpawnLock.withLock { try ditto.run() }
+            ditto.waitUntilExit()
+            guard ditto.terminationStatus == 0 else { throw UserFacingError("Zipping the diagnostics failed.") }
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't export diagnostics.")
+        }
+    }
+
+    // MARK: App
+
+    func settingsChanged() {
+        let s = runtime.settings.current
+        Log.shared.setDebug(s.debugLogging)
+        Task {
+            await runtime.attention.update { env in
+                env.quiet = s.isQuiet(at: Date())
+                env.presence = s.presence
+                env.sounds = s.sounds
+            }
+        }
+        applyCompanionSettings()
+    }
+
+    func replayOnboarding() {
+        Task { await runtime.settings.update { $0.onboardingDone = false } }
+        onboarding.start()
+    }
+
+    // MARK: Helpers
+
+    static func userFacing(_ error: Error, fallback: String) -> UserFacingError {
+        if let e = error as? UserFacingError { return e }
+        return UserFacingError(fallback, detail: String(describing: error))
+    }
+
+    static func info(_ e: SidefolkCore.ExtensionInfo, bundled: Bool) -> ExtensionInfo {
+        ExtensionInfo(
+            id: e.id, name: e.name, version: e.version, description: e.description ?? "",
+            kind: e.kind == .mcp ? .mcpServer : .sidefolk, enabled: e.enabled, folk: e.folk ?? "byte",
+            toolNames: e.tools.map { $0.title.isEmpty ? $0.name : $0.title }, watcherNames: e.watchers.map(\.title),
+            permissionLines: e.summary.lines.map(\.text), warnings: e.summary.warnings + (e.hasPendingToolChanges
+                ? ["Some tools changed since you installed it; they're on hold until you approve the change."] : []),
+            sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: bundled)
+    }
+
+    /// Sample extensions shipped inside the app.
+    static func sampleManifests() -> [(id: String, folder: URL)] {
+        guard let dir = ResourceLocator.sampleExtensions,
+              let names = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return [] }
+        return names.compactMap { name in
+            let folder = dir.appendingPathComponent(name)
+            guard let data = try? Data(contentsOf: folder.appendingPathComponent(ExtensionManifest.fileName)),
+                  let json = try? JSONValue.parse(String(decoding: data, as: UTF8.self)), let id = json.string("id") else { return nil }
+            return (id, folder)
+        }
+    }
+}

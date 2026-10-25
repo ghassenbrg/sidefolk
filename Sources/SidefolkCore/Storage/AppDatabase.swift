@@ -15,8 +15,12 @@ public final class AppDatabase: Sendable {
         var config = Configuration()
         config.foreignKeysEnabled = true
         config.label = "sidefolk"
+        // Deleted notes are overwritten on disk, not just unlinked (SECURITY T19).
+        config.prepareDatabase { db in try db.execute(sql: "PRAGMA secure_delete = ON") }
         let pool = try DatabasePool(path: url.path, configuration: config)
-        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        for suffix in ["", "-wal", "-shm"] {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path + suffix)
+        }
         return try AppDatabase(pool)
     }
 

@@ -26,6 +26,8 @@ final class AppCoordinator {
     let secrets: any SecretStore = KeychainSecretStore()
     private(set) var agent: AgentRuntime!
     var currentRun: String?
+    private(set) lazy var home = HomeWindowController(services: self)
+    private(set) lazy var settingsWindow = SettingsWindowController(services: self)
     /// Collection names for the intent parser ("ideas for Sidefolk").
     var knownCollections: [String] = []
     private var moodTimer: Task<Void, Never>?
@@ -71,6 +73,12 @@ final class AppCoordinator {
         statusItem.onQuiet = { [weak self] seconds in self?.setQuiet(for: seconds) }
         statusItem.isQuiet = { [weak self] in self?.runtime.settings.current.isQuiet(at: Date()) ?? false }
         statusItem.hotkeyLabel = { [weak self] in self?.hotkeyLabel ?? "" }
+        statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
+        statusItem.onToggleCompanion = { [weak self] in
+            guard let self else { return }
+            self.showCompanion(!self.companion.isVisible)
+        }
+        statusItem.nowProvider = { [weak self] in await self?.nowEntries() ?? [] }
 
         KeyboardShortcuts.onKeyUp(for: .ask) { [weak self] in self?.toggleAsk() }
 
@@ -170,8 +178,38 @@ final class AppCoordinator {
         Log.shared.info("app", "quit", ["fallbackReminders": String(fallback.count)])
     }
 
+    /// The menu bar's "Now" list: what needs you, what's due soon, what's running.
+    func nowEntries() async -> [StatusItemController.NowEntry] {
+        var entries: [StatusItemController.NowEntry] = []
+        let now = Date()
+        for s in ((try? await runtime.sessions.live()) ?? []) where s.state == .needsYou {
+            entries.append(.init(title: "\(s.agent == "codex" ? "Codex" : "Claude") needs you", detail: s.projectName ?? "a session",
+                                 symbol: "hand.raised", action: { [weak self] in self?.openSession(s) }))
+        }
+        for r in ((try? await runtime.reminderStore.pending()) ?? []).prefix(3) {
+            guard let due = r.nextDue else { continue }
+            entries.append(.init(title: r.title.clipped(40), detail: TimeFormat.when(due, now: now, calendar: .autoupdatingCurrent),
+                                 symbol: "alarm", action: { [weak self] in self?.openHome() }))
+        }
+        for j in ((try? await runtime.jobs.running()) ?? []).prefix(2) {
+            entries.append(.init(title: j.title.clipped(40), detail: "running \(TimeText.duration(now.timeIntervalSince(j.startedAt)))",
+                                 symbol: "terminal", action: { [weak self] in self?.openHome() }))
+        }
+        let watching = ((try? await runtime.watcherStore.active()) ?? []).count
+        if watching > 0 {
+            entries.append(.init(title: "Watching \(watching) thing\(watching == 1 ? "" : "s")", detail: "Scout is on it",
+                                 symbol: "binoculars", action: { [weak self] in self?.openHome() }))
+        }
+        return entries
+    }
+
     #if DEBUG
     func runDevCommand(_ command: String) {
+        if command == "home" { openHome(); return }
+        if command.hasPrefix("settings") {
+            openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            return
+        }
         if command.hasPrefix("ask:") {
             showAsk()
             ask.text = String(command.dropFirst(4))
@@ -225,9 +263,20 @@ final class AppCoordinator {
         askPanel.show(beside: frame, on: screen)
     }
 
-    func openHome() {}
+    func openHome() {
+        askPanel.hide()
+        home.show()
+    }
 
-    func openSettings() {}
+    func openHome(item: NotebookItem) {
+        askPanel.hide()
+        home.show(item: item)
+    }
+
+    func openSettings(tab: SettingsTab? = nil) {
+        askPanel.hide()
+        settingsWindow.show(tab: tab)
+    }
 
     func setQuiet(for seconds: TimeInterval?) {
         let until = seconds.map { Date().addingTimeInterval($0) }

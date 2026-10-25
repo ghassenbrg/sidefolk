@@ -196,6 +196,12 @@ extension AppCoordinator: AskActions {
             NSWorkspace.shared.open(u)
             return
         }
+        if card.kind == .note, let id = card.refId {
+            Task {
+                if let item = try? await runtime.notebook.item(id: id) { openHome(item: item) } else { openHome() }
+            }
+            return
+        }
         openHome()
     }
 
@@ -213,5 +219,5 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func openSettingsAI() { openSettings() }
+    func openSettingsAI() { openSettings(tab: .ai) }
 }
