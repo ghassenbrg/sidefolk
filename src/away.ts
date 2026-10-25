@@ -43,32 +43,9 @@ export function weekStart(now = new Date()) {
   return d;
 }
 
-/** Friday afternoon's look back: notes taken this week, then finished work per project. */
-export function weekly(entries: JournalEntry[], notes: { notebook: string; date: string }[], now = new Date()): string[] {
-  const start = weekStart(now);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const from = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
-  const lines: string[] = [];
-  const books = new Map<string, number>();
-  for (const n of notes) if (n.date >= from) books.set(n.notebook, (books.get(n.notebook) ?? 0) + 1);
-  const total = [...books.values()].reduce((a, b) => a + b, 0);
-  if (total) lines.push(`${total} ${total === 1 ? "note" : "notes"}: ${[...books].map(([b, n]) => `${b} (${n})`).join(", ")}`);
-  const done = new Map<string, { source: string; count: number }>();
-  for (const e of entries) {
-    if (e.kind !== "done" || e.at < start.getTime()) continue;
-    const key = e.project ? folder(e.project) : "Elsewhere";
-    const d = done.get(key) ?? { source: e.source, count: 0 };
-    d.count++;
-    done.set(key, d);
-  }
-  for (const [project, d] of [...done].sort((a, b) => b[1].count - a[1].count).slice(0, 4))
-    lines.push(`${project} · ${agent(d.source)} finished ${d.count === 1 ? "a task" : `${d.count} tasks`}`);
-  return lines;
-}
-
-/** Whether this is Friday afternoon and the week's look back hasn't happened yet. */
+/** Whether this is Friday from 16:00 and this week's "Your week" hasn't shown yet (docs/V1.md V1-L8). */
 export function weeklyDue(storage: Pick<Storage, "getItem" | "setItem"> | null, now = new Date()): boolean {
-  if (now.getDay() !== 5 || now.getHours() < 15) return false;
+  if (now.getDay() !== 5 || now.getHours() < 16) return false;
   const week = weekStart(now).toDateString();
   try {
     if (storage?.getItem("sidefolk.weekly") === week) return false;

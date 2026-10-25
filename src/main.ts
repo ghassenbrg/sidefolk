@@ -3,8 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { handleToolCall, type ToolCall } from "./agent-tools";
-import type { AgentEvent } from "./agents";
-import { AWAY_SECS, weekly, weeklyDue, weekStart, welcomeBack, type JournalEntry } from "./away";
+import { AGENT_NAMES, type AgentEvent } from "./agents";
+import { AWAY_SECS, weeklyDue, welcomeBack, type JournalEntry } from "./away";
+import { mondayOf, today } from "./notes";
 import { Companion, type Ask, type Host } from "./companion";
 import { install } from "./demo";
 import { area, needed, place, shouldMove, type Rect } from "./frame";
@@ -36,6 +37,7 @@ type Settings = {
   volume: number;
   labs_commands: boolean;
   labs_sessions: boolean;
+  your_week: boolean;
 };
 const settings = inTauri ? await invoke<Settings>("get_settings") : null;
 // The window covers only the companions (frame.ts); a reloaded page starts where it is.
@@ -119,6 +121,7 @@ const reminderStore: ReminderStore = inTauri
       add: (text, due, project, from, repeat) => invoke<Reminder>("add_reminder", { text, due, project, from, repeat }),
       update: async (id, change) => void (await invoke("update_reminder", { id, change })),
       remove: async (id) => void (await invoke("remove_reminder", { id })),
+      answer: async (id, answer) => void (await invoke("answer_reminder", { id, ...answer })),
       peek: (show) => void invoke("peek", { show }),
     }
   : memoryStore();
@@ -148,10 +151,32 @@ const noteStore: NoteStore = inTauri
       create: (name) => invoke("create_notebook", { name }),
       add: (notebook, text, date, project, create) => invoke("add_note", { notebook, text, date, project, create }),
       remove: (id, entry) => invoke("remove_note", { id, entry }),
+      move: (id, entry, to) => invoke("move_note", { id, entry, to }),
     }
   : memoryNotes();
 const notes = new Notes(companion, noteStore);
 reminders.writeNote = (text) => void notes.capture(text);
+// A finished session: one short card with "Log it" (docs/V1.md V1-L7). Only the project and the
+// first prompt line go into the note, never the agent's output.
+pet.agents.onDone = (event, first) => {
+  const project = event.project ? event.project.split("/").pop()! : "";
+  const agent = AGENT_NAMES[event.source];
+  const id = `done-${event.source}-${event.session}`;
+  pet.bubble.show({
+    id,
+    who: `${pet.name} · ${project || agent}`,
+    title: `${agent} finished${project ? ` in ${project}` : ""}.`,
+    lines: event.detail ? [event.detail] : [],
+    choices: [
+      { label: "OK", value: "ok" },
+      { label: "Log it", value: "log", primary: true },
+    ],
+    onChoose: (value) => {
+      pet.bubble.close(id);
+      if (value === "log") notes.logWork(`${project ? `${project}: ` : ""}${first}`.trim());
+    },
+  });
+};
 if (inTauri) reminders.manage = (id) => host.openTab?.(id ? `reminders:${id}` : "reminders");
 companion.seedOutcomes(await journal(Date.now() - 7 * 86_400_000));
 await reminders.start();
@@ -279,28 +304,29 @@ function safeStorage() {
   }
 }
 
-/** Friday afternoon: what this week brought, and a nudge to note the wins (the evaluation habit). */
+/** Friday from 16:00, once a week: Pip holds up "Your week" (docs/V1.md V1-L8). */
 async function weeklyWins() {
-  if (!inTauri || !weeklyDue(safeStorage())) return;
-  const books = await invoke<{ id: string; name: string }[]>("list_notebooks").catch(() => []);
-  const pages = await Promise.all(books.map((b) => invoke<{ name: string; entries: { date: string }[] }>("read_notebook", { id: b.id }).catch(() => null)));
-  const notesThisWeek = pages.flatMap((p) => (p ? p.entries.map((e) => ({ notebook: p.name, date: e.date })) : []));
-  const lines = weekly(await journal(weekStart().getTime()), notesThisWeek);
+  if (!inTauri || !settings?.your_week || !weeklyDue(safeStorage())) return;
+  const monday = mondayOf(today());
+  const books = await invoke<{ id: string }[]>("list_notebooks").catch(() => []);
+  const pages = await Promise.all(books.map((b) => invoke<{ entries: { date: string }[] }>("read_notebook", { id: b.id }).catch(() => null)));
+  const count = pages.reduce((n, p) => n + (p?.entries.filter((e) => mondayOf(e.date) === monday).length ?? 0), 0);
   pet.bubble.show({
     id: "weekly",
     who: pet.name,
-    title: "Your week",
-    lines: lines.length ? lines : ["A quiet week on my side."],
+    title: count ? `Your week: ${count} ${count === 1 ? "entry" : "entries"}` : "Your week",
+    lines: [count ? "Here's what you got done, ready to copy." : "Nothing logged this week. Anything worth a note?"],
     choices: [
       { label: "Later", value: "later" },
-      { label: "Write this week's wins", value: "write", primary: true },
+      count ? { label: "Open Your week", value: "open", primary: true } : { label: "Add a note", value: "write", primary: true },
     ],
     onChoose: (value) => {
       pet.bubble.close("weekly");
-      if (value === "write") void notes.capture("note what I achieved this week for evaluation");
+      if (value === "open") host.openTab?.("week");
+      if (value === "write") void notes.capture("note what I achieved this week");
     },
   });
-  pet.mind.react("wave", 1.6);
+  pet.mind.react("note", 1.6);
 }
 
 /** Coming back after a long time away: what the agents did meanwhile, and the next reminder. */

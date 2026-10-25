@@ -1,14 +1,14 @@
 import { sheet } from "./dialog";
 import { icon } from "../icons";
-import { today, type NoteEntry, type Notebook } from "../notes";
+import { LOG, matchesNote, mondayOf, today, type NoteEntry, type Notebook } from "../notes";
 import { invoke, listen } from "./api";
 import type { App } from "./app";
 import { button, h } from "./dom";
 import { back, empty, header } from "./ui";
 
-// Notes: notebooks you name, dated entries, search, edit, Markdown export. The files are plain
-// Markdown in the data folder, so they open anywhere; this page is one way in, the companion
-// ("note for evaluation: …") the other.
+// The work log (docs/V1.md §5): Log and the notebooks you name, one dated timeline across them,
+// search by text or date, edit, move, Markdown export. The files are plain Markdown in the data
+// folder, so they open anywhere; this page is one way in, the companion ("note: …") the other.
 
 type Page = Notebook & { entries: NoteEntry[]; path: string };
 
@@ -36,8 +36,24 @@ export function renderNotes(app: App, arg: string) {
   return view;
 }
 
+/** Log first (the inbox), then the most recently changed. */
+const shelfOrder = (books: Notebook[]) => [...books].sort((a, b) => Number(b.name === LOG) - Number(a.name === LOG) || b.updated - a.updated);
+
+/** Entries grouped by the week they're dated in, newest week first (docs/V1.md V1-L5). */
+function timeline(app: App, hits: { p: Page; e: NoteEntry }[]) {
+  const weeks = new Map<string, { p: Page; e: NoteEntry }[]>();
+  for (const hit of [...hits].sort((a, b) => b.e.date.localeCompare(a.e.date))) weeks.set(mondayOf(hit.e.date), [...(weeks.get(mondayOf(hit.e.date)) ?? []), hit]);
+  const nodes: HTMLElement[] = [];
+  for (const [monday, items] of weeks) {
+    nodes.push(h("h3", { class: "section-title", text: `Week of ${new Date(`${monday}T12:00:00`).toLocaleDateString([], { day: "numeric", month: "long", year: "numeric" })}` }));
+    nodes.push(h("div", { class: "card list" }, ...items.map(({ p, e }) => row(app, p, e, undefined, true))));
+  }
+  return nodes;
+}
+
 async function list(app: App, view: HTMLElement, focus: boolean) {
-  const books = await invoke<Notebook[]>("list_notebooks");
+  const books = shelfOrder(await invoke<Notebook[]>("list_notebooks"));
+  const pages = await Promise.all(books.map((b) => invoke<Page>("read_notebook", { id: b.id }).catch(() => null))).then((all) => all.filter((p): p is Page => !!p));
   const fill = () => void list(app, view, false);
   changed = fill;
   app.onLeave(() => (changed = null));
@@ -74,48 +90,24 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
     } finally { submit.disabled = false; }
   });
 
+  // One search and one timeline over every notebook; words match the text, project, notebook
+  // and the date ("evaluation october", "last week", "2026-04").
   const search = h("input", {
     type: "search",
     id: "notes-search",
-    placeholder: "Search all notebooks",
+    placeholder: "Search notes, notebooks or dates (“october”, “last week”)",
     autocomplete: "off",
-    "aria-label": "Search all notebooks",
+    "aria-label": "Search all notes",
   });
-  const results = h("section", {
-    "aria-label": "Search results",
-    "aria-live": "polite",
-  });
-  let pages: Page[] | null = null;
-  search.addEventListener("input", async () => {
-    const q = search.value.trim().toLowerCase();
-    if (!q) return results.replaceChildren();
-    pages ??= await Promise.all(books.map((b) => invoke<Page>("read_notebook", { id: b.id })));
-    const hits = pages.flatMap((p) => p.entries.filter((e) => e.text.toLowerCase().includes(q) || e.project.toLowerCase().includes(q)).map((e) => ({ p, e })));
-    results.replaceChildren(
-      hits.length
-        ? h(
-            "div",
-            { class: "card list" },
-            ...hits.slice(0, 50).map(({ p, e }) =>
-              h(
-                "div",
-                { class: "row line" },
-                h(
-                  "div",
-                  { class: "identity-text" },
-                  h("strong", { text: e.text }),
-                  h("span", {
-                    class: "meta",
-                    text: `${p.name} · ${longDay(e.date)}`,
-                  }),
-                ),
-                button("Open", () => app.go("notes", p.id), "small"),
-              ),
-            ),
-          )
-        : h("p", { class: "muted", text: "Nothing matches." }),
-    );
-  });
+  const only = h("select", { id: "notes-notebook", "aria-label": "Show notes from" }, h("option", { value: "", text: "All notebooks" }), ...pages.map((p) => h("option", { value: p.id, text: p.name })));
+  const stream = h("section", { "aria-label": "All entries", "aria-live": "polite" });
+  const draw = () => {
+    const q = search.value.trim();
+    const hits = pages.filter((p) => !only.value || p.id === only.value).flatMap((p) => p.entries.filter((e) => matchesNote(e, p.name, q)).map((e) => ({ p, e })));
+    stream.replaceChildren(...(hits.length ? timeline(app, hits.slice(0, 300)) : [h("p", { class: "muted", text: q ? "Nothing matches." : "No notes yet." })]));
+  };
+  search.addEventListener("input", draw);
+  only.addEventListener("change", draw);
 
   const shelf = h("section", { class: "card list", "aria-label": "Notebooks" });
   for (const b of books)
@@ -129,7 +121,7 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
           h("strong", {}, icon("notes"), " ", b.name),
           h("span", {
             class: "meta",
-            text: `${b.count} ${b.count === 1 ? "note" : "notes"}${b.updated ? ` · changed ${new Date(b.updated).toLocaleDateString()}` : ""}`,
+            text: `${b.name === LOG ? "Where notes go when you don't name a notebook · " : ""}${b.count} ${b.count === 1 ? "note" : "notes"}${b.updated ? ` · changed ${new Date(b.updated).toLocaleDateString()}` : ""}`,
           }),
         ),
         button("Open", () => app.go("notes", b.id), "small"),
@@ -138,12 +130,14 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
 
   view.replaceChildren(
     ...[
-      h("div", { class: "page-heading" }, h("div", {}, ...header("Notes", "Ideas and small wins, collected over time.")), button([icon("plus"), "New notebook"], openCreate, "primary")),
-      books.length ? h("div", { class: "field" }, search) : null,
-      results,
-      books.length ? shelf : empty("No notebooks yet", "Create one here, or tell your companion “note for ideas: …” and it starts one for you."),
+      h("div", { class: "page-heading" }, h("div", {}, ...header("Work log", "What you got done, dated and kept.")), h("div", { class: "inline" }, button("Your week", () => app.go("week")), button([icon("plus"), "New notebook"], openCreate, "primary"))),
+      books.length ? shelf : empty("Nothing logged yet", "Tell your companion “note: …” and it goes to your Log, or “note for evaluation: …” to start a notebook."),
+      books.length ? h("h2", { class: "section-title", text: "All entries" }) : null,
+      books.length ? h("div", { class: "inline notes-filters" }, h("div", { class: "field grow" }, search), only) : null,
+      books.length ? stream : null,
     ].filter((n): n is HTMLElement => !!n),
   );
+  draw();
   if (focus) requestAnimationFrame(openCreate);
 }
 
@@ -214,7 +208,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
     // Incoming notes must not replace a half-written edit. Refresh after Save or Cancel.
     if (entries.querySelector(".note.editing")) return;
     const q = search.value.trim().toLowerCase();
-    const shown = page.entries.filter((e) => !q || e.text.toLowerCase().includes(q) || e.project.toLowerCase().includes(q)).reverse();
+    const shown = page.entries.filter((e) => matchesNote(e, page.name, q)).reverse();
     entries.replaceChildren(
       ...(shown.length
         ? shown.map((e) => row(app, page, e, draw))
@@ -231,7 +225,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
 
   view.replaceChildren(
     ...[
-      back("Notes", () => app.go("notes")),
+      back("Work log", () => app.go("notes")),
       h("div", { class: "page-heading" }, h("div", {}, ...header(page.name, "Dated notes, collected over time.")), button([icon("plus"), "New note"], () => { text.scrollIntoView({ block: "center" }); text.focus(); }, "primary")),
       h(
         "div",
@@ -261,7 +255,27 @@ async function notebook(app: App, view: HTMLElement, id: string) {
 
 }
 
-function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void): HTMLElement {
+/** Another notebook for an entry; it keeps its date and project. */
+async function move(app: App, page: Page, entry: NoteEntry) {
+  const books = shelfOrder(await invoke<Notebook[]>("list_notebooks")).filter((b) => b.id !== page.id);
+  if (!books.length) return app.toast(`${page.name} is your only notebook. Create another to move notes into it.`);
+  const to = h("select", { id: "move-to" }, ...books.map((b) => h("option", { value: b.id, text: b.name })));
+  const form = h("form", { class: "card", "aria-label": "Move note" }, h("p", { class: "note-text", text: entry.text }), h("div", { class: "field" }, h("label", { for: to.id, text: "Move to" }), to));
+  const editor = sheet("Move note", form);
+  form.append(h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), h("button", { type: "submit", class: "primary", text: "Move" })));
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      const [book] = await invoke<[Notebook, NoteEntry]>("move_note", { id: page.id, entry, to: to.value });
+      editor.close();
+      app.toast(`Moved to ${book.name}.`);
+    } catch (error) {
+      app.toast(String(error), undefined, true);
+    }
+  });
+}
+
+function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void, withNotebook = false): HTMLElement {
   const node = h(
     "div",
     { class: "row line note" },
@@ -270,14 +284,15 @@ function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void): HTMLE
       { class: "identity-text" },
       h("span", {
         class: "meta",
-        text: `${longDay(entry.date)}${entry.project ? ` · ${entry.project}` : ""}`,
+        text: `${longDay(entry.date)}${withNotebook ? ` · ${page.name}` : ""}${entry.project ? ` · ${entry.project}` : ""}`,
       }),
       h("p", { class: "note-text", text: entry.text }),
     ),
     h(
       "div",
       { class: "inline" },
-      button("Edit", () => edit(), "small"),
+      button("Edit", () => edit(), "small", { "aria-label": `Edit note from ${longDay(entry.date)}` }),
+      button("Move…", () => void move(app, page, entry), "small", { "aria-label": `Move note from ${longDay(entry.date)}` }),
       button(
         "Delete",
         async () => {

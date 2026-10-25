@@ -1,8 +1,9 @@
 import { folder } from "./agents";
 import type { Companion } from "./companion";
 
-// Notes taken in one sentence ("note for evaluation: shipped the login migration"): dated,
-// tagged with the project you're working in, written to a Markdown notebook (notes.rs).
+// The work log (docs/V1.md §5): notes taken in one sentence, dated, tagged with the project you're
+// working in, written to Markdown notebooks (notes.rs). "note: …" goes to Log without a question;
+// "note for X: …" needs X to match a notebook exactly, or asks, and the text is never lost.
 
 /** Mirrors `Notebook` and `Entry` in src-tauri/src/notes.rs. */
 export type Notebook = { id: string; name: string; count: number; updated: number };
@@ -13,19 +14,61 @@ export type NoteStore = {
   create(name: string): Promise<Notebook>;
   add(notebook: string, text: string, date: string, project: string, create?: boolean): Promise<[Notebook, NoteEntry]>;
   remove(id: string, entry: NoteEntry): Promise<void>;
+  /** Moves an entry to another notebook, keeping its date and project. */
+  move(id: string, entry: NoteEntry, to: string): Promise<[Notebook, NoteEntry]>;
 };
+
+/** The default notebook: the inbox every unnamed note goes to. */
+export const LOG = "Log";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 /** Today on this Mac, as the notebook writes it. */
 export const today = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-/** "evaluation" finds "Evaluation H2 2026"; the closest name wins, an exact one always. */
-export function matchNotebook(books: Notebook[], wanted: string): Notebook | null {
+/** A notebook named exactly (any case), and the ones a word of whose name starts with what was
+ * typed ("evaluation" is near "Evaluation H2 2026"). Nothing is ever picked by a guess. */
+export function matchNotebook(books: Notebook[], wanted: string): { exact: Notebook | null; near: Notebook[] } {
   const want = wanted.trim().toLowerCase();
-  const exact = books.find((b) => b.name.toLowerCase() === want || b.id === want);
-  if (exact) return exact;
-  const words = books.filter((b) => b.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(want)) || b.name.toLowerCase().startsWith(want));
-  return words.length === 1 ? words[0] : (words.sort((a, b) => b.updated - a.updated)[0] ?? null);
+  const exact = books.find((b) => b.name.toLowerCase() === want || b.id === want) ?? null;
+  const near = exact ? [] : books.filter((b) => b.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(want)) || b.name.toLowerCase().startsWith(want));
+  return { exact, near };
+}
+
+const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+
+/** The Monday (YYYY-MM-DD) of the week a date is in. */
+export function mondayOf(date: string): string {
+  const d = new Date(`${date}T12:00:00`);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return today(d);
+}
+
+/**
+ * Search across the work log (docs/V1.md V1-L6): every word must match the text, the project,
+ * the notebook's name or the date. Dates match as "october", "oct 2026", "2026-04", "2026",
+ * "this week" and "last week".
+ */
+export function matchesNote(entry: NoteEntry, notebook: string, query: string, now = new Date()): boolean {
+  let q = query.toLowerCase().trim();
+  if (!q) return true;
+  const monday = mondayOf(entry.date);
+  const thisWeek = mondayOf(today(now));
+  const lastWeek = mondayOf(today(new Date(now.getTime() - 7 * 86_400_000)));
+  if (/\bthis week\b/.test(q)) {
+    if (monday !== thisWeek) return false;
+    q = q.replace(/\bthis week\b/, " ");
+  }
+  if (/\blast week\b/.test(q)) {
+    if (monday !== lastWeek) return false;
+    q = q.replace(/\blast week\b/, " ");
+  }
+  const month = Number(entry.date.slice(5, 7));
+  const words = `${entry.text} ${entry.project} ${notebook}`.toLowerCase();
+  return q.split(/\s+/).filter(Boolean).every((w) => {
+    if (words.includes(w) || entry.date.startsWith(w)) return true;
+    const named = MONTHS.findIndex((m) => w.length >= 3 && m.startsWith(w));
+    return named >= 0 && named + 1 === month;
+  });
 }
 
 export class Notes {
@@ -35,29 +78,39 @@ export class Notes {
   ) {}
 
   async take(text: string, wanted: string | null): Promise<string | void> {
-    const books = await this.store.list();
-    if (wanted) {
-      const book = matchNotebook(books, wanted);
-      if (book) return this.write(book.id, text);
-      return this.offerNew(wanted, text);
-    }
-    if (books.length === 0) return this.write("Notes", text, true);
-    if (books.length === 1) return this.write(books[0].id, text);
-    return this.ask(books, text);
+    if (!wanted) return this.write(LOG, text, true);
+    const { exact, near } = matchNotebook(await this.store.list(), wanted);
+    if (exact) return this.write(exact.id, text);
+    return this.ask(wanted, near, text);
   }
 
   /** A quick capture, from a reminder like "every Friday at 4, note what I achieved for evaluation". */
   async capture(reminderText: string) {
     const books = await this.store.list();
     const lower = reminderText.toLowerCase();
-    const book = books.find((b) => b.name.toLowerCase().split(/\s+/).some((w) => w.length > 3 && lower.includes(w)));
+    const named = books.filter((b) => b.name.toLowerCase().split(/\s+/).some((w) => w.length > 3 && lower.includes(w)));
+    // Only a notebook the reminder clearly names; anything else goes to Log.
+    const book = named.length === 1 ? named[0] : null;
     const bubble = this.companion.pet.bubble;
     bubble.prompt({
       who: `${this.companion.pet.name} · ${book ? book.name : "note"}`,
       placeholder: "What happened? One sentence is enough.",
       suggestions: [],
-      preview: (text) => (text.trim() ? (book ? `Add to ${book.name}` : "Add a note (I'll ask which notebook)") : ""),
+      preview: (text) => (text.trim() ? `Add to ${book ? book.name : LOG}` : ""),
       submit: (text) => this.take(text, book ? book.id : null),
+    });
+  }
+
+  /** "Log it" on a finished session: the line is prefilled and editable, and goes to Log. */
+  logWork(line: string) {
+    const bubble = this.companion.pet.bubble;
+    bubble.prompt({
+      who: `${this.companion.pet.name} · ${LOG}`,
+      placeholder: "What got done?",
+      value: line,
+      suggestions: [],
+      preview: (text) => (text.trim() ? `Add to ${LOG}` : ""),
+      submit: (text) => this.take(text, null),
     });
   }
 
@@ -75,7 +128,7 @@ export class Notes {
     return reply;
   }
 
-  /** The note, with Undo for a few seconds. */
+  /** "Noted in X", with Move and Undo; they stay until the card is closed (docs/V1.md V1-L4). */
   private confirm(book: Notebook, entry: NoteEntry, reply: string) {
     const bubble = this.companion.pet.bubble;
     const id = `note-added-${book.id}-${entry.line}`;
@@ -86,49 +139,60 @@ export class Notes {
       lines: [entry.text],
       choices: [
         { label: "Undo", value: "undo" },
+        { label: "Move…", value: "move" },
         { label: "OK", value: "ok", primary: true },
       ],
       onChoose: async (value) => {
         bubble.close(id);
-        if (value !== "undo") return;
-        await this.store.remove(book.id, entry);
-        bubble.say("Removed.", 3);
+        if (value === "undo") {
+          await this.store.remove(book.id, entry);
+          return bubble.say("Removed.", 3);
+        }
+        if (value === "move") this.moveCard(book, entry);
       },
     });
-    setTimeout(() => bubble.close(id), 8_000);
   }
 
-  /** Several notebooks and none named: one click picks (most recent first). */
-  private ask(books: Notebook[], text: string) {
+  /** Another notebook for a note just written. */
+  private async moveCard(from: Notebook, entry: NoteEntry) {
     const bubble = this.companion.pet.bubble;
-    const recent = [...books].sort((a, b) => b.updated - a.updated).slice(0, 4);
+    const others = (await this.store.list()).filter((b) => b.id !== from.id).sort((a, b) => b.updated - a.updated).slice(0, 5);
+    if (!others.length) return bubble.say(`${from.name} is your only notebook. Say “new notebook …” to start another.`, 6);
+    bubble.show({
+      id: "note-move",
+      who: `${this.companion.pet.name} · move note`,
+      title: "Move it to…",
+      lines: [entry.text],
+      choices: [{ label: "Cancel", value: "" }, ...others.map((b, i) => ({ label: b.name, value: b.id, primary: i === 0 }))],
+      onChoose: async (to) => {
+        bubble.close("note-move");
+        if (!to) return;
+        const [book] = await this.store.move(from.id, entry, to);
+        bubble.say(`Moved to ${book.name}.`, 4);
+      },
+    });
+  }
+
+  /**
+   * "note for X: …" where X isn't a notebook's exact name. One near match: confirm it. Several:
+   * choose. None: start X, or keep it in Log. The text waits on the card meanwhile.
+   */
+  private ask(wanted: string, near: Notebook[], text: string) {
+    const bubble = this.companion.pet.bubble;
+    const choices = [
+      { label: `Save to ${LOG}`, value: "\u0000log" },
+      ...(near.length ? near.slice(0, 4).map((b, i) => ({ label: near.length === 1 ? `Add to ${b.name}` : b.name, value: b.id, primary: i === 0 })) : [{ label: `New notebook “${wanted}”`, value: "\u0000new", primary: true }]),
+    ];
     bubble.show({
       id: "note-where",
       who: `${this.companion.pet.name} · note`,
-      title: "Which notebook?",
+      title: near.length === 1 ? `Add to ${near[0].name}?` : near.length ? "Which notebook?" : `There's no notebook called ${wanted}.`,
       lines: [text],
-      choices: recent.map((b, i) => ({ label: b.name, value: b.id, primary: i === 0 })),
+      choices,
       onChoose: async (value) => {
         bubble.close("note-where");
-        bubble.say(await this.write(value, text), 4);
-      },
-    });
-  }
-
-  private offerNew(name: string, text: string) {
-    const bubble = this.companion.pet.bubble;
-    bubble.show({
-      id: "note-new-book",
-      who: `${this.companion.pet.name} · note`,
-      title: `There's no notebook called ${name}. Start it?`,
-      lines: [text],
-      choices: [
-        { label: "Cancel", value: "cancel" },
-        { label: `Start ${name}`, value: "create", primary: true },
-      ],
-      onChoose: async (value) => {
-        bubble.close("note-new-book");
-        if (value === "create") bubble.say(await this.write(name, text, true), 4);
+        const reply = value === "\u0000log" ? await this.write(LOG, text, true) : value === "\u0000new" ? await this.write(wanted, text, true) : await this.write(value, text);
+        bubble.say(reply, 4);
       },
     });
   }
@@ -162,6 +226,10 @@ export function memoryNotes(): NoteStore {
       if (!found) return;
       found.entries = found.entries.filter((e) => e.line !== entry.line);
       found.book.count = found.entries.length;
+    },
+    move: async (id, entry, to) => {
+      await store.remove(id, entry);
+      return store.add(to, entry.text, entry.date, entry.project);
     },
   };
   return store;

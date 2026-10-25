@@ -1,6 +1,6 @@
 import { folder } from "./agents";
 import type { Companion } from "./companion";
-import { describeDue, describeRepeat, nextDue, parseReminder, type Repeat } from "./when";
+import { describeDue, describeRepeat, parseReminder, type Repeat } from "./when";
 
 /** Mirrors `Reminder` in src-tauri/src/reminders.rs. */
 export type Reminder = {
@@ -13,14 +13,22 @@ export type Reminder = {
   done: boolean;
   fired: boolean;
   repeat?: Repeat | null;
+  /** A series' first occurrence; its weekday and time never move with a snooze. */
+  anchor?: number;
+  /** When the current occurrence was due before any snooze. */
+  occurrence?: number;
   history?: { at: number; action: string; due: number }[];
 };
+
+/** How a reminder card was answered; the schedule itself is Rust's (src-tauri/src/reminders.rs). */
+export type ReminderAnswer = { action: "done" | "skip" } | { action: "snooze"; until: number };
 
 export type ReminderStore = {
   list(): Promise<Reminder[]>;
   add(text: string, due: number, project: string | null, from?: string, repeat?: Repeat): Promise<Reminder>;
   update(id: string, change: { done?: boolean; due?: number; fired?: boolean; completed?: boolean }): Promise<void>;
   remove(id: string): Promise<void>;
+  answer(id: string, answer: ReminderAnswer): Promise<void>;
   /** Shows the overlay while the pet is hidden (false puts it back). */
   peek(show: boolean): void;
 };
@@ -35,6 +43,8 @@ const MINUTE = 60_000;
 export class Reminders {
   private list: Reminder[] = [];
   private showing = new Set<string>();
+  /** Late reminders gathered into one "While you were away" card; they stay overdue in the window. */
+  private gathered = new Set<string>();
   /** Opens the Settings window's reminder list (desktop app only). */
   manage?: (id?: string) => void;
   /** Opens a quick note capture; a reminder about writing something down offers it. */
@@ -58,6 +68,8 @@ export class Reminders {
       if (!current || current.done || current.due !== old.due || current.text !== old.text) {
         this.companion.closeRequest(`reminder-${old.id}`);
         this.unpeek(old);
+        // Its next time (a repeat, a snooze) shows on its own again.
+        this.gathered.delete(old.id);
       }
     }
     this.list = next;
@@ -182,11 +194,39 @@ export class Reminders {
 
   private check(starting: boolean) {
     const now = Date.now();
-    for (const r of this.list) {
-      if (r.done || this.showing.has(r.id)) continue;
-      // Shown before Sidefolk quit but never answered: show it again.
-      if (r.due <= now && (!r.fired || starting)) this.show(r, now - r.due > 2 * MINUTE);
-    }
+    // Shown before Sidefolk quit but never answered: show it again.
+    const due = this.list.filter((r) => !r.done && !this.showing.has(r.id) && !this.gathered.has(r.id) && r.due <= now && (!r.fired || starting));
+    const late = due.filter((r) => now - r.due > 2 * MINUTE);
+    for (const r of due) if (!late.includes(r)) this.show(r, false);
+    // After a quit or sleep: one card for everything that came due meanwhile (docs/V1.md V1-R8).
+    if (late.length === 1) this.show(late[0], true);
+    else if (late.length > 1) this.away(late);
+  }
+
+  private away(late: Reminder[]) {
+    const pet = this.companion.pet;
+    for (const r of late) this.gathered.add(r.id);
+    this.store.peek(true);
+    const lines = late
+      .sort((a, b) => a.due - b.due)
+      .slice(0, 6)
+      .map((r) => `${describeDue(new Date(r.due))} · ${r.text}`);
+    if (late.length > 6) lines.push(`+${late.length - 6} more`);
+    pet.bubble.show({
+      id: "away",
+      who: `${pet.name} · reminders`,
+      title: `While you were away: ${late.length} reminders`,
+      lines,
+      choices: [{ label: "One by one", value: "each" }, ...(this.manage ? [{ label: "Open the list", value: "list", primary: true }] : [])],
+      onChoose: (value) => {
+        pet.bubble.close("away");
+        this.store.peek(false);
+        if (value === "list") this.manage?.();
+        else for (const r of late) this.show(r, true);
+      },
+      onClose: () => this.store.peek(false),
+    });
+    pet.mind.react("wave", 1.6);
   }
 
   private show(r: Reminder, missed: boolean) {
@@ -207,7 +247,9 @@ export class Reminders {
       choices: [
         { label: "In 10 min", value: "10" },
         { label: "In 1 hour", value: "60" },
+        ...(new Date().getHours() < 17 ? [{ label: "This evening", value: "evening" }] : []),
         { label: "Tomorrow 9:00", value: "tomorrow" },
+        ...(r.repeat ? [{ label: "Skip this one", value: "skip", quiet: true }] : []),
         // "Every Friday at 4, note what I achieved": the reminder opens the notebook's capture.
         ...(this.writeNote && aboutWriting(r.text) ? [{ label: "Write it now", value: "write", primary: true }, { label: "Done", value: "done" }] : [{ label: "Done", value: "done", primary: true }]),
         ...(this.manage ? [{ label: "Open", value: "open", quiet: true }] : []),
@@ -229,29 +271,12 @@ export class Reminders {
     if (this.showing.size === 0) this.store.peek(false);
   }
 
+  /** Done and Skip move a series to its next occurrence; a snooze moves only this one (Rust). */
   private async answer(r: Reminder, value: string) {
     this.unpeek(r);
-    if (value === "done" && r.repeat) {
-      // A repeating reminder isn't finished: it moves to its next time.
-      const due = nextDue(new Date(r.due), r.repeat, new Date(Math.max(Date.now(), r.due))).getTime();
-      await this.store.update(r.id, { due, completed: true });
-      r.due = due;
-      r.fired = false;
-      return;
-    }
-    if (value === "done") {
-      await this.store.update(r.id, { done: true });
-      r.done = true;
-      return;
-    }
-    const due = new Date();
-    if (value === "tomorrow") {
-      due.setDate(due.getDate() + 1);
-      due.setHours(9, 0, 0, 0);
-    } else due.setTime(due.getTime() + Number(value) * MINUTE);
-    await this.store.update(r.id, { due: due.getTime() });
-    r.due = due.getTime();
-    r.fired = false;
+    if (value === "done" || value === "skip") await this.store.answer(r.id, { action: value });
+    else await this.store.answer(r.id, { action: "snooze", until: snoozeUntil(value).getTime() });
+    await this.reload();
   }
 
   private showList() {
@@ -273,6 +298,17 @@ export class Reminders {
   }
 }
 
+/** When a snooze choice shows the reminder again: minutes, "evening" (18:00) or "tomorrow" (09:00). */
+export function snoozeUntil(choice: string, now = new Date()): Date {
+  const at = new Date(now);
+  if (choice === "evening") at.setHours(18, 0, 0, 0);
+  else if (choice === "tomorrow") {
+    at.setDate(at.getDate() + 1);
+    at.setHours(9, 0, 0, 0);
+  } else at.setTime(at.getTime() + Number(choice) * MINUTE);
+  return at;
+}
+
 /** A reminder to write something down ("note what I achieved this week", "log the wins"). */
 export const aboutWriting = (text: string) => /\b(note|notes|write( it)? down|log|jot|journal)\b|what (i|we) (did|achieved|shipped)|\bwins\b/i.test(text);
 
@@ -291,6 +327,13 @@ export function memoryStore(): ReminderStore {
       if (r) { Object.assign(r, change); if (change.due !== undefined) r.fired = false; }
     },
     remove: async (id) => void list.splice(list.findIndex((r) => r.id === id) >>> 0, 1),
+    // The preview has no series engine: done finishes, a snooze moves it.
+    answer: async (id, answer) => {
+      const r = list.find((r) => r.id === id);
+      if (!r) return;
+      if (answer.action === "snooze") Object.assign(r, { due: answer.until, fired: false });
+      else r.done = true;
+    },
     peek: () => {},
   };
 }

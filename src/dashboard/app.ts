@@ -9,6 +9,7 @@ import { renderRequests, renderReview } from "./requests";
 import { renderSessions } from "./sessions";
 import { prepareSettings, renderSettings } from "./settings";
 import { renderSetup } from "./setup";
+import { renderWeek } from "./week";
 import { tellBar } from "./tell";
 import { picture } from "../roster";
 
@@ -54,12 +55,12 @@ export type App = {
 const NAV: [string, string, IconName][] = [
   ["today", "Today", "home"],
   ["reminders", "Reminders", "reminders"],
-  ["notes", "Notes", "notes"],
+  ["notes", "Work log", "notes"],
   ["sessions", "Sessions", "terminal"],
   ["settings", "Settings", "settings"],
 ];
 /** Views reached from a destination keep that destination selected. */
-const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today" };
+const PARENT: Record<string, string> = { review: "sessions", requests: "today", home: "today", week: "notes" };
 
 const main = document.querySelector<HTMLElement>("main")!;
 const topbar = document.querySelector<HTMLElement>("#topbar")!;
@@ -257,6 +258,7 @@ function draw(focus: boolean) {
       sessions: renderSessions,
       settings: renderSettings,
       setup: renderSetup,
+      week: renderWeek,
     }[view] ?? renderHome;
   const active = document.activeElement instanceof HTMLElement && main.contains(document.activeElement) ? document.activeElement : null;
   const activeId = active?.id;

@@ -40,6 +40,8 @@ export function parse(input: string): Command {
   const kept = input.trim();
   if ((m = kept.match(/^(?:note|jot|log|add)\s+(?:it\s+)?(?:for|to|in|into)\s+(?:my\s+|the\s+)?([^:]{1,60}?)\s*(?:notebook\s*)?:\s*(.+)$/is))) return { kind: "note", notebook: m[1], text: m[2].trim() };
   if ((m = kept.match(/^(?:note|jot down|write down)\s*(?::|that\s)\s*(.+)$/is))) return { kind: "note", notebook: null, text: m[1].trim() };
+  // "log shipped the release": straight to the Log (docs/V1.md V1-L2).
+  if ((m = kept.match(/^log:?\s+(.+)$/is))) return { kind: "note", notebook: null, text: m[1].trim() };
   if (/^(?:open|show)\s+(?:the\s+)?(?:sidefolk|dashboard|app|window)$/.test(lower)) return { kind: "sidefolk" };
   // "start a claude session in sidefolk", "new codex session in api with full access", "open a claude session".
   if ((m = text.match(/^(?:(?:start|new|launch|begin)\s+(?:an?\s+)?(?:new\s+)?|open\s+an?\s+(?:new\s+)?)(claude(?:\s+code)?|codex)(?:\s+session)?(?:\s+(?:in|for)\s+(~?[\w./-]+))?(\s+with\s+full\s+access)?$/i)))
@@ -107,7 +109,7 @@ export function explain(text: string, ctx: ExplainContext): string {
     case "start":
       return `Start ${command.agent === "codex" ? "Codex" : "Claude Code"} in ${command.folder ?? "your home folder"}${command.full ? (command.agent === "codex" ? " without approvals" : " in auto mode") : ""} (you confirm first)`;
     case "note":
-      return command.notebook ? `Add to ${command.notebook}: ${command.text}` : `Add a note (I'll ask which notebook): ${command.text}`;
+      return command.notebook ? `Add to ${command.notebook}: ${command.text}` : `Add to your Log: ${command.text}`;
     case "notebook":
       return `Start a notebook called ${command.name}`;
     case "notes":

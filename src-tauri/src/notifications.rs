@@ -1,6 +1,7 @@
-//! macOS owns the next reminder's alarm, so it survives quitting Sidefolk. The companion
-//! handles reminders while running; a notification click opens that reminder in the window.
-use crate::reminders::Reminder;
+//! macOS holds the coming reminders' alarms (up to 60, reminders.rs `queue`), so they fire with
+//! Sidefolk quit. The companion handles reminders while running; a notification click opens that
+//! reminder in the window.
+use crate::reminders::Queued;
 use serde::Serialize;
 use std::sync::mpsc::Sender;
 
@@ -31,7 +32,7 @@ pub async fn request_notifications(
     notification_status().await
 }
 
-pub fn install(app: &tauri::AppHandle) -> Option<Sender<Vec<Reminder>>> {
+pub fn install(app: &tauri::AppHandle) -> Option<Sender<Vec<Queued>>> {
     #[cfg(target_os = "macos")]
     return native::install(app);
     #[cfg(not(target_os = "macos"))]
@@ -41,12 +42,9 @@ pub fn install(app: &tauri::AppHandle) -> Option<Sender<Vec<Reminder>>> {
     }
 }
 
-/// Only the next occurrence is queued; completing a repeat schedules its next date.
-fn pending(list: &[Reminder], now: u64) -> Vec<Reminder> {
-    list.iter()
-        .filter(|r| !r.done && !r.fired && r.due > now)
-        .cloned()
-        .collect()
+/// The alarm's identifier: one per occurrence, so a series holds several at once.
+fn identifier((id, _, at): &Queued) -> String {
+    format!("reminder-{id}@{at}")
 }
 
 #[cfg(target_os = "macos")]
@@ -96,7 +94,8 @@ mod native {
                 completion: &DynBlock<dyn Fn()>,
             ) {
                 let id = response.notification().request().identifier().to_string();
-                if let Some(id) = id.strip_prefix("reminder-") {
+                // "reminder-<id>@<when>": the reminder's id comes first.
+                if let Some(id) = id.strip_prefix("reminder-").map(|rest| rest.split('@').next().unwrap_or(rest)) {
                     if id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
                         let app = self.ivars().clone();
                         let tab = format!("reminders:{id}");
@@ -116,7 +115,7 @@ mod native {
         NSBundle::mainBundle().bundleIdentifier().is_some()
     }
 
-    pub fn install(app: &tauri::AppHandle) -> Option<Sender<Vec<Reminder>>> {
+    pub fn install(app: &tauri::AppHandle) -> Option<Sender<Vec<Queued>>> {
         if !available() {
             return None;
         }
@@ -125,7 +124,7 @@ mod native {
         let center = UNUserNotificationCenter::currentNotificationCenter();
         center.setDelegate(Some(ProtocolObject::from_ref(&*delegate)));
         DELEGATE.with(|slot| *slot.borrow_mut() = Some(delegate));
-        let (tx, rx) = mpsc::channel::<Vec<Reminder>>();
+        let (tx, rx) = mpsc::channel::<Vec<Queued>>();
         std::thread::spawn(move || {
             let center = UNUserNotificationCenter::currentNotificationCenter();
             let mut previous: HashMap<String, (String, u64)> = HashMap::new();
@@ -148,10 +147,7 @@ mod native {
                 }
             }
             while let Ok(list) = rx.recv() {
-                let next: HashMap<_, _> = pending(&list, crate::journal::now_ms())
-                    .into_iter()
-                    .map(|r| (format!("reminder-{}", r.id), (r.text, r.due)))
-                    .collect();
+                let next: HashMap<_, _> = list.iter().map(|q| (identifier(q), (q.1.clone(), q.2))).collect();
                 let removed: Vec<_> = previous
                     .keys()
                     .filter(|id| !next.contains_key(*id))
@@ -268,34 +264,7 @@ mod native {
 mod tests {
     use super::*;
     #[test]
-    fn schedules_only_future_unanswered_occurrences() {
-        let future = Reminder {
-            due: 200,
-            ..Default::default()
-        };
-        let list = vec![
-            future.clone(),
-            Reminder {
-                done: true,
-                ..future.clone()
-            },
-            Reminder {
-                fired: true,
-                ..future.clone()
-            },
-            Reminder {
-                due: 100,
-                ..future.clone()
-            },
-            Reminder {
-                repeat: Some(crate::reminders::Repeat {
-                    every: "day".into(),
-                    n: 1,
-                }),
-                ..future
-            },
-        ];
-        assert_eq!(pending(&list, 100).len(), 2);
-        assert!(pending(&list, 200).is_empty());
+    fn each_occurrence_has_its_own_alarm() {
+        assert_eq!(identifier(&("r1-0".into(), "stretch".into(), 42)), "reminder-r1-0@42");
     }
 }

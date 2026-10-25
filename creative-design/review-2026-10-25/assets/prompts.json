@@ -1,0 +1,7 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "use": "Presentation cover only; no production in-app asset change",
+  "prompt": "Use case: stylized-concept. Asset type: editorial cover artwork for the design handoff of Sidefolk, a quiet Mac desktop companion. Create a premium tactile miniature still life, landscape 3:2, an ivory folded paper note standing in a mint-green shallow ceramic tray, one closed oatmeal notebook with charcoal spine and a small terracotta bookmark, two restrained curved paper arches behind, sitting on a warm cream desk. Beautiful matte clay and thick paper material, soft natural morning side light, believable contact shadows, sophisticated contemporary Japanese stationery aesthetic, calm and warm, lots of empty space above and left. Palette strictly warm ivory #F7F3EA, cream #FFFCF7, charcoal #272A33, mint #6FCFB4, terracotta #C87658. Composition is clustered on right bottom half. No text, no logos, no characters, no bunny, no people, no interface, no plants, no gradients or neon. This is presentation atmosphere only, not a new product feature or in-app background.",
+  "original_output": "/Users/ghassenbrg/.codex/generated_images/01a170a4-8e40-76f1-b2d8-cdc09c5e4b09/exec-5bfebf11-6889-402b-a92e-0ce9a50f829d.png",
+  "project_output": "assets/desk-cover.png"
+}

@@ -1,0 +1,945 @@
+{
+  "date": "2026-10-25",
+  "engine": "Playwright WebKit",
+  "kind": "Design prototype only",
+  "screens": [
+    {
+      "id": "cover",
+      "image": "images/01-cover.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today",
+      "image": "images/02-today.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "image": "images/03-calm.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "image": "images/04-reminders.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "image": "images/05-reminder-edit.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "image": "images/06-work-log.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "week",
+      "image": "images/07-week.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "sessions",
+      "image": "images/08-sessions.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "image": "images/09-request.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request-diff",
+      "image": "images/10-request-diff.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "image": "images/11-setup.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup-notifications",
+      "image": "images/12-setup-notifications.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup-tools",
+      "image": "images/13-setup-tools.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "image": "images/14-settings.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "companion",
+      "image": "images/15-companion.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "agents",
+      "image": "images/16-agents.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "privacy",
+      "image": "images/17-privacy.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "desktop",
+      "image": "images/18-desktop.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "components",
+      "image": "images/19-components.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "states",
+      "image": "images/20-states.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "quick-add",
+      "image": "images/21-quick-add.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today-dark",
+      "image": "images/22-today-dark.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings-dark",
+      "image": "images/23-settings-dark.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "narrow",
+      "image": "images/24-narrow.png",
+      "viewport": [
+        720,
+        1200
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "repeat-editor",
+      "image": "images/25-repeat-editor.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "quick-reminder",
+      "image": "images/26-quick-reminder.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "quick-ambiguity",
+      "image": "images/27-quick-ambiguity.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "notebook-choice",
+      "image": "images/28-notebook-choice.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request-released",
+      "image": "images/29-request-released.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request-long",
+      "image": "images/30-request-long.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "desktop-spark",
+      "image": "images/31-desktop-spark.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "control-states",
+      "image": "images/32-control-states.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "new-reminder",
+      "image": "images/33-new-reminder.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup-disconnected",
+      "image": "images/34-setup-disconnected.png",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    }
+  ],
+  "responsive": [
+    {
+      "id": "today",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "width": 1100,
+      "height": 760,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "width": 1100,
+      "height": 760,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "width": 900,
+      "height": 680,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "width": 900,
+      "height": 680,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "width": 640,
+      "height": 480,
+      "theme": "light",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "today",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "calm",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminders",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "reminder-edit",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "work-log",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "request",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "settings",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    },
+    {
+      "id": "setup",
+      "width": 640,
+      "height": 480,
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "missingImages": [],
+      "nestedButtons": 0,
+      "unnamedButtons": 0
+    }
+  ],
+  "interactions": [
+    "Quick add opens focused, native dialog closes with Escape",
+    "Add reminder opens create mode; blank title stays in editor",
+    "Ambiguous time requires a choice; confirmation preserves that choice",
+    "Notebook choice preserves the selected destination in confirmation",
+    "Notebook changes filter entries and preserve an unsaved draft",
+    "Released request has Open and no Allow",
+    "Long operation has no Allow before complete scroll review",
+    "Everyday Today has no Sessions or developer vocabulary",
+    "Reduced-motion rendering retains the same readable states",
+    "At 640×480, opening Add reminder immediately shows and focuses the title field"
+  ],
+  "errors": [],
+  "result": "passed"
+}

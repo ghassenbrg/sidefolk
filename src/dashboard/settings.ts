@@ -207,6 +207,7 @@ function settingsContents(app: App) {
       row("Summon shortcut", "Hides the companion, or calls it to your cursor.", shortcut),
       row("Start at login", "Opens Sidefolk when you log in.", button(integrations.start_at_login ? "Turn off" : "Turn on", () => void invoke("tray_action", { action: "login" }).then(() => app.refresh()))),
       toggle(app, "hide_from_dock", "Hide from Dock", "Sidefolk leaves the Dock and ⌘Tab; open this window from the menu bar icon instead."),
+      toggle(app, "your_week", "Your week", "On Friday from 4 PM, your companion shows what you logged this week, ready to copy."),
     ),
   );
 

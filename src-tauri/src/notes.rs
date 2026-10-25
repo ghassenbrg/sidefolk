@@ -193,6 +193,20 @@ impl Notes {
         self.save(id, &lines)
     }
 
+    /// Moves an entry to another notebook with its date and project. It's written there before it
+    /// leaves here, so a failure never loses it.
+    pub fn move_entry(&self, from: &str, at: &Entry, to: &str) -> io::Result<Entry> {
+        if from == to {
+            return Err(io::Error::other("It's already in that notebook."));
+        }
+        if self.lines(from)?.get(at.line).and_then(|l| parse_entry(at.line, l)).as_ref() != Some(at) {
+            return Err(io::Error::other("This notebook changed on disk. Reopen it and try again."));
+        }
+        let moved = self.add(to, &at.text, &at.date, &at.project)?;
+        self.remove(from, at)?;
+        Ok(moved)
+    }
+
     /// Puts a removed entry back where it was (Undo).
     pub fn restore(&self, id: &str, entry: &Entry) -> io::Result<()> {
         let _guard = self.write.lock().unwrap();
@@ -253,6 +267,13 @@ pub fn remove_note(app: tauri::AppHandle, shared: Shared<'_>, id: String, entry:
 }
 
 #[tauri::command(async)]
+pub fn move_note(app: tauri::AppHandle, shared: Shared<'_>, id: String, entry: EntryRef, to: String) -> Result<(Notebook, Entry), String> {
+    let book = shared.notes.find(&to).ok_or_else(|| format!("There's no notebook called {to}."))?;
+    let entry = changed(&app, shared.notes.move_entry(&id, &entry.into(), &book.id))?;
+    Ok((book, entry))
+}
+
+#[tauri::command(async)]
 pub fn restore_note(app: tauri::AppHandle, shared: Shared<'_>, id: String, entry: EntryRef) -> Result<(), String> {
     changed(&app, shared.notes.restore(&id, &entry.into()))
 }
@@ -275,6 +296,23 @@ impl From<EntryRef> for Entry {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn moves_an_entry_with_its_date_and_project() {
+        let dir = std::env::temp_dir().join(format!("sidefolk-notes-move-{}", std::process::id()));
+        let notes = Notes::new(&dir);
+        let log = notes.create("Log").unwrap();
+        let evaluation = notes.create("Evaluation H2 2026").unwrap();
+        let entry = notes.add(&log.id, "shipped the login migration", "2026-10-03", "api").unwrap();
+        let moved = notes.move_entry(&log.id, &entry, &evaluation.id).unwrap();
+        assert_eq!((moved.date.as_str(), moved.text.as_str(), moved.project.as_str()), ("2026-10-03", "shipped the login migration", "api"));
+        assert!(notes.read(&log.id).unwrap().entries.is_empty());
+        // A line that changed on disk isn't moved (and nothing is lost).
+        let stale = Entry { text: "something else".into(), ..moved.clone() };
+        assert!(notes.move_entry(&evaluation.id, &stale, &log.id).is_err());
+        assert_eq!(notes.read(&evaluation.id).unwrap().entries.len(), 1);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn notebooks_are_markdown_that_survives_hand_edits() {

@@ -13,10 +13,10 @@ says what Enter will do before anything happens.
 | Say | What happens |
 |---|---|
 | remind me tomorrow at 9 to call the bank | A reminder. Pip holds the note when it's due, even after a restart. |
-| every weekday at 9 to check mail · every 2 weeks on Friday… | A repeating reminder. |
+| every weekday at 9 to check mail · every 2 weeks on Friday… | A repeating reminder: it comes back on schedule whether or not you answered the last one. |
 | 10 minutes before the call at 3 | A reminder ahead of something. |
-| note for evaluation: shipped the login migration | A dated note in that notebook. |
-| note: idea for the landing page | A dated note; Pip asks which notebook. |
+| note: idea for the landing page · log shipped the release | A dated note in your Log. |
+| note for evaluation: shipped the login migration | A dated note in that notebook. If no notebook has exactly that name, Pip asks (and keeps your text). |
 | notes · reminders | Opens the list. |
 | open api in VS Code · open a terminal in api · open github.com | Opens it. |
 | open session · open api session | Brings that Claude Code session forward, or continues it. |
@@ -36,8 +36,17 @@ Every card has ×. Closing a request only hides it; it waits in the window until
 Open it from the Dock, the menu bar icon, or "open Sidefolk".
 
 - **Today** (⌘1): what needs you, your work sessions, what's coming up.
-- **Reminders** (⌘2, ⌘N for a new one): add, edit, repeat, snooze, history.
-- **Notes** (⌘3): notebooks, search, edit, copy as Markdown.
+- **Reminders** (⌘2, ⌘N for a new one): add, edit, repeat, snooze, skip one, history. Snoozing
+  moves only that one: a Monday reminder snoozed to Tuesday still comes back on Monday. A
+  reminder you didn't answer stays overdue on Today until you do. macOS holds the coming ones,
+  so they arrive even when Sidefolk is closed; anything that came due while your Mac slept shows
+  on one card ("While you were away").
+- **Work log** (⌘3): your Log and the notebooks you name, one timeline of every entry by week,
+  search by words or dates ("october", "last week"), edit, move to another notebook, copy as
+  Markdown. **Your week** lists what you logged and finished this week, ready to copy; on Friday
+  from 4 PM your companion offers it (Settings → General → Your week).
+- When a Claude Code session finishes, its card offers **Log it**: the project and your first
+  request, editable, go to your Log.
 - **Sessions** (⌘4): running and finished Claude Code sessions. It appears once Claude Code is
   connected.
 - **Settings** (⌘,): searchable categories. **Appearance → Theme** offers System (the default),

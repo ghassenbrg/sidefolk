@@ -196,3 +196,29 @@ Newest last. Each entry: what, why, and what would change it.
     - No status polling: the overlay publishes on change, and the window refreshes on focus and
       on events (`integrations-changed` from `tray::refresh`, `requests`, `status`,
       `settings-changed`, `reminders-changed`, `notes-changed`).
+43. **UI/UX team design proposal (25 October 2026, founder requested an open rethink).**
+    `creative-design/review-2026-10-25/` contains the workday-desk direction, 34 image boards,
+    editable prototype, system/behavior/implementation handoff and verification. Keep the logo,
+    Pip/Spark, palette and v1 scope; recompose Today as attention + agenda + dated writing and
+    keep Settings separate. New screen references and 13 CSS px window text are explicit design
+    proposals, not silent amendments to V1-U2/U7 or a release-gate sign-off. The founder requested
+    a developer-ready package; production implementation remains P5 after the planned state
+    foundation. This adds no feature or dependency and supersedes no production approval yet.
+43. **P2 reminders and work log (25 October 2026).**
+    - `jiff` is added (guardrail 6) because Rust's standard library has no time zones. Series
+      math is local wall-clock time across DST (`series.rs`): a skipped time fires at the next
+      valid minute, a doubled time fires once.
+    - A reminder now keeps three times: `anchor` (the series' first occurrence; it moves only
+      when the series is edited), `occurrence` (the current one, before any snooze) and `due`
+      (when it fires next).
+    - Done and Skip move to the next occurrence counted from the anchor, never from a snooze.
+    - Every 20 s, `tick` records an occurrence that came and went unanswered as Missed and keeps
+      only the latest one.
+    - macOS holds up to 60 alarms (`queue`), with ids `reminder-<id>@<ms>`.
+    - The overlay and window answer through `answer_reminder`. The TS `nextDue` is now used only
+      for previews.
+    - Work log: "note:" and "log …" go to Log. Notebook names must match exactly; otherwise
+      Pip offers the near names, a new notebook or Log, and never guesses.
+    - `move_note` writes the entry to the target before removing it from the source.
+    - Your week replaces the weekly wins summary; Log it stores only the project and the first
+      prompt line.

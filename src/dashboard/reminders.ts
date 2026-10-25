@@ -1,7 +1,7 @@
 import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { badge } from "../states";
-import { describeRepeat, nextDue, parseReminder, type Repeat } from "../when";
+import { describeRepeat, parseReminder, type Repeat } from "../when";
 import { invoke, type Reminder } from "./api";
 import type { App } from "./app";
 import { agentShort, button, folder, h, timeZone } from "./dom";
@@ -168,9 +168,10 @@ function row(app: App, r: Reminder, detail = false) {
   const missed = r.due < Date.now();
   const by = r.from === "you" ? "" : ` · set by ${agentShort(r.from)}`;
   const where = r.project ? ` · ${folder(r.project)}` : "";
-  const update = async (change: Record<string, unknown>, done: string) => {
+  // Done, Skip and Snooze go through the series engine (src-tauri/src/reminders.rs).
+  const update = async (answer: Record<string, unknown>, done: string) => {
     try {
-      await invoke("update_reminder", { id: r.id, change });
+      await invoke("answer_reminder", { id: r.id, ...answer });
       app.toast(done);
       await app.refresh();
     } catch (error) {
@@ -183,12 +184,13 @@ function row(app: App, r: Reminder, detail = false) {
     h(
       "div",
       { class: "row" },
-      h("div", {}, h("strong", { text: r.text }), h("p", { class: "meta", text: `${missed ? "Was due " : ""}${longDate(due)}${r.repeat ? `, then ${describeRepeat(r.repeat, due)}` : ""}${where}${by}` })),
+      h("div", {}, h("strong", { text: r.text }), h("p", { class: "meta", text: `${missed ? "Was due " : ""}${longDate(due)}${r.repeat ? `, then ${describeRepeat(r.repeat, new Date(r.anchor || r.due))}` : ""}${where}${by}` })),
       h(
         "div",
         { class: "actions" },
         !detail ? button("Open", () => app.go("reminders", r.id), "quiet") : null,
-        button("Snooze 10 min", () => void update({ due: Date.now() + 600_000 }, "Snoozed for 10 minutes."), "quiet"),
+        button("Snooze 10 min", () => void update({ action: "snooze", until: Date.now() + 600_000 }, "Snoozed for 10 minutes."), "quiet", { "aria-label": `Snooze ${r.text} for 10 minutes` }),
+        detail && r.repeat ? button("Skip this one", () => void update({ action: "skip" }, "Skipped. The next one is scheduled."), "quiet") : null,
         button("Edit", () => {
           let close = () => {};
           const editor = sheet("Edit reminder", editRow(app, r, () => close()));
@@ -212,7 +214,7 @@ function row(app: App, r: Reminder, detail = false) {
             app.toast(String(error), undefined, true);
           }
         }, "quiet"),
-        button([icon("done"), "Mark complete"], () => void update(r.repeat ? { due: nextDue(due, r.repeat, new Date(Math.max(Date.now(), r.due))).getTime(), completed: true } : { done: true }, r.repeat ? "Next repeat scheduled." : "Marked complete."), ""),
+        button([icon("done"), "Mark complete"], () => void update({ action: "done" }, r.repeat ? "Next repeat scheduled." : "Marked complete."), "", { "aria-label": `Mark ${r.text} complete` }),
       ),
     ),
   );

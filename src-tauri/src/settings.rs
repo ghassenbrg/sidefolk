@@ -47,6 +47,8 @@ pub struct Settings {
     /// Settings → Labs (docs/V1.md F-10, F-17): `$` commands and starting sessions, off by default.
     pub labs_commands: bool,
     pub labs_sessions: bool,
+    /// "Your week" on Friday from 16:00 (docs/V1.md V1-L8).
+    pub your_week: bool,
     /// The terminal sessions and commands open in: auto | terminal | iterm | ghostty | wezterm |
     /// kitty | alacritty.
     pub terminal: String,
@@ -74,6 +76,7 @@ impl Default for Settings {
             terminal: "auto".into(),
             labs_commands: false,
             labs_sessions: false,
+            your_week: true,
             hide_from_dock: false,
         }
     }

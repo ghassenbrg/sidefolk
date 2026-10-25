@@ -91,6 +91,10 @@ export class Agents {
   readonly outcomes = new Map<string, Outcome>();
   /** Told about every event after it is applied, so the crew can bring the pet out. */
   onEvent: (event: AgentEvent) => void = () => {};
+  /** Each session's first prompt line, for "Log it" when it finishes (docs/V1.md V1-L7). */
+  private readonly firstPrompt = new Map<string, string>();
+  /** A finished session's card; null keeps the plain line. Given the session's first prompt line. */
+  onDone: ((event: AgentEvent, firstPrompt: string) => void) | null = null;
 
   constructor(
     private readonly mind: Mind,
@@ -112,6 +116,7 @@ export class Agents {
     const name = AGENT_NAMES[event.source];
     const where = inProject(event.project || event.cwd);
     if (event.kind !== "waiting") this.announced.delete(key);
+    if (event.kind === "prompt" && event.detail && !this.firstPrompt.has(key)) this.firstPrompt.set(key, event.detail.split("\n")[0].trim());
     switch (event.kind) {
       case "start":
         this.bubble.say(`${name} started${where}.`, 3);
@@ -157,7 +162,8 @@ export class Agents {
         // One short celebration (under 1.2 s); a failure says what and where to look.
         if (event.kind === "done") {
           this.mind.react("celebrate", 1.1);
-          this.bubble.say(`${name} finished${where}.${event.detail ? ` ${event.detail}` : ""}`, 9, "done");
+          if (this.onDone) this.onDone(event, this.firstPrompt.get(key) ?? "");
+          else this.bubble.say(`${name} finished${where}.${event.detail ? ` ${event.detail}` : ""}`, 9, "done");
         } else {
           this.mind.react("sad", 1.6);
           this.bubble.say(`${name} stopped with a problem${where}: ${event.detail || "no reason given"}. Open it from Sidefolk.`, 12, "fail");
@@ -166,6 +172,7 @@ export class Agents {
       case "idle":
       case "end":
         this.sessions.delete(key);
+        this.firstPrompt.delete(key);
         break;
     }
     this.refresh();

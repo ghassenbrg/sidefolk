@@ -25,6 +25,8 @@ export type Settings = {
   /** Settings → Labs (docs/V1.md F-10, F-17). */
   labs_commands: boolean;
   labs_sessions: boolean;
+  /** "Your week" on Friday from 16:00 (docs/V1.md V1-L8). */
+  your_week: boolean;
   hide_from_dock: boolean;
 };
 /** Mirrors `Problem` in src-tauri/src/store.rs: a file that couldn't be read at launch. */
@@ -113,6 +115,7 @@ function preview(): typeof tauriInvoke {
       terminal: "auto",
       labs_commands: false,
       labs_sessions: false,
+      your_week: true,
       hide_from_dock: false,
     } as Settings,
     integrations: { claude_hooks: true, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null } as Integrations,
@@ -181,6 +184,17 @@ function preview(): typeof tauriInvoke {
         const r = { id: `r${Date.now()}`, text: a.text, due: a.due, project: a.project ?? "", from: "you", created: Date.now(), done: false, fired: false, repeat: a.repeat };
         state.reminders.push(r);
         return r;
+      }
+      // The preview has no series engine: done finishes, skip and snooze move it.
+      case "answer_reminder": {
+        const r = state.reminders.find((x) => x.id === a.id);
+        if (r) {
+          if (a.action === "snooze") Object.assign(r, { due: a.until, fired: false });
+          else if (a.action === "done" && !r.repeat) r.done = true;
+          else Object.assign(r, { due: r.due + 7 * 86_400_000, fired: false });
+        }
+        setTimeout(() => emit("reminders-changed", null), 20);
+        return !!r;
       }
       case "update_reminder": {
         const r = state.reminders.find((x) => x.id === a.id);

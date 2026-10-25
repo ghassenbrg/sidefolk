@@ -20,6 +20,7 @@ mod requests;
 mod notes;
 mod notifications;
 mod sessions;
+mod series;
 mod settings;
 mod store;
 mod tray;
@@ -125,6 +126,20 @@ fn restore_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, reminder: re
 }
 
 /// The page's answer to an agent's tool call (see mcp.rs).
+/// A reminder card's answer: done, snooze until a time, or skip this occurrence of a series.
+#[tauri::command(async)]
+fn answer_reminder(app: AppHandle, shared: State<'_, Arc<Shared>>, id: String, action: String, until: Option<u64>) -> Result<bool, String> {
+    let answer = match (action.as_str(), until) {
+        ("done", _) => reminders::Answer::Done,
+        ("skip", _) => reminders::Answer::Skip,
+        ("snooze", Some(until)) if until > journal::now_ms() => reminders::Answer::Snooze(until),
+        _ => return Err("Choose a time later than now.".into()),
+    };
+    let answered = shared.reminders.answer(&id, answer, journal::now_ms(), &jiff::tz::TimeZone::system()).map_err(|e| e.to_string())?;
+    let _ = app.emit("reminders-changed", ());
+    Ok(answered)
+}
+
 /// Stores that couldn't be read at launch (store.rs), for the window's banner.
 #[tauri::command(async)]
 fn store_problems(shared: State<'_, Arc<Shared>>) -> Vec<store::Problem> {
@@ -248,6 +263,7 @@ fn main() {
             notes::edit_note,
             notes::remove_note,
             notes::restore_note,
+            notes::move_note,
             actions::open_target,
             actions::start_session,
             actions::resolve_folder,
@@ -271,6 +287,7 @@ fn main() {
             update_reminder,
             remove_reminder,
             restore_reminder,
+            answer_reminder,
             peek,
             mcp_reply,
             store_problems,
@@ -311,6 +328,18 @@ fn main() {
             if let Some(sender) = notifications::install(app.handle()) {
                 shared.reminders.schedule_with(sender);
             }
+            // Series move past occurrences that came and went, now and every 20 seconds after.
+            let (handle, ticking) = (app.handle().clone(), shared.clone());
+            std::thread::spawn(move || loop {
+                match ticking.reminders.tick(journal::now_ms(), &jiff::tz::TimeZone::system()) {
+                    Ok(true) => {
+                        let _ = handle.emit("reminders-changed", ());
+                    }
+                    Ok(false) => {}
+                    Err(error) => eprintln!("sidefolk: reminders: {error}"),
+                }
+                std::thread::sleep(std::time::Duration::from_secs(20));
+            });
             prefs::apply_theme(app.handle(), &shared.settings.lock().unwrap().value.theme);
             app_menu::apply_dock(app.handle());
             app.set_menu(app_menu::build(app.handle())?)?;

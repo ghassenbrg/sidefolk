@@ -61,3 +61,17 @@ describe("wording", () => {
   });
   it("shortens session IDs people compare", () => expect(sessionLabel("04c1e7d2-5b8a")).toBe("Work session 04c1"));
 });
+
+describe("Your week", () => {
+  it("lists the week's notes and completed reminders, oldest first", async () => {
+    const { weekItems, weekMarkdown } = await import("./week");
+    const pages = [
+      { id: "log", name: "Log", count: 2, updated: 0, entries: [{ line: 2, date: "2026-10-20", text: "shipped search", project: "api" }, { line: 3, date: "2026-10-12", text: "older", project: "" }] },
+      { id: "e", name: "Evaluation", count: 1, updated: 0, entries: [{ line: 2, date: "2026-10-19", text: "mentored Sam", project: "" }] },
+    ];
+    const reminders = [{ id: "r", text: "send the report", due: 0, project: "", from: "you", created: 0, done: true, fired: true, history: [{ at: new Date(2026, 9, 23, 16).getTime(), action: "Completed", due: 0 }] }];
+    const items = weekItems(pages, reminders, "2026-10-19");
+    expect(items.map((i) => i.text)).toEqual(["mentored Sam", "shipped search", "send the report"]);
+    expect(weekMarkdown("2026-10-19", items)).toContain("- 2026-10-20 — shipped search _(Log · api)_");
+  });
+});

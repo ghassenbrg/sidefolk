@@ -18,6 +18,7 @@ tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "sync", "time", "net"] }
 axum = "0.8"
+jiff = "0.2"
 
 [features]
 # The calendar heads-up (docs/V1.md F-21): kept for v1.1, off in v1 builds.

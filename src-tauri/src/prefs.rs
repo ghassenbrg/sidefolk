@@ -88,6 +88,7 @@ pub struct Change {
     terminal: Option<String>,
     labs_commands: Option<bool>,
     labs_sessions: Option<bool>,
+    your_week: Option<bool>,
     hide_from_dock: Option<bool>,
 }
 
@@ -163,6 +164,9 @@ pub fn update_settings(app: AppHandle, shared: State<'_, Arc<Shared>>, change: C
                 }
                 if let Some(on) = change.labs_sessions {
                     s.labs_sessions = on;
+                }
+                if let Some(on) = change.your_week {
+                    s.your_week = on;
                 }
                 if let Some(hide) = change.hide_from_dock {
                     s.hide_from_dock = hide;

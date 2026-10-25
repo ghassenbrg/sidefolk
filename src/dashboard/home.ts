@@ -88,7 +88,8 @@ export function renderHome(app: App) {
   const next = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due).slice(0, 4);
   for (const r of next) upcoming.append(button([
     h("span", { class: "with-icon" }, icon("reminders"), h("strong", { text: r.text })),
-    h("span", { class: "meta", text: describeDue(new Date(r.due)) }), icon("chevron"),
+    // A one-off stays overdue here until it's answered (docs/V1.md V1-R6).
+    h("span", { class: "meta", text: r.due < Date.now() ? `Overdue · ${describeDue(new Date(r.due))}` : describeDue(new Date(r.due)) }), icon("chevron"),
   ], () => app.go("reminders", r.id), "list-button"));
   const emptyUpcoming = h("p", { class: "muted", text: "Nothing coming up. A little space for your next small step." });
   if (!next.length) upcoming.append(emptyUpcoming);

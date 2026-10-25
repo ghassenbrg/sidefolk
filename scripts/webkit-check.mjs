@@ -77,7 +77,7 @@ for (const scheme of ["light", "dark"]) {
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
   // Incoming companion notes preserve both capture and an unfinished entry edit.
   await page.locator("#note-text").fill("Unfinished capture");
-  await page.locator(".note").first().getByRole("button", { name: "Edit", exact: true }).click();
+  await page.locator(".note").first().getByRole("button", { name: /^Edit note/ }).click();
   await page.getByRole("textbox", { name: "Edit note" }).fill("Unfinished edit");
   await page.evaluate(async () => {
     // Vite may version module URLs after an edit; use the page's actual API module.
@@ -113,6 +113,14 @@ for (const scheme of ["light", "dark"]) {
   if ((await page.locator(".crew-choice").count()) !== 2) failures.push("settings: Pip and Spark aren't both offered");
   await page.locator("label[for=look-spark]").click();
   await page.locator("#toast").getByText("Your companion is Spark now.", { exact: true }).waitFor();
+  // The work log: one timeline across notebooks, searchable by date; Your week lists the week.
+  await page.goto(base + "/settings.html?tab=notes");
+  await page.getByRole("heading", { name: "All entries" }).waitFor();
+  await page.locator("#notes-search").fill("october");
+  await page.getByText("Mentored Sam through their first on-call week.", { exact: true }).waitFor();
+  if (await page.getByText("Led the login migration; errors down 40%.", { exact: true }).count()) failures.push(`${scheme} notes: a September note matched "october"`);
+  await page.getByRole("button", { name: "Your week" }).click();
+  await page.getByRole("heading", { name: "Your week" }).waitFor();
   // English never becomes a command; with Labs → Commands on, "$ …" is confirmed in the window.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
@@ -145,7 +153,7 @@ for (const scheme of ["light", "dark"]) {
   await edit.getByLabel("Every how many?").fill("1");
   const originalDate = await edit.getByLabel("Date", { exact: true }).inputValue();
   await edit.getByRole("button", { name: "Save changes" }).click();
-  await reminder.getByRole("button", { name: "Mark complete" }).click();
+  await reminder.getByRole("button", { name: "Mark repeat acceptance complete" }).click();
   await reminder.getByRole("button", { name: "Edit", exact: true }).click();
   edit = page.getByRole("form", { name: "Edit repeat acceptance" });
   assert.notEqual(await edit.getByLabel("Date", { exact: true }).inputValue(), originalDate);
@@ -250,13 +258,21 @@ await overlay.keyboard.press("c");
 await overlay.locator(".bubble input").fill("reminders");
 await overlay.locator(".bubble input").press("Enter");
 await overlay.getByText("No reminders", { exact: true }).waitFor();
+// "note: …" goes to the Log without a question; a notebook that doesn't exist is offered, never
+// guessed (V1-L2, V1-L3).
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("note: tidied the release checklist");
+await overlay.locator(".bubble input").press("Enter");
+await overlay.getByText("Noted in Log.", { exact: true }).waitFor();
 // A note to a notebook that doesn't exist yet offers to start it, then confirms with Undo.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);
 await overlay.keyboard.press("c");
 await overlay.locator(".bubble input").fill("note for evaluation: shipped the login migration");
 await overlay.locator(".bubble input").press("Enter");
-await overlay.getByRole("button", { name: "Start evaluation" }).click();
+await overlay.getByRole("button", { name: "New notebook “evaluation”" }).click();
 await overlay.getByText("Noted in evaluation.", { exact: true }).waitFor();
 // A plain command is recognized locally and only runs after the confirmation card.
 await overlay.goto(base + "/?zoom=1.4");

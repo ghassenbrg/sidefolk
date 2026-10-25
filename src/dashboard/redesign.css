@@ -147,3 +147,7 @@ nav { overflow-y: auto; }
 .terminals .term-tab.ended { color: var(--muted); }
 .terminals .term-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
 .terminals .term-host { height: calc(100vh - 340px); min-height: 240px; padding: var(--space-2); border: 1px solid var(--control-border); border-radius: var(--radius-card); background: var(--surface); overflow: hidden; }
+/* The work log's search takes the row; the notebook filter sits beside it. */
+.notes-filters { align-items: end; }
+.notes-filters .grow { flex: 1; min-width: 0; }
+.notes-filters .grow input { width: 100%; }
