@@ -96,7 +96,7 @@ public final class SkillLibrary: Sendable {
             do {
                 return try load(folder: folder, origin: origin)
             } catch {
-                Log.shared.warning("skills", "skipped \(name)", ["error": String(describing: error)])
+                Log.shared.warning("skills", "skipped a skill", ["skill": name, "error": String(describing: error)])
                 return nil
             }
         }

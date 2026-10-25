@@ -31,6 +31,11 @@ public protocol SecretStore: Sendable {
 public enum SecretKey {
     public static let anthropicAPIKey = "anthropic.apiKey"
     public static let openAIAPIKey = "openai.apiKey"
+    /// Provider keys (each also has a "<key>.host" binding, see `ProviderKeys`).
+    public static let providerKeys = [anthropicAPIKey, openAIAPIKey]
+
+    /// The environment values of a user-added MCP server, one JSON item per server.
+    public static func mcpServer(_ id: String) -> String { "mcp.\(id)" }
 }
 
 public struct SecretStoreError: Error, Sendable, CustomStringConvertible {

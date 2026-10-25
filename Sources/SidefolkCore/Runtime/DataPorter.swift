@@ -38,23 +38,53 @@ public struct DataPorter: Sendable {
         }
     }
 
-    /// Removes every row Sidefolk stored and its folders (extensions, skills, logs, run state).
-    /// The app quits afterwards; secrets in the Keychain are removed by the caller.
-    public func deleteEverything() async throws {
+    /// What "Delete everything" removed, and what it couldn't.
+    public struct DeletionReport: Sendable, Equatable {
+        /// Every extension and MCP server whose record was removed (their Keychain items are "mcp.<id>").
+        public var extensionIds: [String]
+        /// Folders or Keychain items that are still there.
+        public var leftovers: [String]
+    }
+
+    /// Removes every row Sidefolk stored and its folders (extensions, skills, logs, run state), and,
+    /// given the Keychain, the provider keys with their host bindings and every MCP server's secrets.
+    /// The extension list is read before its rows go, so their secrets can still be found. Installed
+    /// extensions are read-only on disk, so their folders are unlocked first. Throws, after doing
+    /// everything it can, when something is left behind; the app quits afterwards.
+    @discardableResult
+    public func deleteEverything(secrets: (any SecretStore)? = nil) async throws -> DeletionReport {
         let db = runtime.db
+        let ids = try await runtime.extensionStore.all().map(\.id)
+        var leftovers: [String] = []
+        if let secrets {
+            let keys = ProviderKeys(store: secrets)
+            for account in SecretKey.providerKeys {
+                do { try keys.remove(account: account) } catch { leftovers.append("Keychain item \(account)") }
+            }
+            for id in ids {
+                do { try secrets.delete(SecretKey.mcpServer(id)) } catch { leftovers.append("Keychain item \(SecretKey.mcpServer(id))") }
+            }
+        }
         try await db.writer.write { db in
             for table in ["items", "collections", "reminders", "watchers", "exchanges", "activity", "grants", "folders",
                           "extensions", "agent_runs", "attention", "sessions", "jobs", "kv"] {
                 try db.execute(sql: "DELETE FROM \(table)")
             }
         }
-        let fm = FileManager.default
         let p = runtime.paths
-        for dir in [p.extensions, p.extensionData, p.skills, p.brainWorkdir, p.home.appendingPathComponent("Sandbox"),
-                    p.home.appendingPathComponent("snapshots"), p.logs] {
-            try? fm.removeItem(at: dir)
+        for dir in [p.extensions, p.extensionData, p.skills, p.brainWorkdir, p.run, p.home.appendingPathComponent("Sandbox"),
+                    p.home.appendingPathComponent("snapshots"), p.home.appendingPathComponent("bin"), p.logs] {
+            ExtensionFiles.removeTree(dir.path)
+            if ExtensionFS.lstat(dir.path) != nil { leftovers.append(FolderAccess.displayPath(dir.path)) }
         }
         try await db.writer.vacuum()
+        let report = DeletionReport(extensionIds: ids, leftovers: leftovers)
+        guard leftovers.isEmpty else {
+            throw UserFacingError("I deleted your data, but couldn't remove: \(leftovers.joined(separator: ", ")).",
+                                  recovery: "Remove what's left in Finder (or Keychain Access), then quit Sidefolk.",
+                                  changedNothing: false)
+        }
+        return report
     }
 
     /// Counts for the Privacy page.

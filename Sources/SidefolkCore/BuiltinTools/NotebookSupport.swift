@@ -22,36 +22,32 @@ enum NotebookCollections {
         try await notebook.collections().filter { $0.kind != .profile }
     }
 
-    /// Exact name, then prefix, then containment (case-insensitive), among filable collections.
+    /// The exact name, or one unambiguous whole-word prefix (`NotebookStore.match`), among filable collections.
     static func resolve(_ name: String, notebook: NotebookStore) async throws -> NotebookCollection? {
-        let wanted = name.trimmedText.lowercased()
-        guard !wanted.isEmpty else { return nil }
-        if isProfileName(wanted) { throw profileRefusal }
-        let all = try await filable(notebook)
-        if let exact = all.first(where: { $0.name.lowercased() == wanted }) { return exact }
-        if let prefix = all.first(where: { $0.name.lowercased().hasPrefix(wanted) }) { return prefix }
-        return all.first { c in
-            let n = c.name.lowercased()
-            return n.contains(wanted) || (n.count >= 3 && wanted.contains(n))
-        }
+        if isProfileName(name) { throw profileRefusal }
+        return NotebookStore.match(name, in: try await filable(notebook))
     }
 
+    static func isInboxName(_ name: String) -> Bool { name.trimmedText.lowercased() == NotebookStore.inboxName.lowercased() }
+
+    /// Finds or creates in one transaction, so parallel saves to a new project make it once.
     static func resolveOrCreate(_ name: String, kind: NotebookCollection.Kind = .project, notebook: NotebookStore,
                                 now: Date) async throws -> (collection: NotebookCollection, created: Bool) {
-        if name.trimmedText.lowercased() == NotebookStore.inboxName.lowercased() {
-            return (try await notebook.inbox(now: now), false)
-        }
-        if let found = try await resolve(name, notebook: notebook) { return (found, false) }
-        return (try await create(name, kind: kind, notebook: notebook, now: now), true)
+        if isInboxName(name) { return (try await notebook.inbox(now: now), false) }
+        if isProfileName(name) { throw profileRefusal }
+        let (collection, created) = try await notebook.collection(named: name, kind: kind, excluding: [.profile], now: now)
+        return (collection, created)
     }
 
     static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, now: Date) async throws -> NotebookCollection {
         let clean = name.trimmedText.clipped(60)
         guard !clean.isEmpty else { throw ToolError.invalidInput("a collection needs a name.") }
         if isProfileName(clean) { throw profileRefusal }
-        let collection = NotebookCollection(name: clean, kind: kind, now: now)
-        try await notebook.db.writer.write { db in try collection.insert(db) }
-        return collection
+        // The Inbox always exists (it is made on first use); a look-alike "inbox" project would split notes.
+        if isInboxName(clean) {
+            throw UserFacingError("“\(NotebookStore.inboxName)” is always there: it's where notes go when no collection is named.")
+        }
+        return try await notebook.createCollection(name: clean, kind: kind, now: now)
     }
 
     /// The "About you" collection; created on demand when `create` is true.
@@ -102,7 +98,8 @@ enum NoteText {
     /// the whole text kept as the body, so nothing is lost.
     static func split(_ text: String) -> (title: String, body: String) {
         let all = text.trimmedText
-        let parts = all.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+        // "\r\n" is a single Character, so a plain "\n" split would never see a pasted Windows line break.
+        let parts = all.split(maxSplits: 1, omittingEmptySubsequences: false, whereSeparator: \.isNewline)
         let first = String(parts.first ?? "").trimmedText
         let rest = parts.count > 1 ? String(parts[1]).trimmedText : ""
         guard first.count > maxTitle else { return (first, rest) }
