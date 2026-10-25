@@ -189,6 +189,26 @@ public actor ReminderScheduler {
         return changed?.before
     }
 
+    /// Changes a reminder's title and/or time (and repeat). Returns how it was before, for Undo.
+    @discardableResult
+    public func edit(id: String, title: String?, fireAt: Date?, recurrence: Recurrence??) async throws -> Reminder? {
+        if let fireAt, fireAt <= clock.now { throw UserFacingError("That time has already passed.", recovery: "Pick a time in the future.") }
+        let changed = try await update(id) { r in
+            guard r.state != .cancelled, r.state != .done else { return false }
+            if let title, !title.trimmingCharacters(in: .whitespaces).isEmpty { r.title = title.clipped(200) }
+            if let fireAt {
+                r.fireAt = fireAt
+                r.state = .scheduled
+                r.snoozedUntil = nil
+            }
+            if let recurrence { r.recurrence = recurrence }
+            return true
+        }
+        if let fireAt, recurrence != nil { try? await kv.set(Self.anchorKey(id), fireAt.timeIntervalSince1970) }
+        await finishChange()
+        return changed?.before
+    }
+
     /// Puts a reminder back exactly as it was (the Undo of cancel, done and snooze).
     public func restore(_ reminder: Reminder) async throws {
         try await store.save(reminder)

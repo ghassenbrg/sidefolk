@@ -109,6 +109,7 @@ final class FixtureServices: AppServices {
     func uninstallExtension(_ id: String) async -> UserFacingError? { nil }
 
     func installCommandLineTool() async -> UserFacingError? { nil }
+    func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? { nil }
     func removeCommandLineTool() async -> UserFacingError? { nil }
 
     func sampleExtensions() async -> [(name: String, folder: URL)] { [("System Vitals", URL(fileURLWithPath: "/tmp/system-vitals"))] }

@@ -82,6 +82,8 @@ protocol AppServices: AnyObject {
     func snoozeReminder(_ id: String, until: Date) async
     func cancelReminder(_ id: String) async
     func createReminder(title: String, when: String) async -> UserFacingError?
+    /// Renames and/or re-times a reminder; `when` is natural language ("tomorrow 9am"), empty keeps the time.
+    func editReminder(_ id: String, title: String, when: String) async -> UserFacingError?
 
     // Watchers
     func pauseWatcher(_ id: String) async

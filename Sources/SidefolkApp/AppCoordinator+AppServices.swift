@@ -19,6 +19,25 @@ extension AppCoordinator: AppServices {
         }
     }
 
+    func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? {
+        var date: Date?
+        var recurrence: Recurrence??
+        let phrase = when.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !phrase.isEmpty {
+            guard let parsed = whenParser.parse(phrase, now: Date()), parsed.date > Date() else {
+                return UserFacingError("I didn't understand “\(phrase)” as a time.", recovery: "Try “tomorrow 9am” or “every monday at 10”.")
+            }
+            date = parsed.date
+            recurrence = .some(parsed.recurrence)
+        }
+        do {
+            _ = try await runtime.scheduler.edit(id: id, title: title, fireAt: date, recurrence: recurrence)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't change that reminder.")
+        }
+    }
+
     // MARK: Watchers
 
     func pauseWatcher(_ id: String) async { _ = try? await runtime.watchers.pause(id) }

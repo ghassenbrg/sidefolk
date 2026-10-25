@@ -131,6 +131,12 @@ final class NowModel {
         await reload()
     }
 
+    func edit(_ r: Reminder, title: String, when: String) async -> UserFacingError? {
+        let error = await services.editReminder(r.id, title: title, when: when)
+        await reload()
+        return error
+    }
+
     func cancel(_ r: Reminder) async {
         await services.cancelReminder(r.id)
         await reload()
