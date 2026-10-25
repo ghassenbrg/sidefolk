@@ -115,6 +115,7 @@ struct AskView: View {
         if model.busy { return model.phase ?? "Working…" }
         if let hint = model.hint { return hint }
         if model.pendingReminderTitle != nil { return "When? Try “tomorrow 9am” or “in 2 hours”" }
+        if model.pendingWatch != nil { return "Which address? e.g. localhost:3000 or example.com/status" }
         if model.attachment != nil { return "Pick what to do, or type what you want" }
         return "Type something, or drop a file or link on me"
     }

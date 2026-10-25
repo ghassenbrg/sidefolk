@@ -62,13 +62,22 @@ extension AppCoordinator: AskActions {
                 model.add(.info("Okay, no reminder."), caption: text)
                 return
             }
-            if let when = whenParser.parse(text, now: Date()),
+            if let when = runtime.intentParser.parseTime(text, now: Date()), when.date > Date(),
                when.remaining.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).isEmpty {
                 model.pendingReminderTitle = nil
-                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence), caption: "\(title) — \(text)", into: model)
+                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence, important: model.pendingReminderImportant),
+                         caption: "\(title) — \(text)", into: model)
                 return
             }
             model.pendingReminderTitle = nil
+        }
+        // A watch that was waiting for its address.
+        if let pending = model.pendingWatch, attachment == nil {
+            model.pendingWatch = nil
+            if let parsed = runtime.intentParser.watch(address: text, kind: pending.kind, becomes: pending.becomes) {
+                runLocal(parsed.intent, caption: text, into: model)
+                return
+            }
         }
         // Plain-language intents complete locally, instantly, without AI (DECISIONS D4). Words typed
         // with a dropped item are understood too; the item rides along as the note or reminder detail.
@@ -100,8 +109,8 @@ extension AppCoordinator: AskActions {
     static func withAttachment(_ intent: LocalIntent, _ attachment: Attachment?) -> LocalIntent {
         guard let attachment, let detail = attachment.text ?? Optional(attachment.label) else { return intent }
         switch intent {
-        case .note(let kind, let text, let collection):
-            return .note(kind: kind, text: text + "\n\n" + detail, collection: collection)
+        case .note(let kind, let text, let collection, let collectionKind):
+            return .note(kind: kind, text: text + "\n\n" + detail, collection: collection, collectionKind: collectionKind)
         default:
             return intent
         }
@@ -121,9 +130,15 @@ extension AppCoordinator: AskActions {
                 }
             case .list(let title, let cards):
                 model.add(.list(title: title, cards: cards), caption: caption)
-            case .needsTime(let title):
+            case .needsTime(let title, let reason, let important):
                 model.pendingReminderTitle = title
-                model.add(.info("When should I remind you to “\(title)”?"), caption: caption)
+                model.pendingReminderImportant = important
+                let question = "When should I remind you to “\(title.prefix(1).lowercased() + title.dropFirst())”?"
+                model.add(.info([reason, question].compactMap { $0 }.joined(separator: " ")), caption: caption)
+                model.focusRequest += 1
+            case .needsTarget(let kind, let becomes):
+                model.pendingWatch = (kind, becomes)
+                model.add(.info("Which address should I watch? For example localhost:3000 or example.com/status."), caption: caption)
                 model.focusRequest += 1
             case .info(let text):
                 model.add(.info(text), caption: caption)

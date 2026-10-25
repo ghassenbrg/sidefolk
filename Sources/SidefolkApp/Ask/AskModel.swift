@@ -82,6 +82,9 @@ final class AskModel {
     var focusRequest = 0
     /// A reminder waiting for its time ("When should I remind you?").
     var pendingReminderTitle: String?
+    var pendingReminderImportant = false
+    /// A watch waiting for its address ("Which address? e.g. localhost:3000").
+    var pendingWatch: (kind: String, becomes: String?)?
     weak var actions: AskActions?
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
