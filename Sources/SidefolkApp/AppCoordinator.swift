@@ -23,6 +23,9 @@ final class AppCoordinator {
     private var roster = DutyRoster()
     private var backlog = 0
     private var rosterTask: Task<Void, Never>?
+    let secrets: any SecretStore = KeychainSecretStore()
+    private(set) var agent: AgentRuntime!
+    var currentRun: String?
     private var moodTimer: Task<Void, Never>?
     private var eventTask: Task<Void, Never>?
 
@@ -42,6 +45,7 @@ final class AppCoordinator {
             self?.renderMood()
         }
 
+        agent = makeAgentRuntime()
         onboarding = Onboarding(coordinator: self)
         companion.delegate = self
         applyCompanionSettings()
@@ -248,47 +252,6 @@ final class AppCoordinator {
             }
         }
     }
-}
-
-extension AppCoordinator: AskActions {
-    func hint(for text: String) -> String? { nil }
-
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {
-        model.add(.needsBrain, caption: text)
-    }
-
-    func stop() {}
-
-    func undo(activityId: String, in model: AskModel) {
-        Task {
-            do {
-                if let label = try await runtime.executor.undo.undo(activityId) {
-                    model.add(.info("Undone: \(label)."))
-                } else {
-                    model.add(.info("That can't be undone anymore."))
-                }
-            } catch {
-                model.add(.error(UserFacingError("I couldn't undo that.", detail: String(describing: error)), retryable: false))
-            }
-        }
-    }
-
-    func answer(approval: ApprovalRequest, decision: ApprovalDecision) {
-        ask.removeApproval(id: approval.id)
-        Task { await runtime.broker.resolve(id: approval.id, decision: decision) }
-    }
-
-    func open(card: ResultCard) {
-        if let url = card.url, let u = URL(string: url), ["http", "https"].contains(u.scheme?.lowercased() ?? "") {
-            NSWorkspace.shared.open(u)
-            return
-        }
-        openHome()
-    }
-
-    func saveAnswer(_ text: String, in model: AskModel) {}
-
-    func openSettingsAI() { openSettings() }
 }
 
 extension AppCoordinator: CompanionDelegate {
