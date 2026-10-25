@@ -15,7 +15,6 @@ struct ExtensionsSettingsView: View {
         SettingsPage {
             installed
             skills
-            AgentsGroup(model: model)
         }
         .sheet(item: $preview) { p in InstallPreviewSheet(preview: p, model: model) }
         .sheet(isPresented: $addingServer) { AddServerSheet(model: model) }
@@ -403,7 +402,8 @@ enum ShellWords {
 
 // MARK: - Connect your agents
 
-private struct AgentsGroup: View {
+/// Settings › Agents: Claude Code, Codex and the `sidefolk` command.
+struct AgentsGroup: View {
     var model: SettingsModel
     @State private var hooks = true
 

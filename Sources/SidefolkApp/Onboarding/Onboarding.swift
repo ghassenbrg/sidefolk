@@ -43,7 +43,9 @@ final class Onboarding {
             advance(to: .agents)
         case (.agents, "connect"):
             Task {
-                _ = await coordinator.connectClaudeCode(hooks: true)
+                let status = await coordinator.integrationStatus()
+                if status.claudeCodeFound { _ = await coordinator.connectClaudeCode(hooks: true) }
+                if status.codexFound, !status.codexMCPInstalled { _ = await coordinator.connectCodex() }
                 advance(to: .login)
             }
         case (.agents, _):
@@ -74,7 +76,9 @@ final class Onboarding {
             if target == .notifications, await coordinator.notificationsAuthorized() { target = .agents }
             if target == .agents {
                 let status = await coordinator.integrationStatus()
-                if !status.claudeCodeFound || status.claudeHooksInstalled { target = .login }
+                let claudeDone = !status.claudeCodeFound || status.claudeHooksInstalled
+                let codexDone = !status.codexFound || status.codexMCPInstalled
+                if claudeDone && codexDone { target = .login }
             }
             if target == .login, coordinator.openAtLogin { target = .done }
             step = target
@@ -101,7 +105,8 @@ final class Onboarding {
             item = bubble("Can I use Mac notifications?", "Only when I'm hidden, you're in fullscreen, or something is urgent.",
                           [("allow", "Allow notifications", true), ("later", "Not now", false)])
         case .agents:
-            item = bubble("Want a tap when Claude Code needs you?", "I'll add myself to Claude Code's settings — you'll see exactly what changes, and I keep a backup.",
+            item = bubble("Want a tap when your coding agents need you?",
+                          "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup.",
                           [("connect", "Connect…", true), ("later", "Later", false)])
         case .login:
             item = bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
