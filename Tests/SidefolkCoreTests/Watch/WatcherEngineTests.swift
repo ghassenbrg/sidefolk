@@ -198,6 +198,27 @@ import Testing
         #expect(try await stored(v.id).nextCheckAt == now.addingTimeInterval(600), "never sooner than its own interval")
     }
 
+    @Test func twoWatchersOnOneHostTakeTurnsAndCheckNowDoesNotWait() async throws {
+        env.fetcher.say("<p>hello</p>")
+        let engine = env.engine()
+        let a = try await engine.add(.make(WatchKind.urlChange, config: ["url": "https://example.com/a"], now: now))
+        let b = try await engine.add(.make(WatchKind.urlChange, config: ["url": "https://example.com/b"], now: now))
+        await engine.tick()
+
+        let results = [try await stored(a.id), try await stored(b.id)]
+        let checked = results.filter { $0.lastState != nil }
+        let waiting = results.filter { $0.lastState == nil }
+        #expect(checked.count == 1 && waiting.count == 1, "one request a minute per host")
+        let late = try #require(waiting.first)
+        #expect(late.errorCount == 0 && late.lastError == nil, "waiting your turn is not a failure")
+        #expect(late.nextCheckAt == now.addingTimeInterval(60))
+        #expect(env.fetcher.requests.count == 1)
+
+        let forced = await engine.checkNow(late.id)
+        #expect(forced?.lastState != nil, "the user pressing check now is not made to wait")
+        #expect(env.fetcher.requests.count == 2)
+    }
+
     @Test func recheckAsksForAnotherLookSooner() async throws {
         let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:]), recheckIn: 3) }])
         let w = try await engine.add(.make("fake", interval: 600, now: now))

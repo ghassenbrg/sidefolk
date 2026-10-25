@@ -53,7 +53,9 @@ enum WatchWords {
     static func defaultTitle(kind: String, config: JSONValue) -> String {
         switch kind {
         case WatchKind.urlChange, WatchKind.siteStatus:
-            return config.string("url").flatMap(URL.init(string:)).map(WebTarget.displayName) ?? (config.string("url") ?? "a web page").clipped(70)
+            // Typed as "example.com/pricing", so give it the https:// it will be watched with before naming it.
+            return (try? WebTarget.normalise(config.string("url"), allowLocal: true)).map(WebTarget.displayName)
+                ?? (config.string("url") ?? "a web page").clipped(70)
         case WatchKind.folderNewFile:
             return "\(WatchedPath.name(config.string("path") ?? "")) folder"
         case WatchKind.fileAppears, WatchKind.fileChanges:

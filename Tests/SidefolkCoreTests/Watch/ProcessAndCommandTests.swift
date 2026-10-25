@@ -145,6 +145,9 @@ final class FakeProcessTable: ProcessTable {
         #expect(me != nil)
         #expect(me.map { table.find(name: $0.name).contains { $0.pid == getpid() } } == true)
         #expect(table.entry(pid: 0x7ffffff0) == nil)
+        let started = Date()
+        _ = table.find(name: "no-such-process-anywhere")
+        #expect(Date().timeIntervalSince(started) < 0.5, "a scan of every process should be cheap")
     }
 }
 

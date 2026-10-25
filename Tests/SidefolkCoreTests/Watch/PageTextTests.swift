@@ -108,6 +108,15 @@ import Testing
         #expect(c.isSignificant)
     }
 
+    @Test func aFullSizePageComparesQuickly() {
+        let page = (0..<1500).map { "Line \($0) of a fairly long product description with price $\($0 % 90 + 10).99 today" }.joined(separator: "\n")
+        let edited = page.replacingOccurrences(of: "Line 700 ", with: "Line seven hundred ")
+        let started = Date()
+        let c = TextDiff.compare(old: page, new: edited)
+        #expect(Date().timeIntervalSince(started) < 1)
+        #expect(c.removed.count == 1 && c.added.count == 1)
+    }
+
     @Test func containsIgnoresCaseAndWhitespace() {
         #expect(TextDiff.contains("Item is\nIN  stock now", "in stock"))
         #expect(!TextDiff.contains("sold out", "in stock"))
