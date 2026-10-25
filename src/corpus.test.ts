@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse, type Command } from "./commands";
-import { parseReminder } from "./when";
+import { parseReminder, parseEventReminder } from "./when";
 
 // The Quick add corpus (docs/V1.md V1-Q7): 300 phrases people type, each with what it must do.
 // Gates: at least 95% right; no shell command without `$`, ever; no reminder at a wrong time
@@ -256,7 +256,7 @@ const developer: Line[] = [
   ["remind me tonight to push the branch", "remind D0 20:00"],
   ["push the branch tonight", "remind D0 20:00"],
   ["update the changelog this afternoon", "remind D0 15:00"],
-  ["remind me when api finishes", "remind ?"],
+  ["remind me when api finishes", "remind event:api"],
   ["on call handover at 6pm", "remind D0 18:00"],
   ["bump dependencies in 2 days", "remind D2 09:00"],
   ["write the RFC tomorrow afternoon", "remind D1 15:00"],
@@ -352,6 +352,8 @@ function at(due: Date, now: Date): string {
 function outcome(command: Command, now: Date): { kind: string; detail: string } {
   switch (command.kind) {
     case "remind": {
+      const event = parseEventReminder(command.text);
+      if (event) return { kind: "remind", detail: `event:${event.project}` };
       const parsed = parseReminder(command.text, now);
       if (!parsed) return { kind: "remind", detail: "?" };
       return { kind: "remind", detail: parsed.alternative ? `${at(parsed.due, now)}|${at(parsed.alternative, now)}` : at(parsed.due, now) };

@@ -4,9 +4,21 @@ import * as chrono from "chrono-node";
 // the user's machine, so setting a reminder never costs model tokens.
 
 /** How a reminder comes back. Weekly/every-N-weeks repeat on the weekday of the first due date. */
-export type Repeat = { every: "day" | "weekday" | "week" | "month"; n: number; days?: number[] };
+export type Repeat = { every: "day" | "weekday" | "week" | "month" | "year"; n: number; days?: number[] };
 /** `alternative`: the other reading of a bare hour ("at 9": 21:00 today or 09:00 tomorrow). */
 export type Parsed = { what: string; due: Date; repeat?: Repeat; alternative?: Date };
+
+export type EventReminderDraft = { project: string; what: string };
+
+/** A condition, never a date. Keep the project spelling exact for the resolver. */
+export function parseEventReminder(input: string): EventReminderDraft | null {
+  if (/[\n\r]/.test(input) || input.trimStart().startsWith("$")) return null;
+  const match = /^(?:remind me\s+)?when\s+(.+?)\s+(?:finishes|is done)(?:\s+(?:to|about)\s+(.+))?$/i.exec(input.trim());
+  if (!match) return null;
+  const project = match[1].replace(/^(["'])(.*)\1$/, "$2").trim();
+  if (!project || /[,;$]|\b(?:and|or)\b/i.test(project)) return null;
+  return { project, what: match[2]?.trim() || `${project} finishes` };
+}
 
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
@@ -30,6 +42,7 @@ export function takeRepeat(text: string): { rest: string; repeat?: Repeat } {
     [/\b(?:every|each|on) ?(?:week ?days?|weekdays)\b|\bweekdays\b/i, () => ({ every: "weekday", n: 1 }), () => ""],
     [/\b(?:every|each) (day|morning|evening|night)\b|\bdaily\b/i, () => ({ every: "day", n: 1 }), (m) => (m[1] && m[1].toLowerCase() !== "day" ? `in the ${m[1]}` : "")],
     [new RegExp(`\\b(?:every|each) (${WEEKDAYS.join("|")})s?\\b`, "i"), () => ({ every: "week", n: 1 }), (m) => m[1]],
+    [/\b(?:every|each) (year)\b|\b(yearly|annually)\b/i, () => ({ every: "year", n: 1 }), () => ""],
     [/\b(?:every|each) (week|month)\b|\b(weekly|monthly)\b/i, (m) => ({ every: (m[1] ?? m[2]).toLowerCase().replace("ly", "") as Repeat["every"], n: 1 }), () => ""],
   ];
   for (const [pattern, repeat, keep] of rules) {
@@ -47,18 +60,25 @@ export function takeRepeat(text: string): { rest: string; repeat?: Repeat } {
  * across daylight-saving changes. Monthly on the 31st falls back to the month's last day. */
 export function nextDue(first: Date, repeat: Repeat, after: Date): Date {
   const next = new Date(first);
-  let guard = 0;
-  while (next <= after && guard++ < 5000) {
+  if (repeat.every === "weekday") while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate() + 1);
+  if (repeat.every === "week" && repeat.days?.length) {
+    const anchorWeek = new Date(first); anchorWeek.setDate(first.getDate() - first.getDay()); anchorWeek.setHours(0, 0, 0, 0);
+    for (let guard = 0; guard < 20000; guard++, next.setDate(next.getDate() + 1)) {
+      const calendarDays = Math.round((Date.UTC(next.getFullYear(), next.getMonth(), next.getDate()) - Date.UTC(anchorWeek.getFullYear(), anchorWeek.getMonth(), anchorWeek.getDate())) / 86_400_000);
+      if (next > after && repeat.days.includes(next.getDay()) && Math.floor(calendarDays / 7) % repeat.n === 0) return next;
+    }
+    return next;
+  }
+  for (let k = 1; next <= after && k <= 10000; k++) {
     if (repeat.every === "day") next.setDate(next.getDate() + repeat.n);
     else if (repeat.every === "week") next.setDate(next.getDate() + 7 * repeat.n);
     else if (repeat.every === "weekday") {
       do next.setDate(next.getDate() + 1);
       while (next.getDay() === 0 || next.getDay() === 6);
     } else {
-      const day = first.getDate();
       next.setDate(1);
-      next.setMonth(next.getMonth() + repeat.n);
-      next.setDate(Math.min(day, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+      next.setFullYear(first.getFullYear(), first.getMonth() + k * repeat.n * (repeat.every === "year" ? 12 : 1), 1);
+      next.setDate(Math.min(first.getDate(), new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
     }
   }
   return next;
@@ -73,7 +93,8 @@ export function describeRepeat(repeat: Repeat, first: Date): string {
     return repeat.n > 1 ? `every ${repeat.n} weeks on ${joined}` : `every ${joined}`;
   }
   if (repeat.every === "week") return `every ${plural} on ${first.toLocaleDateString([], { weekday: "long" })}`;
-  if (repeat.every === "month") return `every ${plural} on day ${first.getDate()}`;
+  if (repeat.every === "month") return `every ${plural} on day ${first.getDate()}${first.getDate() > 28 ? " (last day in shorter months)" : ""}`;
+  if (repeat.every === "year") return `every ${plural} on ${first.toLocaleDateString([], { month: "long", day: "numeric" })}${first.getMonth() === 1 && first.getDate() === 29 ? " (February 28 in non-leap years)" : ""}`;
   return `every ${plural}`;
 }
 
@@ -172,9 +193,14 @@ function resolve(results: chrono.ParsedResult[], now: Date, repeat?: Repeat): { 
 }
 
 export function parseReminder(input: string, now = new Date()): Parsed | null {
+  // Even an unsupported event compound must not become its incidental date/time.
+  if (/^(?:remind me\s+)?when\b/i.test(input.trim())) return null;
   const { rest: offsetText, ms: offset } = takeOffset(nameTimes(input, now));
   const withoutOffset = offset ? offsetText.replace(/[,;]?\s*remind me\s*/i, " ").trim() : offsetText;
   const { rest: taken, repeat } = takeRepeat(withoutOffset);
+  // Reject the whole unsupported/compound rule instead of accepting its easy first part.
+  if (/\b(every|each|daily|weekly|monthly|yearly|annually|weekdays)\b/i.test(taken)
+    || repeat && /\b(?:and\s+)?(?:\d+\s+(?:hours?|minutes?|days?|weeks?)|last\s+\w+|first\s+(?:monday|tuesday|wednesday|thursday|friday))\b/i.test(taken)) return null;
   // "every evening" leaves "in the evening", which becomes a time too.
   const text = repeat ? nameTimes(taken, now) : taken;
   const resolved = resolve(chrono.parse(text, now, { forwardDate: true }), now, repeat);
@@ -242,4 +268,21 @@ export function describeDue(due: Date, now = new Date()): string {
   if (days === 1) return `tomorrow ${time}`;
   if (days === -1) return `yesterday ${time}`;
   return `${due.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} ${time}`;
+}
+
+
+export const dateValue = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export const timeValue = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+/** Reject invalid calendar fields rather than letting Date roll February 30 into March.
+ * DST gaps still resolve forward, as the native local date fields do. */
+export function fromFields(date: string, time: string): Date | null {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const t = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!d || !t) return null;
+  const [year, month, day] = d.slice(1).map(Number);
+  const [hour, minute] = t.slice(1).map(Number);
+  if (year < 100 || month < 1 || month > 12 || day < 1 || day > new Date(year, month, 0).getDate() || hour > 23 || minute > 59) return null;
+  const value = new Date(year, month - 1, day, hour, minute);
+  return Number.isNaN(value.getTime()) ? null : value;
 }

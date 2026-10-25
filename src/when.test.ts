@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeRepeat, nextDue, parseReminder, parseWhen } from "./when";
+import { describeRepeat, nextDue, parseReminder, parseWhen, fromFields, parseEventReminder } from "./when";
 
 // Thursday 22 October 2026, 16:00 local time.
 const now = new Date(2026, 9, 22, 16, 0);
@@ -155,4 +155,43 @@ describe("offsets", () => {
   it("refuses an offset that lands in the past", () => {
     expect(parseReminder("2 hours before the demo at 5pm today", now)).toBeNull();
   });
+});
+
+
+describe("yearly and calendar policy", () => {
+  it("keeps February 29 as the yearly anchor across clamped years", () => {
+    const anchor = new Date(2024, 1, 29, 9);
+    let due = anchor;
+    for (const [year, day] of [[2025, 28], [2026, 28], [2027, 28], [2028, 29]]) {
+      due = nextDue(anchor, { every: "year", n: 1 }, due);
+      expect([due.getFullYear(), due.getMonth(), due.getDate(), due.getHours()]).toEqual([year, 1, day, 9]);
+    }
+    expect(describeRepeat({ every: "year", n: 1 }, anchor)).toContain("February 28 in non-leap years");
+    expect(describeRepeat({ every: "month", n: 1 }, new Date(2027, 0, 31))).toContain("last day in shorter months");
+    expect(parseReminder("renew yearly on October 30 at 9am", now)?.repeat).toEqual({ every: "year", n: 1 });
+  });
+  it("previews all chosen weekdays and counts weeks from the anchor", () => {
+    const anchor = new Date(2026, 9, 26, 9);
+    const repeat = { every: "week", n: 2, days: [1, 4] } as const;
+    const rule = { ...repeat, days: [...repeat.days] };
+    const thu = nextDue(anchor, rule, anchor);
+    expect([thu.getDate(), thu.getDay(), thu.getHours()]).toEqual([29, 4, 9]);
+    expect(nextDue(anchor, rule, thu).getDate()).toBe(9);
+    const sunday = new Date(2026, 9, 25, 9);
+    expect(nextDue(sunday, { every: "weekday", n: 1 }, new Date(sunday.getTime() - 1)).getDate()).toBe(26);
+  });
+  it.each(["2026-02-29", "2026-04-31", "2026-13-01", "2026-00-10", "2026-10-00"])("rejects invalid calendar date %s", (date) => expect(fromFields(date, "09:00")).toBeNull());
+  it.each(["24:00", "09:60", "-1:00"])("rejects invalid time %s", (time) => expect(fromFields("2026-10-25", time)).toBeNull());
+  it.each(["every 2 days and 3 hours to stretch", "every 53 weeks on Friday at 9 to plan", "every last Friday at 9 to plan", "daily and weekly at 9 to plan"])("rejects the whole unsupported rule: %s", (text) => expect(parseReminder(text, now)).toBeNull());
+});
+
+
+describe("event conditions", () => {
+  it("reads project completion before any incidental date words", () => {
+    expect(parseEventReminder("remind me when api finishes")).toEqual({ project: "api", what: "api finishes" });
+    expect(parseEventReminder('when "My API" is done to review tests')).toEqual({ project: "My API", what: "review tests" });
+    expect(parseEventReminder("when tomorrow finishes")).toEqual({ project: "tomorrow", what: "tomorrow finishes" });
+    expect(parseReminder("when tomorrow finishes")).toBeNull();
+  });
+  it.each(["$ echo when api finishes", "when api and web finishes", "when api finishes tomorrow", "when api fails", "when api finishes\nrun shell"])("never partially accepts %s", (text) => expect(parseEventReminder(text)).toBeNull());
 });
