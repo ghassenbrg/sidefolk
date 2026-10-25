@@ -274,23 +274,25 @@ private struct ReminderRow: View {
         .nowRow()
         .contextMenu {
             Button("Mark done") { Task { await model.complete(reminder) } }
-            snoozeItems
+            snoozeItems(prefixed: true)
             Divider()
             Button("Cancel reminder", role: .destructive) { Task { await model.cancel(reminder) } }
         }
     }
 
     private var snoozeMenu: some View {
-        Menu("Snooze") { snoozeItems }
+        Menu("Snooze") { snoozeItems(prefixed: false) }
             .menuStyle(.button)
             .buttonStyle(.sf(.secondary))
             .fixedSize()
             .accessibilityLabel("Snooze “\(reminder.title)”")
     }
 
-    @ViewBuilder private var snoozeItems: some View {
+    /// "10 minutes" inside the Snooze menu; "Snooze 10 minutes" where the menu doesn't say it.
+    @ViewBuilder private func snoozeItems(prefixed: Bool) -> some View {
         ForEach(NowModel.Snooze.allCases, id: \.self) { option in
-            Button("Snooze \(model.title(for: option).lowercasedFirst)") { Task { await model.snooze(reminder, option) } }
+            let title = model.title(for: option)
+            Button(prefixed ? "Snooze \(title.lowercasedFirst)" : title) { Task { await model.snooze(reminder, option) } }
         }
     }
 
