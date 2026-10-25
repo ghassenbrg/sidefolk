@@ -62,6 +62,8 @@ final class SettingsModel {
 
     // Extensions
     private(set) var extensions: [ExtensionInfo] = []
+    /// Bundled samples not installed yet ("Try System Vitals").
+    private(set) var samples: [(name: String, folder: URL)] = []
     private(set) var skills: [SkillInfo] = []
     private(set) var integration: IntegrationStatus?
     private(set) var extensionError: UserFacingError?
@@ -87,7 +89,9 @@ final class SettingsModel {
                 switch domain {
                 case .settings: settings = runtime.settings.current
                 case .permissions: await loadPermissions()
-                case .extensions: extensions = await services.extensions()
+                case .extensions:
+                    extensions = await services.extensions()
+                    samples = await services.sampleExtensions()
                 case .skills: skills = await services.skills()
                 default: break
                 }
@@ -348,6 +352,7 @@ final class SettingsModel {
     func install(_ preview: ExtensionInstallPreview) async -> UserFacingError? {
         let error = await services.installExtension(preview)
         extensions = await services.extensions()
+        samples = await services.sampleExtensions()
         return error
     }
 

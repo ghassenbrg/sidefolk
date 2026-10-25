@@ -107,6 +107,8 @@ final class FixtureServices: AppServices {
     func setExtensionEnabled(_ id: String, _ enabled: Bool) async {}
     func uninstallExtension(_ id: String) async -> UserFacingError? { nil }
 
+    func sampleExtensions() async -> [(name: String, folder: URL)] { [("System Vitals", URL(fileURLWithPath: "/tmp/system-vitals"))] }
+
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError? { nil }
 
     func skills() async -> [SkillInfo] {

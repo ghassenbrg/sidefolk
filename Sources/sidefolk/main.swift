@@ -48,6 +48,13 @@ case "status":
     print(text)
     exit(running ? 0 : 1)
 
+case "ext":
+    guard arguments.count == 3, arguments[1] == "validate" else { fail("usage: sidefolk ext validate <folder>") }
+    let folder = URL(fileURLWithPath: (arguments[2] as NSString).expandingTildeInPath, isDirectory: true)
+    let report = ExtensionValidator.validate(at: folder, paths: paths)
+    print(report.text)
+    exit(report.isValid ? 0 : 1)
+
 case "--version", "version":
     print("sidefolk \(SidefolkVersion.current)")
 

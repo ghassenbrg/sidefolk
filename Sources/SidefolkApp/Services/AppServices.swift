@@ -102,6 +102,8 @@ protocol AppServices: AnyObject {
     func setExtensionEnabled(_ id: String, _ enabled: Bool) async
     func uninstallExtension(_ id: String) async -> UserFacingError?
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError?
+    /// Sample extensions shipped with the app that aren't installed yet.
+    func sampleExtensions() async -> [(name: String, folder: URL)]
     func skills() async -> [SkillInfo]
     func deleteSkill(_ name: String) async
 

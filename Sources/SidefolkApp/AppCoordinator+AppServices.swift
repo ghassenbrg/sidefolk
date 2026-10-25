@@ -94,6 +94,15 @@ extension AppCoordinator: AppServices {
         }
     }
 
+    func sampleExtensions() async -> [(name: String, folder: URL)] {
+        let installed = Set(await runtime.extensions.extensions().map(\.id))
+        return Self.sampleManifests().filter { !installed.contains($0.id) }.map { sample in
+            let json = (try? Data(contentsOf: sample.folder.appendingPathComponent(ExtensionManifest.fileName)))
+                .flatMap { try? JSONValue.parse(String(decoding: $0, as: UTF8.self)) }
+            return (json?.string("name") ?? sample.id, sample.folder)
+        }
+    }
+
     func skills() async -> [SkillInfo] {
         runtime.skills.skills().map { SkillInfo(name: $0.name, description: $0.description, bundled: $0.origin == .bundled) }
     }

@@ -53,6 +53,18 @@ struct ExtensionsSettingsView: View {
                     Button("Install from Folder…", action: chooseFolder).buttonStyle(.sf(.secondary))
                     Button("Add MCP Server…") { addingServer = true }.buttonStyle(.sf(.secondary))
                 }
+                if !model.samples.isEmpty {
+                    HStack(spacing: Theme.Space.s) {
+                        Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        ForEach(model.samples, id: \.folder) { sample in
+                            Button("\(sample.name)…") {
+                                model.clearExtensionError()
+                                Task { preview = await model.preview(folder: sample.folder) }
+                            }
+                            .buttonStyle(.sf(.plain))
+                        }
+                    }
+                }
                 if let error = model.extensionError { InlineError(error: error) }
             }
             .padding(.horizontal, Theme.Space.l)

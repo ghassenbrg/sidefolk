@@ -104,6 +104,10 @@ final class AppCoordinator {
         #if DEBUG
         DebugSnapshots.handler = { [weak self] command in self?.runDevCommand(command) }
         #endif
+        await runtime.attention.onAction(kind: "brief") { [weak self] _, action in
+            guard action == "open" else { return }
+            await MainActor.run { self?.openHome() }
+        }
         await runtime.housekeeping()
         do {
             try await runtime.start()
