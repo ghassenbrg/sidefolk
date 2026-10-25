@@ -19,7 +19,8 @@ struct AskEntry: Identifiable, Equatable {
         case list(title: String, cards: [ResultCard])
         case approval(ApprovalRequest)
         case error(UserFacingError, retryable: Bool)
-        case needsBrain
+        /// No AI is set up; offers to keep the words as a note.
+        case needsBrain(String)
         case info(String)
     }
 
@@ -54,6 +55,8 @@ final class AskModel {
     var phase: String?
     /// Increments to ask the view to focus the input.
     var focusRequest = 0
+    /// A reminder waiting for its time ("When should I remind you?").
+    var pendingReminderTitle: String?
     weak var actions: AskActions?
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?

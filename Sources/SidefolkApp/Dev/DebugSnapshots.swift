@@ -7,12 +7,23 @@ import SidefolkCore
 /// without screen capture) check the composed UI.
 enum DebugSnapshots {
     static let notification = Notification.Name("app.sidefolk.dev.snapshot")
-    private static var observer: NSObjectProtocol?
+    /// `object` = "ask:<text>", "respond:<action id>", "dismiss", "hideAsk" — drives the UI for QA.
+    static let command = Notification.Name("app.sidefolk.dev.command")
+    private static var observers: [NSObjectProtocol] = []
+    static var handler: ((String) -> Void)?
 
     static func install(home: URL) {
-        observer = DistributedNotificationCenter.default().addObserver(forName: notification, object: nil, queue: .main) { _ in
+        let dnc = DistributedNotificationCenter.default()
+        observers.append(dnc.addObserver(forName: notification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { capture(into: home.appendingPathComponent("snapshots", isDirectory: true)) }
-        }
+        })
+        observers.append(dnc.addObserver(forName: command, object: nil, queue: .main) { note in
+            let text = note.object as? String ?? ""
+            MainActor.assumeIsolated {
+                Log.shared.info("dev", "command", ["command": text])
+                handler?(text)
+            }
+        })
     }
 
     static func capture(into dir: URL) {

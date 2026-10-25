@@ -25,6 +25,8 @@ public final class SidefolkRuntime: Sendable {
     public let broker: ApprovalBroker
     public let executor: ToolExecutor
     public let attention: AttentionCenter
+    public let scheduler: ReminderScheduler
+    public let brief: MorningBrief
 
     public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock()) async {
         self.paths = paths
@@ -51,7 +53,29 @@ public final class SidefolkRuntime: Sendable {
         executor = ToolExecutor(registry: registry, permissions: permissions, broker: broker, activity: activity,
                                 events: events, clock: clock)
         attention = AttentionCenter(store: AttentionStore(db), events: events, clock: clock)
+        brief = MorningBrief(db: db, attention: attention, settings: settings, clock: clock)
+        scheduler = ReminderScheduler(store: reminderStore, attention: attention, events: events, settings: settings,
+                                      clock: clock, brief: brief)
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
+        registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
+    }
+
+    /// The local language understanding, configured with the user's idea of "morning" and "evening".
+    public var intentParser: IntentParser {
+        let s = settings.current
+        return IntentParser(morningHour: s.morningHour, afternoonHour: s.afternoonHour, eveningHour: s.eveningHour)
+    }
+
+    /// Starts the background engines (reminders now; watchers, extensions and the bridge as they join).
+    public func start() async {
+        await scheduler.start()
+    }
+
+    /// Before quitting: stop timers and return what system notifications should cover while Sidefolk is off.
+    public func stop() async -> [FallbackNotification] {
+        let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400)
+        await scheduler.stop()
+        return fallback
     }
 
     /// Opens (creating if needed) the database under `paths`.

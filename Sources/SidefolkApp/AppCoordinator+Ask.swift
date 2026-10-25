@@ -20,8 +20,17 @@ extension AppCoordinator {
 
 extension AppCoordinator: AskActions {
     func hint(for text: String) -> String? {
-        runtime.settings.current.provider.kind == .none ? nil : "Ask \(providerLabel)"
+        if let title = ask.pendingReminderTitle {
+            guard let when = whenParser.parse(text, now: Date()) else { return "When should I remind you to “\(title.clipped(30))”?" }
+            return "Reminder · \(TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent)) · no AI"
+        }
+        if let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections) {
+            return parsed.hint
+        }
+        return runtime.settings.current.provider.kind == .none ? "Needs AI — not set up yet" : "Ask \(providerLabel)"
     }
+
+    var whenParser: WhenParser { WhenParser(calendar: .autoupdatingCurrent, settings: runtime.settings.current) }
 
     var providerLabel: String {
         switch runtime.settings.current.provider.kind {
@@ -33,11 +42,51 @@ extension AppCoordinator: AskActions {
     }
 
     func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {
+        // A reminder that was waiting for its time.
+        if let title = model.pendingReminderTitle, attachment == nil {
+            model.pendingReminderTitle = nil
+            if let when = whenParser.parse(text, now: Date()) {
+                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence), caption: "\(title) — \(text)", into: model)
+            } else {
+                model.add(.info("I didn't catch a time, so I didn't set it. Try “remind me tomorrow at 9 to \(title)”."))
+            }
+            return
+        }
+        // Plain-language intents complete locally, instantly, without AI (DECISIONS D4).
+        if !thinkHarder, attachment == nil,
+           let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections) {
+            runLocal(parsed.intent, caption: text, into: model)
+            return
+        }
         guard runtime.settings.current.provider.kind != .none else {
-            model.add(.needsBrain, caption: text)
+            model.add(.needsBrain(attachment?.text.map { "\(text)\n\n\($0)" } ?? text), caption: text)
             return
         }
         runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model)
+    }
+
+    func runLocal(_ intent: LocalIntent, caption: String, into model: AskModel) {
+        let runner = LocalIntentRunner(runtime: runtime)
+        Task {
+            let outcome = await runner.run(intent)
+            switch outcome {
+            case .card(let card, let activityId, let undo):
+                model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), caption: caption)
+                // Quick intents close the panel a moment after their card appears.
+                try? await Task.sleep(for: .seconds(undo ? 2.5 : 1.2))
+                if !model.busy, model.text.isEmpty, model.entries.last?.caption == caption { model.onAutoClose?() }
+            case .list(let title, let cards):
+                model.add(.list(title: title, cards: cards), caption: caption)
+            case .needsTime(let title):
+                model.pendingReminderTitle = title
+                model.add(.info("When should I remind you to “\(title)”?"), caption: caption)
+                model.focusRequest += 1
+            case .info(let text):
+                model.add(.info(text), caption: caption)
+            case .failed(let error):
+                model.add(.error(error, retryable: false), caption: caption)
+            }
+        }
     }
 
     func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {

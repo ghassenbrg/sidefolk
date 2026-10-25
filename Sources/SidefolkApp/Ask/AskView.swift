@@ -70,7 +70,8 @@ struct AskView: View {
             }
             HStack(spacing: 4) {
                 Image(systemName: "return").imageScale(.small)
-                Text(model.busy ? (model.phase ?? "Working…") : (model.hint ?? "Type something, or drop a file or link on me"))
+                Text(model.busy ? (model.phase ?? "Working…") : (model.hint ?? (model.pendingReminderTitle != nil
+                    ? "When? Try “tomorrow 9am” or “in 2 hours”" : "Type something, or drop a file or link on me")))
                     .lineLimit(1)
             }
             .font(Theme.Font.hint)
@@ -154,13 +155,16 @@ private struct EntryView: View {
                     if let r = error.recovery { Text(r).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted) }
                 }
             }
-        case .needsBrain:
+        case .needsBrain(let text):
             SFCard(accent: Theme.folkColor("byte")) {
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
                     Text("I need a brain for that.").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                     Text("Notes, reminders and watches work without one. For questions, connect Claude Code, an API key or Ollama.")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.primary))
+                    HStack(spacing: 6) {
+                        Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.primary))
+                        Button("Keep as a note") { model.actions?.saveAnswer(text, in: model) }.buttonStyle(.sf(.secondary))
+                    }
                 }
             }
         case .info(let text):

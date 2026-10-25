@@ -26,6 +26,8 @@ final class AppCoordinator {
     let secrets: any SecretStore = KeychainSecretStore()
     private(set) var agent: AgentRuntime!
     var currentRun: String?
+    /// Collection names for the intent parser ("ideas for Sidefolk").
+    var knownCollections: [String] = []
     private var moodTimer: Task<Void, Never>?
     private var eventTask: Task<Void, Never>?
 
@@ -74,6 +76,11 @@ final class AppCoordinator {
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
+        monitor.onWake = { [weak self] in
+            guard let self else { return }
+            Task { await self.runtime.scheduler.reschedule() }
+        }
+        monitor.onClockChange = monitor.onWake
         monitor.start()
         await notifier.clearFallback()
         await runtime.attention.update { env in
@@ -86,7 +93,13 @@ final class AppCoordinator {
             guard let stream = self?.runtime.events.stream() else { return }
             for await event in stream { self?.handle(event) }
         }
+        #if DEBUG
+        DebugSnapshots.handler = { [weak self] command in self?.runDevCommand(command) }
+        #endif
         await runtime.housekeeping()
+        await runtime.start()
+        await refreshCollections()
+        _ = await notificationsAuthorized()
         refreshRoster()
         if !runtime.settings.current.onboardingDone {
             try? await Task.sleep(for: .seconds(1))
@@ -140,8 +153,34 @@ final class AppCoordinator {
         bubbles.present(item, .attention(expandFor: 600))
     }
 
-    func prepareForQuit() {
+    /// Stops the engines and covers the next week of reminders with system notifications.
+    func prepareForQuit() async {
         eventTask?.cancel()
+        let fallback = await runtime.stop()
+        notifier.scheduleFallback(fallback.map { (id: $0.id, title: $0.title, body: $0.body, date: $0.date) })
+        Log.shared.info("app", "quit", ["fallbackReminders": String(fallback.count)])
+    }
+
+    #if DEBUG
+    func runDevCommand(_ command: String) {
+        if command.hasPrefix("ask:") {
+            showAsk()
+            ask.text = String(command.dropFirst(4))
+            ask.submit()
+        } else if command.hasPrefix("respond:"), let item = bubbles.model.item {
+            respond(to: item, action: String(command.dropFirst(8)))
+            bubbles.withdraw(id: item.id)
+        } else if command == "dismiss", let item = bubbles.model.item {
+            respond(to: item, action: nil)
+            bubbles.withdraw(id: item.id)
+        } else if command == "hideAsk" {
+            askPanel.hide()
+        }
+    }
+    #endif
+
+    func refreshCollections() async {
+        knownCollections = ((try? await runtime.notebook.collections()) ?? []).map(\.name)
     }
 
     // MARK: Windows
@@ -208,7 +247,11 @@ final class AppCoordinator {
             statusItem.refreshNow()
             if [.reminders, .watchers, .runs, .attention].contains(domain) { refreshRoster() }
             if domain == .reminders { onboarding.reminderCreated() }
-            if domain == .settings { applyCompanionSettings() }
+            if domain == .settings {
+                applyCompanionSettings()
+                Task { await runtime.scheduler.reschedule() }
+            }
+            if domain == .notebook { Task { await refreshCollections() } }
         default:
             break
         }
@@ -232,7 +275,7 @@ final class AppCoordinator {
         }
     }
 
-    private func respond(to item: AttentionItem, action: String?) {
+    func respond(to item: AttentionItem, action: String?) {
         if item.source == Onboarding.source {
             onboarding.respond(action: action)
             return
