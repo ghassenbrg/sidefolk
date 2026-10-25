@@ -16,7 +16,7 @@ public struct ToolOutcome: Sendable {
     /// What the model is told about this call.
     public var modelText: String {
         switch status {
-        case .ok(let r): return r.untrusted ? "<untrusted_content>\n\(r.text)\n</untrusted_content>" : r.text
+        case .ok(let r): return r.untrusted ? UntrustedText.wrap(r.text, source: activity.tool) : r.text
         case .denied(let why): return "Not done: \(why) Do not retry this action unless the user asks again."
         case .failed(let e): return "Failed: \(e.message)\(e.changedNothing ? " Nothing was changed." : "")"
         }
