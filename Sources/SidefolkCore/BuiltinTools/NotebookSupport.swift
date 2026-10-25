@@ -173,7 +173,7 @@ enum NoteText {
 /// Compact one-line renderings of notebook items for the model.
 enum NoteFormat {
     static func line(_ item: NotebookItem, collections: [String: String], snippet: Bool = true) -> String {
-        var parts = ["[\(item.kind.rawValue)] \(ToolFormat.oneLine(item.title, 100))"]
+        var parts = ["[\(item.kind.rawValue)] \(ToolFormat.oneLine(ExternalText.clean(item.title), 100))"]
         var meta = [collections[item.collectionId] ?? "?", ToolFormat.day(item.createdAt)]
         if item.status == .done { meta.append("done") }
         if !item.tagList.isEmpty { meta.append("#" + item.tagList.joined(separator: " #")) }
@@ -181,8 +181,8 @@ enum NoteFormat {
         parts.append("— " + meta.joined(separator: ", "))
         var text = "\(item.id)  " + parts.joined(separator: " ")
         if snippet {
-            let body = ToolFormat.oneLine(item.body, 110)
-            if !body.isEmpty, body != ToolFormat.oneLine(item.title, 110) { text += "\n    " + body }
+            let body = ToolFormat.oneLine(ExternalText.clean(item.body), 110)
+            if !body.isEmpty, body != ToolFormat.oneLine(ExternalText.clean(item.title), 110) { text += "\n    " + body }
         }
         return text
     }

@@ -67,7 +67,7 @@ struct ProfileRememberTool: Tool {
         }
         let (title, body) = NoteText.split(fact)
         let item = NotebookItem(collectionId: profile.id, kind: .note, title: title, body: body,
-                                source: context.caller.sourceTag, now: context.now)
+                                source: context.caller.provenanceTag, now: context.now)
         try await notebook.add(item)
         events.changed(.notebook)
         events.changed(.memories)
@@ -104,7 +104,7 @@ struct ProfileListTool: Tool {
         let lines = facts.map { f -> String in
             var meta = ToolFormat.day(f.createdAt)
             if let origin = ItemProvenance.note(for: f.source) { meta += ", \(origin)" }
-            return "\(f.id)  \(factText(f).clipped(200)) (\(meta))"
+            return "\(f.id)  \(ExternalText.clean(factText(f)).clipped(200)) (\(meta))"
         }
         return ToolResult(
             text: "\(ToolFormat.count(facts.count, "fact")) about the user:\n" + lines.joined(separator: "\n"),

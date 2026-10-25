@@ -48,10 +48,13 @@ public enum HTMLText {
     // MARK: Markup
 
     /// Works on UTF-8 bytes: tags are ASCII, so no character decoding is needed to find them.
-    private struct Markup {
+    private final class Markup {
         let bytes: [UInt8]
         let lower: [UInt8]
         var count: Int { bytes.count }
+        // A page full of "<a \"" would make every stray "<" scan 20 KB ahead; give up after a few such failures.
+        private var failedScans = 0
+        var exhausted: Bool { failedScans > 200 }
 
         init(_ bytes: [UInt8]) {
             self.bytes = bytes
@@ -110,6 +113,7 @@ public enum HTMLText {
                 }
                 j += 1
             }
+            failedScans += 1
             return nil
         }
 
@@ -137,7 +141,7 @@ public enum HTMLText {
             }
             var depth = 1
             var i = from
-            while i < limit {
+            while i < limit, !exhausted {
                 guard let lt = find([UInt8(ascii: "<")], from: i, to: limit) else { return nil }
                 if let t = tag(at: lt, limit: limit) {
                     if t.name == name {
@@ -187,7 +191,7 @@ public enum HTMLText {
             var preDepth = 0
             var i = range.lowerBound
             let end = range.upperBound
-            while i < end {
+            while i < end, !exhausted {
                 guard let lt = find([UInt8(ascii: "<")], from: i, to: end) else {
                     out.text(string(i..<end), pre: preDepth > 0)
                     break

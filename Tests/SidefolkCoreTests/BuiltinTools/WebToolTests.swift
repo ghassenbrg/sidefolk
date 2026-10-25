@@ -70,6 +70,15 @@ import Testing
         #expect(fallbackTitle.title == "Only a heading")
     }
 
+    @Test func hostileMarkupCannotMakeExtractionExplode() {
+        let start = Date()
+        let stray = String(repeating: "<a \"", count: 400_000)           // every "<" opens a quote that never closes
+        _ = HTMLText.extract("<p>before</p>" + stray + "<p>after</p>")
+        let nested = String(repeating: "<div hidden>", count: 100_000)
+        _ = HTMLText.extract(nested + "text")
+        #expect(Date().timeIntervalSince(start) < 10)
+    }
+
     @Test func entitiesDecode() {
         #expect(HTMLEntities.decode("a &lt; b &amp;&amp; c &gt; d &quot;q&quot; &#65;&#x42; &unknown; &amp") == "a < b && c > d \"q\" AB &unknown; &amp")
     }
@@ -216,5 +225,25 @@ import Testing
         #expect(asked.tainted)
         #expect(out.wasDenied)
         #expect(t.fetcher.requested.count == 1)
+    }
+}
+
+/// Talks to the real internet, so it only runs on request: `SIDEFOLK_TEST_NETWORK=1 swift test`.
+@Suite(.enabled(if: ProcessInfo.processInfo.environment["SIDEFOLK_TEST_NETWORK"] == "1"))
+struct LiveWebTests {
+    @Test func readsARealPage() async throws {
+        let tool = WebFetchTool(fetcher: URLSessionFetcher())
+        let result = try await tool.run(["url": "https://example.com/"], context: ToolContext(caller: .user, now: Date()))
+        #expect(result.text.contains("Example Domain"))
+        #expect(result.text.hasPrefix("Title: Example Domain"))
+        #expect(result.untrusted)
+    }
+
+    @Test func aPublicNameThatPointsAtLoopbackIsRefused() async throws {
+        // localtest.me is a real DNS name that resolves to 127.0.0.1: the case a literal-address check misses.
+        let tool = WebFetchTool(fetcher: URLSessionFetcher())
+        await #expect(throws: UserFacingError.self) {
+            _ = try await tool.run(["url": "http://localtest.me/"], context: ToolContext(caller: .user, now: Date()))
+        }
     }
 }

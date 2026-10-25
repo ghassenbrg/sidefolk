@@ -5,7 +5,7 @@ import Foundation
 
 extension Caller {
     /// Provenance stored on notes and facts: `user | agent | routine | external:<client> | extension:<id>`.
-    var sourceTag: String {
+    var provenanceTag: String {
         switch self {
         case .user: "user"
         case .agent: "agent"

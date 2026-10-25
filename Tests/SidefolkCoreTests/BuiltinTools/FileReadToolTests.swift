@@ -5,7 +5,7 @@ import Testing
 @testable import SidefolkCore
 
 /// A one-page PDF with `text` drawn on it.
-func makePDF(_ text: String) -> Data {
+func makeTestPDF(_ text: String) -> Data {
     let data = NSMutableData()
     var box = CGRect(x: 0, y: 0, width: 612, height: 792)
     let context = CGContext(consumer: CGDataConsumer(data: data)!, mediaBox: &box, nil)!
@@ -113,6 +113,16 @@ func makePDF(_ text: String) -> Data {
         #expect(await t.run("files.read", ["path": .string(empty)]).result?.text.contains("empty") == true)
     }
 
+    @Test func readRefusesPipesWithoutHanging() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        try await t.grant()
+        let fifo = t.root + "/pipe"
+        #expect(mkfifo(fifo, 0o600) == 0)
+        let out = await t.run("files.read", ["path": .string(fifo)])
+        #expect(out.failure?.message.contains("ordinary file") == true)
+    }
+
     @Test func readDecodesLegacyEncodings() async throws {
         let t = try BuiltinEnv()
         defer { t.cleanup() }
@@ -127,7 +137,7 @@ func makePDF(_ text: String) -> Data {
         defer { t.cleanup() }
         try await t.grant()
         let path = t.root + "/report.pdf"
-        try makePDF("Quarterly report seven").write(to: URL(fileURLWithPath: path))
+        try makeTestPDF("Quarterly report seven").write(to: URL(fileURLWithPath: path))
         let out = await t.run("files.read", ["path": .string(path)])
         let result = try #require(out.result)
         #expect(result.text.contains("Quarterly report seven"))
@@ -209,7 +219,7 @@ func makePDF(_ text: String) -> Data {
         let hidden = try t.file("docs/.hidden/invoice.txt", "h")
         let elsewhere = try t.file("other/invoice.txt", "o")
         try FileManager.default.createSymbolicLink(atPath: docs + "/escape", withDestinationPath: t.root + "/other")
-        let search = FilesSearchTool(searcher: FakeSearch(results: [inside, hidden, elsewhere, docs + "/escape/invoice.txt", nested, docs + "/../other/invoice.txt"]))
+        let search = FilesSearchTool(searcher: ScriptedSearch(results: [inside, hidden, elsewhere, docs + "/escape/invoice.txt", nested, docs + "/../other/invoice.txt"]))
         t.env.registry.register(search)
         try await t.grant(docs)
 

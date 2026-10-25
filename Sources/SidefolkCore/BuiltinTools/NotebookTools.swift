@@ -60,7 +60,7 @@ struct NotesSaveTool: Tool {
         let finalKind = kind ?? .note
         let item = NotebookItem(
             collectionId: target.collection.id, kind: finalKind, title: title, body: body, url: url,
-            tags: NoteText.cleanTags(input.textList("tags") ?? []), source: context.caller.sourceTag, now: context.now)
+            tags: NoteText.cleanTags(input.textList("tags") ?? []), source: context.caller.provenanceTag, now: context.now)
         try await notebook.add(item)
         events.changed(.notebook)
 
@@ -226,8 +226,9 @@ struct NotesUpdateTool: Tool {
             let (title, body) = NoteText.split(try input.requiredText("text", limit: NoteText.maxText))
             item.title = title
             item.body = body
-            // Whoever last wrote the words is who they are attributed to.
-            item.source = context.caller.sourceTag
+            // Whoever last wrote the words is who they are attributed to, but an outsider's note never becomes
+            // trusted just because Sidefolk's own agent edited it.
+            if !(ItemProvenance.isForeign(item.source) && context.caller != .user) { item.source = context.caller.provenanceTag }
             changed.append("text")
         }
         var movedTo: (collection: NotebookCollection, created: Bool)?

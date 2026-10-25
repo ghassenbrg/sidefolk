@@ -165,6 +165,17 @@ import Testing
         #expect(item.source == "user")
     }
 
+    @Test func editingAnOutsidersNoteDoesNotMakeItTrusted() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        let saved = await t.run("notes.save", ["text": "Planted by a repo"], as: .external(client: "evil"))
+        let id = try #require(saved.result?.card?.refId)
+        _ = await t.run("notes.update", ["id": .string(id), "text": "Edited by Sidefolk"], as: .agent(runId: "r"))
+        #expect(try await t.notebook.item(id: id)?.source == "external:evil")
+        _ = await t.run("notes.update", ["id": .string(id), "text": "Rewritten by the user"], as: .user)
+        #expect(try await t.notebook.item(id: id)?.source == "user")
+    }
+
     @Test func updateNeedsSomethingToChangeAndAKnownNote() async throws {
         let t = try BuiltinEnv()
         defer { t.cleanup() }

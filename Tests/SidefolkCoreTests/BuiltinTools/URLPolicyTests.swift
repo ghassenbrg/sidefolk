@@ -4,7 +4,7 @@ import Testing
 @testable import SidefolkCore
 
 /// Answers DNS from a table instead of the network.
-struct StubResolver: HostResolving {
+struct StubHostResolver: HostResolving {
     var table: [String: [IPAddress]]
     func addresses(for host: String) async throws -> [IPAddress] {
         guard let found = table[host] else { throw URLPolicy.Violation.cannotResolve(host) }
@@ -78,7 +78,7 @@ private func ip(_ text: String) -> IPAddress { IPAddress.parse(text)! }
     }
 
     @Test func namesThatResolveToPrivateAddressesAreRefused() async throws {
-        let resolver = StubResolver(table: [
+        let resolver = StubHostResolver(table: [
             "ok.test": [ip("93.184.216.34")],
             "mixed.test": [ip("93.184.216.34"), ip("10.0.0.5")],
             "rebind.test": [ip("127.0.0.1")],

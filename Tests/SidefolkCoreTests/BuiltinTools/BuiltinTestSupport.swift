@@ -3,7 +3,7 @@ import Synchronization
 @testable import SidefolkCore
 
 /// A platform that records what was asked of it, with a clipboard that really holds text.
-final class FakePlatform: PlatformBridge, Sendable {
+final class RecordingPlatform: PlatformBridge, Sendable {
     private struct State {
         var clipboard: String?
         var openedURLs: [URL] = []
@@ -33,7 +33,7 @@ final class FakePlatform: PlatformBridge, Sendable {
 }
 
 /// Serves canned pages and remembers what was asked for.
-final class FakeFetcher: WebFetching, Sendable {
+final class ScriptedFetcher: WebFetching, Sendable {
     private struct State {
         var responses: [String: Result<WebResponse, WebFetchError>] = [:]
         var fallback: Result<WebResponse, WebFetchError>?
@@ -66,13 +66,13 @@ final class FakeFetcher: WebFetching, Sendable {
     }
 }
 
-struct FakeSearch: FileSearching {
+struct ScriptedSearch: FileSearching {
     var results: [String]
     func search(query: String, inFolder folder: String, limit: Int) async throws -> [String] { Array(results.prefix(limit)) }
 }
 
 /// A "Trash" inside a temp folder, so tests never touch the real one.
-struct FakeTrash: FileTrashing {
+struct TempTrash: FileTrashing {
     let folder: String
     func trash(path: String) throws -> String {
         try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
@@ -86,21 +86,21 @@ struct FakeTrash: FileTrashing {
 struct BuiltinEnv {
     let env: TestEnv
     let notebook: NotebookStore
-    let platform: FakePlatform
-    let fetcher = FakeFetcher()
-    let trash: FakeTrash
+    let platform: RecordingPlatform
+    let fetcher = ScriptedFetcher()
+    let trash: TempTrash
     /// Canonical path of an empty temp folder owned by this test.
     let root: String
 
     init(clipboard: String? = nil, searchResults: [String] = []) throws {
         env = try TestEnv()
         notebook = NotebookStore(env.db)
-        platform = FakePlatform(clipboard: clipboard)
+        platform = RecordingPlatform(clipboard: clipboard)
         root = FolderAccess.canonical(env.home.path)!
-        trash = FakeTrash(folder: root + "/.fake-trash")
+        trash = TempTrash(folder: root + "/.fake-trash")
         env.registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: env.events, fetcher: fetcher))
         // Swap in the seams so no test touches Spotlight or the real Trash.
-        env.registry.register(FilesSearchTool(searcher: FakeSearch(results: searchResults)))
+        env.registry.register(FilesSearchTool(searcher: ScriptedSearch(results: searchResults)))
         env.registry.register(FilesTrashTool(trasher: trash))
     }
 
