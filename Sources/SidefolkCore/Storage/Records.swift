@@ -7,8 +7,9 @@ public protocol SidefolkRecord: Codable, FetchableRecord, PersistableRecord, Sen
 extension SidefolkRecord {
     public static var databaseColumnDecodingStrategy: DatabaseColumnDecodingStrategy { .convertFromSnakeCase }
     public static var databaseColumnEncodingStrategy: DatabaseColumnEncodingStrategy { .convertToSnakeCase }
-    public static var databaseDateDecodingStrategy: DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static var databaseDateEncodingStrategy: DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    // GRDB 7 asks per column; properties with these names would be ignored and dates stored as text.
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
 }
 
 /// How strongly something may claim the user's attention.
