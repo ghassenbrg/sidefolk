@@ -1,0 +1,94 @@
+import AppKit
+import SidefolkCore
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var coordinator: AppCoordinator?
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Files Sidefolk creates are private to the user (docs/SECURITY.md T6, T19).
+        umask(0o077)
+        NSApp.mainMenu = MainMenu.make()
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        let paths = SidefolkPaths.standard()
+        Log.shared.configure(directory: paths.logs, debug: false)
+        Log.shared.info("app", "launch", ["version": SidefolkVersion.current, "home": paths.home.path])
+        Task {
+            do {
+                let runtime = try await SidefolkRuntime.open(paths: paths, platform: MacPlatform())
+                Log.shared.setDebug(runtime.settings.current.debugLogging)
+                let coordinator = AppCoordinator(runtime: runtime)
+                self.coordinator = coordinator
+                await coordinator.start()
+            } catch {
+                Log.shared.error("app", "launch failed", ["error": String(describing: error)])
+                StartupFailure.show(error: error, dataFolder: paths.home)
+            }
+        }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        coordinator?.openHome()
+        return true
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        coordinator?.prepareForQuit()
+    }
+}
+
+/// When the database can't be opened, say so plainly and keep the user's data untouched.
+enum StartupFailure {
+    static func show(error: Error, dataFolder: URL) {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate()
+        let alert = NSAlert()
+        alert.messageText = "Sidefolk couldn't start"
+        alert.informativeText = """
+            Sidefolk couldn't open its data folder. Nothing was deleted or changed.
+
+            Try restarting your Mac. If this keeps happening, export diagnostics from \
+            ~/Library/Logs/Sidefolk and check the data folder at \(FolderAccess.displayPath(dataFolder.path)).
+            """
+        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: "Show Data Folder")
+        if alert.runModal() == .alertSecondButtonReturn {
+            NSWorkspace.shared.activateFileViewerSelecting([dataFolder])
+        }
+        NSApp.terminate(nil)
+    }
+}
+
+/// A minimal main menu so standard editing shortcuts work in Sidefolk's text fields.
+enum MainMenu {
+    static func make() -> NSMenu {
+        let main = NSMenu()
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "Quit Sidefolk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appItem.submenu = appMenu
+        main.addItem(appItem)
+
+        let editItem = NSMenuItem()
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editItem.submenu = edit
+        main.addItem(editItem)
+
+        let windowItem = NSMenuItem()
+        let window = NSMenu(title: "Window")
+        window.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        window.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowItem.submenu = window
+        main.addItem(windowItem)
+        return main
+    }
+}
