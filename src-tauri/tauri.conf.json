@@ -48,11 +48,21 @@
       "icons/icon.png"
     ],
     "macOS": {
-      "minimumSystemVersion": "14.0"
+      "minimumSystemVersion": "14.0",
+      "hardenedRuntime": true,
+      "entitlements": "Entitlements.plist"
     },
     "category": "DeveloperTool",
     "shortDescription": "Pip, your desktop companion for reminders, a work log and Claude Code",
     "longDescription": "Pip sits on your desktop, taps you when Claude Code or a reminder needs you, takes you to that exact session, and keeps a dated log of what you got done.",
-    "copyright": "© 2026 Ghassen Bargougui"
+    "copyright": "© 2026 Ghassen Bargougui",
+    "createUpdaterArtifacts": false
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [],
+      "requireSignedVersion": true
+    }
   }
 }

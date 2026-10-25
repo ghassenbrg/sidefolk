@@ -19,6 +19,8 @@ tauri-plugin-single-instance = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "sync", "time", "net"] }
 axum = "0.8"
 jiff = "0.2"
+tauri-plugin-updater = "2"
+semver = { version = "1", features = ["serde"] }
 
 [features]
 # The calendar heads-up (docs/V1.md F-21): kept for v1.1, off in v1 builds.
@@ -37,4 +39,5 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 panic = "abort"
-strip = true
+debug = 1
+strip = false # Preserve symbols until release-build.sh has archived dSYMs.
