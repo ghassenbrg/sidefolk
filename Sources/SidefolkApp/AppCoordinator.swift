@@ -184,6 +184,12 @@ final class AppCoordinator {
             bubbles.withdraw(id: item.id)
         } else if command == "hideAsk" {
             askPanel.hide()
+        } else if command.hasPrefix("approve") || command == "deny" {
+            let decision: ApprovalDecision = command == "deny" ? .deny : (command == "approveAlways" ? .allowAlways : .allowOnce)
+            Task {
+                guard let first = await runtime.broker.pending().first else { return }
+                answer(approval: first, decision: decision)
+            }
         }
     }
     #endif

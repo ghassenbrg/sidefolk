@@ -12,16 +12,17 @@ struct ApprovalCard: View {
     var body: some View {
         SFCard(accent: Theme.folkColor("guard")) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
-                HStack(spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Image(systemName: "checkmark.shield").foregroundStyle(Theme.folkColor("guard"))
                     Text(request.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    Spacer(minLength: 0)
-                    Text(riskLabel).font(Theme.Font.eyebrow)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(riskTint, in: Capsule())
-                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                Text(riskLabel).font(Theme.Font.eyebrow)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(riskTint, in: Capsule())
+                    .foregroundStyle(Theme.ink)
                 Text(request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 details
                 if request.tainted {
                     Label("This came up while reading outside content. Check it carefully.", systemImage: "exclamationmark.triangle")
@@ -94,7 +95,8 @@ struct ApprovalCard: View {
     }
 
     private var riskLabel: String {
-        switch request.risk {
+        if case .folderAccess(_, let write) = request.details { return write ? "FOLDER ACCESS · CAN CHANGE FILES" : "FOLDER ACCESS · READ ONLY" }
+        return switch request.risk {
         case .low: "LOW"
         case .medium: "CHANGES THINGS"
         case .high: "HIGH RISK"
