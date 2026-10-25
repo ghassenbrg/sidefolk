@@ -189,7 +189,6 @@ private struct ActivityRow<Cell: View>: View {
                 }
                 .lineLimit(1)
                 .frame(minWidth: column.minWidth, maxWidth: column.width ?? .infinity, alignment: .leading)
-                .layoutPriority(column == .what ? 1 : 0)
             }
         }
         .padding(.horizontal, Theme.Space.l)

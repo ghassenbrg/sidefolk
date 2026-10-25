@@ -97,7 +97,9 @@ enum Describe {
     static func source(_ source: String) -> String? {
         let parts = source.split(separator: ":", maxSplits: 1).map(String.init)
         guard parts.count == 2 else {
-            return ["user", "agent", "sidefolk", "ui", "you", "routine", "brief"].contains(source.lowercased()) ? nil : agentName(source)
+            // Bare sources are Sidefolk's own ("user", "agent", "cli"…) unless they name a known agent.
+            let k = source.lowercased()
+            return k.hasPrefix("claude") || k.hasPrefix("codex") || k.hasPrefix("cursor") ? agentName(source) : nil
         }
         switch parts[0] {
         case "external": return agentName(parts[1])

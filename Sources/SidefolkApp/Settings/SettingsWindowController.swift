@@ -42,15 +42,30 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         model.start()
         Task { await model.refresh() }
         WindowActivation.show(window)
+        // AppKit focuses the first text field (the companion's name, selected); a stray key would replace it.
+        Task { @MainActor in window.makeFirstResponder(nil) }
     }
 
     func close() { window?.performClose(nil) }
 
     private func makeWindow() -> NSWindow {
+        let window = NSWindow()
+        tabs = Self.configure(window, model: model)
+        window.delegate = self
+        window.center()
+        window.setFrameAutosaveName("SidefolkSettings")
+        return window
+    }
+
+    /// Everything about the window except where it sits; returns the tab controller. UISnapshots
+    /// uses this too, so pictures show exactly what people get.
+    @discardableResult
+    static func configure(_ window: NSWindow, model: SettingsModel) -> NSTabViewController {
         let tabs = NSTabViewController()
         tabs.tabStyle = .toolbar
         for tab in SettingsTab.allCases {
             let host = NSHostingController(rootView: SettingsTabContent(tab: tab, model: model))
+            // No preferred size: switching tabs keeps the window's size instead of jumping.
             host.sizingOptions = []
             host.title = tab.title
             let item = NSTabViewItem(viewController: host)
@@ -59,19 +74,18 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             item.identifier = tab.rawValue
             tabs.addTabViewItem(item)
         }
-        self.tabs = tabs
-        let window = NSWindow(contentViewController: tabs)
+        window.contentViewController = tabs
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.toolbarStyle = .preference
-        window.setContentSize(NSSize(width: Self.width, height: 620))
-        window.contentMinSize = NSSize(width: Self.width, height: 420)
-        window.contentMaxSize = NSSize(width: Self.width, height: 4000)
+        // The tabs sit on the window's own background, so the chrome matches the pages (navy in dark).
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = NSColor(Theme.surfaceSunken)
+        window.setContentSize(NSSize(width: width, height: 620))
+        window.contentMinSize = NSSize(width: width, height: 420)
+        window.contentMaxSize = NSSize(width: width, height: 4000)
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
-        window.delegate = self
-        window.center()
-        window.setFrameAutosaveName("SidefolkSettings")
-        return window
+        return tabs
     }
 
     func windowWillClose(_ notification: Notification) {

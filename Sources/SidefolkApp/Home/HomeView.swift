@@ -4,26 +4,13 @@ import SwiftUI
 /// The Home window: a sidebar (Now, Activity, the Notebook's collections, Trash) and the selected page.
 struct HomeView: View {
     @Bindable var model: HomeModel
-    /// Lays the sidebar out in a plain stack instead of a split view. Only for snapshot rendering:
-    /// the split view's sidebar material can't be drawn offscreen.
-    var flatLayout = false
 
     var body: some View {
-        Group {
-            if flatLayout {
-                HStack(spacing: 0) {
-                    HomeSidebar(model: model).frame(width: 230).background(Theme.surface)
-                    Rectangle().fill(Theme.line).frame(width: 1)
-                    detail
-                }
-            } else {
-                NavigationSplitView {
-                    HomeSidebar(model: model)
-                        .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
-                } detail: {
-                    detail
-                }
-            }
+        NavigationSplitView {
+            HomeSidebar(model: model)
+                .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
+        } detail: {
+            detail
         }
         .frame(minWidth: 860, minHeight: 560)
         .overlay(alignment: .bottom) {
@@ -98,6 +85,7 @@ private struct HomeSidebar: View {
         }
         .listStyle(.sidebar)
         .scrollContentBackground(.hidden)
+        .background(Theme.surface)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Button { sheet = .create } label: {

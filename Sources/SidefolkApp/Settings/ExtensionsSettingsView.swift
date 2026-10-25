@@ -408,9 +408,13 @@ private struct AgentsGroup: View {
                 InlineError(error: error).padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s)
             }
         }
-        .onChange(of: model.integration?.claudeHooksInstalled) { _, installed in
-            if let installed, model.integration?.claudeMCPInstalled == true { hooks = installed }
-        }
+        .onAppear(perform: syncHooks)
+        .onChange(of: model.integration) { syncHooks() }
+    }
+
+    /// Once connected, the checkbox shows what is installed; before that it's the user's choice.
+    private func syncHooks() {
+        if let s = model.integration, s.claudeMCPInstalled { hooks = s.claudeHooksInstalled }
     }
 
     private func claude(_ s: IntegrationStatus) -> some View {

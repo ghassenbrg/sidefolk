@@ -18,7 +18,8 @@ struct GeneralSettingsView: View {
                     InlineError(error: error).padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s)
                 }
                 SettingsRow(title: "Ask shortcut", detail: "Opens the Ask panel from any app.") {
-                    KeyboardShortcuts.Recorder(for: .ask)
+                    // The menu bar and the Ask panel show the shortcut, so tell the app when it changes.
+                    KeyboardShortcuts.Recorder(for: .ask) { _ in model.services.settingsChanged() }
                         .accessibilityLabel("Ask shortcut")
                 }
                 SettingsRow(title: "Name", detail: "What your companion is called in bubbles and menus.") {

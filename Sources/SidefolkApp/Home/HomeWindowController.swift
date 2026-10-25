@@ -45,23 +45,33 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     }
 
     private func makeWindow() -> NSWindow {
-        let host = NSHostingController(rootView: HomeView(model: model))
-        host.sizingOptions = [.minSize]
-        host.sceneBridgingOptions = [.toolbars]
-        let window = NSWindow(contentViewController: host)
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        window.title = "Sidefolk"
-        window.titleVisibility = .hidden
-        window.toolbar = NSToolbar(identifier: "app.sidefolk.home")
-        window.toolbarStyle = .unified
-        window.contentMinSize = NSSize(width: 860, height: 560)
-        window.setContentSize(NSSize(width: 1080, height: 720))
-        window.isReleasedWhenClosed = false
-        window.tabbingMode = .disallowed
+        let window = NSWindow()
+        Self.configure(window, model: model)
         window.delegate = self
         window.center()
         window.setFrameAutosaveName("SidefolkHome")
         return window
+    }
+
+    /// Everything about the window except where it sits. UISnapshots uses this too, so pictures
+    /// show exactly what people get.
+    static func configure(_ window: NSWindow, model: HomeModel) {
+        let host = NSHostingController(rootView: HomeView(model: model))
+        host.sizingOptions = [.minSize]
+        // SwiftUI builds the toolbar (the split view's sidebar button) for this window.
+        host.sceneBridgingOptions = [.toolbars]
+        window.contentViewController = host
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.title = "Sidefolk"
+        window.titleVisibility = .hidden
+        window.toolbarStyle = .unified
+        // The toolbar shows the window's own background, so the chrome matches the pages (navy in dark).
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = NSColor(Theme.surfaceSunken)
+        window.contentMinSize = NSSize(width: 860, height: 560)
+        window.setContentSize(NSSize(width: 1080, height: 720))
+        window.isReleasedWhenClosed = false
+        window.tabbingMode = .disallowed
     }
 
     func windowWillClose(_ notification: Notification) {
