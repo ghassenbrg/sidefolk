@@ -1,0 +1,21 @@
+{
+  "id": "dev.sidefolk.hello-folk",
+  "name": "Hello Folk",
+  "version": "1.0.0",
+  "sidefolk": ">=1.0",
+  "description": "The smallest working extension: one tool and one watcher. Copy this folder to start your own.",
+  "author": "Sidefolk",
+  "run": { "command": "python3", "args": ["main.py"] },
+  "tools": {
+    "hello": { "title": "Say hello", "risk": "low", "mutates": false }
+  },
+  "watchers": {
+    "countdown": {
+      "title": "Countdown",
+      "description": "Fires once after a number of checks.",
+      "config": {
+        "checks": { "type": "integer", "description": "How many checks before it fires.", "default": 3, "minimum": 1, "maximum": 100 }
+      }
+    }
+  }
+}

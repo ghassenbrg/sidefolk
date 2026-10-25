@@ -1,0 +1,36 @@
+{
+  "id": "dev.sidefolk.system-vitals",
+  "name": "System Vitals",
+  "version": "1.0.0",
+  "sidefolk": ">=1.0",
+  "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
+  "folk": "byte",
+  "author": "Sidefolk",
+  "run": { "command": "python3", "args": ["main.py"] },
+  "permissions": {
+    "network": false,
+    "files": { "read": [], "write": [] },
+    "exec": ["/usr/bin/pmset", "/usr/bin/vm_stat", "/usr/sbin/sysctl"]
+  },
+  "tools": {
+    "battery": { "title": "Battery status", "risk": "low", "category": "system", "mutates": false },
+    "disk": { "title": "Disk space", "risk": "low", "category": "system", "mutates": false },
+    "memory": { "title": "Memory use", "risk": "low", "category": "system", "mutates": false }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "Battery low",
+      "description": "Tells you once when the battery drops below a level while it isn't charging.",
+      "config": {
+        "below_percent": { "type": "integer", "description": "Warn below this percentage.", "default": 20, "minimum": 1, "maximum": 99 }
+      }
+    },
+    "disk_low": {
+      "title": "Disk space low",
+      "description": "Tells you once when free space on the startup disk drops below a size.",
+      "config": {
+        "below_gb": { "type": "number", "description": "Warn below this many gigabytes free.", "default": 10, "minimum": 0.5 }
+      }
+    }
+  }
+}
