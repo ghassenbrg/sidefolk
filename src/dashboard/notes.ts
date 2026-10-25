@@ -17,6 +17,7 @@ type Page = Notebook & { entries: NoteEntry[]; path: string };
 const drafts = new Map<string, string>();
 let searchText = "";
 let notebookFilter = "";
+let projectFilter = "";
 let changed: (() => void) | null = null;
 listen("notes-changed", () => changed?.());
 
@@ -39,8 +40,8 @@ export function markdown(page: Pick<Page, "name" | "entries">) {
 export function renderNotes(app: App, arg: string) {
   const view = h("div", { class: "view notes" });
   app.live(() => {});
-  const [id] = arg.split(":");
-  if (id && id !== "new") void notebook(app, view, id);
+  const [id, mode] = arg.split(":");
+  if (id && id !== "new") void notebook(app, view, id, mode === "capture");
   else void list(app, view, id === "new").catch((error) => view.replaceChildren(dataState("Couldn’t load your work log.", problem(error), () => app.redraw(true))));
   return view;
 }
@@ -114,49 +115,41 @@ async function list(app: App, view: HTMLElement, focus: boolean) {
   });
   const only = h("select", { id: "notes-notebook", "aria-label": "Show notes from" }, h("option", { value: "", text: "All notebooks" }), ...pages.map((p) => h("option", { value: p.id, text: p.name })));
   only.value = notebookFilter;
+  const projects = [...new Set(pages.flatMap((page) => page.entries.map((entry) => entry.project)).filter(Boolean))].sort();
+  const project = h("select", { "aria-label": "Filter by project" }, h("option", { value: "", text: "All projects" }), ...projects.map((value) => h("option", { value, text: value })));
+  project.value = projectFilter;
+  const resultLabel = h("p", { class: "meta", role: "status" });
   const stream = h("section", { "aria-label": "All entries", "aria-live": "polite" });
   const draw = () => {
     const q = search.value.trim();
-    const hits = pages.filter((p) => !only.value || p.id === only.value).flatMap((p) => p.entries.filter((e) => matchesNote(e, p.name, q)).map((e) => ({ p, e })));
-    stream.replaceChildren(...(hits.length ? timeline(app, hits.slice(0, 300)) : [h("p", { class: "muted", text: q ? "Nothing matches." : "No notes yet." })]));
+    const hits = pages.filter((p) => !only.value || p.id === only.value).flatMap((p) => p.entries.filter((e) => (!project.value || e.project === project.value) && matchesNote(e, p.name, q)).map((e) => ({ p, e })));
+    resultLabel.textContent = `${hits.length} ${hits.length === 1 ? "entry" : "entries"}${q ? ` matching “${q}”` : ""}${only.value ? ` in ${pages.find((p) => p.id === only.value)?.name}` : ""}${project.value ? ` · ${project.value}` : ""}`;
+    stream.replaceChildren(...(hits.length ? timeline(app, hits) : [h("p", { class: "muted", text: q || project.value || only.value ? "Nothing matches." : "No notes yet." })]));
   };
   search.addEventListener("input", () => { searchText = search.value; draw(); });
   only.addEventListener("change", () => { notebookFilter = only.value; draw(); });
+  project.addEventListener("change", () => { projectFilter = project.value; draw(); });
 
-  const shelf = h("section", { class: "card list", "aria-label": "Notebooks" });
-  for (const b of books)
-    shelf.append(
-      h(
-        "div",
-        { class: "row line" },
-        h(
-          "div",
-          { class: "identity-text" },
-          h("strong", {}, icon("notes"), " ", b.name),
-          h("span", {
-            class: "meta",
-            text: `${b.name === LOG ? "Where notes go when you don't name a notebook · " : ""}${b.count} ${b.count === 1 ? "note" : "notes"}${b.updated ? ` · changed ${new Date(b.updated).toLocaleDateString()}` : ""}`,
-          }),
-        ),
-        button("Open", () => app.go("notes", b.id), "small"),
-      ),
-    );
-
-  view.replaceChildren(
-    ...[
-      h("div", { class: "page-heading" }, h("div", {}, ...header("Work log", "What you got done, dated and kept.")), h("div", { class: "inline" }, button("Your week", () => app.go("week")), button([icon("plus"), "New notebook"], openCreate, "primary"))),
-      books.length ? shelf : empty("Nothing logged yet", "Tell your companion “note: …” and it goes to your Log, or “note for evaluation: …” to start a notebook."),
-      books.length ? h("h2", { class: "section-title", text: "All entries" }) : null,
-      books.length ? h("div", { class: "inline notes-filters" }, h("div", { class: "field grow" }, search), only) : null,
-      books.length ? stream : null,
-    ].filter((n): n is HTMLElement => !!n),
-  );
+  const shelf = h("aside", { class: "notebook-sidebar", "aria-label": "Notebooks" }, h("p", { class: "eyebrow", text: "Notebooks" }), button("All entries", () => { only.value = ""; notebookFilter = ""; draw(); }, "", { "aria-current": "page" }));
+  for (const book of books) shelf.append(button([icon("notes"), book.name], () => app.go("notes", book.id)));
+  shelf.append(button([icon("plus"), "New notebook"], openCreate, "quiet"));
+  const capture = async () => {
+    try {
+      const book = books.find((b) => b.name === LOG) ?? await invoke<Notebook>("create_notebook", { name: LOG });
+      app.go("notes", `${book.id}:capture`);
+    } catch (error) { app.toast(problem(error), undefined, true); }
+  };
+  const content = h("div", { class: "notebook-content" }, h("h2", { class: "section-title", text: "All entries" }),
+    h("div", { class: "inline notes-filters" }, h("div", { class: "field grow" }, search), only, projects.length ? project : null), resultLabel,
+    books.length ? stream : empty("Nothing logged yet", "Add a note to your Log, or start a notebook for a topic."));
+  view.replaceChildren(h("div", { class: "page-heading" }, h("div", {}, ...header("Work log", "What you got done, dated and kept.")), h("div", { class: "inline" }, button("Your week", () => app.go("week")), button([icon("plus"), "Add note"], () => void capture(), "primary"))),
+    h("div", { class: "notebook-layout" }, shelf, content));
   draw();
   focusHeading(view);
   if (focus) requestAnimationFrame(openCreate);
 }
 
-async function notebook(app: App, view: HTMLElement, id: string) {
+async function notebook(app: App, view: HTMLElement, id: string, capture = false) {
   let page: Page;
   try {
     page = await invoke<Page>("read_notebook", { id });
@@ -193,6 +186,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
     text,
     h("div", { class: "actions" }, h("span", { class: "hint", text: `Dated ${longDay(today())}.` }), h("button", { type: "submit", class: "primary", text: "Add note" })),
   );
+  add.hidden = !capture && !drafts.get(id);
   add.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!text.value.trim() || text.disabled) return text.focus();
@@ -206,10 +200,11 @@ async function notebook(app: App, view: HTMLElement, id: string) {
       });
       text.value = "";
       drafts.delete(id);
+      add.hidden = true;
       await fill();
     } catch (error) {
       app.toast(problem(error), undefined, true);
-    } finally { text.disabled = false; text.focus(); }
+    } finally { text.disabled = false; if (!add.hidden) text.focus(); else view.querySelector<HTMLElement>("h1")?.focus(); }
   });
   text.addEventListener("input", () => drafts.set(id, text.value));
   text.addEventListener("keydown", (e) => {
@@ -247,7 +242,7 @@ async function notebook(app: App, view: HTMLElement, id: string) {
   view.replaceChildren(
     ...[
       back("Work log", () => app.go("notes")),
-      h("div", { class: "page-heading" }, h("div", {}, ...header(page.name, "Dated notes, collected over time.")), button([icon("plus"), "New note"], () => { text.scrollIntoView({ block: "center" }); text.focus(); }, "primary")),
+      h("div", { class: "page-heading" }, h("div", {}, ...header(page.name, "Dated notes, collected over time.")), button([icon("plus"), "New note"], () => { add.hidden = false; text.scrollIntoView({ block: "center" }); text.focus(); }, "primary")),
       h(
         "div",
         { class: "actions" },
@@ -307,13 +302,13 @@ function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void, withNo
         class: "meta",
         text: `${longDay(entry.date)}${withNotebook ? ` · ${page.name}` : ""}${entry.project ? ` · ${entry.project}` : ""}`,
       }),
-      h("p", { class: "note-text", text: entry.text }),
+      button(entry.text, () => edit(), "note-text text-button", { "aria-label": `Edit note from ${longDay(entry.date)}` }),
     ),
     h(
       "div",
       { class: "inline" },
-      button("Edit", () => edit(), "small", { "aria-label": `Edit note from ${longDay(entry.date)}` }),
-      overflow(`note from ${longDay(entry.date)}`, [{ label: "Move…", run: () => void move(app, page, entry).catch((e) => app.toast(problem(e), undefined, true)) }, { label: "Delete", destructive: true, run: () => void (async () => {
+      button("Move…", () => void move(app, page, entry).catch((e) => app.toast(problem(e), undefined, true)), "small", { "aria-label": `Move note from ${longDay(entry.date)}` }),
+      overflow(`note from ${longDay(entry.date)}`, [{ label: "Edit", run: edit }, { label: "Delete", destructive: true, run: () => void (async () => {
           try {
             await invoke("remove_note", { id: page.id, entry });
             app.toast("Note deleted.", {
@@ -326,7 +321,7 @@ function row(app: App, page: Page, entry: NoteEntry, redraw?: () => void, withNo
         })() }]),
     ),
   );
-  const edit = () => {
+  function edit() {
     const field = h("textarea", {
       rows: 3,
       maxlength: 2000,

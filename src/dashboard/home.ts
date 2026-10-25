@@ -1,6 +1,8 @@
+import { reminderRow } from "./reminders";
+import { isScheduledReminder } from "../event-reminders";
 import { problem } from "../voice";
 import { sheet } from "./dialog";
-import type { Notebook } from "../notes";
+import type { Notebook, NoteEntry } from "../notes";
 import { icon } from "../icons";
 import { badge } from "../states";
 import { describeDue } from "../when";
@@ -49,7 +51,7 @@ export function attentionCard(app: App, w: Waiting) {
 }
 
 /** What each store holds, for the damaged-file notice (docs/V1.md V1-S2). */
-const STORE_NAMES: Record<string, string> = { "reminders.json": "reminders", "settings.json": "settings", "crew.json": "companion's name" };
+const STORE_NAMES: Record<string, string> = { "reminders.json": "reminders", "settings.json": "settings", "crew.json": "companion's name", "update-policy.json": "update safety policy" };
 
 /** A file that couldn't be read at launch: it was kept aside, and the last good copy can come back. */
 function storeNotices(app: App, into: HTMLElement) {
@@ -85,15 +87,12 @@ export function renderHome(app: App) {
   const primary = h("div", { class: "home-primary" });
   const secondary = h("div", { class: "home-secondary" });
   view.append(h("div", { class: "home-grid" }, primary, secondary));
-  const pending = reminders.filter((r) => !r.done).sort((a, b) => a.due - b.due);
+  const pending = reminders.filter(isScheduledReminder).sort((a, b) => a.due - b.due);
   const overdue = pending.filter((r) => r.due < Date.now());
   const agenda = (title: string, items: typeof reminders) => {
     primary.append(h("h2", { class: "section-title", text: title }));
     const list = h("section", { class: "card list", "aria-label": title });
-    for (const r of items.slice(0, 4)) list.append(button([
-      h("span", { class: "agenda-time", text: new Date(r.due).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }),
-      h("span", {}, h("strong", { text: r.text }), h("span", { class: "meta", text: describeDue(new Date(r.due)) })), icon("chevron"),
-    ], () => app.go("reminders", r.id), "list-button"));
+    for (const r of items.slice(0, 4)) list.append(reminderRow(app, r, false, true));
     if (!items.length) list.append(h("p", { class: "muted", text: "Nothing coming up. A little space for your next small step." }));
     list.append(h("div", { class: "actions" }, button(items.length > 4 ? `All ${items.length} reminders` : "All reminders", () => app.go("reminders"), "quiet")));
     primary.append(list);
@@ -103,26 +102,33 @@ export function renderHome(app: App) {
   else if (!overdue.length) primary.append(h("h2", { class: "section-title", text: "You're all caught up." }));
   for (const w of waiting.slice(0, 3)) primary.append(attentionCard(app, w));
   if (waiting.length > 3) primary.append(button(`See all ${waiting.length} requests`, () => app.go("requests"), "wide"));
-  agenda("Coming up", pending.filter((r) => r.due >= Date.now()));
+  const tomorrow = new Date(); tomorrow.setHours(24, 0, 0, 0);
+  agenda("Today’s reminders", pending.filter((r) => r.due >= Date.now() && r.due < tomorrow.getTime()));
 
   const sessions = status.pets.flatMap((p) => p.sessions);
-  const connected = integrations.claude_hooks || integrations.codex_tools || integrations.claude_tools || sessions.length;
+  const connected = integrations.claude_hooks || integrations.codex_health !== "off" || integrations.codex_tools || integrations.claude_tools || sessions.length;
   if (connected) {
-    const list = h("section", { class: "card list", "aria-label": "Work sessions" });
+    const list = h("section", { class: "card list", "aria-label": "Running sessions" });
     for (const s of sessions.slice(0, 3)) list.append(sessionRow(app, s));
     if (!sessions.length) list.append(h("p", { class: "muted", text: "Nothing running right now." }));
     list.append(h("div", { class: "actions" }, button("All sessions", () => app.go("sessions"), "quiet")));
-    secondary.append(h("h2", { class: "section-title", text: "Work sessions" }), list);
+    secondary.append(h("h2", { class: "section-title", text: "Running sessions" }), list);
   }
-  const notes = h("section", { class: "card list", "aria-label": "Recent notes" }, h("p", { class: "muted", text: "Loading notebooks…" }));
-  secondary.append(h("h2", { class: "section-title", text: "Recent notes" }), notes);
-  void invoke<Notebook[]>("list_notebooks").then((books) => {
+  const notes = h("section", { class: "card list recent-log", "aria-label": "Recent log" }, h("p", { class: "muted", text: "Loading notebooks…" }));
+  secondary.append(h("h2", { class: "section-title", text: "Recent log" }), notes);
+  const loadRecent = async () => {
+    const books = await invoke<Notebook[]>("list_notebooks");
+    const pages = await Promise.all(books.map((book) => invoke<Notebook & { entries: NoteEntry[] }>("read_notebook", { id: book.id })));
+    const recent = pages.flatMap((book) => book.entries.map((entry) => ({ book, entry }))).sort((a, b) => b.entry.date.localeCompare(a.entry.date) || b.book.updated - a.book.updated || b.entry.line - a.entry.line).slice(0, 3);
     notes.replaceChildren();
-    for (const book of [...books].sort((a, b) => b.updated - a.updated).slice(0, 3)) notes.append(button([
-      h("span", { class: "with-icon" }, icon("notes"), h("span", {}, h("strong", { text: book.name }), h("span", { class: "meta", text: `${book.count} ${book.count === 1 ? "note" : "notes"}` }))), icon("chevron"),
-    ], () => app.go("notes", book.id), "list-button"));
-    if (!books.length) notes.append(h("p", { class: "muted", text: "Keep an idea or a small win. Your dated notes collect here." }));
+    for (const { book, entry } of recent) notes.append(button([
+      h("span", { class: "meta", text: `${new Date(`${entry.date}T12:00:00`).toLocaleDateString([], { day: "numeric", month: "short" })} · ${book.name}` }),
+      h("span", { class: "recent-writing", text: entry.text }),
+    ], () => app.go("notes", book.id), "recent-entry"));
+    if (!recent.length) notes.append(h("p", { class: "muted", text: "Keep an idea or a small win. Your dated notes collect here." }));
     notes.append(h("div", { class: "actions" }, button("Add note", () => app.go("notes"))));
-  }).catch(() => notes.replaceChildren(h("p", { class: "muted", text: "Couldn't load notebooks." }), button("Open Notes", () => app.go("notes"))));
+  };
+  void loadRecent().catch(() => notes.replaceChildren(h("p", { class: "muted", text: "Couldn't load your recent writing." }), button("Retry", () => void loadRecent().catch((e) => app.toast(problem(e), undefined, true)))));
+
   return view;
 }

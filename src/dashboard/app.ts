@@ -5,6 +5,8 @@ import { button, h } from "./dom";
 import { Feedback } from "./feedback";
 import { dataState } from "./kit";
 import { problem } from "../voice";
+import { petState } from "./ui";
+import { STATES } from "../states";
 import { renderHome } from "./home";
 import { renderNotes } from "./notes";
 import { renderReminders } from "./reminders";
@@ -81,7 +83,7 @@ const waiters = new Map<string, (ok: boolean, text?: string) => void>();
 const app: App = {
   state: {
     settings: {} as Settings,
-    integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, start_at_login: false, hook_error: null, claude_health: "off" },
+    integrations: { claude_hooks: false, claude_tools: false, codex_tools: false, codex_health: "off", start_at_login: false, hook_error: null, claude_health: "off" },
     crew: { main: { name: "Pip" } },
     reminders: [],
     status: { pets: [], waiting: [] },
@@ -305,12 +307,21 @@ function updateNav() {
     if (b.dataset.view === selected) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   }
-  const connected = app.state.integrations.claude_hooks || app.state.integrations.codex_tools || app.state.integrations.claude_tools || app.state.status.pets.some((p) => p.sessions.length);
+  const connected = app.state.integrations.claude_hooks || app.state.integrations.codex_health !== "off" || app.state.integrations.codex_tools || app.state.integrations.claude_tools || app.state.status.pets.some((p) => p.sessions.length);
   const ai = nav.querySelector<HTMLElement>(".nav-ai");
   if (ai) ai.hidden = !connected && !["sessions", "review", "requests"].includes(current.view);
   const count = app.state.status.waiting.length;
   const badge = nav.querySelector<HTMLElement>(".count")!;
-  if (!topbar.firstChild && current.view !== "setup") topbar.append(tellBar(app));
+  if (!topbar.firstChild && current.view !== "setup") topbar.append(h("span", { class: "breadcrumb", "data-tauri-drag-region": true }), tellBar(app));
+  const crumb = topbar.querySelector<HTMLElement>(".breadcrumb");
+  if (crumb) crumb.textContent = NAV.find(([id]) => id === selected)?.[1] ?? "Sidefolk";
+  const portrait = nav.querySelector<HTMLImageElement>(".nav-pip");
+  if (portrait) portrait.src = picture(app.state.crew.main.look);
+  const caption = nav.querySelector<HTMLElement>(".companion-caption");
+  const companion = app.state.status.pets[0];
+  if (caption) caption.replaceChildren(h("strong", { text: app.state.crew.main.name }), h("span", { text: companion ? STATES[petState(companion, app.state.status.waiting)].word : "Here if you need me." }));
+  const quiet = nav.querySelector<HTMLButtonElement>(".quiet-toggle");
+  if (quiet) { quiet.setAttribute("aria-pressed", String(!app.state.settings.sounds)); quiet.textContent = app.state.settings.sounds ? "Quiet off" : "Quiet on"; }
   badge.hidden = count === 0;
   badge.textContent = String(count);
   badge.setAttribute("aria-label", `${count} waiting`);
@@ -321,13 +332,15 @@ function buildNav() {
   const list = h("div", { class: "nav-list nav-everyday" });
   const utility = h("div", { class: "nav-list nav-utility" });
   for (const [view, label, glyph] of NAV) {
-    const b = button([icon(glyph), h("span", { text: label })], () => app.go(view), "", { "data-view": view });
+    const b = button([icon(glyph), h("span", { text: label })], () => app.go(view), "", { "data-view": view, "aria-label": label, title: label });
     if (view === "today") b.append(h("span", { class: "count", hidden: true }));
     (view === "settings" ? utility : list).append(b);
     if (view === "sessions") b.classList.add("nav-ai");
   }
   const pet = h("img", { class: "nav-pip", src: picture(app.state.crew.main.look), alt: "", width: 84, height: 76 });
-  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, utility, pet);
+  const quiet = button("Quiet", () => void app.save({ sounds: !app.state.settings.sounds }), "quiet-toggle", { "aria-pressed": String(!app.state.settings.sounds), "aria-label": "Quiet mode" });
+  const footer = h("div", { class: "sidebar-foot" }, h("div", { class: "companion-dock" }, pet, h("p", { class: "companion-caption" })), h("div", { class: "sidebar-utility" }, utility, quiet));
+  nav.replaceChildren(h("div", { class: "drag", "data-tauri-drag-region": true }), brand, list, footer);
 }
 
 /** "review:<id>", "requests", … from the companion, the tray or the URL. */
@@ -368,6 +381,7 @@ listen<Ask[]>("requests", (requests) => {
   updateNav();
 });
 listen<{ id: string; ok: boolean; text?: string }>("answered", ({ id, ok, text }) => waiters.get(id)?.(ok, text));
+listen("notes-changed", () => { if (["today", "home", "week"].includes(current.view)) app.redraw(); });
 listen("reminders-changed", () => void app.refresh().catch((error) => app.toast(problem(error), undefined, true)));
 listen<Settings>("settings-changed", (settings) => {
   app.state.settings = settings;

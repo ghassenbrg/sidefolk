@@ -28,6 +28,13 @@ const views = [
   ["notebook", "/settings.html?tab=notes:evaluation-h2-2026"],
 ];
 
+async function fillCapture(page, text) {
+  const field = page.locator("#note-text");
+  await field.waitFor({ state: "attached" });
+  if (!(await field.isVisible())) await page.getByRole("button", { name: "New note", exact: true }).click();
+  await field.fill(text);
+}
+
 const browser = await webkit.launch();
 const failures = [];
 const watch = (page, label) => {
@@ -69,7 +76,7 @@ for (const scheme of ["light", "dark"]) {
   if (await page.getByRole("button", { name: /Asks first|Full access/ }).count()) failures.push("sessions: a full access switch is back");
   // A note added in the window shows up first, and Delete offers Undo.
   await page.goto(base + "/settings.html?tab=notes:evaluation-h2-2026");
-  await page.locator("#note-text").fill("Ran the accessibility audit.");
+  await fillCapture(page, "Ran the accessibility audit.");
   await page.getByRole("button", { name: "Add note" }).click();
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
   const noteMenu = page.locator(".note").first().getByRole("button", { name: /^More actions/ });
@@ -85,13 +92,13 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("heading", { name: "Reminders", exact: true }).waitFor();
   await page.keyboard.press("Control+z");
   await page.locator("nav").getByRole("button", { name: "Work log", exact: true }).click();
-  await page.getByRole("button", { name: "Open", exact: true }).first().click();
+  await page.getByRole("button", { name: "Evaluation H2 2026", exact: true }).click();
   await page.locator(".note").first().getByText("Ran the accessibility audit.").waitFor();
   // Incoming companion notes preserve both capture and an unfinished entry edit.
-  await page.locator("#note-text").fill("Unfinished capture");
+  await fillCapture(page, "Unfinished capture");
   await page.locator("nav").getByRole("button", { name: "Reminders", exact: true }).click();
   await page.locator("nav").getByRole("button", { name: "Work log", exact: true }).click();
-  await page.getByRole("button", { name: "Open", exact: true }).first().click();
+  await page.getByRole("button", { name: "Evaluation H2 2026", exact: true }).click();
   assert.equal(await page.locator("#note-text").inputValue(), "Unfinished capture");
   await page.locator(".note").first().getByRole("button", { name: /^Edit note/ }).click();
   await page.getByRole("textbox", { name: "Edit note" }).fill("Unfinished edit");
@@ -107,7 +114,7 @@ for (const scheme of ["light", "dark"]) {
   assert.equal(await page.getByRole("textbox", { name: "Edit note" }).inputValue(), "Unfinished edit");
   await page.locator(".note.editing").getByRole("button", { name: "Cancel" }).click();
   await page.getByText("Arrived from companion", { exact: true }).waitFor();
-  await page.locator("#note-text").fill("");
+  await fillCapture(page, "");
   // Labs: starting sessions is off by default; turned on, New session offers a folder and the
   // tool's own mode, off by default.
   await page.goto(base + "/settings.html?tab=sessions");
@@ -137,7 +144,8 @@ for (const scheme of ["light", "dark"]) {
   await uninstall.waitFor();
   if (await page.locator("#uninstall-delete-data").isChecked()) failures.push("uninstall: deleting data is on by default");
   await uninstall.getByRole("button", { name: "Uninstall" }).click();
-  await uninstall.getByText("still in", { exact: false }).waitFor();
+  await uninstall.getByText("Preview: no connections or files were changed.", { exact: true }).waitFor();
+  await uninstall.getByText("Sidefolk stays open. Resolve the steps above and retry.", { exact: true }).waitFor();
   await page.goto(base + "/settings.html?tab=settings:companion");
   if ((await page.locator(".crew-choice").count()) !== 2) failures.push("settings: Pip and Spark aren't both offered");
   await page.locator("label[for=look-spark]").click();
@@ -195,22 +203,25 @@ for (const scheme of ["light", "dark"]) {
   await page.getByRole("button", { name: "Back to Reminders" }).click();
   await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
   await page.getByRole("menuitem", { name: "Edit repeat acceptance", exact: true }).click();
+  await page.getByRole("radio", { name: "All future", exact: true }).check();
   let edit = page.getByRole("form", { name: "Edit repeat acceptance" });
   assert.equal(await edit.getByLabel("Repeat", { exact: true }).inputValue(), "week");
   await edit.getByLabel("Repeat", { exact: true }).selectOption("day");
   await edit.getByLabel("Every how many?").fill("1");
-  const originalDate = await edit.getByLabel("Date", { exact: true }).inputValue();
+  const originalDate = await edit.getByLabel("Anchor date", { exact: true }).inputValue();
   await edit.getByRole("button", { name: "Save changes" }).click();
   await reminder.getByRole("button", { name: "Mark repeat acceptance complete" }).click();
   await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
   await page.getByRole("menuitem", { name: "Edit repeat acceptance", exact: true }).click();
+  await page.getByRole("radio", { name: "All future", exact: true }).check();
   edit = page.getByRole("form", { name: "Edit repeat acceptance" });
-  assert.notEqual(await edit.getByLabel("Date", { exact: true }).inputValue(), originalDate);
+  assert.notEqual(await edit.getByLabel("Anchor date", { exact: true }).inputValue(), originalDate);
   await edit.getByLabel("Repeat", { exact: true }).selectOption("");
   await edit.getByRole("button", { name: "Save changes" }).click();
   assert.equal((await reminder.innerText()).includes("then every"), false);
   await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Delete repeat acceptance", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Delete reminder… repeat acceptance", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete reminder", exact: true }).click();
   await page.locator("#toast").getByRole("button", { name: "Undo" }).click();
   await reminder.getByRole("button", { name: "More actions for repeat acceptance", exact: true }).click();
   await page.getByRole("menuitem", { name: "Edit repeat acceptance", exact: true }).click();

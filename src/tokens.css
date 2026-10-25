@@ -51,9 +51,9 @@
   --radius-panel: 24px;
   --target: 44px;
   --window-target: 28px;
-  --window-text: 13pt;
-  --window-text-secondary: 16px;
-  --window-text-meta: 14px;
+  --window-text: 13px;
+  --window-text-secondary: 13px;
+  --window-text-meta: 12px;
   --palette-light-canvas: #f7f3ea;
   --palette-light-border: #dad6cd;
   --palette-dark-canvas: #191c22;

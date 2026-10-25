@@ -3,7 +3,7 @@ import { applyTheme, themeOf } from "../theme";
 import { notificationSetting } from "./notifications";
 import { icon, mark, type IconName } from "../icons";
 import { acceleratorFrom, shortcutLabel } from "../keys";
-import { invoke, inTauri, type Settings } from "./api";
+import { invoke, inTauri, listen, type Settings } from "./api";
 import type { App } from "./app";
 import { button, h, TERMINAL_LABELS } from "./dom";
 import { terminalControl } from "./setup";
@@ -122,6 +122,36 @@ function toolRow(app: App, key: "claude_hooks" | "claude_tools" | "codex_tools",
   );
 }
 
+type UpdateStatus = { configured: boolean; checking: boolean; installing: boolean; installed: boolean; version: string | null; notes: string | null; offer_id: string | null; error: string | null; paused: boolean; holding_allowed: boolean };
+let showUpdate: ((status: UpdateStatus) => void) | null = null;
+listen<UpdateStatus>("update-status", (status) => showUpdate?.(status));
+function updateControl(app: App) {
+  const result = h("p", { class: "muted", role: "status", text: "Checking update settings…" });
+  const actions = h("div", { class: "inline" });
+  const content = h("div", { class: "update-control" }, result, actions);
+  const draw = (status: UpdateStatus) => {
+    result.textContent = status.installed ? "Update installed. Restart Sidefolk to finish."
+      : status.installing ? "Installing the update…" : status.checking ? "Checking for updates…"
+      : !status.configured ? "Updates are not configured for this build."
+      : status.error ? problem(status.error) : status.version ? `Sidefolk ${status.version} is available.` : "You have the current version.";
+    actions.replaceChildren(button("Check for updates", async () => {
+      try { draw(await invoke<UpdateStatus>("check_updates")); }
+      catch (error) { app.toast(problem(error), undefined, true); }
+    }, "", { disabled: !status.configured || status.checking || status.installing }));
+    if (status.offer_id && status.version) actions.append(button("Review update…", () => {
+      const body = h("div", {}, h("p", { class: "note-text", text: status.notes ?? "" }));
+      const editor = sheet(`Sidefolk ${status.version}`, body);
+      body.append(h("div", { class: "actions sheet-actions" }, button("Later", editor.close), button("Install…", async () => {
+        try { await invoke("install_update", { offerId: status.offer_id }); editor.close(); }
+        catch (error) { app.toast(problem(error), undefined, true); }
+      }, "primary")));
+    }));
+  };
+  showUpdate = (status) => { if (content.isConnected) draw(status); };
+  void invoke<UpdateStatus>("update_status").then(draw).catch((error) => { result.textContent = problem(error); });
+  return content;
+}
+
 /** Disconnect & uninstall (docs/V1.md V1-X2): says exactly what happens, then does it and quits. */
 function uninstallSheet() {
   const remove = h("input", { type: "checkbox", id: "uninstall-delete-data" });
@@ -139,8 +169,10 @@ function uninstallSheet() {
     event.preventDefault();
     go.disabled = true;
     try {
-      const lines = await invoke<string[]>("uninstall_sidefolk", { deleteData: remove.checked });
-      done.replaceChildren(...[...lines, "Sidefolk quits in a few seconds. Then drag it from Applications to the Bin."].map((line) => h("li", { text: line })));
+      const { lines, quitting: finished } = await invoke<{ lines: string[]; quitting: boolean }>("uninstall_sidefolk", { deleteData: remove.checked });
+      if (!lines.length) { go.disabled = false; return; }
+      done.replaceChildren(...[...lines, ...(finished ? ["Sidefolk quits in a few seconds. Then drag it from Applications to the Bin."] : ["Sidefolk stays open. Resolve the steps above and retry."])].map((line) => h("li", { text: line })));
+      if (!finished) go.disabled = false;
     } catch (error) {
       done.replaceChildren(h("li", { text: problem(error) }));
       go.disabled = false;
@@ -263,6 +295,21 @@ function settingsContents(app: App) {
       integrations.hook_error ? h("p", { class: "field-error", role: "alert", text: problem(integrations.hook_error) }) : null,
       toolRow(app, "claude_hooks", "claude", "Claude Code", "Follow Claude Code sessions, review requests, and receive its notes and reminders.", "Adds local session hooks and companion tools through Claude Code’s CLI. Each config is backed up before changing it.", "Disconnects Sidefolk’s hooks and companion tools, with backups. Requests stay in Claude Code’s own window."),
       toolRow(app, "codex_tools", "tools-codex", "Companion tools for Codex", "The same tools for Codex sessions.", "Runs `codex mcp add` to register Sidefolk's tools and keeps a backup of Codex's config.", "Codex can no longer reach you through a companion."),
+      row("Codex session watching · Beta", integrations.codex_health === "waiting" ? "Waiting for trust or the first event. Open /hooks in Codex to review Sidefolk’s hooks. Approvals stay in Codex." : integrations.codex_health === "working" ? "Listening to Codex sessions. Approvals stay in Codex." : integrations.codex_health === "repair" ? "The connection needs repair. Review the paths in the confirmation." : "Optional local session hooks. Changes need confirmation and a backup; then you review their trust in Codex.",
+        h("div", { class: "inline" }, ...[true, ...(integrations.codex_health !== "off" ? [false] : [])].map((connect) => button(connect ? integrations.codex_health === "off" ? "Connect Codex sessions…" : "Repair Codex sessions…" : "Disconnect Codex sessions…", async () => {
+          try {
+            const result = await invoke<{ status: string; message: string }>("configure_codex", { connect });
+            if (result.status !== "cancelled") { app.toast(result.message); await app.refresh(); app.redraw(true); }
+          } catch (error) { app.toast(problem(error), undefined, true); }
+        })))),
+      row("Sidefolk agent skill", "Teaches Claude Code or Codex how to control your companion, reminders and work log through MCP. Each install previews paths and keeps backups.",
+        h("div", { class: "inline" }, ...[["claude", "Claude Code"], ["codex", "Codex"]].map(([agent, label]) => button(`Install for ${label}…`, async () => {
+          try {
+            const result = await invoke<{ status: string }>("install_sidefolk_skill", { agent });
+            if (result.status === "installed") app.toast(`Skill installed for ${label}.`);
+            else if (result.status === "unchanged") app.toast("The skill is already current.");
+          } catch (error) { app.toast(problem(error), undefined, true); }
+        })))),
       integrations.claude_hooks ? toggle(app, "pet_answers_permissions", "Answer requests on the companion", "When you are away from that exact session, your companion holds the request. Returning to the session releases it there. If time runs out, Claude Code asks in its own window.") : null,
     ),
   );
@@ -320,6 +367,7 @@ function settingsContents(app: App) {
       "info",
       "help",
       row("Sidefolk", `Version ${app.state.version}`, h("span")),
+      row("Updates", "Release notes and a signed update, with your confirmation before installing.", updateControl(app)),
       row("Your data", `Your companion, journal, reminders and backups stay on this Mac: ${app.state.dataDir}`, button("Show in Finder", () => void invoke("reveal_data_dir", {}))),
       row("Logs", "Errors and crashes, to attach to a bug report.", button("Show in Finder", () => void invoke("reveal_data_dir", { logs: true }))),
       row("Setup guide", "The short introduction from the first launch.", button("Run setup again", () => app.go("setup", "start"))),
@@ -327,11 +375,19 @@ function settingsContents(app: App) {
       row(
         "Report a problem",
         "Copies a short report (versions, settings, recent errors; never your reminders, notes or names) to paste into an email or an issue.",
-        button("Copy report", () =>
-          void invoke<string>("problem_report")
-            .then((report) => navigator.clipboard.writeText(report))
-            .then(() => app.toast("Report copied. Add what happened at the top, then send it."), (error) => app.toast(problem(error), undefined, true)),
-        ),
+        button("Preview report…", async () => {
+          try {
+            const report = await invoke<string>("problem_report");
+            const text = h("textarea", { rows: 12, "aria-label": "Problem report", readonly: true });
+            text.value = report;
+            const body = h("div", {}, h("p", { text: "Review what will be copied. Notes, commands, raw logs and names are excluded." }), text);
+            const editor = sheet("Problem report", body);
+            body.append(h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), button("Copy report", async () => {
+              try { await navigator.clipboard.writeText(report); editor.close(); app.toast("Report copied."); }
+              catch (error) { app.toast(problem(error), undefined, true); }
+            }, "primary")));
+          } catch (error) { app.toast(problem(error), undefined, true); }
+        }),
       ),
       h(
         "div",

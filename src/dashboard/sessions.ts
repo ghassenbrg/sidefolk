@@ -2,6 +2,7 @@ import { problem } from "../voice";
 import { sheet } from "./dialog";
 import { icon } from "../icons";
 import { badge } from "../states";
+import { today, type NoteEntry, type Notebook } from "../notes";
 import { invoke } from "./api";
 import type { App } from "./app";
 import { agentShort, ago, button, folder, h } from "./dom";
@@ -31,7 +32,7 @@ export function renderSessions(app: App) {
               "div",
               { class: "row line" },
               h("div", { class: "identity-text" }, h("strong", { text: `${agentShort(o.source)} · ${folder(o.project || o.cwd || "")}` }), h("span", { class: "meta", text: `${o.kind === "done" ? "Finished" : "Stopped with a problem"} ${ago(o.at)}${o.kind === "done" && o.detail ? ` · ${o.detail}` : ""}` })),
-              h("div", { class: "inline" }, badge(o.kind === "done" ? "done" : "failed"), button([icon("terminal"), "Continue"], () => void app.openSession({ source: o.source, session: o.session!, cwd: o.cwd || o.project }, true), "small")),
+              h("div", { class: "inline" }, badge(o.kind === "done" ? "done" : "failed"), o.kind === "done" ? button("Log it", () => logWork(app, o), "small", { "aria-label": `Log ${agentShort(o.source)} work in ${folder(o.project || "")}` }) : null, button([icon("terminal"), "Continue"], () => void app.openSession({ source: o.source, session: o.session!, cwd: o.cwd || o.project }, true), "small")),
             ),
           )
         : [h("p", { class: "muted", text: "Finished sessions show up here, ready to continue in your terminal." })]),
@@ -43,7 +44,7 @@ export function renderSessions(app: App) {
     if (!view.contains(document.activeElement) || !document.activeElement?.matches("input, select, textarea")) fill();
   });
   view.append(h("h2", { class: "section-title", text: "Running" }), running, h("h2", { class: "section-title", text: "Recently finished" }), finished);
-  if (!app.state.integrations.claude_hooks) view.append(empty("Claude Code isn't connected", "Connect it in Settings to see its sessions here and answer its requests.", button("Open Settings", () => app.go("settings", "tools"))));
+  if (!app.state.integrations.claude_hooks && app.state.integrations.codex_health === "off") view.append(empty("No session watcher connected", "Connect Claude Code or opt into Codex session watching in Settings.", button("Open Settings", () => app.go("settings", "tools"))));
   return view;
 }
 
@@ -55,7 +56,7 @@ function knownFolders(app: App) {
 
 function newSession(app: App, close: () => void) {
   const known = knownFolders(app);
-  const tool = h("select", { id: "new-session-tool" }, h("option", { value: "claude", text: "Claude Code" }), h("option", { value: "codex", text: "Codex" }));
+  const tool = h("select", { id: "new-session-tool" }, h("option", { value: "claude", text: "Claude Code" }));
   const where = h("input", { type: "text", id: "new-session-folder", list: "known-folders", autocomplete: "off", placeholder: "~/git/api or api", value: known[0] ?? "" });
   const folders = h("datalist", { id: "known-folders" }, ...known.map((path) => h("option", { value: path })));
   const full = h("input", { type: "checkbox", class: "switch", role: "switch", id: "new-session-full" });
@@ -69,7 +70,7 @@ function newSession(app: App, close: () => void) {
       h("div", { class: "field" }, h("label", { for: tool.id, text: "Tool" }), tool),
       h("div", { class: "field wide" }, h("label", { for: where.id, text: "Folder" }), folderPicker(app, where), folders),
     ),
-    h("div", { class: "setting" }, h("div", { class: "setting-text" }, h("label", { for: full.id, text: "Start in the tool's own auto mode" }), h("p", { class: "muted", text: "Claude Code's auto mode, or Codex without approvals sandboxed to the folder. The tool decides what to ask; Sidefolk never answers for it. Off: it asks you first." })), full),
+    h("div", { class: "setting" }, h("div", { class: "setting-text" }, h("label", { for: full.id, text: "Start in the tool's own auto mode" }), h("p", { class: "muted", text: "Claude Code’s auto mode. The tool decides what to ask; Sidefolk never answers for it. Off: it asks you first." })), full),
     h("div", { class: "actions sheet-actions" }, button("Cancel", close), h("button", { type: "submit", class: "primary", text: "Start in terminal" })),
   );
   const error = h("p", { class: "field-error", role: "alert" });
@@ -90,4 +91,25 @@ function newSession(app: App, close: () => void) {
     }
   });
   return form;
+}
+
+/** Keep the user's first request, after review; agent output never becomes a note by itself. */
+function logWork(app: App, outcome: import("./api").Outcome) {
+  const text = h("textarea", { id: "work-entry", rows: 4, maxlength: 2000 });
+  text.value = `${outcome.project ? `${folder(outcome.project)}: ` : ""}${outcome.firstPrompt ?? ""}`;
+  const error = h("p", { class: "field-error", role: "alert" });
+  const form = h("form", {}, h("label", { for: text.id, text: "Entry for your Log" }), text, error);
+  const editor = sheet("Log this work", form);
+  const save = h("button", { type: "submit", class: "primary", text: "Save to Log" });
+  form.append(h("div", { class: "actions sheet-actions" }, button("Cancel", editor.close), save));
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault(); if (!text.value.trim() || save.disabled) return;
+    save.disabled = true;
+    try {
+      const [book, entry] = await invoke<[Notebook, NoteEntry]>("add_note", { notebook: "Log", text: text.value, date: today(), project: folder(outcome.project || ""), create: true });
+      editor.close();
+      app.toast("Noted in Log.", { label: "Undo", run: async () => { await invoke("remove_note", { id: book.id, entry }); } });
+    } catch (reason) { error.textContent = problem(reason); save.disabled = false; }
+  });
+  text.focus();
 }

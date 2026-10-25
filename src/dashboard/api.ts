@@ -34,13 +34,13 @@ export type Settings = {
 /** Mirrors `Problem` in src-tauri/src/store.rs: a file that couldn't be read at launch. */
 export type StoreProblem = { file: string; kept: string; error: string; backup: boolean };
 /** `hook_error`: why Sidefolk can't hear Claude Code (its port is taken), or null. */
-export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; start_at_login: boolean; hook_error: string | null; claude_disconnect_pending?: boolean; claude_health: "off" | "waiting" | "working" | "repair" | "unavailable" };
+export type Integrations = { claude_hooks: boolean; claude_tools: boolean; codex_tools: boolean; codex_health: "off" | "waiting" | "working" | "repair" | "unavailable"; start_at_login: boolean; hook_error: string | null; claude_disconnect_pending?: boolean; claude_health: "off" | "waiting" | "working" | "repair" | "unavailable" };
 /** crew.json: the companion's name, and `look: "spark"` when it's Spark. */
 export type CrewFile = { main: { name: string; look?: string } };
 
 /** Mirrors `status()` in src/companion.ts. */
-export type SessionInfo = { source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number };
-export type Outcome = { kind: "done" | "failed"; source: string; project: string; detail: string; at: number; session?: string; cwd?: string };
+export type SessionInfo = { firstPrompt?: string; source: string; id: string; cwd: string; state: string; verb: string; detail: string; project: string; at: number };
+export type Outcome = { firstPrompt?: string; kind: "done" | "failed"; source: string; project: string; detail: string; at: number; session?: string; cwd?: string };
 export type PetStatus = {
   id: string;
   name: string;
@@ -122,7 +122,7 @@ function preview(): typeof tauriInvoke {
       your_week: true,
       hide_from_dock: false,
     } as Settings,
-    integrations: { claude_hooks: true, claude_tools: true, codex_tools: false, start_at_login: false, hook_error: null, claude_health: "working" } as Integrations,
+    integrations: { claude_hooks: true, claude_tools: true, codex_tools: false, codex_health: "off", start_at_login: false, hook_error: null, claude_health: "working" } as Integrations,
     crew: { main: { name: "Pip" } } as CrewFile,
     reminders: [
       { id: "r1", text: "Review launch notes", due: now + 3 * 3_600_000, project: "", from: "you", created: now, done: false, fired: false },
@@ -189,6 +189,16 @@ function preview(): typeof tauriInvoke {
         return state.crew;
       case "list_reminders":
         return state.reminders;
+      case "configure_codex":
+        return { status: "cancelled", message: "Preview: no Codex hooks changed." };
+      case "resolve_event_project":
+        return a.path;
+      case "add_event_reminder": {
+        const now = Date.now();
+        const r: Reminder = { id: `event-${now}`, text: a.text, project: a.project, due: 0, created: now, done: false, fired: false, from: "you", event: { expires: now + 24 * 3_600_000 } };
+        state.reminders.push(r);
+        return r;
+      }
       case "add_reminder": {
         const r = { id: `r${Date.now()}`, text: a.text, due: a.due, project: a.project ?? "", from: "you", created: Date.now(), done: false, fired: false, repeat: a.repeat };
         state.reminders.push(r);
@@ -259,9 +269,12 @@ function preview(): typeof tauriInvoke {
         setTimeout(() => emit("notes-changed", null), 50);
         return null;
       }
+      case "install_sidefolk_skill": return { status: "cancelled", files: [], backups: [] };
+      case "update_status": return { configured: false, checking: false, installing: false, installed: false, version: null, notes: null, offer_id: null, error: null, paused: false, holding_allowed: true };
+      case "check_updates": throw "Updates are not configured for this preview.";
       case "clear_history": return null as never;
       case "uninstall_sidefolk":
-        return ["Removed Sidefolk's hooks from Claude Code (a backup is kept). (Preview: nothing changed.)", "Your reminders, notes and backups are still in your data folder."];
+        return { lines: ["Preview: no connections or files were changed."], quitting: false };
       case "problem_report":
         return "Sidefolk preview on macOS (preview)\n\nWhat happened, and what did you expect?\n";
       case "allow_terminal_control":
