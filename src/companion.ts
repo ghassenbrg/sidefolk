@@ -312,6 +312,10 @@ export class Companion {
       case "start":
         if (!this.host.labs?.().sessions) return "Starting sessions is off. Turn it on in Settings → Labs.";
         return this.confirmStart(command.agent, command.folder, command.full);
+      case "chat":
+        // Small talk: one line in Pip's voice, with a pose (creative-design/PIP.md).
+        this.pet.mind.react(command.pose === "note" ? "write" : command.pose, 1.4);
+        return command.reply;
       case "unknown":
         return this.offerNote(command.text);
     }

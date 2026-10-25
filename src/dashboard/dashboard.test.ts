@@ -75,3 +75,13 @@ describe("Your week", () => {
     expect(weekMarkdown("2026-10-19", items)).toContain("- 2026-10-20 — shipped search _(Log · api)_");
   });
 });
+
+describe("a new reminder's default time", () => {
+  it("is the next full hour, or 09:00 tomorrow late at night", async () => {
+    const { defaultDue } = await import("./reminders");
+    const at = (d: Date) => [d.getDate(), d.getHours(), d.getMinutes()];
+    expect(at(defaultDue(new Date(2026, 9, 25, 10, 20)))).toEqual([25, 11, 0]);
+    expect(at(defaultDue(new Date(2026, 9, 25, 21, 30)))).toEqual([26, 9, 0]);
+    expect(at(defaultDue(new Date(2026, 9, 25, 5, 0)))).toEqual([25, 9, 0]);
+  });
+});

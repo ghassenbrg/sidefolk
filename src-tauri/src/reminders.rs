@@ -72,11 +72,18 @@ pub struct Repeat {
     /// "day", "weekday", "week" or "month".
     pub every: String,
     pub n: u32,
+    /// Weekly on these days (0 Sunday … 6 Saturday), e.g. Monday and Thursday; empty means the
+    /// anchor's weekday.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub days: Vec<u8>,
 }
 
 impl Repeat {
     pub fn valid(&self) -> bool {
-        matches!(self.every.as_str(), "day" | "weekday" | "week" | "month") && (1..=52).contains(&self.n)
+        matches!(self.every.as_str(), "day" | "weekday" | "week" | "month")
+            && (1..=52).contains(&self.n)
+            && self.days.iter().all(|d| *d < 7)
+            && (self.days.is_empty() || self.every == "week")
     }
 }
 
@@ -423,7 +430,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("sidefolk-series-{}", std::process::id()));
         let store = Reminders::load(&dir, &Default::default());
         // Weekly on Monday 26 October at 09:00, snoozed to Tuesday, then done: next Monday.
-        let r = store.add("plan the week", at(&tz, 26, 9), "", "you", Some(Repeat { every: "week".into(), n: 1 })).unwrap();
+        let r = store.add("plan the week", at(&tz, 26, 9), "", "you", Some(Repeat { every: "week".into(), n: 1, days: vec![] })).unwrap();
         store.answer(&r.id, Answer::Snooze(at(&tz, 27, 10)), at(&tz, 26, 9), &tz).unwrap();
         assert_eq!(store.list()[0].due, at(&tz, 27, 10));
         store.answer(&r.id, Answer::Done, at(&tz, 27, 10), &tz).unwrap();
@@ -443,7 +450,7 @@ mod tests {
         let tz = jiff::tz::TimeZone::get("Asia/Tokyo").unwrap();
         let dir = std::env::temp_dir().join(format!("sidefolk-missed-{}", std::process::id()));
         let store = Reminders::load(&dir, &Default::default());
-        let daily = store.add("drink water", at(&tz, 20, 9), "", "you", Some(Repeat { every: "day".into(), n: 1 })).unwrap();
+        let daily = store.add("drink water", at(&tz, 20, 9), "", "you", Some(Repeat { every: "day".into(), n: 1, days: vec![] })).unwrap();
         let once = store.add("send the invoice", at(&tz, 20, 15), "", "you", None).unwrap();
         // Shown on the 20th, never answered; the Mac slept until the 25th at 10:00.
         store.update(&daily.id, &Change { fired: Some(true), ..Default::default() }).unwrap();
@@ -462,7 +469,7 @@ mod tests {
     fn macos_holds_one_offs_and_the_next_occurrences_of_each_series() {
         let tz = jiff::tz::TimeZone::get("Asia/Tokyo").unwrap();
         let now = at(&tz, 25, 10);
-        let daily = Reminder { id: "d".into(), text: "water".into(), due: at(&tz, 25, 18), anchor: at(&tz, 20, 18), occurrence: at(&tz, 25, 18), repeat: Some(Repeat { every: "day".into(), n: 1 }), ..Default::default() };
+        let daily = Reminder { id: "d".into(), text: "water".into(), due: at(&tz, 25, 18), anchor: at(&tz, 20, 18), occurrence: at(&tz, 25, 18), repeat: Some(Repeat { every: "day".into(), n: 1, days: vec![] }), ..Default::default() };
         let once = Reminder { id: "o".into(), text: "bank".into(), due: at(&tz, 26, 9), occurrence: at(&tz, 26, 9), ..Default::default() };
         let done = Reminder { id: "x".into(), done: true, due: at(&tz, 26, 9), ..Default::default() };
         let q = queue(&[daily, once, done], now, &tz);
@@ -489,7 +496,7 @@ mod tests {
         store.update(&r.id, &Change { done: Some(true), ..Default::default() }).unwrap();
         assert!(Reminders::load(&dir, &Default::default()).list().is_empty());
         assert!(!store.update("missing", &Change::default()).unwrap());
-        let weekly = Repeat { every: "week".into(), n: 2 };
+        let weekly = Repeat { every: "week".into(), n: 2, days: vec![] };
         let r = store.add("send the report", now_ms() + 60_000, "", "you", Some(weekly.clone())).unwrap();
         assert_eq!(r.repeat, Some(weekly.clone()));
         store.update(&r.id, &serde_json::from_str::<Change>(r#"{"text":"new title"}"#).unwrap()).unwrap();
@@ -499,7 +506,7 @@ mod tests {
         assert!(store.update(&r.id, &serde_json::from_str::<Change>(r#"{"repeat":{"every":"day","n":0}}"#).unwrap()).is_err());
         store.update(&r.id, &serde_json::from_str::<Change>(r#"{"clear_repeat":true}"#).unwrap()).unwrap();
         assert_eq!(Reminders::load(&dir, &Default::default()).list().iter().find(|x| x.id == r.id).unwrap().repeat, None);
-        let odd = store.add("odd", now_ms() + 60_000, "", "you", Some(Repeat { every: "hour".into(), n: 1 })).unwrap();
+        let odd = store.add("odd", now_ms() + 60_000, "", "you", Some(Repeat { every: "hour".into(), n: 1, days: vec![] })).unwrap();
         assert_eq!(odd.repeat, None);
         let r = store.add("call the bank", now_ms() + 60_000, "", "you", None).unwrap();
         assert!(store.update(&r.id, &Change { text: Some(" ".into()), ..Default::default() }).is_err());

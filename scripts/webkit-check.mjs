@@ -121,6 +121,24 @@ for (const scheme of ["light", "dark"]) {
   if (await page.getByText("Led the login migration; errors down 40%.", { exact: true }).count()) failures.push(`${scheme} notes: a September note matched "october"`);
   await page.getByRole("button", { name: "Your week" }).click();
   await page.getByRole("heading", { name: "Your week" }).waitFor();
+  // Quick add finishes in the window (V1-Q1): a reminder with its time, both readings of an
+  // ambiguous hour, a note to the Log, small talk.
+  await page.goto(base + "/settings.html");
+  await page.locator(".tell-input").fill("call mom at 5pm");
+  await page.locator(".tell-input").press("Enter");
+  await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+  await page.locator("#toast").getByText("Got it.", { exact: false }).waitFor();
+  await page.locator(".tell-input").fill("at 9 send the report");
+  await page.locator(".tell-input").press("Enter");
+  await page.getByRole("dialog").getByText("Which one do you mean?").waitFor();
+  if ((await page.getByRole("dialog").locator(".sheet-actions button").count()) !== 3) failures.push(`${scheme} quick add: an ambiguous hour didn't offer both readings`);
+  await page.keyboard.press("Escape");
+  await page.locator(".tell-input").fill("note: tidied the release checklist");
+  await page.locator(".tell-input").press("Enter");
+  await page.locator("#toast").getByText("Noted in Log.", { exact: true }).waitFor();
+  await page.locator(".tell-input").fill("hi");
+  await page.locator(".tell-input").press("Enter");
+  await page.locator("#toast").getByText("Hi. Here if you need me.", { exact: true }).waitFor();
   // English never becomes a command; with Labs → Commands on, "$ …" is confirmed in the window.
   await page.goto(base + "/settings.html");
   await page.locator(".tell-input").fill("ls -la");
@@ -289,6 +307,13 @@ await overlay.waitForTimeout(800);
 await overlay.screenshot({ path: join(out, "overlay-run.png") });
 await run.getByRole("button", { name: "Run in terminal" }).click();
 await overlay.getByText("Preview: nothing ran", { exact: false }).waitFor();
+// An ambiguous hour offers both readings on the companion (V1-Q5).
+await overlay.goto(base + "/?zoom=1.4");
+await overlay.waitForTimeout(1200);
+await overlay.keyboard.press("c");
+await overlay.locator(".bubble input").fill("at 9 send the report");
+await overlay.locator(".bubble input").press("Enter");
+await overlay.getByText("Which one do you mean?", { exact: true }).waitFor();
 // English never reaches the terminal card, even when it starts with a command's name.
 await overlay.goto(base + "/?zoom=1.4");
 await overlay.waitForTimeout(1200);

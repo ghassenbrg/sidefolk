@@ -222,3 +222,18 @@ Newest last. Each entry: what, why, and what would change it.
     - `move_note` writes the entry to the target before removing it from the source.
     - Your week replaces the weekly wins summary; Log it stores only the project and the first
       prompt line.
+44. **P3 Quick add (25 October 2026).**
+    - **Corpus.** `src/corpus.test.ts` holds 300 phrases (150 everyday, 100 developer, 50
+      adversarial), run on a fixed clock in Paris and Tokyo plus a DST night. It is 100% on the
+      phrases as written, which the agents wrote. Real misses from the beta get added as lines.
+      `CORPUS_REPORT=1` prints the score.
+    - **Precedence.** `$` comes first (`$ echo tomorrow at 9` is a command), then small talk:
+      about 20 replies in Pip's voice, kind `chat` with a pose.
+    - **Bare hours.** A bare hour's `alternative` is the other time of day, never the same hour
+      on another day. The companion and the window offer both as buttons.
+    - **Same surface.** The window's Quick add finishes reminders, notes, navigation, opening
+      things and small talk in the window. Only rename and hide go to the companion.
+    - **Weekday lists** ("every Monday and Thursday") are `Repeat.days`, in Rust and TS. The
+      form keeps them.
+    - **Reminder form defaults** are the next full hour, or tomorrow 09:00 outside 07:00–21:59
+      (B7).

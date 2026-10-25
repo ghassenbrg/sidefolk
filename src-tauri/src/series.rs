@@ -52,14 +52,23 @@ fn nth(anchor: Date, repeat: &Repeat, k: i64) -> Option<Date> {
 pub fn next_after(anchor: u64, repeat: &Repeat, after: u64, tz: &TimeZone) -> u64 {
     let start = wall(anchor, tz);
     let time = start.time();
-    if repeat.every == "weekday" {
-        // Each weekday at the anchor's time.
+    if repeat.every == "weekday" || !repeat.days.is_empty() {
+        // Weekdays, or the named days of the week, at the anchor's time; every n-th week counted
+        // from the anchor's week.
+        let anchor_week = start.date().checked_sub(jiff::Span::new().days(start.date().weekday().to_sunday_zero_offset() as i64)).unwrap_or(start.date());
+        let on = |day: Date| {
+            if repeat.every == "weekday" {
+                return !matches!(day.weekday(), jiff::civil::Weekday::Saturday | jiff::civil::Weekday::Sunday);
+            }
+            let weeks = anchor_week.until(day).map(|s| s.get_days() as i64).unwrap_or(0).div_euclid(7);
+            repeat.days.contains(&(day.weekday().to_sunday_zero_offset() as u8)) && weeks.rem_euclid(repeat.n as i64) == 0
+        };
         let mut day = wall(after.max(anchor), tz).date();
         if after < anchor {
             day = day.checked_sub(jiff::Span::new().days(1)).unwrap_or(day);
         }
-        for _ in 0..14 {
-            if !matches!(day.weekday(), jiff::civil::Weekday::Saturday | jiff::civil::Weekday::Sunday) {
+        for _ in 0..(14 * repeat.n.max(1) as usize) {
+            if on(day) {
                 let at = instant(day.to_datetime(time), tz);
                 if at > after && at >= anchor {
                     return at;
@@ -113,7 +122,7 @@ mod tests {
         instant(date(y, m, d).at(h, min, 0, 0), tz)
     }
     fn repeat(every: &str, n: u32) -> Repeat {
-        Repeat { every: every.into(), n }
+        Repeat { every: every.into(), n, days: vec![] }
     }
     fn wall_of(ms: u64, tz: &TimeZone) -> (i8, i8, i8, i8) {
         let w = wall(ms, tz);
@@ -164,6 +173,21 @@ mod tests {
         // Weekdays skip the weekend: Friday → Monday.
         let friday = at(&tokyo, 2026, 10, 30, 9, 0);
         assert_eq!(wall_of(next_after(friday, &repeat("weekday", 1), friday, &tokyo), &tokyo), (11, 2, 9, 0));
+    }
+
+    #[test]
+    fn several_days_of_the_week() {
+        let tokyo = tz("Asia/Tokyo");
+        // Monday and Thursday at 09:00, from Monday 26 October 2026.
+        let mon_thu = Repeat { every: "week".into(), n: 1, days: vec![1, 4] };
+        let anchor = at(&tokyo, 2026, 10, 26, 9, 0);
+        let thu = next_after(anchor, &mon_thu, anchor, &tokyo);
+        let mon = next_after(anchor, &mon_thu, thu, &tokyo);
+        assert_eq!((wall_of(thu, &tokyo), wall_of(mon, &tokyo)), ((10, 29, 9, 0), (11, 2, 9, 0)));
+        // Every other week: Monday and Thursday, then two weeks later.
+        let fortnightly = Repeat { every: "week".into(), n: 2, days: vec![1, 4] };
+        let thu = next_after(anchor, &fortnightly, anchor, &tokyo);
+        assert_eq!(wall_of(next_after(anchor, &fortnightly, thu, &tokyo), &tokyo), (11, 9, 9, 0));
     }
 
     #[test]

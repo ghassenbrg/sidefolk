@@ -225,8 +225,12 @@ function preview(): typeof tauriInvoke {
         return book;
       }
       case "add_note": {
-        const a = args as { notebook: string; text: string; date: string; project?: string | null };
-        const book = state.notebooks.find((b) => b.id === a.notebook || b.name.toLowerCase() === a.notebook.toLowerCase());
+        const a = args as { notebook: string; text: string; date: string; project?: string | null; create?: boolean };
+        let book = state.notebooks.find((b) => b.id === a.notebook || b.name.toLowerCase() === a.notebook.toLowerCase());
+        if (!book && a.create) {
+          book = { id: a.notebook.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: a.notebook, count: 0, updated: Date.now(), entries: [], path: `${notesDir}/${a.notebook.toLowerCase()}.md` };
+          state.notebooks.push(book);
+        }
         if (!book) throw `There's no notebook called ${a.notebook}.`;
         const entry = { line: book.entries.length + 2, date: a.date, text: a.text.trim(), project: a.project ?? "" };
         book.entries.push(entry);

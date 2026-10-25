@@ -22,14 +22,47 @@ export type Command =
   | { kind: "notes" }
   /** `$ …`: a shell command for the user's terminal, after they see it. `folder` as typed ("api", "~/x"). */
   | { kind: "run"; command: string; folder: string | null }
+  /** Small talk: a short reply in the companion's voice, and how it moves (docs/V1.md V1-Q2). */
+  | { kind: "chat"; reply: string; pose: "wave" | "celebrate" | "sleep" | "note" }
   | { kind: "unknown"; text: string };
 
+/** Small talk Pip answers in its own voice: one short sentence, never a feature list (PIP.md). */
+const CHAT: [RegExp, string, Extract<Command, { kind: "chat" }>["pose"]][] = [
+  [/^(hi|hello|hey|hiya|yo|howdy)( there)?( (pip|spark|buddy|friend))?$/, "Hi. Here if you need me.", "wave"],
+  [/^good morning( (pip|spark))?$/, "Morning. Tell me what to hold today.", "wave"],
+  [/^good (afternoon|evening)( (pip|spark))?$/, "Hello again. Here if you need me.", "wave"],
+  [/^good ?night( (pip|spark))?$/, "Good night. I'll keep watch.", "sleep"],
+  [/^(thanks|thank you|thx|ty|cheers)( (so much|a lot|pip|spark|buddy))?$/, "Anytime.", "wave"],
+  [/^(how are you|how'?s it going|you ok|are you ok|how do you do)( (pip|spark|today))?$/, "All good. Holding your things.", "wave"],
+  [/^(good job|nice work|well done|great job|nice|awesome|you'?re the best)( (pip|spark))?$/, "Thanks!", "celebrate"],
+  [/^(i love you|love you|you'?re cute|cute)( (pip|spark))?$/, "Aw. Back to work, though.", "celebrate"],
+  [/^(sorry|my bad|oops)$/, "No harm done.", "wave"],
+  [/^(bye|goodbye|see you|see ya|later|cya)( (pip|spark))?$/, "See you. I'll be right here.", "wave"],
+  [/^(who are you|what are you)$/, "I'm your desk companion. I hold reminders and notes.", "wave"],
+  [/^(are you an? ai|are you real|are you chatgpt|are you claude)$/, "No, I'm not an AI. I just keep things for you.", "wave"],
+  [/^(ok|okay|k|cool|great|got it|alright|sure)$/, "Got it.", "note"],
+  [/^(lol|haha|hehe|lmao)$/, "Heh.", "celebrate"],
+  [/^(i'?m (tired|exhausted|done)|long day)$/, "Take a break. I'll hold everything.", "sleep"],
+  [/^(i'?m (bored|back)|back)$/, "Welcome back.", "wave"],
+  [/^(what time is it|what'?s the time)$/, new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), "note"],
+  [/^(yes|yep|yeah|no|nope|nah)$/, "Noted. Tell me more if you need something.", "note"],
+];
+
 export function parse(input: string): Command {
+  // `$ …` first: everything after it is the command, dates and all (docs/V1.md V1-Q2 step 2).
+  const raw = input.trim();
+  let m: RegExpMatchArray | null;
+  if ((m = raw.match(/^\$\s*(\S.*?)(?:\s+in\s+(~?[\w./-]+))?$/s))) return { kind: "run", command: m[1].trim(), folder: m[2] ?? null };
+  if (raw === "?") return { kind: "help" };
   const text = input.trim().replace(/[.!?]+$/, "");
   const lower = text.toLowerCase();
-  let m: RegExpMatchArray | null;
+  for (const [pattern, reply, pose] of CHAT) {
+    if (!pattern.test(lower.replace(/[,!.]/g, "").replace(/\s+/g, " "))) continue;
+    // "what time is it" answers the time now, not when the page loaded.
+    return { kind: "chat", reply: pattern.source.includes("time is it") ? new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : reply, pose };
+  }
 
-  if (/^(help|\?|what can you do)$/.test(lower)) return { kind: "help" };
+  if (/^(help|what can you do)$/.test(lower)) return { kind: "help" };
   if (/^(?:show |list |open )?(?:my |the )?reminders$/.test(lower)) return { kind: "reminders" };
   // "what's today", "what do I have today": the day, in the window's Today.
   if (/^(?:what'?s|what is|what do i have|show me)\s+(?:on\s+|up\s+)?(?:for\s+)?today$/.test(lower)) return { kind: "sidefolk" };
@@ -57,10 +90,6 @@ export function parse(input: string): Command {
   // before "open …" so "open enrollment closes friday 5pm" is one too (docs/V1.md V1-Q2).
   if (parseReminder(text)) return { kind: "remind", text };
   if ((m = text.match(/^open\s+(?:the\s+)?(\S.{0,60})$/i)) && !/\s(session|notebook)$/i.test(text)) return { kind: "open-thing", target: m[1], app: null };
-  // "$ npm test in api": only an explicit `$` is a command. Checked on the raw input: a trailing
-  // "?" or "." can be part of a command.
-  const raw = input.trim();
-  if ((m = raw.match(/^\$\s*(.+?)(?:\s+in\s+(~?[\w./-]+))?$/))) return { kind: "run", command: m[1], folder: m[2] ?? null };
   return { kind: "unknown", text };
 }
 
@@ -116,6 +145,8 @@ export function explain(text: string, ctx: ExplainContext): string {
       return "Show your notebooks";
     case "run":
       return `Run \`${command.command}\` in ${command.folder ?? "your home folder"}, in your terminal (you confirm first)`;
+    case "chat":
+      return "Say hi";
     case "unknown":
       return "Save it as a note";
   }

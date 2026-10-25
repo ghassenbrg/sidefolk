@@ -88,22 +88,33 @@ export class Reminders {
     if (kind === "new-reminder") return this.form();
     const parsed = parseReminder(text);
     if (!parsed) return this.askWhen(text.replace(/^(to|about)\s+/i, ""));
-    return this.propose(parsed.what, parsed.due, parsed.repeat, text);
+    return this.propose(parsed.what, parsed.due, parsed.repeat, text, parsed.alternative);
   }
 
-  private propose(what: string, due: Date, repeat?: Repeat, original = what) {
+  /**
+   * The reminder as understood, before it's saved. A bare hour with two sensible readings ("at 9":
+   * tonight or tomorrow morning) offers both as the buttons, so no time is ever guessed in silence
+   * (docs/V1.md V1-Q5).
+   */
+  private propose(what: string, due: Date, repeat?: Repeat, original = what, alternative?: Date) {
     const bubble = this.companion.pet.bubble;
+    const when = (d: Date) => d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const save = (at: Date) => {
+      if (at.getTime() <= Date.now()) { bubble.say("That time has passed. Choose a later one.", 5); return this.form(original); }
+      void this.add(what, at, repeat).catch((e) => bubble.say(`Not saved: ${e}`, 6, "fail"));
+    };
     bubble.show({
       id: "reminder-preview", who: `${this.companion.name} · new reminder`, title: what,
-      lines: [`${due.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}${repeat ? ` · ${describeRepeat(repeat, due)}` : ""}`],
-      choices: [{ label: "Save", value: "save", primary: true }, { label: "Change", value: "change" }],
+      lines: alternative ? ["Which one do you mean?"] : [`${when(due)}${repeat ? ` · ${describeRepeat(repeat, due)}` : ""}`],
+      choices: alternative
+        ? [{ label: describeDue(due), value: "due", primary: true }, { label: describeDue(alternative), value: "alternative" }, { label: "Change", value: "change", quiet: true }]
+        : [{ label: "Save", value: "save", primary: true }, { label: "Change", value: "change" }],
       onChoose: (value) => {
         if (value === "change") return this.form(original);
-        if (due.getTime() <= Date.now()) { bubble.say("That time has passed. Choose a later one.", 5); return this.form(original); }
-        void this.add(what, due, repeat).catch((e) => bubble.say(`Not saved: ${e}`, 6, "fail"));
+        save(value === "alternative" && alternative ? alternative : due);
       },
     });
-    return "Review the reminder on the companion, then Save or Change.";
+    return alternative ? "Pick the time on the companion." : "Review the reminder on the companion, then Save or Change.";
   }
 
   private async add(what: string, due: Date, repeat?: Repeat) {
@@ -155,7 +166,7 @@ export class Reminders {
       },
       submit: async (text) => {
         const parsed = parseReminder(text);
-        return parsed ? this.propose(parsed.what, parsed.due, parsed.repeat, text) : this.askWhen(text);
+        return parsed ? this.propose(parsed.what, parsed.due, parsed.repeat, text, parsed.alternative) : this.askWhen(text);
       },
     });
   }

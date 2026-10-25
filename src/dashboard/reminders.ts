@@ -26,10 +26,24 @@ export function fromFields(date: string, time: string): Date | null {
 export const longDate = (d: Date) =>
   d.toLocaleString([], { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
-/** The form fields; reused for adding and for editing one reminder. */
-function fields(prefix: string, initial?: Reminder) {
-  const due = initial ? new Date(initial.due) : null;
-  const text = h("input", { type: "text", id: `${prefix}-text`, maxlength: 300, autocomplete: "off", value: initial?.text ?? "", placeholder: "Review launch notes", "aria-describedby": `${prefix}-text-error` });
+/** A new reminder's starting time: the next full hour, or 09:00 tomorrow outside 07:00–21:59.
+ * The fields always hold a real value, never a placeholder that looks like one (V1-R14). */
+export function defaultDue(now = new Date()): Date {
+  const d = new Date(now);
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  if (d.getHours() < 7 || d.getHours() > 21 || d.getDate() !== now.getDate()) {
+    d.setTime(now.getTime());
+    d.setDate(d.getDate() + (now.getHours() >= 7 ? 1 : 0));
+    d.setHours(9, 0, 0, 0);
+  }
+  return d;
+}
+
+/** The form fields; reused for adding and for editing one reminder. `text` prefills a new one. */
+function fields(prefix: string, initial?: Reminder, text0 = "") {
+  const due = initial ? new Date(initial.due) : defaultDue();
+  const text = h("input", { type: "text", id: `${prefix}-text`, maxlength: 300, autocomplete: "off", value: initial?.text ?? text0, placeholder: "Review launch notes", "aria-describedby": `${prefix}-text-error` });
   const date = h("input", { type: "date", id: `${prefix}-date`, value: due ? dateValue(due) : "", "aria-describedby": `${prefix}-when-error` });
   const time = h("input", { type: "time", id: `${prefix}-time`, value: due ? timeValue(due) : "", "aria-describedby": `${prefix}-when-error` });
   const repeat = h("select", { id: `${prefix}-repeat` });
@@ -39,7 +53,11 @@ function fields(prefix: string, initial?: Reminder) {
   const interval = h("input", { type: "number", id: `${prefix}-interval`, min: 1, max: 52, step: 1, value: String(initial?.repeat?.n ?? 1) });
   const intervalField = h("div", { class: "field" }, h("label", { for: interval.id, text: "Every how many?" }), interval);
   let typedRepeat = !!initial;
-  const selectedRepeat = (): Repeat | undefined => repeat.value ? { every: repeat.value as Repeat["every"], n: repeat.value === "weekday" ? 1 : Number(interval.value) } : undefined;
+  // Weekly on several days ("Monday and Thursday") has no control of its own here: the days come
+  // from what was typed, or stay as they were, while the repeat is weekly.
+  let days = initial?.repeat?.days ?? [];
+  const selectedRepeat = (): Repeat | undefined =>
+    repeat.value ? { every: repeat.value as Repeat["every"], n: repeat.value === "weekday" ? 1 : Number(interval.value), ...(repeat.value === "week" && days.length ? { days } : {}) } : undefined;
   const textError = h("p", { class: "field-error", id: `${prefix}-text-error`, role: "alert" });
   const whenError = h("p", { class: "field-error", id: `${prefix}-when-error`, role: "alert" });
   const resolved = h("p", { class: "hint", "aria-live": "polite" });
@@ -55,6 +73,7 @@ function fields(prefix: string, initial?: Reminder) {
     if (!typedRepeat) {
       repeat.value = parsed?.repeat?.every ?? "";
       interval.value = String(parsed?.repeat?.n ?? 1);
+      days = parsed?.repeat?.days ?? [];
     }
     intervalField.hidden = !repeat.value || repeat.value === "weekday";
     const when = fromFields(date.value, time.value);
@@ -118,8 +137,9 @@ export function renderReminders(app: App, arg = "") {
   return view;
 }
 
-function addReminder(app: App) {
-  const add = fields("new");
+/** The Add reminder sheet; `text` comes from Quick add when it had no time to go on. */
+export function addReminder(app: App, text = "") {
+  const add = fields("new", undefined, text);
   const error = h("p", { class: "field-error", role: "alert" });
   const submit = h("button", { type: "submit", class: "primary", text: "Save reminder" });
   const form = h("form", { "aria-label": "Add a reminder" }, add.node, error);

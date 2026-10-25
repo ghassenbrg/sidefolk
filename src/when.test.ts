@@ -64,6 +64,20 @@ describe("everyday phrasing (docs/V1.md V1-Q3)", () => {
   });
 });
 
+describe("several days of the week (docs/V1.md V1-Q4)", () => {
+  const sunday = new Date(2026, 9, 25, 10, 0);
+  it("reads weekday lists as one weekly series on those days", () => {
+    const r = parseReminder("every monday and thursday at 9 gym", sunday)!;
+    expect(r.repeat).toEqual({ every: "week", n: 1, days: [1, 4] });
+    expect([r.what, ...at(r.due)]).toEqual(["gym", 26, 9, 0]);
+    expect(describeRepeat(r.repeat!, r.due)).toBe("every Monday and Thursday");
+    const bins = parseReminder("bins out every tue and fri at 8pm", sunday)!;
+    expect(bins.repeat?.days).toEqual([2, 5]);
+    expect(at(bins.due)).toEqual([27, 20, 0]);
+    expect(parseReminder("mondays, wednesdays and fridays at 7am run", sunday)!.repeat?.days).toEqual([1, 3, 5]);
+  });
+});
+
 describe("parseWhen", () => {
   it("takes ISO times literally and plain words with the same rules", () => {
     expect(at(parseWhen("2026-10-23T03:00", now)!)).toEqual([23, 3, 0]);

@@ -21,7 +21,7 @@ the comparison with Codex's audit, and the supreme council's papers and RULING.m
   - requests in Rust, with Codex's review fixes
   - no polling, single instance
   - Pip and Spark
-- Release build 5.03 MiB at P2; not relaunched on the user's Mac.
+- Release build 5.05 MiB at P3; not relaunched on the user's Mac.
 
 ## P2 Reminders & work log (25 October, Claude Code): built, verified in WebKit
 
@@ -51,17 +51,43 @@ the comparison with Codex's audit, and the supreme council's papers and RULING.m
   search, Your week, renamed accessible buttons). Not hand-checked: real notifications after
   quit or sleep, and DST on a real Mac (G2-core).
 
+## P3 Quick add (25 October, Claude Code): built, verified
+
+- **The corpus** (`src/corpus.test.ts`): 300 phrases, two time zones plus the DST night. All
+  three gates hold: 100% on the corpus (≥95% required), no shell without `$`, no silently wrong
+  time.
+- **Parser fixes the corpus found:**
+  - `$` comes first.
+  - "?" means help.
+  - "tonight at 9" is 21:00.
+  - "14h" and "14h30" are read.
+  - "on the 1st" is the next 1st.
+  - A vague "the week" loses to a named day.
+  - "every evening" gets its time.
+  - A repeat with no time starts at the next 09:00.
+  - Weekday lists work (`Repeat.days`, `series.rs`).
+- **Small talk** (kind `chat`): about 20 replies with a pose ("good night" sleeps, praise
+  cheers).
+- **Ambiguous hours** offer both readings as buttons, on the companion and in the window.
+- **The window's Quick add finishes in the window** (`dashboard/tell.ts` `finish`): reminder
+  sheet with Undo, notes exact-or-ask, notebooks, navigation, open session and open things,
+  small talk, and "Save as a note?". Rename and hide still go to the companion.
+- **The Add reminder form** always holds a real date and time (B7 fixed).
+- **Verified:** typecheck, 88 Vitest (corpus included), 54 Rust, WebKit (window Quick add:
+  reminder, ambiguous, Log note, small talk; companion ambiguous card).
+
 ## Next step (exact)
 
-**P3 Quick add** (V1 §6, §14):
-1. The 300-phrase corpus as a Vitest table: 150 everyday, 100 developer, 50 adversarial, on a
-   fixed clock in Europe/Paris and Asia/Tokyo across DST. Gates: ≥95% correct, 100% no shell
-   without `$`, 0 silently wrong times.
-2. The choice UI for an ambiguous bare hour (`Parsed.alternative`: "3 PM today · 3 AM
-   tomorrow") on the companion and in the window.
-3. Same-surface finishing: the window's Quick add must finish reminders and notes in the window
-   (today it hands them to the companion, `dashboard/tell.ts`; Codex F07).
-4. About 20 small-talk replies in Pip's voice; compound weekday lists ("Monday and Thursday").
+**P4 Claude Code trust** (V1 §7, §10, §14), the agent track. In order:
+1. The sidecar hook binary `sidefolk-hook` (Tauri `externalBin`) on a 0700 Unix socket with a
+   same-uid peer check, plus the guarded wrapper line `test -x … && exec … hook || exit 0`.
+   `claude_setup.rs` then installs command hooks instead of HTTP ones (V1-X1). Uninstall goes
+   in the same step (V1-X2). Needs Codex's review (guardrail 5).
+2. Routing (V1-D4): track which session is focused per the host matrix (Terminal and iTerm by
+   tty; Ghostty, WezTerm and VS Code after their spikes), hold unless focused, and release
+   within 1 s when the user goes there (`requests.release_session` exists).
+3. Identity and the session list on the companion (V1-D11); health states (V1-D13).
+4. Spikes: Codex `notify` (2 days, beta only), Ghostty tty, WezTerm cli, VS Code window.
 
 ## Waiting on the founder (V1 §16)
 

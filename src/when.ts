@@ -4,7 +4,7 @@ import * as chrono from "chrono-node";
 // the user's machine, so setting a reminder never costs model tokens.
 
 /** How a reminder comes back. Weekly/every-N-weeks repeat on the weekday of the first due date. */
-export type Repeat = { every: "day" | "weekday" | "week" | "month"; n: number };
+export type Repeat = { every: "day" | "weekday" | "week" | "month"; n: number; days?: number[] };
 /** `alternative`: the other reading of a bare hour ("at 9": 21:00 today or 09:00 tomorrow). */
 export type Parsed = { what: string; due: Date; repeat?: Repeat; alternative?: Date };
 
@@ -13,6 +13,18 @@ const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "frida
 /** Finds "every day", "daily", "on weekdays", "every 2 weeks", "every Monday", "monthly"… and
  * returns the text without it; "every Monday" leaves "Monday" for the date parser. */
 export function takeRepeat(text: string): { rest: string; repeat?: Repeat } {
+  // "every Monday and Thursday", "mondays and thursdays", "every mon, wed and fri": a weekly
+  // series on those days (docs/V1.md V1-Q4). The first day stays for the date parser.
+  const day = `(?:${WEEKDAYS.map((d) => `${d.slice(0, 3)}(?:${d.slice(3)})?`).join("|")})s?`;
+  const list = new RegExp(`\\b(?:(?:every|each|on)\\s+)?(${day}(?:\\s*(?:,|and|&)\\s*${day})+)\\b`, "i");
+  const named = text.match(list);
+  if (named && named.index !== undefined) {
+    const days = [...new Set(named[1].split(/\s*(?:,|and|&)\s*/i).map((d) => WEEKDAYS.findIndex((w) => w.startsWith(d.toLowerCase().slice(0, 3)))).filter((d) => d >= 0))].sort((a, b) => a - b);
+    if (days.length > 1) {
+      const rest = `${text.slice(0, named.index)} ${text.slice(named.index + named[0].length)}`.replace(/\s+/g, " ").trim();
+      return { rest, repeat: { every: "week", n: 1, days } };
+    }
+  }
   const rules: [RegExp, (m: RegExpMatchArray) => Repeat, (m: RegExpMatchArray) => string][] = [
     [/\b(?:every|each) (\d+) (day|week|month)s\b/i, (m) => ({ every: m[2].toLowerCase() as Repeat["every"], n: Number(m[1]) }), () => ""],
     [/\b(?:every|each|on) ?(?:week ?days?|weekdays)\b|\bweekdays\b/i, () => ({ every: "weekday", n: 1 }), () => ""],
@@ -52,9 +64,14 @@ export function nextDue(first: Date, repeat: Repeat, after: Date): Date {
   return next;
 }
 
-/** "every day", "every weekday", "every 2 weeks on Friday", "every month on day 3". */
+/** "every day", "every weekday", "every 2 weeks on Friday", "every Monday and Thursday", "every month on day 3". */
 export function describeRepeat(repeat: Repeat, first: Date): string {
   const plural = repeat.n > 1 ? `${repeat.n} ${repeat.every}s` : repeat.every;
+  if (repeat.days?.length) {
+    const names = repeat.days.map((d) => new Date(2026, 9, 25 + d).toLocaleDateString([], { weekday: "long" }));
+    const joined = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0];
+    return repeat.n > 1 ? `every ${repeat.n} weeks on ${joined}` : `every ${joined}`;
+  }
   if (repeat.every === "week") return `every ${plural} on ${first.toLocaleDateString([], { weekday: "long" })}`;
   if (repeat.every === "month") return `every ${plural} on day ${first.getDate()}`;
   return `every ${plural}`;
@@ -73,9 +90,23 @@ function takeOffset(text: string): { rest: string; ms: number } {
 const PART: Record<string, string> = { morning: "9am", afternoon: "3pm", evening: "6pm", night: "8pm" };
 const DAYS = `today|tomorrow|${WEEKDAYS.join("|")}`;
 
-/** "tonight", "end of day", "tomorrow morning", "noon": into times the date parser reads exactly. */
-function nameTimes(text: string): string {
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/**
+ * "tonight", "end of day", "tomorrow morning", "noon", "14h30", "on the 1st": into times the date
+ * parser reads exactly. "the 1st" is the next 1st of a month, this month's if it's still to come.
+ */
+function nameTimes(text: string, now: Date): string {
   return text
+    .replace(/\b(\d{1,2})h(\d{2})?\b/gi, (_, h: string, m?: string) => `${h}:${m ?? "00"}`)
+    .replace(/\btonight\s+at\s+(\d{1,2}(?::\d{2})?)(?!\s*[ap]\.?m)/gi, "today at $1pm")
+    .replace(/\bat\s+(\d{1,2}(?::\d{2})?)\s+tonight\b/gi, "today at $1pm")
+    .replace(/\b(?:on\s+)?the\s+(\d{1,2})(?:st|nd|rd|th)\b(?!\s+(?:of\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/gi, (all, n: string) => {
+      const day = Number(n);
+      const month = day > now.getDate() ? now.getMonth() : now.getMonth() + 1;
+      const date = new Date(now.getFullYear(), month, day);
+      return day >= 1 && day <= 31 && date.getDate() === day ? `on ${MONTH_NAMES[date.getMonth()]} ${day}` : all;
+    })
     .replace(/\b(?:by |at )?(?:the )?end of (?:the )?(?:work ?)?day\b|\beod\b/gi, "at 5pm")
     .replace(/\btonight\b/gi, "today at 8pm")
     .replace(/\bthis (morning|afternoon|evening)\b/gi, (_, part: string) => `today at ${PART[part.toLowerCase()]}`)
@@ -93,8 +124,11 @@ const dateKnown = (r: chrono.ParsedResult) => r.start.isCertain("day") || r.star
  * "every weekday at 9" stays at 09:00. Without a time, the day starts at 09:00.
  */
 function resolve(results: chrono.ParsedResult[], now: Date, repeat?: Repeat): { due: Date; used: chrono.ParsedResult[]; alternative?: Date } | null {
-  const first = results[0];
+  // "plan the week on monday": a vague "the week" gives way to the day that's named.
+  const specific = results.length > 1 ? results.filter((r) => !/^(?:the|this)\s+(?:week|month|year)$/i.test(r.text)) : results;
+  const first = specific[0];
   if (!first) return null;
+  results = specific;
   const timed = first.start.isCertain("hour") ? first : results.find((r) => r.start.isCertain("hour") && !dateKnown(r));
   const used = timed && timed !== first ? [first, timed] : [first];
   const hasDate = used.some(dateKnown);
@@ -133,20 +167,25 @@ function resolve(results: chrono.ParsedResult[], now: Date, repeat?: Repeat): { 
     if (!hasDate && d <= now) d.setDate(d.getDate() + 1);
     return d;
   })();
-  return { due: chosen, used, alternative: candidates[1] };
+  // The other reading is the other time of day ("9" as 21:00 or 09:00), not the same hour later.
+  return { due: chosen, used, alternative: candidates.find((d) => d.getHours() !== chosen.getHours()) };
 }
 
 export function parseReminder(input: string, now = new Date()): Parsed | null {
-  const { rest: offsetText, ms: offset } = takeOffset(nameTimes(input));
+  const { rest: offsetText, ms: offset } = takeOffset(nameTimes(input, now));
   const withoutOffset = offset ? offsetText.replace(/[,;]?\s*remind me\s*/i, " ").trim() : offsetText;
-  const { rest: text, repeat } = takeRepeat(withoutOffset);
+  const { rest: taken, repeat } = takeRepeat(withoutOffset);
+  // "every evening" leaves "in the evening", which becomes a time too.
+  const text = repeat ? nameTimes(taken, now) : taken;
   const resolved = resolve(chrono.parse(text, now, { forwardDate: true }), now, repeat);
   if (!resolved) {
-    // "every weekday to stand up" with no time: the next one at 09:00.
+    // "every weekday to stand up" with no time: the next 09:00 (on a weekday for weekdays).
     if (!repeat || !text.trim()) return null;
-    const first = new Date(now);
-    first.setHours(9, 0, 0, 0);
-    const due = nextDue(first, repeat, now);
+    const due = new Date(now);
+    due.setHours(9, 0, 0, 0);
+    if (due <= now) due.setDate(due.getDate() + 1);
+    if (repeat.every === "weekday") while (due.getDay() === 0 || due.getDay() === 6) due.setDate(due.getDate() + 1);
+    if (repeat.days?.length) while (!repeat.days.includes(due.getDay())) due.setDate(due.getDate() + 1);
     const what = text.replace(/^(to|about|that)\s+/i, "").trim();
     return what ? { what, due, repeat } : null;
   }
@@ -158,8 +197,14 @@ export function parseReminder(input: string, now = new Date()): Parsed | null {
     due.setTime(due.getTime() - offset);
     if (due <= now) return null;
   }
-  // Weekday repeats start on a weekday.
+  // Weekday repeats start on a weekday; one on named days starts on the soonest of them.
   if (repeat?.every === "weekday") while (due.getDay() === 0 || due.getDay() === 6) due.setDate(due.getDate() + 1);
+  if (repeat?.days?.length) {
+    const time = [due.getHours(), due.getMinutes()] as const;
+    due.setTime(now.getTime());
+    due.setHours(time[0], time[1], 0, 0);
+    while (!repeat.days.includes(due.getDay()) || due <= now) due.setDate(due.getDate() + 1);
+  }
 
   let rest = text;
   for (const r of [...used].sort((a, b) => b.index - a.index)) rest = rest.slice(0, r.index) + " " + rest.slice(r.index + r.text.length);
@@ -177,7 +222,7 @@ export function parseReminder(input: string, now = new Date()): Parsed | null {
 
 /** A time on its own ("tomorrow at 9", "2026-10-24T15:00"), with the same rules as above. */
 export function parseWhen(when: string, now = new Date()): Date | null {
-  const results = chrono.parse(nameTimes(when), now, { forwardDate: true });
+  const results = chrono.parse(nameTimes(when, now), now, { forwardDate: true });
   // Agents usually send ISO times, which mean exactly what they say.
   if (/\d{4}-\d{2}-\d{2}T/.test(when)) {
     const exact = results[0]?.start.date();

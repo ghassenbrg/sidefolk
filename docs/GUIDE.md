@@ -7,13 +7,15 @@ takes you back to it. Everything stays on your Mac, and nothing uses AI unless y
 
 ## Talk to Pip
 
-Click Pip and type. The same field is at the top of the Sidefolk window. The line under the field
-says what Enter will do before anything happens.
+Click Pip and type. The same field is at the top of the Sidefolk window, and works there with Pip
+hidden. The line under the field says what Enter will do before anything happens.
 
 | Say | What happens |
 |---|---|
-| remind me tomorrow at 9 to call the bank | A reminder. Pip holds the note when it's due, even after a restart. |
-| every weekday at 9 to check mail · every 2 weeks on Friday… | A repeating reminder: it comes back on schedule whether or not you answered the last one. |
+| remind me tomorrow at 9 to call the bank · call mom at 5pm · dentist thu 2:30 | A reminder: anything with a time or a date is one. You see the time before it's saved. |
+| send the report at 9 | When an hour could mean two things (9 tonight or 9 tomorrow morning), you pick. |
+| tonight · end of day · tomorrow morning · this afternoon | 8 PM · 5 PM · 9 AM · 3 PM. |
+| every weekday at 9 to check mail · every 2 weeks on Friday · every Monday and Thursday at 7 | A repeating reminder: it comes back on schedule whether or not you answered the last one. |
 | 10 minutes before the call at 3 | A reminder ahead of something. |
 | note: idea for the landing page · log shipped the release | A dated note in your Log. |
 | note for evaluation: shipped the login migration | A dated note in that notebook. If no notebook has exactly that name, Pip asks (and keeps your text). |
@@ -21,6 +23,8 @@ says what Enter will do before anything happens.
 | open api in VS Code · open a terminal in api · open github.com | Opens it. |
 | open session · open api session | Brings that Claude Code session forward, or continues it. |
 | rename to Bun · hide · help | |
+| hi · thanks · good night | A word back. |
+| anything else | Offered as a note in your Log, never sent anywhere. |
 
 **Commands (Labs).** With Settings → General → Labs → Commands on, text that starts with `$` is
 a command: `$ npm test in api`. You see the exact command and its folder first, then it opens in
