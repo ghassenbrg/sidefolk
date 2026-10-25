@@ -28,7 +28,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
    undone.
 4. **Respect attention.** Interruptions are rare, graded and grouped. Quiet mode, fullscreen
    awareness, snooze and one-time re-nudges, never nagging.
-5. **Memory you can see.** The Notebook and Memories are explicit, editable and deletable. No hidden
+5. **Memory you can see.** The Notebook (including "About you") is explicit, editable and deletable. No hidden
    profile. Implicit context expires.
 6. **Local first.** Everything lives on the Mac in one folder. The only network traffic is the AI
    provider you chose, web pages you asked about, and extensions you allowed.
@@ -50,7 +50,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 
 | # | Experience | Example |
 |---|------------|---------|
-| E1 | Talk to it anywhere | Click the companion or press ⌥Space, type, Enter. The panel opens beside the character. |
+| E1 | Talk to it anywhere | Click the companion or press ⌘⇧Space, type, Enter. The panel opens beside the character. |
 | E2 | Capture | "Save this idea to Sidefolk: extensions could have their own folk" → Pip pops up, *Saved to Sidefolk › Ideas*, Undo. |
 | E3 | Recall | "What ideas did I save for Sidefolk?" → answered from the Notebook with links to the notes. |
 | E4 | Remind | "Remind me tomorrow morning to send the document" → persists, fires at 09:00 (configurable "morning"), even after relaunch; Done / Snooze / Open. |
@@ -66,78 +66,75 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 ## 5. V1 scope
 
 Priorities: **P0** must ship, **P1** ships unless blocked, **P2** stretch for V1 (otherwise backlog).
+Updated after the product review (docs/DECISIONS.md D4–D12).
 
 ### Body and surfaces
 - P0 Companion window: transparent, always on top, all Spaces, beside fullscreen apps, draggable,
-  remembers position per display, sits on the desktop "floor" (screen bottom/dock edge).
-- P0 Character engine: layered vector rig on Core Animation, pose-based state machine with smooth
-  transitions, blink/breathe idle, props per activity, reduced motion support, near-zero idle CPU.
-- P0 Ask panel anchored to the companion: input, short exchange, result cards, approval cards, undo.
-- P0 Speech bubbles for proactive events, with actions and grouping badge.
-- P0 Menu bar item; global hotkey (configurable).
-- P1 Home window: Today (now/next/recent), Notebook, Reminders, Watchers, Activity, Folks
-  (extensions/skills).
-- P1 Folk Family cameos: Pip (notes), Tempo (reminders/routines), Scout (watchers/search),
-  Guard (approvals/privacy), Byte (agents/extensions), Play (celebration) appear beside the
-  companion when their domain acts. Extensions can choose a folk.
-- P1 Drag and drop onto the companion.
-- P2 Voice input (push-to-talk, on-device speech recognition), spoken replies.
+  remembers position per display, stands on the desktop floor. Never wanders on its own.
+- P0 Character engine: layered vector rig on Core Animation, pose-based states with smooth
+  transitions, blink/breathe idle, props per activity, reduced motion, near-zero idle CPU.
+- P0 Presence modes: Always / Only when needed (peek) / Menu bar only.
+- P0 Ask panel beside the companion: input with a hint line (what Enter does, whether it uses AI),
+  result cards (max 3 visible), approval cards, Undo; quick intents close it 1 s after the card.
+- P0 Speech bubbles for proactive events, with actions; a count badge when several wait.
+- P0 Drag and drop onto the companion: Save · Remind me · Watch (URLs/files) · Ask.
+- P0 Menu bar item with a "Now" list; global hotkey ⌘⇧Space (configurable, registration checked).
+- P0 Home window: Now (reminders, watchers, sessions, jobs, waiting items), Notebook, Activity.
+- P1 Folks on duty: Tempo, Scout, Byte beside the companion while their job is live (max 3).
+- P2 Voice input (push-to-talk, on-device speech recognition).
 
-### Brain
-- P0 Agent runtime with tool loop, step and time budgets, cancellation, streaming states.
-- P0 Providers: Claude Code CLI (subscription; brain runs with only Sidefolk tools), Anthropic API,
-  OpenAI-compatible (OpenAI/Ollama/LM Studio/OpenRouter). Fast/Smart slots. Connection test.
-- P0 Context builder with a budget: persona, rules, time/timezone, frontmost app, relevant notes
-  and memories (FTS ranking), recent exchange, skill index.
-- P0 Slash commands that work without AI: `/note`, `/remind`, `/watch`, `/quiet`, `/find`.
-- P1 Escalation: the fast model can hand a turn to the Smart model.
-- P2 Workers: hand a coding task in a chosen folder to Claude Code / Codex as a background job,
-  watched to completion with a checkpoint summary.
+### Understanding and brain
+- P0 Local intent parser (no AI): remind (times, dates, recurrence), note/idea/task to a
+  collection, watch (URL, file, folder, process name), quiet mode, find, done/snooze.
+- P0 Agent runtime with tool loop, step/time budgets, cancel (Stop), state events.
+- P0 Providers: Claude Code CLI (subscription), Anthropic API, OpenAI-compatible. Main model plus
+  optional smart model for "Think harder". Connection check. No-AI mode keeps everything local working.
+- P0 Context builder with a budget: persona, rules, time zone, frontmost app, "About you" notes,
+  relevant notebook items (FTS), live jobs, recent exchange (10-minute thread window).
 
 ### Memory and data
-- P0 Notebook: collections (projects/topics, Inbox default) with notes, ideas, tasks, links;
-  full-text search; soft delete with Trash and undo.
-- P0 Memories: durable facts/preferences the user or agent saved, editable and deletable.
-- P0 Short-term exchange history with retention (default 7 days).
+- P0 Notebook: Inbox, About you (profile), projects/topics/lists with notes, ideas, tasks, links;
+  full-text search; Trash with restore (30 days); Undo for recent changes.
+- P0 Short-term exchange history with retention (default 7 days), never shown as a transcript.
 - P0 Activity log (audit) of every tool execution and decision.
 - P1 Export all data (JSON) and delete all data.
 
-### Time and watching
-- P0 Reminders: natural times, recurrence (daily/weekdays/weekly/monthly/every N), snooze,
-  done, survives restart, missed reminders summarised on launch, fallback system notifications
-  scheduled when the app quits.
-- P0 Watchers: web page change/contains, site up/down, file/folder appears, file changed,
-  process exit (pid or name), periodic command (confirmed). Intervals with floors, backoff,
-  expiry, pause/resume.
-- P1 Routines: scheduled agent prompts.
+### Time, watching and agents
+- P0 Reminders: natural times, recurrence, snooze, done, survive restart, missed ones summarised on
+  return, fallback system notifications scheduled when the app quits.
+- P0 Watchers: web page change/contains (normalised text diff, 1% threshold, before/after),
+  site up/down (2 failures in a row), file/folder appears, file changed, process (by name) exits,
+  periodic command (confirmed). Floors, backoff, cooldown, expiry, pause/resume.
+- P0 `sidefolk run -- <cmd>`: runs a command, the companion tells you when it ends (exit, time).
+- P0 `sidefolk mcp`: Sidefolk tools for Claude Code, Codex and any MCP client (note, remind, watch,
+  notify, ask_user, search). One-click connect after confirmation and config backup.
+- P1 Claude Code session awareness via hooks (installed on click, with backup): working, needs
+  you, finished; "Open" brings its app to the front.
+- P1 Morning brief (deterministic): today's reminders, open tasks, active watchers.
+- P2 Scheduled prompts (routines run by the agent), workers (hand a coding task to Claude Code/Codex).
 
-### Hands and guard
-- P0 Built-in tools: notebook, tasks, memories, reminders, watchers, clipboard, open URL/app/file,
-  files (list/read/search/move/rename/create folder/trash) in granted folders, web fetch, now.
-- P0 Guard: risk levels, per-caller trust, taint from untrusted content, grants (always allow
-  scoped), approval UI, audit.
+### Hands and Guard
+- P0 Built-in tools: notebook, about-you, reminders, watchers, clipboard, open URL/app/file,
+  files (list/read/search/move/rename/create folder/trash) in granted folders, web fetch, time.
+- P0 Guard: risk levels, caller trust, taint, folder grants, protected paths, approvals, audit.
 - P0 Secrets in the Keychain.
 
 ### Extensibility
-- P0 Extension host: manifest, discovery, permissions shown at install, sandboxed process
-  (sandbox-exec profile from permissions), MCP tool protocol, Sidefolk watcher protocol,
-  timeouts, crash isolation, enable/disable/uninstall.
-- P0 Sample extension (System Vitals: battery/disk/memory tools and a low-disk/battery watcher).
-- P0 Add any MCP server as an extension (runs with user privileges; clearly labelled).
-- P1 Skills: markdown instructions with frontmatter, progressive loading, the companion can
-  propose new skills (user approves).
-- P1 Sidefolk MCP server (`sidefolk mcp`) for external agents; one-click connect to Claude Code /
-  Codex after confirmation and backup of their config.
+- P0 Extension host: manifest, discovery, permissions shown at install, sandboxed process,
+  MCP tools, Sidefolk watcher protocol, timeouts, crash isolation, enable/disable/uninstall.
+- P0 Sample extension (System Vitals) and an extension developer guide.
+- P0 Add any MCP server (unsandboxed, labelled, medium-risk tools).
+- P1 Skills: markdown instructions loaded on demand; the companion can propose a skill (user approves).
 
 ### Attention
-- P0 Levels: ambient, gentle, attention, critical. Quiet mode (timed), fullscreen awareness,
-  user-away deferral, grouping, one re-nudge, snooze.
+- P0 Levels and defaults in §11, quiet mode, fullscreen/away deferral, typing guard, rate limits,
+  grouping, one re-nudge, snooze.
 
 ### Onboarding and settings
-- P0 First run: meet the companion, name it, brain setup with detection and test, notifications
-  permission with context, open at login, first try.
-- P0 Settings that all work: General, Companion, Attention, AI, Memory & Privacy, Permissions,
-  Extensions, Advanced (diagnostics).
+- P0 First run happens on the desktop through the companion (no wizard): hello, a real reminder in
+  2 minutes without AI, notifications asked in context, connect Claude Code if found, open at login.
+  AI setup is offered when first needed.
+- P0 Settings that all work: General, Companion & Attention, AI, Privacy & Permissions, Extensions.
 
 ### Quality
 - P0 Structured local logs with redaction, diagnostics export, agent run records.
@@ -158,7 +155,7 @@ Companion (drag) ──────────────► move, settle on f
 Companion (drop file/url/text) ► Ask panel with attachment + quick actions
 Companion (right-click) ───────► menu: Ask, Today, Notebook, Quiet 1h, Hide, Settings
 Companion (double-click) ──────► Home window
-⌥Space ────────────────────────► Ask panel (from anywhere)
+⌘⇧Space ──────────────────────► Ask panel (from anywhere)
 Menu bar icon ─────────────────► Ask, Open Sidefolk, Quiet, Show/Hide companion, Settings, Quit
 Bubble ────────────────────────► action buttons (Done, Snooze, Open, Allow/Deny, Dismiss)
 System notification ───────────► same actions when the companion is hidden/away
@@ -211,15 +208,16 @@ external MCP agent, extension. Rules:
 
 | Level | Presentation | Example |
 |-------|--------------|---------|
-| ambient | pose/badge only | watcher active, job running |
-| gentle | small bubble, auto-dismiss 8 s | note saved by an external agent |
-| attention | companion steps forward, bubble stays until handled | reminder, watcher fired |
-| critical | attention + system notification + sound | reminder marked important, watcher marked critical |
+| ambient | pose/badge/folk only | watcher active, job running |
+| gentle | small bubble, 6 s, paused on hover, one at a time | Claude saved a note |
+| attention | companion steps forward; bubble expanded 30 s then collapses to a held card + badge | reminder, watcher fired, command finished |
+| critical | attention + system notification + sound | reminder marked important |
 
-Policy: quiet mode lowers attention→gentle-silent queue and blocks gentle; critical still shows.
-Fullscreen frontmost app → companion tucks away, attention becomes system notification. User away →
-queue, summarise on return. More than one pending item → grouped count badge. Unacknowledged
-attention re-nudges once after 10 minutes, then waits in the badge.
+Defaults: typing guard (wait for 1.5 s without keys, defer at most 20 s); at most 1 attention event
+per 90 s and 3 per source per 10 min, the rest fold into "+N"; external agents capped at attention
+level without sound; quiet mode and fullscreen-frontmost hold everything but critical (which
+becomes a system notification); away (5 min idle or locked) queues and shows one summary on return;
+one re-nudge after 10 minutes, then it waits in the badge; celebrate only waits longer than 2 min.
 
 ## 12. Failure model
 
@@ -231,7 +229,7 @@ it is disabled with a notice. Detailed diagnostics go to the local log.
 
 ## 13. Post-V1 backlog (not unfinished V1)
 
-Calendar awareness (EventKit), app-usage timeline and "what was I doing" recap, voice wake word,
+Scheduled prompts and workers, calendar awareness (EventKit), app-usage timeline and "what was I doing" recap, voice wake word,
 Apple on-device model provider, embeddings for semantic recall, extension catalog/store,
 companion-generated sandboxed code tools, Sparkle auto-update, cross-device sync, community
 characters and personalities, Claude Code/Codex hook-based passive session monitoring.
