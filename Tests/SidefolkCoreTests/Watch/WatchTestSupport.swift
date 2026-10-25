@@ -62,8 +62,9 @@ final class Counter: Sendable {
     var count: Int { value.withLock { $0 } }
 }
 
-/// A real folder to play in, with a canonical path (no links on the way, nothing hidden).
-struct Sandbox {
+/// A real folder to play in, with a canonical path (no links on the way, nothing hidden). It removes itself
+/// when the test that made it is done.
+final class Sandbox: Sendable {
     let root: String
 
     init() throws {
@@ -90,6 +91,7 @@ struct Sandbox {
     func remove(_ name: String) throws { try FileManager.default.removeItem(atPath: path(name)) }
     func move(_ from: String, _ to: String) throws { try FileManager.default.moveItem(atPath: path(from), toPath: path(to)) }
     func cleanUp() { try? FileManager.default.removeItem(atPath: root) }
+    deinit { cleanUp() }
 }
 
 extension Watcher {
