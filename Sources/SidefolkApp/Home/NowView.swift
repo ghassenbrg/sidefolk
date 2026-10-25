@@ -89,8 +89,13 @@ struct NowView: View {
             SectionHeader(title: "Running", folk: "byte", count: model.jobs.count + model.workingSessions.count)
             RowsCard {
                 if model.jobs.isEmpty && model.workingSessions.isEmpty {
-                    InlineEmpty(text: "Nothing running. Start a command with “sidefolk run -- npm test” and I'll tell you when it ends.",
+                    InlineEmpty(text: "Nothing running. Connect Claude Code or Codex to see their sessions here, or start a command with “sidefolk run -- npm test”.",
                                 systemImage: "terminal")
+                    HStack {
+                        Button("Connect your agents…") { model.services.openAgentSettings() }.buttonStyle(.sf(.secondary))
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Space.l).padding(.bottom, Theme.Space.m)
                 }
                 ForEach(model.workingSessions) { s in
                     RunningRow(symbol: "sparkles", title: Describe.session(s), started: s.startedAt, detail: s.detail,

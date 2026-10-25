@@ -284,6 +284,8 @@ extension AppCoordinator: AppServices {
         applyCompanionSettings()
     }
 
+    func openAgentSettings() { openSettings(tab: .agents) }
+
     func replayOnboarding() {
         Task { await runtime.settings.update { $0.onboardingDone = false } }
         onboarding.start()

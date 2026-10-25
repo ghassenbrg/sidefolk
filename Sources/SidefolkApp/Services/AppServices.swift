@@ -141,4 +141,6 @@ protocol AppServices: AnyObject {
     func settingsChanged()
     func showCompanion(_ visible: Bool)
     func replayOnboarding()
+    /// Opens Settings › Agents (connect Claude Code / Codex, install the sidefolk command).
+    func openAgentSettings()
 }
