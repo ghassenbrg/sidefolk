@@ -36,6 +36,12 @@ public enum TimeFormat {
         "\(day(date, now: now, calendar: calendar)) \(clock(date, calendar: calendar))"
     }
 
+    /// "Thu 23 Oct 2025 09:00": unambiguous, for text a model reads.
+    public static func full(_ date: Date, calendar: Calendar) -> String {
+        let c = calendar.dateComponents([.day, .month, .year], from: date)
+        return "\(weekdayShort[isoWeekday(of: date, calendar: calendar) - 1]) \(c.day ?? 1) \(monthShort[(c.month ?? 1) - 1]) \(c.year ?? 0) \(clock(date, calendar: calendar))"
+    }
+
     /// "every day", "every 2 weeks on Tue, Thu", "every weekday".
     public static func recurrence(_ r: Recurrence) -> String {
         let n = r.interval
