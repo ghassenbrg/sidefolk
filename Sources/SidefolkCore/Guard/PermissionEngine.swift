@@ -43,7 +43,12 @@ public struct PermissionEngine: Sendable {
             return .deny(blocked)
         }
         if !unreadable.isEmpty || !unwritable.isEmpty {
-            let folder = FolderAccess.suggestedFolder(for: (unwritable + unreadable)[0])
+            guard caller.kind != "external", caller.kind != "extension" else {
+                return .deny("That folder hasn't been shared with Sidefolk.")
+            }
+            guard let folder = FolderAccess.suggestedFolder(for: (unwritable + unreadable)[0]) else {
+                return .deny("That location is too broad to share. Add a specific folder in Settings › Privacy & Permissions.")
+            }
             return .ask(ApprovalRequest(
                 tool: spec.name, title: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?",
                 summary: summary, risk: max(spec.risk, .medium), caller: caller,
@@ -101,8 +106,8 @@ public struct PermissionEngine: Sendable {
     public static func grantScope(for scope: ToolScope) -> JSONValue {
         if let command = scope.command { return ["command": .string(command)] }
         if let ext = scope.extensionId { return ["extension": .string(ext)] }
-        if let first = (scope.writePaths + scope.readPaths).first {
-            return ["folder": .string(FolderAccess.suggestedFolder(for: first))]
+        if let first = (scope.writePaths + scope.readPaths).first, let folder = FolderAccess.suggestedFolder(for: first) {
+            return ["folder": .string(folder)]
         }
         if let host = URL(string: scope.url ?? "")?.host?.lowercased() { return ["host": .string(host)] }
         return .object([:])
