@@ -2,16 +2,22 @@
 
 Updated: 2026-10-26 (overnight build, orchestrated by Claude).
 
-## Done
-- Spec (docs/PRODUCT.md), architecture, decisions D1–D15, product review adopted.
-- Core foundation: JSON, IDs, paths, SQLite schema v1 (GRDB), stores, event bus, tool contract,
-  Guard (risk, caller, taint, folders, protected paths, grants), approvals, executor with audit and
-  undo, attention policy + center, settings, diagnostics with redaction, brain/platform interfaces.
-- Tests: Guard and executor (20 passing).
+## Done (on `rework`)
+- Spec (docs/PRODUCT.md), architecture, decisions D1–D15, product/security/macOS reviews adopted
+  (docs/SECURITY.md, docs/MACOS-NOTES.md, docs/VOICE.md, docs/FOUNDING.md).
+- Core: storage (GRDB, schema v1), Guard (risk, caller, taint, hardened path policy), approvals,
+  executor + audit + undo, attention policy/center, settings, diagnostics/redaction, companion mood,
+  runtime container, interfaces for brain/platform.
+- App shell: design tokens/components, Ask panel (cards, approvals), bubbles, status item,
+  notifications, environment monitor, login item, packaging script (`make dev`, `make app`).
+- Tests: 28 passing (Guard, executor, mood).
 
-## In progress (parallel worktrees)
-- Character rig + folks + icon (SidefolkCharacter, sidefolk-render).
-- Time & understanding, watchers, built-in tools, brain (providers/loop/context).
+## In progress (parallel agent worktrees under .claude/worktrees)
+- Character rig/folks/icon, time & local understanding, watchers, built-in tools, brain,
+  bridge (socket/CLI/Claude Code backend/integrations), extensions + skills, Home + Settings UI.
+- Uncommitted in main checkout: Companion/CompanionWindowController.swift, Onboarding/ (wait for
+  the character merge and the coordinator's AppServices implementation).
 
 ## Next
-- Bridge (local API, `sidefolk` CLI: mcp/run/hook), extensions, app shell, Home, Settings, onboarding.
+- Merge agent branches, wire everything in AppCoordinator (AppServices impl, intent runner,
+  agent runtime, scheduler/watchers/extensions/bridge startup), end-to-end QA, adversarial review.
