@@ -623,7 +623,7 @@ import Testing
         let child = Process()
         child.executableURL = URL(fileURLWithPath: "/bin/sleep")
         child.arguments = ["60"]
-        try child.run()
+        try SpawnLock.withLock { try child.run() }
         defer { if child.isRunning { child.terminate() } }
 
         let engine = env.engine(probes: [ProcessExitsProbe()], clock: SystemClock())

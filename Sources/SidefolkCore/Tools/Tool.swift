@@ -98,13 +98,17 @@ public struct ToolScope: Sendable, Hashable {
     public var command: String?
     public var url: String?
     public var extensionId: String?
+    /// Text the user must read in full before approving (e.g. a new skill); never grantable "always".
+    public var text: String?
 
-    public init(readPaths: [String] = [], writePaths: [String] = [], command: String? = nil, url: String? = nil, extensionId: String? = nil) {
+    public init(readPaths: [String] = [], writePaths: [String] = [], command: String? = nil, url: String? = nil,
+                extensionId: String? = nil, text: String? = nil) {
         self.readPaths = readPaths
         self.writePaths = writePaths
         self.command = command
         self.url = url
         self.extensionId = extensionId
+        self.text = text
     }
 
     public static let none = ToolScope()

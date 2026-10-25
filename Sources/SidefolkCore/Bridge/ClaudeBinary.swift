@@ -116,8 +116,8 @@ public enum ClaudeBinary {
         guard let fingerprint = fingerprint(path) else { return .failure(UserFacingError("Claude Code couldn't be read.")) }
         if let known = cache.withLock({ $0[fingerprint] }) { return .success(known) }
 
-        guard let versionText = await output(of: path, ["--version"], environment: environment, cwd: cwd),
-              let helpText = await output(of: path, ["--help"], environment: environment, cwd: cwd) else {
+        guard let versionText = await outputRetrying(path, ["--version"], environment: environment, cwd: cwd),
+              let helpText = await outputRetrying(path, ["--help"], environment: environment, cwd: cwd) else {
             return .failure(UserFacingError("Claude Code didn't start.", recovery: "Run claude in Terminal to see what's wrong."))
         }
         let (missing, flags) = self.flags(fromHelp: helpText)
@@ -141,12 +141,18 @@ public enum ClaudeBinary {
     }
 
     /// stdout of a short, prompt-free invocation, or nil if it failed or took over 15 s.
+    /// One retry: a cold start (or a busy Mac) can stall a first launch.
+    private static func outputRetrying(_ path: String, _ arguments: [String], environment: [String: String], cwd: String) async -> String? {
+        if let text = await output(of: path, arguments, environment: environment, cwd: cwd) { return text }
+        return await output(of: path, arguments, environment: environment, cwd: cwd)
+    }
+
     private static func output(of path: String, _ arguments: [String], environment: [String: String], cwd: String) async -> String? {
         guard let child = try? PipedChild.spawn(path, arguments: arguments, environment: environment, cwd: cwd) else { return nil }
         child.closeInput()
         // Killing the child is what ends the read loop on timeout.
         let timer = Task {
-            try await Task.sleep(for: .seconds(15))
+            try await Task.sleep(for: .seconds(8))
             child.signalGroup(SIGKILL)
         }
         defer { timer.cancel() }

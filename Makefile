@@ -4,7 +4,7 @@ build:
 	swift build
 
 test:
-	swift test
+	swift test --no-parallel
 
 # Debug app with its own data folder (never your real Sidefolk data).
 dev:

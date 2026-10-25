@@ -69,7 +69,7 @@ public struct PermissionEngine: Sendable {
         case .low where !networkFromTaint:
             return .allow(.auto)
         case .low, .medium:
-            let grantable = !(tainted && caller.kind != "user")
+            let grantable = !(tainted && caller.kind != "user") && scope.text == nil
             if grantable, policy.mode == .standard, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)
             }
@@ -118,6 +118,7 @@ public struct PermissionEngine: Sendable {
     }
 
     static func details(spec: ToolSpec, scope: ToolScope) -> ApprovalRequest.Details {
+        if let text = scope.text { return .text(text) }
         if let command = scope.command { return .command(command) }
         if let url = scope.url { return .url(url) }
         let paths = scope.writePaths + scope.readPaths

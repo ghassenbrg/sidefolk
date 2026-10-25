@@ -36,11 +36,13 @@ public final class Log: Sendable {
         let clean = Redactor.redact(message)
         let cleanFields = fields.mapValues { Redactor.redact($0).clipped(2000) }
         let logger = Logger(subsystem: subsystem, category: category)
+        // Field values may hold personal content: Console shows them only when private data is enabled.
+        let detail = cleanFields.isEmpty ? "" : " " + cleanFields.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: " ")
         switch level {
-        case .debug: logger.debug("\(clean, privacy: .public)")
-        case .info: logger.info("\(clean, privacy: .public)")
-        case .warning: logger.warning("\(clean, privacy: .public)")
-        case .error: logger.error("\(clean, privacy: .public)")
+        case .debug: logger.debug("\(clean, privacy: .public)\(detail, privacy: .private)")
+        case .info: logger.info("\(clean, privacy: .public)\(detail, privacy: .private)")
+        case .warning: logger.warning("\(clean, privacy: .public)\(detail, privacy: .private)")
+        case .error: logger.error("\(clean, privacy: .public)\(detail, privacy: .private)")
         }
 
         var record: [String: String] = cleanFields

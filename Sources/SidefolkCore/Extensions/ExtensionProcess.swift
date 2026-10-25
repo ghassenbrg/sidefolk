@@ -88,16 +88,14 @@ public final class ExtensionProcess: Sendable {
         self.spec = spec
         self.limits = limits
         var fds: [Int32] = []
+        // Created close-on-exec under the spawn lock, so no other child Sidefolk starts can inherit them.
         for _ in 0..<3 {
-            var p: [Int32] = [0, 0]
-            guard pipe(&p) == 0 else {
+            guard let p = SpawnLock.pipe() else {
                 for fd in fds { close(fd) }
                 throw ExtensionError.spawn("Couldn't create pipes: \(String(cString: strerror(errno)))")
             }
-            fds += p
+            fds += [p.read, p.write]
         }
-        // Never let these leak into any other child Sidefolk starts.
-        for fd in fds { _ = fcntl(fd, F_SETFD, FD_CLOEXEC) }
         childFDs = (fds[0], fds[3], fds[5])
         stdinFD = fds[1]
         stdoutFD = fds[2]
@@ -215,7 +213,7 @@ public final class ExtensionProcess: Sendable {
         var pid: pid_t = 0
         let rc = Self.withCStrings(argv) { argvPtr in
             Self.withCStrings(envp) { envPtr in
-                posix_spawn(&pid, spec.executable, &actions, &attr, argvPtr, envPtr)
+                SpawnLock.spawn { posix_spawn(&pid, spec.executable, &actions, &attr, argvPtr, envPtr) }
             }
         }
         guard rc == 0 else { throw ExtensionError.spawn("Couldn't start \(spec.executable): \(String(cString: strerror(rc)))") }

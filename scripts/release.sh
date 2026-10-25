@@ -19,7 +19,7 @@ if [[ "${SIDEFOLK_SKIP_NOTARIZE:-}" != "1" ]]; then
 fi
 
 # Tests must pass before anything is signed.
-swift test
+swift test --no-parallel
 
 SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
 # Re-sign with a secure timestamp (build-app.sh uses --timestamp=none for speed).

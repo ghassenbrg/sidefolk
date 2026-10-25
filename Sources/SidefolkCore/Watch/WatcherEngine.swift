@@ -295,13 +295,14 @@ public actor WatcherEngine {
         guard generation == timerGeneration, started else { return }
         timer = nil
         ticking = true
-        await tick()
+        await tick(epoch: epoch)
         ticking = false
         arm()
     }
 
     /// Runs every check that is due now, a few at a time. The timer calls this; tests call it directly.
-    func tick() async {
+    /// With an `epoch`, no new check starts once `stop()` has moved past it.
+    func tick(epoch tickEpoch: Int? = nil) async {
         await ensureLoaded()
         let now = clock.now
         let due = watchers.values.filter { w in
@@ -312,11 +313,12 @@ public actor WatcherEngine {
 
         await withTaskGroup(of: Void.self) { group in
             var waiting = due[...]
+            let current = { tickEpoch == nil || tickEpoch == self.epoch }
             for _ in 0..<min(Self.maxConcurrentChecks, due.count) {
-                if let id = waiting.popFirst() { group.addTask { await self.runCheck(id) } }
+                if current(), let id = waiting.popFirst() { group.addTask { await self.runCheck(id, epoch: tickEpoch) } }
             }
             while await group.next() != nil {
-                if let id = waiting.popFirst() { group.addTask { await self.runCheck(id) } }
+                if current(), let id = waiting.popFirst() { group.addTask { await self.runCheck(id, epoch: tickEpoch) } }
             }
         }
     }

@@ -5,10 +5,16 @@ extension AppCoordinator {
     func makeAgentRuntime() -> AgentRuntime {
         let runtime = self.runtime
         let platform = runtime.platform
+        let live = LiveStateSummary.provider(db: runtime.db)
+        let extensions = runtime.extensions
+        let skills = runtime.skills
         let sources = ContextSources(
             frontmostApp: { await platform.frontmostApplication() },
-            liveState: LiveStateSummary.provider(db: runtime.db),
-            skills: { [] }
+            liveState: {
+                let lines = [await live(), ExtensionContext.watcherLines(await extensions.watcherKinds())].compactMap { $0 }
+                return lines.isEmpty ? nil : lines.joined(separator: "\n")
+            },
+            skills: { skills.index() }
         )
         let context = ContextBuilder(notebook: runtime.notebook, exchanges: runtime.exchanges, sources: sources)
         let paths = runtime.paths

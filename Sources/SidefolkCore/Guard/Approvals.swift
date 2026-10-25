@@ -7,6 +7,8 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         case url(String)
         case paths([String])
         case folderAccess(folder: String, write: Bool)
+        /// Text to read in full (a new skill's instructions).
+        case text(String)
     }
 
     public var id: String

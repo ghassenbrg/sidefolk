@@ -83,6 +83,14 @@ struct ApprovalCard: View {
                 }
                 if paths.count > 5 { Text("and \(paths.count - 5) more").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint) }
             }
+        case .text(let text):
+            ScrollView {
+                Text(text).font(Theme.Font.caption).foregroundStyle(Theme.ink).textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 160)
+            .padding(Theme.Space.s)
+            .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
         case .folderAccess(let folder, let write):
             Text("\(write ? "Read and change" : "Read") files in \(FolderAccess.displayPath(folder))")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)

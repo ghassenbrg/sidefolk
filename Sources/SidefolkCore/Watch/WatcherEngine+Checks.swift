@@ -2,7 +2,9 @@ import Foundation
 
 // One check of one watcher: run the probe, apply what it found, tell the user if it matters.
 extension WatcherEngine {
-    func runCheck(_ id: String) async {
+    /// - Parameter epoch: set when the timer started this check; a `stop()` since then cancels it.
+    func runCheck(_ id: String, epoch checkEpoch: Int? = nil) async {
+        guard checkEpoch == nil || checkEpoch == epoch else { return }
         guard let w = watchers[id], w.state == .active, !running.contains(id) else { return }
         let now = clock.now
         if let expires = w.expiresAt, expires <= now {

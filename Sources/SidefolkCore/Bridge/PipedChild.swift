@@ -33,11 +33,10 @@ final class PipedChild: Sendable {
     }
 
     static func spawn(_ executable: String, arguments: [String], environment: [String: String], cwd: String) throws -> PipedChild {
-        var stdinPipe: [Int32] = [-1, -1], stdoutPipe: [Int32] = [-1, -1], stderrPipe: [Int32] = [-1, -1]
-        guard pipe(&stdinPipe) == 0 else { throw BridgeError.system("pipe", errno) }
-        guard pipe(&stdoutPipe) == 0 else { closeAll(stdinPipe); throw BridgeError.system("pipe", errno) }
-        guard pipe(&stderrPipe) == 0 else { closeAll(stdinPipe + stdoutPipe); throw BridgeError.system("pipe", errno) }
-        for fd in stdinPipe + stdoutPipe + stderrPipe { _ = fcntl(fd, F_SETFD, FD_CLOEXEC) }
+        guard let i = SpawnLock.pipe() else { throw BridgeError.system("pipe", errno) }
+        guard let o = SpawnLock.pipe() else { closeAll([i.read, i.write]); throw BridgeError.system("pipe", errno) }
+        guard let e = SpawnLock.pipe() else { closeAll([i.read, i.write, o.read, o.write]); throw BridgeError.system("pipe", errno) }
+        let stdinPipe = [i.read, i.write], stdoutPipe = [o.read, o.write], stderrPipe = [e.read, e.write]
         // Writing to a child that already died must fail with EPIPE, not kill Sidefolk.
         _ = fcntl(stdinPipe[1], F_SETNOSIGPIPE, 1)
         let pid: pid_t

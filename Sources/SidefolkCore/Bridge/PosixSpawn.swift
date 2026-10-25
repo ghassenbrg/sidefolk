@@ -66,8 +66,10 @@ enum PosixSpawn {
         defer { (argv + envp).forEach { free($0) } }
 
         var pid: pid_t = 0
-        let rc = searchPath ? posix_spawnp(&pid, executable, &actions, &attr, argv, envp)
-            : posix_spawn(&pid, executable, &actions, &attr, argv, envp)
+        let rc = SpawnLock.spawn {
+            searchPath ? posix_spawnp(&pid, executable, &actions, &attr, argv, envp)
+                : posix_spawn(&pid, executable, &actions, &attr, argv, envp)
+        }
         guard rc == 0 else { throw PosixSpawnError(executable: executable, code: rc) }
         return pid
     }

@@ -75,7 +75,7 @@ struct CreateSkillTool: Tool {
     }
 
     /// The approval card shows this verbatim, and an "always" grant can only ever match this exact text.
-    func scope(for input: JSONValue) -> ToolScope { ToolScope(command: Self.fullText(input)) }
+    func scope(for input: JSONValue) -> ToolScope { ToolScope(text: Self.fullText(input)) }
 
     static func fullText(_ input: JSONValue) -> String {
         "Skill “\(input["name"]?.stringValue ?? "")”\n\(input["description"]?.stringValue ?? "")\n\n\(input["instructions"]?.stringValue ?? "")"

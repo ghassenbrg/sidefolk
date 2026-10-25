@@ -105,7 +105,7 @@ import Testing
         #expect(outcome.isOK)
         let request = try #require(await answered.value)
         #expect(request.risk == .medium)
-        guard case .command(let text) = request.details else { Issue.record("expected the full text in the approval"); return }
+        guard case .text(let text) = request.details else { Issue.record("expected the full text in the approval"); return }
         #expect(text.contains(instructions))
 
         let skill = try #require(library.skill(named: "plan-tomorrow"))
@@ -115,8 +115,8 @@ import Testing
 
         // A different text never matches an "always" grant made for this one.
         let tool = try #require(env.registry.tool(named: "skills.create"))
-        #expect(tool.scope(for: ["name": "a", "description": "b", "instructions": "c"]).command
-                != tool.scope(for: ["name": "a", "description": "b", "instructions": "c; and more"]).command)
+        #expect(tool.scope(for: ["name": "a", "description": "b", "instructions": "c"]).text
+                != tool.scope(for: ["name": "a", "description": "b", "instructions": "c; and more"]).text)
     }
 
     @Test func externalAndExtensionCallersCannotCreateSkills() async throws {

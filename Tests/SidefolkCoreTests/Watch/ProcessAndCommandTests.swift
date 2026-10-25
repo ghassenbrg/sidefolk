@@ -91,7 +91,7 @@ final class FakeProcessTable: ProcessTable {
         let child = Process()
         child.executableURL = URL(fileURLWithPath: "/bin/sleep")
         child.arguments = ["30"]
-        try child.run()
+        try SpawnLock.withLock { try child.run() }
         defer { if child.isRunning { child.terminate() } }
         let real = ProcessExitsProbe(table: LibprocTable())
 
@@ -114,7 +114,7 @@ final class FakeProcessTable: ProcessTable {
         let child = Process()
         child.executableURL = URL(fileURLWithPath: sleeper.path)
         child.arguments = ["30"]
-        try child.run()
+        try SpawnLock.withLock { try child.run() }
         defer { if child.isRunning { child.terminate() } }
         let real = ProcessExitsProbe(table: LibprocTable())
 
@@ -131,7 +131,7 @@ final class FakeProcessTable: ProcessTable {
         let child = Process()
         child.executableURL = URL(fileURLWithPath: "/bin/sleep")
         child.arguments = ["1"]
-        try child.run()
+        try SpawnLock.withLock { try child.run() }
         let real = ProcessExitsProbe(table: LibprocTable())
         var w = try real.made(.make(WatchKind.processExits, config: ["pid": .number(Double(child.processIdentifier))]))
         #expect(try await !real.step(&w).triggered)

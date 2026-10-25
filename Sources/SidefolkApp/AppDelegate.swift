@@ -16,7 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.shared.info("app", "launch", ["version": SidefolkVersion.current, "home": paths.home.path])
         Task {
             do {
-                let runtime = try await SidefolkRuntime.open(paths: paths, platform: MacPlatform())
+                let secrets = KeychainSecretStore()
+                let runtime = try await SidefolkRuntime.open(
+                    paths: paths, platform: MacPlatform(), bundledResources: ResourceLocator.resources,
+                    extensionSecrets: { server in MCPServerSecrets.environment(for: server, store: secrets) })
                 Log.shared.setDebug(runtime.settings.current.debugLogging)
                 #if DEBUG
                 DebugSnapshots.install(home: paths.home)

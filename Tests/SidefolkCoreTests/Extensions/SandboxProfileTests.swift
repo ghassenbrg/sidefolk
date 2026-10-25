@@ -120,7 +120,7 @@ extension SandboxProfileTests {
         let cc = Process()
         cc.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
         cc.arguments = ["clang", "-o", program, source.path]
-        try cc.run()
+        try SpawnLock.withLock { try cc.run() }
         cc.waitUntilExit()
         try #require(cc.terminationStatus == 0, "clang isn't available")
         let profile = try SandboxProfile.make(.init(extensionDir: ext.path, dataDir: data.path, executable: program,
@@ -132,7 +132,13 @@ extension SandboxProfileTests {
             environment: ["PATH": "/usr/bin:/bin"], workingDirectory: data.path))
         let out = OutputCollector()
         try process.start(onOutput: { out.add($0) }, onExit: { _ in })
+        // A just-built binary can stall at launch while macOS assesses it; never hang the suite on that.
+        let watchdog = Task {
+            try await Task.sleep(for: .seconds(20))
+            await process.terminate()
+        }
         let exit = await process.waitForExit()
+        watchdog.cancel()
         #expect(exit.cause == .exited(0), "\(process.stderrTail)")
         #expect(out.lines == ["native ok"])
     }

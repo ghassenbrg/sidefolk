@@ -97,7 +97,7 @@ public struct InterpreterResolver: Sendable {
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice
         p.standardInput = FileHandle.nullDevice
-        do { try p.run() } catch { return nil }
+        do { try SpawnLock.withLock { try p.run() } } catch { return nil }
         let data = out.fileHandleForReading.readDataToEndOfFile()
         p.waitUntilExit()
         guard p.terminationStatus == 0 else { return nil }

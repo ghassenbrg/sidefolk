@@ -32,9 +32,16 @@ public final class SidefolkRuntime: Sendable {
     public let gateway: ExternalToolGateway
     public let sessionTracker: SessionTracker
     public let jobTracker: JobTracker
+    public let extensions: ExtensionHost
+    public let skills: SkillLibrary
     private let server: LocalAPIServer
 
-    public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock()) async {
+    /// - Parameters:
+    ///   - bundledResources: the app's Resources folder (bundled skills and sample extensions).
+    ///   - extensionSecrets: environment values for an MCP server, read from the Keychain by server id.
+    public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock(),
+                bundledResources: URL? = nil,
+                extensionSecrets: @escaping @Sendable (String) async -> [String: String] = { _ in [:] }) async {
         self.paths = paths
         self.db = db
         self.platform = platform
@@ -71,6 +78,9 @@ public final class SidefolkRuntime: Sendable {
             _ = await platform.activateApplication(pid: session.hostPid, bundleId: session.hostApp)
         })
         jobTracker = JobTracker(store: jobs, attention: attention, events: events, clock: clock)
+        extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)
+        skills = SkillLibrary(userDirectory: paths.skills, bundledDirectory: bundledResources?.appendingPathComponent("Skills", isDirectory: true),
+                              events: events)
         server = LocalAPIServer(socket: paths.socket, services: BridgeServices(
             tools: gateway, tokens: tokens, sessions: sessionTracker, jobs: jobTracker, status: StatusReader(db: db)))
 
@@ -79,6 +89,8 @@ public final class SidefolkRuntime: Sendable {
         registry.register(WatchTools.make(engine: watchers))
         registry.register(AgentFacingTools.make(attention: attention))
         registry.register(AgentFacingTools.status(StatusReader(db: db)))
+        registry.register(SkillTools.all(skills))
+        registry.register(ExtensionWatchTool(host: extensions, engine: watchers))
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening".
@@ -92,6 +104,8 @@ public final class SidefolkRuntime: Sendable {
     public func start() async throws {
         try server.start()
         await scheduler.start()
+        await extensions.start()
+        await watchers.register(ExtensionWatcherProbe(host: extensions))
         await watchers.start()
         await sessionTracker.start()
         _ = await jobTracker.reconcile()
@@ -109,15 +123,18 @@ public final class SidefolkRuntime: Sendable {
         let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400)
         await scheduler.stop()
         await watchers.stop()
+        await extensions.shutdown()
         server.stop()
         return fallback
     }
 
     /// Opens (creating if needed) the database under `paths`.
-    public static func open(paths: SidefolkPaths, platform: any PlatformBridge) async throws -> SidefolkRuntime {
+    public static func open(paths: SidefolkPaths, platform: any PlatformBridge, bundledResources: URL? = nil,
+                            extensionSecrets: @escaping @Sendable (String) async -> [String: String] = { _ in [:] }) async throws -> SidefolkRuntime {
         try paths.prepare()
         let db = try AppDatabase.open(at: paths.database)
-        let runtime = await SidefolkRuntime(paths: paths, db: db, platform: platform)
+        let runtime = await SidefolkRuntime(paths: paths, db: db, platform: platform, bundledResources: bundledResources,
+                                            extensionSecrets: extensionSecrets)
         try await runtime.notebook.inbox()
         return runtime
     }

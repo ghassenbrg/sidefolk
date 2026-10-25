@@ -45,7 +45,7 @@ struct SpotlightSearch: FileSearching {
         running.process.standardError = FileHandle.nullDevice
         running.process.standardInput = FileHandle.nullDevice
         running.process.environment = [:]
-        do { try running.process.run() } catch {
+        do { try SpawnLock.withLock { try running.process.run() } } catch {
             throw UserFacingError("Spotlight search isn't available on this Mac.", detail: String(describing: error))
         }
         let timer = DispatchWorkItem { running.stop(timedOut: true) }

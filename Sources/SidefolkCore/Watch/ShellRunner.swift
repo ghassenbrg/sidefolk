@@ -51,9 +51,8 @@ public enum ShellRunner {
     // MARK: Spawning
 
     private static func spawn(_ command: String, cwd: String) throws -> (pid: pid_t, readFd: Int32) {
-        var fds: [Int32] = [0, 0]
-        guard pipe(&fds) == 0 else { throw ShellError.couldNotStart("pipe: \(String(cString: strerror(errno)))") }
-        let (readFd, writeFd) = (fds[0], fds[1])
+        guard let p = SpawnLock.pipe() else { throw ShellError.couldNotStart("pipe: \(String(cString: strerror(errno)))") }
+        let (readFd, writeFd) = (p.read, p.write)
         // Writing to a pipe whose reader is gone must be an error, not a signal that kills us.
         for fd in [readFd, writeFd] {
             _ = fcntl(fd, F_SETNOSIGPIPE, 1)
@@ -97,7 +96,7 @@ public enum ShellRunner {
             envp.forEach { free($0) }
         }
         var pid: pid_t = 0
-        let status = posix_spawn(&pid, "/bin/sh", &actions, &attributes, argv, envp)
+        let status = SpawnLock.spawn { posix_spawn(&pid, "/bin/sh", &actions, &attributes, argv, envp) }
         guard status == 0 else {
             close(readFd)
             throw ShellError.couldNotStart(String(cString: strerror(status)))
