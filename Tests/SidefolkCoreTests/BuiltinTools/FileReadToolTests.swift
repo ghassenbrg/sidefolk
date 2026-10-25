@@ -82,7 +82,7 @@ func makeTestPDF(_ text: String) -> Data {
         #expect(result.text.hasPrefix("File: "))
         #expect(result.text.contains("Line one\nHiddentext\nLine three"))   // bidi control stripped
         #expect(result.card?.title == "notes.txt")
-        #expect(out.modelText.hasPrefix("<untrusted_content>"))
+        #expect(out.modelText.hasPrefix("<untrusted_content "))
     }
 
     @Test func readCapsLongFilesAndSaysSo() async throws {

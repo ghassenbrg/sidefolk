@@ -110,10 +110,10 @@ enum ExternalText {
     }
 
     static func isStripped(_ u: Unicode.Scalar) -> Bool {
+        if UntrustedText.isInvisible(u) { return true }   // zero-width, bidi and tag characters, shared with the brain
         switch u.value {
-        case 0x200B...0x200F, 0x202A...0x202E, 0x2060...0x2069, 0xFEFF, 0xE0000...0xE007F: true
-        case 0x00...0x08, 0x0B, 0x0C, 0x0E...0x1F, 0x7F: true
-        default: false
+        case 0x00...0x08, 0x0B, 0x0C, 0x0E...0x1F, 0x7F: return true   // stray control characters
+        default: return false
         }
     }
 

@@ -126,7 +126,7 @@ import Testing
         let result = try #require(out.result)
         #expect(result.text == "Title: Pricing\nURL: https://example.com/pricing\n\nOnly $5 a month.")
         #expect(result.untrusted)
-        #expect(out.modelText.hasPrefix("<untrusted_content>"))
+        #expect(out.modelText.hasPrefix("<untrusted_content "))
         #expect(result.card?.kind == .web)
         #expect(result.card?.url == "https://example.com/pricing")
     }
