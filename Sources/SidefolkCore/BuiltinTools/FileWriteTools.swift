@@ -151,7 +151,10 @@ struct FilesRenameTool: Tool {
         if FilePaths.isRisky(name: newName), oldExt != newExt {
             throw UserFacingError("I won't rename something into a “.\(newExt)” item, because those can run programs.")
         }
-        let target = try FilePaths.resolve(FilePaths.join(FilePaths.parent(source), newName))
+        // Check the destination, but rename to the spelling that was asked for: on a case-insensitive disk the
+        // canonical form of an existing "readme.txt" would swallow a request for "README.txt".
+        let target = FilePaths.join(FilePaths.parent(source), newName)
+        _ = try FilePaths.resolve(target)
         try Self.rename(from: source, to: target, oldName: oldName, newName: newName)
 
         return ToolResult(

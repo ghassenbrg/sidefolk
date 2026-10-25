@@ -156,20 +156,18 @@ private final class FetchOperation: NSObject, URLSessionDataDelegate, @unchecked
                     newRequest request: URLRequest) async -> URLRequest? {
         guard let target = request.url else { return nil }
         let count = state.withLock { s -> Int in s.redirects += 1; return s.redirects }
-        if count > options.maxRedirects {
-            fail(.blocked(.tooManyRedirects))
+        // A refused redirect stops the download right away instead of reading the redirect response.
+        func refuse(_ error: WebFetchError) -> URLRequest? {
+            fail(error)
+            task.cancel()
             return nil
         }
-        if response.url?.scheme?.lowercased() == "https", target.scheme?.lowercased() == "http" {
-            fail(.blocked(.insecureRedirect))
-            return nil
-        }
+        if count > options.maxRedirects { return refuse(.blocked(.tooManyRedirects)) }
+        if response.url?.scheme?.lowercased() == "https", target.scheme?.lowercased() == "http" { return refuse(.blocked(.insecureRedirect)) }
         do { try await policy.validate(target) } catch let v as URLPolicy.Violation {
-            fail(.blocked(v))
-            return nil
+            return refuse(.blocked(v))
         } catch {
-            fail(.network(String(describing: error)))
-            return nil
+            return refuse(.network(String(describing: error)))
         }
         state.withLock { $0.finalURL = target }
         return request

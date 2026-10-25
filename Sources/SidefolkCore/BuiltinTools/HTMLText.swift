@@ -290,8 +290,9 @@ public enum HTMLText {
         }
 
         func finish() -> String {
+            // Only trailing blanks go: normal text never starts a line with one, and <pre> keeps its indentation.
             s.split(separator: "\n", omittingEmptySubsequences: false)
-                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .map { line in String(line.reversed().drop(while: { $0 == " " || $0 == "\t" }).reversed()) }
                 .joined(separator: "\n")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
