@@ -198,6 +198,49 @@ struct WhenCase: Sendable, CustomTestStringConvertible {
         #expect(resolve("feb 30") == nil)
     }
 
+    // MARK: Phrases a model passes to reminders.create
+
+    static let modelPhrases: [WhenCase] = [
+        WhenCase("tomorrow at 9:00 AM", "Thu 2025-10-23 09:00"),
+        WhenCase("Tomorrow, 9 AM", "Thu 2025-10-23 09:00"),
+        WhenCase("9 AM tomorrow", "Thu 2025-10-23 09:00"),
+        WhenCase("today at 5:00 PM", "Wed 2025-10-22 17:00"),
+        WhenCase("5:00 PM", "Wed 2025-10-22 17:00"),
+        WhenCase("noon tomorrow", "Thu 2025-10-23 12:00"),
+        WhenCase("tomorrow noon", "Thu 2025-10-23 12:00"),
+        WhenCase("9 o'clock tomorrow", "Thu 2025-10-23 09:00"),
+        WhenCase("friday, October 24 at 3 PM", "Fri 2025-10-24 15:00"),
+        WhenCase("Friday October 31", "Fri 2025-10-31 09:00"),
+        WhenCase("October 24th, 2025 at 3:00pm", "Fri 2025-10-24 15:00"),
+        WhenCase("this coming Friday at 3pm", "Fri 2025-10-24 15:00"),
+        WhenCase("next Friday at 3pm", "Fri 2025-10-24 15:00"),
+        WhenCase("an hour from now", "Wed 2025-10-22 11:00"),
+        WhenCase("half an hour from now", "Wed 2025-10-22 10:30"),
+        WhenCase("2 hours from now", "Wed 2025-10-22 12:00"),
+        WhenCase("in 90 minutes", "Wed 2025-10-22 11:30"),
+        WhenCase("in 2 days", "Fri 2025-10-24 09:00"),
+        WhenCase("end of day", "Wed 2025-10-22 17:00"),
+        WhenCase("eod", "Wed 2025-10-22 17:00"),
+        WhenCase("end of the day tomorrow", "Thu 2025-10-23 17:00"),
+        WhenCase("friday 3", "Fri 2025-10-24 15:00"),
+        WhenCase("2025-10-23 9:00", "Thu 2025-10-23 09:00"),
+        WhenCase("2025-10-23T09:00", "Thu 2025-10-23 09:00"),
+        WhenCase("2025-10-23T09:00:00+02:00", "Thu 2025-10-23 07:00"),
+        WhenCase("on Monday morning at 8", "Mon 2025-10-27 08:00"),
+        WhenCase("Monday at 8am", "Mon 2025-10-27 08:00"),
+        WhenCase("tonight at 9pm", "Wed 2025-10-22 21:00"),
+        WhenCase("tomorrow afternoon at 3", "Thu 2025-10-23 15:00"),
+    ]
+
+    @Test(arguments: modelPhrases) func phrasesFromAModel(_ c: WhenCase) {
+        #expect(shown(c.input) == c.expected)
+    }
+
+    @Test func aDateBeatsItsWeekdayLabel() {
+        // 31 October 2025 is a Friday; a wrong label must not move the date.
+        #expect(shown("Thursday, October 31") == "Fri 2025-10-31 09:00")
+    }
+
     // MARK: ISO 8601
 
     @Test func isoDatesAndTimes() {

@@ -57,8 +57,16 @@ struct Atom: Sendable {
         out.end = max(end, next.end)
         if duration != nil || next.duration != nil { return nil }
         if let d = next.day {
-            guard day == nil else { return nil }
-            out.day = d
+            if let own = day {
+                // "Friday, October 24": the date decides, the weekday is only a label.
+                switch (own, d) {
+                case (.weekday, .date), (.weekday, .dayOfMonth), (.weekday, .iso): out.day = d
+                case (.date, .weekday), (.dayOfMonth, .weekday), (.iso, .weekday): break
+                default: return nil
+                }
+            } else {
+                out.day = d
+            }
         }
         if let t = next.time {
             if let own = time {
@@ -164,7 +172,7 @@ struct WhenScanner {
     private func matchOffset(_ i: Int) -> Atom? {
         var j = i
         let hasIn = ["in", "after", "within"].contains(word(j) ?? "")
-        if hasIn { j += 1 } else if number(j) == nil { return nil }
+        if hasIn { j += 1 } else if readQuantity(j) == nil { return nil }
 
         var span = SpanDuration()
         var parsed = false
@@ -271,6 +279,12 @@ struct WhenScanner {
         if let w = word(k), ["at", "by", "around"].contains(w) { explicitAt = true; k += 1 }
         else if punct(k) == "@" { explicitAt = true; k += 1 }
 
+        // "end of (the) day", "eod", "cob": the working day ends at 17:00
+        if word(k) == "eod" || word(k) == "cob" { return Atom(time: .clock(hour: 17, minute: 0, meridiem: nil, exact24: true), end: k + 1) }
+        if word(k) == "end", word(k + 1) == "of" {
+            let dayAt = word(k + 2) == "the" ? k + 3 : k + 2
+            if word(dayAt) == "day" { return Atom(time: .clock(hour: 17, minute: 0, meridiem: nil, exact24: true), end: dayAt + 1) }
+        }
         if let w = word(k) {
             if w == "noon" { return Atom(time: .noon, end: k + 1) }
             if w == "midnight" { return Atom(time: .midnight, end: k + 1) }
@@ -285,7 +299,9 @@ struct WhenScanner {
             return clock(hour: t.clockHour, minute: t.clockMinute, hasColon: true, leadingZero: t.leadingZero, tokenAt: k, explicitAt: explicitAt)
         }
         if t.kind == .number, t.isInteger, !t.ordinal, t.number < 24 {
-            return clock(hour: Int(t.number), minute: 0, hasColon: false, leadingZero: false, tokenAt: k, explicitAt: explicitAt)
+            // "friday 3" or "tomorrow 9" as the last words: a day followed by a bare hour.
+            let closesADay = k == lastContent && (1...12).contains(Int(t.number)) && previous.map { $0.end == k && $0.day != nil && $0.time == nil } == true
+            return clock(hour: Int(t.number), minute: 0, hasColon: false, leadingZero: false, tokenAt: k, explicitAt: explicitAt || closesADay)
         }
         return nil
     }
@@ -295,12 +311,14 @@ struct WhenScanner {
         var j = k + 1
         var meridiem: Meridiem?
         var hint: DayPart?
+        var oclock = false
         if let w = word(j), w == "am" || w == "pm" {
             guard (1...12).contains(hour) else { return nil }
             meridiem = w == "am" ? .am : .pm
             j += 1
         } else if word(j) == "o'clock" {
             j += 1
+            oclock = true
         } else if word(j) == "in", word(j + 1) == "the", let p = partWord(j + 2) {
             hint = p
             j += 3
@@ -308,7 +326,7 @@ struct WhenScanner {
         if ["sharp", "exactly"].contains(word(j) ?? "") { j += 1 }
 
         // Without am/pm or a colon, only "at 5" counts as a time; "5" alone is just a number.
-        if meridiem == nil, !hasColon, !explicitAt { return nil }
+        if meridiem == nil, !hasColon, !explicitAt, !oclock { return nil }
         // "look at 5 pages" is not a time.
         if meridiem == nil, !hasColon, hint == nil, let follower = word(j), Self.unitNouns.contains(follower) { return nil }
 
@@ -333,6 +351,8 @@ struct WhenScanner {
         var k = i
         var prefix: String?
         if let w = word(k), Self.dayPrefixes.contains(w) { prefix = w; k += 1 }
+        // "this coming friday"
+        if prefix == "this" || prefix == "next", ["coming", "upcoming"].contains(word(k) ?? "") { k += 1 }
         let isNext = prefix == "next"
         let isThis = prefix == "this"
         var the = k
