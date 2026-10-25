@@ -45,12 +45,19 @@ public actor AttentionCenter {
         self.clock = clock
     }
 
+    private var signals: (@Sendable () -> (secondsSinceKey: TimeInterval, secondsSinceInput: TimeInterval))?
+
+    /// Input idle times read at decision time (typing guard, away), so nothing polls.
+    public func setSignalProvider(_ provider: @escaping @Sendable () -> (secondsSinceKey: TimeInterval, secondsSinceInput: TimeInterval)) {
+        signals = provider
+    }
+
     /// Routes action answers for items whose `refKind` (or source prefix) matches `kind`.
     public func onAction(kind: String, _ handler: @escaping ActionHandler) { handlers[kind] = handler }
 
     public var environment: AttentionEnvironment { env }
 
-    public func update(_ change: (inout AttentionEnvironment) -> Void) {
+    public func update(_ change: @Sendable (inout AttentionEnvironment) -> Void) {
         let before = env
         change(&env)
         guard env != before else { return }
@@ -107,6 +114,10 @@ public actor AttentionCenter {
 
     private func consider(_ item: AttentionItem) {
         let now = clock.now
+        if let s = signals?() {
+            env.lastKeyAt = now.addingTimeInterval(-s.secondsSinceKey)
+            if s.secondsSinceInput > 300 { env.away = true }
+        }
         let decision = AttentionPolicy.decide(level: item.level, source: item.source, createdAt: item.createdAt, now: now,
                                               env: env, recent: recent)
         switch decision {
