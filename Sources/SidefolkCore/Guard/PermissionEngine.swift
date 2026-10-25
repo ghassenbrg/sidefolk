@@ -60,7 +60,11 @@ public struct PermissionEngine: Sendable {
         // A direct user action is the user's own decision.
         if caller == .user { return .allow(.auto) }
 
-        let networkFromTaint = tainted && spec.capabilities.contains(.network)
+        // While untrusted content is in play, anything that could carry it into memory, the
+        // clipboard, a browser or the network waits for the user (SECURITY T2, T12).
+        let carriesTaint = tainted && (spec.capabilities.contains(.network) || spec.capabilities.contains(.apps)
+            || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard])))
+        let networkFromTaint = carriesTaint
         switch spec.risk {
         case .low where !networkFromTaint:
             return .allow(.auto)

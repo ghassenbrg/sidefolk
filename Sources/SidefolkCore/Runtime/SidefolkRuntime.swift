@@ -51,6 +51,7 @@ public final class SidefolkRuntime: Sendable {
         executor = ToolExecutor(registry: registry, permissions: permissions, broker: broker, activity: activity,
                                 events: events, clock: clock)
         attention = AttentionCenter(store: AttentionStore(db), events: events, clock: clock)
+        registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
     }
 
     /// Opens (creating if needed) the database under `paths`.
