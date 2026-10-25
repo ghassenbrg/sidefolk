@@ -38,8 +38,9 @@ fn nth(anchor: Date, repeat: &Repeat, k: i64) -> Option<Date> {
     match repeat.every.as_str() {
         "day" => anchor.checked_add(jiff::Span::new().days(k * n)).ok(),
         "week" => anchor.checked_add(jiff::Span::new().days(7 * k * n)).ok(),
-        "month" => {
-            let months = (anchor.year() as i64) * 12 + (anchor.month() as i64 - 1) + k * n;
+        "month" | "year" => {
+            let months = (anchor.year() as i64) * 12 + (anchor.month() as i64 - 1) + k * n * if repeat.every == "year" { 12 } else { 1 };
+            if !(0..=9999 * 12 + 11).contains(&months) { return None; }
             let (year, month) = (months.div_euclid(12) as i16, (months.rem_euclid(12) + 1) as i8);
             let first = Date::new(year, month, 1).ok()?;
             Date::new(year, month, anchor.day().min(first.days_in_month())).ok()
@@ -82,9 +83,15 @@ pub fn next_after(anchor: u64, repeat: &Repeat, after: u64, tz: &TimeZone) -> u6
     let period: u64 = match repeat.every.as_str() {
         "day" => 86_400_000,
         "week" => 7 * 86_400_000,
+        "year" => 365 * 86_400_000,
         _ => 28 * 86_400_000,
     } * repeat.n as u64;
-    let first = (after.saturating_sub(anchor) / period).saturating_sub(2) as i64;
+    let end = wall(after, tz);
+    let first = match repeat.every.as_str() {
+        "month" => ((end.year() as i64 - start.year() as i64) * 12 + end.month() as i64 - start.month() as i64).div_euclid(repeat.n as i64).max(0),
+        "year" => (end.year() as i64 - start.year() as i64).div_euclid(repeat.n as i64).max(0),
+        _ => (after.saturating_sub(anchor) / period).saturating_sub(2) as i64,
+    };
     for k in (first..).take(1000) {
         let Some(date) = nth(start.date(), repeat, k) else { break };
         let at = instant(date.to_datetime(time), tz);
@@ -198,4 +205,21 @@ mod tests {
         assert_eq!(wall_of(missed.unwrap(), &tokyo), (10, 25, 9, 0));
         assert_eq!(last_missed(anchor, &repeat("day", 1), anchor, at(&tokyo, 2026, 10, 20, 18, 0), &tokyo), None);
     }
+    #[test]
+    fn yearly_clamps_february_29_without_losing_the_leap_anchor() {
+        for name in ["Asia/Tokyo", "America/New_York"] {
+            let tz = tz(name);
+            let anchor = at(&tz, 2024, 2, 29, 9, 0);
+            let mut occurrence = anchor;
+            for (year, day) in [(2025, 28), (2026, 28), (2027, 28), (2028, 29)] {
+                occurrence = next_after(anchor, &repeat("year", 1), occurrence, &tz);
+                assert_eq!(occurrence, at(&tz, year, 2, day, 9, 0), "{name}");
+            }
+            let ordinary = at(&tz, 2026, 12, 31, 9, 0);
+            assert_eq!(next_after(ordinary, &repeat("year", 1), ordinary, &tz), at(&tz, 2027, 12, 31, 9, 0));
+            // A long-lived monthly series must not drift past the search window.
+            assert_eq!(next_after(anchor, &repeat("month", 1), at(&tz, 2200, 2, 1, 9, 0), &tz), at(&tz, 2200, 2, 28, 9, 0));
+        }
+    }
+
 }
