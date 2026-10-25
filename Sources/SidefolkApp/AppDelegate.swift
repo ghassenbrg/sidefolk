@@ -18,6 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 let runtime = try await SidefolkRuntime.open(paths: paths, platform: MacPlatform())
                 Log.shared.setDebug(runtime.settings.current.debugLogging)
+                #if DEBUG
+                DebugSnapshots.install(home: paths.home)
+                #endif
                 let coordinator = AppCoordinator(runtime: runtime)
                 self.coordinator = coordinator
                 await coordinator.start()

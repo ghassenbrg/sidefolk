@@ -33,6 +33,9 @@ final class FloatingPanel: NSPanel {
 final class HostedPanel<Content: View> {
     let panel: FloatingPanel
     let host: NSHostingController<Content>
+    private var lastPlacement: (() -> Void)?
+    private var resizeObserver: NSObjectProtocol?
+    private var replacing = false
 
     init(rootView: Content, allowsKey: Bool) {
         panel = FloatingPanel()
@@ -42,14 +45,26 @@ final class HostedPanel<Content: View> {
         host.view.wantsLayer = true
         host.view.layer?.backgroundColor = .clear
         panel.contentViewController = host
+        // SwiftUI resizes the window from its top-left corner; re-anchor to the companion instead.
+        resizeObserver = NotificationCenter.default.addObserver(forName: NSWindow.didResizeNotification, object: panel, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !self.replacing else { return }
+                self.lastPlacement?()
+            }
+        }
     }
 
-    var fittingSize: NSSize { host.view.fittingSize }
+    var fittingSize: NSSize {
+        host.view.layoutSubtreeIfNeeded()
+        let ideal = host.sizeThatFits(in: NSSize(width: 600, height: 2000))
+        return ideal.width > 1 && ideal.height > 1 ? ideal : host.view.fittingSize
+    }
 
     /// Places the panel next to `anchor` (the companion's frame), on the side with more room,
     /// fully inside the visible frame of `screen`.
     func place(beside anchor: NSRect, on screen: NSScreen, gap: CGFloat = 10, preferAbove: Bool = false) {
-        let size = fittingSize
+        lastPlacement = { [weak self] in self?.place(beside: anchor, on: screen, gap: gap, preferAbove: preferAbove) }
+        let size = panel.isVisible && panel.frame.height > 1 ? panel.frame.size : fittingSize
         let visible = screen.visibleFrame
         var origin: NSPoint
         if preferAbove {
@@ -63,6 +78,8 @@ final class HostedPanel<Content: View> {
         }
         origin.x = min(max(origin.x, visible.minX + 8), visible.maxX - size.width - 8)
         origin.y = min(max(origin.y, visible.minY + 8), visible.maxY - size.height - 8)
+        replacing = true
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
+        replacing = false
     }
 }
