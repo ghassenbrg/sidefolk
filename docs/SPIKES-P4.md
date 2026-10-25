@@ -52,3 +52,15 @@ user to trust them in `/hooks`. That is a one-time step to put in setup.
 Next step for F-14 (P6): a Codex hooks installer, built like `claude_setup.rs` (confirm first,
 keep a backup, remove only our own lines), that reuses the sidecar. Its events map to agent
 events exactly as Claude Code's do.
+
+## Implementation follow-through (25 October 2026)
+
+F-14 now has a native-confirmed hooks installer and an event-only Unix-socket path. The
+implementation uses documented lifecycle fields, not transcripts. Settings distinguishes
+waiting for trust/first event from listening and offers repair/disconnect. `/hooks` trust is
+manual; no trust/config.toml mutation or real Codex CLI call was made during development.
+Codex approvals remain in Codex. Temp tests cover exact backups, merge/removal, stale previews,
+translocation and missing-file profile-symlink retargeting. Native Codex/host behavior still
+needs a version-pinned founder check.
+
+Reference rechecked: [official Codex hooks](https://learn.chatgpt.com/docs/hooks).

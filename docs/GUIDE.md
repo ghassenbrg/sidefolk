@@ -31,7 +31,7 @@ a command: `$ npm test in api`. You see the exact command and its folder first, 
 your terminal. Plain sentences never run as commands.
 
 **Starting sessions (Labs).** With Settings → General → Labs → Start sessions on, "start a claude
-session in api" opens a new Claude Code (or Codex) session in your terminal.
+session in api" opens a new Claude Code session in your terminal. Starting Codex sessions is not available.
 
 Every card has ×. Closing a request only hides it; it waits in the window until it's answered.
 The summon shortcut (⌘⇧Space by default) focuses Quick add; pressing it again keeps your draft.
@@ -84,14 +84,34 @@ settings is kept. Hooks and companion tools connect together. If disconnecting f
 - When a session finishes or fails, Pip says so once.
 - "Open" brings the session forward. In Terminal and iTerm it selects its tab; other apps come
   forward, and you pick the session there.
-- Codex: its companion tools (notes, questions, reminders) can be connected too. Watching Codex
-  sessions is not available yet.
+- Codex: connect companion tools independently. **Codex session watching · Beta** installs
+  local event hooks after a native confirmation and exact backup. Open `/hooks` in Codex to
+  review and trust them, then start a session. New or changed definitions need renewed trust.
+  Watching reports progress, completion and "needs you" with Open; approvals always stay in Codex.
+
+## Control Sidefolk from an AI agent
+
+Settings → Agents connects the MCP tools for Claude Code or Codex. Install the **Sidefolk agent
+skill** there too: it shows the two destination files before native confirmation and keeps
+original backups. Restart the agent or refresh its tools/skills after installation.
+
+Ask the agent to show or summon your companion, choose Pip or Spark, rename it, set Quiet,
+open the window, list or create a reminder, or append to a notebook. The skill first discovers
+the actual tool schemas. `sidefolk_status`, `sidefolk_control`, `sidefolk_reminders` and
+`sidefolk_notes` use Sidefolk's saved state; the existing notify, ask, remind and presence tools
+remain available. Questions show their deadline and supplied session identity; when none is supplied, the card says so. Waiting questions and session displays survive an overlay reload without replaying notices. Ambiguous times or notebook names require clarification. No tool can approve
+agent operations, run shell commands or install connections.
+
+For a project completion reminder, say **"remind me when api finishes"**. An exact known
+project name or full project path is required. The confirmation shows the resolved Git root
+and 24-hour expiry. Only an observed completion in that project triggers it; expiry keeps a
+visible explanation without firing. Waiting conditions have no timed macOS notification.
 
 ## Uninstalling
 
 Settings → Privacy & data → **Disconnect & uninstall** (also in the menu bar). It removes only
 what Sidefolk added to Claude Code and Codex, keeping a backup of each settings file. It also
-stops Sidefolk opening at login, then quits; drag Sidefolk to the Bin afterwards. Your reminders
+restores the agent skill files it managed, stops Sidefolk opening at login, then quits; drag Sidefolk to the Bin afterwards. User-edited skill files are preserved and reported as conflicts; Sidefolk stays open for recovery. Your reminders
 and notes stay unless you tick "Also move my reminders, notes and backups to the Bin". Without
 the app: `/Applications/Sidefolk.app/Contents/MacOS/sidefolk uninstall`.
 
@@ -104,8 +124,14 @@ off by default.
 
 ## Something wrong?
 
-Settings → Privacy & data → **Copy report**, add what happened, and send it. The report contains
-versions, settings and recent errors, never your reminders, notes or names.
+Settings → Privacy & data → **Preview report…**, review it, then Copy report. The report contains
+versions, a small settings allowlist and diagnostic counts; raw error text, reminders, notes,
+paths and names are excluded. Nothing is sent automatically.
+
+Settings → General also checks for updates. A configured release shows its version and notes
+before a separate native Install confirmation, then asks before restarting. Updates verify the
+signed archive. Offline, unconfigured or unsafe release policy stops permission holding;
+reminders and logging continue. **Pause answers** in the menu bar persists until resumed.
 
 ## Privacy and quiet
 

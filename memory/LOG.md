@@ -794,3 +794,20 @@ they read on light and dark wallpapers at the real desktop size.
   list).
   - **Not hand-checked:** a real Claude Code session going through the sidecar, release on
     focus, and Repair after moving the app (G2-agent).
+
+## 25 October 2026 — adopted design, MCP/skill and release preparation
+
+Continuation after P5 foundation bbd1905. Founder adopted review-2026-10-25 and requested MCP
+control, portable skill and all remaining release work, with economical subagents. Applied the
+window package, finished recurrence/event reminder gaps, added native-controlled MCP tools and
+confirmed skill install/restore, observational Codex hooks, updater safety/consent, release scripts
+and CI, report preview/redaction and persisted Pause answers. Bounded native snapshots now retain
+sessions/questions over webview reload without replaying side effects. No global configs changed.
+
+Independent review found/fixed the restart policy floor, missing-leaf Codex profile-link identity
+and overlay Hide scoping regressions. Final reviewer found no concrete Replies/MCP blocker.
+Full release:check passed: 125 Vitest, 115 Rust/3 ignored, strict Clippy, readiness/policy checks
+and full/P5/reminder WebKit. Local release bundle 9.54 MiB; no signing/notarization/app launch.
+Full evidence, SHA and pending gates: docs/checks/RELEASE-READINESS-2026-10-25.md. Missing actual
+credentials/feed plus native acceptance/cohorts still block distribution. P4 incident remains
+unrestored; unrelated staged film-duo index is preserved. All delegated workers are closed.

@@ -50,7 +50,15 @@ Notes ⌘3, Sessions ⌘4, Settings ⌘,. First launch opens a three-step setup 
 **With Claude Code** (Settings → Agents): Pip shows what each session is doing, brings its
 permission requests (Decline / Allow once, or answer in Claude's window; Pip never answers on its
 own) and tells you when it finishes or fails. MCP tools for Claude Code and Codex: `notify`,
-`ask`, `remind`, `presence`. Watching Codex sessions is not built yet (docs/V1.md F-14).
+`ask`, `remind`, `presence`, plus authoritative companion controls, reminder management and exact
+notebook capture. Install the portable Sidefolk skill from Settings → Agents. Codex session
+watching is opt-in Beta: native confirmation, exact backups, then manual `/hooks` trust in Codex.
+It reports status and opens sessions; approvals stay in Codex. See [the guide](docs/GUIDE.md).
+
+The founder-adopted window package lives in `creative-design/review-2026-10-25`; Pip and Spark
+both remain available. `npm run release:check` runs the complete offline/browser checks;
+`npm run release:ready` reports missing signing and release inputs. A local build is not a signed
+release or evidence that native gates have passed.
 
 ## Settings and data
 

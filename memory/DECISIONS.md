@@ -302,3 +302,38 @@ Newest last. Each entry: what, why, and what would change it.
       micro-frames remain a cap, not an obligation to regenerate the frozen artwork.
     - Recording protection stays off while the founder's Mission Control spike is pending;
       setup exposes the choice. Browser screenshots are evidence of layout only, not G4/G2.
+47. **Founder adoption and agent control (25 October 2026).** The founder explicitly requested
+    implementation of review-2026-10-25, replacing the old layout references and adopting its
+    scoped 13 CSS px window density (overlay remains 16px/44px; larger text scales accessibly).
+    Also authorized companion/Sidefolk control through MCP plus a portable agent skill, and
+    economical parallel implementation through release readiness. Read/control/capture tools
+    retain Rust state authority; no tool may approve agent requests, run shell or change global
+    integration configuration. Integrations/skill installation remain explicit app confirmations.
+48. **P6 release dependencies.** The v1 contract explicitly calls for the Tauri updater plugin,
+    signed updates and a minimum-safe-version kill switch. Add the official updater dependency
+    and matching build capability only for that release flow; direct semver supports typed,
+    monotonic minimum-version policy and its versioned persistence. Signing/notarization keys and
+    credentials must be supplied through normal local keychain/CI secret configuration, never
+    invented placeholders presented as working or committed private keys. Missing credentials
+    are a release blocker, not a reason to claim a signed build.
+
+49. **Codex status and portable skill (25 October 2026).** F-14 uses documented Codex lifecycle
+    hooks through an event-only `hook-codex` mode of the signed app binary. It always exits zero
+    without printing decisions; PermissionRequest becomes only a needs-you status/Open action.
+    Native-confirmed installation edits only marked hooks in CODEX_HOME/hooks.json, takes exact
+    backups, rejects stale confirmation snapshots and translocation, and requires manual /hooks
+    trust. MCP tools and skills connect independently. Skill provenance is allowlisted and
+    durable; uninstall restores initial files, preserving user edits and conflicts for retry.
+50. **Release review corrections (25 October 2026).** Quarantined update policy remains blocked
+    across later restarts even without an active file; a stale lower feed cannot reset its floor.
+    Missing Codex hook files snapshot the canonical existing parent to detect profile-link
+    retargeting. Native uninstall confirms separately, stays open on incomplete cleanup, and
+    reports its actual quit status. Integration/history/recovery commands are window-scoped;
+    overlay Hide uses its own restricted command. No new dependency or broader permission.
+51. **Reload continuity (25 October 2026).** Native memory retains a bounded, typed snapshot of
+    session first prompts/latest states/outcomes. Rehydration is silent and preserves timestamps;
+    changing Pip/Spark or size does not replay notifications or lose the session display. Pending
+    MCP questions retain their payload and deadline in Rust, survive an overlay reload, reject
+    late replies and cap concurrent calls. Notify/remind are never replayed as side effects.
+    Ask shows an explicit deadline and supplied session identity (or says none was supplied).
+    No transcript parsing, disk history expansion, background model call or dependency.
