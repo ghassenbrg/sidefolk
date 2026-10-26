@@ -19,7 +19,7 @@ enum SnapshotLanguage {
             }
             let child = Process()
             child.executableURL = Bundle.main.executableURL
-            child.arguments = Array(args.dropFirst()) + ["-AppleLanguages", "(\(language))"] + direction(language)
+            child.arguments = Array(args.dropFirst()) + ["-AppleLanguages", "(\(language))"]
             try child.run()
             child.waitUntilExit()
             return child.terminationStatus
@@ -27,13 +27,6 @@ enum SnapshotLanguage {
             FileHandle.standardError.write(Data("ui-snapshots: couldn't render in \(language): \(error)\n".utf8))
             return 1
         }
-    }
-
-    /// Arabic lays out right to left. AppKit decides that from the app bundle's localization, which a
-    /// plain executable doesn't have, so the copy is told directly (as Xcode's RTL pseudolanguage does).
-    private static func direction(_ language: String) -> [String] {
-        guard Locale.Language(identifier: language).characterDirection == .rightToLeft else { return [] }
-        return ["-AppleTextDirection", "YES", "-NSForceRightToLeftWritingDirection", "YES"]
     }
 
     private static func value(after flag: String, in args: [String]) -> String? {

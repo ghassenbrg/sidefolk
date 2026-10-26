@@ -26,6 +26,19 @@ enum AppLanguage {
     /// The language this launch is speaking: the bundle's best match among its translations.
     static var current: String { Bundle.main.preferredLocalizations.first ?? "en" }
 
+    /// AppKit lays an app out right to left only when the Mac itself reads that way; Sidefolk can
+    /// speak Arabic on an English Mac, so it sets its own direction, in its own defaults (AppKit reads
+    /// them through CFPreferences, which doesn't see registered defaults). Call it before
+    /// `NSApplication.shared`. Text keeps its natural direction; only the layout mirrors.
+    static func applyLayoutDirection() {
+        let key = "AppleTextDirection"
+        if Locale.Language(identifier: current).characterDirection == .rightToLeft {
+            UserDefaults.standard.set(true, forKey: key)
+        } else if UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? ProcessInfo.processInfo.processName)?[key] != nil {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+    }
+
     /// What "follow the Mac" would pick, for the menu's first item.
     static var system: String {
         Bundle.preferredLocalizations(from: supported.map(\.code), forPreferences: Locale.preferredLanguages).first ?? "en"

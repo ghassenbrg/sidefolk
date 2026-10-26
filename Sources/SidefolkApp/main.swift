@@ -1,5 +1,6 @@
 import AppKit
 
+AppLanguage.applyLayoutDirection()
 #if DEBUG
 UISnapshots.runIfRequested()
 #endif
