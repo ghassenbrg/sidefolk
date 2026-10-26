@@ -347,3 +347,66 @@ from the vector PDF exports, so they stay sharp at any size without a 4096 px bi
 **Why:** the founder found the logo "a little bit small" and asked for the companion, the folks and
 the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
 small places get one clear element (lettering, a face) instead of a reduced composition.
+
+### D38 — The Mac's own apps through built-in tools on Apple Events, Apple Notes first (2026-10-26)
+**What failed:** the founder asked Sidefolk to "check my Apple Notes and move them, well organized, into
+our notebook". The model could open an app (`open.app`) but not read one, and nothing said so: the system
+prompt only told it to act through its tools "rather than explaining how they could do it". It opened Notes,
+the one tool that sounded related, and asked him to export his notes by hand.
+**Decision:**
+- Sidefolk reaches the Mac's own apps through **built-in tools** that send **Apple Events** from fixed
+  JavaScript for Automation programs, run by `/usr/bin/osascript` as a child process (`AppleEventsRunner`,
+  `OsascriptRunner`, `Sources/SidefolkCore/MacApps/`). The model never writes script: typed tool inputs reach
+  a program only as one JSON value, ASCII-escaped, so no input can end the literal and become code.
+- Apple Notes: `applenotes.list` (accounts and folders with counts, then a page of at most 50 notes: short
+  id, title, folder, modified date, the start of the text; `folder`, `query`, `not_copied`, `offset`),
+  `applenotes.read` (at most 5 whole notes as Markdown, attachments named, never read), `applenotes.copy`
+  (at most 50 notes, each into the collection the model chose: the text as written, an italic line saying
+  where it came from, the tag `apple-notes`, Notes' own dates, source `app:notes`; a ledger in `kv` remembers
+  what is copied), `applenotes.remove` (moves notes to Notes' Recently Deleted). Apple Reminders:
+  `applereminders.list` (open reminders, read only).
+- Guard: capability `mac.apps` (a switch in Settings › Privacy & Permissions). Reading and copying are
+  medium: the card says what is read and where ("Read the titles, folders and dates of up to 50 notes in
+  “Recipes” in Apple Notes", "Copy 25 notes from Apple Notes into “Cooking”, “Travel”"), labelled "Reads
+  private data" when the call only reads. Results are untrusted, so the turn is tainted and every later
+  medium call asks (T2). Removing is high risk, asked every time, never "always", and lists every note by
+  title; it is refused before any card unless the note was copied, and at run time unless its copy is in
+  the notebook, whole (no attachments left behind, not cut) and unchanged since, and its account has a
+  Recently Deleted folder. Copy is the default; the tool description and the prompt say "move" or "delete"
+  must come from the person. None of these tools is offered to other agents.
+- Permission: `NSAppleEventsUsageDescription` and the hardened-runtime entitlement
+  `com.apple.security.automation.apple-events`. macOS asks once per app the first time the person approves a
+  read. A refusal comes back to the model as instructions to relay and to the person as a card whose
+  "Open System Settings" button opens Privacy & Security › Automation (only that page; `PrivacyPane`).
+- How the model learns what it can reach: the offered tools and their descriptions (`open.app` now says it
+  only shows the app), and a "What you can reach" section in the system prompt built from the offered tools:
+  which of the Mac's own apps it can use and how, that nothing else on the Mac is reachable unless a tool
+  does it, to say so in one sentence and offer what it can do (an extension or MCP server could add it), and
+  not to send the person off to export or paste things by hand unless they ask how. Guard's refusals
+  (switched off, refused by macOS) are worded for it to relay.
+- Big libraries go in batches: pages and copies of at most 50, every copy result saying where the job stands
+  ("Progress: 75 of 214 notes in Apple Notes are in the notebook; 139 to go"), `not_copied` to pick up where
+  the last request stopped. One request never holds the whole library.
+**Why built-in, compared with the alternatives:**
+- *A bundled extension:* extensions run under `sandbox-exec`, whose profile denies Apple Events (SECURITY §3);
+  their tool descriptions never reach the model (D24), so it couldn't learn what they do; and opening the
+  sandbox to Apple Events would let an extension drive any app as Sidefolk.
+- *Delegating to a connected agent (Claude Code, Codex):* their brains run with Sidefolk's tools only (T7).
+  Handing one a shell for `osascript` means model-written scripts Guard can't summarise, a CLI and its quota
+  as a requirement, and the agent's own words as the only record of what was read.
+- *MCP servers:* the right path for the long tail (Mail, Things, Bear), added by the person, unsandboxed and
+  medium by default (T16). But they are third-party code that can't ship as a default, and Guard sees an
+  opaque tool. Notes is a first-party, everyday target that deserves typed tools with exact approval text.
+- *`NSAppleScript` in the app:* Apple Events block until the app, or the person at macOS's prompt, answers,
+  and `NSAppleScript` belongs on the main thread. A child process has a deadline and dies as a group; the
+  script goes over stdin and nothing personal goes in argv.
+- *EventKit for Reminders and Calendar:* the native framework, and the only one that expands repeating
+  events. Reading open reminders fits the Apple Events pattern (one permission flow, one recovery path), so
+  it is here; Calendar doesn't (repeating events come back once, big calendars are slow), so calendar
+  awareness stays EventKit work (PRODUCT §13).
+**Implications:** Sidefolk now asks for Automation (SECURITY T22, T25). Children it starts (approved command
+watchers, MCP servers the person added) inherit its TCC grants, Automation included (T9, T16 residuals).
+Notes' Recently Deleted folder is recognised by name, in English and in Notes' own word for the Mac's language
+(read from NotesShared's strings); where it isn't found, removing is refused. The scripts are checked against
+the apps' scripting dictionaries and a stand-in object model that the real scripts run against through
+osascript, never against real notes: the founder's manual test is the first run on a real library.
