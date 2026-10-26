@@ -66,7 +66,7 @@ import Testing
         let h = try MacAppsEnv()
         let mine = h.env.registry.specs.filter { $0.capabilities.contains(.macApps) }
         #expect(mine.map(\.name).sorted() == ["applenotes.copy", "applenotes.list", "applenotes.read", "applenotes.remove", "applereminders.list"])
-        #expect(mine.allSatisfy { !$0.external })
+        #expect(mine.allSatisfy { !$0.external && !ExternalToolPolicy.isExposed($0.name) })
         #expect(mine.allSatisfy { $0.risk >= .medium })
     }
 
