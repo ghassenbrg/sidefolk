@@ -772,3 +772,21 @@ executable code" now reads "none runs outside a sandbox without an install the p
 freshly installed extension's tools are offered from the person's next request (tools are fixed per run).
 Built-in descriptions now reach the model, so they are reviewed like prompts. Extensions still can't hold
 secrets, choose hosts, or reach Unix sockets; the catalog lists those as the next platform pieces.
+
+### D40 — With no AI chosen, the Ask panel offers the plan this Mac is signed in to (2026-10-27)
+**Decision:** when a request needs AI and the provider is "No AI", the "That needs AI" card probes the
+subscription CLIs the way Settings › AI does (`ClaudeBinary.status`, `CodexBinary.status`: version, help
+and Codex's login, never a prompt) and offers **Answer with Claude Code** / **Answer with Codex**. One
+click chooses that provider (`switchProvider`, the same change Settings makes), turns the card into a line
+saying which AI answers from now on and where to change it, and sends the request again with what was
+dropped with it (still untrusted). Only plans are offered: Codex signed in with an API key bills that key,
+so it stays a Settings choice, and API-key and local providers are never chosen from the panel. Without a
+plan, "Set up AI…" leads the card. Built-in extensions show one request to try under each in Settings ›
+Extensions (`BuiltInExamples`, app-side and translated: built-ins are first-party and only the AI reads
+the words); the button fills the Ask panel and nothing is sent until Return.
+**Why:** the primary persona (PRODUCT §3) has Claude Code or Codex, yet a fresh install answered their
+first question with "That needs AI, which isn't set up" and "Save as task" as the main button; Settings ›
+AI is where they'd never look at that moment, and PRODUCT §5 says AI setup is offered when first needed.
+**Alternatives:** choosing a found CLI at launch (a silent change of where requests go); an onboarding
+step (skipped by many, and too early: the need isn't there yet); offering API-key providers too (a
+surprise bill, and a key to type).
