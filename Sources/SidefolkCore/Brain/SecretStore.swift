@@ -30,9 +30,10 @@ public protocol SecretStore: Sendable {
 
 public enum SecretKey {
     public static let anthropicAPIKey = "anthropic.apiKey"
+    /// OpenAI's key; before presets (D26) every OpenAI-compatible key lived here.
     public static let openAIAPIKey = "openai.apiKey"
     /// Provider keys (each also has a "<key>.host" binding, see `ProviderKeys`).
-    public static let providerKeys = [anthropicAPIKey, openAIAPIKey]
+    public static var providerKeys: [String] { [anthropicAPIKey] + ProviderPreset.allCases.map(\.keyAccount) }
 
     /// The environment values of a user-added MCP server, one JSON item per server.
     public static func mcpServer(_ id: String) -> String { "mcp.\(id)" }
@@ -151,6 +152,28 @@ public struct ProviderKeys: Sendable {
                                   recovery: "Paste the key again in Settings › AI to use it with \(host).")
         }
         return saved
+    }
+
+    /// The key for an OpenAI-compatible preset at `host`. A key saved before presets existed (in
+    /// OpenAI's account) still counts, but only for the host it was saved for.
+    public func key(for preset: ProviderPreset, host: String) throws(UserFacingError) -> Secret? {
+        if let own = try key(account: preset.keyAccount, host: host) { return own }
+        guard preset.keyAccount != SecretKey.openAIAPIKey else { return nil }
+        return try? key(account: SecretKey.openAIAPIKey, host: host)
+    }
+
+    /// Forgets the preset's key, and an older key saved for the same host, so "Remove key" removes
+    /// the key that was in use.
+    public func remove(preset: ProviderPreset, host: String) throws {
+        try remove(account: preset.keyAccount)
+        if preset.keyAccount != SecretKey.openAIAPIKey, boundHost(account: SecretKey.openAIAPIKey) == host.lowercased() {
+            try remove(account: SecretKey.openAIAPIKey)
+        }
+    }
+
+    /// The host a saved key is bound to, if any.
+    public func boundHost(account: String) -> String? {
+        (try? store.get(Self.bindingKey(account)))?.reveal()
     }
 
     /// "api.openai.com", "localhost:11434".

@@ -20,9 +20,10 @@ colors, and Spark. Your saved companion choice and custom name stay yours.
   “add oat milk to my groceries list”, “watch https://example.com/pricing”, “tell me when report.pdf
   appears in Downloads”, “quiet for 1 hour”, “what ideas did I save for Sidefolk?” all finish instantly
   on your Mac. The hint under the input tells you what Enter will do and whether it uses AI.
-- **Thinks when you need it.** Questions and open-ended requests go to the AI you chose: your
-  Claude subscription through Claude Code, an Anthropic API key, or any OpenAI-compatible endpoint
-  (OpenAI, Ollama, LM Studio, OpenRouter). The AI acts through Sidefolk’s tools, never around them.
+- **Thinks when you need it.** Questions and open-ended requests go to the AI you chose: a plan you
+  already pay for (Claude through Claude Code, ChatGPT through Codex), an API key (Anthropic, OpenAI,
+  Google Gemini, Mistral, Groq, xAI, DeepSeek, OpenRouter), a model on your Mac (Ollama, LM Studio),
+  or your own OpenAI-compatible server. The AI acts through Sidefolk’s tools, never around them.
 - **Remembers, visibly.** A Notebook with an Inbox, “About you” (facts it keeps in mind), and your
   projects, topics and lists. Everything is editable, searchable, and in the Trash for 30 days.
 - **Keeps time.** Reminders with natural times and repeats, snooze, done, missed-reminder summaries,
@@ -106,7 +107,8 @@ accounts, no telemetry. Settings › Privacy & Permissions exports or deletes ev
 
 - **Nothing happens on ⌘⇧Space** — another app may use that shortcut; change it in Settings › General.
 - **“That needs AI, which isn’t set up yet”** — pick a provider in Settings › AI; local commands keep working.
-- **Claude Code isn’t found** — Settings › AI › Claude Code shows where it looked; set a custom path.
+- **Claude Code or Codex isn’t found** — Settings › AI shows the command to install it; set a custom path
+  if it’s somewhere unusual. Codex must be signed in (`codex login` in Terminal).
 - **An extension “didn’t start”** — run `sidefolk ext validate <folder>`; Settings › Extensions shows
   its last error. Diagnostics (logs without your content) export from Settings › Privacy.
 - **Reminders while the Mac sleeps** — the companion sleeps too; missed reminders appear once you’re back.

@@ -190,10 +190,10 @@ struct BackendHarness {
     }
 
     @Test func unsafeModelNamesAreDropped() {
-        #expect(ClaudeCodeBackend.isSafeModelName("claude-sonnet-4-5"))
-        #expect(ClaudeCodeBackend.isSafeModelName("opus[1m]"))
-        #expect(!ClaudeCodeBackend.isSafeModelName(""))
-        #expect(!ClaudeCodeBackend.isSafeModelName("--dangerously-skip-permissions x"))
+        #expect(CLIBrain.isSafeModelName("claude-sonnet-4-5"))
+        #expect(CLIBrain.isSafeModelName("opus[1m]"))
+        #expect(!CLIBrain.isSafeModelName(""))
+        #expect(!CLIBrain.isSafeModelName("--dangerously-skip-permissions x"))
     }
 }
 
@@ -241,9 +241,9 @@ struct BackendHarness {
 
         let old = ClaudeFixtures.help.replacingOccurrences(of: "--strict-mcp-config", with: "--strict-mcp-config-x")
         #expect(ClaudeBinary.flags(fromHelp: old).missing == ["--strict-mcp-config"])
-        #expect(!ClaudeBinary.mentions("--toolsy --tools-list", "--tools"))
-        #expect(ClaudeBinary.mentions("  --tools <tools...>", "--tools"))
-        #expect(!ClaudeBinary.mentions("--system-prompt <p>", "--system-prompt-file"))
+        #expect(!CLIBrain.mentions("--toolsy --tools-list", "--tools"))
+        #expect(CLIBrain.mentions("  --tools <tools...>", "--tools"))
+        #expect(!CLIBrain.mentions("--system-prompt <p>", "--system-prompt-file"))
     }
 
     @Test func onlyTrustworthyBinaries() throws {
@@ -252,12 +252,12 @@ struct BackendHarness {
         let path = dir.path + "/claude"
         try "#!/bin/sh\n".write(toFile: path, atomically: true, encoding: .utf8)
         chmod(path, 0o755)
-        #expect(ClaudeBinary.problem(with: path) == nil)
+        #expect(CLIBrain.problem(with: path) == nil)
         chmod(path, 0o775)
-        #expect(ClaudeBinary.problem(with: path) != nil)
+        #expect(CLIBrain.problem(with: path) != nil)
         chmod(path, 0o644)
-        #expect(ClaudeBinary.problem(with: path) != nil)
-        #expect(ClaudeBinary.problem(with: "relative/claude") != nil)
+        #expect(CLIBrain.problem(with: path) != nil)
+        #expect(CLIBrain.problem(with: "relative/claude") != nil)
         #expect(ClaudeBinary.candidates(configured: "", home: "/Users/me")
                 == ["/Users/me/.local/bin/claude", "/opt/homebrew/bin/claude", "/usr/local/bin/claude"])
     }

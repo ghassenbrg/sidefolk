@@ -43,81 +43,65 @@ public enum ClaudeBinary {
         return list
     }
 
-    /// The first candidate that passes `problem(with:)`.
-    public static func locate(configured: String, home: String = NSHomeDirectory()) -> Result<String, UserFacingError> {
-        let list = candidates(configured: configured, home: home)
+    /// The first candidate that passes `CLIBrain.problem(with:)`.
+    public static func find(configured: String, home: String = NSHomeDirectory()) -> CLILocation {
         var reasons: [String] = []
-        for path in list {
-            guard let reason = problem(with: path) else { return .success(path) }
+        for path in candidates(configured: configured, home: home) {
+            guard let reason = CLIBrain.problem(with: path) else { return .found(path) }
             if FileManager.default.fileExists(atPath: path) { reasons.append(reason) }
         }
-        if let reason = reasons.first {
-            return .failure(UserFacingError("Sidefolk won't run Claude Code from there: \(reason)",
-                                            recovery: "Reinstall Claude Code or choose another provider in Settings › AI."))
-        }
-        return .failure(UserFacingError("I couldn't find Claude Code on this Mac.",
-                                        recovery: "Install it, or set its path in Settings › AI."))
+        return reasons.first.map(CLILocation.unusable) ?? .notFound
     }
 
-    /// Why this path must not be run, or nil if it may be.
-    public static func problem(with path: String) -> String? {
-        guard path.hasPrefix("/") else { return "the path must be absolute" }
-        var linkInfo = stat()
-        guard lstat(path, &linkInfo) == 0 else { return "\(path) doesn't exist" }
-        if linkInfo.st_mode & S_IFMT == S_IFLNK, linkInfo.st_uid != getuid(), linkInfo.st_uid != 0 {
-            return "\(path) is a link owned by another user"
+    /// For Settings: found, vetted and probed (`--version`, `--help`), never a prompt.
+    public static func status(configured: String, workdir: String,
+                              environment: [String: String] = ProcessInfo.processInfo.environment) async -> CLIStatus {
+        switch find(configured: configured) {
+        case .notFound: return .notFound
+        case .unusable(let reason): return .unusable(reason)
+        case .found(let path):
+            try? PrivateDirectory.ensure(workdir)
+            let env = CLIBrain.environment(base: environment, tmp: workdir, cliPath: path)
+            switch await probe(path, environment: env, cwd: workdir) {
+            case .success(let install): return .ready(path: path, version: install.version, login: nil)
+            case .failure(let error): return .unusable(error.description)
+            }
         }
-        guard let resolved = realpath(path, nil) else { return "\(path) is a broken link" }
-        defer { free(resolved) }
-        var st = stat()
-        guard stat(resolved, &st) == 0, st.st_mode & S_IFMT == S_IFREG else { return "\(path) is not a file" }
-        guard st.st_uid == getuid() || st.st_uid == 0 else { return "\(path) belongs to another user" }
-        guard st.st_mode & 0o022 == 0 else { return "\(path) can be changed by other users" }
-        guard st.st_mode & 0o111 != 0 else { return "\(path) is not executable" }
-        return nil
+    }
+
+    public static func locate(configured: String, home: String = NSHomeDirectory()) -> Result<String, UserFacingError> {
+        switch find(configured: configured, home: home) {
+        case .found(let path): .success(path)
+        case .unusable(let reason):
+            .failure(UserFacingError("Sidefolk won't run Claude Code from there: \(reason)",
+                                     recovery: "Reinstall Claude Code or choose another provider in Settings › AI."))
+        case .notFound:
+            .failure(UserFacingError("I couldn't find Claude Code on this Mac.", recovery: "Install it, or set its path in Settings › AI."))
+        }
     }
 
     /// Which required flags the help text lacks, and which optional ones it has.
     public static func flags(fromHelp help: String) -> (missing: [String], flags: ClaudeFlags) {
-        let missing = requiredFlags.filter { !mentions(help, $0) }
-        let flags = ClaudeFlags(restricted: mentions(help, "--restricted"), settingSources: mentions(help, "--setting-sources"),
-                                systemPromptFile: mentions(help, "--system-prompt-file") || help.contains("--system-prompt[-file]"))
+        let missing = requiredFlags.filter { !CLIBrain.mentions(help, $0) }
+        let flags = ClaudeFlags(restricted: CLIBrain.mentions(help, "--restricted"),
+                                settingSources: CLIBrain.mentions(help, "--setting-sources"),
+                                systemPromptFile: CLIBrain.mentions(help, "--system-prompt-file") || help.contains("--system-prompt[-file]"))
         return (missing, flags)
     }
 
-    /// `--tools` but not `--tools-x`: the flag followed by something that can't continue a flag name.
-    static func mentions(_ help: String, _ flag: String) -> Bool {
-        var search = help[...]
-        while let r = search.range(of: flag) {
-            let before = r.lowerBound == help.startIndex ? " " : help[help.index(before: r.lowerBound)]
-            let after = r.upperBound == help.endIndex ? " " : help[r.upperBound]
-            let isFlagChar: (Character) -> Bool = { $0.isLetter || $0.isNumber || $0 == "-" }
-            if !isFlagChar(before), !isFlagChar(after) { return true }
-            search = help[r.upperBound...]
-        }
-        return false
-    }
-
-    private struct Fingerprint: Hashable {
-        var path: String
-        var inode: UInt64
-        var size: Int64
-        var mtime: Int
-    }
-
-    private static let cache = Mutex<[Fingerprint: ClaudeInstall]>([:])
+    private static let cache = Mutex<[CLIBrain.Fingerprint: ClaudeInstall]>([:])
 
     /// Runs `--version` and `--help` once per binary (keyed by inode, size and mtime, so an update
     /// is probed again). Never sends a prompt.
     public static func probe(_ path: String, environment: [String: String], cwd: String) async -> Result<ClaudeInstall, UserFacingError> {
-        if let reason = problem(with: path) {
+        if let reason = CLIBrain.problem(with: path) {
             return .failure(UserFacingError("Sidefolk won't run Claude Code: \(reason)", recovery: "Reinstall Claude Code or choose another provider."))
         }
-        guard let fingerprint = fingerprint(path) else { return .failure(UserFacingError("Claude Code couldn't be read.")) }
+        guard let fingerprint = CLIBrain.fingerprint(path) else { return .failure(UserFacingError("Claude Code couldn't be read.")) }
         if let known = cache.withLock({ $0[fingerprint] }) { return .success(known) }
 
-        guard let versionText = await outputRetrying(path, ["--version"], environment: environment, cwd: cwd),
-              let helpText = await outputRetrying(path, ["--help"], environment: environment, cwd: cwd) else {
+        guard let versionText = await CLIBrain.outputRetrying(path, ["--version"], environment: environment, cwd: cwd),
+              let helpText = await CLIBrain.outputRetrying(path, ["--help"], environment: environment, cwd: cwd) else {
             return .failure(UserFacingError("Claude Code didn't start.", recovery: "Run claude in Terminal to see what's wrong."))
         }
         let (missing, flags) = self.flags(fromHelp: helpText)
@@ -132,36 +116,5 @@ public enum ClaudeBinary {
         let install = ClaudeInstall(path: path, version: version.clipped(40), flags: flags)
         cache.withLock { $0[fingerprint] = install }
         return .success(install)
-    }
-
-    private static func fingerprint(_ path: String) -> Fingerprint? {
-        var st = stat()
-        guard stat(path, &st) == 0 else { return nil }
-        return Fingerprint(path: path, inode: UInt64(st.st_ino), size: Int64(st.st_size), mtime: st.st_mtimespec.tv_sec)
-    }
-
-    /// stdout of a short, prompt-free invocation, or nil if it failed or took over 15 s.
-    /// One retry: a cold start (or a busy Mac) can stall a first launch.
-    private static func outputRetrying(_ path: String, _ arguments: [String], environment: [String: String], cwd: String) async -> String? {
-        if let text = await output(of: path, arguments, environment: environment, cwd: cwd) { return text }
-        return await output(of: path, arguments, environment: environment, cwd: cwd)
-    }
-
-    private static func output(of path: String, _ arguments: [String], environment: [String: String], cwd: String) async -> String? {
-        guard let child = try? PipedChild.spawn(path, arguments: arguments, environment: environment, cwd: cwd) else { return nil }
-        child.closeInput()
-        // Killing the child is what ends the read loop on timeout.
-        let timer = Task {
-            try await Task.sleep(for: .seconds(8))
-            child.signalGroup(SIGKILL)
-        }
-        defer { timer.cancel() }
-        let reader = DescriptorLineReader(fd: child.output, limit: 1 << 20)
-        var lines: [String] = []
-        while let item = await reader.next() {
-            if case .line(let bytes) = item { lines.append(String(decoding: bytes, as: UTF8.self)) }
-        }
-        guard case .exited(0) = await child.wait() else { return nil }
-        return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
