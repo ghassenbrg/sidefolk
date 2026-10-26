@@ -41,8 +41,9 @@ without reading.
 **T2 Prompt injection (H/H).** Sources: web pages, watcher payloads, files, clipboard, drops,
 command output, extension and MCP results *and tool descriptions*, notes, memories, reminders and
 watchers written by external agents (or by Sidefolk's agent in a tainted turn). Every `ToolResult`
-carries `untrusted`; a list or read that quotes anyone else's words sets it (`reminders.*` when a
-title isn't user-sourced, `watch.list`, notes). Taint is sticky for the turn (or routine run) and
+carries `untrusted`; a list or read that quotes anyone else's words sets it (`reminders.*` and
+`watch.*` when a title isn't user-sourced, notes, and `collections.list`, `notes.*` when a quoted
+collection name isn't). Taint is sticky for the turn (or routine run) and
 set only by code. While tainted, all medium/high calls ask (grants ignored), and so do clipboard
 writes and memory/skill/routine creation. Network and open calls ask (medium) whenever their
 normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
@@ -59,21 +60,25 @@ That is hygiene, not a boundary. Rendered Markdown never loads remote images; li
 host. *Residual:* injection can still steer low-risk actions; extension tool names and titles
 (≤ 60 characters) still reach the model.
 
-**T3 Persistent injection (M/H).** Items, memories, reminders, skills and routines record `source`
-(`user | user:agent | agent | external:<client> | extension:<id>`): Sidefolk's agent records
-`user:agent` in a clean turn and plain `agent` in a tainted one (`ToolContext.provenanceTag`).
-The context builder auto-includes only user-sourced notes and memories, and "Right now" quotes only
-user-sourced reminder and watcher titles; the rest are counted. Job titles (command lines from the
-socket) are counted, and agent sessions show only a known agent name and state, never the folder
-or title from a hook payload. Others arrive through explicit search or lists, which taint the
-turn. Memories, skills and routines created by non-user callers or in tainted turns need approval
-showing the full text.
+**T3 Persistent injection (M/H).** Items, collections, memories, reminders, watchers, skills and
+routines record `source` (`user | user:agent | agent | external:<client> | extension:<id>`;
+watchers made by a routine keep `routine:<id>`): Sidefolk's agent records `user:agent` in a clean
+turn and plain `agent` in a tainted one (`ToolContext.provenanceTag`). Collections named before
+their source was recorded count as the user's. The context builder auto-includes only user-sourced
+notes and memories and places a note by its collection's name only when the user named it, and
+"Right now" quotes only user-sourced reminder and watcher titles; the rest are counted. Job titles
+(command lines from the socket) are counted, and agent sessions show only a known agent name and
+state, never the folder or title from a hook payload. Others arrive through explicit search or
+lists, which taint the turn. Memories, skills and routines created by non-user callers or in
+tainted turns need approval showing the full text.
 
 **T4 Confused deputy via external MCP clients (H/H).** An agent in a hostile repo uses Sidefolk's
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
-without asking: `notes.create` (Inbox, tagged), `reminders.create` (at most `attention`, 20 active
-per client and 50 for all clients together), notify/`ask_user`, `status`, and non-command
-watchers (10 active; quota checks and creation are serialized, so parallel calls can't overshoot).
+without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create
+a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
+together), notify/`ask_user`, `status`, and non-command watchers (10 active for all clients
+together, each stopping after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so
+parallel calls can't overshoot).
 Reading user data (notes, memories, reminders) asks, with an optional per-client grant that is off
 by default. Files, clipboard, open, web fetch, command watchers, skills, settings and extensions
 are not exposed. Clients pair during one-click connect (per-client key, after confirmation and
@@ -86,9 +91,14 @@ process-exit watcher, not command watchers.
 `sidefolk run -- <cmd>` (D12) must exec the command itself, in the caller's process and sandbox,
 and only report start and exit over the socket; the app never runs it. Claude Code hook payloads
 (D12) are untrusted input: they are parsed with size caps, the hooks fail open, and they never
-block or slow the session.
+block or slow the session. Their host app (`host_pid`, `host_bundle_id`, what "Open" brings to the
+front) is self-reported, so `HostTrust` keeps a pid only when it is an ancestor of the connection's
+`LOCAL_PEERPID` (checked while the sender waits for its reply) and then reads the bundle id from that
+process; otherwise only a well-known terminal or editor bundle id is kept, and nothing else is
+focused. "Open" uses a stored pid only while it still runs that app (pids get reused).
 
-*Residual:* data the user lets an agent read goes to that agent's provider.
+*Residual:* data the user lets an agent read goes to that agent's provider. Same-uid code can
+still name its own ancestor, or a known terminal, as a session's host.
 
 **T5 Tool loops (M/M).** 10 steps / 120 s, 25 calls per turn. A third identical call (tool + args)
 stops the run. Routines get a daily run and token budget.
@@ -150,8 +160,10 @@ cannot flip grants, base URLs or extension state.
 
 ### C. Hands
 
-**T9 Shell command watchers (M/H).** Created only by the user, or by the agent with high-risk
-approval; never by external callers, extensions or routines. The grant is bound to
+**T9 Shell command watchers (M/H).** Created only by the user, or by Sidefolk's agent in a clean
+turn (`user:agent`) with high-risk approval; never by external callers, extensions, routines or a
+tainted turn (`agent`), which is refused before any card is shown (`Tool.refusal`, logged as
+blocked). The probe checks the source again before every run. The grant is bound to
 `SHA-256(command + "\0" + canonical cwd)` (no cwd is its own value), so any change voids it;
 grants saved before the binding match nothing. Run as `posix_spawn /bin/sh -c` with
 `POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_CLOEXEC_DEFAULT`, stdin `/dev/null`, no TTY (sudo cannot
@@ -216,8 +228,9 @@ name that was swapped in after the check is still read through `O_NOFOLLOW_ANY` 
 - Watchers the user asks for themselves (typed in the Ask panel or made with a button: caller
   `user`, untainted) may target localhost, the LAN and `.local` hosts with no further question
   (DECISIONS D21). The `allow_local` flag is set by the tool from the caller, never read from tool
-  input; agents, external clients, extensions and tainted turns are refused with a message saying
-  to ask directly.
+  input; agents (Sidefolk's own in a clean turn, `user:agent`, too), external clients, extensions
+  and tainted turns are refused with a message saying to ask directly, and the probes honour the
+  flag only on a watcher whose source is exactly `user`.
 - Open URL: http(s) low (medium when tainted); `mailto` medium; `file:` goes through `PathPolicy`
   and an executable-type block; `javascript:`, `data:`, `blob:` and `about:` never. Any other
   scheme is high risk and shows the handler app (`NSWorkspace.urlForApplication(toOpen:)`), e.g.
@@ -278,8 +291,9 @@ secrets live in the Keychain and go only into that server's env.
 
 **T17 MCP protocol abuse (M/M).** Advertise no client capabilities. Reject server-initiated
 `sampling/createMessage` (quota theft), `roots/list` (leaks grants) and `elicitation`. Messages
-≤ 1 MiB and nested ≤ 64 levels (deeper JSON from any outside source, the socket and model replies
-included, is refused before decoding: it would overflow a task's stack), ≤ 16 in flight, 30 s per
+≤ 1 MiB and nested ≤ 64 levels (deeper JSON from any outside source, the socket, model replies
+and watched pages included, is refused before decoding: it would overflow a task's stack; a watched
+page that deep is compared as plain text), ≤ 16 in flight, 30 s per
 call. Descriptions ≤ 1 KB, schemas ≤ 16 KB, invisible characters stripped; descriptions are shown
 to the user, never to the model (T2). An `isError` result's text reaches the model as untrusted
 content (≤ 4 KB). Watcher summaries ≤ 200 chars; manifest watcher titles never reach the model.
@@ -350,13 +364,19 @@ binary targets or build plugins from dependencies.
   source (or kind) and 12 in all per 10 min, then badge only. A slot is reserved in the same actor
   step as the decision, so concurrent posts can't all pass. `critical` only from reminders,
   watchers and the user's own actions (`AttentionPolicy.criticalSources`; callers never post under
-  those names), and only user-created reminders and watchers are stored as critical. A second
-  answer to the same item is dropped. The `com.apple.screenIsLocked`/`Unlocked` notifications are
-  only a hint, since any process can post them: the app must confirm with `ScreenLock.isLocked`
+  those names), and only user-created reminders and watchers are stored as critical (for reminders,
+  `user` and `user:agent`, enforced in `ReminderScheduler.create` whatever the caller asked). Only
+  the user's own reminders fire as `reminder`, which skips spacing so they arrive on time; anyone
+  else's fire as `reminder:<kind>` (`reminder:external`, `reminder:agent`…), wait their turn and
+  never say "You asked" (the bubble keys on `refKind`, which stays `reminder`). A second answer to
+  the same item is dropped. The `com.apple.screenIsLocked`/`Unlocked` notifications are only a
+  hint, since any process can post them: the app must confirm with `ScreenLock.isLocked`
   (`CGSessionCopyCurrentDictionary`) before holding or releasing items. Identical titles within
   10 min are not yet deduplicated.
 - Watcher floors: web 5 min, site 60 s, command 60 s. At most 50 active, with per-caller quotas.
-- At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days.
+- At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
+  external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
+  step that makes a watcher active.
 
 ## 3. Extension sandbox profile
 
@@ -474,7 +494,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
    aborts.
 4. **Socket:** foreign uid rejected (seam over `LOCAL_PEERCRED`); no token → `.external`; bad,
    expired or reused token → disconnect; oversized line rejected; symlinked, foreign-owned or 0755
-   run dir refused; a live socket is never unlinked; mode is 0600.
+   run dir refused; a live socket is never unlinked; mode is 0600; a session event's host pid that
+   isn't an ancestor of the sender is dropped.
 5. **Manifest:** bad id; id/folder mismatch; `run.command` escape (`../`, absolute, symlink);
    unknown key; exec inside a writable path; deny-listed path; quote or newline in a path.
 6. **Integrity:** an edited extension file disables the extension; a changed `tools/list`
@@ -487,8 +508,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
    or argv; `Secret` prints redacted.
 10. **Brain:** argv has the isolation flags and no prompt or token; a failed probe refuses to run;
     an extra tool in the init event kills the run.
-11. **DoS:** watcher floors and quotas; attention rate limit; step and call caps; repeated-call
-    breaker; one pending approval per caller.
+11. **DoS:** watcher floors and quotas (parallel external creations stop at the cap); attention rate
+    limit; step and call caps; repeated-call breaker; one pending approval per caller.
 12. **Storage:** modes 0700/0600 including wal and shm; delete-all removes everything, Keychain
     included.
 
