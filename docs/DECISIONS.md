@@ -783,7 +783,10 @@ dropped with it (still untrusted). Only plans are offered: Codex signed in with 
 so it stays a Settings choice, and API-key and local providers are never chosen from the panel. Without a
 plan, "Set up AI…" leads the card. Built-in extensions show one request to try under each in Settings ›
 Extensions (`BuiltInExamples`, app-side and translated: built-ins are first-party and only the AI reads
-the words); the button fills the Ask panel and nothing is sent until Return.
+the words); the button fills the Ask panel and nothing is sent until Return. Their calls read as
+sentences on approval cards and in Activity (`BuiltInToolSummary`: "Clone https://… into ~/git/x"), built
+only from the exact arguments and only for the app's own copy (origin bundled); any other extension's
+card keeps its title and the arguments as they are (T1).
 **Why:** the primary persona (PRODUCT §3) has Claude Code or Codex, yet a fresh install answered their
 first question with "That needs AI, which isn't set up" and "Save as task" as the main button; Settings ›
 AI is where they'd never look at that moment, and PRODUCT §5 says AI setup is offered when first needed.
