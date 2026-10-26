@@ -116,6 +116,29 @@ import Testing
         #expect(none == nil)
     }
 
+    @Test func waitingNoticesComeBackAfterARestart() async throws {
+        let db = try AppDatabase.inMemory()
+        let store = AttentionStore(db)
+        let before = AttentionCenter(store: store, events: EventBus())
+        await before.update { $0.away = true }
+        let held = await before.post(AttentionRequest(level: .attention, source: "reminder", title: "Stretch"))
+        let question = await before.post(AttentionRequest(level: .attention, source: "external:codex", title: "Deploy?", refKind: "ask"))
+        #expect(try await store.item(id: held.id)?.state == .pending)
+
+        // The app quits and starts again.
+        let events = EventBus()
+        let after = AttentionCenter(store: store, events: events)
+        let stream = events.stream()
+        await after.restoreWaiting()
+        for await e in stream {
+            if case .attention(.present(let item, _)) = e {
+                #expect(item.id == held.id)
+                break
+            }
+        }
+        #expect(try await store.item(id: question.id)?.state == .expired, "nobody waits for the old question's answer")
+    }
+
     @Test func returningFromAwaySummarisesHeldItems() async throws {
         let (center, events, _) = try center()
         await center.update { $0.away = true }
