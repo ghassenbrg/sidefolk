@@ -103,7 +103,7 @@ final class Mochi3D {
             head.addChildNode(eye)
             eyes.append(eye)
             let ear = SCNNode()
-            ear.position = SCNVector3(side * 0.3, 0.55, -0.1)
+            ear.position = SCNVector3(side * 0.3, 0.42, -0.1)
             ear.eulerAngles.z = CGFloat(-side * 0.22)
             ear.addChildNode(Self.capsule(height: 1.05, radius: 0.19, at: SCNVector3(0, 0.45, 0), color: Self.white))
             ear.addChildNode(Self.capsule(height: 0.46, radius: 0.196, at: SCNVector3(0, 0.75, 0), color: Self.navy))

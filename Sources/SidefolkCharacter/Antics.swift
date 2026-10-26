@@ -170,8 +170,8 @@ struct Antic {
             for key in track.keys {
                 switch track.part {
                 case .head: (dx, dy) = (max(dx, abs(key.dx) + abs(key.turn) * 40), max(dy, key.dy + abs(key.turn) * 20))
-                case .armL, .armR where key.turn > 1: (dx, dy) = (max(dx, 10), max(dy, 4))
-                case .earL, .earR where key.turn < 0: dy = max(dy, 3)
+                case .armL where key.turn > 1, .armR where key.turn > 1: (dx, dy) = (max(dx, 10), max(dy, 4))
+                case .earL where key.turn < 0, .earR where key.turn < 0: dy = max(dy, 3)
                 default: break
                 }
             }
