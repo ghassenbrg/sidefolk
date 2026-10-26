@@ -80,9 +80,7 @@ public struct PermissionEngine: Sendable {
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted,
-                // An extension's own word that it changes nothing isn't enough to say so on the card.
-                readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions]),
-                canAllowForRequest: forRequest, extensionId: scope.extensionId
+                effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")), canAllowForRequest: forRequest, extensionId: scope.extensionId
             ))
         case .high:
             // Only an exact command may be granted "always"; everything else is asked every time.
@@ -129,6 +127,20 @@ public struct PermissionEngine: Sendable {
         outwardUntyped
             || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions])
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
+    }
+
+    /// What a call can do, for the card's label, from what Sidefolk lets it do: an extension's capabilities come
+    /// from its sandbox (network, folders, programs), so its own word that it changes nothing is never taken; a
+    /// built-in tool's `mutates` is Sidefolk's own.
+    static func effect(of spec: ToolSpec, extension isExtension: Bool) -> ApprovalRequest.Effect {
+        let can = spec.capabilities
+        if can.contains(.shell) { return .runsPrograms }
+        if can.contains(.filesWrite) { return .changesFiles }
+        if spec.mutates, !isExtension { return .changesThings }
+        if can.contains(.network) { return .usesInternet }
+        if can.contains(.apps) { return .opensApps }
+        if can.contains(.filesRead) { return .readsFiles }
+        return isExtension ? .usesExtension : .readsPrivateData
     }
 
     /// The grant that covers this call, if any. Grants are per tool, narrowed by scope.

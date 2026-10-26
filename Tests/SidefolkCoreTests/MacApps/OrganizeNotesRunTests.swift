@@ -92,7 +92,7 @@ import Testing
 
         // Two cards: reading the list in a clean turn, then copying while tainted.
         #expect(cards.map(\.tool) == ["applenotes.list", "applenotes.copy"])
-        #expect(!cards[0].tainted && cards[0].readsOnly)
+        #expect(!cards[0].tainted && cards[0].effect == .readsPrivateData)
         #expect(cards[1].tainted && cards[1].summary == "Copy 5 notes from Apple Notes into “Cooking”, “Travel”, “Inbox” and 1 more")
 
         // The notebook holds the copies, organized, each saying where it came from.

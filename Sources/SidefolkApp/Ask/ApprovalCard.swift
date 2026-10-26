@@ -104,7 +104,17 @@ struct ApprovalCard: View {
         if case .folderAccess(_, let write) = request.details { return write ? "Folder access · can change files" : "Folder access · read only" }
         return switch request.risk {
         case .low: "Low"
-        case .medium: request.readsOnly ? "Reads private data" : "Changes things"
+        case .medium:
+            switch request.effect {
+            case .readsPrivateData: "Reads private data"
+            case .readsFiles: "Reads files"
+            case .usesInternet: "Uses the internet"
+            case .opensApps: "Opens a link or app"
+            case .usesExtension: "Uses an extension"
+            case .changesFiles: "Changes files"
+            case .runsPrograms: "Runs a program"
+            case .changesThings: "Changes things"
+            }
         case .high: "High risk"
         }
     }

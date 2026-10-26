@@ -11,6 +11,27 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         case text(String)
     }
 
+    /// What the call can do, as far as Sidefolk knows it rather than as a tool says it: what the card's
+    /// label names, so a weather forecast reads "Uses the internet", not "Changes things".
+    public enum Effect: String, Sendable, Hashable {
+        /// Reads private data (the clipboard, Apple Notes) and sends nothing out.
+        case readsPrivateData
+        /// Reads files in a folder the person shared.
+        case readsFiles
+        /// Reaches a server: a fetch, or an extension allowed the network.
+        case usesInternet
+        /// Opens a link, an email draft or another app.
+        case opensApps
+        /// Runs an extension that can reach nothing beyond its own data folder.
+        case usesExtension
+        /// Moves, renames or creates files.
+        case changesFiles
+        /// Runs a program.
+        case runsPrograms
+        /// Changes something else (a setting, a watcher, Sidefolk's data, another app's).
+        case changesThings
+    }
+
     public var id: String
     public var tool: String
     public var title: String
@@ -22,8 +43,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var canAlways: Bool
     /// The request was triggered while untrusted content was in play.
     public var tainted: Bool
-    /// The action only reads (private data such as the clipboard or Apple Notes) and sends nothing out.
-    public var readsOnly: Bool
+    public var effect: Effect
     /// Whether "Allow for this request" may be offered: the same tool then runs without a card until
     /// Sidefolk's run ends (D37). Only where "Always" isn't, and only for what can't carry data out.
     public var canAllowForRequest: Bool
@@ -32,7 +52,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var createdAt: Date
 
     public init(id: String = Identifier.make(), tool: String, title: String, summary: String, risk: Risk, caller: Caller,
-                details: Details, canAlways: Bool, tainted: Bool = false, readsOnly: Bool = false, canAllowForRequest: Bool = false,
+                details: Details, canAlways: Bool, tainted: Bool = false, effect: Effect = .changesThings, canAllowForRequest: Bool = false,
                 extensionId: String? = nil, createdAt: Date = Date()) {
         self.id = id
         self.tool = tool
@@ -43,7 +63,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         self.details = details
         self.canAlways = canAlways
         self.tainted = tainted
-        self.readsOnly = readsOnly
+        self.effect = effect
         self.canAllowForRequest = canAllowForRequest
         self.extensionId = extensionId
         self.createdAt = createdAt

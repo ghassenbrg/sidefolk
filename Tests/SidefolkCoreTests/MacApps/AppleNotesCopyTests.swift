@@ -17,7 +17,7 @@ import Testing
 
         let request = try #require(card)
         #expect(request.summary == "Copy 3 notes from Apple Notes into “Cooking”, “Travel”")
-        #expect(request.risk == .medium && request.tainted && !request.readsOnly)
+        #expect(request.risk == .medium && request.tainted && request.effect == .changesThings)
         let result = try #require(out.result)
         #expect(out.isOK && result.untrusted)
         #expect(result.text.contains("Copied 3 notes into the notebook:"))
@@ -130,7 +130,7 @@ import Testing
         let (out, card) = await h.approved("applenotes.remove", ["ids": [.string(Self.handle(1)), .string(Self.handle(2))]], tainted: true)
 
         let request = try #require(card)
-        #expect(request.risk == .high && !request.canAlways && !request.readsOnly)
+        #expect(request.risk == .high && !request.canAlways && request.effect == .changesThings)
         #expect(request.summary == "Move 2 notes in Apple Notes to Recently Deleted")
         guard case .text(let listed) = request.details else { Issue.record("expected the notes listed"); return }
         #expect(listed.contains("“Pasta carbonara” (iCloud › Recipes › Weeknight)"))

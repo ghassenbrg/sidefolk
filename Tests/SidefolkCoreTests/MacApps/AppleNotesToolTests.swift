@@ -14,7 +14,7 @@ import Testing
         let (out, card) = await h.approved("applenotes.list")
 
         let request = try #require(card)
-        #expect(request.risk == .medium && request.readsOnly && request.canAlways)
+        #expect(request.risk == .medium && request.effect == .readsPrivateData && request.canAlways)
         #expect(request.summary == "Read the titles, folders and dates of up to 50 of your Apple Notes")
         let result = try #require(out.result)
         #expect(result.untrusted)
@@ -172,8 +172,8 @@ import Testing
                                  ProbeTool(name: "test.read", risk: .medium, mutates: false)])
         let (_, ext) = await h.approved("ext.probe.read")
         let (_, own) = await h.approved("test.read")
-        #expect(ext?.readsOnly == false, "an extension's word that it changes nothing isn't enough")
-        #expect(own?.readsOnly == true)
+        #expect(ext?.effect == .usesExtension, "an extension's word that it changes nothing isn't enough")
+        #expect(own?.effect == .readsPrivateData)
     }
 
     @Test func onlyThePrivacyPaneIsAKnownLink() {

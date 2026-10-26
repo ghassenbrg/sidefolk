@@ -384,7 +384,7 @@ enum UISnapshots {
         ask.add(.result(MacApp.reminders.permissionCard, activityId: nil, undo: false), caption: "what's on my Apple Reminders?")
         ask.add(.approval(ApprovalRequest(tool: "applenotes.list", title: String(localized: "List Apple Notes"),
                                           summary: "Read the titles, folders and dates of up to 50 notes in “Recipes” in Apple Notes",
-                                          risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: true, readsOnly: true)))
+                                          risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: true, effect: .readsPrivateData)))
         ask.add(.approval(ApprovalRequest(tool: "applenotes.remove", title: String(localized: "Remove notes from Apple Notes"),
                                           summary: "Move 2 notes in Apple Notes to Recently Deleted", risk: .high, caller: .agent(runId: "r"),
                                           details: .text("“Pasta carbonara” (iCloud › Recipes)\n“Sourdough” (iCloud › Recipes)\n\n"

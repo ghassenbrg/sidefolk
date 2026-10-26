@@ -7,7 +7,7 @@ import Testing
         let h = try MacAppsEnv()
         let (out, card) = await h.approved("applereminders.list")
         let request = try #require(card)
-        #expect(request.risk == .medium && request.readsOnly)
+        #expect(request.risk == .medium && request.effect == .readsPrivateData)
         #expect(request.summary == "Read your open reminders in Apple Reminders")
         let result = try #require(out.result)
         #expect(result.untrusted)
