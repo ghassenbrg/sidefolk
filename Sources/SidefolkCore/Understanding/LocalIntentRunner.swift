@@ -58,6 +58,8 @@ public struct LocalIntentRunner: Sendable {
             if let r = recurrence {
                 var rec: [String: JSONValue] = ["frequency": .string(r.frequency.rawValue), "interval": .number(Double(r.interval))]
                 if !r.weekdays.isEmpty { rec["weekdays"] = .array(r.weekdays.map { .number(Double($0)) }) }
+                // "every 30 minutes until 6pm": the hint promised the end, so the reminder keeps it.
+                if let until = r.until { rec["until"] = .string(ISO8601DateFormatter().string(from: until)) }
                 input["recurrence"] = .object(rec)
             }
             return await execute("reminders.create", .object(input))

@@ -3,14 +3,14 @@ import SidefolkCore
 
 /// Reports on the desktop (D35): a pill beside the companion for each live value, the newest value in the menu
 /// bar while the companion is away, and a notification only when one was asked for, or when the companion is away
-/// and the value comes slower than once a minute. A value every few seconds touches no database and no list.
+/// and the value comes slower than once a minute, never in quiet mode (`WatchReading.notifies`). A value every few
+/// seconds touches no database and no list.
 extension AppCoordinator {
     /// A report read a new value.
     func showReading(_ reading: WatchReading) {
         readings[reading.watcherId] = reading
         renderReadouts()
-        let away = !companion.isVisible
-        if reading.notify || (away && reading.intervalS > 60) {
+        if reading.notifies(companionVisible: companion.isVisible, quiet: runtime.settings.current.isQuiet(at: Date())) {
             notifier.showReport(reading)
             notifiedReports.insert(reading.watcherId)
         }

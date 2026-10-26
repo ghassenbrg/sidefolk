@@ -73,6 +73,13 @@ public struct WatchReading: Sendable, Hashable {
         self.notify = notify
     }
 
+    /// Whether this value also goes out as a system notification (D35): when the person asked for one, or when
+    /// the companion is hidden and values come slower than once a minute. Never in quiet mode, which lets only
+    /// urgent things through: a value every few seconds or minutes never is, and the pill still shows it.
+    public func notifies(companionVisible: Bool, quiet: Bool) -> Bool {
+        !quiet && (notify || (!companionVisible && intervalS > 60))
+    }
+
     init(_ w: Watcher, value: String, at: Date) {
         self.init(watcherId: w.id, title: w.title, label: w.config.string("place")?.components(separatedBy: ",").first ?? w.title,
                   value: value.displaySafe.clipped(WatchLimits.readingLimit), at: at, intervalS: w.intervalS,

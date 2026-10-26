@@ -33,7 +33,9 @@ public struct ToolOutcome: Sendable {
             let body = r.untrusted ? UntrustedText.wrap(r.text, source: activity.tool) : r.text
             return r.isError ? "The tool reported a problem; it may or may not have changed something:\n\(body)" : body
         case .denied(let why): return "Not done: \(why) Do not retry this action unless the user asks again."
-        case .failed(let e): return "Failed: \(e.message)\(e.changedNothing ? " Nothing was changed." : "")"
+        case .failed(let e):
+            // The recovery is how a model fixes its call ("…or an ISO date such as 2025-11-12T09:00:00").
+            return "Failed: \(e.message)\(e.recovery.map { " " + $0 } ?? "")\(e.changedNothing ? " Nothing was changed." : "")"
         case .unanswered(stop: false):
             return "Skipped: the user didn't answer in time, so this step was skipped and nothing was done. "
                 + "Carry on with the rest of the request without it, and tell the user what was skipped."
