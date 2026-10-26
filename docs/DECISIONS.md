@@ -379,7 +379,11 @@ selector or pattern); `watch.command` with `report=true` shows a command's last 
   seconds reloads no list and reads no database; it reaches the database only with the routine saves (at
   most every 5 minutes). The engine's one timer sleeps with a tolerance of a tenth of the wait, checks due
   within half a second share a wake-up, and no timer runs when nothing is live. Measured in a release build
-  on the dev Mac (macOS 27, Apple silicon), `top -pid` every 5 s over 2 minutes: MEASUREMENT.
+  on the dev Mac (macOS 27, Apple silicon; companion shown, folks and pointer-following off so the mouse
+  adds no noise), 330 s after a 30 s settle, process CPU time from `ps` and `top -pid` every 5 s: idle with
+  no report 0.036 % of one core (0.12 s), with a CPU report every 10 s 0.042 % (0.14 s, 33 readings, so
+  about 0.6 ms each); `top` showed 0.0 % in 62 of 67 samples and 0.1 % in the rest, the same as without the
+  report. The database got one routine save in those 5 minutes.
 - **Reminders:** `Recurrence.Frequency.minutely` (a minute is the finest step; seconds are raised to a
   minute and the answer says so; a value every few seconds is a report). The parser reads "every 30
   minutes", "every half hour" and "until 6pm"/"until friday" after a repeat. A frequent reminder's notice

@@ -473,7 +473,6 @@ private struct ReportRow: View {
                 Text(report.title).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(1)
                 Text(verbatim: reading?.value ?? "…").font(.system(size: 17, weight: .semibold, design: .rounded)).monospacedDigit()
                     .foregroundStyle(report.state == .paused ? Theme.inkFaint : Theme.ink).lineLimit(1).truncationMode(.tail)
-                    .contentTransition(.numericText())
                 Text(verbatim: meta).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                 if report.errorCount > 0, let error = report.lastError {
                     Text(error).font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(2)
