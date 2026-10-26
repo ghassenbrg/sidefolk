@@ -522,6 +522,16 @@
         }
       }
     },
+    "%@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {
@@ -1197,6 +1207,9 @@
     "Claude's usage limit is reached for now." : {
 
     },
+    "Clear" : {
+
+    },
     "Clear search" : {
 
     },
@@ -1826,6 +1839,9 @@
 
     },
     "Its %@ move to the Trash for 30 days. Restored items go to the Inbox." : {
+
+    },
+    "Its art isn't in this build." : {
 
     },
     "Its files changed since you installed it (%@) Install it again to use it." : {
@@ -2517,7 +2533,13 @@
     "Remove the skill “%@”" : {
 
     },
+    "Remove these results" : {
+
+    },
     "Remove what's left in Finder (or Keychain Access), then quit Sidefolk." : {
+
+    },
+    "Remove “%@”" : {
 
     },
     "Removed the folder %@" : {
