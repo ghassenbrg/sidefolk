@@ -1,5 +1,6 @@
 {
   "format": 1,
+  "sidefolk": ">=0.1",
   "id": "template",
   "name": "Template",
   "description": "A round little bear to start from: copy this folder, rename it and the id, then change it.",

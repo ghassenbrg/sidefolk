@@ -88,8 +88,11 @@ final class Director {
         if animate && reducedMotion { crossfade(rig.stage) }
         let transit: Transit = animate && !reducedMotion ? .spring : .instant
 
-        // A new state ends any moment; its pose replaces the moment's face.
-        cancelAntic(smooth: animate && !reducedMotion, restoreFace: false)
+        // A new state ends any moment (its pose replaces the moment's face), except a quick answer
+        // to the person going into a calm state: a boop plays on while the Ask panel opens.
+        if !(animate && antic?.antic.snappy == true && Self.settles(next)) {
+            cancelAntic(smooth: animate && !reducedMotion, restoreFace: false)
+        }
         stopLoops(smooth: animate && !reducedMotion)
         setProp(look.prop, animated: animate)
         rig.apply(restPose, transit)

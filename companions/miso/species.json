@@ -1,5 +1,6 @@
 {
   "format": 1,
+  "sidefolk": ">=0.1",
   "id": "miso",
   "name": "Miso",
   "description": "A cream cat with a bell, made from the template: pointed ears, a pink nose and a tail.",

@@ -8,6 +8,8 @@ let package = Package(
         .executable(name: "SidefolkApp", targets: ["SidefolkApp"]),
         .executable(name: "sidefolk", targets: ["sidefolk"]),
         .executable(name: "sidefolk-render", targets: ["sidefolk-render"]),
+        // Spike: a primitive 3D Mochi in SceneKit (docs/research/lively-companions.md); not shipped.
+        .executable(name: "sidefolk-3d", targets: ["sidefolk-3d"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
@@ -30,6 +32,7 @@ let package = Package(
         ),
         .executableTarget(name: "sidefolk", dependencies: ["SidefolkCore"]),
         .executableTarget(name: "sidefolk-render", dependencies: ["SidefolkCharacter"]),
+        .executableTarget(name: "sidefolk-3d"),
         .testTarget(name: "SidefolkCoreTests", dependencies: ["SidefolkCore"]),
         .testTarget(name: "SidefolkCharacterTests", dependencies: ["SidefolkCharacter"]),
     ]

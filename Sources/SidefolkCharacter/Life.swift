@@ -113,9 +113,9 @@ final class Life {
 
     func noteInteraction() { quietSince = senses.now }
 
-    /// Starts or stops ticking to match the view: idle, in a window, motion allowed.
+    /// Starts or stops ticking to match the view: idle, on screen, motion allowed.
     func refresh() {
-        let wanted = profile.every != nil && view.window != nil && !view.reducedMotion && view.state == .idle
+        let wanted = profile.every != nil && view.isOnScreen && !view.reducedMotion && view.state == .idle
         if !wanted {
             timer?.invalidate()
             timer = nil

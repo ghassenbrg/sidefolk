@@ -131,6 +131,45 @@ Reduced motion: no breathing, sways, ear trails, hops or loops; state changes cr
 quick fade; `wave` and `lookAround` become discrete pose changes; `hop`, `nod` and `shake` do nothing;
 a speaking mouth holds half open instead of moving.
 
+## Life: moments, postures, liveliness (proposed)
+
+On the branch `poc/lively-companions`, waiting for the founder (research and numbers:
+[docs/research/lively-companions.md](research/lively-companions.md)).
+
+```swift
+view.liveliness = .balanced                 // .minimal (D20 as it is), .balanced, .lively
+view.perform(.boop)                         // any CharacterAntic; toward: a screen point aims peeks
+view.setPosture(.sit, animated: true)       // idle only: .stand, .sit, .lie
+view.pointerMoved(toScreen: p)              // from the host's pointer monitor: stroking pets it
+view.noteInteraction()                      // pointer close, a click: it gets up, the quiet clock restarts
+if view.reactsToNews { view.perform(.startle) }
+```
+
+- **Moments** (`Antics.swift`) are data: tracks of squash, stretch, nudge and turn on layers whose
+  model transform is always the identity (`gesture`, `faceGesture`, `scan`, the soft rig's head tilt
+  layers, arm `loop`s, ear `trail`s; `Figure.movers(_:)`), plus face beats (`Mood`, drawn by
+  `Figure.express`) and gaze beats. Live, one keyframe animation per layer and a few one-shot
+  timers; offscreen, `Director.hold(_:at:)` sets the same keys for frame strips. Each is fitted to
+  the body's resting outline (`Layers.visibleBounds`) so nothing leaves the window (tested for every
+  companion, every frame).
+- **Postures** are poses on top of idle (`Moods.posture`): sitting brings the feet forward
+  (`Pose.feetSplay`, drawn in front of the belly), lying down is lower with drowsy eyes and half
+  folded ears.
+- **Life** (`Life.swift`): one non-repeating timer while idle and on screen; `Mind` decides (typing
+  holds it still, quiet time sits then lies down, variety, rare moments rare, sleepier at night).
+  Senses (`Surroundings`): seconds since a key and the frontmost window's frame, no permission.
+- **Hands:** `PettingDetector` (strokes back and forth) and `Fling` (a throw's arc to the floor).
+- Minimal arms no timer and keeps `settleAfter` at 20 s; Reduce Motion starts nothing on its own
+  and plays only a moment's faces.
+
+## Custom companions (proposed)
+
+`CustomCompanions.load(folder:)` reads a folder with `species.json` and `parts/*.svg` (format and
+rules in the research doc) into a `CustomCompanion`; `CharacterLook(custom:style:)` draws it on a
+`SoftRig` like any folk. `loadAll(home:)` reads `<home>/companions/*` and installed extensions'
+`companion/` folders. Data only: strict keys, ranges, SVG shapes only, files inside the folder only,
+and a geometry check in every state. `companions/template/` and `companions/miso/` are the examples.
+
 ## Reviewing changes
 
 ```sh
@@ -139,6 +178,9 @@ swift run sidefolk-render /tmp/sheets             # robot sheets, folks, menubar
 swift run sidefolk-render /tmp/sheets --only nova # one companion's sheets
 swift run sidefolk-render --icon Resources/Icon   # icon-macos-1024.png, Sidefolk.iconset/, Sidefolk.icns (iconutil)
 swift run sidefolk-render --live cycle 32 mochi   # a real window; check CPU with top -pid
+swift run sidefolk-render --antics /tmp/antics --only mochi   # every moment: a strip and a GIF each
+swift run sidefolk-render --live demo 47 mochi    # every moment live; click, stroke, drag, throw it
+swift run sidefolk-render --check-companion companions/miso   # a custom companion's problems
 ```
 
 `Resources/Character/` keeps the robot's sheets (states, states-small, gaze, hit), `folks.png`,

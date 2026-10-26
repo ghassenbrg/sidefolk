@@ -150,7 +150,8 @@ final class Stage: NSView {
             character.setGaze(CGVector(dx: dx / 160, dy: dy / 160))
             character.noteInteraction()
         } else if character.liveliness == .lively {
-            character.setGaze(CGVector(dx: dx / max(distance, 1) * min(1, distance / 400), dy: dy / max(distance, 1) * min(1, distance / 400)))
+            let reach = min(1, distance / 500) / max(distance, 1)
+            character.setGaze(CGVector(dx: dx * reach, dy: dy * reach), wakes: false)
         } else {
             character.setGaze(nil)
         }

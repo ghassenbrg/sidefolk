@@ -55,6 +55,8 @@ import Testing
         #expect(errors(try scratch { $0["id"] = "mochi" }).contains("already has"))
         #expect(errors(try scratch { $0["id"] = "../x" }).contains("id"))
         #expect(errors(try scratch { $0["format"] = 2 }).contains("format"))
+        #expect(errors(try scratch { $0["sidefolk"] = "0.1" }).contains("sidefolk: the oldest version"))
+        #expect(errors(try scratch { $0["sidefolk"] = ">=0.1" }).isEmpty)
         #expect(errors(try scratch { $0["name"] = "Bun\u{7}" }).contains("name"))
     }
 

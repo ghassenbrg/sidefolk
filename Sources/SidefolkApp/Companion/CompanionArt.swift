@@ -16,10 +16,33 @@ enum CompanionArt {
                                                              accessory: CharacterAccessory(style.accessory)))
     }
 
-    /// What the settings say; a companion that isn't offered (yet) shows as Mochi.
+    /// What the settings say; a companion that isn't offered (yet) shows as Mochi. A custom one
+    /// that loads is worn in the chosen companion's style.
     static func look(for settings: AppSettings) -> CharacterLook {
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
-        return look(choice, style: settings.style(for: choice))
+        let built = look(choice, style: settings.style(for: choice))
+        guard let custom = custom(settings.customCompanion) else { return built }
+        return CharacterLook(custom: custom, style: built.style)
+    }
+
+    static func liveliness(_ level: CompanionLiveliness) -> Liveliness {
+        Liveliness(rawValue: level.rawValue) ?? .balanced
+    }
+
+    // MARK: Made by you
+
+    /// Companions made from data in `<home>/companions/` (and installed extensions), as last read.
+    private(set) static var made: [CompanionReport] = CustomCompanions.loadAll(home: SidefolkPaths.standard().home)
+
+    /// Reads them again (at launch and when Settings › Companion opens): data only, never run.
+    static func reloadMade() {
+        made = CustomCompanions.loadAll(home: SidefolkPaths.standard().home)
+        previews = previews.filter { !$0.key.hasPrefix("custom:") }
+    }
+
+    static func custom(_ id: String?) -> CustomCompanion? {
+        guard let id else { return nil }
+        return made.lazy.compactMap(\.companion).first { $0.id == id }
     }
 
     static func species(_ choice: CompanionChoice) -> CharacterSpecies {
@@ -44,6 +67,14 @@ enum CompanionArt {
     /// The companion the settings choose, still in `state`, as Home and the Ask panel show it.
     static func portrait(for settings: AppSettings, state: CharacterState = .idle, side: CGFloat) -> NSImage {
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
+        if let custom = custom(settings.customCompanion) {
+            let look = look(for: settings), size = CGSize(width: side, height: side)
+            let key = "custom:\(custom.id).\(look.style.color.rawValue).\(look.style.accessory.rawValue).\(state.name).\(side)"
+            if let cached = previews[key] { return cached }
+            let image = NSImage(cgImage: CharacterRenderer.image(state: state, size: size, scale: 2, look: look), size: size)
+            previews[key] = image
+            return image
+        }
         return picture(choice, style: settings.style(for: choice), state: state, side: side)
     }
 

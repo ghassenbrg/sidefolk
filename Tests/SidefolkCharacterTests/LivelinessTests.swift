@@ -72,6 +72,15 @@ import Testing
         #expect(director.anticTimers.isEmpty)
     }
 
+    @Test func aBoopPlaysOnWhileTheAskPanelOpens() {
+        let director = Director(CharacterLook(.mochi), live: true)
+        director.perform(Antics.boop, name: .boop)
+        director.show(.listening, animated: true)
+        #expect(director.performing == .boop)
+        director.show(.thinking, animated: true)
+        #expect(director.performing == nil)
+    }
+
     @Test func reducedMotionKeepsOnlyTheFaces() {
         let director = Director(CharacterLook(.mochi), live: true)
         director.reducedMotion = true

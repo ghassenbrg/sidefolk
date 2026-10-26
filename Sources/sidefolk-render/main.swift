@@ -26,6 +26,9 @@ import UniformTypeIdentifiers
 let usage = "usage: sidefolk-render <outdir> [--only <id>] | --icon <dir> | --menu-bar <dir> | --antics <dir> [--only <id>]"
     + " | --live <state|cycle|demo> <seconds> [<id>] [\(LiveOptions.usage)] | --check-companion <folder>"
 
+// Line by line even into a pipe or a log, so a live run's window id and progress show as they happen.
+setvbuf(stdout, nil, _IOLBF, 0)
+
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
     switch args.first {

@@ -22,6 +22,12 @@ public enum CompanionSize: String, Codable, Sendable, CaseIterable {
     }
 }
 
+/// How much the companion does on its own (docs/research/lively-companions.md): minimal is the
+/// companion of D20, balanced adds small moments while idle, lively more of them.
+public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
+    case minimal, balanced, lively
+}
+
 /// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, or one of the
 /// Folk Family (D30). The app offers the ones whose rigs are finished.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
@@ -178,6 +184,10 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// Each companion keeps its own colour and accessory, so switching back finds it as it was.
     /// Keyed by `CompanionChoice.rawValue`; read them with `style(for:)`.
     public var styles: [String: CompanionStyle] = [:]
+    /// A companion made from data in `<home>/companions/<id>/`, worn instead of `companion` while
+    /// it loads (style and name still come from `companion`'s).
+    public var customCompanion: String?
+    public var liveliness: CompanionLiveliness = .balanced
     public var presence: PresenceMode = .always
     public var size: CompanionSize = .medium
     public var eyesFollowPointer = true
@@ -215,6 +225,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         if styles[CompanionChoice.sidefolk.rawValue] == nil, let accent = try? legacy.decode(CompanionAccent.self, forKey: .accent) {
             styles[CompanionChoice.sidefolk.rawValue] = CompanionStyle(color: accent, accessory: .none)
         }
+        customCompanion = try? c.decodeIfPresent(String.self, forKey: .customCompanion)
+        read(.liveliness, &liveliness)
         read(.presence, &presence)
         read(.size, &size)
         read(.eyesFollowPointer, &eyesFollowPointer)
@@ -242,6 +254,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public mutating func choose(_ next: CompanionChoice) {
         if !hasCustomName { companionName = next.defaultName }
         companion = next
+        customCompanion = nil
     }
 
     private enum LegacyKeys: String, CodingKey { case accent }

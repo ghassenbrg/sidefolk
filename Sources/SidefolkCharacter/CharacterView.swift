@@ -72,8 +72,9 @@ public final class CharacterView: NSView {
     }
 
     /// Look direction, each axis -1...1 (x right, y up); nil looks straight ahead.
-    /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy.
-    public func setGaze(_ vector: CGVector?) {
+    /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy. A look normally wakes
+    /// the breathing (something is near); `wakes: false` for a faint look at something far away.
+    public func setGaze(_ vector: CGVector?, wakes: Bool = true) {
         let next = vector.map { CGVector(dx: max(-1, min(1, $0.dx)), dy: max(-1, min(1, $0.dy))) }
         switch (gaze, next) {
         case (nil, nil): return
@@ -81,7 +82,7 @@ public final class CharacterView: NSView {
         default: break
         }
         gaze = next
-        if next != nil { director.wake() }
+        if next != nil, wakes { director.wake() }
         director.setGaze(next)
     }
 
@@ -281,6 +282,7 @@ public final class CharacterView: NSView {
             MainActor.assumeIsolated {
                 guard let self, let window = self.window else { return }
                 self.director.setPaused(!window.occlusionState.contains(.visible))
+                self.life?.refresh()
             }
         }
     }

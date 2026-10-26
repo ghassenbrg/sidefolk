@@ -54,6 +54,7 @@ final class CompanionWindowController {
     private var folkViews: [DutyFolk: FolkView] = [:]
     private var folkOrder: [DutyFolk] = []
     private var raiseTask: Task<Void, Never>?
+    private var flightTimer: Timer?
     var eyesFollowPointer = true
     private let readouts = ReadoutPillsModel()
     private let readoutHost: ReadoutHostView
@@ -204,7 +205,8 @@ final class CompanionWindowController {
     /// Steps forward for something that needs the user, then tucks back (when-needed mode).
     func stepForward(for seconds: TimeInterval = 20) {
         if presence == .whenNeeded { setPeeking(false, animated: true) }
-        character.play(.hop)
+        // Something arrived: lively companions jump at it, the minimal one hops as before.
+        if character.reactsToNews { character.perform(.startle) } else { character.play(.hop) }
         raiseTask?.cancel()
         guard presence == .whenNeeded else { return }
         raiseTask = Task { [weak self] in
@@ -223,7 +225,11 @@ final class CompanionWindowController {
     // MARK: State
 
     func render(_ pose: CompanionPose) {
-        character.setState(Self.state(for: pose), animated: true)
+        let state = Self.state(for: pose)
+        let changed = state != character.state
+        character.setState(state, animated: true)
+        // Something got done: glad about it, with two hops (the success pose alone hops once).
+        if changed, state == .success, character.reactsToNews { character.perform(.cheer) }
     }
 
     func setBadges(watching: Bool, busy: Bool, waiting: Int) {
@@ -358,9 +364,43 @@ final class CompanionWindowController {
                 self?.savePosition()
                 self?.layoutContent()
                 self?.delegate?.companionMoved()
+                self?.character.perform(.land)
             }
         }
     }
+
+    /// Thrown: it tumbles through the air, lands on the bottom of the screen and is dizzy after a
+    /// hard landing. The window moves along the arc for under a second, then everything stops.
+    func fling(_ velocity: CGVector) {
+        guard !character.reducedMotion else { return settleAfterDrag() }
+        let v = screen.visibleFrame
+        let flight = Fling(from: panel.frame.origin, velocity: velocity, floor: v.minY - feetInset,
+                           span: (v.minX - characterBox.width * 0.15)...(v.maxX - panel.frame.width + characterBox.width * 0.15))
+        character.perform(.spin)
+        let start = CACurrentMediaTime()
+        flightTimer?.invalidate()
+        flightTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let t = CACurrentMediaTime() - start
+                self.panel.setFrameOrigin(flight.position(at: t))
+                guard t >= flight.duration else { return }
+                self.flightTimer?.invalidate()
+                self.flightTimer = nil
+                self.savePosition()
+                self.layoutContent()
+                self.delegate?.companionMoved()
+                self.character.perform(.land)
+                guard flight.impact > 0.35 else { return }
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .seconds(0.55))
+                    self?.character.perform(.dizzy)
+                }
+            }
+        }
+    }
+
+    var isFlying: Bool { flightTimer != nil }
 
     func moveToScreen(of point: NSPoint) {
         guard let target = NSScreen.screens.first(where: { $0.frame.contains(point) }), target != screen else { return }
@@ -397,6 +437,8 @@ final class CompanionWindowController {
             }
         }
         if panel.ignoresMouseEvents != ignore { panel.ignoresMouseEvents = ignore }
+        // Stroking it with the pointer pets it.
+        if !isFlying { character.pointerMoved(toScreen: p) }
         // Eyes follow the pointer when it is near (max 20 updates a second).
         guard eyesFollowPointer, !character.reducedMotion else { return }
         let now = Date()
@@ -407,7 +449,12 @@ final class CompanionWindowController {
         let distance = hypot(dx, dy)
         if distance < 260, distance > 6 {
             character.setGaze(CGVector(dx: max(-1, min(1, dx / 160)), dy: max(-1, min(1, dy / 160))))
+            character.noteInteraction()
             folkViews.values.forEach { $0.wake() }
+        } else if character.liveliness == .lively, distance > 6 {
+            // Lively: it keeps an eye on the pointer across the screen, more faintly far away.
+            let reach = min(1, distance / 500) / distance
+            character.setGaze(CGVector(dx: dx * reach, dy: dy * reach), wakes: false)
         } else {
             character.setGaze(nil)
         }
@@ -421,6 +468,8 @@ final class CompanionContainerView: NSView {
     private var mouseDownAt: NSPoint?
     private var windowOriginAtDown: NSPoint?
     private var dragging = false
+    /// The last tenth of a second of a drag, for the speed it is let go at.
+    private var trail: [(time: TimeInterval, point: NSPoint)] = []
     private(set) var isDraggingFile = false
     /// Pressed and not moved yet: held long enough, it talks instead of clicking or dragging.
     private var holdTimer: Timer?
@@ -452,6 +501,7 @@ final class CompanionContainerView: NSView {
         holding = false
         holdTimer?.invalidate()
         holdTimer = nil
+        trail = [(event.timestamp, NSEvent.mouseLocation)]
         let point = convert(event.locationInWindow, from: nil)
         guard event.clickCount == 1, owner?.delegate?.companionCanTalk == true,
               owner?.folk(at: point) == nil, owner?.readout(at: point) != true else { return }
@@ -469,6 +519,8 @@ final class CompanionContainerView: NSView {
     override func mouseDragged(with event: NSEvent) {
         guard !holding, let start = mouseDownAt, let origin = windowOriginAtDown, let window else { return }
         let p = NSEvent.mouseLocation
+        trail.append((event.timestamp, p))
+        trail.removeAll { event.timestamp - $0.time > 0.1 }
         if !dragging, hypot(p.x - start.x, p.y - start.y) > 4 {
             dragging = true
             holdTimer?.invalidate()
@@ -491,7 +543,8 @@ final class CompanionContainerView: NSView {
         if dragging {
             dragging = false
             owner?.delegate?.companionDragChanged(false)
-            owner?.settleAfterDrag()
+            let velocity = Self.velocity(trail)
+            if Fling.isToss(velocity) { owner?.fling(velocity) } else { owner?.settleAfterDrag() }
             return
         }
         let local = convert(event.locationInWindow, from: nil)
@@ -502,8 +555,16 @@ final class CompanionContainerView: NSView {
         } else if event.clickCount == 2 {
             owner?.delegate?.companionDoubleClicked()
         } else if event.clickCount == 1 {
+            character.perform(.boop)
             owner?.delegate?.companionClicked()
         }
+    }
+
+    /// Points per second over the drag's last tenth of a second.
+    static func velocity(_ trail: [(time: TimeInterval, point: NSPoint)]) -> CGVector {
+        guard let first = trail.first, let last = trail.last, last.time - first.time > 0.01 else { return .zero }
+        let dt = last.time - first.time
+        return CGVector(dx: (last.point.x - first.point.x) / dt, dy: (last.point.y - first.point.y) / dt)
     }
 
     override func rightMouseDown(with event: NSEvent) {

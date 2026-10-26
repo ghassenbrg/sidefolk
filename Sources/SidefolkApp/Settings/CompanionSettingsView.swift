@@ -1,3 +1,4 @@
+import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
@@ -36,10 +37,56 @@ struct CompanionSettingsView: View {
                                isOn: setting(\.showFolks))
             }
 
+            if !CompanionArt.made.isEmpty {
+                SettingsGroup(title: "Made by you",
+                              footer: "Companions made from data in Sidefolk's companions folder. They wear the colour and scarf chosen above.") {
+                    ForEach(CompanionArt.made, id: \.folder) { report in
+                        madeRow(report)
+                    }
+                }
+            }
+
             SettingsGroup(title: "Behavior") {
+                SettingsRow(title: "Liveliness", detail: livelinessDetail) {
+                    Picker("Liveliness", selection: Binding(get: { model.settings.liveliness },
+                                                            set: { level in model.update { $0.liveliness = level } })) {
+                        Text("Minimal").tag(CompanionLiveliness.minimal)
+                        Text("Balanced").tag(CompanionLiveliness.balanced)
+                        Text("Lively").tag(CompanionLiveliness.lively)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+                }
                 SettingsToggle(title: "Sleep when you're away", detail: "Naps after 10 minutes without input and wakes when you're back.",
                                isOn: setting(\.sleepWhenIdle))
                 SettingsToggle(title: "Sounds", detail: "A soft chime for reminders and finished jobs.", isOn: setting(\.sounds))
+            }
+        }
+    }
+
+    private var livelinessDetail: LocalizedStringKey {
+        switch model.settings.liveliness {
+        case .minimal: "Moves only when something happens, then rests. The lightest on battery."
+        case .balanced: "Now and then a stretch, a yawn or a glance at your work; sits down when nothing happens. Still while you type."
+        case .lively: "More moments, more often, and eyes that follow the pointer across the screen."
+        }
+    }
+
+    /// A custom companion: its name and what it is, or why it can't be used.
+    private func madeRow(_ report: CompanionReport) -> some View {
+        let chosen = report.companion.map { model.settings.customCompanion == $0.id } ?? false
+        let detail = report.companion.map { $0.summary ?? "" } ?? report.errors.first ?? ""
+        return SettingsRow(title: Text(verbatim: report.companion?.name ?? report.folder.lastPathComponent),
+                           detail: Text(verbatim: detail)) {
+            if let companion = report.companion {
+                if chosen {
+                    Image(systemName: "checkmark").foregroundStyle(.secondary)
+                } else {
+                    Button("Use") { model.update { $0.customCompanion = companion.id } }
+                }
+            } else {
+                Image(systemName: "exclamationmark.triangle").foregroundStyle(.secondary)
             }
         }
     }

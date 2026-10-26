@@ -5,6 +5,8 @@ import Foundation
 /// an unknown key anywhere is an error, so a typo never silently changes the companion.
 struct SpeciesFile: Decodable {
     var format: Int
+    /// The oldest Sidefolk that can show it, written like an extension manifest's: ">=0.1".
+    var sidefolk: String?
     var id: String
     var name: String
     var description: String?
@@ -131,7 +133,7 @@ struct SpeciesFile: Decodable {
                                                     "ellipse": .object(["center": .any, "radius": .any]),
                                                     "blob": .any, "path": .any, "part": .any])
     static let schema: Schema = .object([
-        "format": .any, "id": .any, "name": .any, "description": .any, "author": .any,
+        "format": .any, "sidefolk": .any, "id": .any, "name": .any, "description": .any, "author": .any,
         "body": .object(["colors": .any, "edge": .any, "torso": shapeKeys, "head": shapeKeys, "neck": .any, "scale": .any]),
         "feet": .object(["at": .any, "size": .any, "colors": .any]),
         "arms": .object(["shoulders": .any, "shape": shapeKeys]),
@@ -174,6 +176,9 @@ struct SpeciesFile: Decodable {
     func resolve(part: (String) throws -> [PartShape]) throws -> CompanionBody {
         typealias Invalid = CustomCompanions.Invalid
         guard format == CustomCompanions.formatVersion else { throw Invalid("format must be \(CustomCompanions.formatVersion)") }
+        if let sidefolk, sidefolk.range(of: #"^>=[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]{1,3})?$"#, options: .regularExpression) == nil {
+            throw Invalid("sidefolk: the oldest version that can show it, written >=0.1")
+        }
         guard id.range(of: #"^[a-z][a-z0-9-]{1,31}$"#, options: .regularExpression) != nil else {
             throw Invalid("id: 2–32 lowercase letters, digits and dashes, starting with a letter")
         }
