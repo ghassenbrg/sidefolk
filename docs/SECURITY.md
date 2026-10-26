@@ -565,6 +565,9 @@ chose. Found in the 0.1.0 review and fixed:
   default over a failed read.
 - *Audit.* A step refused by Stop or Quit wasn't in Activity (its write was cancelled with the run); audit
   rows are now written from a detached task.
+- *Shared room.* Other agents may show this Mac's load (D42), but live values have four places beside the
+  companion; they together now hold at most two (`WatchLimits.maxActiveExternalReports`), so one steered by a
+  hostile repo can't leave the person unable to show their own.
 - *Disk.* `FileHandle.write(_:)` raises an Objective-C exception on a full disk, which nothing catches: the log
   writer and the `sidefolk` helper's error output use the throwing `write(contentsOf:)`. A day's log stops at
   16 MB.

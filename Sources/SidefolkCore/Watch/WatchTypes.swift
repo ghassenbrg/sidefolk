@@ -176,6 +176,8 @@ public enum WatchLimits {
     public static let maxActiveCommands = 5
     /// Live readouts at once: each is a pill beside the companion.
     public static let maxActiveReports = 4
+    /// Of those, what every external agent together may hold (T4, T29).
+    public static let maxActiveExternalReports = 2
     public static let onceExpiry: TimeInterval = 7 * 86400
     public static let repeatExpiry: TimeInterval = 30 * 86400
     /// A report stops on its own unless the person said to keep going: after an hour when it reads more often

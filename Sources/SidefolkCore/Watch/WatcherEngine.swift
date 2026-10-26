@@ -308,6 +308,11 @@ public actor WatcherEngine {
             if external.count >= WatchLimits.maxActiveExternal {
                 throw WatchError.limit(String(localized: "Other agents already have \(external.count) watches running. Stop one first."))
             }
+            // Live values share four places beside the companion: other agents never take more than half of them,
+            // so one steered by a hostile repo can't leave the person unable to show their own.
+            if w.mode == .report, external.filter({ $0.mode == .report }).count >= WatchLimits.maxActiveExternalReports {
+                throw WatchError.limit(String(localized: "Other agents already show \(WatchLimits.maxActiveExternalReports) live values. Stop one first."))
+            }
         }
         if w.kind == WatchKind.command, others.filter({ $0.kind == WatchKind.command }).count >= WatchLimits.maxActiveCommands {
             throw WatchError.limit(String(localized: "\(WatchLimits.maxActiveCommands) command watchers are already running. Stop one first."))
