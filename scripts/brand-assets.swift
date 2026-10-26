@@ -2,8 +2,6 @@
 // Deterministic production exports. Run from the repository root: swift scripts/brand-assets.swift
 import AppKit
 import ImageIO
-import Vision
-import CoreImage
 
 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let brand = root.appendingPathComponent("Resources/Brand")
@@ -62,165 +60,67 @@ func normalized(_ image: CGImage, ink: (Double, Double, Double)? = nil, trimOutp
 }
 let navy = (15.0/255, 45.0/255, 91.0/255)
 let aqua = (46.0/255, 212.0/255, 217.0/255)
-// Use the actual reference letterforms. No font substitution, generated lettering or text effects.
-let reference = read("Resources/Brand/reference/folk-family.png")
-let letters = reference.cropping(to: CGRect(x: 43, y: 237, width: 297, height: 80))!
-let lc = context(letters.width, letters.height)
-lc.draw(letters, in: CGRect(x: 0, y: 0, width: letters.width, height: letters.height))
-let lp = lc.data!.assumingMemoryBound(to: UInt8.self)
-for y in 0..<letters.height { for x in 0..<letters.width {
-    let i = (y * letters.width + x) * 4
-    let r = Double(lp[i])/255, g = Double(lp[i+1])/255, b = Double(lp[i+2])/255
-    let color = x < 151 ? navy : aqua
-    // All letter shapes are below y=16; only the original rays occupy the upper-right strip.
-    let allowed = (y >= 16 || x > 258) && b > r * 1.07 && (x < 151 || g > r * 1.12)
-    let alpha = allowed ? min(1, max(0, (1-r)/(1-color.0))) : 0
-    let a = alpha < 0.08 ? 0 : alpha
-    for (j, value) in [color.0, color.1, color.2].enumerated() { lp[i+j] = UInt8((value*a*255).rounded()) }
-    lp[i+3] = UInt8((a*255).rounded())
-}}
-let extractedWordmark = trimmed(lc.makeImage()!, padding: 3)
-// Trace only the supplied letter silhouettes, then gently smooth the pixel contours. This
-// preserves the reference lettering while providing real scalable vector paths for frameworks.
-let mask = context(extractedWordmark.width, extractedWordmark.height)
-mask.draw(extractedWordmark, in: CGRect(x: 0, y: 0, width: mask.width, height: mask.height))
-let mp = mask.data!.assumingMemoryBound(to: UInt8.self)
-for i in 0..<(mask.width * mask.height) {
-    let alpha = mp[i*4+3]
-    for j in 0..<3 { mp[i*4+j] = 255-alpha }
-    mp[i*4+3] = 255
-}
-let request = VNDetectContoursRequest()
-request.detectsDarkOnLight = true
-request.contrastAdjustment = 1
-request.maximumImageDimension = 2048
-let maskImage = CIImage(cgImage: mask.makeImage()!)
-let softened = maskImage.clampedToExtent().applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 1.0])
-    .cropped(to: maskImage.extent)
-let cleanMask = CIContext().createCGImage(softened, from: maskImage.extent)!
-try VNImageRequestHandler(cgImage: scaled(cleanMask, mask.width*4, mask.height*4)).perform([request])
-let contour = request.results!.first!.normalizedPath
-let trace = CGMutablePath()
-var points: [CGPoint] = []
-func add(_ a: CGPoint, _ b: CGPoint) -> CGPoint { CGPoint(x: a.x+b.x, y: a.y+b.y) }
-func sub(_ a: CGPoint, _ b: CGPoint) -> CGPoint { CGPoint(x: a.x-b.x, y: a.y-b.y) }
-func mul(_ p: CGPoint, _ s: CGFloat) -> CGPoint { CGPoint(x: p.x*s, y: p.y*s) }
-func dot(_ a: CGPoint, _ b: CGPoint) -> CGFloat { a.x*b.x+a.y*b.y }
-func unit(_ p: CGPoint) -> CGPoint { mul(p, 1/max(0.000001, sqrt(dot(p,p)))) }
-func normalizedPoint(_ p: CGPoint) -> CGPoint {
-    CGPoint(x: p.x/CGFloat(mask.width), y: p.y/CGFloat(mask.height))
-}
-// Least-squares cubic fitting with a subpixel error bound. Simply connecting every contour
-// pixel reproduces the screenshot's stair steps even in an SVG; actual fitted curves do not.
-func fitCurve(_ p: [CGPoint], _ left: CGPoint, _ right: CGPoint) {
-    let first = p[0], last = p.last!, count = p.count
-    if count == 2 {
-        let d = sqrt(dot(sub(last,first),sub(last,first)))/3
-        trace.addCurve(to: normalizedPoint(last), control1: normalizedPoint(add(first,mul(left,d))),
-                       control2: normalizedPoint(add(last,mul(right,d))))
-        return
-    }
-    var u = [CGFloat](repeating: 0, count: count)
-    for i in 1..<count { let d = sub(p[i],p[i-1]); u[i] = u[i-1]+sqrt(dot(d,d)) }
-    let length = max(0.000001,u.last!)
-    u = u.map { $0/length }
-    var c00: CGFloat = 0, c01: CGFloat = 0, c11: CGFloat = 0, x0: CGFloat = 0, x1: CGFloat = 0
-    for i in 0..<count {
-        let t = u[i], s = 1-t, b0 = s*s*s, b1 = 3*t*s*s, b2 = 3*t*t*s, b3 = t*t*t
-        let a = mul(left,b1), b = mul(right,b2)
-        let delta = sub(p[i],add(mul(first,b0+b1),mul(last,b2+b3)))
-        c00 += dot(a,a); c01 += dot(a,b); c11 += dot(b,b)
-        x0 += dot(a,delta); x1 += dot(b,delta)
-    }
-    let det = c00*c11-c01*c01
-    var al = abs(det) > 0.00000001 ? (x0*c11-x1*c01)/det : 0
-    var ar = abs(det) > 0.00000001 ? (c00*x1-c01*x0)/det : 0
-    let chord = sub(last,first), distance = sqrt(dot(chord,chord))
-    if al < 0.0001 || ar < 0.0001 || al > length || ar > length { al = distance/3; ar = distance/3 }
-    let c1 = add(first,mul(left,al)), c2 = add(last,mul(right,ar))
-    var error: CGFloat = 0, split = count/2
-    for i in 1..<(count-1) {
-        let t = u[i], s = 1-t
-        let q = add(add(mul(first,s*s*s),mul(c1,3*t*s*s)),add(mul(c2,3*t*t*s),mul(last,t*t*t)))
-        let delta = sub(q,p[i]), e = dot(delta,delta)
-        if e > error { error = e; split = i }
-    }
-    if error <= 0.9*0.9 {
-        trace.addCurve(to: normalizedPoint(last), control1: normalizedPoint(c1), control2: normalizedPoint(c2))
-    } else {
-        let center = unit(sub(p[split-1],p[split+1]))
-        fitCurve(Array(p[0...split]),left,center)
-        fitCurve(Array(p[split...]),mul(center,-1),right)
+// The wordmark is authored vector geometry, not a contour trace of the small reference.
+// Keep one editable SVG master; all platform formats are rendered from exactly these paths.
+final class WordmarkSource: NSObject, XMLParserDelegate {
+    var paths: [(CGPath, String)] = []
+    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
+                qualifiedName qName: String?, attributes: [String: String]) {
+        guard elementName == "path", let data = attributes["d"], let fill = attributes["fill"] else { return }
+        let expression = try! NSRegularExpression(pattern: #"[MLCZ]|[-+]?[0-9]*\.?[0-9]+"#)
+        let tokens = expression.matches(in: data, range: NSRange(data.startIndex..., in: data))
+            .map { String(data[Range($0.range, in: data)!]) }
+        let path = CGMutablePath()
+        var i = 0
+        func point() -> CGPoint {
+            let p = CGPoint(x: Double(tokens[i])!, y: Double(tokens[i+1])!)
+            i += 2; return p
+        }
+        while i < tokens.count {
+            let command = tokens[i]; i += 1
+            switch command {
+            case "M": path.move(to: point())
+            case "L": path.addLine(to: point())
+            case "C": let c1 = point(), c2 = point(), end = point(); path.addCurve(to: end, control1: c1, control2: c2)
+            case "Z": path.closeSubpath()
+            default: preconditionFailure("Unsupported wordmark command: \(command)")
+            }
+        }
+        paths.append((path, fill))
     }
 }
-func finishContour() {
-    guard points.count > 2 else { points.removeAll(); return }
-    let pixels = points.map { CGPoint(x: $0.x*CGFloat(mask.width), y: $0.y*CGFloat(mask.height)) }
-    let minX = pixels.map(\.x).min()!, maxX = pixels.map(\.x).max()!
-    let minY = pixels.map(\.y).min()!, maxY = pixels.map(\.y).max()!
-    let width = maxX-minX, height = maxY-minY
-    let area = abs(pixels.indices.reduce(CGFloat.zero) { sum, i in
-        let a = pixels[i], b = pixels[(i+1)%pixels.count]
-        return sum+a.x*b.y-b.x*a.y
-    })/2
-    // The i dot and round counters are intentional geometric forms, not wobbly screenshot edges.
-    if width < 23, height < 23, width/height > 0.8, width/height < 1.3, area/(width*height) > 0.68 {
-        trace.addEllipse(in: CGRect(x: minX/CGFloat(mask.width), y: minY/CGFloat(mask.height),
-                                   width: width/CGFloat(mask.width), height: height/CGFloat(mask.height)))
-        points.removeAll(); return
-    }
-    let tangent = unit(sub(pixels[1],pixels.last!))
-    trace.move(to: points[0])
-    fitCurve(pixels+[pixels[0]],tangent,mul(tangent,-1))
-    trace.closeSubpath()
-    points.removeAll()
-}
-contour.applyWithBlock { element in
-    switch element.pointee.type {
-    case .moveToPoint: finishContour(); points.append(element.pointee.points[0])
-    case .addLineToPoint: points.append(element.pointee.points[0])
-    case .closeSubpath: finishContour()
-    default: preconditionFailure("Unexpected contour segment")
-    }
-}
-finishContour()
-func drawWordmark(_ c: CGContext, width: CGFloat, height: CGFloat) {
-    c.scaleBy(x: width, y: height)
-    for (rect, color) in [(CGRect(x: 0, y: 0, width: 0.507, height: 1), navy),
-                           (CGRect(x: 0.507, y: 0, width: 0.493, height: 1), aqua)] {
-        c.saveGState(); c.clip(to: rect)
+let wordmarkSource = WordmarkSource()
+let wordmarkSVG = try String(contentsOf: brand.appendingPathComponent("masters/wordmark.svg"), encoding: .utf8)
+let parser = XMLParser(data: Data(wordmarkSVG.utf8))
+parser.delegate = wordmarkSource
+precondition(parser.parse() && wordmarkSource.paths.count == 11, "Invalid wordmark master")
+func drawWordmark(_ c: CGContext, width: CGFloat, height: CGFloat, ink: (Double, Double, Double)? = nil) {
+    c.saveGState()
+    c.translateBy(x: 0, y: height)
+    c.scaleBy(x: width/300, y: -height/84)
+    for (path, fill) in wordmarkSource.paths {
+        let color = ink ?? (fill == "#0F2D5B" ? navy : aqua)
         c.setFillColor(CGColor(srgbRed: color.0, green: color.1, blue: color.2, alpha: 1))
-        c.addPath(trace); c.drawPath(using: .eoFill); c.restoreGState()
+        c.addPath(path); c.drawPath(using: .eoFill)
     }
+    c.restoreGState()
 }
-let wc = context(4096, Int((4096.0 * Double(extractedWordmark.height) / Double(extractedWordmark.width)).rounded()))
+let wc = context(4096, 1147)
 drawWordmark(wc, width: CGFloat(wc.width), height: CGFloat(wc.height))
 let wordmark = wc.makeImage()!
 try fm.createDirectory(at: exports, withIntermediateDirectories: true)
-let pdf = NSMutableData()
-var mediaBox = CGRect(x: 0, y: 0, width: extractedWordmark.width, height: extractedWordmark.height)
-let pc = CGContext(consumer: CGDataConsumer(data: pdf)!, mediaBox: &mediaBox, nil)!
-pc.beginPDFPage(nil); drawWordmark(pc, width: mediaBox.width, height: mediaBox.height)
-pc.endPDFPage(); pc.closePDF()
-try (pdf as Data).write(to: exports.appendingPathComponent("wordmark-color.pdf"))
-var commands: [String] = []
-func pointString(_ p: CGPoint) -> String { String(format: "%.7f %.7f", Double(p.x), Double(p.y)) }
-trace.applyWithBlock { element in
-    let e = element.pointee
-    switch e.type {
-    case .moveToPoint: commands.append("M"+pointString(e.points[0]))
-    case .addCurveToPoint: commands.append("C"+pointString(e.points[0])+" "+pointString(e.points[1])+" "+pointString(e.points[2]))
-    case .closeSubpath: commands.append("Z")
-    default: preconditionFailure("Unexpected trace segment")
-    }
+for (name, ink) in [("color", Optional<(Double, Double, Double)>.none), ("navy", navy), ("white", (1.0,1.0,1.0))] {
+    let pdf = NSMutableData()
+    var mediaBox = CGRect(x: 0, y: 0, width: 300, height: 84)
+    let pc = CGContext(consumer: CGDataConsumer(data: pdf)!, mediaBox: &mediaBox, nil)!
+    pc.beginPDFPage(nil); drawWordmark(pc, width: 300, height: 84, ink: ink)
+    pc.endPDFPage(); pc.closePDF()
+    try (pdf as Data).write(to: exports.appendingPathComponent("wordmark-\(name).pdf"))
+    let svg = ink == nil ? wordmarkSVG : wordmarkSVG
+        .replacingOccurrences(of: "#0F2D5B", with: name == "white" ? "#FFFFFF" : "#0F2D5B")
+        .replacingOccurrences(of: "#2ED4D9", with: name == "white" ? "#FFFFFF" : "#0F2D5B")
+    try svg.write(to: exports.appendingPathComponent("wordmark-\(name).svg"), atomically: true, encoding: .utf8)
 }
-let svg = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 \(extractedWordmark.width) \(extractedWordmark.height)">
-<defs><path id="letters" d="\(commands.joined(separator: " "))"/><clipPath id="side"><rect width=".507" height="1"/></clipPath><clipPath id="folk"><rect x=".507" width=".493" height="1"/></clipPath></defs>
-<g transform="translate(0 \(extractedWordmark.height)) scale(\(extractedWordmark.width) -\(extractedWordmark.height))" fill-rule="evenodd"><use href="#letters" fill="#0F2D5B" clip-path="url(#side)"/><use href="#letters" fill="#2ED4D9" clip-path="url(#folk)"/></g>
-</svg>
-"""
-try svg.write(to: exports.appendingPathComponent("wordmark-color.svg"), atomically: true, encoding: .utf8)
 let mark = normalized(read("Resources/Brand/masters/mark-clean.png"))
 let primaryCrop = read("Resources/Brand/masters/logo-group.png").cropping(to:
     CGRect(x: 200, y: 55, width: 1100, height: 700))!

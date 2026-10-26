@@ -17,7 +17,7 @@ These are individual transparent assets, not crops for the app to discover in a 
 | Logos | `exports/logo-{stacked,horizontal}-{color,navy,white}.png` | Tightly framed transparent lockups; preserve aspect ratio. |
 | Family marks | `exports/mark-{color,navy,white}.png` | Standalone character group without tile or lettering. |
 | Wordmarks | `exports/wordmark-{color,navy,white}.png` | Flat lettering, 4096 px color master; no bevel, glow or shadow. |
-| Vector wordmark | `exports/wordmark-color.svg`, `exports/wordmark-color.pdf` | Actual fitted Bézier outlines, canonical flat brand colors, no font dependency or embedded raster. |
+| Vector wordmarks | `exports/wordmark-{color,navy,white}.{svg,pdf}` | Hand-authored Bézier outlines, canonical flat colors, no fonts, clipping masks, filters or embedded raster. |
 
 `scripts/build-app.sh` copies the production exports to `Contents/Resources/Brand/` and the templates
 to `Contents/Resources/MenuBar/`. `BrandAsset` provides typed AppKit loading in the app, and SwiftUI
@@ -41,9 +41,11 @@ scripts/build-app.sh debug
 ```
 
 The generator crops, isolates alpha, normalizes colors, lays out each lockup and exports the iconset
-and ICNS. Text comes from the reference letter silhouettes, denoised and fitted to smooth cubic
-Bézier curves; circular dots/counters are geometric ellipses. It is not an enlarged pixel crop or a
-new font. The color master is 4096 px wide and the SVG/PDF paths scale independently of resolution.
+and ICNS. `masters/wordmark.svg` is the editable, hand-authored source for the text, following the
+reference's rounded letterforms. The earlier contour trace was rejected. The current source uses
+11 simple named paths, straight stems, smooth curves, geometric counters and separately drawn rays;
+it has no font dependency. The generator consumes its absolute M/L/C/Z commands directly for PNG
+and PDF, so the logo variants share the exact same geometry. PNG wordmarks are 4096 px wide.
 
 `masters/` contains imagegen outputs used for the soft 3D artwork; `reference/folk-family.png` is the
 user-supplied board. The primary logo retains the mint helper's laptop. The app icon and icon-only

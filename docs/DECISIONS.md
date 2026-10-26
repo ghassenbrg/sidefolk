@@ -158,8 +158,8 @@ residual channel (SECURITY T2).
 
 ### D25 — Reference-faithful production brand assets (2026-10-26)
 **Decision:** use standalone transparent artwork reconstructed from the founder's Folk Family
-reference for static logos and the macOS app icon. Preserve the original flat wordmark's letter
-silhouettes as smooth fitted Bézier outlines, with navy/aqua fills and no generated text effects.
+reference for static logos and the macOS app icon. Reconstruct the flat wordmark as hand-authored
+Bézier outlines following the reference, with navy/aqua fills and no generated text effects.
 Export a complete ICNS/iconset and native 18 pt vector menu bar template; bundle production exports
 and load them through `BrandAsset`. The menu template simplifies the companion's shell/visor/smile
 for small sizes and lets macOS tint its alpha. The live vector rig remains as specified in D2.
@@ -171,6 +171,10 @@ separate transparent artwork PNG. No bevel, raised tile, cast shadow or edge lig
 Only derived legacy macOS ICNS/iconset representations get a flat inset rounded mask. An Xcode
 asset catalog includes both the raw image sets and the macOS AppIcon set. The rendered-tile master
 was rejected and removed.
+**Wordmark correction:** reject the low-resolution contour trace. The canonical source is now
+`Resources/Brand/masters/wordmark.svg`, drawn as 11 named, editable filled paths. SVG, PDF, PNG and
+all logo lockups derive from that master. Color, navy and white SVGs have no embedded raster, font,
+filters, transforms or clipping masks.
 
 ### D28 — Ten languages for everything people read; plain-language commands stay English (2026-10-26)
 **Decision:** the interface, notices and messages ship in English, French, Spanish, German, Italian,

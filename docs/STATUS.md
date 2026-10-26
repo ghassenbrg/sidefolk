@@ -10,8 +10,8 @@ into `rework`).
   template. Calm states settle after 20 s, loops are capped at 24 fps and pause while hidden (D20).
 - **Brand assets (2026-10-26):** reference-faithful app icon (1024 PNG, ten iconset representations,
   ICNS); individual transparent stacked/horizontal logos, wordmarks and family marks in color,
-  navy and white. Generated text effects were rejected; the final flat wordmark uses denoised,
-  fitted cubic Bézier silhouettes from the original reference, with SVG/PDF and 4096 px PNG exports.
+  navy and white. Generated text effects and the contour trace were rejected; the flat wordmark
+  now uses a hand-authored SVG following the reference, with SVG/PDF and 4096 px PNG exports.
   Native 18 pt menu template is a vector PDF plus 1x/2x/3x PNGs, bundled and loaded as an NSImage
   template through `BrandAsset`. `make brand-assets` rebuilds exports and a light/dark preview.
   Verified alpha, dimensions, SVG paths, PDF native loading, exact bundled bytes, signed debug
@@ -25,6 +25,12 @@ into `rework`).
   export dimensions and catalog references, Xcode `actool` compilation, ICNS decoding and signed
   debug build resource bytes. No source work remains half done; use `Resources/Icon/icon-artwork.png`
   or `icon-source-2048.png` for the next platform export, rather than the derived macOS icon.
+- **Wordmark quality correction (2026-10-26):** removed Vision contour fitting from the asset
+  generator. `Resources/Brand/masters/wordmark.svg` contains 11 hand-authored letter/dot/ray paths
+  with smooth outlines, straight stems and corrected f/o spacing. Color, navy and white SVG/PDF
+  variants, PNGs and all six logo lockups use this master. Checked native macOS SVG rendering at
+  4096 px and small sizes, vector-only SVG structure and cross-format raster agreement. No work
+  remains half done; edit the master SVG for future lettering changes and run `make brand-assets`.
 - **Core:** storage (GRDB, FTS5, secure_delete, 0600 files) and Guard (risk, caller, taint, user-typed
   links, hardened path policy, folder-bound command grants, approvals). Every tool input is checked
   against its schema. The executor provides audit and undo. Also attention policy and center (held
