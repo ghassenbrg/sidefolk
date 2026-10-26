@@ -2,7 +2,8 @@
 # Collects every string people can read into Resources/Localization/Localizable.xcstrings.
 # The compiler reports each SwiftUI text literal and String(localized:) with its exact key (so
 # interpolations get the right %@ / %lld); xcstringstool merges them, keeping translations and
-# marking strings that no longer exist as stale. Prints how complete each language is.
+# marking strings that no longer exist as stale. Prints how complete each language is
+# (scripts/translations.py moves translations in and out).
 #   scripts/strings.sh            (make strings)
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -27,13 +28,4 @@ for f in "$found"/*.stringsdata; do
 done
 xcrun xcstringstool sync "$catalog" "${args[@]}"
 
-python3 - "$catalog" <<'PY'
-import json, sys
-strings = json.load(open(sys.argv[1]))["strings"]
-live = {k: v for k, v in strings.items() if v.get("extractionState") != "stale" and v.get("shouldTranslate", True)}
-langs = sorted({l for v in live.values() for l in v.get("localizations", {})} - {"en"})
-print(f"{len(live)} strings")
-for l in langs:
-    done = sum(1 for v in live.values() if v.get("localizations", {}).get(l, {}).get("stringUnit", {}).get("state") == "translated")
-    print(f"  {l}: {done}/{len(live)}")
-PY
+python3 scripts/translations.py status
