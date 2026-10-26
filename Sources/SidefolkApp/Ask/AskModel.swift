@@ -93,6 +93,8 @@ final class AskModel {
     /// A watch waiting for its address ("Which address? e.g. localhost:3000").
     var pendingWatch: (kind: String, becomes: String?)?
     weak var actions: AskActions?
+    /// Extensions by id, so their approval and result cards show their icon and name.
+    var extensionLooks: [String: ExtensionLook] = [:]
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
 

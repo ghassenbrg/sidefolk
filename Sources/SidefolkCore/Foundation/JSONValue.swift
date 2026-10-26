@@ -140,4 +140,12 @@ public extension JSONValue {
         guard let data = try? enc.encode(self) else { return "null" }
         return String(decoding: data, as: UTF8.self)
     }
+
+    /// Indented, key-sorted JSON text, for files people read (extension drafts).
+    var prettyString: String {
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.sortedKeys, .withoutEscapingSlashes, .prettyPrinted]
+        guard let data = try? enc.encode(self) else { return "null" }
+        return String(decoding: data, as: UTF8.self)
+    }
 }

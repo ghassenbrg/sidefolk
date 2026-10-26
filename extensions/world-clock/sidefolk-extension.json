@@ -1,0 +1,15 @@
+{
+  "id": "dev.sidefolk.world-clock",
+  "name": "World Clock",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.",
+  "folk": "tempo",
+  "author": "Sidefolk",
+  "icon": "icon.pdf",
+  "run": { "command": "python3", "args": ["main.py"] },
+  "tools": {
+    "current_time": { "title": "Time around the world", "risk": "low", "category": "time", "mutates": false },
+    "convert_time": { "title": "Convert a time between places", "risk": "low", "category": "time", "mutates": false }
+  }
+}

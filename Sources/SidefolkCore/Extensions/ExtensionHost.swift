@@ -15,6 +15,7 @@ public actor ExtensionHost {
         public var crashWindow: TimeInterval = 300
         public var limits = ExtensionProcessLimits.standard
         public var resolver = InterpreterResolver.system
+        public var programs = ProgramResolver.system
         /// Where MCP server commands named without a path are looked up, and the PATH they get.
         public var mcpSearchPath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         public init() {}
@@ -34,12 +35,16 @@ public actor ExtensionHost {
         var idleTask: Task<Void, Never>?
         var starting: Task<MCPClient, Error>?
         var toolWarnings: [String] = []
+        /// The installed copy's icon, when it passed the checks.
+        var iconPath: String?
+        /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
+        var oneShots: [ObjectIdentifier: MCPClient] = [:]
     }
 
     public nonisolated let paths: SidefolkPaths
     private let store: ExtensionStore
     private let registry: ToolRegistry
-    private let events: EventBus
+    nonisolated let events: EventBus
     private let config: Configuration
     private let secrets: @Sendable (String) async -> [String: String]
     private let installer: ExtensionInstaller
@@ -60,7 +65,7 @@ public actor ExtensionHost {
         config = configuration
         self.secrets = secrets
         installer = ExtensionInstaller(paths: paths)
-        validator = ManifestValidator(paths: paths, resolver: configuration.resolver)
+        validator = ManifestValidator(paths: paths, resolver: configuration.resolver, programs: configuration.programs)
     }
 
     // MARK: Startup and shutdown
@@ -75,10 +80,11 @@ public actor ExtensionHost {
 
     /// Stops every running process.
     public func shutdown() async {
-        let clients = runtimes.values.compactMap(\.client)
+        let clients = runtimes.values.compactMap(\.client) + runtimes.values.flatMap(\.oneShots.values)
         for id in runtimes.keys {
             runtimes[id]?.idleTask?.cancel()
             runtimes[id]?.client = nil
+            runtimes[id]?.oneShots = [:]
         }
         await withTaskGroup(of: Void.self) { group in
             for c in clients { group.addTask { await c.shutdown() } }
@@ -107,6 +113,7 @@ public actor ExtensionHost {
             } else {
                 let report = validator.validate(folder: URL(fileURLWithPath: folder), mode: .installed)
                 rt.manifest = report.manifest
+                rt.iconPath = report.iconPath
                 if !report.isValid, record.enabled {
                     rt.record.enabled = false
                     let issue = report.errors.first?.description ?? String(localized: "unknown problem")
@@ -143,6 +150,14 @@ public actor ExtensionHost {
 
     public func info(id: String) -> ExtensionInfo? { makeInfo(id) }
 
+    /// What the installed copy holds (names and contents of its files) and whether it is still as
+    /// installed, so built-in extensions can follow the app (`BundledExtensions`).
+    func installedState(id: String) -> (contentHash: String, intact: Bool)? {
+        guard let rt = runtimes[id], rt.record.kind == .sidefolk else { return nil }
+        let intact = integrity.verify(id: id, folder: installer.installedFolder(id), pins: rt.pin.files) == nil
+        return (ExtensionFiles.contentHash(rt.pin.files), intact)
+    }
+
     private func makeInfo(_ id: String) -> ExtensionInfo? {
         guard let rt = runtimes[id] else { return nil }
         let summary = rt.record.kind == .mcp
@@ -157,7 +172,8 @@ public actor ExtensionHost {
         }
         return ExtensionInfo(id: id, name: rt.pin.name, version: rt.record.version, kind: rt.record.kind,
                              enabled: rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
-                             description: rt.pin.description, folk: rt.pin.folk, author: rt.pin.author, summary: summary,
+                             description: rt.pin.description, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
+                             iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings)
     }
@@ -192,10 +208,14 @@ public actor ExtensionHost {
         return nil
     }
 
-    /// Installs (or updates) the extension in `folder`. The user has seen `preview(folder:)` and agreed.
-    /// It is copied in, locked, pinned, started once to list its tools, and its tools are registered.
+    /// Installs (or updates) the extension in `folder`. The user has seen `preview(folder:)` and agreed, or
+    /// it is one Sidefolk ships (`origin` bundled, `enabled` from its catalog). It is copied in, locked,
+    /// pinned, started once to list its tools, and its tools are registered while it is on.
     @discardableResult
-    public func install(from folder: URL) async throws -> ExtensionInfo {
+    public func install(from folder: URL, origin: ExtensionOrigin? = nil, enabled: Bool = true) async throws -> ExtensionInfo {
+        let drafts = ExtensionFS.realpath(paths.extensionDrafts.path)
+        let fromDrafts = drafts.flatMap { d in ExtensionFS.realpath(folder.path).map { ExtensionFS.isInside($0, d) } } ?? false
+        let origin = origin ?? (fromDrafts ? .draft : nil)
         let report = validator.validate(folder: folder, mode: .source)
         guard report.isValid, let manifest = report.manifest else {
             throw UserFacingError(verbatim: String(localized: "This extension can't be installed."), recovery: report.errors.first?.description)
@@ -223,14 +243,18 @@ public actor ExtensionHost {
             record.lastError = nil
             record.manifestHash = ExtensionFiles.aggregateHash(staged.pins)
             let pin = ExtensionPin(name: manifest.name, description: manifest.description, folk: manifest.folk,
-                                   author: manifest.author, launch: start, permissions: permissions, files: staged.pins)
-            runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest)
+                                   author: manifest.author, origin: origin, launch: start, permissions: permissions, files: staged.pins)
+            runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath)
             _ = try await launch(id, approveAll: true)
-            guard let saved = runtimes[id] else { throw UserFacingError("The extension stopped while it was being installed.") }
-            try await store.save(saved.record)
+            guard runtimes[id] != nil else { throw UserFacingError("The extension stopped while it was being installed.") }
+            if !enabled {
+                await stop(id)
+                runtimes[id]?.record.enabled = false
+            }
+            try await store.save(runtimes[id]!.record)
             installer.finish(committed)
             registerTools(id)
-            touch(id)
+            if enabled { touch(id) }
             Log.shared.info("extensions", "installed", ["id": id, "version": manifest.version])
             events.changed(.extensions)
             return makeInfo(id)!
@@ -247,7 +271,9 @@ public actor ExtensionHost {
 
     /// Removes the extension, its data folder and its record.
     public func uninstall(id: String) async throws {
-        guard runtimes[id] != nil else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
+        guard let rt = runtimes[id] else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
+        // It would come back with the next launch; switching it off is the way to refuse it.
+        guard rt.pin.origin != .bundled else { throw UserFacingError("\(rt.pin.name) comes with Sidefolk.", recovery: "Switch it off instead.") }
         await stop(id)
         runtimes[id] = nil
         registry.unregister(owner: id)
@@ -422,30 +448,79 @@ public actor ExtensionHost {
 
     // MARK: Tool calls
 
-    func callTool(_ id: String, remote: String, title: String, input: JSONValue) async throws -> ToolResult {
+    /// - Parameters:
+    ///   - folders: what Guard allowed for this call in the folders the person named; the call then runs
+    ///     in its own process whose sandbox opens just those.
+    ///   - timeout: the manifest's `timeout` for this tool; 30 seconds otherwise.
+    func callTool(_ id: String, remote: String, title: String, input: JSONValue, folders: [ExtensionFolderGrant] = [],
+                  timeout: TimeInterval? = nil) async throws -> ToolResult {
         guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         try ensureApproved(id, remote, title)
         begin(id)
         defer { end(id) }
-        let client = try await ensureRunning(id)
-        try ensureApproved(id, remote, title)
+        let limit = timeout ?? config.callTimeout
         let text: String
         do {
-            text = try await client.callTool(name: remote, arguments: input, timeout: config.callTimeout)
+            if folders.isEmpty {
+                let client = try await ensureRunning(id)
+                try ensureApproved(id, remote, title)
+                text = try await client.callTool(name: remote, arguments: input, timeout: limit)
+            } else {
+                text = try await callInOwnProcess(id, remote: remote, title: title, input: input, folders: folders, timeout: limit)
+            }
         } catch MCPError.toolFailed(let message) {
             // The tool's own explanation helps the model fix its call; it is the extension's text, so untrusted.
             let clean = ExtensionText.untrusted(message, bytes: 4_000)
             return ToolResult(text: clean.isEmpty ? "(no explanation given)" : clean,
                               card: ResultCard(kind: .extensionResult, title: String(localized: "“\(title)” reported a problem"), subtitle: rt.pin.name,
-                                               detail: clean.clipped(200)),
+                                               detail: clean.clipped(200), refId: id),
                               untrusted: true, isError: true)
         } catch let error as MCPError {
             throw userFacing(error, action: "“\(title)”", name: rt.pin.name)
         }
         let clean = ExtensionText.untrusted(text, bytes: 20_000)
         return ToolResult(text: clean.isEmpty ? "(no output)" : clean,
-                          card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200)),
+                          card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200), refId: id),
                           untrusted: true)
+    }
+
+    /// A call that works in folders the person named gets a process of its own: its sandbox adds exactly
+    /// those folders, and it stops when the call ends, so the extension never keeps that access (D39).
+    /// It lists its tools first, so a tool that changed since install is held as it would be otherwise.
+    private func callInOwnProcess(_ id: String, remote: String, title: String, input: JSONValue,
+                                  folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> String {
+        guard let rt = runtimes[id], rt.record.kind == .sidefolk else {
+            throw UserFacingError("Only sandboxed extensions can work in a folder you name.")
+        }
+        try await verifyFiles(id)
+        let process = try ExtensionProcess(spec: try sandboxedSpec(id, folders: folders), limits: config.limits)
+        let client = MCPClient(process: process)
+        let key = ObjectIdentifier(client)
+        runtimes[id]?.oneShots[key] = client
+        func finish() async {
+            runtimes[id]?.oneShots[key] = nil
+            _ = await client.shutdown()
+        }
+        do {
+            try client.start()
+            _ = try await client.initialize(timeout: config.callTimeout)
+            let (tools, refused) = try await client.listTools(timeout: config.callTimeout)
+            try await reconcile(id, tools: tools, refused: refused, approveAll: false)
+        } catch {
+            let exit = await client.shutdown()
+            runtimes[id]?.oneShots[key] = nil
+            if let e = error as? UserFacingError { throw e }
+            throw Self.startFailure(name: rt.pin.name, error: error, exit: exit, stderr: ExtensionText.untrusted(process.stderrTail, bytes: 2000))
+        }
+        do {
+            try ensureApproved(id, remote, title)
+            let text = try await client.callTool(name: remote, arguments: input, timeout: timeout)
+            await finish()
+            return text
+        } catch {
+            await finish()
+            throw error
+        }
     }
 
     private func ensureApproved(_ id: String, _ remote: String, _ title: String) throws {
@@ -499,12 +574,7 @@ public actor ExtensionHost {
         let spec: ExtensionProcessSpec
         switch rt.record.kind {
         case .sidefolk:
-            if let problem = integrity.verify(id: id, folder: installer.installedFolder(id), pins: rt.pin.files) {
-                await disable(id, reason: String(localized: "Its files changed since you installed it (\(problem)) Install it again to use it."),
-                              notice: String(localized: "\(rt.pin.name) was changed on disk, so I turned it off. Install it again to use it."))
-                throw UserFacingError("\(rt.pin.name) was turned off because its files changed.",
-                                      recovery: "Install it again from Settings › Extensions.")
-            }
+            try await verifyFiles(id)
             spec = try sandboxedSpec(id)
         case .mcp:
             spec = try await serverSpec(id)
@@ -584,8 +654,18 @@ public actor ExtensionHost {
                                detail: [String(describing: error), stderr].filter { !$0.isEmpty }.joined(separator: "\n"))
     }
 
-    private func sandboxedSpec(_ id: String) throws -> ExtensionProcessSpec {
-        guard var rt = runtimes[id], let launch = rt.pin.launch, let permissions = rt.pin.permissions else {
+    /// Before every start: the installed files must still be the ones pinned at install (SECURITY T14).
+    private func verifyFiles(_ id: String) async throws {
+        guard let rt = runtimes[id], rt.record.kind == .sidefolk else { return }
+        guard let problem = integrity.verify(id: id, folder: installer.installedFolder(id), pins: rt.pin.files) else { return }
+        await disable(id, reason: String(localized: "Its files changed since you installed it (\(problem)) Install it again to use it."),
+                      notice: String(localized: "\(rt.pin.name) was changed on disk, so I turned it off. Install it again to use it."))
+        throw UserFacingError("\(rt.pin.name) was turned off because its files changed.", recovery: "Install it again from Settings › Extensions.")
+    }
+
+    /// - Parameter folders: folders Guard allowed for one call, added to what the manifest grants.
+    private func sandboxedSpec(_ id: String, folders: [ExtensionFolderGrant] = []) throws -> ExtensionProcessSpec {
+        guard var rt = runtimes[id], let launch = rt.pin.launch, var permissions = rt.pin.permissions else {
             throw UserFacingError("Its saved settings are incomplete. Install it again.")
         }
         let folder = installer.installedFolder(id)
@@ -596,6 +676,31 @@ public actor ExtensionHost {
                 throw UserFacingError("\(rt.pin.name) can't start: \(FolderAccess.displayPath(path)) changed since you installed it.",
                                       recovery: "Install it again.")
             }
+        }
+        // Folders for this call: canonical, outside everything Sidefolk protects, and never its own data.
+        let own = [paths.home.path, paths.extensions.path, paths.extensionData.path].compactMap(FolderAccess.canonical)
+        for grant in folders {
+            guard FolderAccess.canonical(grant.path) == grant.path, FolderAccess.forbiddenReason([grant.path]) == nil,
+                  !own.contains(where: { ExtensionFS.isInside(grant.path, $0) || ExtensionFS.isInside($0, grant.path) }) else {
+                throw UserFacingError("\(rt.pin.name) can't work in \(FolderAccess.displayPath(grant.path)).", changedNothing: true)
+            }
+            if grant.write {
+                if !permissions.write.contains(grant.path) { permissions.write.append(grant.path) }
+            } else if !permissions.read.contains(grant.path), !permissions.write.contains(grant.path) {
+                permissions.read.append(grant.path)
+            }
+        }
+        // Xcode and Homebrew updates move programs; find them again the same trusted way.
+        for (i, program) in permissions.programs.enumerated() where !InterpreterResolver.isTrusted(program.path) {
+            guard let again = config.programs.resolve(program.name) else {
+                throw UserFacingError("\(rt.pin.name) needs \(program.name), which isn't available anymore.")
+            }
+            permissions.programs[i] = again
+            rt.pin.permissions?.programs[i] = again
+            rt.record.granted = try? JSONValue.from(rt.pin)
+            runtimes[id] = rt
+            let record = rt.record
+            Task { try? await store.save(record) }
         }
         var interpreter = launch.interpreter
         if let current = interpreter, !InterpreterResolver.isTrusted(current.path) {
@@ -619,15 +724,17 @@ public actor ExtensionHost {
         let profile = try SandboxProfile.make(.init(extensionDir: folder, dataDir: data, executable: executable,
                                                     reexec: interpreter?.reexec, runtime: interpreter?.runtime ?? [],
                                                     permissions: permissions,
-                                                    allowFork: !permissions.exec.isEmpty || interpreter?.name == "sh"))
+                                                    allowFork: !permissions.exec.isEmpty || !permissions.programs.isEmpty
+                                                        || interpreter?.name == "sh"))
         let profilePath = try installer.writeProfile(profile.text, id: id)
         var args = ["-f", profilePath] + profile.arguments + [executable]
         if let interpreter { args += interpreter.flags + [real] }
         args += launch.arguments
-        let env = [
+        var env = [
             "HOME": data, "TMPDIR": data + "/tmp/", "PATH": "/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE": "1",
             "LANG": "en_US.UTF-8", "SIDEFOLK_EXTENSION_ID": id, "SIDEFOLK_DATA_DIR": data,
         ]
+        for program in permissions.programs { env[program.environmentKey] = program.path }
         return ExtensionProcessSpec(executable: "/usr/bin/sandbox-exec", arguments: args, environment: env, workingDirectory: data)
     }
 
@@ -764,6 +871,9 @@ public actor ExtensionHost {
 
     private func stop(_ id: String) async {
         runtimes[id]?.idleTask?.cancel()
+        let oneShots = runtimes[id]?.oneShots.values.map { $0 } ?? []
+        runtimes[id]?.oneShots = [:]
+        for client in oneShots { _ = await client.shutdown() }
         guard let client = runtimes[id]?.client else { return }
         runtimes[id]?.client = nil
         await client.shutdown()
@@ -820,17 +930,31 @@ public actor ExtensionHost {
         if !permissions.write.isEmpty { capabilities.insert(.filesWrite) }
         if !permissions.dangerousExec.isEmpty { capabilities.insert(.shell) }
         let title = title(rt, def)
+        // Sidefolk's own extensions are first-party text that ships in the app; everyone else's isn't (D24, D39).
+        let firstParty = rt.pin.origin == .bundled
+        let timeout = meta?.timeout.map { TimeInterval(min(max($0, ExtensionTool.timeouts.lowerBound), ExtensionTool.timeouts.upperBound)) }
         let spec = ToolSpec(name: registryName, title: title,
-                            description: Self.modelDescription(title: title, extensionName: rt.pin.name, kind: rt.record.kind),
-                            inputSchema: Self.modelSchema(def.inputSchema),
+                            description: firstParty
+                                ? Self.firstPartyDescription(def.description, extensionName: rt.pin.name)
+                                : Self.modelDescription(title: title, extensionName: rt.pin.name, kind: rt.record.kind),
+                            inputSchema: firstParty ? def.inputSchema : Self.modelSchema(def.inputSchema),
                             risk: risk(rt, def.name), capabilities: capabilities, category: meta?.category ?? .extensions,
-                            mutates: meta?.mutates ?? true, external: false)
+                            mutates: meta?.mutates ?? true, external: false,
+                            // A little longer than the call itself, so the extension's own timeout is what reports it.
+                            timeout: timeout.map { $0 + 5 })
         let id = rt.record.id
         let remote = def.name
-        return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote) { [weak self] input in
+        return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote,
+                             folderParameters: meta?.paths ?? [:]) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
-            return try await self.callTool(id, remote: remote, title: title, input: input)
+            return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)
         }
+    }
+
+    /// A built-in extension's own description, cleaned and capped like any description, naming where it is from.
+    static func firstPartyDescription(_ description: String, extensionName: String) -> String {
+        let text = ExtensionText.untrusted(description, bytes: 1_000)
+        return "\(text.isEmpty ? "" : text + " ")(Sidefolk's built-in extension “\(ExtensionText.line(extensionName, characters: 60))”. Its results are untrusted.)"
     }
 
     /// What the model is told about an extension's tool. A tool's own description (and the free text

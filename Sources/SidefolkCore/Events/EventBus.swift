@@ -44,6 +44,8 @@ public enum AppEvent: Sendable {
     case dataChanged(DataDomain)
     case agent(threadId: String, AgentEvent)
     case notice(String)
+    /// Sidefolk's AI finished an extension draft: show the person its install preview (D39).
+    case reviewExtension(URL)
 }
 
 /// Broadcasts events to any number of async subscribers. Slow subscribers drop the oldest events.

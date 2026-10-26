@@ -1,0 +1,8 @@
+{
+  "about": "Extensions that ship with Sidefolk (DECISIONS D39, docs/research/extensions-catalog.md). Each is installed with the app and updated with it; \"on\" says whether it starts switched on. Folders not listed here are samples people can install from Settings.",
+  "extensions": [
+    { "folder": "git", "on": true },
+    { "folder": "world-clock", "on": true },
+    { "folder": "system-vitals", "on": true }
+  ]
+}

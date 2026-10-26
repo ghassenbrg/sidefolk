@@ -33,13 +33,17 @@ public final class SidefolkRuntime: Sendable {
     public let sessionTracker: SessionTracker
     public let jobTracker: JobTracker
     public let extensions: ExtensionHost
+    /// Extensions Sidefolk ships, installed and updated with the app (D39).
+    public let bundledExtensions: BundledExtensions
+    /// Extensions Sidefolk's AI wrote for the person, waiting for review (D39).
+    public let extensionDrafts: ExtensionDrafts
     public let skills: SkillLibrary
     /// Which Apple Notes are already in the notebook (DECISIONS D38).
     public let appleNotesLedger: AppleNotesLedger
     private let server: LocalAPIServer
 
     /// - Parameters:
-    ///   - bundledResources: the app's Resources folder (bundled skills and sample extensions).
+    ///   - bundledResources: the app's Resources folder (bundled skills, built-in and sample extensions).
     ///   - extensionSecrets: environment values for an MCP server, read from the Keychain by server id.
     ///   - appleEvents: how Notes and Reminders are reached; tests pass a fake.
     public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock(),
@@ -84,6 +88,8 @@ public final class SidefolkRuntime: Sendable {
         })
         jobTracker = JobTracker(store: jobs, attention: attention, events: events, clock: clock)
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)
+        bundledExtensions = BundledExtensions(directory: bundledResources?.appendingPathComponent("Extensions", isDirectory: true))
+        extensionDrafts = ExtensionDrafts(paths: paths)
         skills = SkillLibrary(userDirectory: paths.skills, bundledDirectory: bundledResources?.appendingPathComponent("Skills", isDirectory: true),
                               events: events)
         appleNotesLedger = AppleNotesLedger(db: db)
@@ -98,6 +104,7 @@ public final class SidefolkRuntime: Sendable {
         registry.register(AgentFacingTools.status(StatusReader(db: db)))
         registry.register(SkillTools.all(skills))
         registry.register(ExtensionWatchTool(host: extensions, engine: watchers))
+        registry.register(ExtensionBuilderTools.all(drafts: extensionDrafts, host: extensions, events: events))
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening",
@@ -120,6 +127,9 @@ public final class SidefolkRuntime: Sendable {
         }
         await scheduler.start()
         await extensions.start()
+        // Off the launch path: the first launch installs each built-in extension (a short start of each).
+        let bundled = bundledExtensions, host = extensions
+        Task { await bundled.install(into: host) }
         await watchers.register(ExtensionWatcherProbe(host: extensions))
         await watchers.start()
         await sessionTracker.start()

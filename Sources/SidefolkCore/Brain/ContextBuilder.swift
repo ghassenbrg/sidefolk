@@ -179,12 +179,16 @@ public struct ContextBuilder: Sendable {
             "- Only what your tools do. Opening an app only opens it or brings it forward: you can't see, read or change anything in it.",
         ]
         if !apps.isEmpty { lines.append("- In the Mac's own apps: " + apps.joined(separator: " and ") + ". Nothing else in them.") }
+        // Built-in extensions add tools named ext.<extension>.<tool> (git, the world clock …); they count as your tools.
+        let missing = names.contains("extensions.draft")
+            ? "say so in one sentence and offer what you can do instead, including building a small extension for it (load the "
+                + "build-extension skill first; never write one before the user agrees)."
+            : "say so in one sentence and offer what you can do instead; an extension or MCP server (Settings › Extensions) could add it."
         lines += [
             "- Nothing else on this Mac unless one of your tools does it: not other apps' content (Mail, Messages, Calendar, Contacts, "
-                + "Photos, browsers), the screen, or online accounts.",
-            "- When a request needs something you can't reach, say so in one sentence and offer what you can do instead; an extension "
-                + "or MCP server (Settings › Extensions) could add it. Don't send the user off to export, copy or paste things by hand "
-                + "unless they ask how.",
+                + "Photos, browsers), the screen, or online accounts. Extension tools (ext.<extension>.<tool>) are your tools too.",
+            "- When a request needs something you can't reach, " + missing + " Don't send the user off to export, copy or paste things "
+                + "by hand unless they ask how.",
             "- Big jobs (many notes) go in batches: do a batch, say what's done and what's left, and continue when the user asks.",
         ]
         return lines.joined(separator: "\n")

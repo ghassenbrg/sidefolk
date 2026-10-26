@@ -13,6 +13,8 @@ final class FixtureServices: AppServices {
     var keys: Set<APIKeyTarget> = []
     /// What Settings › AI finds; snapshots change it to show each provider's states.
     var detection = FixtureServices.sampleDetection
+    /// Shows Settings › Extensions on a Mac without git, where the built-in Git extension can't run.
+    var gitMissing = false
 
     init(runtime: SidefolkRuntime, keys: Set<APIKeyTarget> = []) {
         self.runtime = runtime
@@ -74,14 +76,41 @@ final class FixtureServices: AppServices {
 
     // MARK: Extensions and skills
 
+    /// An icon shipped in the repository's extensions folder (snapshots run from the repository).
+    static func icon(_ folder: String) -> String {
+        URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("extensions/\(folder)/icon.pdf").path
+    }
+
+    static let git = ExtensionInfo(
+        id: "dev.sidefolk.git", name: "Git", version: "1.0.0",
+        description: "Clone public repositories into a folder you choose, and check, update and read the history of the ones you have.",
+        kind: .sidefolk, enabled: true, folk: "byte",
+        toolNames: ["Clone a repository", "Recent commits", "Pull the latest changes", "Repository status"], watcherNames: [],
+        permissionLines: ["Can use the internet", "Can read and change files in a folder you name, for that request only, once you approve it",
+                          "Can run git (/Applications/Xcode.app/Contents/Developer/usr/bin/git)"],
+        warnings: ["It can use the internet while it works in a folder you name, so it could upload what's in that folder."],
+        sandboxed: true, lastError: nil, bundled: true, iconPath: icon("git"))
+
     func extensions() async -> [ExtensionInfo] {
-        [
-            ExtensionInfo(id: "app.sidefolk.system-vitals", name: "System Vitals", version: "1.0.0",
-                          description: "Tells you when your Mac runs hot, low on memory or low on battery.",
-                          kind: .sidefolk, enabled: true, folk: "scout", toolNames: ["vitals_cpu", "vitals_memory", "vitals_battery"],
-                          watcherNames: ["High CPU", "Low battery"],
-                          permissionLines: ["Read CPU, memory and battery levels", "No internet and no access to your files"],
-                          warnings: [], sandboxed: true, lastError: nil, bundled: true),
+        (gitMissing ? [] : [Self.git]) + [
+            ExtensionInfo(id: "dev.sidefolk.world-clock", name: "World Clock", version: "1.0.0",
+                          description: "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.",
+                          kind: .sidefolk, enabled: true, folk: "tempo", toolNames: ["Convert a time between places", "Time around the world"],
+                          watcherNames: [], permissionLines: ["No access to your files or the internet"],
+                          warnings: [], sandboxed: true, lastError: nil, bundled: true, iconPath: Self.icon("world-clock")),
+            ExtensionInfo(id: "dev.sidefolk.system-vitals", name: "System Vitals", version: "1.0.0",
+                          description: "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
+                          kind: .sidefolk, enabled: false, folk: "byte", toolNames: ["Battery status", "Disk space", "Memory use"],
+                          watcherNames: ["Battery low", "Disk space low"],
+                          permissionLines: ["Can run /usr/bin/pmset", "Can run /usr/bin/vm_stat", "Can run /usr/sbin/sysctl",
+                                            "No access to your files or the internet"],
+                          warnings: [], sandboxed: true, lastError: nil, bundled: true, iconPath: Self.icon("system-vitals")),
+            ExtensionInfo(id: "local.strava-runs", name: "Strava Runs", version: "0.1.0",
+                          description: "Your latest runs from Strava: distance, pace and time.",
+                          kind: .sidefolk, enabled: true, folk: nil, toolNames: ["Latest runs"], watcherNames: [],
+                          permissionLines: ["Can use the internet"], warnings: [], sandboxed: true, lastError: nil, bundled: false,
+                          fromDraft: true),
             ExtensionInfo(id: "dev.lumen.hue", name: "Hue Lights", version: "0.4.2",
                           description: "Turns your Philips Hue lights on and off.",
                           kind: .sidefolk, enabled: false, folk: "nova", toolNames: ["hue_set_scene", "hue_off"], watcherNames: [],
@@ -103,9 +132,17 @@ final class FixtureServices: AppServices {
         id: "dev.example.weather", name: "Weather", version: "1.2.0",
         description: "Morning forecasts in your brief, and a heads-up before rain.",
         sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Downloads/weather-extension"),
-        permissionLines: ["Fetch data from api.open-meteo.com", "Read files in ~/Documents/Travel", "Keep its own data"],
-        warnings: ["It can read files in ~/Documents/Travel and use the internet, so it could upload them."],
-        toolNames: ["weather_today", "weather_week"], watcherNames: ["Rain soon"], isUpdate: false)
+        permissionLines: ["Can use the internet", "Can read ~/Documents/Travel"],
+        warnings: ["It can read ~/Documents/Travel and use the internet, so it could upload those files."],
+        toolNames: ["weather_today", "weather_week"], watcherNames: ["Rain soon"], isUpdate: false, folk: "scout")
+
+    /// A draft Sidefolk's AI wrote, handed over for review (D39).
+    static let draftPreview = ExtensionInstallPreview(
+        id: "local.strava-runs", name: "Strava Runs", version: "0.1.0",
+        description: "Your latest runs from Strava: distance, pace and time.",
+        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Sidefolk/ExtensionDrafts/local.strava-runs"),
+        permissionLines: ["Can use the internet"], warnings: [], toolNames: ["latest_runs"], watcherNames: [], isUpdate: false,
+        fromDraft: true)
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? { nil }
     func setExtensionEnabled(_ id: String, _ enabled: Bool) async {}
@@ -119,7 +156,24 @@ final class FixtureServices: AppServices {
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? { nil }
     func removeCommandLineTool() async -> UserFacingError? { nil }
 
-    func sampleExtensions() async -> [(name: String, folder: URL)] { [("System Vitals", URL(fileURLWithPath: "/tmp/system-vitals"))] }
+    func sampleExtensions() async -> [(name: String, folder: URL)] { [("Hello Folk", URL(fileURLWithPath: "/tmp/hello-folk"))] }
+
+    func unavailableExtensions() async -> [UnavailableExtension] {
+        guard gitMissing else { return [] }
+        return [UnavailableExtension(id: Self.git.id, name: Self.git.name,
+                                     message: "git isn't installed on this Mac. Install Apple's command line tools with xcode-select --install, or git with Homebrew.",
+                                     look: Self.git.look)]
+    }
+
+    func retryBuiltInExtensions() async {}
+
+    func extensionDrafts() async -> [ExtensionDraftInfo] {
+        [ExtensionDraftInfo(id: "local.pomodoro-log", name: "pomodoro-log", title: "Pomodoro Log", version: "0.1.0",
+                            folder: URL(fileURLWithPath: "/tmp/local.pomodoro-log"), modified: Date().addingTimeInterval(-300))]
+    }
+
+    func deleteExtensionDraft(_ name: String) async -> UserFacingError? { nil }
+    func revealExtensionDraft(_ draft: ExtensionDraftInfo) {}
 
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError? { nil }
 

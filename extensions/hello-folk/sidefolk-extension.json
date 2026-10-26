@@ -5,6 +5,7 @@
   "sidefolk": ">=0.1",
   "description": "The smallest working extension: one tool and one watcher. Copy this folder to start your own.",
   "author": "Sidefolk",
+  "icon": "icon.pdf",
   "run": { "command": "python3", "args": ["main.py"] },
   "tools": {
     "hello": { "title": "Say hello", "risk": "low", "mutates": false }

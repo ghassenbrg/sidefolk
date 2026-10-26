@@ -1,5 +1,13 @@
 import Foundation
 
+/// Where an installed extension came from. Nil (not stored) means a folder the person chose, or an MCP server.
+public enum ExtensionOrigin: String, Codable, Sendable, Hashable {
+    /// Shipped inside Sidefolk and installed by it: first-party code, updated with the app (D39).
+    case bundled
+    /// Written by Sidefolk's AI for the person in the drafts folder, installed once they approved it (D39).
+    case draft
+}
+
 /// What Sidefolk pinned when the user installed an extension or added an MCP server. Stored as JSON in
 /// `ExtensionRecord.granted`; only the host writes it.
 public struct ExtensionPin: Codable, Sendable, Hashable {
@@ -7,6 +15,7 @@ public struct ExtensionPin: Codable, Sendable, Hashable {
     public var description: String?
     public var folk: String?
     public var author: String?
+    public var origin: ExtensionOrigin?
     /// Sidefolk extensions: how it starts, what it may touch, and the hash of every file.
     public var launch: ExtensionLaunch?
     public var permissions: ExtensionPermissions?
@@ -18,13 +27,14 @@ public struct ExtensionPin: Codable, Sendable, Hashable {
     /// Changed or new definitions waiting for the user; those tools can't run (quarantine).
     public var pending: [String: MCPToolDefinition]
 
-    public init(name: String, description: String? = nil, folk: String? = nil, author: String? = nil,
+    public init(name: String, description: String? = nil, folk: String? = nil, author: String? = nil, origin: ExtensionOrigin? = nil,
                 launch: ExtensionLaunch? = nil, permissions: ExtensionPermissions? = nil, files: [ExtensionFilePin] = [],
                 server: MCPServerCommand? = nil, tools: [String: MCPToolDefinition] = [:], pending: [String: MCPToolDefinition] = [:]) {
         self.name = name
         self.description = description
         self.folk = folk
         self.author = author
+        self.origin = origin
         self.launch = launch
         self.permissions = permissions
         self.files = files
@@ -75,6 +85,9 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var description: String?
     public var folk: String?
     public var author: String?
+    public var origin: ExtensionOrigin?
+    /// The installed copy's icon file, checked at install and on every load; nil means the default tile.
+    public var iconPath: String?
     public var summary: PermissionSummary
     /// For MCP servers, the command line as added.
     public var command: String?

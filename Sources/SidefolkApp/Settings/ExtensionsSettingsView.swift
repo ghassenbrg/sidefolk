@@ -2,21 +2,25 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Extensions: installed extensions and MCP servers, skills, and the agents Sidefolk
-/// is connected to.
+/// Settings › Extensions: the extensions that come with Sidefolk, the ones the person added (folders and
+/// MCP servers), drafts Sidefolk's AI wrote for them, and skills.
 struct ExtensionsSettingsView: View {
     var model: SettingsModel
-    @State private var preview: ExtensionInstallPreview?
     @State private var addingServer = false
     @State private var uninstalling: ExtensionInfo?
     @State private var deletingSkill: SkillInfo?
+    @State private var deletingDraft: ExtensionDraftInfo?
 
     var body: some View {
         SettingsPage {
+            if !builtIns.isEmpty || !model.unavailable.isEmpty { builtIn }
             installed
+            if !model.drafts.isEmpty { drafts }
             skills
         }
-        .sheet(item: $preview) { p in InstallPreviewSheet(preview: p, model: model) }
+        .sheet(item: Binding(get: { model.installPreview }, set: { model.installPreview = $0 })) { p in
+            InstallPreviewSheet(preview: p, model: model)
+        }
         .sheet(isPresented: $addingServer) { AddServerSheet(model: model) }
         .alert("Uninstall “\(uninstalling?.name ?? "")”?", isPresented: Binding(
             get: { uninstalling != nil }, set: { if !$0 { uninstalling = nil } }
@@ -34,17 +38,43 @@ struct ExtensionsSettingsView: View {
         } message: { _ in
             Text("Its instructions are removed. This can't be undone.")
         }
+        .alert("Move the draft “\(deletingDraft?.title ?? "")” to the Trash?", isPresented: Binding(
+            get: { deletingDraft != nil }, set: { if !$0 { deletingDraft = nil } }
+        ), presenting: deletingDraft) { draft in
+            Button("Move to Trash", role: .destructive) { Task { await model.deleteDraft(draft) } }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("An extension already installed from it stays installed.")
+        }
     }
 
-    // MARK: Installed
+    private var builtIns: [ExtensionInfo] { model.extensions.filter(\.bundled) }
+
+    // MARK: Built in
+
+    private var builtIn: some View {
+        SettingsGroup(title: "Built in",
+                      footer: "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want.") {
+            ForEach(builtIns) { ext in
+                ExtensionRow(ext: ext, model: model, uninstall: nil)
+            }
+            ForEach(model.unavailable) { item in
+                UnavailableExtensionRow(item: item) { Task { await model.retryBuiltIns() } }
+            }
+        }
+    }
+
+    // MARK: Added by you
 
     private var installed: some View {
-        SettingsGroup(title: "Installed",
+        SettingsGroup(title: "Added by you",
                       footer: "Extensions run in a sandbox limited to what they asked for at install. MCP servers run with your full permissions.") {
-            if model.extensions.isEmpty {
-                InlineEmpty(text: "No extensions yet. Install one from a folder, or add an MCP server.", systemImage: "puzzlepiece.extension")
+            let added = model.extensions.filter { !$0.bundled }
+            if added.isEmpty {
+                InlineEmpty(text: "Nothing added yet. Install an extension from a folder, add an MCP server, or ask Sidefolk to build one.",
+                            systemImage: "puzzlepiece.extension")
             }
-            ForEach(model.extensions) { ext in
+            ForEach(added) { ext in
                 ExtensionRow(ext: ext, model: model) { uninstalling = ext }
             }
             VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -58,7 +88,7 @@ struct ExtensionsSettingsView: View {
                         ForEach(model.samples, id: \.folder) { sample in
                             Button {
                                 model.clearExtensionError()
-                                Task { preview = await model.preview(folder: sample.folder) }
+                                Task { model.installPreview = await model.preview(folder: sample.folder) }
                             } label: {
                                 Text(verbatim: "\(sample.name)…")
                             }
@@ -85,7 +115,21 @@ struct ExtensionsSettingsView: View {
             let response: NSApplication.ModalResponse
             if let window = NSApp.keyWindow { response = await panel.beginSheetModal(for: window) } else { response = panel.runModal() }
             guard response == .OK, let url = panel.url else { return }
-            preview = await model.preview(folder: url)
+            model.installPreview = await model.preview(folder: url)
+        }
+    }
+
+    // MARK: Drafts
+
+    private var drafts: some View {
+        SettingsGroup(title: "Drafts",
+                      footer: "Extensions Sidefolk wrote at your request. Nothing in a draft runs until you review it and install it.") {
+            ForEach(model.drafts) { draft in
+                DraftRow(draft: draft, review: {
+                    model.clearExtensionError()
+                    Task { await model.review(folder: draft.folder) }
+                }, reveal: { model.revealDraft(draft) }, delete: { deletingDraft = draft })
+            }
         }
     }
 
@@ -116,188 +160,6 @@ struct ExtensionsSettingsView: View {
                 .padding(.horizontal, Theme.Space.l)
                 .padding(.vertical, Theme.Space.m)
             }
-        }
-    }
-}
-
-// MARK: - Extension row
-
-private struct ExtensionRow: View {
-    var ext: ExtensionInfo
-    var model: SettingsModel
-    var uninstall: () -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Theme.Space.m) {
-            FolkBadge(name: ext.folk, size: 32)
-            VStack(alignment: .leading, spacing: Theme.Space.xs + 2) {
-                HStack(spacing: Theme.Space.s) {
-                    Text(ext.name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    if !ext.version.isEmpty {
-                        Text(ext.version).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                    }
-                    if ext.kind == .mcpServer { Chip("MCP server", tone: .neutral) }
-                }
-                if !ext.description.isEmpty {
-                    Text(ext.description).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if ext.sandboxed {
-                    Chip("Sandboxed", tone: .success, systemImage: "lock.shield")
-                } else {
-                    Chip("Runs with your full permissions", tone: .warning, systemImage: "exclamationmark.triangle")
-                }
-                if !ext.permissionLines.isEmpty {
-                    VStack(alignment: .leading, spacing: 2) {
-                        ForEach(ext.permissionLines, id: \.self) { line in
-                            Label(line, systemImage: "checkmark").labelStyle(BulletLabelStyle())
-                        }
-                    }
-                }
-                if let tools = toolsLine {
-                    Text(tools).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).fixedSize(horizontal: false, vertical: true)
-                }
-                // Tools on hold for approval, or a manifest and program that disagree: worth knowing, not errors.
-                ForEach(ext.warnings, id: \.self) { warning in
-                    Label(warning, systemImage: "exclamationmark.triangle")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
-                }
-                if let error = ext.lastError {
-                    Label(error, systemImage: "exclamationmark.circle.fill")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
-                }
-                HStack(spacing: Theme.Space.s) {
-                    if !ext.pendingTools.isEmpty {
-                        Button("Review changed tools…") { Task { await model.reviewToolChanges(ext) } }.buttonStyle(.sf(.primary))
-                    }
-                    if !ext.bundled {
-                        Button("Uninstall…", action: uninstall).buttonStyle(.sf(.secondary))
-                    }
-                }
-                .padding(.top, 2)
-            }
-            Spacer(minLength: Theme.Space.s)
-            Toggle("Enable \(ext.name)", isOn: Binding(get: { ext.enabled }, set: { on in Task { await model.setEnabled(ext, on) } }))
-                .toggleStyle(.switch).labelsHidden().tint(Theme.accent)
-        }
-        .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, Theme.Space.m)
-        .opacity(ext.enabled ? 1 : 0.75)
-    }
-
-    private var toolsLine: String? {
-        var parts: [String] = []
-        if !ext.toolNames.isEmpty { parts.append(ExtensionWords.tools(ext.toolNames)) }
-        if !ext.watcherNames.isEmpty { parts.append(ExtensionWords.watchers(ext.watcherNames)) }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
-    }
-}
-
-/// What an extension adds, as Settings and the install preview list it.
-private enum ExtensionWords {
-    static func tools(_ names: [String]) -> String { String(localized: "Tools: \(Wording.list(names))") }
-    static func watchers(_ names: [String]) -> String { String(localized: "Watchers: \(Wording.list(names))") }
-}
-
-/// Small caption lines with a leading mark, for permission and warning lists.
-private struct BulletLabelStyle: LabelStyle {
-    var color: Color = Theme.inkMuted
-
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            configuration.icon.font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.inkFaint)
-            configuration.title.font(Theme.Font.caption).foregroundStyle(color).fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
-// MARK: - Install preview (Guard style)
-
-struct InstallPreviewSheet: View {
-    var preview: ExtensionInstallPreview
-    var model: SettingsModel
-    @State private var armed = false
-    @State private var installing = false
-    @State private var error: UserFacingError?
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.l) {
-            HStack(alignment: .top, spacing: Theme.Space.m) {
-                FolkBadge(name: "guard", size: 36)
-                VStack(alignment: .leading, spacing: 2) {
-                    (preview.isUpdate ? Text("Update \(preview.name)?") : Text("Install \(preview.name)?"))
-                        .font(Theme.Font.heading).foregroundStyle(Theme.ink)
-                    Text("Version \(preview.version) · from \(FolderAccess.displayPath(preview.sourceFolder.path))")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1).truncationMode(.middle)
-                }
-            }
-            if !preview.description.isEmpty {
-                Text(preview.description).font(Theme.Font.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
-            }
-            if !preview.warnings.isEmpty {
-                VStack(alignment: .leading, spacing: Theme.Space.s) {
-                    ForEach(preview.warnings, id: \.self) { warning in
-                        Label {
-                            Text(warning).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
-                        } icon: {
-                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.danger)
-                        }
-                    }
-                }
-                .padding(Theme.Space.m)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Theme.dangerSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            }
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Eyebrow(text: "It will be able to")
-                if preview.permissionLines.isEmpty {
-                    Text("Nothing beyond its own data folder.").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                }
-                ForEach(preview.permissionLines, id: \.self) { line in
-                    Label {
-                        Text(line).font(Theme.Font.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "checkmark.shield").foregroundStyle(Theme.folkColor("guard"))
-                    }
-                }
-            }
-            if !preview.toolNames.isEmpty || !preview.watcherNames.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    Eyebrow(text: "It adds")
-                    if !preview.toolNames.isEmpty {
-                        Text(ExtensionWords.tools(preview.toolNames)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    }
-                    if !preview.watcherNames.isEmpty {
-                        Text(ExtensionWords.watchers(preview.watcherNames)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    }
-                }
-            }
-            Text("It runs in a sandbox limited to the lines above. You can turn it off or uninstall it any time.")
-                .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).fixedSize(horizontal: false, vertical: true)
-            if let error { InlineError(error: error) }
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }.buttonStyle(.sfSecondary).keyboardShortcut(.cancelAction)
-                Button(installing ? "Installing…" : preview.isUpdate ? "Update \(preview.name)" : "Install \(preview.name)") {
-                    installing = true
-                    Task {
-                        error = await model.install(preview)
-                        installing = false
-                        if error == nil { dismiss() }
-                    }
-                }
-                .buttonStyle(.sfPrimary)
-                .disabled(!armed || installing)
-            }
-        }
-        .padding(Theme.Space.xl)
-        .frame(width: 480)
-        .background(Theme.surface)
-        .task {
-            // Like approval cards: inert for a moment so a stray Return can't install it.
-            try? await Task.sleep(for: .milliseconds(800))
-            armed = true
         }
     }
 }

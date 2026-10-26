@@ -13,16 +13,22 @@ struct ExtensionInfo: Identifiable, Hashable {
     var description: String
     var kind: Kind
     var enabled: Bool
-    var folk: String
+    var folk: String?
     var toolNames: [String]
     var watcherNames: [String]
     var permissionLines: [String]
     var warnings: [String]
     var sandboxed: Bool
     var lastError: String?
+    /// Ships with Sidefolk (D39): it can be switched off, not uninstalled.
     var bundled: Bool
     /// Tools that changed or appeared since the user approved the extension; on hold until approved again.
     var pendingTools: [String] = []
+    var iconPath: String?
+    /// Sidefolk's AI wrote it for the person, who installed it from the drafts.
+    var fromDraft = false
+
+    var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }
 
 /// What installing an extension would allow, shown before the user confirms.
@@ -37,6 +43,30 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var toolNames: [String]
     var watcherNames: [String]
     var isUpdate: Bool
+    var folk: String?
+    var iconPath: String?
+    /// A draft Sidefolk's AI wrote at the person's request (D39), not a folder from elsewhere.
+    var fromDraft = false
+
+    var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
+}
+
+/// An extension draft Sidefolk's AI wrote, waiting in the drafts folder for review (D39).
+struct ExtensionDraftInfo: Identifiable, Hashable {
+    var id: String
+    var name: String
+    var title: String
+    var version: String?
+    var folder: URL
+    var modified: Date
+}
+
+/// A built-in extension that couldn't be installed on this Mac (git missing, for example).
+struct UnavailableExtension: Identifiable, Hashable {
+    var id: String
+    var name: String
+    var message: String
+    var look: ExtensionLook
 }
 
 struct SkillInfo: Identifiable, Hashable {
@@ -121,6 +151,15 @@ protocol AppServices: AnyObject {
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError?
     /// Sample extensions shipped with the app that aren't installed yet.
     func sampleExtensions() async -> [(name: String, folder: URL)]
+    /// Built-in extensions this Mac can't run yet, and why.
+    func unavailableExtensions() async -> [UnavailableExtension]
+    /// Tries the built-in extensions again (after installing git, say).
+    func retryBuiltInExtensions() async
+    /// Drafts Sidefolk's AI wrote, newest first.
+    func extensionDrafts() async -> [ExtensionDraftInfo]
+    /// Moves a draft to the Trash.
+    func deleteExtensionDraft(_ name: String) async -> UserFacingError?
+    func revealExtensionDraft(_ draft: ExtensionDraftInfo)
     func skills() async -> [SkillInfo]
     func deleteSkill(_ name: String) async
 

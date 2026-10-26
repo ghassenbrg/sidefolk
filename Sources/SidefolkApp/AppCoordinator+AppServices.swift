@@ -67,8 +67,7 @@ extension AppCoordinator: AppServices {
     // MARK: Extensions and skills
 
     func extensions() async -> [ExtensionInfo] {
-        let bundledIds = Set(Self.sampleManifests().map(\.id))
-        return await runtime.extensions.extensions().map { Self.info($0, bundled: bundledIds.contains($0.id)) }
+        await runtime.extensions.extensions().map(Self.info)
     }
 
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
@@ -85,10 +84,13 @@ extension AppCoordinator: AppServices {
             warnings.insert(String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"), at: 0)
             warnings += diff.addedPermissions.map { String(localized: "New permission: \($0)") }
         }
+        let drafts = runtime.extensionDrafts.directory.resolvingSymlinksInPath().path
         return .success(ExtensionInstallPreview(
             id: manifest.id, name: manifest.name, version: manifest.version, description: manifest.description ?? "",
             sourceFolder: folder, permissionLines: summary?.lines.map(\.text) ?? [], warnings: warnings,
-            toolNames: manifest.tools.keys.sorted(), watcherNames: manifest.watchers.keys.sorted(), isUpdate: preview.update != nil))
+            toolNames: manifest.tools.keys.sorted(), watcherNames: manifest.watchers.keys.sorted(), isUpdate: preview.update != nil,
+            folk: manifest.folk, iconPath: preview.report.iconPath,
+            fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/")))
     }
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? {
@@ -134,12 +136,42 @@ extension AppCoordinator: AppServices {
 
     func sampleExtensions() async -> [(name: String, folder: URL)] {
         let installed = Set(await runtime.extensions.extensions().map(\.id))
-        return Self.sampleManifests().filter { !installed.contains($0.id) }.map { sample in
-            let json = (try? Data(contentsOf: sample.folder.appendingPathComponent(ExtensionManifest.fileName)))
-                .flatMap { try? JSONValue.parse(String(decoding: $0, as: UTF8.self)) }
-            return (json?.string("name") ?? sample.id, sample.folder)
+        return runtime.bundledExtensions.samples().compactMap { folder in
+            guard let manifest = Self.manifest(in: folder), !installed.contains(manifest.id) else { return nil }
+            return (manifest.name, folder)
         }
     }
+
+    func unavailableExtensions() async -> [UnavailableExtension] {
+        let folders = Dictionary(runtime.bundledExtensions.entries().map { ($0.id, $0.folder) }, uniquingKeysWith: { a, _ in a })
+        return runtime.bundledExtensions.unavailable.map { problem in
+            // The app's own copy, signed with the app: its icon is drawn as shipped.
+            let manifest = folders[problem.id].flatMap(Self.manifest)
+            let icon = folders[problem.id].flatMap { folder in manifest?.icon.map { folder.appendingPathComponent($0).path } }
+            return UnavailableExtension(id: problem.id, name: problem.name, message: problem.message,
+                                        look: ExtensionLook(name: problem.name, iconPath: icon, folk: manifest?.folk))
+        }
+    }
+
+    func retryBuiltInExtensions() async { await runtime.bundledExtensions.install(into: runtime.extensions) }
+
+    func extensionDrafts() async -> [ExtensionDraftInfo] {
+        runtime.extensionDrafts.list().map {
+            ExtensionDraftInfo(id: $0.id, name: $0.name, title: $0.title, version: $0.version, folder: $0.folder, modified: $0.modified)
+        }
+    }
+
+    func deleteExtensionDraft(_ name: String) async -> UserFacingError? {
+        do {
+            try runtime.extensionDrafts.delete(name: name)
+            runtime.events.changed(.extensions)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: String(localized: "I couldn't move that draft to the Trash."))
+        }
+    }
+
+    func revealExtensionDraft(_ draft: ExtensionDraftInfo) { NSWorkspace.shared.activateFileViewerSelecting([draft.folder]) }
 
     func skills() async -> [SkillInfo] {
         runtime.skills.skills().map { SkillInfo(name: $0.name, description: $0.description, bundled: $0.origin == .bundled) }
@@ -254,27 +286,22 @@ extension AppCoordinator: AppServices {
         return UserFacingError(verbatim: fallback, detail: String(describing: error))
     }
 
-    static func info(_ e: SidefolkCore.ExtensionInfo, bundled: Bool) -> ExtensionInfo {
+    static func info(_ e: SidefolkCore.ExtensionInfo) -> ExtensionInfo {
         ExtensionInfo(
             id: e.id, name: e.name, version: e.version, description: e.description ?? "",
-            kind: e.kind == .mcp ? .mcpServer : .sidefolk, enabled: e.enabled, folk: e.folk ?? "byte",
+            kind: e.kind == .mcp ? .mcpServer : .sidefolk, enabled: e.enabled, folk: e.folk,
             toolNames: e.tools.map { $0.title.isEmpty ? $0.name : $0.title }, watcherNames: e.watchers.map(\.title),
             permissionLines: e.summary.lines.map(\.text), warnings: e.summary.warnings + (e.hasPendingToolChanges
                 ? [String(localized: "Some tools changed since you installed it; they're on hold until you approve the change.")] : [])
                 + e.toolWarnings,
-            sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: bundled,
-            pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title })
+            sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
+            pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
+            iconPath: e.iconPath, fromDraft: e.origin == .draft)
     }
 
-    /// Sample extensions shipped inside the app.
-    static func sampleManifests() -> [(id: String, folder: URL)] {
-        guard let dir = ResourceLocator.sampleExtensions,
-              let names = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return [] }
-        return names.compactMap { name in
-            let folder = dir.appendingPathComponent(name)
-            guard let data = try? Data(contentsOf: folder.appendingPathComponent(ExtensionManifest.fileName)),
-                  let json = try? JSONValue.parse(String(decoding: data, as: UTF8.self)), let id = json.string("id") else { return nil }
-            return (id, folder)
-        }
+    /// The manifest of an extension folder shipped inside the app, or nil.
+    static func manifest(in folder: URL) -> ExtensionManifest? {
+        FileManager.default.contents(atPath: folder.appendingPathComponent(ExtensionManifest.fileName).path)
+            .flatMap { try? ExtensionManifest.decode($0) }
     }
 }

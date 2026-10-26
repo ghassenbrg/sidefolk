@@ -59,8 +59,14 @@ final class SettingsModel {
 
     // Extensions
     private(set) var extensions: [ExtensionInfo] = []
-    /// Bundled samples not installed yet ("Try System Vitals").
+    /// Samples shipped with the app, not installed yet ("Try Hello Folk").
     private(set) var samples: [(name: String, folder: URL)] = []
+    /// Built-in extensions this Mac can't run yet.
+    private(set) var unavailable: [UnavailableExtension] = []
+    /// Extensions Sidefolk's AI wrote, waiting for review (D39).
+    private(set) var drafts: [ExtensionDraftInfo] = []
+    /// The install preview on screen, from a folder, a sample, a draft, or Sidefolk handing one over.
+    var installPreview: ExtensionInstallPreview?
     private(set) var skills: [SkillInfo] = []
     private(set) var integration: IntegrationStatus?
     private(set) var extensionError: UserFacingError?
@@ -89,8 +95,7 @@ final class SettingsModel {
                     integration = await services.integrationStatus()
                 case .permissions: await loadPermissions()
                 case .extensions:
-                    extensions = await services.extensions()
-                    samples = await services.sampleExtensions()
+                    await loadExtensions()
                 case .skills: skills = await services.skills()
                 default: break
                 }
@@ -110,8 +115,7 @@ final class SettingsModel {
         notificationsAllowed = await services.notificationsAuthorized()
         await loadPermissions()
         storage = await services.storageSummary()
-        extensions = await services.extensions()
-        samples = await services.sampleExtensions()
+        await loadExtensions()
         skills = await services.skills()
         integration = await services.integrationStatus()
         await ai.refresh()
@@ -239,6 +243,30 @@ final class SettingsModel {
 
     // MARK: Extensions
 
+    func loadExtensions() async {
+        extensions = await services.extensions()
+        samples = await services.sampleExtensions()
+        unavailable = await services.unavailableExtensions()
+        drafts = await services.extensionDrafts()
+    }
+
+    /// Shows the install preview for `folder` (Sidefolk's AI asked the person to review a draft).
+    func review(folder: URL) async {
+        installPreview = await preview(folder: folder)
+    }
+
+    func retryBuiltIns() async {
+        await services.retryBuiltInExtensions()
+        await loadExtensions()
+    }
+
+    func deleteDraft(_ draft: ExtensionDraftInfo) async {
+        extensionError = await services.deleteExtensionDraft(draft.name)
+        await loadExtensions()
+    }
+
+    func revealDraft(_ draft: ExtensionDraftInfo) { services.revealExtensionDraft(draft) }
+
     func setEnabled(_ ext: ExtensionInfo, _ on: Bool) async {
         await services.setExtensionEnabled(ext.id, on)
         extensions = await services.extensions()
@@ -271,8 +299,7 @@ final class SettingsModel {
 
     func install(_ preview: ExtensionInstallPreview) async -> UserFacingError? {
         let error = await services.installExtension(preview)
-        extensions = await services.extensions()
-        samples = await services.sampleExtensions()
+        await loadExtensions()
         return error
     }
 

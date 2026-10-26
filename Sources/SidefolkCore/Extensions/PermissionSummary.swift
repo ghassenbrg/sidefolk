@@ -6,19 +6,38 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var read: [String]
     public var write: [String]
     public var exec: [String]
+    /// Programs named without a path (`git`), found on this Mac at install.
+    public var programs: [ResolvedProgram]
+    /// The most any tool does in a folder the person names in a call (`tools.<name>.paths`); nil when none does.
+    public var folders: ExtensionManifest.FolderUse?
 
-    public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = []) {
+    public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
+                programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil) {
         self.network = network
         self.read = read
         self.write = write
         self.exec = exec
+        self.programs = programs
+        self.folders = folders
     }
 
-    /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …).
+    /// Pins saved before programs and per-call folders existed have neither.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        network = try c.decode(Bool.self, forKey: .network)
+        read = try c.decode([String].self, forKey: .read)
+        write = try c.decode([String].self, forKey: .write)
+        exec = try c.decode([String].self, forKey: .exec)
+        programs = try c.decodeIfPresent([ResolvedProgram].self, forKey: .programs) ?? []
+        folders = try c.decodeIfPresent(ExtensionManifest.FolderUse.self, forKey: .folders)
+    }
+
+    /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …). Programs named
+    /// without a path never count: Sidefolk found them itself, and the sandbox lets them start only their helpers.
     public var dangerousExec: [String] { exec.filter(Self.canRunAnything) }
 
     /// Raises every tool to at least medium risk: it can reach the internet, change files or run anything.
-    public var raisesRiskFloor: Bool { network || !write.isEmpty || !dangerousExec.isEmpty }
+    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty }
 
     static let anythingRunners: Set<String> = [
         "sh", "bash", "zsh", "dash", "ksh", "csh", "tcsh", "fish", "env", "xargs", "nohup", "sudo", "su", "login",
@@ -62,13 +81,25 @@ public struct PermissionSummary: Sendable, Hashable {
         for path in p.write {
             lines.append(Line(kind: .write, text: String(localized: "Can read and change files in \(show(path))"), caution: true))
         }
+        switch p.folders {
+        case .write?:
+            lines.append(Line(kind: .write, text: String(localized: "Can read and change files in a folder you name, for that request only, once you approve it"),
+                              caution: true))
+        case .read?:
+            lines.append(Line(kind: .read, text: String(localized: "Can read a folder you name, for that request only, once you approve it"), caution: false))
+        case nil:
+            break
+        }
         let dangerous = Set(p.dangerousExec)
         for path in p.exec {
             let anything = dangerous.contains(path)
             lines.append(Line(kind: .exec, text: anything ? String(localized: "Can run \(path), which can run anything") : String(localized: "Can run \(path)"),
                               caution: anything))
         }
-        if !p.network && p.read.isEmpty && p.write.isEmpty {
+        for program in p.programs {
+            lines.append(Line(kind: .exec, text: String(localized: "Can run \(program.name) (\(show(program.path)))"), caution: false))
+        }
+        if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))
         }
 
@@ -76,6 +107,9 @@ public struct PermissionSummary: Sendable, Hashable {
         let folders = (p.read + p.write).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
         if p.network, !folders.isEmpty {
             warnings.append(String(localized: "It can read \(list(folders.map(show))) and use the internet, so it could upload those files."))
+        }
+        if p.network, p.folders != nil {
+            warnings.append(String(localized: "It can use the internet while it works in a folder you name, so it could upload what's in that folder."))
         }
         if let first = p.dangerousExec.first {
             warnings.append(p.network

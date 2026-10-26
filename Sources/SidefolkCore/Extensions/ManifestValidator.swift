@@ -25,6 +25,8 @@ public struct ValidationReport: Sendable {
     public var launch: ExtensionLaunch?
     public var permissions: ExtensionPermissions?
     public var summary: PermissionSummary?
+    /// The icon file, when the manifest names one that passed the checks.
+    public var iconPath: String?
 
     public var isValid: Bool { errors.isEmpty && manifest != nil && launch != nil && permissions != nil }
 
@@ -48,6 +50,7 @@ public struct ValidationReport: Sendable {
             let runner = launch.interpreter.map { "\($0.name) (\($0.path)) " } ?? ""
             out.append("Runs: \(runner)\(([launch.program] + launch.arguments).joined(separator: " "))")
         }
+        if let icon = manifest?.icon, iconPath != nil { out.append("Icon: \(icon)") }
         if let summary {
             out.append("Permissions:")
             out += summary.texts.map { "  - \($0)" }
@@ -96,10 +99,12 @@ public struct ManifestValidator: Sendable {
 
     public var paths: SidefolkPaths
     public var resolver: InterpreterResolver
+    public var programs: ProgramResolver
 
-    public init(paths: SidefolkPaths, resolver: InterpreterResolver = .system) {
+    public init(paths: SidefolkPaths, resolver: InterpreterResolver = .system, programs: ProgramResolver = .system) {
         self.paths = paths
         self.resolver = resolver
+        self.programs = programs
     }
 
     public func validate(folder: URL, mode: Mode = .source) -> ValidationReport {
@@ -132,9 +137,10 @@ public struct ManifestValidator: Sendable {
         var issues: [ValidationIssue] = []
         checkIdentity(manifest, folder: dir, mode: mode, issues: &issues, warnings: &report.warnings)
         report.launch = checkRun(manifest.run, folder: dir, issues: &issues)
-        let permissions = checkPermissions(manifest.permissions, folder: dir, issues: &issues, warnings: &report.warnings)
+        report.iconPath = checkIcon(manifest.icon, folder: dir, issues: &issues)
+        var permissions = checkPermissions(manifest.permissions, folder: dir, issues: &issues, warnings: &report.warnings)
+        permissions.folders = checkTools(manifest, issues: &issues)
         report.permissions = permissions
-        checkTools(manifest, issues: &issues)
         checkWatchers(manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
@@ -268,6 +274,32 @@ public struct ManifestValidator: Sendable {
         return String(real.dropFirst(folder.count + 1))
     }
 
+    // MARK: Icon
+
+    /// The icon's real path when it is a PNG or PDF inside the folder that passes `ExtensionIcon`'s checks.
+    private func checkIcon(_ icon: String?, folder: String, issues: inout [ValidationIssue]) -> String? {
+        guard let icon else { return nil }
+        guard ExtensionIcon.fileTypes.contains((icon as NSString).pathExtension.lowercased()) else {
+            issues.append(ValidationIssue(field: "icon", message: "must be a .png or .pdf file (SVG isn't accepted; export it as PDF)."))
+            return nil
+        }
+        guard let rel = insidePath(icon, folder: folder, field: "icon", executable: false, issues: &issues) else { return nil }
+        let path = folder + "/" + rel
+        guard let st = ExtensionFS.lstat(path), Int(st.st_size) <= ExtensionIcon.maxBytes else {
+            issues.append(ValidationIssue(field: "icon", message: "“\(icon)” is larger than 256 KiB."))
+            return nil
+        }
+        guard let data = FileManager.default.contents(atPath: path) else {
+            issues.append(ValidationIssue(field: "icon", message: "“\(icon)” couldn't be read."))
+            return nil
+        }
+        if let problem = ExtensionIcon.problem(data, fileName: rel) {
+            issues.append(ValidationIssue(field: "icon", message: "“\(icon)” \(problem)"))
+            return nil
+        }
+        return path
+    }
+
     static func isMachO(_ path: String) -> Bool {
         guard let h = FileHandle(forReadingAtPath: path), let d = try? h.read(upToCount: 4), d.count == 4 else { return false }
         try? h.close()
@@ -299,8 +331,17 @@ public struct ManifestValidator: Sendable {
             .compactMap(FolderAccess.canonical)
         for (i, raw) in p.exec.enumerated() {
             let field = "permissions.exec[\(i)]"
+            if !raw.contains("/"), ProgramResolver.known[raw] != nil {
+                guard let program = programs.resolve(raw) else {
+                    issues.append(ValidationIssue(field: field, message: "\(raw) isn't installed on this Mac. Install Apple's command line tools with xcode-select --install, or \(raw) with Homebrew."))
+                    continue
+                }
+                if !result.programs.contains(where: { $0.name == program.name }) { result.programs.append(program) }
+                continue
+            }
             guard raw.hasPrefix("/"), !ExtensionText.hasControlOrQuote(raw) else {
-                issues.append(ValidationIssue(field: field, message: "must be an absolute path like /usr/bin/pmset."))
+                let named = ProgramResolver.known.keys.sorted().joined(separator: ", ")
+                issues.append(ValidationIssue(field: field, message: "must be an absolute path like /usr/bin/pmset, or a program Sidefolk finds by name (\(named))."))
                 continue
             }
             guard let real = ExtensionFS.realpath(raw), let st = ExtensionFS.lstat(real) else {
@@ -363,8 +404,10 @@ public struct ManifestValidator: Sendable {
 
     // MARK: Tools and watchers
 
-    private func checkTools(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
+    /// Returns the most any tool does in a folder named in a call (`write` over `read`), for the permission sheet.
+    private func checkTools(_ m: ExtensionManifest, issues: inout [ValidationIssue]) -> ExtensionManifest.FolderUse? {
         if m.tools.count > 128 { issues.append(ValidationIssue(field: "tools", message: "can declare at most 128 tools.")) }
+        var folders: ExtensionManifest.FolderUse?
         for name in m.tools.keys.sorted() {
             let field = "tools.\(name)"
             if name.range(of: Self.namePattern, options: .regularExpression) == nil {
@@ -372,10 +415,22 @@ public struct ManifestValidator: Sendable {
             } else if ExtensionTool.registryName(short: m.shortName, tool: name).count > 64 {
                 issues.append(ValidationIssue(field: field, message: "makes the full tool name ext.\(m.shortName).\(name) longer than 64 characters."))
             }
-            if let t = m.tools[name]?.title, t.isEmpty || t.count > 80 || ExtensionText.clean(t) != t {
+            guard let meta = m.tools[name] else { continue }
+            if let t = meta.title, t.isEmpty || t.count > 80 || ExtensionText.clean(t) != t {
                 issues.append(ValidationIssue(field: "\(field).title", message: "must be 1–80 characters of plain text."))
             }
+            if let t = meta.timeout, !ExtensionTool.timeouts.contains(t) {
+                issues.append(ValidationIssue(field: "\(field).timeout", message: "must be between 1 and 300 seconds."))
+            }
+            if meta.paths.count > 4 { issues.append(ValidationIssue(field: "\(field).paths", message: "can name at most 4 parameters.")) }
+            for (param, use) in meta.paths.sorted(by: { $0.key < $1.key }) {
+                if param.range(of: Self.namePattern, options: .regularExpression) == nil {
+                    issues.append(ValidationIssue(field: "\(field).paths.\(param)", message: "isn't a valid parameter name (lowercase letters, digits and _)."))
+                }
+                if use == .write || folders == nil { folders = use }
+            }
         }
+        return folders
     }
 
     private func checkWatchers(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {

@@ -141,6 +141,7 @@ final class AppCoordinator {
         }
         installHelperLink()
         await refreshCollections()
+        await refreshExtensionLooks()
         _ = await notificationsAuthorized()
         refreshRoster()
         statusItem.refreshNow()
@@ -356,6 +357,11 @@ final class AppCoordinator {
     }
     #endif
 
+    /// How each extension looks, for its approval and result cards in the Ask panel.
+    func refreshExtensionLooks() async {
+        ask.extensionLooks = Dictionary(await extensions().map { ($0.id, $0.look) }, uniquingKeysWith: { a, _ in a })
+    }
+
     func refreshCollections() async {
         knownCollections = ((try? await runtime.notebook.collections()) ?? []).map(\.name)
     }
@@ -453,6 +459,9 @@ final class AppCoordinator {
             creditExternal(activity, ok: ok)
         case .approvalResolved(let id, _):
             ask.removeApproval(id: id)
+        case .reviewExtension(let folder):
+            askPanel.hide()
+            settingsWindow.review(folder: folder)
         case .dataChanged(let domain):
             if [.reminders, .watchers, .runs, .attention].contains(domain) { scheduleNowRefresh() }
             if [.reminders, .watchers, .runs, .attention].contains(domain) { refreshRoster() }
@@ -462,6 +471,7 @@ final class AppCoordinator {
                 Task { await runtime.rearm() }
             }
             if domain == .notebook { Task { await refreshCollections() } }
+            if domain == .extensions { Task { await refreshExtensionLooks() } }
         default:
             break
         }

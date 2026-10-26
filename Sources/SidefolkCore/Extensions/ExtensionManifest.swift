@@ -15,6 +15,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     /// The folk that appears when it works.
     public var folk: String?
     public var author: String?
+    /// An image inside the folder (`icon.png` or `icon.pdf`), shown wherever the extension is named.
+    public var icon: String?
     public var run: Run
     public var permissions: Permissions
     public var tools: [String: ToolMeta]
@@ -83,23 +85,36 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var category: ToolCategory?
         /// Whether it changes anything; missing means it might.
         public var mutates: Bool?
+        /// Parameters that name a file or folder the person chooses, and what the tool does there. Guard
+        /// checks each against the folders the person shared, and the sandbox opens it for that call only.
+        public var paths: [String: FolderUse]
+        /// Seconds one call may take, for slow work such as cloning; missing means 30.
+        public var timeout: Int?
 
-        public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil) {
+        public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
+                    paths: [String: FolderUse] = [:], timeout: Int? = nil) {
             self.title = title
             self.risk = risk
             self.category = category
             self.mutates = mutates
+            self.paths = paths
+            self.timeout = timeout
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
             category = try c.decodeIfPresent(ToolCategory.self, forKey: "category")
             mutates = try c.decodeIfPresent(Bool.self, forKey: "mutates")
+            paths = try c.decodeIfPresent([String: FolderUse].self, forKey: "paths") ?? [:]
+            timeout = try c.decodeIfPresent(Int.self, forKey: "timeout")
         }
     }
+
+    /// What a tool does in a folder the person names in a call.
+    public enum FolderUse: String, Sendable, Hashable, Codable { case read, write }
 
     public struct WatcherMeta: Sendable, Hashable, Decodable {
         public var title: String
@@ -154,7 +169,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     }
 
     public init(id: String, name: String, version: String, sidefolk: String? = nil, description: String? = nil,
-                folk: String? = nil, author: String? = nil, run: Run, permissions: Permissions = Permissions(),
+                folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:]) {
         self.id = id
         self.name = name
@@ -163,6 +178,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.description = description
         self.folk = folk
         self.author = author
+        self.icon = icon
         self.run = run
         self.permissions = permissions
         self.tools = tools
@@ -170,7 +186,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     }
 
     public init(from decoder: Decoder) throws {
-        try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "folk", "author", "run",
+        try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "folk", "author", "icon", "run",
                                        "permissions", "tools", "watchers"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
@@ -180,6 +196,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         description = try c.decodeIfPresent(String.self, forKey: "description")
         folk = try c.decodeIfPresent(String.self, forKey: "folk")
         author = try c.decodeIfPresent(String.self, forKey: "author")
+        icon = try c.decodeIfPresent(String.self, forKey: "icon")
         run = try c.decode(Run.self, forKey: "run")
         permissions = try c.decodeIfPresent(Permissions.self, forKey: "permissions") ?? Permissions()
         tools = try c.decodeIfPresent([String: ToolMeta].self, forKey: "tools") ?? [:]

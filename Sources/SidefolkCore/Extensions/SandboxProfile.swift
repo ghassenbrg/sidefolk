@@ -62,7 +62,12 @@ public struct SandboxProfile: Sendable, Hashable {
         }
 
         var sb = baseRules
-        let runtime = try inputs.runtime.map(real)
+        // Programs named by the manifest (git) load from their own installation, like an interpreter does.
+        var runtimeFolders: [String] = []
+        for folder in inputs.runtime + inputs.permissions.programs.flatMap(\.runtime) where !runtimeFolders.contains(folder) {
+            runtimeFolders.append(folder)
+        }
+        let runtime = try runtimeFolders.map(real)
         if !runtime.isEmpty {
             sb += "\n;; interpreter runtime (read-only)\n(allow file-read* file-map-executable\n"
             sb += runtime.enumerated().map { "  (subpath \(add("RT_\($0.offset)", $0.element)))" }.joined(separator: "\n") + ")\n"
@@ -86,7 +91,11 @@ public struct SandboxProfile: Sendable, Hashable {
         sb += "\n;; exec allow-list: the program (+ the binary it re-executes) and the manifest's exec entries\n(allow process-exec\n"
         var execs = ["  (literal \(add("RUN_EXEC", try real(inputs.executable))))"]
         if let reexec = inputs.reexec { execs.append("  (literal \(add("RUN_EXEC_2", try real(reexec))))") }
-        let exec = try inputs.permissions.exec.map(real)
+        var listed = inputs.permissions.exec
+        for program in inputs.permissions.programs {
+            for path in [program.path] + program.helpers where !listed.contains(path) { listed.append(path) }
+        }
+        let exec = try listed.map(real)
         execs += exec.enumerated().map { "  (literal \(add("EXEC_\($0.offset)", $0.element)))" }
         sb += execs.joined(separator: "\n") + ")\n"
 

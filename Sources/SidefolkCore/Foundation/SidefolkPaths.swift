@@ -26,6 +26,8 @@ public struct SidefolkPaths: Sendable {
     public var database: URL { home.appendingPathComponent("sidefolk.sqlite") }
     public var extensions: URL { home.appendingPathComponent("Extensions", isDirectory: true) }
     public var extensionData: URL { home.appendingPathComponent("ExtensionData", isDirectory: true) }
+    /// Extensions Sidefolk's AI writes for the person, waiting to be reviewed and installed (D39).
+    public var extensionDrafts: URL { home.appendingPathComponent("ExtensionDrafts", isDirectory: true) }
     public var skills: URL { home.appendingPathComponent("Skills", isDirectory: true) }
     public var run: URL { home.appendingPathComponent("run", isDirectory: true) }
     public var socket: URL { run.appendingPathComponent("sidefolk.sock") }
@@ -34,7 +36,7 @@ public struct SidefolkPaths: Sendable {
     /// Creates the folders with owner-only permissions.
     public func prepare() throws {
         let fm = FileManager.default
-        for dir in [home, logs, extensions, extensionData, skills, run, brainWorkdir] {
+        for dir in [home, logs, extensions, extensionData, extensionDrafts, skills, run, brainWorkdir] {
             try fm.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
             try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir.path)
         }

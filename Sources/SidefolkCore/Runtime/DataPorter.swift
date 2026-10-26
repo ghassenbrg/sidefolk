@@ -74,7 +74,7 @@ public struct DataPorter: Sendable {
             }
         }
         let p = runtime.paths
-        for dir in [p.extensions, p.extensionData, p.skills, p.brainWorkdir, p.run, p.home.appendingPathComponent("Sandbox"),
+        for dir in [p.extensions, p.extensionData, p.extensionDrafts, p.skills, p.brainWorkdir, p.run, p.home.appendingPathComponent("Sandbox"),
                     p.home.appendingPathComponent("snapshots"), p.home.appendingPathComponent("bin"), p.logs] {
             ExtensionFiles.removeTree(dir.path)
             if ExtensionFS.lstat(dir.path) != nil { leftovers.append(FolderAccess.displayPath(dir.path)) }

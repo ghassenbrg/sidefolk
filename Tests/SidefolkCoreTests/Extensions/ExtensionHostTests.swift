@@ -124,7 +124,7 @@ struct ExtensionHostTests {
         #expect(!state.enabled)
         #expect(state.lastError?.contains("server.py") == true)
         #expect(h.env.registry.tool(named: "ext.sample.echo") == nil)
-        #expect(await firstNotice(notices)?.contains("changed on disk") == true)
+        #expect(await ExtFixtures.firstNotice(notices)?.contains("changed on disk") == true)
         await #expect(throws: UserFacingError.self) { try await h.host.setEnabled(true, id: info.id) }
     }
 
@@ -156,7 +156,7 @@ struct ExtensionHostTests {
         #expect(!state.enabled)
         #expect(state.lastError?.contains("3 times in 5 minutes") == true)
         #expect(h.env.registry.tool(named: "ext.sample.echo") == nil)
-        #expect(await firstNotice(notices)?.contains("kept crashing") == true)
+        #expect(await ExtFixtures.firstNotice(notices)?.contains("kept crashing") == true)
         #expect(try await h.store.record(id: info.id)?.enabled == false)
 
         try await h.host.setEnabled(true, id: info.id)
@@ -203,7 +203,7 @@ struct ExtensionHostTests {
         #expect(held.failure?.message.contains("on hold") == true, "\(String(describing: held.failure))")
         #expect(h.env.registry.tool(named: "ext.sample.echo") == nil)
         #expect(await h.host.info(id: info.id)?.hasPendingToolChanges == true)
-        #expect(await firstNotice(notices)?.contains("on hold") == true)
+        #expect(await ExtFixtures.firstNotice(notices)?.contains("on hold") == true)
 
         try await h.host.approveToolChanges(id: info.id)
         let tool = try #require(h.env.registry.tool(named: "ext.sample.echo"))
@@ -329,22 +329,5 @@ struct ExtensionHostTests {
         #expect(await h.host.preview(folder: clash).conflict != nil)
         await #expect(throws: UserFacingError.self) { try await h.host.install(from: clash) }
         await h.host.shutdown()
-    }
-
-    /// The first `.notice` on the bus within a few seconds.
-    func firstNotice(_ stream: AsyncStream<AppEvent>) async -> String? {
-        await withTaskGroup(of: String?.self) { group in
-            group.addTask {
-                for await event in stream { if case .notice(let text) = event { return text } }
-                return nil
-            }
-            group.addTask {
-                try? await Task.sleep(for: .seconds(5))
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
-        }
     }
 }

@@ -55,7 +55,7 @@ public struct PermissionEngine: Sendable {
                 tool: spec.name, title: String(localized: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?"),
                 summary: summary, risk: max(spec.risk, .medium), caller: caller,
                 details: .folderAccess(folder: folder, write: !unwritable.isEmpty),
-                canAlways: true
+                canAlways: true, extensionId: scope.extensionId
             ))
         }
 
@@ -90,7 +90,8 @@ public struct PermissionEngine: Sendable {
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted,
                 // An extension's own word that it changes nothing isn't enough to say so on the card.
-                readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions])
+                readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions]),
+                extensionId: scope.extensionId
             ))
         case .high:
             // Only an exact command may be granted "always"; everything else is asked every time.
@@ -101,7 +102,8 @@ public struct PermissionEngine: Sendable {
             }
             return .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: .high, caller: caller,
-                details: Self.details(spec: spec, scope: scope), canAlways: exactCommand && !tainted, tainted: tainted
+                details: Self.details(spec: spec, scope: scope), canAlways: exactCommand && !tainted, tainted: tainted,
+                extensionId: scope.extensionId
             ))
         }
     }

@@ -13,9 +13,6 @@ enum ResourceLocator {
         }
         return nil
     }
-
-    /// Sample extensions shipped with the app, offered in Settings › Extensions.
-    static var sampleExtensions: URL? { resources?.appendingPathComponent("Extensions", isDirectory: true) }
 }
 
 /// Environment values for a user-added MCP server live in one Keychain item, "mcp.<server>", as JSON.

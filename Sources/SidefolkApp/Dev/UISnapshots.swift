@@ -126,12 +126,21 @@ enum UISnapshots {
             await settings.ai.refresh()
             await settings.ai.test()
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
+            // A Mac without git: the built-in Git extension says why it isn't there.
+            fixtures.gitMissing = true
+            await settings.loadExtensions()
+            try await page("page-settings-extensions-no-git", ExtensionsSettingsView(model: settings), width: width)
+            fixtures.gitMissing = false
+            await settings.loadExtensions()
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
             try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Mochi",
                                                       portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
             try await page("desktop-ask-apple-notes", AskView(model: sampleAskAppleNotes(), companionName: "Mochi",
                                                                   portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"),
+                           width: 380)
+            try await page("desktop-ask-extensions", AskView(model: sampleAskExtensions(), companionName: "Mochi",
+                                                                 portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"),
                            width: 380)
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
@@ -140,6 +149,7 @@ enum UISnapshots {
             // Sheets.
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
             try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
+            try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 480)
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
         }
@@ -225,6 +235,23 @@ enum UISnapshots {
                                           details: .text("“Pasta carbonara” (iCloud › Recipes)\n“Sourdough” (iCloud › Recipes)\n\n"
                                                          + "Their copies stay in your notebook. Notes keeps deleted notes in Recently Deleted for 30 days."),
                                           canAlways: false, tainted: true)))
+        return ask
+    }
+
+    /// The founder's case (D39): cloning into ~/git with the built-in Git extension, after a World Clock answer.
+    private static func sampleAskExtensions() -> AskModel {
+        let ask = AskModel()
+        let git = FixtureServices.git
+        ask.extensionLooks = [git.id: git.look,
+                              "dev.sidefolk.world-clock": ExtensionLook(name: "World Clock", iconPath: FixtureServices.icon("world-clock"), folk: "tempo")]
+        ask.add(.result(ResultCard(kind: .extensionResult, title: "Time around the world", subtitle: "World Clock",
+                                   detail: "It is Tuesday 27 October, 09:12 in Tokyo (JST, UTC+9), 8 hours ahead of you.",
+                                   refId: "dev.sidefolk.world-clock"), activityId: nil, undo: false),
+                caption: "what time is it in Tokyo?")
+        ask.add(.approval(ApprovalRequest(tool: "ext.git.clone", title: "Clone a repository",
+                                          summary: "Clone a repository (Git) {\"destination\":\"~/git/Hello-World\",\"url\":\"https://github.com/octocat/Hello-World\"}",
+                                          risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
+                                          canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
         return ask
     }
 

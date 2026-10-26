@@ -128,8 +128,8 @@ enum ExtensionFiles {
     }
 
     /// SHA-256, mode and size of every file, sorted by path.
-    static func pin(_ root: String) throws -> [ExtensionFilePin] {
-        try walk(root).filter { !$0.isDirectory }.map { e in
+    static func pin(_ root: String, skipping: Set<String> = []) throws -> [ExtensionFilePin] {
+        try walk(root, skipping: skipping).filter { !$0.isDirectory }.map { e in
             ExtensionFilePin(path: e.path, mode: UInt16(e.st.st_mode & 0o7777), size: Int64(e.st.st_size),
                              sha256: try ExtensionHash.sha256(file: root + "/" + e.path))
         }
@@ -139,6 +139,12 @@ enum ExtensionFiles {
     static func aggregateHash(_ pins: [ExtensionFilePin]) -> String {
         let lines = pins.map { "\($0.path)\t\(String($0.mode, radix: 8))\t\($0.size)\t\($0.sha256)" }
         return ExtensionHash.sha256(Data(lines.joined(separator: "\n").utf8))
+    }
+
+    /// One hash over the files' names and contents only: a source folder and its locked installed copy
+    /// differ in modes, never in this.
+    static func contentHash(_ pins: [ExtensionFilePin]) -> String {
+        ExtensionHash.sha256(Data(pins.map { "\($0.path)\t\($0.sha256)" }.joined(separator: "\n").utf8))
     }
 }
 

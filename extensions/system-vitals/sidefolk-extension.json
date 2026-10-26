@@ -6,6 +6,7 @@
   "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
   "folk": "byte",
   "author": "Sidefolk",
+  "icon": "icon.pdf",
   "run": { "command": "python3", "args": ["main.py"] },
   "permissions": {
     "network": false,

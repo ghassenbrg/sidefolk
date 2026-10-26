@@ -49,6 +49,13 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     func close() { window?.performClose(nil) }
 
+    /// Settings › Extensions with the install preview of `folder` over it: Sidefolk's AI finished a draft,
+    /// and the person decides there (D39).
+    func review(folder: URL) {
+        show(tab: .extensions)
+        Task { await model.review(folder: folder) }
+    }
+
     private func makeWindow() -> NSWindow {
         let window = NSWindow()
         tabs = Self.configure(window, model: model)

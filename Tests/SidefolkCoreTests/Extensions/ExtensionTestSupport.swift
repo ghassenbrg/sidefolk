@@ -9,8 +9,29 @@ enum ExtFixtures {
     static let repoRoot = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
 
+    /// The first `.notice` on the bus within a few seconds.
+    static func firstNotice(_ stream: AsyncStream<AppEvent>) async -> String? {
+        await withTaskGroup(of: String?.self) { group in
+            group.addTask {
+                for await event in stream { if case .notice(let text) = event { return text } }
+                return nil
+            }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(5))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+
     static let python = InterpreterResolver.system.resolve("python3")
     static let hasPython = python != nil
+    /// Apple's or Homebrew's git, found the way built-in extensions find it.
+    static let git = ProgramResolver.system.resolve("git")
+    /// Tests that reach the network (one tiny public clone) run only with SIDEFOLK_LIVE_NETWORK=1.
+    static let liveNetwork = ProcessInfo.processInfo.environment["SIDEFOLK_LIVE_NETWORK"] == "1"
     static let noPython: Comment = "python3 not found (xcrun --find python3 failed); skipping tests that run extensions"
 
     /// A new, empty folder with its real path (`/private/var/…`, not `/var/…`).

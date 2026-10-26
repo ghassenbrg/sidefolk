@@ -37,10 +37,13 @@ public struct ToolSpec: Sendable, Hashable {
     public var mutates: Bool
     /// Offered to external agents through the Sidefolk MCP server.
     public var external: Bool
+    /// How long one call may run when it needs longer than the caller's usual limit (cloning a repository).
+    public var timeout: TimeInterval?
 
     public init(
         name: String, title: String, description: String, inputSchema: JSONValue, risk: Risk,
-        capabilities: Set<Capability>, category: ToolCategory, mutates: Bool, external: Bool = false
+        capabilities: Set<Capability>, category: ToolCategory, mutates: Bool, external: Bool = false,
+        timeout: TimeInterval? = nil
     ) {
         self.name = name
         self.title = title
@@ -51,6 +54,7 @@ public struct ToolSpec: Sendable, Hashable {
         self.category = category
         self.mutates = mutates
         self.external = external
+        self.timeout = timeout
     }
 
     /// Name safe for model APIs (letters, digits, underscore, dash).
@@ -177,10 +181,13 @@ public struct ToolContext: Sendable {
     public var now: Date
     /// Untrusted content was in play when this call was made (docs/SECURITY.md T2, T3).
     public var tainted: Bool
-    public init(caller: Caller, now: Date, tainted: Bool = false) {
+    /// The folders Guard let this call use: those the person shared, plus any allowed for this call only.
+    public var folders: [GrantedFolder]
+    public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = []) {
         self.caller = caller
         self.now = now
         self.tainted = tainted
+        self.folders = folders
     }
 
     /// Where something a tool writes came from. Sidefolk's own agent acting in a clean turn acts for

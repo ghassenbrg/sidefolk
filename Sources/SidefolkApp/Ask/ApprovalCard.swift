@@ -5,6 +5,8 @@ import SwiftUI
 /// stays inert for a moment so a stray keypress can't approve it; high risk needs ⌘⏎, other apps a click.
 struct ApprovalCard: View {
     var request: ApprovalRequest
+    /// The extension whose tool is asking, shown by its icon and name under the title.
+    var look: ExtensionLook? = nil
     var decide: (ApprovalDecision) -> Void
     @State private var armed = false
     @State private var showDetails = false
@@ -16,6 +18,13 @@ struct ApprovalCard: View {
                     Image(systemName: "checkmark.shield").foregroundStyle(Theme.folkColor("guard"))
                     Text(request.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
+                }
+                if let look {
+                    HStack(spacing: 6) {
+                        ExtensionBadge(look: look, size: 16)
+                        Text("From the \(look.name) extension", comment: "Under an approval's title: which extension's tool asks")
+                            .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    }
                 }
                 Text(riskLabel).font(Theme.Font.eyebrow).textCase(.uppercase)
                     .padding(.horizontal, 6).padding(.vertical, 2)

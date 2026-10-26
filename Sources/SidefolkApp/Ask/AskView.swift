@@ -206,13 +206,13 @@ private struct EntryView: View {
     var body: some View {
         switch entry.content {
         case .result(let card, let activityId, let undo):
-            ResultCardView(card: card, actions: {
+            ResultCardView(card: card, look: card.kind == .extensionResult ? card.refId.flatMap { model.extensionLooks[$0] } : nil, actions: {
                 if undo, let activityId {
                     Button("Undo") { model.actions?.undo(activityId: activityId, in: model) }.buttonStyle(.sf(.secondary))
                 }
                 if PrivacyPane.isKnown(card.url) {
                     Button("Open System Settings") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
-                } else if card.refId != nil || card.url != nil {
+                } else if card.kind != .extensionResult, card.refId != nil || card.url != nil {
                     Button("Open") { model.actions?.open(card: card) }.buttonStyle(.sf(.secondary))
                 }
             })
@@ -239,7 +239,9 @@ private struct EntryView: View {
         case .answer(let text, let canThinkHarder, let tainted):
             AnswerCard(text: text, canThinkHarder: canThinkHarder, tainted: tainted, model: model)
         case .approval(let request):
-            ApprovalCard(request: request) { decision in model.actions?.answer(approval: request, decision: decision) }
+            ApprovalCard(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }) { decision in
+                model.actions?.answer(approval: request, decision: decision)
+            }
         case .error(let error, let retryable):
             SFCard(accent: Theme.coral) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -293,13 +295,20 @@ private struct EntryView: View {
 
 struct ResultCardView<Actions: View>: View {
     var card: ResultCard
+    /// The extension that answered, drawn by its icon instead of the generic symbol.
+    var look: ExtensionLook? = nil
     @ViewBuilder var actions: Actions
 
     var body: some View {
         SFCard(accent: Self.accent(for: card.kind)) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    Image(systemName: card.itemKind.map(ItemKindStyle.symbol) ?? Self.symbol(for: card.kind)).foregroundStyle(Self.accent(for: card.kind))
+                    if let look {
+                        ExtensionBadge(look: look, size: 18)
+                    } else {
+                        Image(systemName: card.itemKind.map(ItemKindStyle.symbol) ?? Self.symbol(for: card.kind))
+                            .foregroundStyle(Self.accent(for: card.kind))
+                    }
                     Text(card.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
