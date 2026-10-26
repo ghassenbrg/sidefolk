@@ -27,6 +27,9 @@ enum Theme {
     static let dangerSoft = Color(light: 0xFFEDEA, dark: 0x4A2622)
     static let success = Color(light: 0x2F9E6D, dark: 0x7DD3A7)
     static let successSoft = Color(light: 0xE6F6EE, dark: 0x1D3D31)
+    /// The Now greeting's wash: aqua into light blue, as quiet as the cards around it.
+    static let heroStart = Color(light: 0xDDF6F7, dark: 0x153B49)
+    static let heroEnd = Color(light: 0xE6EFFD, dark: 0x1B2C49)
 
     // MARK: Metrics
     enum Space {
@@ -51,6 +54,7 @@ enum Theme {
         static let bubbleTitle = SwiftUI.Font.system(size: 15, weight: .semibold, design: .rounded)
         static let input = SwiftUI.Font.system(size: 16, weight: .regular, design: .rounded)
         static let hint = SwiftUI.Font.system(size: 11.5, weight: .medium, design: .rounded)
+        static let hero = SwiftUI.Font.system(size: 30, weight: .bold, design: .rounded)
         static let title = SwiftUI.Font.system(size: 22, weight: .bold, design: .rounded)
         static let heading = SwiftUI.Font.system(size: 15, weight: .semibold, design: .rounded)
         static let body = SwiftUI.Font.system(size: 13)

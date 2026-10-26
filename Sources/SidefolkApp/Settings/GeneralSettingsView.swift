@@ -2,8 +2,8 @@ import KeyboardShortcuts
 import SidefolkCore
 import SwiftUI
 
-/// Settings › General: startup, the Ask shortcut, the name, quiet mode, what times of day mean,
-/// notifications and the welcome.
+/// Settings › General: startup, the Ask shortcut, language, quiet mode, what times of day mean,
+/// notifications and the welcome. The companion's name lives with the companion (Settings › Companion).
 struct GeneralSettingsView: View {
     var model: SettingsModel
 
@@ -21,13 +21,6 @@ struct GeneralSettingsView: View {
                     // The menu bar and the Ask panel show the shortcut, so tell the app when it changes.
                     KeyboardShortcuts.Recorder(for: .ask) { _ in model.services.settingsChanged() }
                         .accessibilityLabel("Ask shortcut")
-                }
-                SettingsRow(title: "Name", detail: "What your companion is called in bubbles and menus.") {
-                    let fallback = model.settings.companion.defaultName
-                    CommitField(label: "Companion name", prompt: fallback, value: model.settings.companionName, width: 180) { name in
-                        let clean = name.isEmpty ? fallback : String(name.prefix(30))
-                        model.update { $0.companionName = clean }
-                    }
                 }
                 LanguageRow()
             }

@@ -28,8 +28,9 @@ including the superseded robot studies, with repository paths and SHA-256 hashes
 | Icon marks | `exports/mark-{color,navy,white}.png` | Standalone rabbit portrait/monochrome mark without tile or lettering. |
 | Mascot vectors | `exports/mascot-{navy,white}.{svg,pdf,png}` | Hand-drawn rabbit mark for large monochrome use (lockups, print); the menu bar has its own reduced glyph. |
 | Full-body mascot | `exports/mascot-color.png` | Mochi character study, transparent and unframed. |
-| Wordmarks | `exports/wordmark-{color,navy,white}.png` | Flat lettering, 4096 px wide; no bevel, glow or shadow. |
-| Vector wordmarks | `exports/wordmark-{color,navy,white}.{svg,pdf}` | One filled outline per letter built from strokes (below), canonical flat colors, no fonts, clipping masks, filters or embedded raster. |
+| Wordmarks | `exports/wordmark-{color,reversed,navy,white}.png` | Flat lettering, 4096 px wide; no bevel, glow or shadow. `color` is navy "Side" + aqua "folk" for light surfaces, `reversed` white "Side" + aqua "folk" for dark ones; the app uses only these two (D33). |
+| Vector wordmarks | `exports/wordmark-{color,reversed,navy,white}.{svg,pdf}` | One filled outline per letter built from strokes (below), canonical flat colors, no fonts, clipping masks, filters or embedded raster. The app draws the PDFs. |
+| Family art | `exports/family-color.png` | Mochi with Byte, Seed and Pip, without lettering: the first hello bubble and the About window. |
 
 `scripts/build-app.sh` copies the production exports to `Contents/Resources/Brand/` and the templates
 to `Contents/Resources/MenuBar/`. `BrandAsset` provides typed AppKit loading in the app, and SwiftUI

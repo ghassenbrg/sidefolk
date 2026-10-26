@@ -231,9 +231,7 @@ extension AppCoordinator: AppServices {
         applyCompanionSettings()
     }
 
-    func openAgentSettings() { openSettings(tab: .agents) }
-
-    func openAsk(prefill: String) { showAsk(prefill: prefill) }
+    func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }
 
     func replayOnboarding() {
         Task { await runtime.settings.update { $0.onboardingDone = false } }

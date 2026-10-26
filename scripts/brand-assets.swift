@@ -100,33 +100,38 @@ parser.delegate = wordmarkSource
 // scripts/wordmark.swift writes the master: one path per letter and one per ray.
 precondition(parser.parse() && wordmarkSource.paths.count == 10 && wordmarkSource.size.width > 0, "Invalid wordmark master")
 let wordmarkSize = wordmarkSource.size
-func drawWordmark(_ c: CGContext, width: CGFloat, height: CGFloat, ink: (Double, Double, Double)? = nil) {
+typealias Ink = (Double, Double, Double)
+let white: Ink = (1, 1, 1)
+/// The wordmark with "Side" in one ink and "folk" with its rays in another.
+func drawWordmark(_ c: CGContext, width: CGFloat, height: CGFloat, side: Ink, folk: Ink) {
     c.saveGState()
     c.translateBy(x: 0, y: height)
     c.scaleBy(x: width/wordmarkSize.width, y: -height/wordmarkSize.height)
     for (path, fill) in wordmarkSource.paths {
-        let color = ink ?? (fill == "#0F2D5B" ? navy : aqua)
+        let color = fill == "#0F2D5B" ? side : folk
         c.setFillColor(CGColor(srgbRed: color.0, green: color.1, blue: color.2, alpha: 1))
         c.addPath(path); c.drawPath(using: .eoFill)
     }
     c.restoreGState()
 }
-let wc = context(4096, Int((4096 * wordmarkSize.height / wordmarkSize.width).rounded()))
-drawWordmark(wc, width: CGFloat(wc.width), height: CGFloat(wc.height))
-let wordmark = wc.makeImage()!
+func hex(_ ink: Ink) -> String { String(format: "#%02X%02X%02X", Int(ink.0 * 255), Int(ink.1 * 255), Int(ink.2 * 255)) }
 try fm.createDirectory(at: exports, withIntermediateDirectories: true)
-for (name, ink) in [("color", Optional<(Double, Double, Double)>.none), ("navy", navy), ("white", (1.0,1.0,1.0))] {
+// Color for light surfaces; reversed (white "Side", aqua "folk") for dark ones; navy and white single-ink.
+var wordmarks: [String: CGImage] = [:]
+for (name, side, folk) in [("color", navy, aqua), ("reversed", white, aqua), ("navy", navy, navy), ("white", white, white)] {
+    let wc = context(4096, Int((4096 * wordmarkSize.height / wordmarkSize.width).rounded()))
+    drawWordmark(wc, width: CGFloat(wc.width), height: CGFloat(wc.height), side: side, folk: folk)
+    wordmarks[name] = wc.makeImage()!
     let pdf = NSMutableData()
     var mediaBox = CGRect(origin: .zero, size: wordmarkSize)
     let pc = CGContext(consumer: CGDataConsumer(data: pdf)!, mediaBox: &mediaBox, nil)!
-    pc.beginPDFPage(nil); drawWordmark(pc, width: wordmarkSize.width, height: wordmarkSize.height, ink: ink)
+    pc.beginPDFPage(nil); drawWordmark(pc, width: wordmarkSize.width, height: wordmarkSize.height, side: side, folk: folk)
     pc.endPDFPage(); pc.closePDF()
     try (pdf as Data).write(to: exports.appendingPathComponent("wordmark-\(name).pdf"))
-    let svg = ink == nil ? wordmarkSVG : wordmarkSVG
-        .replacingOccurrences(of: "#0F2D5B", with: name == "white" ? "#FFFFFF" : "#0F2D5B")
-        .replacingOccurrences(of: "#2ED4D9", with: name == "white" ? "#FFFFFF" : "#0F2D5B")
+    let svg = wordmarkSVG.replacingOccurrences(of: "#0F2D5B", with: hex(side)).replacingOccurrences(of: "#2ED4D9", with: hex(folk))
     try svg.write(to: exports.appendingPathComponent("wordmark-\(name).svg"), atomically: true, encoding: .utf8)
 }
+let wordmark = wordmarks["color"]!
 let mark = normalized(read("Resources/Brand/masters/rabbit-portrait.png"))
 let primaryMark = normalized(read("Resources/Brand/masters/rabbit-family.png"))
 let mono = normalized(read("Resources/Brand/exports/mascot-navy.png"))
@@ -157,9 +162,9 @@ func lockup(horizontal: Bool, mark: CGImage, word: CGImage) -> CGImage {
     }
     return trimmed(c.makeImage()!, padding: 24)
 }
-try save(wordmark, exports.appendingPathComponent("wordmark-color.png"))
-try save(tint(wordmark, navy), exports.appendingPathComponent("wordmark-navy.png"))
-try save(tint(wordmark, (1,1,1)), exports.appendingPathComponent("wordmark-white.png"))
+for (name, image) in wordmarks { try save(image, exports.appendingPathComponent("wordmark-\(name).png")) }
+// The family on its own, for the first hello and the About window.
+try save(primaryMark, exports.appendingPathComponent("family-color.png"))
 try save(mark, exports.appendingPathComponent("mark-color.png"))
 try save(mono, exports.appendingPathComponent("mark-navy.png"))
 try save(tint(mono, (1,1,1)), exports.appendingPathComponent("mark-white.png"))

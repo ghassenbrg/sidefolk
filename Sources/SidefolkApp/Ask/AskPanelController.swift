@@ -8,9 +8,9 @@ final class AskPanelController {
     private var resignObserver: NSObjectProtocol?
     var onVisibilityChange: ((Bool) -> Void)?
 
-    init(model: AskModel, companionName: String, hotkey: String) {
+    init(model: AskModel, companionName: String, portrait: NSImage?, hotkey: String) {
         self.model = model
-        hosted = HostedPanel(rootView: AskView(model: model, companionName: companionName, hotkey: hotkey), allowsKey: true)
+        hosted = HostedPanel(rootView: AskView(model: model, companionName: companionName, portrait: portrait, hotkey: hotkey), allowsKey: true)
         hosted.panel.onCancel = { [weak self] in self?.cancel() }
         resignObserver = NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: hosted.panel,
                                                                 queue: .main) { [weak self] _ in
@@ -22,8 +22,8 @@ final class AskPanelController {
     var isVisible: Bool { hosted.panel.isVisible }
     var frame: NSRect { hosted.panel.frame }
 
-    func update(companionName: String, hotkey: String) {
-        hosted.host.rootView = AskView(model: model, companionName: companionName, hotkey: hotkey)
+    func update(companionName: String, portrait: NSImage?, hotkey: String) {
+        hosted.host.rootView = AskView(model: model, companionName: companionName, portrait: portrait, hotkey: hotkey)
     }
 
     func show(beside anchor: NSRect, on screen: NSScreen, focus: Bool = true) {

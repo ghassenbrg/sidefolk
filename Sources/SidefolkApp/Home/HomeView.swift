@@ -56,10 +56,14 @@ private struct HomeSidebar: View {
 
     var body: some View {
         List(selection: $model.selection) {
-            BrandLockup()
+            // The app's name at a size that reads as one; it opens About.
+            Button { model.services.showAbout() } label: { Wordmark(height: 30) }
+                .buttonStyle(.plain)
+                .help("About Sidefolk")
                 .selectionDisabled()
                 .listRowSeparator(.hidden)
-                .padding(.bottom, Theme.Space.s)
+                .padding(.leading, Theme.Space.xs)
+                .padding(.bottom, Theme.Space.m)
             Section {
                 Label { Text("Now") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
@@ -100,6 +104,14 @@ private struct HomeSidebar: View {
                 }
                 .buttonStyle(.sfPlain)
                 Spacer()
+                // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window
+                // is in front; Settings is also one click from wherever Home is.
+                Button { model.services.openSettings(tab: nil) } label: {
+                    Image(systemName: "gearshape").font(.system(size: 14, weight: .medium))
+                }
+                .buttonStyle(.sfPlain)
+                .help("Settings (⌘,)")
+                .accessibilityLabel("Settings")
             }
             .padding(.horizontal, Theme.Space.s)
             .padding(.vertical, Theme.Space.s)
@@ -239,23 +251,5 @@ struct CollectionSheet: View {
                 }
             }
         }
-    }
-}
-
-/// The family and the wordmark at the top of the sidebar, in the variant that reads on this appearance.
-private struct BrandLockup: View {
-    @Environment(\.colorScheme) private var scheme
-
-    var body: some View {
-        HStack(spacing: 6) {
-            if let mark = BrandAsset.markColor.image {
-                Image(nsImage: mark).resizable().scaledToFit().frame(height: 30)
-            }
-            if let word = (scheme == .dark ? BrandAsset.wordmarkWhite : BrandAsset.wordmarkColor).image {
-                Image(nsImage: word).resizable().scaledToFit().frame(height: 17)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Sidefolk")
     }
 }

@@ -324,3 +324,26 @@ candidates were drawn at real size beside wifi, battery and search on light and 
 and merged the ears; a plain outline read as any bunny; adding the scarf crowded the 1x pixels. The
 filled ear tips plus the nose are the two details that say Mochi at this size, and the outline matches
 the weight of the symbols around it.
+
+### D33 — Where the brand appears in the app, and in which variant (2026-10-26)
+**Decision:** the full-colour art is the hero and appears where it has room; the lettering keeps its
+two colours on every surface. Specifically:
+- **Home sidebar:** the wordmark alone at 30 pt (navy "Side" + aqua "folk" on light, the new
+  `wordmark-reversed` with white "Side" on dark); clicking it opens About. It replaces a 30 pt cropped
+  portrait beside 17 pt lettering, which read as a sticker.
+- **Now:** a greeting card on a quiet aqua-to-blue wash with *your* companion, drawn by its rig in its
+  style at 176 pt, and an "Ask <name>…" button. The mascot is shown where it is large, not shrunk.
+- **About window** (app menu, menu bar menu, sidebar wordmark): the family art and the wordmark,
+  version, tagline, notices. It replaces the standard panel, which could only show the icon.
+- **First hello bubble:** the family art (`family-color`), as the bubble's code always meant.
+- **Ask panel:** the companion's face in a small disc beside its name, so you see who you're asking.
+- **Empty pages:** your companion with its notepad in an empty collection; folks where their job is
+  the subject (Scout for search, Seed for About you, Guard for Activity, Brew for Trash).
+- **Menu bar:** the monochrome glyph (D32). **Settings:** no brand header; macOS Settings windows
+  carry their identity in the toolbar, and About is a click away.
+Single-colour wordmarks and lockups (navy, white) stay for print and partners; the app never shows
+all-white or all-navy lettering, because the aqua "folk" is half of the name's look. Wordmarks load
+from the vector PDF exports, so they stay sharp at any size without a 4096 px bitmap in memory.
+**Why:** the founder found the logo "a little bit small" and asked for the companion, the folks and
+the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
+small places get one clear element (lettering, a face) instead of a reduced composition.

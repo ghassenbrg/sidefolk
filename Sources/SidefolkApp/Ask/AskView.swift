@@ -5,6 +5,8 @@ import SwiftUI
 struct AskView: View {
     @Bindable var model: AskModel
     var companionName: String
+    /// The companion as drawn on the desktop, so the panel says who you're talking to.
+    var portrait: NSImage?
     var hotkey: String
     @FocusState private var inputFocused: Bool
 
@@ -27,8 +29,17 @@ struct AskView: View {
     }
 
     private var header: some View {
-        HStack(spacing: Theme.Space.s) {
-            Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
+        HStack(spacing: Theme.Space.xs) {
+            if let portrait {
+                // The face in a soft disc: the rig's canvas has room around the body.
+                Image(nsImage: portrait).resizable().frame(width: 52, height: 52).offset(y: -1)
+                    .frame(width: 26, height: 26)
+                    .background(Theme.accentSoft)
+                    .clipShape(Circle())
+                    .accessibilityHidden(true)
+                    .padding(.trailing, Theme.Space.xs)
+            }
+            Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink)
             Spacer()
             if model.hasResults, !model.busy {
                 Button { model.clearResults() } label: {
@@ -36,17 +47,22 @@ struct AskView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Remove these results")
+                .padding(.trailing, Theme.Space.xs)
             }
-            Button { model.actions?.openHome() } label: {
-                Image(systemName: "house").imageScale(.small)
-            }
-            .buttonStyle(.sfPlain)
-            .help("Open Sidefolk")
-            .accessibilityLabel("Open Sidefolk")
+            headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
+            headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
             Text(hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                .padding(.leading, Theme.Space.xs)
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.top, Theme.Space.m)
+    }
+
+    private func headerButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) { Image(systemName: symbol).imageScale(.small) }
+            .buttonStyle(.sf(.plain))
+            .help(help)
+            .accessibilityLabel(help)
     }
 
     private var input: some View {
@@ -231,7 +247,7 @@ private struct EntryView: View {
                     if retryable, let retry {
                         HStack(spacing: 6) {
                             Button("Try again", action: retry).buttonStyle(.sf(.secondary))
-                            Button("AI settings…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
+                            Button("AI settings…") { model.actions?.openSettings(tab: .ai) }.buttonStyle(.sf(.plain))
                         }
                     }
                 }
@@ -254,7 +270,7 @@ private struct EntryView: View {
                         HStack(spacing: 6) { localActions(text, guess: guess) }
                         VStack(alignment: .leading, spacing: 6) { localActions(text, guess: guess) }
                     }
-                    Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
+                    Button("Set up AI…") { model.actions?.openSettings(tab: .ai) }.buttonStyle(.sf(.plain))
                 }
             }
         case .question(let item):

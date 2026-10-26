@@ -25,8 +25,8 @@ struct BubbleView: View {
         if let item = model.item {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 // The very first hello introduces the whole family, not just the one on the desktop.
-                if item.refKind == Onboarding.welcome, model.expanded, let family = BrandAsset.markColor.image {
-                    Image(nsImage: family).resizable().scaledToFit().frame(height: 64)
+                if item.refKind == Onboarding.welcome, model.expanded, let family = BrandAsset.familyColor.image {
+                    Image(nsImage: family).resizable().scaledToFit().frame(height: 84)
                         .frame(maxWidth: .infinity).accessibilityHidden(true)
                 }
                 HStack(alignment: .top, spacing: Theme.Space.s) {
