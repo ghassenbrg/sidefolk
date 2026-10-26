@@ -116,9 +116,15 @@ struct EmptyState: View {
     var title: String
     var message: String
     var systemImage: String
+    /// A folk to show instead of the symbol: empty pages are where the family can say hello.
+    var folk: String?
     var body: some View {
         VStack(spacing: Theme.Space.s) {
-            Image(systemName: systemImage).font(.system(size: 28, weight: .light)).foregroundStyle(Theme.inkFaint)
+            if let folk, let art = FolkArt.image(folk, size: 88) {
+                Image(nsImage: art).resizable().scaledToFit().frame(width: 88, height: 88).accessibilityHidden(true)
+            } else {
+                Image(systemName: systemImage).font(.system(size: 28, weight: .light)).foregroundStyle(Theme.inkFaint)
+            }
             Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
             Text(message).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).multilineTextAlignment(.center)
         }
@@ -178,15 +184,23 @@ struct FolkBadge: View {
     var size: CGFloat = 22
 
     var body: some View {
-        Circle()
-            .fill(Theme.folkColor(name))
-            .frame(width: size, height: size)
-            .overlay {
-                Image(systemName: Self.symbol(for: name))
-                    .font(.system(size: size * 0.46, weight: .semibold))
-                    .foregroundStyle(Theme.navy)
+        Group {
+            // The folk itself; a coloured disc with its prop for names the family doesn't have (extensions).
+            if let art = FolkArt.image(name, size: size * 1.4) {
+                Image(nsImage: art).resizable().scaledToFit().frame(width: size * 1.4, height: size * 1.4)
+                    .padding(-size * 0.2)
+            } else {
+                Circle()
+                    .fill(Theme.folkColor(name))
+                    .overlay {
+                        Image(systemName: Self.symbol(for: name))
+                            .font(.system(size: size * 0.46, weight: .semibold))
+                            .foregroundStyle(Theme.navy)
+                    }
             }
-            .accessibilityHidden(true)
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
     }
 
     /// The prop each folk holds on the identity sheet.
@@ -256,7 +270,7 @@ struct SectionHeader<Trailing: View>: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
-            if let folk { FolkBadge(name: folk, size: 20) }
+            if let folk { FolkBadge(name: folk, size: 26) }
             Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
             if let count, count > 0 {
                 Text("\(count)").font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)

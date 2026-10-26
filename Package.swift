@@ -31,5 +31,6 @@ let package = Package(
         .executableTarget(name: "sidefolk", dependencies: ["SidefolkCore"]),
         .executableTarget(name: "sidefolk-render", dependencies: ["SidefolkCharacter"]),
         .testTarget(name: "SidefolkCoreTests", dependencies: ["SidefolkCore"]),
+        .testTarget(name: "SidefolkCharacterTests", dependencies: ["SidefolkCharacter"]),
     ]
 )

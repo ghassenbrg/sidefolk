@@ -3,6 +3,35 @@ import SidefolkCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: AppCoordinator?
+    /// The quit work is done (or must be skipped), so terminating doesn't wait for it again.
+    private var readyToQuit = false
+
+    /// Quitting from code. Called from inside a task or a main-queue callback, `terminate` with
+    /// `.terminateLater` would wait for a task that can't start until that caller returns, and the app
+    /// would hang. So the quit work runs first, then termination goes straight through.
+    /// - Parameter prepare: false when there is nothing to hand over: a second copy that must leave the
+    ///   first one's reminders alone, or data that was just deleted.
+    static func quit(prepare: Bool = true) {
+        let delegate = NSApp.delegate as? AppDelegate
+        Task { @MainActor in
+            if prepare, let delegate, !delegate.readyToQuit, let coordinator = delegate.coordinator {
+                await coordinator.prepareForQuit()
+            }
+            delegate?.readyToQuit = true
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// The standard panel (it shows the new icon and the version) with the brand's line under it.
+    @objc func showAbout(_ sender: Any?) {
+        let centered = NSMutableParagraphStyle()
+        centered.alignment = .center
+        let credits = NSAttributedString(string: "Your AI sidekicks, always here.\nA companion that remembers, reminds, watches, and works with your agents.",
+                                         attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor,
+                                                      .paragraphStyle: centered])
+        NSApp.activate()
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+    }
 
     @objc func openSettings(_ sender: Any?) { coordinator?.openSettings() }
     @objc func openAsk(_ sender: Any?) { coordinator?.showAsk() }
@@ -43,7 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let coordinator else { return .terminateNow }
+        // The user quit (menu, ⌘Q, logout): this runs from event handling, so the task below can run.
+        guard let coordinator, !readyToQuit else { return .terminateNow }
         Task {
             await coordinator.prepareForQuit()
             NSApp.reply(toApplicationShouldTerminate: true)
@@ -80,7 +110,7 @@ enum MainMenu {
         let main = NSMenu()
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "About Sidefolk", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "About Sidefolk", action: #selector(AppDelegate.showAbout(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings(_:)), keyEquivalent: ",")
         appMenu.addItem(withTitle: "Ask Sidefolk…", action: #selector(AppDelegate.openAsk(_:)), keyEquivalent: "")

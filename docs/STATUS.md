@@ -1,13 +1,71 @@
 # Status
 
-Updated: 2026-10-26, late morning (orchestrated by Claude; specialist agents in worktrees, merged
-into `rework`).
+Updated: 2026-10-26. Latest: asset-set preservation for the Mochi brand and Folk Family.
 
 ## Done and verified
-- **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (D1–D24), SECURITY (threat model T1–T24),
+- **Asset-set preservation (2026-10-26):** `Resources/ASSETS.md` indexes the named character,
+  branding, icon, template, pose and reference sets. Preserved the three early robot generations
+  previously found only in the image cache under `Resources/Brand/archive/robot/early-generations/`,
+  and the user's rejected wordmark/icon examples under `Resources/Brand/reference/quality-feedback/`.
+  `Resources/Brand/generated-image-index.json` records all 22 generated originals with repository
+  paths and SHA-256 hashes; verified each against its untouched imagegen output. All character
+  sources, comparison sheets, references and prompts remain in Git. No runtime changes or work
+  left half done. Next: use the asset index when selecting or revising artwork.
+- **Mochi brand rollout (2026-10-26, D29):** Mochi is the brand mascot and fresh-install default.
+  Explicit saved choices, names and accents are preserved. Settings still offers the original
+  Sidefolk robot with all four light colors and Spark. Replaced the production logo marks, blue
+  app icon/ICNS/Xcode assets, menu-bar PNG/PDF/SVG and resource-free brand fallback with the rabbit.
+  Kept the hand-authored wordmark; new family/portrait masters follow the supplied rabbit guide.
+  Refined the app portrait against the close-up (tilted face, asymmetric ears, low scarf crop,
+  simple blue gradient). Redrew the monochrome rabbit to follow its close-up’s ear curves, side
+  paw, two rays and separated scarf tail. Native SVG/PDF/PNG share the same smooth geometry.
+  All 16 Mochi poses now use white/navy/mint-aqua, graded from archived sources with exact alpha
+  and dimensions preserved. The original robot rig and Spark art are unchanged. Robot brand
+  masters are archived in `Resources/Brand/archive/robot/`.
+  Verified 851 tests (842 core + 9 character), Xcode asset compilation, raw icon corners, vector
+  templates, uncut logo bounds, all pose alpha channels, and light/dark Home/Companion snapshots
+  in `build/qa-mochi-ui/` (including the robot selected in coral). Signed debug and release
+  assemblies verified, including exact bundled assets and exclusion of source archives. Native
+  SVG/PDF reviewed against the supplied monochrome crop in `build/qa-rabbit-vector.png`.
+  Delivery: `build/Sidefolk-Mochi-brand-assets.zip`. No implementation work remains half done. Next: use
+  `build/Sidefolk.app` for the founder's visual check; saved robot selections remain selectable.
+- **Folk Family companion concepts (2026-10-26):** `folk-family/` contains 13 named folders:
+  Sidefolk, redesigned legacy Mochi and Spark, plus Pip, Byte, Seed, Melody, Scout, Tempo, Play,
+  Guard, Nova and Brew. Each has a clean transparent 1254×1254 PNG, untouched source PNG and name/
+  metadata JSON. The supplied full identity sheet drives the family style; legacy Mochi/Spark
+  references were recovered from `fc36151`. Includes a complete labeled `character-sheet.png`,
+  `main-companions.png`, `folk-family-sheet.png`, exact imagegen prompts and references. Reviewed
+  the sheets visually; verified all 13 names, dimensions, alpha, clear borders and source files.
+  `scripts/companion-concept-sheets.swift` rebuilds clean exports and sheets without model calls.
+  No concept-generation work remains half done. Next: the founder chooses which designs to take
+  into pose sets/animation; these studies are static artwork, not installed animated skins.
+- **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (through D29), SECURITY (threat model T1–T24),
   MACOS-NOTES, VOICE, FOUNDING, CHARACTER, EXTENSIONS.
 - **Character:** Core Animation rig with 11 states and 10 props, all 10 folks, app icon and menu bar
   template. Calm states settle after 20 s, loops are capped at 24 fps and pause while hidden (D20).
+- **Brand assets (2026-10-26):** reference-faithful app icon (1024 PNG, ten iconset representations,
+  ICNS); individual transparent stacked/horizontal logos, wordmarks and family marks in color,
+  navy and white. Generated text effects and the contour trace were rejected; the flat wordmark
+  now uses a hand-authored SVG following the reference, with SVG/PDF and 4096 px PNG exports.
+  Native 18 pt menu template is a vector PDF plus 1x/2x/3x PNGs, bundled and loaded as an NSImage
+  template through `BrandAsset`. `make brand-assets` rebuilds exports and a light/dark preview.
+  Verified alpha, dimensions, SVG paths, PDF native loading, exact bundled bytes, signed debug
+  assembly and visual review at native menu size and high zoom. No brand work remains half done;
+  next step is the founder's visual sign-off on `Resources/Brand/preview.png`.
+- **Raw icon source correction (2026-10-26):** replaced the raised-tile app icon with a clean
+  transparent artwork PNG and flat, full-bleed 2048/1024 px square sources. No baked bevel, tile
+  lighting, cast shadow or rounded source corners. The legacy macOS ICNS/iconset is derived with
+  only a flat outline/inset. Added a drop-in Xcode asset catalog (`AppIcon`, `AppIconSource`,
+  `IconArtwork`); removed the rejected rendered-tile master. Verification: source pixels/corners,
+  export dimensions and catalog references, Xcode `actool` compilation, ICNS decoding and signed
+  debug build resource bytes. No source work remains half done; use `Resources/Icon/icon-artwork.png`
+  or `icon-source-2048.png` for the next platform export, rather than the derived macOS icon.
+- **Wordmark quality correction (2026-10-26):** removed Vision contour fitting from the asset
+  generator. `Resources/Brand/masters/wordmark.svg` contains 11 hand-authored letter/dot/ray paths
+  with smooth outlines, straight stems and corrected f/o spacing. Color, navy and white SVG/PDF
+  variants, PNGs and all six logo lockups use this master. Checked native macOS SVG rendering at
+  4096 px and small sizes, vector-only SVG structure and cross-format raster agreement. No work
+  remains half done; edit the master SVG for future lettering changes and run `make brand-assets`.
 - **Core:** storage (GRDB, FTS5, secure_delete, 0600 files) and Guard (risk, caller, taint, user-typed
   links, hardened path policy, folder-bound command grants, approvals). Every tool input is checked
   against its schema. The executor provides audit and undo. Also attention policy and center (held
@@ -50,7 +108,7 @@ into `rework`).
     Settings (General, Companion, AI, Agents, Privacy & Permissions, Extensions).
   - Embodied onboarding (hello, agents, a real reminder, notifications, login), data export, delete
     everything (Keychain items included), diagnostics export with redacted logs.
-- **Tests:** 833 in 90 suites. `make test` runs them serially and they pass consistently (about 40 s).
+- **Tests:** 851 in 93 suites (842 core + 9 character). `make test` runs serially (about 40 s).
 
 ## Reviews done (second round) and what came of them
 UX/product, security, QA/plugin developer and performance reviews (reports were working files, not in

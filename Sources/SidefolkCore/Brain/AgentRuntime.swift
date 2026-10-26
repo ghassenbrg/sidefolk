@@ -153,9 +153,10 @@ public actor AgentRuntime {
     /// Settings › AI "Test", only on the user's click: the free check, then one tiny request without
     /// tools, which counts toward the user's usage. Nothing is stored.
     public func testProvider(_ provider: ProviderSettings? = nil) async -> Result<String, UserFacingError> {
+        let provider = provider ?? settings().provider
+        if case .failure(let error) = await checkProvider(provider) { return .failure(error) }
         let choice: BrainChoice
-        do { choice = try factory.make(provider ?? settings().provider, thinkHarder: false) } catch { return .failure(error) }
-        if case .failure(let error) = await choice.backend.check() { return .failure(error) }
+        do { choice = try factory.make(provider, thinkHarder: false) } catch { return .failure(error) }
         let start = clock.now
         let runId = "test-" + Identifier.make(now: start)
         let task = BrainTask(runId: runId, threadId: runId, system: "You check that a connection works. Answer with one word.",

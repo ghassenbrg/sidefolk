@@ -54,7 +54,7 @@ struct NotebookEditor: View {
             VStack {
                 Spacer()
                 EmptyState(title: "Nothing selected", message: "Pick something on the left, or press ⌘N to write something new.",
-                           systemImage: "note.text")
+                           systemImage: "note.text", folk: "pip")
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -9,11 +9,12 @@ struct TrashView: View {
     var body: some View {
         PageScroll {
             PageTitle(title: "Trash", subtitle: "Things stay here for 30 days, then they're gone for good.")
-            RowsCard {
-                if model.trash.isEmpty {
-                    InlineEmpty(text: "The Trash is empty.", systemImage: "trash")
-                }
-                ForEach(model.trash) { item in row(item) }
+            if model.trash.isEmpty {
+                EmptyState(title: "The Trash is empty", message: "Things you delete wait here for 30 days, in case you change your mind.",
+                           systemImage: "trash", folk: "brew")
+                    .frame(maxWidth: .infinity)
+            } else {
+                RowsCard { ForEach(model.trash) { item in row(item) } }
             }
         }
         .alert("Delete “\(confirming?.title.clipped(40) ?? "")” forever?", isPresented: Binding(

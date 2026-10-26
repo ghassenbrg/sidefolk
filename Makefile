@@ -1,4 +1,4 @@
-.PHONY: build test dev app run-dev render brand-assets clean
+.PHONY: build test dev app run-dev render strings brand-assets clean
 
 build:
 	swift build
@@ -17,10 +17,16 @@ dev:
 app:
 	scripts/build-app.sh release
 
+# Collect strings to translate into Resources/Localization/Localizable.xcstrings.
+strings:
+	scripts/strings.sh
+
 render:
 	swift run sidefolk-render build/render
 
 brand-assets:
+	swift scripts/rebrand-mochi.swift
+	swift run sidefolk-render --brand-mascot Resources/Brand/exports
 	swift scripts/brand-assets.swift
 	swift run sidefolk-render --menu-bar Resources/MenuBar
 	swift scripts/brand-preview.swift

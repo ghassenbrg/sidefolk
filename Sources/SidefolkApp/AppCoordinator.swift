@@ -87,7 +87,14 @@ final class AppCoordinator {
         }
         statusItem.nowProvider = { [weak self] in await self?.nowEntries() ?? [] }
 
-        KeyboardShortcuts.onKeyUp(for: .ask) { [weak self] in self?.toggleAsk() }
+        // A debug copy must not take ⌘⇧Space from the Sidefolk the developer actually uses (it once
+        // swallowed the founder's typing); SIDEFOLK_DEV_HOTKEY=1 opts in.
+        #if DEBUG
+        let hotkey = ProcessInfo.processInfo.environment["SIDEFOLK_DEV_HOTKEY"] == "1"
+        #else
+        let hotkey = true
+        #endif
+        if hotkey { KeyboardShortcuts.onKeyUp(for: .ask) { [weak self] in self?.toggleAsk() } }
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
@@ -148,6 +155,7 @@ final class AppCoordinator {
         let s = runtime.settings.current
         companion.eyesFollowPointer = s.eyesFollowPointer
         companion.apply(size: s.size, reducedMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         askPanel?.update(companionName: s.companionName, hotkey: hotkeyLabel)
@@ -279,6 +287,12 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command.hasPrefix("language:") {
+            let code = String(command.dropFirst(9))
+            AppLanguage.chosen = code == "system" ? nil : code
+            AppLanguage.relaunch()
+            return
+        }
         if command.hasPrefix("find:") { home.showSearch(String(command.dropFirst(5))); return }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
@@ -292,6 +306,19 @@ final class AppCoordinator {
         }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            return
+        }
+        if command.hasPrefix("companion:") {
+            // companion:<sidefolk|mochi|spark>[:<accent>], the same change the Settings picker makes.
+            let parts = command.split(separator: ":").dropFirst().map(String.init)
+            let choice = parts.first.flatMap(CompanionChoice.init(rawValue:))
+            let accent = parts.dropFirst().first.flatMap(CompanionAccent.init(rawValue:))
+            Task {
+                await runtime.settings.update { s in
+                    if let choice { s.choose(choice) }
+                    if let accent { s.accent = accent }
+                }
+            }
             return
         }
         if command.hasPrefix("ask:") {

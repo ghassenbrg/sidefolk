@@ -1,7 +1,10 @@
 {
   "tool": "built-in image_gen",
+  "current_reference": "reference/mochi-brand-guide.png",
+  "current_mascot": "Mochi rabbit; original robot remains selectable",
+  "current_artwork_prompts": "masters/rabbit-prompts.json",
   "reference": "reference/folk-family.png",
-  "note": "Generated lettering rejected. Production wordmarks are extracted from the reference and recolored flat by scripts/brand-assets.swift. Production app tile is precisely masked; marks are alpha-normalized. Menu bar is native vector geometry.",
+  "note": "The current identity is the Mochi rabbit, following current_reference and current_artwork_prompts above. Production text comes from hand-authored masters/wordmark.svg. Raw icon sources use the rabbit portrait on a simple blue-gradient square; separate legacy macOS exports receive only a geometric mask. Monochrome rabbit and menu marks share RabbitBrandMark vector geometry. Historical robot prompts below are archived history, not the current mascot. The original robot remains a selectable companion.",
   "prompts": [
     {
       "name": "app-icon",
@@ -27,5 +30,7 @@
       "name": "mark-monochrome",
       "prompt": "Use case logo-brand. Reference image is attached Sidefolk identity board. Create a SINGLE isolated exact faithful reproduction of the MONOCHROME artwork in its third top panel, artwork only. A compact family of cute small helpers surrounding a friendly central companion with rounded dome white/negative-space body, navy visor, and two smiling arched eyes cut out. Four navy helpers: one atop waving, one left rear, one left lower, one right, with two tiny navy rays. ALL ink exactly solid navy #0F2D5B, ONLY navy and transparent pixels with narrow antialiasing; use transparent negative space for white parts, no actual white fill, absolutely no gradients, shadows, glows, haze or background. Clean flat graphic silhouette, large square transparent canvas, generous margins. No text, no board, no tile, no mockup."
     }
-  ]
+  ],
+  "current_icon_prompt": "masters/rabbit-icon-refinement-prompt.json",
+  "monochrome_reference": "reference/rabbit-monochrome-detail.png"
 }

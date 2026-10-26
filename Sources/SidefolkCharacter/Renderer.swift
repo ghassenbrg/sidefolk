@@ -3,14 +3,15 @@ import AppKit
 /// Offscreen rendering of the same layer rigs the views use: icons, docs and visual tests.
 public enum CharacterRenderer {
     /// A still frame of `state`, centered and scaled to fit `size` (points) at `scale` pixels per point.
+    /// Busy sprite states show the first of their poses.
     @MainActor
-    public static func image(state: CharacterState, size: CGSize, scale: CGFloat,
-                             badges: Set<CharacterBadge> = [], gaze: CGVector? = nil) -> CGImage {
-        let director = Director(live: false)
-        director.show(state, animated: false)
-        director.setBadges(badges, animated: false)
-        director.setGaze(gaze)
-        return render(director.rig.stage, canvas: Canvas.size, size: size, scale: scale)
+    public static func image(state: CharacterState, size: CGSize, scale: CGFloat, badges: Set<CharacterBadge> = [],
+                             gaze: CGVector? = nil, look: CharacterLook = .sidefolk(.aqua)) -> CGImage {
+        let performer = look.performer(live: false)
+        performer.show(state, animated: false)
+        performer.setBadges(badges, animated: false)
+        performer.setGaze(gaze)
+        return render(performer.stage, canvas: Canvas.size, size: size, scale: scale)
     }
 
     @MainActor
@@ -21,15 +22,40 @@ public enum CharacterRenderer {
         return render(holder, canvas: FolkCanvas.size, size: size, scale: scale)
     }
 
-    /// The macOS app icon: a soft white tile with the companion in front and folks peeking out.
-    /// Sizes of 32 px and under drop the folks so the face stays readable.
+    /// Resource-free brand fallback. The original robot remains a separate selectable performer.
     @MainActor
     public static func appIcon(size: Int) -> CGImage {
-        let scene = IconScene(detailed: size > 32).layer
-        return render(scene, canvas: IconScene.canvas, size: CGSize(width: size, height: size), scale: 1)
+        let c = bitmap(CGSize(width: size, height: size), 1)
+        let fit = CGFloat(size) / 1024
+        c.scaleBy(x: fit, y: fit)
+        c.addPath(CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824),
+                         cornerWidth: 185, cornerHeight: 185, transform: nil))
+        c.clip()
+        c.setFillColor(CGColor(srgbRed: 147/255, green: 197/255, blue: 253/255, alpha: 1))
+        c.fill(CGRect(x: 100, y: 100, width: 824, height: 824))
+        c.translateBy(x: 195, y: 130)
+        RabbitBrandMark.draw(in: c, size: CGSize(width: 634, height: 760),
+                             ink: CGColor(srgbRed: 15/255, green: 45/255, blue: 91/255, alpha: 1), color: true)
+        return c.makeImage()!
     }
 
-    /// The reference companion simplified for 18 pt: rounded shell, filled visor, cut-out smiles.
+    public static func mascotMark(size: CGSize, scale: CGFloat, ink: CGColor) -> CGImage {
+        let c = bitmap(size, scale)
+        c.scaleBy(x: scale, y: scale)
+        RabbitBrandMark.draw(in: c, size: size, ink: ink)
+        return c.makeImage()!
+    }
+
+    public static func mascotPDF(size: CGSize, ink: CGColor) -> Data {
+        let data = NSMutableData()
+        var box = CGRect(origin: .zero, size: size)
+        let c = CGContext(consumer: CGDataConsumer(data: data)!, mediaBox: &box, nil)!
+        c.beginPDFPage(nil); RabbitBrandMark.draw(in: c, size: size, ink: ink)
+        c.endPDFPage(); c.closePDF()
+        return data as Data
+    }
+
+    /// Mochi's rabbit ears, face and scarf simplified for an 18 pt macOS template.
     /// A template must use alpha alone so macOS can tint it for any menu bar appearance.
     @MainActor
     public static func menuBarTemplate(size: CGSize, scale: CGFloat) -> CGImage {
@@ -52,36 +78,7 @@ public enum CharacterRenderer {
     }
 
     private static func drawMenuBar(in context: CGContext, size: CGSize) {
-        let fit = min(size.width, size.height) / 24
-        context.translateBy(x: (size.width - 24 * fit) / 2, y: (size.height - 24 * fit) / 2)
-        context.scaleBy(x: fit, y: fit)
-        let black = CGColor(gray: 0, alpha: 1)
-        context.setStrokeColor(black)
-        context.setFillColor(black)
-        context.setLineWidth(1.8)
-        context.setLineJoin(.round)
-        let shell = CGMutablePath()
-        shell.move(to: CGPoint(x: 12, y: 21.5))
-        shell.addCurve(to: CGPoint(x: 22, y: 9), control1: CGPoint(x: 19, y: 21.5), control2: CGPoint(x: 22, y: 16))
-        shell.addCurve(to: CGPoint(x: 17, y: 3), control1: CGPoint(x: 22, y: 4), control2: CGPoint(x: 20, y: 3))
-        shell.addLine(to: CGPoint(x: 7, y: 3))
-        shell.addCurve(to: CGPoint(x: 2, y: 9), control1: CGPoint(x: 4, y: 3), control2: CGPoint(x: 2, y: 4))
-        shell.addCurve(to: CGPoint(x: 12, y: 21.5), control1: CGPoint(x: 2, y: 16), control2: CGPoint(x: 5, y: 21.5))
-        shell.closeSubpath()
-        context.addPath(shell)
-        context.strokePath()
-        let visor = CGMutablePath()
-        visor.addPath(CGPath(roundedRect: CGRect(x: 4.6, y: 7.2, width: 14.8, height: 10),
-                             cornerWidth: 4.8, cornerHeight: 4.8, transform: nil))
-        for x in [7.0, 13.0] {
-            let eye = CGMutablePath()
-            eye.move(to: CGPoint(x: x, y: 11))
-            eye.addCurve(to: CGPoint(x: x + 4, y: 11),
-                         control1: CGPoint(x: x + 1, y: 13.6), control2: CGPoint(x: x + 3, y: 13.6))
-            visor.addPath(eye.copy(strokingWithWidth: 1.5, lineCap: .round, lineJoin: .round, miterLimit: 1))
-        }
-        context.addPath(visor)
-        context.drawPath(using: .eoFill)
+        RabbitBrandMark.draw(in: context, size: size, ink: CGColor(gray: 0, alpha: 1))
     }
 
     // MARK: Plumbing
@@ -112,65 +109,5 @@ public enum CharacterRenderer {
         holder.render(in: context)
         layer.removeFromSuperlayer()
         return context.makeImage()!
-    }
-}
-
-/// The app icon's composition in a 1024 canvas (Apple's macOS grid: an 824 tile inset by 100).
-@MainActor
-private struct IconScene {
-    static let canvas = CGSize(width: 1024, height: 1024)
-    let layer = Layers.canvas(IconScene.canvas, anchor: pt(512, 512))
-
-    init(detailed: Bool) {
-        let tileRect = CGRect(x: 100, y: 100, width: 824, height: 824)
-        let tilePath = Paths.roundedRect(tileRect, 185)
-        let shadow = Layers.shape(tilePath, fill: RGB.white.cg())
-        Layers.dropShadow(shadow, path: shadow.path, radius: 18, opacity: 0.28, offset: CGSize(width: 0, height: -10),
-                          color: RGB(0x0B1A33))
-        layer.addSublayer(shadow)
-        layer.addSublayer(Layers.gradient(tilePath, [RGB(0xFFFFFF), RGB(0xF4F7FC), RGB(0xE4ECF8)]))
-        let glow = CAGradientLayer()
-        glow.type = .radial
-        glow.frame = CGRect(x: 212, y: 230, width: 600, height: 520)
-        glow.colors = [Palette.lightBlue.cg(0.28), Palette.lightBlue.cg(0)]
-        glow.startPoint = CGPoint(x: 0.5, y: 0.5)
-        glow.endPoint = CGPoint(x: 1, y: 1)
-        layer.addSublayer(glow)
-        layer.addSublayer(Layers.shape(Paths.roundedRect(tileRect.insetBy(dx: 2, dy: 2), 183), stroke: RGB.white.cg(0.9), lineWidth: 3))
-
-        let character = Director(live: false)
-        character.show(.idle, animated: false)
-
-        if detailed {
-            for a in [0.5, 0.82] {
-                let dir = pt(cos(a), sin(a))
-                let c = pt(512, 470)
-                layer.addSublayer(Layers.shape(Paths.polyline([c + dir * 335, c + dir * 392]), stroke: Palette.aqua.cg(), lineWidth: 26))
-            }
-            place(.byte, center: pt(318, 560), scale: 3.7, mirrored: false)
-            place(.tempo, center: pt(712, 508), scale: 3.6, mirrored: true)
-            place(.pip, center: pt(588, 738), scale: 3.6, mirrored: false)
-            place(.seed, center: pt(262, 330), scale: 3.5, mirrored: false)
-            place(character.rig.stage, floor: pt(512, 168), scale: 3.3)
-        } else {
-            place(character.rig.stage, floor: pt(512, 112), scale: 5.0)
-        }
-    }
-
-    private func place(_ folk: Folk, center: CGPoint, scale: CGFloat, mirrored: Bool) {
-        let rig = FolkRig(folk, plain: true)
-        let holder = Layers.canvas(FolkCanvas.size, anchor: FolkCanvas.center)
-        holder.position = center
-        holder.setAffineTransform(CGAffineTransform(scaleX: mirrored ? -scale : scale, y: scale))
-        holder.addSublayer(rig.root)
-        layer.addSublayer(holder)
-    }
-
-    private func place(_ stage: CALayer, floor: CGPoint, scale: CGFloat) {
-        let holder = Layers.canvas(Canvas.size, anchor: Canvas.pivot)
-        holder.position = floor
-        holder.setAffineTransform(CGAffineTransform(scaleX: scale, y: scale))
-        holder.addSublayer(stage)
-        layer.addSublayer(holder)
     }
 }

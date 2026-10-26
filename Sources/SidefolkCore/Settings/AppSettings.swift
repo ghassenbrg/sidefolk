@@ -22,6 +22,26 @@ public enum CompanionSize: String, Codable, Sendable, CaseIterable {
     }
 }
 
+/// Who lives on the desktop: the new default Mochi rabbit, the original vector robot, or Spark.
+public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
+    case mochi, sidefolk, spark
+
+    /// The name it goes by until the user gives it another.
+    public var defaultName: String {
+        switch self {
+        case .sidefolk: "Sidefolk"
+        case .mochi: "Mochi"
+        case .spark: "Spark"
+        }
+    }
+}
+
+/// The colour of the Sidefolk robot's light, from the brand palette. Sprite companions keep the
+/// colours they were drawn with.
+public enum CompanionAccent: String, Codable, Sendable, CaseIterable {
+    case aqua, coral, mint, lightBlue
+}
+
 public enum ProviderKind: String, Codable, Sendable, CaseIterable {
     case none
     case claudeCode
@@ -102,7 +122,10 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
 /// Everything the user can change. Stored as one JSON document; every field has a default so
 /// older or newer stored versions decode safely.
 public struct AppSettings: Codable, Sendable, Equatable {
-    public var companionName = "Sidefolk"
+    public var companionName = "Mochi"
+    /// Change it with `choose(_:)`, which keeps the name in step.
+    public var companion: CompanionChoice = .mochi
+    public var accent: CompanionAccent = .aqua
     public var presence: PresenceMode = .always
     public var size: CompanionSize = .medium
     public var eyesFollowPointer = true
@@ -131,6 +154,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         func read<T: Decodable>(_ key: CodingKeys, _ into: inout T) { if let v = try? c.decode(T.self, forKey: key) { into = v } }
         read(.companionName, &companionName)
+        read(.companion, &companion)
+        read(.accent, &accent)
         read(.presence, &presence)
         read(.size, &size)
         read(.eyesFollowPointer, &eyesFollowPointer)
@@ -151,6 +176,19 @@ public struct AppSettings: Codable, Sendable, Equatable {
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }
+
+    /// Switches companion. A name that is still one of the built-in defaults follows the new
+    /// companion ("Sidefolk" becomes "Mochi"); a name the user chose stays.
+    public mutating func choose(_ next: CompanionChoice) {
+        if !hasCustomName { companionName = next.defaultName }
+        companion = next
+    }
+
+    /// Whether the user named the companion themselves (anything but a built-in default).
+    public var hasCustomName: Bool {
+        let name = companionName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return !name.isEmpty && !CompanionChoice.allCases.contains { $0.defaultName.lowercased() == name }
+    }
 }
 
 /// Loads, caches and saves `AppSettings`; publishes `.dataChanged(.settings)`.

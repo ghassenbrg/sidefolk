@@ -25,6 +25,19 @@ final class Effects {
     private(set) var shown: Set<Effect> = []
     private var moving = false
 
+    /// Marks drawn in the character's own light (zZz, thought dots, waves, "?", alert ticks) follow
+    /// the accent; celebration colours and sweat keep theirs.
+    var light = CharacterAccent.aqua.light {
+        didSet {
+            guard light != oldValue else { return }
+            let showing = shown
+            show([], animated: false, moving: moving)
+            rigs.values.forEach { $0.layer.removeFromSuperlayer() }
+            rigs = [:]
+            show(showing, animated: false, moving: moving)
+        }
+    }
+
     init(stage: CALayer, body: CALayer) {
         self.stage = stage
         self.body = body
@@ -40,7 +53,7 @@ final class Effects {
             rig.layer.removeFromSuperlayer()
         }
         for effect in arriving {
-            let rig = rigs[effect] ?? Effects.build(effect)
+            let rig = rigs[effect] ?? Effects.build(effect, light)
             rigs[effect] = rig
             let parent = effect.ridesBody ? body : stage
             parent.addSublayer(rig.layer)
@@ -64,7 +77,7 @@ final class Effects {
     /// The question mark used by the look-around gesture, built on demand and hidden at rest.
     func question() -> CALayer {
         if let rig = rigs[.question] { return rig.layer }
-        let rig = Effects.build(.question)
+        let rig = Effects.build(.question, light)
         rig.layer.opacity = 0
         rigs[.question] = rig
         stage.addSublayer(rig.layer)
@@ -90,32 +103,32 @@ final class Effects {
 
     // MARK: Builders
 
-    private static func build(_ effect: Effect) -> EffectRig {
+    private static func build(_ effect: Effect, _ light: Light) -> EffectRig {
         switch effect {
-        case .zzz: zzz()
-        case .dots: dots()
+        case .zzz: zzz(light)
+        case .dots: dots(light)
         case .exclaim: exclaim()
-        case .question: question()
+        case .question: question(light)
         case .sparkles: sparkles()
         case .sweat: sweat()
-        case .waves: waves()
+        case .waves: waves(light)
         case .confetti: confetti()
-        case .ticks: ticks()
+        case .ticks: ticks(light)
         }
     }
 
     /// A glyph container anchored at `origin`, so pops and bounces grow from that point.
     private static func holder(_ origin: CGPoint) -> CALayer { Layers.canvas(anchor: origin) }
 
-    private static func zzz() -> EffectRig {
+    private static func zzz(_ light: Light) -> EffectRig {
         let root = Layers.canvas()
         var loops: [Loop] = []
         for (i, (origin, size)) in [(pt(127, 124), 9.0), (pt(140, 138), 12.0), (pt(156, 155), 15.0)].enumerated() {
             let z = holder(origin)
             let path = Paths.polyline([origin + pt(-size / 2, size / 2), origin + pt(size / 2, size / 2),
                                        origin + pt(-size / 2, -size / 2), origin + pt(size / 2, -size / 2)])
-            let glyph = Layers.shape(path, stroke: Palette.eyeLight.cg(), lineWidth: size * 0.24)
-            Layers.glow(glyph, Palette.aqua, radius: 2.5, opacity: 0.7)
+            let glyph = Layers.shape(path, stroke: light.line.cg(), lineWidth: size * 0.24)
+            Layers.glow(glyph, light.glow, radius: 2.5, opacity: 0.7)
             z.addSublayer(glyph)
             root.addSublayer(z)
             let rise = Motion.cycle("transform", [
@@ -129,7 +142,7 @@ final class Effects {
         return EffectRig(layer: root, loops: loops)
     }
 
-    private static func dots() -> EffectRig {
+    private static func dots(_ light: Light) -> EffectRig {
         let origin = pt(150, 156)
         let root = holder(pt(128, 132))
         let bubble = CGMutablePath()
@@ -144,7 +157,7 @@ final class Effects {
         for i in 0..<3 {
             let center = origin + pt(CGFloat(i - 1) * 11, 0)
             let dot = holder(center)
-            dot.addSublayer(Layers.shape(Paths.circle(center, 3.4), fill: Palette.aqua.cg()))
+            dot.addSublayer(Layers.shape(Paths.circle(center, 3.4), fill: light.glow.cg()))
             root.addSublayer(dot)
             let hop = Motion.cycle("transform", [
                 Motion.transform(.identity),
@@ -175,18 +188,18 @@ final class Effects {
         return EffectRig(layer: root, loops: [Loop(layer: root, key: "bounce", animation: bounce)])
     }
 
-    private static func question() -> EffectRig {
+    private static func question(_ light: Light) -> EffectRig {
         let base = pt(156, 146)
         let root = holder(base)
         let curl = CGMutablePath()
         curl.move(to: base + pt(-7, 22))
         curl.addCurve(to: base + pt(7, 23), control1: base + pt(-6, 30), control2: base + pt(6, 31))
         curl.addCurve(to: base + pt(0, 11), control1: base + pt(8, 16), control2: base + pt(0, 16))
-        let glyph = Layers.shape(curl, stroke: Palette.eyeLight.cg(), lineWidth: 5)
-        Layers.glow(glyph, Palette.aqua, radius: 2.5, opacity: 0.6)
+        let glyph = Layers.shape(curl, stroke: light.line.cg(), lineWidth: 5)
+        Layers.glow(glyph, light.glow, radius: 2.5, opacity: 0.6)
         root.addSublayer(glyph)
-        let dot = Layers.shape(Paths.circle(base + pt(0, 3), 3.2), fill: Palette.eyeLight.cg())
-        Layers.glow(dot, Palette.aqua, radius: 2.5, opacity: 0.6)
+        let dot = Layers.shape(Paths.circle(base + pt(0, 3), 3.2), fill: light.line.cg())
+        Layers.glow(dot, light.glow, radius: 2.5, opacity: 0.6)
         root.addSublayer(dot)
         return EffectRig(layer: root)
     }
@@ -233,14 +246,14 @@ final class Effects {
                                               Loop(layer: root, key: "fade", animation: fade)])
     }
 
-    private static func waves() -> EffectRig {
+    private static func waves(_ light: Light) -> EffectRig {
         let root = Layers.canvas()
         var loops: [Loop] = []
         for (i, radius) in [9.0, 16.0].enumerated() {
             let arc = CGMutablePath()
             arc.addArc(center: Canvas.earR + pt(4, 0), radius: radius + 6, startAngle: -0.75, endAngle: 0.75, clockwise: false)
-            let wave = Layers.shape(arc, stroke: Palette.eyeLight.cg(), lineWidth: 3.4)
-            Layers.glow(wave, Palette.aqua, radius: 2.5, opacity: 0.7)
+            let wave = Layers.shape(arc, stroke: light.line.cg(), lineWidth: 3.4)
+            Layers.glow(wave, light.glow, radius: 2.5, opacity: 0.7)
             root.addSublayer(wave)
             loops.append(Loop(layer: wave, key: "pulse",
                               animation: Motion.loop("opacity", from: 1, to: 0.25, duration: 0.7, phase: Double(i) * 0.35)))
@@ -275,14 +288,14 @@ final class Effects {
         return EffectRig(layer: root, loops: loops)
     }
 
-    private static func ticks() -> EffectRig {
+    private static func ticks(_ light: Light) -> EffectRig {
         let center = pt(64, 132)
         let root = holder(center)
         for angle in [2.0, 2.45, 2.9] {
             let dir = pt(cos(angle), sin(angle))
             let tick = Layers.shape(Paths.polyline([center + dir * 26, center + dir * 36]),
-                                    stroke: Palette.eyeLight.cg(), lineWidth: 4.6)
-            Layers.glow(tick, Palette.aqua, radius: 2, opacity: 0.6)
+                                    stroke: light.line.cg(), lineWidth: 4.6)
+            Layers.glow(tick, light.glow, radius: 2, opacity: 0.6)
             root.addSublayer(tick)
         }
         let pulse = Motion.cycle("transform", [
