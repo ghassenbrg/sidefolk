@@ -143,33 +143,34 @@ public struct URLPolicy: Sendable {
         case tooManyRedirects
         case insecureRedirect
 
+        /// Worded for people, in the app's language.
         public var message: String {
             switch self {
             case .notAWebAddress:
-                "That isn't a valid web address. It should look like https://example.com/page, with no spaces."
+                String(localized: "That isn't a valid web address. It should look like https://example.com/page, with no spaces.")
             case .unsupportedScheme(let scheme):
-                "I only handle web addresses (http and https), not “\(scheme):” links."
+                String(localized: "I only handle web addresses (http and https), not “\(scheme):” links.")
             case .hasCredentials:
-                "Web addresses with a name and password in them aren't allowed."
+                String(localized: "Web addresses with a name and password in them aren't allowed.")
             case .tooLong:
-                "That web address is too long."
+                String(localized: "That web address is too long.")
             case .missingHost:
-                "That web address has no site name in it."
+                String(localized: "That web address has no site name in it.")
             case .oddIPNotation(let host):
-                "“\(host)” is an unusual way to write an IP address. Write it as four plain numbers, like 93.184.216.34."
+                String(localized: "“\(host)” is an unusual way to write an IP address. Write it as four plain numbers, like 93.184.216.34.")
             case .privateDestination(let host):
-                "“\(host)” points at this computer or your local network, so I won't fetch it."
+                String(localized: "“\(host)” points at this computer or your local network, so I won't fetch it.")
             case .cannotResolve(let host):
-                "I couldn't find a site called “\(host)”."
+                String(localized: "I couldn't find a site called “\(host)”.")
             case .tooManyRedirects:
-                "That address sent me around in circles (too many redirects)."
+                String(localized: "That address sent me around in circles (too many redirects).")
             case .insecureRedirect:
-                "That secure (https) address tried to send me to an insecure (http) one, so I stopped."
+                String(localized: "That secure (https) address tried to send me to an insecure (http) one, so I stopped.")
             }
         }
 
         public var description: String { message }
-        public var userFacing: UserFacingError { UserFacingError(message) }
+        public var userFacing: UserFacingError { UserFacingError(verbatim: message) }
     }
 
     private let resolver: any HostResolving

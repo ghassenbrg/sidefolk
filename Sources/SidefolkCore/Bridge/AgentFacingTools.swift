@@ -40,7 +40,7 @@ struct NotifyUserTool: Tool {
 
     var spec: ToolSpec {
         ToolSpec(
-            name: "notify.user", title: "Notify the user",
+            name: "notify.user", title: String(localized: "Notify the user"),
             description: "Show the user a short message on their desktop, e.g. that a task finished. Use \"attention\" only when they should look now.",
             inputSchema: Schema.object([
                 "title": Schema.string("One line, at most 120 characters."),
@@ -50,13 +50,13 @@ struct NotifyUserTool: Tool {
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { "Notify: \(input.string("title") ?? "")" }
+    func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        guard let title = input.string("title") else { throw ToolError.invalidInput("a title is needed") }
+        guard let title = input.string("title") else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
         // The schema only offers gentle and attention, so external agents stay capped at attention.
         let level: AttentionLevel = input.string("level") == "attention" ? .attention : .gentle
-        let actions = level == .attention ? [AttentionAction(id: "dismiss", title: "Dismiss")] : []
+        let actions = level == .attention ? [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))] : []
         await attention.post(AttentionRequest(level: level, source: AgentFacingTools.source(for: context.caller),
                                               title: title.clipped(120), body: input.string("body")?.clipped(600),
                                               actions: actions, refKind: "notify"))
@@ -69,7 +69,7 @@ struct AskUserTool: Tool {
 
     var spec: ToolSpec {
         ToolSpec(
-            name: "ask.user", title: "Ask the user",
+            name: "ask.user", title: String(localized: "Ask the user"),
             description: "Ask the user a short question and wait for the answer. Offer 2 to 4 answer buttons when the choices are known; "
                 + "leave options out to let them type the answer. Returns the chosen option, what they typed, or \"no answer\".",
             inputSchema: Schema.object([
@@ -80,13 +80,13 @@ struct AskUserTool: Tool {
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { "Ask: \(input.string("question") ?? "")" }
+    func summary(for input: JSONValue) -> String { String(localized: "Ask: \(input.string("question") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        guard let question = input.string("question") else { throw ToolError.invalidInput("a question is needed") }
+        guard let question = input.string("question") else { throw ToolError.invalidInput(String(localized: "a question is needed")) }
         let options = (input["options"]?.arrayValue ?? []).compactMap { $0.stringValue?.clipped(40) }.filter { !$0.isEmpty }
         guard options.isEmpty || ((2...4).contains(options.count) && Set(options).count == options.count) else {
-            throw ToolError.invalidInput("give 2 to 4 different options, or none to let the user type an answer")
+            throw ToolError.invalidInput(String(localized: "give 2 to 4 different options, or none to let the user type an answer"))
         }
         var timeout = min(Double(input["timeout_seconds"]?.intValue ?? 300), AgentFacingTools.maxAskSeconds)
         // Sidefolk's own brain calls tools with the executor's default 90 s timeout.
@@ -94,7 +94,7 @@ struct AskUserTool: Tool {
         let actions = options.enumerated().map { AttentionAction(id: "option-\($0.offset)", title: $0.element, isPrimary: $0.offset == 0) }
         // Who is asking is shown with the question; agents must not pose as Sidefolk or the user.
         var asker: String?
-        if case .external(let client) = context.caller { asker = "\(AgentFacingTools.displayName(client)) asks" }
+        if case .external(let client) = context.caller { asker = String(localized: "\(AgentFacingTools.displayName(client)) asks") }
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
                                                           title: question.clipped(200), body: asker, actions: actions, refKind: "ask"),
                                          timeout: max(10, timeout))
@@ -140,7 +140,8 @@ public struct StatusSnapshot: Sendable, Equatable {
         waiting = json["waiting"]?.intValue ?? 0
     }
 
-    /// "2 sessions (1 needs you), 1 job running, 3 reminders, 1 watch, 0 waiting".
+    /// "2 sessions (1 needs you), 1 job running, 3 reminders, 1 watch, 0 waiting", in English: agents read
+    /// it, and so does `sidefolk status` in Terminal.
     public var sentence: String {
         func n(_ count: Int, _ one: String, _ many: String) -> String { "\(count) \(count == 1 ? one : many)" }
         var parts = [n(sessions, "agent session", "agent sessions") + (sessionsNeedingYou > 0 ? " (\(sessionsNeedingYou) need you)" : "")]
@@ -173,12 +174,12 @@ struct StatusTool: Tool {
     let reader: StatusReader
 
     var spec: ToolSpec {
-        ToolSpec(name: "status", title: "Sidefolk status",
+        ToolSpec(name: "status", title: String(localized: "Sidefolk status"),
                  description: "How many agent sessions, jobs, reminders and watches Sidefolk is keeping track of (counts only).",
                  inputSchema: Schema.object([:]), risk: .low, capabilities: [], category: .system, mutates: false, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { "Read Sidefolk's status" }
+    func summary(for input: JSONValue) -> String { String(localized: "Read Sidefolk's status") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let s = await reader.snapshot()

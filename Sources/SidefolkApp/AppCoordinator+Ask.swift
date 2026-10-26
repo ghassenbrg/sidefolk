@@ -267,7 +267,7 @@ extension AppCoordinator: AskActions {
             case .ok(let r):
                 if let card = r.card { model.add(.result(card, activityId: out.activity.id, undo: out.activity.undoAvailable)) }
             case .denied(let why):
-                model.add(.error(UserFacingError(why), retryable: false))
+                model.add(.error(UserFacingError(verbatim: why), retryable: false))
             case .failed(let e):
                 model.add(.error(e, retryable: false))
             }

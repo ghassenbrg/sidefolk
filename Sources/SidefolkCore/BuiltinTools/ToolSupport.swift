@@ -28,7 +28,7 @@ enum ItemProvenance {
 extension JSONValue {
     /// A trimmed, non-empty string no longer than `limit` characters.
     func requiredText(_ key: String, limit: Int = 2_000) throws -> String {
-        guard let s = string(key) else { throw ToolError.invalidInput("“\(key)” is required.") }
+        guard let s = string(key) else { throw ToolError.invalidInput(String(localized: "“\(key)” is required.")) }
         guard s.count <= limit else {
             throw UserFacingError("“\(key)” is too long (the limit is \(limit.formatted()) characters).")
         }
@@ -62,7 +62,7 @@ extension JSONValue {
     }
 }
 
-/// Plain, deterministic formatting for text the model reads.
+/// Plain, deterministic formatting for text the model reads, always in English (people's text uses `Wording`).
 enum ToolFormat {
     static func day(_ date: Date) -> String {
         let c = Calendar.current.dateComponents([.year, .month, .day], from: date)

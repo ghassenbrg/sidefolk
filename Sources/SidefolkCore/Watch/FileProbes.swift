@@ -23,11 +23,11 @@ enum WatchedPath {
     /// A path typed by a person, made absolute and canonical. The canonical form is what gets watched,
     /// so later changes to links in between cannot redirect the watcher (docs/SECURITY.md T10).
     static func prepare(_ config: JSONValue) throws -> JSONValue {
-        guard let raw = config.string("path") else { throw WatchError.invalid("Tell me which file or folder to watch.") }
+        guard let raw = config.string("path") else { throw WatchError.invalid(String(localized: "Tell me which file or folder to watch.")) }
         let expanded = (raw as NSString).expandingTildeInPath
-        guard expanded.hasPrefix("/") else { throw WatchError.invalid("I need the full path, like ~/Downloads/report.pdf.") }
+        guard expanded.hasPrefix("/") else { throw WatchError.invalid(String(localized: "I need the full path, like ~/Downloads/report.pdf.")) }
         guard let canonical = FolderAccess.canonical(expanded) else {
-            throw WatchError.invalid("That path isn't allowed (it has “..” in it, or a link that goes nowhere).")
+            throw WatchError.invalid(String(localized: "That path isn't allowed (it has “..” in it, or a link that goes nowhere)."))
         }
         if let why = FolderAccess.forbiddenReason([canonical]) { throw WatchError.invalid(why) }
         return config.setting("path", .string(expanded)).setting("resolved", .string(canonical))
@@ -36,10 +36,10 @@ enum WatchedPath {
     /// The canonical path to look at, after checking that no link has appeared on the way since the watcher was made.
     static func resolved(_ config: JSONValue) throws -> String {
         guard let resolved = config.string("resolved") ?? config.string("path").flatMap({ FolderAccess.canonical($0) }) else {
-            throw ProbeError.failed("This watcher has no path.")
+            throw ProbeError.failed(String(localized: "This watcher has no path."))
         }
         guard FolderAccess.canonical(resolved) == resolved else {
-            throw ProbeError.failed("A link now points somewhere else on the way to \(FolderAccess.displayPath(resolved)), so I stopped looking there.")
+            throw ProbeError.failed(String(localized: "A link now points somewhere else on the way to \(FolderAccess.displayPath(resolved)), so I stopped looking there."))
         }
         return resolved
     }
@@ -56,7 +56,7 @@ enum WatchedPath {
 
     static func name(_ path: String) -> String { URL(fileURLWithPath: path).lastPathComponent.displaySafe.clipped(80) }
 
-    static func size(_ bytes: Double) -> String { ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file) }
+    static func size(_ bytes: Double) -> String { Wording.bytes(Int64(bytes)) }
 
     /// Types that are safe to hand to the Mac to open: they are shown, never run. Everything else (programs,
     /// scripts, installers, `.inetloc`/`.webloc`/`.fileloc` shortcuts, files with no extension) is shown in its
@@ -143,11 +143,12 @@ public struct FileAppearsProbe: WatcherProbe {
 
         if gone {
             return ProbeResult(state: .object(state), triggered: true,
-                               summary: firstLook ? "\(name) isn't there" : "\(name) is gone",
+                               summary: firstLook ? String(localized: "\(name) isn't there") : String(localized: "\(name) is gone"),
                                openTarget: (path as NSString).deletingLastPathComponent)
         }
-        let detail = facts.map { "\(WatchedPath.size($0.size))" + ($0.isDirectory ? " (folder)" : "") }
-        return ProbeResult(state: .object(state), triggered: true, summary: firstLook ? "\(name) is already there" : "\(name) appeared",
+        let detail = facts.map { $0.isDirectory ? String(localized: "\(WatchedPath.size($0.size)) (folder)") : WatchedPath.size($0.size) }
+        return ProbeResult(state: .object(state), triggered: true,
+                           summary: firstLook ? String(localized: "\(name) is already there") : String(localized: "\(name) appeared"),
                            detail: detail, openTarget: WatchedPath.openable(path))
     }
 
@@ -192,15 +193,15 @@ public struct FileChangesProbe: WatcherProbe {
         switch (existed, facts) {
         case (false, nil): return ProbeResult(state: .object(state))
         case (false, let now?):
-            return ProbeResult(state: .object(state), triggered: true, summary: "\(name) was created",
+            return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) was created"),
                                detail: WatchedPath.size(now.size), openTarget: open)
         case (true, nil):
-            return ProbeResult(state: .object(state), triggered: true, summary: "\(name) was deleted",
+            return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) was deleted"),
                                openTarget: (path as NSString).deletingLastPathComponent)
         case (true, let now?):
             guard let before, !now.sameContent(as: before) else { return ProbeResult(state: .object(state)) }
-            let sizes = before.size == now.size ? "Size unchanged" : "\(WatchedPath.size(before.size)) → \(WatchedPath.size(now.size))"
-            return ProbeResult(state: .object(state), triggered: true, summary: "\(name) changed", detail: sizes, openTarget: open)
+            let sizes = before.size == now.size ? String(localized: "Size unchanged") : "\(WatchedPath.size(before.size)) → \(WatchedPath.size(now.size))"
+            return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: sizes, openTarget: open)
         }
     }
 
@@ -230,7 +231,7 @@ public struct FolderNewFileProbe: WatcherProbe {
         var w = watcher
         w.config = try WatchedPath.prepare(w.config)
         if let pattern = w.config.string("pattern") {
-            guard pattern.count <= 100, !pattern.contains("/") else { throw WatchError.invalid("The file pattern should be a short name pattern like *.pdf.") }
+            guard pattern.count <= 100, !pattern.contains("/") else { throw WatchError.invalid(String(localized: "The file pattern should be a short name pattern like *.pdf.")) }
         }
         return w
     }
@@ -250,12 +251,12 @@ public struct FolderNewFileProbe: WatcherProbe {
 
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
         let dir = try WatchedPath.resolved(w.config)
-        guard FileFacts.read(dir)?.isDirectory == true else { throw ProbeError.failed("I can't find the folder \(FolderAccess.displayPath(dir)).") }
+        guard FileFacts.read(dir)?.isDirectory == true else { throw ProbeError.failed(String(localized: "I can't find the folder \(FolderAccess.displayPath(dir)).")) }
         let names: [String]
         do { names = try FileManager.default.contentsOfDirectory(atPath: dir) } catch {
-            throw ProbeError.failed("I can't read the folder \(FolderAccess.displayPath(dir)).")
+            throw ProbeError.failed(String(localized: "I can't read the folder \(FolderAccess.displayPath(dir))."))
         }
-        guard names.count <= Self.maxEntries else { throw ProbeError.failed("That folder has too many items for me to watch.") }
+        guard names.count <= Self.maxEntries else { throw ProbeError.failed(String(localized: "That folder has too many items for me to watch.")) }
 
         let visible = names.filter { !Self.isIgnored($0) }
         let partials = Array(names.filter { !$0.hasPrefix(".") && Self.isPartial($0) }.sorted().prefix(50))
@@ -303,14 +304,12 @@ public struct FolderNewFileProbe: WatcherProbe {
             let isDownload = downloaded.contains(only) || growingBefore.contains(only) || folder == "Downloads"
             let facts = FileFacts.read(dir + "/" + only)
             return ProbeResult(state: .object(state), triggered: true,
-                               summary: isDownload ? "\(label) finished downloading" : "New in \(folder): \(label)",
-                               detail: facts.map { $0.isDirectory ? "A folder" : WatchedPath.size($0.size) },
+                               summary: isDownload ? String(localized: "\(label) finished downloading") : String(localized: "New in \(folder): \(label)"),
+                               detail: facts.map { $0.isDirectory ? String(localized: "A folder") : WatchedPath.size($0.size) },
                                openTarget: WatchedPath.openable(dir + "/" + only), recheckIn: recheck)
         }
-        let shown = settled.prefix(4).map { $0.displaySafe.clipped(40) }.joined(separator: ", ")
-        let more = settled.count > 4 ? " and \(settled.count - 4) more" : ""
-        return ProbeResult(state: .object(state), triggered: true, summary: "\(settled.count) new files in \(folder)",
-                           detail: shown + more, openTarget: dir, recheckIn: recheck)
+        return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(settled.count) new files in \(folder)"),
+                           detail: Wording.names(settled.map { $0.displaySafe.clipped(40) }, max: 4), openTarget: dir, recheckIn: recheck)
     }
 
     public func eventTargets(for watcher: Watcher) -> [WatchEventTarget] {

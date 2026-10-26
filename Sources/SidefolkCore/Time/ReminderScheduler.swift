@@ -251,7 +251,7 @@ public actor ReminderScheduler {
         var out: [FallbackNotification] = []
         for r in await upcoming() {
             guard let due = r.nextDue, due <= end else { continue }
-            let body = r.notes ?? "Reminder"
+            let body = r.notes ?? String(localized: "Reminder")
             var when = max(due, now.addingTimeInterval(2))
             out.append(FallbackNotification(id: r.id, title: r.title, body: body, date: when))
             guard let rule = r.recurrence else { continue }
@@ -319,16 +319,14 @@ public actor ReminderScheduler {
         if let notes = r.notes, !notes.isEmpty { lines.append(notes) }
         // "You asked yesterday 18:20." — context for one-off reminders set a while ago.
         if r.recurrence == nil, !firing.missed, firing.dueAt.timeIntervalSince(r.createdAt) > 120 {
-            var set = TimeFormat.when(r.createdAt, now: clock.now, calendar: calendar)
-            if set.hasPrefix("Today") || set.hasPrefix("Yesterday") { set = set.prefix(1).lowercased() + set.dropFirst() }
-            lines.append(own ? "You asked \(set)." : "Another app or agent set this \(set).")
+            lines.append(askedText(r.createdAt, own: own))
         }
         await attention.post(AttentionRequest(
             level: r.level, source: Self.attentionSource(r.source), title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
             actions: [
-                AttentionAction(id: ActionID.done, title: "Done", isPrimary: true),
-                AttentionAction(id: ActionID.snooze10, title: "10 min"),
-                AttentionAction(id: ActionID.tomorrow, title: "Tomorrow"),
+                AttentionAction(id: ActionID.done, title: String(localized: "Done"), isPrimary: true),
+                AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")),
+                AttentionAction(id: ActionID.tomorrow, title: String(localized: "Tomorrow")),
             ],
             refKind: "reminder", refId: r.id
         ))
@@ -337,13 +335,32 @@ public actor ReminderScheduler {
 
     private func missedText(_ due: Date) -> String {
         let now = clock.now
-        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: due), to: calendar.startOfDay(for: now)).day ?? 0
         let time = TimeFormat.clock(due, calendar: calendar)
-        switch days {
-        case ...0: return "Missed at \(time)"
-        case 1: return "Missed yesterday \(time)"
-        default: return "Missed \(TimeFormat.day(due, now: due, calendar: calendar)) \(time)"
+        switch daysAgo(due, now: now) {
+        case ...0: return String(localized: "Missed at \(time)")
+        case 1: return String(localized: "Missed yesterday \(time)")
+        default: return String(localized: "Missed \(TimeFormat.day(due, now: now, calendar: calendar)) \(time)", comment: "A day like “Nov 12”, then a time")
         }
+    }
+
+    /// "You asked yesterday 18:20.": context for a one-off reminder set a while ago, or who else set it.
+    private func askedText(_ created: Date, own: Bool) -> String {
+        let now = clock.now
+        let time = TimeFormat.clock(created, calendar: calendar)
+        switch daysAgo(created, now: now) {
+        case ...0:
+            return own ? String(localized: "You asked today \(time).") : String(localized: "Another app or agent set this today \(time).")
+        case 1:
+            return own ? String(localized: "You asked yesterday \(time).") : String(localized: "Another app or agent set this yesterday \(time).")
+        default:
+            let day = TimeFormat.day(created, now: now, calendar: calendar)
+            return own ? String(localized: "You asked \(day) \(time).", comment: "A day like “Nov 12”, then a time")
+                : String(localized: "Another app or agent set this \(day) \(time).", comment: "A day like “Nov 12”, then a time")
+        }
+    }
+
+    private func daysAgo(_ date: Date, now: Date) -> Int {
+        calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 0
     }
 
     // MARK: Answers from the bubble or a notification

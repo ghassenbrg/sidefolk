@@ -13,7 +13,7 @@ public struct ExtensionWatcherProbe: WatcherProbe {
 
     public func prepare(_ watcher: Watcher) throws -> Watcher {
         guard watcher.config.string("extension") != nil, watcher.config.string("watcher") != nil else {
-            throw WatchError.invalid("An extension watcher needs the extension and the watcher's name.")
+            throw WatchError.invalid(String(localized: "An extension watcher needs the extension and the watcher's name."))
         }
         var w = watcher
         // Extensions never reach the user louder than "attention" (SECURITY T17).
@@ -48,7 +48,7 @@ public struct ExtensionWatchTool: Tool {
 
     public var spec: ToolSpec {
         ToolSpec(
-            name: "watch.extension", title: "Watch with an extension",
+            name: "watch.extension", title: String(localized: "Watch with an extension"),
             description: "Start a watcher provided by an installed extension (see the extension watchers listed in context). "
                 + "`settings` must match that watcher's fields.",
             inputSchema: Schema.object([
@@ -63,17 +63,17 @@ public struct ExtensionWatchTool: Tool {
     }
 
     public func summary(for input: JSONValue) -> String {
-        "Watch “\(input.string("watcher") ?? "?")” from \(input.string("extension") ?? "an extension")"
+        String(localized: "Watch “\(input.string("watcher") ?? "?")” from \(input.string("extension") ?? String(localized: "an extension"))")
     }
 
     public func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: input.string("extension")) }
 
     public func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let id = input.string("extension"), let name = input.string("watcher") else {
-            throw ToolError.invalidInput("extension and watcher are required")
+            throw ToolError.invalidInput(String(localized: "extension and watcher are required"))
         }
         guard let kind = await host.watcherKinds().first(where: { $0.extensionId == id && $0.watcher == name }) else {
-            throw ToolError.notFound("a watcher “\(name)” in an enabled extension “\(id)”")
+            throw ToolError.notFound(String(localized: "a watcher “\(name)” in an enabled extension “\(id)”"))
         }
         let settings = try WatcherConfig.validate(input["settings"] ?? .object([:]), fields: kind.config)
         let minutes = Double(max(5, input["interval_minutes"]?.intValue ?? 15))
@@ -87,8 +87,9 @@ public struct ExtensionWatchTool: Tool {
         let engine = self.engine
         return ToolResult(
             text: "Watching “\(added.title)” (\(id)) every \(Int(minutes)) min. Watcher id \(added.id).",
-            card: ResultCard(kind: .watcher, title: "Watching: \(added.title)", subtitle: "Every \(Int(minutes)) min · \(kind.title)", refId: added.id),
-            undo: UndoAction(label: "Stop watching \(added.title)") { _ = await engine.remove(added.id) })
+            card: ResultCard(kind: .watcher, title: String(localized: "Watching: \(added.title)"),
+                             subtitle: String(localized: "Every \(Int(minutes)) min · \(kind.title)"), refId: added.id),
+            undo: UndoAction(label: String(localized: "Stop watching \(added.title)")) { _ = await engine.remove(added.id) })
     }
 }
 

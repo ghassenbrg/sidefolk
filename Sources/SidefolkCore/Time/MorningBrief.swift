@@ -54,18 +54,13 @@ public actor MorningBrief {
         guard !today.isEmpty || tasks > 0 else { return nil }
 
         var lines = today.prefix(Self.listed).map { r in "\(TimeFormat.clock(r.nextDue ?? r.fireAt, calendar: calendar)) \(r.title)" }
-        if today.count > Self.listed { lines.append("+\(today.count - Self.listed) more") }
+        if today.count > Self.listed { lines.append(String(localized: "+\(today.count - Self.listed) more")) }
         var facts: [String] = []
-        if tasks > 0 { facts.append(tasks == 1 ? "1 open task" : "\(tasks) open tasks") }
-        if watching > 0 { facts.append(watching == 1 ? "1 watcher on duty" : "\(watching) watchers on duty") }
+        if tasks > 0 { facts.append(String(localized: "\(tasks) open tasks")) }
+        if watching > 0 { facts.append(String(localized: "\(watching) watchers on duty")) }
         if !facts.isEmpty { lines.append(facts.joined(separator: " · ")) }
 
-        let headline: String
-        switch today.count {
-        case 0: headline = "Good morning"
-        case 1: headline = "Good morning · 1 reminder today"
-        default: headline = "Good morning · \(today.count) reminders today"
-        }
+        let headline = today.isEmpty ? String(localized: "Good morning") : String(localized: "Good morning · \(today.count) reminders today")
         return Content(title: headline, body: lines.joined(separator: "\n"), reminders: today.count, openTasks: tasks, watchers: watching)
     }
 
@@ -94,7 +89,7 @@ public actor MorningBrief {
         guard let content = await compose(now: now) else { return false }
         await attention.post(AttentionRequest(
             level: .gentle, source: "brief", title: content.title, body: content.body,
-            actions: [AttentionAction(id: "open", title: "Open", isPrimary: true)], refKind: "brief"
+            actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)], refKind: "brief"
         ))
         return true
     }

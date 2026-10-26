@@ -24,22 +24,24 @@ import Testing
 
         let content = try #require(await t.brief.compose(now: t.clock.now))
         #expect(content.title == "Good morning · 2 reminders today")
-        #expect(content.body == "09:30 Standup\n15:30 Dentist\n2 open tasks · 1 watcher on duty")
+        // The test runner has no string catalog, so a count reads as its key; CatalogTests checks the English singulars.
+        #expect(content.body == "09:30 Standup\n15:30 Dentist\n2 open tasks · 1 watchers on duty")
         #expect(content.reminders == 2)
         #expect(content.openTasks == 2)
         #expect(content.watchers == 1)
     }
 
+    /// Counts of one read as their catalog key here ("1 open tasks"); the app's English is "1 open task" (CatalogTests).
     @Test func singularsAndNoReminders() async throws {
         let t = try await SchedulerEnv(now: TimeTest.date(2025, 10, 22, 9))
         try await addTask(t, "Only one")
         let onlyTask = try #require(await t.brief.compose(now: t.clock.now))
         #expect(onlyTask.title == "Good morning")
-        #expect(onlyTask.body == "1 open task")
+        #expect(onlyTask.body == "1 open tasks")
 
         try await t.scheduler.create(title: "Single", at: t.date(2025, 10, 22, 12))
         let one = try #require(await t.brief.compose(now: t.clock.now))
-        #expect(one.title == "Good morning · 1 reminder today")
+        #expect(one.title == "Good morning · 1 reminders today")
     }
 
     @Test func longListsAreCut() async throws {
@@ -82,7 +84,7 @@ import Testing
         let item = try #require(await t.posted().first)
         #expect(item.source == "brief")
         #expect(item.level == .gentle)
-        #expect(item.title == "Good morning · 1 reminder today")
+        #expect(item.title == "Good morning · 1 reminders today")
         #expect(item.body == "15:00 Dentist")
 
         t.clock.set(t.date(2025, 10, 22, 9, 30))

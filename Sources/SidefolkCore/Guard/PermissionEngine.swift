@@ -35,7 +35,7 @@ public struct PermissionEngine: Sendable {
         policy: GuardPolicy, grants: [Grant], folders: [GrantedFolder], mentions: UserMentions? = nil
     ) -> GuardDecision {
         if let off = spec.capabilities.first(where: { policy.disabled.contains($0) }) {
-            return .deny("\(Self.capabilityName(off)) is turned off in Sidefolk's Permissions settings.")
+            return .deny(String(localized: "\(Self.capabilityName(off)) is turned off in Sidefolk's Permissions settings."))
         }
 
         // Folder boundary: file tools act only inside folders the user granted.
@@ -46,13 +46,13 @@ public struct PermissionEngine: Sendable {
         }
         if !unreadable.isEmpty || !unwritable.isEmpty {
             guard caller.kind != "external", caller.kind != "extension" else {
-                return .deny("That folder hasn't been shared with Sidefolk.")
+                return .deny(String(localized: "That folder hasn't been shared with Sidefolk."))
             }
             guard let folder = FolderAccess.suggestedFolder(for: (unwritable + unreadable)[0]) else {
-                return .deny("That location is too broad to share. Add a specific folder in Settings › Privacy & Permissions.")
+                return .deny(String(localized: "That location is too broad to share. Add a specific folder in Settings › Privacy & Permissions."))
             }
             return .ask(ApprovalRequest(
-                tool: spec.name, title: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?",
+                tool: spec.name, title: String(localized: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?"),
                 summary: summary, risk: max(spec.risk, .medium), caller: caller,
                 details: .folderAccess(folder: folder, write: !unwritable.isEmpty),
                 canAlways: true
@@ -160,19 +160,19 @@ public struct PermissionEngine: Sendable {
 
     public static func capabilityName(_ c: Capability) -> String {
         switch c {
-        case .notebook: "The notebook"
-        case .memory: "Memory"
-        case .time: "Reminders"
-        case .watch: "Watching"
-        case .clipboard: "Clipboard access"
-        case .apps: "Opening apps and links"
-        case .network: "Internet access"
-        case .shell: "Running commands"
-        case .agents: "Agent workers"
-        case .extensions: "Extensions"
-        case .system: "System information"
-        case .filesRead: "Reading files"
-        case .filesWrite: "Changing files"
+        case .notebook: String(localized: "The notebook")
+        case .memory: String(localized: "Memory")
+        case .time: String(localized: "Reminders")
+        case .watch: String(localized: "Watching")
+        case .clipboard: String(localized: "Clipboard access")
+        case .apps: String(localized: "Opening apps and links")
+        case .network: String(localized: "Internet access")
+        case .shell: String(localized: "Running commands")
+        case .agents: String(localized: "Agent workers")
+        case .extensions: String(localized: "Extensions")
+        case .system: String(localized: "System information")
+        case .filesRead: String(localized: "Reading files")
+        case .filesWrite: String(localized: "Changing files")
         }
     }
 }

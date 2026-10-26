@@ -21,12 +21,373 @@
         }
       }
     },
+    "%@ (folder)" : {
+
+    },
+    "%@ I'll keep checking and tell you when it's back up." : {
+
+    },
+    "%@ I'll keep trying." : {
+
+    },
+    "%@ It's already down, so I'll tell you if it comes back and goes down again." : {
+
+    },
+    "%@ already uses the name “%@” for its tools." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ already uses the name “%2$@” for its tools."
+          }
+        }
+      }
+    },
+    "%@ and %lld more" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ and %2$lld more"
+          }
+        }
+      }
+    },
+    "%@ appeared" : {
+
+    },
+    "%@ asks" : {
+
+    },
+    "%@ can't be read: %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ can't be read: %2$@."
+          }
+        }
+      }
+    },
+    "%@ can't be written: %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ can't be written: %2$@."
+          }
+        }
+      }
+    },
+    "%@ can't start: %@ changed since you installed it." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ can't start: %2$@ changed since you installed it."
+          }
+        }
+      }
+    },
+    "%@ changed" : {
+
+    },
+    "%@ changed %@. I put it on hold until you review the change in Settings › Extensions." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ changed %2$@. I put it on hold until you review the change in Settings › Extensions."
+          }
+        }
+      }
+    },
+    "%@ changed %@. I put them on hold until you review the change in Settings › Extensions." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ changed %2$@. I put them on hold until you review the change in Settings › Extensions."
+          }
+        }
+      }
+    },
+    "%@ changed while Sidefolk was editing it. Nothing was written; try again." : {
+
+    },
+    "%@ couldn't accept that request. Nothing was changed." : {
+
+    },
+    "%@ didn't start (it answered something other than MCP)." : {
+
+    },
+    "%@ didn't start (it didn't answer in time)." : {
+
+    },
+    "%@ didn't start (it exited with status %d)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ didn't start (it exited with status %2$d)."
+          }
+        }
+      }
+    },
+    "%@ didn't start (it was stopped by signal %d)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ didn't start (it was stopped by signal %2$d)."
+          }
+        }
+      }
+    },
+    "%@ didn't start." : {
+
+    },
+    "%@ doesn't have the model “%@”. Nothing was changed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ doesn't have the model “%2$@”. Nothing was changed."
+          }
+        }
+      }
+    },
+    "%@ exited" : {
+
+    },
+    "%@ exited with code %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ exited with code %2$lld"
+          }
+        }
+      }
+    },
+    "%@ failed (exit %lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ failed (exit %2$lld)"
+          }
+        }
+      }
+    },
     "%@ files in %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ files in %2$@"
+          }
+        }
+      }
+    },
+    "%@ finished downloading" : {
+
+    },
+    "%@ finished in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ finished in %2$@"
+          }
+        }
+      }
+    },
+    "%@ folder" : {
+
+    },
+    "%@ gave an answer I couldn't use for %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ gave an answer I couldn't use for %2$@."
+          }
+        }
+      }
+    },
+    "%@ goes through a link, so I won't follow it." : {
+
+    },
+    "%@ had a problem answering. Nothing was changed." : {
+
+    },
+    "%@ has passed." : {
+
+    },
+    "%@ has special permission bits (setuid, setgid or sticky)." : {
+
+    },
+    "%@ has too many entries (at most %lld)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ has too many entries (at most %2$lld)."
+          }
+        }
+      }
+    },
+    "%@ in %@" : {
+      "comment" : "“Ideas in Sidefolk”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ in %2$@"
+          }
+        }
+      }
+    },
+    "%@ is a file, not a folder." : {
+
+    },
+    "%@ is a hard link: the same file also has another name, possibly in a folder you haven't shared, so I won't open or move it." : {
+
+    },
+    "%@ is a link (alias), and I only change real files and folders." : {
+
+    },
+    "%@ is already there" : {
+
+    },
+    "%@ is back up" : {
+
+    },
+    "%@ is down" : {
+
+    },
+    "%@ is gone" : {
+
+    },
+    "%@ is limiting how fast I can ask right now. Nothing was changed." : {
+
+    },
+    "%@ is missing its program." : {
+
+    },
+    "%@ is missing, a link, or larger than 64 KiB." : {
+
+    },
+    "%@ is on a read-only disk." : {
+
+    },
+    "%@ is reachable, but it doesn't have “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is reachable, but it doesn't have “%2$@”."
+          }
+        }
+      }
+    },
+    "%@ is too long (at most %lld characters)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is too long (at most %2$lld characters)."
+          }
+        }
+      }
+    },
+    "%@ is too short." : {
+
+    },
+    "%@ is turned off in Sidefolk's Permissions settings." : {
+
+    },
+    "%@ isn't a folder I can search." : {
+
+    },
+    "%@ isn't a folder." : {
+
+    },
+    "%@ isn't a regular file or folder." : {
+
+    },
+    "%@ isn't a time." : {
+
+    },
+    "%@ isn't running right now." : {
+
+    },
+    "%@ isn't there" : {
+
+    },
+    "%@ isn't what Sidefolk expected (%@), so it wasn't changed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ isn't what Sidefolk expected (%2$@), so it wasn't changed."
+          }
+        }
+      }
+    },
+    "%@ kept crashing, so I turned it off. You can turn it back on in Settings › Extensions." : {
+
+    },
+    "%@ must be at least %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ must be at least %2$@."
+          }
+        }
+      }
+    },
+    "%@ must be at most %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ must be at most %2$@."
+          }
+        }
+      }
+    },
+    "%@ must be one of: %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ must be one of: %2$@."
+          }
+        }
+      }
+    },
+    "%@ needs %@, which isn't available anymore." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ needs %2$@, which isn't available anymore."
+          }
+        }
+      }
+    },
+    "%@ needs an API key. Nothing was changed." : {
+
+    },
+    "%@ needs you in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ needs you in %2$@"
           }
         }
       }
@@ -41,12 +402,132 @@
         }
       }
     },
+    "%@ no longer offers “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ no longer offers “%2$@”."
+          }
+        }
+      }
+    },
+    "%@ now matches what you were waiting for" : {
+
+    },
+    "%@ now says “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ now says “%2$@”"
+          }
+        }
+      }
+    },
+    "%@ rejected your API key. Nothing was changed." : {
+
+    },
+    "%@ reported a problem with %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reported a problem with %2$@."
+          }
+        }
+      }
+    },
+    "%@ returned too much watcher state." : {
+
+    },
+    "%@ sent an answer I couldn't read. Nothing was changed." : {
+
+    },
+    "%@ should be %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ should be %2$@."
+          }
+        }
+      }
+    },
+    "%@ stopped while working on %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ stopped while working on %2$@."
+          }
+        }
+      }
+    },
+    "%@ succeeded" : {
+
+    },
+    "%@ took too long to answer. Nothing was changed." : {
+
+    },
+    "%@ took too long with %@, so I stopped waiting." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ took too long with %2$@, so I stopped waiting."
+          }
+        }
+      }
+    },
+    "%@ was changed on disk (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ was changed on disk (%2$@)"
+          }
+        }
+      }
+    },
+    "%@ was changed on disk, so I turned it off. Install it again to use it." : {
+
+    },
+    "%@ was created" : {
+
+    },
+    "%@ was deleted" : {
+
+    },
+    "%@ was stopped after %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ was stopped after %2$@"
+          }
+        }
+      }
+    },
+    "%@ was turned off because its files changed." : {
+
+    },
     "%@ — %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ — %2$@"
+          }
+        }
+      }
+    },
+    "%@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
           }
         }
       }
@@ -61,25 +542,349 @@
         }
       }
     },
+    "%@: found “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: found “%2$@”"
+          }
+        }
+      }
+    },
+    "%@: input schema is larger than 16 KB" : {
+
+    },
+    "%@: input schema isn't an object" : {
+
+    },
+    "%@: the output changed" : {
+
+    },
     "%@…" : {
 
     },
     "%lld" : {
 
     },
+    "%lld characters" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld character"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld characters"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld collections" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld collection"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld collections"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld command watchers are already running. Stop one first." : {
+
+    },
     "%lld days" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld facts remembered" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fact remembered"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld facts remembered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld h" : {
+
+    },
+    "%lld items" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld item"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld matches for “%@”" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld match for “%2$@”"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld matches for “%2$@”"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld min" : {
+
+    },
+    "%lld new files in %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld new file in %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld new files in %2$@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld open tasks" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld open task"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld open tasks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld s" : {
+
+    },
+    "%lld upcoming reminders" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld upcoming reminder"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld upcoming reminders"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld watchers" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld watcher"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld watchers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld watchers on duty" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld watcher on duty"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld watchers on duty"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "+%lld more" : {
 
     },
     "+%lld more waiting" : {
 
     },
+    ", fired %lld×" : {
+
+    },
     "1 day" : {
+
+    },
+    "1 min" : {
+
+    },
+    "10 min" : {
+
+    },
+    "A file changed: %@." : {
+
+    },
+    "A file is missing: %@." : {
+
+    },
+    "A file was added: %@." : {
+
+    },
+    "A folder" : {
+
+    },
+    "A link now points somewhere else on the way to %@, so I stopped looking there." : {
+
+    },
+    "A reminder needs something to remind you about." : {
+
+    },
+    "A search can't start with a dash." : {
+
+    },
+    "A server called %@ is already added." : {
+
+    },
+    "A skill called “%@” exists again." : {
+
+    },
+    "A skill name uses lowercase letters, digits and dashes, like plan-a-trip." : {
+
+    },
+    "A skill needs a description of at most 500 characters." : {
+
+    },
+    "A skill needs instructions of at most %lld characters." : {
+
+    },
+    "A tool without a usable name" : {
 
     },
     "AI settings…" : {
 
     },
     "API key" : {
+
+    },
+    "About you" : {
 
     },
     "Access to %@" : {
@@ -103,10 +908,58 @@
     "Add an MCP server" : {
 
     },
+    "Add it in Settings › AI (for Ollama: http://localhost:11434/v1)." : {
+
+    },
+    "Add it in Settings › AI." : {
+
+    },
+    "Add one in Settings › AI." : {
+
+    },
     "Add reminder" : {
 
     },
     "Adding…" : {
+
+    },
+    "Adds [%@] (runs %@ mcp) to Codex's config." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adds [%1$@] (runs %2$@ mcp) to Codex's config."
+          }
+        }
+      }
+    },
+    "Adds hooks for %@ that run %@ hook (%lld s limit)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adds hooks for %1$@ that run %2$@ hook (%3$lld s limit)."
+          }
+        }
+      }
+    },
+    "Adds the MCP server “sidefolk” (runs %@ mcp) to Claude Code's user settings." : {
+
+    },
+    "After %@" : {
+
+    },
+    "After %@ in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "After %1$@ in %2$@"
+          }
+        }
+      }
+    },
+    "Agent workers" : {
 
     },
     "All" : {
@@ -115,7 +968,57 @@
     "Allow notifications" : {
 
     },
+    "Already cancelled" : {
+
+    },
+    "Already exists" : {
+
+    },
+    "Already remembered" : {
+
+    },
     "Always allow" : {
+
+    },
+    "An exit code is a number from 0 to 255." : {
+
+    },
+    "An extension watcher needs the extension and the watcher's name." : {
+
+    },
+    "Another app or agent set this %@ %@." : {
+      "comment" : "A day like “Nov 12”, then a time",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Another app or agent set this %1$@ %2$@."
+          }
+        }
+      }
+    },
+    "Another app or agent set this today %@." : {
+
+    },
+    "Another app or agent set this yesterday %@." : {
+
+    },
+    "Anthropic couldn't accept that request. Nothing was changed." : {
+
+    },
+    "Anthropic doesn't offer the model “%@” to your account. Nothing was changed." : {
+
+    },
+    "Anthropic had a problem answering. Nothing was changed." : {
+
+    },
+    "Anthropic is limiting how fast I can ask right now. Nothing was changed." : {
+
+    },
+    "Anthropic sent an answer I couldn't read. Nothing was changed." : {
+
+    },
+    "Anthropic turned the request down for a billing reason. Nothing was changed." : {
 
     },
     "Archive" : {
@@ -130,7 +1033,16 @@
     "Ask shortcut" : {
 
     },
+    "Ask the user" : {
+
+    },
+    "Ask the user to cancel some first." : {
+
+    },
     "Ask, remind, note, watch…" : {
+
+    },
+    "Ask: %@" : {
 
     },
     "Asked by %@" : {
@@ -142,16 +1054,172 @@
     "Be quiet" : {
 
     },
+    "Bring back reminder" : {
+
+    },
+    "Can read %@" : {
+
+    },
+    "Can read and change files in %@" : {
+
+    },
+    "Can run %@" : {
+
+    },
+    "Can run %@, which can run anything" : {
+
+    },
+    "Can use the internet" : {
+
+    },
     "Cancel" : {
+
+    },
+    "Cancel a reminder" : {
 
     },
     "Cancel reminder" : {
 
     },
+    "Cancelled" : {
+
+    },
+    "Change a note" : {
+
+    },
+    "Change a note (%@)" : {
+
+    },
+    "Changing files" : {
+
+    },
+    "Check Claude Code in Settings › AI, or choose another provider." : {
+
+    },
+    "Check Claude Code in Terminal." : {
+
+    },
+    "Check Claude Code's managed settings, then restart Sidefolk, or choose another provider." : {
+
+    },
     "Check now" : {
 
     },
+    "Check that Sidefolk has access to that folder in System Settings › Privacy & Security › Files and Folders." : {
+
+    },
+    "Check that Sidefolk is allowed to change that folder." : {
+
+    },
+    "Check that a browser is set up on this Mac." : {
+
+    },
+    "Check that a mail app is set up on this Mac." : {
+
+    },
+    "Check the address in Settings › AI (it usually ends in /v1)." : {
+
+    },
+    "Check the address in Settings › AI, or try another network." : {
+
+    },
+    "Check the key in Settings › AI, or paste a new one." : {
+
+    },
+    "Check the model and address in Settings › AI." : {
+
+    },
+    "Check the model name in Settings › AI." : {
+
+    },
+    "Check the spelling." : {
+
+    },
+    "Check your connection and the address." : {
+
+    },
+    "Check your connection or switch provider." : {
+
+    },
+    "Check your internet connection, or switch provider in Settings › AI." : {
+
+    },
+    "Check your plan and credits in the Anthropic Console." : {
+
+    },
+    "Check your plan with %@, or switch provider in Settings › AI." : {
+
+    },
+    "Check your workspace access in the Anthropic Console." : {
+
+    },
+    "Choose Claude Code, an API key or Ollama in Settings › AI." : {
+
+    },
+    "Choose a later end date." : {
+
+    },
+    "Choose a model that supports tool calling in Settings › AI." : {
+
+    },
+    "Choose a more specific folder." : {
+
+    },
+    "Choose another folder." : {
+
+    },
+    "Choose another model in Settings › AI." : {
+
+    },
+    "Choose one in Settings › AI." : {
+
+    },
+    "Claude Code couldn't be read." : {
+
+    },
+    "Claude Code didn't start." : {
+
+    },
+    "Claude Code isn't ready to help yet. Nothing was changed." : {
+
+    },
+    "Claude Code isn't set up on this Mac." : {
+
+    },
+    "Claude Code isn't signed in." : {
+
+    },
+    "Claude Code session updates" : {
+
+    },
+    "Claude Code stopped with an error." : {
+
+    },
+    "Claude is overloaded right now. Nothing was changed." : {
+
+    },
+    "Claude kept calling tools, so I stopped it." : {
+
+    },
+    "Claude took too long, so I stopped it." : {
+
+    },
+    "Claude's usage limit is reached for now." : {
+
+    },
+    "Clear" : {
+
+    },
     "Clear search" : {
+
+    },
+    "Clipboard access" : {
+
+    },
+    "Clipboard is empty" : {
+
+    },
+    "Codex isn't set up on this Mac." : {
 
     },
     "Collection" : {
@@ -169,10 +1237,68 @@
     "Connect your agents…" : {
 
     },
+    "Copied to the clipboard" : {
+
+    },
     "Copy" : {
 
     },
+    "Copy command" : {
+
+    },
+    "Copy to the clipboard" : {
+
+    },
+    "Copy to your clipboard: “%@”" : {
+
+    },
+    "Couldn't create the skill “%@”." : {
+
+    },
+    "Couldn't find the program “%@”." : {
+
+    },
+    "Couldn't move: %@" : {
+
+    },
+    "Couldn't read %@ in the extension." : {
+
+    },
+    "Couldn't write the skill “%@”." : {
+
+    },
+    "Create a collection" : {
+
+    },
+    "Create a folder" : {
+
+    },
+    "Create a skill" : {
+
+    },
     "Create collection" : {
+
+    },
+    "Create it first with files.mkdir." : {
+
+    },
+    "Create the collection “%@”" : {
+
+    },
+    "Create the folder %@" : {
+
+    },
+    "Create the skill “%@”: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create the skill “%1$@”: %2$@"
+          }
+        }
+      }
+    },
+    "Created a folder" : {
 
     },
     "Delete" : {
@@ -185,6 +1311,9 @@
 
     },
     "Delete Everything" : {
+
+    },
+    "Delete a skill" : {
 
     },
     "Delete all Sidefolk data?" : {
@@ -208,6 +1337,9 @@
     "Delete “%@”?" : {
 
     },
+    "Deleted" : {
+
+    },
     "Delete…" : {
 
     },
@@ -226,14 +1358,33 @@
     "Done" : {
 
     },
+    "Done for now" : {
+
+    },
     "Edit reminder" : {
 
     },
     "Edit…" : {
 
     },
+    "Empty file" : {
+
+    },
     "Enable %@" : {
 
+    },
+    "Ended" : {
+
+    },
+    "Every %lld min · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Every %1$lld min · %2$@"
+          }
+        }
+      }
     },
     "Everyone" : {
 
@@ -250,7 +1401,22 @@
     "Export Diagnostics…" : {
 
     },
+    "Extensions" : {
+
+    },
+    "Extensions aren't running." : {
+
+    },
     "Find" : {
+
+    },
+    "Find files" : {
+
+    },
+    "Finished" : {
+
+    },
+    "Folder already exists" : {
 
     },
     "For 1 hour" : {
@@ -262,7 +1428,289 @@
     "For 30 minutes" : {
 
     },
+    "Forget a fact" : {
+
+    },
+    "Forget a fact about you" : {
+
+    },
+    "Forget a few that no longer matter, then try again." : {
+
+    },
+    "Forgot" : {
+
+    },
+    "Forgot “%@”" : {
+
+    },
+    "Found" : {
+
+    },
+    "Found for “%@”" : {
+
+    },
     "From" : {
+
+    },
+    "Give it a short plain name." : {
+
+    },
+    "Give me the name of an app (like “Safari”), not a file path." : {
+
+    },
+    "Give the collection a name." : {
+
+    },
+    "Good morning" : {
+
+    },
+    "Good morning · %lld reminders today" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Good morning · %lld reminder today"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Good morning · %lld reminders today"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "I can only attach web links (http or https) to a note." : {
+
+    },
+    "I can't check %@ right now" : {
+
+    },
+    "I can't check %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I can't check %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "I can't find the folder %@." : {
+
+    },
+    "I can't find the folder to run in." : {
+
+    },
+    "I can't move %@ into itself." : {
+
+    },
+    "I can't reach %@ right now" : {
+
+    },
+    "I can't read the folder %@." : {
+
+    },
+    "I can't set up a command watcher in this conversation: it has read content from outside, so the command might not be the user's own. Ask again in a new conversation." : {
+
+    },
+    "I couldn't %@ at %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I couldn't %1$@ at %2$@."
+          }
+        }
+      }
+    },
+    "I couldn't add myself to your login items." : {
+
+    },
+    "I couldn't add that folder. Nothing changed." : {
+
+    },
+    "I couldn't add the sidefolk command." : {
+
+    },
+    "I couldn't build that email link." : {
+
+    },
+    "I couldn't copy the logs." : {
+
+    },
+    "I couldn't create that collection. Nothing changed." : {
+
+    },
+    "I couldn't find %@." : {
+
+    },
+    "I couldn't find Claude Code on this Mac." : {
+
+    },
+    "I couldn't find a site called “%@”." : {
+
+    },
+    "I couldn't find an AI service at that address. Nothing was changed." : {
+
+    },
+    "I couldn't find that website." : {
+
+    },
+    "I couldn't make a secure connection to %@. Nothing was changed." : {
+
+    },
+    "I couldn't move %@ to the Trash." : {
+
+    },
+    "I couldn't move back: %@. Something may have changed since." : {
+
+    },
+    "I couldn't open an app called “%@”." : {
+
+    },
+    "I couldn't open that PDF." : {
+
+    },
+    "I couldn't open that link." : {
+
+    },
+    "I couldn't open “About you”." : {
+
+    },
+    "I couldn't put back %@. You can restore it from the Trash." : {
+
+    },
+    "I couldn't reach %@ on this Mac. Nothing was changed." : {
+
+    },
+    "I couldn't reach %@. Nothing was changed." : {
+
+    },
+    "I couldn't reach Claude." : {
+
+    },
+    "I couldn't reach that site." : {
+
+    },
+    "I couldn't reach the site." : {
+
+    },
+    "I couldn't read %@." : {
+
+    },
+    "I couldn't read your API key from the Keychain. Nothing was changed." : {
+
+    },
+    "I couldn't read “%@” as a time." : {
+
+    },
+    "I couldn't remove myself from your login items." : {
+
+    },
+    "I couldn't remove ~/.local/bin/sidefolk." : {
+
+    },
+    "I couldn't start the command." : {
+
+    },
+    "I couldn't start the email." : {
+
+    },
+    "I couldn't tell when “%@” is. Nothing was saved." : {
+
+    },
+    "I couldn't undo that." : {
+
+    },
+    "I couldn't update %@." : {
+
+    },
+    "I couldn't write the export there." : {
+
+    },
+    "I deleted your data, but couldn't remove: %@." : {
+
+    },
+    "I didn't understand “%@” as a time." : {
+
+    },
+    "I don't have a tool called %@." : {
+
+    },
+    "I don't know how to watch “%@” (the extension that provides it may be off)." : {
+
+    },
+    "I don't know how to watch “%@”." : {
+
+    },
+    "I need a full path that starts with / or ~, without “..” parts or broken links." : {
+
+    },
+    "I need the address of your AI service." : {
+
+    },
+    "I need the full path, like ~/Downloads/report.pdf." : {
+
+    },
+    "I need to know which %@ model to use." : {
+
+    },
+    "I need your Anthropic API key for that." : {
+
+    },
+    "I only handle web addresses (http and https), not “%@:” links." : {
+
+    },
+    "I only talk to AI services over https, except on this Mac." : {
+
+    },
+    "I stopped watching %@" : {
+
+    },
+    "I won't create “%@”, because that kind of item can run programs." : {
+
+    },
+    "I won't move %@, because that kind of item can run programs." : {
+
+    },
+    "I won't move, rename or delete %@. It's one of the main folders in your home folder." : {
+
+    },
+    "I won't rename something into a “.%@” item, because those can run programs." : {
+
+    },
+    "I'll ask when" : {
+
+    },
+    "I'll keep trying, a little less often each time." : {
+
+    },
+    "I'll tell you %@" : {
+
+    },
+    "I'll tell you if it starts and then quits." : {
+
+    },
+    "I'm already watching %lld things. Stop one before starting another." : {
+
+    },
+    "Idea" : {
+
+    },
+    "Ideas" : {
+
+    },
+    "If it's yours, copy it to a normal file first (for example with Finder's Duplicate)." : {
+
+    },
+    "Inbox" : {
 
     },
     "Install %@ first, then connect it here." : {
@@ -271,11 +1719,121 @@
     "Install from Folder…" : {
 
     },
+    "Install it again from Settings › Extensions." : {
+
+    },
+    "Install it again to use it." : {
+
+    },
+    "Install it again." : {
+
+    },
+    "Install it, or set its path in Settings › AI." : {
+
+    },
     "Installing…" : {
 
     },
+    "Internet access" : {
+
+    },
+    "It answered %@." : {
+
+    },
+    "It can read %@ and use the internet, so it could upload those files." : {
+
+    },
+    "It can run %@, which can run any code its sandbox allows." : {
+
+    },
+    "It can save what it downloads into %@." : {
+
+    },
+    "It can use the internet and run %@, so it could download and run other code." : {
+
+    },
+    "It downloads the latest %@ every time it starts. Pin a version, like %@==1.2.3." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It downloads the latest %1$@ every time it starts. Pin a version, like %2$@==1.2.3."
+          }
+        }
+      }
+    },
+    "It downloads the latest %@ every time it starts. Pin a version, like %@@1.2.3." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It downloads the latest %1$@ every time it starts. Pin a version, like %2$@@1.2.3."
+          }
+        }
+      }
+    },
+    "It kept using more than half a CPU core for a minute." : {
+
+    },
+    "It no longer passes Sidefolk's checks: %@." : {
+
+    },
+    "It printed: “%@”. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It printed: “%1$@”. %2$@"
+          }
+        }
+      }
+    },
     "It runs in a sandbox limited to the lines above. You can turn it off or uninstall it any time." : {
 
+    },
+    "It should look like https://api.example.com/v1." : {
+
+    },
+    "It started more than %lld processes." : {
+
+    },
+    "It stopped unexpectedly %lld times in %lld minutes, so Sidefolk turned it off." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It stopped unexpectedly %1$lld times in %2$lld minutes, so Sidefolk turned it off."
+          }
+        }
+      }
+    },
+    "It used more than %llu MB of memory." : {
+
+    },
+    "It's already called “%@”." : {
+
+    },
+    "It's been %lld days. I can start again if you still want it." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "It's been %lld day. I can start again if you still want it."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "It's been %lld days. I can start again if you still want it."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "It's empty." : {
 
@@ -283,7 +1841,28 @@
     "Its %@ move to the Trash for 30 days. Restored items go to the Inbox." : {
 
     },
+    "Its art isn't in this build." : {
+
+    },
+    "Its files changed since you installed it (%@) Install it again to use it." : {
+
+    },
+    "Its folder is missing." : {
+
+    },
+    "Its folder now contains a link or a special file." : {
+
+    },
     "Its instructions are removed. This can't be undone." : {
+
+    },
+    "Its saved settings are incomplete." : {
+
+    },
+    "Its saved settings are incomplete. Install it again." : {
+
+    },
+    "Its saved settings couldn't be read. Remove it and install it again." : {
 
     },
     "Its tools and watches stop, and its files are removed." : {
@@ -295,7 +1874,19 @@
     "Keep recent requests for" : {
 
     },
+    "Keep watching" : {
+
+    },
+    "Keeps going until you stop it" : {
+
+    },
+    "Keychain item %@" : {
+
+    },
     "Kind" : {
+
+    },
+    "Language" : {
 
     },
     "Large" : {
@@ -307,16 +1898,76 @@
     "Last request sent to the AI" : {
 
     },
+    "Last time: %@" : {
+
+    },
     "Less" : {
 
     },
+    "Let Sidefolk work in %@?" : {
+
+    },
     "Link" : {
+
+    },
+    "Links" : {
+
+    },
+    "List a folder" : {
+
+    },
+    "List collections" : {
+
+    },
+    "List notes" : {
+
+    },
+    "List reminders" : {
+
+    },
+    "List skills" : {
+
+    },
+    "List the files in %@" : {
+
+    },
+    "List watchers" : {
+
+    },
+    "List what I'm watching" : {
+
+    },
+    "List what Sidefolk remembers about you" : {
+
+    },
+    "List what's in %@" : {
+
+    },
+    "List your newest notes" : {
+
+    },
+    "List your notebook collections" : {
+
+    },
+    "List your reminders" : {
+
+    },
+    "Load a skill" : {
+
+    },
+    "Load the skill “%@”" : {
 
     },
     "Look again" : {
 
     },
     "MCP servers run outside Sidefolk's sandbox, with your full permissions and the folders you shared with Sidefolk. Only add servers you trust. Their tools ask before changing anything, and what they return is treated as untrusted." : {
+
+    },
+    "Make sure %@ is running, and check the address in Settings › AI." : {
+
+    },
+    "Mark a reminder done" : {
 
     },
     "Mark done" : {
@@ -328,16 +1979,164 @@
     "Medium" : {
 
     },
+    "Memory" : {
+
+    },
+    "Missed %@ %@" : {
+      "comment" : "A day like “Nov 12”, then a time",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missed %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "Missed at %@" : {
+
+    },
+    "Missed yesterday %@" : {
+
+    },
     "More" : {
 
     },
     "More for “%@”" : {
 
     },
+    "Move %lld items to %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Move %1$lld item to %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Move %1$lld items to %2$@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Move %lld items to the Trash: %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Move %1$lld item to the Trash: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Move %1$lld items to the Trash: %2$@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Move a note to the Trash" : {
+
+    },
+    "Move files" : {
+
+    },
+    "Move files to the Trash" : {
+
+    },
+    "Move it yourself in Finder if you meant to." : {
+
+    },
+    "Move the skill “%@” to the Trash" : {
+
+    },
     "Move to Trash" : {
 
     },
     "Move to Trash (⌘⌫)" : {
+
+    },
+    "Moved %lld items" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld item"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Moved %lld items back" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld item back"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld items back"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Moved %lld items to the Trash" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld item to the Trash"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld items to the Trash"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Moved to Trash" : {
 
     },
     "Name" : {
@@ -358,16 +2157,77 @@
     "New collection" : {
 
     },
+    "New in %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New in %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "New list" : {
+
+    },
+    "New list “%@” created." : {
+
+    },
+    "New project" : {
+
+    },
+    "New project “%@” created." : {
+
+    },
     "New reminder" : {
+
+    },
+    "New skill" : {
+
+    },
+    "New topic" : {
+
+    },
+    "New topic “%@” created." : {
+
+    },
+    "No access to your files or the internet" : {
+
+    },
+    "No collections yet" : {
+
+    },
+    "No files found" : {
+
+    },
+    "No internet connection." : {
+
+    },
+    "No matching notes" : {
 
     },
     "No outcome" : {
 
     },
+    "No readable text" : {
+
+    },
+    "No upcoming reminders" : {
+
+    },
+    "Not available" : {
+
+    },
     "Not now" : {
 
     },
+    "Note" : {
+
+    },
     "Notebook" : {
+
+    },
+    "Notes" : {
 
     },
     "Notes, reminders and watches work without AI. AI is only used for questions and open-ended requests." : {
@@ -376,22 +2236,82 @@
     "Nothing beyond its own data folder." : {
 
     },
+    "Nothing found" : {
+
+    },
     "Nothing found." : {
+
+    },
+    "Nothing here yet" : {
+
+    },
+    "Nothing is being watched" : {
+
+    },
+    "Nothing remembered yet" : {
 
     },
     "Nothing sent yet. After your first question, you'll see here exactly what went out." : {
 
     },
+    "Nothing was changed." : {
+
+    },
+    "Nothing was moved." : {
+
+    },
+    "Notify the user" : {
+
+    },
+    "Notify: %@" : {
+
+    },
     "Now" : {
+
+    },
+    "Only urgent things will interrupt you." : {
+
+    },
+    "Only you or Sidefolk itself can create skills." : {
+
+    },
+    "Only you or Sidefolk itself can delete skills." : {
+
+    },
+    "Only you, or Sidefolk after you approve the exact command, can set up a command watcher." : {
+
+    },
+    "Only you, or Sidefolk with your approval, can set up a command watcher." : {
 
     },
     "Open" : {
 
     },
+    "Open %@" : {
+
+    },
+    "Open %@ in your browser" : {
+
+    },
+    "Open Settings › AI and paste the key again." : {
+
+    },
     "Open Sidefolk" : {
 
     },
+    "Open Terminal, run claude and sign in, then try again." : {
+
+    },
+    "Open a link" : {
+
+    },
+    "Open an app" : {
+
+    },
     "Open at login" : {
+
+    },
+    "Open folder" : {
 
     },
     "Open link" : {
@@ -400,16 +2320,132 @@
     "Open session" : {
 
     },
+    "Opened %@" : {
+
+    },
+    "Opening apps and links" : {
+
+    },
     "Or type a different answer above." : {
+
+    },
+    "Other agents already have %lld watches running. Stop one first." : {
+
+    },
+    "Other agents already have as many reminders set as Sidefolk allows." : {
+
+    },
+    "Output: %@" : {
+
+    },
+    "PDF, %lld pages" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "PDF, %lld page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "PDF, %lld pages"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Paste the key again in Settings › AI to use it with %@." : {
 
     },
     "Pause" : {
 
     },
+    "Pause a watcher" : {
+
+    },
+    "Pause “%@”" : {
+
+    },
+    "Paused %@" : {
+
+    },
     "Permission request: %@" : {
 
     },
+    "Pick a time in the future." : {
+
+    },
+    "Pick another name." : {
+
+    },
+    "Pick…" : {
+
+    },
+    "Plain http is only allowed for servers on this Mac. Nothing was saved." : {
+
+    },
     "Presets" : {
+
+    },
+    "Process %@" : {
+
+    },
+    "Put %lld items back" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Put %lld item back"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Put %lld items back"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Put back the skill “%@”" : {
+
+    },
+    "Quiet is off." : {
+
+    },
+    "Quiet off" : {
+
+    },
+    "Quiet until %@" : {
+
+    },
+    "Quiet until %@." : {
+
+    },
+    "Quiet until you turn it off" : {
+
+    },
+    "Quiet until you turn it off." : {
+
+    },
+    "Read Sidefolk's status" : {
+
+    },
+    "Read a file" : {
+
+    },
+    "Read a web page" : {
 
     },
     "Read and change" : {
@@ -418,7 +2454,62 @@
     "Read only" : {
 
     },
+    "Read the clipboard" : {
+
+    },
+    "Read the file %@" : {
+
+    },
+    "Read the text on your clipboard" : {
+
+    },
+    "Read the web page %@" : {
+
+    },
+    "Reading files" : {
+
+    },
+    "Reinstall Claude Code or choose another provider in Settings › AI." : {
+
+    },
+    "Reinstall Claude Code or choose another provider." : {
+
+    },
+    "Remember about you" : {
+
+    },
+    "Remember in About you" : {
+
+    },
+    "Remember: “%@”" : {
+
+    },
+    "Remembered" : {
+
+    },
+    "Remembered “%@” again" : {
+
+    },
+    "Remind me" : {
+
+    },
     "Remind me…" : {
+
+    },
+    "Remind you “%@” %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remind you “%1$@” %2$@"
+          }
+        }
+      }
+    },
+    "Reminder" : {
+
+    },
+    "Reminders" : {
 
     },
     "Remove" : {
@@ -433,28 +2524,134 @@
     "Remove key" : {
 
     },
+    "Remove or rename it, then try again." : {
+
+    },
     "Remove the key and switch" : {
+
+    },
+    "Remove the skill “%@”" : {
+
+    },
+    "Remove these results" : {
+
+    },
+    "Remove what's left in Finder (or Keychain Access), then quit Sidefolk." : {
+
+    },
+    "Remove “%@”" : {
+
+    },
+    "Removed the folder %@" : {
+
+    },
+    "Removed “%@”" : {
+
+    },
+    "Removes Sidefolk's hooks from Claude Code. Your other hooks stay." : {
+
+    },
+    "Removes [%@] from Codex's config. The rest stays." : {
+
+    },
+    "Removes the MCP server “sidefolk” from Claude Code. Other servers stay." : {
+
+    },
+    "Rename %@ to “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename %1$@ to “%2$@”"
+          }
+        }
+      }
+    },
+    "Rename a file" : {
 
     },
     "Rename collection" : {
 
     },
+    "Renamed" : {
+
+    },
+    "Renamed “%@” back" : {
+
+    },
     "Rename…" : {
+
+    },
+    "Restart now" : {
 
     },
     "Restore" : {
 
     },
+    "Restore it from the Trash first." : {
+
+    },
+    "Restored the previous clipboard" : {
+
+    },
+    "Restored “%@”" : {
+
+    },
     "Resume" : {
 
     },
+    "Resume a watcher" : {
+
+    },
+    "Resume “%@”" : {
+
+    },
+    "Resumed %@" : {
+
+    },
     "Review changed tools…" : {
+
+    },
+    "Review it in Settings › Extensions › %@." : {
 
     },
     "Revoke" : {
 
     },
     "Revoke %@" : {
+
+    },
+    "Right away" : {
+
+    },
+    "Right away in %@" : {
+
+    },
+    "Run claude in Terminal to see what's wrong." : {
+
+    },
+    "Run sidefolk ext validate on its folder: it starts the program in the same sandbox and shows what it prints." : {
+
+    },
+    "Run “%@” on a schedule" : {
+
+    },
+    "Run “ollama pull %@”, or choose another model in Settings › AI." : {
+
+    },
+    "Running commands" : {
+
+    },
+    "Runs with your full permissions: it can read and change your files, use the internet and run programs" : {
+
+    },
+    "SKILL.md must start with a --- frontmatter block." : {
+
+    },
+    "SKILL.md's frontmatter isn't closed with ---." : {
+
+    },
+    "Same as the Mac (%@)" : {
 
     },
     "Save" : {
@@ -466,7 +2663,26 @@
     "Save as task" : {
 
     },
+    "Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first." : {
+
+    },
     "Save key" : {
+
+    },
+    "Save to notebook" : {
+
+    },
+    "Save “%@” to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save “%1$@” to %2$@"
+          }
+        }
+      }
+    },
+    "Saved to %@" : {
 
     },
     "Search" : {
@@ -474,6 +2690,26 @@
     },
     "Search %@" : {
 
+    },
+    "Search %@ for “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search %1$@ for “%2$@”"
+          }
+        }
+      }
+    },
+    "Search %@ in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search %1$@ in %2$@"
+          }
+        }
+      }
     },
     "Search everything" : {
 
@@ -484,7 +2720,26 @@
     "Search in" : {
 
     },
+    "Search notebook" : {
+
+    },
+    "Search your notes for “%@”" : {
+
+    },
+    "Search your notes for “%@” in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search your notes for “%1$@” in %2$@"
+          }
+        }
+      }
+    },
     "Send your saved key to %@?" : {
+
+    },
+    "Set a reminder" : {
 
     },
     "Set up AI…" : {
@@ -493,19 +2748,73 @@
     "Show" : {
 
     },
+    "Show %@ in Finder" : {
+
+    },
     "Show in Finder" : {
 
     },
     "Show welcome" : {
 
     },
+    "Showing in Finder" : {
+
+    },
     "Sidefolk" : {
+
+    },
+    "Sidefolk couldn't settle the permissions for this action." : {
+
+    },
+    "Sidefolk doesn't create hidden files or folders (names starting with a dot)." : {
+
+    },
+    "Sidefolk doesn't offer a tool called %@ to other agents." : {
+
+    },
+    "Sidefolk doesn't touch %@ — it's protected." : {
+
+    },
+    "Sidefolk doesn't touch hidden files or folders." : {
+
+    },
+    "Sidefolk doesn't work on the whole disk." : {
 
     },
     "Sidefolk keeps these in mind in every conversation. Change or delete anything." : {
 
     },
+    "Sidefolk only works inside your own home folder." : {
+
+    },
+    "Sidefolk status" : {
+
+    },
+    "Sidefolk stopped using Claude Code because it couldn't keep it isolated." : {
+
+    },
+    "Sidefolk tools in Claude Code" : {
+
+    },
+    "Sidefolk tools in Codex" : {
+
+    },
+    "Sidefolk won't run Claude Code from there: %@" : {
+
+    },
+    "Sidefolk won't run Claude Code: %@" : {
+
+    },
+    "Sidefolk's AI folder isn't private." : {
+
+    },
+    "Sidefolk's tools didn't connect to Claude Code." : {
+
+    },
     "Size" : {
+
+    },
+    "Size unchanged" : {
 
     },
     "Small" : {
@@ -514,13 +2823,84 @@
     "Snooze" : {
 
     },
+    "Snooze a reminder" : {
+
+    },
+    "Snooze a reminder %@" : {
+
+    },
+    "Snooze needs a time in the future." : {
+
+    },
     "Snooze “%@”" : {
+
+    },
+    "Snoozed to %@" : {
+
+    },
+    "Something called %@ already uses the id %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Something called %1$@ already uses the id %2$@."
+          }
+        }
+      }
+    },
+    "Something went wrong while I was thinking. Nothing was changed." : {
+
+    },
+    "Something went wrong while checking." : {
+
+    },
+    "Spotlight search isn't available on this Mac." : {
+
+    },
+    "Start an email" : {
+
+    },
+    "Start an email to %@" : {
+
+    },
+    "Start an email to %@ about “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Start an email to %1$@ about “%2$@”"
+          }
+        }
+      }
+    },
+    "Started an email" : {
 
     },
     "Stop" : {
 
     },
     "Stop watching" : {
+
+    },
+    "Stop watching %@" : {
+
+    },
+    "Stop watching “%@”" : {
+
+    },
+    "Stopped watching %@" : {
+
+    },
+    "Stopped. Nothing was changed." : {
+
+    },
+    "Stops after telling you once" : {
+
+    },
+    "System Settings is open — switch Sidefolk on there." : {
+
+    },
+    "System information" : {
 
     },
     "Tags" : {
@@ -532,6 +2912,33 @@
     "Tap me when a session needs you" : {
 
     },
+    "Task" : {
+
+    },
+    "Tasks" : {
+
+    },
+    "Tell me what to look for on the page, or to watch for any change." : {
+
+    },
+    "Tell me what to watch (“target”)." : {
+
+    },
+    "Tell me which command to run." : {
+
+    },
+    "Tell me which file or folder to watch." : {
+
+    },
+    "Tell me which program to watch, by name or by its process number." : {
+
+    },
+    "Tell me which web address to watch." : {
+
+    },
+    "Tell you when %@ quits" : {
+
+    },
     "Test connection" : {
 
     },
@@ -541,10 +2948,335 @@
     "Text" : {
 
     },
+    "That PDF has no text I can read (it may be scanned pages)." : {
+
+    },
+    "That PDF is larger than %@, too big for me to read." : {
+
+    },
+    "That PDF is password protected, so I can't read it." : {
+
+    },
+    "That address is a %@ file, not a web page or text I can read." : {
+
+    },
+    "That address isn't a web page or text (it sent “%@”)." : {
+
+    },
+    "That address sent me around in circles (too many redirects)." : {
+
+    },
+    "That app already has %lld watchers going. Stop one first." : {
+
+    },
+    "That command is too long to watch." : {
+
+    },
+    "That didn't work: %@" : {
+
+    },
+    "That extension has problems." : {
+
+    },
+    "That extension is no longer installed." : {
+
+    },
+    "That extension is turned off." : {
+
+    },
+    "That file changed while I was opening it, so I stopped." : {
+
+    },
+    "That file was left as it was." : {
+
+    },
+    "That folder can't be shared with Sidefolk." : {
+
+    },
+    "That folder has too many items for me to watch." : {
+
+    },
+    "That folder hasn't been shared with Sidefolk." : {
+
+    },
+    "That folder isn't a Sidefolk extension." : {
+
+    },
+    "That isn't a valid process number." : {
+
+    },
+    "That isn't a valid web address. It should look like https://example.com/page, with no spaces." : {
+
+    },
+    "That isn't a web address. Nothing was saved." : {
+
+    },
+    "That isn't an ordinary file, so I won't open it." : {
+
+    },
+    "That isn't one of the facts about you. Use the notes tools for notes." : {
+
+    },
+    "That location is too broad to share. Add a specific folder in Settings › Privacy & Permissions." : {
+
+    },
+    "That looks like a binary file (an image, archive or app), so I can't read it as text." : {
+
+    },
+    "That matches more than one watcher: %@. Use the id." : {
+
+    },
+    "That name is too long." : {
+
+    },
     "That needs AI — or I can do this:" : {
 
     },
+    "That needs AI, which isn't set up yet." : {
+
+    },
     "That needs AI, which isn't set up." : {
+
+    },
+    "That note is already in the Trash." : {
+
+    },
+    "That note is in the Trash, so I left it alone." : {
+
+    },
+    "That path isn't allowed (it has “..” in it, or a link that goes nowhere)." : {
+
+    },
+    "That path isn't allowed (relative, “..”, or a broken link)." : {
+
+    },
+    "That program" : {
+
+    },
+    "That reminder was cancelled, so there's nothing to mark done." : {
+
+    },
+    "That repeat ends before it starts." : {
+
+    },
+    "That request didn't fit the tool: %@" : {
+
+    },
+    "That secure (https) address tried to send me to an insecure (http) one, so I stopped." : {
+
+    },
+    "That time has already passed." : {
+
+    },
+    "That time has passed." : {
+
+    },
+    "That took too long, so I stopped. Nothing was changed." : {
+
+    },
+    "That was more than the model can read at once. Nothing was changed." : {
+
+    },
+    "That web address has no site name in it." : {
+
+    },
+    "That web address is too long." : {
+
+    },
+    "That's a fact in “About you”. Use the profile tools to change it." : {
+
+    },
+    "That's a fact in “About you”. Use “forget” to remove it." : {
+
+    },
+    "That's a folder, not a file." : {
+
+    },
+    "That's too many items at once (the limit is %lld)." : {
+
+    },
+    "That's too many recipients (the limit is 10)." : {
+
+    },
+    "That's too much text for the clipboard (the limit is %@ characters)." : {
+
+    },
+    "The check was stopped." : {
+
+    },
+    "The clipboard has changed since, so I left it alone." : {
+
+    },
+    "The command took longer than %lld seconds, so I stopped it." : {
+
+    },
+    "The connection dropped." : {
+
+    },
+    "The extension changed while it was being copied. Try again." : {
+
+    },
+    "The extension contains a link (%@). Extensions can't contain links." : {
+
+    },
+    "The extension folder is missing." : {
+
+    },
+    "The extension has more than %lld files." : {
+
+    },
+    "The extension is larger than 200 MB." : {
+
+    },
+    "The extension stopped while it was being installed." : {
+
+    },
+    "The extension's folders are nested too deeply." : {
+
+    },
+    "The extension's sandbox couldn't use %@." : {
+
+    },
+    "The file pattern should be a short name pattern like *.pdf." : {
+
+    },
+    "The folder %@ doesn't exist." : {
+
+    },
+    "The folder this command runs in has changed or is gone." : {
+
+    },
+    "The folder to run in needs a full path without “..”." : {
+
+    },
+    "The installed copy didn't pass Sidefolk's checks." : {
+
+    },
+    "The manifest describes %@, but the program doesn't offer a tool by that name." : {
+
+    },
+    "The manifest describes %@, but the program doesn't offer tools by that name." : {
+
+    },
+    "The model “%@” can't use tools, so I can't act with it. Nothing was changed." : {
+
+    },
+    "The next one would be %@; ask the user whether that works, or pick another time." : {
+
+    },
+    "The notebook" : {
+
+    },
+    "The page came back empty." : {
+
+    },
+    "The page said %@." : {
+
+    },
+    "The program offers %@, which the manifest doesn't describe, so it runs as medium risk with default settings." : {
+
+    },
+    "The program offers %@, which the manifest doesn't describe, so they run as medium risk with default settings." : {
+
+    },
+    "The request is nested too deeply." : {
+
+    },
+    "The request is too large." : {
+
+    },
+    "The request waited too long for your answer." : {
+
+    },
+    "The request was missing “%@”." : {
+
+    },
+    "The request was withdrawn before it ran." : {
+
+    },
+    "The scripted model has no more turns." : {
+
+    },
+    "The search took too long, so I stopped it." : {
+
+    },
+    "The server stopped while it was being added." : {
+
+    },
+    "The site answered “%lld %@”, so there's no page to read." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The site answered “%1$lld %2$@”, so there's no page to read."
+          }
+        }
+      }
+    },
+    "The site didn't answer in time." : {
+
+    },
+    "The site refused the connection." : {
+
+    },
+    "The site took too long to answer." : {
+
+    },
+    "The site's security certificate isn't valid." : {
+
+    },
+    "The skill needs a description." : {
+
+    },
+    "The skill's name must match its folder." : {
+
+    },
+    "The text to look for is too long (200 characters at most)." : {
+
+    },
+    "The tool %@ isn't available here." : {
+
+    },
+    "The watcher doesn't have a setting called “%@”." : {
+
+    },
+    "The watcher needs “%@”." : {
+
+    },
+    "The watcher's saved state is too large." : {
+
+    },
+    "The watcher's settings must be an object." : {
+
+    },
+    "The words to look for are too long (200 characters at most)." : {
+
+    },
+    "There are files in %@ now, so I left the folder." : {
+
+    },
+    "There are too many files called “%@” in that folder already." : {
+
+    },
+    "There's already a collection called “%@”." : {
+
+    },
+    "There's already a file called %@ there, so I can't make a folder with that name." : {
+
+    },
+    "There's already a skill called “%@”." : {
+
+    },
+    "There's already something called “%@” in that folder, so I didn't rename it." : {
+
+    },
+    "There's no collection called “%@”, and other apps can't create one." : {
+
+    },
+    "There's no space left to do that." : {
+
+    },
+    "There's nothing for me to work on yet." : {
 
     },
     "Think harder" : {
@@ -556,22 +3288,88 @@
     "This can't be undone." : {
 
     },
+    "This command watcher wasn't made by you, so I won't run it." : {
+
+    },
+    "This extension can't be installed." : {
+
+    },
     "This removes every note, reminder, watcher, folder grant and extension, your history and logs, and the keys saved in your Keychain. Sidefolk starts fresh. This can't be undone." : {
+
+    },
+    "This server can't be added." : {
+
+    },
+    "This version of Claude Code can't be run safely by Sidefolk." : {
+
+    },
+    "This watcher has no command." : {
+
+    },
+    "This watcher has no path." : {
+
+    },
+    "This watcher has no web address." : {
 
     },
     "Title" : {
 
     },
+    "Today" : {
+
+    },
+    "Tomorrow" : {
+
+    },
+    "Too many or too long arguments." : {
+
+    },
     "Trash" : {
+
+    },
+    "Try a more specific search or a smaller folder." : {
 
     },
     "Try a sample:" : {
 
     },
+    "Try a shorter request, or start a fresh conversation." : {
+
+    },
     "Try again" : {
 
     },
+    "Try again in a moment." : {
+
+    },
+    "Try again later or switch provider in Settings › AI." : {
+
+    },
+    "Try again, or ask for something smaller." : {
+
+    },
+    "Try again, or restart Sidefolk." : {
+
+    },
+    "Try again; if it keeps happening, check Claude Code in Terminal." : {
+
+    },
+    "Try asking in a different way." : {
+
+    },
+    "Try rephrasing it. If it keeps happening, check the model in Settings › AI." : {
+
+    },
+    "Try “in 20 min” or “tomorrow 9:00”." : {
+
+    },
+    "Try “tomorrow 9am” or “every monday at 10”." : {
+
+    },
     "Turn off" : {
+
+    },
+    "Type a request, or drop something on me." : {
 
     },
     "Type delete to confirm" : {
@@ -592,6 +3390,12 @@
     "Undo" : {
 
     },
+    "Undo done" : {
+
+    },
+    "Undo snooze" : {
+
+    },
     "Uninstall" : {
 
     },
@@ -601,16 +3405,61 @@
     "Uninstall…" : {
 
     },
+    "Unknown tool" : {
+
+    },
     "Until tomorrow morning" : {
 
     },
     "Untitled" : {
 
     },
+    "Update Claude Code (claude update) or choose another provider." : {
+
+    },
+    "Updated idea" : {
+
+    },
+    "Updated link" : {
+
+    },
+    "Updated note" : {
+
+    },
+    "Updated task" : {
+
+    },
+    "Use a full address like https://api.openai.com/v1 or http://localhost:11434/v1." : {
+
+    },
     "Use a model" : {
 
     },
+    "Use an https address." : {
+
+    },
+    "Use an https:// address, or http://localhost for Ollama and LM Studio." : {
+
+    },
+    "Use files.list to see what's inside." : {
+
+    },
+    "Use files.read to read it." : {
+
+    },
     "Use my key with %@" : {
+
+    },
+    "Use something like “tomorrow 9am”, “in 20 minutes”, “friday at 3pm”, “every weekday at 9” or an ISO date such as 2025-11-12T09:00:00." : {
+
+    },
+    "Use the program's name, like Xcode, not a path." : {
+
+    },
+    "Use “remember” for facts and preferences." : {
+
+    },
+    "Using %@" : {
 
     },
     "Version %@ · from %@" : {
@@ -623,16 +3472,122 @@
         }
       }
     },
+    "Wait a minute and try again." : {
+
+    },
+    "Waiting a moment before asking that site again." : {
+
+    },
+    "Waiting for you" : {
+
+    },
     "Waiting since %@" : {
 
     },
     "Watch" : {
 
     },
+    "Watch %@" : {
+
+    },
+    "Watch %@ exits" : {
+
+    },
+    "Watch %@ for changes" : {
+
+    },
+    "Watch %@ for new files" : {
+
+    },
+    "Watch %@ for “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Watch %1$@ for “%2$@”"
+          }
+        }
+      }
+    },
+    "Watch %@ goes down" : {
+
+    },
+    "Watch %@ is up" : {
+
+    },
+    "Watch %@ until it says “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Watch %1$@ until it says “%2$@”"
+          }
+        }
+      }
+    },
+    "Watch again" : {
+
+    },
+    "Watch for %@ to appear" : {
+
+    },
+    "Watch for %@ to disappear" : {
+
+    },
+    "Watch something" : {
+
+    },
     "Watch something…" : {
 
     },
+    "Watch whether %@ is up" : {
+
+    },
+    "Watch with a command" : {
+
+    },
+    "Watch with an extension" : {
+
+    },
+    "Watch “%@” from %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Watch “%1$@” from %2$@"
+          }
+        }
+      }
+    },
+    "Watching" : {
+
+    },
+    "Watching %@ again" : {
+
+    },
+    "Watching %@ every %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Watching %1$@ every %2$@"
+          }
+        }
+      }
+    },
+    "Watching: %@" : {
+
+    },
+    "Web addresses with a name and password in them aren't allowed." : {
+
+    },
+    "Web page" : {
+
+    },
     "What" : {
+
+    },
+    "What I know about you" : {
 
     },
     "When" : {
@@ -644,28 +3599,460 @@
     "When, like “tomorrow 9:00”" : {
 
     },
+    "While you were away: %lld things" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "While you were away: %lld thing"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "While you were away: %lld things"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Write a %@" : {
 
     },
     "Write anything…" : {
 
     },
+    "Yesterday" : {
+
+    },
+    "Yesterday has passed." : {
+
+    },
+    "You asked %@ %@." : {
+      "comment" : "A day like “Nov 12”, then a time",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You asked %1$@ %2$@."
+          }
+        }
+      }
+    },
+    "You asked today %@." : {
+
+    },
+    "You asked yesterday %@." : {
+
+    },
+    "You can change it in System Settings › General › Login Items." : {
+
+    },
+    "You said no." : {
+
+    },
+    "Your %@ account is out of credit. Nothing was changed." : {
+
+    },
+    "Your API key was saved for a different address, so I didn't send it. Nothing was changed." : {
+
+    },
+    "Your Anthropic API key was rejected. Nothing was changed." : {
+
+    },
+    "Your Anthropic key isn't allowed to do that. Nothing was changed." : {
+
+    },
     "Your key was saved for %@. Sidefolk only sends a key to the server it was saved for." : {
+
+    },
+    "Your other hooks stay as they are." : {
+
+    },
+    "Zipping the diagnostics failed." : {
+
+    },
+    "a collection called “%@”" : {
+
+    },
+    "a collection needs a name." : {
+
+    },
+    "a file" : {
+
+    },
+    "a folder" : {
+
+    },
+    "a list" : {
+
+    },
+    "a name is required." : {
+
+    },
+    "a note with that id" : {
+
+    },
+    "a number" : {
+
+    },
+    "a path is required." : {
+
+    },
+    "a question is needed" : {
+
+    },
+    "a remembered fact with that id" : {
+
+    },
+    "a reminder with id %@" : {
+
+    },
+    "a session" : {
+
+    },
+    "a skill called “%@”" : {
+
+    },
+    "a title is needed" : {
+
+    },
+    "a watcher called “%@”" : {
+
+    },
+    "a watcher “%@” in an enabled extension “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "a watcher “%1$@” in an enabled extension “%2$@”"
+          }
+        }
+      }
+    },
+    "a web page" : {
+
+    },
+    "a whole number" : {
+
+    },
+    "active" : {
+
+    },
+    "an app" : {
+
+    },
+    "an extension" : {
+
+    },
+    "an extension called %@" : {
+
+    },
+    "an item" : {
+
+    },
+    "an object" : {
 
     },
     "and %lld more" : {
 
     },
+    "change that" : {
+
+    },
+    "checking now" : {
+
+    },
+    "checking “%@”" : {
+
+    },
+    "command" : {
+
+    },
+    "couldn't move %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "couldn't move %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "couldn't read the end date “%@”" : {
+
+    },
+    "create that folder" : {
+
+    },
     "delete" : {
+
+    },
+    "done (it fired)" : {
+
+    },
+    "every %@" : {
+
+    },
+    "every %lld days" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "every %lld hours" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld hour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld hours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "every %lld months" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld month"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld months"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "every %lld weeks" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld week"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld weeks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "every %lld weeks on %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %1$lld week on %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %1$lld weeks on %2$@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "every %lld years" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld year"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "every %lld years"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "every day" : {
+
+    },
+    "every hour" : {
+
+    },
+    "every month" : {
+
+    },
+    "every week" : {
+
+    },
+    "every weekday" : {
+
+    },
+    "every year" : {
+
+    },
+    "everywhere" : {
+
+    },
+    "expired" : {
+
+    },
+    "extension and watcher are required" : {
 
     },
     "from %@" : {
 
     },
+    "give 2 to 4 different options, or none to let the user type an answer" : {
+
+    },
     "https://…" : {
 
     },
+    "ideas" : {
+      "comment" : "What a search looks through: “Search ideas”"
+    },
+    "important" : {
+
+    },
     "in %@" : {
+
+    },
+    "links" : {
+      "comment" : "What a search looks through: “Search links”"
+    },
+    "macOS didn't let me %@ at %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "macOS didn't let me %1$@ at %2$@."
+          }
+        }
+      }
+    },
+    "macOS wants you to approve Sidefolk in Login Items." : {
+
+    },
+    "mark %@" : {
+
+    },
+    "mark done" : {
+
+    },
+    "mark open" : {
+
+    },
+    "marked done" : {
+
+    },
+    "marked open" : {
+
+    },
+    "move to %@" : {
+
+    },
+    "moved to %@" : {
+
+    },
+    "next check in %@" : {
+
+    },
+    "no AI" : {
+
+    },
+    "notebook" : {
+      "comment" : "What a search looks through: “Search notebook”"
+    },
+    "notes" : {
+      "comment" : "What a search looks through: “Search notes”"
+    },
+    "nothing" : {
+
+    },
+    "nothing to change. Give new text, a collection, a status or tags." : {
+
+    },
+    "one from another app or agent (%@)" : {
+
+    },
+    "open that file" : {
+
+    },
+    "open that folder" : {
+
+    },
+    "paused" : {
+
+    },
+    "read that file" : {
+
+    },
+    "recurrence frequency must be one of %@" : {
+
+    },
+    "recurrence needs a “frequency”" : {
+
+    },
+    "rename that" : {
 
     },
     "sk-ant-…" : {
@@ -674,8 +4061,286 @@
     "sk-…" : {
 
     },
+    "snooze takes a single time, not a repeat" : {
+
+    },
+    "something" : {
+
+    },
+    "stuck: %@" : {
+
+    },
+    "tags" : {
+
+    },
+    "tasks" : {
+      "comment" : "What a search looks through: “Search tasks”"
+    },
+    "text" : {
+
+    },
+    "that watcher" : {
+
+    },
+    "the input" : {
+
+    },
+    "the watcher %@ in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the watcher %1$@ in %2$@"
+          }
+        }
+      }
+    },
+    "to %@" : {
+
+    },
+    "true or false" : {
+
+    },
+    "unknown problem" : {
+
+    },
+    "weekdays are 1 (Monday) to 7 (Sunday)" : {
+
+    },
+    "when a new file lands" : {
+
+    },
+    "when it appears" : {
+
+    },
+    "when it changes" : {
+
+    },
+    "when it exits with code %lld" : {
+
+    },
+    "when it goes down" : {
+
+    },
+    "when it goes down or comes back" : {
+
+    },
+    "when it quits" : {
+
+    },
+    "when it says “%@”" : {
+
+    },
+    "when it succeeds" : {
+
+    },
+    "when it's back up" : {
+
+    },
+    "when it's gone" : {
+
+    },
+    "when its output changes" : {
+
+    },
+    "when its output has “%@”" : {
+
+    },
+    "when something happens" : {
+
+    },
+    "when “%@” is gone" : {
+
+    },
+    "which address?" : {
+
+    },
+    "~/.local/bin/sidefolk already exists and isn't Sidefolk's." : {
+
+    },
     "—" : {
 
+    },
+    "“%@” %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” %2$@"
+          }
+        }
+      }
+    },
+    "“%@” became “%@” because that name was taken" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” became “%2$@” because that name was taken"
+          }
+        }
+      }
+    },
+    "“%@” can't be set for a server." : {
+
+    },
+    "“%@” can't be used as a file name. It must be just a name, with no “/”." : {
+
+    },
+    "“%@” changed since you approved it, so it is on hold." : {
+
+    },
+    "“%@” comes with Sidefolk and can't be deleted." : {
+
+    },
+    "“%@” didn't work." : {
+
+    },
+    "“%@” doesn't look like an email address." : {
+
+    },
+    "“%@” has already passed." : {
+
+    },
+    "“%@” has notes in it now, so I left it." : {
+
+    },
+    "“%@” is an unusual way to write an IP address. Write it as four plain numbers, like 93.184.216.34." : {
+
+    },
+    "“%@” is done, so it can't be snoozed." : {
+
+    },
+    "“%@” is gone from %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” is gone from %2$@"
+          }
+        }
+      }
+    },
+    "“%@” is in the past (%@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” is in the past (%2$@)."
+          }
+        }
+      }
+    },
+    "“%@” is required." : {
+
+    },
+    "“%@” is too long (the limit is %@ characters)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” is too long (the limit is %2$@ characters)."
+          }
+        }
+      }
+    },
+    "“%@” isn't an address I can use." : {
+
+    },
+    "“%@” isn't something this tool takes (it takes: %@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” isn't something this tool takes (it takes: %2$@)."
+          }
+        }
+      }
+    },
+    "“%@” isn't something this tool takes." : {
+
+    },
+    "“%@” points at this computer or your local network, so I won't fetch it." : {
+
+    },
+    "“%@” points at this computer or your local network. Ask me directly to watch it — I only watch local addresses when you ask." : {
+
+    },
+    "“%@” reported a problem" : {
+
+    },
+    "“%@” took too long, so I stopped it." : {
+
+    },
+    "“%@” was cancelled, so it can't be snoozed." : {
+
+    },
+    "“About you” already holds %lld facts." : {
+
+    },
+    "“About you” holds facts about you, so notes can't be filed there." : {
+
+    },
+    "“Inbox” is always there: it's where notes go when no collection is named." : {
+
+    },
+    "“becomes” must be up, down or any." : {
+
+    },
+    "“collection_kind” must be project, topic or list." : {
+
+    },
+    "“id” is required" : {
+
+    },
+    "“interval_minutes” must be between a fraction of a minute and 7 days." : {
+
+    },
+    "“kind” must be one of %@." : {
+
+    },
+    "“kind” must be one of note, idea, task, link." : {
+
+    },
+    "“kind” must be project, topic or list." : {
+
+    },
+    "“level” must be gentle, attention or critical" : {
+
+    },
+    "“level” must be gentle, attention or critical." : {
+
+    },
+    "“mode” must be once or repeat." : {
+
+    },
+    "“paths” needs at least one path." : {
+
+    },
+    "“status” must be open or done." : {
+
+    },
+    "“text” is required." : {
+
+    },
+    "“title” is required" : {
+
+    },
+    "“to” needs at least one email address." : {
+
+    },
+    "“when” is required" : {
+
+    },
+    "• %@ (%@, id %@): %@, every %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• %1$@ (%2$@, id %3$@): %4$@, every %5$@"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

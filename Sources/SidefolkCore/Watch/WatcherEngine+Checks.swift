@@ -99,9 +99,9 @@ extension WatcherEngine {
             let shortReason = reason.trimmingCharacters(in: CharacterSet(charactersIn: ". ")).lowercasedFirst
             // Something the person asked to be told about has stopped working: that deserves more than a 6 s whisper.
             await attention.post(AttentionRequest(
-                level: .attention, source: "watcher", title: "I can't check \(w.title): \(shortReason)",
-                body: "I'll keep trying, a little less often each time.",
-                actions: [AttentionAction(id: "stop", title: "Stop watching")], refKind: "watcher", refId: w.id))
+                level: .attention, source: "watcher", title: String(localized: "I can't check \(w.title): \(shortReason)"),
+                body: String(localized: "I'll keep trying, a little less often each time."),
+                actions: [AttentionAction(id: "stop", title: String(localized: "Stop watching"))], refKind: "watcher", refId: w.id))
         }
     }
 
@@ -111,7 +111,7 @@ extension WatcherEngine {
         case let e as WatchError: e.description
         case let e as URLPolicy.Violation: e.message
         case let e as UserFacingError: e.message
-        default: "Something went wrong while checking."
+        default: String(localized: "Something went wrong while checking.")
         }
     }
 
@@ -124,9 +124,9 @@ extension WatcherEngine {
 
     func announce(_ w: Watcher, _ result: ProbeResult) async {
         var actions: [AttentionAction] = []
-        if result.openTarget != nil { actions.append(AttentionAction(id: "open", title: "Open", isPrimary: true)) }
-        if w.mode == .once { actions.append(AttentionAction(id: "keep", title: "Keep watching", isPrimary: actions.isEmpty)) }
-        actions.append(AttentionAction(id: "stop", title: "Stop"))
+        if result.openTarget != nil { actions.append(AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)) }
+        if w.mode == .once { actions.append(AttentionAction(id: "keep", title: String(localized: "Keep watching"), isPrimary: actions.isEmpty)) }
+        actions.append(AttentionAction(id: "stop", title: String(localized: "Stop")))
 
         let title = result.summary.displaySafe.clipped(WatchLimits.summaryLimit)
         let body = result.detail?.components(separatedBy: "\n").map(\.displaySafe).filter { !$0.isEmpty }
@@ -147,9 +147,10 @@ extension WatcherEngine {
         await persist(w)
         let days = max(1, Int(((w.expiresAt ?? now).timeIntervalSince(w.createdAt) / 86400).rounded()))
         await attention.post(AttentionRequest(
-            level: .gentle, source: "watcher", title: "I stopped watching \(w.title)",
-            body: "It's been \(days) \(days == 1 ? "day" : "days"). I can start again if you still want it.",
-            actions: [AttentionAction(id: "keep", title: "Watch again", isPrimary: true), AttentionAction(id: "stop", title: "Remove")],
+            level: .gentle, source: "watcher", title: String(localized: "I stopped watching \(w.title)"),
+            body: String(localized: "It's been \(days) days. I can start again if you still want it."),
+            actions: [AttentionAction(id: "keep", title: String(localized: "Watch again"), isPrimary: true),
+                      AttentionAction(id: "stop", title: String(localized: "Remove"))],
             refKind: "watcher", refId: id))
     }
 
@@ -157,7 +158,7 @@ extension WatcherEngine {
         guard var w = watchers[id] else { return }
         w.state = .error
         w.nextCheckAt = nil
-        w.lastError = "I don't know how to watch “\(w.kind)” (the extension that provides it may be off)."
+        w.lastError = String(localized: "I don't know how to watch “\(w.kind)” (the extension that provides it may be off).")
         w.updatedAt = clock.now
         watchers[id] = w
         hub?.remove(id)

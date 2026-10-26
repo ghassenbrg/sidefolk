@@ -60,7 +60,7 @@ import Testing
         let result = try ok(await run.execute(name: "reminders.create",
                                               input: ["title": "Launch", "when": "2025-12-01T09:30:00Z", "level": "critical", "notes": "Be ready"],
                                               caller: .user))
-        #expect(result.card?.subtitle == "1 Dec 09:30")
+        #expect(result.card?.subtitle == "Dec 1 09:30")
         let saved = try #require(await t.scheduler.upcoming().first)
         #expect(saved.fireAt == t.date(2025, 12, 1, 9, 30))
         #expect(saved.level == .critical)
@@ -139,8 +139,8 @@ import Testing
         let result = try ok(await run.execute(name: "reminders.list", input: .object([:]), caller: .external(client: "claude-code")))
         let lines = result.text.split(separator: "\n").map(String.init)
         #expect(lines.count == 2)
-        #expect(lines[0] == "\(b.id) · Sooner · Today 15:00 · every day")
-        #expect(lines[1] == "\(a.id) · Later · Fri 09:00")
+        #expect(lines[0] == "\(b.id) · Sooner · Wed 22 Oct 2025 15:00 · every day")
+        #expect(lines[1] == "\(a.id) · Later · Fri 24 Oct 2025 09:00")
         #expect(result.card?.title == "2 upcoming reminders")
     }
 

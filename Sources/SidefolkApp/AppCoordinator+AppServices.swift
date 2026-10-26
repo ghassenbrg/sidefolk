@@ -14,7 +14,7 @@ extension AppCoordinator: AppServices {
                                                  caller: .user)
         switch out.status {
         case .ok: return nil
-        case .denied(let why): return UserFacingError(why)
+        case .denied(let why): return UserFacingError(verbatim: why)
         case .failed(let e): return e
         }
     }
@@ -66,10 +66,10 @@ extension AppCoordinator: AppServices {
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
         let preview = await runtime.extensions.preview(folder: folder)
         guard let manifest = preview.report.manifest else {
-            return .failure(UserFacingError("That folder isn't a Sidefolk extension.", recovery: preview.report.text.clipped(400)))
+            return .failure(UserFacingError(verbatim: String(localized: "That folder isn't a Sidefolk extension."), recovery: preview.report.text.clipped(400)))
         }
         guard preview.canInstall else {
-            return .failure(UserFacingError(preview.conflict ?? "That extension has problems.", recovery: preview.report.text.clipped(400)))
+            return .failure(UserFacingError(verbatim: preview.conflict ?? String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
         }
         let summary = preview.report.summary
         var warnings = (summary?.warnings ?? []) + preview.report.warnings
@@ -115,7 +115,7 @@ extension AppCoordinator: AppServices {
 
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError? {
         let preview = await runtime.extensions.previewMCPServer(name: name, command: command, arguments: arguments)
-        if let problem = preview.errors.first { return UserFacingError(problem) }
+        if let problem = preview.errors.first { return UserFacingError(verbatim: problem) }
         do {
             _ = try await runtime.extensions.addMCPServer(name: name, command: command, arguments: arguments)
             return nil
@@ -244,7 +244,7 @@ extension AppCoordinator: AppServices {
 
     static func userFacing(_ error: Error, fallback: String) -> UserFacingError {
         if let e = error as? UserFacingError { return e }
-        return UserFacingError(fallback, detail: String(describing: error))
+        return UserFacingError(verbatim: fallback, detail: String(describing: error))
     }
 
     static func info(_ e: SidefolkCore.ExtensionInfo, bundled: Bool) -> ExtensionInfo {
