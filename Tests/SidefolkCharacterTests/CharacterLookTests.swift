@@ -66,12 +66,29 @@ import Testing
         let face = Species.mochi.face
         var sleeping = Choreography.look(for: .sleeping)
         SoftExpressions.adapt(&sleeping, for: .sleeping, face: face)
-        #expect(sleeping.pose.eyeL == Ink.closed)
+        #expect(sleeping.pose.eyeL == Ink.closed.scaled(face.scale))
         #expect(sleeping.pose.shine == 0)
+        #expect(sleeping.pose.earFold == 1)
         var idle = Choreography.look(for: .idle)
         SoftExpressions.adapt(&idle, for: .idle, face: face)
-        #expect(idle.pose.eyeL == Ink.bead)
+        #expect(idle.pose.eyeL == Ink.bead.scaled(face.scale))
         #expect(idle.pose.mouthShown == 0)
+        #expect(idle.pose.earFold == 0)
+    }
+
+    @Test func asleepMochisEarsFoldDownAlongItsHead() {
+        let v = view(.mochi)
+        let awake = v.characterPath.boundingBoxOfPath
+        v.setState(.sleeping, animated: false)
+        let asleep = v.characterPath.boundingBoxOfPath
+        // Not standing up, and not sticking out sideways either.
+        #expect(asleep.maxY < awake.maxY - 40)
+        #expect(asleep.width < 140)
+        // Spark's antenna droops but doesn't fold.
+        let spark = view(.spark)
+        let up = spark.characterPath.boundingBoxOfPath.maxY
+        spark.setState(.sleeping, animated: false)
+        #expect(spark.characterPath.boundingBoxOfPath.maxY > up - 45)
     }
 
     @Test func aStyleRedressesInPlace() {

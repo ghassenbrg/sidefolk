@@ -1,8 +1,8 @@
 import QuartzCore
 
 /// An ear, antenna or sprout, rotating around its base. Three nested layers keep its motions
-/// apart: `root` holds its pose (rest tilt plus droop), `trail` one-shot follow-through and `sway`
-/// the gentle repeating swing.
+/// apart: `root` holds its pose (rest tilt plus droop, and the fold of soft ears), `trail` one-shot
+/// follow-through and `sway` the gentle repeating swing.
 @MainActor
 final class Appendage {
     let root: CALayer
@@ -11,6 +11,10 @@ final class Appendage {
     private let art: CALayer
     private let spec: AppendageSpec
     private(set) var angle: CGFloat
+    /// Where it sits and how it is stretched beyond its rotation: folded back, an ear seen from the
+    /// front hangs from the head's edge, shorter and a little narrower.
+    private var shift = CGPoint.zero
+    private var scale = CGSize(width: 1, height: 1)
 
     init(_ spec: AppendageSpec) {
         self.spec = spec
@@ -34,10 +38,20 @@ final class Appendage {
         art.addSublayer(placed)
     }
 
-    /// Positive `droop` turns it outward and down, negative perks it up.
-    func pose(_ droop: CGFloat, _ transit: Transit) {
-        angle = spec.angle - spec.side * droop
-        Motion.set(root, "transform", Motion.transform(CGAffineTransform(rotationAngle: angle)), transit)
+    /// Positive `droop` turns it outward and down, negative perks it up. A soft ear folding back
+    /// (`fold` 1) lies down along the head: turned further out, foreshortened, a little narrower.
+    func pose(_ droop: CGFloat, fold: CGFloat, _ transit: Transit) {
+        let folding = spec.fold
+        let f = folding == nil ? 0 : fold
+        angle = spec.angle - spec.side * (droop + f * (folding?.turn ?? 0))
+        shift = pt(spec.side * f * (folding?.shift.x ?? 0), f * (folding?.shift.y ?? 0))
+        scale = CGSize(width: 1 - f * 0.1, height: 1 - f * (1 - (folding?.length ?? 1)))
+        Motion.set(root, "transform", Motion.transform(placement), transit)
+    }
+
+    /// Pose transform around the base: stretch, turn, then slide.
+    private var placement: CGAffineTransform {
+        CGAffineTransform(translationX: shift.x, y: shift.y).rotated(by: angle).scaledBy(x: scale.width, y: scale.height)
     }
 
     /// A damped flop outward and back, as when the body jumps and lands.
@@ -63,7 +77,7 @@ final class Appendage {
 
     /// Its outline at the current pose, in the coordinates of the layer it hangs from.
     var outline: CGPath {
-        Paths.transformed(spec.outline, CGAffineTransform(translationX: spec.base.x, y: spec.base.y).rotated(by: angle))
+        Paths.transformed(spec.outline, placement.concatenating(CGAffineTransform(translationX: spec.base.x, y: spec.base.y)))
     }
 }
 
@@ -74,7 +88,7 @@ enum Wardrobe {
     static func scarf(_ collar: Collar, _ color: RGB) -> CALayer {
         let root = Layers.canvas()
         let shape = ScarfShape(collar)
-        let shading = Shading(colors: [color.lighter(0.3), color.lighter(0.08), color, color.darker(0.12), color.darker(0.24)],
+        let shading = Shading(colors: [color.lighter(0.32), color.lighter(0.12), color, color.darker(0.09), color.darker(0.18)],
                               locations: [0, 0.3, 0.58, 0.84, 1], center: CGPoint(x: 0.32, y: 0.8),
                               reach: CGSize(width: 1.0, height: 1.2))
         let wrap = SoftShape(shape.band, shading: shading)
@@ -124,14 +138,14 @@ private struct ScarfShape {
         let band = CGMutablePath()
         band.move(to: pt(c.x - w, c.y + h / 2))
         band.addQuadCurve(to: pt(c.x + w, c.y + h / 2), control: pt(c.x, c.y + h / 2 - collar.sag * 2))
-        band.addQuadCurve(to: pt(c.x + w, c.y - h / 2), control: pt(c.x + w + h * 0.45, c.y))
+        band.addQuadCurve(to: pt(c.x + w, c.y - h / 2), control: pt(c.x + w + h * 0.55, c.y))
         band.addQuadCurve(to: pt(c.x - w, c.y - h / 2), control: pt(c.x, c.y - h / 2 - collar.sag * 2))
-        band.addQuadCurve(to: pt(c.x - w, c.y + h / 2), control: pt(c.x - w - h * 0.45, c.y))
+        band.addQuadCurve(to: pt(c.x - w, c.y + h / 2), control: pt(c.x - w - h * 0.55, c.y))
         band.closeSubpath()
         self.band = band
         knot = pt(c.x + w * 0.4, c.y - h * 0.1)
         tailWidth = h * 1.05
-        tailLength = h * 2.05
+        tailLength = h * collar.tail
         hang = CGAffineTransform(translationX: knot.x, y: knot.y).rotated(by: 0.26)
         let top = tailWidth * 0.42, bottom = tailWidth * 0.56, round = tailWidth * 0.3
         let end = CGMutablePath()

@@ -96,6 +96,16 @@ struct AppendageSpec {
     var outline: CGPath
     /// How far it trails behind moves, 0...1 (long ears more than a stiff antenna).
     var floppiness: CGFloat = 1
+    /// How a soft ear folds back and down along the head when asleep: its base slides out to the
+    /// head's edge (`shift`, for a right ear; mirrored for a left one), it turns `turn` further
+    /// out and shows `length` of itself. Antennae and sprouts don't fold; they only droop.
+    var fold: Fold?
+
+    struct Fold {
+        var shift: CGPoint
+        var turn: CGFloat
+        var length: CGFloat
+    }
 }
 
 /// A signature thing the companion holds while nothing else is going on (idle):
@@ -125,4 +135,6 @@ struct Collar {
     var halfWidth: CGFloat
     var sag: CGFloat = 4
     var height: CGFloat = 15
+    /// How far the loose end hangs, in band heights.
+    var tail: CGFloat = 2.05
 }

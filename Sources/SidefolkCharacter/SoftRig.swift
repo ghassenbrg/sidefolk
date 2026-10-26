@@ -257,7 +257,7 @@ final class SoftRig: Figure {
         Motion.set(held, "opacity", Float(next.holding), faceTransit)
 
         for (appendage, spec) in zip(appendages, species.appendages) {
-            appendage.pose(spec.side < 0 ? next.earL : next.earR, transit)
+            appendage.pose(spec.side < 0 ? next.earL : next.earR, fold: next.earFold, transit)
         }
         // A new pose jolts the ears: they lag a moment behind the body.
         if moved { appendages.forEach { $0.flop(0.16, duration: 0.8) } }

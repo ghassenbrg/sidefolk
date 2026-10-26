@@ -67,6 +67,8 @@ On top of the shared choreography a soft rig adds:
 - **Ears.** Each `Appendage` turns around its base on three layers: pose (droop for error and sleep,
   perk for alerts, one ear up while listening), trail (a damped flop after a hop, nod or new pose, a
   swing after a shake) and sway (a slow idle swing, out of step between ears, fast while dragged).
+  Soft ears with a `Fold` (Mochi's) fold back and down along the head when asleep: the base slides
+  to the head's edge, the ear turns down and shows less of itself, like a lop ear.
   Floppiness scales all of it (Mochi's ears 1, Spark's stiff antenna 0.7, Seed's sprout 0.6).
 - **Gaze.** The eyes slide, the face slides a little further (parallax) and the head turns and tilts
   toward the pointer around the neck; ears ride on the head.
