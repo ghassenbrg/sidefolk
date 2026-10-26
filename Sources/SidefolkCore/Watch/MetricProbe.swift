@@ -9,7 +9,7 @@ public enum Metric: String, CaseIterable, Sendable {
     var title: String {
         switch self {
         case .cpu: String(localized: "CPU")
-        case .memory: String(localized: "Memory")
+        case .memory: String(localized: "metric.memory", defaultValue: "Memory", comment: "The Mac's memory (RAM) in use, as a live value; not Sidefolk's memory of you")
         case .battery: String(localized: "Battery")
         case .disk: String(localized: "Free disk")
         case .network: String(localized: "Network")

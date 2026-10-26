@@ -207,7 +207,7 @@ extension IntentParser {
         switch matches.count {
         case 0: hint = ParsedIntent.hint(String(localized: "Stop"), String(localized: "nothing like that is running"))
         case 1: hint = ParsedIntent.hint(String(localized: "Stop \(matches[0].title)"))
-        default: hint = ParsedIntent.hint(String(localized: "Stop"), String(localized: "\(matches.count) match, which one?"))
+        default: hint = ParsedIntent.hint(String(localized: "Stop"), String(localized: "\(matches.count) matches. Which one?"))
         }
         return ParsedIntent(intent: .stopWatch(ids: matches.map(\.id), words: c["what"] ?? ""), hint: hint)
     }

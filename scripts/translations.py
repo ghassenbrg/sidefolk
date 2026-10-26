@@ -5,6 +5,8 @@
   scripts/translations.py export fr todo.json [--all] what French still needs (or every string)
   scripts/translations.py check fr fr.json            validate a translation file, change nothing
   scripts/translations.py import fr fr.json           validate, then write it into the catalog
+  scripts/translations.py import fr fr.json --skip-bad   write what passes, list what doesn't
+  scripts/translations.py plural KEY ONE OTHER        give a count its English forms (count first)
 
 A translation file is one JSON object: {"English key": "translation"}, or for a count
 {"%lld notes": {"one": "...", "other": "..."}}. Import is all or nothing: one bad entry and the
@@ -196,18 +198,42 @@ def export(lang, out, everything):
     print(f"{len(items)} strings for {lang} in {out}")
 
 
+def plural(key, one, other):
+    """English one/other forms for a key whose first argument is a count, so translators get forms too."""
+    catalog = load()
+    if key not in catalog["strings"]:
+        sys.exit(f"{key!r} is not a key in the catalog; run scripts/strings.sh first")
+    source = english(key, catalog["strings"][key])
+    source = source["other"] if isinstance(source, dict) else source
+    for form in (one, other):
+        if placeholders(form) != placeholders(source):
+            sys.exit(f"{form!r} doesn't keep the key's placeholders; number them (%1$lld, %2$@) when there are several")
+    localizations = catalog["strings"][key].setdefault("localizations", {})
+    localizations["en"] = {"variations": {"plural": {"one": unit(one), "other": unit(other)}}}
+    catalog["strings"][key]["localizations"] = dict(sorted(localizations.items()))
+    save(catalog)
+
+
 def main(argv):
+    if len(argv) == 4 and argv[0] == "plural":
+        return plural(argv[1], argv[2], argv[3])
     if len(argv) >= 1 and argv[0] == "status":
         return status(load())
     if len(argv) >= 3 and argv[0] == "export":
         return export(argv[1], argv[2], "--all" in argv[3:])
-    if len(argv) == 3 and argv[0] in ("check", "import"):
+    if len(argv) in (3, 4) and argv[0] in ("check", "import") and argv[3:] in ([], ["--skip-bad"]):
         lang, path = argv[1], argv[2]
         try:
             translations = json.loads(Path(path).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as e:
             sys.exit(f"can't read {path}: {e}")
         catalog = load()
+        if argv[3:] == ["--skip-bad"] and isinstance(translations, dict):
+            # After the English changed under a finished file: keep what still fits, report the rest.
+            bad = {k for k, v in translations.items() if validate(lang, {k: v}, catalog)}
+            for k in sorted(bad):
+                print(f"skipped {k!r}")
+            translations = {k: v for k, v in translations.items() if k not in bad}
         problems = validate(lang, translations, catalog)
         for p in problems:
             print(p)

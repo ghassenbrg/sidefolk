@@ -110,6 +110,6 @@ import Testing
         let fukuoka = w(WatchKind.weather, ["place": "Fukuoka", "quantity": "temperature"], title: "Temperature in Fukuoka")
         let p = parse("stop the temperature", watching: [tokyo, fukuoka])
         #expect(p?.intent == .stopWatch(ids: [tokyo.id, fukuoka.id], words: "the temperature"))
-        #expect(p?.hint == "Stop · 2 match, which one? · no AI")
+        #expect(p?.hint == "Stop · 2 matches. Which one? · no AI")
     }
 }

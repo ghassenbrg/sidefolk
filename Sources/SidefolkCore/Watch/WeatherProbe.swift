@@ -22,7 +22,7 @@ public enum WeatherQuantity: String, CaseIterable, Sendable {
         case .feelsLike: String(localized: "Feels like in \(place)", comment: "The felt temperature in a place")
         case .humidity: String(localized: "Humidity in \(place)")
         case .wind: String(localized: "Wind in \(place)")
-        case .precipitation: String(localized: "Rain in \(place)")
+        case .precipitation: String(localized: "Rainfall in \(place)", comment: "How much rain falls in a place, as a live value")
         case .conditions: String(localized: "Weather in \(place)")
         }
     }
@@ -154,12 +154,12 @@ public struct WeatherProbe: WatcherProbe {
     /// WMO weather codes as Open-Meteo sends them, in a few words.
     static func sky(_ code: Int) -> String {
         switch code {
-        case 0: String(localized: "Clear")
+        case 0: String(localized: "sky.clear", defaultValue: "Clear", comment: "Weather: a clear sky (not the Clear button)")
         case 1, 2: String(localized: "Partly cloudy")
         case 3: String(localized: "Cloudy")
         case 45, 48: String(localized: "Fog")
         case 51...57: String(localized: "Drizzle")
-        case 61...67, 80...82: String(localized: "Rain")
+        case 61...67, 80...82: String(localized: "sky.rain", defaultValue: "Rain", comment: "Weather: it is raining")
         case 71...77, 85, 86: String(localized: "Snow")
         case 95...99: String(localized: "Thunderstorm")
         default: String(localized: "Unknown sky")
