@@ -945,7 +945,7 @@ public actor ExtensionHost {
         let id = rt.record.id
         let remote = def.name
         return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote,
-                             folderParameters: meta?.paths ?? [:]) { [weak self] input, folders in
+                             folderParameters: meta?.paths ?? [:], firstParty: firstParty) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)
         }

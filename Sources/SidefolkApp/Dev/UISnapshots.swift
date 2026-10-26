@@ -404,7 +404,7 @@ enum UISnapshots {
                                    refId: "dev.sidefolk.world-clock"), activityId: nil, undo: false),
                 caption: "what time is it in Tokyo?")
         ask.add(.approval(ApprovalRequest(tool: "ext.git.clone", title: "Clone a repository",
-                                          summary: "Clone a repository (Git) {\"destination\":\"~/git/Hello-World\",\"url\":\"https://github.com/octocat/Hello-World\"}",
+                                          summary: "Clone https://github.com/octocat/Hello-World into ~/git/Hello-World",
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
                                           canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
         return ask
