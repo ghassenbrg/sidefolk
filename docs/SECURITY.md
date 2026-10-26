@@ -54,7 +54,9 @@ Mac or the local network get no card: fetching and watching refuse them for ever
 user, and opening one in the browser sends nothing beyond the LAN. External
 agents follow T4 instead (their own context and network are already theirs). Extension and MCP
 tool descriptions never reach the model: it gets a neutral line built from the tool title and
-extension name, and the schema without its free text (descriptions stay on the install sheet).
+extension name, and the schema without its free text (descriptions stay on the install sheet). The
+exception is the extensions Sidefolk ships (origin `bundled`, installed only from the app's own signed
+Resources, D39): their descriptions are first-party text and are reviewed like prompts.
 Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), stripped of invisible
 and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
 That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
@@ -324,7 +326,15 @@ means false, ≤ 64 KiB.
 - `exec`: absolute regular files outside every writable path. Flag shells, `osascript`, `open`,
   interpreters, `curl`, `security`, `sqlite3` and `launchctl` as "can run anything".
 - Tool names: `^[a-z0-9_]{1,64}$`, namespaced, no shadowing of built-ins. Network or write
-  permissions raise every tool to at least medium.
+  permissions (fixed folders or a `"write"` folder parameter) raise every tool to at least medium.
+- `exec` entries without a path name a program Sidefolk knows (`git` only): resolved from the developer
+  folder `xcode-select` points at, the Command Line Tools, Xcode or Homebrew (never `/usr/bin` shims,
+  never by running xcrun), trusted like an interpreter (owner root or user, not group/world-writable,
+  never the root as prefix), with its fixed helper list. It isn't "can run anything": the sandbox lets it
+  exec only those helpers.
+- `icon`: a regular file inside the folder (no links), `.png` or `.pdf`, ≤ 256 KiB; a PNG's signature and
+  IHDR must say square 64–1024 px; a PDF must parse with CoreGraphics as one unencrypted, square page.
+  Never SVG. Nothing in it is executed or fetched; the app draws the pinned, installed copy.
 - The install screen names dangerous combinations, e.g. read ~/Documents + network = can upload
   them.
 
@@ -334,7 +344,11 @@ means false, ≤ 64 KiB.
   files are rejected.
 - Verify before each spawn (cached by inode+mtime, full check daily). A mismatch disables the
   extension and asks the user.
-- Updates are reinstalls with a permission diff and a tool diff.
+- Updates are reinstalls with a permission diff and a tool diff. Built-in extensions (D39) are
+  reinstalled from the app's Resources when their files differ from the installed copy; one that gains
+  a permission comes back switched off with a notice. They can't be uninstalled (they would return),
+  only switched off. A hand-installed copy with the same id is replaced only by a strictly newer
+  built-in version.
 - Pin a hash of `tools/list` (names, descriptions, schemas). A tool that changes at runtime (rug
   pull) is quarantined until approved.
 - Data lives in `ExtensionData/<id>/`. Sidefolk never loads code, skills or config from there.
@@ -348,7 +362,9 @@ the sandbox. Use a new process group and a scrubbed env: `HOME`/`TMPDIR` in the 
 manifest lists `exec` programs (or the program is `sh`). Every descendant is tracked by pid and
 start time (parent links walked every second, plus the group), so a child that calls `setsid()` is
 still stopped on disable, uninstall, quit, crash and by the watchdog. A `proc_pid_rusage` watchdog
-kills the tree at RSS > 512 MB, CPU > 50 % for 60 s, or more than 32 processes. Three crashes in
+kills the tree at RSS > 512 MB, CPU > 50 % for 60 s, or more than 32 processes. A call that names a
+folder (`tools.<name>.paths`, T26) runs in its own process whose profile adds only that folder; it is
+tracked and stopped like the main one, and ends with the call. Three crashes in
 5 min → disabled. *Residual:* a grandchild whose parent exits within the second it was forked is
 reparented to launchd before it is seen; it keeps the sandbox, and only extensions whose sheet says
 they run programs can fork at all.
@@ -367,6 +383,33 @@ call. Descriptions ≤ 1 KB, schemas ≤ 16 KB, invisible characters stripped; d
 to the user, never to the model (T2). An `isError` result's text reaches the model as untrusted
 content (≤ 4 KB). Watcher summaries ≤ 200 chars; manifest watcher titles never reach the model.
 Extensions get at most `attention`, never `critical`.
+
+**T26 Extensions the AI writes, and folders named per call (M/H), D39.** Two new ways in: Sidefolk's model
+writes program code for the person (`extensions.draft`), and an extension's tool receives a folder the
+person names in a request.
+- *Drafting:* only `Caller.user` or Sidefolk's agent, and never in a tainted turn (`Tool.refusal`, before
+  any card), so injected content can't commission code. Never offered to external agents. A draft is text
+  only: at most 20 files and 1 MB, known text extensions, plain relative names (no `..`, no dot files, no
+  links), written `O_CREAT|O_EXCL|O_NOFOLLOW` with mode 0600 into a staging folder and renamed into
+  `ExtensionDrafts/local.<name>/` (0700, under Sidefolk's data, which file tools never touch, T10). Sidefolk
+  sets `id` (`local.` prefix: never a company's or a built-in id) and `author`; `icon` is refused.
+- *Before approval:* the draft is validated (T13) and started once in a sandbox with `permissions`
+  replaced by `{}` (no network, no folders, no programs, no fork), in a throwaway Sidefolk home, for at most
+  the 30 s call limit, under the watchdog. That is the only time unapproved model-written code runs.
+- *Installing:* only the normal install sheet in Settings (permission lines, warnings, sandbox, update
+  diff, 800 ms arming), opened by `extensions.review` or by the person; the model has no install tool.
+  Installed drafts are origin `draft`, labelled "Written for you", and their descriptions don't reach the
+  model (T2, T3: they would persist into every run).
+- *Folders named per call:* the parameter goes through Guard as a read or write path (T10: shared folders,
+  protected subtrees, the folder card only for Sidefolk's agent and the user). Guard's allowed folders
+  travel in `ToolContext.folders`; at run time the tool canonicalises the path again, checks it against
+  those folders and the protected list, and passes the canonical path. The host refuses anything inside
+  Sidefolk's own data, adds the path to a fresh profile (`READ_n`/`WRITE_n`), and stops that process when
+  the call returns. A relative path is refused before any card.
+*Residual:* a person can approve a draft without reading its code (the sheet names its permissions, not
+its logic); a write folder lets an extension plant files there that other programs later trust (a git
+hook in a repository it was asked to update; Git itself runs with `core.hooksPath=/dev/null`). A
+sandbox escape in the trial would run unapproved code; the trial grants nothing and is short.
 
 ### E. Data
 
@@ -588,13 +631,21 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     through osascript); a refusal by macOS becomes the Settings card; reads taint and ask again while
     tainted; removing is refused for notes not copied, kept for cut, changed or attachment-bearing copies
     and for accounts without Recently Deleted; the scripts run against a stand-in, never the real apps.
+14. **Extensions the AI writes and folders named per call (T26):** drafts refuse non-text files, dot files,
+    `..`, an icon and oversize content, and set id and author; drafting is refused in tainted turns and for
+    every caller but the user and the agent; the trial can't read a folder the draft asks for; a folder
+    named in a call is the only one its process can read, and only read for `"read"`; an unshared folder
+    asks the agent and a "no" runs nothing; built-in extensions follow the app, keep the person's choice,
+    come back off when they gain a permission, and refuse removal; icons are checked as images only.
 
 ## 5. What Sidefolk never does
 
 - Never lets the model, routines, external agents or extensions answer approvals, create grants,
-  change settings, install extensions or touch Sidefolk's own data.
+  change settings, install extensions or touch Sidefolk's own data (the model's drafts folder is written
+  only by `extensions.draft`, T26).
 - Never runs model- or agent-written commands without the user approving the verbatim text; never
-  "always" for high risk; no AI-generated executable code.
+  "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing granted to
+  check it, then only after the person installs it from the install sheet (T26).
 - Never hard-deletes, sets exec bits or strips quarantine.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.

@@ -6,29 +6,38 @@ that speaks [MCP](https://modelcontextprotocol.io) over stdin/stdout. Sidefolk r
 a macOS sandbox built from the permissions the manifest asks for, and you see those permissions in
 plain words before you install it.
 
-Two examples live in this repository:
+Examples live in this repository:
 
 | Folder | What it shows |
 |---|---|
 | [`extensions/hello-folk`](../extensions/hello-folk) | The smallest working extension: one tool, one watcher, ~50 lines of Python. Copy it to start. |
-| [`extensions/system-vitals`](../extensions/system-vitals) | A real one: battery, disk and memory tools, `battery_low` and `disk_low` watchers, and an exec allow-list. |
+| [`extensions/system-vitals`](../extensions/system-vitals) | Battery, disk and memory tools, `battery_low` and `disk_low` watchers, and an exec allow-list. |
+| [`extensions/git`](../extensions/git) | Folders named per call (`paths`), `git` found by name, the internet, a long `timeout`. |
+| [`extensions/world-clock`](../extensions/world-clock) | No permissions at all. |
+| [`extensions/weather`](../extensions/weather) | The internet only, and a watcher that fires once per change. |
+| [`skills/sidefolk-extension/templates`](../skills/sidefolk-extension/templates) | Starting points in Python, Node and sh. |
 
-You can also add any existing MCP server (see [Plain MCP servers](#plain-mcp-servers)); it runs
-without a sandbox and is labelled that way.
+The last four ship with Sidefolk ([Built-in extensions](#built-in-extensions)). For a guided path
+through this page, install the [`sidefolk-extension` skill](../skills/sidefolk-extension/SKILL.md) in
+Claude Code or Codex. You can also add any existing MCP server (see
+[Plain MCP servers](#plain-mcp-servers)); it runs without a sandbox and is labelled that way.
 
 ## Contents
 
 1. [Quick start](#quick-start)
 2. [The manifest](#the-manifest)
-3. [Permissions and the sandbox](#permissions-and-the-sandbox)
-4. [The protocol](#the-protocol)
-5. [Tools, risk and approvals](#tools-risk-and-approvals)
-6. [Watchers](#watchers)
-7. [Testing locally](#testing-locally)
-8. [Installing, updating, removing](#installing-updating-removing)
-9. [Plain MCP servers](#plain-mcp-servers)
-10. [Troubleshooting](#troubleshooting)
-11. [Limits](#limits)
+3. [Icons](#icons)
+4. [Permissions and the sandbox](#permissions-and-the-sandbox)
+5. [The protocol](#the-protocol)
+6. [Tools, risk and approvals](#tools-risk-and-approvals)
+7. [Watchers](#watchers)
+8. [Testing locally](#testing-locally)
+9. [Installing, updating, removing](#installing-updating-removing)
+10. [Built-in extensions](#built-in-extensions)
+11. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+12. [Plain MCP servers](#plain-mcp-servers)
+13. [Troubleshooting](#troubleshooting)
+14. [Limits](#limits)
 
 ## Quick start
 
@@ -64,6 +73,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
   "description": "Battery, disk and memory at a glance.",
   "folk": "byte",
   "author": "Sidefolk",
+  "icon": "icon.pdf",
   "run": { "command": "python3", "args": ["main.py"] },
   "permissions": {
     "network": false,
@@ -92,13 +102,16 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `description` | no | At most 300 characters. |
 | `folk` | no | The folk that appears while it works, e.g. `byte`. |
 | `author` | no | At most 100 characters. |
+| `icon` | no | A square PNG (64–1024 px) or one-page square PDF in the folder, at most 256 KiB. See [Icons](#icons). |
 | `run.command` | yes | `python3`, `node` or `sh`, or a compiled program inside the folder (`bin/server`). Nothing else: no absolute paths, no other interpreters. |
 | `run.args` | depends | For `python3`/`node`/`sh` the first argument is the script, a path inside the folder (`main.py`, `src/server.js`). At most 32 arguments. |
 | `permissions.network` | no | `true` lets it use the internet. Missing means `false`. |
 | `permissions.files.read` | no | Folders it may read, absolute or starting with `~/`. |
 | `permissions.files.write` | no | Folders it may read and change. |
-| `permissions.exec` | no | Absolute paths of programs it may run, like `/usr/bin/pmset`. |
+| `permissions.exec` | no | Absolute paths of programs it may run, like `/usr/bin/pmset`, or `git` by name ([Programs by name](#programs-by-name)). |
 | `tools.<name>` | no | Sidefolk's metadata for a tool your program lists: `title`, `risk` (`low`, `medium`, `high`), `category` (`notes`, `memory`, `time`, `watch`, `files`, `web`, `system`, `agents`, `extensions`) and `mutates` (`false` if it only reads). Tool names: `^[a-z0-9_]{1,64}$`. |
+| `tools.<name>.paths` | no | Parameters that name a folder or file the person chooses, each `"read"` or `"write"` (at most 4). See [Folders named per call](#folders-named-per-call). |
+| `tools.<name>.timeout` | no | Seconds one call may take, 1–300; 30 if missing. For slow work like cloning. |
 | `watchers.<name>` | no | A watcher kind: `title` (≤ 60), `description` (≤ 300) and `config`, its settings. |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 
@@ -115,6 +128,23 @@ you, not writable by other users, and outside every folder the extension or Side
 Shells, interpreters and tools such as `osascript`, `open`, `curl`, `security`, `sqlite3` or
 `launchctl` are flagged on the install sheet as "can run anything": listing one makes the exec
 list meaningless.
+
+## Icons
+
+`"icon": "icon.png"` (or `"icon.pdf"`) names a file in the extension's folder. Sidefolk shows it in
+Settings › Extensions, on the install sheet, and on the approval and result cards of the extension's
+tools.
+
+- **PNG:** square, 64 to 1024 pixels on a side (512 is best).
+- **PDF:** exactly one page, square (within 5 %), not encrypted: vector shapes stay sharp at any size.
+- **At most 256 KiB.** SVG isn't accepted: it is XML that can point at other files and addresses. Export
+  it as PDF.
+- Draw it **full-bleed**; Sidefolk rounds the corners and adds a hairline border.
+
+The file is checked as an image only (its header, its size, one square page) at install and on every
+load, pinned with the other files, and drawn from the installed, read-only copy. Nothing in it is run,
+fetched or followed. An extension without an icon, an MCP server, or a draft gets a tile in its folk's
+colour (`folk`; one is picked from its name otherwise) with its initial.
 
 ## Permissions and the sandbox
 
@@ -166,6 +196,51 @@ Good to know:
   `com.apple.PowerManagement.control` (battery state).
 - **Folders that macOS protects** (Documents, Desktop, Downloads): macOS asks *you* whether
   Sidefolk may access them the first time your extension reads them.
+
+### Folders named per call
+
+A fixed `files.read`/`files.write` folder is open whenever the extension runs, and has to be known when
+you write the manifest. Most tools work on a folder the person names instead ("clone this into ~/git",
+"count the words in ~/Writing"). Declare which parameters are such folders:
+
+```json
+"tools": {
+  "clone": { "title": "Clone a repository", "paths": { "destination": "write" }, "timeout": 300 },
+  "status": { "title": "Repository status", "paths": { "repository": "read" } }
+}
+```
+
+For a call with such a parameter:
+
+1. Guard treats the path like a built-in file tool's: it must be inside a folder the person shared with
+   Sidefolk (Settings › Privacy & Permissions), with write access for `"write"`. If it isn't, Sidefolk's
+   agent gets the card "Let Sidefolk work in ~/git?" (other agents and extensions are refused).
+   Protected places (system folders, `~/Library`, hidden folders, Sidefolk's own data) are refused
+   whatever was shared. Then the tool's own risk decides whether it asks.
+2. Your program receives the parameter as a **full, canonical path** (`/Users/ada/git/project`, never
+   `~/…`), re-checked right before the call.
+3. The call runs in **a process of its own** whose sandbox adds exactly those paths (read-only for
+   `"read"`), started for this call and stopped when it returns. Your long-running process never gets
+   them. Each such call starts your program afresh (`initialize`, `tools/list`, the call), so keep start-up
+   quick.
+4. A relative path is refused before any card.
+
+The install sheet says "Can read and change files in a folder you name, for that request only, once you
+approve it". A `"write"` parameter raises every tool to at least medium risk, like a fixed write folder.
+
+### Programs by name
+
+Some programs live in different places on different Macs, and `/usr/bin/git` is a shim that fails inside
+the sandbox. Write `"exec": ["git"]` and Sidefolk finds the real one at install: in the developer folder
+`xcode-select` points at, the Command Line Tools, Xcode, or Homebrew (never by running `xcrun`, which can
+offer to install the developer tools). It pins the program and the helpers it starts itself (git's
+`git-remote-http`), opens its installation read-only in the sandbox, and passes its path to your
+program as `SIDEFOLK_EXEC_GIT`. `git` is the only name Sidefolk knows today. If it isn't installed,
+validation says so and suggests `xcode-select --install`.
+
+A program found by name isn't "can run anything": it may start only its own helpers. Git in the shipped
+extension still runs with `core.hooksPath=/dev/null`, https only, no credentials and no system or
+global configuration.
 - **Resources:** a watchdog stops your program (and everything it started) if it uses more than
   512 MB of memory, or more than half a CPU core for a minute.
 
@@ -205,6 +280,8 @@ a tool from the extension “System Vitals”", plus your input schema with its 
 (`description`, `title`, `examples`, `default`) removed. Give tools clear titles (the manifest's
 `tools.<name>.title`, else the program's `title`) and parameters self-explanatory names
 (`below_percent`, not `n`); types, `enum`, `minimum`/`maximum` and `maxLength` stay and are enforced.
+The one exception is Sidefolk's own [built-in extensions](#built-in-extensions): their descriptions
+ship inside the signed app, so the model reads them (D39).
 
 **Inputs are checked against your schema** before the call reaches you: wrong types, values outside
 an `enum` or a bound, strings longer than `maxLength` (100,000 characters at most), and, with
@@ -258,8 +335,8 @@ Your tool `battery` in extension `dev.sidefolk.system-vitals` becomes **`ext.sys
 | `high` | Asks you every time. |
 
 A tool's risk is what the manifest says, **medium if it says nothing**, and never below Sidefolk's
-floor: if the extension has `network`, any `files.write` folder, or an exec entry that can run
-anything, every tool is at least medium. A manifest can raise a tool's risk, never lower it.
+floor: if the extension has `network`, any `files.write` folder, a `"write"` folder parameter, or an exec entry
+that can run anything, every tool is at least medium. A manifest can raise a tool's risk, never lower it.
 Plain MCP servers are always at least medium.
 
 Tool results are marked **untrusted**: the model sees them as outside content, and while untrusted
@@ -345,6 +422,50 @@ data folder and its settings.
 after 5 minutes without use. If it stops unexpectedly 3 times within 5 minutes, Sidefolk turns it
 off and tells you.
 
+## Built-in extensions
+
+Some extensions ship with Sidefolk (`extensions/catalog.json`, copied into the app with their folders):
+
+| Extension | Starts | Permissions |
+|---|---|---|
+| Git | On | The internet, `git`, a folder named per call |
+| World Clock | On | None |
+| System Vitals | On | `pmset`, `vm_stat`, `sysctl` |
+| Weather | Off | The internet (Open-Meteo) |
+
+They are installed at launch like any extension (validated, copied, locked, pinned, started once), with
+three differences:
+
+- **They can be switched off, not uninstalled**: they would come back with the next launch.
+- **They follow the app.** At every launch Sidefolk compares the shipped files with the installed copy
+  and reinstalls when they differ (an update, or a damaged copy), keeping whether the person had it on.
+  An update that asks for more (a new permission) is installed switched off, with a notice.
+- **Their tool descriptions reach the model**: first-party text from the app, not a stranger's.
+
+If you install your own copy of a built-in extension (same id) from a folder, Sidefolk keeps it until the
+app brings a strictly newer version, then replaces it and says so. A built-in extension this Mac can't run
+(no git) is listed in Settings with the reason and a Try Again button. There is no locked "core" tier:
+see docs/research/extensions-catalog.md.
+
+## Extensions Sidefolk writes for you
+
+When a request needs something no tool does, Sidefolk's AI can offer to build an extension (the
+`build-extension` skill, D39). It proposes it in plain words and waits for a yes, then:
+
+1. `extensions.draft` writes the draft into `ExtensionDrafts/local.<name>/` under Sidefolk's data folder:
+   text files only (`.py .js .mjs .cjs .sh .json .txt .md .csv`, at most 20 files and 1 MB), never
+   executable, no icon. Sidefolk sets its id (`local.<name>`) and author ("Sidefolk, for you").
+2. The draft is checked exactly like an install, and started once **with every permission removed**
+   (no network, no folders, no programs), to see that it answers. The AI reads the result and fixes it.
+3. `extensions.review` opens the normal install preview in Settings › Extensions. The person reads what
+   it may do and installs it, or doesn't. Nothing is installed any other way.
+
+Only Sidefolk's own agent (or the person) can use these tools, never in a request that read outside
+content, and they are never offered to other agents. Drafts are listed under Settings › Extensions ›
+Drafts (Review…, Show in Finder, Move to Trash). An installed draft is "Written for you"; like any
+extension not shipped with the app, its descriptions don't reach the model, so its tools are known by
+their titles and parameter names, from the person's next request.
+
 ## Plain MCP servers
 
 Settings › Extensions › Add MCP server takes a name, a command and its arguments, for example
@@ -361,7 +482,8 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 
 | Symptom | Likely cause and fix |
 |---|---|
-| "python3 isn't installed on this Mac" | Install Apple's command line tools: `xcode-select --install`. |
+| "python3 isn't installed on this Mac", "git isn't installed on this Mac" | Install Apple's command line tools: `xcode-select --install` (or git with Homebrew). |
+| "~/x isn't shared with Sidefolk for this." | A folder parameter named a folder outside what the person shared, or one replaced by a link since Guard looked. |
 | "… must be a compiled program" | `run.command` points at a script. Use `"command": "python3", "args": ["main.py"]`. |
 | `ModuleNotFoundError` for your own module | Python's isolated mode; add your folder to `sys.path` (see above). |
 | `PermissionError: [Errno 1] Operation not permitted` | The sandbox blocked it. Add the folder to `files`, the program to `exec`, or set `network`. |
@@ -380,10 +502,12 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Manifest | 64 KiB |
 | Files in an extension | 10,000 files, 200 MB |
 | Tools / watchers per extension | 128 / 32 (a server may list at most 256 tools) |
+| Icon | 256 KiB; PNG 64–1024 px square, or a one-page square PDF |
+| Folder parameters per tool | 4 |
 | `files.read`, `files.write`, `exec` entries | 32 each |
 | Message (one line) | 1 MiB; a longer line counts as a crash |
 | Requests in flight | 16 |
-| Time per request | 30 s |
+| Time per request | 30 s; up to 300 s with `tools.<name>.timeout` |
 | Tool description / input schema | 1 KB / 16 KB |
 | Tool result shown to the model | 20 KB (an `isError` explanation: 4 KB) |
 | Processes running at once | 32, the program included |

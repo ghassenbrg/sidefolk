@@ -234,6 +234,7 @@ it is disabled with a notice. Detailed diagnostics go to the local log.
 ## 13. Post-V1 backlog (not unfinished V1)
 
 Scheduled prompts and workers, calendar awareness (EventKit), app-usage timeline and "what was I doing" recap, voice wake word,
-Apple on-device model provider, embeddings for semantic recall, extension catalog/store,
-companion-generated sandboxed code tools, Sparkle auto-update, cross-device sync, community
+Apple on-device model provider, embeddings for semantic recall, an extension directory with signed
+packages (docs/research/extensions-catalog.md; built-in extensions and AI-written ones exist, D39),
+Sparkle auto-update, cross-device sync, community
 characters and personalities, Claude Code/Codex hook-based passive session monitoring.

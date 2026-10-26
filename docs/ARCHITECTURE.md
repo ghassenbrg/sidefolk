@@ -48,6 +48,8 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 |------|-------|
 | Database | `~/Library/Application Support/Sidefolk/sidefolk.sqlite` (WAL) |
 | Extensions | `~/Library/Application Support/Sidefolk/Extensions/<id>/` |
+| Extension drafts (written by Sidefolk's AI, D39) | `~/Library/Application Support/Sidefolk/ExtensionDrafts/local.<name>/` |
+| Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/` with `catalog.json` (repo: `extensions/`) |
 | Skills | `~/Library/Application Support/Sidefolk/Skills/<name>/SKILL.md` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |
 | Brain workdir | `~/Library/Application Support/Sidefolk/brain/` (empty cwd for CLI brains) |
@@ -102,7 +104,14 @@ user folders or agent configs.
 - `EventBus` — typed broadcast (`AppEvent`) via `AsyncStream`s; UI subscribes on MainActor.
 - `ExtensionHost` (actor) — discovers manifests, validates, computes sandbox profiles, spawns
   processes, speaks MCP (`initialize`, `tools/list`, `tools/call`) plus Sidefolk watcher methods
-  (`sidefolk/watch.check`), enforces timeouts, isolates crashes, enable/disable/uninstall.
+  (`sidefolk/watch.check`), enforces timeouts, isolates crashes, enable/disable/uninstall. A call that
+  names a folder (`tools.<name>.paths`) gets a process of its own whose profile adds that folder (D39).
+  `ProgramResolver` finds programs named in `exec` (`git`); `ExtensionIcon` checks icons.
+- `BundledExtensions` (D39) — at launch, installs the app's built-in extensions on or off as
+  `catalog.json` says, reinstalls them when the shipped files change, lists the ones this Mac can't run.
+- `ExtensionDrafts` and `ExtensionBuilderTools` (D39) — `extensions.draft` (text-only drafts, validated
+  and started once with nothing granted), `extensions.review` (posts `AppEvent.reviewExtension`; the app
+  opens the install sheet), `extensions.read_draft`; the `build-extension` skill drives them.
 - `SkillLibrary` — reads skills, exposes an index to the context builder, `skills.load` tool.
 - `MacApps/` (D38) — the Mac's own apps as built-in tools: `AppleEventsRunner` runs fixed JavaScript
   for Automation programs (`OsascriptRunner`: `/usr/bin/osascript` child, script on stdin, params as
@@ -196,6 +205,7 @@ Folder with `sidefolk-extension.json`:
   "tools": { "battery": { "risk": "low", "category": "system" } },
   "watchers": { "battery_low": { "title": "Battery low", "config": { ... } } } }
 ```
+Also `icon`, and per tool `paths` (folders named per call) and `timeout` (D39).
 The process speaks MCP over stdio. Tool metadata (risk/category) comes from the manifest; tools
 not described there default to `medium`. Watchers are checked with `sidefolk/watch.check`
 `{watcher, config, state}` → `{triggered, state, summary}`. The host runs the process under

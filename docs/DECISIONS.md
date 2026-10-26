@@ -441,3 +441,75 @@ Notes' Recently Deleted folder is recognised by name, in English and in Notes' o
 (read from NotesShared's strings); where it isn't found, removing is refused. The scripts are checked against
 the apps' scripting dictionaries and a stand-in object model that the real scripts run against through
 osascript, never against real notes: the founder's manual test is the first run on a real library.
+
+### D39 — Extensions without limits: built-in extensions, folders named per call, icons, and drafts the AI writes for the person (2026-10-26)
+**What failed:** the founder typed "please clone this repository under ~/git" and Sidefolk said it lacked
+the capability. It was right: no tool runs git or writes outside the file tools' moves and renames; the
+`shell` capability only covers command watchers (T9), never a one-off command; and "What you can reach"
+(D38) told the model to say so and point at Settings › Extensions. Making it "just work" through an
+existing tool wasn't possible, and a general "run this command" tool would have been the wrong fix (below).
+**Decision:**
+- **Built-in extensions.** Sidefolk ships extensions in `extensions/`, listed in `extensions/catalog.json`
+  with whether each starts on (`BundledExtensions`). Bundled, on: Git (clone a public https repository,
+  status, pull fast-forward only, log), World Clock (time anywhere, conversions; no permissions), System
+  Vitals. Optional, off: Weather (Open-Meteo; the place asked about leaves the Mac). **No core tier:**
+  anything fundamental is a built-in tool (D38), and an addition the person can't switch off is one they
+  can't refuse. Built-ins are installed like any extension, can be switched off but not removed, and are
+  reinstalled whenever the app's copy differs from the installed one (update or damage), keeping whether
+  the person had it on; an update that asks for more is installed off, with a notice. A copy someone
+  installed by hand with the same id stays until the app brings a strictly newer version, then it is
+  replaced, with a notice. One that can't run on this Mac (no git) is listed in Settings with the reason.
+  Their tool descriptions and full schemas reach the model: first-party text inside the signed app, so
+  D24's reason (a stranger's words in every run) doesn't apply. Everything else keeps D24.
+- **Folders named per call** (`tools.<name>.paths: {"<parameter>": "read" | "write"}`). Guard treats the
+  parameter like a file tool's path (shared folders, the folder card for Sidefolk's agent, protected
+  places refused); `ToolContext.folders` carries what Guard allowed, the tool re-checks the canonical path
+  at run time and hands it to the extension, and the call runs in a process of its own whose sandbox adds
+  just those paths and ends with the call. Fixed `files.*` folders stay, for extensions that need one.
+- **Programs by name**: `"exec": ["git"]` resolves git in the developer folder `xcode-select` points at,
+  the Command Line Tools, Xcode or Homebrew (never `/usr/bin`'s xcrun shim, never by running xcrun), pins
+  it with its https helper, opens its installation read-only, and passes `SIDEFOLK_EXEC_GIT`. Not "can
+  run anything": in the sandbox it can start only its helpers. Per-tool `timeout` (≤ 300 s) for clones.
+- **Icons**: manifest `icon`, a square PNG (64–1024 px) or one-page square PDF of at most 256 KiB, checked
+  as an image only (header and size, page count and box) at install and every load, pinned with the other
+  files, drawn from the locked copy. SVG is refused (XML that can reference files and addresses). Default:
+  a tile in the folk's colour with the initial. Shown in Settings, on the install sheet, on approval cards
+  ("From the Git extension") and on result cards.
+- **The builder.** `extensions.draft`, `extensions.review` and `extensions.read_draft`, used by the
+  bundled `build-extension` skill: the AI proposes the extension in plain words and waits for a yes, writes
+  a text-only draft into `ExtensionDrafts/local.<name>/` (Sidefolk sets the id and author; no binaries,
+  links, executable bits or icon), which is validated like an install and started once with **every
+  permission removed** so the AI can fix it before anyone is asked; then `extensions.review` opens the
+  normal install preview in Settings › Extensions ("written by Sidefolk for you", Show Files). Only the
+  person's click installs it. The tools refuse other agents, routines and extensions, and any request that
+  read outside content (as command watchers do, T9). The "What you can reach" section offers to build one
+  when the tool is offered. Installed drafts are origin `draft`, "Written for you", and follow D24.
+- **For developers and companies**: `skills/sidefolk-extension/SKILL.md` (Claude Code and Codex, with
+  Python, Node and sh templates); publishing (signed packages, a directory, trust levels, updates,
+  revocation) is proposed in docs/research/extensions-catalog.md, not built.
+**Why, compared with the alternatives:**
+- *A generic "run this command" built-in tool* (shell, high risk, verbatim card): it would have cloned the
+  repository today, but with the person's full rights and Sidefolk's TCC grants (T9's residual), with
+  model-written command lines nobody can summarise, and it would make every later capability a shell
+  command instead of a typed, sandboxed, reviewable tool. Git as an extension is narrower: https only, one
+  folder per call, no credentials, no hooks.
+- *Git as a built-in tool* (like Apple Notes, D38): D38 went built-in because the sandbox denies Apple
+  Events. Git runs fine sandboxed (verified: clone, status, pull, log), so it should prove the extension
+  path instead of bypassing it.
+- *A fixed `files.write` folder for Git*: guessing `~/git` or `~/code` is wrong for most people, and it
+  would keep that folder open whenever the extension runs. Per-call folders reuse the folder grants the
+  person already manages, and the sandbox opens nothing between calls.
+- *Generic file writes for drafts* (a `files.write`-style tool): drafts live under Sidefolk's own data,
+  which file tools must never touch (T10); and a dedicated tool can enforce text-only, the id prefix, the
+  author, validation and the trial in one place. *Installing from an approval card* instead of the install
+  sheet: one more permission UI to keep honest; the sheet already shows permissions, warnings, the
+  sandbox, update diffs, and arms after 800 ms.
+- *Trusting an AI-written draft's descriptions*: the draft is the model's own words from a clean turn, but
+  they would persist into every later run (T3); skills written by the agent aren't trusted either. Titles
+  and parameter names carry enough.
+- *Locking a core extension on*: see above.
+**Implications:** SECURITY T26 (AI-written extension code; per-call folders) and §5 ("no AI-generated
+executable code" now reads "none runs outside a sandbox without an install the person approved"). A
+freshly installed extension's tools are offered from the person's next request (tools are fixed per run).
+Built-in descriptions now reach the model, so they are reviewed like prompts. Extensions still can't hold
+secrets, choose hosts, or reach Unix sockets; the catalog lists those as the next platform pieces.
