@@ -45,6 +45,8 @@ final class Director {
     var anticLayers: [CALayer] = []
     /// The latest beat of the moment that has played (0...1 of it).
     var firedBeat: Double?
+    /// Its voice is playing: nothing starts on its own meanwhile.
+    private(set) var speaking = false
     /// Where the host (the pointer) wants the eyes, and where a moment has them instead.
     var hostGaze: CGVector?
     var anticLook: CGVector?
@@ -170,6 +172,7 @@ final class Director {
     /// closes it. Nothing repeats on its own: each level the player reports is one short ease, so the
     /// mouth stops the moment the audio does. Reduced motion holds it half open instead of moving.
     func speak(_ level: CGFloat?) {
+        speaking = level != nil
         let transit: Transit = live && !reducedMotion ? .ease(level == nil ? 0.14 : 0.07) : .instant
         rig.talk(level.map { reducedMotion ? 0.5 : min(1, max(0, $0)) }, transit)
     }

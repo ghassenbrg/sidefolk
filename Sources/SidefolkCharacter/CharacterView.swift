@@ -158,6 +158,7 @@ public final class CharacterView: NSView {
     var surroundings: any Surroundings = Desktop()
 
     var isOnScreen: Bool { window?.occlusionState.contains(.visible) == true }
+    var isSpeaking: Bool { director.speaking }
 
     static func pettable(_ state: CharacterState) -> Bool { state == .idle || state == .sleeping || state == .listening }
 

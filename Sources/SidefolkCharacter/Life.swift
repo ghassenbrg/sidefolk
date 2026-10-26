@@ -143,7 +143,8 @@ final class Life {
     private func tick() {
         timer = nil
         defer { refresh() }
-        guard view.isOnScreen, view.performing == nil else { return }
+        // Not while it is in the middle of a moment or speaking (a spoken reply).
+        guard view.isOnScreen, view.performing == nil, !view.isSpeaking else { return }
         let now = senses.now
         let decision = mind.decide(posture: view.posture, quiet: now.timeIntervalSince(quietSince) * pace, sinceKey: senses.secondsSinceKey,
                                    now: now, hour: Calendar.current.component(.hour, from: now), window: senses.activeWindow,

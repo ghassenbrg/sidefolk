@@ -215,13 +215,14 @@ Opt-in, off by default, and small:
   without words. These can be **synthesized per companion** (pitch and timbre from the species:
   Mochi high and soft, Guard low), so custom companions get a voice from two numbers, with no
   recorded assets to license.
-- **Tied to the voice feature** another team is building (push-to-talk, spoken replies, a mouth
-  driven by the audio level): the rig already has a morphing mouth stroke on every face, and the
-  same `Mood`/beat mechanism can drive it. Proposal: the voice engine publishes an audio level
-  (0…1) at ~30 Hz while speaking; the `Director` maps it to the mouth (closed ‿ → small o → wide
-  pill) with a little jaw squash on the body, as a short-lived loop that stops with the speech.
-  While listening (push-to-talk held), the listening pose plus ears up; the idle scheduler pauses
-  during any voice exchange. One audio session, one volume, one "Sounds" switch for all of it.
+- **Tied to the voice feature** (D34, which landed on `main` while this was written: press and
+  hold to talk, the `hearing` state, spoken replies with `CharacterView.speak(_:)` opening the
+  mouth by the audio level). This branch is rebased on it and fits around it: the idle scheduler
+  only runs in idle (so never while hearing) and holds still while the companion speaks; moments'
+  faces never cover the talking mouth (the rig shows the speaking mouth over any pose); press and
+  hold talks, a click boops, stroking without a button pets. Next, small and natural: a nod on a
+  sentence end, ears perking when the microphone opens, a tiny jaw squash with loud syllables, all
+  as beats on the same Director. One audio session, one volume, one "Sounds" switch for all of it.
 - **Settings:** Sounds: Off / Earcons only / Earcons and character. Respect the system's mute.
 
 Not built in the POC on purpose: the audio pipeline belongs with the voice work, and a sound that

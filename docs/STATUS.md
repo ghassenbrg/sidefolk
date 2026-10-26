@@ -219,9 +219,10 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   extensions, with `companions/template/` and Miso (a cat) as examples and "Made by you" in
   Settings. A SceneKit spike (`sidefolk-3d`). Write-up, format, measurements and recommendation:
   docs/research/lively-companions.md; proposed decision at the end of DECISIONS.md (unnumbered).
-  - *Verified:* `swift build`; full serial suite (952 core + 31 character, incl. every moment of
+  - *Verified:* `swift build`; full serial suite after rebasing on `main` with the voice work
+    (1061 core + 34 character, incl. every moment of
     every companion rendered and checked inside its window); UI snapshots of Settings › Companion;
-    release CPU runs and films (`build/lively-poc/`, scripts there).
+    release CPU runs, films and recordings (`scripts/lively-poc/`, output in `build/lively-poc/`).
   - *Not verified:* the running app (another dev app was running on this Mac; one at a time):
     petting thresholds, the throw and the startle in the real companion window are untried there.
   - *Next if approved:* try it in the dev app for a day; select a custom companion in the
