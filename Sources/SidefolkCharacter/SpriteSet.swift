@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 
-/// The poses every sprite companion is drawn in: `<pose>.png` or `<pose>.webp` in its folder.
+/// The poses every sprite companion is drawn in: `<pose>.png` in its folder.
 enum SpritePose: String, CaseIterable, Sendable {
     case idle, blink, listen, think, work1, work2, write1, write2, note, alert, sad, done, wave, sit, sleep, dangle
 }
@@ -32,9 +32,8 @@ public final class SpriteSet {
     public init?(folder: URL) {
         var files: [SpritePose: URL] = [:]
         for pose in SpritePose.allCases {
-            // Redrawn PNGs replace the legacy WebPs.
-            let candidates = ["png", "webp"].map { folder.appendingPathComponent("\(pose.rawValue).\($0)") }
-            guard let file = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) else { return nil }
+            let file = folder.appendingPathComponent("\(pose.rawValue).png")
+            guard FileManager.default.fileExists(atPath: file.path) else { return nil }
             files[pose] = file
         }
         guard let idle = Self.load(files[.idle]!), let body = Self.measure(idle) else { return nil }

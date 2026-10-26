@@ -5,12 +5,19 @@ offered in Settings › Companion beside the vector Sidefolk robot (docs/DECISIO
 
 ## Source
 
-Copied unchanged from the legacy app on the `main` branch: `public/crew/pip/3d/*.webp` (the bunny,
-called Pip there; renamed Mochi because Pip is the coral folk in the Folk Family) and
-`public/crew/spark/3d/*.webp`. The legacy `art/crew/README.md` describes how they were made: two
-4×2 pose sheets per character, generated with Codex image generation from the founder's reference
-photos (24 October 2026), then cut by `scripts/make_sprites.py` into transparent 420×380 WebP
-frames, scaled alike, with the feet on one baseline.
+The characters come from the founder's earlier design: the legacy app on the `main` branch has them as
+`public/crew/pip/3d/*.webp` (the bunny, called Pip there; renamed Mochi because Pip is the coral folk
+in the Folk Family) and `public/crew/spark/3d/*.webp`. Those frames were keyed out of lossy chroma-green
+sheets about 300 px tall and kept green fringes, so the poses here were made again on 26 October 2026
+with Codex image generation, with a real alpha channel at about 1250 px:
+
+- each companion's idle was generated from its legacy idle and wave frames;
+- every other pose used the new idle as the reference for character, scale and framing, and the
+  legacy frame of that pose only for the posture;
+- `generation-prompts.json` has every brief and reference;
+- `scripts/companion-art.swift` turns the generated pictures into these 512 × 512 PNGs: one scale per
+  companion taken from idle, the feet on one baseline, and the corrections in `<id>-scale.json` for
+  poses the model drew a little larger or smaller than idle.
 
 ## Licence
 

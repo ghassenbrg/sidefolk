@@ -75,9 +75,9 @@ glass, celebration colours and the badges never change. That is the whole custom
 ## Sprite companions
 
 Mochi (a bunny in a mint scarf) and Spark (a little robot with headphones) are the founder's earlier
-characters, 16 poses each (`Resources/Companions/<id>/<pose>.png`, or `.webp` for the legacy cuts;
-PNG wins when both exist). `SpriteSet(folder:)` returns nil when any pose is missing, and the app
-then doesn't offer that companion.
+characters, 16 poses each (`Resources/Companions/<id>/<pose>.png`, redrawn with a real alpha channel;
+see Resources/Companions/README.md). `SpriteSet(folder:)` returns nil when any pose is missing, and
+the app then doesn't offer that companion.
 
 **Placement.** Files may differ in pixel size and margins. Each pose is measured (opaque = alpha ≥
 0.35, so soft edges and faint fringes don't count), scaled by the one factor that makes the idle

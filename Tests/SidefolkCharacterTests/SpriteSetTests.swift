@@ -26,13 +26,6 @@ import UniformTypeIdentifiers
         #expect(SpriteSet(folder: folder) == nil)
     }
 
-    @Test func pngWinsOverWebP() throws {
-        let folder = try Self.folder { _ in Self.figure(width: 200, height: 200, body: CGRect(x: 50, y: 20, width: 100, height: 160)) }
-        // A WebP-named file that is not even an image: if it were read, idle would fail to load.
-        try Data("not an image".utf8).write(to: folder.appendingPathComponent("idle.webp"))
-        #expect(SpriteSet(folder: folder) != nil)
-    }
-
     @Test func posesOfAnySizeShareScaleAndBaseline() throws {
         // Idle: 300 px tall in a 400×500 image. Sit: half as tall, drawn in a 1000×800 image with
         // a different margin under the feet. Same pixel scale, so sit shows half as tall.
