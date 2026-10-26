@@ -120,6 +120,8 @@ public actor ReminderScheduler {
 
     /// Saves a new reminder. `anchor` is the start of a repeating series when it differs from `date`
     /// (WhenResult.anchor), which keeps "the 31st" on the 31st in short months.
+    /// Only the user's own reminders ("user", or "user:agent" from a clean agent turn) may be critical:
+    /// anyone else's is stored as an ordinary alert, whatever the caller asked (SECURITY T24).
     @discardableResult
     public func create(
         title: String, at date: Date, recurrence: Recurrence? = nil, anchor: Date? = nil, notes: String? = nil,
@@ -131,6 +133,7 @@ public actor ReminderScheduler {
         guard date > now.addingTimeInterval(-5) else {
             throw UserFacingError("That time has already passed.", recovery: "Pick a time in the future.")
         }
+        let level = Self.isUsersOwn(source) ? level : min(level, .attention)
         var reminder = Reminder(title: clean, notes: notes?.clipped(1000), fireAt: date, timezone: calendar.timeZone.identifier,
                                 recurrence: recurrence, level: level, action: action, source: source, now: now)
         if reminder.notes?.isEmpty == true { reminder.notes = nil }
@@ -151,7 +154,8 @@ public actor ReminderScheduler {
             r.snoozedUntil = nil
             return true
         }
-        try? await kv.remove(Self.anchorKey(id))
+        // The series anchor stays, as the row does: Undo (`restore`) must bring a monthly reminder back
+        // on its own day. After a short month `fireAt` alone would turn "the 31st" into "the 30th".
         await finishChange()
         return changed?.before
     }
@@ -209,7 +213,9 @@ public actor ReminderScheduler {
         return changed?.before
     }
 
-    /// Puts a reminder back exactly as it was (the Undo of cancel, done and snooze).
+    /// Puts a reminder back exactly as it was (the Undo of cancel, done and snooze), series anchor
+    /// included: `cancel` keeps it. Only a series that lost it (cancelled by an older version) restarts
+    /// from its next time.
     public func restore(_ reminder: Reminder) async throws {
         try await store.save(reminder)
         if reminder.recurrence != nil, reminder.state != .cancelled, reminder.state != .done {
@@ -307,6 +313,7 @@ public actor ReminderScheduler {
     private func present(_ firing: Firing) async -> Reminder? {
         let r = firing.reminder
         if r.action?.kind == .prompt, runPrompt != nil { return r }
+        let own = Self.isUsersOwn(r.source)
         var lines: [String] = []
         if firing.missed { lines.append(missedText(firing.dueAt)) }
         if let notes = r.notes, !notes.isEmpty { lines.append(notes) }
@@ -314,10 +321,10 @@ public actor ReminderScheduler {
         if r.recurrence == nil, !firing.missed, firing.dueAt.timeIntervalSince(r.createdAt) > 120 {
             var set = TimeFormat.when(r.createdAt, now: clock.now, calendar: calendar)
             if set.hasPrefix("Today") || set.hasPrefix("Yesterday") { set = set.prefix(1).lowercased() + set.dropFirst() }
-            lines.append("You asked \(set).")
+            lines.append(own ? "You asked \(set)." : "Another app or agent set this \(set).")
         }
         await attention.post(AttentionRequest(
-            level: r.level, source: "reminder", title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
+            level: r.level, source: Self.attentionSource(r.source), title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
             actions: [
                 AttentionAction(id: ActionID.done, title: "Done", isPrimary: true),
                 AttentionAction(id: ActionID.snooze10, title: "10 min"),
@@ -384,6 +391,19 @@ public actor ReminderScheduler {
     private func timerFired(generation fired: Int) async {
         guard fired == generation, started else { return }
         await tick()
+    }
+
+    // MARK: Provenance
+
+    /// The user's own reminders: set by them, or by Sidefolk's agent in a clean turn ("user:agent").
+    static func isUsersOwn(_ source: String) -> Bool { ContextBuilder.isUserSourced(source) }
+
+    /// The attention source a reminder fires under. Only the user's own use "reminder", which arrives on
+    /// time past the spacing rule and may be critical (AttentionPolicy); another agent's, an extension's
+    /// or a tainted turn's ("reminder:external", "reminder:agent"…) takes its turn like any other notice.
+    /// The bubble's look and buttons key on `refKind`, which stays "reminder".
+    static func attentionSource(_ source: String) -> String {
+        isUsersOwn(source) ? "reminder" : "reminder:" + (source.split(separator: ":").first.map(String.init) ?? "other")
     }
 
     // MARK: Storage helpers
