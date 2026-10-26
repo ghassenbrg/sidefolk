@@ -158,7 +158,9 @@ enum UISnapshots {
             let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
-                          ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess))]
+                          ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
+                          ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
+                          ("desktop-ask-drop", dropAsk(actions))]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
                 try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
@@ -308,6 +310,35 @@ enum UISnapshots {
         ask.add(.answer("I copied 42 notes. Five look like they hold passwords or tokens, so I left them in Notes. Should I copy those too?",
                         canThinkHarder: false, tainted: true), caption: "organize my Apple Notes into the notebook")
         ask.reply()
+        return ask
+    }
+
+    /// No AI chosen yet: a question, then words with a time in them; `ready` are the plans found on this Mac.
+    private static func noAIAsk(ready: [ProviderKind]) -> AskModel {
+        let ask = AskModel()
+        let call = "call the bank tomorrow at 9"
+        let calendar = Calendar.autoupdatingCurrent
+        let nine = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: Date().addingTimeInterval(86_400)) ?? Date()
+        let guess = ReminderGuess(title: "Call the bank", when: nine, recurrence: nil,
+                                  label: String(localized: "Remind me \(TimeFormat.when(nine, now: Date(), calendar: calendar))",
+                                                comment: "A button: “Remind me Tomorrow 09:00”"))
+        ask.add(.needsBrain(NoAIRequest(text: call, guess: guess, request: call, ready: ready)), caption: call)
+        let question = "what time is it in Tokyo?"
+        ask.add(.needsBrain(NoAIRequest(text: question, request: question, ready: ready)), caption: question)
+        return ask
+    }
+
+    /// A link dropped on the companion, waiting for what to do with it, under a long answer with every button.
+    private static func dropAsk(_ actions: FixtureAskActions) -> AskModel {
+        let ask = AskModel()
+        ask.actions = actions
+        ask.attachment = Attachment(kind: .url(URL(string: "https://example.com/pricing")!), label: "example.com/pricing")
+        ask.add(.answer("""
+            The pricing page lists three plans. Free keeps five projects and a week of history. Pro is $15 a month (it was $12 \
+            until Monday) and adds unlimited projects, a year of history and priority support. Team is $12 per person a month \
+            with at least three people, and adds shared folders, single sign-on and an admin console. Annual billing takes 20% \
+            off every paid plan. Do you want me to watch the page for the next change?
+            """, canThinkHarder: true, tainted: true), caption: "what does example.com/pricing say?")
         return ask
     }
 

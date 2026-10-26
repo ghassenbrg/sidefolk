@@ -22,6 +22,18 @@ struct ReminderGuess: Equatable {
 /// Quick things to do with something dropped on the companion.
 enum DropAction { case save, remind, watch, ask }
 
+/// A request that needed AI while none was chosen: what works without it, and a way to send it again.
+struct NoAIRequest: Equatable {
+    /// The words with the dropped item's text, for the actions that keep them as a task or a note.
+    var text: String
+    var guess: ReminderGuess?
+    /// The request as asked and what was dropped with it, sent again once an AI is chosen.
+    var request: String
+    var attachment: Attachment?
+    /// Plans this Mac is already signed in to (Claude Code, Codex), found after the card appears.
+    var ready: [ProviderKind] = []
+}
+
 /// One result in the Ask panel. Requests end in objects, not a transcript (DECISIONS D5).
 struct AskEntry: Identifiable, Equatable {
     enum Content: Equatable {
@@ -30,8 +42,9 @@ struct AskEntry: Identifiable, Equatable {
         case list(title: String, cards: [ResultCard])
         case approval(ApprovalRequest)
         case error(UserFacingError, retryable: Bool)
-        /// No AI is set up; offers local alternatives (a reminder it understood, a task, a note).
-        case needsBrain(String, guess: ReminderGuess?)
+        /// No AI is set up; offers local alternatives (a reminder it understood, a task, a note) and
+        /// the AI this Mac already has, when there is one.
+        case needsBrain(NoAIRequest)
         /// Sidefolk's own agent asks something; answered here with a button or by typing.
         case question(AttentionItem)
         case info(String)
@@ -74,6 +87,8 @@ protocol AskActions: AnyObject {
     func remind(_ guess: ReminderGuess, in model: AskModel)
     /// Asks "When?" for `text` (no AI needed: the answer can be typed or tapped).
     func askWhen(toRemind text: String, in model: AskModel)
+    /// Chooses `kind` as the AI (a plan this Mac is signed in to) and sends the request again with it.
+    func answer(_ request: NoAIRequest, with kind: ProviderKind, replacing entry: AskEntry.ID, in model: AskModel)
     /// Times to tap when Sidefolk asks "When?", from the user's own times of day.
     func reminderTimes() -> [(label: String, date: Date)]
     /// Sets the reminder that was waiting for its time.

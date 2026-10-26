@@ -241,15 +241,6 @@ private struct EntryView: View {
     /// Sends the request again, replacing these cards (failed requests only).
     var retry: (() -> Void)? = nil
 
-    /// What works without AI: keep the words as a task or a note, or set a reminder for them.
-    @ViewBuilder private func localActions(_ text: String, guess: ReminderGuess?) -> some View {
-        Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary)).fixedSize()
-        if guess == nil {
-            Button("Remind me…") { model.actions?.askWhen(toRemind: text, in: model) }.buttonStyle(.sf(.secondary)).fixedSize()
-        }
-        Button("Save as note") { model.actions?.saveAnswer(text, tainted: false, in: model) }.buttonStyle(.sf(.secondary)).fixedSize()
-    }
-
     var body: some View {
         switch entry.content {
         case .result(let card, let activityId, let undo):
@@ -305,33 +296,8 @@ private struct EntryView: View {
                     }
                 }
             }
-        case .needsBrain(let text, let guess):
-            SFCard(accent: Theme.folkColor("byte")) {
-                VStack(alignment: .leading, spacing: Theme.Space.s) {
-                    Text(guess == nil ? "That needs AI, which isn't set up." : "That needs AI — or I can do this:")
-                        .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    if let guess {
-                        Button {
-                            model.actions?.remind(guess, in: model)
-                        } label: {
-                            Label {
-                                Text("\(guess.label): \(guess.title)",
-                                     comment: "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””")
-                            } icon: {
-                                Image(systemName: "alarm")
-                            }
-                            .lineLimit(1)
-                        }
-                        .buttonStyle(.sf(.primary))
-                    }
-                    // Never truncated: the actions wrap when a language makes them longer.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { localActions(text, guess: guess) }
-                        VStack(alignment: .leading, spacing: 6) { localActions(text, guess: guess) }
-                    }
-                    Button("Set up AI…") { model.actions?.openSettings(tab: .ai) }.buttonStyle(.sf(.plain))
-                }
-            }
+        case .needsBrain(let request):
+            NoAICard(request: request, entry: entry.id, model: model)
         case .question(let item):
             QuestionCard(item: item) { actionId in model.actions?.answer(question: item, actionId: actionId) }
         case .info(let text):

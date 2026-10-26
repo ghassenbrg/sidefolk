@@ -103,11 +103,46 @@ extension AppCoordinator: AskActions {
         }
         guard runtime.settings.current.provider.kind != .none else {
             let full = attachment?.text.map { "\(text)\n\n\($0)" } ?? text
-            model.add(.needsBrain(full, guess: reminderGuess(text)), caption: text)
+            let request = NoAIRequest(text: full, guess: reminderGuess(text), request: text, attachment: attachment)
+            model.add(.needsBrain(request), caption: text)
             voice.reply(SpokenLine.line(String(localized: "That needs AI, which isn't set up.")), to: reply, in: model)
+            if let entry = model.entries.last?.id { offerReadyPlans(request, entry: entry, in: model) }
             return
         }
         runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model, reply: reply)
+    }
+
+    /// Adds the plans this Mac is signed in to onto a "needs AI" card, once they are found. The
+    /// primary persona already has Claude Code or Codex; Settings › AI is three clicks they'd never
+    /// look for. Only probes run (`--version`, `--help`, Codex's login status): nothing reaches a model.
+    private func offerReadyPlans(_ request: NoAIRequest, entry: AskEntry.ID, in model: AskModel) {
+        Task {
+            let provider = runtime.settings.current.provider
+            let workdir = runtime.paths.brainWorkdir.path
+            async let claude = ClaudeBinary.status(configured: provider.claudePath, workdir: workdir)
+            async let codex = CodexBinary.status(configured: provider.codexPath, workdir: workdir)
+            var ready: [ProviderKind] = []
+            if case .ready = await claude.0 { ready.append(.claudeCode) }
+            // Codex signed in with an API key bills that key, not a plan: that choice stays in Settings.
+            if case .ready(_, _, .chatGPT?) = await codex.0 { ready.append(.codex) }
+            guard !ready.isEmpty, runtime.settings.current.provider.kind == .none else { return }
+            var offered = request
+            offered.ready = ready
+            model.replace(entry, with: .needsBrain(offered))
+        }
+    }
+
+    func answer(_ request: NoAIRequest, with kind: ProviderKind, replacing entry: AskEntry.ID, in model: AskModel) {
+        guard !model.busy else { return }
+        Task {
+            await runtime.settings.update { $0.provider.switchProvider(to: kind) }
+            // The card becomes a line saying what changed, and the answer joins it under the same request.
+            let kept = model.entries.contains { $0.id == entry }
+            let line = kind == .codex ? String(localized: "Codex answers from now on. You can change that in Settings › AI.")
+                : String(localized: "Claude Code answers from now on. You can change that in Settings › AI.")
+            model.replace(entry, with: .info(line))
+            runAgent(request.request, attachment: request.attachment, thinkHarder: false, into: model, continuing: kept)
+        }
     }
 
     /// "call the bank tomorrow at 9" → a reminder suggestion, when a confident future time is in there.
@@ -176,7 +211,9 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel, reply spoken: ReplyContext? = nil) {
+    /// - Parameter continuing: the request's words are already on screen, so the cards join them.
+    func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel, reply spoken: ReplyContext? = nil,
+                  continuing: Bool = false) {
         model.busy = true
         model.phase = Self.thinkingLine(harder: thinkHarder)
         let agentAttachment = attachment.map { a -> AgentAttachment in
@@ -187,7 +224,7 @@ extension AppCoordinator: AskActions {
         Task {
             let handle = await agent.submit(request)
             currentRun = handle.runId
-            var captioned = false
+            var captioned = continuing
             var shownCards = Set<String>()
             // What may be said aloud once the run ends: the answer, else the last change, else the failure.
             var line: String?

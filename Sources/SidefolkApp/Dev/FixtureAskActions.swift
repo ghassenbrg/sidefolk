@@ -18,6 +18,7 @@ final class FixtureAskActions: AskActions {
     func saveAsTask(_ text: String, in model: AskModel) {}
     func remind(_ guess: ReminderGuess, in model: AskModel) {}
     func askWhen(toRemind text: String, in model: AskModel) {}
+    func answer(_ request: NoAIRequest, with kind: ProviderKind, replacing entry: AskEntry.ID, in model: AskModel) {}
     func reminderTimes() -> [(label: String, date: Date)] { [] }
     func remindPending(at date: Date, in model: AskModel) {}
     func answer(question: AttentionItem, actionId: String) {}
