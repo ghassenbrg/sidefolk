@@ -64,6 +64,9 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
             results.cancel()
             throw error
         }
+        // Words that start in the very first frames (someone who talks the moment the key goes
+        // down) were heard as nothing at all; a moment of silence before them fixes that.
+        if let silence = Self.silence(format) { inputs.yield(AnalyzerInput(buffer: silence)) }
     }
 
     func append(_ buffer: AVAudioPCMBuffer) {
@@ -74,7 +77,9 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
     }
 
     func finish() async -> String {
-        let (analyzer, inputs, results) = state.withLock { ($0.analyzer, $0.inputs, $0.results) }
+        let (analyzer, inputs, results, format) = state.withLock { ($0.analyzer, $0.inputs, $0.results, $0.format) }
+        // And after them, for a key let go on the last syllable.
+        if let silence = Self.silence(format) { inputs?.yield(AnalyzerInput(buffer: silence)) }
         inputs?.finish()
         // The last words settle in a fraction of a second; past four, keep what was heard so far.
         let text = await withTaskGroup(of: String?.self) { group in
@@ -132,6 +137,16 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
         let unspaced = [last, first].contains { $0.unicodeScalars.first?.properties.isIdeographic == true
             || ("\u{3040}"..."\u{30FF}").contains($0) }
         return last.isWhitespace || first.isWhitespace || unspaced ? head + tail : head + " " + tail
+    }
+
+    /// A third of a second of silence in the analyzer's format.
+    private static func silence(_ format: AVAudioFormat?) -> AVAudioPCMBuffer? {
+        guard let format, let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(format.sampleRate / 3)) else { return nil }
+        buffer.frameLength = buffer.frameCapacity
+        for part in UnsafeMutableAudioBufferListPointer(buffer.mutableAudioBufferList) {
+            if let data = part.mData { memset(data, 0, Int(part.mDataByteSize)) }
+        }
+        return buffer
     }
 
     /// The microphone's audio in the analyzer's format (wrong formats are silently ignored by it).

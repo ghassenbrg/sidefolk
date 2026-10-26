@@ -50,6 +50,8 @@ final class VoiceController {
     /// A spoken request is still being worked on (its run can be cancelled by an interruption).
     private var awaitingSpokenReply = false
     private var mouthLevel: Double?
+    /// The preferred models this ElevenLabs key may use, listed (free) along with its voices.
+    var elevenLabsModels: [String]?
 
     init(host: any VoiceHost, secrets: any SecretStore, sink: any AudioSink = AudioPlayer()) {
         self.host = host
@@ -164,7 +166,7 @@ final class VoiceController {
             // The key was let go to answer macOS's question: nothing was heard yet.
             if asking, !holding {
                 host.ask.voice = nil
-                host.ask.add(.info(String(localized: "The microphone is ready. Hold to talk.")))
+                notice(.info(String(localized: "The microphone is ready. Hold to talk.")))
                 return
             }
         }
@@ -206,7 +208,7 @@ final class VoiceController {
             }
             guard case .preparing? = host.ask.voice else { return }
             host.ask.voice = nil
-            host.ask.add(.info(String(localized: "The speech model is ready. Hold to talk again.")))
+            notice(.info(String(localized: "The speech model is ready. Hold to talk again.")))
         } catch {
             fail(UserFacingError("I couldn't download the speech model. Nothing was sent.", recovery: "Check your internet connection and try again.",
                                  detail: String(describing: error)))
@@ -230,10 +232,15 @@ final class VoiceController {
     private func missed(_ heard: String) {
         host.voiceMissed()
         let words = heard.trimmingCharacters(in: .whitespacesAndNewlines)
-        host.ask.add(.info(words.isEmpty ? String(localized: "I didn't catch that. Hold to talk again.")
+        notice(.info(words.isEmpty ? String(localized: "I didn't catch that. Hold to talk again.")
             : String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")))
         host.ask.text = words
         host.ask.focusRequest += 1
+    }
+
+    /// Something about talking itself, as a request of its own, so it doesn't read as part of the last answer.
+    private func notice(_ content: AskEntry.Content) {
+        host.ask.add(content, caption: String(localized: "Talking", comment: "Shown above what the companion says about voice input itself"))
     }
 
     private func fail(_ error: UserFacingError) {
@@ -245,7 +252,7 @@ final class VoiceController {
         host.ask.voice = nil
         finishedTalking()
         host.voiceMissed()
-        host.ask.add(.error(error, retryable: false))
+        notice(.error(error, retryable: false))
     }
 
     /// Talking is over, however it ended: the pose and the Esc watch go back.
@@ -311,7 +318,7 @@ final class VoiceController {
             return AppleVoice()
         case .elevenLabs:
             guard !settings.elevenLabsVoice.isEmpty, let key = elevenLabsKey else { return nil }
-            return ElevenLabsVoice(client: ElevenLabs(key: key))
+            return ElevenLabsVoice(client: ElevenLabs(key: key), models: elevenLabsModels ?? ElevenLabs.preferredModels)
         }
     }
 

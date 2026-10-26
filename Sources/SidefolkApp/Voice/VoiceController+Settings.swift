@@ -50,6 +50,7 @@ extension VoiceController: VoiceServices {
     func setElevenLabsKey(_ key: String?) {
         let keys = ProviderKeys(store: secrets)
         let clean = key?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        elevenLabsModels = nil
         if clean.isEmpty {
             try? keys.remove(account: SecretKey.elevenLabsAPIKey)
         } else {
@@ -60,7 +61,10 @@ extension VoiceController: VoiceServices {
     func elevenLabsVoices() async -> Result<[ElevenLabs.Voice], UserFacingError> {
         guard let key = elevenLabsKey else { return .failure(UserFacingError("Add your ElevenLabs key first.")) }
         do {
-            return .success(try await ElevenLabs(key: key).voices())
+            let client = ElevenLabs(key: key)
+            let voices = try await client.voices()
+            elevenLabsModels = try? await client.models()
+            return .success(voices)
         } catch let error as UserFacingError {
             return .failure(error)
         } catch {

@@ -237,7 +237,7 @@ enum UISnapshots {
         starting.voice = .listening(basic: false)
         let missed = AskModel()
         missed.actions = actions
-        missed.add(.info(String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")))
+        missed.add(.info(String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")), caption: String(localized: "Talking"))
         missed.text = "uh"
         let spoken = AskModel()
         spoken.actions = actions

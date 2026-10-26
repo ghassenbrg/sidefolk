@@ -192,8 +192,8 @@ core; the app holds the audio and speech frameworks.
 
 - **Core** (`Sources/SidefolkCore/Voice/`): `VoiceSettings` (in `AppSettings.voice`); `VoicePolicy`
   (which transcripts are sent, when a reply is spoken, muted or handed to VoiceOver); `SpokenLine`
-  (the one breath said for an answer, a card or a list: no URLs, paths or code); `Sentences` and
-  `SentenceBuffer` (NLTokenizer); `SpeechOutput`, the protocol every voice engine implements (text in,
+  (the one breath said for an answer, a card or a list: no URLs, paths or code); `Sentences`
+  (NLTokenizer); `SpeechOutput`, the protocol every voice engine implements (text in,
   `VoiceAudio` pieces out); `SpeechPlayer`, the playback queue over an `AudioSink` (sentence by
   sentence, instant `stop()`, levels for the mouth); `ElevenLabs` (voices, models, streamed PCM).
 - **App** (`Sources/SidefolkApp/Voice/`): `VoiceController` runs a turn: the talk key or a held
