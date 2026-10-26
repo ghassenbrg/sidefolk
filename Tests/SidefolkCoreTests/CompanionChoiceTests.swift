@@ -99,4 +99,21 @@ import Testing
         s.choose(.sidefolk)
         #expect(s.companionName == "Sidefolk")
     }
+
+    /// A companion from "Made by you" goes by its own name, which gives way like a built-in's default,
+    /// and a name the person chose survives both ways.
+    @Test func customCompanionsComeWithTheirOwnName() throws {
+        var s = AppSettings()
+        s.choose(custom: "miso", name: "Miso")
+        #expect(s.companionName == "Miso" && s.customCompanion == "miso" && !s.hasCustomName)
+        let saved = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
+        #expect(saved.customCompanionName == "Miso")
+        s.choose(.mochi)
+        #expect(s.companionName == "Mochi" && s.customCompanion == nil)
+        s.companionName = "Bun"
+        s.choose(custom: "miso", name: "Miso")
+        #expect(s.companionName == "Bun")
+        s.choose(.spark)
+        #expect(s.companionName == "Bun")
+    }
 }

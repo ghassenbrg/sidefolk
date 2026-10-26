@@ -11,6 +11,8 @@ struct CompanionPicker: View {
 
     private var settings: AppSettings { model.settings }
     private var chosen: CompanionChoice { CompanionArt.offered.contains(settings.companion) ? settings.companion : .mochi }
+    /// A companion from "Made by you" in use: the stage and the title show it, and no built-in card is picked.
+    private var custom: CustomCompanion? { CompanionArt.custom(settings.customCompanion) }
     private var style: CompanionStyle { settings.style(for: chosen) }
 
     var body: some View {
@@ -34,7 +36,7 @@ struct CompanionPicker: View {
 
     private var stage: some View {
         VStack(spacing: Theme.Space.s) {
-            CompanionStage(look: CompanionArt.look(chosen, style: style), name: settings.companionName, state: trying.state)
+            CompanionStage(look: CompanionArt.look(for: settings), name: settings.companionName, state: trying.state)
                 .frame(width: 176, height: 176)
                 .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 .accessibilityLabel("\(settings.companionName), as it looks on your desktop")
@@ -69,8 +71,8 @@ struct CompanionPicker: View {
     private var details: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(chosen.defaultName).font(Theme.Font.title).foregroundStyle(Theme.ink)
-                Text(CompanionArt.role(chosen)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                Text(verbatim: custom?.name ?? chosen.defaultName).font(Theme.Font.title).foregroundStyle(Theme.ink)
+                Text(verbatim: custom.map { $0.summary ?? "" } ?? CompanionArt.role(chosen)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             }
             labelled("Name") {
                 CommitField(label: "Companion name", prompt: Text(verbatim: chosen.defaultName), value: settings.companionName, width: 200) { name in
@@ -135,7 +137,7 @@ struct CompanionPicker: View {
             ForEach(CompanionArt.offered, id: \.self) { choice in
                 CompanionCard(choice: choice,
                               image: CompanionArt.preview(choice, style: settings.style(for: choice), side: 84),
-                              selected: choice == chosen) {
+                              selected: custom == nil && choice == chosen) {
                     model.update { $0.choose(choice) }
                 }
             }

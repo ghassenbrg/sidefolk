@@ -126,6 +126,13 @@ enum UISnapshots {
             settings.update { $0.choose(.sidefolk); $0.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .sidefolk) }
             try await page("page-settings-companion-coral", SettingsTabContent(tab: .companion, model: settings), width: width)
             settings.update { $0.choose(.mochi); $0.styles = [:] }
+            // A companion from "Made by you" in use, when the home has one (D43): the stage and the
+            // title show it, and no built-in card is picked.
+            if let made = CompanionArt.made.lazy.compactMap(\.companion).first {
+                settings.update { $0.choose(custom: made.id, name: made.name) }
+                try await page("page-settings-companion-made", SettingsTabContent(tab: .companion, model: settings), width: width)
+                settings.update { $0.choose(.mochi) }
+            }
             // Settings › AI with each provider chosen, in the states that need different words.
             for (name, choice, setUp) in aiStates {
                 setUp(fixtures, settings)

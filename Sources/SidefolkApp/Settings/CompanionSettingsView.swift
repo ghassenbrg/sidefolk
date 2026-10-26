@@ -39,7 +39,7 @@ struct CompanionSettingsView: View {
 
             if !CompanionArt.made.isEmpty {
                 SettingsGroup(title: "Made by you",
-                              footer: "Companions made from data in Sidefolk's companions folder. They wear the colour and scarf chosen above.") {
+                              footer: "Companions made from data in Sidefolk's companions folder. They wear the color and scarf chosen above.") {
                     ForEach(CompanionArt.made, id: \.folder) { report in
                         madeRow(report)
                     }
@@ -83,7 +83,7 @@ struct CompanionSettingsView: View {
                 if chosen {
                     Image(systemName: "checkmark").foregroundStyle(.secondary)
                 } else {
-                    Button("Use") { model.update { $0.customCompanion = companion.id } }
+                    Button("Use") { model.update { $0.choose(custom: companion.id, name: companion.name) } }
                 }
             } else {
                 Image(systemName: "exclamationmark.triangle").foregroundStyle(.secondary)

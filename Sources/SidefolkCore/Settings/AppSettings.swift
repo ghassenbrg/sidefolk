@@ -185,8 +185,11 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// Keyed by `CompanionChoice.rawValue`; read them with `style(for:)`.
     public var styles: [String: CompanionStyle] = [:]
     /// A companion made from data in `<home>/companions/<id>/`, worn instead of `companion` while
-    /// it loads (style and name still come from `companion`'s).
+    /// it loads (its style still comes from `companion`'s).
     public var customCompanion: String?
+    /// The name the custom companion came with, while it is worn: like a built-in's default name,
+    /// it gives way when another companion is chosen, unless the person named it themselves.
+    public var customCompanionName: String?
     public var liveliness: CompanionLiveliness = .balanced
     public var presence: PresenceMode = .always
     public var size: CompanionSize = .medium
@@ -226,6 +229,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
             styles[CompanionChoice.sidefolk.rawValue] = CompanionStyle(color: accent, accessory: .none)
         }
         customCompanion = try? c.decodeIfPresent(String.self, forKey: .customCompanion)
+        customCompanionName = try? c.decodeIfPresent(String.self, forKey: .customCompanionName)
         read(.liveliness, &liveliness)
         read(.presence, &presence)
         read(.size, &size)
@@ -255,6 +259,14 @@ public struct AppSettings: Codable, Sendable, Equatable {
         if !hasCustomName { companionName = next.defaultName }
         companion = next
         customCompanion = nil
+        customCompanionName = nil
+    }
+
+    /// Wears a companion from "Made by you", called by its own name unless the person chose one.
+    public mutating func choose(custom id: String, name: String) {
+        if !hasCustomName { companionName = name }
+        customCompanion = id
+        customCompanionName = name
     }
 
     private enum LegacyKeys: String, CodingKey { case accent }
@@ -272,6 +284,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var hasCustomName: Bool {
         let name = companionName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return !name.isEmpty && !CompanionChoice.allCases.contains { $0.defaultName.lowercased() == name }
+            && customCompanionName?.lowercased() != name
     }
 }
 
