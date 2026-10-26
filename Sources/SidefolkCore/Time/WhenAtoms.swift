@@ -277,6 +277,8 @@ struct WhenScanner {
     }
 
     private func add(_ amount: Double, _ unit: String, to span: inout WhenSpan) -> Bool {
+        // Checked first: `Int(amount)` below traps on a number past Int.max ("in 99999999999999999999 days").
+        guard amount < 100_000 else { return false }
         let whole = amount == amount.rounded()
         switch unit {
         case "second": span.seconds += amount
@@ -294,7 +296,7 @@ struct WhenScanner {
             span.years += Int(amount)
         default: return false
         }
-        return amount < 100_000
+        return true
     }
 
     // MARK: Clock times and parts of the day
@@ -419,7 +421,7 @@ struct WhenScanner {
 
         if prefix == nil || prefix == "on" || prefix == "by" {
             if let md = monthDay(at: the) { return WhenAtom(day: .date(month: md.month, day: md.day, year: md.year), end: md.end) }
-            if prefix == "on", let n = number(the), n.ordinal, (1...31).contains(Int(n.number)) {
+            if prefix == "on", let n = number(the), n.ordinal, n.isInteger, (1...31).contains(Int(n.number)) {
                 return WhenAtom(day: .dayOfMonth(Int(n.number)), end: the + 1)
             }
         }
@@ -571,7 +573,7 @@ struct WhenScanner {
         guard word(k) == "on" else { return nil }
         var j = k + 1
         if word(j) == "the" { j += 1 }
-        if let n = number(j), n.ordinal, (1...31).contains(Int(n.number)) { return (Int(n.number), j + 1) }
+        if let n = number(j), n.ordinal, n.isInteger, (1...31).contains(Int(n.number)) { return (Int(n.number), j + 1) }
         if word(j) == "last", word(j + 1) == "day" {
             j += 2
             if word(j) == "of", word(j + 1) == "the", word(j + 2) == "month" { j += 3 }

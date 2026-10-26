@@ -26,7 +26,9 @@ struct WhenToken: Sendable {
     var abbreviated = false
     var iso: WhenISOStamp?
 
-    var isInteger: Bool { kind == .number && number == number.rounded() }
+    /// A whole number small enough for any time to use. Typing "dec 99999999999999999999" must not
+    /// crash the hint line: `Int(_:)` traps on a Double past Int.max, so every conversion checks this.
+    var isInteger: Bool { kind == .number && number == number.rounded() && abs(number) < 1_000_000_000 }
 }
 
 /// The words the time parser knows, including common typos and short forms.

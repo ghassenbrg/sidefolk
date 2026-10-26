@@ -171,6 +171,8 @@ extension IntentParser {
         // "in about 5 minutes", "in a couple of hours", "within forty five minutes"
         Scan(#"\b(?:in|within)\s+(?:about\s+|around\s+|roughly\s+)?(?:\#(numWord)[\s-]+){1,3}\#(unit)\b"#),
         Scan(#"\b(?:in|within)\s+(?:a\s+)?(?:few|couple(?:\s+of)?|bit)\b"#),
+        // "for the next 30 minutes" (a span, not a task's length like "read for 20 minutes")
+        Scan(#"\bthe\s+next\s+(?:\#(numWord)[\s-]+){1,3}\#(unit)\b"#),
         // "half past 3", "a quarter to 6", "ten to five", "20 past 4"
         Scan(#"\b(?:half|quarter)\s+(?:past|to)\b"#),
         Scan(#"\b(?:\d+|five|ten|twenty|twenty-five)\s+(?:to|past)\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b"#),
@@ -204,6 +206,12 @@ extension IntentParser {
         // ("read for 20 minutes" is a title, not a time: only a count with nothing in front of it counts)
         Scan(#"(?<!\bfor\s)(?<!\b(?:every|each|last|past|next|this)\s)\b(?:\#(count))\s+\#(unit)$"#),
         Scan(#"^(?:\#(count))\s+\#(unit)\b"#),
+        // A span the repeat didn't absorb: "every 30 minutes for an hour to stretch" left "for an hour".
+        Scan(#"^(?:for\s+(?:the\s+next\s+)?|the\s+next\s+)(?:an?|\#(count))\s+\#(unit)\b"#),
+        // A repeat said another way: "once a minute".
+        Scan(#"\bonce\s+(?:a|an|per|every)\s+(?:second|minute|hour|day|week|month|year)\b"#),
+        // A window of hours: "every 30 minutes between 9 and 5", "from 9 to 5", "9-5".
+        Scan(#"\b(?:between|from)\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?\s*(?:and|to|-|–)\s*\d"#),
         // A weekday or part of day left at an end ("wed fri at 8am", "evening to plan")
         Scan(#"^(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|evening|night|tonight|noon|midnight|weekend)\b"#),
         Scan(#"\b(?:morning|afternoon|evening|tonight|noon|midnight)$"#),

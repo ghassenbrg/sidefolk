@@ -152,6 +152,7 @@ public struct IntentParser: Sendable {
     /// "every few minutes" is no schedule, and seconds are finer than a reminder repeats (a minute at least).
     private static let tooFineOrVague = Scan(#"\bevery\s+(?:few\s+(?:minutes?|mins?|seconds?|secs?)\b|(?:other\s+|\d+\s*)?(?:seconds?|secs?)\b|\d+s\b)"#)
     private static let weekendWord = Scan(#"\bweekend\b"#)
+    private static let repeatEnd = Scan(#"\b(?:until|till|til|forever|indefinitely)\b"#)
     private static let nightWord = Scan(#"\b(?:tonight|night|evening)\b"#)
 
     private func remind(_ command: String, _ ctx: Context) -> ParsedIntent? {
@@ -187,6 +188,8 @@ public struct IntentParser: Sendable {
         guard unusable == nil else { return nil }
         let title = Self.cleanTitle(found.remaining)
         guard !title.isEmpty, !Self.leavesTimeWords(title: title, left: found.remaining, rest: rest) else { return nil }
+        // "every 30 minutes to stretch until friday": an end the repeat didn't take is not part of the title.
+        if found.recurrence != nil, Self.repeatEnd.found(in: title) { return nil }
         // "this weekend" on a weekend rolls over a whole week; the person meant now.
         if Self.weekendWord.found(in: found.matched), (6...7).contains(TimeFormat.isoWeekday(of: ctx.now, calendar: when.calendar)) { return nil }
 

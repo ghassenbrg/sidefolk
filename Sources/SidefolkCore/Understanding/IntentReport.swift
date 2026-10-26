@@ -61,6 +61,8 @@ extension IntentParser {
             report.until = phrase
             text.replaceSubrange(r.lowerBound..<end, with: " ")
         }
+        // "for an hour until I stop it": two ends are not for guessing.
+        guard !(report.untilStopped && report.until != nil) else { return nil }
         if let r = Self.notifyWords.firstRange(in: text) {
             report.notify = true
             text.replaceSubrange(r, with: " ")
@@ -139,11 +141,14 @@ extension IntentParser {
         default: count = Double(g[1]) ?? WhenLexicon.numberWords[g[1]] ?? 0
         }
         guard count > 0 else { return nil }
+        let seconds: TimeInterval
         switch unit.first {
-        case "s": return count
-        case "m": return count * 60
-        default: return count * 3600
+        case "s": seconds = count
+        case "m": seconds = count * 60
+        default: seconds = count * 3600
         }
+        // What `watch.report` would refuse is the AI's to explain; and a huge number must not reach the hint's wording.
+        return seconds <= WatchLimits.maxInterval ? seconds : nil
     }
 
     /// "until 6pm" in the middle of a sentence: the longest run of words after "until" that is a time and nothing else.

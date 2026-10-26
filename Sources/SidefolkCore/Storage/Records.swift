@@ -173,9 +173,13 @@ public struct Recurrence: Codable, Sendable, Hashable {
     public var weekdays: [Int]
     public var until: Date?
 
+    /// "every 1000 years" is the longest repeat: past it the date arithmetic overflows and traps, so a
+    /// reminder an agent made with a giant interval would crash Sidefolk at every launch.
+    public static let maxInterval = 1000
+
     public init(frequency: Frequency, interval: Int = 1, weekdays: [Int] = [], until: Date? = nil) {
         self.frequency = frequency
-        self.interval = max(1, interval)
+        self.interval = min(max(1, interval), Self.maxInterval)
         self.weekdays = weekdays
         self.until = until
     }

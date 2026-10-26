@@ -138,7 +138,7 @@ public struct WeatherProbe: WatcherProbe {
             return ReadingText(shown: shown(UnitTemperature.celsius, .weather), forModel: "\(model) °C")
         case .humidity:
             let share = MetricProbe.percent(value / 100)
-            return ReadingText(shown: share, forModel: "\(Int(value.rounded()))% humidity")
+            return ReadingText(shown: share, forModel: "\(String(format: "%.0f", value))% humidity")
         case .wind:
             return ReadingText(shown: shown(UnitSpeed.kilometersPerHour, .wind), forModel: "\(model) km/h")
         case .precipitation:

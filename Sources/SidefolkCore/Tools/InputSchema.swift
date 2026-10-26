@@ -131,7 +131,8 @@ public enum InputSchema {
         }
     }
 
-    private static func format(_ n: Double) -> String { n.rounded() == n ? String(Int(n)) : String(n) }
+    /// Bounds come from extension schemas too, so a giant one must not reach `Int(_:)`, which traps past Int.max.
+    private static func format(_ n: Double) -> String { n.rounded() == n && abs(n) < 1e15 ? String(Int(n)) : String(n) }
 }
 
 private extension Array {

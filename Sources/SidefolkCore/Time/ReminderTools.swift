@@ -113,7 +113,7 @@ public enum ReminderTools {
                     "when": Schema.string("When: natural language or ISO 8601. May include a repeat such as \"every monday at 10am\", \"every 30 minutes\" or \"every 10 minutes until 6pm\"."),
                     "recurrence": Schema.object([
                         "frequency": Schema.string("How often (minutely = every N minutes, at least one).", enum: Recurrence.Frequency.allCases.map(\.rawValue)),
-                        "interval": Schema.integer("Every N units (default 1).", minimum: 1),
+                        "interval": Schema.integer("Every N units (default 1).", minimum: 1, maximum: Recurrence.maxInterval),
                         "weekdays": Schema.array("For weekly: ISO weekdays, 1 = Monday ... 7 = Sunday (day names work too).",
                                                  items: ["type": ["integer", "string"], "description": "Weekday", "minimum": 1, "maximum": 7]),
                         "until": Schema.string("Stop repeating after this date (natural language or ISO 8601)."),

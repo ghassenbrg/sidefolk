@@ -7,7 +7,8 @@ public enum RecurrenceMath {
     /// The first occurrence strictly after `after`, or nil when the series has ended (`until`).
     /// Occurrences never come before `anchor`.
     public static func nextOccurrence(after: Date, recurrence r: Recurrence, anchor: Date, calendar: Calendar) -> Date? {
-        let step = max(1, r.interval)
+        // A stored row is decoded without `Recurrence.init`, so the bound is applied here too.
+        let step = min(max(1, r.interval), Recurrence.maxInterval)
         let found: Date?
         switch r.frequency {
         case .minutely: found = elapsed(after: after, anchor: anchor, length: Double(step) * 60)
