@@ -57,9 +57,14 @@ struct NotifyUserTool: Tool {
         // The schema only offers gentle and attention, so external agents stay capped at attention.
         let level: AttentionLevel = input.string("level") == "attention" ? .attention : .gentle
         let actions = level == .attention ? [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))] : []
-        await attention.post(AttentionRequest(level: level, source: AgentFacingTools.source(for: context.caller),
-                                              title: title.clipped(120), body: input.string("body")?.clipped(600),
-                                              actions: actions, refKind: "notify"))
+        let item = await attention.post(AttentionRequest(level: level, source: AgentFacingTools.source(for: context.caller),
+                                                         title: title.clipped(120), body: input.string("body")?.clipped(600),
+                                                         actions: actions, refKind: "notify"))
+        // Saying so keeps a caller from sending it again, louder, because it seemed to go nowhere.
+        if await attention.isHeld(item.id) {
+            return ToolResult(text: "Held for now: the user is busy, away or in quiet mode, or other notices came first. "
+                + "Sidefolk shows it when it can; don't send it again.")
+        }
         return ToolResult(text: "Shown to the user.")
     }
 }

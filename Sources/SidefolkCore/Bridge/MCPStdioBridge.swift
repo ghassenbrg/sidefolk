@@ -9,6 +9,13 @@ import Synchronization
 public actor MCPStdioBridge {
     public static let notRunningMessage = "Sidefolk isn't running. Open Sidefolk and try again."
     static let fallbackProtocolVersion = "2025-06-18"
+    /// What a client shows its model about the server as a whole; the Sidefolk skill says the rest.
+    static let instructions = """
+        Sidefolk is the user's desktop companion on this Mac. Use it to remind the user at a time, save notes and tasks \
+        to their notebook, tell them when a web page, site, file or program changes, show a live value of this Mac, \
+        notify them when your work finishes, or ask them a quick question on their desktop. Reading their notes and \
+        reminders asks them first. Never save secrets, and send one notice per event.
+        """
 
     private let connector: any BridgeConnector
     private let input: Int32
@@ -61,7 +68,7 @@ public actor MCPStdioBridge {
                 "protocolVersion": .string(version),
                 "capabilities": ["tools": ["listChanged": false]],
                 "serverInfo": ["name": "sidefolk", "title": "Sidefolk", "version": .string(SidefolkVersion.current)],
-                "instructions": "Sidefolk is the user's desktop companion. Use it to save notes, set reminders, watch things, and notify or ask the user.",
+                "instructions": .string(Self.instructions),
             ]))
         case "ping":
             write(Self.result(id: id, .object([:])))

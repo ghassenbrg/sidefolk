@@ -21,6 +21,16 @@ public enum ReminderTools {
     public static let maxActivePerExternalClient = 20
     public static let maxActiveExternal = 50
 
+    /// The user and Sidefolk's own agent manage every reminder; anyone else only the ones it set
+    /// (recorded as `external:<client>` or `extension:<id>`). Client names are self-chosen, so this keeps
+    /// agents apart from the user's reminders, not from each other.
+    static func canManage(caller: Caller, source: String) -> Bool {
+        switch caller {
+        case .user, .agent: true
+        case .routine, .external, .extension: ToolContext(caller: caller, now: Date()).provenanceTag == source
+        }
+    }
+
     struct Shared: Sendable {
         let scheduler: ReminderScheduler
         let parser: @Sendable () -> WhenParser
@@ -85,9 +95,13 @@ public enum ReminderTools {
                               refId: r.id)
         }
 
-        func existing(_ input: JSONValue) async throws -> Reminder {
+        /// The reminder `id` names, if this caller may change it. Another agent or an extension reaches only the
+        /// reminders it set itself, and one it may not change reads as not found, so ids can't be probed (T4).
+        func existing(_ input: JSONValue, caller: Caller) async throws -> Reminder {
             guard let id = input.string("id") else { throw ToolError.invalidInput(String(localized: "“id” is required")) }
-            guard let r = await scheduler.reminder(matching: id) else { throw ToolError.notFound(String(localized: "a reminder with id \(id)")) }
+            guard let r = await scheduler.reminder(matching: id), ReminderTools.canManage(caller: caller, source: r.source) else {
+                throw ToolError.notFound(String(localized: "a reminder with id \(id)"))
+            }
             return r
         }
     }
@@ -267,14 +281,15 @@ public enum ReminderTools {
                 name: "reminders.cancel", title: String(localized: "Cancel a reminder"),
                 description: "Cancel a reminder by id (from reminders.list). A repeating reminder stops repeating.",
                 inputSchema: Schema.object(["id": Schema.string("The reminder's id.")], required: ["id"]),
-                risk: .low, capabilities: [.time], category: .time, mutates: true
+                // Other agents reach only the reminders they set (`canManage`).
+                risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
             )
         }
 
         func summary(for input: JSONValue) -> String { String(localized: "Cancel a reminder") }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-            let r = try await shared.existing(input)
+            let r = try await shared.existing(input, caller: context.caller)
             let scheduler = shared.scheduler
             let foreign = Shared.isForeign(r)
             guard let before = try await scheduler.cancel(id: r.id), before.state != .cancelled else {
@@ -305,7 +320,7 @@ public enum ReminderTools {
         func summary(for input: JSONValue) -> String { String(localized: "Mark a reminder done") }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-            let r = try await shared.existing(input)
+            let r = try await shared.existing(input, caller: context.caller)
             let scheduler = shared.scheduler
             let foreign = Shared.isForeign(r)
             // A cancelled reminder stays cancelled; saying "done" would claim a change that didn't happen.
@@ -346,7 +361,7 @@ public enum ReminderTools {
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             guard let whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
-            let r = try await shared.existing(input)
+            let r = try await shared.existing(input, caller: context.caller)
             let parsed = try shared.future(whenText, now: context.now)
             guard parsed.recurrence == nil else { throw ToolError.invalidInput(String(localized: "snooze takes a single time, not a repeat")) }
             let scheduler = shared.scheduler
