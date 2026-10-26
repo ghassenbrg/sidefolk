@@ -494,9 +494,12 @@ read on its own so one unknown value can't turn switched-off capabilities back o
 and §5 note the exceptions.
 
 **Residual risks:**
-- Full access runs model-written commands (command watchers, extension programs) and moves files to
-  the Trash in clean turns without the person reading the exact text first: a model *mistake*, not
-  only an injection, acts at once. The sheet says so; Activity, Undo and the Trash are the way back.
+- Full access runs model-written commands (command watchers, extension programs), opens links in
+  other apps' schemes (a Shortcut, `ssh://`) and moves files to the Trash in clean turns without the
+  person reading the exact text first: a model *mistake*, not only an injection, acts at once. The
+  sheet says so; Activity, Undo and the Trash are the way back.
+- Same-uid code can still write the policy in the database and turn on Full access (out of scope,
+  SECURITY §1); the planned HMAC over Guard's rows (T19, P1) now covers the policy too.
 - A clean turn is only as clean as taint tracking. What reaches the context without setting it can
   steer Auto and Full access with no card: extension tool names and titles (60 characters), notes the
   person saved from elsewhere as their own, text they paste into the request itself.

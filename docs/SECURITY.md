@@ -395,7 +395,8 @@ provider keys with their host bindings and each MCP server's `mcp.<id>` item, co
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
 not ignored. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
-extension pins and command watchers, so tampered rows are ignored.
+extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are
+ignored.
 
 **T20 Logging leaks (H/M).** `os.Logger` values are `.private`; messages are fixed text and
 anything that came from outside (extension ids, methods, tool and skill names) goes in fields. A

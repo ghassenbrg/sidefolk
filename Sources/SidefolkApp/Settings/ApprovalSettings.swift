@@ -83,12 +83,12 @@ struct FullAccessSheet: View {
                     .accessibilityHidden(true)
                 Text("Turn on Full access?").font(Theme.Font.heading).foregroundStyle(Theme.ink)
             }
-            Text("Sidefolk will do what you ask without checking with you first: moving and trashing files in the folders you shared, opening links and apps, reading pages, running commands and using extensions.")
+            Text("Sidefolk will do what you ask without checking with you first: moving and trashing files in the folders you shared, opening links and apps, reading pages and your Apple Notes, running commands and using extensions.")
                 .font(Theme.Font.body).foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
             section("It still asks before", symbol: "exclamationmark.shield", tint: Theme.danger) {
                 Text("Anything a web page, file or extension it read could be steering to send your data out: an address you didn't type, a command, a file change, an extension, your clipboard or memory.")
-                Text("Working in a folder you haven't shared, or saving a new skill.")
+                Text("Working in a folder you haven't shared, saving a new skill, or removing notes from Apple Notes.")
             }
             section("In every mode", symbol: "lock", tint: Theme.inkMuted) {
                 Text("What you switched off under “What Sidefolk may do” stays off.")
