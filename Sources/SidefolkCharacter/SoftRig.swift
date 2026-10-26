@@ -42,9 +42,12 @@ final class SoftRig: Figure {
     private let eyeMarks: [FaceMark]
     private let browMarks: [FaceMark]
     private let mouthMark: FaceMark
+    private let backGear = Layers.canvas()
     private let headGear = Layers.canvas()
     private let faceGear = Layers.canvas()
     private let bodyGear = Layers.canvas()
+    /// The signature thing in hand: under the arms or over them, as the species draws it.
+    private let held = Layers.canvas()
     private let wardrobe = Layers.canvas()
     private lazy var trunk: CGPath = makeTrunk()
 
@@ -108,6 +111,7 @@ final class SoftRig: Figure {
             breath.addSublayer(layer)
         }
 
+        crown.addSublayer(backGear)
         appendages.forEach { crown.addSublayer($0.root) }
         breath.addSublayer(crown)
         breath.addSublayer(soft(species.torso, shadow: 5))
@@ -139,9 +143,15 @@ final class SoftRig: Figure {
         head.addSublayer(headGear)
         breath.addSublayer(head)
 
+        if let item = species.held {
+            held.addSublayer(item.draw())
+            held.opacity = 0
+        }
         breath.addSublayer(propBack)
+        if species.held?.overArms == false { breath.addSublayer(held) }
         breath.addSublayer(armL.pose)
         breath.addSublayer(armR.pose)
+        if species.held?.overArms == true { breath.addSublayer(held) }
         breath.addSublayer(propFront)
         breath.addSublayer(bodyFX)
 
@@ -193,6 +203,11 @@ final class SoftRig: Figure {
     func look(for state: CharacterState) -> Look {
         var look = Choreography.look(for: state)
         SoftExpressions.adapt(&look, for: state, face: species.face)
+        if let item = species.held, state == .idle {
+            look.pose.holding = 1
+            if let left = item.arms.0 { look.pose.armL = left }
+            if let right = item.arms.1 { look.pose.armR = right }
+        }
         return look
     }
 
@@ -200,7 +215,7 @@ final class SoftRig: Figure {
         accent = style.color
         let material = style.color.tint
         appendages.forEach { $0.draw(material) }
-        for (container, mount) in [(headGear, Gear.Mount.head), (faceGear, .face), (bodyGear, .body)] {
+        for (container, mount) in [(backGear, Gear.Mount.back), (headGear, .head), (faceGear, .face), (bodyGear, .body)] {
             container.sublayers?.forEach { $0.removeFromSuperlayer() }
             for gear in species.gear where gear.mount == mount { container.addSublayer(gear.draw(material)) }
         }
@@ -239,6 +254,7 @@ final class SoftRig: Figure {
         browMarks.forEach { Motion.set($0.layer, "opacity", Float(next.brows), faceTransit) }
         mouthMark.show(next.mouth, faceTransit)
         Motion.set(mouthMark.layer, "opacity", Float(next.mouthShown), faceTransit)
+        Motion.set(held, "opacity", Float(next.holding), faceTransit)
 
         for (appendage, spec) in zip(appendages, species.appendages) {
             appendage.pose(spec.side < 0 ? next.earL : next.earR, transit)
@@ -270,8 +286,8 @@ final class SoftRig: Figure {
         let turn = CGAffineTransform(translationX: look.dx * 2.2, y: look.dy * 1.4).rotated(by: -look.dx * 0.045)
         Motion.set(head, "transform", Motion.transform(turn), transit)
         Motion.set(crown, "transform", Motion.transform(turn), transit)
-        Motion.set(face, "transform", Motion.transform(CGAffineTransform(translationX: look.dx * 2.5 * s, y: look.dy * 1.8 * s)), transit)
-        let inside: CGFloat = if case .screen = species.face.kind { 5 } else { 1.5 }
+        Motion.set(face, "transform", Motion.transform(CGAffineTransform(translationX: look.dx * 3.5 * s, y: look.dy * 2.4 * s)), transit)
+        let inside: CGFloat = if case .screen = species.face.kind { 5 } else { 2 }
         Motion.set(eyes, "transform", Motion.transform(CGAffineTransform(translationX: look.dx * inside * s, y: look.dy * inside * 0.6 * s)),
                    transit)
     }

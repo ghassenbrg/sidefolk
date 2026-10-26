@@ -28,9 +28,10 @@ final class Appendage {
     /// Redraws it (the style colour changed); the motion layers stay.
     func draw(_ accent: RGB) {
         art.sublayers?.forEach { $0.removeFromSuperlayer() }
-        let drawing = spec.layers(accent)
-        drawing.setAffineTransform(CGAffineTransform(translationX: spec.base.x, y: spec.base.y))
-        art.addSublayer(drawing)
+        let placed = Layers.canvas()
+        placed.setAffineTransform(CGAffineTransform(translationX: spec.base.x, y: spec.base.y))
+        placed.addSublayer(spec.layers(accent))
+        art.addSublayer(placed)
     }
 
     /// Positive `droop` turns it outward and down, negative perks it up.

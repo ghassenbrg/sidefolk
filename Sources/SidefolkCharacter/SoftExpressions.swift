@@ -62,12 +62,15 @@ enum SoftExpressions {
         var face = Pose()
         face.mouthShown = 0
         switch state {
-        case .idle, .listening, .working, .waiting:
+        case .idle:
             rest(&face, temper)
-            if state == .listening, face.eyeL == Ink.bead { face.setEyes(Ink.wide) }
-            if case .working(let prop) = state, [.binoculars, .card, .clock, .bell].contains(prop), face.eyeL == Ink.bead {
-                face.setEyes(Ink.wide)
-            }
+        case .listening, .working, .waiting:
+            // Open eyes on the task whatever the temper; its mouth and brows stay.
+            rest(&face, temper)
+            face.setEyes(Ink.bead)
+            face.shine = 1
+            if state == .listening { face.setEyes(Ink.wide) }
+            if case .working(let prop) = state, [.binoculars, .card, .clock, .bell].contains(prop) { face.setEyes(Ink.wide) }
             if state == .waiting { face.setMouth(Ink.smile) }
         case .sleeping:
             face.setEyes(Ink.closed)

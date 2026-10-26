@@ -23,6 +23,7 @@ struct Species {
     var appendages: [AppendageSpec] = []
     /// Fixed pieces drawn over the head or body (headphones, a chest badge, a cap).
     var gear: [Gear] = []
+    var held: Held?
     /// Where a scarf goes (the shared accessory).
     var collar: Collar
     /// The body at rest: what bubbles and panels attach to.
@@ -97,9 +98,20 @@ struct AppendageSpec {
     var floppiness: CGFloat = 1
 }
 
+/// A signature thing the companion holds while nothing else is going on (idle):
+/// Scout's magnifier, Tempo's calendar. Other states put it away and hold their own props.
+struct Held {
+    /// Arm raises while holding it (left, right); the shared choreography's otherwise.
+    var arms: (CGFloat?, CGFloat?)
+    /// Drawn over the hands (a card held from behind) or under them (a handle gripped).
+    var overArms: Bool
+    var draw: @MainActor () -> CALayer
+}
+
 /// A fixed piece worn over the head or body, optionally in the accent colour.
 struct Gear {
-    enum Mount { case head, face, body }
+    /// `back` hangs behind the body and turns with the head (Melody's headband).
+    enum Mount { case back, head, face, body }
     var mount: Mount
     /// Draws it in canvas units; `accent` is the style colour as a material.
     var draw: @MainActor (_ accent: RGB) -> CALayer

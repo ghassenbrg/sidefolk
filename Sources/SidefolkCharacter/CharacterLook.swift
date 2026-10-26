@@ -16,7 +16,7 @@ public enum CharacterSpecies: String, CaseIterable, Sendable {
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
 
     /// Companions finished to the full bar (every state, gesture, prop): only these are offered.
-    public static let available: [CharacterSpecies] = [.mochi, .sidefolk, .spark]
+    public static let available: [CharacterSpecies] = allCases
 
     public var displayName: String {
         switch self {

@@ -37,6 +37,8 @@ struct Pose: Equatable, Sendable {
     var earR: CGFloat = 0
     /// The catchlight in bead eyes: 1 for open eyes, 0 when they are arcs or closed.
     var shine: CGFloat = 1
+    /// Its signature thing in hand (1) or put away (0).
+    var holding: CGFloat = 0
 
     static func eyes(_ left: Stroke, _ right: Stroke? = nil) -> (Stroke, Stroke) {
         (left, right ?? left.mirrored)

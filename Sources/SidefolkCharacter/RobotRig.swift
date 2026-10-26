@@ -36,6 +36,10 @@ final class RobotRig: Figure {
     let bodyFX = Layers.canvas()
     let stageFX = Layers.canvas()
     let badges = Layers.canvas()
+    /// The shared accessory: a scarf below the visor, behind the arms.
+    private let wardrobe = Layers.canvas()
+    private var wearsScarf = false
+    private static let collar = Collar(center: pt(100, 57), halfWidth: 45, sag: 6, height: 14)
 
     private let ground = CAGradientLayer()
     private let footL = Layers.canvas(anchor: pt(84, 33))
@@ -67,6 +71,9 @@ final class RobotRig: Figure {
 
     func dress(_ style: CharacterStyle) {
         accent = style.color
+        wearsScarf = style.accessory == .scarf
+        wardrobe.sublayers?.forEach { $0.removeFromSuperlayer() }
+        if wearsScarf { wardrobe.addSublayer(Wardrobe.scarf(Self.collar, style.color.tint)) }
     }
 
     init() {
@@ -126,6 +133,7 @@ final class RobotRig: Figure {
         face.addSublayer(faceGesture)
         buildVisor(in: faceGesture)
 
+        breath.addSublayer(wardrobe)
         breath.addSublayer(propBack)
         breath.addSublayer(armL.pose)
         breath.addSublayer(armR.pose)
@@ -291,6 +299,7 @@ final class RobotRig: Figure {
     func silhouette(extra: CGRect?) -> CGPath {
         var shape = Shapes.trunk
         for limb in [armL, armR] { shape = shape.union(limb.outline) }
+        if wearsScarf { shape = shape.union(Wardrobe.scarfOutline(Self.collar)) }
         if let extra { shape = shape.union(CGPath(rect: extra, transform: nil)) }
         let t = CGAffineTransform(translationX: Canvas.pivot.x + pose.shift, y: Canvas.pivot.y + pose.lift)
             .rotated(by: pose.lean)
