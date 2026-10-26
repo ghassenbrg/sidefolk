@@ -62,6 +62,12 @@ public final class CharacterView: NSView {
     /// Breathing resumes for a while (e.g. the pointer came close); calm states settle again later.
     public func wake() { director.wake() }
 
+    /// Speaking: the mouth opens with `level`, the voice's loudness (0...1) as it plays; nil closes
+    /// it. Driven by the audio, so it moves only while sound comes out.
+    public func speak(_ level: Double?) {
+        director.speak(level.map { CGFloat($0) })
+    }
+
     /// Look direction, each axis -1...1 (x right, y up); nil looks straight ahead.
     /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy.
     public func setGaze(_ vector: CGVector?) {
@@ -103,6 +109,7 @@ public final class CharacterView: NSView {
         case .idle: String(localized: "\(name) is here")
         case .sleeping: String(localized: "\(name) is resting")
         case .listening: String(localized: "\(name) is listening")
+        case .hearing: String(localized: "\(name) is listening to you", comment: "VoiceOver, while the microphone is on")
         case .thinking: String(localized: "\(name) is thinking")
         case .working(let prop): prop.activity(name)
         case .waiting: String(localized: "\(name) needs your approval")

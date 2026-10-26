@@ -12,6 +12,7 @@ struct SettingsTabContent: View {
         case .general: GeneralSettingsView(model: model)
         case .companion: CompanionSettingsView(model: model)
         case .ai: AISettingsView(model: model)
+        case .voice: VoiceSettingsView(model: model)
         case .agents: SettingsPage { AgentsGroup(model: model) }
         case .privacy: PrivacySettingsView(model: model)
         case .extensions: ExtensionsSettingsView(model: model)

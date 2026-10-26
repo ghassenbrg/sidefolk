@@ -87,6 +87,8 @@ struct StorageSummary: Hashable {
 @MainActor
 protocol AppServices: AnyObject {
     var runtime: SidefolkRuntime { get }
+    /// Settings › Voice's side: microphone, languages, voices, the ElevenLabs key, the test.
+    var voiceServices: any VoiceServices { get }
 
     // Reminders
     func completeReminder(_ id: String) async

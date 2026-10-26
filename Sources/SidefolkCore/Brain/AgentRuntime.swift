@@ -9,14 +9,17 @@ public struct AgentRequest: Sendable {
     public var thinkHarder: Bool
     /// Start a fresh conversation even if one is open.
     public var newThread: Bool
+    /// Said aloud with the talk key: the first sentence of the answer will be spoken (D34).
+    public var spoken: Bool
 
     public init(text: String, attachment: AgentAttachment? = nil, threadId: String? = nil, thinkHarder: Bool = false,
-                newThread: Bool = false) {
+                newThread: Bool = false, spoken: Bool = false) {
         self.text = text
         self.attachment = attachment
         self.threadId = threadId
         self.thinkHarder = thinkHarder
         self.newThread = newThread
+        self.spoken = spoken
     }
 }
 
@@ -134,7 +137,7 @@ public actor AgentRuntime {
         let choice = try? factory.make(current.provider, thinkHarder: request.thinkHarder)
         let threadId = request.newThread ? nil : (request.threadId ?? currentThread).flatMap { isActive($0, now: clock.now) ? $0 : nil }
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
-                                        thinkHarder: request.thinkHarder, settings: current)
+                                        thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current)
         return ContextPreview(provider: choice?.backend.providerName ?? current.provider.kind.displayName,
                               model: choice.map { $0.model.isEmpty ? "default" : $0.model } ?? "", system: built.system,
                               messages: built.messages, tools: offeredTools().map(\.modelName), tainted: built.tainted, at: clock.now)
@@ -224,7 +227,7 @@ public actor AgentRuntime {
 
         let specs = offeredTools()
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
-                                        thinkHarder: request.thinkHarder, settings: current)
+                                        thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current)
         let provider = choice.backend.providerName
         let model = choice.model.isEmpty ? "default" : choice.model
         let start = clock.now
@@ -237,7 +240,7 @@ public actor AgentRuntime {
         await persist { try await runs.save(opened) }
         emit(.started(runId: runId, provider: provider, model: model))
         let asked = Exchange(threadId: threadId, role: .user, content: request.text.trimmingCharacters(in: .whitespacesAndNewlines),
-                             meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted), now: start)
+                             meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted, spoken: request.spoken), now: start)
         await persist { try await exchanges.append(asked) }
 
         let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted,

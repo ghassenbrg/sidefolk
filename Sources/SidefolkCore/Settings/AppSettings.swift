@@ -177,6 +177,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var activityDays = 90
     public var debugLogging = false
     public var onboardingDone = false
+    /// Talking to the companion and hearing it answer (D34).
+    public var voice = VoiceSettings()
 
     public init() {}
 
@@ -209,6 +211,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.activityDays, &activityDays)
         read(.debugLogging, &debugLogging)
         read(.onboardingDone, &onboardingDone)
+        read(.voice, &voice)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

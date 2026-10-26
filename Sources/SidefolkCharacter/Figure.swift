@@ -46,4 +46,15 @@ protocol Figure: AnyObject {
     /// Ears and antennae trail behind a one-shot move.
     func follow(_ gesture: CharacterGesture)
     func dress(_ style: CharacterStyle)
+    /// Speaking: the mouth opens by `openness` (0...1) over whatever the pose shows; nil gives the
+    /// pose its own mouth back.
+    func talk(_ openness: CGFloat?, _ transit: Transit)
+}
+
+extension Figure {
+    /// An open mouth as one stroke: a round "o" that grows taller as the voice gets louder, built
+    /// from the same skeleton as every other mark, so it morphs from and back to any mouth.
+    static func talkingMouth(_ openness: CGFloat, width: CGFloat) -> Stroke {
+        Stroke.pill(width: width, height: width * (1 + 1.1 * openness))
+    }
 }

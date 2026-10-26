@@ -6,6 +6,9 @@ import SidefolkCore
 extension KeyboardShortcuts.Name {
     /// ⌘⇧Space by default (DECISIONS D11).
     static let ask = Self("ask", default: .init(.space, modifiers: [.command, .shift]))
+    /// Hold to talk, when the person gives talking a shortcut of its own (D34). None by default:
+    /// holding the Ask shortcut talks until then.
+    static let talk = Self("talk")
 }
 
 /// Owns the windows and routes events between the core runtime and the UI.
@@ -19,7 +22,7 @@ final class AppCoordinator {
     let monitor: EnvironmentMonitor
     let companion = CompanionWindowController()
     private(set) var onboarding: Onboarding!
-    private var mood = CompanionMood()
+    var mood = CompanionMood()
     private var roster = DutyRoster()
     private var backlog = 0
     private var rosterTask: Task<Void, Never>?
@@ -34,6 +37,14 @@ final class AppCoordinator {
     var knownCollections: [String] = []
     private var moodTimer: Task<Void, Never>?
     private var eventTask: Task<Void, Never>?
+    /// Talking and spoken replies (D34).
+    private(set) lazy var voice = VoiceController(host: self, secrets: secrets)
+    /// The Ask shortcut is down and may become a hold to talk.
+    var askKeyHold: Task<Void, Never>?
+    var askKeyTalking = false
+    /// The Ask shortcut's press silenced the companion; its release doesn't toggle the panel too.
+    var askKeySilenced = false
+    var talkKeysInstalled = false
 
     init(runtime: SidefolkRuntime) {
         self.runtime = runtime
@@ -46,6 +57,8 @@ final class AppCoordinator {
         askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44),
                                       hotkey: hotkeyLabel)
         ask.actions = self
+        // Esc silences the companion or drops what is being said before it closes anything.
+        askPanel.onEscape = { [weak self] in self?.voice.cancel() ?? false }
         askPanel.onVisibilityChange = { [weak self] visible in
             self?.mood.panelOpen = visible
             if !visible { self?.companion.keepRaised(false) }
@@ -97,7 +110,7 @@ final class AppCoordinator {
         #else
         let hotkey = true
         #endif
-        if hotkey { KeyboardShortcuts.onKeyUp(for: .ask) { [weak self] in self?.toggleAsk() } }
+        if hotkey { installTalkKeys() }
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
@@ -164,6 +177,7 @@ final class AppCoordinator {
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
         companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
         askPanel?.update(companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44), hotkey: hotkeyLabel)
+        applyVoiceKeys()
         renderMood()
     }
 
@@ -303,6 +317,12 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("find:") { home.showSearch(String(command.dropFirst(5))); return }
+        if command.hasPrefix("voice:file:") {
+            // As if the talk key were held while the file played into the microphone.
+            voice.talk(file: URL(fileURLWithPath: String(command.dropFirst("voice:file:".count))))
+            return
+        }
+        if command == "voice:stop" { _ = voice.cancel(); return }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
             if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
@@ -503,7 +523,7 @@ final class AppCoordinator {
         Task { await runtime.attention.respond(id: item.id, actionId: action) }
     }
 
-    private func renderMood() {
+    func renderMood() {
         companion.render(mood.pose(at: Date()))
         moodTimer?.cancel()
         if let next = mood.nextChange(after: Date()) {
@@ -517,7 +537,18 @@ final class AppCoordinator {
 }
 
 extension AppCoordinator: CompanionDelegate {
-    func companionClicked() { toggleAsk() }
+    func companionClicked() {
+        // A click while it talks only silences it (D34).
+        if voice.isSpeaking {
+            voice.interrupt(cancelRun: true)
+            return
+        }
+        toggleAsk()
+    }
+
+    var companionCanTalk: Bool { runtime.settings.current.voice.input }
+    func companionHoldBegan() { voice.begin() }
+    func companionHoldEnded() { voice.end() }
 
     func companionDoubleClicked() {
         askPanel.hide()
