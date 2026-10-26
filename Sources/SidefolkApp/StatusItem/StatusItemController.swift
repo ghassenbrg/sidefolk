@@ -28,6 +28,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var isQuiet: () -> Bool = { false }
     var companionVisible: () -> Bool = { true }
     var hotkeyLabel: () -> String = { "" }
+    /// The companion's name, so the menu asks the one on the desktop, as Now's "Ask Mochi…" does.
+    var companionName: () -> String = { "Sidefolk" }
     private var nowCache: [NowEntry] = []
 
     func install(image: NSImage?) {
@@ -82,7 +84,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let ask = menu.addItem(withTitle: String(localized: "Ask Sidefolk…"), action: #selector(ask), keyEquivalent: "")
+        let ask = menu.addItem(withTitle: String(localized: "Ask \(companionName())…"), action: #selector(ask), keyEquivalent: "")
         ask.target = self
         ask.toolTip = hotkeyLabel()
         if mode == .fullAccess {
