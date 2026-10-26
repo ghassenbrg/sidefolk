@@ -108,13 +108,13 @@ struct AskView: View {
                 }
                 if model.text.isEmpty, !model.busy {
                     // Drops work without AI: the common things are one click away.
-                    HStack(spacing: 6) {
+                    ButtonRow {
                         Button("Save") { model.actions?.perform(.save, with: attachment, in: model) }.buttonStyle(.sf(.primary))
                         Button("Remind me…") { model.actions?.perform(.remind, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                         if canWatch(attachment) {
                             Button("Watch") { model.actions?.perform(.watch, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                         }
-                        Button("Ask About It…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
+                        Button("Ask about it…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                     }
                 }
             }
@@ -423,7 +423,7 @@ struct ResultCardView<Actions: View>: View {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                HStack(spacing: 6) { actions }
+                ButtonRow { actions }
             }
         }
         .accessibilityElement(children: .contain)
@@ -473,7 +473,7 @@ private struct AnswerCard: View {
                         guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.user == nil else { return .discarded }
                         return .systemAction
                     })
-                HStack(spacing: 6) {
+                ButtonRow {
                     if asks {
                         Button("Reply") { model.reply() }.buttonStyle(.sf(.primary))
                     }
