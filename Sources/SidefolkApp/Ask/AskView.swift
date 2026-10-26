@@ -30,6 +30,13 @@ struct AskView: View {
         HStack(spacing: Theme.Space.s) {
             Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
             Spacer()
+            if model.hasResults, !model.busy {
+                Button { model.clearResults() } label: {
+                    Text("Clear").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                }
+                .buttonStyle(.plain)
+                .help("Remove these results")
+            }
             Button { model.actions?.openHome() } label: {
                 Image(systemName: "house").imageScale(.small)
             }
@@ -98,11 +105,12 @@ struct AskView: View {
 
     private var results: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            ForEach(model.visibleEntries) { entry in
-                if let caption = entry.caption {
-                    Text(caption).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
-                }
+            ForEach(model.pinnedEntries) { entry in
                 EntryView(entry: entry, model: model)
+                    .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+            }
+            ForEach(model.visibleRequests) { request in
+                RequestView(request: request, model: model)
                     .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
             }
         }
@@ -136,9 +144,46 @@ struct AskView: View {
     }
 }
 
+/// One request: its words, with a way to remove it, then what came of it.
+private struct RequestView: View {
+    var request: AskModel.Request
+    var model: AskModel
+    @State private var hovering = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            HStack(spacing: 4) {
+                Text(request.caption ?? "").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
+                Spacer(minLength: 0)
+                Button { model.remove(request) } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
+                    .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
+                    .opacity(hovering ? 1 : 0)
+                    .help("Remove")
+                    .accessibilityLabel("Remove “\(request.caption ?? "this result")”")
+            }
+            ForEach(request.entries) { entry in
+                EntryView(entry: entry, model: model, retry: request.caption == nil ? nil : { model.retry(request) })
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+    }
+}
+
 private struct EntryView: View {
     var entry: AskEntry
     var model: AskModel
+    /// Sends the request again, replacing these cards (failed requests only).
+    var retry: (() -> Void)? = nil
+
+    /// What works without AI: keep the words as a task or a note, or set a reminder for them.
+    @ViewBuilder private func localActions(_ text: String, guess: ReminderGuess?) -> some View {
+        Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary)).fixedSize()
+        if guess == nil {
+            Button("Remind me…") { model.actions?.askWhen(toRemind: text, in: model) }.buttonStyle(.sf(.secondary)).fixedSize()
+        }
+        Button("Save as note") { model.actions?.saveAnswer(text, tainted: false, in: model) }.buttonStyle(.sf(.secondary)).fixedSize()
+    }
 
     var body: some View {
         switch entry.content {
@@ -183,9 +228,9 @@ private struct EntryView: View {
                     if let r = error.recovery {
                         Text(r).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                     }
-                    if retryable, let caption = entry.caption {
+                    if retryable, let retry {
                         HStack(spacing: 6) {
-                            Button("Try again") { model.actions?.retry(caption, in: model) }.buttonStyle(.sf(.secondary))
+                            Button("Try again", action: retry).buttonStyle(.sf(.secondary))
                             Button("AI settings…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
                         }
                     }
@@ -204,15 +249,12 @@ private struct EntryView: View {
                         }
                         .buttonStyle(.sf(.primary))
                     }
-                    HStack(spacing: 6) {
-                        Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary))
-                        if guess == nil {
-                            Button("Remind me…") { model.actions?.askWhen(toRemind: text, in: model) }.buttonStyle(.sf(.secondary))
-                        }
-                        Button("Save as note") { model.actions?.saveAnswer(text, tainted: false, in: model) }.buttonStyle(.sf(.secondary))
-                        Spacer(minLength: 0)
-                        Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
+                    // Never truncated: the actions wrap when a language makes them longer.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 6) { localActions(text, guess: guess) }
+                        VStack(alignment: .leading, spacing: 6) { localActions(text, guess: guess) }
                     }
+                    Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
                 }
             }
         case .question(let item):

@@ -96,7 +96,8 @@ final class AskModel {
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
 
-    static let visibleLimit = 3
+    /// Requests shown under the input; older ones drop off. This is not a chat.
+    static let visibleRequests = 2
 
     var hint: String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -104,16 +105,45 @@ final class AskModel {
         return actions?.hint(for: trimmed)
     }
 
-    /// Questions and approvals stay in view (pinned first); then the latest few results, newest first,
-    /// right under the input where the eye already is. Older ones simply drop off: this is not a chat.
-    var visibleEntries: [AskEntry] {
-        let pinned = entries.filter(\.isPinned)
-        // A request's entries stay in their own order under its caption; whole requests go newest first.
-        var requests: [[AskEntry]] = []
-        for entry in entries.filter({ !$0.isPinned }).suffix(Self.visibleLimit) {
-            if entry.caption != nil || requests.isEmpty { requests.append([entry]) } else { requests[requests.count - 1].append(entry) }
+    /// One request and what came of it, in order; the first entry carries the request's words.
+    struct Request: Identifiable, Equatable {
+        var entries: [AskEntry]
+        var id: UUID { entries[0].id }
+        var caption: String? { entries[0].caption }
+    }
+
+    /// Questions and approvals: they wait for an answer, so they stay in view above the results.
+    var pinnedEntries: [AskEntry] { entries.filter(\.isPinned) }
+
+    /// Every result so far, grouped by request, oldest first.
+    var requests: [Request] {
+        var requests: [Request] = []
+        for entry in entries where !entry.isPinned {
+            if entry.caption != nil || requests.isEmpty { requests.append(Request(entries: [entry])) } else { requests[requests.count - 1].entries.append(entry) }
         }
-        return pinned + requests.reversed().flatMap { $0 }
+        return requests
+    }
+
+    /// The latest requests, newest first, right under the input where the eye already is.
+    var visibleRequests: [Request] { Array(requests.suffix(Self.visibleRequests).reversed()) }
+
+    var hasResults: Bool { entries.contains { !$0.isPinned } }
+
+    func remove(_ request: Request) {
+        let gone = Set(request.entries.map(\.id))
+        entries.removeAll { gone.contains($0.id) }
+    }
+
+    /// Everything but the questions and approvals still waiting for an answer.
+    func clearResults() {
+        entries.removeAll { !$0.isPinned }
+    }
+
+    /// Sends a failed request again in place of its old cards, so retries don't pile up.
+    func retry(_ request: Request) {
+        guard let caption = request.caption else { return }
+        remove(request)
+        actions?.retry(caption, in: self)
     }
 
     /// The agent is waiting for an answer the user can type into the input.
