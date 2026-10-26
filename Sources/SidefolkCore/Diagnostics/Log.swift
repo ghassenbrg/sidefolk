@@ -53,7 +53,9 @@ public final class Log: Sendable {
         guard let data = try? JSONSerialization.data(withJSONObject: record, options: [.sortedKeys]) else { return }
         state.withLock { s in
             guard let dir = s.dir else { return }
-            let day = String(record["t"]!.prefix(10))
+            // Files are named by the local day, so "yesterday's log" is the one people mean.
+            let c = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+            let day = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
             if s.handle == nil || s.day != day {
                 try? s.handle?.close()
                 let url = dir.appendingPathComponent("sidefolk-\(day).jsonl")
