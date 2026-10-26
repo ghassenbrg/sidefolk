@@ -47,12 +47,7 @@ final class SettingsModel {
     private(set) var loginError: UserFacingError?
 
     // AI
-    private(set) var detection: ProviderDetection?
-    private(set) var checking = false
-    private(set) var checkResult: Result<String, UserFacingError>?
-    private(set) var contextPreview: String?
-    private(set) var keySaved: [ProviderKind: Bool] = [:]
-    private(set) var baseURLError: UserFacingError?
+    @ObservationIgnored private(set) lazy var ai = AISettingsModel(parent: self)
 
     // Privacy & Permissions
     private(set) var storage: StorageSummary?
@@ -112,7 +107,6 @@ final class SettingsModel {
     func refresh() async {
         settings = runtime.settings.current
         openAtLogin = services.openAtLogin
-        refreshKeys()
         notificationsAllowed = await services.notificationsAuthorized()
         await loadPermissions()
         storage = await services.storageSummary()
@@ -120,8 +114,7 @@ final class SettingsModel {
         samples = await services.sampleExtensions()
         skills = await services.skills()
         integration = await services.integrationStatus()
-        contextPreview = await services.lastContextPreview()
-        detection = await services.detectProviders()
+        await ai.refresh()
     }
 
     func loadPermissions() async {
@@ -172,99 +165,6 @@ final class SettingsModel {
     func setDebugLogging(_ on: Bool) {
         update { $0.debugLogging = on }
         Log.shared.setDebug(on)
-    }
-
-    // MARK: AI
-
-    func setProvider(_ kind: ProviderKind) {
-        guard settings.provider.kind != kind else { return }
-        let model = Self.defaultModel(kind)
-        let defaultURL = Self.presets[0].url
-        update { s in
-            s.provider.kind = kind
-            s.provider.model = model
-            s.provider.smartModel = ""
-            if kind == .openAICompatible, s.provider.baseURL.isEmpty { s.provider.baseURL = defaultURL }
-        }
-        checkResult = nil
-    }
-
-    static func defaultModel(_ kind: ProviderKind) -> String {
-        switch kind {
-        case .none, .openAICompatible: ""
-        case .claudeCode: "sonnet"
-        case .anthropic: "claude-sonnet-4-5"
-        }
-    }
-
-    static let presets: [(name: String, url: String)] = [
-        ("OpenAI", "https://api.openai.com/v1"),
-        ("Ollama", "http://localhost:11434/v1"),
-        ("LM Studio", "http://localhost:1234/v1"),
-        ("OpenRouter", "https://openrouter.ai/api/v1"),
-    ]
-
-    func checkProvider() async {
-        checking = true
-        checkResult = nil
-        checkResult = await services.checkProvider()
-        checking = false
-        contextPreview = await services.lastContextPreview()
-    }
-
-    func redetect() async { detection = await services.detectProviders() }
-
-    func refreshKeys() {
-        for kind in [ProviderKind.anthropic, .openAICompatible] { keySaved[kind] = services.hasAPIKey(for: kind) }
-    }
-
-    func saveKey(_ key: String, for kind: ProviderKind) {
-        let clean = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return }
-        services.setAPIKey(clean, for: kind)
-        refreshKeys()
-        checkResult = nil
-    }
-
-    func removeKey(for kind: ProviderKind) {
-        services.setAPIKey(nil, for: kind)
-        refreshKeys()
-        checkResult = nil
-    }
-
-    enum BaseURLCheck: Equatable {
-        case ok
-        case invalid
-        /// A key is saved for another host; sending it to this one needs the user's yes (SECURITY T18).
-        case needsKeyConfirmation(oldHost: String, newHost: String)
-    }
-
-    /// Checks a new OpenAI-compatible address: http(s) only, plain http only on this Mac.
-    func checkBaseURL(_ text: String) -> BaseURLCheck {
-        baseURLError = nil
-        guard let url = URL(string: text), let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme),
-              let host = url.host?.lowercased(), !host.isEmpty
-        else {
-            baseURLError = UserFacingError("That isn't a web address. Nothing was saved.", recovery: "It should look like https://api.example.com/v1.")
-            return .invalid
-        }
-        if scheme == "http", !["localhost", "127.0.0.1", "::1", "[::1]"].contains(host) {
-            baseURLError = UserFacingError("Plain http is only allowed for servers on this Mac. Nothing was saved.",
-                                           recovery: "Use an https address.")
-            return .invalid
-        }
-        let oldHost = URL(string: settings.provider.baseURL)?.host?.lowercased() ?? ""
-        if keySaved[.openAICompatible] == true, !oldHost.isEmpty, oldHost != host {
-            return .needsKeyConfirmation(oldHost: oldHost, newHost: host)
-        }
-        return .ok
-    }
-
-    func setBaseURL(_ text: String, removingKey: Bool = false) {
-        if removingKey { removeKey(for: .openAICompatible) }
-        update { $0.provider.baseURL = text }
-        baseURLError = nil
-        checkResult = nil
     }
 
     // MARK: Privacy & Permissions

@@ -46,11 +46,20 @@ struct SkillInfo: Identifiable, Hashable {
     var bundled: Bool
 }
 
+/// What Settings › AI shows next to each provider. Everything here is read locally: no prompt, no quota.
 struct ProviderDetection: Hashable {
-    var claudePath: String?
-    var claudeVersion: String?
-    var ollamaRunning: Bool
-    var ollamaModels: [String]
+    var claude: CLIStatus
+    var codex: CLIStatus
+    /// Codex's own model list (bundled with the CLI); empty when it can't be read.
+    var codexModels: [ModelOption] = []
+    var ollama: LocalServerState
+    var lmStudio: LocalServerState
+}
+
+/// Where an API key belongs: Anthropic's, or an OpenAI-compatible preset's (bound to its host).
+enum APIKeyTarget: Hashable {
+    case anthropic
+    case preset(ProviderPreset)
 }
 
 struct IntegrationStatus: Hashable {
@@ -113,11 +122,17 @@ protocol AppServices: AnyObject {
     func skills() async -> [SkillInfo]
     func deleteSkill(_ name: String) async
 
-    // AI
-    func detectProviders() async -> ProviderDetection
-    func checkProvider() async -> Result<String, UserFacingError>
-    func hasAPIKey(for kind: ProviderKind) -> Bool
-    func setAPIKey(_ key: String?, for kind: ProviderKind)
+    // AI. The provider is passed in, not read from the store: Settings has just changed it, and saving is async.
+    func detectProviders(_ provider: ProviderSettings) async -> ProviderDetection
+    /// One tiny request to the provider (it counts toward the user's usage): only on a click.
+    func testProvider(_ provider: ProviderSettings) async -> Result<String, UserFacingError>
+    /// An OpenAI-compatible preset's models, with its saved key. Free: no tokens.
+    func listModels(_ provider: ProviderSettings) async -> Result<[ModelOption], UserFacingError>
+    /// - Parameter customAddress: where the custom endpoint's key is bound.
+    func hasAPIKey(_ target: APIKeyTarget, customAddress: String) -> Bool
+    func setAPIKey(_ key: String?, for target: APIKeyTarget, customAddress: String)
+    /// Binds the custom endpoint's key to a new address, after the user agreed to send it there.
+    func moveCustomKey(from oldAddress: String, to newAddress: String)
     func lastContextPreview() async -> String?
 
     // Integrations (each asks for confirmation and makes a backup before changing anything)

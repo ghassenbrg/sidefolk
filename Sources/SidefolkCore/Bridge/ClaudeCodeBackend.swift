@@ -132,7 +132,7 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
         do { try PrivateDirectory.ensure(paths.brainWorkdir.path) } catch {
             return .failure(UserFacingError("Sidefolk's AI folder isn't private.", detail: "\(error)"))
         }
-        let env = Self.environment(base: baseEnvironment, tmp: paths.brainWorkdir.path, claudePath: claudePath)
+        let env = CLIBrain.environment(base: baseEnvironment, tmp: paths.brainWorkdir.path, cliPath: claudePath)
         return await ClaudeBinary.probe(claudePath, environment: env, cwd: paths.brainWorkdir.path)
     }
 
@@ -213,7 +213,7 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
     static func invocation(task: BrainTask, flags: ClaudeFlags, claudePath: String, runDir: String, helperPath: String,
                            sidefolkHome: String, environment: [String: String]) -> Invocation {
         var args = ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
-        if isSafeModelName(task.model) { args += ["--model", task.model] }
+        if CLIBrain.isSafeModelName(task.model) { args += ["--model", task.model] }
         args += ["--tools", "", "--strict-mcp-config", "--mcp-config", runDir + "/mcp.json", "--disable-slash-commands",
                  "--no-session-persistence", "--permission-prompts", "none", "--allowedTools", "mcp__sidefolk"]
         // --restricted ignores user, project and local settings (hooks, plugins, env); an empty
@@ -228,10 +228,10 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
         } else {
             args += ["--system-prompt", "You are Sidefolk's brain. Follow the instructions at the start of the user's message."]
         }
-        let text = conversation(task, inlineSystem: !flags.systemPromptFile)
+        let text = CLIBrain.conversation(task, inlineSystem: !flags.systemPromptFile)
         let message: JSONValue = ["type": "user", "message": ["role": "user", "content": [["type": "text", "text": .string(text)]]]]
         return Invocation(arguments: args,
-                          environment: Self.environment(base: environment, tmp: runDir + "/tmp", claudePath: claudePath),
+                          environment: CLIBrain.environment(base: environment, tmp: runDir + "/tmp", cliPath: claudePath),
                           input: message.jsonString + "\n", files: files)
     }
 
@@ -242,46 +242,6 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
             "env": ["SIDEFOLK_RUN_DIR": .string(runDir), "SIDEFOLK_HOME": .string(sidefolkHome)],
         ]]]
         return config.jsonString
-    }
-
-    /// The whole exchange as one user message: earlier turns as context, then the new message.
-    static func conversation(_ task: BrainTask, inlineSystem: Bool) -> String {
-        var parts: [String] = []
-        if inlineSystem { parts.append("<instructions>\n\(task.system)\n</instructions>") }
-        let earlier = task.messages.dropLast()
-        if !earlier.isEmpty {
-            let lines = earlier.map { "\($0.role == .user ? "User" : "You"): \($0.text)" }.joined(separator: "\n")
-            parts.append("Earlier in this conversation:\n\(lines)")
-        }
-        if let last = task.messages.last {
-            parts.append(earlier.isEmpty && !inlineSystem ? last.text : "The user's new message:\n\(last.text)")
-        }
-        return parts.joined(separator: "\n\n")
-    }
-
-    /// Allow-listed environment (T7): never DYLD_*, NODE_OPTIONS or ANTHROPIC_*.
-    static func environment(base: [String: String], tmp: String, claudePath: String) -> [String: String] {
-        let user = base["USER"] ?? NSUserName()
-        var env = [
-            "HOME": NSHomeDirectory(), "USER": user, "LOGNAME": base["LOGNAME"] ?? user, "TMPDIR": tmp,
-            "PATH": fixedPath(claudePath: claudePath),
-        ]
-        let lang = base["LANG"] ?? "en_US.UTF-8"
-        env["LANG"] = lang.allSatisfy({ $0.isLetter || $0.isNumber || "._-@".contains($0) }) ? lang : "en_US.UTF-8"
-        return env
-    }
-
-    /// The CLI's own folder (npm installs need `node` beside it) plus Homebrew and system folders.
-    static func fixedPath(claudePath: String) -> String {
-        var dirs = [(claudePath as NSString).deletingLastPathComponent, "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin",
-                    "/usr/sbin", "/sbin"]
-        var seen = Set<String>()
-        dirs.removeAll { !seen.insert($0).inserted }
-        return dirs.joined(separator: ":")
-    }
-
-    static func isSafeModelName(_ model: String) -> Bool {
-        (1...100).contains(model.count) && model.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || "._-:[]".contains($0)) }
     }
 }
 

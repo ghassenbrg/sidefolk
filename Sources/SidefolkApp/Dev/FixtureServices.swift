@@ -9,9 +9,12 @@ import SidefolkCore
 final class FixtureServices: AppServices {
     let runtime: SidefolkRuntime
     private(set) var openAtLogin = false
-    private var keys: Set<ProviderKind> = []
+    /// Saved API keys; snapshots change them to show each provider's states.
+    var keys: Set<APIKeyTarget> = []
+    /// What Settings › AI finds; snapshots change it to show each provider's states.
+    var detection = FixtureServices.sampleDetection
 
-    init(runtime: SidefolkRuntime, keys: Set<ProviderKind> = []) {
+    init(runtime: SidefolkRuntime, keys: Set<APIKeyTarget> = []) {
         self.runtime = runtime
         self.keys = keys
     }
@@ -130,20 +133,42 @@ final class FixtureServices: AppServices {
 
     // MARK: AI
 
-    func detectProviders() async -> ProviderDetection {
-        ProviderDetection(claudePath: NSHomeDirectory() + "/.local/bin/claude", claudeVersion: "2.1.12", ollamaRunning: true,
-                          ollamaModels: ["llama3.1:8b", "qwen2.5-coder:7b", "mistral:7b"])
+    static let sampleDetection = ProviderDetection(
+        claude: .ready(path: NSHomeDirectory() + "/.local/bin/claude", version: "2.1.12", login: nil),
+        codex: .ready(path: "/usr/local/bin/codex", version: "0.160.0", login: .chatGPT),
+        codexModels: ["gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.5"].map { ModelOption(id: $0) },
+        ollama: .running(models: [ModelOption(id: "qwen3:8b", usesTools: true), ModelOption(id: "llama3.1:8b", usesTools: true),
+                                  ModelOption(id: "gemma3:4b", usesTools: false), ModelOption(id: "glm-5.2:cloud", usesTools: true, cloud: true)]),
+        lmStudio: .notInstalled)
+
+    func detectProviders(_ provider: ProviderSettings) async -> ProviderDetection { detection }
+
+    func testProvider(_ provider: ProviderSettings) async -> Result<String, UserFacingError> {
+        .success("Codex answered “ok” in 3.1 s using its default model.")
     }
 
-    func checkProvider() async -> Result<String, UserFacingError> {
-        .success("Connected. Claude answered in 2.4 s using sonnet.")
+    func listModels(_ provider: ProviderSettings) async -> Result<[ModelOption], UserFacingError> {
+        let preset = provider.preset
+        switch preset {
+        case .ollama, .lmStudio:
+            guard case .running(let models) = preset == .ollama ? detection.ollama : detection.lmStudio else {
+                return .failure(UserFacingError("I couldn't reach \(preset.name) on this Mac."))
+            }
+            return .success(models)
+        case .openAI:
+            return .success(["gpt-5-mini", "gpt-4.1-mini", "gpt-5", "gpt-5.5", "o3"].map { ModelOption(id: $0) })
+        default:
+            return .success((preset.suggestedModels + preset.suggestedSmartModels).map { ModelOption(id: $0) })
+        }
     }
 
-    func hasAPIKey(for kind: ProviderKind) -> Bool { keys.contains(kind) }
+    func hasAPIKey(_ target: APIKeyTarget, customAddress: String) -> Bool { keys.contains(target) }
 
-    func setAPIKey(_ key: String?, for kind: ProviderKind) {
-        if key == nil { keys.remove(kind) } else { keys.insert(kind) }
+    func setAPIKey(_ key: String?, for target: APIKeyTarget, customAddress: String) {
+        if key == nil { keys.remove(target) } else { keys.insert(target) }
     }
+
+    func moveCustomKey(from oldAddress: String, to newAddress: String) {}
 
     func lastContextPreview() async -> String? {
         """

@@ -80,8 +80,32 @@ enum Layers {
         layer.contentsScale = scale
         if layer.shouldRasterize { layer.rasterizationScale = scale }
         layer.mask.map { setContentsScale(scale, in: $0) }
-        layer.sublayers?.forEach { setContentsScale(scale, in: $0) }
+        let inner = scale * ((layer as? Magnifier)?.factor ?? 1)
+        layer.sublayers?.forEach { setContentsScale(inner, in: $0) }
     }
+}
+
+/// Shows drawings made for another canvas `factor` times bigger (the on-duty folks' accessories on
+/// a full-size folk), telling `setContentsScale` to rasterize them that much finer so they stay sharp.
+final class Magnifier: CALayer {
+    let factor: CGFloat
+
+    init(_ factor: CGFloat) {
+        self.factor = factor
+        super.init()
+        bounds = CGRect(origin: .zero, size: Canvas.size)
+        anchorPoint = .zero
+        position = .zero
+        setAffineTransform(CGAffineTransform(scaleX: factor, y: factor))
+    }
+
+    override init(layer: Any) {
+        factor = (layer as? Magnifier)?.factor ?? 1
+        super.init(layer: layer)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Magnifier is created in code") }
 }
 
 /// Radial shading for a soft 3D look: light from the upper left, core shadow lower right.

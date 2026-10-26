@@ -10,25 +10,46 @@ import Testing
     @Test func settingsWithoutAnAppearanceUseTheRabbit() throws {
         let s = try decode(#"{"companionName": "Sidefolk", "size": "large"}"#)
         #expect(s.companion == .mochi)
-        #expect(s.accent == .aqua)
+        #expect(s.style(for: .mochi) == CompanionStyle(color: .aqua, accessory: .scarf))
+        #expect(s.style(for: .sidefolk) == CompanionStyle(color: .aqua, accessory: .none))
         #expect(s.size == .large)
     }
 
     @Test func unknownValuesFallBackWithoutLosingTheRest() throws {
         let s = try decode(#"{"companion": "pebble", "accent": "purple", "companionName": "Bob"}"#)
         #expect(s.companion == .mochi)
-        #expect(s.accent == .aqua)
+        #expect(s.style(for: .sidefolk).color == .aqua)
         #expect(s.companionName == "Bob")
     }
 
-    @Test func choiceAndAccentRoundTrip() throws {
+    @Test func choiceAndStyleRoundTrip() throws {
         var s = AppSettings()
         s.choose(.spark)
-        s.accent = .coral
+        s.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .spark)
         let back = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
         #expect(back.companion == .spark)
-        #expect(back.accent == .coral)
+        #expect(back.style(for: .spark) == CompanionStyle(color: .coral, accessory: .scarf))
         #expect(back.companionName == "Spark")
+    }
+
+    @Test func eachCompanionKeepsItsOwnStyle() {
+        var s = AppSettings()
+        s.setStyle(CompanionStyle(color: .mint, accessory: .none), for: .mochi)
+        s.choose(.pip)
+        s.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .pip)
+        s.choose(.mochi)
+        #expect(s.style(for: .mochi) == CompanionStyle(color: .mint, accessory: .none))
+        #expect(s.style(for: .pip) == CompanionStyle(color: .coral, accessory: .scarf))
+        #expect(s.style(for: .scout) == CompanionStyle(color: .aqua, accessory: .none))
+    }
+
+    @Test func folksAnswerToTheirOwnNames() {
+        var s = AppSettings()
+        s.choose(.guard_)
+        #expect(s.companionName == "Guard")
+        s.choose(.scout)
+        #expect(s.companionName == "Scout")
+        #expect(CompanionChoice(rawValue: "guard") == .guard_)
     }
 
     @Test func aNewSetupStartsWithMochi() {
@@ -41,7 +62,7 @@ import Testing
     @Test func aSavedRobotAndItsCustomizationSurviveTheRebrand() throws {
         let settings = try decode(#"{"companion":"sidefolk","accent":"coral","companionName":"Biscuit"}"#)
         #expect(settings.companion == .sidefolk)
-        #expect(settings.accent == .coral)
+        #expect(settings.style(for: .sidefolk) == CompanionStyle(color: .coral, accessory: .none))
         #expect(settings.companionName == "Biscuit")
     }
 

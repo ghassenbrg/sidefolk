@@ -262,9 +262,10 @@ public actor AttentionCenter {
             for i in items { held[i.id] = nil }
             let titles = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
             let summary = AttentionItem(level: .attention, source: "summary",
-                                        title: "While you were away: \(items.count) things",
+                                        title: String(localized: "While you were away: \(items.count) things"),
                                         body: titles + (items.count > 4 ? "\n…" : ""),
-                                        actions: [AttentionAction(id: "open", title: "Show", isPrimary: true)], now: clock.now)
+                                        actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)],
+                                        now: clock.now)
             let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
             reserve(summary.source, presentation, now: clock.now)
             try? await store.save(summary)

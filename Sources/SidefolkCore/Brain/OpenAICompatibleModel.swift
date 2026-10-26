@@ -1,7 +1,7 @@
 import Foundation
 
-/// Any server speaking OpenAI's `POST {base}/chat/completions` with function tools: OpenAI, Ollama
-/// (`http://localhost:11434/v1`, no key), LM Studio, OpenRouter.
+/// Any server speaking OpenAI's `POST {base}/chat/completions` with function tools: the presets in
+/// `ProviderPreset` (OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, OpenRouter, Ollama, LM Studio) or a custom one.
 public struct OpenAICompatibleModel: TurnModel {
     public let providerName: String
     public let baseURL: URL
@@ -9,32 +9,38 @@ public struct OpenAICompatibleModel: TurnModel {
     private let http: ProviderHTTP
 
     /// Throws when the address is unusable, including plain `http://` to anything but this Mac.
-    public init(baseURL: String, apiKey: Secret?, transport: any HTTPTransport = URLSessionTransport(),
+    /// - Parameter name: what errors call the service ("Groq"); derived from the address when nil.
+    public init(baseURL: String, apiKey: Secret?, name: String? = nil, transport: any HTTPTransport = URLSessionTransport(),
                 retry: RetryPolicy = .standard) throws(UserFacingError) {
         let url = try Self.validate(baseURL: baseURL)
         self.baseURL = url
         self.apiKey = apiKey.flatMap { $0.isEmpty ? nil : $0 }
-        providerName = Self.displayName(for: url)
+        providerName = name ?? Self.displayName(for: url)
         http = ProviderHTTP(transport: transport, retry: retry, provider: providerName, local: Self.isLoopback(url.host))
     }
 
     public func respond(to request: TurnRequest) async throws -> ModelTurn {
-        let body = Data(Self.requestBody(request).jsonString.utf8)
+        var wire = request
+        wire.model = Self.wireName(request.model)
+        let body = Data(Self.requestBody(wire).jsonString.utf8)
         let post = HTTPRequest(method: "POST", url: baseURL.appendingPathComponent("chat/completions"), headers: headers(),
                                body: body, timeout: min(max(request.timeBudget, 5), 120))
         let response = try await http.send(post, timeBudget: request.timeBudget)
-        guard response.status == 200 else { throw error(for: response, model: request.model) }
+        guard response.status == 200 else { throw error(for: response, model: wire.model) }
         return try Self.parse(response.body, provider: providerName)
     }
 
-    /// `GET {base}/models`: costs nothing and tells whether the model is there.
+    /// `GET {base}/models`: costs nothing and tells whether the model is listed. Only a request
+    /// proves it answers (Settings' "Test" sends one).
     public func check(model: String) async -> Result<String, UserFacingError> {
+        let model = Self.wireName(model)
         let get = HTTPRequest(method: "GET", url: baseURL.appendingPathComponent("models"), headers: headers(), timeout: 15)
         do {
             let response = try await http.send(get, timeBudget: 20)
             guard response.status == 200 else { return .failure(error(for: response, model: model)) }
             let json = try? JSONValue.parse(response.body)
             let ids = (json?["data"]?.arrayValue ?? json?["models"]?.arrayValue ?? []).compactMap { $0.string("id") ?? $0.string("name") }
+                .map(Self.wireName)
             guard !model.isEmpty else { return .success("Connected to \(providerName).") }
             guard Self.lists(model, in: ids) else {
                 let some = ids.prefix(5).joined(separator: ", ")
@@ -104,6 +110,12 @@ public struct OpenAICompatibleModel: TurnModel {
     }
 
     /// Ollama reports "llama3.1:latest" for a model the user calls "llama3.1".
+    /// The name chat/completions wants. Gemini lists its models as "models/gemini-2.5-flash" but
+    /// answers only to "gemini-2.5-flash"; no provider names a model "models/…" otherwise.
+    public static func wireName(_ model: String) -> String {
+        model.hasPrefix("models/") ? String(model.dropFirst("models/".count)) : model
+    }
+
     static func lists(_ model: String, in ids: [String]) -> Bool {
         ids.contains { $0 == model || $0 == "\(model):latest" || ($0.hasPrefix("\(model):") && !model.contains(":")) }
     }
@@ -220,7 +232,8 @@ public struct OpenAICompatibleModel: TurnModel {
             }
             return UserFacingError("\(name) rejected your API key. Nothing was changed.",
                                    recovery: "Check the key in Settings › AI, or paste a new one.", detail: detail)
-        case 404 where lower.contains("model"):
+        // A provider's own JSON error saying "not found" is about the model; a bare 404 page means a wrong address.
+        case 404 where lower.contains("model") || (ProviderHTTP.isJSONError(response.body) && lower.contains("not found")):
             return UserFacingError("\(name) doesn't have the model “\(model)”. Nothing was changed.",
                                    recovery: name == "Ollama" ? "Run “ollama pull \(model)”, or choose another model in Settings › AI."
                                        : "Choose another model in Settings › AI.", detail: detail)

@@ -25,7 +25,7 @@ private enum WriteChecks {
     /// anything is touched, so a bad entry fails the whole call.
     /// - Parameter moving: the items will end up somewhere else (move, rename), as opposed to the Trash.
     static func sources(_ raw: [String]?, moving: Bool) throws -> [String] {
-        guard let raw, !raw.isEmpty else { throw ToolError.invalidInput("“paths” needs at least one path.") }
+        guard let raw, !raw.isEmpty else { throw ToolError.invalidInput(String(localized: "“paths” needs at least one path.")) }
         guard raw.count <= maxItems else { throw UserFacingError("That's too many items at once (the limit is \(maxItems)).") }
         var seen = Set<String>()
         var out: [String] = []
@@ -57,7 +57,7 @@ private enum WriteChecks {
 
 struct FilesMoveTool: Tool {
     let spec = ToolSpec(
-        name: "files.move", title: "Move files",
+        name: "files.move", title: String(localized: "Move files"),
         description: """
             Move files or folders into another existing folder. Nothing is ever overwritten: if the name is taken \
             the moved item gets " 2" added. Both the source and destination folders must be shared with Sidefolk.
@@ -70,8 +70,8 @@ struct FilesMoveTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         let n = input.textList("paths")?.count ?? 0
-        let to = FilePaths.scopePath(input.string("to_folder")).map(FilePaths.display) ?? input.string("to_folder") ?? "a folder"
-        return "Move \(ToolFormat.count(n, "item")) to \(to)"
+        let to = FilePaths.scopePath(input.string("to_folder")).map(FilePaths.display) ?? input.string("to_folder") ?? String(localized: "a folder")
+        return String(localized: "Move \(n) items to \(to)")
     }
 
     func scope(for input: JSONValue) -> ToolScope {
@@ -96,19 +96,33 @@ struct FilesMoveTool: Tool {
         }
 
         var moved: [(from: String, to: String)] = []
+        // The same notes twice: in English for the model, in the app's language for the card.
         var notes: [String] = []
+        var shownNotes: [String] = []
         for source in sources {
             let name = FilePaths.name(source)
-            if FilePaths.parent(source) == destination { notes.append("\(name) is already there"); continue }
+            if FilePaths.parent(source) == destination {
+                notes.append("\(name) is already there")
+                shownNotes.append(String(localized: "\(name) is already there"))
+                continue
+            }
             do {
                 let target = try FileMover.moveToFreeName(from: source, folder: destination, name: name)
                 moved.append((source, target))
-                if FilePaths.name(target) != name { notes.append("“\(name)” became “\(FilePaths.name(target))” because that name was taken") }
+                let newName = FilePaths.name(target)
+                if newName != name {
+                    notes.append("“\(name)” became “\(newName)” because that name was taken")
+                    shownNotes.append(String(localized: "“\(name)” became “\(newName)” because that name was taken"))
+                }
             } catch FileMover.MoveError.errno(let code) {
-                notes.append("couldn't move \(name): \(WriteChecks.message(for: code, path: source).message)")
+                let why = WriteChecks.message(for: code, path: source).message
+                notes.append("couldn't move \(name): \(why)")
+                shownNotes.append(String(localized: "couldn't move \(name): \(why)"))
             }
         }
-        guard !moved.isEmpty else { throw UserFacingError(notes.isEmpty ? "Nothing was moved." : notes.joined(separator: "; ") + ".") }
+        guard !moved.isEmpty else {
+            throw UserFacingError(verbatim: shownNotes.isEmpty ? String(localized: "Nothing was moved.") : shownNotes.joined(separator: "; ") + ".")
+        }
 
         let names = moved.map { FilePaths.name($0.to) }
         var text = "Moved \(ToolFormat.count(moved.count, "item")) to \(FilePaths.display(destination)): \(ToolFormat.names(names, max: 5))."
@@ -116,15 +130,16 @@ struct FilesMoveTool: Tool {
         let records = moved
         return ToolResult(
             text: text,
-            card: ResultCard(kind: .file, title: "Moved \(ToolFormat.count(moved.count, "item"))", subtitle: "to " + FilePaths.display(destination),
-                             detail: notes.isEmpty ? nil : notes.joined(separator: "; ")),
-            undo: UndoAction(label: "Moved \(ToolFormat.count(records.count, "item")) back") {
+            card: ResultCard(kind: .file, title: String(localized: "Moved \(moved.count) items"),
+                             subtitle: String(localized: "to \(FilePaths.display(destination))"),
+                             detail: shownNotes.isEmpty ? nil : shownNotes.joined(separator: "; ")),
+            undo: UndoAction(label: String(localized: "Moved \(records.count) items back")) {
                 var stuck: [String] = []
                 for r in records.reversed() {
                     do { try FileMover.moveExclusive(from: r.to, to: r.from) } catch { stuck.append(FilePaths.name(r.to)) }
                 }
                 if !stuck.isEmpty {
-                    throw UserFacingError("I couldn't move back: \(ToolFormat.names(stuck)). Something may have changed since.")
+                    throw UserFacingError("I couldn't move back: \(Wording.names(stuck)). Something may have changed since.")
                 }
             })
     }
@@ -132,7 +147,7 @@ struct FilesMoveTool: Tool {
 
 struct FilesRenameTool: Tool {
     let spec = ToolSpec(
-        name: "files.rename", title: "Rename a file",
+        name: "files.rename", title: String(localized: "Rename a file"),
         description: "Rename one file or folder (keeping it in the same folder). Fails rather than replacing an existing item.",
         inputSchema: Schema.object([
             "path": Schema.string("Full path of the item"),
@@ -141,8 +156,8 @@ struct FilesRenameTool: Tool {
         risk: .medium, capabilities: [.filesWrite], category: .files, mutates: true)
 
     func summary(for input: JSONValue) -> String {
-        let old = input.string("path").map { FilePaths.name($0) } ?? "an item"
-        return "Rename \(old) to “\((input.string("new_name") ?? "").clipped(80))”"
+        let old = input.string("path").map { FilePaths.name($0) } ?? String(localized: "an item")
+        return String(localized: "Rename \(old) to “\((input.string("new_name") ?? "").clipped(80))”")
     }
 
     func scope(for input: JSONValue) -> ToolScope {
@@ -170,8 +185,8 @@ struct FilesRenameTool: Tool {
 
         return ToolResult(
             text: "Renamed “\(oldName)” to “\(newName)”.",
-            card: ResultCard(kind: .file, title: "Renamed", subtitle: "\(oldName) → \(newName)"),
-            undo: UndoAction(label: "Renamed “\(newName.clipped(40))” back") {
+            card: ResultCard(kind: .file, title: String(localized: "Renamed"), subtitle: "\(oldName) → \(newName)"),
+            undo: UndoAction(label: String(localized: "Renamed “\(newName.clipped(40))” back")) {
                 try Self.rename(from: target, to: source, oldName: newName, newName: oldName)
             })
     }
@@ -192,13 +207,13 @@ struct FilesRenameTool: Tool {
 
 struct FilesMkdirTool: Tool {
     let spec = ToolSpec(
-        name: "files.mkdir", title: "Create a folder",
+        name: "files.mkdir", title: String(localized: "Create a folder"),
         description: "Create a new folder (and any missing folders above it) inside a folder the user has shared.",
         inputSchema: Schema.object(["path": Schema.string("Full path of the folder to create")], required: ["path"]),
         risk: .medium, capabilities: [.filesWrite], category: .files, mutates: true)
 
     func summary(for input: JSONValue) -> String {
-        "Create the folder \(FilePaths.scopePath(input.string("path")).map(FilePaths.display) ?? input.string("path") ?? "")"
+        String(localized: "Create the folder \(FilePaths.scopePath(input.string("path")).map(FilePaths.display) ?? input.string("path") ?? "")")
     }
 
     func scope(for input: JSONValue) -> ToolScope {
@@ -212,7 +227,7 @@ struct FilesMkdirTool: Tool {
                 throw UserFacingError("There's already a file called \(FilePaths.name(path)) there, so I can't make a folder with that name.")
             }
             return ToolResult(text: "\(FilePaths.display(path)) already exists.",
-                              card: ResultCard(kind: .file, title: "Folder already exists", subtitle: FilePaths.display(path)))
+                              card: ResultCard(kind: .file, title: String(localized: "Folder already exists"), subtitle: FilePaths.display(path)))
         }
         var missing: [String] = []
         var cursor = path
@@ -238,8 +253,8 @@ struct FilesMkdirTool: Tool {
         let made = created
         return ToolResult(
             text: "Created the folder \(FilePaths.display(path)).",
-            card: ResultCard(kind: .file, title: "Created a folder", subtitle: FilePaths.display(path)),
-            undo: UndoAction(label: "Removed the folder \(FilePaths.name(path))") {
+            card: ResultCard(kind: .file, title: String(localized: "Created a folder"), subtitle: FilePaths.display(path)),
+            undo: UndoAction(label: String(localized: "Removed the folder \(FilePaths.name(path))")) {
                 if Self.remove(made) < made.count {
                     throw UserFacingError("There are files in \(FilePaths.display(path)) now, so I left the folder.")
                 }
@@ -263,7 +278,7 @@ struct FilesTrashTool: Tool {
     init(trasher: any FileTrashing = SystemTrash()) { self.trasher = trasher }
 
     let spec = ToolSpec(
-        name: "files.trash", title: "Move files to the Trash",
+        name: "files.trash", title: String(localized: "Move files to the Trash"),
         description: "Move files or folders to the Trash. Nothing is deleted for good; the user can put them back from the Trash.",
         inputSchema: Schema.object([
             "paths": Schema.array("Full paths of what to trash", items: Schema.string("A full path")),
@@ -272,7 +287,7 @@ struct FilesTrashTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         let names = (input.textList("paths") ?? []).map { FilePaths.name($0) }
-        return "Move \(ToolFormat.count(names.count, "item")) to the Trash: \(ToolFormat.names(names))"
+        return String(localized: "Move \(names.count) items to the Trash: \(Wording.names(names))")
     }
 
     func scope(for input: JSONValue) -> ToolScope {
@@ -288,23 +303,23 @@ struct FilesTrashTool: Tool {
             catch { failures.append(FilePaths.name(source)) }
         }
         guard !trashed.isEmpty else {
-            throw UserFacingError("I couldn't move \(ToolFormat.names(failures)) to the Trash.", recovery: "Check that Sidefolk is allowed to change that folder.")
+            throw UserFacingError("I couldn't move \(Wording.names(failures)) to the Trash.", recovery: "Check that Sidefolk is allowed to change that folder.")
         }
         var text = "Moved \(ToolFormat.count(trashed.count, "item")) to the Trash: \(ToolFormat.names(trashed.map { FilePaths.name($0.original) }, max: 5))."
         if !failures.isEmpty { text += " Couldn't move: \(ToolFormat.names(failures))." }
         let records = trashed.filter { !$0.inTrash.isEmpty }
         return ToolResult(
             text: text,
-            card: ResultCard(kind: .file, title: "Moved \(ToolFormat.count(trashed.count, "item")) to the Trash",
-                             subtitle: ToolFormat.names(trashed.map { FilePaths.name($0.original) }),
-                             detail: failures.isEmpty ? nil : "Couldn't move: \(ToolFormat.names(failures))"),
-            undo: records.isEmpty ? nil : UndoAction(label: "Put \(ToolFormat.count(records.count, "item")) back") {
+            card: ResultCard(kind: .file, title: String(localized: "Moved \(trashed.count) items to the Trash"),
+                             subtitle: Wording.names(trashed.map { FilePaths.name($0.original) }),
+                             detail: failures.isEmpty ? nil : String(localized: "Couldn't move: \(Wording.names(failures))")),
+            undo: records.isEmpty ? nil : UndoAction(label: String(localized: "Put \(records.count) items back")) {
                 var stuck: [String] = []
                 for r in records.reversed() {
                     do { try FileMover.moveExclusive(from: r.inTrash, to: r.original) } catch { stuck.append(FilePaths.name(r.original)) }
                 }
                 if !stuck.isEmpty {
-                    throw UserFacingError("I couldn't put back \(ToolFormat.names(stuck)). You can restore it from the Trash.")
+                    throw UserFacingError("I couldn't put back \(Wording.names(stuck)). You can restore it from the Trash.")
                 }
             })
     }

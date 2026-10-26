@@ -372,14 +372,14 @@ public final class ExtensionProcess: Sendable {
                 try? await Task.sleep(for: .seconds(min(limits.treeInterval, limits.sampleInterval)))
                 guard !process.hasExited else { return }
                 if process.refreshTree() + 1 > limits.maxProcesses {
-                    process.killGroup(reason: "It started more than \(limits.maxProcesses) processes.")
+                    process.killGroup(reason: String(localized: "It started more than \(limits.maxProcesses) processes."))
                     return
                 }
                 guard ContinuousClock.now >= nextSample else { continue }
                 nextSample = ContinuousClock.now + .seconds(limits.sampleInterval)
                 let usage = ProcessGroupUsage.sample(pids: [pid] + process.descendants)
                 if usage.residentBytes > limits.maxResidentBytes {
-                    process.killGroup(reason: "It used more than \(limits.maxResidentBytes / 1_048_576) MB of memory.")
+                    process.killGroup(reason: String(localized: "It used more than \(limits.maxResidentBytes / 1_048_576) MB of memory."))
                     return
                 }
                 let now = ContinuousClock.now
@@ -390,7 +390,7 @@ public final class ExtensionProcess: Sendable {
                         let since = hotSince ?? lastAt
                         hotSince = since
                         if now - since >= .seconds(limits.cpuWindow) {
-                            process.killGroup(reason: "It kept using more than half a CPU core for a minute.")
+                            process.killGroup(reason: String(localized: "It kept using more than half a CPU core for a minute."))
                             return
                         }
                     } else {

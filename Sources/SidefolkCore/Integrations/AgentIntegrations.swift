@@ -38,9 +38,9 @@ public enum AgentIntegration: String, Sendable, CaseIterable {
 
     public var title: String {
         switch self {
-        case .claudeMCP: "Sidefolk tools in Claude Code"
-        case .claudeHooks: "Claude Code session updates"
-        case .codexMCP: "Sidefolk tools in Codex"
+        case .claudeMCP: String(localized: "Sidefolk tools in Claude Code")
+        case .claudeHooks: String(localized: "Claude Code session updates")
+        case .codexMCP: String(localized: "Sidefolk tools in Codex")
         }
     }
 }
@@ -151,13 +151,13 @@ public struct AgentIntegrations: Sendable {
         let fm = FileManager.default
         switch integration {
         case .claudeMCP:
-            return fm.fileExists(atPath: locations.claudeConfig.path) ? nil : "Claude Code isn't set up on this Mac."
+            return fm.fileExists(atPath: locations.claudeConfig.path) ? nil : String(localized: "Claude Code isn't set up on this Mac.")
         case .claudeHooks:
             let dir = locations.claudeSettings.deletingLastPathComponent().path
-            return fm.fileExists(atPath: dir) ? nil : "Claude Code isn't set up on this Mac."
+            return fm.fileExists(atPath: dir) ? nil : String(localized: "Claude Code isn't set up on this Mac.")
         case .codexMCP:
             let dir = locations.codexConfig.deletingLastPathComponent().path
-            return fm.fileExists(atPath: dir) ? nil : "Codex isn't set up on this Mac."
+            return fm.fileExists(atPath: dir) ? nil : String(localized: "Codex isn't set up on this Mac.")
         }
     }
 
@@ -205,7 +205,7 @@ public struct AgentIntegrations: Sendable {
         switch integration {
         case .claudeMCP:
             guard let text else {
-                if install { throw IntegrationError.unavailable("Claude Code isn't set up on this Mac.") }
+                if install { throw IntegrationError.unavailable(String(localized: "Claude Code isn't set up on this Mac.")) }
                 return nil
             }
             var root = try parseJSON(text, url)
@@ -325,14 +325,15 @@ public struct AgentIntegrations: Sendable {
     private func describe(_ integration: AgentIntegration, install: Bool) -> [String] {
         let helper = FolderAccess.displayPath(helperPath)
         switch (integration, install) {
-        case (.claudeMCP, true): return ["Adds the MCP server “sidefolk” (runs \(helper) mcp) to Claude Code's user settings."]
-        case (.claudeMCP, false): return ["Removes the MCP server “sidefolk” from Claude Code. Other servers stay."]
+        case (.claudeMCP, true): return [String(localized: "Adds the MCP server “sidefolk” (runs \(helper) mcp) to Claude Code's user settings.")]
+        case (.claudeMCP, false): return [String(localized: "Removes the MCP server “sidefolk” from Claude Code. Other servers stay.")]
         case (.claudeHooks, true):
-            return ["Adds hooks for \(Self.hookEvents.joined(separator: ", ")) that run \(helper) hook (\(Self.hookTimeoutSeconds) s limit).",
-                    "Your other hooks stay as they are."]
-        case (.claudeHooks, false): return ["Removes Sidefolk's hooks from Claude Code. Your other hooks stay."]
-        case (.codexMCP, true): return ["Adds [\(Self.codexTable)] (runs \(helper) mcp) to Codex's config."]
-        case (.codexMCP, false): return ["Removes [\(Self.codexTable)] from Codex's config. The rest stays."]
+            let events = Self.hookEvents.joined(separator: ", ")
+            return [String(localized: "Adds hooks for \(events) that run \(helper) hook (\(Self.hookTimeoutSeconds) s limit)."),
+                    String(localized: "Your other hooks stay as they are.")]
+        case (.claudeHooks, false): return [String(localized: "Removes Sidefolk's hooks from Claude Code. Your other hooks stay.")]
+        case (.codexMCP, true): return [String(localized: "Adds [\(Self.codexTable)] (runs \(helper) mcp) to Codex's config.")]
+        case (.codexMCP, false): return [String(localized: "Removes [\(Self.codexTable)] from Codex's config. The rest stays.")]
         }
     }
 

@@ -1,8 +1,30 @@
 # Status
 
-Updated: 2026-10-26. Latest: Mochi rabbit brand rollout, with the original robot preserved.
+Updated: 2026-10-26. Latest: core strings localizable (D28); asset-set preservation for the Mochi brand.
 
 ## Done and verified
+- **Languages, core pass (D28, 2026-10-26):** every string people read that Sources/SidefolkCore
+  builds is in the catalog (`make strings`: 1088 strings, English only, no translations yet):
+  errors, result cards, undo labels, tool titles and approval summaries, Guard's reasons, attention
+  notices (reminders, watches, jobs, sessions, morning brief, away summary), hint lines, watch and
+  probe wording, permission lines, extension and integration notices. What models read stays
+  English (tool results, descriptions, schemas, prompts; `WatchWords.*ForModel`,
+  `TimeFormat.full`/`recurrenceForModel`). API to follow: `UserFacingError("literal")` is a catalog
+  key, `UserFacingError(verbatim:)` takes final text; elsewhere text is localized where it is written
+  with `String(localized:)`; counts are one key with an Int, with English one/other forms in the
+  catalog (CatalogTests checks them; the test runner has no catalog, so "1 items" there is expected).
+  `TimeFormat.day/when/recurrence` name weekdays and months in `calendar.locale` (tests pin
+  en_US_POSIX; "Dec 1" in the US) and gained "Yesterday". `Wording` formats lists and sizes in the
+  words' language. `Resources/Localization/GLOSSARY.md` is the translators' brief.
+  Verified: full serial suite, catalog compiles with `xcstringstool`, plural lookup checked by hand.
+- **Asset-set preservation (2026-10-26):** `Resources/ASSETS.md` indexes the named character,
+  branding, icon, template, pose and reference sets. Preserved the three early robot generations
+  previously found only in the image cache under `Resources/Brand/archive/robot/early-generations/`,
+  and the user's rejected wordmark/icon examples under `Resources/Brand/reference/quality-feedback/`.
+  `Resources/Brand/generated-image-index.json` records all 22 generated originals with repository
+  paths and SHA-256 hashes; verified each against its untouched imagegen output. All character
+  sources, comparison sheets, references and prompts remain in Git. No runtime changes or work
+  left half done. Next: use the asset index when selecting or revising artwork.
 - **Mochi brand rollout (2026-10-26, D29):** Mochi is the brand mascot and fresh-install default.
   Explicit saved choices, names and accents are preserved. Settings still offers the original
   Sidefolk robot with all four light colors and Spark. Replaced the production logo marks, blue
@@ -100,7 +122,7 @@ Updated: 2026-10-26. Latest: Mochi rabbit brand rollout, with the original robot
     Settings (General, Companion, AI, Agents, Privacy & Permissions, Extensions).
   - Embodied onboarding (hello, agents, a real reminder, notifications, login), data export, delete
     everything (Keychain items included), diagnostics export with redacted logs.
-- **Tests:** 851 in 93 suites (842 core + 9 character). `make test` runs serially (about 40 s).
+- **Tests:** 854 in 94 suites (845 core + 9 character). `make test` runs serially (about 40 s).
 
 ## Reviews done (second round) and what came of them
 UX/product, security, QA/plugin developer and performance reviews (reports were working files, not in
@@ -124,6 +146,15 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
 Nothing. All second-round review follow-ups are merged.
 
 ## Known issues / not yet verified
+- **Languages, still English:** Sources/SidefolkCore/Brain/**, ClaudeCodeBackend.swift,
+  ClaudeBinary.swift and AppSettings.swift were off limits during the core pass (their
+  `UserFacingError("…")` literals are in the catalog already; other text is not). `AgentRuntime`
+  rewrites " Nothing was changed." in English only, so a localized error keeps saying nothing changed
+  when something did. The App target (SwiftUI text aside) has many plain `String` literals. The
+  `sidefolk` command line, `StatusSnapshot.sentence`, bridge protocol errors, extension manifest
+  checks (`ManifestValidator`, `ValidationReport.text`) and `ExtensionError`/`MCPError` details stay
+  English on purpose. Collection names stored in the database ("Inbox", "About you") stay English;
+  cards show them through `NotebookCollections.shownName`.
 - **Not exercised by hand:** hooks inside a real Claude Code session; the notifications permission
   prompt; login item from /Applications; multi-monitor and fullscreen behaviour; "Connect…" for
   Claude Code/Codex (it edits real config files, so only the user should click it).
@@ -146,3 +177,6 @@ Nothing. All second-round review follow-ups are merged.
    login item, multi-monitor), then Developer ID signing and notarization (`scripts/release.sh`).
 2. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review);
    calendar awareness; voice input.
+3. Languages: the App pass and the Brain pass (see Known issues), then translations into the nine
+   languages with GLOSSARY.md, then a look at each language in the dev app (Settings › General ›
+   Language).

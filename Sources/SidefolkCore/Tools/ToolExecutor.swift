@@ -87,7 +87,7 @@ public final class ToolExecutor: Sendable {
     ) async -> ToolOutcome {
         let callId = Identifier.make()
         guard let tool = registry.tool(named: name) else {
-            let a = ToolActivity(id: callId, tool: name, title: name, summary: "Unknown tool", category: .system, caller: caller,
+            let a = ToolActivity(id: callId, tool: name, title: name, summary: String(localized: "Unknown tool"), category: .system, caller: caller,
                                  error: "No such tool")
             return ToolOutcome(activity: a, status: .failed(UserFacingError("I don't have a tool called \(name).")))
         }
@@ -145,8 +145,8 @@ public final class ToolExecutor: Sendable {
                 }
                 // An answer that arrives after the caller gave up (its run ended) never acts for it.
                 guard answer.allowed, !Task.isCancelled else {
-                    let why = answer == .expired ? "The request waited too long for your answer."
-                        : answer.allowed ? "The request was withdrawn before it ran." : "You said no."
+                    let why = answer == .expired ? String(localized: "The request waited too long for your answer.")
+                        : answer.allowed ? String(localized: "The request was withdrawn before it ran.") : String(localized: "You said no.")
                     await log(spec, act, caller: caller, input: input, decision: .denied, outcome: nil, error: why)
                     act.error = why
                     return ToolOutcome(activity: act, status: .denied(why))
@@ -170,7 +170,7 @@ public final class ToolExecutor: Sendable {
             }
         }
         act.error = "Permission loop"
-        return ToolOutcome(activity: act, status: .denied("Sidefolk couldn't settle the permissions for this action."))
+        return ToolOutcome(activity: act, status: .denied(String(localized: "Sidefolk couldn't settle the permissions for this action.")))
     }
 
     /// Denies the cards an agent run is still waiting on; call it when the run ends.
@@ -233,7 +233,7 @@ public final class ToolExecutor: Sendable {
             switch e {
             case .invalidInput(let m): return UserFacingError("That didn't work: \(m)", detail: e.description)
             case .notFound(let m): return UserFacingError("I couldn't find \(m).", detail: e.description)
-            case .unavailable(let m): return UserFacingError(m, detail: e.description)
+            case .unavailable(let m): return UserFacingError(verbatim: m, detail: e.description)
             }
         }
         if error is TimeoutError {

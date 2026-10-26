@@ -118,22 +118,22 @@ enum Choreography {
 
     /// Repeating motion for a state, beyond breathing and prop loops.
     @MainActor
-    static func loops(for state: CharacterState, rig: Rig) -> [Loop] {
+    static func loops(for state: CharacterState, figure: any Figure) -> [Loop] {
         switch state {
         case .idle:
-            return [Loop(layer: rig.loop, key: "sway",
+            return [Loop(layer: figure.loop, key: "sway",
                          animation: Motion.loop("transform.rotation.z", from: -0.012, to: 0.012, duration: 3.4))]
         case .listening:
-            return rig.earLights.map {
+            return figure.listeningLights.map {
                 Loop(layer: $0, key: "pulse", animation: Motion.loop("opacity", from: 0.55, to: 1, duration: 0.9))
             }
         case .thinking, .waiting:
-            return [Loop(layer: rig.loop, key: "sway",
+            return [Loop(layer: figure.loop, key: "sway",
                          animation: Motion.loop("transform.rotation.z", from: -0.025, to: 0.025, duration: 2.2))]
         case .working(let prop):
             switch prop {
             case .laptop, .none:
-                return [rig.armL, rig.armR].enumerated().map { i, arm in
+                return [figure.armL, figure.armR].enumerated().map { i, arm in
                     Loop(layer: arm.loop, key: "type",
                          animation: Motion.loop("transform.rotation.z", from: -0.1, to: 0.12, duration: 0.17, phase: Double(i) * 0.17))
                 }
@@ -142,14 +142,14 @@ enum Choreography {
                                         times: [0, 0.3, 0.45, 0.8, 0.95])
                 let turn = Motion.cycle("transform.rotation.z", [0, 0, 0.03, 0.03, 0], duration: 4.4,
                                         times: [0, 0.3, 0.45, 0.8, 0.95])
-                return [Loop(layer: rig.scan, key: "scan", animation: scan),
-                        Loop(layer: rig.loop, key: "turn", animation: turn)]
+                return [Loop(layer: figure.scan, key: "scan", animation: scan),
+                        Loop(layer: figure.loop, key: "turn", animation: turn)]
             default:
                 return []
             }
         case .alert:
             let wave = Motion.loop("transform.rotation.z", from: -0.15, to: 0.35, duration: 0.32)
-            return [Loop(layer: rig.armR.loop, key: "wave", animation: wave)]
+            return [Loop(layer: figure.armR.loop, key: "wave", animation: wave)]
         case .dragging:
             let top = pt(100, 160)
             func swing(_ angle: CGFloat) -> NSValue {
@@ -159,8 +159,8 @@ enum Choreography {
             }
             let dangle = Motion.cycle("transform", [swing(-0.07), swing(0.07), swing(-0.07)], duration: 1.5)
             let kick = Motion.loop("transform.rotation.z", from: -0.12, to: 0.12, duration: 0.42)
-            return [Loop(layer: rig.loop, key: "dangle", animation: dangle),
-                    Loop(layer: rig.armL.loop, key: "kick", animation: kick)]
+            return [Loop(layer: figure.loop, key: "dangle", animation: dangle),
+                    Loop(layer: figure.armL.loop, key: "kick", animation: kick)]
         case .celebrating:
             let hop = Motion.cycle("transform", [
                 Motion.transform(.identity),
@@ -170,9 +170,9 @@ enum Choreography {
             ], duration: 0.9, times: [0, 0.12, 0.42, 0.72, 1])
             let cheerL = Motion.loop("transform.rotation.z", from: -0.25, to: 0.15, duration: 0.45)
             let cheerR = Motion.loop("transform.rotation.z", from: 0.25, to: -0.15, duration: 0.45)
-            return [Loop(layer: rig.loop, key: "hop", animation: hop),
-                    Loop(layer: rig.armL.loop, key: "cheer", animation: cheerL),
-                    Loop(layer: rig.armR.loop, key: "cheer", animation: cheerR)]
+            return [Loop(layer: figure.loop, key: "hop", animation: hop),
+                    Loop(layer: figure.armL.loop, key: "cheer", animation: cheerL),
+                    Loop(layer: figure.armR.loop, key: "cheer", animation: cheerR)]
         default:
             return []
         }

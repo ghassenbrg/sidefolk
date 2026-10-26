@@ -55,7 +55,7 @@ via the local MCP bridge, so every action still passes Guard. API backends share
 Each provider has a main model and an optional "smart" model used by "Think harder".
 **Why:** the founder has Claude Code; API keys are optional. The founding chat's automatic
 multi-tier router is replaced by a simpler, explainable rule. Apple's on-device model was
-`modelNotReady` on the dev machine, so it is post-V1.
+`modelNotReady` on the dev machine, so it is post-V1. D26 adds Codex and provider presets.
 
 ### D9 — Folks are "on duty" markers, not cameos on every action (2026-10-26)
 **Decision:** Tempo (reminder due within 15 min), Scout (watchers active) and Byte (agent session
@@ -176,6 +176,37 @@ was rejected and removed.
 all logo lockups derive from that master. Color, navy and white SVGs have no embedded raster, font,
 filters, transforms or clipping masks.
 
+### D26 — Every main provider, chosen by how you pay; Codex isolated like Claude Code (2026-10-26)
+**Decision:** add Codex (`codex exec`) as a brain on the user's ChatGPT plan, beside Claude Code,
+and keep one OpenAI-compatible transport with presets: OpenAI, Google Gemini (its OpenAI-compatible
+endpoint), Mistral, Groq, xAI, DeepSeek, OpenRouter, Ollama, LM Studio and a custom address. Each
+preset knows its address, whether a key is needed, where to get one, and how to list models; its
+key has its own Keychain account bound to its host. Settings › AI groups the choices by how you pay
+(a plan you already have, an API key, this Mac, your own server, no AI), shows each one's state
+(found, signed in, key saved, running) and the exact next step (a link, or a command to copy), and
+opens the chosen one's setup in place. Model lists come from the provider; the first suggested
+model it actually offers becomes the default. Each provider keeps its own model when you switch.
+"Test" sends one tiny real request through the same path as a question.
+**Why:** the founder pays for ChatGPT and uses Codex, and wants setup easy for everyone. Presets
+remove the base-URL guesswork that caused the Gemini bug ("models/…" ids, array-wrapped errors)
+without a second transport. Model names go stale, so suggestions are checked against the
+provider's own list rather than hard-coded as the only choice. A free `/models` lookup isn't a test:
+only a real request proves a question will work.
+**Why the CLIs are isolated this way:** a subscription CLI is a general coding agent with a shell,
+file edits, a browser and plugins, running as the user; Sidefolk's brain must only act through
+Sidefolk's tools so Guard sees every action (D14). Claude Code reports its tools at start, so the
+run is checked there. Codex doesn't, so every Codex feature that's on by default is switched off
+except the plumbing the brain needs (later features included), its config, rules and folder
+instructions are ignored, it runs read-only with approvals off in a private folder, and the event
+stream is watched: anything that isn't a message or a Sidefolk tool call stops the run, and what
+the switches should have prevented also disables the backend until restart (SECURITY T7).
+**Alternatives:** Codex through its app-server protocol (more surface, same tools to switch off);
+a separate `CODEX_HOME` (loses the user's sign-in); one Keychain account for every
+OpenAI-compatible service (each switch would need the key again); hard-coded model lists.
+**Implications:** Codex adds the user's own global `AGENTS.md` and keeps `apply_patch` offered to
+its own models; neither can act (read-only sandbox, approvals off, events watched) but they're
+documented residuals. New Codex versions are probed (flags and feature names) before use.
+
 ### D27 — Three companions to choose from; two are sprites; the robot's light colour is the only customisation (2026-10-26)
 The default-appearance decision below is superseded by D29; all three choices remain available.
 **Decision:** Settings › Companion offers the vector Sidefolk robot (default), Mochi and Spark, as
@@ -199,6 +230,8 @@ so redrawn art can replace the legacy cuts without code changes.
 **Alternatives:** rigging Mochi and Spark as vectors (slow, would not look like the renders); one view
 type per kind of companion (the app would juggle two); free colour pickers (off-brand); a tint for
 the sprites' mint parts (the legacy recolouring; looks painted-on on 3D renders).
+**Superseded by D30:** Mochi and Spark became live rigs on the robot's engine, the Folk Family joined
+them, and the colour and an accessory became one style for every companion.
 **Implications:** sprite companions have no effect marks or held props beyond what their poses show,
 and no eye tracking (they lean toward the pointer instead). A new sprite companion is a folder of
 the 16 poses plus a `CompanionChoice` case.
@@ -233,7 +266,36 @@ vector geometry matching the close-up’s ears, paw, rays and separated scarf. R
 have a simple blue-gradient square or transparent background; only separate macOS exports get a
 geometric mask.
 
-### D30 — The wordmark is built from strokes and calibrated against the founder's lettering (2026-10-26)
+### D30 — Every companion is a live rig on one engine; thirteen to choose from; one style for all (2026-10-26)
+**Decision:** Mochi, Spark and the ten folks are vector rigs on the robot's engine: `Director` drives
+a `Figure` (the robot's own `RobotRig`, or a `SoftRig` built from a `Species` description), so every
+companion has every state, gesture, prop, blink, gaze, the D20 settling, the frame cap, the occlusion
+pause, reduced motion and silhouette hit testing. Mochi follows the brand mascot (white body, navy
+bead eyes and ear tips, ears that droop, perk, trail and sway); Spark follows its concept render;
+each folk is exactly twice its on-duty self with its personality at idle and its signature pieces
+(glasses, headphones, cap, beret, bowler, sprout worn; magnifier, calendar, controller, shield,
+brush, cup held at idle and put away when a state needs the hands). Settings › Companion is a
+chooser: the chosen companion live with states to try, its name, colour and what it wears, over a
+gallery of every companion with its role. Every companion takes the same `CharacterStyle`: a brand
+colour (aqua, coral, mint, light blue) and an accessory (none, or a knitted scarf fitted to each
+body); the colour paints what it wears and the robot's light and Spark's gear. Each companion keeps
+its own style; the robot's saved light colour carries over. A folk that is the companion doesn't
+stand beside itself on duty: its duty shows as the companion's badge (watching, busy) instead, and
+it is not introduced as a newcomer.
+**Why:** the founder asked for the new companions to work like the robot ("the main one we did and
+it's well done"), and for every folk to be choosable with the same customisation. Pose pictures
+could not hold props, follow the pointer, morph expressions or move ears, and the redrawn sprites
+still read as stickers next to the rig. One engine with data-described bodies keeps thirteen
+companions at one quality bar with one set of tests, and new ones are a `Species` away. The style
+stops at a colour and a scarf: they suit every body and the brand (Mochi's scarf), while hats and
+glasses clash with ears, fins, antennae and screens on some of them.
+**Alternatives:** keep sprites for Mochi and Spark (D27; no props, no gaze, stiff); one rig class per
+companion (thirteen copies of the same motion code); per-companion extras (later, if wanted).
+**Implications:** the sprite engine, pose art and its scripts are gone. `CharacterSpecies.available`
+gates what is offered. Folks' faces and accessories match the on-duty folks, which stay the
+`FolkRig` drawings (shared through `FolkKit`).
+
+### D31 — The wordmark is built from strokes and calibrated against the founder's lettering (2026-10-26)
 **Decision:** the "Sidefolk" wordmark matches `Resources/Brand/reference/wordmark-reference.png`.
 `scripts/wordmark.swift` constructs every letter as the lettering is drawn: round-capped strokes of one
 stem weight, rings for the d and o, a round dot for the i, two lighter rays; the S and e are a main
@@ -250,7 +312,7 @@ and measuring against the reference makes "like this" checkable instead of a mat
 drifted); a variable-width brush stroke for the S (smooth, but its fit was worse and its counters came
 out pointed); unioning untangent turn arcs (round counters, but small notches where edges crossed).
 
-### D31 — The menu bar shows a reduced Mochi glyph, not the shrunk monochrome mark (2026-10-26)
+### D32 — The menu bar shows a reduced Mochi glyph, not the shrunk monochrome mark (2026-10-26)
 **Decision:** the 18 pt template is its own drawing (`MochiMenuGlyph`): a 1.5 pt outline of Mochi's
 head and ears, the ear tips filled (the brand's navy tips), two wide-set eyes and the nose, with the
 eyes and nose on whole pixels at 2x. One alpha shape, `isTemplate`, so macOS tints it on any bar. The

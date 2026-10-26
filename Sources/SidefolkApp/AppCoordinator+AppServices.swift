@@ -14,7 +14,7 @@ extension AppCoordinator: AppServices {
                                                  caller: .user)
         switch out.status {
         case .ok: return nil
-        case .denied(let why): return UserFacingError(why)
+        case .denied(let why): return UserFacingError(verbatim: why)
         case .failed(let e): return e
         }
     }
@@ -66,10 +66,10 @@ extension AppCoordinator: AppServices {
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
         let preview = await runtime.extensions.preview(folder: folder)
         guard let manifest = preview.report.manifest else {
-            return .failure(UserFacingError("That folder isn't a Sidefolk extension.", recovery: preview.report.text.clipped(400)))
+            return .failure(UserFacingError(verbatim: String(localized: "That folder isn't a Sidefolk extension."), recovery: preview.report.text.clipped(400)))
         }
         guard preview.canInstall else {
-            return .failure(UserFacingError(preview.conflict ?? "That extension has problems.", recovery: preview.report.text.clipped(400)))
+            return .failure(UserFacingError(verbatim: preview.conflict ?? String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
         }
         let summary = preview.report.summary
         var warnings = (summary?.warnings ?? []) + preview.report.warnings
@@ -115,7 +115,7 @@ extension AppCoordinator: AppServices {
 
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError? {
         let preview = await runtime.extensions.previewMCPServer(name: name, command: command, arguments: arguments)
-        if let problem = preview.errors.first { return UserFacingError(problem) }
+        if let problem = preview.errors.first { return UserFacingError(verbatim: problem) }
         do {
             _ = try await runtime.extensions.addMCPServer(name: name, command: command, arguments: arguments)
             return nil
@@ -139,71 +139,7 @@ extension AppCoordinator: AppServices {
 
     func deleteSkill(_ name: String) async { _ = try? runtime.skills.delete(name: name) }
 
-    // MARK: AI
-
-    func detectProviders() async -> ProviderDetection {
-        var detection = ProviderDetection(claudePath: nil, claudeVersion: nil, ollamaRunning: false, ollamaModels: [])
-        if case .success(let path) = ClaudeBinary.locate(configured: runtime.settings.current.provider.claudePath) {
-            detection.claudePath = FolderAccess.displayPath(path)
-            let cwd = runtime.paths.brainWorkdir.path
-            let env = ["HOME": NSHomeDirectory(), "PATH": "/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin:" + (path as NSString).deletingLastPathComponent]
-            if case .success(let install) = await ClaudeBinary.probe(path, environment: env, cwd: cwd) {
-                detection.claudeVersion = install.version
-            }
-        }
-        // Ollama answers locally without a key; a short timeout keeps Settings snappy when it isn't running.
-        var request = URLRequest(url: URL(string: "http://127.0.0.1:11434/api/tags")!)
-        request.timeoutInterval = 1.5
-        if let (data, response) = try? await URLSession(configuration: .ephemeral).data(for: request),
-           (response as? HTTPURLResponse)?.statusCode == 200 {
-            detection.ollamaRunning = true
-            let models = (try? JSONValue.parse(String(decoding: data, as: UTF8.self)))?["models"]?.arrayValue ?? []
-            detection.ollamaModels = models.compactMap { $0.string("name") }.prefix(20).map { $0 }
-        }
-        return detection
-    }
-
-    func checkProvider() async -> Result<String, UserFacingError> { await agent.checkProvider() }
-
-    func hasAPIKey(for kind: ProviderKind) -> Bool {
-        switch kind {
-        case .anthropic: return (try? secrets.get(SecretKey.anthropicAPIKey)) != nil
-        case .openAICompatible: return (try? secrets.get(SecretKey.openAIAPIKey)) != nil
-        default: return false
-        }
-    }
-
-    func setAPIKey(_ key: String?, for kind: ProviderKind) {
-        let keys = ProviderKeys(store: secrets)
-        switch kind {
-        case .anthropic:
-            if let key, !key.isEmpty {
-                try? keys.save(Secret(key), account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost)
-            } else {
-                try? secrets.delete(SecretKey.anthropicAPIKey)
-            }
-        case .openAICompatible:
-            let base = URL(string: runtime.settings.current.provider.baseURL) ?? URL(string: "https://api.openai.com/v1")!
-            if let key, !key.isEmpty {
-                try? keys.save(Secret(key), account: SecretKey.openAIAPIKey, host: ProviderKeys.host(of: base))
-            } else {
-                try? secrets.delete(SecretKey.openAIAPIKey)
-            }
-        default:
-            break
-        }
-        runtime.events.changed(.settings)
-    }
-
-    func lastContextPreview() async -> String? {
-        guard let p = await agent.lastSent() else { return nil }
-        var text = "Sent to \(p.provider) (\(p.model.isEmpty ? "default model" : p.model)) at "
-            + p.at.formatted(date: .abbreviated, time: .standard) + (p.tainted ? " — included outside content" : "") + "\n\n"
-        text += "SYSTEM\n" + p.system + "\n\n"
-        for m in p.messages { text += m.role.rawValue.uppercased() + "\n" + m.text + "\n\n" }
-        text += "TOOLS\n" + p.tools.joined(separator: ", ")
-        return text
-    }
+    // AI: AppCoordinator+AIServices.swift
 
     // MARK: Privacy and data
 
@@ -308,7 +244,7 @@ extension AppCoordinator: AppServices {
 
     static func userFacing(_ error: Error, fallback: String) -> UserFacingError {
         if let e = error as? UserFacingError { return e }
-        return UserFacingError(fallback, detail: String(describing: error))
+        return UserFacingError(verbatim: fallback, detail: String(describing: error))
     }
 
     static func info(_ e: SidefolkCore.ExtensionInfo, bundled: Bool) -> ExtensionInfo {

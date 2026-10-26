@@ -29,14 +29,8 @@ struct CompanionSettingsView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
-                // Sprite companions' eyes are painted on: they lean toward the pointer instead.
-                if model.settings.companion == .sidefolk {
-                    SettingsToggle(title: "Eyes follow the pointer", detail: "A glance now and then, never a stare.",
-                                   isOn: setting(\.eyesFollowPointer))
-                } else {
-                    SettingsToggle(title: "Turn toward the pointer", detail: "A small lean now and then, never a stare.",
-                                   isOn: setting(\.eyesFollowPointer))
-                }
+                SettingsToggle(title: "Eyes follow the pointer", detail: "A glance now and then, never a stare.",
+                               isOn: setting(\.eyesFollowPointer))
                 SettingsToggle(title: "Show folks on duty",
                                detail: "Tempo, Scout and Byte sit beside the companion while a reminder, watch or agent is live.",
                                isOn: setting(\.showFolks))

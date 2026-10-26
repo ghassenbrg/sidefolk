@@ -165,16 +165,24 @@ struct ProviderHTTP: Sendable {
         }
     }
 
-    /// The provider's error message from a JSON error body, in any of the usual shapes.
+    /// The provider's error message from a JSON error body, in any of the usual shapes, including
+    /// Gemini's, which wraps the error in an array (`[{"error": {…}}]`).
     static func errorMessage(_ body: Data) -> (type: String?, message: String?) {
-        guard let json = try? JSONValue.parse(body) else {
+        guard var json = try? JSONValue.parse(body) else {
             let text = String(decoding: body.prefix(300), as: UTF8.self)
             return (nil, text.isEmpty ? nil : text)
         }
+        if let first = json.arrayValue?.first { json = first }
         if let message = json["error"]?.stringValue { return (nil, message) }
         let error = json["error"] ?? json
-        let type = error["type"]?.stringValue ?? error["code"]?.stringValue
+        let type = error["type"]?.stringValue ?? error["status"]?.stringValue ?? error["code"]?.stringValue
         return (type, error["message"]?.stringValue)
+    }
+
+    /// A structured error from the provider, rather than a web server's error page.
+    static func isJSONError(_ body: Data) -> Bool {
+        guard let json = try? JSONValue.parse(body) else { return false }
+        return (json.arrayValue?.first ?? json)["error"] != nil
     }
 
     /// What goes into `UserFacingError.detail` for diagnostics: status, type and a short, redacted message.

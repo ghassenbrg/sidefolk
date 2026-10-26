@@ -55,35 +55,35 @@ public struct PermissionSummary: Sendable, Hashable {
     public static func forExtension(_ p: ExtensionPermissions) -> PermissionSummary {
         var lines: [Line] = []
         let show = FolderAccess.displayPath
-        if p.network { lines.append(Line(kind: .network, text: "Can use the internet", caution: true)) }
+        if p.network { lines.append(Line(kind: .network, text: String(localized: "Can use the internet"), caution: true)) }
         for path in p.read where !p.write.contains(path) {
-            lines.append(Line(kind: .read, text: "Can read \(show(path))", caution: false))
+            lines.append(Line(kind: .read, text: String(localized: "Can read \(show(path))"), caution: false))
         }
         for path in p.write {
-            lines.append(Line(kind: .write, text: "Can read and change files in \(show(path))", caution: true))
+            lines.append(Line(kind: .write, text: String(localized: "Can read and change files in \(show(path))"), caution: true))
         }
         let dangerous = Set(p.dangerousExec)
         for path in p.exec {
             let anything = dangerous.contains(path)
-            lines.append(Line(kind: .exec, text: anything ? "Can run \(path), which can run anything" : "Can run \(path)",
+            lines.append(Line(kind: .exec, text: anything ? String(localized: "Can run \(path), which can run anything") : String(localized: "Can run \(path)"),
                               caution: anything))
         }
         if !p.network && p.read.isEmpty && p.write.isEmpty {
-            lines.append(Line(kind: .none, text: "No access to your files or the internet", caution: false))
+            lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))
         }
 
         var warnings: [String] = []
         let folders = (p.read + p.write).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
         if p.network, !folders.isEmpty {
-            warnings.append("It can read \(list(folders.map(show))) and use the internet, so it could upload those files.")
+            warnings.append(String(localized: "It can read \(list(folders.map(show))) and use the internet, so it could upload those files."))
         }
         if let first = p.dangerousExec.first {
             warnings.append(p.network
-                ? "It can use the internet and run \(first), so it could download and run other code."
-                : "It can run \(first), which can run any code its sandbox allows.")
+                ? String(localized: "It can use the internet and run \(first), so it could download and run other code.")
+                : String(localized: "It can run \(first), which can run any code its sandbox allows."))
         }
         if p.network, !p.write.isEmpty {
-            warnings.append("It can save what it downloads into \(list(p.write.map(show))).")
+            warnings.append(String(localized: "It can save what it downloads into \(list(p.write.map(show)))."))
         }
         return PermissionSummary(lines: lines, warnings: warnings, sandboxed: true)
     }
@@ -94,7 +94,7 @@ public struct PermissionSummary: Sendable, Hashable {
         if let note = unpinnedLauncherWarning(command: command, arguments: arguments) { warnings.append(note) }
         return PermissionSummary(
             lines: [Line(kind: .unsandboxed,
-                         text: "Runs with your full permissions: it can read and change your files, use the internet and run programs",
+                         text: String(localized: "Runs with your full permissions: it can read and change your files, use the internet and run programs"),
                          caution: true)],
             warnings: warnings, sandboxed: false)
     }
@@ -107,21 +107,18 @@ public struct PermissionSummary: Sendable, Hashable {
         case "npx", "bunx", "pnpx":
             guard let package else { return nil }
             let pinned = package.range(of: #"^(@[^/@]+/)?[^@]+@\d"#, options: .regularExpression) != nil
-            return pinned ? nil : "It downloads the latest \(package) every time it starts. Pin a version, like \(package)@1.2.3."
+            return pinned ? nil : String(localized: "It downloads the latest \(package) every time it starts. Pin a version, like \(package)@1.2.3.")
         case "uvx":
             guard let package else { return nil }
             let pinned = package.contains("==") || package.range(of: #"@\d"#, options: .regularExpression) != nil
-            return pinned ? nil : "It downloads the latest \(package) every time it starts. Pin a version, like \(package)==1.2.3."
+            return pinned ? nil : String(localized: "It downloads the latest \(package) every time it starts. Pin a version, like \(package)==1.2.3.")
         default:
             return nil
         }
     }
 
+    /// "~/Documents, ~/Notes and ~/Desktop", in the app's language.
     private static func list(_ items: [String]) -> String {
-        switch items.count {
-        case 0: ""
-        case 1: items[0]
-        default: items.dropLast().joined(separator: ", ") + " and " + items.last!
-        }
+        items.formatted(.list(type: .and).locale(Wording.locale))
     }
 }

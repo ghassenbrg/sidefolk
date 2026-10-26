@@ -50,28 +50,28 @@ public enum FolderAccess {
     /// Parts of `/private` that are ordinary scratch space (`/tmp` and per-user temporary folders).
     static let privateScratch = ["/private/tmp", "/private/var/folders"]
 
-    /// Locations tools never touch, even inside a granted folder.
+    /// Locations tools never touch, even inside a granted folder. The reason is worded for people.
     public static func forbiddenReason(_ paths: [String]) -> String? {
         let home = self.home
         let sidefolk = [SidefolkPaths.standard().home.path, ProcessInfo.processInfo.environment["SIDEFOLK_HOME"]]
             .compactMap { $0 }.compactMap { canonical($0) }
         for raw in paths {
             guard let p = canonical(raw) else {
-                return "That path isn't allowed (relative, “..”, or a broken link)."
+                return String(localized: "That path isn't allowed (relative, “..”, or a broken link).")
             }
-            if p == "/" { return "Sidefolk doesn't work on the whole disk." }
+            if p == "/" { return String(localized: "Sidefolk doesn't work on the whole disk.") }
             let scratch = privateScratch.contains { p == $0 || p.hasPrefix($0 + "/") }
             for prefix in protectedRoots(home: home) + sidefolk where p == prefix || p.hasPrefix(prefix + "/") {
                 if scratch, prefix == "/private" { continue }
-                return "Sidefolk doesn't touch \(displayPath(prefix)) — it's protected."
+                return String(localized: "Sidefolk doesn't touch \(displayPath(prefix)) — it's protected.")
             }
             // Other people's home folders (and /Users/Shared, which anyone on this Mac can write).
             if p.hasPrefix("/Users/"), p != home, !p.hasPrefix(home + "/") {
-                return "Sidefolk only works inside your own home folder."
+                return String(localized: "Sidefolk only works inside your own home folder.")
             }
             // Hidden files and folders (.ssh, .git, .env, .claude …) are off limits.
             if p.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
-                return "Sidefolk doesn't touch hidden files or folders."
+                return String(localized: "Sidefolk doesn't touch hidden files or folders.")
             }
         }
         return nil

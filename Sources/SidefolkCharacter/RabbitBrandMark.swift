@@ -114,7 +114,7 @@ public enum RabbitBrandMark {
     }
 }
 
-/// Mochi's head reduced to what reads in the menu bar (D31): a 1.5 pt outline of the head and ears,
+/// Mochi's head reduced to what reads in the menu bar (D32): a 1.5 pt outline of the head and ears,
 /// the ear tips filled like the brand's navy tips, two eyes and the nose. No rays, paw or scarf: at
 /// 18 pt they turned the large mark into noise. Drawn in an 18 pt box with the eyes and nose on the
 /// 2x pixel grid; it is one alpha shape, so macOS tints it as a template in any menu bar.

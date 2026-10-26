@@ -82,9 +82,11 @@ extension IntentParser {
                 let phrase = g[1].lowercased().split(separator: " ").joined(separator: " ")
                 let reason: String
                 if pattern.past {
-                    reason = phrase == "yesterday" ? "Yesterday has passed." : phrase.hasSuffix("ago") ? "That time has passed." : "\(phrase.capitalizedFirst) has passed."
+                    reason = phrase == "yesterday" ? String(localized: "Yesterday has passed.")
+                        : phrase.hasSuffix("ago") ? String(localized: "That time has passed.")
+                        : String(localized: "\(phrase.capitalizedFirst) has passed.")
                 } else {
-                    reason = "\(phrase.capitalizedFirst) isn't a time."
+                    reason = String(localized: "\(phrase.capitalizedFirst) isn't a time.")
                 }
                 return (text.trimmingCharacters(in: .whitespaces), reason)
             }
@@ -94,7 +96,8 @@ extension IntentParser {
             if h > (meridiem ? 12 : 23) || m > 59 || (meridiem && h == 0) {
                 var text = rest
                 text.removeSubrange(range)
-                return (text.trimmingCharacters(in: .whitespaces), "\(g[1]):\(g[2])\(meridiem ? " " + g[3].lowercased() : "") isn't a time.")
+                let typed = "\(g[1]):\(g[2])\(meridiem ? " " + g[3].lowercased() : "")"
+                return (text.trimmingCharacters(in: .whitespaces), String(localized: "\(typed) isn't a time."))
             }
         }
         return nil

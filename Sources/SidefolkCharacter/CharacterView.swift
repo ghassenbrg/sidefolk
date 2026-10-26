@@ -2,11 +2,10 @@ import AppKit
 
 /// The companion on screen. A layer-hosting view: AppKit never redraws it; all motion is Core
 /// Animation running on the render server. The only app-side timer is the blink scheduler.
-/// `look` picks who is drawn (the vector robot or a sprite companion); everything else works the
-/// same for both.
+/// `look` picks who is drawn and how it is dressed; everything else works the same for every companion.
 @MainActor
 public final class CharacterView: NSView {
-    private var performer: any Performer = Director(live: true)
+    private var director = Director(CharacterLook(.sidefolk), live: true)
     private var blinkTimer: Timer?
     private var gaze: CGVector?
 
@@ -14,9 +13,9 @@ public final class CharacterView: NSView {
         super.init(frame: frame)
         layer = CALayer()
         wantsLayer = true
-        layer?.addSublayer(performer.stage)
+        layer?.addSublayer(director.stage)
         reducedMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        performer.reducedMotion = reducedMotion
+        director.reducedMotion = reducedMotion
         placeStage()
     }
 
@@ -25,16 +24,15 @@ public final class CharacterView: NSView {
 
     // MARK: Public API
 
-    /// Who is drawn. Changing the robot's accent recolours it in place; changing the companion
-    /// crossfades to the other one in the same state, with the same badges.
-    public var look: CharacterLook = .sidefolk(.aqua) {
+    /// Who is drawn. A new style redresses it in place; another companion crossfades in, in the
+    /// same state, with the same badges.
+    public var look = CharacterLook(.sidefolk) {
         didSet {
             guard look != oldValue else { return }
-            switch (oldValue, look, performer) {
-            case (.sidefolk, .sidefolk(let accent), let director as Director):
-                director.accent = accent
-            default:
-                replacePerformer()
+            if look.species == director.species {
+                director.style = look.style
+            } else {
+                replaceDirector()
             }
         }
     }
@@ -44,25 +42,25 @@ public final class CharacterView: NSView {
 
     /// Setting this animates to the new state.
     public var state: CharacterState {
-        get { performer.state }
+        get { director.state }
         set { setState(newValue, animated: true) }
     }
 
     private var occlusionObserver: NSObjectProtocol?
 
     public func setState(_ state: CharacterState, animated: Bool) {
-        guard state != performer.state else { return }
-        performer.show(state, animated: animated && window != nil)
+        guard state != director.state else { return }
+        director.show(state, animated: animated && window != nil)
         scheduleBlink()
     }
 
     public func play(_ gesture: CharacterGesture) {
-        performer.wake()
-        performer.play(gesture)
+        director.wake()
+        director.play(gesture)
     }
 
     /// Breathing resumes for a while (e.g. the pointer came close); calm states settle again later.
-    public func wake() { performer.wake() }
+    public func wake() { director.wake() }
 
     /// Look direction, each axis -1...1 (x right, y up); nil looks straight ahead.
     /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy.
@@ -74,29 +72,29 @@ public final class CharacterView: NSView {
         default: break
         }
         gaze = next
-        if next != nil { performer.wake() }
-        performer.setGaze(next)
+        if next != nil { director.wake() }
+        director.setGaze(next)
     }
 
     /// No bobbing, hopping or sways; state changes crossfade; blinks become a quick fade.
     /// Starts from the system's Reduce Motion setting.
     public var reducedMotion: Bool = false {
-        didSet { performer.reducedMotion = reducedMotion }
+        didSet { director.reducedMotion = reducedMotion }
     }
 
     public var badges: Set<CharacterBadge> = [] {
-        didSet { if badges != oldValue { performer.setBadges(badges, animated: window != nil) } }
+        didSet { if badges != oldValue { director.setBadges(badges, animated: window != nil) } }
     }
 
     /// The visible outline in view coordinates (the robot's arms and held prop, a sprite's opaque
     /// pixels), for click-through.
     public var characterPath: CGPath {
-        Paths.transformed(performer.silhouette, canvasToView)
+        Paths.transformed(director.silhouette, canvasToView)
     }
 
     /// The body at rest in view coordinates: bubbles and panels attach to it, folks stand beside it.
     public var characterFrame: NSRect {
-        performer.restingFrame.applying(canvasToView)
+        director.restingFrame.applying(canvasToView)
     }
 
     public static func accessibilityLabel(for state: CharacterState, name: String = "Sidefolk") -> String {
@@ -117,9 +115,9 @@ public final class CharacterView: NSView {
 
     // MARK: Switching companions
 
-    private func replacePerformer() {
-        let old = performer
-        let next = look.performer(live: true)
+    private func replaceDirector() {
+        let old = director
+        let next = Director(look, live: true)
         next.reducedMotion = reducedMotion
         next.show(old.state, animated: false)
         next.setBadges(badges, animated: false)
@@ -133,7 +131,7 @@ public final class CharacterView: NSView {
             layer?.add(fade, forKey: "companion")
         }
         layer?.replaceSublayer(old.stage, with: next.stage)
-        performer = next
+        director = next
         placeStage()
         scheduleBlink()
     }
@@ -159,7 +157,7 @@ public final class CharacterView: NSView {
                                                                    object: window, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, let window = self.window else { return }
-                self.performer.setPaused(!window.occlusionState.contains(.visible))
+                self.director.setPaused(!window.occlusionState.contains(.visible))
             }
         }
     }
@@ -188,11 +186,11 @@ public final class CharacterView: NSView {
     private func placeStage() {
         let scale = fitScale
         Motion.still {
-            performer.stage.position = CGPoint(x: bounds.midX, y: bounds.midY)
-            performer.stage.setAffineTransform(CGAffineTransform(scaleX: scale, y: scale))
+            director.stage.position = CGPoint(x: bounds.midX, y: bounds.midY)
+            director.stage.setAffineTransform(CGAffineTransform(scaleX: scale, y: scale))
             // Shape layers rasterize at contentsScale; match the pixels they actually cover.
             let backing = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-            performer.contentsScale = max(backing * scale, 1)
+            director.contentsScale = max(backing * scale, 1)
         }
     }
 
@@ -201,7 +199,7 @@ public final class CharacterView: NSView {
     private func scheduleBlink() {
         blinkTimer?.invalidate()
         blinkTimer = nil
-        guard window != nil, performer.blinks else { return }
+        guard window != nil, director.blinks else { return }
         let timer = Timer(timeInterval: .random(in: 3...7), repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.blinkNow() }
         }
@@ -212,7 +210,7 @@ public final class CharacterView: NSView {
 
     private func blinkNow() {
         if window?.occlusionState.contains(.visible) == true {
-            performer.blink(twice: Int.random(in: 0..<5) == 0)
+            director.blink(twice: Int.random(in: 0..<5) == 0)
         }
         scheduleBlink()
     }
