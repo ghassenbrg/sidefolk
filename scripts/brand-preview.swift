@@ -10,7 +10,7 @@ func label(_ text:String,_ x:Double,_ y:Double,_ color:NSColor = .darkGray){(tex
 func art(_ path:String,_ box:CGRect){let im=NSImage(contentsOf:root.appendingPathComponent(path))!;let f=min(box.width/im.size.width,box.height/im.size.height);im.draw(in:rect(box.midX-im.size.width*f/2,box.midY-im.size.height*f/2,im.size.width*f,im.size.height*f))}
 fill(NSColor(white:0.95,alpha:1),rect(0,0,1440,1100))
 label("Sidefolk · production assets from the supplied reference",35,1060)
-art("Resources/Icon/icon-source-2048.png",rect(25,665,390,390));label("Raw square icon source · flat, no tile effects",35,640)
+art("Resources/Icon/icon-source-2048.png",rect(25,665,390,390));label("Raw square source · blue gradient, no tile effects",35,640)
 fill(.white,rect(440,655,955,385));art("Resources/Brand/exports/logo-stacked-color.png",rect(465,675,425,350));art("Resources/Brand/exports/logo-horizontal-color.png",rect(910,735,455,230));label("Flat reference lettering · transparent PNG / vector wordmark",465,620)
 fill(.white,rect(35,340,665,250));art("Resources/Brand/exports/logo-horizontal-navy.png",rect(65,380,605,170));label("Navy on light",55,350)
 fill(NSColor(srgbRed:15/255,green:45/255,blue:91/255,alpha:1),rect(725,340,670,250));art("Resources/Brand/exports/logo-horizontal-white.png",rect(750,380,620,170));label("White on dark",745,350,.white)

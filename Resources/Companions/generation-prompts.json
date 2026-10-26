@@ -1,0 +1,295 @@
+{
+  "tool": "Codex image generation (codex-imagegen skill, gpt-6-luna relaying to the image model), 2026-10-26",
+  "current_palette_pass": "Mochi is now the brand mascot (D29). scripts/rebrand-mochi.swift grades the 16 archived original poses from masters/mochi-legacy to white/navy/mint-aqua without changing dimensions, alpha or pose geometry. Historical imagegen briefs below describe the original ungraded artwork.",
+  "why": "The legacy sprites were keyed out of lossy chroma-green sheets and kept green fringes; these are generated with a real alpha channel at about 1254 px, then normalised by scripts/companion-art.swift.",
+  "legacy references": "git show main:public/crew/pip/3d/<pose>.webp (the bunny, offered as Mochi) and main:public/crew/spark/3d/<pose>.webp",
+  "jobs": [
+    {
+      "companion": "mochi",
+      "pose": "alert",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-alert.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, raising one hand that holds up a small white card with a bold orange exclamation mark, alert and attentive. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "blink",
+      "references": [
+        "new mochi-idle.png"
+      ],
+      "brief": "Edit reference 1: keep everything identical (same bunny, same pose, same position and size in the frame, same lighting and framing) and change only the eyes, which are gently closed mid-blink as soft curved lines. Full body, square image, fully transparent background with clean anti-aliased edges, no ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "dangle",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-dangle.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: lifted from above and dangling: arms and legs hanging loosely, body upright, a surprised but calm face. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "done",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-done.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, both arms raised happily, eyes closed in a big happy smile, celebrating. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "idle",
+      "references": [
+        "legacy pip-idle.png",
+        "legacy pip-wave.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app: the small bunny shown in both reference images (they are the character to keep exactly: cream-white soft fur, round head, tall ears with black tips, small black bead eyes, a tiny dark nose, a mint-green knitted scarf with one end hanging in front, short arms, small round feet). Style: soft matte clay 3D render like the references, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: idle, standing upright facing the viewer, arms relaxed at its sides, neutral friendly face. Composition: full body, centered, the whole character visible with margin on all sides, square image. Fully transparent background with clean anti-aliased edges, no ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "listen",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-listen.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, head tilted slightly to one side, attentive and curious, as if listening closely. Full body, square image, fully transparent background with clean anti-aliased edges, no ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "note",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-note.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding up a small blank sheet of paper in front of it with both hands, showing it, pleased. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "sad",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-sad.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, slightly slumped, looking down, a small sad expression. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "sit",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-sit.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: sitting on the ground with its legs out in front, relaxed and content, facing the viewer. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "sleep",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-sleep.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: sitting on the ground, leaning slightly forward, eyes closed, peacefully asleep. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "think",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-think.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, one hand raised to its chin, looking up and to the side, thinking. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "wave",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-wave.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, waving hello with one raised hand, friendly smile. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "work1",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-work1.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small open mint-green laptop in front of its body with both hands, typing, looking at the screen. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "work2",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-work2.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small open mint-green laptop in front of its body, mid-typing with its hands in a slightly different position than a moment before, looking at the screen. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "write1",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-write1.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small notebook in one hand and writing in it with a pencil in the other, looking at the page. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "mochi",
+      "pose": "write2",
+      "references": [
+        "new mochi-idle.png",
+        "legacy pip-write2.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same bunny, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same bunny that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small notebook in one hand, the pencil lifted slightly from the page between words, looking at the page. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "alert",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-alert.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, raising one hand that holds up a small white card with a bold orange exclamation mark, alert and attentive. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "blink",
+      "references": [
+        "new spark-idle.png"
+      ],
+      "brief": "Edit reference 1: keep everything identical (same robot, same pose, same position and size in the frame, same lighting and framing) and change only the two eyes on its face screen, which are closed mid-blink as short mint-green curved lines. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "dangle",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-dangle.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: lifted from above and dangling: arms and legs hanging loosely, body upright, a surprised but calm face. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "done",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-done.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, both arms raised happily, eyes closed in a big happy smile, celebrating. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "idle",
+      "references": [
+        "legacy spark-idle.png",
+        "legacy spark-wave.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app: the small robot shown in both reference images (keep it exactly: cream-white rounded body and head, a glossy black face screen with two mint-green glowing eyes, mint-green headphone ear pods, a short antenna topped with a mint ball, a small mint badge on its chest, black hands and feet). Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: idle, standing upright facing the viewer, arms relaxed at its sides, calm friendly eyes. Composition: full body, centered, the whole character visible with margin on all sides, square image. Fully transparent background with clean anti-aliased edges, no ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "listen",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-listen.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, head tilted slightly to one side, attentive and curious, as if listening closely. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "note",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-note.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding up a small blank sheet of paper in front of it with both hands, showing it, pleased. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "sad",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-sad.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, slightly slumped, looking down, a small sad expression. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "sit",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-sit.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: sitting on the ground with its legs out in front, relaxed and content, facing the viewer. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "sleep",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-sleep.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: sitting on the ground, leaning slightly forward, eyes closed, peacefully asleep. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "think",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-think.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, one hand raised to its chin, looking up and to the side, thinking. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "wave",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-wave.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, waving hello with one raised hand, friendly smile. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "work1",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-work1.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small open mint-green laptop in front of its body with both hands, typing, looking at the screen. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "work2",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-work2.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small open mint-green laptop in front of its body, mid-typing with its hands in a slightly different position than a moment before, looking at the screen. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "write1",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-write1.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small notebook in one hand and writing in it with a pencil in the other, looking at the page. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    },
+    {
+      "companion": "spark",
+      "pose": "write2",
+      "references": [
+        "new spark-idle.png",
+        "legacy spark-write2.png"
+      ],
+      "brief": "Character sprite for a macOS desktop companion app. Reference 1 is the character and the exact rendering to match: the same robot, same proportions, same soft matte clay look and lighting, drawn at the same size in the frame with its feet on the same baseline. Reference 2 is an older, lower-quality rendering of the same robot that shows the pose to copy; copy only its pose, not its quality, colors or edges. Style: soft matte clay 3D render, gentle studio lighting from the upper left, smooth surfaces, cute and calm. Pose: standing, holding a small notebook in one hand, the pencil lifted slightly from the page between words, looking at the page. Full body, square image. The background must be truly transparent (a real alpha channel, not a painted checkerboard or any color), with clean anti-aliased edges. No ground, no shadow, no outline, no text, no watermark."
+    }
+  ],
+  "processing": "swift scripts/companion-art.swift <masters> Resources/Companions/<id> 512, with Resources/Companions/<id>-scale.json copied to <masters>/scale.json"
+}

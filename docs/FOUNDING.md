@@ -39,7 +39,8 @@ see where ideas came from and how they evolved (see DECISIONS.md).
 ## Identity
 - Name: Sidefolk — "AI that lives by your side". Tagline: "A Friendly AI Desktop Companion".
 - Main character: white rounded robot, navy visor, aqua eyes. The Folk Family — colorful helpers —
-  represents skills, tools and extensions.
+  represents skills, tools and extensions. (Since 26 October 2026 the main character is Mochi, a
+  white rabbit with navy ear tips and an aqua scarf; the robot stays a companion you can pick: D29.)
 - Palette: Navy #0F2D5B, Aqua #2ED4D9, Coral #FF7B6B, Mint #7DD3A7, Light Blue #93C5FD.
 - Personality: friendly, modular, supportive, extensible, delightful.
 

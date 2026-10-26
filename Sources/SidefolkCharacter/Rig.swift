@@ -49,6 +49,11 @@ final class Rig {
     /// Pointer gaze on top of the pose's own look.
     private var gaze: CGVector?
 
+    /// The light's colour. In a live view Core Animation's implicit animation fades it across.
+    var accent: CharacterAccent = .aqua {
+        didSet { if accent != oldValue { tint() } }
+    }
+
     init() {
         armL = Limb(shoulder: Canvas.shoulderL)
         armR = Limb(shoulder: Canvas.shoulderR)
@@ -57,7 +62,14 @@ final class Rig {
         browLayers = [FaceMark(center: Canvas.eyeL, core: false), FaceMark(center: Canvas.eyeR, core: false)]
         mouthLayer = FaceMark(center: Canvas.mouth, core: false)
         build()
+        tint()
         apply(pose, .instant)
+    }
+
+    private func tint() {
+        let light = accent.light
+        ears.forEach { $0.tint(light) }
+        (eyeLayers + browLayers + [mouthLayer]).forEach { $0.tint(light) }
     }
 
     private func build() {
@@ -315,7 +327,7 @@ final class Limb {
     }
 }
 
-/// An ear pod: a white cylinder end with a navy face and a glowing aqua ring.
+/// An ear pod: a white cylinder end with a navy face and a glowing ring in the accent.
 @MainActor
 final class Ear {
     let layer = Layers.canvas()
@@ -335,13 +347,21 @@ final class Ear {
         let face = Layers.shape(Paths.ellipse(faceCenter, 7.5, 19), fill: Palette.visorMid.cg())
         layer.addSublayer(face)
 
-        light = Layers.shape(Paths.ellipse(faceCenter, 4.6, 14.5), fill: Palette.aqua.cg(0.55))
+        light = Layers.shape(Paths.ellipse(faceCenter, 4.6, 14.5))
         Layers.glow(light, Palette.aqua, radius: 5)
         layer.addSublayer(light)
 
-        ring = Layers.shape(Paths.ellipse(faceCenter, 4.8, 15), stroke: Palette.eyeLight.cg(), lineWidth: 2.6)
+        ring = Layers.shape(Paths.ellipse(faceCenter, 4.8, 15), lineWidth: 2.6)
         Layers.glow(ring, Palette.aqua, radius: 3)
         layer.addSublayer(ring)
+    }
+
+    /// Colours only: the glow's strength belongs to the pose (`glow(_:_:)`).
+    func tint(_ accent: Light) {
+        light.fillColor = accent.glow.cg(0.55)
+        light.shadowColor = accent.glow.cg()
+        ring.strokeColor = accent.line.cg()
+        ring.shadowColor = accent.glow.cg()
     }
 
     func glow(_ amount: CGFloat, _ transit: Transit) {
@@ -366,16 +386,20 @@ final class FaceMark {
         layer = CALayer()
         layer.frame = CGRect(x: center.x - half, y: center.y - half, width: FaceMark.box, height: FaceMark.box)
         core = hasCore ? CAShapeLayer() : nil
-        for (line, color) in [(glow, Palette.eyeLight.cg()), (core, Palette.eyeCore.cg(0.85))] {
-            guard let line else { continue }
+        for line in [glow, core].compactMap(\.self) {
             line.frame = layer.bounds
             line.fillColor = nil
-            line.strokeColor = color
             line.lineCap = .round
             line.lineJoin = .round
             layer.addSublayer(line)
         }
         Layers.glow(glow, Palette.aqua, radius: 4.5, opacity: 0.95)
+    }
+
+    func tint(_ accent: Light) {
+        glow.strokeColor = accent.line.cg()
+        glow.shadowColor = accent.glow.cg()
+        core?.strokeColor = accent.core.cg(0.85)
     }
 
     func show(_ stroke: Stroke, _ transit: Transit) {

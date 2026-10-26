@@ -1,0 +1,11 @@
+{
+  "tool": "built-in image_gen",
+  "references": [
+    "../reference/rabbit-app-icon-detail.png",
+    "../reference/mochi-brand-guide.png"
+  ],
+  "purpose": "Replace the first portrait with a closer match to the user's close-up crop.",
+  "prompt": "Use case: precise-object-edit / logo-brand. Image 1 is the AUTHORITATIVE exact desired rabbit APP ICON art. Image 2 is the supporting brand guide. Reconstruct ONLY the rabbit portrait INSIDE the blue icon in image 1 as a high-resolution isolated transparent cutout, retaining the EXACT pose, head tilt, silhouette, proportions, ear angles, navy-tip shapes, eye/nose positions and scarf. This is not an invitation to redesign it. The left ear is lower and leans outward left; the right ear is higher, angled outward right. The head is a broad rounded horizontally oval white shape, tilted with the right eye noticeably higher than the left. Eyes are small glossy navy beads; nose a tiny navy oval; no mouth. Ear length is modest, matching image 1, not the overlong upright ears of an alternate bunny. The face is full and soft, clean white, with navy #0F2D5B ear tips and eyes, mint/aqua scarf wrapping the lower chin with its short hanging end toward lower right. A little white shoulder/paw at lower right. Same smooth high-end soft-3D rendering and exact identity as image 1. No full body or feet. Include the entire ears and scarf, uncut, with transparent margin; the bottom shoulder may terminate in the natural straight crop that the reference has. REMOVE ONLY the blue background, rounded tile, all shadow/bevel/frame effects, label, white presentation card and scene. No new objects or graphic accents. Genuine transparent background, opaque surfaces, crisp narrow antialiased edges. No glow, halos, ground shadow, lettering, border or generated tile. Produce ONE large square portrait asset.",
+  "source": "rabbit-portrait-source-v2.png",
+  "production": "rabbit-portrait.png"
+}

@@ -158,8 +158,8 @@ residual channel (SECURITY T2).
 
 ### D25 — Reference-faithful production brand assets (2026-10-26)
 **Decision:** use standalone transparent artwork reconstructed from the founder's Folk Family
-reference for static logos and the macOS app icon. Preserve the original flat wordmark's letter
-silhouettes as smooth fitted Bézier outlines, with navy/aqua fills and no generated text effects.
+reference for static logos and the macOS app icon. Reconstruct the flat wordmark as hand-authored
+Bézier outlines following the reference, with navy/aqua fills and no generated text effects.
 Export a complete ICNS/iconset and native 18 pt vector menu bar template; bundle production exports
 and load them through `BrandAsset`. The menu template simplifies the companion's shell/visor/smile
 for small sizes and lets macOS tint its alpha. The live vector rig remains as specified in D2.
@@ -171,6 +171,37 @@ separate transparent artwork PNG. No bevel, raised tile, cast shadow or edge lig
 Only derived legacy macOS ICNS/iconset representations get a flat inset rounded mask. An Xcode
 asset catalog includes both the raw image sets and the macOS AppIcon set. The rendered-tile master
 was rejected and removed.
+**Wordmark correction:** reject the low-resolution contour trace. The canonical source is now
+`Resources/Brand/masters/wordmark.svg`, drawn as 11 named, editable filled paths. SVG, PDF, PNG and
+all logo lockups derive from that master. Color, navy and white SVGs have no embedded raster, font,
+filters, transforms or clipping masks.
+
+### D27 — Three companions to choose from; two are sprites; the robot's light colour is the only customisation (2026-10-26)
+The default-appearance decision below is superseded by D29; all three choices remain available.
+**Decision:** Settings › Companion offers the vector Sidefolk robot (default), Mochi and Spark, as
+cards that show each one as drawn, switching live. Mochi and Spark are the founder's two earlier
+characters (the legacy app's bunny "Pip" and robot "Spark"), drawn from 16 pose images each by a
+`SpriteDirector` behind the same `CharacterView` contract as the robot's `Director` (state, gestures,
+badges, alpha-based hit testing, anchor frame, the D20 settling rules). The bunny is offered as
+**Mochi** because Pip is the coral folk in the Folk Family (D3); Spark keeps its name. A companion
+named with a built-in default takes the new companion's name when switching; a name the user chose
+stays. The robot's light (visor marks, ear pods, the marks drawn in that light) can be aqua, coral,
+mint or light blue; nothing else is customisable.
+**Why:** the founder wants a choice and a little personalisation. The two characters exist only as
+pose renders, and rebuilding them as rigs would take weeks for a look the renders already have, so
+sprites (crossfaded poses, alternating frames for busy states) are the honest way to offer them; the
+robot stays a vector rig (D2). Sprites cost no more at rest: they settle to zero animations like the
+rig. Customisation stops at a brand-palette light colour because every further knob (shell colours,
+accessories, per-sprite tints) either breaks the approved identity or needs art that doesn't exist,
+and each knob is a combination to keep working in every state. Pose files are measured rather than
+assumed (PNG preferred over WebP, any pixel size, feet on the floor line, scale from the idle pose),
+so redrawn art can replace the legacy cuts without code changes.
+**Alternatives:** rigging Mochi and Spark as vectors (slow, would not look like the renders); one view
+type per kind of companion (the app would juggle two); free colour pickers (off-brand); a tint for
+the sprites' mint parts (the legacy recolouring; looks painted-on on 3D renders).
+**Implications:** sprite companions have no effect marks or held props beyond what their poses show,
+and no eye tracking (they lean toward the pointer instead). A new sprite companion is a folder of
+the 16 poses plus a `CompanionChoice` case.
 
 ### D28 — Ten languages for everything people read; plain-language commands stay English (2026-10-26)
 **Decision:** the interface, notices and messages ship in English, French, Spanish, German, Italian,
@@ -185,3 +216,19 @@ it. A second rule-based parser per language would be a large, separate project (
 fuzz-tested over 600k inputs), so it is deferred rather than done badly.
 **Alternatives:** translate only the menus (half-translated apps feel broken); write parsers for two
 languages now (high effort, uneven quality).
+
+### D29 — Mochi becomes the brand mascot; the original robot remains a companion (2026-10-26)
+**Decision:** adopt the founder's Mochi rabbit brand guide: white rabbit, navy ear tips and eyes,
+mint/aqua scarf, unchanged wordmark and palette, rabbit family logos, blue app icon and a native
+rabbit-ear/face/scarf menu template. Fresh settings and missing/unknown appearance values default
+to Mochi. Explicit saved companion choices, custom names and robot accent colors are preserved.
+The original `.sidefolk` vector robot and Spark stay selectable; the robot retains all four light
+colors. Only the default and picker ordering change.
+**Why:** the founder selected the rabbit as the main identity and explicitly asked to keep the
+original robot. Brand identity and a person's chosen desktop appearance are distinct.
+**Implementation:** all 16 existing Mochi poses receive a deterministic white/navy/scarf palette
+grade from archived originals, preserving pose scale and alpha. Logos and icon portrait follow the
+new guide and the founder’s close-up icon crop; monochrome and menu marks share hand-drawn native
+vector geometry matching the close-up’s ears, paw, rays and separated scarf. Raw icon sources
+have a simple blue-gradient square or transparent background; only separate macOS exports get a
+geometric mask.

@@ -1,0 +1,137 @@
+{
+  "description": "All 22 built-in imagegen originals from this chat, preserved byte-for-byte. Paths are relative to repository root.",
+  "generated_images": [
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-210688f7-ea5b-4bec-90e7-15a9b2b0a44d.png",
+      "repository_path": "folk-family/scout/source.png",
+      "sha256": "cc5ac2d85e2e6fd2e7f34059bdf8e5cfd4b2e364c6c5d093b7f1f2f0c7084f89"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-245586ad-cc2d-492d-88fc-2c3d8e86f0f2.png",
+      "repository_path": "folk-family/tempo/source.png",
+      "sha256": "561476db894f6dba5e7b4786c255be8d898c06af2452827ae1babaee5acc1428"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-29428ab1-0d58-45bb-a8df-12d30139b2d7.png",
+      "repository_path": "folk-family/seed/source.png",
+      "sha256": "afde7fa8f9fb27b7ae60292c3e4e958b1b10ee173d5138dc79055dcf8006af97"
+    },
+    {
+      "set": "original-robot-brand",
+      "generated_filename": "exec-29d78623-71d1-4ec0-90f0-15e8e3065a4a.png",
+      "repository_path": "Resources/Brand/archive/robot/early-generations/logo-with-glow-source.png",
+      "sha256": "c6581535c83fa74c91454ec67ae38895701f94002d8d3b9c92fc882f6e1f9e90"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-3049b4b6-f3ff-452b-bd65-f5a95dd32c23.png",
+      "repository_path": "folk-family/byte/source.png",
+      "sha256": "8559f238e2919d279af8f6dc9652c89c094b9c4346c705faebff40e84e2123df"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-496b38dc-524b-4d3c-803a-8332813bd496.png",
+      "repository_path": "folk-family/play/source.png",
+      "sha256": "4203fe495e11660cfada4e2b09cd21be051d91d44a1f75b5b78ce7f35eca6ca5"
+    },
+    {
+      "set": "original-robot-brand",
+      "generated_filename": "exec-62c871ee-85e2-4914-a607-ff3aafdd80ef.png",
+      "repository_path": "Resources/Brand/archive/robot/early-generations/family-with-glow-source.png",
+      "sha256": "f83525cc1f44e8628f4e7202b86836f56d9daf4d617ddbf317baa948a31ff4f4"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-75901065-00e6-4da6-8167-aa38c3af6e2d.png",
+      "repository_path": "folk-family/spark/source.png",
+      "sha256": "7b2a2f34762350a1ef19ee2b9bd7c4d42f8775e065dd2892074b288e891c8392"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-9ec1ee9b-d30e-4027-9528-977a052c8665.png",
+      "repository_path": "folk-family/nova/source.png",
+      "sha256": "dc2dedc964a92a41064f0231240e019001747b358f36bf00d37789b6d8c1bd61"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-a30a8b26-ed3f-4f80-b4d9-435fea5e345f.png",
+      "repository_path": "folk-family/pip/source.png",
+      "sha256": "93a0db85ce54bff9af8b5e2f680ca4360f66bb1e39bc9bc2faccb3158463eae0"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-a901768f-13e4-4d10-8d07-badc8f75da59.png",
+      "repository_path": "folk-family/sidefolk/source.png",
+      "sha256": "d1b3f7a8cc79f0f8dccad2ecf92b760121717253af15054c9417c825c81d1396"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-abf8f66a-ca96-4689-af98-616720e78677.png",
+      "repository_path": "folk-family/mochi/source.png",
+      "sha256": "3e4a4027fa2cfdb28ffda76ef41e99a040310b87e61aeeeb7c558e20940759bc"
+    },
+    {
+      "set": "original-robot-brand",
+      "generated_filename": "exec-b4505001-1b61-4f55-a350-9847c83e2079.png",
+      "repository_path": "Resources/Brand/archive/robot/early-generations/raised-app-icon-source.png",
+      "sha256": "0d0c1622b1710779a8b08a92aa081c98e515affb98c050a6f046ddff2ac3c7de"
+    },
+    {
+      "set": "original-robot-brand",
+      "generated_filename": "exec-b958e538-3969-44bb-8be2-928460c80ee1.png",
+      "repository_path": "Resources/Brand/archive/robot/logo-group.png",
+      "sha256": "2c9bb1226208f2363278c7f0d76cdfe4887c7708011ec4619801022d64dcf5ba"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-c239f117-eb2b-4e5d-9dca-8fbaad6a599f.png",
+      "repository_path": "folk-family/brew/source.png",
+      "sha256": "55d449798232a3d8f982ab533c525118004f1be21be54a4fd2899e1762a59510"
+    },
+    {
+      "set": "mochi-brand",
+      "generated_filename": "exec-c8f48fef-ff9a-4cfe-aa03-9cbf2a41d087.png",
+      "repository_path": "Resources/Brand/masters/rabbit-family-source.png",
+      "sha256": "cfac0a048e1453dcce7b158674e47a2f8e4f67db18579106229b1f1d47e02f3b"
+    },
+    {
+      "set": "original-robot-brand",
+      "generated_filename": "exec-cb97c82a-04d3-473a-9f74-26c046620f7c.png",
+      "repository_path": "Resources/Brand/archive/robot/mark-color.png",
+      "sha256": "823182c174b021ea858f7f79d1c402feb48dd695be2a27ba4ec5cc2d0b1d3f5f"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-d87ed902-af78-4e61-b0f6-59584f9b7dca.png",
+      "repository_path": "folk-family/guard/source.png",
+      "sha256": "568447a8728a5ff01149d1e3fb653511ccdbd226f79dbd0bf96deed1f879149b"
+    },
+    {
+      "set": "original-robot-brand",
+      "generated_filename": "exec-d8824de8-ea82-445a-b60e-87d91b990d74.png",
+      "repository_path": "Resources/Brand/archive/robot/mark-monochrome.png",
+      "sha256": "4e182acc535606345556ba7287f40fa542c34a89ff45498dd7c234e89139beef"
+    },
+    {
+      "set": "mochi-brand",
+      "generated_filename": "exec-e1a3c84f-d211-4241-8de5-a6b9552e2781.png",
+      "repository_path": "Resources/Brand/masters/rabbit-portrait-source-v2.png",
+      "sha256": "f90afaad5ff1c567e4e97e87dfcb168fd504339bac1c92c8371030fee5df1539"
+    },
+    {
+      "set": "folk-family",
+      "generated_filename": "exec-e8427aa9-4e55-4647-9862-89788676aa65.png",
+      "repository_path": "folk-family/melody/source.png",
+      "sha256": "c4af9db142c6d2c69cf0dbab3d8132da2f59c9c10d7c7650d4c7e94b64dcf210"
+    },
+    {
+      "set": "mochi-brand",
+      "generated_filename": "exec-fe6bc0e0-5ad7-466c-ae85-70f40903c0c6.png",
+      "repository_path": "Resources/Brand/masters/rabbit-portrait-source.png",
+      "sha256": "17b6a8e794bac3a0a332f89f0cccdc3dfabfd6134ada0988aed806642316c008"
+    }
+  ]
+}

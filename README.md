@@ -4,7 +4,11 @@
 remembers what you tell it, reminds you at the right moment, watches things for you, acts
 through tools you allow — and other AI agents (Claude Code, Codex, any MCP client) can reach it too.
 
-<p align="center"><img src="Resources/Character/states.png" width="720" alt="The Sidefolk companion in its states"></p>
+<p align="center"><img src="Resources/Brand/exports/logo-horizontal-color.png" width="720" alt="Sidefolk with Mochi and the Folk Family"></p>
+
+Mochi, the white rabbit with navy ear tips and a mint/aqua scarf, is the main mascot and the default
+companion. **Settings › Companion** also offers the original Sidefolk robot with its four light
+colors, and Spark. Your saved companion choice and custom name stay yours.
 
 ## What it does
 
@@ -53,7 +57,7 @@ itself in a few bubbles; choose an AI later in **Settings › AI** (everything l
 
 ```sh
 swift build                      # everything
-make test                        # 833 tests (Swift Testing), serial: ~40 s
+make test                        # 851 tests (Swift Testing), serial: ~40 s
 make dev                         # debug app with its own data in build/dev-home (never your real data)
 swift run sidefolk-render out/   # character contact sheets for visual review
 swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # Home, Settings, Ask panel, bubbles; light and dark
