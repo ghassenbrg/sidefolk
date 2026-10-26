@@ -27,6 +27,11 @@ public struct CommandProbe: WatcherProbe {
     public var defaultInterval: TimeInterval { 5 * 60 }
     public var minimumInterval: TimeInterval { 60 }
 
+    /// Reporting its output may go faster than waiting for a change: the person asked to see it.
+    public func minimumInterval(for watcher: Watcher) -> TimeInterval {
+        watcher.mode == .report ? ReportFloors.command : minimumInterval
+    }
+
     let timeout: TimeInterval
     let grace: TimeInterval
 
@@ -42,7 +47,8 @@ public struct CommandProbe: WatcherProbe {
         }
         guard let command = w.config.string("command") else { throw WatchError.invalid(String(localized: "Tell me which command to run.")) }
         guard command.count <= 2000, !command.contains("\0") else { throw WatchError.invalid(String(localized: "That command is too long to watch.")) }
-        var config: [String: JSONValue] = ["command": .string(command)]
+        var config = (w.mode == .report ? Report.options(of: w.config) : .object([:])).objectValue ?? [:]
+        config["command"] = .string(command)
         if let cwd = w.config.string("cwd") {
             let expanded = (cwd as NSString).expandingTildeInPath
             guard expanded.hasPrefix("/"), let canonical = FolderAccess.canonical(expanded) else {
@@ -53,6 +59,10 @@ public struct CommandProbe: WatcherProbe {
             config["cwd"] = .string(canonical)
         }
         w.config = .object(config)
+        if w.mode == .report {
+            w.condition = .object([:])
+            return w
+        }
 
         let condition = CommandCondition(w.condition)
         if let code = condition.exitCode, !(0...255).contains(code) { throw WatchError.invalid(String(localized: "An exit code is a number from 0 to 255.")) }
@@ -89,6 +99,7 @@ public struct CommandProbe: WatcherProbe {
         if result.timedOut { throw ProbeError.failed(String(localized: "The command took longer than \(Int(timeout.rounded(.up))) seconds, so I stopped it.")) }
 
         let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        if w.mode == .report { return try Self.report(output, exitCode: result.exitCode) }
         let hash = SHA256.hash(data: Data(output.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
         let tail = String(output.suffix(400))
         let previous = w.lastState
@@ -116,5 +127,16 @@ public struct CommandProbe: WatcherProbe {
         let was = previous?["tail"]?.stringValue?.displaySafe.suffix(90) ?? ""
         let change = was.isEmpty ? detail : "“\(was)” → “\(output.displaySafe.suffix(90))”"
         return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(label): the output changed"), detail: change)
+    }
+
+    /// A report shows the output's last line, as it is: someone else's text, marked so.
+    static func report(_ output: String, exitCode: Int32) throws -> ProbeResult {
+        let line = output.components(separatedBy: .newlines).map(\.displaySafe).last { !$0.isEmpty } ?? ""
+        guard !line.isEmpty else {
+            throw ProbeError.failed(exitCode == 0 ? String(localized: "The command printed nothing.")
+                : String(localized: "The command printed nothing and exited with code \(exitCode)."))
+        }
+        let shown = line.clipped(WatchLimits.readingLimit)
+        return ProbeResult(state: ["exit": .number(Double(exitCode))], reading: ReadingText(shown: shown, forModel: shown, fromOutside: true))
     }
 }

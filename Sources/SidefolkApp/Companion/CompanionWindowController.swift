@@ -34,6 +34,11 @@ protocol CompanionDelegate: AnyObject {
     func companionMoved()
     func companionReceived(_ drop: Attachment)
     func companionFolkClicked(_ folk: DutyFolk)
+    func companionReadoutClicked()
+    /// Pressing and holding the companion talks (D34), when voice input is on.
+    var companionCanTalk: Bool { get }
+    func companionHoldBegan()
+    func companionHoldEnded()
 }
 
 final class CompanionWindowController {
@@ -50,10 +55,15 @@ final class CompanionWindowController {
     private var folkOrder: [DutyFolk] = []
     private var raiseTask: Task<Void, Never>?
     var eyesFollowPointer = true
+    private let readouts = ReadoutPillsModel()
+    private let readoutHost: ReadoutHostView
 
     init() {
         character = CharacterView(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
         container = CompanionContainerView(character: character)
+        readoutHost = ReadoutHostView(rootView: ReadoutPills(model: readouts))
+        readoutHost.isHidden = true
+        container.addSubview(readoutHost)
         container.owner = self
         panel.contentView = container
     }
@@ -65,7 +75,15 @@ final class CompanionWindowController {
     /// The feet stand 10% above the view's bottom edge.
     private var feetInset: CGFloat { characterBox.height * 0.1 }
     private var folkSize: CGFloat { (size * 0.62).rounded() }
-    private var windowSize: NSSize { NSSize(width: characterBox.width + folkSize * 2.6, height: characterBox.height) }
+    /// The live values stand above the folks' heads.
+    private var readoutBase: CGFloat { feetInset + folkSize * 0.95 }
+    private var readoutSize: NSSize { readouts.items.isEmpty ? .zero : readoutHost.fittingSize }
+    /// Room beside the companion for the folks, or for the widest live value; tall enough for every value.
+    private var windowSize: NSSize {
+        let values = readoutSize
+        return NSSize(width: characterBox.width + max(folkSize * 2.6, values.width + 8),
+                      height: max(characterBox.height, values.height == 0 ? 0 : readoutBase + values.height + 4))
+    }
 
     func apply(size: CompanionSize, reducedMotion: Bool) {
         self.size = CGFloat(size.points)
@@ -103,7 +121,32 @@ final class CompanionWindowController {
             // Folk canvases also stand 10% above their bottom; align both feet lines.
             v.frame = NSRect(x: x, y: feetInset - folkSize * 0.1, width: folkSize, height: folkSize)
         }
+        let values = readoutSize
+        readouts.alignment = folksOnLeft ? .trailing : .leading
+        let inner = folksOnLeft ? body.minX - reach * 0.4 : body.maxX + reach * 0.4
+        readoutHost.frame = NSRect(x: max(0, folksOnLeft ? inner - values.width : inner), y: readoutBase,
+                                   width: values.width, height: values.height)
     }
+
+    /// Shows these live values beside the companion (none hides them). The window grows to hold them while the
+    /// companion stays exactly where it stands.
+    func setReadouts(_ items: [Readout]) {
+        guard items != readouts.items else { return }
+        let before = panel.frame
+        let left = folksGoLeft
+        readouts.items = items
+        readoutHost.isHidden = items.isEmpty
+        readoutHost.invalidateIntrinsicContentSize()
+        let size = windowSize
+        if size != before.size {
+            // With the folks on the left the companion is at the window's right edge: keep it there.
+            let x = left ? before.maxX - size.width : before.minX
+            panel.setFrame(NSRect(x: x, y: before.minY, width: size.width, height: size.height), display: true)
+        }
+        layoutContent()
+    }
+
+    func readout(at point: NSPoint) -> Bool { !readoutHost.isHidden && readoutHost.frame.contains(point) }
 
     /// Folks sit on whichever side of the companion has more room on screen.
     private var folksGoLeft: Bool {
@@ -225,6 +268,7 @@ final class CompanionWindowController {
         case .idle: .idle
         case .sleeping: .sleeping
         case .listening: .listening
+        case .hearing: .hearing
         case .thinking: .thinking
         case .waiting: .waiting
         case .success: .success
@@ -346,7 +390,7 @@ final class CompanionWindowController {
         var ignore = !container.isDraggingFile
         if frame.insetBy(dx: -4, dy: -4).contains(p) {
             let local = container.convert(panel.convertPoint(fromScreen: p), from: nil)
-            if folk(at: local) != nil {
+            if folk(at: local) != nil || readout(at: local) {
                 ignore = false
             } else if character.frame.contains(local) {
                 ignore = ignore && !character.characterPath.contains(character.convert(local, from: container))
@@ -378,6 +422,10 @@ final class CompanionContainerView: NSView {
     private var windowOriginAtDown: NSPoint?
     private var dragging = false
     private(set) var isDraggingFile = false
+    /// Pressed and not moved yet: held long enough, it talks instead of clicking or dragging.
+    private var holdTimer: Timer?
+    private var holding = false
+    static let holdToTalk: TimeInterval = 0.35
 
     init(character: CharacterView) {
         self.character = character
@@ -401,13 +449,30 @@ final class CompanionContainerView: NSView {
         mouseDownAt = NSEvent.mouseLocation
         windowOriginAtDown = window?.frame.origin
         dragging = false
+        holding = false
+        holdTimer?.invalidate()
+        holdTimer = nil
+        let point = convert(event.locationInWindow, from: nil)
+        guard event.clickCount == 1, owner?.delegate?.companionCanTalk == true,
+              owner?.folk(at: point) == nil, owner?.readout(at: point) != true else { return }
+        let timer = Timer(timeInterval: Self.holdToTalk, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.mouseDownAt != nil, !self.dragging else { return }
+                self.holding = true
+                self.owner?.delegate?.companionHoldBegan()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        holdTimer = timer
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let start = mouseDownAt, let origin = windowOriginAtDown, let window else { return }
+        guard !holding, let start = mouseDownAt, let origin = windowOriginAtDown, let window else { return }
         let p = NSEvent.mouseLocation
         if !dragging, hypot(p.x - start.x, p.y - start.y) > 4 {
             dragging = true
+            holdTimer?.invalidate()
+            holdTimer = nil
             owner?.delegate?.companionDragChanged(true)
         }
         guard dragging else { return }
@@ -416,6 +481,13 @@ final class CompanionContainerView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         defer { mouseDownAt = nil }
+        holdTimer?.invalidate()
+        holdTimer = nil
+        if holding {
+            holding = false
+            owner?.delegate?.companionHoldEnded()
+            return
+        }
         if dragging {
             dragging = false
             owner?.delegate?.companionDragChanged(false)
@@ -423,7 +495,9 @@ final class CompanionContainerView: NSView {
             return
         }
         let local = convert(event.locationInWindow, from: nil)
-        if let folk = owner?.folk(at: local) {
+        if owner?.readout(at: local) == true {
+            owner?.delegate?.companionReadoutClicked()
+        } else if let folk = owner?.folk(at: local) {
             owner?.delegate?.companionFolkClicked(folk)
         } else if event.clickCount == 2 {
             owner?.delegate?.companionDoubleClicked()

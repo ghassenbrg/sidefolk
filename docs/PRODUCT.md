@@ -55,6 +55,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 | E3 | Recall | "What ideas did I save for Sidefolk?" → answered from the Notebook with links to the notes. |
 | E4 | Remind | "Remind me tomorrow morning to send the document" → persists, fires at 09:00 (configurable "morning"), even after relaunch; Done / Snooze / Open. |
 | E5 | Watch | "Tell me when example.com/pricing changes", "when report.pdf lands in Downloads", "when pid 4312 exits", "when the server is back up". |
+| E5b | Report | "Every 10 seconds tell me the CPU usage", "temperature in Fukuoka every minute", "show my battery every 5 minutes" → a live value beside the companion, updated in place, with Pause/Stop on Now; "stop telling me the CPU" (D35). |
 | E6 | Act | Open apps/URLs, list/move/rename files in folders you granted, read/write clipboard, fetch a page, run a confirmed command. |
 | E7 | Routines | "Every weekday at 9, give me my open tasks" → a scheduled prompt the companion runs and presents. |
 | E8 | Glanceable state | Sleeping, listening, thinking, working (with a prop that says *what*), waiting for approval, success, error, alert. |
@@ -102,11 +103,16 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P1 Export all data (JSON) and delete all data.
 
 ### Time, watching and agents
-- P0 Reminders: natural times, recurrence, snooze, done, survive restart, missed ones summarised on
-  return, fallback system notifications scheduled when the app quits.
+- P0 Reminders: natural times, recurrence (every N minutes at the finest, with an optional end: "every 10
+  minutes until 6pm"), snooze, done, survive restart, missed ones summarised on return, fallback system
+  notifications scheduled when the app quits.
 - P0 Watchers: web page change/contains (normalised text diff, 1% threshold, before/after),
   site up/down (2 failures in a row), file/folder appears, file changed, process (by name) exits,
   periodic command (confirmed). Floors, backoff, cooldown, expiry, pause/resume.
+- P0 Reports (D35): a value told every N seconds or minutes, not only when it changes: system metrics
+  (CPU, memory, battery, free disk, network; from 5 s), the weather somewhere (built in; from 1 min), one
+  value on a web page or API (from 1 min), a command's output (confirmed; from 10 s). Faster requests are
+  raised and the answer says so. They end after an hour (under a minute) or a day unless "until I stop it".
 - P0 `sidefolk run -- <cmd>`: runs a command, the companion tells you when it ends (exit, time).
 - P0 `sidefolk mcp`: Sidefolk tools for Claude Code, Codex and any MCP client (note, remind, watch,
   notify, ask_user, search). One-click connect after confirmation and config backup.
@@ -207,6 +213,12 @@ external MCP agent, extension. Rules:
 - Destructive file operations move to Trash; nothing is hard-deleted by tools.
 - Shell commands are shown verbatim; "always" can only be granted for that exact command.
 - External agents and routines cannot answer approvals; approvals always come from the user.
+- How much Sidefolk asks before its own agent acts is the person's choice (D37): Ask every time,
+  Ask once per kind (default), Auto, or Full access (only after a sheet that says what it means).
+  No mode lifts the rules above for content-steered actions that could send data out, for other
+  agents or for extensions; the mode is always visible (Ask panel chip, menu bar, Now).
+- If the person doesn't answer, a card of Sidefolk's own agent never holds the task: by default the
+  step is skipped after 10 minutes and the task carries on; the step waits in Now with "Run it now".
 
 ## 11. Attention model
 

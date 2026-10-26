@@ -29,6 +29,8 @@ enum Theme {
     static let accentSoft = Color(light: 0xE3F9FA, dark: 0x173F4D)
     static let danger = Color(light: 0xD9473A, dark: 0xFF8A7D)
     static let dangerSoft = Color(light: 0xFFEDEA, dark: 0x4A2622)
+    /// Text on a `danger` fill: white on the deep red, navy on the light one dark mode uses.
+    static let onDanger = Color(light: 0xFFFFFF, dark: 0x0F2D5B)
     static let success = Color(light: 0x2F9E6D, dark: 0x7DD3A7)
     static let successSoft = Color(light: 0xE6F6EE, dark: 0x1D3D31)
     /// The Now greeting's wash: aqua into light blue, as quiet as the cards around it.

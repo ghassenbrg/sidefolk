@@ -3,15 +3,22 @@ import Foundation
 /// What the companion's body should show. The app maps this onto the character rig.
 public enum CompanionPose: Sendable, Hashable {
     case idle, sleeping, listening, thinking, waiting, success, error, alert, dragging, celebrating
+    /// The microphone is on (the talk key is held): ears up.
+    case hearing
     case working(ToolCategory)
 }
 
 /// Turns everything happening in Sidefolk into one pose, by priority (docs/PRODUCT.md §8):
-/// dragging > waiting > alert > error/success (brief) > working > thinking > listening > idle > sleeping.
+/// dragging > hearing > waiting > alert > error/success (brief) > working > thinking > listening > idle > sleeping.
 public struct CompanionMood: Sendable {
     public var dragging = false
     public var panelOpen = false
     public var asleep = false
+    /// Set by the same code that turns the microphone on and off, so the companion never looks idle
+    /// while it listens (D34).
+    public var hearing = false
+    /// What was said is being turned into words.
+    public var transcribing = false
     public private(set) var thinking: Set<String> = []
     public private(set) var working: [String: ToolCategory] = [:]
     public private(set) var approvals: Set<String> = []
@@ -26,11 +33,12 @@ public struct CompanionMood: Sendable {
 
     public func pose(at now: Date) -> CompanionPose {
         if dragging { return .dragging }
+        if hearing { return .hearing }
         if !approvals.isEmpty { return .waiting }
         if !alerts.isEmpty { return .alert }
         if let t = transient, t.until > now { return t.pose }
         if let category = working.values.first { return .working(category) }
-        if !thinking.isEmpty { return .thinking }
+        if !thinking.isEmpty || transcribing { return .thinking }
         if panelOpen { return .listening }
         if asleep { return .sleeping }
         return .idle
@@ -80,6 +88,9 @@ public struct CompanionMood: Sendable {
     public mutating func quietAlert(id: String) { alerts.remove(id) }
 
     public mutating func celebrate(now: Date) { flash(.celebrating, now: now) }
+
+    /// Nothing usable was heard: a brief sad face.
+    public mutating func missedSpeech(now: Date) { flash(.error, now: now) }
 
     public mutating func clearRun(_ runId: String) {
         thinking.remove(runId)

@@ -43,6 +43,7 @@ final class HomeModel {
                 switch event {
                 case .dataChanged(let domain): self?.changed(domain)
                 case .attention: self?.changed(.attention)
+                case .watchReading(let reading): self?.now.update(reading)
                 default: break
                 }
             }

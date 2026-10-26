@@ -10,6 +10,10 @@ struct FirstLook: Sendable, Equatable {
     var problem: String?
     /// The probe's own remark about how things stand ("Xcode isn't running right now.").
     var note: String?
+    /// What a report read on this first look, for the card and the model's answer.
+    var reading: ReadingText?
+    /// The problem stopped the watcher (`ProbeError.invalid`): there is nothing to keep trying.
+    var final = false
 
     var isFine: Bool { problem == nil && note == nil }
 }

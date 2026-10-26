@@ -26,8 +26,13 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
             UNNotificationAction(identifier: "tomorrow", title: String(localized: "Tomorrow")),
         ]
         let reminder = UNNotificationCategory(identifier: "reminder", actions: actions, intentIdentifiers: [])
+        // A reminder that comes back within the hour: "Tomorrow" means little, stopping it means a lot.
+        let repeating = UNNotificationCategory(identifier: "reminderRepeat", actions: [
+            UNNotificationAction(identifier: "done", title: String(localized: "Done")),
+            UNNotificationAction(identifier: "stop", title: String(localized: "Stop repeating")),
+        ], intentIdentifiers: [])
         let generic = UNNotificationCategory(identifier: "generic", actions: [], intentIdentifiers: [])
-        center.setNotificationCategories([reminder, generic])
+        center.setNotificationCategories([reminder, repeating, generic])
     }
 
     func authorizationStatus() async -> UNAuthorizationStatus {
@@ -47,7 +52,8 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         content.title = item.title
         if let body = item.body { content.body = body }
         content.sound = sound ? .default : nil
-        content.categoryIdentifier = item.refKind == "reminder" ? "reminder" : "generic"
+        content.categoryIdentifier = item.refKind != "reminder" ? "generic"
+            : item.actions.contains { $0.id == ReminderScheduler.ActionID.stop } ? "reminderRepeat" : "reminder"
         content.userInfo = ["attentionId": item.id]
         content.threadIdentifier = item.source
         center.add(UNNotificationRequest(identifier: item.id, content: content, trigger: nil))
@@ -56,6 +62,24 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
     func withdraw(id: String) {
         center?.removeDeliveredNotifications(withIdentifiers: [id])
     }
+
+    /// A report's value as a notification. Every reading of one report shares one identifier, so the new value
+    /// replaces the last in Notification Center instead of piling up; it makes no sound.
+    func showReport(_ reading: WatchReading) {
+        guard let center else { return }
+        let content = UNMutableNotificationContent()
+        content.title = reading.title
+        content.body = reading.value
+        content.categoryIdentifier = "generic"
+        content.threadIdentifier = "report"
+        center.add(UNNotificationRequest(identifier: Self.reportPrefix + reading.watcherId, content: content, trigger: nil))
+    }
+
+    func withdrawReport(_ watcherId: String) {
+        center?.removeDeliveredNotifications(withIdentifiers: [Self.reportPrefix + watcherId])
+    }
+
+    private static let reportPrefix = "report."
 
     /// Schedules system notifications for reminders due while Sidefolk is not running.
     func scheduleFallback(_ reminders: [(id: String, title: String, body: String?, date: Date)]) {

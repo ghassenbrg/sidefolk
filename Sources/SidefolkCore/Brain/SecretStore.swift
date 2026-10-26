@@ -32,8 +32,10 @@ public enum SecretKey {
     public static let anthropicAPIKey = "anthropic.apiKey"
     /// OpenAI's key; before presets (D26) every OpenAI-compatible key lived here.
     public static let openAIAPIKey = "openai.apiKey"
+    /// The ElevenLabs key for spoken replies (D34), bound to `ElevenLabs.host`.
+    public static let elevenLabsAPIKey = "elevenlabs.apiKey"
     /// Provider keys (each also has a "<key>.host" binding, see `ProviderKeys`).
-    public static var providerKeys: [String] { [anthropicAPIKey] + ProviderPreset.allCases.map(\.keyAccount) }
+    public static var providerKeys: [String] { [anthropicAPIKey, elevenLabsAPIKey] + ProviderPreset.allCases.map(\.keyAccount) }
 
     /// The environment values of a user-added MCP server, one JSON item per server.
     public static func mcpServer(_ id: String) -> String { "mcp.\(id)" }

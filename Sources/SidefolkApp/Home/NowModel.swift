@@ -35,9 +35,18 @@ final class NowModel {
     }
 
     private(set) var attention: [AttentionItem] = []
+    /// Steps nobody answered in time; they wait here with "Run it now" (D37).
+    private(set) var skipped: [SkippedStep] = []
+    /// What the last "Run it now" did, said under the list.
+    private(set) var skippedRun: Result<String, UserFacingError>?
+    /// Full access shows as a banner at the top of Now while it is on (D37).
+    private(set) var mode: GuardMode = .askOncePerKind
     private(set) var sessionsNeedingYou: [AgentSession] = []
     private(set) var reminders: [Reminder] = []
     private(set) var watchers: [Watcher] = []
+    /// Reports: values told every few seconds or minutes, with their latest readings.
+    private(set) var reports: [Watcher] = []
+    private(set) var readings: [String: WatchReading] = [:]
     private(set) var jobs: [Job] = []
     private(set) var workingSessions: [AgentSession] = []
     private(set) var recent: [RecentEntry] = []
@@ -54,10 +63,12 @@ final class NowModel {
         self.services = services
     }
 
-    var needsYouCount: Int { attention.count + sessionsNeedingYou.count }
+    var needsYouCount: Int { attention.count + sessionsNeedingYou.count + skipped.count }
 
     func reload() async {
         let rt = runtime
+        skipped = await rt.executor.skipped.list()
+        mode = (try? await rt.permissions.policy())?.mode ?? .askOncePerKind
         let open = await rt.attention.open()
         let live = (try? await rt.sessions.live()) ?? []
         let needing = live.filter { $0.state == .needsYou }
@@ -69,7 +80,10 @@ final class NowModel {
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
         // From the engine, not the database: routine check times are only saved every few minutes.
-        watchers = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
+        let watching = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
+        watchers = watching.filter { $0.mode != .report }
+        reports = watching.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
+        readings = Dictionary(await rt.watchers.latestReadings().map { ($0.watcherId, $0) }, uniquingKeysWith: { a, _ in a })
         jobs = (try? await rt.jobs.running()) ?? []
         recent = await loadRecent()
     }
@@ -125,6 +139,37 @@ final class NowModel {
     }
 
     // MARK: Actions
+
+    /// The person's click answers the question the step's card asked; Guard still checks everything
+    /// else, and asks in the Ask panel if something changed since.
+    func runSkipped(_ step: SkippedStep) async {
+        guard let out = await runtime.executor.runSkipped(id: step.id) else {
+            skippedRun = .failure(UserFacingError("That step can't run anymore. Nothing was changed."))
+            await reload()
+            return
+        }
+        if let problem = out.problem {
+            skippedRun = .failure(problem)
+        } else {
+            skippedRun = .success(out.activity.card?.title ?? out.activity.summary)
+        }
+        await reload()
+    }
+
+    func dismissSkipped(_ step: SkippedStep) async {
+        skippedRun = nil
+        await runtime.executor.skipped.dismiss(step.id)
+        await reload()
+    }
+
+    /// The banner's way out of Full access, back to the default.
+    func turnOffFullAccess() async {
+        var policy = (try? await runtime.permissions.policy()) ?? GuardPolicy()
+        policy.mode = .askOncePerKind
+        try? await runtime.permissions.setPolicy(policy)
+        runtime.events.changed(.permissions)
+        await reload()
+    }
 
     func respond(_ item: AttentionItem, action: String?) async {
         await runtime.attention.respond(id: item.id, actionId: action)
@@ -209,6 +254,12 @@ final class NowModel {
     func resume(_ w: Watcher) async {
         await services.resumeWatcher(w.id)
         await reload()
+    }
+
+    /// A report read a new value: only its row changes, nothing is reloaded.
+    func update(_ reading: WatchReading) {
+        guard reports.contains(where: { $0.id == reading.watcherId }) else { return }
+        readings[reading.watcherId] = reading
     }
 
     func checkNow(_ w: Watcher) async {

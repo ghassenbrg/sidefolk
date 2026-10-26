@@ -348,6 +348,115 @@ from the vector PDF exports, so they stay sharp at any size without a 4096 px bi
 the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
 small places get one clear element (lettering, a face) instead of a reduced composition.
 
+### D34 — Voice: hold to talk, recognized on this Mac, answered in one short line (2026-10-26)
+**Decision:** Phase 1 of docs/research/voice-feasibility.md, with its suggested defaults.
+- **Talk key: hold the Ask shortcut.** A tap still opens and closes the Ask panel; held for 0.3 s it
+  talks, and releasing sends. Settings › Voice can give talking a shortcut of its own instead (no
+  default), which opens the microphone the moment it goes down. Pressing and holding the companion
+  (0.35 s) also talks. *Why:* one shortcut to learn, voice is a way of asking, and a second global
+  shortcut is a second clash nobody can detect (MACOS-NOTES). The price is the hold: the microphone
+  opens 0.3 s after the press, and a three-key chord is held while talking; people who mind either
+  give talking its own shortcut. The companion's ears go up when the microphone is really on.
+- **Off by default.** Nothing asks for the microphone until the person turns voice input on and
+  holds the key. The microphone is open only while the key is held (the orange dot is honest), the
+  Mac's own microphone is preferred (AirPods stay out of call quality), and the capture is rebuilt
+  when the audio hardware changes. Audio is never stored; the words join history as text, marked spoken.
+- **Recognition on this Mac.** SpeechAnalyzer with SpeechTranscriber on macOS 26+, DictationTranscriber
+  for languages it lacks (Arabic, here), the language's model downloaded by macOS with progress
+  (Settings › Voice, or the first press); on macOS 15 the older recognizer forced on device, labelled
+  "basic". It listens in the app's language unless one is pinned; the locale is picked by Sidefolk
+  (installed first, the Mac's region, then the language's home), because Apple's own equivalence
+  mapped "en" to en-ZA. Measured on the dev Mac (macOS 27.0.1): SpeechAnalyzer needs no
+  speech-recognition permission (only the microphone's), the last words arrive 0.02–0.06 s after
+  release, 45 locales are offered, and French's model downloaded in 16 s.
+- **Release sends** through the normal Ask pipeline: local parser or AI, same cards, approvals and
+  Undo. An empty or one-filler transcript ("um") sends nothing: a sad face, "I didn't catch that",
+  and the words left in the box to fix.
+- **Spoken replies:** Off, Only when I spoke (default) or Always; one short line, always shown in the
+  panel too (with a muted speaker when it stayed silent). Silent in quiet mode, while another app
+  records, when the person typed since asking; with VoiceOver on, the line goes to VoiceOver instead.
+  The talk key, a click on the companion and Esc stop the audio at once, drop the queue and cancel
+  the run of a spoken request still working, so no stale answer turns up.
+- **The line for an AI answer is its first sentence**, made speakable (links become their site, paths
+  their last name, code goes; nothing left → "It's on the screen."), cut at a pause past 24 words;
+  a list says how many and the first. A spoken request adds one paragraph to the prompt asking for a
+  first sentence that stands alone. *Why not a separate spoken field in the answer format:* every
+  brain would have to follow it, CLI brains included, whose output Sidefolk doesn't parse; a field a
+  model forgets or mangles leaks into the card; it costs tokens on every answer. The first sentence
+  works with every brain and is already what the persona asks to lead with.
+- **Engines behind one `SpeechOutput` protocol** (text in, audio out in pieces) and one playback
+  queue (`SpeechPlayer`: sentence splitting, the next sentence made while one plays, instant stop).
+  Apple: AVSpeechSynthesizer written into Sidefolk's own player (so its loudness drives the mouth),
+  the best enhanced or premium voice installed, else the one macOS uses for the language, with a
+  button to System Settings where better voices are downloaded. ElevenLabs: the person's key in the
+  Keychain, bound to api.elevenlabs.io, streamed 24 kHz PCM, never redirected, models tried in order
+  (Eleven v4 Turbo, Flash v2.5, Multilingual v2), a plain statement of what is sent, and "Test voice"
+  saying it costs about 50 characters. Each line's voice follows the line's own language.
+- **Kokoro is left out.** FluidAudio 0.17.7 builds cleanly in this package and its legacy Kokoro
+  runtime ran offline (83 MB model, 71 ms for 2.4 s of speech), but it fails the bar: the English
+  text-to-phoneme model and lexicon always go to ~/.cache/fluidaudio, whatever folder is given, so
+  they can't live under the Sidefolk home or be deleted with it; the recommended v3 runtime aborted
+  the whole process on macOS 27.0.1 (an MPSGraph assertion), and in-process that takes the companion
+  down; English only. Revisit when FluidAudio lets the phonemizer's folder be chosen, in a helper process.
+- **The body:** a `hearing` state (both ears up, eyes wide, the waves) driven by the same code that
+  opens the microphone, thinking while the last words settle, the error face for a miss, and a
+  talking mouth on every companion (`Figure.talk`): an "o" whose height follows the playback level
+  (about 20 updates a second, quantized), each a short ease; nothing repeats, so it stops with the audio.
+**Alternatives:** a dedicated talk shortcut by default (a second clash, no default anyone agrees on);
+a spoken field in the answer format (above); Kokoro (above); cloud transcription (no reason to send
+voices off the Mac for short commands); wake word and always-on listening (the study's "do not build").
+**Implications:** the microphone usage string and the hardened runtime's audio-input entitlement;
+the speech-recognition usage string for macOS 15; microphone permission resets with ad-hoc builds,
+so testers need the Apple Development or Developer ID signature.
+
+### D35 — Reports: a value told every few seconds or minutes, live and in place; reminders down to a minute (2026-10-26)
+**Decision:** a watcher can be a *report* (`Watcher.Mode.report`): at every check it tells the current value
+instead of waiting for a change. `watch.report` reads a system metric (CPU, memory, battery, free disk,
+network: Mach host statistics, IOKit power sources, the volume's resource values and the routing table's
+64-bit counters, no shell), the weather somewhere, or one value on a page or API (JSON path, simple
+selector or pattern); `watch.command` with `report=true` shows a command's last output line.
+- **Floors, never refusals:** metrics 5 s, command output 10 s, weather and web 60 s (HostThrottle still
+  allows one request a minute per host). They are written in the tool descriptions so models pick valid
+  values; a faster request is raised, and both the card ("Every 5 s is the fastest for this; I'll check
+  every 5 s.") and the model's result say so. The system prompt tells every brain never to refuse for
+  frequency.
+- **An end:** a report stops after an hour when it reads more often than once a minute, after a day
+  otherwise, unless the person gave an end ("until 6pm", "for an hour") or said "until I stop it". The card
+  says when it stops; the end itself is a gentle notice with Keep going. Other agents' watchers still end
+  within a day (T4), and `watch.report` is not offered to them at all.
+- **Presentation:** a small pill per report above the on-duty folks ("CPU 23%", "Fukuoka 18 °C"), not the
+  folk holding the value: a number with its name must be readable at a glance, several can stack (at most
+  four live at once), and updating text moves nothing in the rig (no pose, no breathing restarted, D20). A
+  "Live" section on Now shows the value large with Pause and Stop. While the companion is hidden the newest
+  value sits beside the menu bar icon. A notification only when asked for ("notify me"), or when the
+  companion is hidden and the report is slower than once a minute; one identifier per report, so the new
+  value replaces the old one. "Stop telling me the CPU" and "stop the Fukuoka temperature" work without AI.
+- **Built-in weather (Open-Meteo):** free, no key, no account. Without it "temperature in Fukuoka every
+  minute" needs a model to geocode, read coordinates out of a JSON reply and build a forecast URL: two
+  dependent requests that small models get wrong, a turn tainted by reading web content, and nothing at all
+  without AI. Built in, the local parser handles it, the place is looked up once and remembered, and only
+  numbers we format come back, so the result stays trusted. Units follow the Mac's region.
+- **Budget:** values travel as `AppEvent.watchReading`, not `.dataChanged(.watchers)`: a reading every few
+  seconds reloads no list and reads no database; it reaches the database only with the routine saves (at
+  most every 5 minutes). The engine's one timer sleeps with a tolerance of a tenth of the wait, checks due
+  within half a second share a wake-up, and no timer runs when nothing is live. Measured in a release build
+  on the dev Mac (macOS 27, Apple silicon; companion shown, folks and pointer-following off so the mouse
+  adds no noise), 330 s after a 30 s settle, process CPU time from `ps` and `top -pid` every 5 s: idle with
+  no report 0.036 % of one core (0.12 s), with a CPU report every 10 s 0.042 % (0.14 s, 33 readings, so
+  about 0.6 ms each); `top` showed 0.0 % in 62 of 67 samples and 0.1 % in the rest, the same as without the
+  report. The database got one routine save in those 5 minutes.
+- **Reminders:** `Recurrence.Frequency.minutely` (a minute is the finest step; seconds are raised to a
+  minute and the answer says so; a value every few seconds is a report). The parser reads "every 30
+  minutes", "every half hour" and "until 6pm"/"until friday" after a repeat. A frequent reminder's notice
+  replaces its previous one and offers "Stop repeating".
+**Why:** the founder asked for "the temperature in Fukuoka every 1 minute", "the CPU every 10 seconds" and
+reminders more often than daily, and Sidefolk refused all three: watchers were change detectors with
+floors of 5 min (pages) and 1 min (commands), and recurrence stopped at hours.
+**Alternatives:** lowering the change-detector floors (still silent when nothing changes, and a page every
+10 s is abusive); a bubble per reading (a bubble every 10 s is spam, and each is a database row); the folk
+holding the value (illegible at folk size, and it would animate the rig); only a generic web value for the
+weather (fragile and impossible without AI).
+
 ### D36 — Reasoning effort per model slot, only where accepted; services shown by their own logos (2026-10-26)
 **Decision:** each provider's everyday and "Think harder" model has its own reasoning effort, stored
 in `ProviderSettings.effort`/`smartEffort` and remembered per provider with its models. "Default"
@@ -390,6 +499,143 @@ script now writes the PDFs itself: CoreSVG bends arcs written with run-together 
 on `currentColor`, and a PDF context drops a gradient's alpha (Gemini). MIT covers LobeHub's drawings,
 not the owners' trademarks; the README records each brand's rules and what isn't verified (Anthropic
 says use is limited to what it permits; OpenAI's and xAI's pages couldn't be read).
+
+### D37 — Approval modes, and no task left waiting on a question (2026-10-26)
+**Decision:** Settings › Privacy & Permissions starts with how much Sidefolk asks before its own agent
+acts, one choice with a line each:
+- **Ask every time** (was "Cautious"): every medium and high action asks; "Always allow" is ignored.
+- **Ask once per kind** (was "Standard", still the default): as before, grants honoured.
+- **Auto:** medium-risk actions in a clean turn run without a card. High risk, and anything in a turn
+  that read outside content (a web page, file, the clipboard, a drop, an extension's or MCP server's
+  output: the T2 taint), ask exactly as before.
+- **Full access:** everything runs without a card except, in a tainted turn, what could carry data out
+  (list below). It is turned on only through a sheet that says what it means; the menu bar's
+  "Full access…" opens that sheet in Settings.
+
+And "If I don't answer", for the cards Sidefolk's own agent waits on: **keep waiting** (a day at most,
+then the task stops), **skip that step and continue after N minutes** (the default, 10 minutes), or
+**stop the task after N minutes** (2, 5, 10, 30 or 60).
+
+**Invariants, in every mode** (`ModeMatrixTests`, `UnansweredTests`, `PolicyStorageTests`):
+1. *Off stays off, protected stays protected.* Capabilities switched off and forbidden locations
+   (T10) are denied before the mode is looked at. The folder list is *where* Sidefolk may work, not
+   *how often* it asks: a folder outside it still gets its card in every mode (other agents and
+   extensions are refused, as before).
+2. *Prompt injection still needs the person.* Auto changes nothing in a tainted turn. In Full access a
+   tainted turn still asks before any call that could carry what it read, or anything in the context,
+   off the Mac or into later moments (`PermissionEngine.couldCarryOut`), each for a reason:
+   - network or another app at an address the person didn't type: the address is where a model-built
+     request carries data (T2, T11). An address the person typed runs, as it already did;
+   - running a program (`shell`): a command can send anything anywhere (T9). Command watchers are
+     refused outright in tainted turns anyway;
+   - changing files (`files.write`): a granted folder may sync (iCloud Drive, Dropbox), and a move can
+     put a private file into one (T21);
+   - extension and MCP tools: they receive model-built input and may have network or run unsandboxed
+     (T13, T16); the same goes for extension watchers;
+   - clipboard and memory writes: pastejacking (T12) and persistent injection (T3) into later clean
+     turns, where Auto and Full access would then act without asking.
+   Instructions to read in full (a new skill) ask in every mode, clean turns too: they steer later
+   runs (T3). What Full access does let a tainted turn do without a card is what keeps data on the Mac
+   and inside Sidefolk: reading the clipboard, a skill to the Trash (undoable), and the low-risk
+   actions that ran anyway.
+3. *Other agents and extensions keep their own rules.* Modes only ever loosen Guard for Sidefolk's own
+   agent (`Caller.agent`): runs the person started from the Ask panel, answering their own words.
+   Other agents (external MCP clients) are the confused-deputy threat (T4): a hostile repo can steer
+   them, their names are self-chosen, and the person's choice is about their own requests. So in every
+   mode their low-risk calls run, everything else asks every time with no "Always", one card at a time,
+   two minutes and then no. Extensions and routines as callers keep "Ask once per kind" rules too.
+   "Ask every time" applies to every caller: asking more is always safe. Extension *tools* called by
+   Sidefolk's own agent follow its mode, with the tainted-turn rule above.
+4. *Everything is in Activity.* Every call is logged with its decision: new chips say **Auto**,
+   **Full access** (done without asking) and **Skipped**. Activity now offers the same Undo the Ask
+   panel does (15 minutes; `UndoCenter.undoableRows`). Deleting goes to the Trash; that is in the
+   tools, so no mode can change it.
+5. *Nothing is silent.* An action a mode answered for the person shows in the Ask panel as "done
+   without asking", in a bubble when the panel is hidden, and in Activity. The mode itself is always
+   visible: a chip in the Ask panel header (filled red for Full access), an Approvals submenu in the
+   menu bar, whose icon turns orange in Full access with "Full access is on · Turn Off" first in its
+   menu, and a banner at the top of Now.
+
+**Never stalling:** a card Sidefolk's own agent waits on follows the setting; every other card still
+waits two minutes and counts as no (T1). When the wait runs out on "skip", the model reads "Skipped:
+the user didn't answer in time, so this step was skipped and nothing was done. Carry on…" and the run
+goes on; on "stop" (and at the end of a day of "keep waiting") the run is cancelled and ends with "I
+stopped: you didn't answer in time." Time spent waiting for the person doesn't count against the
+run's own two minutes (`BrainToolbox.deadline(from:)`: the deadline moves by every wait and can't pass
+while a card is open), for the API loop and both CLI brains; the CLIs' own tool-call timeouts are set
+just above a day (Codex `tool_timeout_sec`, Claude Code's per-server `timeout`) so they never give up
+first. A skipped or stopped step waits in Now › Needs you (and the menu bar's Now list) with the
+question its card asked, word for word, and **Run it now**: that click answers that question (same
+tool, arguments and words, `ApprovalRequest.asksTheSame`); Guard still checks everything else, and a
+new question shows as a normal card. Steps are kept in memory, 20 at most for a day; after a restart
+they are only in Activity, whose redacted arguments can't run again. No card anywhere waits forever.
+
+**Long jobs that read private data (Apple Notes, D38):** reading a note taints the turn, so before
+this every later batch asked again (a 214-note library meant about eight cards). Now, in a tainted turn,
+a card for a step that can't carry anything off the Mac (`couldCarryOut` is false: no network or other
+app at an untyped address, no command, file change, extension, clipboard or memory write, nothing to
+read in full, not high risk) offers **Allow for this request** where "Always allow" would be: that tool
+then runs without a card until Sidefolk's run ends (`RequestAllowances`, cleared with the run's cards).
+Not in "Ask every time", never for other agents. For the Notes tools that gives, by mode:
+- *Ask every time:* every step asks, as chosen.
+- *Ask once per kind:* the first list in a clean turn asks (and may be "Always"); after it, listing,
+  reading and copying ask once each with "Allow for this request": about three cards per request
+  instead of one per batch.
+- *Auto:* list, read and copy are medium, so a clean turn runs them; once a note has been read they ask
+  like above (a note's text is outside content, which Auto never lets steer an action).
+- *Full access:* list, read and copy also run in a tainted turn: what they move goes from Notes to the
+  AI and into the notebook, all on the Mac, and nothing reaches a server or another app.
+- *Every mode:* `applenotes.remove` asks every time, high risk with every note listed in full: it is
+  destructive in another app, and the place an instruction hidden in a note would aim.
+A "planned job" approved once ("Copy 214 notes into these collections") was the alternative. It would
+need Guard to know each note's folder when it decides (Guard only sees a call's arguments) and to hold
+the model to the plan across later calls: a tool-specific state machine inside Guard. "Allow for this
+request" is general, comes from a real card the person read, ends with the run (10 steps, 25 calls),
+and exists only where nothing can leave the Mac. The cost is in the residual risks below.
+
+**Why:** the founder wants to choose how much Sidefolk asks, like Claude Code and Codex, and never to
+come back after an hour to a task stuck on a question (before, a card waited two minutes and the run's
+own deadline had passed by then anyway). Modes are about how often to ask; the boundaries that make
+asking meaningful (capabilities, protected places, folders, taint, other agents) stay where they were,
+so the worst a mode can do is act on the person's own request without checking with them.
+
+**Alternatives:** a "just do it this time" for a whole request, chosen in the Ask panel before it
+runs (not built: a second, less visible way to loosen Guard, easy to trigger by habit with a modifier
+on Return, and decided before Sidefolk knows whether the turn will read outside content; the chip and
+the menu switch are one click and stay in view, and "Allow for this request" covers one tool after a
+real card); Full access widening the folder list (no: "where" is a separate, standing
+decision); detecting "away" from idle time or a locked screen (a fixed wait is predictable, and
+someone can be away without locking); saving skipped steps in the database (they hold model-built
+arguments, which Activity deliberately keeps redacted).
+
+**Implications:** `GuardPolicy` (`guard.policy` in SQLite, never UserDefaults, so `defaults write`
+can't turn on Full access, T8) gains `unanswered`; the old `standard`/`cautious` load as the new names,
+an unknown mode reads as the default and never as more access, and each field (and each capability) is
+read on its own so one unknown value can't turn switched-off capabilities back on. SECURITY T1, T2, T9
+and §5 note the exceptions.
+
+**Residual risks:**
+- Full access runs model-written commands (command watchers, extension programs), opens links in
+  other apps' schemes (a Shortcut, `ssh://`) and moves files to the Trash in clean turns without the
+  person reading the exact text first: a model *mistake*, not only an injection, acts at once. The
+  sheet says so; Activity, Undo and the Trash are the way back.
+- Same-uid code can still write the policy in the database and turn on Full access (out of scope,
+  SECURITY §1); the planned HMAC over Guard's rows (T19, P1) now covers the policy too.
+- A clean turn is only as clean as taint tracking. What reaches the context without setting it can
+  steer Auto and Full access with no card: extension tool names and titles (60 characters), notes the
+  person saved from elsewhere as their own, text they paste into the request itself.
+- In clean turns Auto and Full access fetch and open model-built addresses without a card, so a
+  misbehaving model can send context (About you, notes) to a server of its choosing.
+- "Run it now" acts on arguments chosen when the step was asked, up to a day earlier; they are shown
+  word for word, but files or pages may have changed since.
+- After "Allow for this request", and in Full access, an instruction hidden in a note can steer the
+  rest of the run to read other notes (their text goes to the AI provider, which T21 accepts by design)
+  or copy notes into other collections, with no card. Nothing reaches a server or another app, copies
+  carry `app:notes` and are never offered to the model as the person's own, and removing still asks.
+- A long wait keeps the run, its CLI brain process and the Ask panel's busy state alive for as long as
+  the setting says (a day with "keep waiting"); Stop ends it.
+- The CLIs' longer tool-call timeouts are set from their documented options and checked in tests of
+  the invocation, not in a live run (no quota spent).
 
 ### D38 — The Mac's own apps through built-in tools on Apple Events, Apple Notes first (2026-10-26)
 **What failed:** the founder asked Sidefolk to "check my Apple Notes and move them, well organized, into

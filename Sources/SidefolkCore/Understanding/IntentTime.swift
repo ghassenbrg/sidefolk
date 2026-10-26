@@ -179,6 +179,8 @@ extension IntentParser {
         Scan(#"\b(?:at|by|around|until|till)\s+(?:about|around)\b"#),
         // "next week", "this weekend", "coming month"
         Scan(#"\b(?:next|this|last|coming)\s+(?:week|month|year|weekend|fortnight|quarter)\b"#),
+        // A repeat the parser could not use: "every 10 minutes until 9am" when 9am has passed, "every 10 seconds"
+        Scan(#"\b(?:every|each)\s+(?:other\s+|\#(count)\s*)?\#(unit)\b"#),
         // "the 5th", "12/11"
         Scan(#"\b\d{1,2}(?:st|nd|rd|th)\b"#),
         Scan(#"\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b"#),

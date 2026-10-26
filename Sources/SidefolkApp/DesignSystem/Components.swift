@@ -562,10 +562,21 @@ struct SettingsToggle: View {
 /// One option of a single choice, with a line of explanation. Several of them in a card make a
 /// radio group whose options can say what they mean.
 struct ChoiceRow: View {
-    var title: LocalizedStringKey
-    var detail: LocalizedStringKey?
+    var title: Text
+    var detail: Text?
     var selected: Bool
     var action: () -> Void
+
+    init(title: Text, detail: Text? = nil, selected: Bool, action: @escaping () -> Void) {
+        self.title = title
+        self.detail = detail
+        self.selected = selected
+        self.action = action
+    }
+
+    init(title: LocalizedStringKey, detail: LocalizedStringKey? = nil, selected: Bool, action: @escaping () -> Void) {
+        self.init(title: Text(title), detail: detail.map { Text($0) }, selected: selected, action: action)
+    }
 
     var body: some View {
         Button(action: action) {
@@ -580,9 +591,9 @@ struct ChoiceRow: View {
                 .frame(width: 16, height: 16)
                 .padding(.top, 1)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(selected ? Theme.Font.bodyStrong : Theme.Font.body).foregroundStyle(Theme.ink)
+                    title.font(selected ? Theme.Font.bodyStrong : Theme.Font.body).foregroundStyle(Theme.ink)
                     if let detail {
-                        Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        detail.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

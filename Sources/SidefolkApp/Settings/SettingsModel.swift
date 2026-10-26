@@ -5,7 +5,7 @@ import SidefolkCore
 
 /// The Settings window's tabs.
 enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, companion, ai, agents, privacy, extensions
+    case general, companion, ai, voice, agents, privacy, extensions
     var id: Self { self }
 
     var title: String {
@@ -13,6 +13,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: String(localized: "General")
         case .companion: String(localized: "Companion")
         case .ai: String(localized: "AI")
+        case .voice: String(localized: "Voice", comment: "A Settings tab: talking to the companion and its spoken replies. Seven tabs share one toolbar: keep it short")
         case .agents: String(localized: "Agents")
         case .privacy: String(localized: "Privacy & Permissions", comment: "A Settings tab. Six tabs share one toolbar, so keep it short (“Privacy” will do)")
         case .extensions: String(localized: "Extensions")
@@ -24,6 +25,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "gearshape"
         case .companion: "face.smiling"
         case .ai: "sparkles"
+        case .voice: "waveform"
         case .agents: "terminal"
         case .privacy: "hand.raised"
         case .extensions: "puzzlepiece.extension"
@@ -49,11 +51,16 @@ final class SettingsModel {
     // AI
     @ObservationIgnored private(set) lazy var ai = AISettingsModel(parent: self)
 
+    // Voice
+    @ObservationIgnored private(set) lazy var voice = VoiceSettingsModel(parent: self)
+
     // Privacy & Permissions
     private(set) var storage: StorageSummary?
     private(set) var folders: [GrantedFolder] = []
     private(set) var grants: [Grant] = []
     private(set) var policy = GuardPolicy()
+    /// The sheet that says what Full access means is showing (from Settings or the menu bar).
+    var confirmingFullAccess = false
     private(set) var folderError: UserFacingError?
     private(set) var dataMessage: Result<String, UserFacingError>?
 
@@ -115,6 +122,7 @@ final class SettingsModel {
         skills = await services.skills()
         integration = await services.integrationStatus()
         await ai.refresh()
+        await voice.refresh()
     }
 
     func loadPermissions() async {
@@ -209,6 +217,11 @@ final class SettingsModel {
         policy = next
         try? await runtime.permissions.setPolicy(next)
         runtime.events.changed(.permissions)
+    }
+
+    /// Full access only after its sheet (`FullAccessSheet`); every other mode at once.
+    func setMode(_ mode: GuardMode) async {
+        await setPolicy { $0.mode = mode }
     }
 
     func toolTitle(_ name: String) -> String {

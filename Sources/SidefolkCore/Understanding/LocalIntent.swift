@@ -17,6 +17,30 @@ public struct WatchIntent: Sendable, Equatable {
     }
 }
 
+/// A value to show every so often ("every 10 seconds tell me the CPU usage"), for `watch.report`.
+public struct ReportIntent: Sendable, Equatable {
+    public enum Source: Sendable, Equatable {
+        case metric(Metric)
+        case weather(place: String, quantity: WeatherQuantity)
+    }
+
+    public var source: Source
+    public var everySeconds: TimeInterval
+    /// The end as typed ("6pm", "in an hour"); nil means the default end.
+    public var until: String?
+    public var untilStopped = false
+    /// "notify me": a notification with every reading, not only the live value.
+    public var notify = false
+
+    public init(source: Source, everySeconds: TimeInterval, until: String? = nil, untilStopped: Bool = false, notify: Bool = false) {
+        self.source = source
+        self.everySeconds = everySeconds
+        self.until = until
+        self.untilStopped = untilStopped
+        self.notify = notify
+    }
+}
+
 /// What the user meant, worked out without a model.
 public enum LocalIntent: Sendable, Equatable {
     /// `important` reminders are the ones that still interrupt during quiet mode ("urgent: remind me ...").
@@ -28,6 +52,9 @@ public enum LocalIntent: Sendable, Equatable {
     /// A durable fact about the user ("I prefer pnpm"), kept in About you.
     case aboutMe(fact: String)
     case watch(WatchIntent)
+    case report(ReportIntent)
+    /// "stop telling me the CPU": the watchers the words name (none, one or several), and the words themselves.
+    case stopWatch(ids: [String], words: String)
     /// Quiet mode until a time; nil means until the user turns it off.
     case quiet(until: Date?)
     case quietOff

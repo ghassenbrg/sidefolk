@@ -39,20 +39,29 @@ struct AskView: View {
                     .accessibilityHidden(true)
                     .padding(.trailing, Theme.Space.xs)
             }
-            Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink)
-            Spacer()
-            if model.hasResults, !model.busy {
+            Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(1)
+                .layoutPriority(1)
+            ModeChip(mode: model.mode) { model.actions?.openSettings(tab: .privacy) }
+                .padding(.leading, Theme.Space.xs)
+            Spacer(minLength: Theme.Space.xs)
+            // The mode chip needs the room: the shortcut shows while there is nothing to clear.
+            let clearable = model.hasResults && !model.busy
+            if clearable {
                 Button { model.clearResults() } label: {
                     Text("Clear").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 }
                 .buttonStyle(.plain)
+                .fixedSize()
                 .help("Remove these results")
                 .padding(.trailing, Theme.Space.xs)
             }
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
             headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
-            Text(verbatim: hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                .padding(.leading, Theme.Space.xs)
+            if !clearable {
+                Text(verbatim: hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                    .fixedSize()
+                    .padding(.leading, Theme.Space.xs)
+            }
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.top, Theme.Space.m)
@@ -68,14 +77,21 @@ struct AskView: View {
     private var input: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-                TextField(model.pendingQuestion == nil ? "Ask, remind, note, watch…" : "Type your answer…", text: $model.text, axis: .vertical)
+                if model.voice != nil {
+                    // The microphone is on (or the words are settling): the words below are what was heard.
+                    Image(systemName: "waveform")
+                        .foregroundStyle(Theme.accent)
+                        .symbolEffect(.variableColor.iterative, isActive: isListening)
+                        .accessibilityLabel("Listening")
+                }
+                TextField(placeholder, text: $model.text, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(Theme.Font.input)
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1...5)
                     .focused($inputFocused)
                     .onSubmit { model.submit() }
-                    .disabled(model.busy && model.pendingQuestion == nil)
+                    .disabled((model.busy && model.pendingQuestion == nil) || model.voice != nil)
                     .accessibilityLabel("Ask \(companionName)")
                 if model.busy {
                     Button("Stop") { model.actions?.stop() }
@@ -107,7 +123,7 @@ struct AskView: View {
                 WhenChips(times: actions.reminderTimes()) { date in actions.remindPending(at: date, in: model) }
             }
             HStack(spacing: 4) {
-                Image(systemName: "return").imageScale(.small)
+                Image(systemName: model.voice == nil ? "return" : "mic").imageScale(.small)
                 // Two lines at most: the hint stays short in English, and other languages run longer.
                 Text(verbatim: hintLine)
                     .lineLimit(2)
@@ -136,7 +152,37 @@ struct AskView: View {
         .padding(Theme.Space.m)
     }
 
+    private var placeholder: LocalizedStringKey {
+        if model.voice != nil { return "Listening…" }
+        return model.pendingQuestion == nil ? "Ask, remind, note, watch…" : "Type your answer…"
+    }
+
+    private var isListening: Bool {
+        if case .listening? = model.voice { return true }
+        return false
+    }
+
+    /// While talking: what releasing will do, and whether it uses AI (D34).
+    private func voiceHint(_ voice: VoiceInput) -> String {
+        switch voice {
+        case .starting:
+            return String(localized: "Getting ready to listen…")
+        case .preparing(let progress):
+            return String(localized: "Downloading the speech model… \(Int(progress * 100))%", comment: "The number is a percentage")
+        case .finishing:
+            return String(localized: "Getting your last words…")
+        case .listening(let basic):
+            let words = model.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !words.isEmpty, let hint = model.actions?.hint(for: words) else {
+                return basic ? String(localized: "Listening (basic recognition)… Release to send, Esc to cancel")
+                    : String(localized: "Listening… Release to send, Esc to cancel")
+            }
+            return String(localized: "Release: \(hint)", comment: "While talking: what releasing the talk key will do, e.g. “Release: Reminder · Today 17:00 · no AI”")
+        }
+    }
+
     private var hintLine: String {
+        if let voice = model.voice { return voiceHint(voice) }
         if let question = model.pendingQuestion { return String(localized: "Your answer goes to: \(question.title)") }
         if model.busy { return model.phase ?? String(localized: "Working…") }
         if let hint = model.hint { return hint }
@@ -287,6 +333,62 @@ private struct EntryView: View {
             QuestionCard(item: item) { actionId in model.actions?.answer(question: item, actionId: actionId) }
         case .info(let text):
             Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+        case .spoken(let line, let muted):
+            SpokenLineView(line: line, muted: muted)
+        case .doneWithoutAsking(let summary, let fullAccess):
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: fullAccess ? GuardMode.fullAccess.symbol : GuardMode.auto.symbol)
+                    .foregroundStyle(fullAccess ? Theme.danger : Theme.aqua)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(summary).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(fullAccess ? GuardMode.fullAccess.title : GuardMode.auto.title)
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        + Text(verbatim: " · ").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        + Text("done without asking").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                }
+            }
+            .accessibilityElement(children: .combine)
+        case .skipped(let summary, let why):
+            SFCard(accent: Theme.sun) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Image(systemName: "clock.badge.xmark").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)
+                        Text(summary).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text(why).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                    Button("Open Now") { model.actions?.openNow() }.buttonStyle(.sf(.secondary))
+                }
+            }
+        }
+    }
+}
+
+/// The words said aloud, always on screen too (D34); a muted speaker when they stayed text.
+private struct SpokenLineView: View {
+    var line: String
+    var muted: VoicePolicy.Silence?
+
+    var body: some View {
+        Label {
+            Text(verbatim: line).italic().fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: muted == nil ? "speaker.wave.2" : "speaker.slash")
+        }
+        .font(Theme.Font.caption)
+        .foregroundStyle(Theme.inkMuted)
+        .help(help)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(muted == nil ? Text("Said aloud: \(line)") : Text("Not said aloud: \(line)"))
+    }
+
+    private var help: Text {
+        switch muted {
+        case nil: Text("Said aloud")
+        case .quiet?: Text("Not said aloud: quiet mode is on")
+        case .micInUse?: Text("Not said aloud: another app is using the microphone")
+        case .typing?: Text("Not said aloud: you were typing")
         }
     }
 }

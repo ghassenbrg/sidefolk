@@ -3,10 +3,11 @@ import Foundation
 /// The tools that let the user, Sidefolk's agent and other agents set watchers up and manage them.
 /// Every one of them runs through `ToolExecutor`, so Guard and the Activity log see each call.
 public enum WatchTools {
-    public static func make(engine: WatcherEngine) -> [any Tool] {
+    /// - Parameter parser: reads a report's end ("until 6pm") with the user's idea of morning and evening.
+    public static func make(engine: WatcherEngine, parser: @escaping @Sendable () -> WhenParser = { WhenParser() }) -> [any Tool] {
         [
-            WatchCreateTool(engine: engine), WatchCommandTool(engine: engine), WatchListTool(engine: engine),
-            WatchStopTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
+            WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser),
+            WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
         ]
     }
 }
@@ -106,6 +107,11 @@ enum WatchWords {
             return ProcessExitsProbe.label(config)
         case WatchKind.command:
             return (config.string("command") ?? String(localized: "command")).clipped(40)
+        case WatchKind.metric:
+            return config.string("metric").flatMap(Metric.init(rawValue:))?.title ?? kind
+        case WatchKind.weather:
+            let place = config.string("place") ?? ""
+            return (WeatherQuantity(rawValue: config.string("quantity") ?? "") ?? .temperature).title(place)
         default:
             return kind
         }
@@ -151,7 +157,10 @@ enum WatchInput {
 
     static func mode(_ input: JSONValue) throws -> Watcher.Mode {
         guard let text = input.string("mode") else { return .once }
-        guard let mode = Watcher.Mode(rawValue: text.lowercased()) else { throw ToolError.invalidInput(String(localized: "“mode” must be once or repeat.")) }
+        // A report is asked for with watch.report or report=true, which bring its floor and its end with it.
+        guard let mode = Watcher.Mode(rawValue: text.lowercased()), mode != .report else {
+            throw ToolError.invalidInput(String(localized: "“mode” must be once or repeat."))
+        }
         return mode
     }
 
@@ -334,14 +343,18 @@ enum WatchResults {
 
 struct WatchCommandTool: Tool {
     let engine: WatcherEngine
+    var parser: @Sendable () -> WhenParser = { WhenParser() }
 
     var spec: ToolSpec {
         ToolSpec(
             name: "watch.command", title: String(localized: "Watch with a command"),
             description: """
             Run a shell command on a schedule and tell the user when the result matches (it exits with a given code, \
-            its output has some words, or its output changes). The user approves the exact command first. \
-            Prefer watch.create when a web page, file, folder or program can be watched directly.
+            its output has some words, or its output changes). With report=true it instead shows the output's last line \
+            every time, live beside the companion (every_seconds, 10 at the fastest; a faster request is raised and the result \
+            says so; it stops after 1 hour when faster than once a minute, otherwise after 1 day, unless until or until_stopped). \
+            The user approves the exact command first unless they turned on Full access. Prefer watch.create when a web page, \
+            file, folder or program can be watched directly, and watch.report for CPU, memory, battery, disk, network or the weather.
             """,
             inputSchema: Schema.object([
                 "command": Schema.string("The shell command, exactly as it should run."),
@@ -353,6 +366,11 @@ struct WatchCommandTool: Tool {
                 "interval_minutes": Schema.number("Minutes between runs, at least 1 (default 5)."),
                 "mode": Schema.string("once (default) stops after telling the user; repeat keeps going.", enum: ["once", "repeat"]),
                 "level": Schema.string("How loudly to tell the user (default attention).", enum: ["gentle", "attention", "critical"]),
+                "report": Schema.boolean("Show the output every time instead of waiting for a match."),
+                "every_seconds": Schema.number("report: seconds between runs, as the user asked (10 at the fastest)."),
+                "until": Schema.string("report: when to stop, in the user's words (\"6pm\", \"in 2 hours\")."),
+                "until_stopped": Schema.boolean("report: true when the user said to keep going until they stop it."),
+                "notify": Schema.boolean("report: true only when the user asked for a notification each time."),
             ], required: ["command"]),
             risk: .high, capabilities: [.watch, .shell], category: .watch, mutates: true, external: false)
     }
@@ -384,6 +402,7 @@ struct WatchCommandTool: Tool {
         guard let command = input.string("command") else { throw ToolError.invalidInput(String(localized: "Tell me which command to run.")) }
         var config: JSONValue = ["command": .string(command)]
         if let cwd = input.string("cwd") { config = config.setting("cwd", .string(cwd)) }
+        if input["report"]?.boolValue == true { return try await report(command, config: config, input, context: context) }
         var condition: JSONValue = .object([:])
         if let code = input["exit_code"]?.intValue { condition = ["exit_code": .number(Double(code))] }
         else if let text = input.string("output_contains") { condition = ["output_contains": .string(text)] }
@@ -398,6 +417,21 @@ struct WatchCommandTool: Tool {
         do { added = try await engine.add(watcher) } catch { throw WatchInput.watchError(error) }
         let look = await engine.firstLook(of: added.id, polite: false)
         return WatchResults.started(await engine.watcher(id: added.id) ?? added, requested: requested, engine: engine, look: look)
+    }
+}
+
+extension WatchCommandTool {
+    /// report=true: the output every time, live, with a report's floor and end.
+    func report(_ command: String, config: JSONValue, _ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        var config = config
+        if input["notify"]?.boolValue == true { config = config.setting("notify", true) }
+        let end = try Report.end(input, now: context.now, parser: parser())
+        if end == nil, input["until_stopped"]?.boolValue == true { config = config.setting("until_stopped", true) }
+        let requested = try Report.interval(input)
+        let watcher = Watcher(kind: WatchKind.command, title: input.string("title") ?? WatchWords.defaultTitle(kind: WatchKind.command, config: config),
+                              config: config, intervalS: requested, mode: .report, expiresAt: end,
+                              source: WatchSource.string(for: context), now: context.now)
+        return try await Report.start(watcher, requested: requested, engine: engine, context: context)
     }
 }
 
@@ -485,9 +519,13 @@ struct WatchStopTool: Tool {
         let w = try await WatchInput.resolve(input.string("id") ?? "", caller: context.caller, engine: engine)
         guard let removed = await engine.remove(w.id) else { throw ToolError.notFound(String(localized: "that watcher")) }
         let engine = self.engine
-        let undo = UndoAction(label: String(localized: "Watching \(removed.title) again")) { _ = try await engine.add(removed) }
-        return ToolResult(text: "Stopped watching \(removed.title).",
-                          card: ResultCard(kind: .watcher, title: String(localized: "Stopped watching \(removed.title)"), refId: removed.id),
+        let report = removed.mode == .report
+        let undo = UndoAction(label: report ? String(localized: "Showing \(removed.title) again") : String(localized: "Watching \(removed.title) again")) {
+            _ = try await engine.add(removed)
+        }
+        let title = report ? String(localized: "Stopped showing \(removed.title)") : String(localized: "Stopped watching \(removed.title)")
+        return ToolResult(text: report ? "Stopped showing \(removed.title)." : "Stopped watching \(removed.title).",
+                          card: ResultCard(kind: .watcher, title: title, refId: removed.id),
                           undo: undo, untrusted: !WatchSource.isUserSourced(removed.source))
     }
 }

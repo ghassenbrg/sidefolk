@@ -389,6 +389,37 @@ import Testing
         #expect(after.fireAt == t.date(2025, 10, 23, 9))
     }
 
+    @Test func aFrequentReminderKeepsOneNoticeAndCanBeStoppedFromIt() async throws {
+        let t = try await SchedulerEnv(now: TimeTest.date(2025, 10, 22, 10))
+        await t.scheduler.start()
+        let rule = Recurrence(frequency: .minutely, interval: 10, until: t.date(2025, 10, 22, 18))
+        let r = try await t.scheduler.create(title: "Drink water", at: t.date(2025, 10, 22, 10, 10), recurrence: rule)
+
+        t.clock.set(t.date(2025, 10, 22, 10, 10))
+        await t.scheduler.tick()
+        let first = try #require(await t.posted().last)
+        #expect(first.body == "Every 10 minutes until 18:00")
+        #expect(first.actions.map(\.id) == ["done", "stop"], "10 min is no snooze for something every 10 minutes")
+        #expect(await t.reminder(r.id)?.fireAt == t.date(2025, 10, 22, 10, 20))
+
+        // Unanswered, the next time replaces it: one notice waits, not a pile of them.
+        t.clock.set(t.date(2025, 10, 22, 10, 20))
+        await t.scheduler.tick()
+        let open = await t.attention.open()
+        #expect(open.count == 1)
+        #expect(open.first?.id != first.id)
+
+        await t.attention.respond(id: try #require(open.first?.id), actionId: "stop")
+        #expect(await t.reminder(r.id)?.state == .cancelled)
+    }
+
+    @Test func anHourlyReminderStillOffersTenMinutes() {
+        let hourly = Reminder(title: "Stretch", fireAt: TimeTest.wednesday10, recurrence: Recurrence(frequency: .hourly), source: "user")
+        #expect(ReminderScheduler.actions(for: hourly).map(\.id) == ["done", "snooze10", "stop"])
+        let daily = Reminder(title: "Standup", fireAt: TimeTest.wednesday10, recurrence: Recurrence(frequency: .daily), source: "user")
+        #expect(ReminderScheduler.actions(for: daily).map(\.id) == ["done", "snooze10", "tomorrow"])
+    }
+
     @Test func aSeriesEndsAtItsUntilDate() async throws {
         let t = try await SchedulerEnv(now: TimeTest.date(2025, 10, 22, 8))
         await t.scheduler.start()

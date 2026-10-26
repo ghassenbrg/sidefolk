@@ -15,6 +15,8 @@ view.look = CharacterLook(.scout, style: CharacterStyle(color: .coral, accessory
 view.displayName = "Mochi"             // VoiceOver: "Mochi is listening"
 view.state = .working(.notepad)        // springs to the new pose; setState(_:animated:) for no animation
 view.play(.wave)                       // wave, hop, nod, shake, lookAround, blink
+view.state = .hearing                  // the microphone is on: both ears up (D34)
+view.speak(0.7)                        // talking: the mouth opens with the voice's level; speak(nil) closes it
 view.setGaze(CGVector(dx: 0.6, dy: 0)) // -1...1, nil = straight ahead; tiny changes are ignored
 view.badges = [.watching, .count(2)]
 view.reducedMotion = true              // starts from the system setting
@@ -112,6 +114,13 @@ the view is layer-hosting, so AppKit never redraws it. The only app-side timer i
 scheduler: one non-repeating `Timer` re-armed every 3–7 s (tolerance 0.4 s), skipped while the window
 is occluded and not armed in states with closed eyes.
 
+Talking (D34) adds no loop either: `speak(level)` hands the figure's mouth one short ease (0.07 s) to
+an "o" whose height follows the level (`Figure.talk`, the same stroke skeleton, so it morphs from and
+back to any mouth). The app calls it from the audio player's meter, about 20 times a second while
+sound comes out, and only when the level changes by an eighth; `speak(nil)` gives the pose its mouth
+back. When the audio stops, so does the mouth. `hearing` (the microphone is on) doesn't settle: it
+lasts only while the talk key is held, and its waves say the microphone is live.
+
 Measured with `sidefolk-render --live idle 25` (release build, 200 pt window) and `top` sampling every
 2 s: 0.0% CPU in most samples, peaks of 1–3% when a blink is committed, about 11 MB and 3 threads.
 Mochi measures the same (0.0% breathing and settled, 10 MB). `--live idle 31 <id>` prints the
@@ -119,7 +128,8 @@ attached animations every 5 s, "∞" marking loops: Mochi runs breath, sway and 
 20 s, then none. `--live cycle 32` walks every state, to catch loops that are not cleaned up.
 
 Reduced motion: no breathing, sways, ear trails, hops or loops; state changes crossfade; a blink is a
-quick fade; `wave` and `lookAround` become discrete pose changes; `hop`, `nod` and `shake` do nothing.
+quick fade; `wave` and `lookAround` become discrete pose changes; `hop`, `nod` and `shake` do nothing;
+a speaking mouth holds half open instead of moving.
 
 ## Reviewing changes
 

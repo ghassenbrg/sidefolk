@@ -158,9 +158,16 @@ public struct Job: SidefolkRecord, Identifiable, Hashable {
 // MARK: Time
 
 public struct Recurrence: Codable, Sendable, Hashable {
-    public enum Frequency: String, Codable, Sendable, CaseIterable { case hourly, daily, weekdays, weekly, monthly, yearly }
+    public enum Frequency: String, Codable, Sendable, CaseIterable {
+        case minutely, hourly, daily, weekdays, weekly, monthly, yearly
+
+        /// Counted in elapsed time, not on the wall clock: "every 30 minutes" stays 30 real minutes apart across
+        /// daylight saving and time zone moves, and has no time of day of its own.
+        public var isElapsed: Bool { self == .minutely || self == .hourly }
+    }
     public var frequency: Frequency
-    /// Every N units (1 = every day/week/...).
+    /// Every N units (1 = every minute/hour/day/...). Minutes are the finest step: a reminder never repeats
+    /// more often than once a minute (a value that must come faster is a report, not a reminder).
     public var interval: Int
     /// For weekly: ISO weekdays 1 = Monday ... 7 = Sunday. Empty means the weekday of the first fire.
     public var weekdays: [Int]
@@ -239,7 +246,8 @@ public struct Reminder: SidefolkRecord, Identifiable, Hashable {
 public struct Watcher: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "watchers"
     public enum State: String, Codable, Sendable { case active, paused, triggered, expired, error }
-    public enum Mode: String, Codable, Sendable { case once, `repeat` }
+    /// once: tell once, then stop. repeat: tell every time it happens. report: tell the current value every check (D35).
+    public enum Mode: String, Codable, Sendable { case once, `repeat`, report }
 
     public var id: String
     public var kind: String
@@ -310,7 +318,14 @@ public struct Exchange: SidefolkRecord, Identifiable, Hashable {
 
 public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "activity"
-    public enum Decision: String, Codable, Sendable { case auto, allowed, always, denied, blocked, failed }
+    public enum Decision: String, Codable, Sendable {
+        case auto, allowed, always, denied, blocked, failed
+        /// Done without asking because the person chose Auto or Full access (D37).
+        case autoMode = "auto_mode"
+        case fullAccess = "full_access"
+        /// Nobody answered in time; the step was skipped, or its task stopped (D37).
+        case skipped
+    }
 
     public var id: Int64?
     public var at: Date

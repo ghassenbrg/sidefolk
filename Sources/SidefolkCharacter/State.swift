@@ -8,10 +8,12 @@ public enum CharacterProp: String, CaseIterable, Sendable {
 /// The companion states of docs/PRODUCT.md §8. The app picks one by priority; the view shows it.
 public enum CharacterState: Equatable, Sendable {
     case idle, sleeping, listening, thinking, working(CharacterProp), waiting, success, error, alert, dragging, celebrating
+    /// The microphone is on (the talk key is held): ears up, eyes wide, waves beside the head (D34).
+    case hearing
 
     /// Every state once, with each working prop, in contact-sheet order.
     public static var gallery: [CharacterState] {
-        [.idle, .sleeping, .listening, .thinking, .waiting, .success, .error, .alert, .dragging, .celebrating]
+        [.idle, .sleeping, .listening, .hearing, .thinking, .waiting, .success, .error, .alert, .dragging, .celebrating]
             + CharacterProp.allCases.map { .working($0) }
     }
 
@@ -20,6 +22,7 @@ public enum CharacterState: Equatable, Sendable {
         case .idle: "idle"
         case .sleeping: "sleeping"
         case .listening: "listening"
+        case .hearing: "hearing"
         case .thinking: "thinking"
         case .working(let prop): prop == .none ? "working" : "working · \(prop.rawValue)"
         case .waiting: "waiting"

@@ -12,6 +12,7 @@ struct SettingsTabContent: View {
         case .general: GeneralSettingsView(model: model)
         case .companion: CompanionSettingsView(model: model)
         case .ai: AISettingsView(model: model)
+        case .voice: VoiceSettingsView(model: model)
         case .agents: SettingsPage { AgentsGroup(model: model) }
         case .privacy: PrivacySettingsView(model: model)
         case .extensions: ExtensionsSettingsView(model: model)
@@ -45,6 +46,12 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         WindowActivation.show(window)
         // AppKit focuses the first text field (the companion's name, selected); a stray key would replace it.
         Task { @MainActor in window.makeFirstResponder(nil) }
+    }
+
+    /// Privacy & Permissions with the sheet that says what Full access means (from the menu bar).
+    func confirmFullAccess() {
+        show(tab: .privacy)
+        model.confirmingFullAccess = true
     }
 
     func close() { window?.performClose(nil) }

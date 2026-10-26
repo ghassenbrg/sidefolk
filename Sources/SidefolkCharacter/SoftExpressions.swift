@@ -44,6 +44,7 @@ enum SoftExpressions {
         switch state {
         case .idle, .waiting, .working: (0, 0)
         case .listening: (0.28, -0.3)      // one ear up, the other relaxed
+        case .hearing: (-0.3, -0.32)        // both ears up: the microphone is on
         case .thinking: (-0.12, 0.3)
         case .sleeping: (0.3, 0.24)
         case .success, .celebrating: (-0.15, -0.15)
@@ -65,12 +66,12 @@ enum SoftExpressions {
         switch state {
         case .idle:
             rest(&face, temper)
-        case .listening, .working, .waiting:
+        case .listening, .hearing, .working, .waiting:
             // Open eyes on the task whatever the temper; its mouth and brows stay.
             rest(&face, temper)
             face.setEyes(Ink.bead)
             face.shine = 1
-            if state == .listening { face.setEyes(Ink.wide) }
+            if state == .listening || state == .hearing { face.setEyes(Ink.wide) }
             if case .working(let prop) = state, [.binoculars, .card, .clock, .bell].contains(prop) { face.setEyes(Ink.wide) }
             if state == .waiting { face.setMouth(Ink.smile) }
         case .sleeping:

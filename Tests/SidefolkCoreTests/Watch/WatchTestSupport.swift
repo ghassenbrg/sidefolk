@@ -151,3 +151,58 @@ struct WatchEnv {
 
     func notices() async -> [AttentionItem] { (try? await attentionStore.recent()) ?? [] }
 }
+
+/// A Mac whose numbers the test sets: counters move by what each sample adds.
+final class FakeSampler: SystemSampling {
+    struct State {
+        var uptime: TimeInterval = 1000
+        var cpu = CPUTicks(busy: 0, total: 0)
+        var memory: (used: UInt64, total: UInt64)? = (8 << 30, 16 << 30)
+        var battery: BatteryState? = BatteryState(percent: 84, charging: true, onPower: true)
+        var disk: (free: Int64, total: Int64)? = (182_000_000_000, 500_000_000_000)
+        var network: (received: UInt64, sent: UInt64) = (0, 0)
+        /// Added at every CPU sample: a quarter of the ticks busy by default.
+        var cpuStep = CPUTicks(busy: 25, total: 100)
+        var networkStep: (received: UInt64, sent: UInt64) = (2_000_000, 100_000)
+        var secondsPerSample: TimeInterval = 1
+        var samples = 0
+    }
+
+    let state = Mutex(State())
+
+    func set(_ change: (inout State) -> Void) { state.withLock { change(&$0) } }
+    var samples: Int { state.withLock { $0.samples } }
+
+    func uptime() -> TimeInterval { state.withLock { $0.uptime } }
+
+    func cpuTicks() -> CPUTicks? {
+        state.withLock { s in
+            s.samples += 1
+            s.uptime += s.secondsPerSample
+            s.cpu = CPUTicks(busy: s.cpu.busy + s.cpuStep.busy, total: s.cpu.total + s.cpuStep.total)
+            return s.cpu
+        }
+    }
+
+    func memory() -> (used: UInt64, total: UInt64)? { state.withLock { $0.memory } }
+    func battery() -> BatteryState? { state.withLock { $0.battery } }
+    func disk() -> (free: Int64, total: Int64)? { state.withLock { $0.disk } }
+
+    func networkBytes() -> (received: UInt64, sent: UInt64)? {
+        state.withLock { s in
+            s.samples += 1
+            s.uptime += s.secondsPerSample
+            s.network = (s.network.received + s.networkStep.received, s.network.sent + s.networkStep.sent)
+            return s.network
+        }
+    }
+}
+
+extension WatchEnv {
+    /// An engine with the standard probes over the fake web and a fake Mac, and the watch tools registered.
+    func reportEngine(_ sampler: FakeSampler) -> WatcherEngine {
+        let engine = engine(probes: WatchProbes.standard(fetcher: fetcher, throttle: throttle, system: sampler, settle: 0))
+        base.registry.register(WatchTools.make(engine: engine, parser: { WhenParser(calendar: .current) }))
+        return engine
+    }
+}

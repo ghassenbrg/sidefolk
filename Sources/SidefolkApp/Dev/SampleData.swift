@@ -112,6 +112,8 @@ enum SampleData {
         try await reminder("Send the deck to Karim", at: soon)
         try await reminder("Stretch and refill water", at: ago(20), state: .snoozed, snoozedUntil: min(ahead(10), endOfToday.addingTimeInterval(-60)))
         try await reminder("Stand-up", at: day(1, 9, 30), recurrence: Recurrence(frequency: .weekdays))
+        try await reminder("Drink some water", at: min(ahead(25), endOfToday.addingTimeInterval(-90)),
+                           recurrence: Recurrence(frequency: .minutely, interval: 30, until: min(max(day(0, 18), ahead(120)), endOfToday.addingTimeInterval(-60))))
         try await reminder("Call mom", at: day(1, 18), source: "external:claude-code")
         try await reminder("Renew the sidefolk.app domain", at: day(4, 10))
         try await reminder("Water the plants", at: day(6, 19), recurrence: Recurrence(frequency: .weekly, weekdays: [7]))
@@ -137,6 +139,17 @@ enum SampleData {
                           every: 60, state: .paused, checked: ago(60 * 3))
         try await watcher("Nils Frahm tickets go on sale", kind: "web.contains", config: ["url": "https://example.org/concerts"], every: 3600,
                           state: .triggered, checked: ago(170), updated: ago(170))
+
+        // Reports: values told in place, with the last reading saved as the engine saves it.
+        func report(_ title: String, kind: String, config: JSONValue, every: Double, value: String, ends: Date?) async throws {
+            var w = Watcher(kind: kind, title: title, config: config, intervalS: every, mode: .report, expiresAt: ends, source: "user", now: ago(12))
+            w.lastCheckedAt = now.addingTimeInterval(-min(every, 30))
+            w.lastState = ["reading": ["shown": .string(value)]]
+            try await rt.watcherStore.save(w)
+        }
+        try await report(String(localized: "CPU"), kind: WatchKind.metric, config: ["metric": "cpu"], every: 10, value: "23%", ends: ahead(48))
+        try await report(String(localized: "Temperature in \("Fukuoka")"), kind: WatchKind.weather, config: ["place": "Fukuoka", "quantity": "temperature"],
+                         every: 60, value: "18.4 °C", ends: nil)
 
         // Jobs and sessions
         var running = Job(kind: .command, title: "npm test", command: "npm test -- --watch=false", cwd: home + "/git/pockito", pid: 4312,
@@ -185,6 +198,7 @@ enum SampleData {
 
         // Activity and agent runs
         let entries: [(Double, String, String, String, ActivityEntry.Decision, String, String?, String?)] = [
+            (1, "agent", "files.rename", "medium", .autoMode, "Rename “Scan 0412.pdf” to “Invoice April.pdf”", "Renamed", nil),
             (2, "agent", "notebook.search", "low", .auto, "Search the notebook for “sidefolk ideas”", "Found 4 items", nil),
             (6, "external:claude-code", "shell.run", "high", .denied, "Run “git push origin main” in ~/git/sidefolk", nil, "You said not now."),
             (35, "external:claude-code", "notebook.add", "low", .auto, "Save an idea to Inbox", "Saved “Folks could have their own sounds”", nil),
@@ -201,6 +215,7 @@ enum SampleData {
             (60 * 20, "agent", "apps.open", "low", .auto, "Open github.com/sidefolk/sidefolk", "Opened in Safari", nil),
             (60 * 26, "user", "notebook.add", "low", .auto, "Save a note to Inbox", "Saved “Karim's new address”", nil),
             (60 * 30, "agent", "shell.run", "high", .allowed, "Run “npm test” in ~/git/pockito", "Exit 0 after 41 s", nil),
+            (60 * 40, "agent", "files.trash", "high", .fullAccess, "Move 2 files in ~/Downloads to the Trash", "Moved to the Trash", nil),
             (60 * 50, "external:claude-code", "notify", "low", .auto, "Tell you that the build finished", "Shown as a bubble", nil),
         ]
         for (minutes, caller, tool, risk, decision, summary, outcome, error) in entries {
@@ -223,7 +238,7 @@ enum SampleData {
         try await rt.permissions.addGrant(move)
         try await rt.permissions.addGrant(Grant(tool: "shell.run", scope: ["command": "npm test"], callerKind: "agent", now: ago(60 * 30)))
         try await rt.permissions.addGrant(Grant(tool: "web.fetch", scope: ["host": "github.com"], callerKind: "external", now: ago(60 * 24)))
-        try await rt.permissions.setPolicy(GuardPolicy(mode: .standard, disabled: [.clipboard]))
+        try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 
         return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)
     }
