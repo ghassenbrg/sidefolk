@@ -233,7 +233,7 @@ extension AppCoordinator: AppServices {
             _ = LoginItem.set(false)
             UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier ?? "app.sidefolk")
             Log.shared.info("app", "all data deleted")
-            NSApp.terminate(nil)
+            AppDelegate.quit(prepare: false)
             return nil
         } catch {
             return Self.userFacing(error, fallback: "I couldn't delete everything.")
