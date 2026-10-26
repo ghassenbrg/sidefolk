@@ -62,7 +62,8 @@ public struct MetricProbe: WatcherProbe {
             guard let m = system.memory() else { throw ProbeError.failed(String(localized: "I couldn't read the memory use.")) }
             let used = Report.memory(Int64(m.used)), total = Report.memory(Int64(m.total))
             return ReadingText(shown: String(localized: "\(used) of \(total)", comment: "Memory in use, then all of it: “9.9 GB of 16 GB”"),
-                               forModel: "\(ToolFormat.bytes(Int64(m.used))) used of \(ToolFormat.bytes(Int64(m.total)))")
+                               // Counted the way the pill counts (binary, "24 GB" of RAM), so the model quotes the same numbers.
+                               forModel: "\(Self.memoryForModel(m.used)) used of \(Self.memoryForModel(m.total))")
         case .battery:
             guard let b = system.battery() else { throw ProbeError.invalid(String(localized: "This Mac has no battery.")) }
             let level = Self.percent(Double(b.percent) / 100)
@@ -82,6 +83,10 @@ public struct MetricProbe: WatcherProbe {
 
     /// "23 %" in the words' language.
     static func percent(_ share: Double) -> String { share.formatted(.percent.precision(.fractionLength(0)).locale(Wording.locale)) }
+
+    static func memoryForModel(_ bytes: UInt64) -> String {
+        Int64(clamping: bytes).formatted(ByteCountFormatStyle(style: .memory, locale: Locale(identifier: "en_US")))
+    }
 
     /// How far a counter moved since the last sample of the same series, and over how many seconds. The first time
     /// (or after a long pause, or a counter that went back) it takes a second sample `settle` seconds later.

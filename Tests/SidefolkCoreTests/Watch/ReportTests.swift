@@ -52,6 +52,13 @@ import Testing
         #expect(sampler.samples == 2)
     }
 
+    /// The model quoted "8.59 GB used of 17.18 GB" while the pill said "8 GB of 16 GB": RAM is counted in binary units.
+    @Test func memoryReadsTheSameForThePersonAndTheModel() async throws {
+        let result = try ok(await run("watch.report", ["source": "metric", "metric": "memory", "every_seconds": 60]))
+        #expect(result.text.contains("it reads 8 GB used of 16 GB now"), "\(result.text)")
+        #expect(result.card?.subtitle == "Now 8 GB of 16 GB")
+    }
+
     @Test func tooFastIsRaisedToTheFloorAndSaid() async throws {
         let result = try ok(await run("watch.report", ["source": "metric", "metric": "cpu", "every_seconds": 1]))
         #expect(await engine.list().first?.intervalS == ReportFloors.metric)

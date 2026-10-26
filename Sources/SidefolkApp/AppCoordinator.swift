@@ -254,6 +254,9 @@ final class AppCoordinator {
     /// Stops the engines and covers the next week of reminders with system notifications.
     func prepareForQuit() async {
         eventTask?.cancel()
+        // A request still running stops with the app: its CLI brain's process group gets SIGTERM rather than
+        // finishing its turn on the person's quota with no one to answer it.
+        await agent.cancelAll()
         let fallback = await runtime.stop()
         notifier.scheduleFallback(fallback.map { (id: $0.id, title: $0.title, body: $0.body, date: $0.date) })
         Log.shared.info("app", "quit", ["fallbackReminders": String(fallback.count)])

@@ -12,6 +12,7 @@ public final class ExtensionDrafts: Sendable {
     /// What the manifest says wrote it; shown on the install sheet like any author.
     public static let author = "Sidefolk, for you"
     static let maxFiles = 20
+    static let maxDrafts = 20
     static let maxFileBytes = 200 * 1024
     static let maxTotalBytes = 1024 * 1024
     static let fileTypes: Set<String> = ["py", "js", "mjs", "cjs", "sh", "json", "txt", "md", "csv"]
@@ -65,8 +66,13 @@ public final class ExtensionDrafts: Sendable {
         object["id"] = .string(Self.id(for: name))
         object["author"] = .string(Self.author)
         try Self.check(files)
+        // A model writing draft after draft under new names would otherwise fill the folder without end.
+        guard exists(name: name) || list().count < Self.maxDrafts else {
+            throw UserFacingError(verbatim: "There are already \(Self.maxDrafts) extension drafts. Reuse one's name, or ask the person to delete some in Settings › Extensions.")
+        }
 
         try ExtensionFS.makePrivateDirectory(directory)
+        removeLeftoverStaging()
         let staging = directory.appendingPathComponent(".staging-\(Identifier.make())", isDirectory: true).path
         do {
             guard mkdir(staging, 0o700) == 0 else { throw ExtensionError.io("Couldn't create \(staging)") }
@@ -86,6 +92,15 @@ public final class ExtensionDrafts: Sendable {
         } catch {
             ExtensionFiles.removeTree(staging)
             throw error
+        }
+    }
+
+    /// A write interrupted by a quit or crash leaves its staging folder; the next write clears any older than an hour.
+    private func removeLeftoverStaging(now: Date = Date()) {
+        for entry in (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? [] where entry.hasPrefix(".staging-") {
+            let path = directory.appendingPathComponent(entry).path
+            guard let st = ExtensionFS.lstat(path), now.timeIntervalSince1970 - TimeInterval(st.st_mtimespec.tv_sec) > 3600 else { continue }
+            ExtensionFiles.removeTree(path)
         }
     }
 

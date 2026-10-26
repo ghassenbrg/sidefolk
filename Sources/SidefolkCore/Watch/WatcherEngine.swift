@@ -125,7 +125,22 @@ public actor WatcherEngine {
     }
 
     /// Call after the Mac wakes or the clock or time zone changes, so the next check is timed from the real time.
-    public func rearm() { arm() }
+    /// Next checks are moments, so a clock set back an hour would leave every watcher (a report every 10 s too)
+    /// silent for that hour: none waits longer than it could have when it was scheduled.
+    public func rearm() {
+        let now = clock.now
+        for (id, var w) in watchers where w.state == .active {
+            guard let next = w.nextCheckAt else { continue }
+            let backoff = w.errorCount > 0 ? min(w.intervalS * pow(2, Double(w.errorCount)), WatchLimits.maxBackoff) : 0
+            let cooling = cooldownUntil[id] != nil ? probes[w.kind].map { cooldown(for: w, $0) } ?? 0 : 0
+            let latest = now.addingTimeInterval(max(w.intervalS, backoff, cooling))
+            guard next > latest else { continue }
+            w.nextCheckAt = latest
+            watchers[id] = w
+            if let until = cooldownUntil[id], until > latest { cooldownUntil[id] = latest }
+        }
+        arm()
+    }
 
     // MARK: Reading
 

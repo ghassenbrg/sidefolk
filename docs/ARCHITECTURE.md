@@ -247,6 +247,8 @@ are labelled so; their tools are medium risk until the user grants more.
 - `make dev` / `scripts/run.sh` — debug build, assemble `build/Sidefolk-dev.app`, launch with
   `SIDEFOLK_HOME` pointing at `build/dev-home`.
 - `make test` — `swift test`.
-- `make app` — release build, `build/Sidefolk.app`, ad-hoc signed.
-- `scripts/release.sh` — sign with Developer ID (hardened runtime, entitlements), DMG, notarize,
-  staple. Fails clearly when `SIDEFOLK_SIGN_IDENTITY` / `SIDEFOLK_NOTARY_PROFILE` are missing.
+- `make app` — release build, `build/Sidefolk.app` (Apple Development identity if present, else ad hoc),
+  assembled beside the old bundle and swapped in, so a running copy keeps working.
+- `scripts/release.sh` — sign with Developer ID (hardened runtime, entitlements), notarize and staple the app,
+  then the DMG. Fails clearly when `SIDEFOLK_SIGN_IDENTITY` / `SIDEFOLK_NOTARY_PROFILE` are missing. The
+  checklist around it is docs/RELEASE.md.

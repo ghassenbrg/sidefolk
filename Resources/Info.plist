@@ -61,6 +61,8 @@
 	</dict>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Sidefolk reaches your local network only when you ask it to watch something there, or to use an AI model running on another computer.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Sidefolk listens only while you hold the talk shortcut, and understands what you say on this Mac. The recording is never kept.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
