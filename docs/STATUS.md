@@ -1,7 +1,7 @@
 # Status
 
-Updated: 2026-10-26, morning (orchestrated by Claude; specialist agents in worktrees, merged into
-`rework`).
+Updated: 2026-10-26, late morning (orchestrated by Claude; specialist agents in worktrees, merged
+into `rework`).
 
 ## Done and verified
 - **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (D1–D24), SECURITY (threat model T1–T24),
@@ -16,17 +16,20 @@ Updated: 2026-10-26, morning (orchestrated by Claude; specialist agents in workt
   find) and WhenParser with recurrence (fuzz-tested: 600k random inputs, no crash), plus slash
   commands. None of these use AI.
 - **Time:** the reminder scheduler fires due reminders and handles missed ones, snooze, done, edit and
-  recurrence. It reschedules after wake or a clock change, schedules fallback notifications at quit,
+  recurrence (undo keeps a monthly reminder's day). Only the user's own reminders can be critical or
+  skip spacing. It reschedules after wake or a clock change, schedules fallback notifications at quit,
   and runs the morning brief.
 - **Watchers:** web page change, site up/down, file appears or changes, new file in a folder, process
-  exit and command (confirmed), plus extension watchers. Floors, backoff, cooldowns, quotas, SSRF
-  protection; the user's own request may watch localhost and the LAN (D21). Routine checks reach the
-  database at most every 5 minutes.
+  exit and command (confirmed), plus extension watchers. Floors, backoff, cooldowns, quotas (checked
+  atomically in the engine), SSRF protection; the user's own request may watch localhost and the LAN
+  (D21). Watchers record which turn made them; other apps' watchers last at most a day. Routine checks
+  reach the database at most every 5 minutes.
 - **Brain:** Claude Code CLI (isolated: `--tools ""`, strict MCP, restricted settings, init-event
   check), Anthropic API and OpenAI-compatible providers. The context builder has budgets and keeps
   untrusted content out; extension tool descriptions never reach the model (D24).
 - **Bridge:**
-  - Unix socket API with peer-uid check, brain tokens and rate limits.
+  - Unix socket API with peer-uid check, brain tokens and rate limits; a session's host app is trusted
+    only if it is a real ancestor of the process that reported it.
   - `sidefolk mcp` gives external agents a small tool set (their names are labelled unverified; their
     approvals never take a keypress).
   - `sidefolk run -- <cmd>` (a failure shows the last stderr lines, D23), `sidefolk hook <Event>`
@@ -47,7 +50,7 @@ Updated: 2026-10-26, morning (orchestrated by Claude; specialist agents in workt
     Settings (General, Companion, AI, Agents, Privacy & Permissions, Extensions).
   - Embodied onboarding (hello, agents, a real reminder, notifications, login), data export, delete
     everything (Keychain items included), diagnostics export with redacted logs.
-- **Tests:** 813 in 88 suites. `make test` runs them serially and they pass consistently (about 40 s).
+- **Tests:** 833 in 90 suites. `make test` runs them serially and they pass consistently (about 40 s).
 
 ## Reviews done (second round) and what came of them
 UX/product, security, QA/plugin developer and performance reviews (reports were working files, not in
@@ -64,13 +67,11 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   reminder in one request.
 - Onboarding order, folk introduction (Scout), bubble tail, Ask panel order, notebook search across
   collections, Settings › Extensions: checked by snapshot.
-- Release build measured idle (see above).
+- Release build (`make app`, build 212): signature verified, launches with an isolated `SIDEFOLK_HOME`,
+  `sidefolk status` answers, idle measured (see above).
 
 ## In progress
-- A background agent is closing the security follow-ups that fell outside review 2's scope (watcher
-  provenance and 24 h expiry for external watchers, reminder level clamp and own source for other
-  agents' reminders, monthly anchor after undo, collection provenance, hook payload trust). Its branch
-  will be merged into `rework` and the app adapted to any API change.
+Nothing. All second-round review follow-ups are merged.
 
 ## Known issues / not yet verified
 - **Not exercised by hand:** hooks inside a real Claude Code session; the notifications permission
@@ -78,11 +79,20 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   Claude Code/Codex (it edits real config files, so only the user should click it).
 - **Watching huge folders:** a folder with more than 20,000 items can't be watched (a bound on memory
   and stored state).
+- **Following the pointer costs a little:** while the mouse moves, the global mouse monitor and Pip's
+  eyes cost about 1–5% CPU in bursts; with no input the app is at ~0%.
+- **Command watches made by the agent before 2026-10-26** carry the source "agent" and no longer run
+  (the source can't tell a clean turn from a tainted one); recreate them. No user data exists yet, so
+  this only matters for test installs.
+- **Residual trust gaps (documented in SECURITY.md):** code running as you can still name its own
+  ancestor or a known terminal as a session's host; extension tool names and titles (60 characters)
+  reach the model.
 - **Signing:** no Developer ID identity on this Mac, so `scripts/release.sh` (sign, notarize, staple)
   is ready but needs the founder's credentials. Builds are signed with the "Apple Development"
   identity or ad hoc.
 
 ## Next
-1. Merge the security follow-up branch, adapt the app, full test run.
-2. Release build (`make app`), final check, handoff.
-3. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review).
+1. The founder: hand checks listed above (hooks in a real Claude Code session, notifications prompt,
+   login item, multi-monitor), then Developer ID signing and notarization (`scripts/release.sh`).
+2. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review);
+   calendar awareness; voice input.
