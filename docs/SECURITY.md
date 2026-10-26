@@ -437,7 +437,9 @@ in grants get an explicit 0644. `PRAGMA secure_delete=ON`. Delete-all also remov
 ExtensionData, the read-only installed extensions (unlocked first), run state and Keychain items:
 provider keys with their host bindings and each MCP server's `mcp.<id>` item, collected before the
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
-not ignored. Bound parameters only; FTS5 terms quoted. Encryption at rest
+not ignored. Retention is applied at launch and then daily while Sidefolk runs: conversation history (7 days by
+default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
+(14), the notebook's Trash (30); log files after 7 days, at most 16 MB a day. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
 extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are
 ignored.
@@ -472,8 +474,10 @@ paths and queries are dropped, hosts stay.
 - Hardened runtime without exceptions: no `disable-library-validation`, DYLD env, `get-task-allow`
   or JIT.
 - Helpers are signed by the same team. The CLI link goes into `~/.local/bin` only.
-- TCC: Notifications, Local Network only for user-created LAN watchers, and Automation for Notes
-  and Reminders only (T25). Never Full Disk Access, Accessibility or Screen Recording.
+- TCC: Notifications, Local Network only for user-created LAN watchers or a model server the person
+  pointed at another computer (`NSLocalNetworkUsageDescription` says so), the microphone while the talk key
+  is held (T26), and Automation for Notes and Reminders only (T25). Never Full Disk Access, Accessibility or
+  Screen Recording.
 
 **T23 Supply chain (L/H).** GRDB and KeyboardShortcuts use `from:` ranges, and
 `Package.resolved` is committed. Release builds run `swift build -c release
@@ -514,6 +518,32 @@ anything. Spoken replies with ElevenLabs send the words being said, including re
 titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Voice, which says so. Its
 key lives in the Keychain bound to that host (as T18), requests are never redirected, and the key is
 removed with everything else. Replies stay silent while another app records and in quiet mode.
+
+**T28 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
+web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
+a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
+chose. Found in the 0.1.0 review and fixed:
+- *Numbers.* `Int(_:)` traps on a Double past Int.max and Int arithmetic traps on overflow. Typing "remind me on
+  dec 99999999999999999999" crashed the hint line; another agent's `reminders.create` with
+  `interval: 9e18` crashed Sidefolk at once (weekly) or when it fired, then at every launch; a giant `maximum`
+  in an extension's schema crashed the message that quoted it. Numbers are bounded before any conversion
+  (`WhenToken.isInteger` below 10⁹, spans below 100 000), a repeat is at most every 1000 units
+  (`Recurrence.maxInterval`, in the schema, in `init` and again in `RecurrenceMath` for rows already stored),
+  and network values are formatted without `Int(_:)`.
+- *Fail closed.* Guard read the policy with `try?` and fell back to the default, in which nothing is switched
+  off: a call from a stopped task (GRDB refuses work from a cancelled task) ran with Clipboard switched off, set
+  the clipboard, and reported it hadn't. Guard now refuses when it can't read the person's settings, and
+  `withTimeout` never starts work for a caller that is gone. The app changes the policy through
+  `PermissionStore.updatePolicy` (read and write in one transaction, throws on a bad read), never by saving a
+  default over a failed read.
+- *Audit.* A step refused by Stop or Quit wasn't in Activity (its write was cancelled with the run); audit
+  rows are now written from a detached task.
+- *Disk.* `FileHandle.write(_:)` raises an Objective-C exception on a full disk, which nothing catches: the log
+  writer and the `sidefolk` helper's error output use the throwing `write(contentsOf:)`. A day's log stops at
+  16 MB.
+*Residual:* a Swift trap anywhere else still ends the process (Swift has no catch for it); the fuzz and crash
+regression suites (`NewSyntaxFuzzTests`, `CrashRegressionTests`, `FailClosedTests`) are the guard rails.
+Extensions' and MCP servers' own crashes stay isolated in their processes (T15).
 
 ## 3. Extension sandbox profile
 
@@ -664,6 +694,11 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     named in a call is the only one its process can read, and only read for `"read"`; an unshared folder
     asks the agent and a "no" runs nothing; built-in extensions follow the app, keep the person's choice,
     come back off when they gain a permission, and refuse removal; icons are checked as images only.
+15. **Crashes and fail-closed (T28):** huge numbers typed, sent by another agent or stored in a row never trap;
+    a stopped task's call is refused with every capability still off and nothing done, and is in Activity; a
+    policy that can't be read is never replaced by the default; a seeded fuzz of the time and report syntax
+    (`NewSyntaxFuzzTests`). End to end (`Tests/SidefolkCoreTests/E2E`): Full access against a page that tries
+    every way out, an AI-built extension in a tainted turn, a skipped Notes copy run later from Now.
 
 ## 5. What Sidefolk never does
 

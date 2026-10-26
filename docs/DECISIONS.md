@@ -772,3 +772,46 @@ executable code" now reads "none runs outside a sandbox without an install the p
 freshly installed extension's tools are offered from the person's next request (tools are fixed per run).
 Built-in descriptions now reach the model, so they are reviewed like prompts. Extensions still can't hold
 secrets, choose hosts, or reach Unix sockets; the catalog lists those as the next platform pieces.
+
+### D41 — Hardening for 0.1.0: fail closed, bound what comes in, tidy up while running, swap the app (2026-10-27)
+**What the release review found** (quality, performance and security pass over D34–D39 together, with
+end-to-end scenarios in `Tests/SidefolkCoreTests/E2E`): crashes from numbers (the hint line on a typed long
+number; another agent's giant repeat interval, which crashed at every launch), Guard falling back to a default
+policy with nothing switched off, steps refused by Stop missing from Activity, a typed "every 30 minutes until 6pm"
+repeating forever (the local path dropped the end its hint promised), reports notifying in quiet mode, tool
+recoveries never reaching the model, a clock set back silencing every watcher, housekeeping only at launch, a log
+writer that crashed on a full disk, and `make app` deleting the bundle a running copy was using.
+**Decision:**
+- *Fail closed.* When Guard can't read the person's settings, or the caller is gone, nothing runs and the refusal
+  is in Activity. Settings change through `PermissionStore.updatePolicy` (one transaction), never by saving a
+  default over a failed read. `withTimeout` never starts work for a cancelled caller (SECURITY T28).
+- *Bound what comes in.* Numbers from text, agents, extensions' schemas, stored rows and the network are bounded
+  before any `Int` conversion; a repeat is every 1000 units at most (`Recurrence.maxInterval`), enforced in the
+  schema, the initializer and again in `RecurrenceMath` for rows already stored. The parser's contract (D4) is kept
+  by a seeded fuzz of D35's syntax (`NewSyntaxFuzzTests`): a repeat's end or span it can't hold goes to the AI.
+- *Tidy up while running.* As a login item Sidefolk runs for weeks, so retention can't wait for a launch:
+  `DailyChore` runs housekeeping once a day (history, Activity, AI runs, finished jobs, sessions, Trash), logs prune
+  when the day changes and stop at 16 MB a day, the WAL is truncated to 4 MB after checkpoints, drafts are 20 at
+  most and interrupted ones are cleared.
+- *Say it the same way twice.* A tool's `recovery` is part of what the model reads; a memory report counts RAM in
+  binary units for the model as on the pill; a report's notification follows quiet mode
+  (`WatchReading.notifies`); a clock set back clamps every watcher's next check to what it could have been.
+- *Quit stops runs.* Quitting cancels requests in flight, so a CLI brain's process group gets SIGTERM instead of
+  finishing a turn on the person's quota.
+- *Build beside, then swap.* `scripts/build-app.sh` assembles and signs in a staging bundle and swaps it in; the
+  replaced bundle stays until `lsof` says nothing runs from it (docs/RELEASE.md).
+**Measured** (release-optimized build of this commit, macOS 27, Apple silicon, isolated `SIDEFOLK_HOME`, companion
+shown, folks and pointer-following off, 300 s windows after a 30 s settle, `ps` CPU time and `top -pid` every 10 s,
+other builds running on the Mac, load average 4–5; built with `-DDEBUG` only so it wouldn't take the talk
+shortcut from the founder's running copy, which adds two notification observers and nothing that runs): the
+socket answers 0.61 s after launch the first time (built-in extensions installed in the same second) and 0.22 s
+after; idle, 0.19 s of CPU in 300 s (0.06 % of one core; D35 measured 0.036 %), `top` 0.0 % in all 30 samples,
+25 MB footprint, 3–4 threads; with four reports every 10 s (CPU, memory, network, battery: 120 readings), 0.34 s
+(0.11 %, about 2.8 ms a reading with its pill), `top` 0.0–0.1 %, 26–27 MB, 7 threads. `top` showed no idle
+wake-ups in either window; `powermetrics` needs root and wasn't run.
+**Why:** a public 0.1.0 meets inputs nobody on the team typed, Macs that never restart, and disks that fill. A crash
+loop or a setting silently undone costs more trust than any feature earns.
+**Alternatives:** clamping huge numbers instead of refusing them (a reminder every 9e18 days is a mistake to
+report, not to guess); a background vacuum of the database (more disk I/O than the rows are worth; FTS and
+`secure_delete` already keep deleted notes off the disk); building the app into a versioned folder and pointing a
+symlink at it (macOS resolves a bundle through its path, and Finder and Launch Services dislike linked bundles).
