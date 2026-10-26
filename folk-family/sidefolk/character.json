@@ -1,0 +1,9 @@
+{
+  "description" : "The original main companion",
+  "height" : 1254,
+  "image" : "sidefolk.png",
+  "name" : "Sidefolk",
+  "source" : "source.png",
+  "status" : "static companion concept",
+  "width" : 1254
+}

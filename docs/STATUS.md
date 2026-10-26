@@ -4,6 +4,16 @@ Updated: 2026-10-26, late morning (orchestrated by Claude; specialist agents in 
 into `rework`).
 
 ## Done and verified
+- **Folk Family companion concepts (2026-10-26):** `folk-family/` contains 13 named folders:
+  Sidefolk, redesigned legacy Mochi and Spark, plus Pip, Byte, Seed, Melody, Scout, Tempo, Play,
+  Guard, Nova and Brew. Each has a clean transparent 1254×1254 PNG, untouched source PNG and name/
+  metadata JSON. The supplied full identity sheet drives the family style; legacy Mochi/Spark
+  references were recovered from `fc36151`. Includes a complete labeled `character-sheet.png`,
+  `main-companions.png`, `folk-family-sheet.png`, exact imagegen prompts and references. Reviewed
+  the sheets visually; verified all 13 names, dimensions, alpha, clear borders and source files.
+  `scripts/companion-concept-sheets.swift` rebuilds clean exports and sheets without model calls.
+  No concept-generation work remains half done. Next: the founder chooses which designs to take
+  into pose sets/animation; these studies are static artwork, not installed animated skins.
 - **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (D1–D25), SECURITY (threat model T1–T24),
   MACOS-NOTES, VOICE, FOUNDING, CHARACTER, EXTENSIONS.
 - **Character:** Core Animation rig with 11 states and 10 props, all 10 folks, app icon and menu bar
