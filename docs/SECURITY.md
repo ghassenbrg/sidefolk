@@ -152,6 +152,47 @@ Mitigations:
 *Residual:* managed (enterprise) settings and hooks always apply, by design; CLI semantics can
 drift between versions.
 
+**T7 Codex brain (M/H).** The same threat as Claude Code above, with a CLI that has more of its own. Codex has its own shell, file edits (`apply_patch`), web search, browser
+and computer use, image generation, sub-agents, hooks, plugins, apps, skills, `AGENTS.md` and
+execpolicy rules, and it doesn't report its tool list in its event stream. Mitigations (each switch
+verified against codex-cli 0.160.0 by recording the requests it sends to a stand-in Responses
+server, so no quota was spent):
+- Resolve `codex` like `claude` (settings path, then `~/.local/bin`, `~/.codex/bin`, Homebrew,
+  `/usr/local/bin`, npm/Volta/Bun/pnpm/nvm folders, then the app's PATH); the binary must pass the
+  same ownership checks and its folder (and a link's target folder) must not be writable by others.
+- Probe `--version`, `exec --help` (every flag below must be listed) and `features list` (every
+  feature Sidefolk switches off must exist): otherwise fail closed. `codex login status` must say
+  signed in before a run (signed out, `exec` retries for 20 s).
+- Argv: `exec --json --strict-config --ephemeral --skip-git-repo-check --ignore-user-config
+  --ignore-rules --sandbox read-only --cd <run dir>`, `-c approval_policy="never"`,
+  `-c web_search="disabled"`, `-c project_doc_max_bytes=0`, skills, environment, permission, app and
+  collaboration instructions off, `request_user_input` off, `history.persistence="none"`, and
+  `--disable` for every feature that is on by default except the plumbing the brain needs
+  (`code_mode_host`, which runs the sandboxed JavaScript newer models call tools from, retries,
+  compression, MCP sign-in prompts). Features a later Codex adds are switched off too.
+  `--strict-config` makes a renamed key an error instead of a silently ignored one.
+- Exactly one MCP server via `-c mcp_servers.sidefolk.*`: the `sidefolk mcp` helper with the run
+  folder (token file) and `SIDEFOLK_HOME` in its env, `required = true`,
+  `default_tools_approval_mode = "approve"` (Guard decides; with approvals off Codex would refuse
+  every call). The user's own `[mcp_servers]` are never loaded (`--ignore-user-config`).
+- The system prompt goes into a 0600 `instructions.md` used as `model_instructions_file` (it replaces
+  Codex's coding-agent instructions); the conversation goes over stdin. Never argv.
+- Env allow-list as above, plus `CODEX_HOME` only when Sidefolk itself has one; never
+  `OPENAI_API_KEY` (the plan is the point).
+- Self-check on every event: messages, reasoning, plans, warnings and `mcp_tool_call` on server
+  `sidefolk` are allowed. A `command_execution`, `file_change`, `web_search` or another server's
+  tool kills the process group and disables the backend until restart (the switches failed);
+  `collab_tool_call` (some models always get sub-agent tools) or an item type Sidefolk doesn't know
+  kills the run. T5 limits (25 calls, 3 identical) apply.
+
+*Residual:* Codex always adds the user's global `$CODEX_HOME/AGENTS.md` (there is no switch; the
+brain is told it doesn't apply). `apply_patch` stays offered to Codex's own models; the read-only
+sandbox with approvals off rejects every write (verified), and a `file_change` event stops the run.
+Models with sub-agent tools can try to use them; the run stops. Codex still writes its own state
+(SQLite indexes, logs) in `CODEX_HOME`, but `--ephemeral` keeps the conversation out of its session
+files (verified). Managed configuration and requirements always apply; CLI semantics can drift
+between versions (the probe and `--strict-config` catch removed switches, not changed meanings).
+
 **T8 Other IPC (L/M).** No TCP listener in release. Debug endpoints are `#if DEBUG`, bound to
 127.0.0.1, require a token, and reject an `Origin` header or a non-loopback `Host` (DNS
 rebinding). No AppleScript dictionary, no XPC, no data in distributed notifications. A
@@ -507,7 +548,10 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 9. **Secrets:** a canary `sk-ant-CANARY…` never reaches logs, DB, UserDefaults, exports, child env
    or argv; `Secret` prints redacted.
 10. **Brain:** argv has the isolation flags and no prompt or token; a failed probe refuses to run;
-    an extra tool in the init event kills the run.
+    an extra tool in the init event kills the run. Codex: a renamed feature switch or missing flag
+    refuses to run; a recorded `command_execution`, `web_search`, `file_change` or another server's
+    tool kills the run and disables the backend; signed out never starts `exec`; a key saved for one
+    host is never sent to another preset's host.
 11. **DoS:** watcher floors and quotas (parallel external creations stop at the cap); attention rate
     limit; step and call caps; repeated-call breaker; one pending approval per caller.
 12. **Storage:** modes 0700/0600 including wal and shm; delete-all removes everything, Keychain

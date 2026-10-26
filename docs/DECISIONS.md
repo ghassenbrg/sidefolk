@@ -55,7 +55,7 @@ via the local MCP bridge, so every action still passes Guard. API backends share
 Each provider has a main model and an optional "smart" model used by "Think harder".
 **Why:** the founder has Claude Code; API keys are optional. The founding chat's automatic
 multi-tier router is replaced by a simpler, explainable rule. Apple's on-device model was
-`modelNotReady` on the dev machine, so it is post-V1.
+`modelNotReady` on the dev machine, so it is post-V1. D26 adds Codex and provider presets.
 
 ### D9 — Folks are "on duty" markers, not cameos on every action (2026-10-26)
 **Decision:** Tempo (reminder due within 15 min), Scout (watchers active) and Byte (agent session
@@ -166,3 +166,34 @@ for small sizes and lets macOS tint its alpha. The live vector rig remains as sp
 **Why:** the identity must match the approved reference and work as real framework assets, rather
 than mockups, a presentation sheet, or enlarged low-resolution crops. The deterministic
 `make brand-assets` pipeline rebuilds each file from committed inputs without another model call.
+
+### D26 — Every main provider, chosen by how you pay; Codex isolated like Claude Code (2026-10-26)
+**Decision:** add Codex (`codex exec`) as a brain on the user's ChatGPT plan, beside Claude Code,
+and keep one OpenAI-compatible transport with presets: OpenAI, Google Gemini (its OpenAI-compatible
+endpoint), Mistral, Groq, xAI, DeepSeek, OpenRouter, Ollama, LM Studio and a custom address. Each
+preset knows its address, whether a key is needed, where to get one, and how to list models; its
+key has its own Keychain account bound to its host. Settings › AI groups the choices by how you pay
+(a plan you already have, an API key, this Mac, your own server, no AI), shows each one's state
+(found, signed in, key saved, running) and the exact next step (a link, or a command to copy), and
+opens the chosen one's setup in place. Model lists come from the provider; the first suggested
+model it actually offers becomes the default. Each provider keeps its own model when you switch.
+"Test" sends one tiny real request through the same path as a question.
+**Why:** the founder pays for ChatGPT and uses Codex, and wants setup easy for everyone. Presets
+remove the base-URL guesswork that caused the Gemini bug ("models/…" ids, array-wrapped errors)
+without a second transport. Model names go stale, so suggestions are checked against the
+provider's own list rather than hard-coded as the only choice. A free `/models` lookup isn't a test:
+only a real request proves a question will work.
+**Why the CLIs are isolated this way:** a subscription CLI is a general coding agent with a shell,
+file edits, a browser and plugins, running as the user; Sidefolk's brain must only act through
+Sidefolk's tools so Guard sees every action (D14). Claude Code reports its tools at start, so the
+run is checked there. Codex doesn't, so every Codex feature that's on by default is switched off
+except the plumbing the brain needs (later features included), its config, rules and folder
+instructions are ignored, it runs read-only with approvals off in a private folder, and the event
+stream is watched: anything that isn't a message or a Sidefolk tool call stops the run, and what
+the switches should have prevented also disables the backend until restart (SECURITY T7).
+**Alternatives:** Codex through its app-server protocol (more surface, same tools to switch off);
+a separate `CODEX_HOME` (loses the user's sign-in); one Keychain account for every
+OpenAI-compatible service (each switch would need the key again); hard-coded model lists.
+**Implications:** Codex adds the user's own global `AGENTS.md` and keeps `apply_patch` offered to
+its own models; neither can act (read-only sandbox, approvals off, events watched) but they're
+documented residuals. New Codex versions are probed (flags and feature names) before use.
