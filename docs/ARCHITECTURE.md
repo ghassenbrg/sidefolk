@@ -51,6 +51,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Extension drafts (written by Sidefolk's AI, D39) | `~/Library/Application Support/Sidefolk/ExtensionDrafts/local.<name>/` |
 | Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/` with `catalog.json` (repo: `extensions/`) |
 | Skills | `~/Library/Application Support/Sidefolk/Skills/<name>/SKILL.md` |
+| Skill for other agents (D42) | `Sidefolk.app/Contents/Resources/AgentSkills/sidefolk` (repo: `skills/sidefolk`); Connect copies it to `~/.claude/skills/sidefolk`, `~/.codex/skills/sidefolk` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |
 | Brain workdir | `~/Library/Application Support/Sidefolk/brain/` (empty cwd for CLI brains) |
 | Logs | `~/Library/Logs/Sidefolk/sidefolk-YYYY-MM-DD.jsonl` (7 days) |
@@ -126,6 +127,13 @@ user folders or agent configs.
   `applenotes.list/read/copy/remove`, `applereminders.list`, capability `mac.apps`.
 - `LocalAPIServer` — unix socket JSON-lines server: `hello`, `tools/list`, `tools/call`,
   `status`; peer uid check; tokens map brain runs to `Caller.agent`.
+- Other agents (D42): `sidefolk mcp` (`MCPStdioBridge`) reaches `ExternalToolGateway`, an executor whose
+  registry holds only `ExternalToolPolicy`'s tools, each with its external spec (`ExternalSpecs.swift`:
+  descriptions and schemas for what other agents may do). `AgentIntegrations` (Connect, after a
+  confirmation and backups) writes the MCP entry, the Sidefolk skill and session hooks into Claude Code
+  and Codex (`codexHooks`: `$CODEX_HOME/hooks.json`, `sidefolk hook <Event> --agent codex`), and
+  `setupInstructions` gives other MCP apps the command. Hook events feed `SessionTracker` (Now page,
+  "needs you" and "finished" taps; `HostTrust` decides what "Open" brings forward).
 - `Diagnostics` — `os.Logger` categories + JSONL file sink with `Redactor` (keys, tokens, long
   content trimmed); `DiagnosticsExporter` writes a zip without user content by default.
 
