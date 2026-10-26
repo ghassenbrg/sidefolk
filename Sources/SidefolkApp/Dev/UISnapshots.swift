@@ -138,13 +138,22 @@ enum UISnapshots {
             await settings.ai.refresh()
             await settings.ai.test()
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
+            // Settings › Voice turned on, in the states that need different words (D34).
+            for (name, setUp) in voiceStates {
+                setUp(fixtures.voice, settings)
+                await settings.voice.refresh()
+                try await page("page-settings-voice-\(name)", VoiceSettingsView(model: settings), width: width)
+            }
+            settings.update { $0.voice = VoiceSettings() }
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
+            let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
+            let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess))]
+                + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
-                try await page(name, AskView(model: ask, companionName: "Mochi",
-                                             portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
+                try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
             }
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
@@ -225,6 +234,50 @@ enum UISnapshots {
         ("custom", .preset(.custom), { _, s in s.update { $0.provider.baseURL = "https://llm.example.com/v1" } }),
         ("none", .none, { _, _ in }),
     ]
+
+    /// Settings › Voice pages: file name and the fixture state each is shown in.
+    private static let voiceStates: [(String, @MainActor (FixtureVoiceServices, SettingsModel) -> Void)] = [
+        ("on", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.allowed, .ready(.transcriber), false)
+            s.update { $0.voice = VoiceSettings(); $0.voice.input = true }
+        }),
+        ("elevenlabs", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.allowed, .ready(.transcriber), true)
+            s.update { $0.voice.input = true; $0.voice.engine = .elevenLabs; $0.voice.elevenLabsVoice = "v1"; $0.voice.elevenLabsVoiceName = "Juniper" }
+        }),
+        ("download", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.notAsked, .needsDownload(.transcriber), false)
+            s.update { $0.voice = VoiceSettings(); $0.voice.input = true; $0.voice.talkKey = .ownShortcut; $0.voice.language = "fr-FR"; $0.voice.replies = .always }
+        }),
+        ("basic", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.denied, .ready(.basic), false)
+            s.update { $0.voice = VoiceSettings(); $0.voice.input = true }
+        }),
+    ]
+
+    /// The Ask panel while talking: listening with the words so far, the words not caught, and replies said aloud or muted.
+    private static func voiceAsks(_ actions: FixtureAskActions) -> [(String, AskModel)] {
+        let listening = AskModel()
+        listening.actions = actions
+        listening.voice = .listening(basic: false)
+        listening.text = "Remind me at 5 to stretch"
+        let starting = AskModel()
+        starting.actions = actions
+        starting.voice = .listening(basic: false)
+        let missed = AskModel()
+        missed.actions = actions
+        missed.add(.info(String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")), caption: String(localized: "Talking"))
+        missed.text = "uh"
+        let spoken = AskModel()
+        spoken.actions = actions
+        spoken.add(.result(ResultCard(kind: .reminder, title: "Stretch", subtitle: "Today 17:00"), activityId: nil, undo: true),
+                   caption: "Remind me at 5 to stretch.")
+        spoken.add(.spoken("Stretch, Today 17:00", muted: nil))
+        spoken.add(.answer("Next up is **Stretch** at 17:00. Scout is also watching example.com for changes.", canThinkHarder: false, tainted: false),
+                   caption: "What's next?")
+        spoken.add(.spoken("Next up is Stretch at 17:00.", muted: .quiet))
+        return [("listening", listening), ("listening-empty", starting), ("missed", missed), ("spoken", spoken)]
+    }
 
     /// A panel after a few requests: a result, an answer and a pending approval.
     private static func sampleAsk() -> AskModel {

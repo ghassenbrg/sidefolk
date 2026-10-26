@@ -55,6 +55,8 @@ final class SoftRig: Figure {
 
     private(set) var pose = Pose()
     private var gaze: CGVector?
+    /// How open the mouth is while speaking; nil when silent.
+    private var speaking: CGFloat?
     private var style = CharacterAccessory.none
     private var accent = CharacterAccent.aqua
 
@@ -262,8 +264,7 @@ final class SoftRig: Figure {
         browMarks[0].show(next.browL, faceTransit)
         browMarks[1].show(next.browR, faceTransit)
         browMarks.forEach { Motion.set($0.layer, "opacity", Float(next.brows), faceTransit) }
-        mouthMark.show(next.mouth, faceTransit)
-        Motion.set(mouthMark.layer, "opacity", Float(next.mouthShown), faceTransit)
+        showMouth(faceTransit)
         Motion.set(held, "opacity", Float(next.holding), faceTransit)
 
         for (appendage, spec) in zip(appendages, species.appendages) {
@@ -281,6 +282,22 @@ final class SoftRig: Figure {
     func setGaze(_ vector: CGVector?, _ transit: Transit) {
         gaze = vector
         updateGaze(transit)
+    }
+
+    func talk(_ openness: CGFloat?, _ transit: Transit) {
+        speaking = openness
+        showMouth(transit)
+    }
+
+    /// The pose's mouth, or the open one while speaking (sized like the face's other marks).
+    private func showMouth(_ transit: Transit) {
+        if let open = speaking {
+            mouthMark.show(Self.talkingMouth(open, width: 4.4 * species.face.scale), transit)
+            Motion.set(mouthMark.layer, "opacity", Float(1), transit)
+        } else {
+            mouthMark.show(pose.mouth, transit)
+            Motion.set(mouthMark.layer, "opacity", Float(pose.mouthShown), transit)
+        }
     }
 
     /// The eyes look; the head turns a little after them, the features a little further (parallax).

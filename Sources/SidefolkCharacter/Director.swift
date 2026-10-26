@@ -140,6 +140,16 @@ final class Director {
         }
     }
 
+    // MARK: Speaking
+
+    /// The mouth follows the voice's loudness (0...1) while the companion speaks, in any state; nil
+    /// closes it. Nothing repeats on its own: each level the player reports is one short ease, so the
+    /// mouth stops the moment the audio does. Reduced motion holds it half open instead of moving.
+    func speak(_ level: CGFloat?) {
+        let transit: Transit = live && !reducedMotion ? .ease(level == nil ? 0.14 : 0.07) : .instant
+        rig.talk(level.map { reducedMotion ? 0.5 : min(1, max(0, $0)) }, transit)
+    }
+
     func blink(twice: Bool) {
         guard live, look.blinks else { return }
         if reducedMotion {

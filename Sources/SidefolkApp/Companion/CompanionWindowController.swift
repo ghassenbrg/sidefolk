@@ -35,6 +35,10 @@ protocol CompanionDelegate: AnyObject {
     func companionReceived(_ drop: Attachment)
     func companionFolkClicked(_ folk: DutyFolk)
     func companionReadoutClicked()
+    /// Pressing and holding the companion talks (D34), when voice input is on.
+    var companionCanTalk: Bool { get }
+    func companionHoldBegan()
+    func companionHoldEnded()
 }
 
 final class CompanionWindowController {
@@ -264,6 +268,7 @@ final class CompanionWindowController {
         case .idle: .idle
         case .sleeping: .sleeping
         case .listening: .listening
+        case .hearing: .hearing
         case .thinking: .thinking
         case .waiting: .waiting
         case .success: .success
@@ -417,6 +422,10 @@ final class CompanionContainerView: NSView {
     private var windowOriginAtDown: NSPoint?
     private var dragging = false
     private(set) var isDraggingFile = false
+    /// Pressed and not moved yet: held long enough, it talks instead of clicking or dragging.
+    private var holdTimer: Timer?
+    private var holding = false
+    static let holdToTalk: TimeInterval = 0.35
 
     init(character: CharacterView) {
         self.character = character
@@ -440,13 +449,30 @@ final class CompanionContainerView: NSView {
         mouseDownAt = NSEvent.mouseLocation
         windowOriginAtDown = window?.frame.origin
         dragging = false
+        holding = false
+        holdTimer?.invalidate()
+        holdTimer = nil
+        let point = convert(event.locationInWindow, from: nil)
+        guard event.clickCount == 1, owner?.delegate?.companionCanTalk == true,
+              owner?.folk(at: point) == nil, owner?.readout(at: point) != true else { return }
+        let timer = Timer(timeInterval: Self.holdToTalk, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.mouseDownAt != nil, !self.dragging else { return }
+                self.holding = true
+                self.owner?.delegate?.companionHoldBegan()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        holdTimer = timer
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let start = mouseDownAt, let origin = windowOriginAtDown, let window else { return }
+        guard !holding, let start = mouseDownAt, let origin = windowOriginAtDown, let window else { return }
         let p = NSEvent.mouseLocation
         if !dragging, hypot(p.x - start.x, p.y - start.y) > 4 {
             dragging = true
+            holdTimer?.invalidate()
+            holdTimer = nil
             owner?.delegate?.companionDragChanged(true)
         }
         guard dragging else { return }
@@ -455,6 +481,13 @@ final class CompanionContainerView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         defer { mouseDownAt = nil }
+        holdTimer?.invalidate()
+        holdTimer = nil
+        if holding {
+            holding = false
+            owner?.delegate?.companionHoldEnded()
+            return
+        }
         if dragging {
             dragging = false
             owner?.delegate?.companionDragChanged(false)

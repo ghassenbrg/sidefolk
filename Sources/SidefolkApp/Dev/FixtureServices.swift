@@ -13,6 +13,8 @@ final class FixtureServices: AppServices {
     var keys: Set<APIKeyTarget> = []
     /// What Settings › AI finds; snapshots change it to show each provider's states.
     var detection = FixtureServices.sampleDetection
+    let voice = FixtureVoiceServices()
+    var voiceServices: any VoiceServices { voice }
 
     init(runtime: SidefolkRuntime, keys: Set<APIKeyTarget> = []) {
         self.runtime = runtime

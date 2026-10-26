@@ -62,7 +62,9 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, into model: AskModel) {
+        // The reply may be said aloud (D34); an interruption before it arrives keeps it silent.
+        let reply = voice.context(spoken: spoken)
         // A reminder that was waiting for its time: only a time (or "cancel") answers it; anything
         // else is a new request and the pending one is dropped.
         if let title = model.pendingReminderTitle, attachment == nil {
@@ -71,13 +73,14 @@ extension AppCoordinator: AskActions {
             if ["cancel", "never mind", "nevermind", "nvm", "forget it", "no", "stop"].contains(lower) {
                 model.pendingReminderTitle = nil
                 model.add(.info(String(localized: "Okay, no reminder.")), caption: text)
+                voice.reply(SpokenLine.line(String(localized: "Okay, no reminder.")), to: reply, in: model)
                 return
             }
             if let when = runtime.intentParser.parseTime(text, now: Date()), when.date > Date(),
                when.remaining.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).isEmpty {
                 model.pendingReminderTitle = nil
                 runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence, important: model.pendingReminderImportant),
-                         caption: "\(title) — \(text)", into: model)
+                         caption: "\(title) — \(text)", into: model, reply: reply)
                 return
             }
             model.pendingReminderTitle = nil
@@ -86,7 +89,7 @@ extension AppCoordinator: AskActions {
         if let pending = model.pendingWatch, attachment == nil {
             model.pendingWatch = nil
             if let parsed = runtime.intentParser.watch(address: text, kind: pending.kind, becomes: pending.becomes) {
-                runLocal(parsed.intent, caption: text, into: model)
+                runLocal(parsed.intent, caption: text, into: model, reply: reply)
                 return
             }
         }
@@ -95,15 +98,16 @@ extension AppCoordinator: AskActions {
         if !thinkHarder,
            let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
                                                    watching: knownWatches) {
-            runLocal(Self.withAttachment(parsed.intent, attachment), caption: text, into: model)
+            runLocal(Self.withAttachment(parsed.intent, attachment), caption: text, into: model, reply: reply)
             return
         }
         guard runtime.settings.current.provider.kind != .none else {
             let full = attachment?.text.map { "\(text)\n\n\($0)" } ?? text
             model.add(.needsBrain(full, guess: reminderGuess(text)), caption: text)
+            voice.reply(SpokenLine.line(String(localized: "That needs AI, which isn't set up.")), to: reply, in: model)
             return
         }
-        runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model)
+        runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model, reply: reply)
     }
 
     /// "call the bank tomorrow at 9" → a reminder suggestion, when a confident future time is in there.
@@ -129,51 +133,64 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel) {
+    /// - Parameter reply: set for a request someone made (typed or spoken), whose answer may be said aloud.
+    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel, reply: ReplyContext? = nil) {
         let runner = LocalIntentRunner(runtime: runtime)
         Task {
             let outcome = await runner.run(intent)
+            @MainActor func say(_ line: String) {
+                if let reply { voice.reply(line, to: reply, in: model) }
+            }
             switch outcome {
             case .card(let card, let activityId, let undo):
                 model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), caption: caption)
-                // Quick intents close the panel a moment after their card appears.
+                say(SpokenLine.card(card))
+                // Quick intents close the panel a moment after their card appears, once their words are said.
                 try? await Task.sleep(for: .seconds(undo ? 2.5 : 1.2))
-                if !model.busy, model.text.isEmpty, model.pendingQuestion == nil, model.entries.last?.caption == caption {
+                await voice.finishedSpeaking()
+                if !model.busy, model.text.isEmpty, model.voice == nil, model.pendingQuestion == nil, model.latestCaption == caption {
                     model.onAutoClose?()
                 }
             case .list(let title, let cards):
                 model.add(.list(title: title, cards: cards), caption: caption)
+                say(SpokenLine.list(title: title, cards: cards))
             case .needsTime(let title, let reason, let important):
                 model.pendingReminderTitle = title
                 model.pendingReminderImportant = important
                 let question = String(localized: "When should I remind you to “\(title.prefix(1).lowercased() + title.dropFirst())”?")
                 model.add(.info([reason, question].compactMap { $0 }.joined(separator: " ")), caption: caption)
+                say(SpokenLine.line(question))
                 model.focusRequest += 1
             case .needsTarget(let kind, let becomes):
                 model.pendingWatch = (kind, becomes)
                 model.add(.info(String(localized: "Which address should I watch? For example localhost:3000 or example.com/status.")), caption: caption)
+                say(String(localized: "Which address should I watch?"))
                 model.focusRequest += 1
             case .info(let text):
                 model.add(.info(text), caption: caption)
+                say(SpokenLine.line(text))
             case .failed(let error):
                 model.add(.error(error, retryable: false), caption: caption)
+                say(SpokenLine.line(error.message))
             }
         }
     }
 
-    func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {
+    func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel, reply spoken: ReplyContext? = nil) {
         model.busy = true
         model.phase = Self.thinkingLine(harder: thinkHarder)
         let agentAttachment = attachment.map { a -> AgentAttachment in
             AgentAttachment(text: a.text ?? a.label, source: a.label, untrusted: true)
         }
-        let request = AgentRequest(text: text, attachment: agentAttachment, thinkHarder: thinkHarder)
+        let request = AgentRequest(text: text, attachment: agentAttachment, thinkHarder: thinkHarder, spoken: spoken?.spoken ?? false)
         let agent = self.agent!
         Task {
             let handle = await agent.submit(request)
             currentRun = handle.runId
             var captioned = false
             var shownCards = Set<String>()
+            // What may be said aloud once the run ends: the answer, else the last change, else the failure.
+            var line: String?
             func caption() -> String? {
                 defer { captioned = true }
                 return captioned ? nil : text
@@ -192,6 +209,7 @@ extension AppCoordinator: AskActions {
                     if let card = activity.card, ok ? activity.mutates : PrivacyPane.isKnown(card.url) {
                         shownCards.insert(card.title)
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
+                        line = SpokenLine.card(card)
                     }
                     // What the mode answered for the person, and what nobody answered, always show (D37).
                     if ok, activity.actedWithoutAsking {
@@ -201,15 +219,16 @@ extension AppCoordinator: AskActions {
                         model.add(.skipped(activity.summary, why: activity.error ?? ""), caption: caption())
                     }
                 case .reply(let reply):
-
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !answer.isEmpty {
                         model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != "",
                                           tainted: reply.tainted),
                                   caption: caption())
+                        line = SpokenLine.answer(answer)
                     }
                 case .failed(let error):
                     model.add(.error(error, retryable: true), caption: caption())
+                    line = SpokenLine.line(error.message)
                 case .finished:
                     break
                 default:
@@ -219,6 +238,7 @@ extension AppCoordinator: AskActions {
             model.busy = false
             model.phase = nil
             currentRun = nil
+            if let spoken, let line { voice.reply(line, to: spoken, in: model) }
         }
     }
 
@@ -241,6 +261,8 @@ extension AppCoordinator: AskActions {
     }
 
     func stop() {
+        // Stopped by hand: the run's answer, if any arrives, isn't said aloud either.
+        voice.interrupt(cancelRun: false)
         let agent = self.agent!
         Task { await agent.cancelAll() }
     }

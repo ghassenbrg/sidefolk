@@ -5,5 +5,8 @@
 	<!-- Hardened runtime blocks Apple Events without it: reading Apple Notes and Reminders (DECISIONS D38). -->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
+	<!-- The hardened runtime blocks the microphone without it; voice input only opens it while the talk key is held (D34). -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
 </dict>
 </plist>

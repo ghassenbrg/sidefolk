@@ -348,6 +348,67 @@ from the vector PDF exports, so they stay sharp at any size without a 4096 px bi
 the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
 small places get one clear element (lettering, a face) instead of a reduced composition.
 
+### D34 — Voice: hold to talk, recognized on this Mac, answered in one short line (2026-10-26)
+**Decision:** Phase 1 of docs/research/voice-feasibility.md, with its suggested defaults.
+- **Talk key: hold the Ask shortcut.** A tap still opens and closes the Ask panel; held for 0.3 s it
+  talks, and releasing sends. Settings › Voice can give talking a shortcut of its own instead (no
+  default), which opens the microphone the moment it goes down. Pressing and holding the companion
+  (0.35 s) also talks. *Why:* one shortcut to learn, voice is a way of asking, and a second global
+  shortcut is a second clash nobody can detect (MACOS-NOTES). The price is the hold: the microphone
+  opens 0.3 s after the press, and a three-key chord is held while talking; people who mind either
+  give talking its own shortcut. The companion's ears go up when the microphone is really on.
+- **Off by default.** Nothing asks for the microphone until the person turns voice input on and
+  holds the key. The microphone is open only while the key is held (the orange dot is honest), the
+  Mac's own microphone is preferred (AirPods stay out of call quality), and the capture is rebuilt
+  when the audio hardware changes. Audio is never stored; the words join history as text, marked spoken.
+- **Recognition on this Mac.** SpeechAnalyzer with SpeechTranscriber on macOS 26+, DictationTranscriber
+  for languages it lacks (Arabic, here), the language's model downloaded by macOS with progress
+  (Settings › Voice, or the first press); on macOS 15 the older recognizer forced on device, labelled
+  "basic". It listens in the app's language unless one is pinned; the locale is picked by Sidefolk
+  (installed first, the Mac's region, then the language's home), because Apple's own equivalence
+  mapped "en" to en-ZA. Measured on the dev Mac (macOS 27.0.1): SpeechAnalyzer needs no
+  speech-recognition permission (only the microphone's), the last words arrive 0.02–0.06 s after
+  release, 45 locales are offered, and French's model downloaded in 16 s.
+- **Release sends** through the normal Ask pipeline: local parser or AI, same cards, approvals and
+  Undo. An empty or one-filler transcript ("um") sends nothing: a sad face, "I didn't catch that",
+  and the words left in the box to fix.
+- **Spoken replies:** Off, Only when I spoke (default) or Always; one short line, always shown in the
+  panel too (with a muted speaker when it stayed silent). Silent in quiet mode, while another app
+  records, when the person typed since asking; with VoiceOver on, the line goes to VoiceOver instead.
+  The talk key, a click on the companion and Esc stop the audio at once, drop the queue and cancel
+  the run of a spoken request still working, so no stale answer turns up.
+- **The line for an AI answer is its first sentence**, made speakable (links become their site, paths
+  their last name, code goes; nothing left → "It's on the screen."), cut at a pause past 24 words;
+  a list says how many and the first. A spoken request adds one paragraph to the prompt asking for a
+  first sentence that stands alone. *Why not a separate spoken field in the answer format:* every
+  brain would have to follow it, CLI brains included, whose output Sidefolk doesn't parse; a field a
+  model forgets or mangles leaks into the card; it costs tokens on every answer. The first sentence
+  works with every brain and is already what the persona asks to lead with.
+- **Engines behind one `SpeechOutput` protocol** (text in, audio out in pieces) and one playback
+  queue (`SpeechPlayer`: sentence splitting, the next sentence made while one plays, instant stop).
+  Apple: AVSpeechSynthesizer written into Sidefolk's own player (so its loudness drives the mouth),
+  the best enhanced or premium voice installed, else the one macOS uses for the language, with a
+  button to System Settings where better voices are downloaded. ElevenLabs: the person's key in the
+  Keychain, bound to api.elevenlabs.io, streamed 24 kHz PCM, never redirected, models tried in order
+  (Eleven v4 Turbo, Flash v2.5, Multilingual v2), a plain statement of what is sent, and "Test voice"
+  saying it costs about 50 characters. Each line's voice follows the line's own language.
+- **Kokoro is left out.** FluidAudio 0.17.7 builds cleanly in this package and its legacy Kokoro
+  runtime ran offline (83 MB model, 71 ms for 2.4 s of speech), but it fails the bar: the English
+  text-to-phoneme model and lexicon always go to ~/.cache/fluidaudio, whatever folder is given, so
+  they can't live under the Sidefolk home or be deleted with it; the recommended v3 runtime aborted
+  the whole process on macOS 27.0.1 (an MPSGraph assertion), and in-process that takes the companion
+  down; English only. Revisit when FluidAudio lets the phonemizer's folder be chosen, in a helper process.
+- **The body:** a `hearing` state (both ears up, eyes wide, the waves) driven by the same code that
+  opens the microphone, thinking while the last words settle, the error face for a miss, and a
+  talking mouth on every companion (`Figure.talk`): an "o" whose height follows the playback level
+  (about 20 updates a second, quantized), each a short ease; nothing repeats, so it stops with the audio.
+**Alternatives:** a dedicated talk shortcut by default (a second clash, no default anyone agrees on);
+a spoken field in the answer format (above); Kokoro (above); cloud transcription (no reason to send
+voices off the Mac for short commands); wake word and always-on listening (the study's "do not build").
+**Implications:** the microphone usage string and the hardened runtime's audio-input entitlement;
+the speech-recognition usage string for macOS 15; microphone permission resets with ad-hoc builds,
+so testers need the Apple Development or Developer ID signature.
+
 ### D35 — Reports: a value told every few seconds or minutes, live and in place; reminders down to a minute (2026-10-26)
 **Decision:** a watcher can be a *report* (`Watcher.Mode.report`): at every check it tells the current value
 instead of waiting for a change. `watch.report` reads a system metric (CPU, memory, battery, free disk,

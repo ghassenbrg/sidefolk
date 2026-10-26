@@ -52,6 +52,8 @@ final class RobotRig: Figure {
     private(set) var pose = Pose()
     /// Pointer gaze on top of the pose's own look.
     private var gaze: CGVector?
+    /// How open the mouth is while speaking; nil when silent.
+    private var speaking: CGFloat?
 
     /// The light's colour. In a live view Core Animation's implicit animation fades it across.
     private var accent: CharacterAccent = .aqua {
@@ -262,8 +264,7 @@ final class RobotRig: Figure {
         browLayers[0].show(next.browL, faceTransit)
         browLayers[1].show(next.browR, faceTransit)
         browLayers.forEach { Motion.set($0.layer, "opacity", Float(next.brows), faceTransit) }
-        mouthLayer.show(next.mouth, faceTransit)
-        Motion.set(mouthLayer.layer, "opacity", Float(next.mouthShown), faceTransit)
+        showMouth(faceTransit)
 
         ears.forEach { $0.glow(next.earGlow, faceTransit) }
 
@@ -275,6 +276,22 @@ final class RobotRig: Figure {
     }
 
     /// Pointer gaze; nil looks where the pose looks.
+    func talk(_ openness: CGFloat?, _ transit: Transit) {
+        speaking = openness
+        showMouth(transit)
+    }
+
+    /// The pose's mouth, or the open one on the visor while speaking.
+    private func showMouth(_ transit: Transit) {
+        if let open = speaking {
+            mouthLayer.show(Self.talkingMouth(open, width: 6.5), transit)
+            Motion.set(mouthLayer.layer, "opacity", Float(1), transit)
+        } else {
+            mouthLayer.show(pose.mouth, transit)
+            Motion.set(mouthLayer.layer, "opacity", Float(pose.mouthShown), transit)
+        }
+    }
+
     func setGaze(_ vector: CGVector?, _ transit: Transit) {
         gaze = vector
         updateGaze(transit)

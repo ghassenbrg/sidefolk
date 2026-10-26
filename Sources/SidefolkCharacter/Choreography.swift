@@ -43,6 +43,18 @@ enum Choreography {
             look.pose.earGlow = 1
             look.effects = [.waves]
 
+        case .hearing:
+            // Listening to the microphone: rapt, a little forward, both arms in, eyes up on the person.
+            look.pose.setEyes(Face.oval.scaled(1.06))
+            look.pose.look = CGVector(dx: 0, dy: 0.2)
+            look.pose.gazeFollow = 0.4
+            look.pose.lean = -0.02
+            look.pose.squash = CGSize(width: 0.985, height: 1.02)
+            look.pose.armL = 0.25
+            look.pose.armR = 0.25
+            look.pose.earGlow = 1
+            look.effects = [.waves]
+
         case .thinking:
             look.pose.setEyes(Face.oval.scaled(0.92), Face.squint)
             look.pose.look = CGVector(dx: 0.4, dy: 0.8)
@@ -123,7 +135,7 @@ enum Choreography {
         case .idle:
             return [Loop(layer: figure.loop, key: "sway",
                          animation: Motion.loop("transform.rotation.z", from: -0.012, to: 0.012, duration: 3.4))]
-        case .listening:
+        case .listening, .hearing:
             return figure.listeningLights.map {
                 Loop(layer: $0, key: "pulse", animation: Motion.loop("opacity", from: 0.55, to: 1, duration: 0.9))
             }
