@@ -487,6 +487,8 @@ public final class FolkView: NSView {
     private let rig: FolkRig
     /// Scales the canvas to the view; the rig's own root is left free for popping.
     private let stage = Layers.canvas(FolkCanvas.size, anchor: pt(50, 50))
+    /// Folks settle like the companion does (DECISIONS D20): an endless loop keeps the window server drawing.
+    private var settleTimer: Timer?
 
     public init(folk: Folk, frame: NSRect) {
         self.folk = folk
@@ -541,7 +543,14 @@ public final class FolkView: NSView {
         }
         Motion.still { body.opacity = 0 }
         CATransaction.commit()
+        settleTimer?.invalidate()
         rig.body.removeAnimation(forKey: "breath")
+    }
+
+    /// Breathes again for a while (the pointer came close), then settles.
+    public func wake() {
+        guard settleTimer == nil, rig.body.animation(forKey: "breath") == nil else { return }
+        breathe()
     }
 
     public override func setFrameSize(_ newSize: NSSize) {
@@ -555,10 +564,33 @@ public final class FolkView: NSView {
     }
 
     private func breathe() {
+        settleTimer?.invalidate()
+        settleTimer = nil
         rig.body.removeAnimation(forKey: "breath")
         guard !reducedMotion, rig.root.opacity > 0 else { return }
         rig.body.add(Motion.loop("transform", from: Motion.transform(.identity),
                                  to: Motion.transform(CGAffineTransform(scaleX: 1.02, y: 0.97)), duration: 1.6), forKey: "breath")
+        let timer = Timer(timeInterval: Director.settleAfter, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.settle() }
+        }
+        timer.tolerance = 2
+        RunLoop.main.add(timer, forMode: .common)
+        settleTimer = timer
+    }
+
+    /// Glides from wherever the breath was back to rest.
+    private func settle() {
+        settleTimer = nil
+        let body = rig.body
+        let shown = body.presentation()?.transform
+        body.removeAnimation(forKey: "breath")
+        guard let shown else { return }
+        let glide = CABasicAnimation(keyPath: "transform")
+        glide.fromValue = NSValue(caTransform3D: shown)
+        glide.toValue = NSValue(caTransform3D: body.transform)
+        glide.duration = 0.25
+        glide.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        body.add(glide, forKey: "settle")
     }
 
     private func place() {
