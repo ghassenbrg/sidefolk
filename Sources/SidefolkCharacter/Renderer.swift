@@ -29,37 +29,59 @@ public enum CharacterRenderer {
         return render(scene, canvas: IconScene.canvas, size: CGSize(width: size, height: size), scale: 1)
     }
 
-    /// Black-on-transparent face for the menu bar (set `isTemplate` on the NSImage): the head as an
-    /// outline, the visor filled, and the happy eyes cut out of it.
+    /// The reference companion simplified for 18 pt: rounded shell, filled visor, cut-out smiles.
+    /// A template must use alpha alone so macOS can tint it for any menu bar appearance.
     @MainActor
     public static func menuBarTemplate(size: CGSize, scale: CGFloat) -> CGImage {
         let context = bitmap(size, scale)
-        // Frame the head: ears to ears, chin to fin tip.
-        let head = CGRect(x: 16, y: 22, width: 168, height: 162)
-        let fit = min(size.width / head.width, size.height / head.height)
         context.scaleBy(x: scale, y: scale)
-        context.translateBy(x: (size.width - head.width * fit) / 2, y: (size.height - head.height * fit) / 2)
-        context.scaleBy(x: fit, y: fit)
-        context.translateBy(x: -head.minX, y: -head.minY)
+        drawMenuBar(in: context, size: size)
+        return context.makeImage()!
+    }
 
+    /// Vector template for asset catalogs or other native clients.
+    public static func menuBarPDF(size: CGSize) -> Data {
+        let data = NSMutableData()
+        var box = CGRect(origin: .zero, size: size)
+        let context = CGContext(consumer: CGDataConsumer(data: data)!, mediaBox: &box, nil)!
+        context.beginPDFPage(nil)
+        drawMenuBar(in: context, size: size)
+        context.endPDFPage()
+        context.closePDF()
+        return data as Data
+    }
+
+    private static func drawMenuBar(in context: CGContext, size: CGSize) {
+        let fit = min(size.width, size.height) / 24
+        context.translateBy(x: (size.width - 24 * fit) / 2, y: (size.height - 24 * fit) / 2)
+        context.scaleBy(x: fit, y: fit)
         let black = CGColor(gray: 0, alpha: 1)
         context.setStrokeColor(black)
         context.setFillColor(black)
-        context.setLineWidth(12)
+        context.setLineWidth(1.8)
         context.setLineJoin(.round)
-        context.addPath(Shapes.body.union(Shapes.fin).union(Shapes.earPod(Canvas.earL)).union(Shapes.earPod(Canvas.earR)))
+        let shell = CGMutablePath()
+        shell.move(to: CGPoint(x: 12, y: 21.5))
+        shell.addCurve(to: CGPoint(x: 22, y: 9), control1: CGPoint(x: 19, y: 21.5), control2: CGPoint(x: 22, y: 16))
+        shell.addCurve(to: CGPoint(x: 17, y: 3), control1: CGPoint(x: 22, y: 4), control2: CGPoint(x: 20, y: 3))
+        shell.addLine(to: CGPoint(x: 7, y: 3))
+        shell.addCurve(to: CGPoint(x: 2, y: 9), control1: CGPoint(x: 4, y: 3), control2: CGPoint(x: 2, y: 4))
+        shell.addCurve(to: CGPoint(x: 12, y: 21.5), control1: CGPoint(x: 2, y: 16), control2: CGPoint(x: 5, y: 21.5))
+        shell.closeSubpath()
+        context.addPath(shell)
         context.strokePath()
-        context.addPath(Paths.roundedRect(Canvas.visor.insetBy(dx: -2, dy: -2), 27))
-        context.fillPath()
-        context.setBlendMode(.clear)
-        context.setLineCap(.round)
-        for center in [Canvas.eyeL, Canvas.eyeR] {
-            let eye = Stroke.arc(width: 22, rise: 9, thickness: 10)
-            context.setLineWidth(eye.width)
-            context.addPath(eye.path(at: center))
-            context.strokePath()
+        let visor = CGMutablePath()
+        visor.addPath(CGPath(roundedRect: CGRect(x: 4.6, y: 7.2, width: 14.8, height: 10),
+                             cornerWidth: 4.8, cornerHeight: 4.8, transform: nil))
+        for x in [7.0, 13.0] {
+            let eye = CGMutablePath()
+            eye.move(to: CGPoint(x: x, y: 11))
+            eye.addCurve(to: CGPoint(x: x + 4, y: 11),
+                         control1: CGPoint(x: x + 1, y: 13.6), control2: CGPoint(x: x + 3, y: 13.6))
+            visor.addPath(eye.copy(strokingWithWidth: 1.5, lineCap: .round, lineJoin: .round, miterLimit: 1))
         }
-        return context.makeImage()!
+        context.addPath(visor)
+        context.drawPath(using: .eoFill)
     }
 
     // MARK: Plumbing

@@ -70,8 +70,10 @@ final class AppCoordinator {
             Task { await self.runtime.attention.respond(id: item.id, actionId: nil) }
         }
 
-        let template = CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2)
-        statusItem.install(image: NSImage(cgImage: template, size: NSSize(width: 18, height: 18)))
+        let menuBarImage = BrandAsset.menuBar.image ?? NSImage(
+            cgImage: CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2),
+            size: NSSize(width: 18, height: 18))
+        statusItem.install(image: menuBarImage)
         statusItem.onAsk = { [weak self] in self?.toggleAsk() }
         statusItem.onOpenHome = { [weak self] in self?.openHome() }
         statusItem.onOpenSettings = { [weak self] in self?.openSettings() }

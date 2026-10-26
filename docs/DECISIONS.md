@@ -155,3 +155,14 @@ and an input schema with free text removed, not the author's description. **Why:
 text written by a third party and loaded into every run; tainting every run instead would make every
 link and memory write ask for approval. Tool names and titles (60 characters at most) remain a small
 residual channel (SECURITY T2).
+
+### D25 — Reference-faithful production brand assets (2026-10-26)
+**Decision:** use standalone transparent artwork reconstructed from the founder's Folk Family
+reference for static logos and the macOS app icon. Preserve the original flat wordmark's letter
+silhouettes as smooth fitted Bézier outlines, with navy/aqua fills and no generated text effects.
+Export a complete ICNS/iconset and native 18 pt vector menu bar template; bundle production exports
+and load them through `BrandAsset`. The menu template simplifies the companion's shell/visor/smile
+for small sizes and lets macOS tint its alpha. The live vector rig remains as specified in D2.
+**Why:** the identity must match the approved reference and work as real framework assets, rather
+than mockups, a presentation sheet, or enlarged low-resolution crops. The deterministic
+`make brand-assets` pipeline rebuilds each file from committed inputs without another model call.

@@ -30,6 +30,8 @@ sed -e "s/__BUNDLE_ID__/$BUNDLE_ID/" -e "s/__VERSION__/$VERSION/" -e "s/__BUILD_
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 [[ -f Resources/Icon/Sidefolk.icns ]] && cp Resources/Icon/Sidefolk.icns "$APP/Contents/Resources/Sidefolk.icns"
+[[ -d Resources/Brand/exports ]] && cp -R Resources/Brand/exports "$APP/Contents/Resources/Brand"
+[[ -d Resources/MenuBar ]] && cp -R Resources/MenuBar "$APP/Contents/Resources/MenuBar"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$APP/Contents/Resources/Skills"
 cp THIRD_PARTY_NOTICES.md LICENSE "$APP/Contents/Resources/" 2>/dev/null || true
 [[ -d extensions ]] && cp -R extensions "$APP/Contents/Resources/Extensions"

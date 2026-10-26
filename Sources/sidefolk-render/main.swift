@@ -7,15 +7,30 @@ import UniformTypeIdentifiers
 //
 //   sidefolk-render <outdir>                 contact sheets: states, folks, gaze, menubar, icon
 //   sidefolk-render --icon <dir>             icon-1024.png, Sidefolk.iconset/ and Sidefolk.icns
+//   sidefolk-render --menu-bar <dir>         native template PNGs (1x/2x/3x) and vector PDF
 //   sidefolk-render --live <state> <secs>    a real window, for CPU checks ("cycle" walks every state)
 
-let usage = "usage: sidefolk-render <outdir> | --icon <dir> | --live <state|cycle> <seconds>"
+let usage = "usage: sidefolk-render <outdir> | --icon <dir> | --menu-bar <dir> | --live <state|cycle> <seconds>"
 
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
     switch args.first {
     case "--icon" where args.count == 2:
         Icons.write(to: URL(fileURLWithPath: args[1]))
+    case "--menu-bar" where args.count == 2:
+        let dir = URL(fileURLWithPath: args[1])
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let size = CGSize(width: 18, height: 18)
+            for scale in 1...3 {
+                let suffix = scale == 1 ? "" : "@\(scale)x"
+                save(CharacterRenderer.menuBarTemplate(size: size, scale: CGFloat(scale)),
+                     dir.appendingPathComponent("SidefolkMenuBar\(suffix).png"))
+            }
+            try CharacterRenderer.menuBarPDF(size: size).write(to: dir.appendingPathComponent("SidefolkMenuBar.pdf"))
+        } catch {
+            fatalError("Menu bar asset export failed: \(error)")
+        }
     case "--live" where args.count == 3:
         Live.run(state: args[1], seconds: Double(args[2]) ?? 10)
     case let dir? where !dir.hasPrefix("-"):
@@ -61,7 +76,7 @@ enum Sheets {
         save(sheet(title: "Hit shapes (characterPath) over the art", columns: 10, cell: CGSize(width: 116, height: 132),
                    items: states.map { s in (s.name, { hitImage(s) }) }), dir.appendingPathComponent("hit.png"))
         save(menubarSheet(), dir.appendingPathComponent("menubar.png"))
-        save(CharacterRenderer.appIcon(size: 1024), dir.appendingPathComponent("icon-1024.png"))
+        save(Icons.image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
         save(iconSizes(), dir.appendingPathComponent("icon-sizes.png"))
         print("wrote contact sheets to \(dir.path)")
     }
@@ -136,7 +151,7 @@ enum Sheets {
             label("App icon at its real pixel sizes", at: CGPoint(x: 12, y: 276), size: 12, weight: .semibold)
             var x: CGFloat = 12
             for s in sizes {
-                let image = CharacterRenderer.appIcon(size: s)
+                let image = Icons.image(size: s)
                 context.draw(image, in: CGRect(x: x, y: 12, width: CGFloat(s), height: CGFloat(s)))
                 x += CGFloat(s) + 14
             }
@@ -185,13 +200,29 @@ func save(_ image: CGImage, _ url: URL) {
 
 @MainActor
 enum Icons {
+    /// Contact sheets and re-exports use the production artwork when run from the repository.
+    /// The vector rig remains a fallback for standalone render-tool installations.
+    static func image(size: Int) -> CGImage {
+        let master = URL(fileURLWithPath: "Resources/Icon/icon-1024.png")
+        guard let source = CGImageSourceCreateWithURL(master as CFURL, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            return CharacterRenderer.appIcon(size: size)
+        }
+        let c = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: 0,
+                          space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        c.interpolationQuality = .high
+        c.draw(image, in: CGRect(x: 0, y: 0, width: size, height: size))
+        return c.makeImage()!
+    }
+
     static func write(to dir: URL) {
         let set = dir.appendingPathComponent("Sidefolk.iconset")
         try? FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
-        save(CharacterRenderer.appIcon(size: 1024), dir.appendingPathComponent("icon-1024.png"))
+        save(image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
         for points in [16, 32, 128, 256, 512] {
-            save(CharacterRenderer.appIcon(size: points), set.appendingPathComponent("icon_\(points)x\(points).png"))
-            save(CharacterRenderer.appIcon(size: points * 2), set.appendingPathComponent("icon_\(points)x\(points)@2x.png"))
+            save(image(size: points), set.appendingPathComponent("icon_\(points)x\(points).png"))
+            save(image(size: points * 2), set.appendingPathComponent("icon_\(points)x\(points)@2x.png"))
         }
         let iconutil = Process()
         iconutil.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")

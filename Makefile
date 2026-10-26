@@ -1,4 +1,4 @@
-.PHONY: build test dev app run-dev render clean
+.PHONY: build test dev app run-dev render brand-assets clean
 
 build:
 	swift build
@@ -19,6 +19,11 @@ app:
 
 render:
 	swift run sidefolk-render build/render
+
+brand-assets:
+	swift scripts/brand-assets.swift
+	swift run sidefolk-render --menu-bar Resources/MenuBar
+	swift scripts/brand-preview.swift
 
 clean:
 	rm -rf .build build
