@@ -447,6 +447,17 @@ binary targets or build plugins from dependencies.
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
   step that makes a watcher active.
 
+**T26 Voice: the microphone and a cloud voice (M/M), D34.** The microphone opens only while the
+person holds the talk key or the companion (off until voice input is turned on; macOS asks on the
+first hold), so the orange dot is an honest sign; nothing listens otherwise and there is no wake
+word. Recognition runs on the Mac (SpeechAnalyzer, or the older recognizer forced on device); audio
+is never written anywhere, and the words go through the normal Ask pipeline as the user's own
+request, so Guard, approvals and Undo apply unchanged and voice is never the confirmation for
+anything. Spoken replies with ElevenLabs send the words being said, including reminder and note
+titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Voice, which says so. Its
+key lives in the Keychain bound to that host (as T18), requests are never redirected, and the key is
+removed with everything else. Replies stay silent while another app records and in quiet mode.
+
 ## 3. Extension sandbox profile
 
 Values are passed only as `-D` parameters, never spliced into SBPL. A value of
