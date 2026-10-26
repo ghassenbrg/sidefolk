@@ -87,7 +87,14 @@ final class AppCoordinator {
         }
         statusItem.nowProvider = { [weak self] in await self?.nowEntries() ?? [] }
 
-        KeyboardShortcuts.onKeyUp(for: .ask) { [weak self] in self?.toggleAsk() }
+        // A debug copy must not take ⌘⇧Space from the Sidefolk the developer actually uses (it once
+        // swallowed the founder's typing); SIDEFOLK_DEV_HOTKEY=1 opts in.
+        #if DEBUG
+        let hotkey = ProcessInfo.processInfo.environment["SIDEFOLK_DEV_HOTKEY"] == "1"
+        #else
+        let hotkey = true
+        #endif
+        if hotkey { KeyboardShortcuts.onKeyUp(for: .ask) { [weak self] in self?.toggleAsk() } }
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
