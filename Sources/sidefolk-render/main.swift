@@ -12,10 +12,22 @@ import UniformTypeIdentifiers
 //   sidefolk-render --icon <dir>             icon-macos-1024.png, Sidefolk.iconset/ and Sidefolk.icns
 //   sidefolk-render --menu-bar <dir>         native template PNGs (1x/2x/3x) and vector PDF
 //   sidefolk-render --brand-mascot <dir>     rabbit vector marks in navy and white
-//   sidefolk-render --live <state> <secs> [<id>]
-//                                            a real window, for CPU checks ("cycle" walks every state)
+//   sidefolk-render --antics <dir> [--only <id>]
+//                                            the moments of life: a frame strip per companion and a GIF per moment
+//   sidefolk-render --live <state|cycle|demo> <secs> [<id>] [--liveliness L] [--pace n] [--backdrop] [--film dir]
+//                                            a real window, for CPU checks ("cycle" walks every state, "demo"
+//                                            plays every moment); click, stroke, drag or throw it
+//   sidefolk-render --check-companion <folder>
+//                                            reads a custom companion (species.json + parts) and says what is wrong
+//
+// Wherever an <id> is taken, a custom companion works too: a folder path (companions/miso), or the id
+// of one in $SIDEFOLK_HOME/companions/.
 
-let usage = "usage: sidefolk-render <outdir> [--only <id>] | --icon <dir> | --menu-bar <dir> | --live <state|cycle> <seconds> [<id>]"
+let usage = "usage: sidefolk-render <outdir> [--only <id>] | --icon <dir> | --menu-bar <dir> | --antics <dir> [--only <id>]"
+    + " | --live <state|cycle|demo> <seconds> [<id>] [\(LiveOptions.usage)] | --check-companion <folder>"
+
+// Line by line even into a pipe or a log, so a live run's window id and progress show as they happen.
+setvbuf(stdout, nil, _IOLBF, 0)
 
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
@@ -51,14 +63,22 @@ MainActor.assumeIsolated {
         } catch {
             fatalError("Menu bar asset export failed: \(error)")
         }
-    case "--live" where args.count == 3 || args.count == 4:
-        let id = args.count == 4 ? args[3] : "sidefolk"
-        guard let species = CharacterSpecies(rawValue: id) else { print("no companion called \(id)"); exit(2) }
-        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: CharacterLook(species))
+    case "--live" where args.count >= 3:
+        let hasId = args.count > 3 && !args[3].hasPrefix("--")
+        let who = Companion.named(hasId ? args[3] : "sidefolk")
+        guard let options = LiveOptions(Array(args.dropFirst(hasId ? 4 : 3))) else { print(usage); exit(2) }
+        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: who.look, options: options)
+    case "--antics" where args.count == 2 || (args.count == 4 && args[2] == "--only"):
+        let who = args.count == 4 ? [Companion.named(args[3])] : CharacterSpecies.allCases.map(Companion.init)
+        AnticSheets.write(to: URL(fileURLWithPath: args[1]), looks: who.map { ($0.id, $0.name, $0.look) })
+    case "--check-companion" where args.count == 2:
+        let report = CustomCompanions.load(folder: URL(fileURLWithPath: args[1]))
+        report.errors.forEach { print("error: \($0)") }
+        report.warnings.forEach { print("warning: \($0)") }
+        guard let companion = report.companion else { exit(1) }
+        print("ok: \(companion.name) (\(companion.id)) draws in every state")
     case let dir? where !dir.hasPrefix("-") && (args.count == 1 || (args.count == 3 && args[1] == "--only")):
-        let only = args.count == 3 ? CharacterSpecies(rawValue: args[2]) : nil
-        if args.count == 3, only == nil { print("no companion called \(args[2])"); exit(2) }
-        Sheets.write(to: URL(fileURLWithPath: dir), only: only)
+        Sheets.write(to: URL(fileURLWithPath: dir), only: args.count == 3 ? Companion.named(args[2]) : nil)
     default:
         print(usage)
         exit(2)
@@ -73,11 +93,11 @@ enum Sheets {
     static let paper = NSColor(srgbRed: 0.945, green: 0.953, blue: 0.97, alpha: 1)
     static let ink = NSColor(srgbRed: 0.1, green: 0.13, blue: 0.25, alpha: 1)
 
-    static func write(to dir: URL, only: CharacterSpecies?) {
+    static func write(to dir: URL, only: Companion?) {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         if let only {
             writeCompanion(only, to: dir)
-            print("wrote \(only.rawValue) sheets to \(dir.path)")
+            print("wrote \(only.id) sheets to \(dir.path)")
             return
         }
         let states = CharacterState.gallery
@@ -109,16 +129,16 @@ enum Sheets {
         save(menubarSheet(), dir.appendingPathComponent("menubar.png"))
         save(Icons.image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
         save(iconSizes(), dir.appendingPathComponent("icon-sizes.png"))
-        CharacterSpecies.allCases.forEach { writeCompanion($0, to: dir) }
+        CharacterSpecies.allCases.forEach { writeCompanion(Companion($0), to: dir) }
         print("wrote contact sheets to \(dir.path)")
     }
 
     /// One companion in every state, small with badges, its hit shapes, its gaze, its styles, and
     /// beside its reference art.
-    static func writeCompanion(_ species: CharacterSpecies, to dir: URL) {
-        let look = CharacterLook(species)
+    static func writeCompanion(_ who: Companion, to dir: URL) {
+        let look = who.look
         let states = CharacterState.gallery
-        let name = species.displayName, id = species.rawValue
+        let name = who.name, id = who.id
         func image(_ state: CharacterState, _ side: CGFloat, badges: Set<CharacterBadge> = [], gaze: CGVector? = nil,
                    look: CharacterLook = look) -> CGImage {
             CharacterRenderer.image(state: state, size: CGSize(width: side, height: side), scale: scale, badges: badges, gaze: gaze, look: look)
@@ -139,13 +159,15 @@ enum Sheets {
         let styles = CharacterAccessory.allCases.flatMap { accessory in
             CharacterAccent.allCases.map { color in
                 ("\(color.rawValue) · \(accessory.rawValue)", {
-                    image(.idle, 150, look: CharacterLook(species, style: CharacterStyle(color: color, accessory: accessory)))
+                    var styled = look
+                    styled.style = CharacterStyle(color: color, accessory: accessory)
+                    return image(.idle, 150, look: styled)
                 })
             }
         }
         save(sheet(title: "\(name) styles: colour × what it wears", columns: 4, cell: CGSize(width: 160, height: 176), items: styles),
              dir.appendingPathComponent("companion-\(id)-styles.png"))
-        if let reference = Reference.image(for: species) {
+        if let species = who.species, let reference = Reference.image(for: species) {
             save(compare(name, reference: reference,
                          renders: [CharacterState.idle, .listening, .success, .sleeping].map { ($0.name, image($0, 300)) }),
                  dir.appendingPathComponent("compare-\(id).png"))
@@ -340,65 +362,6 @@ enum Icons {
     }
 }
 
-// MARK: Live harness
-
-@MainActor
-enum Live {
-    static func run(state name: String, seconds: Double, look: CharacterLook) {
-        let app = NSApplication.shared
-        app.setActivationPolicy(.accessory)
-        let window = NSWindow(contentRect: NSRect(x: 40, y: 40, width: 200, height: 200), styleMask: [.borderless],
-                              backing: .buffered, defer: false)
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.level = .floating
-        let view = CharacterView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
-        view.look = look
-        window.contentView = view
-        window.orderFrontRegardless()
-
-        let states = CharacterState.gallery
-        if name == "cycle" {
-            Task { @MainActor in
-                for state in states {
-                    view.state = state
-                    try? await Task.sleep(for: .seconds(1.5))
-                    print("[live] \(state.name): \(animations(in: view.layer)) animations running")
-                }
-            }
-        } else if let state = states.first(where: { $0.name == name }) {
-            view.state = state
-            // Calm states should drop to zero running animations once they settle (D20).
-            Task { @MainActor in
-                for t in stride(from: 5, to: Int(seconds), by: 5) {
-                    try? await Task.sleep(for: .seconds(5))
-                    // Finished one-shots stay attached until the next commit; only "∞" ones keep drawing.
-                    let keys = animationKeys(in: view.layer)
-                    print("[live] \(t)s: \(keys.filter { $0.hasSuffix("∞") }.count) looping \(keys.sorted())")
-                }
-            }
-        }
-        print("[live] pid \(ProcessInfo.processInfo.processIdentifier) showing \(name) for \(seconds)s")
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(seconds))
-            NSApp.terminate(nil)
-        }
-        app.run()
-    }
-
-    /// Animations attached anywhere in the tree: loops should come and go with their state.
-    static func animations(in layer: CALayer?) -> Int { animationKeys(in: layer).count }
-
-    /// Keys of every attached animation, "∞" marking the repeating ones.
-    static func animationKeys(in layer: CALayer?) -> [String] {
-        guard let layer else { return [] }
-        let own = (layer.animationKeys() ?? []).map { key in
-            layer.animation(forKey: key)?.repeatCount == .infinity ? key + "∞" : key
-        }
-        return own + (layer.sublayers ?? []).flatMap { animationKeys(in: $0) }
-    }
-}
-
 // MARK: Reference art
 
 /// The founder's concept renders each companion is drawn after (read from the repository).
@@ -410,5 +373,51 @@ enum Reference {
         }
         guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else { return nil }
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
+    }
+}
+
+// MARK: Who
+
+/// A companion to draw: one of Sidefolk's own, or a custom one made from data.
+struct Companion {
+    var id: String
+    var name: String
+    var look: CharacterLook
+    var species: CharacterSpecies?
+
+    init(_ species: CharacterSpecies) {
+        self.init(id: species.rawValue, name: species.displayName, look: CharacterLook(species), species: species)
+    }
+
+    init(id: String, name: String, look: CharacterLook, species: CharacterSpecies? = nil) {
+        self.id = id
+        self.name = name
+        self.look = look
+        self.species = species
+    }
+
+    /// A built-in id, a custom companion's folder (anything with a "/"), or the id of one in
+    /// $SIDEFOLK_HOME/companions/. Exits with the reasons when it can't be drawn.
+    @MainActor
+    static func named(_ name: String) -> Companion {
+        if let species = CharacterSpecies(rawValue: name) { return Companion(species) }
+        let report: CompanionReport?
+        if name.contains("/") {
+            report = CustomCompanions.load(folder: URL(fileURLWithPath: name))
+        } else if let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"] {
+            report = CustomCompanions.loadAll(home: URL(fileURLWithPath: home)).first { $0.companion?.id == name || $0.folder.lastPathComponent == name }
+        } else {
+            report = nil
+        }
+        guard let report else {
+            print("no companion called \(name) (custom ones: a folder path, or an id in $SIDEFOLK_HOME/companions)")
+            exit(2)
+        }
+        guard let custom = report.companion else {
+            report.errors.forEach { print("error: \($0)") }
+            exit(2)
+        }
+        report.warnings.forEach { print("warning: \($0)") }
+        return Companion(id: custom.id, name: custom.name, look: CharacterLook(custom: custom))
     }
 }

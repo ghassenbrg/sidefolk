@@ -75,6 +75,21 @@ enum Layers {
         return layer
     }
 
+    /// What `layer`'s subtree draws, in `space` coordinates (model values: the pose at rest):
+    /// shapes by their paths, gradients by their frames; hidden and transparent parts left out.
+    static func visibleBounds(_ layer: CALayer, in space: CALayer) -> CGRect {
+        guard !layer.isHidden, layer.opacity > 0.01 else { return .null }
+        var box = CGRect.null
+        if let shape = layer as? CAShapeLayer, let path = shape.path, shape.fillColor != nil || shape.strokeColor != nil {
+            let half = shape.strokeColor == nil ? 0 : shape.lineWidth / 2
+            box = layer.convert(path.boundingBoxOfPath.insetBy(dx: -half, dy: -half), to: space)
+        } else if layer is CAGradientLayer || layer.contents != nil {
+            box = layer.convert(layer.bounds, to: space)
+        }
+        for sublayer in layer.sublayers ?? [] { box = box.union(visibleBounds(sublayer, in: space)) }
+        return box
+    }
+
     /// Sets contentsScale through a subtree so vector content stays crisp at the drawn size.
     static func setContentsScale(_ scale: CGFloat, in layer: CALayer) {
         layer.contentsScale = scale

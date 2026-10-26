@@ -37,6 +37,9 @@ final class SoftRig: Figure {
     /// Ears and sprouts behind the head, and the head itself: both turn the same way.
     private let crown: CALayer
     private let head: CALayer
+    /// Inside each: tilts and nods of antics, around the neck (gaze owns the outer transform).
+    private let crownTilt: CALayer
+    private let headTilt: CALayer
     /// Eyes, brows and mouth; gaze slides this a little further than the head (parallax).
     private let face: CALayer
     private let eyes = Layers.canvas()
@@ -65,6 +68,8 @@ final class SoftRig: Figure {
         let neck = species.neck
         crown = Layers.canvas(anchor: neck)
         head = Layers.canvas(anchor: neck)
+        crownTilt = Layers.canvas(anchor: neck)
+        headTilt = Layers.canvas(anchor: neck)
         face = Layers.canvas(anchor: neck)
         let (eyeL, eyeR) = species.face.eyes
         blink = Layers.canvas(anchor: pt(100, (eyeL.y + eyeR.y) / 2))
@@ -117,15 +122,17 @@ final class SoftRig: Figure {
             breath.addSublayer(layer)
         }
 
-        crown.addSublayer(backGear)
-        appendages.forEach { crown.addSublayer($0.root) }
+        crown.addSublayer(crownTilt)
+        crownTilt.addSublayer(backGear)
+        appendages.forEach { crownTilt.addSublayer($0.root) }
         breath.addSublayer(crown)
         breath.addSublayer(soft(species.torso, shadow: 5))
         breath.addSublayer(bodyGear)
         breath.addSublayer(wardrobe)
 
-        if let shape = species.head { head.addSublayer(soft(shape, shadow: 4)) }
-        head.addSublayer(face)
+        head.addSublayer(headTilt)
+        if let shape = species.head { headTilt.addSublayer(soft(shape, shadow: 4)) }
+        headTilt.addSublayer(face)
         face.addSublayer(faceGesture)
         if case .screen(let rect, let radius) = species.face.kind { faceGesture.addSublayer(Self.screen(rect, radius)) }
         if species.face.cheeks {
@@ -143,10 +150,10 @@ final class SoftRig: Figure {
         scan.addSublayer(mouthMark.layer)
         if let nose = species.face.nose {
             scan.addSublayer(Layers.shape(Paths.ellipse(pt(nose.midX, nose.midY), nose.width / 2, nose.height / 2),
-                                          fill: Palette.eyeInk.cg()))
+                                          fill: (species.face.noseColor ?? Palette.eyeInk).cg()))
         }
         faceGesture.addSublayer(faceGear)
-        head.addSublayer(headGear)
+        headTilt.addSublayer(headGear)
         breath.addSublayer(head)
 
         if let item = species.held {
@@ -242,7 +249,8 @@ final class SoftRig: Figure {
     // MARK: Posing
 
     func apply(_ next: Pose, _ transit: Transit) {
-        let moved = transit.isInstant ? false : next != pose
+        // Only a new pose jolts the ears; a face changing for a moment (an ease) doesn't.
+        let moved = transit.isSpring && next != pose
         pose = next
         let bodyTransform = CGAffineTransform(translationX: next.shift, y: next.lift)
             .rotated(by: next.lean)
@@ -251,11 +259,10 @@ final class SoftRig: Figure {
         armL.raise(next.armL, side: -1, transit)
         armR.raise(next.armR, side: 1, transit)
 
-        let drop = next.feetDangle
         for (i, foot) in feet.enumerated() {
-            let side: CGFloat = i == 0 ? -1 : 1
-            Motion.set(foot, "transform", Motion.transform(
-                CGAffineTransform(translationX: side * drop * 1.5, y: -drop * 4).rotated(by: side * drop * 0.35)), transit)
+            Motion.set(foot, "transform", Motion.transform(Feet.transform(next, side: i == 0 ? -1 : 1)), transit)
+            // Sitting, the feet come forward: in front of the belly instead of under it.
+            foot.zPosition = next.feetSplay > 0.5 ? 1 : 0
         }
 
         let faceTransit: Transit = transit.isInstant ? .instant : .ease(0.22)
@@ -338,6 +345,27 @@ final class SoftRig: Figure {
         case .lookAround: appendages.forEach { $0.swing(0.12, duration: 2.2) }
         case .blink: break
         }
+    }
+
+    // MARK: Antics
+
+    func movers(_ part: Part) -> [Mover] {
+        switch part {
+        case .body: [Mover(layer: gesture)]
+        case .face: [Mover(layer: faceGesture)]
+        case .eyes: [Mover(layer: scan)]
+        case .head: [Mover(layer: headTilt), Mover(layer: crownTilt)]
+        case .armL: [Mover(layer: armL.loop, turn: -1)]
+        case .armR: [Mover(layer: armR.loop, turn: 1)]
+        // "Outward" turns a left ear counterclockwise; floppy ears follow more than stiff antennae.
+        case .earL: appendages.filter { $0.spec.side < 0 }.map { Mover(layer: $0.trail, turn: $0.spec.floppiness) }
+        case .earR: appendages.filter { $0.spec.side > 0 }.map { Mover(layer: $0.trail, turn: -$0.spec.floppiness) }
+        }
+    }
+
+    func express(_ mood: Mood, on pose: Pose, mirrored: Bool) -> Pose {
+        let ink = if case .ink = species.face.kind { true } else { false }
+        return Moods.apply(mood, to: pose, ink: ink, scale: species.face.scale, mirrored: mirrored)
     }
 
     // MARK: Hit testing

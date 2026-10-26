@@ -1,0 +1,39 @@
+{
+  "format": 1,
+  "sidefolk": ">=0.1",
+  "id": "miso",
+  "name": "Miso",
+  "description": "A cream cat with a bell, made from the template: pointed ears, a pink nose and a tail.",
+  "author": "Sidefolk",
+  "body": {
+    "colors": ["#FFFFFF", "#FFF8EF", "#F8EADB", "#EBD5C0", "#DBC0A6"],
+    "edge": "#CDB49C",
+    "torso": { "roundish": { "center": [100, 46], "size": [70, 44], "top": 0.86, "squareness": 2 } },
+    "head": { "roundish": { "center": [100, 99], "size": [98, 74], "top": 0.92, "squareness": 2.3 } },
+    "neck": [100, 66],
+    "scale": 0.95
+  },
+  "feet": { "at": [[86, 27], [114, 27]], "size": [26, 15] },
+  "arms": {
+    "shoulders": [[71, 57], [129, 57]],
+    "shape": { "ellipse": { "center": [0, -9], "radius": [6.5, 11.5] } }
+  },
+  "face": {
+    "eyes": [[79, 95], [121, 95]],
+    "mouth": [100, 84.5],
+    "nose": { "center": [100, 90], "size": [6.5, 4], "color": "#EE8E8E" },
+    "scale": 1.1,
+    "cheeks": true,
+    "temper": "smiling"
+  },
+  "ears": [
+    { "part": "parts/ear.svg", "base": [77, 126], "angle": 0.34, "side": "left", "floppiness": 0.3 },
+    { "part": "parts/ear.svg", "base": [123, 126], "angle": -0.34, "side": "right", "floppiness": 0.3 }
+  ],
+  "gear": [
+    { "part": "parts/tail.svg", "mount": "back" },
+    { "part": "parts/bell.svg", "mount": "body" }
+  ],
+  "collar": { "center": [100, 64], "halfWidth": 31, "sag": 4.5, "height": 17, "tail": 1.4 },
+  "marks": { "zzz": [-18, 12], "dots": [20, -16], "question": [6, 0], "exclaim": [6, 0] }
+}

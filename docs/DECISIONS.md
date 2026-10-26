@@ -906,3 +906,28 @@ for Codex*: it works, but Codex documents `$CODEX_HOME/skills` and Sidefolk alre
 folders and Codex's hooks file. `SessionTracker` treats `PermissionRequest` as "needs you". Live checks:
 `SIDEFOLK_LIVE_CODEX=1` / `SIDEFOLK_LIVE_CLAUDE=1` run `LiveAgentsTests` (each CLI, with only this test's
 Sidefolk configured, lists the tools and calls `status`).
+
+### D43 — Companions with a life of their own; custom companions as data (2026-10-27)
+**Decision:** the shared `Director` plays **moments** (one-shot bits of life written as data:
+tracks on identity layers plus face and gaze beats, fitted to each body so nothing leaves the
+window), **postures** (sit, then lie down) and **reactions** (boop, pet, drop, throw, startle on
+news, cheer when done), chosen by an idle scheduler that holds still while the person types, skips
+its turn while the companion speaks, and is sleepier at night. A **Liveliness** setting: Minimal
+(today's companion, D20 unchanged), Balanced (the default: a moment every 28–65 s) and Lively (every
+10–26 s, more kinds, eyes on the pointer across the screen); at every level the loops settle 20 s
+after anything happens. Reduce Motion starts nothing on its own. **Custom companions** are a folder
+with `species.json` and SVG parts, read strictly as data (never code), checked to draw inside the
+window in every state, loaded from `companions/` in the Sidefolk home and from installed extensions,
+listed under "Made by you".
+**Why:** the founder found the companions doll-like; life comes from small self-initiated moments,
+attention, weight and time, all of which fit the vector engine at near-zero idle cost: the companion's
+own process stays near 0.05% of a core at every level, WindowServer pays only while something moves
+(about 0.5% of a core on average in Balanced, 1.2% in Lively; docs/research/lively-companions.md).
+Data companions reuse the `Species` path D30 made, without a code path or a sandbox.
+**Alternatives:** constant idle loops (D20's measured cost); Rive/Lottie (an art pipeline and a
+runtime, and they lose props and data species); **3D** in SceneKit/RealityKit, tried as a spike and
+dropped (a GPU frame for every moving frame, a cost even when hidden, and a modelling pipeline we
+don't have); walking across the screen (later); sound (designed with voice, opt-in, later).
+**Implications:** `AppSettings.liveliness` (default Balanced) and `customCompanion`; Settings ›
+Companion gains Liveliness and "Made by you"; the companion window answers clicks, strokes and throws;
+`sidefolk-render --live`, `--antics` and `--check-companion` review it.

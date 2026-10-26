@@ -45,6 +45,18 @@ release build 0.1.0 (379) made and verified; launch screenshots refreshed.
 - **Fixes from the founder's use:** Open session brings Claude's desktop app forward (its Claude Code
   runs from a background-only bundle) or says why it can't; bubbles lost a gritty window shadow; an
   answer that ends with a question offers Reply; Settings › Agents shows each agent's own mark.
+- **Lively companions (D43, merged 2026-10-27):** the companions have a life of their own on the
+  shared Director: 17 moments as data (ear twitch, stretch, yawn, scratch, hop, wiggle, peek, glance,
+  sneeze, double take; boop, pet, startle, cheer, land, spin, dizzy), fitted to each body so nothing
+  leaves the window; sit and lie-down postures; an idle scheduler that holds still while the person
+  types, skips its turn while the companion speaks and is sleepier at night; petting by stroking,
+  throwing with a short flight. Settings › Companion › Liveliness: Minimal (today's companion),
+  Balanced (default), Lively; Reduce Motion starts nothing on its own. Custom companions as data
+  (`species.json` + SVG parts, strict, never run) from `<home>/companions/` and installed extensions,
+  "Made by you" in Settings, `companions/template/` and Miso (a cat) as examples. The 3D spike was
+  dropped. *Checked:* every moment of every companion rendered inside its window (tests), release
+  CPU runs and films (`scripts/lively-poc/`), docs/research/lively-companions.md; not yet a day in
+  the real app.
 - **Production review (2026-10-27):**
   - *Design (D40):* with no AI chosen, the Ask panel offers the Claude Code or Codex this Mac is signed
     in to (one click picks it and asks again); built-in calls read as sentences ("Clone … into
@@ -273,10 +285,7 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   `sidefolk status` answers, idle measured (see above).
 
 ## In progress
-- **Lively companions:** a proof of concept on the branch `poc/lively-companions` (moments,
-  postures, an idle scheduler, Liveliness Minimal/Balanced/Lively, custom companions as data, a 3D
-  spike); waiting for the founder's decision. Its write-up is docs/research/lively-companions.md on
-  that branch.
+Nothing.
 
 ## Known issues / not yet verified
 - **Not yet tried by hand with the real thing:** the microphone (its permission prompt, hold to talk,

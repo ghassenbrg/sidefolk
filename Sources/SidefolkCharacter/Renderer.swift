@@ -5,13 +5,34 @@ public enum CharacterRenderer {
     /// A still frame of `state`, centered and scaled to fit `size` (points) at `scale` pixels per point.
     @MainActor
     public static func image(state: CharacterState, size: CGSize, scale: CGFloat, badges: Set<CharacterBadge> = [],
-                             gaze: CGVector? = nil, look: CharacterLook = CharacterLook(.sidefolk)) -> CGImage {
+                             gaze: CGVector? = nil, look: CharacterLook = CharacterLook(.sidefolk),
+                             posture: CharacterPosture = .stand) -> CGImage {
         let director = Director(look, live: false)
         director.show(state, animated: false)
+        director.setPosture(posture, animated: false)
         director.setBadges(badges, animated: false)
         director.setGaze(gaze)
         return render(director.stage, canvas: Canvas.size, size: size, scale: scale)
     }
+
+    /// A moment as `count` still frames, evenly spaced from its start to its end (the same numbers
+    /// the live animation plays; face changes cut instead of easing).
+    @MainActor
+    public static func frames(of antic: CharacterAntic, count: Int, size: CGSize, scale: CGFloat,
+                              look: CharacterLook = CharacterLook(.sidefolk), state: CharacterState = .idle,
+                              posture: CharacterPosture = .stand, mirrored: Bool = false) -> [CGImage] {
+        let director = Director(look, live: false)
+        director.show(state, animated: false)
+        director.setPosture(posture, animated: false)
+        let moment = mirrored ? Antics.make(antic).flipped : Antics.make(antic)
+        return (0..<count).map { i in
+            director.hold(moment, at: Double(i) / Double(max(count - 1, 1)))
+            return render(director.stage, canvas: Canvas.size, size: size, scale: scale)
+        }
+    }
+
+    /// How long a moment plays, in seconds.
+    public static func duration(of antic: CharacterAntic) -> TimeInterval { Antics.make(antic).duration }
 
     @MainActor
     public static func folkImage(_ folk: Folk, size: CGSize, scale: CGFloat) -> CGImage {

@@ -47,6 +47,12 @@ struct Stroke: Equatable, Sendable {
         Stroke(points: Array(repeating: .zero, count: 7), width: diameter)
     }
 
+    /// A hollow ring, two half circles from the top round to the top again: dizzy eyes.
+    static func ring(radius r: CGFloat, width: CGFloat) -> Stroke {
+        let k = r * 4 / 3
+        return Stroke(points: [pt(0, r), pt(k, r), pt(k, -r), pt(0, -r), pt(-k, -r), pt(-k, r), pt(0, r)], width: width)
+    }
+
     /// Upright capsule of the given outer size.
     static func pill(width: CGFloat, height: CGFloat) -> Stroke {
         let half = max(height - width, 0) / 2

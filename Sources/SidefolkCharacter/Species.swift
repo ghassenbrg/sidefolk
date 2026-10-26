@@ -37,12 +37,13 @@ struct Species {
     var scale: CGFloat = 1
 
     /// The robot is its own rig; every other companion is a soft rig of its species.
-    static func figure(for species: CharacterSpecies) -> any Figure {
-        switch species {
+    static func figure(for look: CharacterLook) -> any Figure {
+        if let custom = look.custom { return SoftRig(Species(custom)) }
+        return switch look.species {
         case .sidefolk: RobotRig()
         case .mochi: SoftRig(mochi)
         case .spark: SoftRig(spark)
-        default: SoftRig(folk(species.folk!))
+        default: SoftRig(folk(look.species.folk!))
         }
     }
 }
@@ -66,6 +67,8 @@ struct SoftFace {
     var cheeks: Bool = false
     /// How it looks at rest: eyes and mouth for idle and the calm states.
     var temper: Temper = .calm
+    /// The nose's colour when it isn't the eyes' ink (a custom companion's pink nose).
+    var noseColor: RGB?
 }
 
 /// Resting expressions, from the folks' personalities.

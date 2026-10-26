@@ -60,6 +60,7 @@ final class AppCoordinator {
     }
 
     func start() async {
+        CompanionArt.reloadMade()
         let s = runtime.settings.current
         askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44),
                                       hotkey: hotkeyLabel)
@@ -182,6 +183,7 @@ final class AppCoordinator {
         let s = runtime.settings.current
         companion.eyesFollowPointer = s.eyesFollowPointer
         companion.apply(size: s.size, reducedMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        companion.character.liveliness = CompanionArt.liveliness(s.liveliness)
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)

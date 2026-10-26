@@ -6,6 +6,8 @@ import QuartzCore
 final class Director {
     let rig: any Figure
     let species: CharacterSpecies
+    /// Who it is (`CharacterLook.identity`): a built-in companion or a custom one.
+    let identity: String
     var stage: CALayer { rig.stage }
     var restingFrame: CGRect { rig.restingFrame }
 
@@ -22,7 +24,7 @@ final class Director {
     private let effects: Effects
     private let badgeChips: Badges
     /// False for offscreen renders: no animation of any kind is added.
-    private let live: Bool
+    let live: Bool
 
     private(set) var state: CharacterState = .idle
     private(set) var look = Look()
@@ -32,8 +34,22 @@ final class Director {
     /// Calm states stop their loops after a while so the window server can rest (blinks continue).
     private var settleTimer: Timer?
     /// Hidden or fully covered: no loops at all.
-    private var paused = false
+    private(set) var paused = false
     static let settleAfter: TimeInterval = 20
+
+    /// How it holds itself while idle (other states stand).
+    var posture = CharacterPosture.stand
+    /// The moment playing now, its beat timers and the layers it moves.
+    var antic: (name: CharacterAntic?, antic: Antic)?
+    var anticTimers: [Timer] = []
+    var anticLayers: [CALayer] = []
+    /// The latest beat of the moment that has played (0...1 of it).
+    var firedBeat: Double?
+    /// Its voice is playing: nothing starts on its own meanwhile.
+    private(set) var speaking = false
+    /// Where the host (the pointer) wants the eyes, and where a moment has them instead.
+    var hostGaze: CGVector?
+    var anticLook: CGVector?
 
     var reducedMotion = false {
         didSet { if oldValue != reducedMotion { refreshMotion() } }
@@ -50,8 +66,9 @@ final class Director {
     init(_ look: CharacterLook, live: Bool) {
         self.live = live
         species = look.species
+        identity = look.identity
         style = look.style
-        let rig = Species.figure(for: look.species)
+        let rig = Species.figure(for: look)
         rig.dress(look.style)
         self.rig = rig
         effects = Effects(stage: rig.stageFX, body: rig.bodyFX, offset: { [unowned rig] in rig.markOffset($0) })
@@ -66,13 +83,19 @@ final class Director {
         let previous = state
         state = next
         look = rig.look(for: next)
+        if next != .idle { posture = .stand }
         let animate = animated && live
         if animate && reducedMotion { crossfade(rig.stage) }
         let transit: Transit = animate && !reducedMotion ? .spring : .instant
 
+        // A new state ends any moment (its pose replaces the moment's face), except a quick answer
+        // to the person going into a calm state: a boop plays on while the Ask panel opens.
+        if !(animate && antic?.antic.snappy == true && Self.settles(next)) {
+            cancelAntic(smooth: animate && !reducedMotion, restoreFace: false)
+        }
         stopLoops(smooth: animate && !reducedMotion)
         setProp(look.prop, animated: animate)
-        rig.apply(look.pose, transit)
+        rig.apply(restPose, transit)
         effects.show(look.effects, animated: animate, moving: moving)
         startLoops()
         sharpen()
@@ -80,6 +103,9 @@ final class Director {
     }
 
     func setGaze(_ gaze: CGVector?) {
+        hostGaze = gaze
+        // A moment looking somewhere keeps its eyes there until it ends.
+        guard anticLook == nil else { return }
         rig.setGaze(gaze, live ? .ease(0.32) : .instant)
     }
 
@@ -146,6 +172,7 @@ final class Director {
     /// closes it. Nothing repeats on its own: each level the player reports is one short ease, so the
     /// mouth stops the moment the audio does. Reduced motion holds it half open instead of moving.
     func speak(_ level: CGFloat?) {
+        speaking = level != nil
         let transit: Transit = live && !reducedMotion ? .ease(level == nil ? 0.14 : 0.07) : .instant
         rig.talk(level.map { reducedMotion ? 0.5 : min(1, max(0, $0)) }, transit)
     }
@@ -218,6 +245,7 @@ final class Director {
         if hidden {
             settleTimer?.invalidate()
             settleTimer = nil
+            cancelAntic(smooth: false)
             stopLoops(smooth: false)
         } else {
             startLoops()
@@ -227,17 +255,26 @@ final class Director {
     /// Removes the running loops. When `smooth`, layers glide from where the loop left them
     /// back to rest instead of snapping (e.g. landing from a mid-air celebration hop).
     private func stopLoops(smooth: Bool) {
-        var snapshots: [(CALayer, String, Any)] = []
-        if smooth {
-            var seen = Set<ObjectIdentifier>()
-            for layer in loops.map(\.layer) where seen.insert(ObjectIdentifier(layer)).inserted {
-                guard let shown = layer.presentation() else { continue }
-                snapshots.append((layer, "transform", NSValue(caTransform3D: shown.transform)))
-                snapshots.append((layer, "opacity", shown.opacity))
-            }
-        }
+        let snapshots = smooth ? Self.snapshot(loops.map(\.layer)) : []
         loops.forEach { $0.layer.removeAnimation(forKey: $0.key) }
         loops = []
+        Self.glide(snapshots)
+    }
+
+    /// What `layers` show on screen now (transform and opacity), to glide back from.
+    static func snapshot(_ layers: [CALayer]) -> [(CALayer, String, Any)] {
+        var snapshots: [(CALayer, String, Any)] = []
+        var seen = Set<ObjectIdentifier>()
+        for layer in layers where seen.insert(ObjectIdentifier(layer)).inserted {
+            guard let shown = layer.presentation() else { continue }
+            snapshots.append((layer, "transform", NSValue(caTransform3D: shown.transform)))
+            snapshots.append((layer, "opacity", shown.opacity))
+        }
+        return snapshots
+    }
+
+    /// Eases each layer from where it was shown back to its model value.
+    static func glide(_ snapshots: [(CALayer, String, Any)]) {
         for (layer, keyPath, from) in snapshots {
             guard let model = layer.value(forKeyPath: keyPath), !(model as AnyObject).isEqual(from) else { continue }
             let settle = CABasicAnimation(keyPath: keyPath)
@@ -268,11 +305,11 @@ final class Director {
         sharpen()
     }
 
-    private func sharpen() {
+    func sharpen() {
         if live { Layers.setContentsScale(contentsScale, in: rig.stage) }
     }
 
-    private func crossfade(_ layer: CALayer) {
+    func crossfade(_ layer: CALayer) {
         let transition = CATransition()
         transition.type = .fade
         transition.duration = 0.2

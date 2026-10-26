@@ -29,7 +29,7 @@ public final class CharacterView: NSView {
     public var look = CharacterLook(.sidefolk) {
         didSet {
             guard look != oldValue else { return }
-            if look.species == director.species {
+            if look.identity == director.identity {
                 director.style = look.style
             } else {
                 replaceDirector()
@@ -52,11 +52,14 @@ public final class CharacterView: NSView {
         guard state != director.state else { return }
         director.show(state, animated: animated && window != nil)
         scheduleBlink()
+        life?.noteInteraction()
+        life?.refresh()
     }
 
     public func play(_ gesture: CharacterGesture) {
         director.wake()
         director.play(gesture)
+        life?.noteInteraction()
     }
 
     /// Breathing resumes for a while (e.g. the pointer came close); calm states settle again later.
@@ -69,8 +72,9 @@ public final class CharacterView: NSView {
     }
 
     /// Look direction, each axis -1...1 (x right, y up); nil looks straight ahead.
-    /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy.
-    public func setGaze(_ vector: CGVector?) {
+    /// Tiny changes are ignored so pointer jitter doesn't keep the eyes busy. A look normally wakes
+    /// the breathing (something is near); `wakes: false` for a faint look at something far away.
+    public func setGaze(_ vector: CGVector?, wakes: Bool = true) {
         let next = vector.map { CGVector(dx: max(-1, min(1, $0.dx)), dy: max(-1, min(1, $0.dy))) }
         switch (gaze, next) {
         case (nil, nil): return
@@ -78,14 +82,123 @@ public final class CharacterView: NSView {
         default: break
         }
         gaze = next
-        if next != nil { director.wake() }
+        if next != nil, wakes { director.wake() }
         director.setGaze(next)
     }
 
-    /// No bobbing, hopping or sways; state changes crossfade; blinks become a quick fade.
-    /// Starts from the system's Reduce Motion setting.
+    /// No bobbing, hopping or sways; state changes crossfade; blinks become a quick fade; moments
+    /// show only their faces and nothing starts on its own. Starts from the system's Reduce Motion setting.
     public var reducedMotion: Bool = false {
-        didSet { director.reducedMotion = reducedMotion }
+        didSet {
+            director.reducedMotion = reducedMotion
+            life?.refresh()
+        }
+    }
+
+    // MARK: Life (docs/research/lively-companions.md)
+
+    /// How much it does on its own. `.minimal` is the companion of D20; see `Liveliness`.
+    public var liveliness: Liveliness = .minimal {
+        didSet { if liveliness != oldValue { applyLiveliness() } }
+    }
+
+    /// Whether a notification startles it and finished work makes it cheer (the host asks).
+    public var reactsToNews: Bool { liveliness.profile.newsReactions && !reducedMotion }
+
+    /// Standing, sitting or lying down (idle only; any other state stands).
+    public var posture: CharacterPosture { director.posture }
+
+    public func setPosture(_ posture: CharacterPosture, animated: Bool) {
+        director.setPosture(posture, animated: animated && window != nil)
+    }
+
+    /// The moment playing now, if any.
+    public var performing: CharacterAntic? { director.performing }
+
+    /// Plays a moment now (an answer to the person or the news, or a demo). `toward`, a screen
+    /// point, aims a peek or a glance and picks the side it leans to.
+    public func perform(_ antic: CharacterAntic, toward target: NSPoint? = nil) {
+        perform(antic, toward: target, byItself: false)
+    }
+
+    /// Something happened to the companion (the pointer came close, a click, a drag): the quiet
+    /// clock restarts and, sitting or lying down, it gets up (stretching after lying down).
+    public func noteInteraction() {
+        life?.noteInteraction()
+        guard director.posture != .stand, state == .idle else { return }
+        let wasLying = director.posture == .lie
+        director.setPosture(.stand, animated: window != nil)
+        if wasLying { perform(.stretch, toward: nil, byItself: true) }
+    }
+
+    /// The pointer moved, in screen coordinates: stroking the companion pets it. Hosts call this
+    /// from their pointer monitor; away from the companion it costs a rectangle test.
+    public func pointerMoved(toScreen point: NSPoint) {
+        guard let window else { return }
+        let local = convert(window.convertPoint(fromScreen: point), from: nil)
+        let inside = bounds.contains(local) && characterPath.contains(local)
+        guard inside || stroking else { return }
+        stroking = inside
+        guard petting.add(local, inside: inside, at: CACurrentMediaTime()), Self.pettable(state), performing != .pet else { return }
+        noteInteraction()
+        // It leans into the hand: toward the side being stroked.
+        let moment = Antics.pet
+        director.perform(local.x > characterFrame.midX ? moment.flipped : moment, name: .pet)
+    }
+
+    /// Runs the idle scheduler's clock this many times faster: demos and the render tool only.
+    public var lifePace: Double = 1 {
+        didSet { life?.pace = lifePace }
+    }
+
+    private var life: Life?
+    private var petting = PettingDetector()
+    private var stroking = false
+    /// What it senses of the desk (tests swap it).
+    var surroundings: any Surroundings = Desktop()
+
+    var isOnScreen: Bool { window?.occlusionState.contains(.visible) == true }
+    var isSpeaking: Bool { director.speaking }
+
+    static func pettable(_ state: CharacterState) -> Bool { state == .idle || state == .sleeping || state == .listening }
+
+    func perform(_ antic: CharacterAntic, toward target: NSPoint?, byItself: Bool) {
+        guard window != nil else { return }
+        if !byItself { noteInteraction() }
+        var moment = Antics.make(antic)
+        if let target, let aim = gaze(toward: target) {
+            // Lean and look toward the target; the moment's looks become that exact direction.
+            if aim.dx < 0 { moment = moment.flipped }
+            moment.looks = moment.looks.map { ($0.at, $0.look == nil ? nil : aim) }
+        } else if byItself, Bool.random() {
+            moment = moment.flipped
+        }
+        director.perform(moment, name: antic)
+    }
+
+    /// The look direction (-1...1) from the companion toward a screen point.
+    private func gaze(toward point: NSPoint) -> CGVector? {
+        guard let window else { return nil }
+        let center = window.convertToScreen(convert(characterFrame, to: nil))
+        let dx = (point.x - center.midX) / 260, dy = (point.y - center.midY) / 260
+        return CGVector(dx: max(-1, min(1, dx)), dy: max(-1, min(1, dy)))
+    }
+
+    private func applyLiveliness() {
+        let profile = liveliness.profile
+        guard profile.every != nil else {
+            life?.stop()
+            life = nil
+            setPosture(.stand, animated: true)
+            return
+        }
+        if let life {
+            life.profile = profile
+        } else {
+            life = Life(profile: profile, view: self, senses: surroundings)
+            life?.pace = lifePace
+        }
+        life?.refresh()
     }
 
     public var badges: Set<CharacterBadge> = [] {
@@ -157,6 +270,7 @@ public final class CharacterView: NSView {
         super.viewDidMoveToWindow()
         placeStage()
         scheduleBlink()
+        life?.refresh()
         occlusionObserver.map(NotificationCenter.default.removeObserver)
         occlusionObserver = nil
         guard let window else { return }
@@ -166,6 +280,7 @@ public final class CharacterView: NSView {
             MainActor.assumeIsolated {
                 guard let self, let window = self.window else { return }
                 self.director.setPaused(!window.occlusionState.contains(.visible))
+                self.life?.refresh()
             }
         }
     }
