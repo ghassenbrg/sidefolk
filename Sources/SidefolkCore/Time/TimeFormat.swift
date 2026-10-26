@@ -51,6 +51,7 @@ public enum TimeFormat {
     public static func recurrence(_ r: Recurrence, calendar: Calendar) -> String {
         let n = r.interval
         switch r.frequency {
+        case .minutely: return n == 1 ? String(localized: "every minute") : String(localized: "every \(n) minutes")
         case .hourly: return n == 1 ? String(localized: "every hour") : String(localized: "every \(n) hours")
         case .daily: return n == 1 ? String(localized: "every day") : String(localized: "every \(n) days")
         case .weekdays: return String(localized: "every weekday")
@@ -64,11 +65,34 @@ public enum TimeFormat {
         }
     }
 
+    /// "every 10 minutes until 18:00", "every day until Fri", "every hour until Tomorrow 12:00": the rule with
+    /// its end, when it has one.
+    public static func recurrence(_ r: Recurrence, now: Date, calendar: Calendar) -> String {
+        let rule = recurrence(r, calendar: calendar)
+        guard let end = r.until else { return rule }
+        return String(localized: "\(rule) until \(moment(end, now: now, calendar: calendar))",
+                      comment: "A repeat, then when it stops: “every 10 minutes until 18:00”, “every day until Fri”")
+    }
+
+    /// The same in English, for text a model reads, with the end in full.
+    public static func recurrenceForModel(_ r: Recurrence, calendar: Calendar) -> String {
+        let rule = recurrenceForModel(r)
+        return r.until.map { "\(rule) until \(full($0, calendar: calendar))" } ?? rule
+    }
+
+    /// A moment as briefly as it stays clear: "18:00" today, "Fri" for the end of a day, else "Tomorrow 12:00".
+    public static func moment(_ date: Date, now: Date, calendar: Calendar) -> String {
+        if calendar.isDate(date, inSameDayAs: now) { return clock(date, calendar: calendar) }
+        let c = calendar.dateComponents([.hour, .minute], from: date)
+        return c.hour == 23 && c.minute == 59 ? day(date, now: now, calendar: calendar) : when(date, now: now, calendar: calendar)
+    }
+
     /// The same in English, for text a model reads.
     public static func recurrenceForModel(_ r: Recurrence) -> String {
         let n = r.interval
         func every(_ unit: String) -> String { n == 1 ? "every \(unit)" : "every \(n) \(unit)s" }
         switch r.frequency {
+        case .minutely: return every("minute")
         case .hourly: return every("hour")
         case .daily: return every("day")
         case .weekdays: return "every weekday"

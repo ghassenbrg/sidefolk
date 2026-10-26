@@ -38,16 +38,20 @@ public struct IntentParser: Sendable {
         self.init(when: WhenParser(calendar: calendar, morningHour: morningHour, afternoonHour: afternoonHour, eveningHour: eveningHour), home: home)
     }
 
-    /// - Parameter knownCollections: names of the user's notebook collections, so "ideas for Sidefolk" can tell a collection from a search word.
-    public func parse(_ text: String, now: Date, knownCollections: [String] = []) -> ParsedIntent? {
+    /// - Parameters:
+    ///   - knownCollections: names of the user's notebook collections, so "ideas for Sidefolk" can tell a collection from a search word.
+    ///   - watching: what is being watched or reported, so "stop the Fukuoka temperature" can name one.
+    public func parse(_ text: String, now: Date, knownCollections: [String] = [], watching: [WatchName] = []) -> ParsedIntent? {
         guard let p = prepare(text) else { return nil }
-        let ctx = Context(now: now, known: knownCollections)
-        return quiet(p.command, ctx) ?? watch(p.command, ctx) ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
+        let ctx = Context(now: now, known: knownCollections, watching: watching)
+        return quiet(p.command, ctx) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? watch(p.command, ctx)
+            ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
     }
 
     struct Context {
         let now: Date
         let known: [String]
+        var watching: [WatchName] = []
     }
 
     // MARK: Cleaning the text
@@ -145,7 +149,8 @@ public struct IntentParser: Sendable {
     private static let remindLead = IntentPattern(
         #"(?:(?<strong>(?:set|create|add|make|schedule|new)\s+(?:me\s+)?(?:an?\s+|another\s+|the\s+)?(?:(?:urgent|important)\s+)?reminder(?:\s+for\s+me)?|remind\s+(?:me|myself)|reminder(?=\s*[:\-–—]|\s+(?:to|about|for|that)\s))|(?<weak>(?:ping|nudge|alert|notify)\s+me|tell\s+me\s+to|remember))(?:\s*[:,\-–—]\s*|\s+)(?<rest>.+)"#
     )
-    private static let everyFewMinutes = Scan(#"\bevery\s+(?:other\s+|few\s+|\d+\s+)?(?:minutes?|mins?|seconds?|secs?)\b"#)
+    /// "every few minutes" is no schedule, and seconds are finer than a reminder repeats (a minute at least).
+    private static let tooFineOrVague = Scan(#"\bevery\s+(?:few\s+(?:minutes?|mins?|seconds?|secs?)\b|(?:other\s+|\d+\s*)?(?:seconds?|secs?)\b|\d+s\b)"#)
     private static let weekendWord = Scan(#"\bweekend\b"#)
     private static let nightWord = Scan(#"\b(?:tonight|night|evening)\b"#)
 
@@ -160,9 +165,8 @@ public struct IntentParser: Sendable {
             guard c["weak"]?.lowercased() != "remember" || rest.lowercased().hasPrefix("to ") else { return nil }
         }
         if rest.lowercased().hasPrefix("for ") { rest = String(rest.dropFirst(4)) }
-        // "every 30 minutes" is a schedule a Recurrence cannot hold (its smallest step is an hour):
-        // better left to the AI than to ask "when?" about a time that was given.
-        if Self.everyFewMinutes.found(in: rest) { return nil }
+        // Better left to the AI than to ask "when?" about a time that was given, or to round it.
+        if Self.tooFineOrVague.found(in: rest) { return nil }
         let urgency = Self.stripUrgency(rest, lead: Self.urgentRestLead, tail: Self.urgentTail)
         rest = urgency.text
         important = important || urgency.important
@@ -198,7 +202,7 @@ public struct IntentParser: Sendable {
             date = midnight
         }
         var parts = [String(localized: "Reminder"), TimeFormat.when(date, now: ctx.now, calendar: when.calendar)]
-        if let rule = found.recurrence { parts.append(TimeFormat.recurrence(rule, calendar: when.calendar)) }
+        if let rule = found.recurrence { parts.append(TimeFormat.recurrence(rule, now: ctx.now, calendar: when.calendar)) }
         if important { parts.append(String(localized: "important")) }
         return ParsedIntent(intent: .remind(title: title, when: date, recurrence: found.recurrence, important: important),
                             hint: ParsedIntent.hint(parts.joined(separator: " · ")))

@@ -1,23 +1,5 @@
 import Foundation
 
-/// How cautious Guard is for the agent's medium-risk actions.
-public enum GuardMode: String, Codable, Sendable, CaseIterable {
-    /// Ask once per kind of action; "always allow" grants are honoured.
-    case standard
-    /// Ask for every medium and high action, ignore grants for agents.
-    case cautious
-}
-
-public struct GuardPolicy: Codable, Sendable, Equatable {
-    public var mode: GuardMode = .standard
-    /// Capabilities the user switched off entirely.
-    public var disabled: Set<Capability> = []
-    public init(mode: GuardMode = .standard, disabled: Set<Capability> = []) {
-        self.mode = mode
-        self.disabled = disabled
-    }
-}
-
 public enum GuardDecision: Sendable, Equatable {
     case allow(ActivityEntry.Decision)
     case ask(ApprovalRequest)
@@ -76,36 +58,77 @@ public struct PermissionEngine: Sendable {
         // While untrusted content is in play, anything that could carry it into memory, the
         // clipboard, a browser or the network waits for the user (SECURITY T2, T12). An address
         // the user typed carries nothing the model added.
-        let carriesTaint = tainted && ((outward && !typed)
+        let outwardUntyped = outward && !typed
+        let carriesTaint = tainted && (outwardUntyped
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard])))
+        let mode = policy.mode(for: caller)
+        let honoursGrants = mode != .askEveryTime
+        let decision: GuardDecision
         switch risk {
         case .low where !carriesTaint:
             return .allow(.auto)
         case .low, .medium:
             let grantable = !(tainted && caller.kind != "user") && scope.text == nil
-            if grantable, policy.mode == .standard, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
+            if grantable, honoursGrants, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)
             }
-            return .ask(ApprovalRequest(
+            // In a turn that read outside content "Always" is never offered. A call that can't carry
+            // anything off the Mac may instead be allowed for the rest of Sidefolk's run (D37): a library
+            // of Apple Notes copied in batches is one card per kind, not one per batch.
+            let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil
+                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped)
+            decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted,
                 // An extension's own word that it changes nothing isn't enough to say so on the card.
                 readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions]),
-                extensionId: scope.extensionId
+                canAllowForRequest: forRequest, extensionId: scope.extensionId
             ))
         case .high:
             // Only an exact command may be granted "always"; everything else is asked every time.
             let exactCommand = scope.command != nil
-            if exactCommand, !tainted, policy.mode == .standard,
+            if exactCommand, !tainted, honoursGrants,
                Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)
             }
-            return .ask(ApprovalRequest(
+            decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: .high, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: exactCommand && !tainted, tainted: tainted,
                 extensionId: scope.extensionId
             ))
         }
+        // Auto and Full access answer, themselves, the questions the person chose not to be asked.
+        if let tag = Self.answeredByMode(mode, risk: risk, spec: spec, scope: scope, tainted: tainted, outwardUntyped: outwardUntyped) {
+            return .allow(tag)
+        }
+        return decision
+    }
+
+    /// The question Auto or Full access answers without the person (D37), with the tag Activity shows,
+    /// or nil when the person must answer. Text to read in full (a new skill: instructions for later
+    /// runs) always waits for them. Auto acts on medium risk in a clean turn. Full access acts on
+    /// anything, except, in a turn that read outside content, what could carry data out.
+    static func answeredByMode(_ mode: GuardMode, risk: Risk, spec: ToolSpec, scope: ToolScope, tainted: Bool,
+                               outwardUntyped: Bool) -> ActivityEntry.Decision? {
+        guard scope.text == nil else { return nil }
+        switch mode {
+        case .askEveryTime, .askOncePerKind:
+            return nil
+        case .auto:
+            return !tainted && risk == .medium ? .autoMode : nil
+        case .fullAccess:
+            return tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped) ? nil : .fullAccess
+        }
+    }
+
+    /// What a turn steered by a web page, file or extension still never does without the person, even
+    /// in Full access (SECURITY T2, T12, T21): reach a server or another app at an address the person
+    /// didn't type, run a program, change files (a shared folder may sync them anywhere), hand input to
+    /// an extension or MCP server, or write the clipboard or memory, which carry it into later moments.
+    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool) -> Bool {
+        outwardUntyped
+            || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions])
+            || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
     }
 
     /// The grant that covers this call, if any. Grants are per tool, narrowed by scope.
@@ -167,7 +190,7 @@ public struct PermissionEngine: Sendable {
         case .notebook: String(localized: "The notebook")
         case .memory: String(localized: "Memory")
         case .time: String(localized: "Reminders")
-        case .watch: String(localized: "Watching")
+        case .watch: String(localized: "capability.watch", defaultValue: "Watching", comment: "A permission: watching pages, files and programs. Also in “%@ is turned off in Sidefolk's Permissions settings.”")
         case .clipboard: String(localized: "Clipboard access")
         case .apps: String(localized: "Opening apps and links")
         case .network: String(localized: "Internet access")

@@ -35,6 +35,12 @@ struct AskEntry: Identifiable, Equatable {
         /// Sidefolk's own agent asks something; answered here with a button or by typing.
         case question(AttentionItem)
         case info(String)
+        /// The line said aloud for this request, always shown too (D34); muted says why it wasn't.
+        case spoken(String, muted: VoicePolicy.Silence?)
+        /// Done without a question because the person chose Auto or Full access (D37): never silent.
+        case doneWithoutAsking(String, fullAccess: Bool)
+        /// Nobody answered in time: what was skipped, why, and that it waits in Now (D37).
+        case skipped(String, why: String)
     }
 
     let id = UUID()
@@ -56,7 +62,8 @@ struct AskEntry: Identifiable, Equatable {
 @MainActor
 protocol AskActions: AnyObject {
     func hint(for text: String) -> String?
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel)
+    /// `spoken`: the words came from the talk key, so the reply may be said aloud (D34).
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, into model: AskModel)
     func stop()
     func undo(activityId: String, in model: AskModel)
     func answer(approval: ApprovalRequest, decision: ApprovalDecision)
@@ -76,6 +83,20 @@ protocol AskActions: AnyObject {
     func retry(_ text: String, in model: AskModel)
     func openSettings(tab: SettingsTab?)
     func openHome()
+    /// Home › Now, where skipped steps wait (D37).
+    func openNow()
+}
+
+/// Talking instead of typing (D34): what the panel shows while the talk key is held and just after.
+enum VoiceInput: Equatable {
+    /// The microphone and the recognizer are getting ready.
+    case starting
+    /// The microphone is on; the input shows the words as they are recognized. `basic` on macOS 15.
+    case listening(basic: Bool)
+    /// The language's speech model is downloading (0...1).
+    case preparing(Double)
+    /// Released: the last words are settling.
+    case finishing
 }
 
 @MainActor @Observable
@@ -85,13 +106,19 @@ final class AskModel {
     var entries: [AskEntry] = []
     var busy = false
     var phase: String?
+    /// Set while the person talks; the input is theirs again once it is nil.
+    var voice: VoiceInput?
     /// Increments to ask the view to focus the input.
     var focusRequest = 0
+    /// The person chose to answer a question an answer ended with; the input says so until they send.
+    var replying = false
     /// A reminder waiting for its time ("When should I remind you?").
     var pendingReminderTitle: String?
     var pendingReminderImportant = false
     /// A watch waiting for its address ("Which address? e.g. localhost:3000").
     var pendingWatch: (kind: String, becomes: String?)?
+    /// How much Sidefolk asks (D37), shown in the header.
+    var mode: GuardMode = .askOncePerKind
     weak var actions: AskActions?
     /// Extensions by id, so their approval and result cards show their icon and name.
     var extensionLooks: [String: ExtensionLook] = [:]
@@ -158,7 +185,14 @@ final class AskModel {
         entries.removeAll { if case .question(let q) = $0.content { return q.id == id } else { return false } }
     }
 
-    func submit(thinkHarder: Bool = false) {
+    /// An answer asked something. Replying is typing a follow-up (the recent requests go with it), but
+    /// nothing said so, so the card offers Reply and the input becomes the place for it.
+    func reply() {
+        replying = true
+        focusRequest += 1
+    }
+
+    func submit(thinkHarder: Bool = false, spoken: Bool = false) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         // While the agent waits for an answer, what the user types is that answer.
         if let question = pendingQuestion, !trimmed.isEmpty {
@@ -167,13 +201,17 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
+        replying = false
         // Shown as the request's caption and sent with the item; the model answers in any language.
         let request = trimmed.isEmpty ? String(localized: "What should I do with this?") : trimmed
         text = ""
         let sent = attachment
         attachment = nil
-        actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, into: self)
+        actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, spoken: spoken, into: self)
     }
+
+    /// The words of the newest request, to tell whether a newer one came in since.
+    var latestCaption: String? { entries.last { $0.caption != nil }?.caption }
 
     func add(_ content: AskEntry.Content, caption: String? = nil) {
         entries.append(AskEntry(caption: caption, content: content))

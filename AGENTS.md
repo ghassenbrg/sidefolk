@@ -28,6 +28,9 @@ Agents can't see the screen. To check the running debug app:
   `home`, `settings:<tab>`, `find:<query>`, `drop:<url or path>` drive it (list at the top of the script).
 - Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
 - `sidefolk` (in `build/Sidefolk-dev.app/Contents/Helpers/`) with the same `SIDEFOLK_HOME` talks to that app.
+- Voice without a microphone or speakers: `say -o /tmp/x.aiff "remind me at 5 to stretch"`, then
+  `swift run SidefolkApp --voice-transcribe /tmp/x.aiff`, `--voice-say "<answer>" out.caf`, or
+  `swift scripts/dev.swift voice:file:/tmp/x.aiff` in the debug app (ARCHITECTURE › Voice).
 - When a test run seems stuck, run it through `script -q log.txt swift test --no-parallel < /dev/null`:
   plain redirection buffers the output, so the last lines lie about where it stopped.
 

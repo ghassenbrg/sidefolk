@@ -109,6 +109,20 @@ enum CLIBrain {
                       errors: await child.stderr().trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
+    /// Sleeps until the run's deadline passes. The deadline moves by every wait for the person's
+    /// answer and is nil while a card waits (D37), so it is read again every few seconds.
+    static func sleep(until deadline: @Sendable () -> Date?) async throws {
+        while true {
+            let left = deadline()?.timeIntervalSinceNow ?? 5
+            if left <= 0 { return }
+            try await Task.sleep(for: .seconds(min(left, 5)))
+        }
+    }
+
+    /// The longest a CLI brain waits for one Sidefolk tool call: the longest a card can wait for the
+    /// person (D37), plus a margin for the tool to run. Each CLI's own MCP timeout is set to this.
+    static let toolCallSeconds = UnansweredRule.longestMinutes * 60 + 300
+
     // MARK: Spawning
 
     /// Allow-listed environment (T7): never DYLD_*, NODE_OPTIONS, ANTHROPIC_* or OPENAI_*.

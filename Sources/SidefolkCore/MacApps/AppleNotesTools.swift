@@ -186,6 +186,8 @@ struct AppleNotesReadTool: Tool {
                 }
                 if note.locked {
                     lines.append("It is locked: the user has to unlock it in Notes before it can be read.")
+                } else if let code = note.unreadable {
+                    lines.append("Notes wouldn't hand over its text (Apple Events error \(code)). Say so; don't guess why.")
                 } else {
                     let (body, cut) = ExternalText.prepare(note.markdown, limit: share)
                     lines.append(body.isEmpty ? "(no text besides the title)" : body)

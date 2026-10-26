@@ -5,14 +5,10 @@ import SidefolkCore
 enum Describe {
     // MARK: Time
 
-    /// "Every weekday", "Every 2 weeks on Mon and Thu", "Every day until 12 Dec": the same words as
+    /// "Every weekday", "Every 30 minutes until 18:00", "Every day until Fri": the same words as
     /// cards and notices (`TimeFormat.recurrence`), starting a line.
-    static func recurrence(_ r: Recurrence) -> String {
-        var text = TimeFormat.recurrence(r, calendar: .autoupdatingCurrent)
-        if let until = r.until {
-            text = String(localized: "\(text) until \(until.formatted(.dateTime.day().month(.abbreviated)))",
-                          comment: "“every day until 12 Dec”")
-        }
+    static func recurrence(_ r: Recurrence, now: Date = Date()) -> String {
+        let text = TimeFormat.recurrence(r, now: now, calendar: .autoupdatingCurrent)
         return text.prefix(1).uppercased() + text.dropFirst()
     }
 
@@ -35,6 +31,12 @@ enum Describe {
     /// The probe kind as a person would name it, with an icon.
     static func watcherKind(_ kind: String) -> WatcherKind {
         let k = kind.lowercased()
+        switch k {
+        case WatchKind.metric: return WatcherKind(symbol: "gauge.with.dots.needle.33percent", label: String(localized: "This Mac"))
+        case WatchKind.weather: return WatcherKind(symbol: "cloud.sun", label: String(localized: "Weather"))
+        case WatchKind.webValue: return WatcherKind(symbol: "globe", label: String(localized: "Web value"))
+        default: break
+        }
         if k.hasPrefix("ext") || k.contains("/") {
             return WatcherKind(symbol: "puzzlepiece.extension", label: String(localized: "Extension"))
         }
@@ -61,6 +63,16 @@ enum Describe {
             }
         }
         return nil
+    }
+
+    /// "Every 10 s · stops 11:00", "Every 1 min · until you stop it": how often a report reads and when it ends.
+    static func reportSchedule(_ w: Watcher, now: Date = Date()) -> String {
+        let every = interval(w.intervalS)
+        let end = w.expiresAt.map { String(localized: "stops \(TimeFormat.moment($0, now: now, calendar: .autoupdatingCurrent))",
+                                           comment: "“stops 11:00”, “stops Tomorrow 10:00”") }
+            ?? String(localized: "until you stop it")
+        let line = [every, end].joined(separator: " · ")
+        return line.prefix(1).uppercased() + line.dropFirst()
     }
 
     // MARK: People and agents

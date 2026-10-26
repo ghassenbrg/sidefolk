@@ -19,12 +19,18 @@ enum Theme {
     static let surfaceSunken = Color(light: 0xF4F7FB, dark: 0x0E1A2E)
     static let surfaceRaised = Color(light: 0xFFFFFF, dark: 0x1B2C49)
     static let line = Color(light: 0xE2E8F0, dark: 0x26385A)
+    /// What a service's logo sits on, and the ink of one drawn in a single colour (D36). Both are neutral so
+    /// brand colours never clash with a folk colour, and the ink is the pure black or white the owners ask for.
+    static let logoPlate = Color(light: 0xFFFFFF, dark: 0x0E1A2E)
+    static let logoInk = Color(light: 0x000000, dark: 0xFFFFFF)
     static let accent = aqua
     /// Text on aqua: navy keeps 7:1 contrast.
     static let onAccent = Color(hex: 0x0F2D5B)
     static let accentSoft = Color(light: 0xE3F9FA, dark: 0x173F4D)
     static let danger = Color(light: 0xD9473A, dark: 0xFF8A7D)
     static let dangerSoft = Color(light: 0xFFEDEA, dark: 0x4A2622)
+    /// Text on a `danger` fill: white on the deep red, navy on the light one dark mode uses.
+    static let onDanger = Color(light: 0xFFFFFF, dark: 0x0F2D5B)
     static let success = Color(light: 0x2F9E6D, dark: 0x7DD3A7)
     static let successSoft = Color(light: 0xE6F6EE, dark: 0x1D3D31)
     /// The Now greeting's wash: aqua into light blue, as quiet as the cards around it.

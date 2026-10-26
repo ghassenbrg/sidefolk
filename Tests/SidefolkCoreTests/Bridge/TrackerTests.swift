@@ -124,7 +124,7 @@ struct TrackerEnv {
         let done = await t.jobs.finish(JobReport(id: job.id, title: "npm test", exitCode: 0), client: "sidefolk-cli")
         #expect(done.state == .succeeded)
         let item = try #require(try await t.items().last)
-        #expect(item.title == "npm test finished in 4m 12s")
+        #expect(item.title == "npm test finished after 4m 12s")
         #expect(item.level == .attention)
         #expect(item.actions.map(\.title) == ["Dismiss"])
     }
@@ -167,7 +167,7 @@ struct TrackerEnv {
         await t.jobs.finish(JobReport(id: job.id, title: "ls", exitCode: 0, durationSeconds: 2), client: "cli")
         let item = try #require(try await t.items().last)
         #expect(item.level == .gentle)
-        #expect(item.title == "ls finished in 2s")
+        #expect(item.title == "ls finished after 2s")
     }
 
     @Test func finishWithoutStartIsRecorded() async throws {

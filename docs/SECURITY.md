@@ -30,8 +30,11 @@ as user-given only when it, or for opening a link its site, appears in the user'
 Approval cards render the tool's deterministic `summary(input)` and raw args (full URL, absolute
 path, verbatim command), never model prose. Approval is bound to `SHA-256(tool, canonical args)`
 and re-checked at execution. Allow is inert for 800 ms, Return never defaults to Allow on high,
-timeout 120 s → deny for every caller, and a run's cards are denied when the run ends (or its
-socket connection drops), so a late Allow never acts for a caller that is gone. Other agents
+a card waits 120 s and then counts as a no, except the cards of Sidefolk's own agent, which follow
+the person's "If I don't answer" setting (skip the step or stop the task after N minutes, a day at
+most; D37), and a run's cards are denied when the run ends (or its socket connection drops), so a
+late Allow never acts for a caller that is gone. How often the person is asked is their approval
+mode (D37); modes loosen Guard only for Sidefolk's own agent and never touch the rules below. Other agents
 share one pending card: while it waits, their further requests are refused at once (their names
 are self-chosen, so a per-name limit would be none). "Always" grants are never given for high
 risk or to external callers, are scoped by caller kind, revocable, and expire after 90 days
@@ -46,7 +49,11 @@ carries `untrusted`; a list or read that quotes anyone else's words sets it (`re
 `watch.*` when a title isn't user-sourced, notes, and `collections.list`, `notes.*` when a quoted
 collection name isn't). Taint is sticky for the turn (or routine run) and
 set only by code. While tainted, all medium/high calls ask (grants ignored), and so do clipboard
-writes and memory/skill/routine creation. Network and open calls ask (medium) whenever their
+writes and memory/skill/routine creation. Auto changes none of this; Full access still asks, in a
+tainted turn, for every call that could carry data out (network or open at an untyped address,
+commands, file changes, extension and MCP tools, clipboard and memory writes) and lets the rest run
+(D37). A tainted card for a step that can carry nothing out (not high risk, nothing to read in full)
+offers "Allow for this request" instead of "Always": that tool runs without a card until the run ends. Network and open calls ask (medium) whenever their
 normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
 while tainted, and opening a site the user named runs in a clean turn (`UserMentions`: scheme,
 `www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
@@ -201,12 +208,13 @@ between versions (the probe and `--strict-config` catch removed switches, not ch
 127.0.0.1, require a token, and reject an `Origin` header or a non-loopback `Host` (DNS
 rebinding). No AppleScript dictionary, no XPC, no data in distributed notifications. A
 `sidefolk://` scheme only navigates. `UserDefaults` holds cosmetics only, so `defaults write`
-cannot flip grants, base URLs or extension state.
+cannot flip grants, the approval mode, base URLs or extension state.
 
 ### C. Hands
 
 **T9 Shell command watchers (M/H).** Created only by the user, or by Sidefolk's agent in a clean
-turn (`user:agent`) with high-risk approval; never by external callers, extensions, routines or a
+turn (`user:agent`) with high-risk approval (or without one when the person turned on Full access,
+D37); never by external callers, extensions, routines or a
 tainted turn (`agent`), which is refused before any card is shown (`Tool.refusal`, logged as
 blocked). The probe checks the source again before every run. The grant is bound to
 `SHA-256(command + "\0" + canonical cwd)` (no cwd is its own value), so any change voids it;
@@ -363,7 +371,7 @@ manifest lists `exec` programs (or the program is `sh`). Every descendant is tra
 start time (parent links walked every second, plus the group), so a child that calls `setsid()` is
 still stopped on disable, uninstall, quit, crash and by the watchdog. A `proc_pid_rusage` watchdog
 kills the tree at RSS > 512 MB, CPU > 50 % for 60 s, or more than 32 processes. A call that names a
-folder (`tools.<name>.paths`, T26) runs in its own process whose profile adds only that folder; it is
+folder (`tools.<name>.paths`, T27) runs in its own process whose profile adds only that folder; it is
 tracked and stopped like the main one, and ends with the call. Three crashes in
 5 min → disabled. *Residual:* a grandchild whose parent exits within the second it was forked is
 reparented to launchd before it is seen; it keeps the sandbox, and only extensions whose sheet says
@@ -384,7 +392,7 @@ to the user, never to the model (T2). An `isError` result's text reaches the mod
 content (≤ 4 KB). Watcher summaries ≤ 200 chars; manifest watcher titles never reach the model.
 Extensions get at most `attention`, never `critical`.
 
-**T26 Extensions the AI writes, and folders named per call (M/H), D39.** Two new ways in: Sidefolk's model
+**T27 Extensions the AI writes, and folders named per call (M/H), D39.** Two new ways in: Sidefolk's model
 writes program code for the person (`extensions.draft`), and an extension's tool receives a folder the
 person names in a request.
 - *Drafting:* only `Caller.user` or Sidefolk's agent, and never in a tainted turn (`Tool.refusal`, before
@@ -431,7 +439,8 @@ provider keys with their host bindings and each MCP server's `mcp.<id>` item, co
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
 not ignored. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
-extension pins and command watchers, so tampered rows are ignored.
+extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are
+ignored.
 
 **T20 Logging leaks (H/M).** `os.Logger` values are `.private`; messages are fixed text and
 anything that came from outside (extension ids, methods, tool and skill names) goes in fields. A
@@ -486,10 +495,25 @@ binary targets or build plugins from dependencies.
   hint, since any process can post them: the app must confirm with `ScreenLock.isLocked`
   (`CGSessionCopyCurrentDictionary`) before holding or releasing items. Identical titles within
   10 min are not yet deduplicated.
-- Watcher floors: web 5 min, site 60 s, command 60 s. At most 50 active, with per-caller quotas.
+- Watcher floors: web 5 min, site 60 s, command 60 s. Reports (D35): metrics 5 s, weather and web
+  values 60 s (still one request a minute per host), command output 10 s; at most 4 live at once,
+  ending after an hour or a day unless the user said "until I stop it". `watch.report` is not offered
+  to external agents: a web value would let them read pages through Sidefolk (T4). A web value or a
+  command's output is untrusted in the tool result (T2). At most 50 active, with per-caller quotas.
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
   step that makes a watcher active.
+
+**T26 Voice: the microphone and a cloud voice (M/M), D34.** The microphone opens only while the
+person holds the talk key or the companion (off until voice input is turned on; macOS asks on the
+first hold), so the orange dot is an honest sign; nothing listens otherwise and there is no wake
+word. Recognition runs on the Mac (SpeechAnalyzer, or the older recognizer forced on device); audio
+is never written anywhere, and the words go through the normal Ask pipeline as the user's own
+request, so Guard, approvals and Undo apply unchanged and voice is never the confirmation for
+anything. Spoken replies with ElevenLabs send the words being said, including reminder and note
+titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Voice, which says so. Its
+key lives in the Keychain bound to that host (as T18), requests are never redirected, and the key is
+removed with everything else. Replies stay silent while another app records and in quiet mode.
 
 ## 3. Extension sandbox profile
 
@@ -604,7 +628,9 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 3. **Guard:** taint makes the next medium call ask and ignores grants; a non-user URL asks; an
    exact-command grant rejects `cmd; rm -rf ~` and whitespace variants; external callers cannot
    reach file, clipboard or command tools; the extension risk floor holds; an args-hash mismatch
-   aborts.
+   aborts. Approval modes (D37): every mode × risk × taint × caller, the invariants in every mode
+   (switched-off capabilities, protected places, folder cards, other agents' rules), an unknown or
+   old stored mode never loosening Guard, and every wait for an answer ending.
 4. **Socket:** foreign uid rejected (seam over `LOCAL_PEERCRED`); no token → `.external`; bad,
    expired or reused token → disconnect; oversized line rejected; symlinked, foreign-owned or 0755
    run dir refused; a live socket is never unlinked; mode is 0600; a session event's host pid that
@@ -632,7 +658,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     through osascript); a refusal by macOS becomes the Settings card; reads taint and ask again while
     tainted; removing is refused for notes not copied, kept for cut, changed or attachment-bearing copies
     and for accounts without Recently Deleted; the scripts run against a stand-in, never the real apps.
-14. **Extensions the AI writes and folders named per call (T26):** drafts refuse non-text files, dot files,
+14. **Extensions the AI writes and folders named per call (T27):** drafts refuse non-text files, dot files,
     `..`, an icon and oversize content, and set id and author; drafting is refused in tainted turns and for
     every caller but the user and the agent; the trial can't read a folder the draft asks for; a folder
     named in a call is the only one its process can read, and only read for `"read"`; an unshared folder
@@ -643,10 +669,11 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 - Never lets the model, routines, external agents or extensions answer approvals, create grants,
   change settings, install extensions or touch Sidefolk's own data (the model's drafts folder is written
-  only by `extensions.draft`, T26).
-- Never runs model- or agent-written commands without the user approving the verbatim text; never
-  "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing granted to
-  check it, then only after the person installs it from the install sheet (T26).
+  only by `extensions.draft`, T27).
+- Never runs model- or agent-written commands without the user approving the verbatim text, unless
+  the person turned on Full access, and then never from a turn that read outside content (D37);
+  never "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing
+  granted to check it, then only after the person installs it from the install preview (T27).
 - Never hard-deletes, sets exec bits or strips quarantine.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.

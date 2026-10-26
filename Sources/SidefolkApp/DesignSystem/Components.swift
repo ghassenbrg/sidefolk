@@ -1,3 +1,4 @@
+import AppKit
 import SidefolkCore
 import SwiftUI
 
@@ -255,23 +256,42 @@ struct IconTile: View {
     var symbol: String
     var folk: String
     var size: CGFloat = 28
-    /// A service's own logo, drawn instead of the symbol when it loads (D36).
+    /// A service's own logo, drawn on a neutral plate instead of the symbol when it loads (D36).
     var logo: ProviderLogo?
 
     var body: some View {
+        if let logo, let image = logo.image {
+            LogoTile(logo: logo, image: image, size: size)
+        } else {
+            RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
+                .fill(Theme.folkColor(folk).opacity(0.24))
+                .frame(width: size, height: size)
+                .overlay { Image(systemName: symbol).font(.system(size: size * 0.46, weight: .medium)) }
+                .foregroundStyle(Theme.ink)
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+/// A service's logo on a neutral plate (D36): colour logos keep their colours, black-or-white ones take the
+/// appearance's black or white. The mark is drawn well inside the plate, which is the clear space owners ask for.
+struct LogoTile: View {
+    var logo: ProviderLogo
+    var image: NSImage
+    var size: CGFloat
+
+    var body: some View {
         RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
-            .fill(Theme.folkColor(folk).opacity(0.24))
+            .fill(Theme.logoPlate)
+            .overlay(RoundedRectangle(cornerRadius: size * 0.3, style: .continuous).strokeBorder(Theme.line))
             .frame(width: size, height: size)
             .overlay {
-                if let image = logo?.image {
-                    // A little wider than tall, so wide marks (Claude Code's) aren't smaller than square ones.
-                    Image(nsImage: image).renderingMode(.template).resizable().scaledToFit()
-                        .frame(width: size * 0.6, height: size * 0.54)
-                } else {
-                    Image(systemName: symbol).font(.system(size: size * 0.46, weight: .medium))
-                }
+                Image(nsImage: image)
+                    .renderingMode(logo.isMonochrome ? .template : .original)
+                    .resizable().scaledToFit()
+                    .foregroundStyle(Theme.logoInk)
+                    .frame(width: size * 0.66, height: size * 0.66)
             }
-            .foregroundStyle(Theme.ink)
             .accessibilityHidden(true)
     }
 }
@@ -542,10 +562,21 @@ struct SettingsToggle: View {
 /// One option of a single choice, with a line of explanation. Several of them in a card make a
 /// radio group whose options can say what they mean.
 struct ChoiceRow: View {
-    var title: LocalizedStringKey
-    var detail: LocalizedStringKey?
+    var title: Text
+    var detail: Text?
     var selected: Bool
     var action: () -> Void
+
+    init(title: Text, detail: Text? = nil, selected: Bool, action: @escaping () -> Void) {
+        self.title = title
+        self.detail = detail
+        self.selected = selected
+        self.action = action
+    }
+
+    init(title: LocalizedStringKey, detail: LocalizedStringKey? = nil, selected: Bool, action: @escaping () -> Void) {
+        self.init(title: Text(title), detail: detail.map { Text($0) }, selected: selected, action: action)
+    }
 
     var body: some View {
         Button(action: action) {
@@ -560,9 +591,9 @@ struct ChoiceRow: View {
                 .frame(width: 16, height: 16)
                 .padding(.top, 1)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(selected ? Theme.Font.bodyStrong : Theme.Font.body).foregroundStyle(Theme.ink)
+                    title.font(selected ? Theme.Font.bodyStrong : Theme.Font.body).foregroundStyle(Theme.ink)
                     if let detail {
-                        Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        detail.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

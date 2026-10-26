@@ -61,5 +61,9 @@
 	</dict>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sidefolk listens only while you hold the talk shortcut, and understands what you say on this Mac. The recording is never kept.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>On macOS 15, Sidefolk uses Apple's on-device speech recognition to understand what you say while you hold the talk shortcut.</string>
 </dict>
 </plist>

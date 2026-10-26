@@ -11,7 +11,12 @@ struct NowView: View {
             NowHero(greeting: greeting, status: status, settings: model.services.runtime.settings.current) {
                 model.services.openAsk(prefill: "")
             }
-            if model.needsYouCount > 0 { needsYou }
+            if model.mode == .fullAccess {
+                FullAccessBanner(settings: { model.services.openSettings(tab: .privacy) }) { Task { await model.turnOffFullAccess() } }
+            }
+            if model.needsYouCount > 0 || model.skippedRun != nil { needsYou }
+            // Values told every few seconds or minutes change as you look: they sit near the top.
+            if !model.reports.isEmpty { live }
             // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
             if busy { running }
             comingUp
@@ -51,6 +56,24 @@ struct NowView: View {
                 ForEach(model.attention) { item in
                     AttentionRow(item: item) { action in Task { await model.respond(item, action: action) } }
                 }
+                ForEach(model.skipped) { step in
+                    SkippedStepRow(step: step, run: { Task { await model.runSkipped(step) } },
+                                   dismiss: { Task { await model.dismissSkipped(step) } })
+                }
+                if let result = model.skippedRun {
+                    SkippedRunResult(result: result)
+                }
+            }
+        }
+    }
+
+    // MARK: Live
+
+    private var live: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
+            SectionHeader(title: "Live", folk: "scout", count: model.reports.count)
+            RowsCard {
+                ForEach(model.reports) { w in ReportRow(report: w, reading: model.readings[w.id], model: model) }
             }
         }
     }
@@ -438,12 +461,52 @@ private struct WatcherRow: View {
 
     @ViewBuilder private var state: some View {
         switch watcher.state {
-        case .active: Chip("Watching", tone: .accent)
+        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .accent)
         case .paused: Chip("Paused", tone: .neutral)
         case .error: Chip("Having trouble", tone: .danger)
         case .triggered: Chip("Spotted", tone: .success)
         case .expired: Chip("Expired", tone: .neutral)
         }
+    }
+}
+
+/// A report: its latest value, large, how often it reads and when it stops, with Pause and Stop at hand.
+private struct ReportRow: View {
+    var report: Watcher
+    var reading: WatchReading?
+    var model: NowModel
+
+    var body: some View {
+        HStack(alignment: .center, spacing: Theme.Space.m) {
+            IconTile(symbol: Describe.watcherKind(report.kind).symbol, folk: "scout")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(report.title).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                Text(verbatim: reading?.value ?? "…").font(.system(size: 17, weight: .semibold, design: .rounded)).monospacedDigit()
+                    .foregroundStyle(report.state == .paused ? Theme.inkFaint : Theme.ink).lineLimit(1).truncationMode(.tail)
+                Text(verbatim: meta).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                if report.errorCount > 0, let error = report.lastError {
+                    Text(error).font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: Theme.Space.s)
+            HStack(spacing: 6) {
+                if report.state == .paused {
+                    Button("Resume") { Task { await model.resume(report) } }.buttonStyle(.sf(.secondary))
+                } else {
+                    Button("Pause") { Task { await model.pause(report) } }.buttonStyle(.sf(.secondary))
+                }
+                Button("Stop") { Task { await model.stop(report) } }.buttonStyle(.sf(.secondary))
+                    .accessibilityLabel(Text("Stop showing \(report.title)"))
+            }
+        }
+        .nowRow()
+        .accessibilityElement(children: .contain)
+    }
+
+    private var meta: String {
+        let schedule = Describe.reportSchedule(report)
+        return report.state == .paused ? String(localized: "Paused · \(schedule)", comment: "“Paused · Every 10 s · stops 11:00”") : schedule
     }
 }
 
@@ -498,8 +561,8 @@ private struct EditReminderSheet: View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             Text("Edit reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
             TextField("What", text: $title).textFieldStyle(.roundedBorder)
-            TextField("When — e.g. “tomorrow 9am”; leave empty to keep \(TimeFormat.when(reminder.nextDue ?? reminder.fireAt, now: Date(), calendar: .autoupdatingCurrent))",
-                      text: $when).textFieldStyle(.roundedBorder)
+            TextField("When — e.g. “tomorrow 9am” or “every 30 minutes”; leave empty to keep \(current)", text: $when)
+                .textFieldStyle(.roundedBorder)
             if let error { InlineError(error: error) }
             HStack {
                 Spacer()
@@ -517,5 +580,13 @@ private struct EditReminderSheet: View {
         .padding(Theme.Space.xl)
         .frame(width: 420)
         .onAppear { title = reminder.title }
+    }
+
+    /// "Today 10:30, every 30 minutes until 18:00": the next time, and the repeat it belongs to.
+    private var current: String {
+        let next = TimeFormat.when(reminder.nextDue ?? reminder.fireAt, now: Date(), calendar: .autoupdatingCurrent)
+        guard let rule = reminder.recurrence else { return next }
+        return String(localized: "\(next), \(TimeFormat.recurrence(rule, now: Date(), calendar: .autoupdatingCurrent))",
+                      comment: "The next time, then the repeat: “Today 10:30, every 30 minutes”")
     }
 }

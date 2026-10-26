@@ -18,8 +18,16 @@ public enum LiveStateSummary {
         }
 
         let active = watchers.filter { $0.state == .active }
-        if !active.isEmpty {
-            lines.append("- Watching: " + list(active.filter { trusted($0.source) }.map { "“\(title($0.title))”" }, total: active.count))
+        let watching = active.filter { $0.mode != .report }
+        if !watching.isEmpty {
+            lines.append("- Watching: " + list(watching.filter { trusted($0.source) }.map { "“\(title($0.title))”" }, total: watching.count))
+        }
+        // Live values the user sees beside the companion, so "stop the CPU" has something to point at.
+        let reports = active.filter { $0.mode == .report }
+        if !reports.isEmpty {
+            lines.append("- Showing live: " + list(reports.filter { trusted($0.source) }.map {
+                "“\(title($0.title))” every \(WatchWords.everyForModel($0.intervalS))"
+            }, total: reports.count))
         }
 
         // Job titles are command lines reported over the socket, so they are counted, never quoted.

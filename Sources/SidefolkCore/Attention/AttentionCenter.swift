@@ -122,6 +122,14 @@ public actor AttentionCenter {
 
     public func open() async -> [AttentionItem] { (try? await store.open()) ?? [] }
 
+    /// Retires what is still open about one thing (a repeating reminder's last time) without answering it: no
+    /// handler runs, the bubble and notification go away, and it no longer counts as waiting.
+    public func withdraw(refKind: String, refId: String) async {
+        for item in (try? await store.open()) ?? [] where item.refKind == refKind && item.refId == refId {
+            await expire(id: item.id)
+        }
+    }
+
     /// After a restart: notices that were still waiting (held while away, quiet or typing) get their
     /// turn again, several as one summary. Questions from the last run are closed, since nobody is
     /// waiting for their answer any more; anything older than a day stays in the Now list only.

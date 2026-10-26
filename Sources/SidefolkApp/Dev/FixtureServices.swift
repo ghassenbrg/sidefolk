@@ -15,6 +15,8 @@ final class FixtureServices: AppServices {
     var detection = FixtureServices.sampleDetection
     /// Shows Settings › Extensions on a Mac without git, where the built-in Git extension can't run.
     var gitMissing = false
+    let voice = FixtureVoiceServices()
+    var voiceServices: any VoiceServices { voice }
 
     init(runtime: SidefolkRuntime, keys: Set<APIKeyTarget> = []) {
         self.runtime = runtime

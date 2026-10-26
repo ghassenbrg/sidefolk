@@ -71,17 +71,18 @@ public enum ReminderTools {
         func line(_ r: Reminder) -> String {
             var s = "\(r.id) · \(r.title)"
             if let due = r.nextDue { s += " · \(TimeFormat.full(due, calendar: calendar))" }
-            if let rule = r.recurrence { s += " · \(TimeFormat.recurrenceForModel(rule))" }
+            if let rule = r.recurrence { s += " · \(TimeFormat.recurrenceForModel(rule, calendar: calendar))" }
             if r.state != .scheduled { s += " · \(r.state.rawValue)" }
             return s
         }
 
-        func card(_ r: Reminder, now: Date, prefix: String? = nil) -> ResultCard {
+        func card(_ r: Reminder, now: Date, prefix: String? = nil, note: String? = nil) -> ResultCard {
             var parts: [String] = []
             if let due = r.nextDue { parts.append(TimeFormat.when(due, now: now, calendar: calendar)) }
-            if let rule = r.recurrence { parts.append(TimeFormat.recurrence(rule, calendar: calendar)) }
+            if let rule = r.recurrence { parts.append(TimeFormat.recurrence(rule, now: now, calendar: calendar)) }
             if let prefix { parts.insert(prefix, at: 0) }
-            return ResultCard(kind: .reminder, title: r.title, subtitle: parts.isEmpty ? nil : parts.joined(separator: " · "), refId: r.id)
+            return ResultCard(kind: .reminder, title: r.title, subtitle: parts.isEmpty ? nil : parts.joined(separator: " · "), detail: note,
+                              refId: r.id)
         }
 
         func existing(_ input: JSONValue) async throws -> Reminder {
@@ -102,14 +103,16 @@ public enum ReminderTools {
                 name: "reminders.create", title: String(localized: "Set a reminder"),
                 description: """
                 Remind the user about something at a time. `when` takes plain language ("tomorrow morning", "in 20 minutes", \
-                "friday at 3pm", "every weekday at 9") or ISO 8601. Reminders survive restarts and show a bubble with Done and Snooze. \
+                "friday at 3pm", "every weekday at 9", "every 30 minutes", "every 2 hours until 6pm") or ISO 8601. Reminders \
+                survive restarts and show a bubble with Done and Snooze. A reminder repeats at most once a minute; a faster \
+                request is set to every minute and the result says so. To show a changing value (CPU, weather) use watch.report. \
                 Only set one when the user actually asked and the time is clear; ask first if it is not.
                 """,
                 inputSchema: Schema.object([
                     "title": Schema.string("What to remind about, as a short phrase (\"Send the document\")."),
-                    "when": Schema.string("When: natural language or ISO 8601. May include a repeat such as \"every monday at 10am\"."),
+                    "when": Schema.string("When: natural language or ISO 8601. May include a repeat such as \"every monday at 10am\", \"every 30 minutes\" or \"every 10 minutes until 6pm\"."),
                     "recurrence": Schema.object([
-                        "frequency": Schema.string("How often.", enum: Recurrence.Frequency.allCases.map(\.rawValue)),
+                        "frequency": Schema.string("How often (minutely = every N minutes, at least one).", enum: Recurrence.Frequency.allCases.map(\.rawValue)),
                         "interval": Schema.integer("Every N units (default 1).", minimum: 1),
                         "weekdays": Schema.array("For weekly: ISO weekdays, 1 = Monday ... 7 = Sunday (day names work too).",
                                                  items: ["type": ["integer", "string"], "description": "Weekday", "minimum": 1, "maximum": 7]),
@@ -127,9 +130,15 @@ public enum ReminderTools {
                 .trimmingCharacters(in: .whitespaces)
         }
 
+        /// "every 30 seconds" is finer than a reminder repeats: it becomes every minute, and the result says so
+        /// (a value to show every few seconds is a report, `watch.report`).
+        static let everyFewSeconds = Scan(#"\bevery\s+(?:\d+\s*|a\s+few\s+|few\s+|other\s+)?(?:seconds?|secs?)\b"#)
+
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             guard let title = input.string("title") else { throw ToolError.invalidInput(String(localized: "“title” is required")) }
-            guard let whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
+            guard var whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
+            let raised = Self.everyFewSeconds.found(in: whenText)
+            if raised { whenText = Self.everyFewSeconds.replacing(in: whenText, with: "every minute") }
             let now = context.now
             let parsed = try shared.future(whenText, now: now)
             let calendar = shared.calendar
@@ -167,11 +176,13 @@ public enum ReminderTools {
             let id = reminder.id
             let scheduler = shared.scheduler
             var text = "Reminder set: “\(reminder.title)” for \(TimeFormat.full(date, calendar: calendar))"
-            if let rule { text += ", repeating \(TimeFormat.recurrenceForModel(rule))" }
+            if let rule { text += ", repeating \(TimeFormat.recurrenceForModel(rule, calendar: calendar))" }
             if reminder.level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(id)"
+            if raised { text += ". Reminders repeat at most once a minute, so this one repeats every minute; tell the user." }
             return ToolResult(
-                text: text, card: shared.card(reminder, now: now),
+                text: text, card: raised ? shared.card(reminder, now: now, note: String(localized: "A reminder repeats at most once a minute."))
+                    : shared.card(reminder, now: now),
                 undo: UndoAction(label: String(localized: "Cancel reminder")) { _ = try await scheduler.cancel(id: id) }
             )
         }
@@ -179,7 +190,7 @@ public enum ReminderTools {
         private func recurrence(from json: JSONValue?, now: Date) throws -> Recurrence? {
             guard let json, json.objectValue != nil else { return nil }
             guard let name = json.string("frequency")?.lowercased() else { throw ToolError.invalidInput(String(localized: "recurrence needs a “frequency”")) }
-            let synonyms = ["hour": "hourly", "day": "daily", "week": "weekly", "month": "monthly", "year": "yearly", "weekday": "weekdays"]
+            let synonyms = ["minute": "minutely", "hour": "hourly", "day": "daily", "week": "weekly", "month": "monthly", "year": "yearly", "weekday": "weekdays"]
             guard let frequency = Recurrence.Frequency(rawValue: synonyms[name] ?? name) else {
                 let names = Recurrence.Frequency.allCases.map(\.rawValue).joined(separator: ", ")
                 throw ToolError.invalidInput(String(localized: "recurrence frequency must be one of \(names)"))

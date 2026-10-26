@@ -24,13 +24,16 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var tainted: Bool
     /// The action only reads (private data such as the clipboard or Apple Notes) and sends nothing out.
     public var readsOnly: Bool
+    /// Whether "Allow for this request" may be offered: the same tool then runs without a card until
+    /// Sidefolk's run ends (D37). Only where "Always" isn't, and only for what can't carry data out.
+    public var canAllowForRequest: Bool
     /// The extension whose tool this is, so the card can show its icon and name.
     public var extensionId: String?
     public var createdAt: Date
 
     public init(id: String = Identifier.make(), tool: String, title: String, summary: String, risk: Risk, caller: Caller,
-                details: Details, canAlways: Bool, tainted: Bool = false, readsOnly: Bool = false, extensionId: String? = nil,
-                createdAt: Date = Date()) {
+                details: Details, canAlways: Bool, tainted: Bool = false, readsOnly: Bool = false, canAllowForRequest: Bool = false,
+                extensionId: String? = nil, createdAt: Date = Date()) {
         self.id = id
         self.tool = tool
         self.title = title
@@ -41,18 +44,37 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         self.canAlways = canAlways
         self.tainted = tainted
         self.readsOnly = readsOnly
+        self.canAllowForRequest = canAllowForRequest
         self.extensionId = extensionId
         self.createdAt = createdAt
+    }
+
+    /// Whether the person reading `other` was asked exactly this: same tool, same caller, same
+    /// words and details (they come from the arguments), same risk and the same warning.
+    public func asksTheSame(as other: ApprovalRequest) -> Bool {
+        tool == other.tool && caller == other.caller && title == other.title && summary == other.summary
+            && details == other.details && risk == other.risk && tainted == other.tainted
     }
 }
 
 public enum ApprovalDecision: Sendable, Hashable {
     case allowOnce
     case allowAlways
+    /// This tool, for the rest of the run that asked (`ApprovalRequest.canAllowForRequest`).
+    case allowForRequest
     case deny
     case expired
 
-    public var allowed: Bool { self == .allowOnce || self == .allowAlways }
+    public var allowed: Bool { self == .allowOnce || self == .allowAlways || self == .allowForRequest }
+}
+
+/// The tools the person allowed "for this request" (D37), by the run that asked. They end with the run.
+actor RequestAllowances {
+    private var tools: [String: Set<String>] = [:]
+
+    func allow(_ tool: String, run: String) { tools[run, default: []].insert(tool) }
+    func covers(_ tool: String, run: String) -> Bool { tools[run]?.contains(tool) == true }
+    func end(run: String) { tools[run] = nil }
 }
 
 /// Parks approval requests until the user answers in the UI, or they expire.

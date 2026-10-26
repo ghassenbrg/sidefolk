@@ -179,7 +179,7 @@ public actor SessionTracker {
     private func tapFinished(_ s: AgentSession, worked: TimeInterval) async {
         await attention.post(AttentionRequest(
             level: worked >= Self.longWork ? .attention : .gentle, source: "session:\(s.id)",
-            title: String(localized: "\(Self.agentName(s.agent)) finished in \(Self.project(s))"), body: s.title,
+            title: String(localized: "\(Self.agentName(s.agent)) finished in \(Self.project(s))", comment: "An agent, then its project: “Claude finished in sidefolk”"), body: s.title,
             actions: Self.actions,
             refKind: "session", refId: s.id))
     }

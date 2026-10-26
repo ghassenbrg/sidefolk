@@ -107,10 +107,27 @@ import Testing
         #expect(parse("remember the milk") != nil)  // a note, see below
     }
 
-    @Test func schedulesTooFineForARecurrenceAreLeftToTheAI() {
-        #expect(parse("remind me every 30 minutes to stretch") == nil)
-        #expect(parse("remind me to drink water every 20 min") == nil)
-        #expect(intent("remind me every 2 hours to stretch") != nil)
+    @Test func remindersEveryFewMinutesOrHours() {
+        let p = parse("remind me every 30 minutes to stretch")
+        #expect(p?.intent == .remind(title: "Stretch", when: at(2025, 10, 22, 10, 30), recurrence: Recurrence(frequency: .minutely, interval: 30)))
+        #expect(p?.hint == "Reminder · Today 10:30 · every 30 minutes · no AI")
+        #expect(intent("remind me to drink water every 20 min")
+            == .remind(title: "Drink water", when: at(2025, 10, 22, 10, 20), recurrence: Recurrence(frequency: .minutely, interval: 20)))
+        #expect(intent("remind me every 2 hours to stretch")
+            == .remind(title: "Stretch", when: at(2025, 10, 22, 12), recurrence: Recurrence(frequency: .hourly, interval: 2)))
+        let until = parse("remind me every 10 minutes until 6pm to drink water")
+        #expect(until?.intent == .remind(title: "Drink water", when: at(2025, 10, 22, 10, 10),
+                                         recurrence: Recurrence(frequency: .minutely, interval: 10, until: at(2025, 10, 22, 18))))
+        #expect(until?.hint == "Reminder · Today 10:10 · every 10 minutes until 18:00 · no AI")
+    }
+
+    @Test func schedulesTooFineOrVagueForAReminderAreLeftToTheAI() {
+        // An end that has passed (or comes before the first time) is not asked about with the repeat in the title.
+        #expect(parse("remind me every 10 minutes until 9am to drink water") == nil)
+        #expect(parse("remind me every 10 minutes until 10:05 to drink water") == nil)
+        #expect(parse("remind me every 30 seconds to blink") == nil)
+        #expect(parse("remind me every few minutes to stretch") == nil)
+        #expect(parse("remind me to blink every 10s") == nil)
     }
 
     @Test func typosInTheLeadWord() {

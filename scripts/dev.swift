@@ -8,6 +8,7 @@
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift companion:mochi | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
+//   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

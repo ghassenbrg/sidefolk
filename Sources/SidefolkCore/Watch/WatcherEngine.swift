@@ -3,7 +3,8 @@ import Foundation
 /// The probes Sidefolk ships with.
 public enum WatchProbes {
     public static func standard(fetcher: any WatchFetcher = WatchSessionFetcher(), throttle: HostThrottle = HostThrottle(),
-                                processes: any ProcessTable = LibprocTable()) -> [any WatcherProbe] {
+                                processes: any ProcessTable = LibprocTable(), system: any SystemSampling = MacSampler(),
+                                settle: TimeInterval = 1) -> [any WatcherProbe] {
         [
             UrlChangeProbe(fetcher: fetcher, throttle: throttle),
             SiteStatusProbe(fetcher: fetcher, throttle: throttle),
@@ -12,6 +13,9 @@ public enum WatchProbes {
             FolderNewFileProbe(),
             ProcessExitsProbe(table: processes),
             CommandProbe(),
+            MetricProbe(system: system, settle: settle),
+            WeatherProbe(fetcher: fetcher, throttle: throttle),
+            WebValueProbe(fetcher: fetcher, throttle: throttle),
         ]
     }
 }
@@ -25,6 +29,8 @@ public actor WatcherEngine {
     static let maxConcurrentChecks = 4
     /// Event-driven checks on one watcher are at least this far apart.
     static let minEventGap: TimeInterval = 2
+    /// A check this close to being due is done with the ones that are (see `tick`).
+    static let coalescing: TimeInterval = 0.5
 
     let store: WatcherStore
     let attention: AttentionCenter
@@ -51,6 +57,9 @@ public actor WatcherEngine {
     var hub: WatchEventHub?
     /// What was last written for each watcher, so routine checks can skip the database (see `persist`).
     var lastSaved: [String: (material: String, state: String, at: Date)] = [:]
+    /// The latest value of each report, kept here: it changes every few seconds, so it reaches the database
+    /// only with the routine saves.
+    var readings: [String: WatchReading] = [:]
 
     /// - Parameters:
     ///   - opener: opens a web address or a file for the "Open" button (the app's `PlatformBridge`).
@@ -130,6 +139,19 @@ public actor WatcherEngine {
         return watchers[id]
     }
 
+    /// The latest value of every report, newest watcher first. After a restart, until the first new check, the value
+    /// last saved with the watcher.
+    public func latestReadings() async -> [WatchReading] {
+        await ensureLoaded()
+        return watchers.values.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) > ($1.createdAt, $1.id) }
+            .compactMap { w in readings[w.id] ?? Self.savedReading(w) }
+    }
+
+    static func savedReading(_ w: Watcher) -> WatchReading? {
+        guard let shown = w.lastState?["reading"]?.string("shown"), let at = w.lastCheckedAt else { return nil }
+        return WatchReading(w, value: shown, at: at)
+    }
+
     // MARK: Changing
 
     /// Starts watching. Fills in defaults, raises too-short intervals to the kind's floor and
@@ -143,7 +165,7 @@ public actor WatcherEngine {
         w.title = w.title.displaySafe.clipped(100)
         if w.title.isEmpty { w.title = w.kind.replacingOccurrences(of: "_", with: " ") }
         if w.intervalS <= 0 { w.intervalS = probe.defaultInterval }
-        w.intervalS = min(max(w.intervalS, probe.minimumInterval), WatchLimits.maxInterval)
+        w.intervalS = min(max(w.intervalS, probe.minimumInterval(for: w)), WatchLimits.maxInterval)
         // Only the user's own watchers may be critical; everything else stays at "attention" or below.
         if w.level > .attention, w.source != "user" { w.level = .attention }
         w = try probe.prepare(w)
@@ -157,9 +179,11 @@ public actor WatcherEngine {
         w.lastError = nil
         w.errorCount = 0
         w.fireCount = 0
-        let lifetime = now.addingTimeInterval(defaultExpiry(w))
         // External agents' watchers never outlive a day, whatever they asked for (T4, T24).
-        if w.expiresAt == nil || WatchSource.isExternal(w.source) { w.expiresAt = min(w.expiresAt ?? lifetime, lifetime) }
+        if let life = lifetime(w), w.expiresAt == nil || WatchSource.isExternal(w.source) {
+            let end = now.addingTimeInterval(life)
+            w.expiresAt = min(w.expiresAt ?? end, end)
+        }
         w.createdAt = now
         w.updatedAt = now
         watchers[w.id] = w
@@ -173,6 +197,7 @@ public actor WatcherEngine {
     @discardableResult
     public func remove(_ id: String) async -> Watcher? {
         lastSaved[id] = nil
+        readings[id] = nil
         await ensureLoaded()
         guard let w = watchers.removeValue(forKey: id) else { return nil }
         inflight.removeValue(forKey: id)?.cancel()
@@ -214,7 +239,7 @@ public actor WatcherEngine {
         w.errorCount = 0
         w.lastError = nil
         w.nextCheckAt = now
-        w.expiresAt = max(w.expiresAt ?? now, now.addingTimeInterval(defaultExpiry(w)))
+        if let life = lifetime(w) { w.expiresAt = max(w.expiresAt ?? now, now.addingTimeInterval(life)) }
         w.updatedAt = now
         cooldownUntil[id] = nil
         watchers[id] = w
@@ -236,10 +261,17 @@ public actor WatcherEngine {
 
     // MARK: Limits
 
-    /// How long a watcher lives (each time it is started): a day for other agents' (T4), else by mode.
-    func defaultExpiry(_ w: Watcher) -> TimeInterval {
+    /// How long a watcher lives (each time it is started): a day for other agents' (T4), else by mode. A report the
+    /// person asked to keep "until I stop it" has no end of its own (nil).
+    func lifetime(_ w: Watcher) -> TimeInterval? {
         if WatchSource.isExternal(w.source) { return WatchLimits.externalExpiry }
-        return w.mode == .once ? WatchLimits.onceExpiry : WatchLimits.repeatExpiry
+        switch w.mode {
+        case .once: return WatchLimits.onceExpiry
+        case .repeat: return WatchLimits.repeatExpiry
+        case .report:
+            if w.config["until_stopped"]?.boolValue == true { return nil }
+            return w.intervalS < 60 ? WatchLimits.fastReportLifetime : WatchLimits.reportLifetime
+        }
     }
 
     /// At most 50 watchers going, 10 from external agents (all of them together: their names are
@@ -262,6 +294,9 @@ public actor WatcherEngine {
         if w.kind == WatchKind.command, others.filter({ $0.kind == WatchKind.command }).count >= WatchLimits.maxActiveCommands {
             throw WatchError.limit(String(localized: "\(WatchLimits.maxActiveCommands) command watchers are already running. Stop one first."))
         }
+        if w.mode == .report, others.filter({ $0.mode == .report }).count >= WatchLimits.maxActiveReports {
+            throw WatchError.limit(String(localized: "I'm already showing \(WatchLimits.maxActiveReports) live values. Stop one first."))
+        }
     }
 
     // MARK: Loading and saving
@@ -277,15 +312,15 @@ public actor WatcherEngine {
 
     /// Saves a watcher. Routine checks (only the timing changed) reach the database at most every few
     /// minutes, so ten watchers don't grow the log all day; readers that show timing ask the engine (`list()`).
+    /// A report's value counts as timing: it travels as `.watchReading`, and the lists hear nothing until
+    /// something else about the report changes.
     func persist(_ w: Watcher) async {
         let material = Self.materialFingerprint(w)
-        let state = w.lastState?.jsonString ?? ""
+        let state = Self.stateFingerprint(w)
         let now = clock.now
-        defer { events.changed(.watchers) }
-        if let saved = lastSaved[w.id], saved.material == material, saved.state == state,
-           now.timeIntervalSince(saved.at) < Self.routineSaveInterval {
-            return
-        }
+        let routine = lastSaved[w.id].map { $0.material == material && $0.state == state } ?? false
+        if !routine || w.mode != .report { events.changed(.watchers) }
+        if routine, let saved = lastSaved[w.id], now.timeIntervalSince(saved.at) < Self.routineSaveInterval { return }
         do { try await store.save(w) } catch {
             Log.shared.error("watch", "could not save a watcher", ["error": "\(error)"])
         }
@@ -293,6 +328,12 @@ public actor WatcherEngine {
     }
 
     static let routineSaveInterval: TimeInterval = 300
+
+    /// The probe's memory without a report's latest value, which changes at every check.
+    static func stateFingerprint(_ w: Watcher) -> String {
+        let state = w.mode == .report ? w.lastState?.setting("reading", nil) : w.lastState
+        return state?.jsonString ?? ""
+    }
 
     /// Everything but the timing: state, errors, firings, settings.
     static func materialFingerprint(_ w: Watcher) -> String {
@@ -322,8 +363,11 @@ public actor WatcherEngine {
         guard started, !ticking, let next = soonest() else { return }
         let generation = timerGeneration
         let delay = max(0, next.timeIntervalSince(clock.now))
+        // Late by a tenth of the wait at most (never early): macOS can then wake for this together with other
+        // timers instead of on its own, which matters for a report every few seconds.
+        let tolerance = min(max(delay / 10, 0.05), 10)
         timer = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(delay))
+            try? await Task.sleep(for: .seconds(delay), tolerance: .seconds(tolerance))
             guard !Task.isCancelled else { return }
             await self?.timerFired(generation)
         }
@@ -343,9 +387,11 @@ public actor WatcherEngine {
     func tick(epoch tickEpoch: Int? = nil) async {
         await ensureLoaded()
         let now = clock.now
+        // Checks due within the next moment ride along, so two reports a little apart share one wake-up.
+        let soon = now.addingTimeInterval(Self.coalescing)
         let due = watchers.values.filter { w in
             guard w.state == .active, !running.contains(w.id) else { return false }
-            return (w.nextCheckAt ?? now) <= now || (w.expiresAt.map { $0 <= now } ?? false)
+            return (w.nextCheckAt ?? now) <= soon || (w.expiresAt.map { $0 <= now } ?? false)
         }.sorted { ($0.nextCheckAt ?? .distantPast) < ($1.nextCheckAt ?? .distantPast) }.map(\.id)
         guard !due.isEmpty else { return }
 

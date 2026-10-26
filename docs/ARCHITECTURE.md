@@ -71,7 +71,9 @@ user folders or agent configs.
 - `ToolRegistry` — built-in tools + tools contributed by extensions/MCP servers; namespaced
   (`notes.create`, `ext.system-vitals.battery`). Model-facing names replace `.` with `_`.
 - `Guard` — `PermissionEngine.evaluate(call, spec, caller, tainted) -> .allow | .ask(req) | .deny`;
-  `ApprovalBroker` (actor) parks requests until the UI answers or a timeout denies;
+  `GuardPolicy` holds the approval mode and "If I don't answer" (D37);
+  `ApprovalBroker` (actor) parks requests until the UI answers or the wait ends (a no; for
+  Sidefolk's own agent, a skipped step kept in `SkippedSteps` for "Run it now", or a stopped task);
   `GrantStore` persists "always allow" grants with scope (tool, folder, exact command, extension).
 - `ToolExecutor` — the only path to run a tool: guard → (approval) → run with timeout → activity
   log → events. Every caller (agent loop, Claude Code brain via bridge, external MCP, slash
@@ -96,8 +98,11 @@ user folders or agent configs.
   change, wake, clock change; fires to `AttentionCenter`; recurrence; snooze; missed-on-launch
   summary; computes fallback system notifications when the app quits.
 - `WatcherEngine` (actor) — runs `WatcherProbe`s: polling kinds share one scheduler loop keyed by
-  next-check time; event kinds use DispatchSource (vnode/proc). Interval floors, exponential
-  backoff on error, expiry, once/repeat, state persisted after every check.
+  next-check time (a timer with tolerance; checks due within half a second share a wake-up); event
+  kinds use DispatchSource (vnode/proc). Interval floors, exponential backoff on error, expiry,
+  once/repeat/report. Material changes are saved at once, routine checks at most every 5 minutes.
+  Reports (D35) publish each value as `AppEvent.watchReading` instead of a notice or a list reload;
+  the app shows it as a pill beside the companion and a live row on Now.
 - `AttentionCenter` (actor) — receives `AttentionRequest`s (level, source, title, body, actions),
   applies policy (quiet mode, fullscreen, away, grouping, re-nudge, rate limits) and emits
   presentation directives for the app. Pure policy core (`AttentionPolicy`) is unit tested.
@@ -193,6 +198,30 @@ the prefix; the first suggestion the provider actually offers becomes the defaul
 provider keeps its own model when the user switches (`ProviderSettings.switchProvider`).
 
 Each provider has a main model and an optional smart one for "Think harder" (D8).
+
+## Voice (D34)
+
+Push-to-talk in, one short spoken line out. Everything that can be tested without audio hardware is in
+core; the app holds the audio and speech frameworks.
+
+- **Core** (`Sources/SidefolkCore/Voice/`): `VoiceSettings` (in `AppSettings.voice`); `VoicePolicy`
+  (which transcripts are sent, when a reply is spoken, muted or handed to VoiceOver); `SpokenLine`
+  (the one breath said for an answer, a card or a list: no URLs, paths or code); `Sentences`
+  (NLTokenizer); `SpeechOutput`, the protocol every voice engine implements (text in,
+  `VoiceAudio` pieces out); `SpeechPlayer`, the playback queue over an `AudioSink` (sentence by
+  sentence, instant `stop()`, levels for the mouth); `ElevenLabs` (voices, models, streamed PCM).
+- **App** (`Sources/SidefolkApp/Voice/`): `VoiceController` runs a turn: the talk key or a held
+  companion → `MicrophoneCapture` (AVAudioEngine tap, built-in microphone preferred, rebuilt on
+  hardware changes) → a `SpeechRecognizer` (`AnalyzerRecognizer` on macOS 26+, `BasicRecognizer`
+  before) whose partial words fill the Ask box → release → `AskModel.submit(spoken:)`, the normal
+  pipeline. Replies come back through `VoiceController.reply`, which applies `VoicePolicy` and plays
+  through `AudioPlayer` (an `AudioSink`) with `AppleVoice` or `ElevenLabsVoice`. The companion's pose
+  follows `CompanionMood.hearing`/`transcribing`, its mouth the player's levels.
+- **Dev paths** (debug builds): `SidefolkApp --voice-transcribe <audio file>` runs a file through the
+  same recognizer and conversion as the microphone and prints what releasing would send;
+  `--voice-say "<answer>" <out.caf>` writes the spoken line to a file through the real queue;
+  `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
+  plays a file into a running debug app as if the talk key were held.
 
 ## Extension protocol (summary; full guide in docs/EXTENSIONS.md)
 

@@ -36,12 +36,25 @@ extension WatcherEngine {
     // MARK: Results
 
     func apply(_ result: ProbeResult, to w: inout Watcher, probe: any WatcherProbe, at now: Date) async {
-        if lookouts[w.id] != nil { lookouts[w.id] = FirstLook(answered: true, note: result.firstLookNote) }
+        if lookouts[w.id] != nil { lookouts[w.id] = FirstLook(answered: true, note: result.firstLookNote, reading: result.reading) }
         w.lastState = result.state
         w.lastCheckedAt = now
         w.errorCount = 0
         w.lastError = nil
         w.updatedAt = now
+        if w.mode == .report {
+            // A report tells every time, in place: the value goes out as an event and waits for the routine save.
+            w.nextCheckAt = now.addingTimeInterval(w.intervalS)
+            if let reading = result.reading {
+                w.lastState = result.state.setting("reading", ["shown": .string(reading.shown)])
+                let value = WatchReading(w, value: reading.shown, at: now)
+                readings[w.id] = value
+                events.publish(.watchReading(value))
+            }
+            watchers[w.id] = w
+            await persist(w)
+            return
+        }
         if result.triggered {
             w.fireCount += 1
             switch w.mode {
@@ -49,7 +62,7 @@ extension WatcherEngine {
                 w.state = .triggered
                 w.nextCheckAt = nil
                 cooldownUntil[w.id] = nil
-            case .repeat:
+            case .repeat, .report:
                 // Stay quiet for a while so a page or file that keeps changing does not ring all day.
                 let next = now.addingTimeInterval(max(w.intervalS, cooldown(for: w, probe)))
                 w.nextCheckAt = next
@@ -78,6 +91,17 @@ extension WatcherEngine {
         case .offline?:
             w.nextCheckAt = now.addingTimeInterval(min(w.intervalS, 60))
             watchers[w.id] = w
+            await persist(w)
+            return
+        case .invalid(let why)?:
+            // Looking again can't help: stop here and say why, in Now and on the card that confirms a new watcher.
+            if lookouts[w.id] != nil { lookouts[w.id] = FirstLook(answered: true, problem: why, final: true) }
+            w.state = .error
+            w.nextCheckAt = nil
+            w.lastCheckedAt = now
+            w.lastError = why
+            watchers[w.id] = w
+            hub?.remove(w.id)
             await persist(w)
             return
         default:
@@ -145,6 +169,17 @@ extension WatcherEngine {
         watchers[id] = w
         hub?.remove(id)
         await persist(w)
+        if w.mode == .report {
+            // Reports end by design (an hour, a day, or when they were told to): say so quietly, offer more.
+            let end = TimeFormat.clock(w.expiresAt ?? now, calendar: .autoupdatingCurrent)
+            await attention.post(AttentionRequest(
+                level: .gentle, source: "watcher", title: String(localized: "I stopped showing \(w.title)"),
+                body: String(localized: "It was set to stop at \(end)."),
+                actions: [AttentionAction(id: "keep", title: String(localized: "Keep going"), isPrimary: true),
+                          AttentionAction(id: "stop", title: String(localized: "Remove"))],
+                refKind: "watcher", refId: id))
+            return
+        }
         let days = max(1, Int(((w.expiresAt ?? now).timeIntervalSince(w.createdAt) / 86400).rounded()))
         await attention.post(AttentionRequest(
             level: .gentle, source: "watcher", title: String(localized: "I stopped watching \(w.title)"),

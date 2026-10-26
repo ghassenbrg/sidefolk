@@ -46,10 +46,13 @@ public final class SidefolkRuntime: Sendable {
     ///   - bundledResources: the app's Resources folder (bundled skills, built-in and sample extensions).
     ///   - extensionSecrets: environment values for an MCP server, read from the Keychain by server id.
     ///   - appleEvents: how Notes and Reminders are reached; tests pass a fake.
+    ///   - approvalMinute: how long a minute of an unanswered approval lasts (D37); the UI snapshots
+    ///     shorten it to show steps that were skipped.
     public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock(),
                 bundledResources: URL? = nil,
                 extensionSecrets: @escaping @Sendable (String) async -> [String: String] = { _ in [:] },
-                appleEvents: any AppleEventsRunner = OsascriptRunner()) async {
+                appleEvents: any AppleEventsRunner = OsascriptRunner(),
+                approvalMinute: TimeInterval = 60) async {
         self.paths = paths
         self.db = db
         self.platform = platform
@@ -72,7 +75,7 @@ public final class SidefolkRuntime: Sendable {
         registry = ToolRegistry()
         broker = ApprovalBroker(events: events)
         executor = ToolExecutor(registry: registry, permissions: permissions, broker: broker, activity: activity,
-                                events: events, clock: clock)
+                                events: events, clock: clock, minute: approvalMinute)
         attention = AttentionCenter(store: AttentionStore(db), events: events, clock: clock)
         brief = MorningBrief(db: db, attention: attention, settings: settings, clock: clock)
         scheduler = ReminderScheduler(store: reminderStore, attention: attention, events: events, settings: settings,
@@ -99,7 +102,7 @@ public final class SidefolkRuntime: Sendable {
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
-        registry.register(WatchTools.make(engine: watchers))
+        registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) }))
         registry.register(AgentFacingTools.make(attention: attention))
         registry.register(AgentFacingTools.status(StatusReader(db: db)))
         registry.register(SkillTools.all(skills))

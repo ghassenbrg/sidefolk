@@ -40,6 +40,13 @@ struct WhenRepeat: Sendable, Equatable {
     var day: Int?
 }
 
+/// "until 6pm", "until friday": where a repeating series stops.
+struct WhenEnd: Sendable {
+    var day: WhenDay?
+    var time: WhenTime?
+    var partHint: WhenDayPart?
+}
+
 /// One recognised piece of a time phrase and the tokens it covers (`start..<end`).
 struct WhenAtom: Sendable {
     var day: WhenDay?
@@ -48,6 +55,8 @@ struct WhenAtom: Sendable {
     var partHint: WhenDayPart?
     var duration: WhenSpan?
     var repeats: WhenRepeat?
+    /// A repeat's last moment ("every 10 minutes until 6pm").
+    var until: WhenEnd?
     var start = 0
     var end = 0
 
@@ -84,8 +93,12 @@ struct WhenAtom: Sendable {
             guard repeats == nil else { return nil }
             out.repeats = r
         }
+        if next.until != nil {
+            guard until == nil else { return nil }
+            out.until = next.until
+        }
         if out.repeats != nil, out.day != nil { return nil }
-        if let r = out.repeats, r.frequency == .hourly, out.time != nil { return nil }
+        if let r = out.repeats, r.frequency.isElapsed, out.time != nil { return nil }
         return out
     }
 }
@@ -111,6 +124,12 @@ struct WhenScanner {
         while i < tokens.count {
             if var atom = match(at: i, previous: out.last) {
                 atom.start = i
+                // Right after the repeat ("every hour until 6") or after its time ("every day at 8 until friday").
+                let repeating = atom.repeats != nil || (out.last?.repeats != nil && atom.time != nil && atom.day == nil)
+                if repeating, let (end, after) = matchUntil(atom.end) {
+                    atom.until = end
+                    atom.end = after
+                }
                 out.append(atom)
                 i = max(atom.end, i + 1)
             } else {
@@ -118,6 +137,28 @@ struct WhenScanner {
             }
         }
         return out
+    }
+
+    /// "until 6pm", "till friday", "until tomorrow at noon" right after a repeat. A bare hour counts as a time here
+    /// ("until 6" is 18:00), as it does after "at".
+    private func matchUntil(_ k: Int) -> (WhenEnd, Int)? {
+        guard ["until", "till", "til"].contains(word(k) ?? "") else { return nil }
+        if let day = matchDay(k + 1) {
+            var end = WhenEnd(day: day.day, time: day.time, partHint: day.partHint)
+            var after = day.end
+            var j = day.end
+            if word(j) == "at" || punct(j) == "," { j += 1 }
+            if end.time == nil, let time = matchTime(j, previous: day, explicit: true), time.time != nil {
+                end.time = time.time
+                end.partHint = time.partHint
+                after = time.end
+            }
+            return (end, after)
+        }
+        if let time = matchTime(k + 1, previous: nil, explicit: true), time.time != nil {
+            return (WhenEnd(time: time.time, partHint: time.partHint), time.end)
+        }
+        return nil
     }
 
     private func match(at i: Int, previous: WhenAtom?) -> WhenAtom? {
@@ -264,7 +305,8 @@ struct WhenScanner {
         "degrees", "miles", "km", "kg", "pounds", "cards", "tabs", "emails", "messages", "calls", "meetings",
     ]
 
-    private func matchTime(_ i: Int, previous: WhenAtom?) -> WhenAtom? {
+    /// - Parameter explicit: the words before already said a time comes ("until 6"), as "at" does.
+    private func matchTime(_ i: Int, previous: WhenAtom?, explicit: Bool = false) -> WhenAtom? {
         // "in the morning/afternoon/evening", "in the night"
         if word(i) == "in", word(i + 1) == "the", let p = partWord(i + 2) {
             return WhenAtom(time: .part(p), end: i + 3)
@@ -275,7 +317,7 @@ struct WhenScanner {
         }
 
         var k = i
-        var explicitAt = false
+        var explicitAt = explicit
         if let w = word(k), ["at", "by", "around"].contains(w) { explicitAt = true; k += 1 }
         else if punct(k) == "@" { explicitAt = true; k += 1 }
 
@@ -461,13 +503,17 @@ struct WhenScanner {
             k += 1
         } else if let n = number(k), n.isInteger, !n.ordinal, (1...999).contains(Int(n.number)) {
             guard let u = word(k + 1) else { return nil }
-            // "every 30 minutes" cannot be a Recurrence (the smallest step is an hour).
-            guard ["hour", "day", "week", "month", "year"].contains(u) else { return nil }
+            // Seconds are too fine for a reminder (its smallest step is a minute): left alone, never rounded.
+            guard ["minute", "hour", "day", "week", "month", "year"].contains(u) else { return nil }
             interval = Int(n.number)
             k += 1
+        } else if word(k) == "half", word(k + 1) == "hour" || (["a", "an"].contains(word(k + 1) ?? "") && word(k + 2) == "hour") {
+            // "every half hour", "every half an hour"
+            return WhenAtom(repeats: WhenRepeat(frequency: .minutely, interval: 30), end: word(k + 1) == "hour" ? k + 2 : k + 3)
         }
         guard let u = word(k) else { return nil }
         switch u {
+        case "minute": return WhenAtom(repeats: WhenRepeat(frequency: .minutely, interval: interval), end: k + 1)
         case "day": return WhenAtom(repeats: WhenRepeat(frequency: .daily, interval: interval), end: k + 1)
         case "hour": return WhenAtom(repeats: WhenRepeat(frequency: .hourly, interval: interval), end: k + 1)
         case "week":

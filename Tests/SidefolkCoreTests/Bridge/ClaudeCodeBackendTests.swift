@@ -169,6 +169,8 @@ struct BackendHarness {
         #expect(mcp?["mcpServers"]?["sidefolk"]?.string("command") == "/h/sidefolk")
         #expect(mcp?["mcpServers"]?["sidefolk"]?["args"] == ["mcp"])
         #expect(mcp?["mcpServers"]?["sidefolk"]?["env"] == ["SIDEFOLK_RUN_DIR": "/r", "SIDEFOLK_HOME": "/home"])
+        // A card may wait for the person a day at most (D37); Claude Code must not give up on the call first.
+        #expect(mcp?["mcpServers"]?["sidefolk"]?["timeout"]?.intValue == (24 * 60 * 60 + 300) * 1000)
     }
 
     @Test func olderCLIsGetTheSystemPromptOverStdin() throws {

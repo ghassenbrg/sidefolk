@@ -104,10 +104,22 @@ enum UISnapshots {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
             }
             try await page("page-now", NowView(model: full.now), width: 870)
+            // With Full access on, Now leads with it (D37).
+            let homePolicy = try await full.services.runtime.permissions.policy()
+            try await full.services.runtime.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+            await full.now.reload()
+            try await page("page-now-full-access", NowView(model: full.now), width: 870)
+            try await full.services.runtime.permissions.setPolicy(homePolicy)
+            await full.now.reload()
             let width = SettingsWindowController.width
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
+            let policy = settings.policy
+            await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
+            try await page("page-settings-privacy-full-access", SettingsTabContent(tab: .privacy, model: settings), width: width)
+            await settings.setPolicy { $0 = policy }
             // The companion chooser with Spark chosen, then the robot in coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)
@@ -126,6 +138,14 @@ enum UISnapshots {
             await settings.ai.refresh()
             await settings.ai.test()
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
+            // Settings › Voice turned on, in the states that need different words (D34).
+            for (name, setUp) in voiceStates {
+                setUp(fixtures.voice, settings)
+                await settings.voice.refresh()
+                try await page("page-settings-voice-\(name)", VoiceSettingsView(model: settings), width: width)
+            }
+            settings.update { $0.voice = VoiceSettings() }
+
             // A Mac without git: the built-in Git extension says why it isn't there.
             fixtures.gitMissing = true
             await settings.loadExtensions()
@@ -134,17 +154,19 @@ enum UISnapshots {
             await settings.loadExtensions()
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
-            try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Mochi",
-                                                      portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
-            try await page("desktop-ask-apple-notes", AskView(model: sampleAskAppleNotes(), companionName: "Mochi",
-                                                                  portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"),
-                           width: 380)
-            try await page("desktop-ask-extensions", AskView(model: sampleAskExtensions(), companionName: "Mochi",
-                                                                 portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"),
-                           width: 380)
+            let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
+            let actions = FixtureAskActions()
+            let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
+                          ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
+                          ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess))]
+                + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
+            for (name, ask) in panels {
+                try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
+            }
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
+            try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
 
             // Sheets.
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
@@ -152,15 +174,18 @@ enum UISnapshots {
             try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 480)
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
+            try await page("sheet-full-access", FullAccessSheet(model: settings), width: 460)
         }
         print("ui-snapshots: wrote \(dir.path) (\(Bundle.main.preferredLocalizations.first ?? "en"))")
     }
 
     // MARK: Fixtures
 
+    /// A minute of an unanswered approval lasts a millisecond here, so sample steps can be skipped (D37).
     private static func runtime() async throws -> SidefolkRuntime {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-ui-\(UUID().uuidString)", isDirectory: true)
-        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform())
+        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform(),
+                                       approvalMinute: 0.001)
         try await rt.notebook.inbox()
         return rt
     }
@@ -169,8 +194,21 @@ enum UISnapshots {
         let rt = try await runtime()
         let model = HomeModel(services: FixtureServices(runtime: rt))
         let sample = empty ? nil : try await SampleData.fill(rt, notebook: model.notebook)
+        if !empty { try await skipSteps(rt) }
         await model.reloadAll()
         return (model, sample)
+    }
+
+    /// Two steps Sidefolk's agent asked about while nobody was there, through the real path: a page
+    /// to read (skipped, the run went on) and a command to run on a schedule (the task stopped).
+    private static func skipSteps(_ rt: SidefolkRuntime) async throws {
+        let policy = try await rt.permissions.policy()
+        _ = await rt.executor.execute(name: "web.fetch", input: ["url": "https://example.com/pricing"], caller: .agent(runId: "sample"))
+        var stopping = policy
+        stopping.unanswered.action = .stop
+        try await rt.permissions.setPolicy(stopping)
+        _ = await rt.executor.execute(name: "watch.command", input: ["command": "npm run e2e", "exit_code": 0], caller: .agent(runId: "sample"))
+        try await rt.permissions.setPolicy(policy)
     }
 
     private static func makeSettings() async throws -> (SettingsModel, FixtureServices) {
@@ -206,6 +244,50 @@ enum UISnapshots {
         ("none", .none, { _, _ in }),
     ]
 
+    /// Settings › Voice pages: file name and the fixture state each is shown in.
+    private static let voiceStates: [(String, @MainActor (FixtureVoiceServices, SettingsModel) -> Void)] = [
+        ("on", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.allowed, .ready(.transcriber), false)
+            s.update { $0.voice = VoiceSettings(); $0.voice.input = true }
+        }),
+        ("elevenlabs", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.allowed, .ready(.transcriber), true)
+            s.update { $0.voice.input = true; $0.voice.engine = .elevenLabs; $0.voice.elevenLabsVoice = "v1"; $0.voice.elevenLabsVoiceName = "Juniper" }
+        }),
+        ("download", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.notAsked, .needsDownload(.transcriber), false)
+            s.update { $0.voice = VoiceSettings(); $0.voice.input = true; $0.voice.talkKey = .ownShortcut; $0.voice.language = "fr-FR"; $0.voice.replies = .always }
+        }),
+        ("basic", { f, s in
+            (f.microphone, f.status, f.hasElevenLabsKey) = (.denied, .ready(.basic), false)
+            s.update { $0.voice = VoiceSettings(); $0.voice.input = true }
+        }),
+    ]
+
+    /// The Ask panel while talking: listening with the words so far, the words not caught, and replies said aloud or muted.
+    private static func voiceAsks(_ actions: FixtureAskActions) -> [(String, AskModel)] {
+        let listening = AskModel()
+        listening.actions = actions
+        listening.voice = .listening(basic: false)
+        listening.text = "Remind me at 5 to stretch"
+        let starting = AskModel()
+        starting.actions = actions
+        starting.voice = .listening(basic: false)
+        let missed = AskModel()
+        missed.actions = actions
+        missed.add(.info(String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")), caption: String(localized: "Talking"))
+        missed.text = "uh"
+        let spoken = AskModel()
+        spoken.actions = actions
+        spoken.add(.result(ResultCard(kind: .reminder, title: "Stretch", subtitle: "Today 17:00"), activityId: nil, undo: true),
+                   caption: "Remind me at 5 to stretch.")
+        spoken.add(.spoken("Stretch, Today 17:00", muted: nil))
+        spoken.add(.answer("Next up is **Stretch** at 17:00. Scout is also watching example.com for changes.", canThinkHarder: false, tainted: false),
+                   caption: "What's next?")
+        spoken.add(.spoken("Next up is Stretch at 17:00.", muted: .quiet))
+        return [("listening", listening), ("listening-empty", starting), ("missed", missed), ("spoken", spoken)]
+    }
+
     /// A panel after a few requests: a result, an answer and a pending approval.
     private static func sampleAsk() -> AskModel {
         let ask = AskModel()
@@ -217,6 +299,48 @@ enum UISnapshots {
                                           risk: .medium, caller: .agent(runId: "r"),
                                           details: .paths(["~/Downloads/a.pdf", "~/Downloads/b.pdf", "~/Downloads/c.pdf"]),
                                           canAlways: false)))
+        return ask
+    }
+
+    /// An answer that ends with a question: Reply, then the input waits for it.
+    private static func sampleAskQuestion() -> AskModel {
+        let ask = AskModel()
+        ask.add(.answer("I copied 42 notes. Five look like they hold passwords or tokens, so I left them in Notes. Should I copy those too?",
+                        canThinkHarder: false, tainted: true), caption: "organize my Apple Notes into the notebook")
+        ask.reply()
+        return ask
+    }
+
+    /// The live values beside the companion: two running, one paused.
+    private static func sampleReadouts() -> ReadoutPillsModel {
+        let model = ReadoutPillsModel()
+        model.items = [Readout(id: "1", label: String(localized: "CPU"), value: "23%"),
+                       Readout(id: "2", label: "Fukuoka", value: "18.4 °C"),
+                       Readout(id: "3", label: String(localized: "Network"), value: "↓ 1.2 MB/s ↑ 40 kB/s", paused: true)]
+        return model
+    }
+
+    /// A panel in Auto or Full access after a request that went on while nobody answered: what was
+    /// done without asking, and the step that was skipped (D37).
+    private static func awayAsk(_ mode: GuardMode) -> AskModel {
+        let ask = AskModel()
+        ask.mode = mode
+        let full = mode == .fullAccess
+        ask.add(.result(ResultCard(kind: .file, title: "Renamed 3 invoices", subtitle: "~/Documents/Invoices"), activityId: nil, undo: true),
+                caption: "tidy up my invoices and check the pricing page")
+        ask.add(.doneWithoutAsking("Rename 3 files in ~/Documents/Invoices", fullAccess: full))
+        if full {
+            ask.add(.doneWithoutAsking("Move 2 files in ~/Downloads to the Trash", fullAccess: true))
+        } else {
+            // After a note was read, a step that keeps everything on the Mac can be allowed for the request.
+            ask.add(.approval(ApprovalRequest(tool: "applenotes.copy", title: String(localized: "Copy Apple Notes to the notebook"),
+                                              summary: "Copy 50 notes from Apple Notes into “Cooking”, “Travel”", risk: .medium,
+                                              caller: .agent(runId: "r"), details: .none, canAlways: false, tainted: true,
+                                              canAllowForRequest: true)))
+        }
+        ask.add(.skipped("Read https://example.com/pricing", why: "You didn't answer in time, so this step was skipped."))
+        ask.add(.answer("I renamed the invoices. I didn't read the pricing page: you weren't there to say yes, so it's waiting in Now.",
+                        canThinkHarder: false, tainted: false))
         return ask
     }
 
@@ -267,6 +391,12 @@ enum UISnapshots {
                                               actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
                                                         AttentionAction(id: "snooze", title: String(localized: "10 min"))],
                                               refKind: "reminder", refId: "r1"))),
+            ("reminder-repeating", bubble(AttentionItem(level: .attention, source: "reminder", title: "Drink some water",
+                                                        body: "Every 30 minutes until 18:00",
+                                                        actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
+                                                                  AttentionAction(id: "snooze10", title: String(localized: "10 min")),
+                                                                  AttentionAction(id: "stop", title: String(localized: "Stop repeating"))],
+                                                        refKind: "reminder", refId: "r2"))),
             ("job-failed", bubble(AttentionItem(level: .attention, source: "job", title: "npm test failed (exit 1)",
                                                 body: "FAIL src/app.test.ts\nExpected 2, received 3\nAfter 4m 12s in sidefolk",
                                                 actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),
@@ -278,6 +408,10 @@ enum UISnapshots {
                                                         AttentionAction(id: "no", title: "No")],
                                               refKind: "ask"),
                                 tail: .init(onTop: true, x: 60))),
+            ("done-without-asking", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
+                                                         title: String(localized: "Done without asking: \("Rename 3 files in ~/Documents/Invoices")",
+                                                                       comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
+                                                         body: GuardMode.auto.title, refKind: "unasked"))),
             ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
                                            body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
             ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),

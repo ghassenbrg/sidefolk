@@ -71,7 +71,8 @@ Do the same for the person.
    only, so anything in quotes that shows what to type stays as it is: “remind me at 5 to stretch”,
    “tomorrow 9am”, “in 20 minutes”, “every weekday at 9”. Words the person typed come back in some
    messages (“Yesterday has passed.” is built from what they typed): translate the sentence, keep
-   their words.
+   their words. Examples that only the AI handles (“I prefer short answers”, “write a skill for my
+   weekly review”, “and tomorrow too”) may be translated: the AI understands every language.
 2. **Placeholders.** Keep every `%@`, `%lld` and `%d`, no more and no fewer. To change their order,
    number them: `%2$@ … %1$@`. A key with several placeholders already shows them numbered in its
    English value; the comment says what each one is when it is not obvious.

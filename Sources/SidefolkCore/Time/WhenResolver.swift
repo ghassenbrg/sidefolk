@@ -22,7 +22,7 @@ struct WhenResolver {
 
     func resolve(_ atom: WhenAtom) -> Outcome? {
         if let span = atom.duration { return offset(span) }
-        if atom.repeats != nil { return repeating(atom) }
+        if atom.repeats != nil { return ending(repeating(atom), atom.until) }
         return single(atom)
     }
 
@@ -210,8 +210,8 @@ struct WhenResolver {
         }
 
         switch spec.frequency {
-        case .hourly:
-            let first = now.addingTimeInterval(Double(spec.interval) * 3600)
+        case .minutely, .hourly:
+            let first = now.addingTimeInterval(Double(spec.interval) * (spec.frequency == .minutely ? 60 : 3600))
             return result(first: first, anchor: first)
         case .daily:
             guard let first = soonest({ _ in true }) else { return nil }
@@ -243,6 +243,23 @@ struct WhenResolver {
                 return d
             }
         }
+    }
+
+    /// "until 6pm", "until friday": the series' last moment goes into the rule. A day without a time ends when that day
+    /// does. A clock time alone means today: when it has already passed (or comes before the first time), the phrase
+    /// is not used at all rather than stretched into tomorrow.
+    private func ending(_ outcome: Outcome?, _ end: WhenEnd?) -> Outcome? {
+        guard var outcome, let end else { return outcome }
+        guard let stop = single(WhenAtom(day: end.day, time: end.time, partHint: end.partHint)), stop.confidence != .low else { return nil }
+        if end.day == nil, !calendar.isDate(stop.date, inSameDayAs: now) { return nil }
+        var last = stop.date
+        if end.time == nil, let nextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: last)) {
+            last = nextDay.addingTimeInterval(-1)
+        }
+        guard last >= outcome.date else { return nil }
+        outcome.recurrence?.until = last
+        outcome.confidence = min(outcome.confidence, stop.confidence)
+        return outcome
     }
 
     /// Monthly and yearly series: the anchor is placed on a real date that has the wanted day (a month or

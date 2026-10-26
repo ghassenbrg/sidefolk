@@ -57,14 +57,16 @@ import Testing
 
     @Test func bundledSkillsAreUsable() throws {
         let skills = SkillLibrary(userDirectory: root.appendingPathComponent("none"), bundledDirectory: Self.bundled).skills()
-        #expect(skills.map(\.name) == ["organize-downloads", "weekly-review"])
+        #expect(skills.map(\.name) == ["build-extension", "organize-downloads", "weekly-review"])
         for s in skills {
             #expect(s.origin == .bundled && s.trusted)
             #expect(!s.description.isEmpty && s.instructions.count > 300)
             #expect(!s.tools.isEmpty)
         }
         #expect(skills.last?.model == "smart")
-        #expect(skills.first?.tools == ["files.list", "files.mkdir", "files.move"])
+        #expect(skills.first?.tools == ["extensions.draft", "extensions.review", "extensions.read_draft"])
+        #expect(skills.first?.model == "smart", "writing code wants the careful model")
+        #expect(skills.dropFirst().first?.tools == ["files.list", "files.mkdir", "files.move"])
     }
 
     @Test func indexMergesUserAndBundledSkills() throws {
@@ -73,7 +75,7 @@ import Testing
         try write("broken", "---\nname: other-name\ndescription: x\n---\n")
         try write("Bad_Name", "---\nname: Bad_Name\ndescription: x\n---\n")
         let index = library.index()
-        #expect(index.map(\.name) == ["organize-downloads", "tidy-desk", "weekly-review"])
+        #expect(index.map(\.name) == ["build-extension", "organize-downloads", "tidy-desk", "weekly-review"])
         #expect(index.last?.description == "My own review.")
         #expect(library.skill(named: "weekly-review")?.origin == .user)
         #expect(index.allSatisfy { $0.trusted })

@@ -7,6 +7,8 @@ final class AskPanelController {
     private let hosted: HostedPanel<AskView>
     private var resignObserver: NSObjectProtocol?
     var onVisibilityChange: ((Bool) -> Void)?
+    /// Esc goes here first (talking, speaking); true when it was handled there.
+    var onEscape: (() -> Bool)?
 
     init(model: AskModel, companionName: String, portrait: NSImage?, hotkey: String) {
         self.model = model
@@ -50,11 +52,12 @@ final class AskPanelController {
     }
 
     private func cancel() {
+        if onEscape?() == true { return }
         if !model.text.isEmpty { model.text = "" } else { hide() }
     }
 
     private func didResignKey() {
-        // Stay up while work or a question is pending; otherwise get out of the way.
-        if !model.busy && !model.entries.contains(where: \.isPinned) { hide() }
+        // Stay up while work, a question or talking is pending; otherwise get out of the way.
+        if !model.busy && model.voice == nil && !model.entries.contains(where: \.isPinned) { hide() }
     }
 }

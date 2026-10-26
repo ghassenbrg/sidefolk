@@ -45,7 +45,8 @@ public struct LocalIntentRunner: Sendable {
 
     public func parse(_ text: String) async -> ParsedIntent? {
         let names = ((try? await runtime.notebook.collections()) ?? []).map(\.name)
-        return runtime.intentParser.parse(Self.expandSlash(text), now: runtime.clock.now, knownCollections: names)
+        let watching = await runtime.watchers.list().map(WatchName.init)
+        return runtime.intentParser.parse(Self.expandSlash(text), now: runtime.clock.now, knownCollections: names, watching: watching)
     }
 
     public func run(_ intent: LocalIntent) async -> LocalOutcome {
@@ -76,6 +77,23 @@ public struct LocalIntentRunner: Sendable {
                 input["contains"] = .string(contains)
             }
             return await execute("watch.create", .object(input))
+        case .report(let r):
+            var input: [String: JSONValue] = ["every_seconds": .number(r.everySeconds)]
+            switch r.source {
+            case .metric(let metric):
+                input["source"] = "metric"
+                input["metric"] = .string(metric.rawValue)
+            case .weather(let place, let quantity):
+                input["source"] = "weather"
+                input["place"] = .string(place)
+                input["quantity"] = .string(quantity.rawValue)
+            }
+            if let until = r.until { input["until"] = .string(until) }
+            if r.untilStopped { input["until_stopped"] = true }
+            if r.notify { input["notify"] = true }
+            return await execute("watch.report", .object(input))
+        case .stopWatch(let ids, let words):
+            return await stop(ids, words: words)
         case .quiet(let until):
             await runtime.settings.update { $0.quietUntil = until ?? .distantFuture }
             await runtime.attention.update { $0.quiet = true }
@@ -96,17 +114,26 @@ public struct LocalIntentRunner: Sendable {
         }
     }
 
+    /// Stops what the words named, through `watch.stop` like any other stop. Several matches are named back
+    /// rather than all stopped: "stop the temperature" with two cities should ask which.
+    private func stop(_ ids: [String], words: String) async -> LocalOutcome {
+        let said = words.trimmingCharacters(in: .whitespaces).clipped(40)
+        guard !ids.isEmpty else {
+            return .info(said.isEmpty ? String(localized: "I'm not showing or watching anything right now.")
+                : String(localized: "I'm not showing or watching anything like “\(said)”."))
+        }
+        guard ids.count == 1 else {
+            let titles = await runtime.watchers.list().filter { ids.contains($0.id) }.map { "“\($0.title)”" }
+            return .info(String(localized: "That could be \(Wording.list(titles)). Which one should I stop?"))
+        }
+        return await execute("watch.stop", ["id": .string(ids[0])])
+    }
+
     private func execute(_ tool: String, _ input: JSONValue) async -> LocalOutcome {
         let out = await runtime.executor.execute(name: tool, input: input, caller: .user)
-        switch out.status {
-        case .ok(let result):
-            let card = result.card ?? ResultCard(kind: .info, title: result.text.clipped(120))
-            return .card(card, activityId: out.activity.id, undo: out.activity.undoAvailable)
-        case .denied(let why):
-            return .failed(UserFacingError(verbatim: why))
-        case .failed(let error):
-            return .failed(error)
-        }
+        guard case .ok(let result) = out.status else { return .failed(out.problem!) }
+        let card = result.card ?? ResultCard(kind: .info, title: result.text.clipped(120))
+        return .card(card, activityId: out.activity.id, undo: out.activity.undoAvailable)
     }
 
     private func find(query: String, kind: NotebookItem.Kind?, collection: String?) async -> LocalOutcome {
@@ -129,7 +156,7 @@ public struct LocalIntentRunner: Sendable {
         if !query.isEmpty, kind == nil {
             title = String(localized: "Found for “\(query.clipped(30))”")
         } else {
-            let what = kind.map(NoteText.plural) ?? String(localized: "Found")
+            let what = kind.map(NoteText.plural) ?? String(localized: "Results", comment: "Title of notebook search results of every kind: “Results in Sidefolk”")
             title = target.map { String(localized: "\(what) in \(NotebookCollections.shownName($0))", comment: "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”") } ?? what
         }
         return .list(title: "\(title) (\(cards.count))", cards: cards)

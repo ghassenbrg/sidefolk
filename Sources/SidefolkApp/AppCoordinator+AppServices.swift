@@ -12,11 +12,7 @@ extension AppCoordinator: AppServices {
     func createReminder(title: String, when: String) async -> UserFacingError? {
         let out = await runtime.executor.execute(name: "reminders.create", input: ["title": .string(title), "when": .string(when)],
                                                  caller: .user)
-        switch out.status {
-        case .ok: return nil
-        case .denied(let why): return UserFacingError(verbatim: why)
-        case .failed(let e): return e
-        }
+        return out.problem
     }
 
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? {

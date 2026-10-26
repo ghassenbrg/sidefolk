@@ -10,7 +10,8 @@ public enum RecurrenceMath {
         let step = max(1, r.interval)
         let found: Date?
         switch r.frequency {
-        case .hourly: found = hourly(after: after, anchor: anchor, step: step)
+        case .minutely: found = elapsed(after: after, anchor: anchor, length: Double(step) * 60)
+        case .hourly: found = elapsed(after: after, anchor: anchor, length: Double(step) * 3600)
         case .daily: found = daily(after: after, anchor: anchor, step: step, calendar: calendar)
         case .weekdays: found = weekdays(after: after, anchor: anchor, calendar: calendar)
         case .weekly: found = weekly(after: after, anchor: anchor, step: step, days: r.weekdays, calendar: calendar)
@@ -24,9 +25,8 @@ public enum RecurrenceMath {
 
     // MARK: Frequencies
 
-    /// Hours are elapsed time, not wall-clock: "every 2 hours" stays two real hours apart across DST.
-    private static func hourly(after: Date, anchor: Date, step: Int) -> Date? {
-        let length = Double(step) * 3600
+    /// Minutes and hours are elapsed time, not wall-clock: "every 2 hours" stays two real hours apart across DST.
+    private static func elapsed(after: Date, anchor: Date, length: TimeInterval) -> Date? {
         guard after >= anchor else { return anchor }
         let k = (after.timeIntervalSince(anchor) / length).rounded(.down) + 1
         return anchor.addingTimeInterval(k * length)
