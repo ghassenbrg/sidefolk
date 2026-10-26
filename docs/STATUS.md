@@ -4,10 +4,19 @@ Updated: 2026-10-26, late morning (orchestrated by Claude; specialist agents in 
 into `rework`).
 
 ## Done and verified
-- **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (D1–D24), SECURITY (threat model T1–T24),
+- **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (D1–D25), SECURITY (threat model T1–T24),
   MACOS-NOTES, VOICE, FOUNDING, CHARACTER, EXTENSIONS.
 - **Character:** Core Animation rig with 11 states and 10 props, all 10 folks, app icon and menu bar
   template. Calm states settle after 20 s, loops are capped at 24 fps and pause while hidden (D20).
+- **Brand assets (2026-10-26):** reference-faithful app icon (1024 PNG, ten iconset representations,
+  ICNS); individual transparent stacked/horizontal logos, wordmarks and family marks in color,
+  navy and white. Generated text effects were rejected; the final flat wordmark uses denoised,
+  fitted cubic Bézier silhouettes from the original reference, with SVG/PDF and 4096 px PNG exports.
+  Native 18 pt menu template is a vector PDF plus 1x/2x/3x PNGs, bundled and loaded as an NSImage
+  template through `BrandAsset`. `make brand-assets` rebuilds exports and a light/dark preview.
+  Verified alpha, dimensions, SVG paths, PDF native loading, exact bundled bytes, signed debug
+  assembly and visual review at native menu size and high zoom. No brand work remains half done;
+  next step is the founder's visual sign-off on `Resources/Brand/preview.png`.
 - **Core:** storage (GRDB, FTS5, secure_delete, 0600 files) and Guard (risk, caller, taint, user-typed
   links, hardened path policy, folder-bound command grants, approvals). Every tool input is checked
   against its schema. The executor provides audit and undo. Also attention policy and center (held

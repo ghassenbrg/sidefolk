@@ -234,6 +234,21 @@ for y in 645..<700 { for x in 1030..<1100 {
     let r = Double(pp[i])/255, g = Double(pp[i+1])/255, b = Double(pp[i+2])/255
     if g > 0.5, b/g < 1.15, r < g*0.99 { for j in 0..<4 { pp[i+j] = 0 } }
 } }
+// Remove detached crop-edge flecks (including the discarded ray's pale antialias rim).
+var seen = [Bool](repeating: false, count: 1100*700)
+for start in seen.indices where !seen[start] && pp[start*4+3] > 8 {
+    var island = [start], cursor = 0
+    seen[start] = true
+    while cursor < island.count {
+        let at = island[cursor], x = at%1100, y = at/1100
+        cursor += 1
+        for next in [x > 0 ? at-1 : -1, x < 1099 ? at+1 : -1,
+                     y > 0 ? at-1100 : -1, y < 699 ? at+1100 : -1] where next >= 0 {
+            if !seen[next], pp[next*4+3] > 8 { seen[next] = true; island.append(next) }
+        }
+    }
+    if island.count < 256 { for at in island { for j in 0..<4 { pp[at*4+j] = 0 } } }
+}
 let primaryMark = normalized(primaryContext.makeImage()!)
 let mono = normalized(read("Resources/Brand/masters/mark-monochrome.png"), ink: navy)
 func tint(_ image: CGImage, _ ink: (Double, Double, Double)) -> CGImage {
