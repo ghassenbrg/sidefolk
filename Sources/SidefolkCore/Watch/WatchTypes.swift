@@ -55,19 +55,28 @@ public struct ReadingText: Sendable, Equatable {
 public struct WatchReading: Sendable, Hashable {
     public var watcherId: String
     public var title: String
+    /// The short name a pill beside the companion shows: "CPU", "Fukuoka".
+    public var label: String
     public var value: String
     public var at: Date
     public var intervalS: TimeInterval
     /// The person asked for a notification with every reading.
     public var notify: Bool
 
-    public init(watcherId: String, title: String, value: String, at: Date, intervalS: TimeInterval, notify: Bool) {
+    public init(watcherId: String, title: String, label: String, value: String, at: Date, intervalS: TimeInterval, notify: Bool) {
         self.watcherId = watcherId
         self.title = title
+        self.label = label
         self.value = value
         self.at = at
         self.intervalS = intervalS
         self.notify = notify
+    }
+
+    init(_ w: Watcher, value: String, at: Date) {
+        self.init(watcherId: w.id, title: w.title, label: w.config.string("place")?.components(separatedBy: ",").first ?? w.title,
+                  value: value.displaySafe.clipped(WatchLimits.readingLimit), at: at, intervalS: w.intervalS,
+                  notify: w.config["notify"]?.boolValue == true)
     }
 }
 

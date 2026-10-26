@@ -414,7 +414,11 @@ binary targets or build plugins from dependencies.
   hint, since any process can post them: the app must confirm with `ScreenLock.isLocked`
   (`CGSessionCopyCurrentDictionary`) before holding or releasing items. Identical titles within
   10 min are not yet deduplicated.
-- Watcher floors: web 5 min, site 60 s, command 60 s. At most 50 active, with per-caller quotas.
+- Watcher floors: web 5 min, site 60 s, command 60 s. Reports (D35): metrics 5 s, weather and web
+  values 60 s (still one request a minute per host), command output 10 s; at most 4 live at once,
+  ending after an hour or a day unless the user said "until I stop it". `watch.report` is not offered
+  to external agents: a web value would let them read pages through Sidefolk (T4). A web value or a
+  command's output is untrusted in the tool result (T2). At most 50 active, with per-caller quotas.
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
   step that makes a watcher active.

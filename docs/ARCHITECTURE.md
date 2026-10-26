@@ -94,8 +94,11 @@ user folders or agent configs.
   change, wake, clock change; fires to `AttentionCenter`; recurrence; snooze; missed-on-launch
   summary; computes fallback system notifications when the app quits.
 - `WatcherEngine` (actor) — runs `WatcherProbe`s: polling kinds share one scheduler loop keyed by
-  next-check time; event kinds use DispatchSource (vnode/proc). Interval floors, exponential
-  backoff on error, expiry, once/repeat, state persisted after every check.
+  next-check time (a timer with tolerance; checks due within half a second share a wake-up); event
+  kinds use DispatchSource (vnode/proc). Interval floors, exponential backoff on error, expiry,
+  once/repeat/report. Material changes are saved at once, routine checks at most every 5 minutes.
+  Reports (D35) publish each value as `AppEvent.watchReading` instead of a notice or a list reload;
+  the app shows it as a pill beside the companion and a live row on Now.
 - `AttentionCenter` (actor) — receives `AttentionRequest`s (level, source, title, body, actions),
   applies policy (quiet mode, fullscreen, away, grouping, re-nudge, rate limits) and emits
   presentation directives for the app. Pure policy core (`AttentionPolicy`) is unit tested.

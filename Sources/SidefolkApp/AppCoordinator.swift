@@ -34,6 +34,11 @@ final class AppCoordinator {
     var knownCollections: [String] = []
     private var moodTimer: Task<Void, Never>?
     private var eventTask: Task<Void, Never>?
+    /// Live reports and their latest values (AppCoordinator+Readouts).
+    var reports: [Watcher] = []
+    var readings: [String: WatchReading] = [:]
+    var notifiedReports: Set<String> = []
+    var readoutTask: Task<Void, Never>?
 
     init(runtime: SidefolkRuntime) {
         self.runtime = runtime
@@ -143,6 +148,7 @@ final class AppCoordinator {
         await refreshCollections()
         _ = await notificationsAuthorized()
         refreshRoster()
+        refreshReadouts()
         statusItem.refreshNow()
         Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {
@@ -165,6 +171,7 @@ final class AppCoordinator {
         companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
         askPanel?.update(companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44), hotkey: hotkeyLabel)
         renderMood()
+        renderReadouts()
     }
 
     private func setAsleep(_ asleep: Bool) {
@@ -284,7 +291,12 @@ final class AppCoordinator {
                                  detail: String(localized: "running \(TimeText.duration(now.timeIntervalSince(j.startedAt)))", comment: "“running 4m 12s”"),
                                  symbol: "terminal", action: { [weak self] in self?.openHome() }))
         }
-        let watching = ((try? await runtime.watcherStore.active()) ?? []).count
+        for w in reports.prefix(3) {
+            let value = readings[w.id].map { "\($0.label) \($0.value)" } ?? w.title
+            entries.append(.init(title: value.clipped(40), detail: Describe.interval(w.intervalS), symbol: Describe.watcherKind(w.kind).symbol,
+                                 action: { [weak self] in self?.openHome() }))
+        }
+        let watching = ((try? await runtime.watcherStore.active()) ?? []).filter { $0.mode != .report }.count
         if watching > 0 {
             entries.append(.init(title: String(localized: "Watching \(watching) things"), detail: String(localized: "Scout is on it"),
                                  symbol: "binoculars", action: { [weak self] in self?.openHome() }))
@@ -430,6 +442,11 @@ final class AppCoordinator {
     // MARK: Events
 
     private func handle(_ event: AppEvent) {
+        // A new value is not news for the companion's mood: it only updates its pill.
+        if case .watchReading(let reading) = event {
+            showReading(reading)
+            return
+        }
         mood.apply(event, now: Date())
         renderMood()
         switch event {
@@ -456,6 +473,7 @@ final class AppCoordinator {
         case .dataChanged(let domain):
             if [.reminders, .watchers, .runs, .attention].contains(domain) { scheduleNowRefresh() }
             if [.reminders, .watchers, .runs, .attention].contains(domain) { refreshRoster() }
+            if domain == .watchers { refreshReadouts() }
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {
                 applyCompanionSettings()
@@ -565,6 +583,8 @@ extension AppCoordinator: CompanionDelegate {
 
     func companionFolkClicked(_ folk: DutyFolk) { openHome() }
 
+    func companionReadoutClicked() { openHome() }
+
     func showCompanion(_ visible: Bool) {
         if visible {
             companion.show(presence: runtime.settings.current.presence == .menuBarOnly ? .always : runtime.settings.current.presence)
@@ -573,6 +593,8 @@ extension AppCoordinator: CompanionDelegate {
             askPanel.hide()
         }
         statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
+        // The live values follow: beside the companion, or in the menu bar while it is away.
+        renderReadouts()
     }
 }
 

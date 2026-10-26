@@ -347,3 +347,47 @@ from the vector PDF exports, so they stay sharp at any size without a 4096 px bi
 **Why:** the founder found the logo "a little bit small" and asked for the companion, the folks and
 the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
 small places get one clear element (lettering, a face) instead of a reduced composition.
+
+### D35 — Reports: a value told every few seconds or minutes, live and in place; reminders down to a minute (2026-10-26)
+**Decision:** a watcher can be a *report* (`Watcher.Mode.report`): at every check it tells the current value
+instead of waiting for a change. `watch.report` reads a system metric (CPU, memory, battery, free disk,
+network: Mach host statistics, IOKit power sources, the volume's resource values and the routing table's
+64-bit counters, no shell), the weather somewhere, or one value on a page or API (JSON path, simple
+selector or pattern); `watch.command` with `report=true` shows a command's last output line.
+- **Floors, never refusals:** metrics 5 s, command output 10 s, weather and web 60 s (HostThrottle still
+  allows one request a minute per host). They are written in the tool descriptions so models pick valid
+  values; a faster request is raised, and both the card ("Every 5 s is the fastest for this; I'll check
+  every 5 s.") and the model's result say so. The system prompt tells every brain never to refuse for
+  frequency.
+- **An end:** a report stops after an hour when it reads more often than once a minute, after a day
+  otherwise, unless the person gave an end ("until 6pm", "for an hour") or said "until I stop it". The card
+  says when it stops; the end itself is a gentle notice with Keep going. Other agents' watchers still end
+  within a day (T4), and `watch.report` is not offered to them at all.
+- **Presentation:** a small pill per report above the on-duty folks ("CPU 23%", "Fukuoka 18 °C"), not the
+  folk holding the value: a number with its name must be readable at a glance, several can stack (at most
+  four live at once), and updating text moves nothing in the rig (no pose, no breathing restarted, D20). A
+  "Live" section on Now shows the value large with Pause and Stop. While the companion is hidden the newest
+  value sits beside the menu bar icon. A notification only when asked for ("notify me"), or when the
+  companion is hidden and the report is slower than once a minute; one identifier per report, so the new
+  value replaces the old one. "Stop telling me the CPU" and "stop the Fukuoka temperature" work without AI.
+- **Built-in weather (Open-Meteo):** free, no key, no account. Without it "temperature in Fukuoka every
+  minute" needs a model to geocode, read coordinates out of a JSON reply and build a forecast URL: two
+  dependent requests that small models get wrong, a turn tainted by reading web content, and nothing at all
+  without AI. Built in, the local parser handles it, the place is looked up once and remembered, and only
+  numbers we format come back, so the result stays trusted. Units follow the Mac's region.
+- **Budget:** values travel as `AppEvent.watchReading`, not `.dataChanged(.watchers)`: a reading every few
+  seconds reloads no list and reads no database; it reaches the database only with the routine saves (at
+  most every 5 minutes). The engine's one timer sleeps with a tolerance of a tenth of the wait, checks due
+  within half a second share a wake-up, and no timer runs when nothing is live. Measured in a release build
+  on the dev Mac (macOS 27, Apple silicon), `top -pid` every 5 s over 2 minutes: MEASUREMENT.
+- **Reminders:** `Recurrence.Frequency.minutely` (a minute is the finest step; seconds are raised to a
+  minute and the answer says so; a value every few seconds is a report). The parser reads "every 30
+  minutes", "every half hour" and "until 6pm"/"until friday" after a repeat. A frequent reminder's notice
+  replaces its previous one and offers "Stop repeating".
+**Why:** the founder asked for "the temperature in Fukuoka every 1 minute", "the CPU every 10 seconds" and
+reminders more often than daily, and Sidefolk refused all three: watchers were change detectors with
+floors of 5 min (pages) and 1 min (commands), and recurrence stopped at hours.
+**Alternatives:** lowering the change-detector floors (still silent when nothing changes, and a page every
+10 s is abusive); a bubble per reading (a bubble every 10 s is spam, and each is a database row); the folk
+holding the value (illegible at folk size, and it would animate the rig); only a generic web value for the
+weather (fragile and impossible without AI).

@@ -112,6 +112,8 @@ enum SampleData {
         try await reminder("Send the deck to Karim", at: soon)
         try await reminder("Stretch and refill water", at: ago(20), state: .snoozed, snoozedUntil: min(ahead(10), endOfToday.addingTimeInterval(-60)))
         try await reminder("Stand-up", at: day(1, 9, 30), recurrence: Recurrence(frequency: .weekdays))
+        try await reminder("Drink some water", at: min(ahead(25), endOfToday.addingTimeInterval(-90)),
+                           recurrence: Recurrence(frequency: .minutely, interval: 30, until: min(max(day(0, 18), ahead(120)), endOfToday.addingTimeInterval(-60))))
         try await reminder("Call mom", at: day(1, 18), source: "external:claude-code")
         try await reminder("Renew the sidefolk.app domain", at: day(4, 10))
         try await reminder("Water the plants", at: day(6, 19), recurrence: Recurrence(frequency: .weekly, weekdays: [7]))
@@ -137,6 +139,17 @@ enum SampleData {
                           every: 60, state: .paused, checked: ago(60 * 3))
         try await watcher("Nils Frahm tickets go on sale", kind: "web.contains", config: ["url": "https://example.org/concerts"], every: 3600,
                           state: .triggered, checked: ago(170), updated: ago(170))
+
+        // Reports: values told in place, with the last reading saved as the engine saves it.
+        func report(_ title: String, kind: String, config: JSONValue, every: Double, value: String, ends: Date?) async throws {
+            var w = Watcher(kind: kind, title: title, config: config, intervalS: every, mode: .report, expiresAt: ends, source: "user", now: ago(12))
+            w.lastCheckedAt = now.addingTimeInterval(-min(every, 30))
+            w.lastState = ["reading": ["shown": .string(value)]]
+            try await rt.watcherStore.save(w)
+        }
+        try await report(String(localized: "CPU"), kind: WatchKind.metric, config: ["metric": "cpu"], every: 10, value: "23%", ends: ahead(48))
+        try await report(String(localized: "Temperature in \("Fukuoka")"), kind: WatchKind.weather, config: ["place": "Fukuoka", "quantity": "temperature"],
+                         every: 60, value: "18.4 °C", ends: nil)
 
         // Jobs and sessions
         var running = Job(kind: .command, title: "npm test", command: "npm test -- --watch=false", cwd: home + "/git/pockito", pid: 4312,

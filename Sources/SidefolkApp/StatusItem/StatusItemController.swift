@@ -37,9 +37,25 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         item.menu = menu
     }
 
+    private var badge = 0
+    private var readout: String?
+
     func setBadge(_ count: Int) {
-        item.button?.title = count > 0 ? " \(count)" : ""
-        item.length = count > 0 ? NSStatusItem.variableLength : NSStatusItem.squareLength
+        badge = count
+        updateTitle()
+    }
+
+    /// A live value beside the icon, while the companion is away from the desktop (nil removes it).
+    func setReadout(_ text: String?) {
+        guard text != readout else { return }
+        readout = text
+        updateTitle()
+    }
+
+    private func updateTitle() {
+        let parts = [readout?.clipped(28), badge > 0 ? String(badge) : nil].compactMap { $0 }
+        item.button?.title = parts.isEmpty ? "" : " " + parts.joined(separator: "  ")
+        item.length = parts.isEmpty ? NSStatusItem.squareLength : NSStatusItem.variableLength
         item.button?.imagePosition = .imageLeading
     }
 

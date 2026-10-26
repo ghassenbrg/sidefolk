@@ -133,6 +133,7 @@ enum UISnapshots {
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
+            try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
 
             // Sheets.
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
@@ -199,6 +200,15 @@ enum UISnapshots {
         return ask
     }
 
+    /// The live values beside the companion: two running, one paused.
+    private static func sampleReadouts() -> ReadoutPillsModel {
+        let model = ReadoutPillsModel()
+        model.items = [Readout(id: "1", label: String(localized: "CPU"), value: "23%"),
+                       Readout(id: "2", label: "Fukuoka", value: "18.4 °C"),
+                       Readout(id: "3", label: String(localized: "Network"), value: "↓ 1.2 MB/s ↑ 40 kB/s", paused: true)]
+        return model
+    }
+
     private static func sampleBubbles() -> [(String, BubbleModel)] {
         func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
             let model = BubbleModel()
@@ -211,6 +221,12 @@ enum UISnapshots {
                                               actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
                                                         AttentionAction(id: "snooze", title: String(localized: "10 min"))],
                                               refKind: "reminder", refId: "r1"))),
+            ("reminder-repeating", bubble(AttentionItem(level: .attention, source: "reminder", title: "Drink some water",
+                                                        body: "Every 30 minutes until 18:00",
+                                                        actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
+                                                                  AttentionAction(id: "snooze10", title: String(localized: "10 min")),
+                                                                  AttentionAction(id: "stop", title: String(localized: "Stop repeating"))],
+                                                        refKind: "reminder", refId: "r2"))),
             ("job-failed", bubble(AttentionItem(level: .attention, source: "job", title: "npm test failed (exit 1)",
                                                 body: "FAIL src/app.test.ts\nExpected 2, received 3\nAfter 4m 12s in sidefolk",
                                                 actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),

@@ -38,6 +38,9 @@ final class NowModel {
     private(set) var sessionsNeedingYou: [AgentSession] = []
     private(set) var reminders: [Reminder] = []
     private(set) var watchers: [Watcher] = []
+    /// Reports: values told every few seconds or minutes, with their latest readings.
+    private(set) var reports: [Watcher] = []
+    private(set) var readings: [String: WatchReading] = [:]
     private(set) var jobs: [Job] = []
     private(set) var workingSessions: [AgentSession] = []
     private(set) var recent: [RecentEntry] = []
@@ -69,7 +72,10 @@ final class NowModel {
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
         // From the engine, not the database: routine check times are only saved every few minutes.
-        watchers = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
+        let watching = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
+        watchers = watching.filter { $0.mode != .report }
+        reports = watching.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
+        readings = Dictionary(await rt.watchers.latestReadings().map { ($0.watcherId, $0) }, uniquingKeysWith: { a, _ in a })
         jobs = (try? await rt.jobs.running()) ?? []
         recent = await loadRecent()
     }
@@ -209,6 +215,12 @@ final class NowModel {
     func resume(_ w: Watcher) async {
         await services.resumeWatcher(w.id)
         await reload()
+    }
+
+    /// A report read a new value: only its row changes, nothing is reloaded.
+    func update(_ reading: WatchReading) {
+        guard reports.contains(where: { $0.id == reading.watcherId }) else { return }
+        readings[reading.watcherId] = reading
     }
 
     func checkNow(_ w: Watcher) async {

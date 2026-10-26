@@ -47,8 +47,7 @@ extension WatcherEngine {
             w.nextCheckAt = now.addingTimeInterval(w.intervalS)
             if let reading = result.reading {
                 w.lastState = result.state.setting("reading", ["shown": .string(reading.shown)])
-                let value = WatchReading(watcherId: w.id, title: w.title, value: reading.shown.displaySafe.clipped(WatchLimits.readingLimit),
-                                         at: now, intervalS: w.intervalS, notify: w.config["notify"]?.boolValue == true)
+                let value = WatchReading(w, value: reading.shown, at: now)
                 readings[w.id] = value
                 events.publish(.watchReading(value))
             }

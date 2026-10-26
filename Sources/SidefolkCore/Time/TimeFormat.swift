@@ -81,7 +81,7 @@ public enum TimeFormat {
     }
 
     /// A moment as briefly as it stays clear: "18:00" today, "Fri" for the end of a day, else "Tomorrow 12:00".
-    static func moment(_ date: Date, now: Date, calendar: Calendar) -> String {
+    public static func moment(_ date: Date, now: Date, calendar: Calendar) -> String {
         if calendar.isDate(date, inSameDayAs: now) { return clock(date, calendar: calendar) }
         let c = calendar.dateComponents([.hour, .minute], from: date)
         return c.hour == 23 && c.minute == 59 ? day(date, now: now, calendar: calendar) : when(date, now: now, calendar: calendar)

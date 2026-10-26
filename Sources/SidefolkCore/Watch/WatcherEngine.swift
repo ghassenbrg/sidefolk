@@ -149,8 +149,7 @@ public actor WatcherEngine {
 
     static func savedReading(_ w: Watcher) -> WatchReading? {
         guard let shown = w.lastState?["reading"]?.string("shown"), let at = w.lastCheckedAt else { return nil }
-        return WatchReading(watcherId: w.id, title: w.title, value: shown, at: at, intervalS: w.intervalS,
-                            notify: w.config["notify"]?.boolValue == true)
+        return WatchReading(w, value: shown, at: at)
     }
 
     // MARK: Changing
