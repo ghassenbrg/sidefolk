@@ -32,6 +32,9 @@ struct Species {
     var markOffsets: [Effect: CGPoint] = [:]
     /// The colour of its marks when not its accent light.
     var marks: Light?
+    /// Draws the whole body this much smaller around the floor point, so a tall companion's ears
+    /// stay inside the window when it hops or is lifted. Coordinates above are before it.
+    var scale: CGFloat = 1
 
     /// The robot is its own rig; every other companion is a soft rig of its species.
     static func figure(for species: CharacterSpecies) -> any Figure {

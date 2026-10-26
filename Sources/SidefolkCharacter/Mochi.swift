@@ -23,17 +23,22 @@ extension Species {
         // Eyes low and wide on the face, a little bigger than the folks' (scale): they carry the cuteness.
         face: SoftFace(kind: .ink, eyes: (pt(80, 89.5), pt(120, 89.5)), mouth: pt(100, 81.5),
                        nose: CGRect(x: 97, y: 88, width: 6, height: 3.6), scale: 1.14),
-        appendages: [ear(base: pt(85, 127), angle: 0.3, side: -1), ear(base: pt(115, 127), angle: -0.3, side: 1)],
+        // A slight outward lean, one ear a touch more than the other, so it looks alive.
+        appendages: [ear(base: pt(85, 127), angle: 0.2, side: -1), ear(base: pt(115, 127), angle: -0.25, side: 1)],
         collar: Collar(center: pt(100, 64), halfWidth: 30, sag: 4.5, height: 19, tail: 1.45),
-        restingFrame: CGRect(x: 57, y: 20, width: 86, height: 156),
+        restingFrame: CGRect(x: 57, y: 20, width: 86, height: 168),
         markOffsets: [.zzz: pt(-20, 20), .dots: pt(22, -18), .question: pt(8, 0), .exclaim: pt(6, 0),
-                      .sweat: pt(-6, -12), .waves: pt(-15, -6), .ticks: pt(-10, -14)])
+                      .sweat: pt(-6, -12), .waves: pt(-15, -6), .ticks: pt(-10, -14)],
+        // Its tall ears would leave the window when it hops or is lifted at full size.
+        scale: 0.95)
 
-    /// A tall rabbit ear rising from behind the head: slim where it joins, round at the top, the
-    /// upper part dipped in navy. Asleep it folds back and down along the head.
+    /// A tall rabbit ear rising from behind the head: a long oval, slim where it joins, tapering a
+    /// little to a fully round tip, its top two fifths dipped in navy. Asleep it lies back behind
+    /// the head, only the round tips showing over it.
     private static func ear(base: CGPoint, angle: CGFloat, side: CGFloat) -> AppendageSpec {
-        let outline = Paths.blob([pt(-10, -4), pt(-15, 10), pt(-17.5, 23), pt(-18, 35), pt(-14, 46), pt(0, 51.5),
-                                  pt(14, 46), pt(18, 35), pt(17.5, 23), pt(15, 10), pt(10, -4), pt(0, -7)])
+        let outline = Paths.blob([pt(-10.5, -4), pt(-14.5, 8), pt(-17.5, 20), pt(-19, 31), pt(-19.5, 41), pt(-17.5, 50.5),
+                                  pt(-11.5, 58.5), pt(0, 63), pt(11.5, 58.5), pt(17.5, 50.5), pt(19.5, 41), pt(19, 31),
+                                  pt(17.5, 20), pt(14.5, 8), pt(10.5, -4), pt(0, -7)])
         return AppendageSpec(base: base, angle: angle, side: side, layers: { _ in
             let root = Layers.canvas()
             let ear = SoftShape(outline, shading: Shading(colors: Palette.fur, locations: [0, 0.3, 0.6, 0.85, 1],
@@ -44,8 +49,9 @@ extension Species {
             root.addSublayer(ear.layer)
             // The navy cap ends in a soft curve, lower in the middle like the mascot's.
             let dip = CGMutablePath()
-            dip.move(to: pt(-30, 28))
-            dip.addQuadCurve(to: pt(30, 28), control: pt(0, 19))
+            // Gently curved and a little lower on the outer side, like the mascot's.
+            dip.move(to: pt(-30, 42 + 3 * side))
+            dip.addQuadCurve(to: pt(30, 42 - 3 * side), control: pt(0, 31))
             dip.addLine(to: pt(30, 80))
             dip.addLine(to: pt(-30, 80))
             dip.closeSubpath()
@@ -55,6 +61,6 @@ extension Species {
                                                  reach: CGSize(width: 0.95, height: 1.05)))
             root.addSublayer(tip.layer)
             return root
-        }, outline: outline, floppiness: 1, fold: AppendageSpec.Fold(shift: pt(16, -7), turn: 2.15, length: 0.64))
+        }, outline: outline, floppiness: 1, fold: AppendageSpec.Fold(shift: pt(0, -3), turn: -0.1, length: 0.4))
     }
 }
