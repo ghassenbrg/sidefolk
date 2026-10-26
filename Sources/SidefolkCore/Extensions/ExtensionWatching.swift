@@ -82,7 +82,7 @@ public struct ExtensionWatchTool: Tool {
         // model later as the creator's own words, so without one from the caller it is the plain name.
         let watcher = Watcher(kind: "extension", title: input.string("title") ?? "\(id) / \(name)",
                               config: ["extension": .string(id), "watcher": .string(name), "settings": settings],
-                              intervalS: minutes * 60, mode: mode, level: .attention, source: context.provenanceTag, now: context.now)
+                              intervalS: minutes * 60, mode: mode, level: .attention, source: WatchSource.string(for: context), now: context.now)
         let added = try await engine.add(watcher)
         let engine = self.engine
         return ToolResult(

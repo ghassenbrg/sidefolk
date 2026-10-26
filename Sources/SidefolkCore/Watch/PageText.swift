@@ -61,8 +61,11 @@ public enum PageText {
 
     static func decode(_ data: Data, contentType: String?) -> String { WebContent.decode(data, contentType: contentType) }
 
+    /// A fetched page is anyone's bytes: nesting is bounded before the recursive parser sees them (T17),
+    /// and a page nested too deep is read as plain text instead.
     private static func prettyJSON(_ data: Data) -> String? {
-        guard let object = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
+        guard (try? JSONValue.checkDepth(data)) != nil,
+              let object = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
               let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .fragmentsAllowed])
         else { return nil }
         return String(data: pretty, encoding: .utf8)

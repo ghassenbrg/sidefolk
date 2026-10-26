@@ -43,7 +43,7 @@ struct BridgeHarness {
         sessions = SessionTracker(store: SessionStore(env.db), attention: attention, events: env.events, clock: env.clock)
         jobs = JobTracker(store: JobStore(env.db), attention: attention, events: env.events, clock: env.clock)
         let gateway = ExternalToolGateway(registry: env.registry, permissions: env.permissions, broker: env.broker,
-                                          activity: env.activity, events: env.events, watchers: WatcherStore(env.db), clock: env.clock)
+                                          activity: env.activity, events: env.events, clock: env.clock)
         let services = BridgeServices(tools: gateway, tokens: tokens, sessions: sessions, jobs: jobs, status: StatusReader(db: env.db))
         server = LocalAPIServer(socket: URL(fileURLWithPath: dir.socket), services: services, limits: limits,
                                 peerUID: peerUID ?? UnixSocket.peerUID)

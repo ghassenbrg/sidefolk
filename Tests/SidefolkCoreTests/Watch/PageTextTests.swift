@@ -35,6 +35,15 @@ import Testing
         #expect(text.components(separatedBy: "\n").count > 3)
     }
 
+    /// T17: a watched page answering with JSON nested deeper than Sidefolk accepts is read as text,
+    /// never handed to the recursive parser.
+    @Test func deeplyNestedJSONIsReadAsTextNotParsed() {
+        let deep = String(repeating: "[", count: JSONValue.maxDepth + 1) + "1" + String(repeating: "]", count: JSONValue.maxDepth + 1)
+        #expect(normalise(deep, type: "application/json") == deep, "one line of text, not pretty-printed")
+        let fine = String(repeating: "[", count: 3) + "1" + String(repeating: "]", count: 3)
+        #expect(normalise(fine, type: "application/json").contains("\n"))
+    }
+
     @Test func plainTextIsKeptAsLines() {
         #expect(normalise("one\n\n  two  \nthree", type: "text/plain") == "one\ntwo\nthree")
     }

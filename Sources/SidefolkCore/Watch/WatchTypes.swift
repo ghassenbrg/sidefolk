@@ -109,9 +109,13 @@ public enum ProbeError: Error, Sendable, Equatable, CustomStringConvertible {
 public enum WatchLimits {
     public static let maxActive = 50
     public static let maxActivePerExternalClient = 10
+    /// Every external agent together (T4): a new client name doesn't buy new room.
+    public static let maxActiveExternal = 10
     public static let maxActiveCommands = 5
     public static let onceExpiry: TimeInterval = 7 * 86400
     public static let repeatExpiry: TimeInterval = 30 * 86400
+    /// External agents' watchers stop after a day, however they were set up (T4).
+    public static let externalExpiry: TimeInterval = 86400
     public static let defaultCooldown: TimeInterval = 30 * 60
     public static let maxBackoff: TimeInterval = 6 * 3600
     public static let maxInterval: TimeInterval = 7 * 86400
@@ -137,6 +141,15 @@ public enum WatchKind {
 
 /// Who made a watcher, recorded in `watchers.source`. It decides what the watcher may do.
 public enum WatchSource {
+    /// What a new watcher records: `ToolContext.provenanceTag` (Sidefolk's agent in a clean turn acts for
+    /// the user, "user:agent"; in a tainted turn it is plain "agent"). A routine keeps its id, so it can
+    /// manage its own watchers later (`canManage`).
+    public static func string(for context: ToolContext) -> String {
+        if case .routine = context.caller { return string(for: context.caller) }
+        return context.provenanceTag
+    }
+
+    /// Who a caller is when it manages watchers.
     public static func string(for caller: Caller) -> String {
         switch caller {
         case .user: "user"
@@ -147,10 +160,16 @@ public enum WatchSource {
         }
     }
 
-    /// Only the user, never an agent, may point a watcher at their own Mac or network.
+    /// Only the user, never an agent, may point a watcher at their own Mac or network (D21, SECURITY T11).
+    /// Not even "user:agent": a clean turn still builds the address itself, and only a request the user
+    /// typed or a button they pressed may reach local addresses.
     public static func mayTargetLocal(_ source: String) -> Bool { source == "user" }
-    /// Commands are created by the user, or by Sidefolk's own agent after a high-risk approval.
-    public static func mayRunCommands(_ source: String) -> Bool { source == "user" || source == "agent" }
+    /// Commands are created by the user, or by Sidefolk's own agent in a clean turn after a high-risk
+    /// approval ("user:agent"). A command from a tainted turn ("agent") may have been dictated by a page.
+    public static func mayRunCommands(_ source: String) -> Bool { source == "user" || source == "user:agent" }
+    /// Whether a watcher's title is the user's own words and may be quoted to the model. Anyone else's
+    /// (another agent, an extension, a routine, a tainted turn) is counted or marked untrusted (T3).
+    public static func isUserSourced(_ source: String) -> Bool { ContextBuilder.isUserSourced(source) }
     public static func isExternal(_ source: String) -> Bool { source.hasPrefix("external:") }
     /// Whether `caller` may change a watcher made by `source`: external agents and extensions only touch their own.
     public static func canManage(caller: Caller, watcherSource source: String) -> Bool {

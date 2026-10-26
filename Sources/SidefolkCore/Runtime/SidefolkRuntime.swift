@@ -73,7 +73,7 @@ public final class SidefolkRuntime: Sendable {
                                  opener: { url in _ = await platform.open(url: url) })
         tokens = BrainTokenRegistry()
         gateway = ExternalToolGateway(registry: registry, permissions: permissions, broker: broker, activity: activity,
-                                      events: events, watchers: watcherStore, clock: clock)
+                                      events: events, clock: clock)
         sessionTracker = SessionTracker(store: sessions, attention: attention, events: events, clock: clock, open: { session in
             _ = await platform.activateApplication(pid: session.hostPid, bundleId: session.hostApp)
         })

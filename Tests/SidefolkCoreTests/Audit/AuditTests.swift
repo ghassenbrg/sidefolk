@@ -111,8 +111,7 @@ import Testing
         let t = try await SchedulerEnv()
         t.env.registry.register(ReminderTools.make(scheduler: t.scheduler, parser: { TimeTest.parser(TimeTest.utc) }))
         let gateway = ExternalToolGateway(registry: t.env.registry, permissions: t.env.permissions, broker: t.env.broker,
-                                          activity: t.env.activity, events: t.env.events, watchers: WatcherStore(t.env.db),
-                                          clock: t.env.clock)
+                                          activity: t.env.activity, events: t.env.events, clock: t.env.clock)
         return (t, gateway)
     }
 
