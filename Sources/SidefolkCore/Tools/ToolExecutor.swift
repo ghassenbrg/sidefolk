@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 public struct ToolOutcome: Sendable {
     public enum Status: Sendable {
@@ -10,33 +11,40 @@ public struct ToolOutcome: Sendable {
     public var activity: ToolActivity
     public var status: Status
 
-    public var isOK: Bool { if case .ok = status { return true } else { return false } }
+    public var isOK: Bool { if case .ok(let r) = status { return !r.isError } else { return false } }
     public var untrusted: Bool { if case .ok(let r) = status { return r.untrusted } else { return false } }
 
     /// What the model is told about this call.
     public var modelText: String {
         switch status {
-        case .ok(let r): return r.untrusted ? UntrustedText.wrap(r.text, source: activity.tool) : r.text
+        case .ok(let r):
+            let body = r.untrusted ? UntrustedText.wrap(r.text, source: activity.tool) : r.text
+            return r.isError ? "The tool reported a problem; it may or may not have changed something:\n\(body)" : body
         case .denied(let why): return "Not done: \(why) Do not retry this action unless the user asks again."
         case .failed(let e): return "Failed: \(e.message)\(e.changedNothing ? " Nothing was changed." : "")"
         }
     }
 }
 
-/// Recent undoable actions, kept for 15 minutes.
+/// Recent undoable actions, kept for 15 minutes. An older one is neither offered nor performed:
+/// what it would put back may have changed since.
 public actor UndoCenter {
+    public static let lifetime: TimeInterval = 900
     private var entries: [String: (UndoAction, Date)] = [:]
     public init() {}
 
     public func register(_ action: UndoAction, id: String, now: Date = Date()) {
-        entries = entries.filter { now.timeIntervalSince($0.value.1) < 900 }
+        entries = entries.filter { now.timeIntervalSince($0.value.1) < Self.lifetime }
         entries[id] = (action, now)
     }
 
-    public func has(_ id: String) -> Bool { entries[id] != nil }
+    public func has(_ id: String, now: Date = Date()) -> Bool {
+        guard let (_, at) = entries[id] else { return false }
+        return now.timeIntervalSince(at) < Self.lifetime
+    }
 
-    public func undo(_ id: String) async throws -> String? {
-        guard let (action, _) = entries.removeValue(forKey: id) else { return nil }
+    public func undo(_ id: String, now: Date = Date()) async throws -> String? {
+        guard let (action, at) = entries.removeValue(forKey: id), now.timeIntervalSince(at) < Self.lifetime else { return nil }
         try await action.perform()
         return action.label
     }
@@ -63,12 +71,18 @@ public final class ToolExecutor: Sendable {
         self.clock = clock
     }
 
+    /// How long any approval card waits before it counts as "no" (SECURITY T1).
+    public static let approvalTimeout: TimeInterval = 120
+
     /// - Parameters:
     ///   - tainted: untrusted content is in play for this caller's current task.
+    ///   - mentions: the links the user typed in the request this call serves; links anywhere else
+    ///     are model-built and Guard asks before they are fetched or opened.
+    ///   - approvalTimeout: capped at `ToolExecutor.approvalTimeout`.
     ///   - onWaiting: called when the call is parked waiting for the user's approval.
     public func execute(
-        name: String, input: JSONValue, caller: Caller, tainted: Bool = false,
-        timeout: TimeInterval = 90, approvalTimeout: TimeInterval = 600,
+        name: String, input: JSONValue, caller: Caller, tainted: Bool = false, mentions: UserMentions? = nil,
+        timeout: TimeInterval = 90, approvalTimeout: TimeInterval = ToolExecutor.approvalTimeout,
         onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil
     ) async -> ToolOutcome {
         let callId = Identifier.make()
@@ -87,6 +101,11 @@ public final class ToolExecutor: Sendable {
             act.error = "Missing \(missing)"
             return ToolOutcome(activity: act, status: .failed(UserFacingError("The request was missing “\(missing)”.")))
         }
+        if let problem = InputSchema.problem(spec.inputSchema, input, unknownKeys: caller == .user) {
+            act.error = "Invalid input"
+            return ToolOutcome(activity: act, status: .failed(UserFacingError("That request didn't fit the tool: \(problem)",
+                                                                              detail: "schema: \(problem)")))
+        }
 
         let scope = tool.scope(for: input)
         var decisionTag: ActivityEntry.Decision = .auto
@@ -98,7 +117,7 @@ public final class ToolExecutor: Sendable {
             let grants = (try? await permissions.grants()) ?? []
             let folders = ((try? await permissions.folders()) ?? []) + extraFolders
             let decision = engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller,
-                                           tainted: tainted, policy: policy, grants: grants, folders: folders)
+                                           tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions)
             switch decision {
             case .allow(let tag):
                 if tag == .always, let g = PermissionEngine.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) {
@@ -112,9 +131,16 @@ public final class ToolExecutor: Sendable {
                 return ToolOutcome(activity: act, status: .denied(why))
             case .ask(let request):
                 onWaiting?(request)
-                let answer = await broker.request(request, timeout: approvalTimeout)
-                guard answer.allowed else {
-                    let why = answer == .expired ? "The request waited too long for your answer." : "You said no."
+                guard let answer = await broker.requestIfRoom(request, timeout: min(approvalTimeout, Self.approvalTimeout)) else {
+                    let why = "Another agent's request is already waiting for the user's answer. Try again after it is answered."
+                    await log(spec, act, caller: caller, input: input, decision: .denied, outcome: nil, error: why)
+                    act.error = why
+                    return ToolOutcome(activity: act, status: .denied(why))
+                }
+                // An answer that arrives after the caller gave up (its run ended) never acts for it.
+                guard answer.allowed, !Task.isCancelled else {
+                    let why = answer == .expired ? "The request waited too long for your answer."
+                        : answer.allowed ? "The request was withdrawn before it ran." : "You said no."
                     await log(spec, act, caller: caller, input: input, decision: .denied, outcome: nil, error: why)
                     act.error = why
                     return ToolOutcome(activity: act, status: .denied(why))
@@ -141,6 +167,11 @@ public final class ToolExecutor: Sendable {
         return ToolOutcome(activity: act, status: .denied("Sidefolk couldn't settle the permissions for this action."))
     }
 
+    /// Denies the cards an agent run is still waiting on; call it when the run ends.
+    public func cancelApprovals(runId: String) async {
+        await broker.cancel(runId: runId)
+    }
+
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,
                      decision: ActivityEntry.Decision, timeout: TimeInterval) async -> ToolOutcome {
         var act = act
@@ -153,8 +184,13 @@ public final class ToolExecutor: Sendable {
                 await self.undo.register(undo, id: act.id)
                 act.undoAvailable = true
             }
-            await log(tool.spec, act, caller: caller, input: input, decision: decision, outcome: result.card?.title ?? result.text.clipped(160), error: nil)
-            events.publish(.toolFinished(act, ok: true))
+            if result.isError {
+                act.error = "\(tool.spec.title) reported a problem"
+                await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: result.text.clipped(300))
+            } else {
+                await log(tool.spec, act, caller: caller, input: input, decision: decision, outcome: result.card?.title ?? result.text.clipped(160), error: nil)
+            }
+            events.publish(.toolFinished(act, ok: !result.isError))
             return ToolOutcome(activity: act, status: .ok(result))
         } catch {
             let ufe = Self.userFacing(error, tool: tool.spec)
@@ -205,15 +241,54 @@ public final class ToolExecutor: Sendable {
 
 public struct TimeoutError: Error, Sendable {}
 
-/// Runs `work`, throwing `TimeoutError` if it takes longer than `seconds`.
+/// Runs `work`, throwing `TimeoutError` if it takes longer than `seconds`. Returns on time even when
+/// `work` ignores cancellation (blocking I/O, a stuck extension): a task group would wait for it, so
+/// `work` runs in its own task, is cancelled at the deadline and is left to finish on its own. Its
+/// late result is dropped; any side effect it still has happens after the caller was told it stopped.
 public func withTimeout<T: Sendable>(_ seconds: TimeInterval, _ work: @escaping @Sendable () async throws -> T) async throws -> T {
-    try await withThrowingTaskGroup(of: T.self) { group in
-        group.addTask { try await work() }
-        group.addTask {
-            try await Task.sleep(for: .seconds(seconds))
-            throw TimeoutError()
+    let first = FirstResult<T>()
+    let worker = Task {
+        do { first.finish(.success(try await work())) } catch { first.finish(.failure(error)) }
+    }
+    let timer = Task {
+        try? await Task.sleep(for: .seconds(seconds))
+        if !Task.isCancelled, first.finish(.failure(TimeoutError())) { worker.cancel() }
+    }
+    defer { timer.cancel() }
+    return try await withTaskCancellationHandler {
+        try await withCheckedThrowingContinuation { first.install($0) }
+    } onCancel: {
+        worker.cancel()
+        first.finish(.failure(CancellationError()))
+    }
+}
+
+/// Resumes one continuation with whichever result arrives first, even before it is installed.
+private final class FirstResult<T: Sendable>: Sendable {
+    private struct State {
+        var continuation: CheckedContinuation<T, any Error>?
+        var result: Result<T, any Error>?
+    }
+    private let state = Mutex(State())
+
+    func install(_ continuation: CheckedContinuation<T, any Error>) {
+        let ready = state.withLock { s -> Result<T, any Error>? in
+            if s.result == nil { s.continuation = continuation }
+            return s.result
         }
-        defer { group.cancelAll() }
-        return try await group.next()!
+        if let ready { continuation.resume(with: ready) }
+    }
+
+    /// True when this result was the first.
+    @discardableResult
+    func finish(_ result: Result<T, any Error>) -> Bool {
+        let (waiting, won) = state.withLock { s -> (CheckedContinuation<T, any Error>?, Bool) in
+            guard s.result == nil else { return (nil, false) }
+            s.result = result
+            defer { s.continuation = nil }
+            return (s.continuation, true)
+        }
+        waiting?.resume(with: result)
+        return won
     }
 }

@@ -32,6 +32,10 @@ public final class LocalAPIServer: Sendable {
         public var idleTimeout: TimeInterval = 600
         public var callsPerMinute = 60
         public var concurrentCalls = 4
+        /// Every external client together: a new connection (or a new name) doesn't buy a new budget (T4).
+        public var externalCallsPerMinute = 120
+        /// Session, job and status messages from all connections together (they carry no auth).
+        public var eventsPerMinute = 600
         public init() {}
     }
 
@@ -51,6 +55,24 @@ public final class LocalAPIServer: Sendable {
         var sweep: (any DispatchSourceTimer)?
         var connections: [UInt64: BridgeConnection] = [:]
         var nextId: UInt64 = 1
+        var externalCalls: [Date] = []
+        var events: [Date] = []
+    }
+
+    /// Server-wide sliding windows, shared by every connection.
+    private func admit(external: Bool, now: Date) -> Bool {
+        state.withLock { s in
+            if external {
+                s.externalCalls.removeAll { now.timeIntervalSince($0) >= 60 }
+                guard s.externalCalls.count < limits.externalCallsPerMinute else { return false }
+                s.externalCalls.append(now)
+            } else {
+                s.events.removeAll { now.timeIntervalSince($0) >= 60 }
+                guard s.events.count < limits.eventsPerMinute else { return false }
+                s.events.append(now)
+            }
+            return true
+        }
     }
 
     /// - Parameter peerUID: reads the peer's uid from an accepted socket; tests replace it to
@@ -219,7 +241,13 @@ public final class LocalAPIServer: Sendable {
             return
         }
 
-        switch BridgeProtocol.Method(rawValue: method) {
+        let kind = BridgeProtocol.Method(rawValue: method)
+        // Session, job and status messages need no token, so they share one budget across connections.
+        if [.status, .sessionEvent, .jobStart, .jobFinish].contains(kind), !admit(external: false, now: Date()) {
+            conn.send(BridgeProtocol.failure(id: id, .rateLimited, "Too many messages to Sidefolk this minute. Try again shortly."))
+            return
+        }
+        switch kind {
         case .hello:
             conn.send(BridgeProtocol.failure(id: id, .badRequest, "Already said hello."))
         case .toolsList:
@@ -229,18 +257,25 @@ public final class LocalAPIServer: Sendable {
                 conn.send(BridgeProtocol.failure(id: id, .badRequest, "tools/call needs a name."))
                 return
             }
-            if let refusal = conn.admitCall(now: Date(), limits: limits) {
+            let now = Date()
+            if case .external = caller, !admit(external: true, now: now) {
+                conn.send(BridgeProtocol.failure(id: id, .rateLimited, "Other agents made too many calls to Sidefolk this minute. Try again shortly."))
+                return
+            }
+            if let refusal = conn.admitCall(now: now, limits: limits) {
                 let why = refusal == .rateLimited ? "Too many calls to Sidefolk this minute. Try again shortly."
                     : "Too many Sidefolk calls at once. Wait for one to finish."
                 conn.send(BridgeProtocol.failure(id: id, refusal, why))
                 return
             }
             let input = params["arguments"] ?? .object([:])
-            Task {
+            // Cancelled if the connection drops: a card still waiting for its answer then counts as
+            // "no", so a later Allow never acts for a caller that is gone (L8).
+            conn.track(Task {
                 let outcome = await self.call(name, input: input, caller: caller)
                 conn.finishCall()
                 conn.send(BridgeProtocol.reply(id: id, result: ["text": .string(outcome.promptText), "isError": .bool(!outcome.isOK)]))
-            }
+            })
         case .status:
             Task {
                 let snapshot = await self.services.status?.snapshot() ?? StatusSnapshot()
@@ -357,6 +392,17 @@ final class BridgeConnection: Sendable {
         var inFlight = 0
         var callTimes: [Date] = []
         var lastActivity = Date()
+        var calls: [Task<Void, Never>] = []
+        var closed = false
+    }
+
+    /// Keeps a tool call's task so `close()` can cancel it.
+    func track(_ task: Task<Void, Never>) {
+        let closed = session.withLock { s -> Bool in
+            if !s.closed { s.calls.append(task) }
+            return s.closed
+        }
+        if closed { task.cancel() }
     }
 
     init(id: UInt64, fd: Int32, lineLimit: Int) {
@@ -437,6 +483,12 @@ final class BridgeConnection: Sendable {
         io.withLock { $0 = false }
         let read = source.withLock { s in defer { s = nil }; return s }
         read?.cancel()
+        let calls = session.withLock { s -> [Task<Void, Never>] in
+            s.closed = true
+            defer { s.calls = [] }
+            return s.calls
+        }
+        for call in calls { call.cancel() }
     }
 
     func touch() { session.withLock { $0.lastActivity = Date() } }
@@ -461,6 +513,8 @@ final class BridgeConnection: Sendable {
         session.withLock { s in
             s.inFlight -= 1
             s.lastActivity = Date()
+            // Finished calls can't be told apart from here; keep the list short instead.
+            if s.inFlight == 0 { s.calls.removeAll() }
         }
     }
 }

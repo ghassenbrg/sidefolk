@@ -38,11 +38,21 @@ public enum FolderAccess {
 
     private static var home: String { canonical(NSHomeDirectory()) ?? NSHomeDirectory() }
 
+    /// Whole subtrees tools never touch, even inside a granted folder (SECURITY T10.2): the system,
+    /// apps (bundles run code), every folder on the default PATH and the interpreters' libraries (a
+    /// file planted there runs as the user, Sidefolk's own brain included), other users' homes and
+    /// the system's private folders.
+    static func protectedRoots(home: String) -> [String] {
+        ["/System", "/Library", "/usr", "/bin", "/sbin", "/opt", "/Applications", "/cores", "/dev", "/private",
+         home + "/Library", home + "/Applications", home + "/bin"]
+    }
+
+    /// Parts of `/private` that are ordinary scratch space (`/tmp` and per-user temporary folders).
+    static let privateScratch = ["/private/tmp", "/private/var/folders"]
+
     /// Locations tools never touch, even inside a granted folder.
     public static func forbiddenReason(_ paths: [String]) -> String? {
         let home = self.home
-        let roots = ["/System", "/usr", "/bin", "/sbin", "/private/etc", "/private/var/db", "/private/var/root", "/private/var/log", "/Library", "/dev",
-                     home + "/Library"]
         let sidefolk = [SidefolkPaths.standard().home.path, ProcessInfo.processInfo.environment["SIDEFOLK_HOME"]]
             .compactMap { $0 }.compactMap { canonical($0) }
         for raw in paths {
@@ -50,8 +60,14 @@ public enum FolderAccess {
                 return "That path isn't allowed (relative, “..”, or a broken link)."
             }
             if p == "/" { return "Sidefolk doesn't work on the whole disk." }
-            for prefix in roots + sidefolk where p == prefix || p.hasPrefix(prefix + "/") {
+            let scratch = privateScratch.contains { p == $0 || p.hasPrefix($0 + "/") }
+            for prefix in protectedRoots(home: home) + sidefolk where p == prefix || p.hasPrefix(prefix + "/") {
+                if scratch, prefix == "/private" { continue }
                 return "Sidefolk doesn't touch \(displayPath(prefix)) — it's protected."
+            }
+            // Other people's home folders (and /Users/Shared, which anyone on this Mac can write).
+            if p.hasPrefix("/Users/"), p != home, !p.hasPrefix(home + "/") {
+                return "Sidefolk only works inside your own home folder."
             }
             // Hidden files and folders (.ssh, .git, .env, .claude …) are off limits.
             if p.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
@@ -61,11 +77,14 @@ public enum FolderAccess {
         return nil
     }
 
-    /// Folders that can never be granted as a whole (too broad).
+    /// Folders that can never be granted as a whole (too broad): the disk, home itself, a whole
+    /// volume, and the shared scratch roots.
     public static func isGrantable(_ folder: String) -> Bool {
         guard let f = canonical(folder) else { return false }
-        let tooBroad = ["/", "/Users", "/Applications", "/Volumes", "/private", "/System", "/Library", home]
-        return !tooBroad.contains(f) && forbiddenReason([f]) == nil
+        let tooBroad = ["/", "/Users", "/Volumes", home] + privateScratch
+        let parts = f.split(separator: "/")
+        let volumeRoot = parts.count == 2 && parts[0] == "Volumes"
+        return !tooBroad.contains(f) && !volumeRoot && forbiddenReason([f]) == nil
     }
 
     /// The folder to offer when a path is outside every grant: the path itself if it is a folder,

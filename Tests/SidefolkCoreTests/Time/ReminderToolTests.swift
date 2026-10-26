@@ -49,7 +49,7 @@ import Testing
         let saved = try #require(await t.scheduler.upcoming().first)
         #expect(saved.title == "Send the document")
         #expect(saved.fireAt == t.date(2025, 10, 23, 9))
-        #expect(saved.source == "agent")
+        #expect(saved.source == "user:agent")   // a clean turn acts for the user (SECURITY T3)
         #expect(saved.level == .attention)
         #expect(card.refId == saved.id)
         #expect(result.text.contains(saved.id))

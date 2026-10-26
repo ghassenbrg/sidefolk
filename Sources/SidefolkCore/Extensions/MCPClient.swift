@@ -7,6 +7,8 @@ public enum MCPError: Error, Sendable, Equatable, CustomStringConvertible {
     case exited(String)
     case protocolViolation(String)
     case server(code: Int, message: String)
+    /// A `tools/call` result with `isError: true`: the tool ran and explains, in its own words, what went wrong.
+    case toolFailed(String)
     case badResponse(String)
 
     public var description: String {
@@ -16,6 +18,7 @@ public enum MCPError: Error, Sendable, Equatable, CustomStringConvertible {
         case .exited(let why): "The extension stopped (\(why))."
         case .protocolViolation(let why): "The extension broke the protocol: \(why)."
         case .server(let code, let message): "The extension answered with error \(code): \(message)"
+        case .toolFailed(let message): "The tool reported a problem: \(message)"
         case .badResponse(let what): "The extension sent an unexpected answer to \(what)."
         }
     }
@@ -152,7 +155,7 @@ public final class MCPClient: Sendable {
     public func callTool(name: String, arguments: JSONValue, timeout: TimeInterval = 30) async throws -> String {
         let result = try await request("tools/call", params: ["name": .string(name), "arguments": arguments], timeout: timeout)
         let text = Self.text(of: result)
-        if case .bool(true)? = result["isError"] { throw MCPError.server(code: 0, message: text) }
+        if case .bool(true)? = result["isError"] { throw MCPError.toolFailed(text) }
         return text
     }
 
@@ -267,7 +270,7 @@ public final class MCPClient: Sendable {
             return
         }
         // Anything that isn't a JSON object (log noise on stdout) is ignored.
-        guard let message = try? JSONDecoder().decode(JSONValue.self, from: data), message.objectValue != nil else { return }
+        guard let message = try? JSONValue.parse(data), message.objectValue != nil else { return }
         if let method = message["method"]?.stringValue {
             if let id = message["id"], !id.isNull {
                 answerServerRequest(id: id, method: method)

@@ -24,6 +24,10 @@ public struct ExtensionProcessLimits: Sendable, Hashable {
     public var maxCPUFraction = 0.5
     public var cpuWindow: TimeInterval = 60
     public var sampleInterval: TimeInterval = 5
+    /// How often the process tree is walked, so children that leave the group are still known.
+    public var treeInterval: TimeInterval = 1
+    /// Processes the extension may have running at once, itself included (a fork bomb stops here).
+    public var maxProcesses = 32
     public var maxLineBytes = 1024 * 1024
     public var stderrBytes = 16 * 1024
     /// Time between SIGTERM and SIGKILL.
@@ -62,7 +66,14 @@ public struct ExtensionProcessExit: Sendable, Hashable, CustomStringConvertible 
 /// A child process started with `posix_spawn`: its own process group, only fds 0–2 inherited
 /// (`POSIX_SPAWN_CLOEXEC_DEFAULT`; an inherited DB or socket fd would bypass the sandbox), default signal
 /// handling, an explicit environment, stdout split into capped lines, stderr kept in a small ring for
-/// diagnostics, and a `proc_pid_rusage` watchdog over the whole group (SECURITY T15, MACOS-NOTES §11).
+/// diagnostics, and a `proc_pid_rusage` watchdog over the whole tree (SECURITY T15, MACOS-NOTES §11).
+///
+/// The process group alone isn't the extension: a child can `setsid()` into a group of its own and
+/// would outlive disable, uninstall and quit. So every descendant is tracked by walking parent links
+/// once a second (remembered by pid and start time, so a reused pid is never signalled), and stop,
+/// exit and the watchdog signal all of them. Residual: a grandchild whose parent exits within the
+/// same second it was forked is reparented to launchd before it is seen. It keeps the sandbox, and
+/// the profile only allows `fork` to extensions whose install sheet said they run programs.
 public final class ExtensionProcess: Sendable {
     private struct State {
         var pid: pid_t = 0
@@ -73,6 +84,8 @@ public final class ExtensionProcess: Sendable {
         var exitWaiters: [CheckedContinuation<ExtensionProcessExit, Never>] = []
         var stdinOpen = true
         var stderr = Data()
+        /// Descendants seen so far, with their start times.
+        var tree: [pid_t: UInt64] = [:]
     }
 
     public let spec: ExtensionProcessSpec
@@ -159,8 +172,9 @@ public final class ExtensionProcess: Sendable {
         Thread.detachNewThread { [self] in
             var status: Int32 = 0
             while waitpid(pid, &status, 0) == -1, errno == EINTR {}
-            // Anything the extension left behind in its group goes with it.
+            // Anything the extension left behind, in its group or not, goes with it.
             _ = Darwin.kill(-pid, SIGKILL)
+            signalTree(SIGKILL, refresh: false)
             _ = stdoutDone.wait(timeout: .now() + 2)
             _ = stderrDone.wait(timeout: .now() + 2)
             let signal = status & 0x7F
@@ -281,15 +295,47 @@ public final class ExtensionProcess: Sendable {
         }
         guard started else { return ExtensionProcessExit(cause: .exited(0), watchdog: nil, requested: true) }
         writeQueue.async { [self] in closeStdin() }
-        if !hasExited { _ = Darwin.kill(-pid, SIGTERM) }
+        // Walk the tree while the root is still alive: once it exits, its children belong to launchd.
+        if !hasExited {
+            _ = Darwin.kill(-pid, SIGTERM)
+            signalTree(SIGTERM, refresh: true)
+        }
         let grace = limits.terminateGrace
-        let killer = Task {
+        let killer = Task { [self] in
             try await Task.sleep(for: .seconds(grace))
             _ = Darwin.kill(-pid, SIGKILL)
+            signalTree(SIGKILL, refresh: true)
         }
         let exit = await waitForExit()
         killer.cancel()
+        signalTree(SIGKILL, refresh: false)
         return exit
+    }
+
+    /// Descendants of the extension that are still alive (for tests and diagnostics).
+    public var descendants: [pid_t] {
+        state.withLock { $0.tree }.filter { ProcessTree.startTime($0.key) == $0.value }.map(\.key).sorted()
+    }
+
+    /// Records every process below the root (and in its group) that is alive now.
+    @discardableResult
+    func refreshTree() -> Int {
+        let root = pid
+        guard root > 0 else { return 0 }
+        let found = ProcessTree.descendants(of: root)
+        return state.withLock { s in
+            s.tree = s.tree.filter { ProcessTree.startTime($0.key) == $0.value }
+            for (p, start) in found { s.tree[p] = start }
+            return s.tree.count
+        }
+    }
+
+    /// Signals every known descendant whose pid still belongs to the same process.
+    private func signalTree(_ signal: Int32, refresh: Bool) {
+        if refresh { refreshTree() }
+        for (p, start) in state.withLock({ $0.tree }) where ProcessTree.startTime(p) == start {
+            _ = Darwin.kill(p, signal)
+        }
     }
 
     public func waitForExit() async -> ExtensionProcessExit {
@@ -303,12 +349,13 @@ public final class ExtensionProcess: Sendable {
         }
     }
 
-    /// Kills the group for exceeding a limit; the exit carries the reason.
+    /// Kills the whole tree for exceeding a limit; the exit carries the reason.
     func killGroup(reason: String) {
         let pid = state.withLock { s -> pid_t in
             if s.watchdog == nil { s.watchdog = reason }
             return s.pid
         }
+        signalTree(SIGKILL, refresh: true)
         _ = Darwin.kill(-pid, SIGKILL)
     }
 
@@ -320,10 +367,17 @@ public final class ExtensionProcess: Sendable {
             var lastCPU: UInt64?
             var lastAt = ContinuousClock.now
             var hotSince: ContinuousClock.Instant?
+            var nextSample = ContinuousClock.now + .seconds(limits.sampleInterval)
             while let process = self, !process.hasExited {
-                try? await Task.sleep(for: .seconds(limits.sampleInterval))
+                try? await Task.sleep(for: .seconds(min(limits.treeInterval, limits.sampleInterval)))
                 guard !process.hasExited else { return }
-                let usage = ProcessGroupUsage.sample(group: pid)
+                if process.refreshTree() + 1 > limits.maxProcesses {
+                    process.killGroup(reason: "It started more than \(limits.maxProcesses) processes.")
+                    return
+                }
+                guard ContinuousClock.now >= nextSample else { continue }
+                nextSample = ContinuousClock.now + .seconds(limits.sampleInterval)
+                let usage = ProcessGroupUsage.sample(pids: [pid] + process.descendants)
                 if usage.residentBytes > limits.maxResidentBytes {
                     process.killGroup(reason: "It used more than \(limits.maxResidentBytes / 1_048_576) MB of memory.")
                     return
@@ -350,7 +404,45 @@ public final class ExtensionProcess: Sendable {
     }
 }
 
-/// Memory and CPU time of every live process in a group.
+/// Walking an extension's processes: its group, and everything below it by parent links.
+enum ProcessTree {
+    /// When `pid` started (µs since 1970), or nil when it is gone. Pid and start time together name
+    /// one process; a pid alone may have been reused.
+    static func startTime(_ pid: pid_t) -> UInt64? {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }
+        return info.pbi_start_tvsec * 1_000_000 + info.pbi_start_tvusec
+    }
+
+    static func children(of pid: pid_t) -> [pid_t] {
+        list { proc_listchildpids(pid, $0, $1) }
+    }
+
+    static func group(_ pgid: pid_t) -> [pid_t] {
+        list { proc_listpgrppids(pgid, $0, $1) }
+    }
+
+    private static func list(_ call: (UnsafeMutableRawPointer, Int32) -> Int32) -> [pid_t] {
+        var pids = [pid_t](repeating: 0, count: 512)
+        let count = pids.withUnsafeMutableBytes { call($0.baseAddress!, Int32($0.count)) }
+        return Array(pids.prefix(max(0, min(Int(count), pids.count)))).filter { $0 > 0 }
+    }
+
+    /// Every live process below `root` or in its group (the root itself excluded), with start times.
+    static func descendants(of root: pid_t, limit: Int = 4096) -> [pid_t: UInt64] {
+        var found: [pid_t: UInt64] = [:]
+        var queue = children(of: root) + group(root)
+        while let pid = queue.popLast(), found.count < limit {
+            guard pid != root, found[pid] == nil, let start = startTime(pid) else { continue }
+            found[pid] = start
+            queue += children(of: pid)
+        }
+        return found
+    }
+}
+
+/// Memory and CPU time of a set of processes.
 enum ProcessGroupUsage {
     struct Sample {
         var residentBytes: UInt64
@@ -363,14 +455,10 @@ enum ProcessGroupUsage {
         return (UInt64(info.numer), UInt64(max(info.denom, 1)))
     }()
 
-    static func sample(group: pid_t) -> Sample {
-        var pids = [pid_t](repeating: 0, count: 256)
-        let count = Int(proc_listpgrppids(group, &pids, Int32(pids.count * MemoryLayout<pid_t>.size)))
-        var members = Array(pids.prefix(max(0, min(count, pids.count))).filter { $0 > 0 })
-        if members.isEmpty { members = [group] }
+    static func sample(pids members: [pid_t]) -> Sample {
         var rss: UInt64 = 0
         var ticks: UInt64 = 0
-        for pid in members {
+        for pid in Set(members) {
             var info = rusage_info_v4()
             let rc = withUnsafeMutablePointer(to: &info) { p in
                 p.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(pid, RUSAGE_INFO_V4, $0) }

@@ -218,13 +218,30 @@ import Testing
         let t = try BuiltinEnv()
         defer { t.cleanup() }
         t.fetcher.serve("https://example.com/", html: "<p>hi</p>")
-        #expect(await t.run("web.fetch", ["url": "https://example.com/"]).isOK)   // a clean turn may fetch
+        #expect(await t.run("web.fetch", ["url": "https://example.com/"]).isOK)   // a clean turn may fetch what the user typed
+        // Tainted: an address the user typed still carries nothing the model added, so it runs …
+        #expect(await t.run("web.fetch", ["url": "https://example.com/"], tainted: true).isOK)
+        // … but one taken from the page waits for the user.
         let answer = t.env.autoAnswer(.deny)
-        let out = await t.run("web.fetch", ["url": "https://example.com/"], tainted: true)
+        let out = await t.run("web.fetch", ["url": "https://example.com/"], tainted: true, said: "summarise that page")
         let asked = try #require(await answer.value)
         #expect(asked.tainted)
+        #expect(asked.risk == .medium)
         #expect(out.wasDenied)
-        #expect(t.fetcher.requested.count == 1)
+        #expect(t.fetcher.requested.count == 2)
+    }
+
+    @Test func linksTheUserDidNotTypeAsk() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        t.fetcher.serve("https://example.com/c?d=secret", html: "<p>hi</p>")
+        let answer = t.env.autoAnswer(.deny)
+        let out = await t.run("web.fetch", ["url": "https://example.com/c?d=secret"], said: "what's the weather?")
+        let asked = try #require(await answer.value)
+        #expect(asked.risk == .medium)
+        #expect(asked.details == .url("https://example.com/c?d=secret"))
+        #expect(out.wasDenied)
+        #expect(t.fetcher.requested.isEmpty)
     }
 }
 

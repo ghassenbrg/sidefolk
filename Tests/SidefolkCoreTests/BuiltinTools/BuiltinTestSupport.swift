@@ -106,9 +106,13 @@ struct BuiltinEnv {
 
     func cleanup() { try? FileManager.default.removeItem(at: env.home) }
 
+    /// - Parameter said: what the user typed in the request; by default the call's own `url`, as in
+    ///   "open https://…". Links the user didn't type make web and open calls ask (SECURITY T2).
     @discardableResult
-    func run(_ tool: String, _ input: JSONValue = [:], as caller: Caller = .agent(runId: "t"), tainted: Bool = false) async -> ToolOutcome {
-        await env.executor.execute(name: tool, input: input, caller: caller, tainted: tainted)
+    func run(_ tool: String, _ input: JSONValue = [:], as caller: Caller = .agent(runId: "t"), tainted: Bool = false,
+             said: String? = nil) async -> ToolOutcome {
+        await env.executor.execute(name: tool, input: input, caller: caller, tainted: tainted,
+                                   mentions: UserMentions(text: said ?? input["url"]?.stringValue ?? ""))
     }
 
     /// Shares a folder (read and write) the way the user's "always allow" would.

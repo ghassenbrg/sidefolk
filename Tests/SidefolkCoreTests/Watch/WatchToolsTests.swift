@@ -16,8 +16,10 @@ import Testing
         env.base.registry.register(WatchTools.make(engine: engine))
     }
 
+    /// As if the user typed the address to watch: links the user didn't type make the agent ask (SECURITY T2).
     func run(_ tool: String, _ input: JSONValue, as caller: Caller = .user) async -> ToolOutcome {
-        await env.base.executor.execute(name: tool, input: input, caller: caller)
+        await env.base.executor.execute(name: tool, input: input, caller: caller,
+                                        mentions: UserMentions(text: input["target"]?.stringValue ?? ""))
     }
 
     func result(_ outcome: ToolOutcome) throws -> ToolResult {
@@ -307,8 +309,11 @@ import Testing
         #expect(ok.isOK, "low risk, runs without a question")
 
         // Asking for the local network anyway changes nothing: the option does not exist for agents.
+        // (The schema check refuses the unknown option before the tool sees it.)
         let sneaky = await run("watch.create", ["kind": "site_status", "target": "http://localhost:3000", "allow_local": true], as: agent)
-        #expect(failure(sneaky)?.contains("local network") == true)
+        #expect(failure(sneaky)?.contains("allow_local") == true)
+        let plain = await run("watch.create", ["kind": "site_status", "target": "http://localhost:3000"], as: agent)
+        #expect(failure(plain)?.contains("local network") == true)
         #expect(await engine.list().count == 1)
     }
 

@@ -21,42 +21,67 @@ Each entry gives likelihood/impact, the V1 mitigation, and the residual risk.
 ### A. Agent and tools
 
 **T1 Arbitrary tool execution (H/H).** `ToolExecutor` is the only path. Inputs are validated
-against strict JSON Schema (`additionalProperties:false`, length caps) before `Guard`. Each caller
-sees only the tools it may use. Risk floors: exec = high; file writes, custom-scheme open and
-network to a model-built URL = at least medium; manifest risk can raise but never lower them.
+against the tool's JSON Schema before `Guard` (`InputSchema`: types, `enum`, bounds, unknown keys
+under `additionalProperties:false`, string and list caps, 1 MiB per call); messages are written so
+the model can fix its call. Each caller sees only the tools it may use. Risk floors: exec = high;
+file writes, custom-scheme open and network to a model-built URL = at least medium (a URL counts
+as user-given only when it, or for opening a link its site, appears in the user's own message:
+`UserMentions`); manifest risk can raise but never lower them.
 Approval cards render the tool's deterministic `summary(input)` and raw args (full URL, absolute
 path, verbatim command), never model prose. Approval is bound to `SHA-256(tool, canonical args)`
 and re-checked at execution. Allow is inert for 800 ms, Return never defaults to Allow on high,
-timeout 120 s → deny, one pending approval per caller. "Always" grants are never given for high
+timeout 120 s → deny for every caller, and a run's cards are denied when the run ends (or its
+socket connection drops), so a late Allow never acts for a caller that is gone. Other agents
+share one pending card: while it waits, their further requests are refused at once (their names
+are self-chosen, so a per-name limit would be none). "Always" grants are never given for high
 risk or to external callers, are scoped by caller kind, revocable, and expire after 90 days
-unused. *Residual:* the user approves without reading.
+unused. A site grant never covers a URL with a query or fragment. *Residual:* the user approves
+without reading.
 
 **T2 Prompt injection (H/H).** Sources: web pages, watcher payloads, files, clipboard, drops,
-command output, extension and MCP results *and tool descriptions*, notes or memories written by
-external agents. Every `ToolResult` carries `untrusted`. Taint is sticky for the turn (or routine
-run) and set only by code. While tainted, all medium/high calls ask (grants ignored), and so do
-network calls whose normalized URL is not verbatim in the user's message, clipboard writes and
-memory/skill/routine creation. Untrusted text is wrapped as `<untrusted source=…>` (closing tag
-escaped), stripped of invisible and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF,
-E0000–E007F) and capped at 20 KB. That is hygiene, not a boundary. Rendered Markdown never loads
-remote images; links show the full host. *Residual:* injection can still steer low-risk actions.
+command output, extension and MCP results *and tool descriptions*, notes, memories, reminders and
+watchers written by external agents (or by Sidefolk's agent in a tainted turn). Every `ToolResult`
+carries `untrusted`; a list or read that quotes anyone else's words sets it (`reminders.*` when a
+title isn't user-sourced, `watch.list`, notes). Taint is sticky for the turn (or routine run) and
+set only by code. While tainted, all medium/high calls ask (grants ignored), and so do clipboard
+writes and memory/skill/routine creation. Network and open calls ask (medium) whenever their
+normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
+while tainted, and opening a site the user named runs in a clean turn (`UserMentions`: scheme,
+`www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
+Mac or the local network get no card: fetching and watching refuse them for everyone but the
+user, and opening one in the browser sends nothing beyond the LAN. External
+agents follow T4 instead (their own context and network are already theirs). Extension and MCP
+tool descriptions never reach the model: it gets a neutral line built from the tool title and
+extension name, and the schema without its free text (descriptions stay on the install sheet).
+Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), stripped of invisible
+and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
+That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
+host. *Residual:* injection can still steer low-risk actions; extension tool names and titles
+(≤ 60 characters) still reach the model.
 
-**T3 Persistent injection (M/H).** Items, memories, skills and routines record `source`
-(`user | agent | external:<client> | extension:<id>`). The context builder auto-includes only
-user-sourced notes and memories; others arrive through explicit search, which taints the turn.
-Memories, skills and routines created by non-user callers or in tainted turns need approval
+**T3 Persistent injection (M/H).** Items, memories, reminders, skills and routines record `source`
+(`user | user:agent | agent | external:<client> | extension:<id>`): Sidefolk's agent records
+`user:agent` in a clean turn and plain `agent` in a tainted one (`ToolContext.provenanceTag`).
+The context builder auto-includes only user-sourced notes and memories, and "Right now" quotes only
+user-sourced reminder and watcher titles; the rest are counted. Job titles (command lines from the
+socket) are counted, and agent sessions show only a known agent name and state, never the folder
+or title from a hook payload. Others arrive through explicit search or lists, which taint the
+turn. Memories, skills and routines created by non-user callers or in tainted turns need approval
 showing the full text.
 
 **T4 Confused deputy via external MCP clients (H/H).** An agent in a hostile repo uses Sidefolk's
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
-without asking: `notes.create` (Inbox, tagged), `reminders.create`, notify/`ask_user`, `status`,
-and non-command watchers (10 active). Reading user data (notes, memories, lists) asks, with an
-optional per-client grant that is off by default. Files, clipboard, open, web fetch, command
-watchers, skills, settings and extensions are not exposed. Clients pair during one-click connect
-(per-client key, after confirmation and backup). That gives revocation and quotas, not a boundary
-against same-uid code. Names are shown as unverified. Rate limits: 60 calls/min and 4
-concurrent. External callers can never answer approvals. E9 ("ping me when tests pass") needs
-only notify or a process-exit watcher, not command watchers.
+without asking: `notes.create` (Inbox, tagged), `reminders.create` (at most `attention`, 20 active
+per client and 50 for all clients together), notify/`ask_user`, `status`, and non-command
+watchers (10 active; quota checks and creation are serialized, so parallel calls can't overshoot).
+Reading user data (notes, memories, reminders) asks, with an optional per-client grant that is off
+by default. Files, clipboard, open, web fetch, command watchers, skills, settings and extensions
+are not exposed. Clients pair during one-click connect (per-client key, after confirmation and
+backup). That gives revocation and quotas, not a boundary against same-uid code. Names are shown
+as unverified. Rate limits: 60 calls/min and 4 concurrent per connection, 120 calls/min for all
+external clients together, and 600 session/job/status messages a minute for the whole socket.
+External callers can never answer approvals. E9 ("ping me when tests pass") needs only notify or a
+process-exit watcher, not command watchers.
 
 `sidefolk run -- <cmd>` (D12) must exec the command itself, in the caller's process and sandbox,
 and only report start and exit over the socket; the app never runs it. Claude Code hook payloads
@@ -77,7 +102,9 @@ stops the run. Routines get a daily run and token budget.
 - Stale socket: must be `S_IFSOCK` and owned by the user. If `connect` succeeds, another instance
   is live: focus it and exit. On `ECONNREFUSED`, unlink.
 - `umask(0o077)` at launch, before any threads, so the socket is created 0600; `chmod` again after
-  bind.
+  bind. Children (command watchers, extensions, the brain) get the usual 022: `posix_spawn` has no
+  umask attribute, so `SpawnLock.spawn` lowers it for the spawn call itself, under the spawn lock.
+  Sidefolk's own files use explicit modes inside 0700 folders, so that instant widens nothing.
 - On accept: `getsockopt(SOL_LOCAL, LOCAL_PEERCRED)` must show `cr_uid == getuid()`. PIDs are for
   logs only (they get reused).
 - Brain token: 32 bytes from `SecRandomCopyBytes`, delivered to the bridge in a 0600 file under
@@ -125,7 +152,8 @@ cannot flip grants, base URLs or extension state.
 
 **T9 Shell command watchers (M/H).** Created only by the user, or by the agent with high-risk
 approval; never by external callers, extensions or routines. The grant is bound to
-`SHA-256(command, cwd)`, so any change voids it. Run as `posix_spawn /bin/sh -c` with
+`SHA-256(command + "\0" + canonical cwd)` (no cwd is its own value), so any change voids it;
+grants saved before the binding match nothing. Run as `posix_spawn /bin/sh -c` with
 `POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_CLOEXEC_DEFAULT`, stdin `/dev/null`, no TTY (sudo cannot
 prompt), fixed env, cwd a granted folder or an empty dir. Timeout 30 s → `SIGTERM` to the process
 group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; at most 5 active.
@@ -135,10 +163,15 @@ group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; a
 1. Grants come only from `NSOpenPanel` or Settings. That is user intent, and it also satisfies TCC
    for Documents, Desktop and Downloads. Store the `realpath(3)` plus a bookmark; a bookmark that
    moves requires a new grant.
-2. Never grantable, and denied inside broader grants: `/`, `/System`, `/Library`, `/usr`, `/bin`,
-   `/sbin`, `/private`, `/Applications`, `/Users`, `/Volumes`, `$HOME` itself, `~/Library` (which
-   covers LaunchAgents and Keychains), `$HOME` dot-dirs (`~/.ssh`, `~/.claude`, `~/.codex`), and
-   the Sidefolk data root and `$SIDEFOLK_HOME`.
+2. Denied as whole subtrees, even inside broader grants (`FolderAccess.forbiddenReason`):
+   `/System`, `/Library`, `/usr` (with `/usr/local`), `/bin`, `/sbin`, `/opt` (Homebrew's `bin`,
+   `lib`, `Cellar`: a planted `claude` or stdlib file would run as the user), `/Applications`,
+   `/cores`, `/dev`, `/private` except `/private/tmp` and `/private/var/folders`, other users'
+   homes and `/Users/Shared`, `~/Library` (LaunchAgents, Keychains), `~/Applications`, `~/bin`,
+   `$HOME` dot-dirs (`~/.ssh`, `~/.claude`, `~/.codex`, `~/.local`), and the Sidefolk data root and
+   `$SIDEFOLK_HOME`. Never grantable as a whole: `/`, `/Users`, `/Volumes` and each volume's root,
+   `$HOME` itself, `/private/tmp`, `/private/var/folders`. The same check gates extension
+   `files.read`/`files.write` and file watchers.
 3. Check: reject NUL, relative paths and `.`/`..` components. Do not collapse them lexically:
    `standardizedFileURL` turns `granted/link/../x` into `granted/x`, but the kernel resolves
    `link` first. Walk up to the deepest existing ancestor using **lstat** semantics, `realpath`
@@ -156,14 +189,18 @@ group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; a
 5. Writes:
    - No dot components (`.git/hooks`, `.envrc`, `.vscode`).
    - New files use `O_CREAT|O_EXCL` with mode 0644 and never exec bits.
-   - Refuse `.app .command .tool .terminal .webloc .fileloc .scpt .workflow .pkg .mobileconfig`.
-   - Moves check both ends and use `renameatx_np(RENAME_EXCL)`.
+   - Refuse `.app .command .tool .terminal .webloc .fileloc .scpt .workflow .pkg .mobileconfig`,
+     for new names and for moving existing items.
+   - Moves check both ends and use `renamex_np(RENAME_EXCL | RENAME_NOFOLLOW_ANY)`, so a folder
+     swapped for a link after the check fails the move.
    - Deletes go only through `FileManager.trashItem`.
+   - A regular file with more than one link (`st_nlink > 1`) is never read, moved or renamed: it
+     may be the same file as one outside every grant.
 6. Dotfile reads (`.env`) ask; listings hide them.
 7. `LSFileQuarantineEnabled = YES`; never strip `com.apple.quarantine`.
 
-*Residual:* children inherit Sidefolk's TCC grants (the responsible process); pre-existing hard
-links inside a grant can point outside it.
+*Residual:* children inherit Sidefolk's TCC grants (the responsible process); a file with a single
+name that was swapped in after the check is still read through `O_NOFOLLOW_ANY` and `F_GETPATH`.
 
 **T11 Unsafe URLs and SSRF (H/M).** `URLPolicy` serves web fetch, URL watchers and open URL.
 - Fetch: http(s) only, no userinfo, ≤ 2048 chars, punycode shown.
@@ -222,8 +259,14 @@ means false, ≤ 64 KiB.
 with `POSIX_SPAWN_CLOEXEC_DEFAULT`, passing only fds 0–2: an inherited fd (DB, socket) bypasses
 the sandbox. Use a new process group and a scrubbed env: `HOME`/`TMPDIR` in the data dir,
 `PATH=/usr/bin:/bin`, `PYTHONDONTWRITEBYTECODE=1`, and no `NODE_OPTIONS`, `PYTHONPATH`,
-`BASH_ENV`, `ENV` or `DYLD_*`. Run Python with `-I`. A `proc_pid_rusage` watchdog kills the group
-at RSS > 512 MB or CPU > 50 % for 60 s. Three crashes in 5 min → disabled.
+`BASH_ENV`, `ENV` or `DYLD_*`. Run Python with `-I`. The profile allows `fork` only when the
+manifest lists `exec` programs (or the program is `sh`). Every descendant is tracked by pid and
+start time (parent links walked every second, plus the group), so a child that calls `setsid()` is
+still stopped on disable, uninstall, quit, crash and by the watchdog. A `proc_pid_rusage` watchdog
+kills the tree at RSS > 512 MB, CPU > 50 % for 60 s, or more than 32 processes. Three crashes in
+5 min → disabled. *Residual:* a grandchild whose parent exits within the second it was forked is
+reparented to launchd before it is seen; it keeps the sandbox, and only extensions whose sheet says
+they run programs can fork at all.
 
 **T16 User-added MCP servers (M/H).** They run unsandboxed with the user's rights and Sidefolk's
 TCC grants, labelled as such, with the command shown at add time. Tools default to medium and
@@ -232,9 +275,12 @@ secrets live in the Keychain and go only into that server's env.
 
 **T17 MCP protocol abuse (M/M).** Advertise no client capabilities. Reject server-initiated
 `sampling/createMessage` (quota theft), `roots/list` (leaks grants) and `elicitation`. Messages
-≤ 1 MiB, ≤ 16 in flight, 30 s per call. Descriptions ≤ 1 KB, schemas ≤ 16 KB, invisible
-characters stripped. Watcher summaries ≤ 200 chars. Extensions get at most `attention`, never
-`critical`.
+≤ 1 MiB and nested ≤ 64 levels (deeper JSON from any outside source, the socket and model replies
+included, is refused before decoding: it would overflow a task's stack), ≤ 16 in flight, 30 s per
+call. Descriptions ≤ 1 KB, schemas ≤ 16 KB, invisible characters stripped; descriptions are shown
+to the user, never to the model (T2). An `isError` result's text reaches the model as untrusted
+content (≤ 4 KB). Watcher summaries ≤ 200 chars; manifest watcher titles never reach the model.
+Extensions get at most `attention`, never `critical`.
 
 ### E. Data
 
@@ -245,18 +291,26 @@ characters stripped. Watcher summaries ≤ 200 chars. Extensions get at most `at
 - A `Secret` type redacts itself in `description`, `Mirror` and `Encodable`.
 - Never in SQLite, UserDefaults, argv, child env, prompts, exports or diagnostics.
 - A key is bound to its provider host: a base-URL host change needs re-confirmation, and plain
-  `http://` to a non-loopback host is refused.
+  `http://` to a non-loopback host is refused. Loopback means literally `localhost`, `::1` or an
+  IPv4 address in 127/8; `127.0.0.1.example.com` is a public name.
 
 **T19 Local storage (M/M).** Data and log dirs 0700; db, `-wal`, `-shm` and logs 0600. User files
 in grants get an explicit 0644. `PRAGMA secure_delete=ON`. Delete-all also removes logs,
-ExtensionData and Keychain items. Bound parameters only; FTS5 terms quoted. Encryption at rest
+ExtensionData, the read-only installed extensions (unlocked first), run state and Keychain items:
+provider keys with their host bindings and each MCP server's `mcp.<id>` item, collected before the
+extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
+not ignored. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
 extension pins and command watchers, so tampered rows are ignored.
 
-**T20 Logging leaks (H/M).** `os.Logger` values are `.private`. A JSONL `Redactor` catches
-`sk-ant-`, `sk-`, `Bearer `, `gh[pousr]_`, `xox[abpr]-`, `AKIA`, PEM keys and high-entropy
-tokens ≥ 32 chars. No prompt or response bodies by default; activity keeps `args_redacted`; runs
-keep counts only; diagnostics exclude user content.
+**T20 Logging leaks (H/M).** `os.Logger` values are `.private`; messages are fixed text and
+anything that came from outside (extension ids, methods, tool and skill names) goes in fields. A
+JSONL `Redactor` catches `sk-ant-`, `sk-`, `Bearer `, `gh[pousr]_`, `github_pat_`, `xox[abpr]-`,
+`AKIA`, `AIza`, `npm_`, JWTs, PEM private keys and opaque tokens ≥ 32 chars mixing upper case,
+lower case and digits. No prompt or response bodies by default; activity keeps `args_redacted`;
+runs keep counts only; diagnostics exclude user content, and the logs in the diagnostics zip go
+through `Redactor.diagnostics` (`Log.copySanitized`): home becomes `~`, paths below it and URL
+paths and queries are dropped, hosts stay.
 
 **T21 Exfiltration paths.**
 
@@ -288,8 +342,16 @@ keep counts only; diagnostics exclude user content.
 binary targets or build plugins from dependencies.
 
 **T24 Attention spam and runaway watchers (M/M).**
-- Attention: at most 3 items per source per 10 min, then badge only; identical titles within
-  10 min are deduplicated; `critical` only for user-created reminders and watchers.
+- Attention: at most 3 items per source per 10 min, and 6 for all sources of one self-named kind
+  together (every external agent, every session, every extension), then held; gentle bubbles 6 per
+  source (or kind) and 12 in all per 10 min, then badge only. A slot is reserved in the same actor
+  step as the decision, so concurrent posts can't all pass. `critical` only from reminders,
+  watchers and the user's own actions (`AttentionPolicy.criticalSources`; callers never post under
+  those names), and only user-created reminders and watchers are stored as critical. A second
+  answer to the same item is dropped. The `com.apple.screenIsLocked`/`Unlocked` notifications are
+  only a hint, since any process can post them: the app must confirm with `ScreenLock.isLocked`
+  (`CGSessionCopyCurrentDictionary`) before holding or releasing items. Identical titles within
+  10 min are not yet deduplicated.
 - Watcher floors: web 5 min, site 60 s, command 60 s. At most 50 active, with per-caller quotas.
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days.
 
@@ -307,7 +369,6 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 (deny default)                                   ; network, mach, IPC, files: all denied
 
 ;; process basics
-(allow process-fork)                             ; children inherit this sandbox
 (allow signal (target same-sandbox))
 (allow sysctl-read)
 (allow mach-lookup
@@ -345,6 +406,9 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 (allow process-exec
   (literal (param "RUN_EXEC")) (literal (param "RUN_EXEC_2"))
   (literal (param "EXEC_0")))
+
+;; only with exec entries (or for sh): children inherit this sandbox
+(allow process-fork)
 
 ;; network=true adds (all-or-nothing, see limits):
 ;; (allow system-socket) (allow network-outbound (remote ip "*:*"))

@@ -16,11 +16,22 @@ public enum ReminderTools {
 
     // MARK: Shared pieces
 
+    /// Active reminders one external client may keep, and all external clients together (their names
+    /// are self-chosen, so the shared cap is what really bounds them).
+    public static let maxActivePerExternalClient = 20
+    public static let maxActiveExternal = 50
+
     struct Shared: Sendable {
         let scheduler: ReminderScheduler
         let parser: @Sendable () -> WhenParser
+        /// Quota checks and creation run one at a time, so parallel calls can't all see room.
+        let quotas = AsyncGate()
 
         var calendar: Calendar { parser().calendar }
+
+        /// Titles written by anyone but the user (another agent, an extension, Sidefolk's agent in a
+        /// tainted turn) are someone else's words: a result quoting them is untrusted (SECURITY T2, T3).
+        static func isForeign(_ r: Reminder) -> Bool { !ContextBuilder.isUserSourced(r.source) }
 
         /// A time the tool can use: in the future, understood, and unambiguous enough to act on.
         func future(_ text: String, now: Date) throws -> WhenResult {
@@ -46,9 +57,14 @@ public enum ReminderTools {
             return r
         }
 
-        func source(_ caller: Caller) -> String {
-            if case .external(let client) = caller { return "external:\(client)" }
-            return caller.kind
+        /// Another agent may keep a bounded number of reminders going (T4, T24).
+        func checkExternalQuota(source: String) async throws {
+            let external = await scheduler.upcoming().filter { $0.source.hasPrefix("external:") }
+            if external.filter({ $0.source == source }).count >= ReminderTools.maxActivePerExternalClient
+                || external.count >= ReminderTools.maxActiveExternal {
+                throw UserFacingError("Other agents already have as many reminders set as Sidefolk allows.",
+                                      recovery: "Ask the user to cancel some first.")
+            }
         }
 
         func line(_ r: Reminder, now: Date) -> String {
@@ -94,7 +110,8 @@ public enum ReminderTools {
                     "recurrence": Schema.object([
                         "frequency": Schema.string("How often.", enum: Recurrence.Frequency.allCases.map(\.rawValue)),
                         "interval": Schema.integer("Every N units (default 1).", minimum: 1),
-                        "weekdays": Schema.array("For weekly: ISO weekdays, 1 = Monday ... 7 = Sunday.", items: Schema.integer("Weekday", minimum: 1, maximum: 7)),
+                        "weekdays": Schema.array("For weekly: ISO weekdays, 1 = Monday ... 7 = Sunday (day names work too).",
+                                                 items: ["type": ["integer", "string"], "description": "Weekday", "minimum": 1, "maximum": 7]),
                         "until": Schema.string("Stop repeating after this date (natural language or ISO 8601)."),
                     ], required: ["frequency"]),
                     "notes": Schema.string("Optional extra detail shown under the title."),
@@ -129,16 +146,27 @@ public enum ReminderTools {
                 rule = explicit
             }
 
-            let level = input.string("level").flatMap(AttentionLevel.init(rawValue:)) ?? .attention
-            guard level != .ambient else { throw ToolError.invalidInput("“level” must be gentle, attention or critical") }
-            let reminder = try await shared.scheduler.create(
-                title: title, at: date, recurrence: rule, anchor: anchor, notes: input.string("notes"), level: level,
-                source: shared.source(context.caller)
-            )
+            let asked = input.string("level").map { $0.lowercased() }.flatMap(AttentionLevel.init(rawValue:)) ?? .attention
+            guard asked != .ambient else { throw ToolError.invalidInput("“level” must be gentle, attention or critical") }
+            // Critical breaks through Quiet mode, full screen and the away hold with sound, so only the
+            // user's own click sets it (SECURITY T24); agents get attention at most.
+            let level = context.caller == .user ? asked : min(asked, .attention)
+            // Recorded as the agent's when the turn was tainted, so a title a web page dictated is
+            // never quoted to the model as the user's (T3).
+            let source = context.provenanceTag
+            let shared = self.shared
+            let notes = input.string("notes")
+            let (first, repeating, seriesAnchor) = (date, rule, anchor)
+            let reminder = try await shared.quotas.run {
+                if case .external = context.caller { try await shared.checkExternalQuota(source: source) }
+                return try await shared.scheduler.create(title: title, at: first, recurrence: repeating, anchor: seriesAnchor,
+                                                         notes: notes, level: level, source: source)
+            }
             let id = reminder.id
             let scheduler = shared.scheduler
             var text = "Reminder set: “\(reminder.title)” for \(TimeFormat.full(date, calendar: calendar))"
             if let rule { text += ", repeating \(TimeFormat.recurrence(rule))" }
+            if level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(id)"
             return ToolResult(
                 text: text, card: shared.card(reminder, now: now),
@@ -207,7 +235,8 @@ public enum ReminderTools {
             let title = count == 0 ? "No upcoming reminders" : (count == 1 ? "1 upcoming reminder" : "\(count) upcoming reminders")
             let body = lines.isEmpty ? "You have no reminders." : lines.joined(separator: "\n")
             let detail = upcoming.prefix(5).map { "\(TimeFormat.when($0.nextDue ?? $0.fireAt, now: now, calendar: shared.calendar)) \($0.title)" }.joined(separator: "\n")
-            return ToolResult(text: body, card: ResultCard(kind: .list, title: title, detail: detail.isEmpty ? nil : detail))
+            return ToolResult(text: body, card: ResultCard(kind: .list, title: title, detail: detail.isEmpty ? nil : detail),
+                              untrusted: (upcoming + finished).contains(where: Shared.isForeign))
         }
     }
 
@@ -231,11 +260,13 @@ public enum ReminderTools {
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let r = try await shared.existing(input)
             let scheduler = shared.scheduler
+            let foreign = Shared.isForeign(r)
             guard let before = try await scheduler.cancel(id: r.id), before.state != .cancelled else {
-                return ToolResult(text: "“\(r.title)” was already cancelled.", card: shared.card(r, now: context.now, prefix: "Already cancelled"))
+                return ToolResult(text: "“\(r.title)” was already cancelled.", card: shared.card(r, now: context.now, prefix: "Already cancelled"),
+                                  untrusted: foreign)
             }
             return ToolResult(text: "Cancelled “\(r.title)”.", card: ResultCard(kind: .reminder, title: r.title, subtitle: "Cancelled", refId: r.id),
-                              undo: UndoAction(label: "Bring back reminder") { try await scheduler.restore(before) })
+                              undo: UndoAction(label: "Bring back reminder") { try await scheduler.restore(before) }, untrusted: foreign)
         }
     }
 
@@ -257,13 +288,19 @@ public enum ReminderTools {
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let r = try await shared.existing(input)
             let scheduler = shared.scheduler
+            let foreign = Shared.isForeign(r)
+            // A cancelled reminder stays cancelled; saying "done" would claim a change that didn't happen.
+            if r.state == .cancelled {
+                throw UserFacingError("That reminder was cancelled, so there's nothing to mark done.")
+            }
             guard let before = try await scheduler.complete(id: r.id) else { throw ToolError.notFound("a reminder with id \(r.id)") }
             let now = context.now
             let after = await scheduler.reminder(matching: r.id) ?? r
             let note = after.recurrence != nil ? "It will remind you again \(after.nextDue.map { TimeFormat.when($0, now: now, calendar: shared.calendar) } ?? "later")." : ""
             return ToolResult(text: "Marked “\(r.title)” done. \(note)".trimmingCharacters(in: .whitespaces),
                               card: ResultCard(kind: .reminder, title: r.title, subtitle: after.recurrence == nil ? "Done" : "Done for now", refId: r.id),
-                              undo: before == after ? nil : UndoAction(label: "Undo done") { try await scheduler.restore(before) })
+                              undo: before == after ? nil : UndoAction(label: "Undo done") { try await scheduler.restore(before) },
+                              untrusted: foreign)
         }
     }
 
@@ -297,7 +334,8 @@ public enum ReminderTools {
             let when = TimeFormat.when(parsed.date, now: context.now, calendar: shared.calendar)
             return ToolResult(text: "Snoozed “\(r.title)” until \(TimeFormat.full(parsed.date, calendar: shared.calendar)).",
                               card: ResultCard(kind: .reminder, title: r.title, subtitle: "Snoozed to \(when)", refId: r.id),
-                              undo: UndoAction(label: "Undo snooze") { try await scheduler.restore(before) })
+                              undo: UndoAction(label: "Undo snooze") { try await scheduler.restore(before) },
+                              untrusted: Shared.isForeign(r))
         }
     }
 }

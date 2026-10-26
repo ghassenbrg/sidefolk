@@ -49,11 +49,20 @@ case "status":
     exit(running ? 0 : 1)
 
 case "ext":
-    guard arguments.count == 3, arguments[1] == "validate" else { fail("usage: sidefolk ext validate <folder>") }
-    let folder = URL(fileURLWithPath: (arguments[2] as NSString).expandingTildeInPath, isDirectory: true)
+    let options = Array(arguments.dropFirst(2))
+    let noRun = options.contains("--no-run")
+    let folders = options.filter { $0 != "--no-run" }
+    guard arguments.count >= 3, arguments[1] == "validate", folders.count == 1 else {
+        fail("usage: sidefolk ext validate [--no-run] <folder>")
+    }
+    let folder = URL(fileURLWithPath: (folders[0] as NSString).expandingTildeInPath, isDirectory: true)
     let report = ExtensionValidator.validate(at: folder, paths: paths)
     print(report.text)
-    exit(report.isValid ? 0 : 1)
+    guard report.isValid, !noRun else { exit(report.isValid ? 0 : 1) }
+    // The manifest is fine; now start the program the way Sidefolk will, in its sandbox.
+    let trial = await ExtensionValidator.trial(at: folder)
+    print(trial.text)
+    exit(trial.problem == nil ? 0 : 1)
 
 case "--version", "version":
     print("sidefolk \(SidefolkVersion.current)")

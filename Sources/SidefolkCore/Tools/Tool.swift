@@ -112,6 +112,9 @@ public struct ToolScope: Sendable, Hashable {
     }
 
     public static let none = ToolScope()
+
+    /// The folder a command runs in: tools that take a working folder list it first in `readPaths`.
+    public var commandFolder: String? { command == nil ? nil : readPaths.first }
 }
 
 /// A compact, presentable result shown in the Ask panel and the Activity log.
@@ -150,12 +153,16 @@ public struct ToolResult: Sendable {
     public var undo: UndoAction?
     /// The text contains content from outside the user's own words (web, files, clipboard, extensions).
     public var untrusted: Bool
+    /// The tool ran and reported a failure in its own words (an extension's `isError`). The text is
+    /// still shown to the model, but the call doesn't count as done.
+    public var isError: Bool
 
-    public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false) {
+    public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text
         self.card = card
         self.undo = undo
         self.untrusted = untrusted
+        self.isError = isError
     }
 }
 

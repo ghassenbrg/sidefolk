@@ -457,4 +457,43 @@ public enum ExtensionValidator {
                                 resolver: InterpreterResolver = .system) -> ValidationReport {
         ManifestValidator(paths: paths, resolver: resolver).validate(folder: folder, mode: .source)
     }
+
+    /// What starting the program said.
+    public struct TrialReport: Sendable {
+        /// Registered tool names, as the model would see them.
+        public var tools: [String]
+        /// Where the manifest and the program's `tools/list` disagree.
+        public var warnings: [String]
+        /// Why it didn't start (exit status, its last stderr line), nil when it did.
+        public var problem: String?
+
+        public var text: String {
+            if let problem { return "It didn't start.\n\(problem)" }
+            var lines = ["It started in its sandbox and offers \(tools.count) tool\(tools.count == 1 ? "" : "s"): \(tools.joined(separator: ", "))."]
+            lines += warnings.map { "Warning: \($0)" }
+            return lines.joined(separator: "\n")
+        }
+    }
+
+    /// Installs a copy into a throwaway Sidefolk home and starts it exactly as Sidefolk would: in its
+    /// sandbox, `initialize` then `tools/list`. Nothing of the user's is read or changed.
+    public static func trial(at folder: URL, resolver: InterpreterResolver = .system) async -> TrialReport {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-ext-trial-\(UUID().uuidString)", isDirectory: true)
+        defer { ExtensionFiles.removeTree(home.path) }
+        do {
+            let paths = SidefolkPaths(home: home)
+            try paths.prepare()
+            var configuration = ExtensionHost.Configuration()
+            configuration.resolver = resolver
+            let host = ExtensionHost(paths: paths, store: ExtensionStore(try AppDatabase.inMemory()), registry: ToolRegistry(),
+                                     events: EventBus(), configuration: configuration)
+            let info = try await host.install(from: folder)
+            await host.shutdown()
+            return TrialReport(tools: info.tools.map(\.name), warnings: info.toolWarnings, problem: nil)
+        } catch let e as UserFacingError {
+            return TrialReport(tools: [], warnings: [], problem: [e.message, e.recovery, e.detail].compactMap { $0 }.joined(separator: "\n"))
+        } catch {
+            return TrialReport(tools: [], warnings: [], problem: String(describing: error))
+        }
+    }
 }

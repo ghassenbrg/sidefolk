@@ -30,6 +30,15 @@ enum FilePaths {
         return lstat(path, &st) == 0 ? st.st_mode & S_IFMT : nil
     }
 
+    /// A regular file with more than one name may be the same file as one outside every shared folder
+    /// (`ln ~/.ssh/id_rsa granted/notes.txt`): reading or moving it would reach that file, so the file
+    /// tools leave it alone (SECURITY T10).
+    static func refuseHardLink(_ st: stat, path: String) throws {
+        guard st.st_mode & S_IFMT == S_IFREG, st.st_nlink > 1 else { return }
+        throw UserFacingError("\(display(path)) is a hard link: the same file also has another name, possibly in a folder you haven't shared, so I won't open or move it.",
+                              recovery: "If it's yours, copy it to a normal file first (for example with Finder's Duplicate).")
+    }
+
     static func exists(_ path: String) -> Bool { lstatMode(path) != nil }
     static func isDirectory(_ path: String) -> Bool { lstatMode(path) == S_IFDIR }
 
@@ -129,6 +138,7 @@ enum SafeFile {
         case S_IFDIR: throw UserFacingError("That's a folder, not a file.", recovery: "Use files.list to see what's inside.")
         default: throw UserFacingError("That isn't an ordinary file, so I won't open it.")
         }
+        try FilePaths.refuseHardLink(st, path: path)
         // The path must still lead to this very file (it could have been swapped after the check).
         var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
         if fcntl(fd, F_GETPATH, &buffer) == 0 {
@@ -171,9 +181,10 @@ enum FileFailure {
 }
 
 enum FileMover {
-    /// Moves `from` to `to` without replacing anything: fails with `EEXIST` when `to` exists.
+    /// Moves `from` to `to` without replacing anything: fails with `EEXIST` when `to` exists, and with
+    /// `ELOOP` when any folder on either path was swapped for a link after Guard checked it.
     static func moveExclusive(from: String, to: String) throws {
-        if renamex_np(from, to, UInt32(RENAME_EXCL)) == 0 { return }
+        if renamex_np(from, to, UInt32(RENAME_EXCL | RENAME_NOFOLLOW_ANY)) == 0 { return }
         let code = errno
         guard code == EXDEV else { throw MoveError.errno(code) }
         // Different volume: rename can't cross it, so copy and remove through FileManager, which refuses to overwrite.

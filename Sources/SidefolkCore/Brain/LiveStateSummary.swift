@@ -22,25 +22,25 @@ public enum LiveStateSummary {
             lines.append("- Watching: " + list(active.filter { trusted($0.source) }.map { "“\(title($0.title))”" }, total: active.count))
         }
 
+        // Job titles are command lines reported over the socket, so they are counted, never quoted.
         let running = jobs.filter { $0.state == .running }
         if !running.isEmpty {
-            let shown = running.filter { trusted($0.source) }.map {
-                "“\(title($0.title))” since \(ContextBuilder.format($0.startedAt, "HH:mm", timeZone))"
-            }
-            lines.append("- Running: " + list(shown, total: running.count))
+            let since = running.map(\.startedAt).min().map { " (the first since \(ContextBuilder.format($0, "HH:mm", timeZone)))" } ?? ""
+            lines.append("- Running: \(running.count) \(running.count == 1 ? "command" : "commands") started from a terminal or another agent\(since)")
         }
 
-        // Session titles and folders come from hook payloads, so only the agent, the folder name and the state appear.
+        // Session titles, folder names and agent names all come from hook payloads that any local
+        // process can send (a cloned repo's folder name is the attacker's text), so only known agent
+        // names and the state appear.
         let live = sessions.filter { $0.endedAt == nil && $0.state != .finished }
         if !live.isEmpty {
             let shown = live.map { s in
-                let place = s.projectName.map { " in \(title($0).clipped(40))" } ?? ""
                 let state = switch s.state {
                 case .needsYou: "needs you"
                 case .working: "working"
                 case .idle, .finished: "idle"
                 }
-                return "\(title(s.agent).clipped(30))\(place) (\(state))"
+                return "\(agentName(s.agent)) (\(state))"
             }
             lines.append("- Agent sessions: " + list(shown, total: live.count))
         }
@@ -60,7 +60,17 @@ public enum LiveStateSummary {
         }
     }
 
-    static func trusted(_ source: String) -> Bool { ContextBuilder.isUserSourced(source) || source.lowercased() == "agent" }
+    /// Only the user's own words are quoted. Sidefolk's agent records "user:agent" for what it does in
+    /// a clean turn; plain "agent" marks something made while untrusted content steered the turn.
+    static func trusted(_ source: String) -> Bool { ContextBuilder.isUserSourced(source) }
+
+    static func agentName(_ agent: String) -> String {
+        switch agent.lowercased() {
+        case "claude-code", "claude": "Claude Code"
+        case "codex": "Codex"
+        default: "another agent"
+        }
+    }
 
     static func title(_ text: String) -> String { ContextBuilder.oneLine(text).clipped(80) }
 

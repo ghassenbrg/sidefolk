@@ -78,7 +78,9 @@ public struct ExtensionWatchTool: Tool {
         let settings = try WatcherConfig.validate(input["settings"] ?? .object([:]), fields: kind.config)
         let minutes = Double(max(5, input["interval_minutes"]?.intValue ?? 15))
         let mode: Watcher.Mode = input.string("mode") == "repeat" ? .repeat : .once
-        let watcher = Watcher(kind: "extension", title: input.string("title") ?? kind.title,
+        // The manifest's title is the extension author's text; a watcher's title is quoted to the
+        // model later as the creator's own words, so without one from the caller it is the plain name.
+        let watcher = Watcher(kind: "extension", title: input.string("title") ?? "\(id) / \(name)",
                               config: ["extension": .string(id), "watcher": .string(name), "settings": settings],
                               intervalS: minutes * 60, mode: mode, level: .attention, source: context.provenanceTag, now: context.now)
         let added = try await engine.add(watcher)
@@ -90,13 +92,14 @@ public struct ExtensionWatchTool: Tool {
     }
 }
 
-/// Context lines about what extension watchers exist, for the agent.
+/// Context lines about what extension watchers exist, for the agent. Only identifiers appear: titles
+/// and descriptions are the extension author's words and would reach every system prompt (SECURITY T2).
 public enum ExtensionContext {
     public static func watcherLines(_ kinds: [ExtensionWatcherKind]) -> String? {
         guard !kinds.isEmpty else { return nil }
         return kinds.prefix(12).map { k in
-            let fields = k.config.keys.sorted().joined(separator: ", ")
-            return "- Extension watcher \(k.extensionId) / \(k.watcher): \(k.title)" + (fields.isEmpty ? "" : " (settings: \(fields))")
+            let fields = k.config.keys.sorted().map { ExtensionText.line($0, characters: 40) }.joined(separator: ", ")
+            return "- Extension watcher \(k.extensionId) / \(ExtensionText.line(k.watcher, characters: 64))" + (fields.isEmpty ? "" : " (settings: \(fields))")
         }.joined(separator: "\n")
     }
 }

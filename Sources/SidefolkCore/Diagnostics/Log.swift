@@ -68,6 +68,23 @@ public final class Log: Sendable {
         }
     }
 
+    /// Copies the JSONL logs in `directory` to `destination` (created), each line passed through
+    /// `Redactor.diagnostics`: what the diagnostics zip should carry instead of the raw files.
+    public static func copySanitized(from directory: URL, to destination: URL, home: String = NSHomeDirectory()) throws {
+        let fm = FileManager.default
+        try fm.createDirectory(at: destination, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        let files = (try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+        for file in files where file.pathExtension == "jsonl" {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            let clean = text.split(separator: "\n", omittingEmptySubsequences: false)
+                .map { Redactor.diagnostics(String($0), home: home) }.joined(separator: "\n")
+            let target = destination.appendingPathComponent(file.lastPathComponent)
+            guard fm.createFile(atPath: target.path, contents: Data(clean.utf8), attributes: [.posixPermissions: 0o600]) else {
+                throw UserFacingError("I couldn't copy the logs.")
+            }
+        }
+    }
+
     private func prune(directory: URL, keepDays: Int) {
         let cutoff = Date().addingTimeInterval(-Double(keepDays) * 86400)
         let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
@@ -82,24 +99,63 @@ public final class Log: Sendable {
 /// Removes things that must never be logged or exported.
 public enum Redactor {
     private static let patterns: [NSRegularExpression] = [
+        #"-----BEGIN [A-Z0-9 ]*PRIVATE KEY( BLOCK)?-----[\s\S]*?(-----END [A-Z0-9 ]*PRIVATE KEY( BLOCK)?-----|$)"#,   // PEM keys
         #"sk-[A-Za-z0-9_\-]{12,}"#,                       // OpenAI / Anthropic style keys
         #"sk-ant-[A-Za-z0-9_\-]{12,}"#,
         #"(?i)(api[_-]?key|token|secret|password|authorization)(["'\s:=]+)([^\s"',}]{6,})"#,
         #"(?i)bearer\s+[A-Za-z0-9._\-]{10,}"#,
         #"gh[pousr]_[A-Za-z0-9]{20,}"#,
+        #"github_pat_[A-Za-z0-9_]{20,}"#,
         #"xox[abpr]-[A-Za-z0-9\-]{10,}"#,
         #"AKIA[0-9A-Z]{16}"#,
+        #"AIza[0-9A-Za-z_\-]{30,}"#,                      // Google API keys
+        #"npm_[A-Za-z0-9]{30,}"#,
+        #"eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}"#,   // JWTs
     ].compactMap { try? NSRegularExpression(pattern: $0) }
+
+    /// Long runs of letters and digits that mix lower case, upper case and digits look like generated
+    /// tokens (hex hashes and ordinary words don't mix all three).
+    private static let opaque = try? NSRegularExpression(pattern: #"[A-Za-z0-9_+\-]{32,}={0,2}"#)
 
     public static func redact(_ text: String) -> String {
         var out = text
         for re in patterns {
             let range = NSRange(out.startIndex..., in: out)
-            if re.numberOfCaptureGroups >= 3 {
+            if re.numberOfCaptureGroups >= 3, re.pattern.hasPrefix("(?i)(api") {
                 out = re.stringByReplacingMatches(in: out, range: range, withTemplate: "$1$2[redacted]")
             } else {
                 out = re.stringByReplacingMatches(in: out, range: range, withTemplate: "[redacted]")
             }
+        }
+        return redactOpaque(out)
+    }
+
+    private static func redactOpaque(_ text: String) -> String {
+        guard let opaque else { return text }
+        var out = text
+        for match in opaque.matches(in: text, range: NSRange(text.startIndex..., in: text)).reversed() {
+            guard let range = Range(match.range, in: out) else { continue }
+            let run = out[range]
+            if run.contains(where: \.isLowercase), run.contains(where: \.isUppercase), run.contains(where: \.isNumber) {
+                out.replaceSubrange(range, with: "[redacted]")
+            }
+        }
+        return out
+    }
+
+    /// For logs that leave the Mac (the diagnostics zip): the home folder becomes "~" and web
+    /// addresses keep only their host, so file names, paths and query strings stay behind.
+    public static func diagnostics(_ text: String, home: String = NSHomeDirectory()) -> String {
+        var out = redact(text)
+        if !home.isEmpty, home != "/" {
+            out = out.replacingOccurrences(of: home, with: "~")
+            out = out.replacingOccurrences(of: home.replacingOccurrences(of: "/", with: "\\/"), with: "~")
+        }
+        if let urls = try? NSRegularExpression(pattern: #"(https?:\\?/\\?/[A-Za-z0-9.\-:\[\]]+)[^\s"',}]*"#) {
+            out = urls.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "$1/…")
+        }
+        if let paths = try? NSRegularExpression(pattern: #"~(\\?/[^\s"',}]+)+"#) {
+            out = paths.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "~/…")
         }
         return out
     }

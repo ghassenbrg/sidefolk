@@ -41,6 +41,9 @@ import Testing
           (literal (param "EXEC_0"))
           (literal (param "EXEC_1")))
 
+        ;; new processes (it runs programs; children inherit this sandbox)
+        (allow process-fork)
+
         ;; services the listed programs need
         (allow mach-lookup
           (global-name (param "MACH_0")))
@@ -59,10 +62,14 @@ import Testing
         defer { ExtensionFiles.removeTree(root.path) }
         let profile = try SandboxProfile.make(.init(extensionDir: root.path, dataDir: root.path, executable: "/bin/sh",
                                                     permissions: ExtensionPermissions()))
-        for absent in ["RT_", "READ_", "WRITE_", "EXEC_0", "RUN_EXEC_2", "MACH_", "network-outbound", "system-socket"] {
+        for absent in ["RT_", "READ_", "WRITE_", "EXEC_0", "RUN_EXEC_2", "MACH_", "network-outbound", "system-socket", "process-fork"] {
             #expect(!profile.text.contains(absent), "\(absent)")
         }
         #expect(profile.parameters.map(\.key) == ["EXT_DIR", "DATA_DIR", "RUN_EXEC"])
+        // A shell may be allowed to fork for pipelines without listing any program.
+        let shell = try SandboxProfile.make(.init(extensionDir: root.path, dataDir: root.path, executable: "/bin/sh",
+                                                  permissions: ExtensionPermissions(), allowFork: true))
+        #expect(shell.text.contains("(allow process-fork)"))
     }
 
     @Test func valuesAreRealPathsAndNeverSpliced() throws {

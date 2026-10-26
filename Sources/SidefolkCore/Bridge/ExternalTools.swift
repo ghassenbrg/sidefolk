@@ -5,13 +5,14 @@ import Foundation
 /// folder grants, network or commands, so the list is by name and closed: files, clipboard, open,
 /// web, command watchers, skills, settings and extensions never appear.
 public enum ExternalToolPolicy {
-    /// Exposed and run without asking when the tool itself is low risk.
+    /// Exposed and run without asking when the tool itself is low risk. Nothing here reads the
+    /// user's data: `watch.list` shows an agent only its own watchers, `status` only counts.
     public static let direct: Set<String> = [
-        "notes.save", "reminders.create", "reminders.list", "watch.create", "watch.list", "watch.stop",
+        "notes.save", "reminders.create", "watch.create", "watch.list", "watch.stop",
         "notify.user", "ask.user", "status",
     ]
-    /// Exposed, but reading the user's notes always asks first.
-    public static let asking: Set<String> = ["notes.search", "notes.list"]
+    /// Exposed, but reading the user's data (notes, reminders) always asks first (T4).
+    public static let asking: Set<String> = ["notes.search", "notes.list", "reminders.list"]
     /// Watchers an external agent may keep active at once (T4).
     public static let maxActiveWatchers = 10
 
@@ -79,6 +80,8 @@ public final class ExternalToolGateway: Sendable {
     private let exposed = ToolRegistry()
     private let executor: ToolExecutor
     private let watchers: WatcherStore?
+    /// Creations that count against a quota run one at a time, so parallel calls can't all see room.
+    private let quotas = AsyncGate()
 
     public init(registry: ToolRegistry, permissions: PermissionStore, broker: ApprovalBroker, activity: ActivityStore,
                 events: EventBus, watchers: WatcherStore? = nil, clock: any Clock = SystemClock()) {
@@ -104,7 +107,7 @@ public final class ExternalToolGateway: Sendable {
                                    caller: caller, error: "Not exposed")
             return ToolOutcome(activity: act, status: .failed(UserFacingError("Sidefolk doesn't offer a tool called \(name) to other agents.")))
         }
-        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec), watchers: watchers)
+        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec), watchers: watchers, quotas: quotas)
         exposed.register(facade)
         let input = ExternalToolPolicy.adjustedInput(base.spec.name, input: input, schema: facade.spec.inputSchema, client: client)
         // Evaluating medium calls as tainted makes Guard ask every time and never offer
@@ -122,18 +125,22 @@ struct ExternalFacade: Tool {
     let base: any Tool
     let spec: ToolSpec
     let watchers: WatcherStore?
+    let quotas: AsyncGate
 
     func summary(for input: JSONValue) -> String { base.summary(for: input) }
     func scope(for input: JSONValue) -> ToolScope { base.scope(for: input) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }
-        if spec.name == "watch.create", let watchers {
-            let mine = try await watchers.active().filter { $0.source.hasPrefix("external:") }
-            if mine.count >= ExternalToolPolicy.maxActiveWatchers {
-                throw ToolError.unavailable("Other agents already have \(mine.count) watches running. Stop one first.")
+        guard spec.name == "watch.create", let watchers else { return try await base.run(input, context: context) }
+        // Counted and created under one gate: checked separately, parallel calls all saw room.
+        let base = self.base
+        return try await quotas.run {
+            let theirs = try await watchers.active().filter { $0.source.hasPrefix("external:") }
+            if theirs.count >= ExternalToolPolicy.maxActiveWatchers {
+                throw ToolError.unavailable("Other agents already have \(theirs.count) watches running. Stop one first.")
             }
+            return try await base.run(input, context: context)
         }
-        return try await base.run(input, context: context)
     }
 }

@@ -41,29 +41,54 @@ public struct NotebookStore: Sendable {
         try await db.writer.read { db in try NotebookCollection.fetchOne(db, key: id) }
     }
 
-    /// Finds a collection by name: exact (case-insensitive), then prefix, then containment.
+    /// Finds a collection by name (see `match`).
     public func findCollection(named name: String) async throws -> NotebookCollection? {
+        Self.match(name, in: try await collections(includeArchived: false))
+    }
+
+    /// The collection a typed name means: the exact name (ignoring case), or else the one collection
+    /// whose name starts with it as whole words ("Reading" → "Reading list"). Never a longer word or
+    /// a name merely containing it: "Work" isn't "Workout" and "Smart home" isn't "Art". Two
+    /// candidates mean nothing is certain, so nil.
+    static func match(_ name: String, in all: [NotebookCollection]) -> NotebookCollection? {
         let wanted = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !wanted.isEmpty else { return nil }
-        let all = try await collections(includeArchived: false)
         if let exact = all.first(where: { $0.name.lowercased() == wanted }) { return exact }
-        if let prefix = all.first(where: { $0.name.lowercased().hasPrefix(wanted) }) { return prefix }
-        return all.first(where: { $0.name.lowercased().contains(wanted) || wanted.contains($0.name.lowercased()) })
+        let prefixed = all.filter { c in
+            let n = c.name.lowercased()
+            guard n.hasPrefix(wanted), let next = n.dropFirst(wanted.count).first else { return false }
+            return !(next.isLetter || next.isNumber)
+        }
+        return prefixed.count == 1 ? prefixed[0] : nil
     }
 
-    /// Returns the named collection, creating it when it does not exist.
-    public func collection(named name: String, kind: NotebookCollection.Kind = .project, now: Date = Date()) async throws -> (NotebookCollection, created: Bool) {
-        if let found = try await findCollection(named: name) { return (found, false) }
+    /// Returns the named collection, creating it when it does not exist. The look-up and the insert
+    /// share one write transaction, so parallel calls (an agent batching saves) create it once.
+    /// - Parameter excluding: kinds a name never resolves to (the profile is not a filing target).
+    public func collection(named name: String, kind: NotebookCollection.Kind = .project, excluding: Set<NotebookCollection.Kind> = [],
+                           now: Date = Date()) async throws -> (NotebookCollection, created: Bool) {
+        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60)
+        guard !clean.isEmpty else { throw ToolError.invalidInput("a collection needs a name.") }
+        let skipped = excluding.map(\.rawValue)
+        return try await db.writer.write { db in
+            let live = try NotebookCollection.filter(Column("archived_at") == nil).filter(!skipped.contains(Column("kind"))).fetchAll(db)
+            if let found = Self.match(clean, in: live) { return (found, false) }
+            let created = NotebookCollection(name: clean, kind: kind, now: now)
+            try created.insert(db)
+            return (created, true)
+        }
+    }
+
+    /// Creates a collection with exactly this name (no fuzzy matching). Refuses a name an existing
+    /// collection already has (ignoring case), checked in the same transaction as the insert.
+    public func createCollection(name: String, kind: NotebookCollection.Kind, now: Date = Date()) async throws -> NotebookCollection {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60)
         let created = NotebookCollection(name: clean, kind: kind, now: now)
-        try await db.writer.write { db in try created.insert(db) }
-        return (created, true)
-    }
-
-    /// Creates a collection with exactly this name (no fuzzy matching).
-    public func createCollection(name: String, kind: NotebookCollection.Kind, now: Date = Date()) async throws -> NotebookCollection {
-        let created = NotebookCollection(name: name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60), kind: kind, now: now)
-        try await db.writer.write { db in try created.insert(db) }
+        try await db.writer.write { db in
+            let taken = try NotebookCollection.filter(sql: "name = ? COLLATE NOCASE", arguments: [clean]).fetchCount(db) > 0
+            if taken { throw UserFacingError("There's already a collection called “\(clean)”.") }
+            try created.insert(db)
+        }
         return created
     }
 
@@ -168,6 +193,8 @@ public struct NotebookStore: Sendable {
 
     /// Full-text search over title, body and tags, best matches first; falls back to substring match.
     public func search(_ query: String, collectionId: String? = nil, kinds: [NotebookItem.Kind]? = nil, limit: Int = 20) async throws -> [NotebookItem] {
+        // Longer than any real search, and SQLite refuses a LIKE pattern past 50,000 bytes.
+        let query = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxQueryLength))
         let pattern = FTSQuery.pattern(for: query)
         return try await db.writer.read { db in
             var results: [NotebookItem] = []
@@ -186,16 +213,23 @@ public struct NotebookStore: Sendable {
                 args.append(limit)
                 results = try NotebookItem.fetchAll(db, sql: sql, arguments: StatementArguments(args))
             }
-            if results.isEmpty {
-                let like = "%\(query.trimmingCharacters(in: .whitespacesAndNewlines))%"
+            if results.isEmpty, !query.isEmpty {
+                // What the user typed is literal text: `%` and `_` are escaped, not wildcards.
+                let like = "%" + Self.escapeLike(query) + "%"
                 var r = NotebookItem.filter(Column("deleted_at") == nil)
-                    .filter(Column("title").like(like) || Column("body").like(like) || Column("tags").like(like))
+                    .filter(sql: #"(title LIKE ? ESCAPE '\' OR body LIKE ? ESCAPE '\' OR tags LIKE ? ESCAPE '\')"#, arguments: [like, like, like])
                 if let collectionId { r = r.filter(Column("collection_id") == collectionId) }
                 if let kinds { r = r.filter(kinds.map(\.rawValue).contains(Column("kind"))) }
                 results = try r.order(Column("updated_at").desc).limit(limit).fetchAll(db)
             }
             return results
         }
+    }
+
+    public static let maxQueryLength = 1_000
+
+    static func escapeLike(_ text: String) -> String {
+        text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "%", with: "\\%").replacingOccurrences(of: "_", with: "\\_")
     }
 
     public func counts() async throws -> (collections: Int, items: Int, trashed: Int) {

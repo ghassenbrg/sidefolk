@@ -40,15 +40,19 @@ public struct BrainTask: Sendable {
 public final class BrainToolbox: Sendable {
     public let runId: String
     public let specs: [ToolSpec]
+    /// The links the user typed in the request this run answers (SECURITY T1, T2).
+    public let mentions: UserMentions
     private let executor: ToolExecutor
     private let tainted = Mutex(false)
+    private let closed = Mutex(false)
     private let emit: @Sendable (AgentEvent) -> Void
     private let results = Mutex<[ToolOutcome]>([])
 
     public init(runId: String, specs: [ToolSpec], executor: ToolExecutor, startTainted: Bool = false,
-                emit: @escaping @Sendable (AgentEvent) -> Void) {
+                mentions: UserMentions = .none, emit: @escaping @Sendable (AgentEvent) -> Void) {
         self.runId = runId
         self.specs = specs
+        self.mentions = mentions
         self.executor = executor
         self.emit = emit
         tainted.withLock { $0 = startTainted }
@@ -57,9 +61,16 @@ public final class BrainToolbox: Sendable {
     public var isTainted: Bool { tainted.withLock { $0 } }
     public var outcomes: [ToolOutcome] { results.withLock { $0 } }
 
+    /// The run ended: later calls are refused and cards still waiting are denied, so an Allow
+    /// clicked afterwards never acts for a run that is gone.
+    public func close() async {
+        closed.withLock { $0 = true }
+        await executor.cancelApprovals(runId: runId)
+    }
+
     /// Runs a tool by its spec name or model-facing name.
     public func call(_ name: String, input: JSONValue) async -> ToolOutcome {
-        let allowed = specs.contains { $0.name == name || $0.modelName == name }
+        let allowed = specs.contains { $0.name == name || $0.modelName == name } && !closed.withLock { $0 }
         guard allowed else {
             let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system,
                                    caller: .agent(runId: runId), error: "Tool not available")
@@ -69,7 +80,7 @@ public final class BrainToolbox: Sendable {
         emit(.phase(.working(spec.category)))
         let emit = self.emit
         let outcome = await executor.execute(name: spec.name, input: input, caller: .agent(runId: runId), tainted: isTainted,
-                                             onWaiting: { _ in emit(.phase(.waitingForApproval)) })
+                                             mentions: mentions, onWaiting: { _ in emit(.phase(.waitingForApproval)) })
         if outcome.untrusted { tainted.withLock { $0 = true } }
         results.withLock { $0.append(outcome) }
         emit(.toolFinished(outcome.activity, ok: outcome.isOK))

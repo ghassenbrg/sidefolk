@@ -195,7 +195,10 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             throw ValidationIssue(field: fileName, message: "is \(data.count / 1024) KiB; the limit is 64 KiB.")
         }
         do {
+            try JSONValue.checkDepth(data)
             return try JSONDecoder().decode(ExtensionManifest.self, from: data)
+        } catch is JSONDepthError {
+            throw ValidationIssue(field: fileName, message: "is nested more than \(JSONValue.maxDepth) levels deep.")
         } catch let error as DecodingError {
             throw ValidationIssue(decoding: error)
         } catch {

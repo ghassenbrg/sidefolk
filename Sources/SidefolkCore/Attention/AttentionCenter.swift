@@ -35,7 +35,15 @@ public actor AttentionCenter {
     private var handlers: [String: ActionHandler] = [:]
     private var waiting: [String: CheckedContinuation<String?, Never>] = [:]
     private var held: [String: AttentionItem] = [:]
+    /// Attention-level and gentle presentations of the last window, for the rate limits. A slot is
+    /// taken in the same synchronous step as the decision, before any `await`, so concurrent posts
+    /// can't all decide against the same, older list.
     private var recent: [(source: String, at: Date)] = []
+    private var gentle: [(source: String, at: Date)] = []
+    /// Away because the input-idle signal said so at the last decision (lock and sleep come through `update`).
+    private var idleAway = false
+    /// Items an answer is being handled for; a second answer (double click, bubble plus notification) is dropped.
+    private var answering: Set<String> = []
     private var timers: [String: Task<Void, Never>] = [:]
     private var renudges: [String: Task<Void, Never>] = [:]
 
@@ -55,13 +63,18 @@ public actor AttentionCenter {
     /// Routes action answers for items whose `refKind` (or source prefix) matches `kind`.
     public func onAction(kind: String, _ handler: @escaping ActionHandler) { handlers[kind] = handler }
 
-    public var environment: AttentionEnvironment { env }
+    /// What decisions see: the app's view (lock, sleep, quiet, full screen) plus the idle signal.
+    public var environment: AttentionEnvironment {
+        var e = env
+        e.away = e.away || idleAway
+        return e
+    }
 
     public func update(_ change: @Sendable (inout AttentionEnvironment) -> Void) {
         let before = env
         change(&env)
         guard env != before else { return }
-        let returned = before.away && !env.away
+        let returned = before.away && !env.away && !idleAway
         let calmer = (before.quiet && !env.quiet) || (before.fullscreen && !env.fullscreen)
         if returned || calmer { Task { await reconsiderHeld(summarise: returned) } }
     }
@@ -69,29 +82,33 @@ public actor AttentionCenter {
     /// Posts and presents (or holds) an item; returns it.
     @discardableResult
     public func post(_ request: AttentionRequest) async -> AttentionItem {
-        let item = AttentionItem(level: request.level, source: request.source, title: request.title.clipped(160),
-                                 body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
-                                 refId: request.refId, now: clock.now)
-        try? await store.save(item)
-        await consider(item)
+        let item = makeItem(request)
+        await deliver(item)
         return item
     }
 
     /// Posts and waits for the user to pick an action (or the timeout). Returns the action id.
     public func ask(_ request: AttentionRequest, timeout: TimeInterval) async -> String? {
-        let item = await post(request)
+        let item = makeItem(request)
         let id = item.id
         let timer = Task { [weak self] in
             try? await Task.sleep(for: .seconds(timeout))
             await self?.expire(id: id)
         }
-        let answer = await withCheckedContinuation { c in waiting[id] = c }
+        // The waiter is in place before the item can be shown, so an instant answer is never lost.
+        let answer = await withCheckedContinuation { c in
+            waiting[id] = c
+            Task { await self.deliver(item) }
+        }
         timer.cancel()
         return answer
     }
 
-    /// The user chose `actionId` (or dismissed with nil) on an item, here or in a notification.
+    /// The user chose `actionId` (or dismissed with nil) on an item, here or in a notification. A
+    /// second answer to the same item does nothing, even while the first is still being handled.
     public func respond(id: String, actionId: String?) async {
+        guard answering.insert(id).inserted else { return }
+        defer { answering.remove(id) }
         guard var item = try? await store.item(id: id), item.state != .acknowledged else { return }
         item.state = .acknowledged
         item.acknowledgedAt = clock.now
@@ -112,17 +129,34 @@ public actor AttentionCenter {
         return handlers[item.source] ?? handlers[String(item.source.split(separator: ":").first ?? "")]
     }
 
+    /// `critical` is kept only for the sources allowed to use it (AttentionPolicy.criticalSources).
+    private func makeItem(_ request: AttentionRequest) -> AttentionItem {
+        let level = request.level == .critical && !AttentionPolicy.criticalSources.contains(request.source) ? .attention : request.level
+        return AttentionItem(level: level, source: request.source, title: request.title.clipped(160),
+                             body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
+                             refId: request.refId, now: clock.now)
+    }
+
+    private func deliver(_ item: AttentionItem) async {
+        try? await store.save(item)
+        await consider(item)
+    }
+
     private func consider(_ item: AttentionItem) async {
         let now = clock.now
         if let s = signals?() {
             env.lastKeyAt = now.addingTimeInterval(-s.secondsSinceKey)
-            if s.secondsSinceInput > 300 { env.away = true }
+            // Read fresh at every decision: being idle once must not hold everything until a lock/unlock.
+            let wasIdle = idleAway
+            idleAway = s.secondsSinceInput > 300
+            if wasIdle, !idleAway, !env.away, !held.isEmpty { Task { await reconsiderHeld(summarise: true) } }
         }
         let decision = AttentionPolicy.decide(level: item.level, source: item.source, createdAt: item.createdAt, now: now,
-                                              env: env, recent: recent)
+                                              env: environment, recent: recent, gentle: gentle)
         switch decision {
         case .present(let presentation):
             held[item.id] = nil
+            reserve(item.source, presentation, now: now)
             await present(item, presentation)
         case .hold(let until):
             held[item.id] = item
@@ -151,9 +185,6 @@ public actor AttentionCenter {
         shown.shownAt = clock.now
         let saved = shown
         try? await store.save(saved)
-        if case .attention = presentation { recent.append((item.source, clock.now)) }
-        if case .system = presentation { recent.append((item.source, clock.now)) }
-        recent = recent.filter { clock.now.timeIntervalSince($0.at) < AttentionPolicy.perSourceWindow }
         events.publish(.attention(.present(saved, presentation)))
 
         // One re-nudge for things that need an answer.
@@ -176,11 +207,26 @@ public actor AttentionCenter {
         await consider(item)
     }
 
+    /// Counts a presentation against the rate limits. Synchronous, so it lands in the same actor
+    /// step as the decision that made it.
+    private func reserve(_ source: String, _ presentation: AttentionPresentation, now: Date) {
+        let window = AttentionPolicy.perSourceWindow
+        switch presentation {
+        case .attention, .system: recent.append((source, now))
+        case .gentle: gentle.append((source, now))
+        case .ambient: break
+        }
+        recent.removeAll { now.timeIntervalSince($0.at) >= window }
+        gentle.removeAll { now.timeIntervalSince($0.at) >= window }
+    }
+
     private func expire(id: String) async {
-        guard var item = try? await store.item(id: id), item.state != .acknowledged else { return }
-        item.state = .expired
-        try? await store.save(item)
-        finish(id)
+        if var item = try? await store.item(id: id), item.state != .acknowledged {
+            item.state = .expired
+            try? await store.save(item)
+            finish(id)
+        }
+        // An `ask` whose item never reached the store still gets its answer: none.
         waiting.removeValue(forKey: id)?.resume(returning: nil)
         await publishBacklog()
     }
@@ -203,8 +249,10 @@ public actor AttentionCenter {
                                         title: "While you were away: \(items.count) things",
                                         body: titles + (items.count > 4 ? "\n…" : ""),
                                         actions: [AttentionAction(id: "open", title: "Show", isPrimary: true)], now: clock.now)
+            let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
+            reserve(summary.source, presentation, now: clock.now)
             try? await store.save(summary)
-            await present(summary, .attention(expandFor: AttentionPolicy.expandSeconds))
+            await present(summary, presentation)
             return
         }
         for i in items { await consider(i) }
