@@ -89,8 +89,10 @@ public enum ShellRunner {
         let flags = POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_CLOEXEC_DEFAULT | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK
         posix_spawnattr_setflags(&attributes, Int16(flags))
 
-        let argv = ["/bin/sh", "-c", command].map { strdup($0) } + [nil]
-        let envp = environment().map { strdup($0) } + [nil]
+        // Typed, like PosixSpawn's: Swift 6.3 reads the literal as C pointers (from `+ [nil]`) and rejects the strings.
+        let words: [String] = ["/bin/sh", "-c", command]
+        let argv: [UnsafeMutablePointer<CChar>?] = words.map { strdup($0) } + [nil]
+        let envp: [UnsafeMutablePointer<CChar>?] = environment().map { strdup($0) } + [nil]
         defer {
             argv.forEach { free($0) }
             envp.forEach { free($0) }
