@@ -454,6 +454,7 @@ struct AgentsGroup: View {
     private func claude(_ s: IntegrationStatus) -> some View {
         AgentCard(
             name: "Claude Code",
+            symbol: "sparkle",
             status: !s.claudeCodeFound ? String(localized: "Not installed")
                 : s.claudeMCPInstalled ? (s.claudeHooksInstalled ? String(localized: "Connected, with session taps") : String(localized: "Connected"))
                 : String(localized: "Not connected"),
@@ -484,6 +485,7 @@ struct AgentsGroup: View {
     private func commandLine(_ s: IntegrationStatus) -> some View {
         AgentCard(
             name: String(localized: "sidefolk command", comment: "The `sidefolk` command-line tool; keep “sidefolk” as it is"),
+            symbol: "terminal",
             status: s.cliLinked ? String(localized: "Installed") : String(localized: "Not installed"),
             connected: s.cliLinked,
             found: true,
@@ -497,6 +499,7 @@ struct AgentsGroup: View {
     private func codex(_ s: IntegrationStatus) -> some View {
         AgentCard(
             name: "Codex",
+            symbol: "chevron.left.forwardslash.chevron.right",
             status: !s.codexFound ? String(localized: "Not installed")
                 : s.codexMCPInstalled ? String(localized: "Connected") : String(localized: "Not connected"),
             connected: s.codexMCPInstalled,
@@ -511,6 +514,7 @@ struct AgentsGroup: View {
 
 private struct AgentCard<Extra: View>: View {
     var name: String
+    var symbol: String
     var status: String
     var connected: Bool
     var found: Bool
@@ -522,7 +526,8 @@ private struct AgentCard<Extra: View>: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
-            FolkBadge(name: "byte", size: 32)
+            // Each agent its own mark on Byte's colour (agents are Byte's job); one Byte per card read as three.
+            IconTile(symbol: symbol, folk: "byte", size: 32)
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     Text(name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
