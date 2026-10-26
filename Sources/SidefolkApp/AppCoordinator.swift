@@ -188,7 +188,8 @@ final class AppCoordinator {
                                 activeWatchers: watchers.count, liveAgentWork: jobs.count + working)
             companion.setFolks(roster.onDuty, visible: runtime.settings.current.showFolks)
             companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
-            introduceNewFolks(roster.onDuty)
+            // Only folks standing beside the companion: a folk that is the companion needs no introduction.
+            introduceNewFolks(companion.folksShown)
         }
     }
 

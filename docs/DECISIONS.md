@@ -199,6 +199,8 @@ so redrawn art can replace the legacy cuts without code changes.
 **Alternatives:** rigging Mochi and Spark as vectors (slow, would not look like the renders); one view
 type per kind of companion (the app would juggle two); free colour pickers (off-brand); a tint for
 the sprites' mint parts (the legacy recolouring; looks painted-on on 3D renders).
+**Superseded by D30:** Mochi and Spark became live rigs on the robot's engine, the Folk Family joined
+them, and the colour and an accessory became one style for every companion.
 **Implications:** sprite companions have no effect marks or held props beyond what their poses show,
 and no eye tracking (they lean toward the pointer instead). A new sprite companion is a folder of
 the 16 poses plus a `CompanionChoice` case.
@@ -232,3 +234,32 @@ new guide and the founder’s close-up icon crop; monochrome and menu marks shar
 vector geometry matching the close-up’s ears, paw, rays and separated scarf. Raw icon sources
 have a simple blue-gradient square or transparent background; only separate macOS exports get a
 geometric mask.
+
+### D30 — Every companion is a live rig on one engine; thirteen to choose from; one style for all (2026-10-26)
+**Decision:** Mochi, Spark and the ten folks are vector rigs on the robot's engine: `Director` drives
+a `Figure` (the robot's own `RobotRig`, or a `SoftRig` built from a `Species` description), so every
+companion has every state, gesture, prop, blink, gaze, the D20 settling, the frame cap, the occlusion
+pause, reduced motion and silhouette hit testing. Mochi follows the brand mascot (white body, navy
+bead eyes and ear tips, ears that droop, perk, trail and sway); Spark follows its concept render;
+each folk is exactly twice its on-duty self with its personality at idle and its signature pieces
+(glasses, headphones, cap, beret, bowler, sprout worn; magnifier, calendar, controller, shield,
+brush, cup held at idle and put away when a state needs the hands). Settings › Companion is a
+chooser: the chosen companion live with states to try, its name, colour and what it wears, over a
+gallery of every companion with its role. Every companion takes the same `CharacterStyle`: a brand
+colour (aqua, coral, mint, light blue) and an accessory (none, or a knitted scarf fitted to each
+body); the colour paints what it wears and the robot's light and Spark's gear. Each companion keeps
+its own style; the robot's saved light colour carries over. A folk that is the companion doesn't
+stand beside itself on duty: its duty shows as the companion's badge (watching, busy) instead, and
+it is not introduced as a newcomer.
+**Why:** the founder asked for the new companions to work like the robot ("the main one we did and
+it's well done"), and for every folk to be choosable with the same customisation. Pose pictures
+could not hold props, follow the pointer, morph expressions or move ears, and the redrawn sprites
+still read as stickers next to the rig. One engine with data-described bodies keeps thirteen
+companions at one quality bar with one set of tests, and new ones are a `Species` away. The style
+stops at a colour and a scarf: they suit every body and the brand (Mochi's scarf), while hats and
+glasses clash with ears, fins, antennae and screens on some of them.
+**Alternatives:** keep sprites for Mochi and Spark (D27; no props, no gaze, stiff); one rig class per
+companion (thirteen copies of the same motion code); per-companion extras (later, if wanted).
+**Implications:** the sprite engine, pose art and its scripts are gone. `CharacterSpecies.available`
+gates what is offered. Folks' faces and accessories match the on-duty folks, which stay the
+`FolkRig` drawings (shared through `FolkKit`).

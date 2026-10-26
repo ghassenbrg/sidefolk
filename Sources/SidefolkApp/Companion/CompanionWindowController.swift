@@ -213,6 +213,9 @@ final class CompanionWindowController {
         layoutContent()
     }
 
+    /// The folks standing beside the companion now.
+    var folksShown: [DutyFolk] { folkOrder }
+
     func folk(at point: NSPoint) -> DutyFolk? {
         folkViews.first { $0.value.frame.contains(point) }?.key
     }
