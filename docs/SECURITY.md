@@ -47,7 +47,10 @@ set only by code. While tainted, all medium/high calls ask (grants ignored), and
 writes and memory/skill/routine creation. Network and open calls ask (medium) whenever their
 normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
 while tainted, and opening a site the user named runs in a clean turn (`UserMentions`: scheme,
-`www.`, default port and a trailing slash don't matter; query and fragment do). Extension and MCP
+`www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
+Mac or the local network get no card: fetching and watching refuse them for everyone but the
+user, and opening one in the browser sends nothing beyond the LAN. External
+agents follow T4 instead (their own context and network are already theirs). Extension and MCP
 tool descriptions never reach the model: it gets a neutral line built from the tool title and
 extension name, and the schema without its free text (descriptions stay on the install sheet).
 Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), stripped of invisible

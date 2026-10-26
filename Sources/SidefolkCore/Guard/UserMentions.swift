@@ -36,9 +36,12 @@ public struct UserMentions: Sendable, Hashable {
         }
     }
 
-    /// A well-formed public-style web address (what web and open tools accept). Anything else is
-    /// refused by those tools themselves, so it needs no card.
-    public static func isWebAddress(_ text: String) -> Bool { (try? URLPolicy.parseWebURL(text)) != nil }
+    /// A well-formed web address on a public-looking host (what web and open tools accept from
+    /// anyone but the user). Anything else is refused by those tools themselves, so it needs no card.
+    public static func isWebAddress(_ text: String) -> Bool {
+        guard let url = try? URLPolicy.parseWebURL(text) else { return false }
+        return (try? URLPolicy.checkHost(url)) != nil
+    }
 
     /// The exact address appears in what the user typed (http and https count as the same).
     public func contains(url text: String) -> Bool {

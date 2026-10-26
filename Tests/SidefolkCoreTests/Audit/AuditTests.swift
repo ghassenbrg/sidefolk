@@ -5,8 +5,7 @@ import Testing
 
 // Security review 2 (2026-10-26). These started as proof-of-concept tests that passed while each
 // weakness was present; the fixed ones now assert the secure behaviour and stay as regression tests.
-// Tests still named `poc_` describe a weakness that lives outside SidefolkCore's fixed files (the app
-// or the watcher engine) and still pass because it is still there.
+// The one still named `poc_` pins a Foundation behaviour the app has to guard against.
 
 @Suite(.serialized) struct AuditGuardTests {
     let engine = PermissionEngine()
@@ -300,9 +299,9 @@ struct AuditExtensionTests {
         #expect(try secrets.get(SecretKey.mcpServer("mcp.files")) == nil)
     }
 
-    /// F12 (M4, app). Still open: the Ask panel renders answers with `AttributedString(markdown:)`,
-    /// keeping links of any scheme. The fix (an `openURL` action allowing only http(s) after a
-    /// confirmation) belongs to SidefolkApp/Ask/AskView.swift.
+    /// F12 (M4, app). `AttributedString(markdown:)` keeps links of any scheme, so whatever renders a
+    /// model answer must filter them itself (SidefolkApp/Ask/AskView.swift, outside Core). This only
+    /// pins the Foundation behaviour that makes that necessary.
     @Test func poc_answerMarkdownKeepsNonWebLinks() throws {
         let text = "[Open the report](file:///Users/Shared/report.command) or [fix it](shortcuts://run-shortcut?name=x)"
         let rendered = try AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))
@@ -310,17 +309,18 @@ struct AuditExtensionTests {
         #expect(links.map { $0.scheme ?? "" } == ["file", "shortcuts"])
     }
 
-    /// F14 (L4, watcher engine). Still open here: Watch/ is fixed separately. Watcher "Open" shows the
-    /// folder instead of opening runnable files, but only by extension, so an executable with no
-    /// extension is opened directly.
-    @Test func poc_watcherOpenRunsExtensionlessExecutables() throws {
+    /// F14 (L4, fixed in Watch/). Watcher "Open" shows the folder for anything runnable, an
+    /// executable with no extension or an internet location included.
+    @Test func watcherOpenNeverRunsExtensionlessExecutables() throws {
         let dir = try ExtFixtures.tempDir("open")
         defer { try? FileManager.default.removeItem(at: dir) }
         let file = dir.appendingPathComponent("README").path
         try Data("#!/bin/sh\necho pwned\n".utf8).write(to: URL(fileURLWithPath: file))
         chmod(file, 0o755)
-        #expect(WatchedPath.openable(file) == file)
-        #expect(WatchedPath.openable(dir.appendingPathComponent("x.inetloc").path).hasSuffix(".inetloc"))
+        #expect(WatchedPath.openable(file) == dir.path)
+        let location = dir.appendingPathComponent("x.inetloc").path
+        try Data("<plist/>".utf8).write(to: URL(fileURLWithPath: location))
+        #expect(!WatchedPath.openable(location).hasSuffix(".inetloc"))
     }
 
     /// F16 (L2). The slot is reserved in the same actor step as the decision, so concurrent posts
