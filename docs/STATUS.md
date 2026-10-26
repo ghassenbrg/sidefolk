@@ -1,8 +1,52 @@
 # Status
 
-Updated: 2026-10-26. Latest: design pass: wordmark rebuilt to the founder's lettering (D31), menu bar Mochi glyph (D32), brand in the app and Settings in reach (D33).
+Updated: 2026-10-26. Latest: languages, app pass: every word the app shows is in the catalog (1681 strings, English only), snapshots in any language, a pseudo-localization check, Arabic right to left (D28).
 
 ## Done and verified
+- **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
+  character's VoiceOver words and the core leftovers (Brain replies and checks, provider names,
+  Claude Code/Codex messages) is in the catalog: `make strings` finds 1681 strings, English only.
+  - *How:* the shared components (SettingsRow, SettingsToggle, SettingsGroup, EmptyState,
+    InlineEmpty, PageTitle, SectionHeader, Chip, Eyebrow, ChoiceRow, CommitField) take
+    `LocalizedStringKey`, so literal call sites are collected as written, and `Text` otherwise
+    (`Text(verbatim:)` for names, paths and words already localized; Toast shows final text).
+    Models and AppKit (menus, alerts, notifications, onboarding) use `String(localized:)`. No
+    sentence is built from English pieces (one key per variant); counts are one Int key with English
+    one/other forms (16 more, CatalogTests checks them). The delete-everything word is localized.
+  - *Watch out:* a ternary passed to an *optional* `LocalizationValue`/`LocalizedStringKey` parameter
+    loses its second literal from the catalog (compiler bug): give each branch its own
+    `String(localized:)` or `Text(…)`. `fixedSize(horizontal: false, vertical: true)` on text in a
+    window that sizes from its content (`sizingOptions = [.minSize]`) blows up the window's minimum
+    height (Activity did); keep it inside scroll views.
+  - *strings.sh fix:* the build system now names module folders `SidefolkApp-p.build`; the clean step
+    missed them, so a second run collected only changed files.
+  - *Snapshots per language:* `swift run SidefolkApp --ui-snapshots <dir> --language fr` (any of
+    the ten; `--catalog <file>` for another catalog). It relaunches itself with `-AppleLanguages`
+    and, under `swift run`, compiles the catalog next to the executable for that run only. Until
+    translations land, every language renders English text (dates and system controls do change).
+  - *Pseudo-localization:* `scripts/pseudo-l10n.py [--language fr|ar]` renders the snapshots with a
+    throwaway catalog where every value is accented and ~40 % longer (`build/pseudo-<lang>/`). Found
+    and fixed: bubble and question buttons now stack when they don't fit, the Ask hint and "New
+    collection" take two lines, the companion's state picker becomes a menu, narrow Activity columns
+    shrink a little, the About tagline centres. Left as is: long Settings tab names push the last tab
+    into the toolbar's overflow (the translator comment asks for a short "Privacy" tab name).
+  - *Right to left:* AppKit mirrors an app only when the Mac reads right to left, so Sidefolk in
+    Arabic on an English Mac stayed left to right. `AppLanguage.applyLayoutDirection()` (main.swift,
+    before NSApplication) sets `AppleTextDirection` in Sidefolk's own defaults for Arabic and removes
+    it otherwise. Checked in pseudo-Arabic snapshots and in the dev app: Home, Settings, the Ask
+    panel, the Now hero (companion moves to the left) and the chooser mirror; the bubble tail stays
+    aimed at the companion (`tail.x` is physical; its overlay is laid out left to right); the
+    companion, folks and panel placement are AppKit frames and never mirror.
+  - Verified: `swift build`; full serial suite (886 core + 9 character); English snapshots compared
+    pixel by pixel with rework's (only the intended changes); pseudo-fr and pseudo-ar snapshots
+    reviewed; the debug app copy with pseudo tables switched to French and Arabic with the dev
+    command `language:fr`/`language:ar` (it relaunches) and back with `language:system`.
+  - Left in English on purpose: model-facing text (prompts, tool results and descriptions, the
+    "Dropped file:" attachment text, the last-request payload's section names), typed-command words
+    ("cancel", "tell me when " prefill, "remind me in 2 minutes to stretch"), `sidefolk` CLI output,
+    bridge and socket errors, extension manifest checks, logs and diagnostics, product and company
+    names, the stored collection names "Inbox"/"About you" (shown localized), sample data in
+    snapshots, and isolation reasons for a broken Claude Code (diagnostics detail only).
 - **Design pass (2026-10-26, D31–D33):**
   - *Wordmark (D31):* `scripts/wordmark.swift` builds every letter from round-capped strokes, rings
     and a dot, fitted to `Resources/Brand/reference/wordmark-reference.png` (S 97.8 %, letters
@@ -21,8 +65,8 @@ Updated: 2026-10-26. Latest: design pass: wordmark rebuilt to the founder's lett
   - Verified: UI snapshots light/dark before (`build/design-before/`) and after
     (`build/design-after/`), the debug app (Home, About, Ask panel and the real status item via
     `swift scripts/dev.swift snap`), `swift build`, full serial suite after merging rework (885 core + 9 character).
-  - Not done: `make strings` for the new UI strings (English fallback works); the founder's look at
-    the new wordmark and glyph. Next: see "Design next" below.
+  - Not done: the founder's look at the new wordmark and glyph (its strings are now in the
+    catalog). Next: see "Design next" below.
 - **Languages, core pass (D28, 2026-10-26):** every string people read that Sources/SidefolkCore
   builds is in the catalog (`make strings`: 1088 strings, English only, no translations yet):
   errors, result cards, undo labels, tool titles and approval summaries, Guard's reasons, attention
@@ -142,7 +186,7 @@ Updated: 2026-10-26. Latest: design pass: wordmark rebuilt to the founder's lett
     Settings (General, Companion, AI, Agents, Privacy & Permissions, Extensions).
   - Embodied onboarding (hello, agents, a real reminder, notifications, login), data export, delete
     everything (Keychain items included), diagnostics export with redacted logs.
-- **Tests:** 854 in 94 suites (845 core + 9 character). `make test` runs serially (about 40 s).
+- **Tests:** 895 (886 core in 103 suites + 9 character). `make test` runs serially (about 40 s).
 
 ## Reviews done (second round) and what came of them
 UX/product, security, QA/plugin developer and performance reviews (reports were working files, not in
@@ -166,15 +210,13 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
 Nothing. All second-round review follow-ups are merged.
 
 ## Known issues / not yet verified
-- **Languages, still English:** Sources/SidefolkCore/Brain/**, ClaudeCodeBackend.swift,
-  ClaudeBinary.swift and AppSettings.swift were off limits during the core pass (their
-  `UserFacingError("…")` literals are in the catalog already; other text is not). `AgentRuntime`
-  rewrites " Nothing was changed." in English only, so a localized error keeps saying nothing changed
-  when something did. The App target (SwiftUI text aside) has many plain `String` literals. The
-  `sidefolk` command line, `StatusSnapshot.sentence`, bridge protocol errors, extension manifest
-  checks (`ManifestValidator`, `ValidationReport.text`) and `ExtensionError`/`MCPError` details stay
-  English on purpose. Collection names stored in the database ("Inbox", "About you") stay English;
-  cards show them through `NotebookCollections.shownName`.
+- **Languages, no translations yet:** the catalog is complete but English only; every language
+  shows English words (dates, numbers and system controls follow the language). The `sidefolk`
+  command line, `StatusSnapshot.sentence`, bridge protocol errors, extension manifest checks
+  (`ManifestValidator`, `ValidationReport.text`) and `ExtensionError`/`MCPError` details stay English
+  on purpose. Collection names stored in the database ("Inbox", "About you") stay English; the app
+  shows them through `NotebookCollections.shownName`. KeyboardShortcuts' recorder has no Arabic of
+  its own (it shows "Space_Key").
 - **Not exercised by hand:** hooks inside a real Claude Code session; the notifications permission
   prompt; login item from /Applications; multi-monitor and fullscreen behaviour; "Connect…" for
   Claude Code/Codex (it edits real config files, so only the user should click it).
@@ -197,13 +239,14 @@ Nothing. All second-round review follow-ups are merged.
    login item, multi-monitor), then Developer ID signing and notarization (`scripts/release.sh`).
 2. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review);
    calendar awareness; voice input.
-3. Languages: the App pass and the Brain pass (see Known issues), then translations into the nine
-   languages with GLOSSARY.md, then a look at each language in the dev app (Settings › General ›
-   Language).
+3. Languages: translations into the nine languages with GLOSSARY.md (`make strings` keeps them),
+   then `swift run SidefolkApp --ui-snapshots build/ui-<lang> --language <lang>` for each and a look
+   in the dev app (Settings › General › Language, or `swift scripts/dev.swift language:<lang>`).
+   Arabic needs a real look right to left (pseudo-Arabic was checked).
 
 ## Design next (from the 2026-10-26 pass)
 1. A hand-drawn Mochi pose for the About window and onboarding (Mochi waving with the folks around,
    on a transparent background) would replace the family art where the companion speaks.
 2. Settings › Agents shows Byte three times; give Claude Code, Codex and the command their own marks.
-3. Run `make strings` and translate the new strings (About, Ask button, Settings tooltips).
+3. Translate the new strings (About, Ask button, Settings tooltips); they are in the catalog.
 4. Check the hero and wordmark with each companion and in each accent colour by hand.

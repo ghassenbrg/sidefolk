@@ -2,6 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "%@ %@" : {
+      "comment" : "Why I stopped, then what was done: two sentences",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11,18 +12,33 @@
         }
       }
     },
-    "%@ %@?" : {
+    "%@ %@ at %@" : {
+      "comment" : "A program, its version and where it is: “Claude Code 2.1.0 at ~/.local/bin/claude”",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ %2$@?"
+            "value" : "%1$@ %2$@ at %3$@"
+          }
+        }
+      }
+    },
+    "%@ %@ at %@, signed in." : {
+      "comment" : "A program, its version and where it is: “Codex 0.160.0 at /opt/homebrew/bin/codex, signed in.”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@ at %3$@, signed in."
           }
         }
       }
     },
     "%@ (folder)" : {
 
+    },
+    "%@ (⌘N)" : {
+      "comment" : "A button's name, then its shortcut"
     },
     "%@ I'll keep checking and tell you when it's back up." : {
 
@@ -32,6 +48,20 @@
     },
     "%@ It's already down, so I'll tell you if it comes back and goes down again." : {
 
+    },
+    "%@ Nothing was changed." : {
+      "comment" : "Why I stopped, then this sentence"
+    },
+    "%@ Then something went wrong: %@" : {
+      "comment" : "What was done (“Done so far: …”), then the error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ Then something went wrong: %2$@"
+          }
+        }
+      }
     },
     "%@ already uses the name “%@” for its tools." : {
       "localizations" : {
@@ -53,10 +83,39 @@
         }
       }
     },
+    "%@ answered “%@” in %@ s using %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ answered “%2$@” in %3$@ s using %4$@."
+          }
+        }
+      }
+    },
+    "%@ answered “%@” in %@ s using its default model." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ answered “%2$@” in %3$@ s using its default model."
+          }
+        }
+      }
+    },
     "%@ appeared" : {
 
     },
     "%@ asks" : {
+
+    },
+    "%@ belongs to another user" : {
+
+    },
+    "%@ can be changed by other users" : {
+
+    },
+    "%@ can't be read" : {
 
     },
     "%@ can't be read: %@." : {
@@ -153,12 +212,25 @@
     "%@ didn't start." : {
 
     },
+    "%@ doesn't exist" : {
+
+    },
     "%@ doesn't have the model “%@”. Nothing was changed." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ doesn't have the model “%2$@”. Nothing was changed."
+          }
+        }
+      }
+    },
+    "%@ downloads the newest %@ every time it starts. Pin a version, like %@@1.2.3." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ downloads the newest %2$@ every time it starts. Pin a version, like %3$@@1.2.3."
           }
         }
       }
@@ -186,15 +258,8 @@
         }
       }
     },
-    "%@ files in %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ files in %2$@"
-          }
-        }
-      }
+    "%@ finished" : {
+
     },
     "%@ finished downloading" : {
 
@@ -244,8 +309,11 @@
         }
       }
     },
+    "%@ hit a problem" : {
+
+    },
     "%@ in %@" : {
-      "comment" : "“Ideas in Sidefolk”",
+      "comment" : "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -254,6 +322,20 @@
           }
         }
       }
+    },
+    "%@ in · %@ out" : {
+      "comment" : "Tokens sent to and received from the AI this week: “12K in · 3K out”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ in · %2$@ out"
+          }
+        }
+      }
+    },
+    "%@ is a broken link" : {
+
     },
     "%@ is a file, not a folder." : {
 
@@ -264,10 +346,19 @@
     "%@ is a link (alias), and I only change real files and folders." : {
 
     },
+    "%@ is a link owned by another user" : {
+
+    },
     "%@ is already there" : {
 
     },
     "%@ is back up" : {
+
+    },
+    "%@ is being moved" : {
+
+    },
+    "%@ is celebrating" : {
 
     },
     "%@ is down" : {
@@ -276,7 +367,19 @@
     "%@ is gone" : {
 
     },
+    "%@ is here" : {
+
+    },
+    "%@ is keeping time" : {
+
+    },
     "%@ is limiting how fast I can ask right now. Nothing was changed." : {
+
+    },
+    "%@ is listening" : {
+
+    },
+    "%@ is looking something up on the web" : {
 
     },
     "%@ is missing its program." : {
@@ -285,7 +388,16 @@
     "%@ is missing, a link, or larger than 64 KiB." : {
 
     },
+    "%@ is not a file" : {
+
+    },
+    "%@ is not executable" : {
+
+    },
     "%@ is on a read-only disk." : {
+
+    },
+    "%@ is preparing a card" : {
 
     },
     "%@ is reachable, but it doesn't have “%@”." : {
@@ -297,6 +409,18 @@
           }
         }
       }
+    },
+    "%@ is reading" : {
+
+    },
+    "%@ is resting" : {
+
+    },
+    "%@ is ringing a reminder" : {
+
+    },
+    "%@ is thinking" : {
+
     },
     "%@ is too long (at most %lld characters)." : {
       "localizations" : {
@@ -312,6 +436,21 @@
 
     },
     "%@ is turned off in Sidefolk's Permissions settings." : {
+
+    },
+    "%@ is watching for something" : {
+
+    },
+    "%@ is working" : {
+
+    },
+    "%@ is working with an agent" : {
+
+    },
+    "%@ is working with files" : {
+
+    },
+    "%@ is writing a note" : {
 
     },
     "%@ isn't a folder I can search." : {
@@ -391,7 +530,11 @@
     "%@ needs an API key. Nothing was changed." : {
 
     },
+    "%@ needs you" : {
+
+    },
     "%@ needs you in %@" : {
+      "comment" : "“Claude Code needs you in sidefolk”: the agent, then the project",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -401,15 +544,11 @@
         }
       }
     },
-    "%@ needs you%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ needs you%2$@"
-          }
-        }
-      }
+    "%@ needs your approval" : {
+
+    },
+    "%@ needs your attention" : {
+
     },
     "%@ no longer offers “%@”." : {
       "localizations" : {
@@ -489,6 +628,17 @@
         }
       }
     },
+    "%@ until %@" : {
+      "comment" : "“every day until 12 Dec”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ until %2$@"
+          }
+        }
+      }
+    },
     "%@ was changed on disk (%@)" : {
       "localizations" : {
         "en" : {
@@ -531,7 +681,11 @@
         }
       }
     },
+    "%@, as it looks on your desktop" : {
+
+    },
     "%@: %@" : {
+      "comment" : "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -558,12 +712,6 @@
 
     },
     "%@: the output changed" : {
-
-    },
-    "%@…" : {
-
-    },
-    "%lld" : {
 
     },
     "%lld characters" : {
@@ -611,7 +759,26 @@
       }
     },
     "%lld command watchers are already running. Stop one first." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld command watcher is already running. Stop it first."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld command watchers are already running. Stop one first."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "%lld days" : {
       "localizations" : {
@@ -660,6 +827,16 @@
     "%lld h" : {
 
     },
+    "%lld h %lld min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld h %2$lld min"
+          }
+        }
+      }
+    },
     "%lld items" : {
       "localizations" : {
         "en" : {
@@ -675,6 +852,28 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld items in it move to the Trash for 30 days. Restored items go to the Inbox." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld item in it moves to the Trash for 30 days. Restored items go to the Inbox."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld items in it move to the Trash for 30 days. Restored items go to the Inbox."
                 }
               }
             }
@@ -754,6 +953,28 @@
     "%lld s" : {
 
     },
+    "%lld things need you." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld thing needs you."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld things need you."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld upcoming reminders" : {
       "localizations" : {
         "en" : {
@@ -829,13 +1050,19 @@
     ", fired %lld×" : {
 
     },
-    "1 day" : {
+    "1 hour" : {
 
     },
     "1 min" : {
 
     },
     "10 min" : {
+
+    },
+    "10 minutes" : {
+
+    },
+    "A companion that remembers, reminds, watches, and works with your agents." : {
 
     },
     "A file changed: %@." : {
@@ -850,7 +1077,13 @@
     "A folder" : {
 
     },
+    "A glance now and then, never a stare." : {
+
+    },
     "A link now points somewhere else on the way to %@, so I stopped looking there." : {
+
+    },
+    "A little robot helper" : {
 
     },
     "A reminder needs something to remind you about." : {
@@ -872,9 +1105,37 @@
 
     },
     "A skill needs instructions of at most %lld characters." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A skill needs instructions of at most %lld character."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A skill needs instructions of at most %lld characters."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "A small peek at the edge of the screen until something needs you." : {
+
+    },
+    "A soft chime for reminders and finished jobs." : {
 
     },
     "A tool without a usable name" : {
+
+    },
+    "AI" : {
 
     },
     "AI settings…" : {
@@ -883,10 +1144,16 @@
     "API key" : {
 
     },
+    "About Sidefolk" : {
+
+    },
     "About you" : {
 
     },
     "Access to %@" : {
+
+    },
+    "Actions this week" : {
 
     },
     "Activity" : {
@@ -922,6 +1189,9 @@
     "Adding…" : {
 
     },
+    "Address" : {
+
+    },
     "Adds [%@] (runs %@ mcp) to Codex's config." : {
       "localizations" : {
         "en" : {
@@ -931,6 +1201,15 @@
           }
         }
       }
+    },
+    "Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools." : {
+
+    },
+    "Adds a link at ~/.local/bin/sidefolk so you can type “sidefolk run -- npm test” in a terminal. Nothing else changes. If ~/.local/bin isn't on your PATH, add this line to ~/.zshrc:" : {
+
+    },
+    "Adds a “sidefolk” MCP server to ~/.claude.json, so Claude Code can save notes, set reminders, watch and notify." : {
+
     },
     "Adds hooks for %@ that run %@ hook (%lld s limit)." : {
       "localizations" : {
@@ -942,7 +1221,13 @@
         }
       }
     },
+    "Adds hooks to ~/.claude/settings.json, so I notice when a session needs you or finishes." : {
+
+    },
     "Adds the MCP server “sidefolk” (runs %@ mcp) to Claude Code's user settings." : {
+
+    },
+    "Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends." : {
 
     },
     "After %@" : {
@@ -958,13 +1243,37 @@
         }
       }
     },
+    "Afternoon" : {
+
+    },
+    "Agent" : {
+
+    },
+    "Agent runs this week" : {
+
+    },
     "Agent workers" : {
+
+    },
+    "Agents" : {
 
     },
     "All" : {
 
     },
+    "Allow" : {
+
+    },
     "Allow notifications" : {
+
+    },
+    "Allow once" : {
+
+    },
+    "Allow ⌘⏎" : {
+
+    },
+    "Allowed" : {
 
     },
     "Already cancelled" : {
@@ -976,7 +1285,16 @@
     "Already remembered" : {
 
     },
+    "Always" : {
+
+    },
     "Always allow" : {
+
+    },
+    "Always allowed" : {
+
+    },
+    "Always asks Codex for high reasoning effort; empty keeps the model above." : {
 
     },
     "An exit code is a number from 0 to 255." : {
@@ -1002,6 +1320,12 @@
     "Another app or agent set this yesterday %@." : {
 
     },
+    "Answers most requests." : {
+
+    },
+    "Anthropic API" : {
+
+    },
     "Anthropic couldn't accept that request. Nothing was changed." : {
 
     },
@@ -1020,13 +1344,37 @@
     "Anthropic turned the request down for a billing reason. Nothing was changed." : {
 
     },
+    "Any server that speaks OpenAI's chat API." : {
+
+    },
+    "Anything you save without saying where lands here." : {
+
+    },
+    "Approve" : {
+
+    },
+    "Aqua" : {
+
+    },
     "Archive" : {
 
     },
     "Archived" : {
 
     },
+    "Archived “%@”." : {
+
+    },
+    "Arguments" : {
+
+    },
     "Ask %@" : {
+
+    },
+    "Ask %@…" : {
+
+    },
+    "Ask Sidefolk…" : {
 
     },
     "Ask shortcut" : {
@@ -1038,22 +1386,79 @@
     "Ask the user to cancel some first." : {
 
     },
+    "Ask “what did I save about…” any time. Drop files or links on me, double-click me for your notebook, or find me in the menu bar." : {
+
+    },
     "Ask, remind, note, watch…" : {
 
     },
     "Ask: %@" : {
 
     },
-    "Asked by %@" : {
+    "Asked by Sidefolk" : {
+
+    },
+    "Asked by a routine" : {
+
+    },
+    "Asked by another app that says it's %@" : {
+
+    },
+    "Asked by the extension %@" : {
+
+    },
+    "Asked by you" : {
+
+    },
+    "Asks every time something would change outside Sidefolk, even if you allowed it before." : {
+
+    },
+    "Asks once for each kind of action and remembers “Always allow”." : {
 
     },
     "Ask…" : {
 
     },
+    "At %@, today's reminders, open tasks and watches in one bubble." : {
+
+    },
+    "Automatic" : {
+
+    },
+    "Available: %@." : {
+
+    },
+    "Backup: %@" : {
+
+    },
+    "Basics" : {
+
+    },
     "Be quiet" : {
 
     },
+    "Behavior" : {
+
+    },
+    "Blocked" : {
+
+    },
     "Bring back reminder" : {
+
+    },
+    "Bubbles wait; important reminders still come through." : {
+
+    },
+    "Built in" : {
+
+    },
+    "Byte keeps me company while an agent or a command is working." : {
+
+    },
+    "Byte: an agent or command is running" : {
+
+    },
+    "Can I use Mac notifications?" : {
 
     },
     "Can read %@" : {
@@ -1071,6 +1476,9 @@
     "Can use the internet" : {
 
     },
+    "Can't use" : {
+
+    },
     "Cancel" : {
 
     },
@@ -1083,10 +1491,16 @@
     "Cancelled" : {
 
     },
+    "Cautious" : {
+
+    },
     "Change a note" : {
 
     },
     "Change a note (%@)" : {
+
+    },
+    "Changes things" : {
 
     },
     "Changing files" : {
@@ -1158,10 +1572,19 @@
     "Check your workspace access in the Anthropic Console." : {
 
     },
+    "Checking on your agents…" : {
+
+    },
+    "Checking your agents…" : {
+
+    },
+    "Checking…" : {
+
+    },
     "Choose Claude Code, Codex, an API key or Ollama in Settings › AI." : {
 
     },
-    "Choose a %@ model" : {
+    "Choose a folder Sidefolk may read and organize." : {
 
     },
     "Choose a later end date." : {
@@ -1173,13 +1596,25 @@
     "Choose a more specific folder." : {
 
     },
+    "Choose an extension folder. You'll see what it can do before anything is installed." : {
+
+    },
     "Choose another folder." : {
 
     },
     "Choose another model in Settings › AI." : {
 
     },
+    "Choose from the list for “%@”" : {
+      "comment" : "A menu of models beside the field it fills"
+    },
     "Choose one in Settings › AI." : {
+
+    },
+    "Claude (API)" : {
+
+    },
+    "Claude Code (your Claude subscription)" : {
 
     },
     "Claude Code couldn't be read." : {
@@ -1209,6 +1644,9 @@
     "Claude kept calling tools, so I stopped it." : {
 
     },
+    "Claude models, pay as you go." : {
+
+    },
     "Claude took too long, so I stopped it." : {
 
     },
@@ -1221,13 +1659,31 @@
     "Clear search" : {
 
     },
+    "Click me or press %@. Try a reminder: no AI needed." : {
+
+    },
+    "Clipboard" : {
+
+    },
     "Clipboard access" : {
 
     },
     "Clipboard is empty" : {
 
     },
+    "Close" : {
+
+    },
+    "Cloud" : {
+      "comment" : "A model that runs on Ollama's servers, not this Mac"
+    },
+    "Code, agents & extensions" : {
+
+    },
     "Codex %@, so I stopped it." : {
+
+    },
+    "Codex (your ChatGPT plan)" : {
 
     },
     "Codex can't use the model “%@”." : {
@@ -1257,7 +1713,25 @@
     "Codex took too long, so I stopped it." : {
 
     },
+    "Codex's default" : {
+
+    },
     "Collection" : {
+
+    },
+    "Colour" : {
+
+    },
+    "Coming up" : {
+
+    },
+    "Command" : {
+
+    },
+    "Companion" : {
+
+    },
+    "Companion name" : {
 
     },
     "Confirmation" : {
@@ -1269,7 +1743,35 @@
     "Connect %@" : {
 
     },
+    "Connect Sidefolk to your agents?" : {
+
+    },
+    "Connect your agents" : {
+
+    },
     "Connect your agents…" : {
+
+    },
+    "Connected" : {
+
+    },
+    "Connected to %@." : {
+
+    },
+    "Connected to %@. %@ is ready." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Connected to %1$@. %2$@ is ready."
+          }
+        }
+      }
+    },
+    "Connected, with session taps" : {
+
+    },
+    "Connect…" : {
 
     },
     "Copied" : {
@@ -1290,6 +1792,9 @@
     "Copy to your clipboard: “%@”" : {
 
     },
+    "Coral" : {
+
+    },
     "Couldn't create the skill “%@”." : {
 
     },
@@ -1303,6 +1808,9 @@
 
     },
     "Couldn't write the skill “%@”." : {
+
+    },
+    "Counting…" : {
 
     },
     "Create a collection" : {
@@ -1336,7 +1844,34 @@
         }
       }
     },
+    "Created %@" : {
+
+    },
     "Created a folder" : {
+
+    },
+    "Custom endpoint" : {
+
+    },
+    "Custom path to claude" : {
+
+    },
+    "Custom path to codex" : {
+
+    },
+    "Cut" : {
+
+    },
+    "Data folder" : {
+
+    },
+    "Debug logging" : {
+
+    },
+    "Decision" : {
+
+    },
+    "DeepSeek's models." : {
 
     },
     "Delete" : {
@@ -1352,6 +1887,9 @@
 
     },
     "Delete a skill" : {
+
+    },
+    "Delete all Sidefolk data" : {
 
     },
     "Delete all Sidefolk data?" : {
@@ -1378,16 +1916,37 @@
     "Deleted" : {
 
     },
+    "Deleted “%@”." : {
+
+    },
+    "Deleted “%@”. Its items are in the Trash." : {
+
+    },
     "Delete…" : {
 
     },
     "Deleting…" : {
 
     },
+    "Denied" : {
+
+    },
+    "Design & creativity" : {
+
+    },
+    "Diagnostics" : {
+
+    },
+    "Diagnostics saved to %@. They contain no notes or messages." : {
+
+    },
     "Disconnect" : {
 
     },
     "Disconnect %@" : {
+
+    },
+    "Disconnect Sidefolk from your agents?" : {
 
     },
     "Dismiss" : {
@@ -1399,19 +1958,52 @@
     "Done for now" : {
 
     },
+    "Done so far: %@." : {
+
+    },
+    "Done." : {
+
+    },
+    "Download %@" : {
+
+    },
+    "Edit" : {
+
+    },
     "Edit reminder" : {
 
+    },
+    "Edited %@" : {
+      "comment" : "“Edited 5 min ago”"
     },
     "Edit…" : {
 
     },
+    "Empty" : {
+
+    },
     "Empty file" : {
+
+    },
+    "Empty uses Codex's default." : {
+
+    },
+    "Empty uses Sidefolk's default." : {
+
+    },
+    "Empty uses the model above." : {
 
     },
     "Enable %@" : {
 
     },
     "Ended" : {
+
+    },
+    "Enter the server's address. It usually ends in /v1." : {
+
+    },
+    "Evening" : {
 
     },
     "Every %lld min · %@" : {
@@ -1427,10 +2019,25 @@
     "Everyone" : {
 
     },
+    "Everything Sidefolk did, who asked, and what was allowed." : {
+
+    },
+    "Everything Sidefolk does, and who asked for it, shows up here." : {
+
+    },
+    "Everything local keeps working. Questions wait until you pick an AI." : {
+
+    },
+    "Everything stays on this Mac. It's encrypted at rest by FileVault when FileVault is on." : {
+
+    },
     "Everywhere" : {
 
     },
     "Exact command" : {
+
+    },
+    "Expired" : {
 
     },
     "Export Data…" : {
@@ -1439,10 +2046,47 @@
     "Export Diagnostics…" : {
 
     },
+    "Export data" : {
+
+    },
+    "Exported to %@." : {
+
+    },
+    "Extension" : {
+
+    },
     "Extensions" : {
 
     },
     "Extensions aren't running." : {
+
+    },
+    "Extensions run in a sandbox limited to what they asked for at install. MCP servers run with your full permissions." : {
+
+    },
+    "Eyes follow the pointer" : {
+
+    },
+    "Failed" : {
+
+    },
+    "Failed after %@" : {
+
+    },
+    "Failed with exit code %@ after %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Failed with exit code %1$@ after %2$@"
+          }
+        }
+      }
+    },
+    "Fetching pages and checking sites." : {
+
+    },
+    "File" : {
 
     },
     "Find" : {
@@ -1454,7 +2098,22 @@
     "Finished" : {
 
     },
+    "Finished after %@" : {
+
+    },
+    "Folder" : {
+
+    },
+    "Folder access · can change files" : {
+
+    },
+    "Folder access · read only" : {
+
+    },
     "Folder already exists" : {
+
+    },
+    "Folders Sidefolk can use" : {
 
     },
     "For 1 hour" : {
@@ -1484,19 +2143,103 @@
     "Found" : {
 
     },
+    "Found %@ %@ at %@, but it isn't signed in. Run this in Terminal, then click Look again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Found %1$@ %2$@ at %3$@, but it isn't signed in. Run this in Terminal, then click Look again."
+          }
+        }
+      }
+    },
+    "Found %@ %@ at %@, signed in with an API key, so it's billed to that key. To use your ChatGPT plan instead, run this in Terminal:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Found %1$@ %2$@ at %3$@, signed in with an API key, so it's billed to that key. To use your ChatGPT plan instead, run this in Terminal:"
+          }
+        }
+      }
+    },
+    "Found %@ %@ at %@, signed in with your ChatGPT plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Found %1$@ %2$@ at %3$@, signed in with your ChatGPT plan."
+          }
+        }
+      }
+    },
+    "Found %@ %@ at %@. It uses the account you signed in with." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Found %1$@ %2$@ at %3$@. It uses the account you signed in with."
+          }
+        }
+      }
+    },
     "Found for “%@”" : {
+
+    },
+    "Free models that run on this Mac." : {
+
+    },
+    "Free, and your requests stay on this Mac (except with Ollama's Cloud models). Pick a model that can use tools." : {
 
     },
     "From" : {
 
     },
+    "From %@" : {
+
+    },
+    "From %@ · deleted %@ · %@" : {
+      "comment" : "“From Inbox · deleted 2 days ago · gone in 28 days”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "From %1$@ · deleted %2$@ · %3$@"
+          }
+        }
+      }
+    },
+    "Fun & celebration" : {
+
+    },
+    "GPT models, pay as you go." : {
+
+    },
+    "General" : {
+
+    },
+    "Get a key" : {
+
+    },
     "Give it a short plain name." : {
+
+    },
+    "Give it something to wear to choose a colour." : {
+
+    },
+    "Give me something to remember." : {
 
     },
     "Give me the name of an app (like “Safari”), not a file path." : {
 
     },
     "Give the collection a name." : {
+
+    },
+    "Good afternoon" : {
+
+    },
+    "Good evening" : {
 
     },
     "Good morning" : {
@@ -1524,7 +2267,49 @@
         }
       }
     },
+    "Google's Gemini models." : {
+
+    },
+    "Got it" : {
+
+    },
+    "Groceries, books to read, places to go." : {
+
+    },
+    "Grok models." : {
+
+    },
+    "Guard" : {
+
+    },
+    "Having trouble" : {
+
+    },
+    "Hi %@" : {
+
+    },
+    "Hi, I'm %@." : {
+
+    },
+    "Hide Companion" : {
+
+    },
+    "Hide Sidefolk" : {
+
+    },
+    "High" : {
+
+    },
+    "High risk" : {
+
+    },
+    "History" : {
+
+    },
     "I can only attach web links (http or https) to a note." : {
+
+    },
+    "I can watch links and files, not text." : {
 
     },
     "I can't check %@ right now" : {
@@ -1544,6 +2329,9 @@
 
     },
     "I can't find the folder to run in." : {
+
+    },
+    "I can't help with that one." : {
 
     },
     "I can't move %@ into itself." : {
@@ -1571,19 +2359,37 @@
     "I couldn't add myself to your login items." : {
 
     },
-    "I couldn't add that folder. Nothing changed." : {
+    "I couldn't add that MCP server." : {
+
+    },
+    "I couldn't add that folder. Nothing was changed." : {
 
     },
     "I couldn't add the sidefolk command." : {
 
     },
+    "I couldn't approve those tools." : {
+
+    },
     "I couldn't build that email link." : {
+
+    },
+    "I couldn't change that reminder." : {
 
     },
     "I couldn't copy the logs." : {
 
     },
-    "I couldn't create that collection. Nothing changed." : {
+    "I couldn't create that collection. Nothing was changed." : {
+
+    },
+    "I couldn't delete everything." : {
+
+    },
+    "I couldn't export diagnostics." : {
+
+    },
+    "I couldn't export your data." : {
 
     },
     "I couldn't find %@." : {
@@ -1602,6 +2408,9 @@
 
     },
     "I couldn't find that website." : {
+
+    },
+    "I couldn't install %@." : {
 
     },
     "I couldn't make a secure connection to %@. Nothing was changed." : {
@@ -1661,6 +2470,9 @@
     "I couldn't remove myself from your login items." : {
 
     },
+    "I couldn't remove that extension." : {
+
+    },
     "I couldn't remove ~/.local/bin/sidefolk." : {
 
     },
@@ -1689,6 +2501,9 @@
 
     },
     "I don't have a tool called %@." : {
+
+    },
+    "I don't have an answer for that." : {
 
     },
     "I don't know how to watch “%@” (the extension that provides it may be off)." : {
@@ -1721,6 +2536,34 @@
     "I only talk to AI services over https, except on this Mac." : {
 
     },
+    "I ran out of steps before finishing." : {
+
+    },
+    "I stopped after %lld actions, my limit for one request." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "I stopped after %lld action, my limit for one request."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "I stopped after %lld actions, my limit for one request."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "I stopped because I kept repeating the same step." : {
+
+    },
     "I stopped watching %@" : {
 
     },
@@ -1736,10 +2579,16 @@
     "I won't rename something into a “.%@” item, because those can run programs." : {
 
     },
+    "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup." : {
+
+    },
     "I'll ask when" : {
 
     },
     "I'll keep trying, a little less often each time." : {
+
+    },
+    "I'll sit down here and keep track of things for you: notes, reminders, and things to watch." : {
 
     },
     "I'll tell you %@" : {
@@ -1749,7 +2598,26 @@
 
     },
     "I'm already watching %lld things. Stop one before starting another." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "I'm already watching %lld thing. Stop it before starting another."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "I'm already watching %lld things. Stop one before starting another."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "Idea" : {
 
@@ -1757,13 +2625,31 @@
     "Ideas" : {
 
     },
+    "Ideas & notes" : {
+
+    },
+    "Idle" : {
+
+    },
     "If it's yours, copy it to a normal file first (for example with Finder's Duplicate)." : {
+
+    },
+    "In 1 hour" : {
 
     },
     "Inbox" : {
 
     },
+    "Install" : {
+
+    },
+    "Install %@" : {
+
+    },
     "Install %@ first, then connect it here." : {
+
+    },
+    "Install %@?" : {
 
     },
     "Install from Folder…" : {
@@ -1778,16 +2664,38 @@
     "Install it again." : {
 
     },
-    "Install it with %@, then run codex login." : {
-
+    "Install it with %@ (or %@), then run codex login." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install it with %1$@ (or %2$@), then run codex login."
+          }
+        }
+      }
     },
     "Install it, or set its path in Settings › AI." : {
+
+    },
+    "Install the sidefolk command?" : {
+
+    },
+    "Installed" : {
+
+    },
+    "Installed but not running. Open Ollama, then click Look again." : {
+
+    },
+    "Installed, but its server is off. In LM Studio, start the server (Developer tab), then click Look again." : {
 
     },
     "Installing…" : {
 
     },
     "Internet access" : {
+
+    },
+    "It adds" : {
 
     },
     "It answered %@." : {
@@ -1848,7 +2756,26 @@
 
     },
     "It started more than %lld processes." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "It started more than %lld process."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "It started more than %lld processes."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "It stopped unexpectedly %lld times in %lld minutes, so Sidefolk turned it off." : {
       "localizations" : {
@@ -1861,6 +2788,9 @@
       }
     },
     "It used more than %llu MB of memory." : {
+
+    },
+    "It will be able to" : {
 
     },
     "It's already called “%@”." : {
@@ -1891,10 +2821,7 @@
     "It's empty." : {
 
     },
-    "Its %@ move to the Trash for 30 days. Restored items go to the Inbox." : {
-
-    },
-    "Its art isn't in this build." : {
+    "Its eyes, ear lights and what it wears." : {
 
     },
     "Its files changed since you installed it (%@) Install it again to use it." : {
@@ -1904,6 +2831,9 @@
 
     },
     "Its folder now contains a link or a special file." : {
+
+    },
+    "Its headphones, antenna, eyes and what it wears." : {
 
     },
     "Its instructions are removed. This can't be undone." : {
@@ -1924,6 +2854,12 @@
     "Its tools stop working right away." : {
 
     },
+    "Just started" : {
+
+    },
+    "Just the menu bar icon. Reminders arrive as notifications." : {
+
+    },
     "Keep recent requests for" : {
 
     },
@@ -1931,6 +2867,9 @@
 
     },
     "Keeps going until you stop it" : {
+
+    },
+    "Key saved" : {
 
     },
     "Keychain item %@" : {
@@ -1954,16 +2893,34 @@
     "Last time: %@" : {
 
     },
+    "Later" : {
+
+    },
+    "Launching apps and opening web pages." : {
+
+    },
+    "Learning & growth" : {
+
+    },
     "Less" : {
 
     },
+    "Let %@ use its changed tools?" : {
+
+    },
     "Let Sidefolk work in %@?" : {
+
+    },
+    "Light blue" : {
 
     },
     "Link" : {
 
     },
     "Links" : {
+
+    },
+    "List" : {
 
     },
     "List a folder" : {
@@ -2011,13 +2968,43 @@
     "Load the skill “%@”" : {
 
     },
+    "Logs and versions for a bug report, without your notes or messages." : {
+
+    },
+    "Look" : {
+
+    },
     "Look again" : {
+
+    },
+    "Look at %@" : {
+
+    },
+    "Look at the link" : {
+
+    },
+    "Look for it on your desktop or in the menu bar. This copy will close." : {
+
+    },
+    "Looking at your files…" : {
+
+    },
+    "Looking for %@…" : {
+
+    },
+    "Low" : {
+
+    },
+    "MCP server" : {
 
     },
     "MCP servers run outside Sidefolk's sandbox, with your full permissions and the folders you shared with Sidefolk. Only add servers you trust. Their tools ask before changing anything, and what they return is treated as untrusted." : {
 
     },
     "Make sure %@ is running, and check the address in Settings › AI." : {
+
+    },
+    "Many providers' models behind one key." : {
 
     },
     "Mark a reminder done" : {
@@ -2029,10 +3016,25 @@
     "Mark not done" : {
 
     },
+    "Mark “%@” done" : {
+
+    },
+    "Mark “%@” not done" : {
+
+    },
     "Medium" : {
 
     },
     "Memory" : {
+
+    },
+    "Menu bar only" : {
+
+    },
+    "Minimize" : {
+
+    },
+    "Mint" : {
 
     },
     "Missed %@ %@" : {
@@ -2052,10 +3054,25 @@
     "Missed yesterday %@" : {
 
     },
+    "Mistral's models." : {
+
+    },
+    "Model" : {
+
+    },
     "More" : {
 
     },
+    "More detail in the local log. Turn it off when you're done." : {
+
+    },
     "More for “%@”" : {
+
+    },
+    "Morning" : {
+
+    },
+    "Morning brief" : {
 
     },
     "Move %lld items to %@" : {
@@ -2189,10 +3206,31 @@
         }
       }
     },
+    "Moved to %@." : {
+
+    },
     "Moved to Trash" : {
 
     },
+    "Moved to the Trash." : {
+
+    },
+    "Moving, renaming and creating files in your folders." : {
+
+    },
+    "Music & focus" : {
+
+    },
+    "My answer got cut off before I could finish. Try asking for less at once." : {
+
+    },
     "Name" : {
+
+    },
+    "Naps after 10 minutes without input and wakes when you're back." : {
+
+    },
+    "Needs AI — not set up yet" : {
 
     },
     "Needs attention" : {
@@ -2201,13 +3239,16 @@
     "Needs attention (%lld)" : {
 
     },
-    "New %@" : {
+    "Needs you" : {
 
     },
-    "New %@ (⌘N)" : {
+    "Needs you (%lld)" : {
 
     },
     "New collection" : {
+
+    },
+    "New idea" : {
 
     },
     "New in %@: %@" : {
@@ -2220,10 +3261,19 @@
         }
       }
     },
+    "New link" : {
+
+    },
     "New list" : {
 
     },
     "New list “%@” created." : {
+
+    },
+    "New note" : {
+
+    },
+    "New permission: %@" : {
 
     },
     "New project" : {
@@ -2238,25 +3288,52 @@
     "New skill" : {
 
     },
+    "New task" : {
+
+    },
     "New topic" : {
 
     },
     "New topic “%@” created." : {
 
     },
+    "No AI" : {
+
+    },
+    "No API key needed. The command's own tools are switched off: it can only act through Sidefolk's." : {
+
+    },
     "No access to your files or the internet" : {
+
+    },
+    "No activity matches these filters." : {
 
     },
     "No collections yet" : {
 
     },
+    "No extensions yet. Install one from a folder, or add an MCP server." : {
+
+    },
     "No files found" : {
+
+    },
+    "No folders yet. Add one here, or allow one when Sidefolk asks." : {
+
+    },
+    "No ideas here" : {
 
     },
     "No internet connection." : {
 
     },
+    "No links here" : {
+
+    },
     "No matching notes" : {
+
+    },
+    "No notes here" : {
 
     },
     "No outcome" : {
@@ -2265,13 +3342,49 @@
     "No readable text" : {
 
     },
+    "No skills yet. Ask “write a skill for my weekly review” and approve it." : {
+
+    },
+    "No tasks here" : {
+
+    },
     "No upcoming reminders" : {
+
+    },
+    "Not allowed yet. Without them, reminders only appear on the desktop." : {
 
     },
     "Not available" : {
 
     },
+    "Not connected" : {
+
+    },
+    "Not installed" : {
+
+    },
+    "Not installed. Download LM Studio, get a model that can use tools, and start its server." : {
+
+    },
+    "Not installed. Download Ollama, then get a model that can use tools:" : {
+
+    },
+    "Not installed. Run this in Terminal (or use Homebrew: brew install --cask codex), sign in with your ChatGPT account, then click Look again." : {
+
+    },
+    "Not installed. Run this in Terminal, sign in when claude asks, then click Look again." : {
+
+    },
     "Not now" : {
+
+    },
+    "Not running" : {
+
+    },
+    "Not signed in" : {
+
+    },
+    "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives." : {
 
     },
     "Note" : {
@@ -2283,7 +3396,25 @@
     "Notes" : {
 
     },
+    "Notes, ideas and tasks for something you're making." : {
+
+    },
+    "Notes, reminders and watches still work. Questions need an AI." : {
+
+    },
     "Notes, reminders and watches work without AI. AI is only used for questions and open-ended requests." : {
+
+    },
+    "Notes, reminders, watches and settings as one JSON file. No keys." : {
+
+    },
+    "Notes, reminders, watches, history, logs and saved keys. This can't be undone." : {
+
+    },
+    "Nothing" : {
+
+    },
+    "Nothing about you yet" : {
 
     },
     "Nothing beyond its own data folder." : {
@@ -2301,16 +3432,46 @@
     "Nothing is being watched" : {
 
     },
+    "Nothing matches" : {
+
+    },
+    "Nothing needs you right now." : {
+
+    },
     "Nothing remembered yet" : {
 
     },
+    "Nothing running or due soon" : {
+
+    },
+    "Nothing running. Connect Claude Code or Codex to see their sessions here, or start a command with “sidefolk run -- npm test”." : {
+
+    },
+    "Nothing scheduled. Try “remind me at 5 to stretch”." : {
+
+    },
+    "Nothing selected" : {
+
+    },
     "Nothing sent yet. After your first question, you'll see here exactly what went out." : {
+
+    },
+    "Nothing to show" : {
 
     },
     "Nothing was changed." : {
 
     },
     "Nothing was moved." : {
+
+    },
+    "Nothing yet" : {
+
+    },
+    "Nothing yet. When you choose “Always allow”, it's listed here." : {
+
+    },
+    "Notifications" : {
 
     },
     "Notify the user" : {
@@ -2322,7 +3483,28 @@
     "Now" : {
 
     },
+    "OK" : {
+
+    },
+    "Okay, no reminder." : {
+
+    },
+    "One thing needs you." : {
+
+    },
+    "Only if it's installed somewhere unusual." : {
+
+    },
+    "Only if the server needs one." : {
+
+    },
     "Only urgent things will interrupt you." : {
+
+    },
+    "Only when I'm hidden, you're in fullscreen, or something is urgent." : {
+
+    },
+    "Only when needed" : {
 
     },
     "Only you or Sidefolk itself can create skills." : {
@@ -2373,7 +3555,13 @@
     "Open link" : {
 
     },
+    "Open models, served fast." : {
+
+    },
     "Open session" : {
+
+    },
+    "OpenAI-compatible" : {
 
     },
     "Opened %@" : {
@@ -2382,16 +3570,50 @@
     "Opening apps and links" : {
 
     },
+    "Opens the Ask panel from any app." : {
+
+    },
+    "Optional" : {
+
+    },
     "Or type a different answer above." : {
 
     },
-    "Other agents already have %lld watches running. Stop one first." : {
+    "Other agents" : {
 
+    },
+    "Other agents already have %lld watches running. Stop one first." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Other agents already have %lld watch running. Stop it first."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Other agents already have %lld watches running. Stop one first."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "Other agents already have as many reminders set as Sidefolk allows." : {
 
     },
+    "Outcome" : {
+
+    },
     "Output: %@" : {
+
+    },
+    "Overdue since %@" : {
 
     },
     "PDF, %lld pages" : {
@@ -2416,10 +3638,19 @@
         }
       }
     },
+    "Paste" : {
+
+    },
     "Paste a new key below." : {
 
     },
+    "Paste key" : {
+
+    },
     "Paste the key again in Settings › AI to use it with %@." : {
+
+    },
+    "Paste your %@ API key below. It stays in your Keychain." : {
 
     },
     "Pause" : {
@@ -2431,10 +3662,19 @@
     "Pause “%@”" : {
 
     },
+    "Paused" : {
+
+    },
     "Paused %@" : {
 
     },
+    "Pay as you go with the provider. Keys stay in your Keychain." : {
+
+    },
     "Permission request: %@" : {
+
+    },
+    "Pick a model" : {
 
     },
     "Pick a time in the future." : {
@@ -2446,13 +3686,34 @@
     "Pick another name." : {
 
     },
+    "Pick something on the left, or press ⌘N to write something new." : {
+
+    },
+    "Pick what to do, or type what you want" : {
+
+    },
     "Pick…" : {
 
     },
     "Plain http is only allowed for servers on this Mac. Nothing was saved." : {
 
     },
+    "Presence" : {
+
+    },
+    "Press to talk to %@." : {
+
+    },
+    "Privacy & Permissions" : {
+      "comment" : "A Settings tab. Six tabs share one toolbar, so keep it short (“Privacy” will do)"
+    },
+    "Process" : {
+
+    },
     "Process %@" : {
+
+    },
+    "Project" : {
 
     },
     "Put %lld items back" : {
@@ -2480,7 +3741,19 @@
     "Put back the skill “%@”" : {
 
     },
+    "Quiet" : {
+
+    },
+    "Quiet for 1 Hour" : {
+
+    },
     "Quiet is off." : {
+
+    },
+    "Quiet mode" : {
+
+    },
+    "Quiet mode is off" : {
 
     },
     "Quiet off" : {
@@ -2498,6 +3771,12 @@
     "Quiet until you turn it off." : {
 
     },
+    "Quit" : {
+
+    },
+    "Quit Sidefolk" : {
+
+    },
     "Read Sidefolk's status" : {
 
     },
@@ -2508,6 +3787,12 @@
 
     },
     "Read and change" : {
+
+    },
+    "Read and change files in %@" : {
+
+    },
+    "Read files in %@" : {
 
     },
     "Read only" : {
@@ -2525,7 +3810,22 @@
     "Read the web page %@" : {
 
     },
+    "Reading and writing what you copied." : {
+
+    },
     "Reading files" : {
+
+    },
+    "Reading the page…" : {
+
+    },
+    "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log." : {
+
+    },
+    "Recently" : {
+
+    },
+    "Redo" : {
 
     },
     "Reinstall Claude Code or choose another provider in Settings › AI." : {
@@ -2555,8 +3855,14 @@
     "Remembered “%@” again" : {
 
     },
+    "Remembering…" : {
+
+    },
     "Remind me" : {
 
+    },
+    "Remind me %@" : {
+      "comment" : "A button: “Remind me Tomorrow 09:00”"
     },
     "Remind me…" : {
 
@@ -2571,10 +3877,25 @@
         }
       }
     },
+    "Reminded you" : {
+
+    },
     "Reminder" : {
 
     },
+    "Reminder · %@ · no AI" : {
+
+    },
     "Reminders" : {
+
+    },
+    "Reminders & time" : {
+
+    },
+    "Reminders and watches only work while I'm running." : {
+
+    },
+    "Reminders can reach you when the companion is hidden or you're in another Space." : {
 
     },
     "Remove" : {
@@ -2599,6 +3920,9 @@
 
     },
     "Remove these results" : {
+
+    },
+    "Remove this result" : {
 
     },
     "Remove what's left in Finder (or Keychain Access), then quit Sidefolk." : {
@@ -2647,10 +3971,22 @@
     "Rename…" : {
 
     },
+    "Replays the first hello on your desktop. Nothing is reset." : {
+
+    },
+    "Requests" : {
+
+    },
+    "Requests go to %@." : {
+
+    },
     "Restart Sidefolk to try again, or choose another provider in Settings › AI." : {
 
     },
     "Restart now" : {
+
+    },
+    "Restart running sessions to pick this up." : {
 
     },
     "Restore" : {
@@ -2660,6 +3996,9 @@
 
     },
     "Restored the previous clipboard" : {
+
+    },
+    "Restored to %@." : {
 
     },
     "Restored “%@”" : {
@@ -2677,6 +4016,9 @@
     "Resumed %@" : {
 
     },
+    "Review Extension" : {
+
+    },
     "Review changed tools…" : {
 
     },
@@ -2689,16 +4031,34 @@
     "Revoke %@" : {
 
     },
+    "Revoke any of these and Sidefolk asks again next time." : {
+
+    },
     "Right away" : {
 
     },
     "Right away in %@" : {
 
     },
+    "Risk" : {
+
+    },
+    "Rituals & breaks" : {
+
+    },
+    "Routine" : {
+
+    },
+    "Routines" : {
+
+    },
     "Run claude in Terminal to see what's wrong." : {
 
     },
     "Run codex in Terminal to see what's wrong." : {
+
+    },
+    "Run on this Mac" : {
 
     },
     "Run sidefolk ext validate on its folder: it starts the program in the same sandbox and shows what it prints." : {
@@ -2710,7 +4070,66 @@
     "Run “ollama pull %@”, or choose another model in Settings › AI." : {
 
     },
+    "Running" : {
+
+    },
     "Running commands" : {
+
+    },
+    "Running for %@" : {
+
+    },
+    "Running with %lld models." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Running with %lld model."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Running with %lld models."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Running with %lld models. Models marked Cloud run on ollama.com, not on this Mac." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Running with %lld model. Models marked Cloud run on ollama.com, not on this Mac."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Running with %lld models. Models marked Cloud run on ollama.com, not on this Mac."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Running, but no model is loaded. Load one in LM Studio, then click Look again." : {
+
+    },
+    "Running, but there are no models yet. Get one that can use tools:" : {
+
+    },
+    "Runs with your full permissions" : {
 
     },
     "Runs with your full permissions: it can read and change your files, use the internet and run programs" : {
@@ -2725,7 +4144,16 @@
     "Same as the Mac (%@)" : {
 
     },
+    "Same model" : {
+
+    },
+    "Sandboxed" : {
+
+    },
     "Save" : {
+
+    },
+    "Save a link" : {
 
     },
     "Save as note" : {
@@ -2753,7 +4181,28 @@
         }
       }
     },
+    "Saved" : {
+
+    },
+    "Saved by %@" : {
+
+    },
+    "Saved in your Keychain." : {
+
+    },
     "Saved to %@" : {
+
+    },
+    "Scarf" : {
+
+    },
+    "Scout is on it" : {
+
+    },
+    "Scout stays out while I'm watching something for you." : {
+
+    },
+    "Scout: watching things for you" : {
 
     },
     "Search" : {
@@ -2782,6 +4231,9 @@
         }
       }
     },
+    "Search & watching" : {
+
+    },
     "Search everything" : {
 
     },
@@ -2807,7 +4259,42 @@
         }
       }
     },
+    "Security & approvals" : {
+
+    },
+    "Select All" : {
+
+    },
     "Send your saved key to %@?" : {
+
+    },
+    "Sends one tiny request to the model." : {
+
+    },
+    "Sends one tiny request. It counts toward your usage." : {
+
+    },
+    "Sent to %@ (%@) at %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sent to %1$@ (%2$@) at %3$@"
+          }
+        }
+      }
+    },
+    "Sent to %@ (%@) at %@, with outside content" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sent to %1$@ (%2$@) at %3$@, with outside content"
+          }
+        }
+      }
+    },
+    "Server address" : {
 
     },
     "Set a reminder" : {
@@ -2816,13 +4303,49 @@
     "Set up AI…" : {
 
     },
+    "Setting the reminder…" : {
+
+    },
+    "Setting up the watch…" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Settings (⌘,)" : {
+
+    },
+    "Settings…" : {
+
+    },
+    "Share Folder" : {
+
+    },
+    "Shell commands, always shown word for word before they run." : {
+
+    },
     "Show" : {
 
     },
     "Show %@ in Finder" : {
 
     },
+    "Show Companion" : {
+
+    },
+    "Show Data Folder" : {
+
+    },
+    "Show folks on duty" : {
+
+    },
     "Show in Finder" : {
+
+    },
+    "Show me" : {
+
+    },
+    "Show the welcome again" : {
 
     },
     "Show welcome" : {
@@ -2834,7 +4357,19 @@
     "Sidefolk" : {
 
     },
+    "Sidefolk Diagnostics" : {
+
+    },
+    "Sidefolk Export" : {
+
+    },
+    "Sidefolk couldn't open its data folder. Nothing was deleted or changed.\n\nTry restarting your Mac. If this keeps happening, export diagnostics from ~/Library/Logs/Sidefolk and check the data folder at %@." : {
+
+    },
     "Sidefolk couldn't settle the permissions for this action." : {
+
+    },
+    "Sidefolk couldn't start" : {
 
     },
     "Sidefolk doesn't create hidden files or folders (names starting with a dot)." : {
@@ -2852,10 +4387,28 @@
     "Sidefolk doesn't work on the whole disk." : {
 
     },
+    "Sidefolk is already running" : {
+
+    },
+    "Sidefolk isn't running, so here's your reminder." : {
+
+    },
+    "Sidefolk keeps these in mind in every conversation." : {
+
+    },
     "Sidefolk keeps these in mind in every conversation. Change or delete anything." : {
 
     },
+    "Sidefolk only touches files inside these folders. Anything it deletes goes to the Trash." : {
+
+    },
     "Sidefolk only works inside your own home folder." : {
+
+    },
+    "Sidefolk saves a backup next to each file before changing it. Disconnect removes only what it added." : {
+
+    },
+    "Sidefolk starts quietly when you log in." : {
 
     },
     "Sidefolk status" : {
@@ -2867,10 +4420,16 @@
     "Sidefolk stopped using Codex because it %@." : {
 
     },
+    "Sidefolk switches language when it restarts." : {
+
+    },
     "Sidefolk tools in Claude Code" : {
 
     },
     "Sidefolk tools in Codex" : {
+
+    },
+    "Sidefolk will run" : {
 
     },
     "Sidefolk won't run Claude Code from there: %@" : {
@@ -2891,16 +4450,46 @@
     "Sidefolk's tools didn't connect to Claude Code." : {
 
     },
+    "Signed in" : {
+
+    },
+    "Signed in with a key" : {
+
+    },
+    "Site" : {
+
+    },
     "Size" : {
 
     },
     "Size unchanged" : {
 
     },
+    "Skills" : {
+
+    },
+    "Skills are written instructions Sidefolk reads when a request needs them." : {
+
+    },
+    "Skip intro" : {
+
+    },
+    "Sleep when you're away" : {
+
+    },
+    "Sleeping" : {
+
+    },
     "Small" : {
 
     },
     "Snooze" : {
+
+    },
+    "Snooze 1 hour" : {
+
+    },
+    "Snooze 10 minutes" : {
 
     },
     "Snooze a reminder" : {
@@ -2912,13 +4501,22 @@
     "Snooze needs a time in the future." : {
 
     },
+    "Snooze until tomorrow morning (%@)" : {
+
+    },
     "Snooze “%@”" : {
 
     },
     "Snoozed to %@" : {
 
     },
+    "Snoozed until %@" : {
+
+    },
     "Some of it was already done; Activity shows what." : {
+
+    },
+    "Some tools changed since you installed it; they're on hold until you approve the change." : {
 
     },
     "Something called %@ already uses the id %@." : {
@@ -2937,7 +4535,19 @@
     "Something went wrong while checking." : {
 
     },
+    "Sounds" : {
+
+    },
     "Spotlight search isn't available on this Mac." : {
+
+    },
+    "Spotted" : {
+
+    },
+    "Spotted the change" : {
+
+    },
+    "Standard" : {
 
     },
     "Start an email" : {
@@ -2956,6 +4566,12 @@
         }
       }
     },
+    "Start at login" : {
+
+    },
+    "Start me when you log in?" : {
+
+    },
     "Started an email" : {
 
     },
@@ -2971,6 +4587,9 @@
     "Stop watching “%@”" : {
 
     },
+    "Stopped after %@" : {
+
+    },
     "Stopped watching %@" : {
 
     },
@@ -2980,10 +4599,16 @@
     "Stops after telling you once" : {
 
     },
+    "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes." : {
+
+    },
     "System Settings is open — switch Sidefolk on there." : {
 
     },
     "System information" : {
+
+    },
+    "System notifications" : {
 
     },
     "Tags" : {
@@ -2999,6 +4624,9 @@
 
     },
     "Tasks" : {
+
+    },
+    "Tell me things like “I prefer short answers” and I'll keep them here." : {
 
     },
     "Tell me what to look for on the page, or to watch for any change." : {
@@ -3020,6 +4648,15 @@
 
     },
     "Tell you when %@ quits" : {
+
+    },
+    "Tempo turns up when a reminder is less than 15 minutes away." : {
+
+    },
+    "Tempo, Scout and Byte sit beside the companion while a reminder, watch or agent is live." : {
+
+    },
+    "Tempo: a reminder is coming up" : {
 
     },
     "Test" : {
@@ -3050,6 +4687,28 @@
 
     },
     "That app already has %lld watchers going. Stop one first." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "That app already has %lld watcher going. Stop it first."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "That app already has %lld watchers going. Stop one first."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "That can't be undone anymore." : {
 
     },
     "That command is too long to watch." : {
@@ -3160,10 +4819,22 @@
     "That was more than the model can read at once. Nothing was changed." : {
 
     },
+    "That was taking too long, so I stopped." : {
+
+    },
     "That web address has no site name in it." : {
 
     },
     "That web address is too long." : {
+
+    },
+    "That's Byte." : {
+
+    },
+    "That's Scout." : {
+
+    },
+    "That's Tempo." : {
 
     },
     "That's a fact in “About you”. Use the profile tools to change it." : {
@@ -3175,6 +4846,9 @@
     "That's a folder, not a file." : {
 
     },
+    "That's it." : {
+
+    },
     "That's too many items at once (the limit is %lld)." : {
 
     },
@@ -3184,6 +4858,12 @@
     "That's too much text for the clipboard (the limit is %@ characters)." : {
 
     },
+    "The API's base address." : {
+
+    },
+    "The Trash is empty" : {
+
+    },
     "The check was stopped." : {
 
     },
@@ -3191,6 +4871,28 @@
 
     },
     "The command took longer than %lld seconds, so I stopped it." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The command took longer than %lld second, so I stopped it."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The command took longer than %lld seconds, so I stopped it."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "The companion stays on your desktop, beside your work." : {
 
     },
     "The connection dropped." : {
@@ -3206,7 +4908,26 @@
 
     },
     "The extension has more than %lld files." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The extension has more than %lld file."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The extension has more than %lld files."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "The extension is larger than 200 MB." : {
 
@@ -3248,6 +4969,9 @@
 
     },
     "The notebook" : {
+
+    },
+    "The original robot" : {
 
     },
     "The page came back empty." : {
@@ -3362,7 +5086,38 @@
     "There's nothing for me to work on yet." : {
 
     },
+    "These changed or appeared since you installed it: %@. Approve only if you expected an update from %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "These changed or appeared since you installed it: %1$@. Approve only if you expected an update from %2$@."
+          }
+        }
+      }
+    },
+    "Things stay here for 30 days, then they're gone for good." : {
+
+    },
+    "Things you delete wait here for 30 days, in case you change your mind." : {
+
+    },
+    "Things you're learning or thinking about." : {
+
+    },
     "Think harder" : {
+
+    },
+    "Thinking" : {
+
+    },
+    "Thinking harder…" : {
+
+    },
+    "Thinking…" : {
+
+    },
+    "Third-party notices" : {
 
     },
     "This came up while reading outside content. Check it carefully." : {
@@ -3372,6 +5127,9 @@
 
     },
     "This command watcher wasn't made by you, so I won't run it." : {
+
+    },
+    "This evening" : {
 
     },
     "This extension can't be installed." : {
@@ -3401,19 +5159,40 @@
     "This watcher has no web address." : {
 
     },
+    "Time" : {
+
+    },
+    "Times of day" : {
+
+    },
     "Title" : {
 
     },
     "Today" : {
 
     },
+    "Tokens this week" : {
+
+    },
     "Tomorrow" : {
+
+    },
+    "Tomorrow morning (%@)" : {
 
     },
     "Too many or too long arguments." : {
 
     },
+    "Tools: %@" : {
+
+    },
+    "Topic" : {
+
+    },
     "Trash" : {
+
+    },
+    "Try" : {
 
     },
     "Try a more specific search or a smaller folder." : {
@@ -3423,6 +5202,9 @@
 
     },
     "Try a shorter request, or start a fresh conversation." : {
+
+    },
+    "Try a state" : {
 
     },
     "Try again" : {
@@ -3449,6 +5231,12 @@
     "Try asking in a different way." : {
 
     },
+    "Try fewer or different words." : {
+
+    },
+    "Try fewer words, or search the whole notebook." : {
+
+    },
     "Try rephrasing it. If it keeps happening, check the model in Settings › AI." : {
 
     },
@@ -3458,13 +5246,19 @@
     "Try “tomorrow 9am” or “every monday at 10”." : {
 
     },
+    "Turn Quiet Off" : {
+
+    },
+    "Turn it on for a meeting or a focus block." : {
+
+    },
     "Turn off" : {
 
     },
     "Type a request, or drop something on me." : {
 
     },
-    "Type delete to confirm" : {
+    "Type something, or drop a file or link on me" : {
 
     },
     "Type your answer above and press Return." : {
@@ -3473,7 +5267,10 @@
     "Type your answer…" : {
 
     },
-    "Type “delete” to confirm." : {
+    "Type “%@” to confirm." : {
+
+    },
+    "Typed requests are understood in English without AI; with AI, in any language." : {
 
     },
     "Unarchive" : {
@@ -3488,6 +5285,9 @@
     "Undo snooze" : {
 
     },
+    "Undone: %@." : {
+
+    },
     "Uninstall" : {
 
     },
@@ -3500,10 +5300,19 @@
     "Unknown tool" : {
 
     },
+    "Until tomorrow" : {
+
+    },
     "Until tomorrow morning" : {
 
     },
     "Untitled" : {
+
+    },
+    "Update %@" : {
+
+    },
+    "Update %@?" : {
 
     },
     "Update Claude Code (claude update) or choose another provider." : {
@@ -3524,7 +5333,24 @@
     "Updated task" : {
 
     },
+    "Updates %@ to %@." : {
+      "comment" : "Two version numbers",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Updates %1$@ to %2$@."
+          }
+        }
+      }
+    },
     "Use a full address like https://api.openai.com/v1 or http://localhost:11434/v1." : {
+
+    },
+    "Use a plan you already pay for" : {
+
+    },
+    "Use an API key" : {
 
     },
     "Use an https address." : {
@@ -3542,6 +5368,9 @@
     "Use my key with %@" : {
 
     },
+    "Use notifications while I'm hidden" : {
+
+    },
     "Use something like “tomorrow 9am”, “in 20 minutes”, “friday at 3pm”, “every weekday at 9” or an ISO date such as 2025-11-12T09:00:00." : {
 
     },
@@ -3552,6 +5381,12 @@
 
     },
     "Using %@" : {
+
+    },
+    "Using an extension…" : {
+
+    },
+    "Version %@" : {
 
     },
     "Version %@ · from %@" : {
@@ -3573,7 +5408,13 @@
     "Waiting for you" : {
 
     },
+    "Waiting for your OK…" : {
+
+    },
     "Waiting since %@" : {
+
+    },
+    "Want a tap when your coding agents need you?" : {
 
     },
     "Watch" : {
@@ -3651,6 +5492,12 @@
         }
       }
     },
+    "Watchers" : {
+
+    },
+    "Watchers: %@" : {
+
+    },
     "Watching" : {
 
     },
@@ -3667,7 +5514,32 @@
         }
       }
     },
+    "Watching %lld things" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Watching %lld thing"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Watching %lld things"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Watching: %@" : {
+
+    },
+    "Wears" : {
 
     },
     "Web addresses with a name and password in them aren't allowed." : {
@@ -3676,19 +5548,58 @@
     "Web page" : {
 
     },
+    "Welcome" : {
+
+    },
     "What" : {
 
     },
     "What I know about you" : {
 
     },
+    "What Sidefolk keeps" : {
+
+    },
+    "What Sidefolk may do" : {
+
+    },
+    "What Sidefolk sends" : {
+
+    },
+    "What it wears." : {
+
+    },
+    "What should I do with %@? Type it below." : {
+
+    },
+    "What should I do with this?" : {
+
+    },
     "When" : {
+
+    },
+    "When should I remind you to “%@”?" : {
+
+    },
+    "When the companion is tucked away or in the menu bar, reminders arrive as notifications." : {
 
     },
     "When — e.g. “tomorrow 9am”; leave empty to keep %@" : {
 
     },
     "When, like “tomorrow 9:00”" : {
+
+    },
+    "When? Try “tomorrow 9am” or “in 2 hours”" : {
+
+    },
+    "Which address should I watch? For example localhost:3000 or example.com/status." : {
+
+    },
+    "Which address? e.g. localhost:3000 or example.com/status" : {
+
+    },
+    "While quiet, reminders still fire, but only important ones interrupt you." : {
 
     },
     "While you were away: %lld things" : {
@@ -3713,16 +5624,49 @@
         }
       }
     },
-    "Write a %@" : {
+    "Who" : {
+
+    },
+    "Window" : {
+
+    },
+    "Without AI" : {
+
+    },
+    "Working" : {
+
+    },
+    "Working on it…" : {
+
+    },
+    "Working…" : {
+
+    },
+    "Write a note" : {
+
+    },
+    "Write a task" : {
+
+    },
+    "Write an idea" : {
 
     },
     "Write anything…" : {
+
+    },
+    "Write one here, or ask me to save something to %@." : {
+
+    },
+    "Writing it down…" : {
 
     },
     "Yesterday" : {
 
     },
     "Yesterday has passed." : {
+
+    },
+    "You" : {
 
     },
     "You asked %@ %@." : {
@@ -3754,6 +5698,12 @@
     "Your %@ account is out of credit. Nothing was changed." : {
 
     },
+    "Your AI companion" : {
+
+    },
+    "Your AI sidekicks, always here." : {
+
+    },
     "Your API key was saved for a different address, so I didn't send it. Nothing was changed." : {
 
     },
@@ -3766,10 +5716,34 @@
     "Your ChatGPT plan's Codex limit is reached for now." : {
 
     },
+    "Your ChatGPT plan, through the codex command." : {
+
+    },
+    "Your Claude subscription, through the claude command." : {
+
+    },
+    "Your answer goes to: %@" : {
+
+    },
+    "Your data" : {
+
+    },
+    "Your key is in the Keychain and is only sent to %@." : {
+
+    },
     "Your key was saved for %@. Sidefolk only sends a key to the server it was saved for." : {
 
     },
+    "Your notes and messages go only to the AI you chose, and only what's needed for the request." : {
+
+    },
     "Your other hooks stay as they are." : {
+
+    },
+    "Your own server" : {
+
+    },
+    "Yours" : {
 
     },
     "Zipping the diagnostics failed." : {
@@ -3860,8 +5834,17 @@
     "and %lld more" : {
 
     },
+    "another collection" : {
+
+    },
+    "can't use tools" : {
+
+    },
     "change that" : {
 
+    },
+    "checked %@" : {
+      "comment" : "“checked 5 min ago”"
     },
     "checking now" : {
 
@@ -3888,8 +5871,14 @@
     "create that folder" : {
 
     },
-    "delete" : {
+    "default model" : {
 
+    },
+    "delete" : {
+      "comment" : "The word typed to confirm deleting everything; lower case"
+    },
+    "did something Sidefolk doesn't recognise (%@)" : {
+      "comment" : "Follows “Codex …” and “because it …”"
     },
     "done (it fired)" : {
 
@@ -3919,6 +5908,9 @@
         }
       }
     },
+    "every %lld h" : {
+
+    },
     "every %lld hours" : {
       "localizations" : {
         "en" : {
@@ -3941,6 +5933,9 @@
         }
       }
     },
+    "every %lld min" : {
+
+    },
     "every %lld months" : {
       "localizations" : {
         "en" : {
@@ -3962,6 +5957,9 @@
           }
         }
       }
+    },
+    "every %lld s" : {
+
     },
     "every %lld weeks" : {
       "localizations" : {
@@ -4050,10 +6048,22 @@
     "everywhere" : {
 
     },
+    "exactly “%@”" : {
+
+    },
     "expired" : {
 
     },
     "extension and watcher are required" : {
+
+    },
+    "for %@" : {
+      "comment" : "An extension it is allowed for"
+    },
+    "for anyone" : {
+
+    },
+    "for extensions" : {
 
     },
     "from %@" : {
@@ -4062,7 +6072,32 @@
     "give 2 to 4 different options, or none to let the user type an answer" : {
 
     },
-    "https://…" : {
+    "gone in %lld days" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "gone in %lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "gone in %lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "gone today" : {
+
+    },
+    "gone tomorrow" : {
 
     },
     "ideas" : {
@@ -4073,6 +6108,12 @@
     },
     "in %@" : {
 
+    },
+    "in routines" : {
+
+    },
+    "last used %@" : {
+      "comment" : "“last used 2 days ago”"
     },
     "links" : {
       "comment" : "What a search looks through: “Search links”"
@@ -4117,6 +6158,12 @@
     "no AI" : {
 
     },
+    "not checked yet" : {
+
+    },
+    "not used yet" : {
+
+    },
     "notebook" : {
       "comment" : "What a search looks through: “Search notebook”"
     },
@@ -4128,6 +6175,9 @@
     },
     "nothing to change. Give new text, a collection, a status or tags." : {
 
+    },
+    "on %@" : {
+      "comment" : "A web address it is allowed on: “on example.com”"
     },
     "one from another app or agent (%@)" : {
 
@@ -4153,6 +6203,12 @@
     "rename that" : {
 
     },
+    "running %@" : {
+      "comment" : "“running 4m 12s”"
+    },
+    "sidefolk command" : {
+      "comment" : "The `sidefolk` command-line tool; keep “sidefolk” as it is"
+    },
     "snooze takes a single time, not a repeat" : {
 
     },
@@ -4174,7 +6230,16 @@
     "that watcher" : {
 
     },
+    "the AI service" : {
+
+    },
+    "the Notebook" : {
+
+    },
     "the input" : {
+
+    },
+    "the path must be absolute" : {
 
     },
     "the watcher %@ in %@" : {
@@ -4190,13 +6255,42 @@
     "to %@" : {
 
     },
+    "tried to change files (%@)" : {
+      "comment" : "Follows “Codex …” and “because it …”"
+    },
+    "tried to run a command (%@)" : {
+      "comment" : "Follows “Codex …” and “because it …”"
+    },
+    "tried to search the web (%@)" : {
+      "comment" : "Follows “Codex …” and “because it …”"
+    },
+    "tried to start helper agents" : {
+      "comment" : "Follows “Codex …” and “because it …”"
+    },
     "true or false" : {
+
+    },
+    "under a minute" : {
 
     },
     "unknown problem" : {
 
     },
+    "used %@’s tool %@, which Sidefolk didn't give it" : {
+      "comment" : "Follows “Codex …” and “because it …”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "used %1$@’s tool %2$@, which Sidefolk didn't give it"
+          }
+        }
+      }
+    },
     "weekdays are 1 (Monday) to 7 (Sunday)" : {
+
+    },
+    "when %@ asks" : {
 
     },
     "when a new file lands" : {
@@ -4238,6 +6332,9 @@
     "when its output has “%@”" : {
 
     },
+    "when other agents ask" : {
+
+    },
     "when something happens" : {
 
     },
@@ -4245,6 +6342,9 @@
 
     },
     "which address?" : {
+
+    },
+    "your local AI server" : {
 
     },
     "~/.local/bin/sidefolk already exists and isn't Sidefolk's." : {
@@ -4300,6 +6400,9 @@
     "“%@” is an unusual way to write an IP address. Write it as four plain numbers, like 93.184.216.34." : {
 
     },
+    "“%@” is back." : {
+
+    },
     "“%@” is done, so it can't be snoozed." : {
 
     },
@@ -4352,6 +6455,9 @@
     "“%@” isn't something this tool takes." : {
 
     },
+    "“%@” moved to the Trash." : {
+
+    },
     "“%@” points at this computer or your local network, so I won't fetch it." : {
 
     },
@@ -4368,12 +6474,34 @@
 
     },
     "“About you” already holds %lld facts." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "“About you” already holds %lld fact."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "“About you” already holds %lld facts."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "“About you” holds facts about you, so notes can't be filed there." : {
 
     },
     "“Inbox” is always there: it's where notes go when no collection is named." : {
+
+    },
+    "“Tomorrow morning”, “this afternoon” and “this evening” mean these times; “tonight” is 21:00." : {
 
     },
     "“becomes” must be up, down or any." : {

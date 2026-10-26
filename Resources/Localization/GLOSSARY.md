@@ -77,3 +77,12 @@ Translate these once and use the same word everywhere, including in Settings and
 8. **Left in English on purpose:** what the AI model reads (tool results, tool descriptions,
    prompts), the `sidefolk` command-line tool's output, the extension manifest checks shown to
    extension authors, and logs.
+9. **Room.** Some words sit in tight places: the six Settings tab names share one toolbar; the
+   Activity table's chips (Low, Medium, High, Automatic, Allowed, Always, Denied, Blocked, Failed)
+   and the segmented choices (All, Notes, Ideas, Tasks, Links; Idle, Thinking, Working, Sleeping;
+   Small, Medium, Large) are short labels. Choose short words there. Sentences can run longer:
+   buttons stack and lines wrap.
+10. **The confirmation word.** Deleting everything asks the person to type a word ("delete", lower
+   case); translate it as one short lower-case word. The English word works in every language.
+11. **Check your work** in pictures: `swift run SidefolkApp --ui-snapshots /tmp/ui-fr --language fr`
+   renders every page in light and dark with the catalog as it is.

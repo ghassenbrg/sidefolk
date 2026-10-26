@@ -84,5 +84,22 @@ import Testing
         #expect(c.shown("%lld matches for “%@”", 1, "tea") == "1 match for “tea”")
         #expect(c.shown("It's been %lld days. I can start again if you still want it.", 1)
             == "It's been 1 day. I can start again if you still want it.")
+        // The app's own counts.
+        #expect(c.shown("%lld things need you.", 1) == "1 thing needs you.")
+        #expect(c.shown("Watching %lld things", 1) == "Watching 1 thing")
+        #expect(c.shown("gone in %lld days", 1) == "gone in 1 day")
+        #expect(c.shown("Running with %lld models.", 1) == "Running with 1 model.")
+        #expect(c.shown("%lld items in it move to the Trash for 30 days. Restored items go to the Inbox.", 2)
+            == "2 items in it move to the Trash for 30 days. Restored items go to the Inbox.")
+    }
+
+    /// The app's windows, menus and Settings are collected too (their components take catalog keys),
+    /// not only what the core builds.
+    @Test func theAppsWordsAreInTheCatalog() {
+        let s = Self.catalog.strings
+        for key in ["Open at login", "Privacy & Permissions", "Quit Sidefolk", "New collection", "Nothing needs you right now.",
+                    "Allow notifications", "Thinking…", "%@ needs you in %@", "Ideas & notes", "%@ is listening"] {
+            #expect(s[key] != nil, "\(key)")
+        }
     }
 }
