@@ -52,7 +52,8 @@ set only by code. While tainted, all medium/high calls ask (grants ignored), and
 writes and memory/skill/routine creation. Auto changes none of this; Full access still asks, in a
 tainted turn, for every call that could carry data out (network or open at an untyped address,
 commands, file changes, extension and MCP tools, clipboard and memory writes) and lets the rest run
-(D37). Network and open calls ask (medium) whenever their
+(D37). A tainted card for a step that can carry nothing out (not high risk, nothing to read in full)
+offers "Allow for this request" instead of "Always": that tool runs without a card until the run ends. Network and open calls ask (medium) whenever their
 normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
 while tainted, and opening a site the user named runs in a clean turn (`UserMentions`: scheme,
 `www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this

@@ -449,16 +449,40 @@ tool, arguments and words, `ApprovalRequest.asksTheSame`); Guard still checks ev
 new question shows as a normal card. Steps are kept in memory, 20 at most for a day; after a restart
 they are only in Activity, whose redacted arguments can't run again. No card anywhere waits forever.
 
+**Long jobs that read private data (Apple Notes, D38):** reading a note taints the turn, so before
+this every later batch asked again (a 214-note library meant about eight cards). Now, in a tainted turn,
+a card for a step that can't carry anything off the Mac (`couldCarryOut` is false: no network or other
+app at an untyped address, no command, file change, extension, clipboard or memory write, nothing to
+read in full, not high risk) offers **Allow for this request** where "Always allow" would be: that tool
+then runs without a card until Sidefolk's run ends (`RequestAllowances`, cleared with the run's cards).
+Not in "Ask every time", never for other agents. For the Notes tools that gives, by mode:
+- *Ask every time:* every step asks, as chosen.
+- *Ask once per kind:* the first list in a clean turn asks (and may be "Always"); after it, listing,
+  reading and copying ask once each with "Allow for this request": about three cards per request
+  instead of one per batch.
+- *Auto:* list, read and copy are medium, so a clean turn runs them; once a note has been read they ask
+  like above (a note's text is outside content, which Auto never lets steer an action).
+- *Full access:* list, read and copy also run in a tainted turn: what they move goes from Notes to the
+  AI and into the notebook, all on the Mac, and nothing reaches a server or another app.
+- *Every mode:* `applenotes.remove` asks every time, high risk with every note listed in full: it is
+  destructive in another app, and the place an instruction hidden in a note would aim.
+A "planned job" approved once ("Copy 214 notes into these collections") was the alternative. It would
+need Guard to know each note's folder when it decides (Guard only sees a call's arguments) and to hold
+the model to the plan across later calls: a tool-specific state machine inside Guard. "Allow for this
+request" is general, comes from a real card the person read, ends with the run (10 steps, 25 calls),
+and exists only where nothing can leave the Mac. The cost is in the residual risks below.
+
 **Why:** the founder wants to choose how much Sidefolk asks, like Claude Code and Codex, and never to
 come back after an hour to a task stuck on a question (before, a card waited two minutes and the run's
 own deadline had passed by then anyway). Modes are about how often to ask; the boundaries that make
 asking meaningful (capabilities, protected places, folders, taint, other agents) stay where they were,
 so the worst a mode can do is act on the person's own request without checking with them.
 
-**Alternatives:** a "just do it this time" for one request in the Ask panel (not built: a second,
-less visible way to loosen Guard, easy to trigger by habit with a modifier on Return, and decided
-before Sidefolk knows whether the turn will read outside content; the chip and the menu switch are
-one click and stay in view); Full access widening the folder list (no: "where" is a separate, standing
+**Alternatives:** a "just do it this time" for a whole request, chosen in the Ask panel before it
+runs (not built: a second, less visible way to loosen Guard, easy to trigger by habit with a modifier
+on Return, and decided before Sidefolk knows whether the turn will read outside content; the chip and
+the menu switch are one click and stay in view, and "Allow for this request" covers one tool after a
+real card); Full access widening the folder list (no: "where" is a separate, standing
 decision); detecting "away" from idle time or a locked screen (a fixed wait is predictable, and
 someone can be away without locking); saving skipped steps in the database (they hold model-built
 arguments, which Activity deliberately keeps redacted).
@@ -480,6 +504,10 @@ and §5 note the exceptions.
   misbehaving model can send context (About you, notes) to a server of its choosing.
 - "Run it now" acts on arguments chosen when the step was asked, up to a day earlier; they are shown
   word for word, but files or pages may have changed since.
+- After "Allow for this request", and in Full access, an instruction hidden in a note can steer the
+  rest of the run to read other notes (their text goes to the AI provider, which T21 accepts by design)
+  or copy notes into other collections, with no card. Nothing reaches a server or another app, copies
+  carry `app:notes` and are never offered to the model as the person's own, and removing still asks.
 - A long wait keeps the run, its CLI brain process and the Ask panel's busy state alive for as long as
   the setting says (a day with "keep waiting"); Stop ends it.
 - The CLIs' longer tool-call timeouts are set from their documented options and checked in tests of

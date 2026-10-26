@@ -52,6 +52,7 @@ public final class ToolExecutor: Sendable {
     private let permissions: PermissionStore
     private let engine = PermissionEngine()
     private let broker: ApprovalBroker
+    private let forRequest = RequestAllowances()
     private let activity: ActivityStore
     private let events: EventBus
     let clock: any Clock
@@ -166,6 +167,8 @@ public final class ToolExecutor: Sendable {
                 if let given = answered, request.asksTheSame(as: given) {
                     answered = nil
                     answer = .allowOnce
+                } else if request.canAllowForRequest, let run = caller.runId, await forRequest.covers(spec.name, run: run) {
+                    answer = .allowOnce
                 } else {
                     onWaiting?(request)
                     guard let reply = await broker.requestIfRoom(request, timeout: wait.seconds) else {
@@ -189,6 +192,9 @@ public final class ToolExecutor: Sendable {
                     return ToolOutcome(activity: act, status: .denied(why))
                 }
                 decisionTag = answer == .allowAlways ? .always : .allowed
+                if answer == .allowForRequest, request.canAllowForRequest, let run = caller.runId {
+                    await forRequest.allow(spec.name, run: run)
+                }
                 if case .folderAccess(let folder, let write) = request.details {
                     let access: GrantedFolder.Access = write ? .readwrite : .read
                     if answer == .allowAlways {
@@ -234,9 +240,11 @@ public final class ToolExecutor: Sendable {
         return ToolOutcome(activity: act, status: .unanswered(stop: stop))
     }
 
-    /// Denies the cards an agent run is still waiting on; call it when the run ends.
+    /// Denies the cards an agent run is still waiting on, and ends what was allowed "for this
+    /// request"; call it when the run ends.
     public func cancelApprovals(runId: String) async {
         await broker.cancel(runId: runId)
+        await forRequest.end(run: runId)
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,

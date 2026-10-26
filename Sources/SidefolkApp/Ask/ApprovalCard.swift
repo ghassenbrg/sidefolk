@@ -38,6 +38,11 @@ struct ApprovalCard: View {
                         Button("Always allow") { decide(.allowAlways) }
                             .buttonStyle(.sf(.secondary))
                             .disabled(!armed)
+                    } else if request.canAllowForRequest {
+                        Button("Allow for this request") { decide(.allowForRequest) }
+                            .buttonStyle(.sf(.secondary))
+                            .disabled(!armed)
+                            .help("Until this request is done, Sidefolk does this again without asking. Offered only for steps that send nothing anywhere but to your AI.")
                     }
                     allowButton
                 }

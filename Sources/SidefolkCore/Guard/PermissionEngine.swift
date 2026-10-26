@@ -72,11 +72,17 @@ public struct PermissionEngine: Sendable {
             if grantable, honoursGrants, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)
             }
+            // In a turn that read outside content "Always" is never offered. A call that can't carry
+            // anything off the Mac may instead be allowed for the rest of Sidefolk's run (D37): a library
+            // of Apple Notes copied in batches is one card per kind, not one per batch.
+            let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil
+                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped)
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted,
                 // An extension's own word that it changes nothing isn't enough to say so on the card.
-                readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions])
+                readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions]),
+                canAllowForRequest: forRequest
             ))
         case .high:
             // Only an exact command may be granted "always"; everything else is asked every time.
