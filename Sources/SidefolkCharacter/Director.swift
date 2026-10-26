@@ -1,20 +1,20 @@
 import QuartzCore
 
-/// Runs the rig: state changes, the loops each state needs, props, effects, badges and gestures.
-/// Shared by the live view and the offscreen renderer (which only wants still frames).
+/// Runs a companion's figure: state changes, the loops each state needs, props, effects, badges
+/// and gestures. Shared by the live view and the offscreen renderer (which only wants still frames).
 @MainActor
-final class Director: Performer {
-    let rig = Rig()
+final class Director {
+    let rig: any Figure
+    let species: CharacterSpecies
     var stage: CALayer { rig.stage }
-    /// Feet to fin, the shell's width plus a little: panels and bubbles tuck in over the ear pods.
-    let restingFrame = CGRect(x: 34, y: 20, width: 132, height: 160)
+    var restingFrame: CGRect { rig.restingFrame }
 
-    /// The colour of the visor's light, the ear pods and the marks drawn in that light.
-    var accent: CharacterAccent {
-        get { rig.accent }
-        set {
-            rig.accent = newValue
-            effects.light = newValue.light
+    /// Its colour and what it wears; the marks drawn in its light follow the figure's mark colour.
+    var style: CharacterStyle {
+        didSet {
+            guard style != oldValue else { return }
+            rig.dress(style)
+            effects.light = rig.markLight
             sharpen()
         }
     }
@@ -47,11 +47,15 @@ final class Director: Performer {
     /// Whether repeating motion runs at all.
     private var moving: Bool { live && !reducedMotion }
 
-    init(live: Bool, accent: CharacterAccent = .aqua) {
+    init(_ look: CharacterLook, live: Bool) {
         self.live = live
-        rig.accent = accent
-        effects = Effects(stage: rig.stageFX, body: rig.bodyFX)
-        effects.light = accent.light
+        species = look.species
+        style = look.style
+        let rig = Species.figure(for: look.species)
+        rig.dress(look.style)
+        self.rig = rig
+        effects = Effects(stage: rig.stageFX, body: rig.bodyFX, offset: { [unowned rig] in rig.markOffset($0) })
+        effects.light = rig.markLight
         badgeChips = Badges(parent: rig.badges)
         show(.idle, animated: false)
     }
@@ -61,7 +65,7 @@ final class Director: Performer {
     func show(_ next: CharacterState, animated: Bool) {
         let previous = state
         state = next
-        look = Choreography.look(for: next)
+        look = rig.look(for: next)
         let animate = animated && live
         if animate && reducedMotion { crossfade(rig.stage) }
         let transit: Transit = animate && !reducedMotion ? .spring : .instant
@@ -91,6 +95,7 @@ final class Director: Performer {
 
     func play(_ gesture: CharacterGesture) {
         guard live else { return }
+        if !reducedMotion { rig.follow(gesture) }
         switch gesture {
         case .blink:
             blink(twice: false)
@@ -166,7 +171,7 @@ final class Director: Performer {
         settleTimer?.invalidate()
         settleTimer = nil
         guard moving, !paused else { return }
-        loops = [breathing()] + Choreography.loops(for: state, rig: rig) + (prop?.rig.loops ?? [])
+        loops = [breathing()] + Choreography.loops(for: state, figure: rig) + rig.loops(for: state) + (prop?.rig.loops ?? [])
         loops.forEach { $0.layer.add($0.animation, forKey: $0.key) }
         guard Self.settles(state) else { return }
         let timer = Timer(timeInterval: Self.settleAfter, repeats: false) { [weak self] _ in

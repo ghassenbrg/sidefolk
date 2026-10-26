@@ -59,6 +59,5 @@ the icon portrait. Their original imagegen outputs and exact prompts are retaine
 from `RabbitBrandMark` in the native character target, using the monochrome close-up’s ear angles, side paw, two rays, and separated scarf tail. It is authored geometry, not a raster trace. The existing hand-authored
 wordmark remains unchanged. Source masters and references are not bundled.
 
-Mochi's existing 16-pose set is palette-graded reproducibly by `scripts/rebrand-mochi.swift` and
-remains animated through `SpriteDirector`. The original robot's rig and accent customization, and
-Spark's artwork, remain available. Saved explicit companion choices are preserved.
+On the desktop, Mochi is a live vector rig drawn after `masters/mascot-mochi.png` (D30); the
+original robot's rig and Spark remain available. Saved explicit companion choices are preserved.

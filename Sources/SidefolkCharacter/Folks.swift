@@ -109,7 +109,7 @@ final class FolkRig {
         var angle: CGFloat, width: CGFloat, height: CGFloat
     }
 
-    private var bumps: [Bump] {
+    private static func bumps(_ folk: Folk) -> [Bump] {
         let up = CGFloat.pi / 2
         switch folk {
         case .pip: return [Bump(angle: up - 0.1, width: 0.2, height: 5.5)]
@@ -125,19 +125,22 @@ final class FolkRig {
         }
     }
 
-    /// A chubby, slightly lumpy round body with its personality bumps (tuft, ears, cloud, flame).
-    private var outline: CGPath {
+    private var outline: CGPath { Self.outline(folk, center: FolkCanvas.center, scale: 1) }
+
+    /// A chubby, slightly lumpy round body with its personality bumps (tuft, ears, cloud, flame),
+    /// `scale` times the on-duty size (the companion-sized folk is twice as big).
+    static func outline(_ folk: Folk, center: CGPoint, scale: CGFloat) -> CGPath {
         let n = 40
         let points = (0..<n).map { i -> CGPoint in
             let a = CGFloat(i) / CGFloat(n) * .pi * 2
             var push: CGFloat = 0
-            for bump in bumps {
+            for bump in bumps(folk) {
                 var d = abs(a - bump.angle)
                 d = min(d, .pi * 2 - d)
                 push += bump.height * exp(-(d * d) / (2 * bump.width * bump.width))
             }
             let flatten: CGFloat = sin(a) < 0 ? 0.9 : 1
-            return FolkCanvas.center + pt(cos(a) * (31 + push), sin(a) * (29 * flatten + push))
+            return center + pt(cos(a) * (31 + push), sin(a) * (29 * flatten + push)) * scale
         }
         return Paths.blob(points)
     }

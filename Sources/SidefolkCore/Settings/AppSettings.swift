@@ -22,24 +22,52 @@ public enum CompanionSize: String, Codable, Sendable, CaseIterable {
     }
 }
 
-/// Who lives on the desktop: the new default Mochi rabbit, the original vector robot, or Spark.
+/// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, or one of the
+/// Folk Family (D30). The app offers the ones whose rigs are finished.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark
+    case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
 
     /// The name it goes by until the user gives it another.
     public var defaultName: String {
         switch self {
-        case .sidefolk: "Sidefolk"
-        case .mochi: "Mochi"
-        case .spark: "Spark"
+        case .guard_: "Guard"
+        default: rawValue.prefix(1).uppercased() + rawValue.dropFirst()
         }
+    }
+
+    /// How it comes dressed: Mochi in its scarf, the others in nothing, aqua accents for all.
+    public var standardStyle: CompanionStyle {
+        CompanionStyle(color: .aqua, accessory: self == .mochi ? .scarf : .none)
     }
 }
 
-/// The colour of the Sidefolk robot's light, from the brand palette. Sprite companions keep the
-/// colours they were drawn with.
+/// A brand colour (D29 palette) for a companion's accents: the robot's light, Spark's headphones,
+/// and whatever it wears.
 public enum CompanionAccent: String, Codable, Sendable, CaseIterable {
     case aqua, coral, mint, lightBlue
+}
+
+/// Something any companion can wear (D30).
+public enum CompanionAccessory: String, Codable, Sendable, CaseIterable {
+    case none, scarf
+}
+
+/// The same small set of choices for every companion.
+public struct CompanionStyle: Codable, Sendable, Equatable {
+    public var color: CompanionAccent
+    public var accessory: CompanionAccessory
+
+    public init(color: CompanionAccent, accessory: CompanionAccessory) {
+        self.color = color
+        self.accessory = accessory
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        color = (try? c.decode(CompanionAccent.self, forKey: .color)) ?? .aqua
+        accessory = (try? c.decode(CompanionAccessory.self, forKey: .accessory)) ?? .none
+    }
 }
 
 public enum ProviderKind: String, Codable, Sendable, CaseIterable {
@@ -77,7 +105,9 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var companionName = "Mochi"
     /// Change it with `choose(_:)`, which keeps the name in step.
     public var companion: CompanionChoice = .mochi
-    public var accent: CompanionAccent = .aqua
+    /// Each companion keeps its own colour and accessory, so switching back finds it as it was.
+    /// Keyed by `CompanionChoice.rawValue`; read them with `style(for:)`.
+    public var styles: [String: CompanionStyle] = [:]
     public var presence: PresenceMode = .always
     public var size: CompanionSize = .medium
     public var eyesFollowPointer = true
@@ -107,7 +137,12 @@ public struct AppSettings: Codable, Sendable, Equatable {
         func read<T: Decodable>(_ key: CodingKeys, _ into: inout T) { if let v = try? c.decode(T.self, forKey: key) { into = v } }
         read(.companionName, &companionName)
         read(.companion, &companion)
-        read(.accent, &accent)
+        read(.styles, &styles)
+        // Before D30 the robot's light colour was the only style ("accent"); keep it.
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
+        if styles[CompanionChoice.sidefolk.rawValue] == nil, let accent = try? legacy.decode(CompanionAccent.self, forKey: .accent) {
+            styles[CompanionChoice.sidefolk.rawValue] = CompanionStyle(color: accent, accessory: .none)
+        }
         read(.presence, &presence)
         read(.size, &size)
         read(.eyesFollowPointer, &eyesFollowPointer)
@@ -134,6 +169,17 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public mutating func choose(_ next: CompanionChoice) {
         if !hasCustomName { companionName = next.defaultName }
         companion = next
+    }
+
+    private enum LegacyKeys: String, CodingKey { case accent }
+
+    /// How `companion` is dressed: what the user chose for it, or how it comes.
+    public func style(for companion: CompanionChoice) -> CompanionStyle {
+        styles[companion.rawValue] ?? companion.standardStyle
+    }
+
+    public mutating func setStyle(_ style: CompanionStyle, for companion: CompanionChoice) {
+        styles[companion.rawValue] = style
     }
 
     /// Whether the user named the companion themselves (anything but a built-in default).

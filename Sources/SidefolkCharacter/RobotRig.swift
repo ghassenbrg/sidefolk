@@ -1,13 +1,13 @@
 import AppKit
 import QuartzCore
 
-/// The main character as a tree of layers in canvas units, and the code that moves it between poses.
+/// The Sidefolk robot as a tree of layers in canvas units, and the code that moves it between poses.
 ///
 /// Nested transform layers keep concerns apart so their animations never fight over a key path:
 /// `body` holds the pose, `loop` the state's repeating motion, `gesture` one-shot moves and
 /// `breath` the idle breathing. Faces, arms and props hang below `breath`.
 @MainActor
-final class Rig {
+final class RobotRig: Figure {
     /// Root of the canvas. The host scales and centers it.
     let stage = Layers.canvas(anchor: pt(100, 100))
 
@@ -50,8 +50,23 @@ final class Rig {
     private var gaze: CGVector?
 
     /// The light's colour. In a live view Core Animation's implicit animation fades it across.
-    var accent: CharacterAccent = .aqua {
+    private var accent: CharacterAccent = .aqua {
         didSet { if accent != oldValue { tint() } }
+    }
+
+    /// Feet to fin, the shell's width plus a little: panels and bubbles tuck in over the ear pods.
+    let restingFrame = CGRect(x: 34, y: 20, width: 132, height: 160)
+    var listeningLights: [CALayer] { ears.map(\.lightLayer) }
+    var markLight: Light { accent.light }
+    /// The effects were placed around this head.
+    func markOffset(_ effect: Effect) -> CGPoint { .zero }
+    func look(for state: CharacterState) -> Look { Choreography.look(for: state) }
+    func loops(for state: CharacterState) -> [Loop] { [] }
+    /// Nothing on the shell dangles.
+    func follow(_ gesture: CharacterGesture) {}
+
+    func dress(_ style: CharacterStyle) {
+        accent = style.color
     }
 
     init() {
@@ -214,7 +229,6 @@ final class Rig {
         parent.addSublayer(glass)
     }
 
-    var earLights: [CALayer] { ears.map(\.lightLayer) }
 
     // MARK: Posing
 
@@ -293,40 +307,6 @@ extension Transit {
     }
 }
 
-/// An arm: a mitten that rotates around its shoulder. The pose angle lives on `pose`, repeating
-/// motion (typing, waving) on `loop`.
-@MainActor
-final class Limb {
-    let pose: CALayer
-    let loop: CALayer
-    private let shoulder: CGPoint
-    private(set) var angle: CGFloat = 0
-
-    init(shoulder: CGPoint) {
-        self.shoulder = shoulder
-        pose = Layers.canvas(anchor: shoulder)
-        loop = Layers.canvas(anchor: shoulder)
-        let mitten = SoftShape(Paths.translated(Shapes.arm, shoulder.x, shoulder.y),
-                               shading: Shading(colors: Palette.shell, locations: [0, 0.3, 0.6, 0.85, 1],
-                                                center: CGPoint(x: 0.35, y: 0.7), reach: CGSize(width: 0.9, height: 0.9)))
-        mitten.shadow(radius: 2.5, opacity: 0.18, offset: CGSize(width: 0, height: -1))
-        mitten.outline(Palette.shellEdge, alpha: 0.35, width: 0.7)
-        pose.addSublayer(loop)
-        loop.addSublayer(mitten.layer)
-    }
-
-    /// `raise` > 0 swings the hand outward and up; the left arm turns clockwise for that.
-    func raise(_ raise: CGFloat, side: CGFloat, _ transit: Transit) {
-        angle = raise * side
-        Motion.set(pose, "transform", Motion.transform(CGAffineTransform(rotationAngle: angle)), transit)
-    }
-
-    /// The mitten's outline at its posed angle, in body coordinates.
-    var outline: CGPath {
-        Paths.transformed(Shapes.arm, CGAffineTransform(translationX: shoulder.x, y: shoulder.y).rotated(by: angle))
-    }
-}
-
 /// An ear pod: a white cylinder end with a navy face and a glowing ring in the accent.
 @MainActor
 final class Ear {
@@ -371,45 +351,4 @@ final class Ear {
     }
 
     var lightLayer: CALayer { light }
-}
-
-/// One morphing facial stroke (an eye, a brow, the mouth), with optional hot core.
-@MainActor
-final class FaceMark {
-    let layer: CALayer
-    private let glow = CAShapeLayer()
-    private let core: CAShapeLayer?
-    private static let box: CGFloat = 60
-
-    init(center: CGPoint, core hasCore: Bool) {
-        let half = FaceMark.box / 2
-        layer = CALayer()
-        layer.frame = CGRect(x: center.x - half, y: center.y - half, width: FaceMark.box, height: FaceMark.box)
-        core = hasCore ? CAShapeLayer() : nil
-        for line in [glow, core].compactMap(\.self) {
-            line.frame = layer.bounds
-            line.fillColor = nil
-            line.lineCap = .round
-            line.lineJoin = .round
-            layer.addSublayer(line)
-        }
-        Layers.glow(glow, Palette.aqua, radius: 4.5, opacity: 0.95)
-    }
-
-    func tint(_ accent: Light) {
-        glow.strokeColor = accent.line.cg()
-        glow.shadowColor = accent.glow.cg()
-        core?.strokeColor = accent.core.cg(0.85)
-    }
-
-    func show(_ stroke: Stroke, _ transit: Transit) {
-        let local = pt(FaceMark.box / 2, FaceMark.box / 2)
-        let path = stroke.path(at: local)
-        Motion.set(glow, "path", path, transit)
-        Motion.set(glow, "lineWidth", stroke.width, transit)
-        if let core {
-            Motion.set(core, "path", path, transit)
-            Motion.set(core, "lineWidth", stroke.width * 0.4, transit)
-        }
-    }
 }

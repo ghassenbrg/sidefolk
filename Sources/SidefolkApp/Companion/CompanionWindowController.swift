@@ -191,8 +191,11 @@ final class CompanionWindowController {
         character.badges = b
     }
 
+    /// Folks stand beside the companion while their duty is live (D9). A folk that is the companion
+    /// itself doesn't stand beside itself: its duty shows as the companion's badge instead (D30).
     func setFolks(_ folks: [DutyFolk], visible: Bool) {
-        let wanted = visible ? folks : []
+        let me = character.look.species.folk
+        let wanted = visible ? folks.filter { Self.folk(for: $0) != me } : []
         for (folk, view) in folkViews where !wanted.contains(folk) {
             folkViews[folk] = nil
             view.popOut { view.removeFromSuperview() }

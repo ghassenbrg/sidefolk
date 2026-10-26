@@ -3,15 +3,14 @@ import AppKit
 /// Offscreen rendering of the same layer rigs the views use: icons, docs and visual tests.
 public enum CharacterRenderer {
     /// A still frame of `state`, centered and scaled to fit `size` (points) at `scale` pixels per point.
-    /// Busy sprite states show the first of their poses.
     @MainActor
     public static func image(state: CharacterState, size: CGSize, scale: CGFloat, badges: Set<CharacterBadge> = [],
-                             gaze: CGVector? = nil, look: CharacterLook = .sidefolk(.aqua)) -> CGImage {
-        let performer = look.performer(live: false)
-        performer.show(state, animated: false)
-        performer.setBadges(badges, animated: false)
-        performer.setGaze(gaze)
-        return render(performer.stage, canvas: Canvas.size, size: size, scale: scale)
+                             gaze: CGVector? = nil, look: CharacterLook = CharacterLook(.sidefolk)) -> CGImage {
+        let director = Director(look, live: false)
+        director.show(state, animated: false)
+        director.setBadges(badges, animated: false)
+        director.setGaze(gaze)
+        return render(director.stage, canvas: Canvas.size, size: size, scale: scale)
     }
 
     @MainActor

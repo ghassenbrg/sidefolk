@@ -158,6 +158,8 @@ final class AppCoordinator {
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
+        // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
+        companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
         askPanel?.update(companionName: s.companionName, hotkey: hotkeyLabel)
         renderMood()
     }
@@ -309,14 +311,18 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("companion:") {
-            // companion:<sidefolk|mochi|spark>[:<accent>], the same change the Settings picker makes.
+            // companion:<id>[:<colour>[:<accessory>]], the same changes the Settings chooser makes.
             let parts = command.split(separator: ":").dropFirst().map(String.init)
-            let choice = parts.first.flatMap(CompanionChoice.init(rawValue:))
-            let accent = parts.dropFirst().first.flatMap(CompanionAccent.init(rawValue:))
+            guard let choice = parts.first.flatMap(CompanionChoice.init(rawValue:)) else { return }
+            let color = parts.dropFirst().first.flatMap(CompanionAccent.init(rawValue:))
+            let accessory = parts.dropFirst(2).first.flatMap(CompanionAccessory.init(rawValue:))
             Task {
                 await runtime.settings.update { s in
-                    if let choice { s.choose(choice) }
-                    if let accent { s.accent = accent }
+                    s.choose(choice)
+                    var style = s.style(for: choice)
+                    if let color { style.color = color }
+                    if let accessory { style.accessory = accessory }
+                    s.setStyle(style, for: choice)
                 }
             }
             return

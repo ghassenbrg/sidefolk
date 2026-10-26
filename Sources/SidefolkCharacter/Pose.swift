@@ -31,6 +31,13 @@ struct Pose: Equatable, Sendable {
     var earGlow: CGFloat = 0.55
     var groundShadow: CGFloat = 1
 
+    // Soft companions (SoftRig); the robot ignores these.
+    /// Ears, antennae and tufts: 0 rests, positive droops outward, negative perks up.
+    var earL: CGFloat = 0
+    var earR: CGFloat = 0
+    /// The catchlight in bead eyes: 1 for open eyes, 0 when they are arcs or closed.
+    var shine: CGFloat = 1
+
     static func eyes(_ left: Stroke, _ right: Stroke? = nil) -> (Stroke, Stroke) {
         (left, right ?? left.mirrored)
     }
