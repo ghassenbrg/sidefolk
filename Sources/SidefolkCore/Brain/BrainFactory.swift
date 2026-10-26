@@ -79,7 +79,7 @@ public struct BrainFactory: Sendable {
                 let model = try OpenAICompatibleModel(baseURL: provider.resolvedBaseURL, apiKey: key,
                                                       name: preset == .custom ? nil : preset.name, transport: transport, retry: retry)
                 // No model chosen yet: the preset's first suggestion, as Settings shows it.
-                var name = chosen
+                var name = OpenAICompatibleModel.wireName(chosen)
                 if name.isEmpty, thinkHarder { name = preset.defaultSmartModel(available: nil) ?? "" }
                 if name.isEmpty { name = preset.defaultModel(available: nil) ?? "" }
                 guard !name.isEmpty else {

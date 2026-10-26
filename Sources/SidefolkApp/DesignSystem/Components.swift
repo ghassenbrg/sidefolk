@@ -487,13 +487,16 @@ struct ChoiceRow: View {
     }
 }
 
-/// A text field that saves when editing ends (Return or focus leaves), not on every keystroke.
+/// A text field that saves when editing ends (Return or focus leaves), not on every keystroke,
+/// unless `live`: then every change is saved at once, for values a button next to it uses
+/// (clicking a button doesn't end editing).
 struct CommitField: View {
     var label: String
     var prompt: String = ""
     var value: String
     var width: CGFloat? = 240
     var monospaced = false
+    var live = false
     var commit: (String) -> Void
     @State private var draft = ""
     @FocusState private var focused: Bool
@@ -508,6 +511,7 @@ struct CommitField: View {
             .onAppear { draft = value }
             .onChange(of: value) { _, new in if !focused { draft = new } }
             .onChange(of: focused) { _, isFocused in if !isFocused { save() } }
+            .onChange(of: draft) { if live, focused { save() } }
             .onSubmit(save)
             .accessibilityLabel(label)
     }

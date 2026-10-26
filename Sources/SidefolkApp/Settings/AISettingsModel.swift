@@ -64,26 +64,16 @@ final class AISettingsModel {
 
     // MARK: Choosing
 
+    /// Each provider keeps its own models (`ProviderSettings.switchProvider`).
     func choose(_ next: AIChoice) {
         guard next != choice else { return }
         parent.update { s in
-            s.provider.smartModel = ""
             switch next {
-            case .none:
-                s.provider.kind = .none
-            case .claudeCode:
-                s.provider.kind = .claudeCode
-                s.provider.model = "sonnet"
-            case .codex:
-                s.provider.kind = .codex
-                s.provider.model = ""
-            case .anthropic:
-                s.provider.kind = .anthropic
-                s.provider.model = ""
-            case .preset(let preset):
-                s.provider.kind = .openAICompatible
-                s.provider.preset = preset
-                s.provider.model = ""
+            case .none: s.provider.switchProvider(to: .none)
+            case .claudeCode: s.provider.switchProvider(to: .claudeCode)
+            case .codex: s.provider.switchProvider(to: .codex)
+            case .anthropic: s.provider.switchProvider(to: .anthropic)
+            case .preset(let preset): s.provider.switchProvider(to: .openAICompatible, preset: preset)
             }
         }
         testResult = nil

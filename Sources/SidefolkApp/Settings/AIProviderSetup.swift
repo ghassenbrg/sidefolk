@@ -202,7 +202,7 @@ private struct ModelPicker: View {
     var body: some View {
         SetupRow(title: title, detail: detail) {
             HStack(spacing: Theme.Space.xs) {
-                CommitField(label: title, prompt: placeholder, value: value, width: 200, monospaced: true, commit: commit)
+                CommitField(label: title, prompt: placeholder, value: value, width: 200, monospaced: true, live: true, commit: commit)
                 if loading {
                     ProgressView().controlSize(.small)
                 } else if !options.isEmpty {
@@ -323,9 +323,14 @@ private struct TestRow: View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             SetupRow(title: "Test", detail: local ? "Sends one tiny request to the model."
                      : "Sends one tiny request. It counts toward your usage.") {
-                Button(ai.testing ? "Testing…" : "Test") { Task { await ai.test() } }
-                    .buttonStyle(.sf(.secondary))
-                    .disabled(ai.testing)
+                Button(ai.testing ? "Testing…" : "Test") {
+                    // Ends editing in an address or path field, so the test uses what was typed; model
+                    // fields save as you type. The test starts once SwiftUI has saved the edit.
+                    NSApp.keyWindow?.makeFirstResponder(nil)
+                    DispatchQueue.main.async { Task { await ai.test() } }
+                }
+                .buttonStyle(.sf(.secondary))
+                .disabled(ai.testing)
             }
             if let result = ai.testResult {
                 Group {

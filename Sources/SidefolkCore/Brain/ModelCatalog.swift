@@ -55,14 +55,15 @@ public enum ModelCatalog {
         return parts.url ?? base
     }
 
-    /// `{"data": [{"id": …}]}`. Gemini prefixes ids with "models/", which its chat endpoint doesn't need.
+    /// `{"data": [{"id": …}]}`. Gemini prefixes ids with "models/", which its chat endpoint rejects, so
+    /// the picker stores the plain name.
     /// Embedding, speech, image and moderation models can't answer, so they're left out of the picker.
     static func parseOpenAI(_ data: Data) -> [ModelOption] {
         let json = try? JSONValue.parse(data)
         let ids = (json?["data"]?.arrayValue ?? json?["models"]?.arrayValue ?? []).compactMap { $0.string("id") ?? $0.string("name") }
         let unusable = ["embed", "tts", "whisper", "dall-e", "moderation", "transcribe", "audio", "realtime", "image", "guard",
                         "ocr", "sora", "rerank"]
-        return ids.map { $0.hasPrefix("models/") ? String($0.dropFirst(7)) : $0 }
+        return ids.map(OpenAICompatibleModel.wireName)
             .filter { id in !unusable.contains { id.lowercased().contains($0) } }
             .map { ModelOption(id: $0) }
     }

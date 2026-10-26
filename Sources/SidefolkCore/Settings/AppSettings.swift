@@ -55,10 +55,32 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
     public var claudePath: String = ""
     /// Path to the `codex` executable when it is not found automatically.
     public var codexPath: String = ""
+    /// The models each provider was left with, by `memoryKey`, so switching never carries one
+    /// provider's model name to another (an Ollama model in a Gemini setup) and switching back restores it.
+    public var modelMemory: [String: ModelPair] = [:]
     public init() {}
 
+    public struct ModelPair: Codable, Sendable, Equatable {
+        public var model: String
+        public var smartModel: String
+    }
+
+    /// "codex", "openAICompatible.gemini".
+    public var memoryKey: String { kind == .openAICompatible ? "\(kind.rawValue).\(preset.rawValue)" : kind.rawValue }
+
+    /// Switches provider: the models in use are remembered for the provider left behind, and the new
+    /// one gets the models it had last time, or none yet (its default; Claude Code's is "sonnet").
+    public mutating func switchProvider(to kind: ProviderKind, preset: ProviderPreset? = nil) {
+        modelMemory[memoryKey] = ModelPair(model: model, smartModel: smartModel)
+        self.kind = kind
+        if let preset { self.preset = preset }
+        let saved = modelMemory[memoryKey]
+        model = saved?.model ?? (kind == .claudeCode ? "sonnet" : "")
+        smartModel = saved?.smartModel ?? ""
+    }
+
     enum CodingKeys: String, CodingKey {
-        case kind, model, smartModel, preset, baseURL, claudePath, codexPath
+        case kind, model, smartModel, preset, baseURL, claudePath, codexPath, modelMemory
     }
 
     /// Every field has a default, so settings written by an older or newer Sidefolk still load (a
@@ -72,6 +94,7 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
         read(.baseURL, &baseURL)
         read(.claudePath, &claudePath)
         read(.codexPath, &codexPath)
+        read(.modelMemory, &modelMemory)
         preset = (try? c.decode(ProviderPreset.self, forKey: .preset)) ?? ProviderPreset.matching(baseURL: baseURL)
     }
 }
