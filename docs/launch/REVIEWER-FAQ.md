@@ -89,6 +89,8 @@ recognised on the Mac, and the audio is never stored.
 - Watches run only while the app runs (reminders fall back to macOS notifications).
 - Extensions can't keep API keys yet or be limited to particular sites.
 - The nine translations are new.
+- Voice is the newest part: checked with recorded audio, `[FOUNDER: update once tried with a real
+  microphone]`.
 
 The complete list is in [../RELEASE-NOTES.md](../RELEASE-NOTES.md).
 

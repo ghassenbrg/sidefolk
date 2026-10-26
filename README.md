@@ -284,10 +284,11 @@ language. The translations are new: corrections are welcome.
   when it's quit. A folder with more than 20,000 items can't be watched.
 - **Extensions** can use the whole internet or none of it (not chosen sites), can't keep an API key
   yet, and there is no extension directory to browse.
-- **Not yet tried by hand:** Claude Code hooks in a real session, multiple displays and fullscreen apps,
-  the notification permission prompt, and opening at login from /Applications.
-- **New and lightly tested:** Apple Notes support (copying is the default, removing always asks), voice,
-  and the nine translations.
+- **Not yet tried by hand:** voice with a real microphone (it was checked with recorded audio), a live
+  ElevenLabs voice, Claude Code hooks in a real session, multiple displays and fullscreen apps, the
+  notification permission prompt, and opening at login from /Applications.
+- **New and lightly tested:** Apple Notes support (copying is the default, removing always asks), the
+  extension builder, and the nine translations.
 
 The full, current list is in [docs/STATUS.md](docs/STATUS.md).
 
@@ -347,7 +348,7 @@ Settings › Companion.
 
 ```sh
 swift build                      # everything
-make test                        # the test suite (Swift Testing), serially, about 40 s
+make test                        # the test suite (Swift Testing), serially, about 45 s
 make dev                         # debug app with its own data in build/dev-home (never your real data)
 swift run sidefolk-render out/   # character contact sheets for visual review
 SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # every page, light and dark

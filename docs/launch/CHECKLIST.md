@@ -57,7 +57,9 @@ These are hand checks, not code. STATUS lists them as not yet exercised.
 | 26 | Connect and Disconnect for Codex on a real config | Founder | Same, with `~/.codex/config.toml`; check Disconnect leaves the file as it was. |
 | 27 | Notification permission prompt, login item from /Applications | Founder | On the notarized build, in a fresh user account. |
 | 28 | Several displays, fullscreen apps, Spaces | Founder | Move the companion between displays; open a fullscreen video; check quiet behaviour. |
-| 29 | Apple Notes on a real, large library | Founder | Copy (not remove) a few hundred notes in several requests; check progress, dates and attachments named. Then remove two copied notes and find them in Recently Deleted. |
+| 29 | Apple Notes on a real, large library, after the -1728 fix | Founder | Copy (not remove) a few hundred notes in several requests; check progress, dates and attachments named. Then remove two copied notes and find them in Recently Deleted. |
+| 29b | Voice with the real microphone, and a live ElevenLabs voice | Founder | On a Developer ID or Apple Development build: the microphone prompt, hold to talk, AirPods connected, Esc to cancel; then one ElevenLabs reply with your key. |
+| 29c | A repository clone asked of a real AI; the menu bar's Approvals submenu and orange Full access icon | Founder | Ask "clone … under ~/git" with Claude Code or Codex as the brain; switch modes from the menu bar. |
 | 30 | macOS 15 and macOS 26 | Founder or a tester | Install and run the ten-minute tour in REVIEWER-FAQ.md, including voice ("basic" recognizer on 15). |
 | 31 | Translations | Native speakers | A short review per language, Arabic right to left in particular. `scripts/translations.py export <lang>` gives each reviewer the strings. |
 | 32 | Brand sign-off | Founder | STATUS still lists the founder's look at the new wordmark, the menu bar glyph and the hero with each companion and colour. |

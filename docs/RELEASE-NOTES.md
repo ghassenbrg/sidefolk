@@ -119,13 +119,16 @@ reminds and keeps watch, and your AI agents can talk to it.
 - **Extensions:** network access is all or nothing, so an extension allowed online can also reach your
   local network; extensions can't keep secrets (API keys) yet; no extension directory; a call runs at most
   300 seconds.
-- **Apple Notes:** the scripts were checked against Notes' scripting dictionary and a stand-in, not yet
-  against a large real library. Copying is the default; removing always asks and lists every note.
-- **Voice:** recognition quality on macOS 15 is "basic". With an ad-hoc build the microphone
-  permission is asked again after each rebuild.
+- **Apple Notes:** run on the founder's own library, where a note part Notes couldn't hand over (error
+  -1728) stopped a copy; that is fixed (only that part is lost, the rest is copied) but not yet re-tried
+  on the real library. Copying is the default; removing always asks and lists every note.
+- **Voice:** checked with recorded audio and spoken-to-file round trips, not yet with a real microphone
+  (its permission prompt, holding to talk, AirPods), and no live ElevenLabs voice yet. Recognition on
+  macOS 15 is "basic". With an ad-hoc build the microphone permission is asked again after each rebuild.
 - **Not yet exercised by hand:** Claude Code hooks in a real session, the notification permission
-  prompt, opening at login from /Applications, several displays and fullscreen apps, and Connect for
-  Claude Code and Codex on a real setup.
+  prompt, opening at login from /Applications, several displays and fullscreen apps, Connect for Claude
+  Code and Codex on a real setup, a repository clone asked of a real AI, and the menu bar's Approvals
+  submenu with its Full access icon.
 - **Translations** cover every string but are new, and no native-speaker review is recorded yet.
   Arabic shows "Space_Key" in the shortcut recorder, which comes from a third-party component.
 - **Residual risks** are listed in [SECURITY.md](SECURITY.md): code running as you can name its own
