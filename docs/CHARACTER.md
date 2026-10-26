@@ -58,7 +58,7 @@ Reduced motion: no breathing, sways, hops or loops; state changes crossfade; a b
 ```sh
 swift run sidefolk-render /tmp/sheets          # states, states-small (with badges), folks, gaze, hit, menubar, icon
 swift run sidefolk-render Resources/Character  # refresh the committed sheets
-swift run sidefolk-render --icon Resources/Icon # icon-1024.png, Sidefolk.iconset/, Sidefolk.icns (iconutil)
+swift run sidefolk-render --icon Resources/Icon # icon-macos-1024.png, Sidefolk.iconset/, Sidefolk.icns (iconutil)
 swift run sidefolk-render --live cycle 32      # a real window; check CPU with top -pid
 ```
 

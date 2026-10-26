@@ -166,3 +166,8 @@ for small sizes and lets macOS tint its alpha. The live vector rig remains as sp
 **Why:** the identity must match the approved reference and work as real framework assets, rather
 than mockups, a presentation sheet, or enlarged low-resolution crops. The deterministic
 `make brand-assets` pipeline rebuilds each file from committed inputs without another model call.
+**Source correction:** the reusable app-icon source is a flat, opaque square (2048/1024 px), with a
+separate transparent artwork PNG. No bevel, raised tile, cast shadow or edge lighting is baked in.
+Only derived legacy macOS ICNS/iconset representations get a flat inset rounded mask. An Xcode
+asset catalog includes both the raw image sets and the macOS AppIcon set. The rendered-tile master
+was rejected and removed.

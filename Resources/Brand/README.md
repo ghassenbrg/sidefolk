@@ -8,7 +8,10 @@ These are individual transparent assets, not crops for the app to discover in a 
 | Asset | Location | Usage |
 |---|---|---|
 | App icon | `../Icon/Sidefolk.icns` | Bundled as `Sidefolk.icns`; Info.plist already names it. |
-| App icon sources | `../Icon/icon-1024.png`, `../Icon/Sidefolk.iconset/` | Square sRGB PNGs: 16/32/128/256/512 pt at 1x and 2x, up to 1024 px. |
+| Raw square icon sources | `../Icon/icon-source-2048.png`, `../Icon/icon-1024.png` | Opaque, full-bleed flat white square, with character artwork; no rounded corners, bevel, shadow, rim or tile lighting. Use these for new platform exports. |
+| Raw icon artwork | `../Icon/icon-artwork.png` | Native-resolution transparent character group, with no background tile; compose on any background. |
+| Derived macOS icon | `../Icon/icon-macos-1024.png`, `../Icon/Sidefolk.iconset/` | Flat macOS outline/inset only. PNGs: 16/32/128/256/512 pt at 1x and 2x. No rendered edge effects. |
+| Xcode asset catalog | `../Icon/Sidefolk.xcassets/` | Drop into an Xcode project. `AppIcon` contains macOS representations; `AppIconSource` and `IconArtwork` are reusable image sets. |
 | Menu bar template | `../MenuBar/SidefolkMenuBar.pdf` | True vector alpha template; `NSImage.isTemplate = true`, size 18 × 18 pt. |
 | Menu bar PNGs | `../MenuBar/SidefolkMenuBar{,@2x,@3x}.png` | 18/36/54 px; black ink, transparent shell and eye cutouts. |
 | Logos | `exports/logo-{stacked,horizontal}-{color,navy,white}.png` | Tightly framed transparent lockups; preserve aspect ratio. |
@@ -24,6 +27,9 @@ can set `SIDEFOLK_RESOURCES` to the repository's absolute `Resources` directory.
 Use the navy variants on light surfaces and the white variants on dark surfaces. The full-color
 character's white shell is opaque. The menu bar uses alpha and macOS tinting, not the navy logo.
 macOS owns the menu item's padding; do not add a background tile to the menu bar template.
+The reusable square app-icon sources have opaque square corners. Only the separate legacy macOS
+ICNS/iconset uses an inset rounded mask. This mask is flat geometry, without simulated thickness,
+edge lighting, cast shadow or presentation framing. The source is never a screenshot of that export.
 
 ## Rebuild
 
@@ -43,4 +49,6 @@ new font. The color master is 4096 px wide and the SVG/PDF paths scale independe
 user-supplied board. The primary logo retains the mint helper's laptop. The app icon and icon-only
 mark follow the board's app-icon composition without a laptop. `generation-prompts.json` records
 the built-in imagegen prompts; generated text was rejected. Source masters and reference are not
-bundled. The animated desktop companion continues to use the native vector rig (D2).
+bundled. The rejected raised-tile app-icon master has been removed; all current app icons derive
+from the clean transparent family mark. The animated desktop companion continues to use the native
+vector rig (D2).

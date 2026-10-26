@@ -17,6 +17,14 @@ into `rework`).
   Verified alpha, dimensions, SVG paths, PDF native loading, exact bundled bytes, signed debug
   assembly and visual review at native menu size and high zoom. No brand work remains half done;
   next step is the founder's visual sign-off on `Resources/Brand/preview.png`.
+- **Raw icon source correction (2026-10-26):** replaced the raised-tile app icon with a clean
+  transparent artwork PNG and flat, full-bleed 2048/1024 px square sources. No baked bevel, tile
+  lighting, cast shadow or rounded source corners. The legacy macOS ICNS/iconset is derived with
+  only a flat outline/inset. Added a drop-in Xcode asset catalog (`AppIcon`, `AppIconSource`,
+  `IconArtwork`); removed the rejected rendered-tile master. Verification: source pixels/corners,
+  export dimensions and catalog references, Xcode `actool` compilation, ICNS decoding and signed
+  debug build resource bytes. No source work remains half done; use `Resources/Icon/icon-artwork.png`
+  or `icon-source-2048.png` for the next platform export, rather than the derived macOS icon.
 - **Core:** storage (GRDB, FTS5, secure_delete, 0600 files) and Guard (risk, caller, taint, user-typed
   links, hardened path policy, folder-bound command grants, approvals). Every tool input is checked
   against its schema. The executor provides audit and undo. Also attention policy and center (held

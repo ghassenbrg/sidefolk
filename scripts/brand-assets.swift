@@ -284,21 +284,54 @@ for horizontal in [false, true] {
     try save(lockup(horizontal: horizontal, mark: mono, word: tint(wordmark, navy)), exports.appendingPathComponent("\(name)-navy.png"))
     try save(lockup(horizontal: horizontal, mark: tint(mono, (1,1,1)), word: tint(wordmark, (1,1,1))), exports.appendingPathComponent("\(name)-white.png"))
 }
-// Standard macOS grid: exact rounded tile, no stray generated pixels outside its silhouette.
-let appSource = normalized(read("Resources/Brand/masters/app-icon.png"), trimOutput: false)
+// The reusable source is raw artwork on an edge-to-edge flat square. Platform padding and
+// masks belong only in derived exports, never in the source. No rendered tile, bevel or shadow.
+try save(mark, icon.appendingPathComponent("icon-artwork.png"))
+let raw = context(2048, 2048)
+raw.setFillColor(CGColor(gray: 1, alpha: 1))
+raw.fill(CGRect(x: 0, y: 0, width: 2048, height: 2048))
+raw.interpolationQuality = .high
+let artworkWidth = 1680.0, artworkHeight = artworkWidth * Double(mark.height)/Double(mark.width)
+raw.draw(mark, in: CGRect(x: (2048-artworkWidth)/2, y: (2048-artworkHeight)/2,
+                         width: artworkWidth, height: artworkHeight))
+let rawSource = raw.makeImage()!
+try save(rawSource, icon.appendingPathComponent("icon-source-2048.png"))
+try save(scaled(rawSource, 1024, 1024), icon.appendingPathComponent("icon-1024.png"))
+
+// Legacy ICNS gets only the native macOS outline/inset as a deterministic 2D mask. Its tile
+// is perfectly flat white, with no lighting, rim, extruded edge, surface gradient or shadow.
 let ac = context(1024, 1024)
-ac.addPath(CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824), cornerWidth: 185, cornerHeight: 185, transform: nil))
+ac.addPath(CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824),
+                 cornerWidth: 185, cornerHeight: 185, transform: nil))
 ac.clip()
 ac.interpolationQuality = .high
-ac.draw(appSource, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
+ac.draw(rawSource, in: CGRect(x: 100, y: 100, width: 824, height: 824))
 let app = ac.makeImage()!
-try save(app, icon.appendingPathComponent("icon-1024.png"))
+try save(app, icon.appendingPathComponent("icon-macos-1024.png"))
 let set = icon.appendingPathComponent("Sidefolk.iconset")
+let catalog = icon.appendingPathComponent("Sidefolk.xcassets")
+let appSet = catalog.appendingPathComponent("AppIcon.appiconset")
+var catalogImages: [[String: Any]] = []
 for points in [16, 32, 128, 256, 512] {
     for scale in [1, 2] {
         let suffix = scale == 2 ? "@2x" : ""
-        try save(scaled(app, points*scale, points*scale), set.appendingPathComponent("icon_\(points)x\(points)\(suffix).png"))
+        let name = "icon_\(points)x\(points)\(suffix).png"
+        try save(scaled(app, points*scale, points*scale), set.appendingPathComponent(name))
+        try save(scaled(app, points*scale, points*scale), appSet.appendingPathComponent(name))
+        catalogImages.append(["filename": name, "idiom": "mac", "size": "\(points)x\(points)", "scale": "\(scale)x"])
     }
+}
+try JSONSerialization.data(withJSONObject: ["info": ["author": "Sidefolk", "version": 1]], options: [.prettyPrinted, .sortedKeys])
+    .write(to: catalog.appendingPathComponent("Contents.json"))
+try JSONSerialization.data(withJSONObject: ["images": catalogImages, "info": ["author": "Sidefolk", "version": 1]], options: [.prettyPrinted, .sortedKeys])
+    .write(to: appSet.appendingPathComponent("Contents.json"))
+for (name, filename, image) in [("AppIconSource", "icon-source-2048.png", rawSource),
+                                 ("IconArtwork", "icon-artwork.png", mark)] {
+    let imageSet = catalog.appendingPathComponent("\(name).imageset")
+    try save(image, imageSet.appendingPathComponent(filename))
+    try JSONSerialization.data(withJSONObject: ["images": [["filename": filename, "idiom": "universal", "scale": "1x"]],
+                                               "info": ["author": "Sidefolk", "version": 1]], options: [.prettyPrinted, .sortedKeys])
+        .write(to: imageSet.appendingPathComponent("Contents.json"))
 }
 let process = Process()
 process.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")
