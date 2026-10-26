@@ -51,7 +51,15 @@ extension AppCoordinator: AppServices {
         let platform = runtime.platform
         // The stored pid only while it still runs the app it was verified as (pids get reused).
         let host = HostTrust.target(for: session)
-        Task { _ = await platform.activateApplication(pid: host.pid, bundleId: host.bundleId) }
+        Task {
+            guard await !platform.activateApplication(pid: host.pid, bundleId: host.bundleId) else { return }
+            // Ended, or started somewhere Sidefolk can't verify: say so instead of doing nothing.
+            let place = session.projectName.map { String(localized: "It was in \($0).") } ?? ""
+            let item = AttentionItem(level: .gentle, source: Self.ownVoice,
+                                     title: String(localized: "I can't bring that session to the front."),
+                                     body: [String(localized: "Its window may be closed."), place].filter { !$0.isEmpty }.joined(separator: " "))
+            bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+        }
     }
 
     func open(item: NotebookItem) { openHome(item: item) }
