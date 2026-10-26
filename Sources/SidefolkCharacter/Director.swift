@@ -3,8 +3,22 @@ import QuartzCore
 /// Runs the rig: state changes, the loops each state needs, props, effects, badges and gestures.
 /// Shared by the live view and the offscreen renderer (which only wants still frames).
 @MainActor
-final class Director {
+final class Director: Performer {
     let rig = Rig()
+    var stage: CALayer { rig.stage }
+    /// Feet to fin, the shell's width plus a little: panels and bubbles tuck in over the ear pods.
+    let restingFrame = CGRect(x: 34, y: 20, width: 132, height: 160)
+
+    /// The colour of the visor's light, the ear pods and the marks drawn in that light.
+    var accent: CharacterAccent {
+        get { rig.accent }
+        set {
+            rig.accent = newValue
+            effects.light = newValue.light
+            sharpen()
+        }
+    }
+
     private let effects: Effects
     private let badgeChips: Badges
     /// False for offscreen renders: no animation of any kind is added.
@@ -33,9 +47,11 @@ final class Director {
     /// Whether repeating motion runs at all.
     private var moving: Bool { live && !reducedMotion }
 
-    init(live: Bool) {
+    init(live: Bool, accent: CharacterAccent = .aqua) {
         self.live = live
+        rig.accent = accent
         effects = Effects(stage: rig.stageFX, body: rig.bodyFX)
+        effects.light = accent.light
         badgeChips = Badges(parent: rig.badges)
         show(.idle, animated: false)
     }

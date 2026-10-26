@@ -4,13 +4,16 @@ import SidefolkCharacter
 import UniformTypeIdentifiers
 
 // Dev tool: renders the character offscreen so changes can be reviewed without a screen.
+// Run it from the repository: sprite companions are read from Resources/Companions.
 //
-//   sidefolk-render <outdir>                 contact sheets: states, folks, gaze, menubar, icon
+//   sidefolk-render <outdir>                 contact sheets: states, accents, folks, gaze, menubar, icon,
+//                                            and every sprite companion's states, badges, hit shapes and poses
 //   sidefolk-render --icon <dir>             icon-1024.png, Sidefolk.iconset/ and Sidefolk.icns
 //   sidefolk-render --menu-bar <dir>         native template PNGs (1x/2x/3x) and vector PDF
-//   sidefolk-render --live <state> <secs>    a real window, for CPU checks ("cycle" walks every state)
+//   sidefolk-render --live <state> <secs> [companion]
+//                                            a real window, for CPU checks ("cycle" walks every state)
 
-let usage = "usage: sidefolk-render <outdir> | --icon <dir> | --menu-bar <dir> | --live <state|cycle> <seconds>"
+let usage = "usage: sidefolk-render <outdir> | --icon <dir> | --menu-bar <dir> | --live <state|cycle> <seconds> [mochi|spark]"
 
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
@@ -31,8 +34,15 @@ MainActor.assumeIsolated {
         } catch {
             fatalError("Menu bar asset export failed: \(error)")
         }
-    case "--live" where args.count == 3:
-        Live.run(state: args[1], seconds: Double(args[2]) ?? 10)
+    case "--live" where args.count == 3 || args.count == 4:
+        let look: CharacterLook
+        if args.count == 4 {
+            guard let art = Companions.load(args[3]) else { print("no art for \(args[3]) in \(Companions.folder.path)"); exit(2) }
+            look = .sprites(art)
+        } else {
+            look = .sidefolk(.aqua)
+        }
+        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: look)
     case let dir? where !dir.hasPrefix("-"):
         Sheets.write(to: URL(fileURLWithPath: dir))
     default:
@@ -75,10 +85,48 @@ enum Sheets {
         save(sheet(title: "Gaze", columns: 9, cell: CGSize(width: 160, height: 176), items: gazeItems), dir.appendingPathComponent("gaze.png"))
         save(sheet(title: "Hit shapes (characterPath) over the art", columns: 10, cell: CGSize(width: 116, height: 132),
                    items: states.map { s in (s.name, { hitImage(s) }) }), dir.appendingPathComponent("hit.png"))
+        let accentItems = CharacterAccent.allCases.flatMap { accent in
+            [CharacterState.idle, .listening, .sleeping].map { s in
+                ("\(accent.rawValue) · \(s.name)", {
+                    CharacterRenderer.image(state: s, size: CGSize(width: 150, height: 150), scale: scale, look: .sidefolk(accent))
+                })
+            }
+        }
+        save(sheet(title: "Accent colours (Settings › Companion)", columns: 6, cell: CGSize(width: 160, height: 176), items: accentItems),
+             dir.appendingPathComponent("accents.png"))
         save(menubarSheet(), dir.appendingPathComponent("menubar.png"))
         save(Icons.image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
         save(iconSizes(), dir.appendingPathComponent("icon-sizes.png"))
+        for name in Companions.names {
+            guard let art = Companions.load(name) else { print("skipped \(name): art missing in \(Companions.folder.path)"); continue }
+            writeSprites(art, to: dir)
+        }
         print("wrote contact sheets to \(dir.path)")
+    }
+
+    /// A sprite companion in every state, small with badges, its hit shapes, and its raw poses.
+    static func writeSprites(_ art: SpriteSet, to dir: URL) {
+        let look = CharacterLook.sprites(art)
+        let states = CharacterState.gallery
+        let title = art.name.capitalized
+        save(sheet(title: "\(title) states · 200 pt view (busy states show their first pose)", columns: 5,
+                   cell: CGSize(width: 220, height: 236),
+                   items: states.map { s in (s.name, { CharacterRenderer.image(state: s, size: CGSize(width: 200, height: 200), scale: scale, look: look) }) }),
+             dir.appendingPathComponent("companion-\(art.name).png"))
+        save(sheet(title: "\(title) at 104 pt, with badges", columns: 10, cell: CGSize(width: 116, height: 132),
+                   items: states.map { s in (s.name, {
+                       CharacterRenderer.image(state: s, size: CGSize(width: 104, height: 104), scale: scale,
+                                               badges: s == .alert ? [.watching, .count(3)] : s == .thinking ? [.busy, .watching] : [.count(2)],
+                                               look: look)
+                   }) }), dir.appendingPathComponent("companion-\(art.name)-small.png"))
+        save(sheet(title: "\(title) hit shapes (characterPath, from the pose's alpha) over the art", columns: 10,
+                   cell: CGSize(width: 116, height: 132), items: states.map { s in (s.name, { hitImage(s, look: look) }) }),
+             dir.appendingPathComponent("companion-\(art.name)-hit.png"))
+        let poses = Companions.poseFiles(art.name)
+        save(sheet(title: "\(title) poses as drawn (\(Companions.folder.lastPathComponent)/\(art.name))", columns: 8,
+                   cell: CGSize(width: 150, height: 160), items: poses.map { file in
+                       (file.deletingPathExtension().lastPathComponent, { Companions.poseImage(file, size: CGSize(width: 140, height: 127)) })
+                   }), dir.appendingPathComponent("companion-\(art.name)-poses.png"))
     }
 
     /// A labelled grid. Each item renders lazily so failures point at the cell.
@@ -101,20 +149,31 @@ enum Sheets {
         }
     }
 
-    /// The state with its click-through outline drawn on top, as CharacterView reports it.
-    static func hitImage(_ state: CharacterState) -> CGImage {
+    /// The state with its click-through outline drawn on top, as CharacterView reports it. A sprite's
+    /// shape is a stack of pixel runs, so it is filled rather than outlined.
+    static func hitImage(_ state: CharacterState, look: CharacterLook = .sidefolk(.aqua)) -> CGImage {
         let side: CGFloat = 104
         let view = CharacterView(frame: NSRect(x: 0, y: 0, width: side, height: side))
+        view.look = look
         view.setState(state, animated: false)
-        let art = CharacterRenderer.image(state: state, size: CGSize(width: side, height: side), scale: scale)
+        let art = CharacterRenderer.image(state: state, size: CGSize(width: side, height: side), scale: scale, look: look)
         let context = CGContext(data: nil, width: art.width, height: art.height, bitsPerComponent: 8, bytesPerRow: 0,
                                 space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         context.draw(art, in: CGRect(x: 0, y: 0, width: art.width, height: art.height))
         context.scaleBy(x: scale, y: scale)
         context.addPath(view.characterPath)
-        context.setStrokeColor(NSColor.systemPink.cgColor)
-        context.setLineWidth(1)
-        context.strokePath()
+        if case .sprites = look {
+            context.setFillColor(NSColor.systemPink.withAlphaComponent(0.4).cgColor)
+            context.fillPath()
+        } else {
+            context.setStrokeColor(NSColor.systemPink.cgColor)
+            context.setLineWidth(1)
+            context.strokePath()
+        }
+        // Bubbles and panels attach to this frame (characterFrameOnScreen in the app).
+        context.setStrokeColor(NSColor.systemBlue.withAlphaComponent(0.6).cgColor)
+        context.setLineWidth(0.5)
+        context.stroke(view.characterFrame)
         return context.makeImage()!
     }
 
@@ -241,7 +300,7 @@ enum Icons {
 
 @MainActor
 enum Live {
-    static func run(state name: String, seconds: Double) {
+    static func run(state name: String, seconds: Double, look: CharacterLook) {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         let window = NSWindow(contentRect: NSRect(x: 40, y: 40, width: 200, height: 200), styleMask: [.borderless],
@@ -250,6 +309,7 @@ enum Live {
         window.backgroundColor = .clear
         window.level = .floating
         let view = CharacterView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
+        view.look = look
         window.contentView = view
         window.orderFrontRegardless()
 
@@ -264,6 +324,15 @@ enum Live {
             }
         } else if let state = states.first(where: { $0.name == name }) {
             view.state = state
+            // Calm states should drop to zero running animations once they settle (D20).
+            Task { @MainActor in
+                for t in stride(from: 5, to: Int(seconds), by: 5) {
+                    try? await Task.sleep(for: .seconds(5))
+                    // Finished one-shots stay attached until the next commit; only "∞" ones keep drawing.
+                    let keys = animationKeys(in: view.layer)
+                    print("[live] \(t)s: \(keys.filter { $0.hasSuffix("∞") }.count) looping \(keys.sorted())")
+                }
+            }
         }
         print("[live] pid \(ProcessInfo.processInfo.processIdentifier) showing \(name) for \(seconds)s")
         Task { @MainActor in
@@ -274,8 +343,51 @@ enum Live {
     }
 
     /// Animations attached anywhere in the tree: loops should come and go with their state.
-    static func animations(in layer: CALayer?) -> Int {
-        guard let layer else { return 0 }
-        return (layer.animationKeys()?.count ?? 0) + (layer.sublayers ?? []).reduce(0) { $0 + animations(in: $1) }
+    static func animations(in layer: CALayer?) -> Int { animationKeys(in: layer).count }
+
+    /// Keys of every attached animation, "∞" marking the repeating ones.
+    static func animationKeys(in layer: CALayer?) -> [String] {
+        guard let layer else { return [] }
+        let own = (layer.animationKeys() ?? []).map { key in
+            layer.animation(forKey: key)?.repeatCount == .infinity ? key + "∞" : key
+        }
+        return own + (layer.sublayers ?? []).flatMap { animationKeys(in: $0) }
+    }
+}
+
+// MARK: Sprite companions
+
+/// The sprite companions' art in the repository (the app bundles the same folders).
+@MainActor
+enum Companions {
+    static let folder = URL(fileURLWithPath: "Resources/Companions", isDirectory: true)
+
+    static var names: [String] {
+        let entries = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isDirectoryKey])) ?? []
+        return entries.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+            .map(\.lastPathComponent).sorted()
+    }
+
+    static func load(_ name: String) -> SpriteSet? { SpriteSet(folder: folder.appendingPathComponent(name)) }
+
+    static func poseFiles(_ name: String) -> [URL] {
+        let dir = folder.appendingPathComponent(name)
+        return ((try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [])
+            .filter { $0.pathExtension == "webp" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    /// A pose file as drawn, on a faint checkerboard so its transparent margin shows.
+    static func poseImage(_ file: URL, size: CGSize) -> CGImage {
+        Sheets.draw(size) { context in
+            for row in 0..<Int(size.height / 10) + 1 {
+                for column in 0..<Int(size.width / 10) + 1 where (row + column) % 2 == 0 {
+                    context.setFillColor(NSColor(white: 0, alpha: 0.04).cgColor)
+                    context.fill(CGRect(x: CGFloat(column) * 10, y: CGFloat(row) * 10, width: 10, height: 10))
+                }
+            }
+            guard let source = CGImageSourceCreateWithURL(file as CFURL, nil),
+                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return }
+            context.draw(image, in: CGRect(origin: .zero, size: size))
+        }
     }
 }
