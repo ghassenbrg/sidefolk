@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import Testing
 @testable import SidefolkCore
 
@@ -88,5 +89,20 @@ import Testing
         _ = try await t.env.executor.undo.undo(edit.activity.id)
         let note = try #require(try await t.notebook.item(id: id))
         #expect(note.deletedAt == nil && note.title == "first version")
+    }
+}
+
+/// Collections made before their source was recorded count as the user's after the upgrade.
+@Suite struct CollectionSourceMigrationTests {
+    @Test func olderCollectionsBecomeTheUsers() async throws {
+        let queue = try DatabaseQueue()
+        try AppDatabase.migrator.migrate(queue, upTo: "v1")
+        try await queue.write { db in
+            try db.execute(sql: "INSERT INTO collections (id, name, kind, created_at, updated_at) VALUES ('c1', 'Old', 'project', 0, 0)")
+        }
+        let upgraded = try AppDatabase(queue)
+        let old = try #require(try await NotebookStore(upgraded).collection(id: "c1"))
+        #expect(old.source == "user")
+        #expect(old.name == "Old")
     }
 }

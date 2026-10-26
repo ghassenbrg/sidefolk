@@ -64,16 +64,18 @@ public struct NotebookStore: Sendable {
 
     /// Returns the named collection, creating it when it does not exist. The look-up and the insert
     /// share one write transaction, so parallel calls (an agent batching saves) create it once.
-    /// - Parameter excluding: kinds a name never resolves to (the profile is not a filing target).
+    /// - Parameters:
+    ///   - excluding: kinds a name never resolves to (the profile is not a filing target).
+    ///   - source: who names it, if it has to be created.
     public func collection(named name: String, kind: NotebookCollection.Kind = .project, excluding: Set<NotebookCollection.Kind> = [],
-                           now: Date = Date()) async throws -> (NotebookCollection, created: Bool) {
+                           source: String = "user", now: Date = Date()) async throws -> (NotebookCollection, created: Bool) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60)
         guard !clean.isEmpty else { throw ToolError.invalidInput("a collection needs a name.") }
         let skipped = excluding.map(\.rawValue)
         return try await db.writer.write { db in
             let live = try NotebookCollection.filter(Column("archived_at") == nil).filter(!skipped.contains(Column("kind"))).fetchAll(db)
             if let found = Self.match(clean, in: live) { return (found, false) }
-            let created = NotebookCollection(name: clean, kind: kind, now: now)
+            let created = NotebookCollection(name: clean, kind: kind, source: source, now: now)
             try created.insert(db)
             return (created, true)
         }
@@ -81,9 +83,10 @@ public struct NotebookStore: Sendable {
 
     /// Creates a collection with exactly this name (no fuzzy matching). Refuses a name an existing
     /// collection already has (ignoring case), checked in the same transaction as the insert.
-    public func createCollection(name: String, kind: NotebookCollection.Kind, now: Date = Date()) async throws -> NotebookCollection {
+    public func createCollection(name: String, kind: NotebookCollection.Kind, source: String = "user",
+                                 now: Date = Date()) async throws -> NotebookCollection {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60)
-        let created = NotebookCollection(name: clean, kind: kind, now: now)
+        let created = NotebookCollection(name: clean, kind: kind, source: source, now: now)
         try await db.writer.write { db in
             let taken = try NotebookCollection.filter(sql: "name = ? COLLATE NOCASE", arguments: [clean]).fetchCount(db) > 0
             if taken { throw UserFacingError("There's already a collection called “\(clean)”.") }
@@ -92,10 +95,12 @@ public struct NotebookStore: Sendable {
         return created
     }
 
+    /// The user renaming a collection in the app: the new name is their own words.
     public func rename(collectionId: String, to name: String, now: Date = Date()) async throws {
         try await db.writer.write { db in
             guard var c = try NotebookCollection.fetchOne(db, key: collectionId) else { return }
             c.name = name.clipped(60)
+            c.source = "user"
             c.updatedAt = now
             try c.update(db)
         }

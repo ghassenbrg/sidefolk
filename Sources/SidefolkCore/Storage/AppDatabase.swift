@@ -230,6 +230,13 @@ public final class AppDatabase: Sendable {
                 t.column("value", .text).notNull()
             }
         }
+        // Who named a collection (SECURITY T3). Where older ones came from wasn't recorded; nearly all
+        // were made in the app or by Sidefolk's agent, so they count as the user's.
+        m.registerMigration("v2-collection-source") { db in
+            try db.alter(table: "collections") { t in
+                t.add(column: "source", .text).notNull().defaults(to: "user")
+            }
+        }
         return m
     }
 }
