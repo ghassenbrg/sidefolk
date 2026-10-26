@@ -127,7 +127,7 @@ struct ApprovalCard: View {
         if case .folderAccess(_, let write) = request.details { return write ? "Folder access · can change files" : "Folder access · read only" }
         return switch request.risk {
         case .low: "Low"
-        case .medium: "Changes things"
+        case .medium: request.readsOnly ? "Reads private data" : "Changes things"
         case .high: "High risk"
         }
     }

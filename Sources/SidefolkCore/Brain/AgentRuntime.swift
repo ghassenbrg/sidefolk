@@ -137,7 +137,7 @@ public actor AgentRuntime {
         let choice = try? factory.make(current.provider, thinkHarder: request.thinkHarder)
         let threadId = request.newThread ? nil : (request.threadId ?? currentThread).flatMap { isActive($0, now: clock.now) ? $0 : nil }
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
-                                        thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current)
+                                        thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current, tools: offeredTools())
         return ContextPreview(provider: choice?.backend.providerName ?? current.provider.kind.displayName,
                               model: choice.map { $0.model.isEmpty ? "default" : $0.model } ?? "", system: built.system,
                               messages: built.messages, tools: offeredTools().map(\.modelName), tainted: built.tainted, at: clock.now)
@@ -164,7 +164,7 @@ public actor AgentRuntime {
         let runId = "test-" + Identifier.make(now: start)
         let task = BrainTask(runId: runId, threadId: runId, system: "You check that a connection works. Answer with one word.",
                              messages: [ChatMessage(role: .user, text: "Reply with the word ok.")], model: choice.model,
-                             maxSteps: 1, deadline: start.addingTimeInterval(60))
+                             effort: choice.effort, maxSteps: 1, deadline: start.addingTimeInterval(60))
         let toolbox = BrainToolbox(runId: runId, specs: [], executor: executor, emit: { _ in })
         defer { _ = (choice.backend as? any BrainUsageReporting)?.takeUsage(runId: runId) }
         do {
@@ -227,7 +227,7 @@ public actor AgentRuntime {
 
         let specs = offeredTools()
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
-                                        thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current)
+                                        thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current, tools: specs)
         let provider = choice.backend.providerName
         let model = choice.model.isEmpty ? "default" : choice.model
         let start = clock.now
@@ -246,7 +246,7 @@ public actor AgentRuntime {
         let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted,
                                    mentions: Self.mentions(in: request), emit: emit)
         let task = BrainTask(runId: runId, threadId: threadId, system: built.system, messages: built.messages, model: choice.model,
-                             maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))
+                             effort: choice.effort, maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))
         var outcome = "ok"
         var errorText: String?
         do {
@@ -346,12 +346,10 @@ public actor AgentRuntime {
             e.changedNothing = false
             // The sentence ends many messages; drop it in whichever language the message is in (the
             // glossary keeps its translation identical everywhere, and CatalogTests checks that).
-            let nothing = String(localized: "Nothing was changed.")
-            for ending in [" " + nothing, " Nothing was changed."] where e.message.hasSuffix(ending) {
-                e.message.removeLast(ending.count)
-                break
-            }
-            e.message += " " + String(localized: "Some of it was already done; Activity shows what.")
+            e.message = Wording.sentences([
+                Wording.droppingNothingChanged(from: e.message),
+                String(localized: "Some of it was already done; Activity shows what."),
+            ])
         }
         return e
     }

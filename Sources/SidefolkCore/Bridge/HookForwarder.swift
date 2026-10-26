@@ -89,10 +89,17 @@ public enum ProcessAncestry {
     /// of its main process. When no ancestor lives in an app bundle (iTerm2's server process,
     /// tmux), the bundle id macOS leaves in `__CFBundleIdentifier` is used without a pid.
     public static func host(startingAt pid: pid_t = getppid(), environment: [String: String] = [:]) -> HostApp? {
+        host(startingAt: pid, environment: environment, path: executablePath(of:), parent: parent(of:))
+    }
+
+    static func host(startingAt pid: pid_t, environment: [String: String],
+                     path: (pid_t) -> String?, parent: (pid_t) -> pid_t?) -> HostApp? {
         var current = pid
         var found: (bundle: String, pid: pid_t)?
         for _ in 0..<64 where current > 1 {
-            let bundle = executablePath(of: current).flatMap(topLevelBundle)
+            // An app that never shows a window can't be brought to the front: Claude's desktop app
+            // runs Claude Code from a background-only claude.app, so climb on to the app around it.
+            let bundle = path(current).flatMap(topLevelBundle).flatMap { showsWindows($0) ? $0 : nil }
             if let bundle {
                 // Keep climbing while still inside the same app: helpers sit below its main process.
                 guard found == nil || found?.bundle == bundle else { break }
@@ -100,8 +107,8 @@ public enum ProcessAncestry {
             } else if found != nil {
                 break
             }
-            guard let parent = parent(of: current), parent != current else { break }
-            current = parent
+            guard let next = parent(current), next != current else { break }
+            current = next
         }
         if let found, let id = Bundle(path: found.bundle)?.bundleIdentifier {
             return HostApp(bundleId: id, pid: Int(found.pid))
@@ -111,6 +118,16 @@ public enum ProcessAncestry {
             return HostApp(bundleId: id, pid: nil)
         }
         return nil
+    }
+
+    /// False for apps marked background-only or menu-bar-only in their Info.plist.
+    static func showsWindows(_ bundlePath: String) -> Bool {
+        guard let info = Bundle(path: bundlePath)?.infoDictionary else { return true }
+        func on(_ key: String) -> Bool {
+            if let flag = info[key] as? Bool { return flag }
+            return (info[key] as? String).map { ["1", "yes", "true"].contains($0.lowercased()) } ?? false
+        }
+        return !on("LSBackgroundOnly") && !on("LSUIElement")
     }
 
     /// "/Applications/Visual Studio Code.app" from any path inside it, nested helper apps included.

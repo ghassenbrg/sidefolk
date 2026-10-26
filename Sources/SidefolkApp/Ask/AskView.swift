@@ -247,7 +247,9 @@ private struct EntryView: View {
                 if undo, let activityId {
                     Button("Undo") { model.actions?.undo(activityId: activityId, in: model) }.buttonStyle(.sf(.secondary))
                 }
-                if card.refId != nil || card.url != nil {
+                if PrivacyPane.isKnown(card.url) {
+                    Button("Open System Settings") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
+                } else if card.refId != nil || card.url != nil {
                     Button("Open") { model.actions?.open(card: card) }.buttonStyle(.sf(.secondary))
                 }
             })

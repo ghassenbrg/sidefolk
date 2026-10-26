@@ -3,18 +3,28 @@ import Foundation
 /// Any server speaking OpenAI's `POST {base}/chat/completions` with function tools: the presets in
 /// `ProviderPreset` (OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, OpenRouter, Ollama, LM Studio) or a custom one.
 public struct OpenAICompatibleModel: TurnModel {
+    /// How a service takes the reasoning effort (D36).
+    public enum EffortStyle: Sendable {
+        /// `"reasoning_effort": "high"`: OpenAI and the services that follow it.
+        case reasoningEffort
+        /// `"reasoning": {"effort": "high"}`: OpenRouter's one shape for every model.
+        case reasoningObject
+    }
+
     public let providerName: String
     public let baseURL: URL
     private let apiKey: Secret?
+    private let effortStyle: EffortStyle
     private let http: ProviderHTTP
 
     /// Throws when the address is unusable, including plain `http://` to anything but this Mac.
     /// - Parameter name: what errors call the service ("Groq"); derived from the address when nil.
-    public init(baseURL: String, apiKey: Secret?, name: String? = nil, transport: any HTTPTransport = URLSessionTransport(),
-                retry: RetryPolicy = .standard) throws(UserFacingError) {
+    public init(baseURL: String, apiKey: Secret?, name: String? = nil, effortStyle: EffortStyle = .reasoningEffort,
+                transport: any HTTPTransport = URLSessionTransport(), retry: RetryPolicy = .standard) throws(UserFacingError) {
         let url = try Self.validate(baseURL: baseURL)
         self.baseURL = url
         self.apiKey = apiKey.flatMap { $0.isEmpty ? nil : $0 }
+        self.effortStyle = effortStyle
         providerName = name ?? Self.displayName(for: url)
         http = ProviderHTTP(transport: transport, retry: retry, provider: providerName, local: Self.isLoopback(url.host))
     }
@@ -22,7 +32,7 @@ public struct OpenAICompatibleModel: TurnModel {
     public func respond(to request: TurnRequest) async throws -> ModelTurn {
         var wire = request
         wire.model = Self.wireName(request.model)
-        let body = Data(Self.requestBody(wire).jsonString.utf8)
+        let body = Data(Self.requestBody(wire, effortStyle: effortStyle).jsonString.utf8)
         let post = HTTPRequest(method: "POST", url: baseURL.appendingPathComponent("chat/completions"), headers: headers(),
                                body: body, timeout: min(max(request.timeBudget, 5), 120))
         let response = try await http.send(post, timeBudget: request.timeBudget)
@@ -126,7 +136,7 @@ public struct OpenAICompatibleModel: TurnModel {
 
     // MARK: Wire format
 
-    static func requestBody(_ r: TurnRequest) -> JSONValue {
+    static func requestBody(_ r: TurnRequest, effortStyle: EffortStyle = .reasoningEffort) -> JSONValue {
         var messages: [JSONValue] = []
         if !r.system.isEmpty { messages.append(["role": "system", "content": .string(r.system)]) }
         for m in r.messages {
@@ -153,6 +163,12 @@ public struct OpenAICompatibleModel: TurnModel {
         // No token limit: OpenAI's newer models reject `max_tokens`, and local servers differ on
         // `max_completion_tokens`. The run's deadline bounds the cost instead.
         var body: [String: JSONValue] = ["model": .string(r.model), "messages": .array(messages), "stream": false]
+        if let effort = r.effort {
+            switch effortStyle {
+            case .reasoningEffort: body["reasoning_effort"] = .string(effort.rawValue)
+            case .reasoningObject: body["reasoning"] = ["effort": .string(effort.rawValue)]
+            }
+        }
         if !r.tools.isEmpty {
             body["tools"] = .array(r.tools.map { spec in
                 ["type": "function", "function": [

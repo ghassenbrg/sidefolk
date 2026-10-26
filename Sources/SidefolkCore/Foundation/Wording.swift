@@ -21,6 +21,21 @@ public enum Wording {
         items.formatted(.list(type: .and, width: .narrow).locale(locale))
     }
 
+    /// Sentences joined as the language joins them: with a space, or with nothing in Chinese and Japanese.
+    public static func sentences(_ parts: [String]) -> String {
+        let tight = ["zh", "ja"].contains(locale.language.languageCode?.identifier ?? "")
+        return parts.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: tight ? "" : " ")
+    }
+
+    /// `text` without the "Nothing was changed." that ends many errors, in the app's language or in
+    /// English, for when something did change. No space is needed before it: Chinese and Japanese have none.
+    public static func droppingNothingChanged(from text: String) -> String {
+        for ending in [String(localized: "Nothing was changed."), "Nothing was changed."] where text.hasSuffix(ending) {
+            return String(text.dropLast(ending.count)).trimmingCharacters(in: .whitespaces)
+        }
+        return text
+    }
+
     /// "123 KB".
     public static func bytes(_ count: Int64) -> String {
         count.formatted(ByteCountFormatStyle(style: .file, locale: locale))

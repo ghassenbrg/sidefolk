@@ -137,6 +137,8 @@ enum UISnapshots {
             // Desktop surfaces: the Ask panel and the kinds of bubble.
             let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
             try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
+            try await page("desktop-ask-apple-notes", AskView(model: sampleAskAppleNotes(), companionName: "Mochi", portrait: portrait,
+                                                                  hotkey: "⇧⌘Space"), width: 380)
             let actions = FixtureAskActions()
             for (name, ask) in voiceAsks(actions) {
                 try await page("desktop-ask-\(name)", AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
@@ -182,7 +184,15 @@ enum UISnapshots {
 
     /// Settings › AI pages: file name, the option chosen, and the fixture state it's shown in.
     private static let aiStates: [(String, AIChoice, @MainActor (FixtureServices, SettingsModel) -> Void)] = [
-        ("codex-ready", .codex, { f, _ in f.detection = FixtureServices.sampleDetection }),
+        // The founder's setup (D36): everyday gpt-6-luna at extra high, "Think harder" gpt-6.1-sol at high.
+        ("codex-ready", .codex, { f, s in
+            f.detection = FixtureServices.sampleDetection
+            s.update { s in
+                s.provider.switchProvider(to: .codex)
+                (s.provider.model, s.provider.effort) = ("gpt-6-luna", ReasoningEffort.xhigh.rawValue)
+                (s.provider.smartModel, s.provider.smartEffort) = ("gpt-6.1-sol", ReasoningEffort.high.rawValue)
+            }
+        }),
         ("codex-signed-out", .codex, { f, _ in f.detection.codex = .ready(path: "/usr/local/bin/codex", version: "0.160.0", login: .signedOut) }),
         ("codex-not-found", .codex, { f, _ in f.detection.codex = .notFound }),
         ("claude-code", .claudeCode, { f, _ in f.detection = FixtureServices.sampleDetection }),
@@ -251,6 +261,24 @@ enum UISnapshots {
                                           risk: .medium, caller: .agent(runId: "r"),
                                           details: .paths(["~/Downloads/a.pdf", "~/Downloads/b.pdf", "~/Downloads/c.pdf"]),
                                           canAlways: false)))
+        return ask
+    }
+
+    /// Organizing Apple Notes (D38): a batch copied, macOS refusing Reminders, the next read waiting.
+    private static func sampleAskAppleNotes() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .note, title: String(localized: "Copied 25 notes from Apple Notes"), subtitle: "Cooking, Travel, Work",
+                                   detail: String(localized: "\(75) of \(214) copied so far"), itemKind: .note), activityId: nil, undo: true),
+                caption: "check my Apple Notes and move them, well organized, into our notebook")
+        ask.add(.result(MacApp.reminders.permissionCard, activityId: nil, undo: false), caption: "what's on my Apple Reminders?")
+        ask.add(.approval(ApprovalRequest(tool: "applenotes.list", title: String(localized: "List Apple Notes"),
+                                          summary: "Read the titles, folders and dates of up to 50 notes in “Recipes” in Apple Notes",
+                                          risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: true, readsOnly: true)))
+        ask.add(.approval(ApprovalRequest(tool: "applenotes.remove", title: String(localized: "Remove notes from Apple Notes"),
+                                          summary: "Move 2 notes in Apple Notes to Recently Deleted", risk: .high, caller: .agent(runId: "r"),
+                                          details: .text("“Pasta carbonara” (iCloud › Recipes)\n“Sourdough” (iCloud › Recipes)\n\n"
+                                                         + "Their copies stay in your notebook. Notes keeps deleted notes in Recently Deleted for 30 days."),
+                                          canAlways: false, tainted: true)))
         return ask
     }
 

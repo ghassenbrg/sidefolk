@@ -106,6 +106,29 @@ import Testing
         #expect(ProcessAncestry.parent(of: getpid()) == getppid())
     }
 
+    @Test func windowlessAppsAreClimbedPast() throws {
+        // Claude's desktop app runs Claude Code from a background-only claude.app; "Open" must
+        // bring the desktop app forward, not the binary it can't activate.
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hosts-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        func app(_ name: String, _ id: String, background: Bool = false) throws -> String {
+            let contents = root.appendingPathComponent("\(name).app/Contents")
+            try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+            var info: [String: Any] = ["CFBundleIdentifier": id, "CFBundlePackageType": "APPL"]
+            if background { info["LSBackgroundOnly"] = true }
+            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+                .write(to: contents.appendingPathComponent("Info.plist"))
+            return root.appendingPathComponent("\(name).app").path
+        }
+        let cli = try app("claude", "com.example.cli", background: true), desk = try app("Desk", "com.example.desk")
+        let paths: [pid_t: String] = [30: cli + "/Contents/MacOS/claude", 20: desk + "/Contents/Helpers/disclaimer", 10: desk + "/Contents/MacOS/Desk"]
+        let parents: [pid_t: pid_t] = [30: 20, 20: 10, 10: 1]
+        let host = ProcessAncestry.host(startingAt: 30, environment: [:], path: { paths[$0] }, parent: { parents[$0] })
+        #expect(host == HostApp(bundleId: "com.example.desk", pid: 10))
+        #expect(!ProcessAncestry.showsWindows(cli))
+        #expect(ProcessAncestry.showsWindows(desk))
+    }
+
     @Test func hookForwardsToTheApp() async throws {
         let h = try BridgeHarness().start()
         defer { h.stop() }

@@ -138,8 +138,11 @@ final class FixtureServices: AppServices {
 
     static let sampleDetection = ProviderDetection(
         claude: .ready(path: NSHomeDirectory() + "/.local/bin/claude", version: "2.1.12", login: nil),
+        claudeEfforts: [.low, .medium, .high, .xhigh, .max],
         codex: .ready(path: "/usr/local/bin/codex", version: "0.160.0", login: .chatGPT),
-        codexModels: ["gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.5"].map { ModelOption(id: $0) },
+        codexModels: ["gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna"].map { ModelOption(id: $0, efforts: [.low, .medium, .high, .xhigh, .max],
+                                                                                  defaultEffort: .medium) }
+            + [ModelOption(id: "gpt-5.5", efforts: [.low, .medium, .high, .xhigh], defaultEffort: .medium)],
         ollama: .running(models: [ModelOption(id: "qwen3:8b", usesTools: true), ModelOption(id: "llama3.1:8b", usesTools: true),
                                   ModelOption(id: "gemma3:4b", usesTools: false), ModelOption(id: "glm-5.2:cloud", usesTools: true, cloud: true)]),
         lmStudio: .notInstalled)

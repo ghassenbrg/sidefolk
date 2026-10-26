@@ -455,6 +455,7 @@ struct AgentsGroup: View {
         AgentCard(
             name: "Claude Code",
             symbol: "sparkle",
+            logo: .claudeCode,
             status: !s.claudeCodeFound ? String(localized: "Not installed")
                 : s.claudeMCPInstalled ? (s.claudeHooksInstalled ? String(localized: "Connected, with session taps") : String(localized: "Connected"))
                 : String(localized: "Not connected"),
@@ -515,6 +516,8 @@ struct AgentsGroup: View {
 private struct AgentCard<Extra: View>: View {
     var name: String
     var symbol: String
+    /// The agent's own logo where Simple Icons has one; the symbol otherwise (D36).
+    var logo: ProviderLogo? = nil
     var status: String
     var connected: Bool
     var found: Bool
@@ -527,7 +530,7 @@ private struct AgentCard<Extra: View>: View {
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
             // Each agent its own mark on Byte's colour (agents are Byte's job); one Byte per card read as three.
-            IconTile(symbol: symbol, folk: "byte", size: 32)
+            IconTile(symbol: symbol, folk: "byte", size: 32, logo: logo)
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     Text(name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)

@@ -2,7 +2,7 @@
   "id": "dev.sidefolk.system-vitals",
   "name": "System Vitals",
   "version": "1.0.0",
-  "sidefolk": ">=1.0",
+  "sidefolk": ">=0.1",
   "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
   "folk": "byte",
   "author": "Sidefolk",

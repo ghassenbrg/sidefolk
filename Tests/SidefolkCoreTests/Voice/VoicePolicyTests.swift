@@ -105,7 +105,7 @@ import Testing
         #expect(!typed.sections.contains("spoken"))
         let spoken = await f.builder.build(text: "what's next?", attachment: nil, threadId: nil, thinkHarder: false, spoken: true,
                                            settings: AppSettings())
-        #expect(spoken.sections.prefix(4) == ["persona", "rules", "environment", "spoken"])
+        #expect(spoken.sections.prefix(5) == ["persona", "rules", "reach", "environment", "spoken"])
         #expect(spoken.system.contains("# Spoken request"))
         #expect(spoken.system.contains("first sentence will be read aloud"))
     }

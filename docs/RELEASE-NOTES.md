@@ -1,4 +1,4 @@
-# Sidefolk 1.0.0 — release notes
+# Sidefolk 0.1.0 — release notes
 
 The first version of Sidefolk: a friendly AI companion that lives on your Mac.
 

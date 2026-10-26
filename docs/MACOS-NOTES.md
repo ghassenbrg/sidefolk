@@ -226,3 +226,32 @@ VERIFIED (ran, `main.swift`):
 5. **Single instance:** dev and release builds share the socket and DB unless `SIDEFOLK_HOME` differs. Use different bundle IDs for dev (`app.sidefolk.dev`) so notification authorization and login items don't collide.
 6. **Deployment target:** set `platforms: [.macOS(.v15)]`. Swift 6.4 features whose runtime ships only with macOS 26+ will then fail availability checks instead of crashing on 15. Run the app on macOS 15 before release; nothing tonight ran there.
 7. **Strict concurrency + AppKit:** Timer, NotificationCenter and NSEvent monitor closures are `@Sendable`. Route them to MainActor methods (VERIFIED patterns above), never capture layers or views directly.
+
+## 14. Apple Events: Notes and Reminders (D38)
+
+VERIFIED (ran, no Apple Event sent):
+- `osascript -l JavaScript -` reads the script from stdin and prints the string the `run()` handler
+  returns. Its JavaScriptCore has `Proxy`, and `JSON.stringify` writes dates as ISO 8601 with
+  milliseconds. The tests run the real programs this way against a stand-in object model.
+- Property names come from the apps' own dictionaries, read from their bundles:
+  `/System/Applications/Notes.app/Contents/Resources/Notes.sdef` (account, folder with `container`,
+  note with `body` HTML, `plaintext`, `creation date`, `modification date`, `password protected`;
+  attachment with `content identifier`, the `cid:` its image has in the note's HTML) and
+  `Reminders.app/…/Reminders.sdef` (list, reminder with `completed`, `due date`, `allday due date`,
+  `priority`, `flagged`, `body`). JXA spells them camelCase (`creationDate`, `contentIdentifier`).
+- Notes' word for its Recently Deleted folder is in
+  `/System/Library/PrivateFrameworks/NotesShared.framework/Resources/Localizable.loctable` under the key
+  "Recently Deleted" (de "Zuletzt gelöscht", fr "Suppr. récentes", ja "最近削除した項目" …).
+
+UNVERIFIED (deliberately not run against the real apps: no Automation prompt, nobody's notes read):
+- Whether `folders` of an account lists nested folders too, and whether `notes` of a folder includes
+  its subfolders' notes. The index script records every folder that lists a folder and the code keeps
+  the deepest, so either answer gives the same tree (tested with the stand-in both ways).
+- That scripting shows Recently Deleted as a folder and that `delete` moves a note there. Removing is
+  refused in an account where that folder isn't found, and a note is reported as moved only when it is
+  seen there afterwards.
+- That macOS attributes the child `osascript`'s Apple Events to Sidefolk (the responsible process), so
+  the prompt names Sidefolk and the switch sits under Sidefolk in Privacy & Security › Automation.
+- That the hardened runtime needs `com.apple.security.automation.apple-events` for events sent by a child
+  (it does for the app's own); the entitlement is in `Resources/Sidefolk.entitlements` either way.
+

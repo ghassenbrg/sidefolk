@@ -88,7 +88,9 @@ public struct PermissionEngine: Sendable {
             }
             return .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
-                details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted
+                details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted,
+                // An extension's own word that it changes nothing isn't enough to say so on the card.
+                readsOnly: !spec.mutates && spec.capabilities.isDisjoint(with: [.network, .apps, .shell, .extensions])
             ))
         case .high:
             // Only an exact command may be granted "always"; everything else is asked every time.
@@ -173,6 +175,7 @@ public struct PermissionEngine: Sendable {
         case .system: String(localized: "System information")
         case .filesRead: String(localized: "Reading files")
         case .filesWrite: String(localized: "Changing files")
+        case .macApps: String(localized: "Using Apple Notes and Reminders")
         }
     }
 }

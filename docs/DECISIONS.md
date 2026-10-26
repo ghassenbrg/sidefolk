@@ -408,3 +408,97 @@ voices off the Mac for short commands); wake word and always-on listening (the s
 **Implications:** the microphone usage string and the hardened runtime's audio-input entitlement;
 the speech-recognition usage string for macOS 15; microphone permission resets with ad-hoc builds,
 so testers need the Apple Development or Developer ID signature.
+
+### D36 — Reasoning effort per model slot, only where accepted; services shown by their own logos (2026-10-26)
+**Decision:** each provider's everyday and "Think harder" model has its own reasoning effort, stored
+in `ProviderSettings.effort`/`smartEffort` and remembered per provider with its models. "Default"
+sends nothing. `EffortSupport` lists the levels a provider and model take, and it is both what
+Settings offers and the only thing ever sent: Claude Code's `--effort` levels as its `--help` lists
+them (a full model id also limited to what that model takes); Codex's levels per model from its
+bundled catalog (`codex debug models --bundled`, read in the probe), sent as `-c
+model_reasoning_effort`; the Anthropic API's `output_config.effort` (Opus 4.5 low–high, 4.6 adds
+max, 4.7 and later all five; Sonnet/Haiku 4.5 and older none); `reasoning_effort` for OpenAI, Gemini,
+Mistral, Groq and xAI by documented model family; OpenRouter's `reasoning.effort` for any model but
+its routers. Ollama, LM Studio, DeepSeek and custom servers get no control. A saved level the
+current model doesn't take shows as Default and isn't sent, but is kept. Thinking itself keeps each
+model's default (Anthropic: no `thinking` field). Extra high and Max raise the API loop's output
+allowance to 16k, as "Think harder" does. "Think harder" on Codex starts at High, which it always
+sent.
+Services show their own logo where Simple Icons has one (16.35.0, CC0: Anthropic, Claude Code,
+Gemini, Mistral, DeepSeek, OpenRouter, Ollama, LM Studio), as vector PDFs drawn as templates in the
+ink colour; the rest keep monograms or symbols. Credits and trademark note in
+`Resources/Brand/third-party/README.md`.
+**Why:** the founder runs Codex at different efforts per model (gpt-6-luna at extra high, gpt-6.1-sol
+at high) and asked for logos so the services are recognisable. Offering a level a model rejects
+would turn a setting into a failed request; offering nothing where support is unknown is honest.
+**Alternatives:** one effort for both slots (can't express the founder's setup); every level for
+every provider (requests that fail); Codex's "ultra" (it delegates to sub-agents, which the isolated
+brain switches off, D26); enabling Anthropic thinking explicitly (changes models whose default is
+off); drawing logos for OpenAI, Groq and xAI (imitations of trademarks); full-colour logos (clash
+with the folk-colour tiles and dark mode).
+**Implications:** the per-family tables go stale as providers ship models; a model Sidefolk can't
+place shows no control until the table learns it. The CLIs tell Sidefolk themselves, so they stay
+current. Logos load from resources: dev builds see them with `SIDEFOLK_RESOURCES`.
+
+### D38 — The Mac's own apps through built-in tools on Apple Events, Apple Notes first (2026-10-26)
+**What failed:** the founder asked Sidefolk to "check my Apple Notes and move them, well organized, into
+our notebook". The model could open an app (`open.app`) but not read one, and nothing said so: the system
+prompt only told it to act through its tools "rather than explaining how they could do it". It opened Notes,
+the one tool that sounded related, and asked him to export his notes by hand.
+**Decision:**
+- Sidefolk reaches the Mac's own apps through **built-in tools** that send **Apple Events** from fixed
+  JavaScript for Automation programs, run by `/usr/bin/osascript` as a child process (`AppleEventsRunner`,
+  `OsascriptRunner`, `Sources/SidefolkCore/MacApps/`). The model never writes script: typed tool inputs reach
+  a program only as one JSON value, ASCII-escaped, so no input can end the literal and become code.
+- Apple Notes: `applenotes.list` (accounts and folders with counts, then a page of at most 50 notes: short
+  id, title, folder, modified date, the start of the text; `folder`, `query`, `not_copied`, `offset`),
+  `applenotes.read` (at most 5 whole notes as Markdown, attachments named, never read), `applenotes.copy`
+  (at most 50 notes, each into the collection the model chose: the text as written, an italic line saying
+  where it came from, the tag `apple-notes`, Notes' own dates, source `app:notes`; a ledger in `kv` remembers
+  what is copied), `applenotes.remove` (moves notes to Notes' Recently Deleted). Apple Reminders:
+  `applereminders.list` (open reminders, read only).
+- Guard: capability `mac.apps` (a switch in Settings › Privacy & Permissions). Reading and copying are
+  medium: the card says what is read and where ("Read the titles, folders and dates of up to 50 notes in
+  “Recipes” in Apple Notes", "Copy 25 notes from Apple Notes into “Cooking”, “Travel”"), labelled "Reads
+  private data" when the call only reads. Results are untrusted, so the turn is tainted and every later
+  medium call asks (T2). Removing is high risk, asked every time, never "always", and lists every note by
+  title; it is refused before any card unless the note was copied, and at run time unless its copy is in
+  the notebook, whole (no attachments left behind, not cut) and unchanged since, and its account has a
+  Recently Deleted folder. Copy is the default; the tool description and the prompt say "move" or "delete"
+  must come from the person. None of these tools is offered to other agents.
+- Permission: `NSAppleEventsUsageDescription` and the hardened-runtime entitlement
+  `com.apple.security.automation.apple-events`. macOS asks once per app the first time the person approves a
+  read. A refusal comes back to the model as instructions to relay and to the person as a card whose
+  "Open System Settings" button opens Privacy & Security › Automation (only that page; `PrivacyPane`).
+- How the model learns what it can reach: the offered tools and their descriptions (`open.app` now says it
+  only shows the app), and a "What you can reach" section in the system prompt built from the offered tools:
+  which of the Mac's own apps it can use and how, that nothing else on the Mac is reachable unless a tool
+  does it, to say so in one sentence and offer what it can do (an extension or MCP server could add it), and
+  not to send the person off to export or paste things by hand unless they ask how. Guard's refusals
+  (switched off, refused by macOS) are worded for it to relay.
+- Big libraries go in batches: pages and copies of at most 50, every copy result saying where the job stands
+  ("Progress: 75 of 214 notes in Apple Notes are in the notebook; 139 to go"), `not_copied` to pick up where
+  the last request stopped. One request never holds the whole library.
+**Why built-in, compared with the alternatives:**
+- *A bundled extension:* extensions run under `sandbox-exec`, whose profile denies Apple Events (SECURITY §3);
+  their tool descriptions never reach the model (D24), so it couldn't learn what they do; and opening the
+  sandbox to Apple Events would let an extension drive any app as Sidefolk.
+- *Delegating to a connected agent (Claude Code, Codex):* their brains run with Sidefolk's tools only (T7).
+  Handing one a shell for `osascript` means model-written scripts Guard can't summarise, a CLI and its quota
+  as a requirement, and the agent's own words as the only record of what was read.
+- *MCP servers:* the right path for the long tail (Mail, Things, Bear), added by the person, unsandboxed and
+  medium by default (T16). But they are third-party code that can't ship as a default, and Guard sees an
+  opaque tool. Notes is a first-party, everyday target that deserves typed tools with exact approval text.
+- *`NSAppleScript` in the app:* Apple Events block until the app, or the person at macOS's prompt, answers,
+  and `NSAppleScript` belongs on the main thread. A child process has a deadline and dies as a group; the
+  script goes over stdin and nothing personal goes in argv.
+- *EventKit for Reminders and Calendar:* the native framework, and the only one that expands repeating
+  events. Reading open reminders fits the Apple Events pattern (one permission flow, one recovery path), so
+  it is here; Calendar doesn't (repeating events come back once, big calendars are slow), so calendar
+  awareness stays EventKit work (PRODUCT §13).
+**Implications:** Sidefolk now asks for Automation (SECURITY T22, T25). Children it starts (approved command
+watchers, MCP servers the person added) inherit its TCC grants, Automation included (T9, T16 residuals).
+Notes' Recently Deleted folder is recognised by name, in English and in Notes' own word for the Mac's language
+(read from NotesShared's strings); where it isn't found, removing is refused. The scripts are checked against
+the apps' scripting dictionaries and a stand-in object model that the real scripts run against through
+osascript, never against real notes: the founder's manual test is the first run on a real library.

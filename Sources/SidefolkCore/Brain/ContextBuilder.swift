@@ -76,16 +76,19 @@ public struct ContextBuilder: Sendable {
         self.timeZone = timeZone
     }
 
+    /// - Parameters:
+    ///   - spoken: said aloud with the talk key; the first sentence of the answer will be spoken (D34).
+    ///   - tools: the tools offered with this request; they decide what "What you can reach" says.
     public func build(text: String, attachment: AgentAttachment?, threadId: String?, thinkHarder: Bool, spoken: Bool = false,
-                      settings: AppSettings) async -> BuiltContext {
+                      settings: AppSettings, tools: [ToolSpec] = []) async -> BuiltContext {
         let now = clock.now
         let budget = thinkHarder ? budgets.thinkHarderSystem : budgets.system
         let frontmost = await sources.frontmostApp()
-        let core = [Self.persona(name: settings.companionName), Self.rules,
+        let core = [Self.persona(name: settings.companionName), Self.rules, Self.reach(tools),
                     Self.environment(now: now, timeZone: timeZone, settings: settings, frontmost: frontmost)]
             + (spoken ? [Self.spokenRequest] : [])
         var parts = [core.joined(separator: "\n\n")]
-        var sections = ["persona", "rules", "environment"] + (spoken ? ["spoken"] : [])
+        var sections = ["persona", "rules", "reach", "environment"] + (spoken ? ["spoken"] : [])
         var remaining = budget - parts[0].count
 
         func add(_ name: String, _ header: String, _ lines: [String], share: Double) {
@@ -170,6 +173,32 @@ public struct ContextBuilder: Sendable {
         The user said this aloud. Your first sentence will be read aloud to them: make it a short, complete answer \
         on its own, in plain words, with no links, paths or code. Details can follow on the screen.
         """
+
+    /// What the model can and can't reach on this Mac, from the tools it is offered, so it says plainly
+    /// what it can't do instead of opening an app and sending the user off to do it by hand (DECISIONS D38).
+    static func reach(_ tools: [ToolSpec]) -> String {
+        let names = Set(tools.map(\.name))
+        var apps: [String] = []
+        if names.contains("applenotes.list") {
+            apps.append("Apple Notes (list and read notes, copy them into the notebook, and move copied notes to Notes' Recently "
+                + "Deleted only when the user asked to move or delete them)")
+        }
+        if names.contains("applereminders.list") { apps.append("Apple Reminders (read open reminders)") }
+        var lines = [
+            "# What you can reach",
+            "- Only what your tools do. Opening an app only opens it or brings it forward: you can't see, read or change anything in it.",
+        ]
+        if !apps.isEmpty { lines.append("- In the Mac's own apps: " + apps.joined(separator: " and ") + ". Nothing else in them.") }
+        lines += [
+            "- Nothing else on this Mac unless one of your tools does it: not other apps' content (Mail, Messages, Calendar, Contacts, "
+                + "Photos, browsers), the screen, or online accounts.",
+            "- When a request needs something you can't reach, say so in one sentence and offer what you can do instead; an extension "
+                + "or MCP server (Settings › Extensions) could add it. Don't send the user off to export, copy or paste things by hand "
+                + "unless they ask how.",
+            "- Big jobs (many notes) go in batches: do a batch, say what's done and what's left, and continue when the user asks.",
+        ]
+        return lines.joined(separator: "\n")
+    }
 
     static func environment(now: Date, timeZone: TimeZone, settings: AppSettings, frontmost: FrontmostApp?) -> String {
         let seconds = timeZone.secondsFromGMT(for: now)
