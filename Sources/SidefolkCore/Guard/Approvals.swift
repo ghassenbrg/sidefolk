@@ -22,10 +22,12 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var canAlways: Bool
     /// The request was triggered while untrusted content was in play.
     public var tainted: Bool
+    /// The action only reads (private data such as the clipboard or Apple Notes) and sends nothing out.
+    public var readsOnly: Bool
     public var createdAt: Date
 
     public init(id: String = Identifier.make(), tool: String, title: String, summary: String, risk: Risk, caller: Caller,
-                details: Details, canAlways: Bool, tainted: Bool = false, createdAt: Date = Date()) {
+                details: Details, canAlways: Bool, tainted: Bool = false, readsOnly: Bool = false, createdAt: Date = Date()) {
         self.id = id
         self.tool = tool
         self.title = title
@@ -35,6 +37,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         self.details = details
         self.canAlways = canAlways
         self.tainted = tainted
+        self.readsOnly = readsOnly
         self.createdAt = createdAt
     }
 }

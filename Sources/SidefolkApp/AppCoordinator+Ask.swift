@@ -185,8 +185,9 @@ extension AppCoordinator: AskActions {
                 case .phase(.waitingForApproval):
                     model.phase = String(localized: "Waiting for your OK…")
                 case .toolFinished(let activity, let ok):
-                    // Read-only results feed the answer; only changes become cards (DECISIONS D5).
-                    if ok, activity.mutates, let card = activity.card {
+                    // Read-only results feed the answer; only changes become cards (DECISIONS D5), and so
+                    // does a way to the System Settings page where macOS needs the person's OK (D38).
+                    if let card = activity.card, ok ? activity.mutates : PrivacyPane.isKnown(card.url) {
                         shownCards.insert(card.title)
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
                     }
@@ -255,7 +256,7 @@ extension AppCoordinator: AskActions {
     }
 
     func open(card: ResultCard) {
-        if let url = card.url, let u = URL(string: url), ["http", "https"].contains(u.scheme?.lowercased() ?? "") {
+        if let url = card.url, let u = URL(string: url), ["http", "https"].contains(u.scheme?.lowercased() ?? "") || PrivacyPane.isKnown(url) {
             NSWorkspace.shared.open(u)
             return
         }

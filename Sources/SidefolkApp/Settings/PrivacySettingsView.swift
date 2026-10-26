@@ -16,6 +16,8 @@ struct PrivacySettingsView: View {
         (.clipboard, "Clipboard", "Reading and writing what you copied."),
         (.filesWrite, "Changing files", "Moving, renaming and creating files in your folders."),
         (.apps, "Opening apps and links", "Launching apps and opening web pages."),
+        (.macApps, "Apple Notes and Reminders",
+         "Reading them when you ask, and copying notes into the notebook. macOS asks you once for each app."),
     ]
 
     var body: some View {

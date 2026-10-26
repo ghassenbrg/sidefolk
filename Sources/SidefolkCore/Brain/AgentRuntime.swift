@@ -134,7 +134,7 @@ public actor AgentRuntime {
         let choice = try? factory.make(current.provider, thinkHarder: request.thinkHarder)
         let threadId = request.newThread ? nil : (request.threadId ?? currentThread).flatMap { isActive($0, now: clock.now) ? $0 : nil }
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
-                                        thinkHarder: request.thinkHarder, settings: current)
+                                        thinkHarder: request.thinkHarder, settings: current, tools: offeredTools())
         return ContextPreview(provider: choice?.backend.providerName ?? current.provider.kind.displayName,
                               model: choice.map { $0.model.isEmpty ? "default" : $0.model } ?? "", system: built.system,
                               messages: built.messages, tools: offeredTools().map(\.modelName), tainted: built.tainted, at: clock.now)
@@ -224,7 +224,7 @@ public actor AgentRuntime {
 
         let specs = offeredTools()
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
-                                        thinkHarder: request.thinkHarder, settings: current)
+                                        thinkHarder: request.thinkHarder, settings: current, tools: specs)
         let provider = choice.backend.providerName
         let model = choice.model.isEmpty ? "default" : choice.model
         let start = clock.now

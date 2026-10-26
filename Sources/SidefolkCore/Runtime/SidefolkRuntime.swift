@@ -34,14 +34,18 @@ public final class SidefolkRuntime: Sendable {
     public let jobTracker: JobTracker
     public let extensions: ExtensionHost
     public let skills: SkillLibrary
+    /// Which Apple Notes are already in the notebook (DECISIONS D38).
+    public let appleNotesLedger: AppleNotesLedger
     private let server: LocalAPIServer
 
     /// - Parameters:
     ///   - bundledResources: the app's Resources folder (bundled skills and sample extensions).
     ///   - extensionSecrets: environment values for an MCP server, read from the Keychain by server id.
+    ///   - appleEvents: how Notes and Reminders are reached; tests pass a fake.
     public init(paths: SidefolkPaths, db: AppDatabase, platform: any PlatformBridge, clock: any Clock = SystemClock(),
                 bundledResources: URL? = nil,
-                extensionSecrets: @escaping @Sendable (String) async -> [String: String] = { _ in [:] }) async {
+                extensionSecrets: @escaping @Sendable (String) async -> [String: String] = { _ in [:] },
+                appleEvents: any AppleEventsRunner = OsascriptRunner()) async {
         self.paths = paths
         self.db = db
         self.platform = platform
@@ -82,10 +86,12 @@ public final class SidefolkRuntime: Sendable {
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)
         skills = SkillLibrary(userDirectory: paths.skills, bundledDirectory: bundledResources?.appendingPathComponent("Skills", isDirectory: true),
                               events: events)
+        appleNotesLedger = AppleNotesLedger(db: db)
         server = LocalAPIServer(socket: paths.socket, services: BridgeServices(
             tools: gateway, tokens: tokens, sessions: sessionTracker, jobs: jobTracker, status: StatusReader(db: db)))
 
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
+        registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
         registry.register(WatchTools.make(engine: watchers))
         registry.register(AgentFacingTools.make(attention: attention))
@@ -118,6 +124,8 @@ public final class SidefolkRuntime: Sendable {
         await watchers.start()
         await sessionTracker.start()
         _ = await jobTracker.reconcile()
+        // Approval cards for removing Apple Notes name them from this, without waiting.
+        _ = try? await appleNotesLedger.load()
         await attention.restoreWaiting()
     }
 

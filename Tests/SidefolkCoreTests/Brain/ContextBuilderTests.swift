@@ -46,7 +46,7 @@ import Testing
 
         let ctx = await f.build("What ideas did I save about extensions and folk?", settings: settings)
 
-        #expect(ctx.sections == ["persona", "rules", "environment", "about", "live", "notebook", "skills"])
+        #expect(ctx.sections == ["persona", "rules", "reach", "environment", "about", "live", "notebook", "skills"])
         #expect(ctx.system.hasPrefix("You are Pip, a small companion who lives on the user's Mac desktop."))
         #expect(ctx.system.contains("- It is Wednesday 22 October 2025, 10:00 (Europe/Paris, UTC+02:00)."))
         #expect(ctx.system.contains("- \"Morning\" means 09:00, \"afternoon\" 14:00 and \"evening\" 18:00."))
@@ -90,7 +90,7 @@ import Testing
 
         #expect(ctx.system.contains("- Frontmost app: Keynote, full screen."))
         #expect(ctx.system.contains("- Quiet mode is on until 11:30: only urgent things interrupt the user."))
-        #expect(ctx.sections == ["persona", "rules", "environment"])
+        #expect(ctx.sections == ["persona", "rules", "reach", "environment"])
     }
 
     @Test func budgetDropsWhatDoesNotFit() async throws {
