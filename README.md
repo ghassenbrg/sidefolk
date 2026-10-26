@@ -62,6 +62,9 @@ make test                        # 851 tests (Swift Testing), serial: ~40 s
 make dev                         # debug app with its own data in build/dev-home (never your real data)
 swift run sidefolk-render out/   # character contact sheets for visual review
 swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # Home, Settings, Ask panel, bubbles; light and dark
+swift run SidefolkApp --ui-snapshots /tmp/sf-fr --language fr   # the same in another language
+make strings                     # collect every string people read into the catalog
+scripts/pseudo-l10n.py --language ar   # pictures in a made-up long translation (ar: right to left)
 swift scripts/dev.swift snap     # snapshot the running debug app's windows (see AGENTS.md)
 ```
 

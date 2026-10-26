@@ -13,7 +13,9 @@ found=$(mktemp -d)
 trap 'rm -rf "$found"' EXIT
 
 # Our modules must be compiled again for the compiler to report their strings; dependencies stay cached.
-find "$build" -type d \( -name 'SidefolkApp.build' -o -name 'SidefolkCore.build' -o -name 'SidefolkCharacter.build' \) \
+# A file left uncompiled would report nothing, and its strings would be marked stale. The build system
+# names the folders SidefolkApp.build or SidefolkApp-p.build (SidefolkCore-t.build), by version.
+find "$build" -type d \( -name 'SidefolkApp*.build' -o -name 'SidefolkCore*.build' -o -name 'SidefolkCharacter*.build' \) \
   -prune -exec rm -rf {} + 2>/dev/null || true
 swift build --product SidefolkApp --build-path "$build" \
   -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$found" > /dev/null

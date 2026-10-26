@@ -5,8 +5,10 @@ import SwiftUI
 
 /// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
 /// and dark, then exits:
-/// `SidefolkApp --ui-snapshots <dir>`. Lets agents (who can't see the screen) review the UI.
-/// Uses an in-memory database, a temp home and fixture services: no real data is read or touched.
+/// `SidefolkApp --ui-snapshots <dir> [--language fr]`. Lets agents (who can't see the screen) review the
+/// UI, in any language (SnapshotLanguage). Uses an in-memory database, a temp home and fixture services:
+/// no real data is read or touched. The sample notes, reminders and activity are content, so they stay
+/// English in every language.
 ///
 /// - `window-*`: the real windows, titlebar and toolbar included, as the controllers build them.
 /// - `page-*`: a page at its full height, to review everything below the fold.
@@ -16,6 +18,7 @@ enum UISnapshots {
     static func runIfRequested() {
         let args = CommandLine.arguments
         guard let flag = args.firstIndex(of: "--ui-snapshots"), flag + 1 < args.count else { return }
+        if let status = SnapshotLanguage.relaunchIfNeeded(args) { exit(status) }
         let dir = URL(fileURLWithPath: args[flag + 1], isDirectory: true)
         let app = NSApplication.shared
         // Prohibited: no Dock icon, no menu bar, never takes focus from the user.
@@ -137,7 +140,7 @@ enum UISnapshots {
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
         }
-        print("ui-snapshots: wrote \(dir.path)")
+        print("ui-snapshots: wrote \(dir.path) (\(Bundle.main.preferredLocalizations.first ?? "en"))")
     }
 
     // MARK: Fixtures
@@ -205,13 +208,13 @@ enum UISnapshots {
         }
         return [
             ("reminder", bubble(AttentionItem(level: .attention, source: "reminder", title: "Stretch", body: "You asked at 16:40.",
-                                              actions: [AttentionAction(id: "done", title: "Done", isPrimary: true),
-                                                        AttentionAction(id: "snooze", title: "In 10 min")],
+                                              actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
+                                                        AttentionAction(id: "snooze", title: String(localized: "10 min"))],
                                               refKind: "reminder", refId: "r1"))),
             ("job-failed", bubble(AttentionItem(level: .attention, source: "job", title: "npm test failed (exit 1)",
                                                 body: "FAIL src/app.test.ts\nExpected 2, received 3\nAfter 4m 12s in sidefolk",
-                                                actions: [AttentionAction(id: "copy", title: "Copy command", isPrimary: true),
-                                                          AttentionAction(id: "open", title: "Open folder")],
+                                                actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),
+                                                          AttentionAction(id: "open", title: String(localized: "Open folder"))],
                                                 refKind: "job", refId: "j1"))),
             ("question", bubble(AttentionItem(level: .attention, source: "external:codex", title: "Codex asks",
                                               body: "Deploy to staging now?",
@@ -219,13 +222,9 @@ enum UISnapshots {
                                                         AttentionAction(id: "no", title: "No")],
                                               refKind: "ask"),
                                 tail: .init(onTop: true, x: 60))),
-            ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: "That's Scout.",
-                                           body: "Scout stays out while I'm watching something for you.", refKind: "intro"))),
-            ("welcome", bubble(AttentionItem(level: .attention, source: Onboarding.source, title: "Hi, I'm Mochi.",
-                                             body: "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
-                                             actions: [AttentionAction(id: "hi", title: "Hi Mochi", isPrimary: true),
-                                                       AttentionAction(id: "skip", title: "Skip intro")],
-                                             refKind: Onboarding.welcome))),
+            ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
+                                           body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
+            ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),
         ]
     }
 

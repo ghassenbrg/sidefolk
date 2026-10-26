@@ -172,12 +172,15 @@ enum SampleData {
         let attention = AttentionStore(rt.db)
         try await attention.save(AttentionItem(
             level: .attention, source: "reminder", title: "Send the invoice to Acme.", body: "You asked yesterday, 18:20.",
-            actions: [AttentionAction(id: "done", title: "Done", isPrimary: true), AttentionAction(id: "snooze10", title: "10 min"),
-                      AttentionAction(id: "tomorrow", title: "Tomorrow")],
+            // The buttons in the app's words, as the reminder and watch notices word them.
+            actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
+                      AttentionAction(id: "snooze10", title: String(localized: "10 min")),
+                      AttentionAction(id: "tomorrow", title: String(localized: "Tomorrow"))],
             refKind: "reminder", refId: "r-acme", now: ago(8)))
         try await attention.save(AttentionItem(
             level: .attention, source: "watcher", title: "Pricing changed: Pro went from $12 to $15.",
-            actions: [AttentionAction(id: "open", title: "Open page", isPrimary: true), AttentionAction(id: "stop", title: "Stop watching")],
+            actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true),
+                      AttentionAction(id: "stop", title: String(localized: "Stop"))],
             refKind: "watcher", refId: "w-pricing", now: ago(25)))
 
         // Activity and agent runs
