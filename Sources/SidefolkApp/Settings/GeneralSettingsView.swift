@@ -39,7 +39,7 @@ struct GeneralSettingsView: View {
                 hourRow("Afternoon", hours: 12...17, key: \.afternoonHour)
                 hourRow("Evening", hours: 16...23, key: \.eveningHour)
                 SettingsToggle(title: "Morning brief",
-                               detail: "At \(TimeText.hour(model.settings.morningHour)), today's reminders, open tasks and watchers in one bubble.",
+                               detail: "At \(TimeText.hour(model.settings.morningHour)), today's reminders, open tasks and watches in one bubble.",
                                isOn: Binding(get: { model.settings.morningBrief }, set: { on in model.update { $0.morningBrief = on } }))
             }
 

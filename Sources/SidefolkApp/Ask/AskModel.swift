@@ -98,14 +98,17 @@ final class AskModel {
         return actions?.hint(for: trimmed)
     }
 
-    /// Questions and approvals stay in view (pinned first); results show the latest few.
+    /// Questions and approvals stay in view (pinned first); then the latest few results, newest first,
+    /// right under the input where the eye already is. Older ones simply drop off: this is not a chat.
     var visibleEntries: [AskEntry] {
         let pinned = entries.filter(\.isPinned)
-        let rest = entries.filter { !$0.isPinned }.suffix(Self.visibleLimit)
-        return pinned + rest
+        // A request's entries stay in their own order under its caption; whole requests go newest first.
+        var requests: [[AskEntry]] = []
+        for entry in entries.filter({ !$0.isPinned }).suffix(Self.visibleLimit) {
+            if entry.caption != nil || requests.isEmpty { requests.append([entry]) } else { requests[requests.count - 1].append(entry) }
+        }
+        return pinned + requests.reversed().flatMap { $0 }
     }
-
-    var hiddenCount: Int { max(0, entries.filter { !$0.isPinned }.count - Self.visibleLimit) }
 
     /// The agent is waiting for an answer the user can type into the input.
     var pendingQuestion: AttentionItem? {

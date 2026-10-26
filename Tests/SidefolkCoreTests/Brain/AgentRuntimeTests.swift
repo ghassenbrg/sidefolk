@@ -42,7 +42,7 @@ import Testing
 
         #expect(events.count == 2)
         let failure = try #require(events.first?.failure)
-        #expect(failure.message == "I need a brain for that.")
+        #expect(failure.message == "That needs AI, which isn't set up yet.")
         #expect(failure.recovery == "Choose Claude Code, an API key or Ollama in Settings › AI.")
         #expect(try await AgentRunStore(env.db).recent().isEmpty)
     }

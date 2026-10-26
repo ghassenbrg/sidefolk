@@ -147,4 +147,6 @@ protocol AppServices: AnyObject {
     func replayOnboarding()
     /// Opens Settings › Agents (connect Claude Code / Codex, install the sidefolk command).
     func openAgentSettings()
+    /// Opens the Ask panel with the start of a sentence typed in, for the user to finish.
+    func openAsk(prefill: String)
 }

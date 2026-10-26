@@ -41,11 +41,11 @@ public struct BrainFactory: Sendable {
 
             switch provider.kind {
             case .none:
-                throw UserFacingError("I need a brain for that.", recovery: "Choose Claude Code, an API key or Ollama in Settings › AI.")
+                throw UserFacingError("That needs AI, which isn't set up yet.", recovery: "Choose Claude Code, an API key or Ollama in Settings › AI.")
 
             case .claudeCode:
                 guard let backend = claudeCodeBackend?(provider) else {
-                    throw UserFacingError("Claude Code isn't ready to be my brain yet. Nothing was changed.",
+                    throw UserFacingError("Claude Code isn't ready to help yet. Nothing was changed.",
                                           recovery: "Check Claude Code in Settings › AI, or choose another provider.")
                 }
                 return BrainChoice(backend: backend, model: chosen)

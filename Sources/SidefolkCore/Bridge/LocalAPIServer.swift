@@ -236,7 +236,7 @@ public final class LocalAPIServer: Sendable {
             return
         }
         if case .agent(_, let token) = caller, !services.tokens.isBound(token, to: conn.id) {
-            conn.send(BridgeProtocol.failure(id: id, .unauthorized, "This Sidefolk brain run has ended."))
+            conn.send(BridgeProtocol.failure(id: id, .unauthorized, "This Sidefolk AI run has ended."))
             drop(conn)
             return
         }

@@ -127,18 +127,16 @@ struct EmptyState: View {
     }
 }
 
-/// Relative and absolute time labels in the companion's voice ("Tue 09:00", "in 12 min").
+/// Relative and absolute time labels in the companion's voice ("Tue 09:00", "in 12 min"). Clock times
+/// use the same 24-hour words as hints, cards and notifications (`TimeFormat`), so a reminder reads the
+/// same everywhere.
 enum TimeText {
     static func short(_ date: Date, now: Date = Date()) -> String {
         let cal = Calendar.current
-        let time = date.formatted(date: .omitted, time: .shortened)
-        if cal.isDate(date, inSameDayAs: now) { return "Today \(time)" }
-        if let tomorrow = cal.date(byAdding: .day, value: 1, to: now), cal.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow \(time)" }
-        if let yesterday = cal.date(byAdding: .day, value: -1, to: now), cal.isDate(date, inSameDayAs: yesterday) { return "Yesterday \(time)" }
-        if abs(date.timeIntervalSince(now)) < 6 * 86400 {
-            return date.formatted(.dateTime.weekday(.abbreviated)) + " " + time
+        if let yesterday = cal.date(byAdding: .day, value: -1, to: now), cal.isDate(date, inSameDayAs: yesterday) {
+            return "Yesterday \(TimeFormat.clock(date, calendar: cal))"
         }
-        return date.formatted(.dateTime.day().month(.abbreviated)) + " " + time
+        return TimeFormat.when(date, now: now, calendar: cal)
     }
 
     static func relative(_ date: Date, now: Date = Date()) -> String {
@@ -163,14 +161,8 @@ enum TimeText {
         return "\(m / 1440) days"
     }
 
-    /// "09:00" style clock time for an hour of the day, in the user's locale.
-    static func hour(_ hour: Int) -> String {
-        var c = DateComponents()
-        c.hour = hour
-        c.minute = 0
-        let date = Calendar.current.date(from: c) ?? Date()
-        return date.formatted(date: .omitted, time: .shortened)
-    }
+    /// "09:00" for an hour of the day.
+    static func hour(_ hour: Int) -> String { (hour < 10 ? "0" : "") + "\(hour):00" }
 }
 
 // MARK: - Window UI (Home, Settings)

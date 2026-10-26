@@ -100,14 +100,14 @@ final class Onboarding {
                           [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)])
         case .tryReminder:
             item = bubble("Give me something to remember.", "Click me or press \(coordinator.hotkeyLabel). Try a reminder: no AI needed.",
-                          [("show", "Show me", true), ("later", "Later", false)])
+                          [("show", "Show me", true), ("later", "Not now", false)])
         case .notifications:
             item = bubble("Can I use Mac notifications?", "Only when I'm hidden, you're in fullscreen, or something is urgent.",
                           [("allow", "Allow notifications", true), ("later", "Not now", false)])
         case .agents:
             item = bubble("Want a tap when your coding agents need you?",
                           "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup.",
-                          [("connect", "Connect…", true), ("later", "Later", false)])
+                          [("connect", "Connect…", true), ("later", "Not now", false)])
         case .login:
             item = bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
                           [("yes", "Start at login", true), ("no", "Not now", false)])

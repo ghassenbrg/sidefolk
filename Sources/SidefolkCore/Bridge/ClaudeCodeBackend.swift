@@ -130,7 +130,7 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
 
     private func install() async -> Result<ClaudeInstall, UserFacingError> {
         do { try PrivateDirectory.ensure(paths.brainWorkdir.path) } catch {
-            return .failure(UserFacingError("Sidefolk's brain folder isn't private.", detail: "\(error)"))
+            return .failure(UserFacingError("Sidefolk's AI folder isn't private.", detail: "\(error)"))
         }
         let env = Self.environment(base: baseEnvironment, tmp: paths.brainWorkdir.path, claudePath: claudePath)
         return await ClaudeBinary.probe(claudePath, environment: env, cwd: paths.brainWorkdir.path)
