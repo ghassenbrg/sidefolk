@@ -71,6 +71,22 @@ final class RobotRig: Figure {
     /// Nothing on the shell dangles.
     func follow(_ gesture: CharacterGesture) {}
 
+    /// One piece with no neck and rigid ear pods: antics move the body, face and arms.
+    func movers(_ part: Part) -> [Mover] {
+        switch part {
+        case .body: [Mover(layer: gesture)]
+        case .face: [Mover(layer: faceGesture)]
+        case .eyes: [Mover(layer: scan)]
+        case .armL: [Mover(layer: armL.loop, turn: -1)]
+        case .armR: [Mover(layer: armR.loop, turn: 1)]
+        case .head, .earL, .earR: []
+        }
+    }
+
+    func express(_ mood: Mood, on pose: Pose, mirrored: Bool) -> Pose {
+        Moods.apply(mood, to: pose, ink: false, scale: 1, mirrored: mirrored)
+    }
+
     func dress(_ style: CharacterStyle) {
         accent = style.color
         wearsScarf = style.accessory == .scarf
@@ -252,11 +268,10 @@ final class RobotRig: Figure {
         armL.raise(next.armL, side: -1, transit)
         armR.raise(next.armR, side: 1, transit)
 
-        let drop = next.feetDangle
-        Motion.set(footL, "transform", Motion.transform(
-            CGAffineTransform(translationX: -drop * 1.5, y: -drop * 4).rotated(by: -drop * 0.35)), transit)
-        Motion.set(footR, "transform", Motion.transform(
-            CGAffineTransform(translationX: drop * 1.5, y: -drop * 4).rotated(by: drop * 0.35)), transit)
+        Motion.set(footL, "transform", Motion.transform(Feet.transform(next, side: -1)), transit)
+        Motion.set(footR, "transform", Motion.transform(Feet.transform(next, side: 1)), transit)
+        // Sitting, the feet come forward: in front of the shell instead of under it.
+        [footL, footR].forEach { $0.zPosition = next.feetSplay > 0.5 ? 1 : 0 }
 
         let faceTransit: Transit = transit.isInstant ? .instant : .ease(0.22)
         eyeLayers[0].show(next.eyeL, faceTransit)
@@ -330,6 +345,21 @@ extension Transit {
     var isInstant: Bool {
         if case .instant = self { return true }
         return false
+    }
+
+    var isSpring: Bool {
+        if case .spring = self { return true }
+        return false
+    }
+}
+
+/// Where a foot goes for a pose: dangling when lifted, forward and apart when sitting.
+enum Feet {
+    static func transform(_ pose: Pose, side: CGFloat) -> CGAffineTransform {
+        let drop = pose.feetDangle, splay = pose.feetSplay
+        return CGAffineTransform(translationX: side * (drop * 1.5 + splay * 5), y: -drop * 4 - splay * 3)
+            .rotated(by: side * (drop * 0.35 - splay * 0.1))
+            .scaledBy(x: 1 + splay * 0.14, y: 1 + splay * 0.14)
     }
 }
 

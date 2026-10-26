@@ -7,9 +7,10 @@ import QuartzCore
 final class Appendage {
     let root: CALayer
     let sway: CALayer
-    private let trail: CALayer
+    /// One-shot follow-through; antics move it too (its model transform stays the identity).
+    let trail: CALayer
     private let art: CALayer
-    private let spec: AppendageSpec
+    let spec: AppendageSpec
     private(set) var angle: CGFloat
     /// Where it sits and how it is stretched beyond its rotation: folded back, an ear seen from the
     /// front hangs from the head's edge, shorter and a little narrower.

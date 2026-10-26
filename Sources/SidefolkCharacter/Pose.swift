@@ -26,6 +26,8 @@ struct Pose: Equatable, Sendable {
     var armL: CGFloat = 0.4
     var armR: CGFloat = 0.4
     var feetDangle: CGFloat = 0
+    /// Feet brought forward and apart, as when sitting (0 standing).
+    var feetSplay: CGFloat = 0
 
     // Light and ground.
     var earGlow: CGFloat = 0.55

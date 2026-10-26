@@ -12,10 +12,14 @@ import UniformTypeIdentifiers
 //   sidefolk-render --icon <dir>             icon-macos-1024.png, Sidefolk.iconset/ and Sidefolk.icns
 //   sidefolk-render --menu-bar <dir>         native template PNGs (1x/2x/3x) and vector PDF
 //   sidefolk-render --brand-mascot <dir>     rabbit vector marks in navy and white
-//   sidefolk-render --live <state> <secs> [<id>]
-//                                            a real window, for CPU checks ("cycle" walks every state)
+//   sidefolk-render --antics <dir> [--only <id>]
+//                                            the moments of life: a frame strip per companion and a GIF per moment
+//   sidefolk-render --live <state|cycle|demo> <secs> [<id>] [--liveliness L] [--pace n] [--backdrop] [--film dir]
+//                                            a real window, for CPU checks ("cycle" walks every state, "demo"
+//                                            plays every moment); click, stroke, drag or throw it
 
-let usage = "usage: sidefolk-render <outdir> [--only <id>] | --icon <dir> | --menu-bar <dir> | --live <state|cycle> <seconds> [<id>]"
+let usage = "usage: sidefolk-render <outdir> [--only <id>] | --icon <dir> | --menu-bar <dir> | --antics <dir> [--only <id>]"
+    + " | --live <state|cycle|demo> <seconds> [<id>] [\(LiveOptions.usage)]"
 
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
@@ -51,10 +55,16 @@ MainActor.assumeIsolated {
         } catch {
             fatalError("Menu bar asset export failed: \(error)")
         }
-    case "--live" where args.count == 3 || args.count == 4:
-        let id = args.count == 4 ? args[3] : "sidefolk"
+    case "--live" where args.count >= 3:
+        let hasId = args.count > 3 && !args[3].hasPrefix("--")
+        let id = hasId ? args[3] : "sidefolk"
         guard let species = CharacterSpecies(rawValue: id) else { print("no companion called \(id)"); exit(2) }
-        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: CharacterLook(species))
+        guard let options = LiveOptions(Array(args.dropFirst(hasId ? 4 : 3))) else { print(usage); exit(2) }
+        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: CharacterLook(species), options: options)
+    case "--antics" where args.count == 2 || (args.count == 4 && args[2] == "--only"):
+        let only = args.count == 4 ? CharacterSpecies(rawValue: args[3]) : nil
+        if args.count == 4, only == nil { print("no companion called \(args[3])"); exit(2) }
+        AnticSheets.write(to: URL(fileURLWithPath: args[1]), looks: (only.map { [$0] } ?? CharacterSpecies.allCases).map { ($0.rawValue, $0.displayName, CharacterLook($0)) })
     case let dir? where !dir.hasPrefix("-") && (args.count == 1 || (args.count == 3 && args[1] == "--only")):
         let only = args.count == 3 ? CharacterSpecies(rawValue: args[2]) : nil
         if args.count == 3, only == nil { print("no companion called \(args[2])"); exit(2) }
@@ -337,65 +347,6 @@ enum Icons {
             print("iconutil failed: \(error)")
         }
         print("wrote icon assets to \(dir.path)")
-    }
-}
-
-// MARK: Live harness
-
-@MainActor
-enum Live {
-    static func run(state name: String, seconds: Double, look: CharacterLook) {
-        let app = NSApplication.shared
-        app.setActivationPolicy(.accessory)
-        let window = NSWindow(contentRect: NSRect(x: 40, y: 40, width: 200, height: 200), styleMask: [.borderless],
-                              backing: .buffered, defer: false)
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.level = .floating
-        let view = CharacterView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
-        view.look = look
-        window.contentView = view
-        window.orderFrontRegardless()
-
-        let states = CharacterState.gallery
-        if name == "cycle" {
-            Task { @MainActor in
-                for state in states {
-                    view.state = state
-                    try? await Task.sleep(for: .seconds(1.5))
-                    print("[live] \(state.name): \(animations(in: view.layer)) animations running")
-                }
-            }
-        } else if let state = states.first(where: { $0.name == name }) {
-            view.state = state
-            // Calm states should drop to zero running animations once they settle (D20).
-            Task { @MainActor in
-                for t in stride(from: 5, to: Int(seconds), by: 5) {
-                    try? await Task.sleep(for: .seconds(5))
-                    // Finished one-shots stay attached until the next commit; only "∞" ones keep drawing.
-                    let keys = animationKeys(in: view.layer)
-                    print("[live] \(t)s: \(keys.filter { $0.hasSuffix("∞") }.count) looping \(keys.sorted())")
-                }
-            }
-        }
-        print("[live] pid \(ProcessInfo.processInfo.processIdentifier) showing \(name) for \(seconds)s")
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(seconds))
-            NSApp.terminate(nil)
-        }
-        app.run()
-    }
-
-    /// Animations attached anywhere in the tree: loops should come and go with their state.
-    static func animations(in layer: CALayer?) -> Int { animationKeys(in: layer).count }
-
-    /// Keys of every attached animation, "∞" marking the repeating ones.
-    static func animationKeys(in layer: CALayer?) -> [String] {
-        guard let layer else { return [] }
-        let own = (layer.animationKeys() ?? []).map { key in
-            layer.animation(forKey: key)?.repeatCount == .infinity ? key + "∞" : key
-        }
-        return own + (layer.sublayers ?? []).flatMap { animationKeys(in: $0) }
     }
 }
 

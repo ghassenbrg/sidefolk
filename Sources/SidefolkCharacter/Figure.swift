@@ -49,6 +49,10 @@ protocol Figure: AnyObject {
     /// Speaking: the mouth opens by `openness` (0...1) over whatever the pose shows; nil gives the
     /// pose its own mouth back.
     func talk(_ openness: CGFloat?, _ transit: Transit)
+    /// The layers an antic moves for `part` (none when the body has no such part).
+    func movers(_ part: Part) -> [Mover]
+    /// `pose` with a moment's face (and ears) on top, in this body's own strokes.
+    func express(_ mood: Mood, on pose: Pose, mirrored: Bool) -> Pose
 }
 
 extension Figure {
