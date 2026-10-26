@@ -110,6 +110,8 @@ final class AskModel {
     var voice: VoiceInput?
     /// Increments to ask the view to focus the input.
     var focusRequest = 0
+    /// The person chose to answer a question an answer ended with; the input says so until they send.
+    var replying = false
     /// A reminder waiting for its time ("When should I remind you?").
     var pendingReminderTitle: String?
     var pendingReminderImportant = false
@@ -181,6 +183,13 @@ final class AskModel {
         entries.removeAll { if case .question(let q) = $0.content { return q.id == id } else { return false } }
     }
 
+    /// An answer asked something. Replying is typing a follow-up (the recent requests go with it), but
+    /// nothing said so, so the card offers Reply and the input becomes the place for it.
+    func reply() {
+        replying = true
+        focusRequest += 1
+    }
+
     func submit(thinkHarder: Bool = false, spoken: Bool = false) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         // While the agent waits for an answer, what the user types is that answer.
@@ -190,6 +199,7 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
+        replying = false
         // Shown as the request's caption and sent with the item; the model answers in any language.
         let request = trimmed.isEmpty ? String(localized: "What should I do with this?") : trimmed
         text = ""

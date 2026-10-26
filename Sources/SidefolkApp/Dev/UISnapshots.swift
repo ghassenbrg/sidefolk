@@ -150,6 +150,7 @@ enum UISnapshots {
             let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
             let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
+                          ("desktop-ask-question", sampleAskQuestion()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess))]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
@@ -290,6 +291,15 @@ enum UISnapshots {
                                           risk: .medium, caller: .agent(runId: "r"),
                                           details: .paths(["~/Downloads/a.pdf", "~/Downloads/b.pdf", "~/Downloads/c.pdf"]),
                                           canAlways: false)))
+        return ask
+    }
+
+    /// An answer that ends with a question: Reply, then the input waits for it.
+    private static func sampleAskQuestion() -> AskModel {
+        let ask = AskModel()
+        ask.add(.answer("I copied 42 notes. Five look like they hold passwords or tokens, so I left them in Notes. Should I copy those too?",
+                        canThinkHarder: false, tainted: true), caption: "organize my Apple Notes into the notebook")
+        ask.reply()
         return ask
     }
 

@@ -154,7 +154,8 @@ struct AskView: View {
 
     private var placeholder: LocalizedStringKey {
         if model.voice != nil { return "Listening…" }
-        return model.pendingQuestion == nil ? "Ask, remind, note, watch…" : "Type your answer…"
+        if model.pendingQuestion != nil { return "Type your answer…" }
+        return model.replying ? "Type your reply…" : "Ask, remind, note, watch…"
     }
 
     private var isListening: Bool {
@@ -464,6 +465,9 @@ private struct AnswerCard: View {
                         return .systemAction
                     })
                 HStack(spacing: 6) {
+                    if asks {
+                        Button("Reply") { model.reply() }.buttonStyle(.sf(.primary))
+                    }
                     if text.count > 400 {
                         Button(expanded ? "Less" : "More") { expanded.toggle() }.buttonStyle(.sf(.secondary))
                     }
@@ -478,6 +482,12 @@ private struct AnswerCard: View {
                 }
             }
         }
+    }
+
+    /// The answer ends with a question (in any script), so the next thing to do is answer it.
+    private var asks: Bool {
+        guard let last = text.trimmingCharacters(in: .whitespacesAndNewlines).last else { return false }
+        return "?？؟".contains(last)
     }
 
     /// Inline markdown only; links are shown, remote images are never loaded.
