@@ -32,13 +32,16 @@ struct ReadoutPills: View {
 
     static let height: CGFloat = 20
     static let gap: CGFloat = 3
-    static let maxWidth: CGFloat = 180
+    /// Room for the longest value Sidefolk reports itself, "Network ↓ 1.2 MB/s ↑ 40 kB/s" while paused (180 cut it).
+    static let maxWidth: CGFloat = 240
 
     private func pill(_ r: Readout) -> some View {
         HStack(spacing: 5) {
             Text(verbatim: r.label).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            // When something must give, the name shortens before the value people came for.
             Text(verbatim: r.value).foregroundStyle(Theme.ink).fontWeight(.semibold).monospacedDigit().lineLimit(1)
                 .truncationMode(.tail)
+                .layoutPriority(1)
             if r.paused { Image(systemName: "pause.fill").imageScale(.small).foregroundStyle(Theme.inkFaint) }
         }
         .font(.system(size: 11, design: .rounded))
