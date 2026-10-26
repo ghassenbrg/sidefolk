@@ -22,7 +22,7 @@ public enum CharacterRenderer {
         return render(holder, canvas: FolkCanvas.size, size: size, scale: scale)
     }
 
-    /// The macOS app icon: a soft white tile with the companion in front and folks peeking out.
+    /// Vector fallback for the macOS app icon: a flat white tile and the companion family.
     /// Sizes of 32 px and under drop the folks so the face stays readable.
     @MainActor
     public static func appIcon(size: Int) -> CGImage {
@@ -125,19 +125,7 @@ private struct IconScene {
     init(detailed: Bool) {
         let tileRect = CGRect(x: 100, y: 100, width: 824, height: 824)
         let tilePath = Paths.roundedRect(tileRect, 185)
-        let shadow = Layers.shape(tilePath, fill: RGB.white.cg())
-        Layers.dropShadow(shadow, path: shadow.path, radius: 18, opacity: 0.28, offset: CGSize(width: 0, height: -10),
-                          color: RGB(0x0B1A33))
-        layer.addSublayer(shadow)
-        layer.addSublayer(Layers.gradient(tilePath, [RGB(0xFFFFFF), RGB(0xF4F7FC), RGB(0xE4ECF8)]))
-        let glow = CAGradientLayer()
-        glow.type = .radial
-        glow.frame = CGRect(x: 212, y: 230, width: 600, height: 520)
-        glow.colors = [Palette.lightBlue.cg(0.28), Palette.lightBlue.cg(0)]
-        glow.startPoint = CGPoint(x: 0.5, y: 0.5)
-        glow.endPoint = CGPoint(x: 1, y: 1)
-        layer.addSublayer(glow)
-        layer.addSublayer(Layers.shape(Paths.roundedRect(tileRect.insetBy(dx: 2, dy: 2), 183), stroke: RGB.white.cg(0.9), lineWidth: 3))
+        layer.addSublayer(Layers.shape(tilePath, fill: RGB.white.cg()))
 
         let character = Director(live: false)
         character.show(.idle, animated: false)

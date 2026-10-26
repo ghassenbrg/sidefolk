@@ -127,7 +127,7 @@ robot (release build, 200 pt window, `top` every 2 s): 0.0% CPU breathing and se
 swift run sidefolk-render /tmp/sheets          # states, states-small (with badges), accents, folks, gaze, hit, menubar, icon,
                                                # and companion-<id>{,-small,-hit,-poses}.png for each sprite companion
 swift run sidefolk-render Resources/Character  # refresh the committed sheets
-swift run sidefolk-render --icon Resources/Icon # icon-1024.png, Sidefolk.iconset/, Sidefolk.icns (iconutil)
+swift run sidefolk-render --icon Resources/Icon # icon-macos-1024.png, Sidefolk.iconset/, Sidefolk.icns (iconutil)
 swift run sidefolk-render --live cycle 32      # a real window; check CPU with top -pid
 swift run sidefolk-render --live idle 31 spark # the same for a sprite companion; prints looping animations
 ```

@@ -8,7 +8,12 @@ struct NowView: View {
 
     var body: some View {
         PageScroll {
-            PageTitle(title: "Now", subtitle: subtitle)
+            HStack(alignment: .center, spacing: Theme.Space.l) {
+                PageTitle(title: greeting, subtitle: subtitle)
+                if let family = BrandAsset.markColor.image {
+                    Image(nsImage: family).resizable().scaledToFit().frame(height: 72).accessibilityHidden(true)
+                }
+            }
             if model.needsYouCount > 0 { needsYou }
             // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
             if busy { running }
@@ -20,6 +25,14 @@ struct NowView: View {
     }
 
     private var busy: Bool { !model.jobs.isEmpty || !model.workingSessions.isEmpty }
+
+    private var greeting: String {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12: "Good morning"
+        case 12..<18: "Good afternoon"
+        default: "Good evening"
+        }
+    }
 
     private var subtitle: String {
         let day = Date().formatted(.dateTime.weekday(.wide).day().month(.wide))

@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "icon-source-2048.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "Sidefolk",
+    "version" : 1
+  }
+}

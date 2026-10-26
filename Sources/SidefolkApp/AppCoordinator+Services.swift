@@ -133,6 +133,6 @@ enum AlreadyRunning {
         alert.informativeText = "Look for it on your desktop or in the menu bar. This copy will close."
         alert.addButton(withTitle: "OK")
         alert.runModal()
-        NSApp.terminate(nil)
+        AppDelegate.quit(prepare: false)
     }
 }

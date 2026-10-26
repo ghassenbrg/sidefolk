@@ -98,7 +98,7 @@ final class Onboarding {
         switch step {
         case .hello:
             item = bubble("Hi, I'm \(name).", "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
-                          [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)])
+                          [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)], kind: Self.welcome)
         case .tryReminder:
             item = bubble("Give me something to remember.", "Click me or press \(coordinator.hotkeyLabel). Try a reminder: no AI needed.",
                           [("show", "Show me", true), ("later", "Not now", false)])
@@ -119,8 +119,11 @@ final class Onboarding {
         coordinator.presentLocal(item)
     }
 
-    private func bubble(_ title: String, _ body: String, _ actions: [(String, String, Bool)]) -> AttentionItem {
+    /// The first bubble, which also shows the family (BubbleView).
+    static let welcome = "welcome"
+
+    private func bubble(_ title: String, _ body: String, _ actions: [(String, String, Bool)], kind: String? = nil) -> AttentionItem {
         AttentionItem(level: .attention, source: Self.source, title: title, body: body,
-                      actions: actions.map { AttentionAction(id: $0.0, title: $0.1, isPrimary: $0.2) })
+                      actions: actions.map { AttentionAction(id: $0.0, title: $0.1, isPrimary: $0.2) }, refKind: kind)
     }
 }

@@ -65,6 +65,12 @@ protocol AskActions: AnyObject {
     func saveAnswer(_ text: String, tainted: Bool, in model: AskModel)
     func saveAsTask(_ text: String, in model: AskModel)
     func remind(_ guess: ReminderGuess, in model: AskModel)
+    /// Asks "When?" for `text` (no AI needed: the answer can be typed or tapped).
+    func askWhen(toRemind text: String, in model: AskModel)
+    /// Times to tap when Sidefolk asks "When?", from the user's own times of day.
+    func reminderTimes() -> [(label: String, date: Date)]
+    /// Sets the reminder that was waiting for its time.
+    func remindPending(at date: Date, in model: AskModel)
     func answer(question: AttentionItem, actionId: String)
     func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel)
     func retry(_ text: String, in model: AskModel)

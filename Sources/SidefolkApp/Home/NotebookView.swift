@@ -147,7 +147,7 @@ private struct ItemList: View {
         if model.items.isEmpty {
             VStack(spacing: 0) {
                 Spacer()
-                EmptyState(title: emptyTitle, message: emptyMessage, systemImage: emptySymbol)
+                EmptyState(title: emptyTitle, message: emptyMessage, systemImage: emptySymbol, folk: emptyFolk)
                 if searching, !model.everywhere {
                     Button("Search everywhere") { model.everywhere = true }
                         .buttonStyle(.sfSecondary)
@@ -213,6 +213,11 @@ private struct ItemList: View {
         if collection.kind == .profile { return "Tell me things like “I prefer short answers” and I'll keep them here." }
         if collection.kind == .inbox { return "Anything you save without saying where lands here." }
         return "Write one here, or ask me to save something to \(collection.name)."
+    }
+
+    private var emptyFolk: String {
+        if searching { return "scout" }
+        return collection.kind == .profile ? "seed" : "pip"
     }
 
     private var emptySymbol: String {

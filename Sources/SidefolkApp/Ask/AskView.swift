@@ -79,6 +79,10 @@ struct AskView: View {
                     }
                 }
             }
+            if model.pendingReminderTitle != nil, !model.busy, let actions = model.actions {
+                // Typing a time works in English; tapping works in every language.
+                WhenChips(times: actions.reminderTimes()) { date in actions.remindPending(at: date, in: model) }
+            }
             HStack(spacing: 4) {
                 Image(systemName: "return").imageScale(.small)
                 Text(hintLine)
@@ -202,6 +206,9 @@ private struct EntryView: View {
                     }
                     HStack(spacing: 6) {
                         Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary))
+                        if guess == nil {
+                            Button("Remind me…") { model.actions?.askWhen(toRemind: text, in: model) }.buttonStyle(.sf(.secondary))
+                        }
                         Button("Save as note") { model.actions?.saveAnswer(text, tainted: false, in: model) }.buttonStyle(.sf(.secondary))
                         Spacer(minLength: 0)
                         Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
@@ -344,5 +351,49 @@ extension AskModel {
         guard let lastPrompt = entries.last(where: { $0.caption != nil })?.caption else { return }
         text = lastPrompt
         submit(thinkHarder: true)
+    }
+}
+
+/// One tap for the usual answers to "When?", and a date picker for any other moment.
+private struct WhenChips: View {
+    var times: [(label: String, date: Date)]
+    var choose: (Date) -> Void
+    @State private var picking = false
+    @State private var custom = Date().addingTimeInterval(3600)
+
+    var body: some View {
+        // One row when it fits; longer languages get two.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 6) { chips(times); pick }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) { chips(Array(times.prefix(2))) }
+                HStack(spacing: 6) { chips(Array(times.dropFirst(2))); pick }
+            }
+        }
+    }
+
+    private func chips(_ times: [(label: String, date: Date)]) -> some View {
+        ForEach(times, id: \.label) { time in
+            Button(time.label) { choose(time.date) }.buttonStyle(.sf(.secondary)).fixedSize()
+                .help(TimeText.short(time.date))
+        }
+    }
+
+    private var pick: some View {
+        Button("Pick…") { picking = true }.buttonStyle(.sf(.secondary)).fixedSize()
+            .popover(isPresented: $picking, arrowEdge: .bottom) {
+                VStack(alignment: .trailing, spacing: Theme.Space.s) {
+                    DatePicker("When", selection: $custom, in: Date()..., displayedComponents: [.date, .hourAndMinute])
+                        .datePickerStyle(.graphical)
+                        .labelsHidden()
+                    Button("Remind me") {
+                        picking = false
+                        choose(custom)
+                    }
+                    .buttonStyle(.sf(.primary))
+                    .keyboardShortcut(.defaultAction)
+                }
+                .padding(Theme.Space.m)
+            }
     }
 }

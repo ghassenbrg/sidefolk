@@ -19,8 +19,9 @@ enum BrandAsset: String {
 
     var image: NSImage? {
         guard let resources = ResourceLocator.resources else { return nil }
-        let path = self == .menuBar ? "MenuBar/\(rawValue).pdf" : "Brand/\(rawValue).png"
-        guard let image = NSImage(contentsOf: resources.appendingPathComponent(path)) else { return nil }
+        // The app bundle flattens the exports into Brand/; the repository keeps them in Brand/exports/.
+        let candidates = self == .menuBar ? ["MenuBar/\(rawValue).pdf"] : ["Brand/\(rawValue).png", "Brand/exports/\(rawValue).png"]
+        guard let image = candidates.lazy.compactMap({ NSImage(contentsOf: resources.appendingPathComponent($0)) }).first else { return nil }
         if self == .menuBar {
             image.size = NSSize(width: 18, height: 18)
             image.isTemplate = true

@@ -29,6 +29,7 @@ struct GeneralSettingsView: View {
                         model.update { $0.companionName = clean }
                     }
                 }
+                LanguageRow()
             }
 
             SettingsGroup(title: "Quiet mode", footer: "While quiet, reminders still fire, but only important ones interrupt you.") {
@@ -117,5 +118,37 @@ struct SettingsPage<Content: View>: View {
 
     var body: some View {
         PageScroll(maxWidth: 600, padding: Theme.Space.xl) { content }
+    }
+}
+
+/// The language Sidefolk speaks. It follows the Mac until one is chosen; a change applies on relaunch.
+private struct LanguageRow: View {
+    @State private var chosen = AppLanguage.chosen
+    private let running = AppLanguage.current
+
+    var body: some View {
+        SettingsRow(title: "Language", detail: detail) {
+            HStack(spacing: Theme.Space.s) {
+                if (chosen ?? AppLanguage.system) != running {
+                    Button("Restart now") { AppLanguage.relaunch() }.buttonStyle(.sf(.primary))
+                }
+                Picker("Language", selection: Binding(get: { chosen ?? "" }, set: { code in
+                    chosen = code.isEmpty ? nil : code
+                    AppLanguage.chosen = chosen
+                })) {
+                    Text("Same as the Mac (\(AppLanguage.name(of: AppLanguage.system)))").tag("")
+                    Divider()
+                    ForEach(AppLanguage.supported, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
+        }
+    }
+
+    private var detail: String {
+        (chosen ?? AppLanguage.system) == running
+            ? "Typed requests are understood in English without AI; with AI, in any language."
+            : "Sidefolk switches language when it restarts."
     }
 }

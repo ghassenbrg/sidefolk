@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 //
 //   sidefolk-render <outdir>                 contact sheets: states, accents, folks, gaze, menubar, icon,
 //                                            and every sprite companion's states, badges, hit shapes and poses
-//   sidefolk-render --icon <dir>             icon-1024.png, Sidefolk.iconset/ and Sidefolk.icns
+//   sidefolk-render --icon <dir>             icon-macos-1024.png, Sidefolk.iconset/ and Sidefolk.icns
 //   sidefolk-render --menu-bar <dir>         native template PNGs (1x/2x/3x) and vector PDF
 //   sidefolk-render --live <state> <secs> [companion]
 //                                            a real window, for CPU checks ("cycle" walks every state)
@@ -262,7 +262,7 @@ enum Icons {
     /// Contact sheets and re-exports use the production artwork when run from the repository.
     /// The vector rig remains a fallback for standalone render-tool installations.
     static func image(size: Int) -> CGImage {
-        let master = URL(fileURLWithPath: "Resources/Icon/icon-1024.png")
+        let master = URL(fileURLWithPath: "Resources/Icon/icon-macos-1024.png")
         guard let source = CGImageSourceCreateWithURL(master as CFURL, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
             return CharacterRenderer.appIcon(size: size)
@@ -278,7 +278,7 @@ enum Icons {
     static func write(to dir: URL) {
         let set = dir.appendingPathComponent("Sidefolk.iconset")
         try? FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
-        save(image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
+        save(image(size: 1024), dir.appendingPathComponent("icon-macos-1024.png"))
         for points in [16, 32, 128, 256, 512] {
             save(image(size: points), set.appendingPathComponent("icon_\(points)x\(points).png"))
             save(image(size: points * 2), set.appendingPathComponent("icon_\(points)x\(points)@2x.png"))

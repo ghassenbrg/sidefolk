@@ -278,6 +278,33 @@ extension AppCoordinator: AskActions {
         runLocal(.remind(title: guess.title, when: guess.when, recurrence: guess.recurrence), caption: nil, into: model)
     }
 
+    func askWhen(toRemind text: String, in model: AskModel) {
+        let title = text.trimmingCharacters(in: .whitespacesAndNewlines).clipped(80)
+        model.pendingReminderTitle = title
+        model.pendingReminderImportant = false
+        model.add(.info("When should I remind you to “\(title)”?"), caption: nil)
+        model.focusRequest += 1
+    }
+
+    func reminderTimes() -> [(label: String, date: Date)] {
+        let settings = runtime.settings.current
+        let calendar = Calendar.autoupdatingCurrent
+        let now = Date()
+        func at(_ hour: Int, daysFromNow days: Int) -> Date? {
+            calendar.date(byAdding: .day, value: days, to: now).flatMap { calendar.date(bySettingHour: hour, minute: 0, second: 0, of: $0) }
+        }
+        var times: [(label: String, date: Date)] = [("In 1 hour", now.addingTimeInterval(3600))]
+        if let evening = at(settings.eveningHour, daysFromNow: 0), evening > now.addingTimeInterval(3600) { times.append(("This evening", evening)) }
+        if let morning = at(settings.morningHour, daysFromNow: 1) { times.append(("Tomorrow", morning)) }
+        return times
+    }
+
+    func remindPending(at date: Date, in model: AskModel) {
+        guard let title = model.pendingReminderTitle, date > Date() else { return }
+        model.pendingReminderTitle = nil
+        runLocal(.remind(title: title, when: date, recurrence: nil, important: model.pendingReminderImportant), caption: title, into: model)
+    }
+
     func answer(question: AttentionItem, actionId: String) {
         ask.removeQuestion(id: question.id)
         Task { await runtime.attention.respond(id: question.id, actionId: actionId) }

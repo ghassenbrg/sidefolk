@@ -280,6 +280,12 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command.hasPrefix("language:") {
+            let code = String(command.dropFirst(9))
+            AppLanguage.chosen = code == "system" ? nil : code
+            AppLanguage.relaunch()
+            return
+        }
         if command.hasPrefix("find:") { home.showSearch(String(command.dropFirst(5))); return }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))

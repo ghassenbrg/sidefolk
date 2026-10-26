@@ -158,14 +158,23 @@ residual channel (SECURITY T2).
 
 ### D25 — Reference-faithful production brand assets (2026-10-26)
 **Decision:** use standalone transparent artwork reconstructed from the founder's Folk Family
-reference for static logos and the macOS app icon. Preserve the original flat wordmark's letter
-silhouettes as smooth fitted Bézier outlines, with navy/aqua fills and no generated text effects.
+reference for static logos and the macOS app icon. Reconstruct the flat wordmark as hand-authored
+Bézier outlines following the reference, with navy/aqua fills and no generated text effects.
 Export a complete ICNS/iconset and native 18 pt vector menu bar template; bundle production exports
 and load them through `BrandAsset`. The menu template simplifies the companion's shell/visor/smile
 for small sizes and lets macOS tint its alpha. The live vector rig remains as specified in D2.
 **Why:** the identity must match the approved reference and work as real framework assets, rather
 than mockups, a presentation sheet, or enlarged low-resolution crops. The deterministic
 `make brand-assets` pipeline rebuilds each file from committed inputs without another model call.
+**Source correction:** the reusable app-icon source is a flat, opaque square (2048/1024 px), with a
+separate transparent artwork PNG. No bevel, raised tile, cast shadow or edge lighting is baked in.
+Only derived legacy macOS ICNS/iconset representations get a flat inset rounded mask. An Xcode
+asset catalog includes both the raw image sets and the macOS AppIcon set. The rendered-tile master
+was rejected and removed.
+**Wordmark correction:** reject the low-resolution contour trace. The canonical source is now
+`Resources/Brand/masters/wordmark.svg`, drawn as 11 named, editable filled paths. SVG, PDF, PNG and
+all logo lockups derive from that master. Color, navy and white SVGs have no embedded raster, font,
+filters, transforms or clipping masks.
 
 ### D27 — Three companions to choose from; two are sprites; the robot's light colour is the only customisation (2026-10-26)
 **Decision:** Settings › Companion offers the vector Sidefolk robot (default), Mochi and Spark, as
@@ -192,3 +201,17 @@ the sprites' mint parts (the legacy recolouring; looks painted-on on 3D renders)
 **Implications:** sprite companions have no effect marks or held props beyond what their poses show,
 and no eye tracking (they lean toward the pointer instead). A new sprite companion is a folder of
 the 16 poses plus a `CompanionChoice` case.
+
+### D28 — Ten languages for everything people read; plain-language commands stay English (2026-10-26)
+**Decision:** the interface, notices and messages ship in English, French, Spanish, German, Italian,
+Portuguese (Brazil), Japanese, Korean, Chinese (Simplified) and Arabic. Sidefolk follows the Mac's
+language and can be switched in Settings › General (it relaunches). Strings come from one String
+Catalog (`make strings`, compiled into the app by `build-app.sh`). Text written for models (tool
+results, prompts, tool descriptions) stays English. The local, no-AI understanding of typed requests
+stays English in V1; with AI configured, requests work in any language, and the buttons (Save,
+Remind me…, Watch) work in every language.
+**Why:** a companion that lives on your desktop should speak your language; the founder asked for
+it. A second rule-based parser per language would be a large, separate project (the English one is
+fuzz-tested over 600k inputs), so it is deferred rather than done badly.
+**Alternatives:** translate only the menus (half-translated apps feel broken); write parsers for two
+languages now (high effort, uneven quality).

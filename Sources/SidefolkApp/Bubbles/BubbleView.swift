@@ -24,6 +24,11 @@ struct BubbleView: View {
     var body: some View {
         if let item = model.item {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
+                // The very first hello introduces the whole family, not just the one on the desktop.
+                if item.refKind == Onboarding.welcome, model.expanded, let family = BrandAsset.markColor.image {
+                    Image(nsImage: family).resizable().scaledToFit().frame(height: 64)
+                        .frame(maxWidth: .infinity).accessibilityHidden(true)
+                }
                 HStack(alignment: .top, spacing: Theme.Space.s) {
                     // The companion's own voice needs no icon; notices from things it watches get one.
                     if item.source != Onboarding.source, item.source != AppCoordinator.ownVoice {

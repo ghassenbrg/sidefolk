@@ -38,6 +38,9 @@ if [[ -d Resources/Companions ]]; then
   mkdir -p "$APP/Contents/Resources/Companions"
   for dir in Resources/Companions/*/; do cp -R "${dir%/}" "$APP/Contents/Resources/Companions/"; done
 fi
+# One <language>.lproj per translation; macOS picks the user's language (or the one chosen in Settings).
+[[ -f Resources/Localization/Localizable.xcstrings ]] && \
+  xcrun xcstringstool compile Resources/Localization/Localizable.xcstrings --output-directory "$APP/Contents/Resources" > /dev/null
 cp THIRD_PARTY_NOTICES.md LICENSE "$APP/Contents/Resources/" 2>/dev/null || true
 [[ -d extensions ]] && cp -R extensions "$APP/Contents/Resources/Extensions"
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.

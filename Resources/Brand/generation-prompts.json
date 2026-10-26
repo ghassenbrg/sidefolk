@@ -1,7 +1,7 @@
 {
   "tool": "built-in image_gen",
   "reference": "reference/folk-family.png",
-  "note": "Generated lettering rejected. Production wordmarks are extracted from the reference and recolored flat by scripts/brand-assets.swift. Production app tile is precisely masked; marks are alpha-normalized. Menu bar is native vector geometry.",
+  "note": "Generated lettering, the contour-traced wordmark and the rendered app-icon tile were rejected. Production text now comes from the hand-authored masters/wordmark.svg, following the reference's rounded letterforms. Raw icon sources use the transparent family artwork on a flat full-bleed white square; only derived legacy macOS exports get a plain geometric mask. No rendered tile master is consumed. Marks are alpha-normalized. Menu bar is native vector geometry. Historical prompts are retained below.",
   "prompts": [
     {
       "name": "app-icon",

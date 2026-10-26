@@ -60,9 +60,10 @@ struct ActivityView: View {
                 Spacer()
                 if model.entries.isEmpty {
                     EmptyState(title: "Nothing yet", message: "Everything Sidefolk does, and who asked for it, shows up here.",
-                               systemImage: "list.bullet.rectangle")
+                               systemImage: "list.bullet.rectangle", folk: "guard")
                 } else {
-                    EmptyState(title: "Nothing to show", message: "No activity matches these filters.", systemImage: "line.3.horizontal.decrease.circle")
+                    EmptyState(title: "Nothing to show", message: "No activity matches these filters.", systemImage: "line.3.horizontal.decrease.circle",
+                               folk: "scout")
                 }
                 Spacer()
             }
