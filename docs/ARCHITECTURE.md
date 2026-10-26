@@ -179,6 +179,30 @@ provider keeps its own model when the user switches (`ProviderSettings.switchPro
 
 Each provider has a main model and an optional smart one for "Think harder" (D8).
 
+## Voice (D34)
+
+Push-to-talk in, one short spoken line out. Everything that can be tested without audio hardware is in
+core; the app holds the audio and speech frameworks.
+
+- **Core** (`Sources/SidefolkCore/Voice/`): `VoiceSettings` (in `AppSettings.voice`); `VoicePolicy`
+  (which transcripts are sent, when a reply is spoken, muted or handed to VoiceOver); `SpokenLine`
+  (the one breath said for an answer, a card or a list: no URLs, paths or code); `Sentences` and
+  `SentenceBuffer` (NLTokenizer); `SpeechOutput`, the protocol every voice engine implements (text in,
+  `VoiceAudio` pieces out); `SpeechPlayer`, the playback queue over an `AudioSink` (sentence by
+  sentence, instant `stop()`, levels for the mouth); `ElevenLabs` (voices, models, streamed PCM).
+- **App** (`Sources/SidefolkApp/Voice/`): `VoiceController` runs a turn: the talk key or a held
+  companion → `MicrophoneCapture` (AVAudioEngine tap, built-in microphone preferred, rebuilt on
+  hardware changes) → a `SpeechRecognizer` (`AnalyzerRecognizer` on macOS 26+, `BasicRecognizer`
+  before) whose partial words fill the Ask box → release → `AskModel.submit(spoken:)`, the normal
+  pipeline. Replies come back through `VoiceController.reply`, which applies `VoicePolicy` and plays
+  through `AudioPlayer` (an `AudioSink`) with `AppleVoice` or `ElevenLabsVoice`. The companion's pose
+  follows `CompanionMood.hearing`/`transcribing`, its mouth the player's levels.
+- **Dev paths** (debug builds): `SidefolkApp --voice-transcribe <audio file>` runs a file through the
+  same recognizer and conversion as the microphone and prints what releasing would send;
+  `--voice-say "<answer>" <out.caf>` writes the spoken line to a file through the real queue;
+  `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
+  plays a file into a running debug app as if the talk key were held.
+
 ## Extension protocol (summary; full guide in docs/EXTENSIONS.md)
 
 Folder with `sidefolk-extension.json`:
