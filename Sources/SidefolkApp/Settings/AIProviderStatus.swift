@@ -55,7 +55,23 @@ extension AIChoice {
         }
     }
 
-    /// Initials for the option's tile: never a company's logo.
+    /// The service's own logo, where Simple Icons has one (D36). OpenAI (and so Codex), Groq and xAI
+    /// aren't there, and Sidefolk doesn't draw imitations: they keep their initials.
+    var logo: ProviderLogo? {
+        switch self {
+        case .claudeCode: .claudeCode
+        case .anthropic: .anthropic
+        case .preset(.gemini): .gemini
+        case .preset(.mistral): .mistral
+        case .preset(.deepSeek): .deepSeek
+        case .preset(.openRouter): .openRouter
+        case .preset(.ollama): .ollama
+        case .preset(.lmStudio): .lmStudio
+        default: nil
+        }
+    }
+
+    /// Initials for the option's tile when it has no logo, or while the logos can't be loaded.
     var monogram: String {
         switch self {
         case .none: ""

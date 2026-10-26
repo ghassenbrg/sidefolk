@@ -141,7 +141,8 @@ private struct Radio: View {
     }
 }
 
-/// Initials (or a symbol) on a tile in the group's folk color: never a company's logo.
+/// The service's logo in the ink colour (D36), or initials or a symbol where there is none, on a tile
+/// in the group's folk color.
 private struct ProviderTile: View {
     var option: AIChoice
 
@@ -150,7 +151,10 @@ private struct ProviderTile: View {
             .fill(Theme.folkColor(option.folk).opacity(0.24))
             .frame(width: 28, height: 28)
             .overlay {
-                if let symbol = option.symbol {
+                if let image = option.logo?.image {
+                    // A little wider than tall, so wide marks (Claude Code's) aren't smaller than square ones.
+                    Image(nsImage: image).renderingMode(.template).resizable().scaledToFit().frame(width: 17, height: 15)
+                } else if let symbol = option.symbol {
                     Image(systemName: symbol).font(.system(size: 13, weight: .medium))
                 } else {
                     Text(option.monogram).font(.system(size: 11.5, weight: .bold, design: .rounded))
