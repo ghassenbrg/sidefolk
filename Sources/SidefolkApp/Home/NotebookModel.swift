@@ -54,6 +54,10 @@ final class NotebookModel {
     var query = "" {
         didSet { if query != oldValue { scheduleItemsReload(delay: .milliseconds(200)) } }
     }
+    /// A search looks in every collection instead of only the open one.
+    var everywhere = false {
+        didSet { if everywhere != oldValue, !query.trimmingCharacters(in: .whitespaces).isEmpty { scheduleItemsReload() } }
+    }
 
     private(set) var selectedId: String?
     /// The selected item as edited; written back when editing pauses, the selection changes or the window closes.
@@ -105,6 +109,8 @@ final class NotebookModel {
         counts = Dictionary(grouping: live, by: \.collectionId).mapValues(\.count)
     }
 
+    func collectionName(_ id: String) -> String? { (collections + archived).first { $0.id == id }?.name }
+
     /// "About you" is part of the Notebook from day one (DECISIONS D6).
     private func ensureProfile() async {
         let all = (try? await store.collections(includeArchived: true)) ?? []
@@ -122,7 +128,7 @@ final class NotebookModel {
         if q.isEmpty {
             items = (try? await store.items(collectionId: collectionId, kinds: kinds, limit: 1000)) ?? []
         } else {
-            items = (try? await store.search(q, collectionId: collectionId, kinds: kinds, limit: 200)) ?? []
+            items = (try? await store.search(q, collectionId: everywhere ? nil : collectionId, kinds: kinds, limit: 200)) ?? []
         }
         if let selectedId, !items.contains(where: { $0.id == selectedId }), draft?.collectionId != collectionId {
             select(nil)

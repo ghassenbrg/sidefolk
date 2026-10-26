@@ -37,6 +37,19 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
 
     func close() { window?.performClose(nil) }
 
+    #if DEBUG
+    /// Dev channel: the Notebook with a search across every collection.
+    func showSearch(_ query: String) {
+        Task {
+            await model.showNotebook()
+            try? await Task.sleep(for: .milliseconds(300)) // after the page has opened (opening clears the search)
+            model.notebook.everywhere = true
+            model.notebook.query = query
+        }
+        present()
+    }
+    #endif
+
     private func present() {
         let window = self.window ?? makeWindow()
         self.window = window

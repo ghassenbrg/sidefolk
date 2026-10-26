@@ -277,6 +277,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command.hasPrefix("find:") { home.showSearch(String(command.dropFirst(5))); return }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
             if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
