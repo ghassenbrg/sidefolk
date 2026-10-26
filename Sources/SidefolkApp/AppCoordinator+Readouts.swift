@@ -16,14 +16,16 @@ extension AppCoordinator {
         }
     }
 
-    /// Reports came, went, paused or resumed: ask the engine which are live.
+    /// Watchers came, went, paused or resumed: ask the engine which reports are live, and what the parser may stop.
     func refreshReadouts() {
         readoutTask?.cancel()
         readoutTask = Task { [weak self] in
             guard let engine = self?.runtime.watchers else { return }
-            let live = await engine.list().filter { $0.mode == .report && ($0.state == .active || $0.state == .paused) }
+            let all = await engine.list()
+            let live = all.filter { $0.mode == .report && ($0.state == .active || $0.state == .paused) }
             let latest = await engine.latestReadings()
             guard let self, !Task.isCancelled else { return }
+            knownWatches = all.filter { $0.state != .triggered && $0.state != .expired }.map(WatchName.init)
             reports = live.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
             let ids = Set(live.map(\.id))
             readings = readings.filter { ids.contains($0.key) }

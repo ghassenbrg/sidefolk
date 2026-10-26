@@ -506,9 +506,7 @@ private struct ReportRow: View {
 
     private var meta: String {
         let schedule = Describe.reportSchedule(report)
-        guard report.state != .paused else { return String(localized: "Paused · \(schedule)", comment: "“Paused · Every 10 s · stops 11:00”") }
-        guard let at = reading?.at else { return schedule }
-        return [schedule, String(localized: "read \(TimeText.relative(at))", comment: "“read 5 s ago”")].joined(separator: " · ")
+        return report.state == .paused ? String(localized: "Paused · \(schedule)", comment: "“Paused · Every 10 s · stops 11:00”") : schedule
     }
 }
 

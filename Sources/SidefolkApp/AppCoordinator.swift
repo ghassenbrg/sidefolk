@@ -32,6 +32,8 @@ final class AppCoordinator {
     private lazy var about = AboutWindowController()
     /// Collection names for the intent parser ("ideas for Sidefolk").
     var knownCollections: [String] = []
+    /// What is watched or reported, so "stop the Fukuoka temperature" can be understood without AI.
+    var knownWatches: [WatchName] = []
     private var moodTimer: Task<Void, Never>?
     private var eventTask: Task<Void, Never>?
     /// Live reports and their latest values (AppCoordinator+Readouts).

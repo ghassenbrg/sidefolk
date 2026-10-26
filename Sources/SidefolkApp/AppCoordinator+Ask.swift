@@ -39,7 +39,8 @@ extension AppCoordinator: AskActions {
             }
             return String(localized: "Reminder · \(TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent)) · no AI")
         }
-        if let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections) {
+        if let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
+                                           watching: knownWatches) {
             return parsed.hint
         }
         return runtime.settings.current.provider.kind == .none ? String(localized: "Needs AI — not set up yet")
@@ -92,7 +93,8 @@ extension AppCoordinator: AskActions {
         // Plain-language intents complete locally, instantly, without AI (DECISIONS D4). Words typed
         // with a dropped item are understood too; the item rides along as the note or reminder detail.
         if !thinkHarder,
-           let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections) {
+           let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
+                                                   watching: knownWatches) {
             runLocal(Self.withAttachment(parsed.intent, attachment), caption: text, into: model)
             return
         }

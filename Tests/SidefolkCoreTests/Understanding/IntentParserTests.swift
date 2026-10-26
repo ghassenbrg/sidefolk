@@ -122,6 +122,9 @@ import Testing
     }
 
     @Test func schedulesTooFineOrVagueForAReminderAreLeftToTheAI() {
+        // An end that has passed (or comes before the first time) is not asked about with the repeat in the title.
+        #expect(parse("remind me every 10 minutes until 9am to drink water") == nil)
+        #expect(parse("remind me every 10 minutes until 10:05 to drink water") == nil)
         #expect(parse("remind me every 30 seconds to blink") == nil)
         #expect(parse("remind me every few minutes to stretch") == nil)
         #expect(parse("remind me to blink every 10s") == nil)
