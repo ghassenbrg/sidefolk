@@ -121,8 +121,9 @@ struct WatchReportTool: Tool {
                 "notify": Schema.boolean("true only when the user asked for a notification each time; otherwise the value just updates in place."),
                 "title": Schema.string("Short name (optional), like \"CPU\" or \"Temperature in Fukuoka\"."),
             ], required: ["source"]),
-            // Not offered to other agents (ExternalToolPolicy): a web value would let them read pages through Sidefolk (T4).
-            risk: .low, capabilities: [.watch, .network], category: .watch, mutates: true, external: false)
+            // Other agents get this Mac's metrics only (ExternalToolPolicy): a web value would let them read pages
+            // through Sidefolk (T4).
+            risk: .low, capabilities: [.watch, .network], category: .watch, mutates: true, external: true)
     }
 
     func summary(for input: JSONValue) -> String {

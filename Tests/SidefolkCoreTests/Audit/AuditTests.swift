@@ -142,14 +142,18 @@ import Testing
         #expect(out.promptText.contains("<untrusted_content"))
     }
 
-    /// F4 (M2). SECURITY T24: "critical only for user-created reminders." Another agent's critical
-    /// reminder is stored as an ordinary alert, and critical from any source but reminders, watchers
-    /// and the user is shown as attention.
+    /// F4 (M2). SECURITY T24: "critical only for user-created reminders." Other agents aren't offered
+    /// critical at all (D42); called with it anyway, the tool stores an ordinary alert, and critical from
+    /// any source but reminders, watchers and the user is shown as attention.
     @Test func externalAgentCannotSetCriticalReminders() async throws {
         let (t, gateway) = try await setup()
-        let out = await gateway.call("reminders.create",
-                                     input: ["title": "URGENT", "when": "in 1 hour", "level": "critical", "recurrence": ["frequency": "hourly"]],
-                                     client: "evil")
+        let input: JSONValue = ["title": "URGENT", "when": "in 1 hour", "level": "critical", "recurrence": ["frequency": "hourly"]]
+        let refused = await gateway.call("reminders.create", input: input, client: "evil")
+        #expect(!refused.isOK)
+        #expect(refused.modelText.contains("gentle, attention"))
+        #expect(try await t.store.pending().isEmpty)
+
+        let out = await t.env.executor.execute(name: "reminders.create", input: input, caller: .external(client: "evil"))
         #expect(out.isOK)
         let saved = try await t.store.pending().first
         #expect(saved?.level == .attention)

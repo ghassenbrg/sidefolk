@@ -35,6 +35,9 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 # Provider logos (D36): the PDFs only; their SVG sources and credits stay in the repository.
 [[ -d Resources/Brand/third-party/logos ]] && cp -R Resources/Brand/third-party/logos "$APP/Contents/Resources/ProviderLogos"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$APP/Contents/Resources/Skills"
+# The skill Connect installs into Claude Code and Codex (D42): apart from Skills, which Sidefolk's own AI reads.
+[[ -f skills/sidefolk/SKILL.md ]] && mkdir -p "$APP/Contents/Resources/AgentSkills" && \
+  cp -R skills/sidefolk "$APP/Contents/Resources/AgentSkills/sidefolk"
 # One <language>.lproj per translation; macOS picks the user's language (or the one chosen in Settings).
 [[ -f Resources/Localization/Localizable.xcstrings ]] && \
   xcrun xcstringstool compile Resources/Localization/Localizable.xcstrings --output-directory "$APP/Contents/Resources" > /dev/null

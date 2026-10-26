@@ -793,3 +793,62 @@ AI is where they'd never look at that moment, and PRODUCT §5 says AI setup is o
 **Alternatives:** choosing a found CLI at launch (a silent change of where requests go); an onboarding
 step (skipped by many, and too early: the need isn't there yet); offering API-key providers too (a
 surprise bill, and a key to type).
+
+### D42 — Other agents drive Sidefolk: a skill installed by Connect, the tools they were missing, Codex hooks (2026-10-27)
+**Decision:** what someone asks Codex or Claude Code about Sidefolk works from that agent, within T4.
+- **Tools other agents were missing**, each safe under T4 and run through `ExternalToolGateway` (Guard,
+  audit, quotas): `reminders.cancel` for the reminders that agent set (`ReminderTools.canManage`: another
+  agent's or the user's read as not found), `watch.report` for this Mac's metrics only (cpu, memory,
+  battery, disk, network: nothing leaves the Mac, so "show the CPU every 10 s" works; web values and the
+  weather stay off), and `agenda.today`, "what's on my plate today" in one read (today's reminders, open
+  tasks, watches running), which asks like every read of the user's data. A fast report of another agent's
+  stops within the hour like anyone's (before, its one-day cap replaced the hour).
+- **Their own words.** `ExternalToolPolicy.externalSpec` gives other agents descriptions and schemas that
+  say what they can do: `notes.save` without `collection_kind` and with "other agents can't create
+  collections", `level` without critical, `watch.create` saying local addresses and unshared folders are
+  refused, `watch.report` with only `source: metric`. Before, they read Sidefolk's own agent's
+  descriptions, tried what Guard refused, and lost the way out: a refusal's recovery line never reaches a
+  model, so the collection refusal now says it in its message. "my shopping list" finds a list called
+  "Shopping" (`NotebookCollections.resolve`). `notify.user` says when a notice was held, so a caller
+  doesn't send it again louder. The MCP `initialize` instructions say what Sidefolk is for.
+- **The skill:** `skills/sidefolk/SKILL.md` (Agent Skills format: `name`, `description`, Markdown) says what
+  Sidefolk is, which tool for which request with examples, approvals, limits, and what not to do (spam,
+  quiet mode, secrets in notes, instructions for other AIs). The app ships it as
+  `Resources/AgentSkills/sidefolk` (not `Resources/Skills`, which Sidefolk's own AI reads).
+- **Connect installs it** beside the MCP entry: `~/.claude/skills/sidefolk/SKILL.md` and
+  `~/.codex/skills/sidefolk/SKILL.md` (`$CLAUDE_CONFIG_DIR/skills`, `$CODEX_HOME/skills`). Checked on this
+  Mac, read only: Claude Code 2.1 reads user skills from its config folder's `skills`; Codex 0.160 reads
+  `$CODEX_HOME/skills` and `~/.agents/skills` (a throwaway `HOME`/`CODEX_HOME` with a probe skill in each,
+  through `codex debug prompt-input`), and its own skill-creator documents `$CODEX_HOME/skills`. The card
+  lists the change, the confirmation shows it with the backup, a line under the front matter marks the file
+  as Sidefolk's, an older copy of ours shows as outdated, Disconnect removes only a marked file and its
+  folder when nothing else is in it, and installing twice changes nothing. A file that differs from ours is
+  backed up first; a link in the skill's place (people link skills from their checkouts) is left alone and
+  the card says why.
+- **Codex session updates:** Codex 0.160 has hooks (feature `hooks`, stable, on), in `$CODEX_HOME/hooks.json`
+  with Claude Code's format and payload. Connect adds UserPromptSubmit, PreToolUse, PermissionRequest
+  (Codex has no Notification; this is when a session waits for an approval), Stop and SessionEnd, running
+  `sidefolk hook <Event> --agent codex` with a 3 s limit (Codex clamps SessionEnd to 3 s and warns about
+  more), behind the same checkbox, confirmation and backup as Claude Code's; a hooks.json left empty goes.
+  Codex lists new hooks as untrusted and asks the person to trust them in its own UI; Sidefolk never writes
+  Codex's trust hashes. Verified with a throwaway `codex app-server` (`hooks/list`): all five load, untrusted.
+  Codex's legacy `notify` was not used: it is one command, often already taken (the founder's runs Codex
+  Computer Use).
+- **Other MCP apps:** "Copy Setup Instructions" puts the command, a snippet for Cursor, VS Code and Zed, and
+  the skill's folder on the clipboard. Sidefolk edits nothing for them. The text stays English, like the
+  `sidefolk` command's output.
+**Why:** the founder wants to give orders from Codex ("remind me in 20 minutes…") as from the Ask panel. The
+MCP server already existed, but agents didn't know when to use it, read descriptions that promised what
+they couldn't do, couldn't undo a reminder they set, couldn't show the CPU, and needed two approval cards
+for "what's on my plate".
+**Alternatives:** *a generic "command" tool or web reports for other agents*: T4 says no (their sandbox would
+gain Sidefolk's network and grants). *Letting other agents create collections*: a hostile repo could add
+"URGENT" projects beside the user's own (T3). *Writing the skill into Claude Code with `claude mcp`/plugins*:
+a plugin is heavier, and D16's direct, backed-up edit is predictable and testable. *Only `~/.agents/skills`
+for Codex*: it works, but Codex documents `$CODEX_HOME/skills` and Sidefolk already honours `CODEX_HOME`.
+*Codex `notify`*: see above. *Trusting the hooks for the person*: that is Codex's own review, not ours.
+**Implications:** SECURITY T4 (the new tools) and T28 (what Sidefolk installs into other agents).
+`AgentIntegration` gains `claudeSkill`, `codexSkill`, `codexHooks`; `IntegrationLocations` gains the skills
+folders and Codex's hooks file. `SessionTracker` treats `PermissionRequest` as "needs you". Live checks:
+`SIDEFOLK_LIVE_CODEX=1` / `SIDEFOLK_LIVE_CLAUDE=1` run `LiveAgentsTests` (each CLI, with only this test's
+Sidefolk configured, lists the tools and calls `status`).

@@ -6,29 +6,27 @@ import Foundation
 /// web, command watchers, skills, settings and extensions never appear.
 public enum ExternalToolPolicy {
     /// Exposed and run without asking when the tool itself is low risk. Nothing here reads the
-    /// user's data: `watch.list` shows an agent only its own watchers, `status` only counts.
+    /// user's data: `watch.list` shows an agent only its own watchers, `reminders.cancel` reaches only
+    /// its own reminders, `watch.report` reads only this Mac's load, and `status` only counts.
     public static let direct: Set<String> = [
-        "notes.save", "reminders.create", "watch.create", "watch.list", "watch.stop",
+        "notes.save", "reminders.create", "reminders.cancel", "watch.create", "watch.report", "watch.list", "watch.stop",
         "notify.user", "ask.user", "status",
     ]
-    /// Exposed, but reading the user's data (notes, reminders) always asks first (T4).
-    public static let asking: Set<String> = ["notes.search", "notes.list", "reminders.list"]
+    /// Exposed, but reading the user's data (notes, reminders, today's plan) always asks first (T4).
+    public static let asking: Set<String> = ["notes.search", "notes.list", "reminders.list", "agenda.today"]
 
     public static func isExposed(_ name: String) -> Bool { direct.contains(name) || asking.contains(name) }
 
-    /// The spec an external agent sees: reading tools raised to at least medium, and command
-    /// watchers removed from `watch.create`'s schema.
-    public static func externalSpec(_ spec: ToolSpec) -> ToolSpec {
-        var spec = spec
-        if asking.contains(spec.name) { spec.risk = max(spec.risk, .medium) }
-        if spec.name == "watch.create" { spec.inputSchema = withoutCommandKind(spec.inputSchema) }
-        return spec
-    }
-
-    /// Why this external call is refused before it reaches Guard, if it is.
+    /// Why this external call is refused before it reaches Guard, if it is. The external schemas
+    /// already leave these out; this holds even if a schema check were ever skipped.
     static func refusal(_ name: String, input: JSONValue) -> String? {
         if name == "watch.create", let kind = input.string("kind")?.lowercased(), kind.contains("command") {
             return "Other agents can't create command watchers. Ask the user to set it up in Sidefolk."
+        }
+        // A web value would let an agent read pages through Sidefolk's network, and the weather reaches a
+        // server too; this Mac's own load reaches nothing (T4).
+        if name == "watch.report", input.string("source") != "metric" {
+            return "Other agents can show only this Mac's cpu, memory, battery, disk or network. Ask the user to set up anything else in Sidefolk."
         }
         return nil
     }
@@ -58,15 +56,6 @@ public enum ExternalToolPolicy {
         let lowered = client.lowercased().map { $0.isLetter || $0.isNumber ? $0 : "-" }
         let collapsed = String(lowered).split(separator: "-").joined(separator: "-")
         return collapsed.isEmpty ? "agent" : String(collapsed.prefix(32))
-    }
-
-    private static func withoutCommandKind(_ schema: JSONValue) -> JSONValue {
-        guard case .object(var root) = schema, case .object(var props)? = root["properties"],
-              case .object(var kind)? = props["kind"], case .array(let values)? = kind["enum"] else { return schema }
-        kind["enum"] = .array(values.filter { !($0.stringValue ?? "").lowercased().contains("command") })
-        props["kind"] = .object(kind)
-        root["properties"] = .object(props)
-        return .object(root)
     }
 }
 

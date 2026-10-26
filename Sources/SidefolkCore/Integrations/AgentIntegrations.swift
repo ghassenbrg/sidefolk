@@ -9,14 +9,27 @@ public struct IntegrationLocations: Sendable, Equatable {
     public var claudeSettings: URL
     /// Codex's config (`~/.codex/config.toml`).
     public var codexConfig: URL
+    /// Claude Code's user skills (`~/.claude/skills`), one folder per skill with a SKILL.md.
+    public var claudeSkills: URL
+    /// Codex's user skills (`~/.codex/skills`; Codex also reads `~/.agents/skills`).
+    public var codexSkills: URL
+    /// Codex's user hooks (`~/.codex/hooks.json`), in Claude Code's format.
+    public var codexHooks: URL
 
-    public init(claudeConfig: URL, claudeSettings: URL, codexConfig: URL) {
+    /// The skills folders and Codex's hooks file default to their places beside the given configs.
+    public init(claudeConfig: URL, claudeSettings: URL, codexConfig: URL, claudeSkills: URL? = nil, codexSkills: URL? = nil,
+                codexHooks: URL? = nil) {
         self.claudeConfig = claudeConfig
         self.claudeSettings = claudeSettings
         self.codexConfig = codexConfig
+        let claudeDir = claudeSettings.deletingLastPathComponent(), codexDir = codexConfig.deletingLastPathComponent()
+        self.claudeSkills = claudeSkills ?? claudeDir.appendingPathComponent("skills", isDirectory: true)
+        self.codexSkills = codexSkills ?? codexDir.appendingPathComponent("skills", isDirectory: true)
+        self.codexHooks = codexHooks ?? codexDir.appendingPathComponent("hooks.json")
     }
 
-    /// The real locations, honouring `CLAUDE_CONFIG_DIR` and `CODEX_HOME`.
+    /// The real locations, honouring `CLAUDE_CONFIG_DIR` and `CODEX_HOME` (checked against Claude Code 2.1
+    /// and Codex 0.160: each reads user skills from `<its folder>/skills/<name>/SKILL.md`).
     public static func standard(home: String = NSHomeDirectory(),
                                 environment: [String: String] = ProcessInfo.processInfo.environment) -> IntegrationLocations {
         let claudeDir = environment["CLAUDE_CONFIG_DIR"].flatMap { $0.isEmpty ? nil : $0 }
@@ -31,18 +44,30 @@ public struct IntegrationLocations: Sendable, Equatable {
 public enum AgentIntegration: String, Sendable, CaseIterable {
     /// Sidefolk's tools in Claude Code (user-scope MCP server "sidefolk").
     case claudeMCP
+    /// The Sidefolk skill in Claude Code: when and how to use those tools.
+    case claudeSkill
     /// Claude Code hooks that tell Sidefolk when a session needs you or finished.
     case claudeHooks
     /// Sidefolk's tools in Codex (`[mcp_servers.sidefolk]`).
     case codexMCP
+    /// The Sidefolk skill in Codex.
+    case codexSkill
+    /// Codex hooks that tell Sidefolk when a session needs you or finished.
+    case codexHooks
 
     public var title: String {
         switch self {
         case .claudeMCP: String(localized: "Sidefolk tools in Claude Code")
+        case .claudeSkill: String(localized: "Sidefolk skill in Claude Code")
         case .claudeHooks: String(localized: "Claude Code session updates")
         case .codexMCP: String(localized: "Sidefolk tools in Codex")
+        case .codexSkill: String(localized: "Sidefolk skill in Codex")
+        case .codexHooks: String(localized: "Codex session updates")
         }
     }
+
+    var isSkill: Bool { self == .claudeSkill || self == .codexSkill }
+    var isHooks: Bool { self == .claudeHooks || self == .codexHooks }
 }
 
 public struct IntegrationStatus: Sendable, Equatable {
@@ -90,28 +115,39 @@ public struct AgentIntegrations: Sendable {
     public static let serverName = "sidefolk"
     /// Hook events Sidefolk listens to, with a short timeout: hooks must never slow a session.
     public static let hookEvents = ["UserPromptSubmit", "PreToolUse", "Notification", "Stop", "SessionEnd"]
+    /// Codex's hooks have no Notification; PermissionRequest is when a session waits for an approval.
+    public static let codexHookEvents = ["UserPromptSubmit", "PreToolUse", "PermissionRequest", "Stop", "SessionEnd"]
     public static let hookTimeoutSeconds = 5
+    /// Codex clamps a SessionEnd hook to 3 s (and warns about a longer one); the helper is done within 2.
+    public static let codexHookTimeoutSeconds = 3
 
     public let locations: IntegrationLocations
     /// The stable path of the `sidefolk` helper (not inside a translocated or moving app bundle).
     public let helperPath: String
     /// Extra environment for the helper (e.g. `SIDEFOLK_HOME` for a dev build); empty in release.
     public let helperEnvironment: [String: String]
+    /// The Sidefolk skill for other agents (skills/sidefolk/SKILL.md, shipped in the app); nil when this copy
+    /// of Sidefolk has none, and then there is no skill to install.
+    public let skill: String?
     private let clock: any Clock
 
     public init(locations: IntegrationLocations, helperPath: String, helperEnvironment: [String: String] = [:],
-                clock: any Clock = SystemClock()) {
+                skill: String? = nil, clock: any Clock = SystemClock()) {
         self.locations = locations
         self.helperPath = helperPath
         self.helperEnvironment = helperEnvironment
+        self.skill = skill
         self.clock = clock
     }
 
     public func file(for integration: AgentIntegration) -> URL {
         switch integration {
         case .claudeMCP: locations.claudeConfig
+        case .claudeSkill: Self.skillFile(in: locations.claudeSkills)
         case .claudeHooks: locations.claudeSettings
         case .codexMCP: locations.codexConfig
+        case .codexSkill: Self.skillFile(in: locations.codexSkills)
+        case .codexHooks: locations.codexHooks
         }
     }
 
@@ -130,16 +166,19 @@ public struct AgentIntegrations: Sendable {
                 guard let server = try parseJSON(text, url)["mcpServers"]?[Self.serverName] else { return make(.notInstalled) }
                 let command = server["command"]?.stringValue ?? ""
                 return make(command == helperPath ? .installed : .outdated(command))
-            case .claudeHooks:
+            case .claudeHooks, .codexHooks:
                 let ours = Self.ourHookCommands(in: try parseJSON(text, url))
                 if ours.isEmpty { return make(.notInstalled) }
-                let expected = Set(Self.hookEvents.map(hookCommand))
-                return make(Set(ours) == expected ? .installed : .outdated(ours.first ?? ""))
+                return make(Set(ours) == Set(expectedHookCommands(integration)) ? .installed : .outdated(ours.first ?? ""))
             case .codexMCP:
                 guard let command = TOMLSection.command(in: text, table: Self.codexTable) else {
                     return TOMLSection.contains(text, table: Self.codexTable) ? make(.outdated("")) : make(.notInstalled)
                 }
                 return make(command == helperPath ? .installed : .outdated(command))
+            case .claudeSkill, .codexSkill:
+                if text == installedSkill { return make(.installed) }
+                // An older copy of ours is replaced on the next Connect; someone else's file only after a backup.
+                return make(text.contains(Self.skillMarker) ? .outdated(url.path) : .notInstalled)
             }
         } catch {
             return make(.unavailable("\(error)"))
@@ -149,29 +188,58 @@ public struct AgentIntegrations: Sendable {
     /// The agent's config folder must exist: Sidefolk never sets up an agent the user doesn't have.
     private func unavailableReason(_ integration: AgentIntegration) -> String? {
         let fm = FileManager.default
+        let claudeMissing = String(localized: "Claude Code isn't set up on this Mac.")
+        let codexMissing = String(localized: "Codex isn't set up on this Mac.")
         switch integration {
         case .claudeMCP:
-            return fm.fileExists(atPath: locations.claudeConfig.path) ? nil : String(localized: "Claude Code isn't set up on this Mac.")
-        case .claudeHooks:
+            return fm.fileExists(atPath: locations.claudeConfig.path) ? nil : claudeMissing
+        case .claudeHooks, .claudeSkill:
+            if integration.isSkill, let why = skillUnavailable(integration) { return why }
             let dir = locations.claudeSettings.deletingLastPathComponent().path
-            return fm.fileExists(atPath: dir) ? nil : String(localized: "Claude Code isn't set up on this Mac.")
-        case .codexMCP:
+            return fm.fileExists(atPath: dir) ? nil : claudeMissing
+        case .codexMCP, .codexHooks, .codexSkill:
+            if integration.isSkill, let why = skillUnavailable(integration) { return why }
             let dir = locations.codexConfig.deletingLastPathComponent().path
-            return fm.fileExists(atPath: dir) ? nil : String(localized: "Codex isn't set up on this Mac.")
+            return fm.fileExists(atPath: dir) ? nil : codexMissing
+        }
+    }
+
+    private func skillUnavailable(_ integration: AgentIntegration) -> String? {
+        if skill == nil { return String(localized: "This copy of Sidefolk has no skill to install.") }
+        if let link = linkedSkillPath(integration) {
+            return String(localized: "\(FolderAccess.displayPath(link)) is a link to somewhere else, so Sidefolk leaves it as it is.")
+        }
+        return nil
+    }
+
+    /// The skill's folder or file when either is a symbolic link. People link skills in from their own
+    /// checkouts; writing or deleting through the link would change their files, not the agent's setup.
+    func linkedSkillPath(_ integration: AgentIntegration) -> String? {
+        let file = file(for: integration)
+        return [file.deletingLastPathComponent().path, file.path].first { path in
+            var st = stat()
+            return lstat(path, &st) == 0 && st.st_mode & S_IFMT == S_IFLNK
         }
     }
 
     // MARK: Preview and apply
 
+    /// What applying an integration does to its file.
+    enum Change: Equatable {
+        case keep
+        case write(String)
+        /// The file goes: a skill Sidefolk installed, or a hooks file left with nothing in it.
+        case delete
+    }
+
     public func preview(_ integration: AgentIntegration, install: Bool) throws -> IntegrationPreview {
         let config = AgentConfigFile(url: file(for: integration))
         let snapshot = try config.read()
-        let updated = try edited(integration, install: install, text: snapshot.text)
-        let changes = updated != snapshot.text
+        let change = try edited(integration, install: install, text: snapshot.text)
         return IntegrationPreview(integration: integration, install: install, file: config.url,
                                   changes: describe(integration, install: install),
-                                  backup: changes && snapshot.text != nil ? config.backupURL(at: clock.now) : nil,
-                                  changesSomething: changes)
+                                  backup: change != .keep && needsBackup(integration, snapshot) ? config.backupURL(at: clock.now) : nil,
+                                  changesSomething: change != .keep)
     }
 
     @discardableResult
@@ -184,29 +252,41 @@ public struct AgentIntegrations: Sendable {
         if install, let reason = unavailableReason(integration) { throw IntegrationError.unavailable(reason) }
         let config = AgentConfigFile(url: file(for: integration))
         let snapshot = try config.read()
-        guard let updated = try edited(integration, install: install, text: snapshot.text), updated != snapshot.text else {
-            return IntegrationResult(changed: false, backup: nil)
-        }
+        let change = try edited(integration, install: install, text: snapshot.text)
+        guard change != .keep else { return IntegrationResult(changed: false, backup: nil) }
         var backup: URL?
-        if snapshot.text != nil {
+        if needsBackup(integration, snapshot) {
             let url = config.backupURL(at: clock.now)
             try config.backup(snapshot, to: url)
             backup = url
         }
-        try config.replace(with: updated, expecting: snapshot)
+        switch change {
+        case .write(let text): try config.replace(with: text, expecting: snapshot)
+        // A skill's folder goes with it when nothing else is in it.
+        case .delete: try config.delete(expecting: snapshot, removingEmptyFolder: integration.isSkill)
+        case .keep: break
+        }
         Log.shared.info("integrations", "\(install ? "installed" : "removed") \(integration.rawValue)",
                         ["file": FolderAccess.displayPath(config.url.path), "backup": backup.map { FolderAccess.displayPath($0.path) } ?? "none"])
         return IntegrationResult(changed: true, backup: backup)
     }
 
-    /// The new file text, or nil when there is nothing to remove from a missing file.
-    func edited(_ integration: AgentIntegration, install: Bool, text: String?) throws -> String? {
+    /// Every file that exists is backed up before it changes, except a skill that is exactly the one Sidefolk
+    /// installs: the app can write it again, and a backup beside it would keep its folder from going away.
+    private func needsBackup(_ integration: AgentIntegration, _ snapshot: AgentConfigFile.Snapshot) -> Bool {
+        guard let text = snapshot.text else { return false }
+        return !(integration.isSkill && text == installedSkill)
+    }
+
+    /// What applying `integration` does to a file with this text (nil: there is no file).
+    func edited(_ integration: AgentIntegration, install: Bool, text: String?) throws -> Change {
         let url = file(for: integration)
+        func written(_ new: String) -> Change { new == text ? .keep : .write(new) }
         switch integration {
         case .claudeMCP:
             guard let text else {
                 if install { throw IntegrationError.unavailable(String(localized: "Claude Code isn't set up on this Mac.")) }
-                return nil
+                return .keep
             }
             var root = try parseJSON(text, url)
             var servers = root["mcpServers"] ?? .object([])
@@ -214,38 +294,41 @@ public struct AgentIntegrations: Sendable {
             if install {
                 servers[Self.serverName] = mcpServerEntry()
             } else {
-                guard servers[Self.serverName] != nil else { return text }
+                guard servers[Self.serverName] != nil else { return .keep }
                 servers[Self.serverName] = nil
             }
             root["mcpServers"] = servers
-            return Self.write(root, like: text)
+            return written(Self.write(root, like: text))
 
-        case .claudeHooks:
+        case .claudeHooks, .codexHooks:
             var root = try text.map { try parseJSON($0, url) } ?? .object([])
             var hooks = root["hooks"] ?? .object([])
             guard hooks.isObject else { throw IntegrationError.malformed(url.path, "hooks is not an object") }
             hooks = Self.withoutOurHooks(hooks)
-            if install {
-                for event in Self.hookEvents {
-                    var group: OrderedJSON = .object([])
-                    if event == "PreToolUse" { group["matcher"] = .string("*") }
-                    group["hooks"] = .array([.object([
-                        .init(key: "type", value: .string("command")),
-                        .init(key: "command", value: .string(hookCommand(event))),
-                        .init(key: "timeout", value: .number("\(Self.hookTimeoutSeconds)")),
-                    ])])
-                    hooks[event] = .array((hooks[event]?.arrayValue ?? []) + [group])
-                }
-            }
+            if install { hooks = withOurHooks(hooks, integration) }
             if case .object(let members) = hooks, members.isEmpty { root["hooks"] = nil } else { root["hooks"] = hooks }
-            if text == nil, case .object(let members) = root, members.isEmpty { return nil }
-            return Self.write(root, like: text ?? "")
+            if case .object(let members) = root, members.isEmpty {
+                // Codex's hooks.json holds nothing but hooks: an empty one goes, as if it had never been made.
+                if text == nil { return .keep }
+                if integration == .codexHooks { return .delete }
+            }
+            return written(Self.write(root, like: text ?? ""))
 
         case .codexMCP:
             let current = text ?? ""
             let without = TOMLSection.removing(Self.codexTable, from: current)
-            if !install { return text == nil ? nil : without }
-            return TOMLSection.appending(codexSection(), to: without)
+            if !install { return text == nil ? .keep : written(without) }
+            return written(TOMLSection.appending(codexSection(), to: without))
+
+        case .claudeSkill, .codexSkill:
+            if install {
+                if let why = skillUnavailable(integration) { throw IntegrationError.unavailable(why) }
+                return written(installedSkill ?? "")
+            }
+            // Only a skill Sidefolk installed is removed, never through a link; a file of the person's own with
+            // the same name stays.
+            guard let text, text.contains(Self.skillMarker), linkedSkillPath(integration) == nil else { return .keep }
+            return .delete
         }
     }
 
@@ -263,10 +346,33 @@ public struct AgentIntegrations: Sendable {
         return .object(members)
     }
 
-    /// `'/path/to/sidefolk' hook Stop` (quoted: the stable path has a space in "Application Support").
-    func hookCommand(_ event: String) -> String {
+    /// `'/path/to/sidefolk' hook Stop` (quoted: the stable path has a space in "Application Support"), with
+    /// `--agent codex` for Codex's hooks.
+    func hookCommand(_ event: String, agent: String = "claude-code") -> String {
         let env = helperEnvironment.sorted { $0.key < $1.key }.map { "\($0.key)=\(Self.shellQuote($0.value)) " }.joined()
-        return env + Self.shellQuote(helperPath) + " hook " + event
+        return env + Self.shellQuote(helperPath) + " hook " + event + (agent == "claude-code" ? "" : " --agent " + agent)
+    }
+
+    func expectedHookCommands(_ integration: AgentIntegration) -> [String] {
+        integration == .codexHooks ? Self.codexHookEvents.map { hookCommand($0, agent: "codex") } : Self.hookEvents.map { hookCommand($0) }
+    }
+
+    /// Adds one matcher group with our handler to each event. Claude Code matches every tool with "*"; Codex reads
+    /// matchers as patterns, where a group without one already matches every tool.
+    func withOurHooks(_ hooks: OrderedJSON, _ integration: AgentIntegration) -> OrderedJSON {
+        var hooks = hooks
+        let codex = integration == .codexHooks
+        for event in codex ? Self.codexHookEvents : Self.hookEvents {
+            var group: OrderedJSON = .object([])
+            if event == "PreToolUse", !codex { group["matcher"] = .string("*") }
+            group["hooks"] = .array([.object([
+                .init(key: "type", value: .string("command")),
+                .init(key: "command", value: .string(hookCommand(event, agent: codex ? "codex" : "claude-code"))),
+                .init(key: "timeout", value: .number("\(codex ? Self.codexHookTimeoutSeconds : Self.hookTimeoutSeconds)")),
+            ])])
+            hooks[event] = .array((hooks[event]?.arrayValue ?? []) + [group])
+        }
+        return hooks
     }
 
     /// Our hook commands anywhere in a settings object.
@@ -300,10 +406,12 @@ public struct AgentIntegrations: Sendable {
         return .object(kept)
     }
 
-    /// `… sidefolk' hook Event` with the executable named `sidefolk`, whatever folder it is in.
+    /// `… sidefolk' hook Event` (or `… hook Event --agent codex`) with the executable named `sidefolk`,
+    /// whatever folder it is in.
     static func isOurHook(_ command: String) -> Bool {
         let trimmed = command.trimmingCharacters(in: .whitespaces)
-        guard let range = trimmed.range(of: #"(^|[\s/'"])sidefolk'?"? hook [A-Za-z]+$"#, options: .regularExpression) else { return false }
+        let pattern = #"(^|[\s/'"])sidefolk'?"? hook [A-Za-z]+( --agent [a-z-]+)?$"#
+        guard let range = trimmed.range(of: pattern, options: .regularExpression) else { return false }
         return !range.isEmpty
     }
 
@@ -320,10 +428,34 @@ public struct AgentIntegrations: Sendable {
         return lines.joined(separator: "\n") + "\n"
     }
 
+    // MARK: The Sidefolk skill
+
+    static let skillName = "sidefolk"
+    /// Starts the line Sidefolk puts under the skill's front matter: how it knows its own copy, and how the
+    /// person reading the file learns where it came from.
+    static let skillMarker = "<!-- Installed by Sidefolk"
+
+    static func skillFile(in folder: URL) -> URL {
+        folder.appendingPathComponent(skillName, isDirectory: true).appendingPathComponent("SKILL.md")
+    }
+
+    /// The skill as installed: the shipped text with that line.
+    var installedSkill: String? { skill.map(Self.marked) }
+
+    static func marked(_ skill: String) -> String {
+        let note = "\(skillMarker) from Settings › Agents. Disconnect there removes it; Connect replaces any edits. -->\n"
+        // The front matter has to stay first for the agents to read the skill's name and description.
+        guard skill.hasPrefix("---\n"), let close = skill.range(of: "\n---\n", range: skill.index(skill.startIndex, offsetBy: 3)..<skill.endIndex) else {
+            return skill + (skill.hasSuffix("\n") ? "\n" : "\n\n") + note
+        }
+        return String(skill[..<close.upperBound]) + "\n" + note + String(skill[close.upperBound...])
+    }
+
     // MARK: Helpers
 
     private func describe(_ integration: AgentIntegration, install: Bool) -> [String] {
         let helper = FolderAccess.displayPath(helperPath)
+        let folder = FolderAccess.displayPath(file(for: integration).deletingLastPathComponent().path)
         switch (integration, install) {
         case (.claudeMCP, true): return [String(localized: "Adds the MCP server “sidefolk” (runs \(helper) mcp) to Claude Code's user settings.")]
         case (.claudeMCP, false): return [String(localized: "Removes the MCP server “sidefolk” from Claude Code. Other servers stay.")]
@@ -334,6 +466,15 @@ public struct AgentIntegrations: Sendable {
         case (.claudeHooks, false): return [String(localized: "Removes Sidefolk's hooks from Claude Code. Your other hooks stay.")]
         case (.codexMCP, true): return [String(localized: "Adds [\(Self.codexTable)] (runs \(helper) mcp) to Codex's config.")]
         case (.codexMCP, false): return [String(localized: "Removes [\(Self.codexTable)] from Codex's config. The rest stays.")]
+        case (.claudeSkill, true), (.codexSkill, true):
+            return [String(localized: "Adds the Sidefolk skill in \(folder), which tells the agent when and how to use Sidefolk's tools.")]
+        case (.claudeSkill, false), (.codexSkill, false):
+            return [String(localized: "Removes the Sidefolk skill from \(folder). Your other skills stay.")]
+        case (.codexHooks, true):
+            let events = Self.codexHookEvents.joined(separator: ", ")
+            return [String(localized: "Adds hooks for \(events) that run \(helper) hook (\(Self.codexHookTimeoutSeconds) s limit)."),
+                    String(localized: "Codex asks you to trust them once, the next time it starts. Your other hooks stay as they are.")]
+        case (.codexHooks, false): return [String(localized: "Removes Sidefolk's hooks from Codex. Your other hooks stay.")]
         }
     }
 

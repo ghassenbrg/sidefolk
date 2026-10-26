@@ -122,6 +122,9 @@ public actor AttentionCenter {
 
     public func open() async -> [AttentionItem] { (try? await store.open()) ?? [] }
 
+    /// Whether an item is waiting for its turn (quiet mode, full screen, away, typing or the rate limits).
+    public func isHeld(_ id: String) -> Bool { held[id] != nil }
+
     /// Retires what is still open about one thing (a repeating reminder's last time) without answering it: no
     /// handler runs, the bubble and notification go away, and it no longer counts as waiting.
     public func withdraw(refKind: String, refId: String) async {

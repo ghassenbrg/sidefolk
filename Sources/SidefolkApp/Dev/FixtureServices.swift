@@ -251,14 +251,17 @@ final class FixtureServices: AppServices {
     // MARK: Integrations
 
     func integrationStatus() async -> IntegrationStatus {
-        IntegrationStatus(claudeCodeFound: true, claudeMCPInstalled: true, claudeHooksInstalled: false, codexFound: true,
-                          codexMCPInstalled: false, cliLinked: true, helperPath: "~/Library/Application Support/Sidefolk/bin/sidefolk")
+        // Claude Code connected with everything; Codex connected before the skill shipped, so its card offers the update.
+        IntegrationStatus(claudeCodeFound: true, claudeMCPInstalled: true, claudeSkillInstalled: true, claudeHooksInstalled: true,
+                          codexFound: true, codexMCPInstalled: true, codexSkillInstalled: false, codexHooksInstalled: false,
+                          cliLinked: true, helperPath: "~/Library/Application Support/Sidefolk/bin/sidefolk")
     }
 
     func connectClaudeCode(hooks: Bool) async -> UserFacingError? { nil }
     func disconnectClaudeCode() async -> UserFacingError? { nil }
-    func connectCodex() async -> UserFacingError? { nil }
+    func connectCodex(hooks: Bool) async -> UserFacingError? { nil }
     func disconnectCodex() async -> UserFacingError? { nil }
+    func copySetupInstructions() {}
 
     // MARK: Privacy and data
 
