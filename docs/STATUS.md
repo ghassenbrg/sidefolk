@@ -1,8 +1,8 @@
 # Status
 
 Updated: 2026-10-27. Version 0.1.0. Latest: the production review is merged (design D40, hardening
-D41, agents D42, the launch kit); 1172 tests pass; all ten languages complete (2131 strings each);
-release build 0.1.0 (379) made and verified; launch screenshots refreshed.
+D41, agents D42, the launch kit) and lively companions (D43, Balanced by default, no 3D); 1195 tests
+pass; all ten languages complete (2141 strings each); release build 0.1.0 made and verified.
 
 ## Done and verified
 - **Version 0.1.0** (`SidefolkVersion.current`); bundled extensions and the docs ask for `sidefolk >=0.1`.
@@ -54,9 +54,11 @@ release build 0.1.0 (379) made and verified; launch screenshots refreshed.
   Balanced (default), Lively; Reduce Motion starts nothing on its own. Custom companions as data
   (`species.json` + SVG parts, strict, never run) from `<home>/companions/` and installed extensions,
   "Made by you" in Settings, `companions/template/` and Miso (a cat) as examples. The 3D spike was
-  dropped. *Checked:* every moment of every companion rendered inside its window (tests), release
-  CPU runs and films (`scripts/lively-poc/`), docs/research/lively-companions.md; not yet a day in
-  the real app.
+  dropped. Choosing a custom companion shows it on the chooser's stage and names it as it came.
+  *Checked:* every moment of every companion rendered inside its window (tests), release CPU runs and
+  films (`scripts/lively-poc/`), docs/research/lively-companions.md, Settings › Companion snapshots
+  with a custom companion in English and German; not yet a day in the real app, and new companion
+  folders appear only after a restart.
 - **Production review (2026-10-27):**
   - *Design (D40):* with no AI chosen, the Ask panel offers the Claude Code or Codex this Mac is signed
     in to (one click picks it and asks again); built-in calls read as sentences ("Clone … into
@@ -80,7 +82,7 @@ release build 0.1.0 (379) made and verified; launch screenshots refreshed.
   - *Launch kit:* README for strangers, docs/RELEASE-NOTES.md for 0.1.0, docs/launch/ (descriptions,
     landing page, posts, demo script, press kit, reviewer FAQ, CHECKLIST.md, 35 screenshots),
     `scripts/launch-screenshots.swift`.
-- **Tests:** 1172 (1160 core in 150 suites + 12 character). `make test` runs serially (about 50 s).
+- **Tests:** 1195 (1161 core in 150 suites + 34 character). `make test` runs serially (about 50 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
   character's VoiceOver words and the core leftovers (Brain replies and checks, provider names,
   Claude Code/Codex messages) is in the catalog: `make strings` finds 1681 strings, English only.

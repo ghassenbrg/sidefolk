@@ -13,6 +13,12 @@ reminds and keeps watch, and your AI agents can talk to it.
   build (D35).
 - Thirteen companions on one animation engine: Mochi (the default), the original Sidefolk robot,
   Spark and the ten folks. Each takes a name, one of four colours and an optional scarf (D30).
+- A life of its own (D43): 17 small moments (a stretch, a yawn, an ear twitch, a glance at your work,
+  a sneeze…), sitting and lying down when nothing happens, a boop when clicked, petting by stroking,
+  and a landing when dropped or thrown. Liveliness: Minimal (moves only when something happens),
+  Balanced (the default) or Lively; Reduce Motion is respected; still while you type.
+- Your own companions: a folder with `species.json` and SVG shapes, read strictly as data, listed
+  under "Made by you" (`companions/template/`, and Miso as an example).
 - Folks on duty beside it: Tempo while a reminder is close, Scout while something is watched, Byte
   while an agent or command runs.
 - Presence: Always, Only when needed, or Menu bar only. A menu bar item with a Now list.

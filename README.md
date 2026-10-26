@@ -31,15 +31,21 @@ AI you already use: Claude Code, Codex, an API key, or a model running on your o
 
 The companion stands on the bottom edge of your screen and shows what it is doing: thinking, writing,
 watching, waiting for your OK, done. When a reminder is close, a page is being watched or an agent is
-working, a small folk sits beside it (Tempo, Scout, Byte). When nothing is happening it holds still;
-at rest it uses well under 0.1 % of one CPU core. If "always there" is too much, choose
-*Only when needed* or *Menu bar only*.
+working, a small folk sits beside it (Tempo, Scout, Byte). Between tasks it has a life of its own:
+now and then a stretch, a yawn, an ear twitch or a glance at your work, and it sits, then lies down,
+when nothing happens. Click it for a boop, stroke it with the pointer to pet it, drag it and drop or
+throw it. It holds still while you type, and at rest it uses well under 0.1 % of one CPU core.
+**Settings › Companion › Liveliness** goes from *Minimal* (moves only when something happens) to
+*Lively*; *Balanced* is the default, and Reduce Motion is respected. If "always there" is too much,
+choose *Only when needed* or *Menu bar only*.
 
 <p align="center"><img src="Resources/Character/companions.png" width="760" alt="The thirteen companions: Mochi, Sidefolk, Spark, Pip, Byte, Seed, Melody, Scout, Tempo, Play, Guard, Nova and Brew"></p>
 
 Pick your companion in **Settings › Companion**, name it, and give it a colour and a scarf. Every
 companion is drawn live, so each one has every pose: listening, thinking, working with a prop that
-says what it's doing, waiting, happy, worried, asleep.
+says what it's doing, waiting, happy, worried, asleep. You can also make your own: a companion is a
+folder with a `species.json` and SVG shapes, read as data and never run (`companions/template/` and
+Miso, a cat, show how; they appear under *Made by you*).
 
 ### Ask in plain words, no AI needed for the basics
 
