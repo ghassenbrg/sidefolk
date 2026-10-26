@@ -336,7 +336,19 @@ final class VoiceController {
         guard next != mouthLevel else { return }
         mouthLevel = next
         host.mouth(next)
+        #if DEBUG
+        // Agents can't watch the mouth: the log says how often it moved for each line.
+        mouthMoves += 1
+        if next == nil {
+            Log.shared.info("voice", "mouth closed", ["moves": String(mouthMoves)])
+            mouthMoves = 0
+        }
+        #endif
     }
+
+    #if DEBUG
+    private var mouthMoves = 0
+    #endif
 
     // MARK: Audio plumbing
 
