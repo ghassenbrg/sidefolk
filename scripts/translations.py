@@ -33,7 +33,10 @@ def load():
 
 
 def save(catalog):
-    CATALOG.write_text(dump(catalog), encoding="utf-8")
+    # Through a temporary file, so a `check` running meanwhile never reads half a catalog.
+    temporary = CATALOG.with_suffix(".tmp")
+    temporary.write_text(dump(catalog), encoding="utf-8")
+    temporary.replace(CATALOG)
 
 
 def dump(value, indent=0):
