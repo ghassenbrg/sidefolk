@@ -17,7 +17,7 @@ struct AISettingsView: View {
     var body: some View {
         SettingsPage {
             Label {
-                Text("Notes, reminders and watchers work without AI. A brain is only used for questions and open-ended requests.")
+                Text("Notes, reminders and watches work without AI. AI is only used for questions and open-ended requests.")
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "info.circle.fill").foregroundStyle(Theme.folkColor("byte"))
@@ -28,7 +28,7 @@ struct AISettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
 
-            SettingsGroup(title: "Brain") {
+            SettingsGroup(title: "AI provider") {
                 ForEach(ProviderKind.allCases, id: \.self) { kind in
                     ChoiceRow(title: title(kind), detail: detail(kind), selected: provider.kind == kind) { model.setProvider(kind) }
                 }
@@ -55,7 +55,7 @@ struct AISettingsView: View {
             }
 
             SettingsGroup(title: "What Sidefolk sends",
-                          footer: "Your notes and messages go only to the brain you chose, and only what's needed for the request.") {
+                          footer: "Your notes and messages go only to the AI you chose, and only what's needed for the request.") {
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
                     DisclosureGroup(isExpanded: $showPayload) {
                         payload.padding(.top, Theme.Space.s)
@@ -116,7 +116,7 @@ struct AISettingsView: View {
 
     private func detail(_ kind: ProviderKind) -> String {
         switch kind {
-        case .none: "Everything local keeps working. Questions wait until you pick a brain."
+        case .none: "Everything local keeps working. Questions wait until you pick an AI."
         case .claudeCode: "Uses your Claude subscription through the claude command. No API key needed."
         case .anthropic: "Pay as you go with your own Anthropic API key."
         case .openAICompatible: "OpenAI, Ollama, LM Studio, OpenRouter or any compatible server."

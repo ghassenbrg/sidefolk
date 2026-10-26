@@ -53,30 +53,70 @@ extension AppCoordinator: AskActions {
     }
 
     func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {
-        // A reminder that was waiting for its time.
+        // A reminder that was waiting for its time: only a time (or "cancel") answers it; anything
+        // else is a new request and the pending one is dropped.
         if let title = model.pendingReminderTitle, attachment == nil {
-            model.pendingReminderTitle = nil
-            if let when = whenParser.parse(text, now: Date()) {
-                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence), caption: "\(title) — \(text)", into: model)
-            } else {
-                model.add(.info("I didn't catch a time, so I didn't set it. Try “remind me tomorrow at 9 to \(title)”."))
+            let lower = text.lowercased().trimmingCharacters(in: .punctuationCharacters.union(.whitespaces))
+            if ["cancel", "never mind", "nevermind", "nvm", "forget it", "no", "stop"].contains(lower) {
+                model.pendingReminderTitle = nil
+                model.add(.info("Okay, no reminder."), caption: text)
+                return
             }
-            return
+            if let when = runtime.intentParser.parseTime(text, now: Date()), when.date > Date(),
+               when.remaining.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).isEmpty {
+                model.pendingReminderTitle = nil
+                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence, important: model.pendingReminderImportant),
+                         caption: "\(title) — \(text)", into: model)
+                return
+            }
+            model.pendingReminderTitle = nil
         }
-        // Plain-language intents complete locally, instantly, without AI (DECISIONS D4).
-        if !thinkHarder, attachment == nil,
+        // A watch that was waiting for its address.
+        if let pending = model.pendingWatch, attachment == nil {
+            model.pendingWatch = nil
+            if let parsed = runtime.intentParser.watch(address: text, kind: pending.kind, becomes: pending.becomes) {
+                runLocal(parsed.intent, caption: text, into: model)
+                return
+            }
+        }
+        // Plain-language intents complete locally, instantly, without AI (DECISIONS D4). Words typed
+        // with a dropped item are understood too; the item rides along as the note or reminder detail.
+        if !thinkHarder,
            let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections) {
-            runLocal(parsed.intent, caption: text, into: model)
+            runLocal(Self.withAttachment(parsed.intent, attachment), caption: text, into: model)
             return
         }
         guard runtime.settings.current.provider.kind != .none else {
-            model.add(.needsBrain(attachment?.text.map { "\(text)\n\n\($0)" } ?? text), caption: text)
+            let full = attachment?.text.map { "\(text)\n\n\($0)" } ?? text
+            model.add(.needsBrain(full, guess: reminderGuess(text)), caption: text)
             return
         }
         runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model)
     }
 
-    func runLocal(_ intent: LocalIntent, caption: String, into model: AskModel) {
+    /// "call the bank tomorrow at 9" → a reminder suggestion, when a confident future time is in there.
+    func reminderGuess(_ text: String) -> ReminderGuess? {
+        guard let when = whenParser.parse(text, now: Date()), when.confidence != .low, when.date > Date() else { return nil }
+        var title = when.remaining.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        for prefix in ["to ", "that "] where title.lowercased().hasPrefix(prefix) { title = String(title.dropFirst(prefix.count)) }
+        guard title.count >= 2 else { return nil }
+        title = title.prefix(1).uppercased() + title.dropFirst()
+        let label = "Remind me " + TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent)
+        return ReminderGuess(title: title, when: when.date, recurrence: when.recurrence, label: label)
+    }
+
+    /// Puts what was dropped into the note body or the reminder's notes.
+    static func withAttachment(_ intent: LocalIntent, _ attachment: Attachment?) -> LocalIntent {
+        guard let attachment, let detail = attachment.text ?? Optional(attachment.label) else { return intent }
+        switch intent {
+        case .note(let kind, let text, let collection, let collectionKind):
+            return .note(kind: kind, text: text + "\n\n" + detail, collection: collection, collectionKind: collectionKind)
+        default:
+            return intent
+        }
+    }
+
+    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel) {
         let runner = LocalIntentRunner(runtime: runtime)
         Task {
             let outcome = await runner.run(intent)
@@ -85,12 +125,20 @@ extension AppCoordinator: AskActions {
                 model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), caption: caption)
                 // Quick intents close the panel a moment after their card appears.
                 try? await Task.sleep(for: .seconds(undo ? 2.5 : 1.2))
-                if !model.busy, model.text.isEmpty, model.entries.last?.caption == caption { model.onAutoClose?() }
+                if !model.busy, model.text.isEmpty, model.pendingQuestion == nil, model.entries.last?.caption == caption {
+                    model.onAutoClose?()
+                }
             case .list(let title, let cards):
                 model.add(.list(title: title, cards: cards), caption: caption)
-            case .needsTime(let title):
+            case .needsTime(let title, let reason, let important):
                 model.pendingReminderTitle = title
-                model.add(.info("When should I remind you to “\(title)”?"), caption: caption)
+                model.pendingReminderImportant = important
+                let question = "When should I remind you to “\(title.prefix(1).lowercased() + title.dropFirst())”?"
+                model.add(.info([reason, question].compactMap { $0 }.joined(separator: " ")), caption: caption)
+                model.focusRequest += 1
+            case .needsTarget(let kind, let becomes):
+                model.pendingWatch = (kind, becomes)
+                model.add(.info("Which address should I watch? For example localhost:3000 or example.com/status."), caption: caption)
                 model.focusRequest += 1
             case .info(let text):
                 model.add(.info(text), caption: caption)
@@ -126,14 +174,13 @@ extension AppCoordinator: AskActions {
                 case .phase(.waitingForApproval):
                     model.phase = "Waiting for your OK…"
                 case .toolFinished(let activity, let ok):
-                    if ok, let card = activity.card {
+                    // Read-only results feed the answer; only changes become cards (DECISIONS D5).
+                    if ok, activity.mutates, let card = activity.card {
                         shownCards.insert(card.title)
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
                     }
                 case .reply(let reply):
-                    for card in reply.cards where !shownCards.contains(card.title) {
-                        model.add(.result(card, activityId: nil, undo: false), caption: caption())
-                    }
+
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !answer.isEmpty {
                         model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != ""),
@@ -220,4 +267,59 @@ extension AppCoordinator: AskActions {
     }
 
     func openSettingsAI() { openSettings(tab: .ai) }
+
+    func saveAsTask(_ text: String, in model: AskModel) {
+        runLocal(.note(kind: .task, text: text, collection: nil), caption: nil, into: model)
+    }
+
+    func remind(_ guess: ReminderGuess, in model: AskModel) {
+        runLocal(.remind(title: guess.title, when: guess.when, recurrence: guess.recurrence), caption: nil, into: model)
+    }
+
+    func answer(question: AttentionItem, actionId: String) {
+        ask.removeQuestion(id: question.id)
+        Task { await runtime.attention.respond(id: question.id, actionId: actionId) }
+    }
+
+    func retry(_ text: String, in model: AskModel) {
+        model.text = text
+        model.submit()
+    }
+
+    /// What dropping something on the companion leads to, without AI.
+    func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel) {
+        model.attachment = nil
+        switch (action, attachment.kind) {
+        case (.save, .url(let url)):
+            runLocal(.note(kind: .link, text: (url.host ?? url.absoluteString) + "\n" + url.absoluteString, collection: nil),
+                     caption: attachment.label, into: model)
+        case (.save, .file(let file)):
+            runLocal(.note(kind: .note, text: file.lastPathComponent + "\n" + FolderAccess.displayPath(file.path), collection: nil),
+                     caption: attachment.label, into: model)
+        case (.save, .text):
+            runLocal(.note(kind: .note, text: attachment.text ?? attachment.label, collection: nil), caption: attachment.label, into: model)
+        case (.remind, _):
+            let title: String = switch attachment.kind {
+            case .url(let url): "Look at \(url.host ?? "the link")"
+            case .file(let file): "Look at \(file.lastPathComponent)"
+            case .text: (attachment.text ?? attachment.label).clipped(80)
+            }
+            model.pendingReminderTitle = title
+            model.add(.info("When should I remind you to “\(title)”?"), caption: attachment.label)
+            model.focusRequest += 1
+        case (.watch, .url(let url)):
+            runLocal(.watch(WatchIntent(kind: "url_change", target: url.absoluteString)), caption: attachment.label, into: model)
+        case (.watch, .file(let file)):
+            var isDir: ObjCBool = false
+            let folder = FileManager.default.fileExists(atPath: file.path, isDirectory: &isDir) && isDir.boolValue
+            runLocal(.watch(WatchIntent(kind: folder ? "folder_new_file" : "file_changes", target: file.path)),
+                     caption: attachment.label, into: model)
+        case (.watch, .text):
+            model.add(.info("I can watch links and files, not text."))
+        case (.ask, _):
+            model.attachment = attachment
+            model.add(.info("What should I do with \(attachment.label)? Type it below."))
+            model.focusRequest += 1
+        }
+    }
 }

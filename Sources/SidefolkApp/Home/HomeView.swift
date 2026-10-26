@@ -60,14 +60,17 @@ private struct HomeSidebar: View {
                 Label { Text("Now") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
                     .tag(HomeSelection.now)
-                Label { Text("Activity") } icon: { icon("list.bullet.rectangle.fill", Theme.folkColor("guard")) }
-                    .tag(HomeSelection.activity)
             }
             Section("Notebook") {
                 ForEach(notebook.collections) { c in collectionRow(c) }
                 Label { Text("Trash") } icon: { icon("trash", Theme.inkMuted) }
                     .badge(notebook.trashCount)
                     .tag(HomeSelection.trash)
+            }
+            Section {
+                // The audit trail matters, but your notes come first.
+                Label { Text("Activity") } icon: { icon("list.bullet.rectangle.fill", Theme.folkColor("guard")) }
+                    .tag(HomeSelection.activity)
             }
             if !notebook.archived.isEmpty {
                 Section("Archived") {

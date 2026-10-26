@@ -47,7 +47,7 @@ extension AppCoordinator {
         let claudeFound = (try? ClaudeBinary.locate(configured: runtime.settings.current.provider.claudePath).get()) != nil || available(.claudeMCP)
         return IntegrationStatus(claudeCodeFound: claudeFound, claudeMCPInstalled: installed(.claudeMCP),
                                  claudeHooksInstalled: installed(.claudeHooks), codexFound: available(.codexMCP),
-                                 codexMCPInstalled: installed(.codexMCP), cliLinked: FileManager.default.fileExists(atPath: stableHelperPath),
+                                 codexMCPInstalled: installed(.codexMCP), cliLinked: commandLineToolInstalled,
                                  helperPath: stableHelperPath)
     }
 

@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 import SidefolkCore
 
@@ -224,3 +225,4 @@ enum SampleData {
         return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)
     }
 }
+#endif

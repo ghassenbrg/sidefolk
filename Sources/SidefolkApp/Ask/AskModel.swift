@@ -11,6 +11,17 @@ struct Attachment: Equatable {
     var text: String?
 }
 
+/// A reminder the local parser could make from words that didn't start with "remind me".
+struct ReminderGuess: Equatable {
+    var title: String
+    var when: Date
+    var recurrence: Recurrence?
+    var label: String
+}
+
+/// Quick things to do with something dropped on the companion.
+enum DropAction { case save, remind, watch, ask }
+
 /// One result in the Ask panel. Requests end in objects, not a transcript (DECISIONS D5).
 struct AskEntry: Identifiable, Equatable {
     enum Content: Equatable {
@@ -19,8 +30,10 @@ struct AskEntry: Identifiable, Equatable {
         case list(title: String, cards: [ResultCard])
         case approval(ApprovalRequest)
         case error(UserFacingError, retryable: Bool)
-        /// No AI is set up; offers to keep the words as a note.
-        case needsBrain(String)
+        /// No AI is set up; offers local alternatives (a reminder it understood, a task, a note).
+        case needsBrain(String, guess: ReminderGuess?)
+        /// Sidefolk's own agent asks something; answered here with a button or by typing.
+        case question(AttentionItem)
         case info(String)
     }
 
@@ -30,6 +43,13 @@ struct AskEntry: Identifiable, Equatable {
     var createdAt = Date()
 
     static func == (a: AskEntry, b: AskEntry) -> Bool { a.id == b.id && a.content == b.content && a.caption == b.caption }
+
+    var isPinned: Bool {
+        switch content {
+        case .approval, .question: true
+        default: false
+        }
+    }
 }
 
 /// What the panel asks the rest of the app to do.
@@ -42,6 +62,11 @@ protocol AskActions: AnyObject {
     func answer(approval: ApprovalRequest, decision: ApprovalDecision)
     func open(card: ResultCard)
     func saveAnswer(_ text: String, in model: AskModel)
+    func saveAsTask(_ text: String, in model: AskModel)
+    func remind(_ guess: ReminderGuess, in model: AskModel)
+    func answer(question: AttentionItem, actionId: String)
+    func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel)
+    func retry(_ text: String, in model: AskModel)
     func openSettingsAI()
     func openHome()
 }
@@ -57,6 +82,9 @@ final class AskModel {
     var focusRequest = 0
     /// A reminder waiting for its time ("When should I remind you?").
     var pendingReminderTitle: String?
+    var pendingReminderImportant = false
+    /// A watch waiting for its address ("Which address? e.g. localhost:3000").
+    var pendingWatch: (kind: String, becomes: String?)?
     weak var actions: AskActions?
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
@@ -69,10 +97,33 @@ final class AskModel {
         return actions?.hint(for: trimmed)
     }
 
-    var visibleEntries: ArraySlice<AskEntry> { entries.suffix(Self.visibleLimit) }
+    /// Questions and approvals stay in view (pinned first); results show the latest few.
+    var visibleEntries: [AskEntry] {
+        let pinned = entries.filter(\.isPinned)
+        let rest = entries.filter { !$0.isPinned }.suffix(Self.visibleLimit)
+        return pinned + rest
+    }
+
+    var hiddenCount: Int { max(0, entries.filter { !$0.isPinned }.count - Self.visibleLimit) }
+
+    /// The agent is waiting for an answer the user can type into the input.
+    var pendingQuestion: AttentionItem? {
+        for e in entries.reversed() { if case .question(let item) = e.content { return item } }
+        return nil
+    }
+
+    func removeQuestion(id: String) {
+        entries.removeAll { if case .question(let q) = $0.content { return q.id == id } else { return false } }
+    }
 
     func submit(thinkHarder: Bool = false) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // While the agent waits for an answer, what the user types is that answer.
+        if let question = pendingQuestion, !trimmed.isEmpty {
+            text = ""
+            actions?.answer(question: question, actionId: AgentFacingTools.typedAnswerPrefix + trimmed)
+            return
+        }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
         let request = trimmed.isEmpty ? "What should I do with this?" : trimmed
         text = ""

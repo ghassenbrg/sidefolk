@@ -14,7 +14,12 @@ final class Rig {
     let body = Layers.canvas()
     let loop = Layers.canvas()
     let gesture = Layers.canvas()
-    let breath = Layers.canvas()
+    /// Rasterized: its looping transform then composites a cached bitmap instead of re-rendering the body.
+    let breath: CALayer = {
+        let layer = Layers.canvas()
+        layer.shouldRasterize = true
+        return layer
+    }()
     /// Visor and eyes; nods and shakes move it, gaze nudges it for parallax.
     let face = Layers.canvas()
     let faceGesture = Layers.canvas()

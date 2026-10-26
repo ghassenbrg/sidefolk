@@ -5,9 +5,12 @@ import Foundation
 struct IntentPattern: Sendable {
     private let regex: NSRegularExpression
 
-    init(_ pattern: String) {
+    /// - Parameter multiline: `.` also matches a line break, for patterns whose last group is text to save as typed.
+    init(_ pattern: String, multiline: Bool = false) {
         // The patterns are literals in this module; a typo is a programmer error caught by the tests.
-        regex = try! NSRegularExpression(pattern: "^(?:" + pattern + ")$", options: [.caseInsensitive])
+        var options: NSRegularExpression.Options = [.caseInsensitive]
+        if multiline { options.insert(.dotMatchesLineSeparators) }
+        regex = try! NSRegularExpression(pattern: "^(?:" + pattern + ")$", options: options)
     }
 
     func match(_ text: String) -> IntentCaptures? {

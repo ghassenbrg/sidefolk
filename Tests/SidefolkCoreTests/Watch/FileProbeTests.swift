@@ -276,6 +276,19 @@ import Testing
         #expect(!r.summary.unicodeScalars.contains { $0.value == 0x202E })
     }
 
+    @Test func aBigDownloadsFolderCanStillBeWatched() async throws {
+        defer { box.cleanUp() }
+        for i in 0..<5_100 { FileManager.default.createFile(atPath: box.path("f\(i).txt"), contents: Data()) }
+        var w = try watcher()
+        let baseline = try await probe.step(&w)
+        #expect(!baseline.triggered)
+        try box.write("movie.mov")
+        _ = try await probe.step(&w)
+        let r = try await probe.step(&w)
+        #expect(r.triggered)
+        #expect(r.summary.contains("movie.mov"))
+    }
+
     @Test func aMissingFolderIsAFailureAndHugeFoldersAreRefused() async throws {
         defer { box.cleanUp() }
         var w = try watcher(folder: "later")

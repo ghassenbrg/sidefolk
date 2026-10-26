@@ -5,7 +5,7 @@ import SidefolkCore
 
 /// The Settings window's tabs.
 enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, companion, ai, privacy, extensions
+    case general, companion, ai, agents, privacy, extensions
     var id: Self { self }
 
     var title: String {
@@ -13,6 +13,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "General"
         case .companion: "Companion"
         case .ai: "AI"
+        case .agents: "Agents"
         case .privacy: "Privacy & Permissions"
         case .extensions: "Extensions"
         }
@@ -23,6 +24,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "gearshape"
         case .companion: "face.smiling"
         case .ai: "sparkles"
+        case .agents: "terminal"
         case .privacy: "hand.raised"
         case .extensions: "puzzlepiece.extension"
         }
@@ -87,7 +89,9 @@ final class SettingsModel {
             for await event in stream {
                 guard case .dataChanged(let domain) = event, let self else { continue }
                 switch domain {
-                case .settings: settings = runtime.settings.current
+                case .settings:
+                    settings = runtime.settings.current
+                    integration = await services.integrationStatus()
                 case .permissions: await loadPermissions()
                 case .extensions:
                     extensions = await services.extensions()
@@ -113,6 +117,7 @@ final class SettingsModel {
         await loadPermissions()
         storage = await services.storageSummary()
         extensions = await services.extensions()
+        samples = await services.sampleExtensions()
         skills = await services.skills()
         integration = await services.integrationStatus()
         contextPreview = await services.lastContextPreview()
@@ -378,6 +383,8 @@ final class SettingsModel {
 
     func disconnectClaudeCode() async { await integrate { await $0.disconnectClaudeCode() } }
     func connectCodex() async { await integrate { await $0.connectCodex() } }
+    func installCommandLineTool() async { await integrate { await $0.installCommandLineTool() } }
+    func removeCommandLineTool() async { await integrate { await $0.removeCommandLineTool() } }
     func disconnectCodex() async { await integrate { await $0.disconnectCodex() } }
 
     private func integrate(_ action: @MainActor (AppServices) async -> UserFacingError?) async {

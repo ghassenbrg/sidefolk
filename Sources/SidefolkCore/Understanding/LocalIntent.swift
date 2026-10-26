@@ -19,9 +19,12 @@ public struct WatchIntent: Sendable, Equatable {
 
 /// What the user meant, worked out without a model.
 public enum LocalIntent: Sendable, Equatable {
-    case remind(title: String, when: Date, recurrence: Recurrence?)
-    /// `collection` is a name as typed (or the known spelling); nil means the Inbox.
-    case note(kind: NotebookItem.Kind, text: String, collection: String?)
+    /// `important` reminders are the ones that still interrupt during quiet mode ("urgent: remind me ...").
+    case remind(title: String, when: Date, recurrence: Recurrence?, important: Bool = false)
+    /// `collection` is a name as typed (or the known spelling); nil means the Inbox. `text` is exactly what was typed.
+    /// `collectionKind` is what to make the collection if it does not exist yet ("add milk to my groceries list" makes a
+    /// list); nil leaves that to the tool's default.
+    case note(kind: NotebookItem.Kind, text: String, collection: String?, collectionKind: NotebookCollection.Kind? = nil)
     /// A durable fact about the user ("I prefer pnpm"), kept in About you.
     case aboutMe(fact: String)
     case watch(WatchIntent)
@@ -30,8 +33,14 @@ public enum LocalIntent: Sendable, Equatable {
     case quietOff
     /// An empty `query` with a `kind` or `collection` means "list them".
     case find(query: String, kind: NotebookItem.Kind?, collection: String?)
-    /// A reminder was asked for without a usable time; the app should ask when.
-    case needsTime(title: String)
+    /// A reminder was asked for without a usable time; the app should ask when. `title` is clean (no time words).
+    /// `reason` says why the words given were no use ("Yesterday has passed.", "25:00 isn't a time.") and is nil
+    /// when there simply was no time. `important` is carried through to the reminder made from the answer.
+    case needsTime(title: String, reason: String? = nil, important: Bool = false)
+    /// A watch was asked for without saying what to watch ("tell me when the server is back up"); the app should ask
+    /// for the address and finish with `IntentParser.watch(address:kind:becomes:)`. `kind` is `site_status` or
+    /// `url_change`; for `site_status`, `becomes` is "up" or "down".
+    case needsTarget(kind: String, becomes: String?)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

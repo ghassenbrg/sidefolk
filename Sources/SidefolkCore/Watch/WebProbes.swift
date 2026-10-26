@@ -4,21 +4,37 @@ import Foundation
 // MARK: Shared web plumbing
 
 enum WebTarget {
-    /// A web address typed by a person: "example.com/pricing" means https. Syntax and host rules come from
-    /// the shared `URLPolicy`; the DNS check happens at every request, where it cannot go stale.
+    /// A web address typed by a person: "example.com/pricing" means https, "localhost:3000" means http. Syntax and
+    /// host rules come from the shared `URLPolicy`; the DNS check happens at every request, where it cannot go stale.
     static func normalise(_ text: String?, allowLocal: Bool) throws -> URL {
         guard var s = text?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
             throw WatchError.invalid("Tell me which web address to watch.")
         }
-        // No scheme typed ("example.com/x", "localhost:3000"): assume https. "mailto:x" or "javascript:x" stay as they are and are refused.
-        if !s.contains("://"), s.range(of: #"^[^/:\s]+:(?!\d+(?:/|$))"#, options: .regularExpression) == nil { s = "https://" + s }
+        // No scheme typed ("example.com/x", "localhost:3000"): assume one. "mailto:x" or "javascript:x" stay as they are and are refused.
+        if !s.contains("://"), s.range(of: #"^[^/:\s]+:(?!\d+(?:/|$))"#, options: .regularExpression) == nil { s = defaultScheme(for: s) + s }
         do {
             let url = try URLPolicy.parseWebURL(s)
             try URLPolicy.checkHost(url, allowPrivate: allowLocal)
             return url
         } catch let violation as URLPolicy.Violation {
+            if case .privateDestination(let host) = violation { throw WatchError.invalid(localRefusal(host)) }
             throw WatchError.invalid(violation.message)
         }
+    }
+
+    /// Dev servers and gadgets at home speak plain http ("localhost:3000", "192.168.1.5:8080", "printer.local");
+    /// anything else typed without a scheme is https.
+    static func defaultScheme(for typed: String) -> String {
+        guard let host = URLComponents(string: "http://" + typed)?.host?.lowercased() else { return "https://" }
+        if host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local") { return "http://" }
+        if let ip = IPAddress.parse(host), !ip.isPublic { return "http://" }
+        return "https://"
+    }
+
+    /// Only the user's own request may reach this Mac or the local network (docs/SECURITY.md T11), so whoever
+    /// is refused here is not the user: say what to do instead.
+    static func localRefusal(_ host: String) -> String {
+        "“\(host)” points at this computer or your local network. Ask me directly to watch it — I only watch local addresses when you ask."
     }
 
     static func url(in config: JSONValue) -> URL? { config.string("url").flatMap(URL.init(string:)) }
@@ -265,7 +281,10 @@ public struct SiteStatusProbe: WatcherProbe {
         if let pending { state["pending"] = .string(pending); state["pending_count"] = .number(Double(count)) }
         if !observed.why.isEmpty { state["why"] = .string(observed.why) }
 
-        guard flipped, becomes == "any" || becomes == observation else { return ProbeResult(state: .object(state)) }
+        // Watching a site that is down right now is the point of "tell me when it's back", but the person who set
+        // it up should hear that it isn't answering, in the card that confirms the watcher.
+        let note = previous == nil && !observed.up ? observed.why : nil
+        guard flipped, becomes == "any" || becomes == observation else { return ProbeResult(state: .object(state), firstLookNote: note) }
 
         let name = WebTarget.displayName(url)
         return observed.up

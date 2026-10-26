@@ -105,7 +105,6 @@ public struct ProcessExitsProbe: WatcherProbe {
         let previous = w.lastState
         let label = Self.label(w.config)
         let wasSeen = previous?["seen"]?.boolValue ?? false
-        let alreadyTold = previous?["reported"]?.boolValue ?? false
 
         var running: [ProcessEntry]
         if let pid = w.config["pid"]?.intValue {
@@ -129,10 +128,10 @@ public struct ProcessExitsProbe: WatcherProbe {
         if wasSeen {
             return ProbeResult(state: ["seen": false, "reported": true], triggered: true, summary: "\(label) exited")
         }
-        // Never seen running: say so once instead of waiting for something that is not there.
-        guard !alreadyTold else { return ProbeResult(state: ["seen": false, "reported": true]) }
-        return ProbeResult(state: ["seen": false, "reported": true], triggered: true, summary: "\(label) isn't running",
-                           detail: "I couldn't find it, so there's nothing to wait for. Is the name right?", level: .gentle)
+        // Never seen running. Say so once, in the card that confirms the new watcher ("Xcode isn't running"), and keep
+        // waiting for it to start and then quit; no notice on top of the card, and none again and again.
+        return ProbeResult(state: ["seen": false, "reported": true],
+                           firstLookNote: previous == nil ? "\(label) isn't running right now." : nil)
     }
 
     public func eventTargets(for watcher: Watcher) -> [WatchEventTarget] {

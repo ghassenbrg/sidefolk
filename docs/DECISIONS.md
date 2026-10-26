@@ -118,3 +118,24 @@ hardened anyway (spawn lock, close-on-exec pipes, ETXTBSY retry, probe retry).
 **Decision:** the watcher engine knows one generic kind that calls an extension's `sidefolk/watch.check`;
 `watch.extension` (medium risk) starts them, validated against the manifest's config fields, never louder
 than "attention". The agent sees available extension watchers in its context.
+
+### D20 — The companion settles when nothing is happening (2026-10-26)
+**Decision:** idle, listening and sleeping breathe for 20 s after any change, then hold still (blinks
+continue); busy states keep moving. Loops are capped at ~24 fps, the body layer is rasterized, and
+all loops pause while the window is hidden or covered.
+**Why:** the performance review measured the endless breathing loop costing ~43% of a core in
+WindowServer on a 120 Hz display (app CPU itself was 0.08%). Motion is information; constant motion
+is noise and battery.
+
+### D21 — Local addresses can be watched when the user asks (2026-10-26)
+**Decision:** `watch.create` from the user's own request (`Caller.user`, untainted) may target
+localhost, LAN and `.local` hosts ("tell me when localhost:3000 is up"). Agents, external clients,
+extensions and tainted turns are still refused (SECURITY T11), with a message that says to ask
+directly. **Why:** the developer persona's main watch target is a local server; the SSRF guard is
+about model-built URLs, not the user's own words.
+
+### D22 — Agents' questions are answered in the Ask panel; bubbles keep their buttons (2026-10-26)
+**Decision:** Sidefolk's own agent (and external questions without options) asks inside the Ask panel,
+where the user can pick an option or type an answer; `ask.user` accepts free-text answers. Bubbles
+never lose their action buttons when they shrink, and questions never shrink. **Why:** the UX review
+found unanswerable collapsed bubbles and a two-minute clarification ping-pong.

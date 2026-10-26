@@ -43,7 +43,9 @@ final class Onboarding {
             advance(to: .agents)
         case (.agents, "connect"):
             Task {
-                _ = await coordinator.connectClaudeCode(hooks: true)
+                let status = await coordinator.integrationStatus()
+                if status.claudeCodeFound { _ = await coordinator.connectClaudeCode(hooks: true) }
+                if status.codexFound, !status.codexMCPInstalled { _ = await coordinator.connectCodex() }
                 advance(to: .login)
             }
         case (.agents, _):
@@ -74,7 +76,9 @@ final class Onboarding {
             if target == .notifications, await coordinator.notificationsAuthorized() { target = .agents }
             if target == .agents {
                 let status = await coordinator.integrationStatus()
-                if !status.claudeCodeFound || status.claudeHooksInstalled { target = .login }
+                let claudeDone = !status.claudeCodeFound || status.claudeHooksInstalled
+                let codexDone = !status.codexFound || status.codexMCPInstalled
+                if claudeDone && codexDone { target = .login }
             }
             if target == .login, coordinator.openAtLogin { target = .done }
             step = target
@@ -95,19 +99,21 @@ final class Onboarding {
             item = bubble("Hi, I'm \(name).", "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
                           [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)])
         case .tryReminder:
-            item = bubble("Give me something to remember.", "Click me or press \(coordinator.hotkeyLabel). Try a reminder — it works without any AI.",
+            item = bubble("Give me something to remember.", "Click me or press \(coordinator.hotkeyLabel). Try a reminder: no AI needed.",
                           [("show", "Show me", true), ("later", "Later", false)])
         case .notifications:
             item = bubble("Can I use Mac notifications?", "Only when I'm hidden, you're in fullscreen, or something is urgent.",
                           [("allow", "Allow notifications", true), ("later", "Not now", false)])
         case .agents:
-            item = bubble("Want a tap when Claude Code needs you?", "I'll add myself to Claude Code's settings — you'll see exactly what changes, and I keep a backup.",
+            item = bubble("Want a tap when your coding agents need you?",
+                          "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup.",
                           [("connect", "Connect…", true), ("later", "Later", false)])
         case .login:
-            item = bubble("Start me when you log in?", "Reminders and watchers only work while I'm running.",
-                          [("yes", "Yes", true), ("no", "No", false)])
+            item = bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
+                          [("yes", "Start at login", true), ("no", "Not now", false)])
         case .done:
-            item = bubble("That's it.", "Drop files or links on me anytime. Right-click me for more.", [("ok", "Got it", true)])
+            item = bubble("That's it.", "Drop files or links on me, double-click me for your notebook, or find me in the menu bar.",
+                          [("ok", "Got it", true)])
         }
         coordinator.presentLocal(item)
     }

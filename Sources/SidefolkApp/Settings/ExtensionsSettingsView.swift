@@ -15,7 +15,6 @@ struct ExtensionsSettingsView: View {
         SettingsPage {
             installed
             skills
-            AgentsGroup(model: model)
         }
         .sheet(item: $preview) { p in InstallPreviewSheet(preview: p, model: model) }
         .sheet(isPresented: $addingServer) { AddServerSheet(model: model) }
@@ -403,7 +402,8 @@ enum ShellWords {
 
 // MARK: - Connect your agents
 
-private struct AgentsGroup: View {
+/// Settings › Agents: Claude Code, Codex and the `sidefolk` command.
+struct AgentsGroup: View {
     var model: SettingsModel
     @State private var hooks = true
 
@@ -413,6 +413,7 @@ private struct AgentsGroup: View {
             if let status = model.integration {
                 claude(status)
                 codex(status)
+                commandLine(status)
             } else {
                 InlineEmpty(text: "Checking your agents…")
             }
@@ -455,6 +456,19 @@ private struct AgentsGroup: View {
                 }
             }
         }
+    }
+
+    private func commandLine(_ s: IntegrationStatus) -> some View {
+        AgentCard(
+            name: "sidefolk command",
+            status: s.cliLinked ? "Installed" : "Not installed",
+            connected: s.cliLinked,
+            found: true,
+            changes: ["Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends."],
+            busy: model.integrationBusy,
+            connect: { Task { await model.installCommandLineTool() } },
+            disconnect: { Task { await model.removeCommandLineTool() } }
+        ) { EmptyView() }
     }
 
     private func codex(_ s: IntegrationStatus) -> some View {

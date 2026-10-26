@@ -38,13 +38,14 @@ final class FakeProcessTable: ProcessTable {
         #expect(try await !probe.step(&w).triggered)
     }
 
-    @Test func aProcessThatWasNeverSeenIsSaidSoOnceAndGently() async throws {
+    @Test func aProcessThatIsNotRunningIsSaidSoOnTheFirstLookAndThenWaitedFor() async throws {
         var w = try watcher(name: "NoSuchApp")
         let r = try await probe.step(&w)
-        #expect(r.triggered)
-        #expect(r.summary == "NoSuchApp isn't running")
-        #expect(r.level == .gentle)
-        #expect(try await !probe.step(&w).triggered, "not again and again")
+        #expect(!r.triggered, "the card that confirms the watcher says it, not a notice on top")
+        #expect(r.firstLookNote == "NoSuchApp isn't running right now.")
+        let again = try await probe.step(&w)
+        #expect(!again.triggered)
+        #expect(again.firstLookNote == nil, "said once")
         // If it does start later, it is watched like any other.
         table.set([ProcessEntry(pid: 5, name: "NoSuchApp", startedAt: 1)])
         #expect(try await !probe.step(&w).triggered)
@@ -66,7 +67,7 @@ final class FakeProcessTable: ProcessTable {
     @Test func aPidWithANameMustAlsoMatchTheName() async throws {
         var w = try watcher(name: "node", pid: 9)
         table.set([ProcessEntry(pid: 9, name: "python", startedAt: 1)])
-        #expect(try await probe.step(&w).summary == "node isn't running")
+        #expect(try await probe.step(&w).firstLookNote == "node isn't running right now.")
     }
 
     @Test func validation() throws {

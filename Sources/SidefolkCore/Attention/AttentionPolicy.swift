@@ -92,6 +92,9 @@ public enum AttentionPolicy {
             return .present(.gentle(autoDismiss: gentleSeconds))
         }
 
+        // Reminders arrive at the time the user chose; spacing them out would make them late.
+        if source == "reminder" { return .present(.attention(expandFor: expandSeconds)) }
+
         // Rate limits for attention: spacing overall, a per-source budget and a per-family budget.
         if let last = recent.map(\.at).max(), now.timeIntervalSince(last) < attentionSpacing {
             return .hold(until: last.addingTimeInterval(attentionSpacing))

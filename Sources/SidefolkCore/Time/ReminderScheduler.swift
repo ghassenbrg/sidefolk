@@ -189,6 +189,26 @@ public actor ReminderScheduler {
         return changed?.before
     }
 
+    /// Changes a reminder's title and/or time (and repeat). Returns how it was before, for Undo.
+    @discardableResult
+    public func edit(id: String, title: String?, fireAt: Date?, recurrence: Recurrence??) async throws -> Reminder? {
+        if let fireAt, fireAt <= clock.now { throw UserFacingError("That time has already passed.", recovery: "Pick a time in the future.") }
+        let changed = try await update(id) { r in
+            guard r.state != .cancelled, r.state != .done else { return false }
+            if let title, !title.trimmingCharacters(in: .whitespaces).isEmpty { r.title = title.clipped(200) }
+            if let fireAt {
+                r.fireAt = fireAt
+                r.state = .scheduled
+                r.snoozedUntil = nil
+            }
+            if let recurrence { r.recurrence = recurrence }
+            return true
+        }
+        if let fireAt, recurrence != nil { try? await kv.set(Self.anchorKey(id), fireAt.timeIntervalSince1970) }
+        await finishChange()
+        return changed?.before
+    }
+
     /// Puts a reminder back exactly as it was (the Undo of cancel, done and snooze).
     public func restore(_ reminder: Reminder) async throws {
         try await store.save(reminder)
@@ -290,6 +310,12 @@ public actor ReminderScheduler {
         var lines: [String] = []
         if firing.missed { lines.append(missedText(firing.dueAt)) }
         if let notes = r.notes, !notes.isEmpty { lines.append(notes) }
+        // "You asked yesterday 18:20." — context for one-off reminders set a while ago.
+        if r.recurrence == nil, !firing.missed, firing.dueAt.timeIntervalSince(r.createdAt) > 120 {
+            var set = TimeFormat.when(r.createdAt, now: clock.now, calendar: calendar)
+            if set.hasPrefix("Today") || set.hasPrefix("Yesterday") { set = set.prefix(1).lowercased() + set.dropFirst() }
+            lines.append("You asked \(set).")
+        }
         await attention.post(AttentionRequest(
             level: r.level, source: "reminder", title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
             actions: [

@@ -78,6 +78,7 @@ enum Layers {
     /// Sets contentsScale through a subtree so vector content stays crisp at the drawn size.
     static func setContentsScale(_ scale: CGFloat, in layer: CALayer) {
         layer.contentsScale = scale
+        if layer.shouldRasterize { layer.rasterizationScale = scale }
         layer.mask.map { setContentsScale(scale, in: $0) }
         layer.sublayers?.forEach { setContentsScale(scale, in: $0) }
     }

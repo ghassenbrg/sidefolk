@@ -15,9 +15,12 @@ public struct ProbeResult: Sendable, Equatable {
     public var level: AttentionLevel?
     /// Ask the engine to look again before the interval is up, e.g. to see if a download has settled.
     public var recheckIn: TimeInterval?
+    /// Set by a probe's very first look when something is off but not wrong enough to fail ("it isn't answering",
+    /// "that program isn't running"). Only the card that confirms the new watcher shows it.
+    public var firstLookNote: String?
 
     public init(state: JSONValue, triggered: Bool = false, summary: String = "", detail: String? = nil,
-                openTarget: String? = nil, level: AttentionLevel? = nil, recheckIn: TimeInterval? = nil) {
+                openTarget: String? = nil, level: AttentionLevel? = nil, recheckIn: TimeInterval? = nil, firstLookNote: String? = nil) {
         self.state = state
         self.triggered = triggered
         self.summary = summary
@@ -25,6 +28,7 @@ public struct ProbeResult: Sendable, Equatable {
         self.openTarget = openTarget
         self.level = level
         self.recheckIn = recheckIn
+        self.firstLookNote = firstLookNote
     }
 }
 

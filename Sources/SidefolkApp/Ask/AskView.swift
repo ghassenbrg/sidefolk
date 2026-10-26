@@ -31,7 +31,7 @@ struct AskView: View {
             Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
             Spacer()
             Button { model.actions?.openHome() } label: {
-                Image(systemName: "square.grid.2x2").imageScale(.small)
+                Image(systemName: "house").imageScale(.small)
             }
             .buttonStyle(.sfPlain)
             .help("Open Sidefolk")
@@ -45,14 +45,14 @@ struct AskView: View {
     private var input: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-                TextField("Ask, remind, note, watch…", text: $model.text, axis: .vertical)
+                TextField(model.pendingQuestion == nil ? "Ask, remind, note, watch…" : "Type your answer…", text: $model.text, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(Theme.Font.input)
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1...5)
                     .focused($inputFocused)
                     .onSubmit { model.submit() }
-                    .disabled(model.busy)
+                    .disabled(model.busy && model.pendingQuestion == nil)
                     .accessibilityLabel("Ask \(companionName)")
                 if model.busy {
                     Button("Stop") { model.actions?.stop() }
@@ -67,11 +67,21 @@ struct AskView: View {
                         .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
                         .accessibilityLabel("Remove attachment")
                 }
+                if model.text.isEmpty, !model.busy {
+                    // Drops work without AI: the common things are one click away.
+                    HStack(spacing: 6) {
+                        Button("Save") { model.actions?.perform(.save, with: attachment, in: model) }.buttonStyle(.sf(.primary))
+                        Button("Remind me…") { model.actions?.perform(.remind, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
+                        if canWatch(attachment) {
+                            Button("Watch") { model.actions?.perform(.watch, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
+                        }
+                        Button("Ask…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
+                    }
+                }
             }
             HStack(spacing: 4) {
                 Image(systemName: "return").imageScale(.small)
-                Text(model.busy ? (model.phase ?? "Working…") : (model.hint ?? (model.pendingReminderTitle != nil
-                    ? "When? Try “tomorrow 9am” or “in 2 hours”" : "Type something, or drop a file or link on me")))
+                Text(hintLine)
                     .lineLimit(1)
             }
             .font(Theme.Font.hint)
@@ -91,13 +101,30 @@ struct AskView: View {
                 EntryView(entry: entry, model: model)
                     .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
             }
-            if model.entries.count > AskModel.visibleLimit {
-                Button("Earlier (\(model.entries.count - AskModel.visibleLimit)) ›") { model.actions?.openHome() }
+            if model.hiddenCount > 0 {
+                Button("Earlier (\(model.hiddenCount)) ›") { model.actions?.openHome() }
                     .buttonStyle(.sfPlain).font(Theme.Font.caption)
             }
         }
         .animation(.spring(duration: 0.3), value: model.entries)
         .padding(Theme.Space.m)
+    }
+
+    private var hintLine: String {
+        if let question = model.pendingQuestion { return "Your answer goes to: \(question.title)" }
+        if model.busy { return model.phase ?? "Working…" }
+        if let hint = model.hint { return hint }
+        if model.pendingReminderTitle != nil { return "When? Try “tomorrow 9am” or “in 2 hours”" }
+        if model.pendingWatch != nil { return "Which address? e.g. localhost:3000 or example.com/status" }
+        if model.attachment != nil { return "Pick what to do, or type what you want" }
+        return "Type something, or drop a file or link on me"
+    }
+
+    private func canWatch(_ a: Attachment) -> Bool {
+        switch a.kind {
+        case .url, .file: true
+        case .text: false
+        }
     }
 
     private func icon(for a: Attachment) -> String {
@@ -148,7 +175,7 @@ private struct EntryView: View {
             AnswerCard(text: text, canThinkHarder: canThinkHarder, model: model)
         case .approval(let request):
             ApprovalCard(request: request) { decision in model.actions?.answer(approval: request, decision: decision) }
-        case .error(let error, _):
+        case .error(let error, let retryable):
             SFCard(accent: Theme.coral) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(error.message).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
@@ -156,20 +183,37 @@ private struct EntryView: View {
                     if let r = error.recovery {
                         Text(r).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                     }
-                }
-            }
-        case .needsBrain(let text):
-            SFCard(accent: Theme.folkColor("byte")) {
-                VStack(alignment: .leading, spacing: Theme.Space.s) {
-                    Text("I need a brain for that.").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    Text("Notes, reminders and watches work without one. For questions, connect Claude Code, an API key or Ollama.")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    HStack(spacing: 6) {
-                        Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.primary))
-                        Button("Keep as a note") { model.actions?.saveAnswer(text, in: model) }.buttonStyle(.sf(.secondary))
+                    if retryable, let caption = entry.caption {
+                        HStack(spacing: 6) {
+                            Button("Try again") { model.actions?.retry(caption, in: model) }.buttonStyle(.sf(.secondary))
+                            Button("AI settings…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
+                        }
                     }
                 }
             }
+        case .needsBrain(let text, let guess):
+            SFCard(accent: Theme.folkColor("byte")) {
+                VStack(alignment: .leading, spacing: Theme.Space.s) {
+                    Text(guess == nil ? "That needs AI, which isn't set up." : "That needs AI — or I can do this:")
+                        .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                    if let guess {
+                        Button {
+                            model.actions?.remind(guess, in: model)
+                        } label: {
+                            Label("\(guess.label): \(guess.title)", systemImage: "alarm").lineLimit(1)
+                        }
+                        .buttonStyle(.sf(.primary))
+                    }
+                    HStack(spacing: 6) {
+                        Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary))
+                        Button("Save as note") { model.actions?.saveAnswer(text, in: model) }.buttonStyle(.sf(.secondary))
+                        Spacer(minLength: 0)
+                        Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
+                    }
+                }
+            }
+        case .question(let item):
+            QuestionCard(item: item) { actionId in model.actions?.answer(question: item, actionId: actionId) }
         case .info(let text):
             Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
         }
@@ -240,6 +284,11 @@ private struct AnswerCard: View {
                 Text(markdown).font(Theme.Font.body).foregroundStyle(Theme.ink)
                     .lineLimit(expanded ? nil : 8).textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
+                    // Links in answers open only as web pages; anything else (file:, app schemes) is ignored.
+                    .environment(\.openURL, OpenURLAction { url in
+                        guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.user == nil else { return .discarded }
+                        return .systemAction
+                    })
                 HStack(spacing: 6) {
                     if text.count > 400 {
                         Button(expanded ? "Less" : "More") { expanded.toggle() }.buttonStyle(.sf(.secondary))
@@ -260,6 +309,35 @@ private struct AnswerCard: View {
     /// Inline markdown only; links are shown, remote images are never loaded.
     private var markdown: AttributedString {
         (try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(text)
+    }
+}
+
+/// A question from Sidefolk's own agent: buttons for its options, or type the answer in the input.
+private struct QuestionCard: View {
+    var item: AttentionItem
+    var answer: (String) -> Void
+
+    var body: some View {
+        SFCard(accent: Theme.aqua) {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "questionmark.bubble").foregroundStyle(Theme.aqua)
+                    Text(item.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                }
+                if let body = item.body {
+                    Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                }
+                if !item.actions.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(item.actions, id: \.id) { action in
+                            Button(action.title) { answer(action.id) }.buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
+                        }
+                    }
+                }
+                Text(item.actions.isEmpty ? "Type your answer above and press Return." : "Or type a different answer above.")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+            }
+        }
     }
 }
 

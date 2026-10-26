@@ -89,8 +89,13 @@ struct NowView: View {
             SectionHeader(title: "Running", folk: "byte", count: model.jobs.count + model.workingSessions.count)
             RowsCard {
                 if model.jobs.isEmpty && model.workingSessions.isEmpty {
-                    InlineEmpty(text: "Nothing running. Start a command with “sidefolk run -- npm test” and I'll tell you when it ends.",
+                    InlineEmpty(text: "Nothing running. Connect Claude Code or Codex to see their sessions here, or start a command with “sidefolk run -- npm test”.",
                                 systemImage: "terminal")
+                    HStack {
+                        Button("Connect your agents…") { model.services.openAgentSettings() }.buttonStyle(.sf(.secondary))
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Space.l).padding(.bottom, Theme.Space.m)
                 }
                 ForEach(model.workingSessions) { s in
                     RunningRow(symbol: "sparkles", title: Describe.session(s), started: s.startedAt, detail: s.detail,
@@ -242,6 +247,7 @@ private struct ReminderRow: View {
     var reminder: Reminder
     var group: String
     var model: NowModel
+    @State private var editing = false
 
     var body: some View {
         HStack(spacing: Theme.Space.m) {
@@ -262,6 +268,7 @@ private struct ReminderRow: View {
             Spacer(minLength: Theme.Space.s)
             snoozeMenu
             Menu {
+                Button("Edit…") { editing = true }
                 Button("Cancel reminder", role: .destructive) { Task { await model.cancel(reminder) } }
             } label: {
                 Image(systemName: "ellipsis")
@@ -272,12 +279,15 @@ private struct ReminderRow: View {
             .accessibilityLabel("More for “\(reminder.title)”")
         }
         .nowRow()
+        .onTapGesture(count: 2) { editing = true }
         .contextMenu {
             Button("Mark done") { Task { await model.complete(reminder) } }
+            Button("Edit…") { editing = true }
             snoozeItems(prefixed: true)
             Divider()
             Button("Cancel reminder", role: .destructive) { Task { await model.cancel(reminder) } }
         }
+        .sheet(isPresented: $editing) { EditReminderSheet(reminder: reminder, model: model) }
     }
 
     private var snoozeMenu: some View {
@@ -300,7 +310,7 @@ private struct ReminderRow: View {
     private var overdue: Bool { due < Date() }
 
     private var when: String {
-        let time = due.formatted(date: .omitted, time: .shortened)
+        let time = TimeFormat.clock(due, calendar: .autoupdatingCurrent)
         if overdue { return "Overdue since \(TimeText.short(due))" }
         if reminder.state == .snoozed { return "Snoozed until \(group == "Later" ? TimeText.short(due) : time)" }
         return group == "Later" ? TimeText.short(due) : time
@@ -452,5 +462,40 @@ private struct RunningRow: View {
     private func elapsed(at now: Date) -> String {
         let seconds = now.timeIntervalSince(started)
         return seconds < 60 ? "Just started" : "Running for \(TimeText.span(seconds))"
+    }
+}
+
+/// Rename a reminder or give it a new time, in the same words you'd type to the companion.
+private struct EditReminderSheet: View {
+    var reminder: Reminder
+    var model: NowModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var title = ""
+    @State private var when = ""
+    @State private var error: UserFacingError?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
+            Text("Edit reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
+            TextField("What", text: $title).textFieldStyle(.roundedBorder)
+            TextField("When — e.g. “tomorrow 9am”; leave empty to keep \(TimeFormat.when(reminder.nextDue ?? reminder.fireAt, now: Date(), calendar: .autoupdatingCurrent))",
+                      text: $when).textFieldStyle(.roundedBorder)
+            if let error { InlineError(error: error) }
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
+                Button("Save") {
+                    Task {
+                        error = await model.edit(reminder, title: title, when: when)
+                        if error == nil { dismiss() }
+                    }
+                }
+                .buttonStyle(.sf(.primary))
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(Theme.Space.xl)
+        .frame(width: 420)
+        .onAppear { title = reminder.title }
     }
 }
