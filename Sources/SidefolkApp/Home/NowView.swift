@@ -10,12 +10,16 @@ struct NowView: View {
         PageScroll {
             PageTitle(title: "Now", subtitle: subtitle)
             if model.needsYouCount > 0 { needsYou }
+            // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
+            if busy { running }
             comingUp
             watching
-            running
+            if !busy { running }
             if !model.recent.isEmpty { recently }
         }
     }
+
+    private var busy: Bool { !model.jobs.isEmpty || !model.workingSessions.isEmpty }
 
     private var subtitle: String {
         let day = Date().formatted(.dateTime.weekday(.wide).day().month(.wide))
