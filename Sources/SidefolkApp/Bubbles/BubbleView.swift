@@ -52,11 +52,8 @@ struct BubbleView: View {
                 }
                 // Buttons stay when the bubble shrinks: a collapsed reminder can still be answered.
                 if !item.actions.isEmpty {
-                    // One row when the verbs fit; stacked, never cut off, when a language makes them longer.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { actions(item) }
-                        VStack(alignment: .leading, spacing: 6) { actions(item) }
-                    }
+                    // One row when the verbs fit; wrapped, never cut off, when a language makes them longer.
+                    ButtonRow { actions(item) }
                 }
                 if model.waitingCount > 1 {
                     Text("+\(model.waitingCount - 1) more waiting").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)

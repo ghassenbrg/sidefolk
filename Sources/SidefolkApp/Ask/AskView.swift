@@ -494,10 +494,7 @@ private struct QuestionCard: View {
                     Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
                 if !item.actions.isEmpty {
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { options }
-                        VStack(alignment: .leading, spacing: 6) { options }
-                    }
+                    ButtonRow { options }
                 }
                 Text(item.actions.isEmpty ? "Type your answer above and press Return." : "Or type a different answer above.")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
