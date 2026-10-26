@@ -1,8 +1,7 @@
 # Status
 
-Updated: 2026-10-27. Version 0.1.0. Latest: every feature team merged into `main` (voice, live
-reports, effort and real logos, approval modes, Apple Notes, built-in extensions and the extension
-builder), all ten languages translated (2008 strings each), and a production review under way.
+Updated: 2026-10-27. Version 0.1.0. Latest: the production review is merged (design D40, hardening
+D41, agents D42, the launch kit); 1172 tests pass; the reviews' 130 new strings are being translated.
 
 ## Done and verified
 - **Version 0.1.0** (`SidefolkVersion.current`); bundled extensions and the docs ask for `sidefolk >=0.1`.
@@ -45,7 +44,30 @@ builder), all ten languages translated (2008 strings each), and a production rev
 - **Fixes from the founder's use:** Open session brings Claude's desktop app forward (its Claude Code
   runs from a background-only bundle) or says why it can't; bubbles lost a gritty window shadow; an
   answer that ends with a question offers Reply; Settings › Agents shows each agent's own mark.
-- **Tests:** 1107 (1095 core in 131 suites + 12 character). `make test` runs serially (about 45 s).
+- **Production review (2026-10-27):**
+  - *Design (D40):* with no AI chosen, the Ask panel offers the Claude Code or Codex this Mac is signed
+    in to (one click picks it and asks again); built-in calls read as sentences ("Clone … into
+    ~/git/…"); each built-in shows a request to try; buttons wrap instead of being cut (`ButtonRow`);
+    honest snapshot samples; Reduce Motion in the Ask panel. Weather now starts on (D39 addendum), and
+    the built-ins' names, descriptions and titles come from the catalog (`BuiltInExtensionWords`).
+  - *Hardening (D41):* six cross-feature end-to-end scenarios (`Tests/.../E2E`, a `World` harness),
+    a fuzz of the new syntax, and fixes for: three crashes (one a crash loop from a huge repeat
+    interval), Guard failing open when its settings couldn't be read, "until 6pm" repeating forever,
+    monthly reminders losing their day, disk-full crashing the log, housekeeping only at launch (now
+    daily), reports notifying in quiet mode, a clock set back silencing watchers, quit leaving CLI
+    brains running. Nothing runs `xcrun` or the `/usr/bin` shims to find a program (no developer-tools
+    dialog on a clean Mac); approval cards say what a call can do ("Uses the internet"). Idle 0.06% of
+    a core, 25 MB; four 10 s reports 0.11%. `make app` builds in a staging bundle and swaps it in.
+    docs/RELEASE.md is the release checklist.
+  - *Agents (D42):* `skills/sidefolk/SKILL.md` installed by Connect beside the MCP entry (Claude Code and
+    Codex, with backup, idempotent, never through a symlinked folder); Codex session hooks; new tools for
+    other agents (`reminders_cancel`, `watch_report` for this Mac's metrics, `agenda_today`); descriptions
+    written for other agents; "Copy Setup Instructions" for Cursor, VS Code and Zed. One tiny live call
+    each through `codex` and `claude` with temp configs listed the tools and called `status`.
+  - *Launch kit:* README for strangers, docs/RELEASE-NOTES.md for 0.1.0, docs/launch/ (descriptions,
+    landing page, posts, demo script, press kit, reviewer FAQ, CHECKLIST.md, 35 screenshots),
+    `scripts/launch-screenshots.swift`.
+- **Tests:** 1172 (1160 core in 150 suites + 12 character). `make test` runs serially (about 50 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
   character's VoiceOver words and the core leftovers (Brain replies and checks, provider names,
   Claude Code/Codex messages) is in the catalog: `make strings` finds 1681 strings, English only.
@@ -250,9 +272,7 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   `sidefolk status` answers, idle measured (see above).
 
 ## In progress
-- **Production review (D40–D42):** product and design, quality/performance/security, agents (MCP
-  gaps, a Sidefolk skill installed by Connect for Claude Code and Codex) and a launch kit (README,
-  release notes, launch posts, press kit, CHECKLIST), each in its own worktree.
+- **Translations of the reviews' 130 new strings** (fr, es, it / de, pt-BR, ar / ja, ko, zh-Hans).
 - **Lively companions:** a proof of concept on the branch `poc/lively-companions` (moments,
   postures, an idle scheduler, Liveliness Minimal/Balanced/Lively, custom companions as data, a 3D
   spike); waiting for the founder's decision. Its write-up is docs/research/lively-companions.md on
@@ -261,7 +281,13 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
 ## Known issues / not yet verified
 - **Not yet tried by hand with the real thing:** the microphone (its permission prompt, hold to talk,
   AirPods), Apple Notes on a real library after the -1728 fix, "clone … under ~/git" with a real AI,
-  the menu bar's Approvals submenu and orange Full access icon, a live ElevenLabs voice.
+  the menu bar's Approvals submenu and orange Full access icon, a live ElevenLabs voice, "Answer with
+  Claude Code" from the no-AI card, Connect adding the skill and Codex's hook trust dialog, a first
+  launch on a clean Mac without the developer tools (the built-ins are Python, so they say what's
+  missing), macOS 15 and 26.
+- **Release blockers that need the founder** (docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence,
+  Developer ID and notarization, the name and domain, a privacy policy and support contact, Open-Meteo's
+  terms if Sidefolk is paid, Anthropic's (and OpenAI's) approval of their logos.
 - **Languages:** the `sidefolk`
   command line, `StatusSnapshot.sentence`, bridge protocol errors, extension manifest checks
   (`ManifestValidator`, `ValidationReport.text`) and `ExtensionError`/`MCPError` details stay English
@@ -288,8 +314,8 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   identity or ad hoc.
 
 ## Next
-1. Merge the production review (design, QA/security, agents, launch kit), translate their new
-   strings (`make strings`, `scripts/translations.py export/check/import`), and build the release.
+1. Import the round-four translations, build the release (`make app`), re-run
+   `swift scripts/launch-screenshots.swift` so the kit shows the final screens.
 2. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
    Developer ID signing and notarization (`scripts/release.sh`); ask Anthropic about its marks.
 3. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
