@@ -148,6 +148,7 @@ final class AppCoordinator {
         let s = runtime.settings.current
         companion.eyesFollowPointer = s.eyesFollowPointer
         companion.apply(size: s.size, reducedMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         askPanel?.update(companionName: s.companionName, hotkey: hotkeyLabel)
@@ -298,6 +299,19 @@ final class AppCoordinator {
         }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            return
+        }
+        if command.hasPrefix("companion:") {
+            // companion:<sidefolk|mochi|spark>[:<accent>], the same change the Settings picker makes.
+            let parts = command.split(separator: ":").dropFirst().map(String.init)
+            let choice = parts.first.flatMap(CompanionChoice.init(rawValue:))
+            let accent = parts.dropFirst().first.flatMap(CompanionAccent.init(rawValue:))
+            Task {
+                await runtime.settings.update { s in
+                    if let choice { s.choose(choice) }
+                    if let accent { s.accent = accent }
+                }
+            }
             return
         }
         if command.hasPrefix("ask:") {

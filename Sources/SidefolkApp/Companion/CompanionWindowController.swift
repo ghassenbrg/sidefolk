@@ -76,15 +76,30 @@ final class CompanionWindowController {
         layoutContent()
     }
 
+    /// Who is on the desktop and what it is called. Switching is live: the character crossfades to
+    /// the other companion in the same state.
+    func apply(look: CharacterLook, name: String) {
+        character.look = look
+        character.displayName = name
+        container.setAccessibilityLabel(name)
+        container.setAccessibilityHelp("Press to talk to \(name).")
+        layoutContent()
+    }
+
     private func layoutContent() {
         let box = characterBox
         let folksOnLeft = folksGoLeft
         let charX = folksOnLeft ? windowSize.width - box.width : 0
         character.frame = NSRect(x: charX, y: 0, width: box.width, height: box.height)
+        // Folks stand beside the body, not the square view: a slim companion keeps them close.
+        // `reach` is how far the robot's body frame sits inside its view, where folks always stood.
+        let body = character.characterFrame.offsetBy(dx: charX, dy: 0)
+        let reach = box.width * 0.17
         for (i, folk) in folkOrder.enumerated() {
             guard let v = folkViews[folk] else { continue }
             let step = folkSize * 0.8
-            let x = folksOnLeft ? charX - CGFloat(i + 1) * step + folkSize * 0.15 : box.width + CGFloat(i) * step - folkSize * 0.15
+            let x = folksOnLeft ? body.minX - reach - CGFloat(i + 1) * step + folkSize * 0.15
+                : body.maxX + reach + CGFloat(i) * step - folkSize * 0.15
             // Folk canvases also stand 10% above their bottom; align both feet lines.
             v.frame = NSRect(x: x, y: feetInset - folkSize * 0.1, width: folkSize, height: folkSize)
         }
@@ -96,10 +111,9 @@ final class CompanionWindowController {
         return panel.frame.midX > screen.visibleFrame.midX
     }
 
-    /// The character's frame in screen coordinates (panels and bubbles attach to it).
+    /// The character's body at rest in screen coordinates (panels and bubbles attach to it).
     var characterFrameOnScreen: NSRect {
-        let local = character.frame.insetBy(dx: characterBox.width * 0.17, dy: characterBox.height * 0.1)
-        return panel.convertToScreen(container.convert(local, to: nil))
+        panel.convertToScreen(character.convert(character.characterFrame, to: nil))
     }
 
     var screen: NSScreen { panel.screen ?? NSScreen.main ?? NSScreen.screens[0] }

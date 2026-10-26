@@ -33,6 +33,11 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 [[ -d Resources/Brand/exports ]] && cp -R Resources/Brand/exports "$APP/Contents/Resources/Brand"
 [[ -d Resources/MenuBar ]] && cp -R Resources/MenuBar "$APP/Contents/Resources/MenuBar"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$APP/Contents/Resources/Skills"
+# Sprite companions: one folder of poses each; their README stays in the repository.
+if [[ -d Resources/Companions ]]; then
+  mkdir -p "$APP/Contents/Resources/Companions"
+  for dir in Resources/Companions/*/; do cp -R "${dir%/}" "$APP/Contents/Resources/Companions/"; done
+fi
 # One <language>.lproj per translation; macOS picks the user's language (or the one chosen in Settings).
 [[ -f Resources/Localization/Localizable.xcstrings ]] && \
   xcrun xcstringstool compile Resources/Localization/Localizable.xcstrings --output-directory "$APP/Contents/Resources" > /dev/null
