@@ -18,9 +18,10 @@ concurrency:
 jobs:
   build-and-test:
     name: Build and test
-    # The repository variables SIDEFOLK_MACOS_RUNNER (for example xcode-27) and SIDEFOLK_XCODE (for
-    # example 26.6) change the machine and the Xcode without editing this file (docs/RELEASE.md).
-    runs-on: ${{ vars.SIDEFOLK_MACOS_RUNNER || 'macos-26' }}
+    # Xcode 27, the toolchain Sidefolk is built with: Xcode 26.6's Swift 6.3 crashes on valid code here.
+    # The repository variables SIDEFOLK_MACOS_RUNNER and SIDEFOLK_XCODE change the machine and the
+    # Xcode without editing this file (docs/RELEASE.md).
+    runs-on: ${{ vars.SIDEFOLK_MACOS_RUNNER || 'xcode-27' }}
     timeout-minutes: 60
     env:
       SIDEFOLK_XCODE: ${{ vars.SIDEFOLK_XCODE }}

@@ -71,13 +71,14 @@ credentials there; the job deletes it at the end.
 
 | Variable | Default | What |
 |---|---|---|
-| `SIDEFOLK_MACOS_RUNNER` | `macos-26` | The runner image, e.g. `xcode-27` (the preview image with Xcode 27) |
+| `SIDEFOLK_MACOS_RUNNER` | `xcode-27` | The runner image (`xcode-27` is GitHub's image with Xcode 27; `macos-26` has Xcode 26) |
 | `SIDEFOLK_XCODE` | the image's default | An Xcode on that image, e.g. `26.6` (`/Applications/Xcode_26.6.app`) |
 | `SIDEFOLK_KEEP_SNAPSHOTS` | `10` | How many snapshot releases to keep |
 
-The project is developed with Xcode 27 (Swift 6.4) and needs at least the macOS 26 SDK (voice uses
-SpeechAnalyzer) and Swift 6.2 (`Package.swift`). `macos-26` defaults to Xcode 26.6; if a build there fails on
-a newer Swift feature, set `SIDEFOLK_MACOS_RUNNER` to `xcode-27`.
+The project is built with Xcode 27 (Swift 6.4), so both workflows run on GitHub's `xcode-27` image. It needs
+at least the macOS 26 SDK (voice uses SpeechAnalyzer). Xcode 26.6 (`macos-26`, Swift 6.3.3) compiles the
+debug build and passes the tests since three fixes for it, but its optimizer crashes on the release build
+(in `HostedPanel`'s deinit), a compiler bug; prefer `xcode-27` until Swift 6.3 is no longer worth supporting.
 
 ## Checklist
 
