@@ -113,15 +113,15 @@ final class FixtureServices: AppServices {
                           kind: .sidefolk, enabled: false, folk: "scout", toolNames: ["Weather forecast"], watcherNames: ["Rain soon"],
                           permissionLines: ["Can use the internet"], warnings: [], sandboxed: true, lastError: nil, bundled: true,
                           iconPath: Self.icon("weather")),
-            ExtensionInfo(id: "local.strava-runs", name: "Strava Runs", version: "0.1.0",
-                          description: "Your latest runs from Strava: distance, pace and time.",
-                          kind: .sidefolk, enabled: true, folk: nil, toolNames: ["Latest runs"], watcherNames: [],
+            ExtensionInfo(id: "local.hacker-news", name: "Hacker News", version: "0.1.0",
+                          description: "The top stories on Hacker News, with their scores and links.",
+                          kind: .sidefolk, enabled: true, folk: nil, toolNames: ["Top stories"], watcherNames: [],
                           permissionLines: ["Can use the internet"], warnings: [], sandboxed: true, lastError: nil, bundled: false,
                           fromDraft: true),
-            ExtensionInfo(id: "dev.lumen.hue", name: "Hue Lights", version: "0.4.2",
-                          description: "Turns your Philips Hue lights on and off.",
-                          kind: .sidefolk, enabled: false, folk: "nova", toolNames: ["hue_set_scene", "hue_off"], watcherNames: [],
-                          permissionLines: ["Talk to devices on your local network"],
+            ExtensionInfo(id: "dev.example.air-quality", name: "Air Quality", version: "0.4.2",
+                          description: "Air quality and pollen for any place, from Open-Meteo.",
+                          kind: .sidefolk, enabled: false, folk: "seed", toolNames: ["air_quality", "pollen"], watcherNames: [],
+                          permissionLines: ["Can use the internet"],
                           warnings: [], sandboxed: true,
                           lastError: "It crashed 3 times in 5 minutes, so I turned it off. Nothing else was affected.", bundled: false),
             ExtensionInfo(id: "mcp.github", name: "GitHub", version: "",
@@ -136,19 +136,20 @@ final class FixtureServices: AppServices {
     }
 
     static let samplePreview = ExtensionInstallPreview(
-        id: "dev.example.weather", name: "Weather", version: "1.2.0",
-        description: "Morning forecasts in your brief, and a heads-up before rain.",
-        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Downloads/weather-extension"),
+        id: "dev.example.trip-planner", name: "Trip Planner", version: "1.2.0",
+        description: "Day plans and packing lists from the trips in your Travel folder.",
+        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Downloads/trip-planner"),
         permissionLines: ["Can use the internet", "Can read ~/Documents/Travel"],
         warnings: ["It can read ~/Documents/Travel and use the internet, so it could upload those files."],
-        toolNames: ["weather_today", "weather_week"], watcherNames: ["Rain soon"], isUpdate: false, folk: "scout")
+        toolNames: ["plan_day", "packing_list"], watcherNames: [], isUpdate: false, folk: "scout")
 
-    /// A draft Sidefolk's AI wrote, handed over for review (D39).
+    /// A draft Sidefolk's AI wrote, handed over for review (D39): the one waiting in Drafts. Extensions can't
+    /// hold secrets, so the samples are things that need no account.
     static let draftPreview = ExtensionInstallPreview(
-        id: "local.strava-runs", name: "Strava Runs", version: "0.1.0",
-        description: "Your latest runs from Strava: distance, pace and time.",
-        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Sidefolk/ExtensionDrafts/local.strava-runs"),
-        permissionLines: ["Can use the internet"], warnings: [], toolNames: ["Latest runs"], watcherNames: [], isUpdate: false,
+        id: "local.pomodoro-log", name: "Pomodoro Log", version: "0.1.0",
+        description: "Logs your focus sessions in its own folder and adds them up by day.",
+        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Sidefolk/ExtensionDrafts/local.pomodoro-log"),
+        permissionLines: [], warnings: [], toolNames: ["Start a session", "Today's sessions"], watcherNames: [], isUpdate: false,
         fromDraft: true)
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? { nil }
