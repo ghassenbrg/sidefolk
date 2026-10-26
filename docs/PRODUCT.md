@@ -131,10 +131,10 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
   grouping, one re-nudge, snooze.
 
 ### Onboarding and settings
-- P0 First run happens on the desktop through the companion (no wizard): hello, a real reminder in
-  2 minutes without AI, notifications asked in context, connect Claude Code if found, open at login.
-  AI setup is offered when first needed.
-- P0 Settings that all work: General, Companion & Attention, AI, Privacy & Permissions, Extensions.
+- P0 First run happens on the desktop through the companion (no wizard): hello, connect Claude Code
+  and Codex if found, a real reminder in 2 minutes without AI, notifications asked in context, open
+  at login. AI setup is offered when first needed. Each folk introduces itself the first time it appears.
+- P0 Settings that all work: General, Companion & Attention, AI, Agents, Privacy & Permissions, Extensions.
 
 ### Quality
 - P0 Structured local logs with redaction, diagnostics export, agent run records.
