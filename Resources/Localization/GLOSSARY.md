@@ -44,6 +44,27 @@ Translate these once and use the same word everywhere, including in Settings and
 | extension, skill | Add-ons: an extension brings tools and watchers; a skill is written instructions. |
 | folk, on duty | A folk is "on duty" while its job is live (a reminder is near, a watch is running). |
 
+## Addressing the person
+
+Chosen once for the whole app (rule 4). A companion is close to its person, so use the warmer form
+wherever the language's software allows it.
+
+| Language | "You" | Buttons and menu items |
+|---|---|---|
+| fr | vous | infinitive (Supprimer, Réessayer) |
+| es | tú | infinitive (Eliminar, Reintentar) |
+| de | du | infinitive (Löschen, Erneut versuchen) |
+| it | tu | imperative, as macOS does (Elimina, Riprova) |
+| pt-BR | você | infinitive (Apagar, Tentar de novo) |
+| ja | です・ます; leave "you" out as Japanese does, never あなた | noun or する form (削除, もう一度試す) |
+| ko | 해요체; leave "you" out, never 당신 | noun or 하기 (삭제, 다시 시도) |
+| zh-Hans | 你 | verb (删除, 重试) |
+| ar | Modern Standard Arabic, masculine singular where a form is unavoidable, as macOS does | verbal noun (حذف, إعادة المحاولة) |
+
+The companion says "I" and has no gender: word its sentences so nothing agrees with it (French
+"C'est fait" rather than "Je suis prêt"). Where a form is unavoidable, use the grammatical default.
+Do the same for the person.
+
 ## Rules
 
 1. **Example commands stay in English.** The understanding of typed requests without AI is English
