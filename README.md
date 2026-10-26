@@ -53,7 +53,7 @@ itself in a few bubbles; choose an AI later in **Settings › AI** (everything l
 
 ```sh
 swift build                      # everything
-make test                        # 670 tests (Swift Testing), serial: ~25 s
+make test                        # 813 tests (Swift Testing), serial: ~40 s
 make dev                         # debug app with its own data in build/dev-home (never your real data)
 swift run sidefolk-render out/   # character contact sheets for visual review
 swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # Home, Settings, Ask panel, bubbles; light and dark
