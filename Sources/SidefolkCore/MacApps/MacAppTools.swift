@@ -22,15 +22,11 @@ enum MacAppAccess {
     /// What a tool returns when macOS refused: the model reads where the switch is, and the person
     /// gets a card whose button opens that page of System Settings.
     static func permissionResult(_ app: MacApp) -> ToolResult {
-        let name = app.displayName
-        return ToolResult(
+        ToolResult(
             text: "macOS didn't let Sidefolk use \(app.englishName), so nothing was read or changed. The user can allow it in "
                 + "System Settings › Privacy & Security › Automation by switching on \(app.englishName) under Sidefolk; a button "
                 + "for that page is shown to them. Tell them, and don't try again until they say they have.",
-            card: ResultCard(kind: .info, title: String(localized: "Sidefolk needs your OK to use \(name)"),
-                             subtitle: String(localized: "System Settings › Privacy & Security › Automation"),
-                             detail: String(localized: "Switch on \(name) under Sidefolk, then ask again."),
-                             url: PrivacyPane.automation.rawValue),
+            card: app.permissionCard,
             isError: true)
     }
 

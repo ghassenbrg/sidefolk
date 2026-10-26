@@ -130,6 +130,9 @@ enum UISnapshots {
             // Desktop surfaces: the Ask panel and the kinds of bubble.
             try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Mochi",
                                                       portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
+            try await page("desktop-ask-apple-notes", AskView(model: sampleAskAppleNotes(), companionName: "Mochi",
+                                                                  portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"),
+                           width: 380)
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
@@ -196,6 +199,24 @@ enum UISnapshots {
                                           risk: .medium, caller: .agent(runId: "r"),
                                           details: .paths(["~/Downloads/a.pdf", "~/Downloads/b.pdf", "~/Downloads/c.pdf"]),
                                           canAlways: false)))
+        return ask
+    }
+
+    /// Organizing Apple Notes (D38): a batch copied, macOS refusing Reminders, the next read waiting.
+    private static func sampleAskAppleNotes() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .note, title: String(localized: "Copied 25 notes from Apple Notes"), subtitle: "Cooking, Travel, Work",
+                                   detail: String(localized: "\(75) of \(214) copied so far"), itemKind: .note), activityId: nil, undo: true),
+                caption: "check my Apple Notes and move them, well organized, into our notebook")
+        ask.add(.result(MacApp.reminders.permissionCard, activityId: nil, undo: false), caption: "what's on my Apple Reminders?")
+        ask.add(.approval(ApprovalRequest(tool: "applenotes.list", title: String(localized: "List Apple Notes"),
+                                          summary: "Read the titles, folders and dates of up to 50 notes in “Recipes” in Apple Notes",
+                                          risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: true, readsOnly: true)))
+        ask.add(.approval(ApprovalRequest(tool: "applenotes.remove", title: String(localized: "Remove notes from Apple Notes"),
+                                          summary: "Move 2 notes in Apple Notes to Recently Deleted", risk: .high, caller: .agent(runId: "r"),
+                                          details: .text("“Pasta carbonara” (iCloud › Recipes)\n“Sourdough” (iCloud › Recipes)\n\n"
+                                                         + "Their copies stay in your notebook. Notes keeps deleted notes in Recently Deleted for 30 days."),
+                                          canAlways: false, tainted: true)))
         return ask
     }
 

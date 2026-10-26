@@ -29,6 +29,15 @@ public enum MacApp: String, Sendable, CaseIterable {
         case .reminders: "Reminders"
         }
     }
+
+    /// What the person sees when macOS refused: where the switch is, with a button to that page.
+    public var permissionCard: ResultCard {
+        let name = displayName
+        return ResultCard(kind: .info, title: String(localized: "Sidefolk needs your OK to use \(name)"),
+                          subtitle: String(localized: "System Settings › Privacy & Security › Automation"),
+                          detail: String(localized: "Switch on \(name) under Sidefolk, then ask again."),
+                          url: PrivacyPane.automation.rawValue)
+    }
 }
 
 /// System Settings pages Sidefolk may open for the person when macOS needs their OK. Only these: a
