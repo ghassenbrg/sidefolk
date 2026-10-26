@@ -10,6 +10,9 @@ struct ActivityView: View {
             PageTitle(title: "Activity", subtitle: "Everything Sidefolk did, who asked, and what was allowed.")
             stats
             filters
+            if let message = model.undoMessage {
+                Text(verbatim: message).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
             table
         }
         .padding(.horizontal, Theme.Space.xl)
@@ -104,7 +107,15 @@ struct ActivityView: View {
         case .decision:
             decisionChip(e.decision)
         case .outcome:
-            outcome(e)
+            HStack(spacing: 6) {
+                outcome(e)
+                // The same Undo the Ask panel offers, whatever mode it ran in (D37).
+                if let row = e.id, model.undoable.contains(row) {
+                    Spacer(minLength: 0)
+                    Button("Undo") { Task { await model.undo(e) } }.buttonStyle(.sf(.secondary)).fixedSize()
+                        .accessibilityLabel(Text("Undo “\(e.summary)”"))
+                }
+            }
         }
     }
 
@@ -125,6 +136,10 @@ struct ActivityView: View {
         case .denied: Chip("Denied", tone: .danger, systemImage: "hand.raised")
         case .blocked: Chip("Blocked", tone: .danger, systemImage: "nosign")
         case .failed: Chip("Failed", tone: .danger, systemImage: "exclamationmark.triangle")
+        // Done without asking: the mode answered for the person (D37), so it never looks like they did.
+        case .autoMode: Chip("Auto", tone: .accent, systemImage: "bolt")
+        case .fullAccess: Chip("Full access", tone: .warning, systemImage: "bolt.fill")
+        case .skipped: Chip("Skipped", tone: .warning, systemImage: "clock.badge.xmark")
         }
     }
 

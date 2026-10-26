@@ -1,7 +1,8 @@
 import AppKit
 import SidefolkCore
 
-/// The menu bar icon: Ask, what's live now, quiet mode, show/hide, Home, Settings, About, Quit.
+/// The menu bar icon: Ask, what's live now, how much Sidefolk asks, quiet mode, show/hide, Home,
+/// Settings, About, Quit.
 final class StatusItemController: NSObject, NSMenuDelegate {
     struct NowEntry {
         var title: String
@@ -19,6 +20,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onAbout: (() -> Void)?
     var onToggleCompanion: (() -> Void)?
     var onQuiet: ((TimeInterval?) -> Void)?
+    /// Switches the approval mode; Full access goes through `onFullAccess` (its sheet) instead.
+    var onMode: ((GuardMode) -> Void)?
+    var onFullAccess: (() -> Void)?
+    private(set) var mode: GuardMode = .askOncePerKind
     var nowProvider: (() async -> [NowEntry])?
     var isQuiet: () -> Bool = { false }
     var companionVisible: () -> Bool = { true }
@@ -35,6 +40,15 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         item.button?.setAccessibilityLabel("Sidefolk")
         menu.delegate = self
         item.menu = menu
+    }
+
+    /// In Full access the menu bar icon turns orange, like the Mac's own "in use" dots, so the mode
+    /// is visible even with the companion and the Ask panel hidden (D37).
+    func setMode(_ mode: GuardMode) {
+        self.mode = mode
+        let full = mode == .fullAccess
+        item.button?.contentTintColor = full ? .systemOrange : nil
+        item.button?.setAccessibilityLabel(full ? String(localized: "Sidefolk, Full access is on") : "Sidefolk")
     }
 
     func setBadge(_ count: Int) {
@@ -55,6 +69,18 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let ask = menu.addItem(withTitle: String(localized: "Ask Sidefolk…"), action: #selector(ask), keyEquivalent: "")
         ask.target = self
         ask.toolTip = hotkeyLabel()
+        if mode == .fullAccess {
+            // First thing in the menu while it lasts, with the way out right under it.
+            let on = menu.addItem(withTitle: "", action: nil, keyEquivalent: "")
+            on.attributedTitle = NSAttributedString(string: String(localized: "Full access is on"), attributes: [
+                .foregroundColor: NSColor.systemOrange, .font: NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold),
+            ])
+            on.image = NSImage(systemSymbolName: GuardMode.fullAccess.symbol, accessibilityDescription: nil)
+            on.isEnabled = false
+            let off = menu.addItem(withTitle: String(localized: "Turn Off Full Access"), action: #selector(chooseMode(_:)), keyEquivalent: "")
+            off.target = self
+            off.representedObject = GuardMode.askOncePerKind.rawValue
+        }
 
         menu.addItem(.separator())
         let header = menu.addItem(withTitle: String(localized: "Now"), action: nil, keyEquivalent: "")
@@ -71,6 +97,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        menu.addItem(modesItem())
         if isQuiet() {
             let q = menu.addItem(withTitle: String(localized: "Turn Quiet Off"), action: #selector(quietOff), keyEquivalent: "")
             q.target = self
@@ -101,6 +128,31 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         about.target = self
         menu.addItem(withTitle: String(localized: "Quit Sidefolk"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         refreshNow()
+    }
+
+    /// "Approvals" › the four modes, the current one checked. Full access opens its sheet in Settings
+    /// rather than switching from a menu.
+    private func modesItem() -> NSMenuItem {
+        let parent = NSMenuItem(title: String(localized: "Approvals: \(mode.title)", comment: "Menu bar: the approval mode, “Approvals: Auto”"),
+                                action: nil, keyEquivalent: "")
+        parent.image = NSImage(systemSymbolName: mode.symbol, accessibilityDescription: nil)
+        let sub = NSMenu()
+        for option in GuardMode.allCases {
+            let full = option == .fullAccess
+            let title = full && mode != .fullAccess ? String(localized: "Full access…") : option.title
+            let mi = sub.addItem(withTitle: title, action: #selector(chooseMode(_:)), keyEquivalent: "")
+            mi.target = self
+            mi.representedObject = option.rawValue
+            mi.state = option == mode ? .on : .off
+            mi.toolTip = option.explanation
+        }
+        parent.submenu = sub
+        return parent
+    }
+
+    @objc private func chooseMode(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let chosen = GuardMode(rawValue: raw), chosen != mode else { return }
+        if chosen == .fullAccess { onFullAccess?() } else { onMode?(chosen) }
     }
 
     @objc private func ask() { onAsk?() }

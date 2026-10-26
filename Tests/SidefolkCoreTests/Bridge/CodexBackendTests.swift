@@ -288,6 +288,8 @@ extension BackendHarness {
         #expect(config("mcp_servers.sidefolk.args") == #"["mcp"]"#)
         #expect(config("mcp_servers.sidefolk.env.SIDEFOLK_RUN_DIR") == "\"\(runDir)\"")
         #expect(config("mcp_servers.sidefolk.default_tools_approval_mode") == #""approve""#)
+        // A card may wait for the person a day at most (D37); Codex must not give up on the call first.
+        #expect(config("mcp_servers.sidefolk.tool_timeout_sec") == String(24 * 60 * 60 + 300))
         #expect(config("model_reasoning_effort") == nil)
         for feature in install.featuresToDisable { #expect(follows("--disable", feature) || args.contains(feature)) }
         #expect(args.filter { $0 == "--disable" }.count == install.featuresToDisable.count)

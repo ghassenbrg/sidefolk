@@ -14,14 +14,15 @@ struct TestEnv {
     let executor: ToolExecutor
     let home: URL
 
-    init(now: Date = TestEnv.referenceDate) throws {
+    /// - Parameter minute: how long a minute of an unanswered approval lasts, so "10 minutes" can pass in a test.
+    init(now: Date = TestEnv.referenceDate, minute: TimeInterval = 60) throws {
         db = try AppDatabase.inMemory()
         clock = ManualClock(now)
         permissions = PermissionStore(db)
         broker = ApprovalBroker(events: events)
         activity = ActivityStore(db)
         executor = ToolExecutor(registry: registry, permissions: permissions, broker: broker, activity: activity,
-                                events: events, clock: clock)
+                                events: events, clock: clock, minute: minute)
         home = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
     }

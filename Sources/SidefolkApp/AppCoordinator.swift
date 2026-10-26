@@ -102,6 +102,7 @@ final class AppCoordinator {
             self.showCompanion(!self.companion.isVisible)
         }
         statusItem.nowProvider = { [weak self] in await self?.nowEntries() ?? [] }
+        installModeSwitch()
 
         // A debug copy must not take ⌘⇧Space from the Sidefolk the developer actually uses (it once
         // swallowed the founder's typing); SIDEFOLK_DEV_HOTKEY=1 opts in.
@@ -288,6 +289,7 @@ final class AppCoordinator {
             entries.append(.init(title: String(localized: "Needs you (\(open.count))"), detail: open[0].title.clipped(30), symbol: "tray.full",
                                  action: { [weak self] in self?.openHome() }))
         }
+        if let skipped = await skippedNowEntry() { entries.append(skipped) }
         for r in ((try? await runtime.reminderStore.pending()) ?? []).prefix(3) {
             guard let due = r.nextDue, due.timeIntervalSince(now) < 6 * 3600 else { continue }
             entries.append(.init(title: r.title.clipped(40), detail: TimeFormat.when(due, now: now, calendar: .autoupdatingCurrent),
@@ -476,10 +478,12 @@ final class AppCoordinator {
             if !askPanel.isVisible { showAsk(focus: trusted) }
         case .toolFinished(let activity, let ok):
             creditExternal(activity, ok: ok)
+            announceDoneWithoutAsking(activity, ok: ok)
         case .approvalResolved(let id, _):
             ask.removeApproval(id: id)
         case .dataChanged(let domain):
-            if [.reminders, .watchers, .runs, .attention].contains(domain) { scheduleNowRefresh() }
+            if domain == .permissions { refreshMode() }
+            if [.reminders, .watchers, .runs, .attention, .skipped].contains(domain) { scheduleNowRefresh() }
             if [.reminders, .watchers, .runs, .attention].contains(domain) { refreshRoster() }
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {

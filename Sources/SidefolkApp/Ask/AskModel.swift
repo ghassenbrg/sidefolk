@@ -37,6 +37,10 @@ struct AskEntry: Identifiable, Equatable {
         case info(String)
         /// The line said aloud for this request, always shown too (D34); muted says why it wasn't.
         case spoken(String, muted: VoicePolicy.Silence?)
+        /// Done without a question because the person chose Auto or Full access (D37): never silent.
+        case doneWithoutAsking(String, fullAccess: Bool)
+        /// Nobody answered in time: what was skipped, why, and that it waits in Now (D37).
+        case skipped(String, why: String)
     }
 
     let id = UUID()
@@ -79,6 +83,8 @@ protocol AskActions: AnyObject {
     func retry(_ text: String, in model: AskModel)
     func openSettings(tab: SettingsTab?)
     func openHome()
+    /// Home › Now, where skipped steps wait (D37).
+    func openNow()
 }
 
 /// Talking instead of typing (D34): what the panel shows while the talk key is held and just after.
@@ -109,6 +115,8 @@ final class AskModel {
     var pendingReminderImportant = false
     /// A watch waiting for its address ("Which address? e.g. localhost:3000").
     var pendingWatch: (kind: String, becomes: String?)?
+    /// How much Sidefolk asks (D37), shown in the header.
+    var mode: GuardMode = .askOncePerKind
     weak var actions: AskActions?
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?

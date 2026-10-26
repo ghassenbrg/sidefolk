@@ -48,6 +48,12 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         Task { @MainActor in window.makeFirstResponder(nil) }
     }
 
+    /// Privacy & Permissions with the sheet that says what Full access means (from the menu bar).
+    func confirmFullAccess() {
+        show(tab: .privacy)
+        model.confirmingFullAccess = true
+    }
+
     func close() { window?.performClose(nil) }
 
     private func makeWindow() -> NSWindow {

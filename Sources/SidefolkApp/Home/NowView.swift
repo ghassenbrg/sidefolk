@@ -11,7 +11,10 @@ struct NowView: View {
             NowHero(greeting: greeting, status: status, settings: model.services.runtime.settings.current) {
                 model.services.openAsk(prefill: "")
             }
-            if model.needsYouCount > 0 { needsYou }
+            if model.mode == .fullAccess {
+                FullAccessBanner(settings: { model.services.openSettings(tab: .privacy) }) { Task { await model.turnOffFullAccess() } }
+            }
+            if model.needsYouCount > 0 || model.skippedRun != nil { needsYou }
             // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
             if busy { running }
             comingUp
@@ -50,6 +53,13 @@ struct NowView: View {
                 }
                 ForEach(model.attention) { item in
                     AttentionRow(item: item) { action in Task { await model.respond(item, action: action) } }
+                }
+                ForEach(model.skipped) { step in
+                    SkippedStepRow(step: step, run: { Task { await model.runSkipped(step) } },
+                                   dismiss: { Task { await model.dismissSkipped(step) } })
+                }
+                if let result = model.skippedRun {
+                    SkippedRunResult(result: result)
                 }
             }
         }

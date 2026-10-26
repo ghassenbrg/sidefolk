@@ -25,5 +25,6 @@ final class FixtureAskActions: AskActions {
     func retry(_ text: String, in model: AskModel) {}
     func openSettings(tab: SettingsTab?) {}
     func openHome() {}
+    func openNow() {}
 }
 #endif

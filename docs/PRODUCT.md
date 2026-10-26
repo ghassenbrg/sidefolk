@@ -207,6 +207,12 @@ external MCP agent, extension. Rules:
 - Destructive file operations move to Trash; nothing is hard-deleted by tools.
 - Shell commands are shown verbatim; "always" can only be granted for that exact command.
 - External agents and routines cannot answer approvals; approvals always come from the user.
+- How much Sidefolk asks before its own agent acts is the person's choice (D37): Ask every time,
+  Ask once per kind (default), Auto, or Full access (only after a sheet that says what it means).
+  No mode lifts the rules above for content-steered actions that could send data out, for other
+  agents or for extensions; the mode is always visible (Ask panel chip, menu bar, Now).
+- If the person doesn't answer, a card of Sidefolk's own agent never holds the task: by default the
+  step is skipped after 10 minutes and the task carries on; the step waits in Now with "Run it now".
 
 ## 11. Attention model
 

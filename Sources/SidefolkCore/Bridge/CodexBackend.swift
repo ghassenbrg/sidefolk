@@ -88,7 +88,7 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
         }
 
         let outcome = await withTaskCancellationHandler {
-            await consume(child, deadline: task.deadline)
+            await consume(child, deadline: { toolbox.deadline(from: task.deadline) })
         } onCancel: {
             child.signalGroup(SIGTERM)
             DispatchQueue.global().asyncAfter(deadline: .now() + 2) { child.signalGroup(SIGKILL) }
@@ -165,10 +165,10 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
     }
 
     /// Reads JSON lines until the turn ends. The first thing that isn't allowed ends the run.
-    func consume(_ child: PipedChild, deadline: Date) async -> Outcome {
+    func consume(_ child: PipedChild, deadline: @escaping @Sendable () -> Date?) async -> Outcome {
         let timedOut = Mutex(false)
         let timer = Task {
-            try await Task.sleep(for: .seconds(max(0, deadline.timeIntervalSinceNow)))
+            try await CLIBrain.sleep(until: deadline)
             timedOut.withLock { $0 = true }
             child.signalGroup(SIGTERM)
         }
@@ -256,8 +256,9 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
             ("mcp_servers.sidefolk.required", "true"),
             // Guard asks the user where it must; Codex asking too would refuse every call (approvals are off).
             ("mcp_servers.sidefolk.default_tools_approval_mode", toml("approve")),
-            // An approval may wait two minutes; the run's own deadline stops it first.
-            ("mcp_servers.sidefolk.tool_timeout_sec", "180"),
+            // A card may wait for the person as long as their "If I don't answer" setting says (D37);
+            // Sidefolk decides when the wait ends, and the run's deadline doesn't count that time.
+            ("mcp_servers.sidefolk.tool_timeout_sec", String(CLIBrain.toolCallSeconds)),
         ]
         // Only a level this Codex lists for the model (D36); "Default" leaves Codex's own.
         if let effort = EffortSupport.accepted(task.effort, in: EffortSupport.codex(model: task.model, catalog: install.models)) {

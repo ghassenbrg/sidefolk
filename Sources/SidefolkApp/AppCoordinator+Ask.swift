@@ -209,6 +209,13 @@ extension AppCoordinator: AskActions {
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
                         line = SpokenLine.card(card)
                     }
+                    // What the mode answered for the person, and what nobody answered, always show (D37).
+                    if ok, activity.actedWithoutAsking {
+                        model.add(.doneWithoutAsking(activity.summary, fullAccess: activity.decision == .fullAccess), caption: caption())
+                    }
+                    if activity.decision == .skipped {
+                        model.add(.skipped(activity.summary, why: activity.error ?? ""), caption: caption())
+                    }
                 case .reply(let reply):
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !answer.isEmpty {
@@ -295,13 +302,10 @@ extension AppCoordinator: AskActions {
         Task {
             // The user's click, but not the user's words when the turn read outside content (SECURITY T2).
             let out = await runtime.executor.execute(name: "notes.save", input: ["text": .string(text)], caller: .user, tainted: tainted)
-            switch out.status {
-            case .ok(let r):
+            if case .ok(let r) = out.status {
                 if let card = r.card { model.add(.result(card, activityId: out.activity.id, undo: out.activity.undoAvailable)) }
-            case .denied(let why):
-                model.add(.error(UserFacingError(verbatim: why), retryable: false))
-            case .failed(let e):
-                model.add(.error(e, retryable: false))
+            } else if let problem = out.problem {
+                model.add(.error(problem, retryable: false))
             }
         }
     }

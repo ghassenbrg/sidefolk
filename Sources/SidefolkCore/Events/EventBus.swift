@@ -4,6 +4,8 @@ import Synchronization
 /// Areas of data the UI may need to refresh.
 public enum DataDomain: String, Sendable, CaseIterable {
     case notebook, memories, reminders, watchers, activity, extensions, skills, settings, attention, permissions, runs
+    /// Steps skipped because nobody answered in time (D37).
+    case skipped
 }
 
 /// A tool call as the companion and the Activity view see it.
@@ -19,6 +21,11 @@ public struct ToolActivity: Sendable, Hashable {
     public var undoAvailable: Bool
     /// The tool changes something (vs. only reading); read-only results feed answers, not cards.
     public var mutates: Bool
+    /// How Guard let it run, once it did. Auto and Full access acts are shown as done without asking (D37).
+    public var decision: ActivityEntry.Decision?
+
+    /// It ran without a question the person would have had to answer in their earlier mode.
+    public var actedWithoutAsking: Bool { decision == .autoMode || decision == .fullAccess }
 
     public init(id: String, tool: String, title: String, summary: String, category: ToolCategory, caller: Caller,
                 card: ResultCard? = nil, error: String? = nil, undoAvailable: Bool = false, mutates: Bool = false) {

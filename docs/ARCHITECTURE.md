@@ -69,7 +69,9 @@ user folders or agent configs.
 - `ToolRegistry` — built-in tools + tools contributed by extensions/MCP servers; namespaced
   (`notes.create`, `ext.system-vitals.battery`). Model-facing names replace `.` with `_`.
 - `Guard` — `PermissionEngine.evaluate(call, spec, caller, tainted) -> .allow | .ask(req) | .deny`;
-  `ApprovalBroker` (actor) parks requests until the UI answers or a timeout denies;
+  `GuardPolicy` holds the approval mode and "If I don't answer" (D37);
+  `ApprovalBroker` (actor) parks requests until the UI answers or the wait ends (a no; for
+  Sidefolk's own agent, a skipped step kept in `SkippedSteps` for "Run it now", or a stopped task);
   `GrantStore` persists "always allow" grants with scope (tool, folder, exact command, extension).
 - `ToolExecutor` — the only path to run a tool: guard → (approval) → run with timeout → activity
   log → events. Every caller (agent loop, Claude Code brain via bridge, external MCP, slash

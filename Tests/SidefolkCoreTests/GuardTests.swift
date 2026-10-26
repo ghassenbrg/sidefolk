@@ -30,7 +30,7 @@ import Testing
 
     @Test func cautiousModeIgnoresGrants() {
         let g = Grant(tool: "t.x", callerKind: "agent")
-        guard case .ask = decide(.medium, policy: GuardPolicy(mode: .cautious), grants: [g]) else {
+        guard case .ask = decide(.medium, policy: GuardPolicy(mode: .askEveryTime), grants: [g]) else {
             Issue.record("expected ask"); return
         }
     }
