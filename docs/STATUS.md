@@ -1,8 +1,51 @@
 # Status
 
-Updated: 2026-10-26. Latest: languages, app pass: every word the app shows is in the catalog (1681 strings, English only), snapshots in any language, a pseudo-localization check, Arabic right to left (D28).
+Updated: 2026-10-27. Version 0.1.0. Latest: every feature team merged into `main` (voice, live
+reports, effort and real logos, approval modes, Apple Notes, built-in extensions and the extension
+builder), all ten languages translated (2008 strings each), and a production review under way.
 
 ## Done and verified
+- **Version 0.1.0** (`SidefolkVersion.current`); bundled extensions and the docs ask for `sidefolk >=0.1`.
+- **Ten languages, translated (D28):** fr, es, de, it, pt-BR, ja, ko, zh-Hans and ar each have all
+  2008 strings, plural forms included (Arabic's six). `scripts/translations.py` exports what a
+  language needs, checks a file (placeholders, plural forms, fragment spaces, keys) and imports it
+  (`--skip-bad` keeps what still fits after the English changed); `plural` gives a count its English
+  forms. GLOSSARY.md fixes how each language addresses the person. Strings with two meanings have
+  their own keys (size/risk "Medium", state/button "Done", "Watching", sky "Clear", RAM "Memory").
+  "Nothing was changed." comes off a message with or without a space (Chinese, Japanese), and
+  sentences and lists join as each language does (`Wording.sentences`, `Wording.list`).
+  *Checked:* `--ui-snapshots --language <lang>` for it, ja, de and ar; Arabic is right to left.
+- **Voice (D34):** hold ⌘⇧Space (or press and hold the companion) to talk; on-device recognition
+  (SpeechAnalyzer, DictationTranscriber, the basic recognizer on macOS 15); the words go through the
+  normal Ask flow; spoken replies (Off / Only when I spoke / Always) with Apple voices or ElevenLabs
+  (own key); a talking mouth on every companion; Settings › Voice. Kokoro is left out (its model
+  files go to ~/.cache and its v3 runtime crashed on macOS 27). *Checked:* recorded audio and
+  speech-to-file round trips, the dev app at volume 0; not yet with the real microphone.
+- **Live reports and frequent reminders (D35):** "every 10 seconds tell me the CPU", "temperature in
+  Fukuoka every minute" (Open-Meteo, no key), web values and command output, as pills beside the
+  companion and a Live section on Now; floors are raised to, never refused; reminders every N minutes
+  or hours with an end. A 10 s CPU report costs 0.042% CPU against 0.036% without.
+- **Effort and logos (D36):** a reasoning effort for each model slot, sent only where the provider
+  and model take it (Codex `model_reasoning_effort`, Claude Code `--effort`, the API fields); real
+  brand logos from LobeHub Icons (MIT), colour where the brand has it. Anthropic asks for approval of
+  its marks before a public release.
+- **Approval modes and away handling (D37):** Ask every time / Ask once per kind (default) / Auto /
+  Full access (only through a confirmation sheet, always visible); "If I don't answer": keep waiting,
+  skip the step and continue (default, 10 min, "Run it now" in Now), or stop. Waiting no longer counts
+  against the run's time; "Allow for this request" covers a job's later steps.
+- **Apple Notes and Reminders (D38):** list, read and copy notes into the notebook (move only with
+  its own high-risk approval, into Recently Deleted); open reminders. Each part of a note is read on
+  its own, so one Notes can't hand over (-1728, found on the founder's library) costs only itself.
+- **Extensions without limits (D39):** built-in Git (clone, status, pull, log over https), World
+  Clock, System Vitals (on) and Weather (off), installed and updated with the app; per-call folders,
+  `git` by name and per-tool timeouts in manifests; icons for every extension; Sidefolk drafts an
+  extension when it lacks a capability (validated, test-run with no permissions, installed only from
+  the preview); `skills/sidefolk-extension/SKILL.md` for developers; the catalog study in
+  docs/research/extensions-catalog.md.
+- **Fixes from the founder's use:** Open session brings Claude's desktop app forward (its Claude Code
+  runs from a background-only bundle) or says why it can't; bubbles lost a gritty window shadow; an
+  answer that ends with a question offers Reply; Settings › Agents shows each agent's own mark.
+- **Tests:** 1107 (1095 core in 131 suites + 12 character). `make test` runs serially (about 45 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
   character's VoiceOver words and the core leftovers (Brain replies and checks, provider names,
   Claude Code/Codex messages) is in the catalog: `make strings` finds 1681 strings, English only.
@@ -207,11 +250,19 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   `sidefolk status` answers, idle measured (see above).
 
 ## In progress
-Nothing. All second-round review follow-ups are merged.
+- **Production review (D40–D42):** product and design, quality/performance/security, agents (MCP
+  gaps, a Sidefolk skill installed by Connect for Claude Code and Codex) and a launch kit (README,
+  release notes, launch posts, press kit, CHECKLIST), each in its own worktree.
+- **Lively companions:** a proof of concept on the branch `poc/lively-companions` (moments,
+  postures, an idle scheduler, Liveliness Minimal/Balanced/Lively, custom companions as data, a 3D
+  spike); waiting for the founder's decision. Its write-up is docs/research/lively-companions.md on
+  that branch.
 
 ## Known issues / not yet verified
-- **Languages, no translations yet:** the catalog is complete but English only; every language
-  shows English words (dates, numbers and system controls follow the language). The `sidefolk`
+- **Not yet tried by hand with the real thing:** the microphone (its permission prompt, hold to talk,
+  AirPods), Apple Notes on a real library after the -1728 fix, "clone … under ~/git" with a real AI,
+  the menu bar's Approvals submenu and orange Full access icon, a live ElevenLabs voice.
+- **Languages:** the `sidefolk`
   command line, `StatusSnapshot.sentence`, bridge protocol errors, extension manifest checks
   (`ManifestValidator`, `ValidationReport.text`) and `ExtensionError`/`MCPError` details stay English
   on purpose. Collection names stored in the database ("Inbox", "About you") stay English; the app
@@ -230,23 +281,21 @@ Nothing. All second-round review follow-ups are merged.
 - **Residual trust gaps (documented in SECURITY.md):** code running as you can still name its own
   ancestor or a known terminal as a session's host; extension tool names and titles (60 characters)
   reach the model.
+- **Extensions can't hold secrets yet**, so Git can't reach private repositories or SSH remotes, and
+  connectors (GitHub, Notion, Linear) wait for it.
 - **Signing:** no Developer ID identity on this Mac, so `scripts/release.sh` (sign, notarize, staple)
   is ready but needs the founder's credentials. Builds are signed with the "Apple Development"
   identity or ad hoc.
 
 ## Next
-1. The founder: hand checks listed above (hooks in a real Claude Code session, notifications prompt,
-   login item, multi-monitor), then Developer ID signing and notarization (`scripts/release.sh`).
-2. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review);
-   calendar awareness; voice input.
-3. Languages: translations into the nine languages with GLOSSARY.md (`make strings` keeps them),
-   then `swift run SidefolkApp --ui-snapshots build/ui-<lang> --language <lang>` for each and a look
-   in the dev app (Settings › General › Language, or `swift scripts/dev.swift language:<lang>`).
-   Arabic needs a real look right to left (pseudo-Arabic was checked).
+1. Merge the production review (design, QA/security, agents, launch kit), translate their new
+   strings (`make strings`, `scripts/translations.py export/check/import`), and build the release.
+2. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
+   Developer ID signing and notarization (`scripts/release.sh`); ask Anthropic about its marks.
+3. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
+   "Today" timeline with an end-of-day recap.
 
 ## Design next (from the 2026-10-26 pass)
 1. A hand-drawn Mochi pose for the About window and onboarding (Mochi waving with the folks around,
    on a transparent background) would replace the family art where the companion speaks.
-2. Settings › Agents shows Byte three times; give Claude Code, Codex and the command their own marks.
-3. Translate the new strings (About, Ask button, Settings tooltips); they are in the catalog.
-4. Check the hero and wordmark with each companion and in each accent colour by hand.
+2. Check the hero and wordmark with each companion and in each accent colour by hand.
