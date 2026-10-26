@@ -26,7 +26,7 @@ struct BubbleView: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(alignment: .top, spacing: Theme.Space.s) {
                     // The companion's own voice needs no icon; notices from things it watches get one.
-                    if item.source != "onboarding" {
+                    if item.source != Onboarding.source, item.source != AppCoordinator.ownVoice {
                         Image(systemName: symbol(for: item)).foregroundStyle(accent(for: item)).font(.system(size: 14, weight: .semibold))
                             .padding(.top, 1)
                     }
