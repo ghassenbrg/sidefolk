@@ -56,6 +56,8 @@ public struct AnthropicModel: TurnModel {
             "messages": .array(r.messages.map(message)),
         ]
         if !r.system.isEmpty { body["system"] = .string(r.system) }
+        // Effort only: thinking keeps each model's own default (adaptive on current models).
+        if let effort = r.effort { body["output_config"] = ["effort": .string(effort.rawValue)] }
         if !r.tools.isEmpty {
             body["tools"] = .array(r.tools.enumerated().map { index, spec in
                 var tool: [String: JSONValue] = [

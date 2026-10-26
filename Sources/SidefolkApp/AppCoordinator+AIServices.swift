@@ -9,9 +9,10 @@ extension AppCoordinator {
         async let codex = CodexBinary.status(configured: provider.codexPath, workdir: workdir)
         async let ollama = LocalServers.probe(.ollama, installed: LocalServers.isInstalled(.ollama))
         async let lmStudio = LocalServers.probe(.lmStudio, installed: LocalServers.isInstalled(.lmStudio))
+        let (claudeStatus, claudeEfforts) = await claude
         let (codexStatus, codexModels) = await codex
-        return ProviderDetection(claude: await claude, codex: codexStatus, codexModels: codexModels, ollama: await ollama,
-                                 lmStudio: await lmStudio)
+        return ProviderDetection(claude: claudeStatus, claudeEfforts: claudeEfforts, codex: codexStatus, codexModels: codexModels,
+                                 ollama: await ollama, lmStudio: await lmStudio)
     }
 
     func testProvider(_ provider: ProviderSettings) async -> Result<String, UserFacingError> { await agent.testProvider(provider) }

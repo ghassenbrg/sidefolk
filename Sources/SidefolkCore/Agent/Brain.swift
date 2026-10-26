@@ -19,16 +19,20 @@ public struct BrainTask: Sendable {
     public var system: String
     public var messages: [ChatMessage]
     public var model: String
+    /// The reasoning effort to ask for (D36); nil sends nothing. Backends send it only where the
+    /// provider and model accept it (`EffortSupport`).
+    public var effort: ReasoningEffort?
     public var maxSteps: Int
     public var deadline: Date
 
     public init(runId: String, threadId: String, system: String, messages: [ChatMessage], model: String,
-                maxSteps: Int = 10, deadline: Date) {
+                effort: ReasoningEffort? = nil, maxSteps: Int = 10, deadline: Date) {
         self.runId = runId
         self.threadId = threadId
         self.system = system
         self.messages = messages
         self.model = model
+        self.effort = effort
         self.maxSteps = maxSteps
         self.deadline = deadline
     }

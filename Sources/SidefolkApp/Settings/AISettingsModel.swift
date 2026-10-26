@@ -92,6 +92,35 @@ final class AISettingsModel {
         parent.update { $0.provider.smartModel = name }
     }
 
+    // MARK: Effort
+
+    /// The efforts the slot's provider and model accept (D36); empty hides the control.
+    func effortLevels(thinkHarder: Bool) -> [ReasoningEffort] {
+        EffortSupport.levels(provider, thinkHarder: thinkHarder, claudeCLI: detection?.claudeEfforts ?? [],
+                             codexModels: detection?.codexModels ?? [])
+    }
+
+    /// What will be sent: the saved effort while the model takes it, else nil ("Default"). The saved
+    /// one is kept, so a model typed letter by letter doesn't lose it on the way.
+    func effort(thinkHarder: Bool) -> ReasoningEffort? {
+        EffortSupport.accepted(provider.requestedEffort(thinkHarder: thinkHarder), in: effortLevels(thinkHarder: thinkHarder))
+    }
+
+    /// The level the model uses when nothing is sent, where the provider says (Codex's catalog).
+    func defaultEffort(thinkHarder: Bool) -> ReasoningEffort? {
+        guard provider.kind == .codex else { return nil }
+        let model = provider.modelName(thinkHarder: thinkHarder)
+        return detection?.codexModels.first { $0.id == model }?.defaultEffort
+    }
+
+    func setEffort(_ effort: ReasoningEffort?, thinkHarder: Bool) {
+        let value = effort?.rawValue ?? ""
+        parent.update { s in
+            if thinkHarder { s.provider.smartEffort = value } else { s.provider.effort = value }
+        }
+        testResult = nil
+    }
+
     func setCLIPath(_ path: String, codex: Bool) {
         parent.update { s in
             if codex { s.provider.codexPath = path } else { s.provider.claudePath = path }

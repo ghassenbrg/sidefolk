@@ -80,8 +80,8 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
             }
 
             emit(.phase(.thinking))
-            let request = TurnRequest(model: task.model, system: task.system, messages: transcript, tools: toolbox.specs,
-                                      maxOutputTokens: limits.maxOutputTokens, timeBudget: remaining)
+            let request = TurnRequest(model: task.model, effort: task.effort, system: task.system, messages: transcript,
+                                      tools: toolbox.specs, maxOutputTokens: limits.maxOutputTokens, timeBudget: remaining)
             let turn: ModelTurn
             do {
                 turn = try await withTimeout(remaining) { try await model.respond(to: request) }
