@@ -82,6 +82,13 @@ pass; all ten languages complete (2141 strings each); release build 0.1.0 made a
   - *Launch kit:* README for strangers, docs/RELEASE-NOTES.md for 0.1.0, docs/launch/ (descriptions,
     landing page, posts, demo script, press kit, reviewer FAQ, CHECKLIST.md, 35 screenshots),
     `scripts/launch-screenshots.swift`.
+- **CI and releases on GitHub (2026-10-27):** `.github/workflows/ci.yml` builds, tests, reports
+  untranslated strings and assembles the app on every push and pull request to `main`;
+  `release.yml` publishes a snapshot (prerelease, signed when the secrets exist) or a Developer ID
+  signed, notarized production release from a `v<version>` tag or Actions › Run workflow.
+  `scripts/package.sh` makes the disk image alone. *Checked:* actionlint and shellcheck clean, the
+  release plan in every case, the DMG from `package.sh`; not yet run on GitHub's runners, and the
+  signing path needs the Developer ID secrets (docs/RELEASE.md).
 - **Tests:** 1195 (1161 core in 150 suites + 34 character). `make test` runs serially (about 50 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
   character's VoiceOver words and the core leftovers (Brain replies and checks, provider names,
