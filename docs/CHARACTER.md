@@ -53,9 +53,10 @@ A `SoftRig` is built from a `Species`: data, not code paths. It says the body's 
 an optional head (Mochi and Spark have necks; folks are one piece), the neck the head turns around,
 feet, shoulders and an `ArmStyle`, the face (`SoftFace`: ink bead eyes, or a dark screen with glowing
 eyes), `AppendageSpec`s (ears, antennae, a sprout), `Gear` worn on the back, head, face or body, an
-optional `Held` signature thing, where a scarf goes (`Collar`), the anchor frame and where effects sit
-clear of its ears (`markOffsets`). `Mochi.swift`, `Spark.swift` and `FolkSpecies.swift` are the
-whole of each companion.
+optional `Held` signature thing, where a scarf goes (`Collar`), the anchor frame, where effects sit
+clear of its ears (`markOffsets`) and a drawing `scale` (Mochi is drawn at 95% so its tall ears stay
+in the window when it hops or is lifted). `Mochi.swift`, `Spark.swift` and `FolkSpecies.swift` are
+the whole of each companion.
 
 On top of the shared choreography a soft rig adds:
 
@@ -67,8 +68,8 @@ On top of the shared choreography a soft rig adds:
 - **Ears.** Each `Appendage` turns around its base on three layers: pose (droop for error and sleep,
   perk for alerts, one ear up while listening), trail (a damped flop after a hop, nod or new pose, a
   swing after a shake) and sway (a slow idle swing, out of step between ears, fast while dragged).
-  Soft ears with a `Fold` (Mochi's) fold back and down along the head when asleep: the base slides
-  to the head's edge, the ear turns down and shows less of itself, like a lop ear.
+  Soft ears with a `Fold` (Mochi's) lie back behind the head when asleep: seen from the front they
+  shorten until only their round navy tips show over it.
   Floppiness scales all of it (Mochi's ears 1, Spark's stiff antenna 0.7, Seed's sprout 0.6).
 - **Gaze.** The eyes slide, the face slides a little further (parallax) and the head turns and tilts
   toward the pointer around the neck; ears ride on the head.

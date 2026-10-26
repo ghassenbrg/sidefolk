@@ -29,6 +29,8 @@ final class SoftRig: Figure {
     let badges = Layers.canvas()
 
     private let species: Species
+    /// The species' drawing scale around the floor point; `body` below it holds the pose.
+    private let fit = Layers.canvas()
     private let body = Layers.canvas()
     private let ground = CAGradientLayer()
     private let feet: [CALayer]
@@ -89,7 +91,7 @@ final class SoftRig: Figure {
 
     private func build() {
         ground.type = .radial
-        let width = species.restingFrame.width * 0.95
+        let width = restingFrame.width * 0.95
         ground.frame = CGRect(x: 100 - width / 2, y: Canvas.floor - 7.5, width: width, height: 15)
         ground.colors = [Palette.ink.cg(0.24), Palette.ink.cg(0.11), Palette.ink.cg(0)]
         ground.locations = [0, 0.5, 1]
@@ -97,7 +99,9 @@ final class SoftRig: Figure {
         ground.endPoint = CGPoint(x: 1, y: 1)
         stage.addSublayer(ground)
 
-        stage.addSublayer(body)
+        fit.setAffineTransform(CGAffineTransform(scaleX: species.scale, y: species.scale))
+        stage.addSublayer(fit)
+        fit.addSublayer(body)
         body.addSublayer(loop)
         loop.addSublayer(gesture)
         gesture.addSublayer(breath)
@@ -195,7 +199,13 @@ final class SoftRig: Figure {
 
     // MARK: Figure
 
-    var restingFrame: CGRect { species.restingFrame }
+    var restingFrame: CGRect { species.restingFrame.applying(fitting) }
+
+    /// Canvas units as the species drew them to canvas units on the stage.
+    private var fitting: CGAffineTransform {
+        CGAffineTransform(translationX: Canvas.pivot.x, y: Canvas.pivot.y).scaledBy(x: species.scale, y: species.scale)
+            .translatedBy(x: -Canvas.pivot.x, y: -Canvas.pivot.y)
+    }
     var listeningLights: [CALayer] { [] }
     var markLight: Light { species.marks ?? accent.light }
     func markOffset(_ effect: Effect) -> CGPoint { species.markOffsets[effect] ?? .zero }
@@ -325,7 +335,7 @@ final class SoftRig: Figure {
             .rotated(by: pose.lean)
             .scaledBy(x: pose.squash.width, y: pose.squash.height)
             .translatedBy(x: -Canvas.pivot.x, y: -Canvas.pivot.y)
-        return Paths.transformed(shape, t)
+        return Paths.transformed(shape, t.concatenating(fitting))
     }
 
     /// The parts that never move relative to the body, merged once.
