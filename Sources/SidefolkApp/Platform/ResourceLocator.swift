@@ -13,6 +13,19 @@ enum ResourceLocator {
         }
         return nil
     }
+
+    /// The folder of the skill Connect installs into other agents (D42): `AgentSkills/sidefolk` in the app;
+    /// in development (`SIDEFOLK_RESOURCES` = the repository's Resources) its source, `skills/sidefolk`.
+    static var agentSkillFolder: URL? {
+        guard let resources else { return nil }
+        let candidates = [resources.appendingPathComponent("AgentSkills/sidefolk", isDirectory: true),
+                          resources.deletingLastPathComponent().appendingPathComponent("skills/sidefolk", isDirectory: true)]
+        return candidates.first { FileManager.default.fileExists(atPath: $0.appendingPathComponent("SKILL.md").path) }
+    }
+
+    static var agentSkill: String? {
+        agentSkillFolder.flatMap { try? String(contentsOf: $0.appendingPathComponent("SKILL.md"), encoding: .utf8) }
+    }
 }
 
 /// Environment values for a user-added MCP server live in one Keychain item, "mcp.<server>", as JSON.

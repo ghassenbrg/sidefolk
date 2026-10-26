@@ -97,9 +97,15 @@ enum APIKeyTarget: Hashable {
 struct IntegrationStatus: Hashable {
     var claudeCodeFound: Bool
     var claudeMCPInstalled: Bool
+    var claudeSkillInstalled: Bool
+    /// Why the skill can't be installed in Claude Code (a link of the person's own in its place), if so.
+    var claudeSkillNote: String? = nil
     var claudeHooksInstalled: Bool
     var codexFound: Bool
     var codexMCPInstalled: Bool
+    var codexSkillInstalled: Bool
+    var codexSkillNote: String? = nil
+    var codexHooksInstalled: Bool
     var cliLinked: Bool
     var helperPath: String
 }
@@ -182,8 +188,10 @@ protocol AppServices: AnyObject {
     func integrationStatus() async -> IntegrationStatus
     func connectClaudeCode(hooks: Bool) async -> UserFacingError?
     func disconnectClaudeCode() async -> UserFacingError?
-    func connectCodex() async -> UserFacingError?
+    func connectCodex(hooks: Bool) async -> UserFacingError?
     func disconnectCodex() async -> UserFacingError?
+    /// Copies how to add Sidefolk to any other MCP client (command, config snippets, the skill's folder).
+    func copySetupInstructions()
     /// Links the `sidefolk` command into ~/.local/bin (after confirmation), so `sidefolk run` works in a terminal.
     func installCommandLineTool() async -> UserFacingError?
     func removeCommandLineTool() async -> UserFacingError?

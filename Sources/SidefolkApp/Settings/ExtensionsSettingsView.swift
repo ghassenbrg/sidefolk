@@ -285,10 +285,11 @@ enum ShellWords {
 
 // MARK: - Connect your agents
 
-/// Settings › Agents: Claude Code, Codex and the `sidefolk` command.
+/// Settings › Agents: Claude Code, Codex, the `sidefolk` command, and setup for any other MCP app.
 struct AgentsGroup: View {
     var model: SettingsModel
     @State private var hooks = true
+    @State private var codexHooks = true
 
     var body: some View {
         SettingsGroup(title: "Connect your agents",
@@ -297,6 +298,7 @@ struct AgentsGroup: View {
                 claude(status)
                 codex(status)
                 commandLine(status)
+                OtherAgentsRow(copy: model.copySetupInstructions)
             } else {
                 InlineEmpty(text: "Checking your agents…")
             }
@@ -310,7 +312,9 @@ struct AgentsGroup: View {
 
     /// Once connected, the checkbox shows what is installed; before that it's the user's choice.
     private func syncHooks() {
-        if let s = model.integration, s.claudeMCPInstalled { hooks = s.claudeHooksInstalled }
+        guard let s = model.integration else { return }
+        if s.claudeMCPInstalled { hooks = s.claudeHooksInstalled }
+        if s.codexMCPInstalled { codexHooks = s.codexHooksInstalled }
     }
 
     private func claude(_ s: IntegrationStatus) -> some View {
@@ -324,24 +328,15 @@ struct AgentsGroup: View {
             connected: s.claudeMCPInstalled,
             found: s.claudeCodeFound,
             changes: [String(localized: "Adds a “sidefolk” MCP server to ~/.claude.json, so Claude Code can save notes, set reminders, watch and notify.")]
+                + (s.claudeSkillNote == nil ? [String(localized: "Adds the Sidefolk skill to ~/.claude/skills, so Claude Code knows when and how to use it.")] : [])
                 + (hooks ? [String(localized: "Adds hooks to ~/.claude/settings.json, so I notice when a session needs you or finishes.")] : []),
             busy: model.integrationBusy,
             connect: { Task { await model.connectClaudeCode(hooks: hooks) } },
             disconnect: { Task { await model.disconnectClaudeCode() } }
         ) {
-            VStack(alignment: .leading, spacing: 4) {
-                Toggle("Notice when a session needs you", isOn: $hooks)
-                    .toggleStyle(.checkbox)
-                    .font(Theme.Font.body)
-                    .foregroundStyle(Theme.ink)
-                if s.claudeMCPInstalled, hooks != s.claudeHooksInstalled {
-                    Button(hooks ? "Add Session Taps" : "Remove Session Taps") {
-                        Task { await model.connectClaudeCode(hooks: hooks) }
-                    }
-                    .buttonStyle(.sf(.secondary))
-                    .disabled(model.integrationBusy)
-                }
-            }
+            AgentOptions(hooks: $hooks, connected: s.claudeMCPInstalled, hooksInstalled: s.claudeHooksInstalled,
+                         skillMissing: s.claudeSkillNote == nil && !s.claudeSkillInstalled, skillNote: s.claudeSkillNote,
+                         busy: model.integrationBusy) { Task { await model.connectClaudeCode(hooks: hooks) } }
         }
     }
 
@@ -365,14 +360,76 @@ struct AgentsGroup: View {
             symbol: "chevron.left.forwardslash.chevron.right",
             logo: .codex,
             status: !s.codexFound ? String(localized: "Not installed")
-                : s.codexMCPInstalled ? String(localized: "Connected") : String(localized: "Not connected"),
+                : s.codexMCPInstalled ? (s.codexHooksInstalled ? String(localized: "Connected, with session taps") : String(localized: "Connected"))
+                : String(localized: "Not connected"),
             connected: s.codexMCPInstalled,
             found: s.codexFound,
-            changes: [String(localized: "Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools.")],
+            changes: [String(localized: "Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools.")]
+                + (s.codexSkillNote == nil ? [String(localized: "Adds the Sidefolk skill to ~/.codex/skills, so Codex knows when and how to use it.")] : [])
+                + (codexHooks ? [String(localized: "Adds hooks to ~/.codex/hooks.json, so I notice when a session needs you or finishes. Codex asks you to trust them once.")] : []),
             busy: model.integrationBusy,
-            connect: { Task { await model.connectCodex() } },
+            connect: { Task { await model.connectCodex(hooks: codexHooks) } },
             disconnect: { Task { await model.disconnectCodex() } }
-        ) { EmptyView() }
+        ) {
+            AgentOptions(hooks: $codexHooks, connected: s.codexMCPInstalled, hooksInstalled: s.codexHooksInstalled,
+                         skillMissing: s.codexSkillNote == nil && !s.codexSkillInstalled, skillNote: s.codexSkillNote,
+                         busy: model.integrationBusy) { Task { await model.connectCodex(hooks: codexHooks) } }
+        }
+    }
+}
+
+/// Under a connected agent: the session-taps choice, and a button when what is installed differs from the card
+/// (taps switched on or off, or a skill that came with a newer Sidefolk). Connect does the rest.
+private struct AgentOptions: View {
+    @Binding var hooks: Bool
+    var connected: Bool
+    var hooksInstalled: Bool
+    var skillMissing: Bool
+    var skillNote: String?
+    var busy: Bool
+    var update: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle("Notice when a session needs you", isOn: $hooks)
+                .toggleStyle(.checkbox)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.ink)
+            if let skillNote {
+                Text(verbatim: skillNote).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
+            if connected, hooks != hooksInstalled || skillMissing {
+                Button(hooks != hooksInstalled ? (hooks ? "Add Session Taps" : "Remove Session Taps") : "Add the Skill", action: update)
+                    .buttonStyle(.sf(.secondary))
+                    .disabled(busy)
+            }
+        }
+    }
+}
+
+/// Any other app that speaks MCP (Cursor, VS Code, Zed…): Sidefolk changes nothing there, it hands over the command.
+private struct OtherAgentsRow: View {
+    var copy: () -> Void
+    @State private var copied = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Space.m) {
+            IconTile(symbol: "square.on.square", folk: "byte", size: 32)
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                Text("Other apps").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Text("Cursor, VS Code, Zed or any app that speaks MCP: copy the command, a setup snippet for each, and where the Sidefolk skill is.")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
+            Spacer(minLength: Theme.Space.s)
+            Button(copied ? "Copied" : "Copy Setup Instructions") {
+                copy()
+                copied = true
+            }
+            .buttonStyle(.sf(.secondary))
+            .fixedSize()
+        }
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.vertical, Theme.Space.m)
     }
 }
 

@@ -8,7 +8,7 @@ public enum HelperCommands {
         Usage:
           sidefolk mcp                              MCP server on stdio for Claude Code, Codex or any MCP client
           sidefolk run [--title "..."] -- <cmd> …   run a command; Sidefolk tells you when it ends
-          sidefolk hook <EventName>                 for Claude Code command hooks (reads the payload on stdin)
+          sidefolk hook <EventName> [--agent codex] for Claude Code and Codex hooks (reads the payload on stdin)
           sidefolk status                           is Sidefolk running, and what it keeps track of
           sidefolk ext validate [--no-run] <folder> check an extension, then start it in its sandbox and list its tools
           sidefolk --version

@@ -337,7 +337,8 @@ final class SettingsModel {
     }
 
     func disconnectClaudeCode() async { await integrate { await $0.disconnectClaudeCode() } }
-    func connectCodex() async { await integrate { await $0.connectCodex() } }
+    func connectCodex(hooks: Bool) async { await integrate { await $0.connectCodex(hooks: hooks) } }
+    func copySetupInstructions() { services.copySetupInstructions() }
     func installCommandLineTool() async { await integrate { await $0.installCommandLineTool() } }
     func removeCommandLineTool() async { await integrate { await $0.removeCommandLineTool() } }
     func disconnectCodex() async { await integrate { await $0.disconnectCodex() } }
