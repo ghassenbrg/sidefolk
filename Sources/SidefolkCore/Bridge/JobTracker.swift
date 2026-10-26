@@ -124,7 +124,7 @@ public actor JobTracker {
         let took = formatDuration(duration)
         let title: String
         switch job.state {
-        case .succeeded: title = String(localized: "\(job.title) finished in \(took)")
+        case .succeeded: title = String(localized: "\(job.title) finished after \(took)", comment: "A command, then how long it ran: “npm test finished after 3 min”")
         case .cancelled: title = String(localized: "\(job.title) was stopped after \(took)")
         default: title = String(localized: "\(job.title) failed (exit \(job.exitCode ?? -1))")
         }

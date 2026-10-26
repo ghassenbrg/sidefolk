@@ -21,9 +21,9 @@ struct CompanionSettingsView: View {
             SettingsGroup(title: "Look") {
                 SettingsRow(title: "Size") {
                     Picker("Size", selection: Binding(get: { model.settings.size }, set: { size in model.update { $0.size = size } })) {
-                        Text("Small").tag(CompanionSize.small)
-                        Text("Medium").tag(CompanionSize.medium)
-                        Text("Large").tag(CompanionSize.large)
+                        Text(String(localized: "size.small", defaultValue: "Small", comment: "Companion size")).tag(CompanionSize.small)
+                        Text(String(localized: "size.medium", defaultValue: "Medium", comment: "Companion size, between Small and Large")).tag(CompanionSize.medium)
+                        Text(String(localized: "size.large", defaultValue: "Large", comment: "Companion size")).tag(CompanionSize.large)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()

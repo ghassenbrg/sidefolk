@@ -189,7 +189,7 @@ public struct PermissionEngine: Sendable {
         case .notebook: String(localized: "The notebook")
         case .memory: String(localized: "Memory")
         case .time: String(localized: "Reminders")
-        case .watch: String(localized: "Watching")
+        case .watch: String(localized: "capability.watch", defaultValue: "Watching", comment: "A permission: watching pages, files and programs. Also in “%@ is turned off in Sidefolk's Permissions settings.”")
         case .clipboard: String(localized: "Clipboard access")
         case .apps: String(localized: "Opening apps and links")
         case .network: String(localized: "Internet access")

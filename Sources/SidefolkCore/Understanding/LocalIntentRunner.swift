@@ -156,7 +156,7 @@ public struct LocalIntentRunner: Sendable {
         if !query.isEmpty, kind == nil {
             title = String(localized: "Found for “\(query.clipped(30))”")
         } else {
-            let what = kind.map(NoteText.plural) ?? String(localized: "Found")
+            let what = kind.map(NoteText.plural) ?? String(localized: "Results", comment: "Title of notebook search results of every kind: “Results in Sidefolk”")
             title = target.map { String(localized: "\(what) in \(NotebookCollections.shownName($0))", comment: "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”") } ?? what
         }
         return .list(title: "\(title) (\(cards.count))", cards: cards)

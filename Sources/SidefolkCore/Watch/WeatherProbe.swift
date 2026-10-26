@@ -146,7 +146,7 @@ public struct WeatherProbe: WatcherProbe {
         case .conditions:
             let code = current["weather_code"]?.intValue ?? -1
             let temperature = shown(UnitTemperature.celsius, .weather)
-            return ReadingText(shown: String(localized: "\(Self.sky(code)), \(temperature)", comment: "“Partly cloudy, 18 °C”"),
+            return ReadingText(shown: String(localized: "weather.conditions", defaultValue: "\(Self.sky(code)), \(temperature)", comment: "The sky, then the temperature: “Partly cloudy, 18 °C”"),
                                forModel: "\(Self.skyForModel(code)), \(model) °C")
         }
     }

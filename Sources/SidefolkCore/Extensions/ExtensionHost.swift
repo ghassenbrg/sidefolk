@@ -99,7 +99,7 @@ public actor ExtensionHost {
             let folder = installer.installedFolder(record.id)
             if let problem = integrity.verify(id: record.id, folder: folder, pins: pin.files) {
                 rt.record.enabled = false
-                rt.record.lastError = String(localized: "Its files changed since you installed it (\(problem)) Install it again to use it.")
+                rt.record.lastError = String(localized: "Its files changed since you installed it (\(problem)). Install it again to use it.")
                 if record.enabled {
                     try? await store.save(rt.record)
                     events.publish(.notice(String(localized: "\(pin.name) was changed on disk, so I turned it off. Install it again to use it.")))
@@ -500,7 +500,7 @@ public actor ExtensionHost {
         switch rt.record.kind {
         case .sidefolk:
             if let problem = integrity.verify(id: id, folder: installer.installedFolder(id), pins: rt.pin.files) {
-                await disable(id, reason: String(localized: "Its files changed since you installed it (\(problem)) Install it again to use it."),
+                await disable(id, reason: String(localized: "Its files changed since you installed it (\(problem)). Install it again to use it."),
                               notice: String(localized: "\(rt.pin.name) was changed on disk, so I turned it off. Install it again to use it."))
                 throw UserFacingError("\(rt.pin.name) was turned off because its files changed.",
                                       recovery: "Install it again from Settings › Extensions.")
@@ -740,7 +740,7 @@ public actor ExtensionHost {
         runtimes[id]?.crashes = crashes
         guard crashes.count >= config.crashLimit, rt.record.enabled else { return }
         let minutes = Int((config.crashWindow / 60).rounded())
-        var why = String(localized: "It stopped unexpectedly \(crashes.count) times in \(minutes) minutes, so Sidefolk turned it off.")
+        var why = String(localized: "It stopped unexpectedly too often (\(crashes.count)× in \(minutes) min), so Sidefolk turned it off.")
         if let reason { why += " " + String(localized: "Last time: \(reason)") }
         await disable(id, reason: why,
                       notice: String(localized: "\(rt.pin.name) kept crashing, so I turned it off. You can turn it back on in Settings › Extensions."))

@@ -461,7 +461,7 @@ private struct WatcherRow: View {
 
     @ViewBuilder private var state: some View {
         switch watcher.state {
-        case .active: Chip("Watching", tone: .accent)
+        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .accent)
         case .paused: Chip("Paused", tone: .neutral)
         case .error: Chip("Having trouble", tone: .danger)
         case .triggered: Chip("Spotted", tone: .success)

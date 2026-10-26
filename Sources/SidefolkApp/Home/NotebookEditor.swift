@@ -54,7 +54,7 @@ struct NotebookEditor: View {
             VStack {
                 Spacer()
                 // Just the symbol: the list beside it already has someone saying hello.
-                EmptyState(title: "Nothing selected", message: "Pick something on the left, or press ⌘N to write something new.",
+                EmptyState(title: "Nothing selected", message: "Pick something from the list, or press ⌘N to write something new.",
                            systemImage: "note.text")
                 Spacer()
             }
@@ -92,7 +92,7 @@ struct NotebookEditor: View {
             .fixedSize()
             .help("Collection")
             if item.kind == .task {
-                Toggle("Done", isOn: Binding(
+                Toggle(String(localized: "state.done", defaultValue: "Done", comment: "Checkbox and status: the task or reminder is finished"), isOn: Binding(
                     get: { field(item, \.status, item.status).wrappedValue == .done },
                     set: { field(item, \.status, item.status).wrappedValue = $0 ? .done : .open }
                 ))

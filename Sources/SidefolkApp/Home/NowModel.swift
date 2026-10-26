@@ -95,7 +95,7 @@ final class NowModel {
             let done = r.state == .done
             let at = done ? r.updatedAt : (r.lastFiredAt ?? r.updatedAt)
             entries.append(RecentEntry(id: "r" + r.id, symbol: done ? "checkmark.circle" : "alarm", folk: "tempo",
-                                       title: r.title, detail: done ? String(localized: "Done") : String(localized: "Reminded you"),
+                                       title: r.title, detail: done ? String(localized: "state.done", defaultValue: "Done", comment: "Checkbox and status: the task or reminder is finished") : String(localized: "Reminded you"),
                                        date: at))
         }
         for j in (try? await rt.jobs.recent(limit: 20)) ?? [] where j.state != .running {

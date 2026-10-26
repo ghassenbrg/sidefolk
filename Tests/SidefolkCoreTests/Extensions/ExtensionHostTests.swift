@@ -154,7 +154,7 @@ struct ExtensionHostTests {
         }
         let state = try #require(await h.host.info(id: info.id))
         #expect(!state.enabled)
-        #expect(state.lastError?.contains("3 times in 5 minutes") == true)
+        #expect(state.lastError?.contains("3× in 5 min") == true)
         #expect(h.env.registry.tool(named: "ext.sample.echo") == nil)
         #expect(await firstNotice(notices)?.contains("kept crashing") == true)
         #expect(try await h.store.record(id: info.id)?.enabled == false)

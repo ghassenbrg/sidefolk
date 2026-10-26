@@ -1651,6 +1651,9 @@
         }
       }
     },
+    "%@ couldn't do that. Nothing was changed." : {
+
+    },
     "%@ didn't accept the key." : {
       "localizations" : {
         "ar" : {
@@ -1708,6 +1711,9 @@
           }
         }
       }
+    },
+    "%@ didn't answer in time. Nothing was changed." : {
+
     },
     "%@ didn't list its models." : {
       "localizations" : {
@@ -2499,6 +2505,17 @@
         }
       }
     },
+    "%@ finished after %@" : {
+      "comment" : "A command, then how long it ran: “npm test finished after 3 min”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ finished after %2$@"
+          }
+        }
+      }
+    },
     "%@ finished downloading" : {
       "localizations" : {
         "ar" : {
@@ -2558,6 +2575,7 @@
       }
     },
     "%@ finished in %@" : {
+      "comment" : "An agent, then its project: “Claude finished in sidefolk”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2678,6 +2696,9 @@
           }
         }
       }
+    },
+    "%@ free" : {
+
     },
     "%@ gave an answer I couldn't use for %@." : {
       "localizations" : {
@@ -4096,6 +4117,9 @@
           }
         }
       }
+    },
+    "%@ is listening to you" : {
+      "comment" : "VoiceOver, while the microphone is on"
     },
     "%@ is looking something up on the web" : {
       "localizations" : {
@@ -6536,6 +6560,17 @@
         }
       }
     },
+    "%@ of %@" : {
+      "comment" : "Memory in use, then all of it: “9.9 GB of 16 GB”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@"
+          }
+        }
+      }
+    },
     "%@ rejected your API key. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -7083,7 +7118,7 @@
       }
     },
     "%@ until %@" : {
-      "comment" : "“every day until 12 Dec”",
+      "comment" : "A repeat, then when it stops: “every 10 minutes until 18:00”, “every day until Fri”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -7508,6 +7543,7 @@
       }
     },
     "%@, %@" : {
+      "comment" : "The next time, then the repeat: “Today 10:30, every 30 minutes”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -7628,6 +7664,12 @@
           }
         }
       }
+    },
+    "%@, charging" : {
+
+    },
+    "%@, on power" : {
+
     },
     "%@: %@" : {
       "comment" : "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””",
@@ -7937,24 +7979,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا أحرف"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حرف واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حرفان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -7967,10 +7991,28 @@
                   "value" : "%lld حرفًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حرف واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld حرف"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حرفان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا أحرف"
                 }
               }
             }
@@ -8127,24 +8169,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا مجموعات"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مجموعة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مجموعتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -8157,10 +8181,28 @@
                   "value" : "%lld مجموعة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مجموعة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld مجموعة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مجموعتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا مجموعات"
                 }
               }
             }
@@ -8317,24 +8359,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بلغت مراقبات الأوامر حدها الأقصى. أوقف واحدة أولًا."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "توجد مراقبة أوامر قيد التشغيل بالفعل. أوقفها أولًا."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "توجد مراقبتا أوامر قيد التشغيل بالفعل. أوقف إحداهما أولًا."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -8347,10 +8371,28 @@
                   "value" : "توجد %lld مراقبة أوامر قيد التشغيل بالفعل. أوقف واحدة منها أولًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "توجد مراقبة أوامر قيد التشغيل بالفعل. أوقفها أولًا."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "توجد %lld مراقبة أوامر قيد التشغيل بالفعل. أوقف واحدة منها أولًا."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "توجد مراقبتا أوامر قيد التشغيل بالفعل. أوقف إحداهما أولًا."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بلغت مراقبات الأوامر حدها الأقصى. أوقف واحدة أولًا."
                 }
               }
             }
@@ -8507,24 +8549,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld يوم"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يوم واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يومين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -8537,7 +8561,25 @@
                   "value" : "%lld يومًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يوم واحد"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld يوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يومين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld يوم"
@@ -8697,24 +8739,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا معلومات محفوظة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "معلومة واحدة محفوظة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "معلومتان محفوظتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -8727,10 +8751,28 @@
                   "value" : "%lld معلومة محفوظة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "معلومة واحدة محفوظة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld معلومة محفوظة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "معلومتان محفوظتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا معلومات محفوظة"
                 }
               }
             }
@@ -9009,24 +9051,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا عناصر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "عنصر واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "عنصران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -9039,10 +9063,28 @@
                   "value" : "%lld عنصرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "عنصر واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld عنصر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "عنصران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا عناصر"
                 }
               }
             }
@@ -9199,24 +9241,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا عناصر فيها. تذهب العناصر المستعادة إلى «الوارد»."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "سيُنقل العنصر الموجود فيها إلى سلة المهملات لمدة 30 يومًا. تذهب العناصر المستعادة إلى «الوارد»."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "سيُنقل العنصران الموجودان فيها إلى سلة المهملات لمدة 30 يومًا. تذهب العناصر المستعادة إلى «الوارد»."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -9229,10 +9253,28 @@
                   "value" : "سيُنقل %lld عنصرًا فيها إلى سلة المهملات لمدة 30 يومًا. تذهب العناصر المستعادة إلى «الوارد»."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سيُنقل العنصر الموجود فيها إلى سلة المهملات لمدة 30 يومًا. تذهب العناصر المستعادة إلى «الوارد»."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "سيُنقل %lld عنصر فيها إلى سلة المهملات لمدة 30 يومًا. تذهب العناصر المستعادة إلى «الوارد»."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سيُنقل العنصران الموجودان فيها إلى سلة المهملات لمدة 30 يومًا. تذهب العناصر المستعادة إلى «الوارد»."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا عناصر فيها. تذهب العناصر المستعادة إلى «الوارد»."
                 }
               }
             }
@@ -9384,29 +9426,14 @@
         }
       }
     },
+    "%lld match, which one?" : {
+
+    },
     "%lld matches for “%@”" : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا نتائج لـ«%2$@»"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نتيجة واحدة لـ«%2$@»"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نتيجتان لـ«%2$@»"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -9419,10 +9446,28 @@
                   "value" : "%1$lld نتيجة لـ«%2$@»"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نتيجة واحدة لـ«%2$@»"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%1$lld نتيجة لـ«%2$@»"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نتيجتان لـ«%2$@»"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا نتائج لـ«%2$@»"
                 }
               }
             }
@@ -9637,24 +9682,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا ملفات جديدة في %2$@"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "ملف جديد واحد في %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "ملفان جديدان في %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -9667,10 +9694,28 @@
                   "value" : "%1$lld ملفًا جديدًا في %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملف جديد واحد في %2$@"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%1$lld ملف جديد في %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملفان جديدان في %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا ملفات جديدة في %2$@"
                 }
               }
             }
@@ -9822,29 +9867,27 @@
         }
       }
     },
+    "%lld notes in Apple Notes" : {
+
+    },
+    "%lld of %lld copied so far" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld copied so far"
+          }
+        }
+      }
+    },
+    "%lld open reminders in Apple Reminders" : {
+
+    },
     "%lld open tasks" : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا مهام مفتوحة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مهمة مفتوحة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مهمتان مفتوحتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -9857,10 +9900,28 @@
                   "value" : "%lld مهمة مفتوحة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مهمة مفتوحة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld مهمة مفتوحة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مهمتان مفتوحتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا مهام مفتوحة"
                 }
               }
             }
@@ -10070,29 +10131,14 @@
         }
       }
     },
+    "%lld stayed in Notes" : {
+
+    },
     "%lld things need you." : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا شيء يحتاج إليك."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أمر واحد يحتاج إليك."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أمران يحتاجان إليك."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -10105,10 +10151,28 @@
                   "value" : "%lld أمرًا يحتاج إليك."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أمر واحد يحتاج إليك."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld أمر يحتاج إليك."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أمران يحتاجان إليك."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا شيء يحتاج إليك."
                 }
               }
             }
@@ -10260,29 +10324,22 @@
         }
       }
     },
+    "%lld things. First: %@" : {
+      "comment" : "Said aloud for a list: how many, then the first one",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld things. First: %2$@"
+          }
+        }
+      }
+    },
     "%lld upcoming reminders" : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا تذكيرات قادمة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تذكير قادم واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تذكيران قادمان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -10295,10 +10352,28 @@
                   "value" : "%lld تذكيرًا قادمًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكير قادم واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld تذكير قادم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكيران قادمان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تذكيرات قادمة"
                 }
               }
             }
@@ -10455,24 +10530,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا مراقبات"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مراقبة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مراقبتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -10485,10 +10542,28 @@
                   "value" : "%lld مراقبة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مراقبة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld مراقبة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مراقبتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا مراقبات"
                 }
               }
             }
@@ -10645,24 +10720,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا مراقبات نشطة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مراقبة نشطة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مراقبتان نشطتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -10675,10 +10732,28 @@
                   "value" : "%lld مراقبة نشطة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مراقبة نشطة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld مراقبة نشطة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مراقبتان نشطتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا مراقبات نشطة"
                 }
               }
             }
@@ -11236,6 +11311,9 @@
         }
       }
     },
+    "A collection name is too long (the limit is 60 characters)." : {
+
+    },
     "A companion that remembers, reminds, watches, and works with your agents." : {
       "localizations" : {
         "ar" : {
@@ -11758,6 +11836,9 @@
         }
       }
     },
+    "A reminder repeats at most once a minute." : {
+
+    },
     "A search can't start with a dash." : {
       "localizations" : {
         "ar" : {
@@ -11873,6 +11954,9 @@
           }
         }
       }
+    },
+    "A short spoken answer to what you said aloud. Typed requests get text." : {
+
     },
     "A skill called “%@” exists again." : {
       "localizations" : {
@@ -12053,24 +12137,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز %lld حرف."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز حرفًا واحدًا."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز حرفين."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -12083,7 +12149,25 @@
                   "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز %lld حرفًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز حرفًا واحدًا."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز %lld حرف."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز حرفين."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "تحتاج المهارة إلى تعليمات لا تتجاوز %lld حرف."
@@ -12876,6 +12960,12 @@
         }
       }
     },
+    "Acts on its own. Still asks before high-risk actions and anything a web page, file or extension could have steered." : {
+
+    },
+    "Acts without asking. Still asks before anything a web page, file or extension steered could send your data out." : {
+
+    },
     "Add Folder…" : {
       "localizations" : {
         "ar" : {
@@ -13166,6 +13256,9 @@
         }
       }
     },
+    "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Voice." : {
+
+    },
     "Add it in Settings › AI (for Ollama: http://localhost:11434/v1)." : {
       "localizations" : {
         "ar" : {
@@ -13397,6 +13490,12 @@
           }
         }
       }
+    },
+    "Add them in Settings › Voice." : {
+
+    },
+    "Add your ElevenLabs key first." : {
+
     },
     "Adding…" : {
       "localizations" : {
@@ -14112,6 +14211,12 @@
         }
       }
     },
+    "After %lld minutes, the task carries on without it. The step waits in Now, where you can still run it." : {
+
+    },
+    "After %lld minutes, the task stops. The step waits in Now, where you can still run it." : {
+
+    },
     "Afternoon" : {
       "localizations" : {
         "ar" : {
@@ -14518,6 +14623,15 @@
         }
       }
     },
+    "Allow for this request" : {
+
+    },
+    "Allow it in System Settings › Privacy & Security › Microphone." : {
+
+    },
+    "Allow it in System Settings › Privacy & Security › Speech Recognition." : {
+
+    },
     "Allow notifications" : {
       "localizations" : {
         "ar" : {
@@ -14749,6 +14863,9 @@
           }
         }
       }
+    },
+    "Allowed. It prefers the Mac's own microphone." : {
+
     },
     "Already cancelled" : {
       "localizations" : {
@@ -15099,6 +15216,7 @@
       }
     },
     "Always asks Codex for high reasoning effort; empty keeps the model above." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -15155,6 +15273,9 @@
           }
         }
       }
+    },
+    "An AI voice. %@ says one short line, and never reads out links, file paths or code." : {
+
     },
     "An exit code is a number from 0 to 255." : {
       "localizations" : {
@@ -15975,6 +16096,9 @@
         }
       }
     },
+    "Anything a web page, file or extension it read could be steering to send your data out: an address you didn't type, a command, a file change, an extension, your clipboard or memory." : {
+
+    },
     "Anything you save without saying where lands here." : {
       "localizations" : {
         "ar" : {
@@ -16032,6 +16156,18 @@
           }
         }
       }
+    },
+    "Apple Notes and Reminders" : {
+
+    },
+    "Apple voices" : {
+
+    },
+    "Approval mode: %@" : {
+
+    },
+    "Approvals: %@" : {
+      "comment" : "Menu bar: the approval mode, “Approvals: Auto”"
     },
     "Approve" : {
       "localizations" : {
@@ -16497,6 +16633,9 @@
         }
       }
     },
+    "Ask About It…" : {
+
+    },
     "Ask Sidefolk…" : {
       "localizations" : {
         "ar" : {
@@ -16554,6 +16693,12 @@
           }
         }
       }
+    },
+    "Ask every time" : {
+
+    },
+    "Ask once per kind" : {
+
     },
     "Ask shortcut" : {
       "localizations" : {
@@ -17193,7 +17338,14 @@
         }
       }
     },
+    "Asks before anything that changes something outside Sidefolk, even if you allowed it before." : {
+
+    },
+    "Asks every time" : {
+      "comment" : "A small label in the Ask panel: the approval mode"
+    },
     "Asks every time something would change outside Sidefolk, even if you allowed it before." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -17251,7 +17403,11 @@
         }
       }
     },
+    "Asks once" : {
+      "comment" : "A small label in the Ask panel: the approval mode"
+    },
     "Asks once for each kind of action and remembers “Always allow”." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -17308,6 +17464,9 @@
           }
         }
       }
+    },
+    "Asks once for each kind of action and remembers “Always allow”. The default." : {
+
     },
     "Ask…" : {
       "localizations" : {
@@ -17424,6 +17583,12 @@
           }
         }
       }
+    },
+    "Attachments left in Apple Notes: %@" : {
+
+    },
+    "Auto" : {
+
     },
     "Automatic" : {
       "localizations" : {
@@ -17599,6 +17764,12 @@
         }
       }
     },
+    "Basic" : {
+
+    },
+    "Basic: macOS 15's older recognizer, on this Mac. It makes more mistakes; macOS 26 brings a better one." : {
+
+    },
     "Basics" : {
       "localizations" : {
         "ar" : {
@@ -17656,6 +17827,9 @@
           }
         }
       }
+    },
+    "Battery" : {
+
     },
     "Be quiet" : {
       "localizations" : {
@@ -17772,6 +17946,9 @@
           }
         }
       }
+    },
+    "Best installed (%@)" : {
+
     },
     "Blocked" : {
       "localizations" : {
@@ -18120,6 +18297,9 @@
           }
         }
       }
+    },
+    "CPU" : {
+
     },
     "Can I use Mac notifications?" : {
       "localizations" : {
@@ -18760,6 +18940,7 @@
       }
     },
     "Cautious" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -19803,6 +19984,9 @@
         }
       }
     },
+    "Check the key in Settings › Voice." : {
+
+    },
     "Check the model and address in Settings › AI." : {
       "localizations" : {
         "ar" : {
@@ -20093,6 +20277,9 @@
         }
       }
     },
+    "Check your internet connection and try again." : {
+
+    },
     "Check your internet connection, or switch provider in Settings › AI." : {
       "localizations" : {
         "ar" : {
@@ -20150,6 +20337,9 @@
           }
         }
       }
+    },
+    "Check your internet connection." : {
+
     },
     "Check your plan and credits in the Anthropic Console." : {
       "localizations" : {
@@ -20788,6 +20978,9 @@
           }
         }
       }
+    },
+    "Choose a voice" : {
+
     },
     "Choose an extension folder. You'll see what it can do before anything is installed." : {
       "localizations" : {
@@ -22357,6 +22550,9 @@
         }
       }
     },
+    "Cloudy" : {
+
+    },
     "Code, agents & extensions" : {
       "localizations" : {
         "ar" : {
@@ -23343,6 +23539,9 @@
         }
       }
     },
+    "Compact" : {
+      "comment" : "An Apple voice's quality"
+    },
     "Companion" : {
       "localizations" : {
         "ar" : {
@@ -24161,6 +24360,12 @@
         }
       }
     },
+    "Copied %lld notes from Apple Notes" : {
+
+    },
+    "Copied 25 notes from Apple Notes" : {
+
+    },
     "Copied to the clipboard" : {
       "localizations" : {
         "ar" : {
@@ -24276,6 +24481,19 @@
           }
         }
       }
+    },
+    "Copy %lld notes from Apple Notes into %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Copy %1$lld notes from Apple Notes into %2$@"
+          }
+        }
+      }
+    },
+    "Copy Apple Notes to the notebook" : {
+
     },
     "Copy command" : {
       "localizations" : {
@@ -25906,6 +26124,12 @@
           }
         }
       }
+    },
+    "Default" : {
+      "comment" : "Reasoning effort: send nothing, so the model uses its own"
+    },
+    "Default (%@)" : {
+      "comment" : "Reasoning effort: send nothing; the model's own level in parentheses"
     },
     "Delete" : {
       "localizations" : {
@@ -27589,6 +27813,9 @@
         }
       }
     },
+    "Done without asking: %@" : {
+      "comment" : "A bubble: what Sidefolk did on its own in Auto or Full access"
+    },
     "Done." : {
       "localizations" : {
         "ar" : {
@@ -27647,6 +27874,12 @@
         }
       }
     },
+    "Done: %@" : {
+
+    },
+    "Download" : {
+
+    },
     "Download %@" : {
       "localizations" : {
         "ar" : {
@@ -27704,6 +27937,18 @@
           }
         }
       }
+    },
+    "Downloading the speech model" : {
+
+    },
+    "Downloading the speech model… %lld%%" : {
+      "comment" : "The number is a percentage"
+    },
+    "Drizzle" : {
+
+    },
+    "Each entry in “notes” needs an “id” and a “collection”." : {
+
     },
     "Edit" : {
       "localizations" : {
@@ -27937,6 +28182,27 @@
           }
         }
       }
+    },
+    "Effort" : {
+      "comment" : "Reasoning effort, beside its menu under a model field"
+    },
+    "ElevenLabs" : {
+
+    },
+    "ElevenLabs couldn't find that voice. Nothing was said." : {
+
+    },
+    "ElevenLabs couldn't make the voice. Nothing was said." : {
+
+    },
+    "ElevenLabs didn't accept your key. Nothing was said." : {
+
+    },
+    "ElevenLabs is busy right now. Nothing was said." : {
+
+    },
+    "ElevenLabs sent something I couldn't read. Nothing was changed." : {
+
     },
     "Empty" : {
       "localizations" : {
@@ -28344,6 +28610,9 @@
         }
       }
     },
+    "Enhanced" : {
+      "comment" : "An Apple voice's quality"
+    },
     "Enter the server's address. It usually ends in /v1." : {
       "localizations" : {
         "ar" : {
@@ -28456,6 +28725,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "晚上"
+          }
+        }
+      }
+    },
+    "Every %@ is the fastest for this; I'll check every %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Every %1$@ is the fastest for this; I'll check every %2$@."
           }
         }
       }
@@ -28697,6 +28976,9 @@
           }
         }
       }
+    },
+    "Everything it does shows in Activity, with Undo where it can. Files it deletes go to the Trash." : {
+
     },
     "Everything local keeps working. Questions wait until you pick an AI." : {
       "localizations" : {
@@ -29452,6 +29734,9 @@
         }
       }
     },
+    "Extra high" : {
+      "comment" : "Reasoning effort, between High and Max"
+    },
     "Eyes follow the pointer" : {
       "localizations" : {
         "ar" : {
@@ -29689,6 +29974,9 @@
           }
         }
       }
+    },
+    "Feels like in %@" : {
+      "comment" : "The felt temperature in a place"
     },
     "Fetching pages and checking sites." : {
       "localizations" : {
@@ -30037,6 +30325,9 @@
           }
         }
       }
+    },
+    "Fog" : {
+
     },
     "Folder" : {
       "localizations" : {
@@ -30501,6 +30792,9 @@
           }
         }
       }
+    },
+    "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in Activity." : {
+
     },
     "Forget a fact" : {
       "localizations" : {
@@ -31164,6 +31458,9 @@
         }
       }
     },
+    "Free disk" : {
+
+    },
     "Free models that run on this Mac." : {
       "localizations" : {
         "ar" : {
@@ -31461,6 +31758,28 @@
         }
       }
     },
+    "From Apple Notes › %@" : {
+
+    },
+    "From Apple Notes › %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "From Apple Notes › %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "Full access" : {
+
+    },
+    "Full access is on" : {
+
+    },
+    "Full access…" : {
+
+    },
     "Fun & celebration" : {
       "localizations" : {
         "ar" : {
@@ -31692,6 +32011,15 @@
           }
         }
       }
+    },
+    "Get better voices…" : {
+
+    },
+    "Getting ready to listen…" : {
+
+    },
+    "Getting your last words…" : {
+
     },
     "Give it a short plain name." : {
       "localizations" : {
@@ -32162,24 +32490,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "صباح الخير · لا تذكيرات اليوم"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "صباح الخير · تذكير واحد اليوم"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "صباح الخير · تذكيران اليوم"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -32192,10 +32502,28 @@
                   "value" : "صباح الخير · %lld تذكيرًا اليوم"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صباح الخير · تذكير واحد اليوم"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "صباح الخير · %lld تذكير اليوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صباح الخير · تذكيران اليوم"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صباح الخير · لا تذكيرات اليوم"
                 }
               }
             }
@@ -32580,6 +32908,7 @@
       }
     },
     "Guard" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -32811,6 +33140,9 @@
         }
       }
     },
+    "Hi, I'm %@. This is how I'll answer you." : {
+      "comment" : "Said aloud by Settings › Voice › Test voice"
+    },
     "Hide Companion" : {
       "localizations" : {
         "ar" : {
@@ -32928,6 +33260,7 @@
       }
     },
     "High" : {
+      "comment" : "Reasoning effort",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -33101,6 +33434,21 @@
         }
       }
     },
+    "Hold the Ask shortcut" : {
+
+    },
+    "Hold the shortcut and talk, release to send. Esc cancels." : {
+
+    },
+    "Hold your talk shortcut. You can also press and hold %@." : {
+
+    },
+    "How much Sidefolk asks" : {
+
+    },
+    "Humidity in %@" : {
+
+    },
     "I can only attach web links (http or https) to a note." : {
       "localizations" : {
         "ar" : {
@@ -33159,6 +33507,12 @@
         }
       }
     },
+    "I can only use simple selectors, like span.price, #total or td." : {
+
+    },
+    "I can show the temperature, feels like, humidity, wind, rain or conditions." : {
+
+    },
     "I can watch links and files, not text." : {
       "localizations" : {
         "ar" : {
@@ -33216,6 +33570,9 @@
           }
         }
       }
+    },
+    "I can't bring that session to the front." : {
+
     },
     "I can't check %@ right now" : {
       "localizations" : {
@@ -33339,6 +33696,9 @@
         }
       }
     },
+    "I can't find a microphone. Nothing was sent." : {
+
+    },
     "I can't find the folder %@." : {
       "localizations" : {
         "ar" : {
@@ -33455,6 +33815,9 @@
         }
       }
     },
+    "I can't hear you: Sidefolk isn't allowed to use the microphone. Nothing was sent." : {
+
+    },
     "I can't help with that one." : {
       "localizations" : {
         "ar" : {
@@ -33512,6 +33875,9 @@
           }
         }
       }
+    },
+    "I can't listen in that language on this Mac. Nothing was sent." : {
+
     },
     "I can't move %@ into itself." : {
       "localizations" : {
@@ -33686,6 +34052,9 @@
           }
         }
       }
+    },
+    "I can't read “%@” as a JSON path, like current.temperature_2m or data[0].price." : {
+
     },
     "I can't set up a command watcher in this conversation: it has read content from outside, so the command might not be the user's own. Ask again in a new conversation." : {
       "localizations" : {
@@ -34389,6 +34758,12 @@
         }
       }
     },
+    "I couldn't download the speech model. Nothing was changed." : {
+
+    },
+    "I couldn't download the speech model. Nothing was sent." : {
+
+    },
     "I couldn't export diagnostics." : {
       "localizations" : {
         "ar" : {
@@ -34679,6 +35054,9 @@
         }
       }
     },
+    "I couldn't find a place called “%@”." : {
+
+    },
     "I couldn't find a site called “%@”." : {
       "localizations" : {
         "ar" : {
@@ -34910,6 +35288,12 @@
           }
         }
       }
+    },
+    "I couldn't list your ElevenLabs voices." : {
+
+    },
+    "I couldn't look up that place." : {
+
     },
     "I couldn't make a secure connection to %@. Nothing was changed." : {
       "localizations" : {
@@ -35317,6 +35701,9 @@
         }
       }
     },
+    "I couldn't play the voice." : {
+
+    },
     "I couldn't put back %@. You can restore it from the Trash." : {
       "localizations" : {
         "ar" : {
@@ -35607,6 +35994,9 @@
         }
       }
     },
+    "I couldn't reach ElevenLabs. Nothing was said." : {
+
+    },
     "I couldn't reach OpenAI." : {
       "localizations" : {
         "ar" : {
@@ -35839,6 +36229,15 @@
         }
       }
     },
+    "I couldn't read that from the Mac." : {
+
+    },
+    "I couldn't read the free disk space." : {
+
+    },
+    "I couldn't read the memory use." : {
+
+    },
     "I couldn't read your API key from the Keychain. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -35896,6 +36295,9 @@
           }
         }
       }
+    },
+    "I couldn't read “%@” as a time to stop." : {
+
     },
     "I couldn't read “%@” as a time." : {
       "localizations" : {
@@ -36128,6 +36530,15 @@
           }
         }
       }
+    },
+    "I couldn't say that out loud. It's on the screen." : {
+
+    },
+    "I couldn't start %@. Nothing was changed." : {
+
+    },
+    "I couldn't start listening. Nothing was sent." : {
+
     },
     "I couldn't start the command." : {
       "localizations" : {
@@ -36535,6 +36946,12 @@
         }
       }
     },
+    "I didn't catch that. Fix the words and press Return, or hold to talk again." : {
+
+    },
+    "I didn't catch that. Hold to talk again." : {
+
+    },
     "I didn't understand “%@” as a time." : {
       "localizations" : {
         "ar" : {
@@ -36821,6 +37238,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我不知道怎么监视“%@”。"
+          }
+        }
+      }
+    },
+    "I found no value at “%@” on %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I found no value at “%1$@” on %2$@."
           }
         }
       }
@@ -37352,24 +37779,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "توقفت بعد %lld إجراء، وهو حدي لطلب واحد."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "توقفت بعد إجراء واحد، وهو حدي لطلب واحد."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "توقفت بعد إجراءين، وهو حدي لطلب واحد."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -37382,7 +37791,25 @@
                   "value" : "توقفت بعد %lld إجراءً، وهو حدي لطلب واحد."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "توقفت بعد إجراء واحد، وهو حدي لطلب واحد."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "توقفت بعد %lld إجراء، وهو حدي لطلب واحد."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "توقفت بعد إجراءين، وهو حدي لطلب واحد."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "توقفت بعد %lld إجراء، وهو حدي لطلب واحد."
@@ -37595,6 +38022,9 @@
         }
       }
     },
+    "I stopped showing %@" : {
+
+    },
     "I stopped watching %@" : {
       "localizations" : {
         "ar" : {
@@ -37652,6 +38082,9 @@
           }
         }
       }
+    },
+    "I stopped: you didn't answer in time. Nothing was changed." : {
+
     },
     "I won't create “%@”, because that kind of item can run programs." : {
       "localizations" : {
@@ -38233,29 +38666,14 @@
         }
       }
     },
+    "I'm already showing %lld live values. Stop one first." : {
+
+    },
     "I'm already watching %lld things. Stop one before starting another." : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بلغتُ الحد الأقصى لما يمكنني مراقبته. أوقف مراقبة قبل بدء أخرى."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أراقب شيئًا واحدًا بالفعل. أوقفه قبل بدء مراقبة أخرى."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أراقب شيئين بالفعل. أوقف أحدهما قبل بدء مراقبة أخرى."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -38268,10 +38686,28 @@
                   "value" : "أراقب %lld شيئًا بالفعل. أوقف أحدها قبل بدء مراقبة أخرى."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أراقب شيئًا واحدًا بالفعل. أوقفه قبل بدء مراقبة أخرى."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "أراقب %lld شيء بالفعل. أوقف أحدها قبل بدء مراقبة أخرى."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أراقب شيئين بالفعل. أوقف أحدهما قبل بدء مراقبة أخرى."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بلغتُ الحد الأقصى لما يمكنني مراقبته. أوقف مراقبة قبل بدء أخرى."
                 }
               }
             }
@@ -38422,6 +38858,12 @@
           }
         }
       }
+    },
+    "I'm not showing or watching anything like “%@”." : {
+
+    },
+    "I'm not showing or watching anything right now." : {
+
     },
     "Idea" : {
       "localizations" : {
@@ -38655,6 +39097,9 @@
         }
       }
     },
+    "If I don't answer" : {
+
+    },
     "If it's yours, copy it to a normal file first (for example with Finder's Duplicate)." : {
       "localizations" : {
         "ar" : {
@@ -38713,6 +39158,9 @@
         }
       }
     },
+    "If macOS is asking whether Sidefolk may use %@, answer it, then try again." : {
+
+    },
     "In 1 hour" : {
       "localizations" : {
         "ar" : {
@@ -38770,6 +39218,12 @@
           }
         }
       }
+    },
+    "In System Settings › Privacy & Security › Automation, switch on %@ under Sidefolk." : {
+
+    },
+    "In every mode" : {
+
     },
     "Inbox" : {
       "localizations" : {
@@ -40540,24 +40994,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بدأ أكثر من %lld عملية."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بدأ أكثر من عملية واحدة."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بدأ أكثر من عمليتين."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -40570,7 +41006,25 @@
                   "value" : "بدأ أكثر من %lld عملية."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بدأ أكثر من عملية واحدة."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بدأ أكثر من %lld عملية."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بدأ أكثر من عمليتين."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "بدأ أكثر من %lld عملية."
@@ -40725,7 +41179,11 @@
         }
       }
     },
+    "It still asks before" : {
+
+    },
     "It stopped unexpectedly %lld times in %lld minutes, so Sidefolk turned it off." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -40789,6 +41247,16 @@
         }
       }
     },
+    "It stopped unexpectedly too often (%lld× in %lld min), so Sidefolk turned it off." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It stopped unexpectedly too often (%1$lld× in %2$lld min), so Sidefolk turned it off."
+          }
+        }
+      }
+    },
     "It used more than %llu MB of memory." : {
       "localizations" : {
         "ar" : {
@@ -40846,6 +41314,12 @@
           }
         }
       }
+    },
+    "It was in %@." : {
+
+    },
+    "It was set to stop at %@." : {
+
     },
     "It will be able to" : {
       "localizations" : {
@@ -40968,24 +41442,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مضى %lld يوم. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مضى يوم واحد. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مضى يومان. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -40998,7 +41454,25 @@
                   "value" : "مضى %lld يومًا. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مضى يوم واحد. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مضى %lld يوم. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مضى يومان. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "مضى %lld يوم. يمكنني البدء من جديد إن كنت لا تزال تريد ذلك."
@@ -41211,6 +41685,9 @@
         }
       }
     },
+    "It's on the screen." : {
+      "comment" : "Said aloud when the answer is only a link or code"
+    },
     "Its eyes, ear lights and what it wears." : {
       "localizations" : {
         "ar" : {
@@ -41270,6 +41747,7 @@
       }
     },
     "Its files changed since you installed it (%@) Install it again to use it." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -41326,6 +41804,9 @@
           }
         }
       }
+    },
+    "Its files changed since you installed it (%@). Install it again to use it." : {
+
     },
     "Its folder is missing." : {
       "localizations" : {
@@ -41558,6 +42039,9 @@
           }
         }
       }
+    },
+    "Its own shortcut" : {
+
     },
     "Its saved settings are incomplete." : {
       "localizations" : {
@@ -41849,6 +42333,9 @@
         }
       }
     },
+    "Its window may be closed." : {
+
+    },
     "Just started" : {
       "localizations" : {
         "ar" : {
@@ -41965,6 +42452,9 @@
         }
       }
     },
+    "Keep going" : {
+
+    },
     "Keep recent requests for" : {
       "localizations" : {
         "ar" : {
@@ -42022,6 +42512,9 @@
           }
         }
       }
+    },
+    "Keep waiting" : {
+
     },
     "Keep watching" : {
       "localizations" : {
@@ -42372,6 +42865,7 @@
       }
     },
     "Large" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -43183,6 +43677,12 @@
         }
       }
     },
+    "List Apple Notes" : {
+
+    },
+    "List Apple Reminders" : {
+
+    },
     "List a folder" : {
       "localizations" : {
         "ar" : {
@@ -43937,6 +44437,21 @@
         }
       }
     },
+    "Listening" : {
+
+    },
+    "Listening (basic recognition)… Release to send, Esc to cancel" : {
+
+    },
+    "Listening…" : {
+
+    },
+    "Listening… Release to send, Esc to cancel" : {
+
+    },
+    "Live" : {
+
+    },
     "Load a skill" : {
       "localizations" : {
         "ar" : {
@@ -44052,6 +44567,9 @@
           }
         }
       }
+    },
+    "Load voices" : {
+
     },
     "Logs and versions for a bug report, without your notes or messages." : {
       "localizations" : {
@@ -44518,6 +45036,7 @@
       }
     },
     "Low" : {
+      "comment" : "Reasoning effort",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44690,6 +45209,9 @@
           }
         }
       }
+    },
+    "Made on this Mac. Nothing is sent anywhere." : {
+
     },
     "Make sure %@ is running, and check the address in Settings › AI." : {
       "localizations" : {
@@ -45097,7 +45619,11 @@
         }
       }
     },
+    "Max" : {
+      "comment" : "Reasoning effort: the most a model can think"
+    },
     "Medium" : {
+      "comment" : "Reasoning effort",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45270,6 +45796,12 @@
           }
         }
       }
+    },
+    "Microphone" : {
+
+    },
+    "Minimal" : {
+      "comment" : "Reasoning effort"
     },
     "Minimize" : {
       "localizations" : {
@@ -45979,24 +46511,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نقل %1$lld عنصر إلى %2$@"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نقل عنصر واحد إلى %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نقل عنصرين إلى %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -46009,7 +46523,25 @@
                   "value" : "نقل %1$lld عنصرًا إلى %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل عنصر واحد إلى %2$@"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل %1$lld عنصر إلى %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل عنصرين إلى %2$@"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "نقل %1$lld عنصر إلى %2$@"
@@ -46169,24 +46701,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نقل %1$lld عنصر إلى سلة المهملات: %2$@"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نقل عنصر واحد إلى سلة المهملات: %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نقل عنصرين إلى سلة المهملات: %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -46199,7 +46713,25 @@
                   "value" : "نقل %1$lld عنصرًا إلى سلة المهملات: %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل عنصر واحد إلى سلة المهملات: %2$@"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل %1$lld عنصر إلى سلة المهملات: %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل عنصرين إلى سلة المهملات: %2$@"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "نقل %1$lld عنصر إلى سلة المهملات: %2$@"
@@ -46353,6 +46885,9 @@
           }
         }
       }
+    },
+    "Move %lld notes in Apple Notes to Recently Deleted" : {
+
     },
     "Move a note to the Trash" : {
       "localizations" : {
@@ -46765,24 +47300,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لم يُنقل أي عنصر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نُقل عنصر واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نُقل عنصران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -46795,10 +47312,28 @@
                   "value" : "نُقل %lld عنصرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقل عنصر واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "نُقل %lld عنصر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقل عنصران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم يُنقل أي عنصر"
                 }
               }
             }
@@ -46955,24 +47490,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لم يُعَد أي عنصر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أُعيد عنصر واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أُعيد عنصران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -46985,10 +47502,28 @@
                   "value" : "أُعيد %lld عنصرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُعيد عنصر واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "أُعيد %lld عنصر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُعيد عنصران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم يُعَد أي عنصر"
                 }
               }
             }
@@ -47145,24 +47680,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لم يُنقل أي عنصر إلى سلة المهملات"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نُقل عنصر واحد إلى سلة المهملات"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "نُقل عنصران إلى سلة المهملات"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -47175,10 +47692,28 @@
                   "value" : "نُقل %lld عنصرًا إلى سلة المهملات"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقل عنصر واحد إلى سلة المهملات"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "نُقل %lld عنصر إلى سلة المهملات"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقل عنصران إلى سلة المهملات"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم يُنقل أي عنصر إلى سلة المهملات"
                 }
               }
             }
@@ -47329,6 +47864,9 @@
           }
         }
       }
+    },
+    "Moved %lld notes to Recently Deleted in Apple Notes" : {
+
     },
     "Moved to %@." : {
       "localizations" : {
@@ -47794,6 +48332,9 @@
         }
       }
     },
+    "Natural voices in many languages, with your own ElevenLabs key." : {
+
+    },
     "Needs AI — not set up yet" : {
       "localizations" : {
         "ar" : {
@@ -48083,6 +48624,9 @@
           }
         }
       }
+    },
+    "Network" : {
+
     },
     "New collection" : {
       "localizations" : {
@@ -49598,6 +50142,9 @@
         }
       }
     },
+    "No matching Apple Notes" : {
+
+    },
     "No matching notes" : {
       "localizations" : {
         "ar" : {
@@ -49888,6 +50435,9 @@
         }
       }
     },
+    "No such folder in Apple Notes" : {
+
+    },
     "No tasks here" : {
       "localizations" : {
         "ar" : {
@@ -50004,6 +50554,12 @@
         }
       }
     },
+    "Nobody answered by %@, so the task stopped here." : {
+
+    },
+    "Nobody answered by %@, so the task went on without it." : {
+
+    },
     "Not allowed yet. Without them, reminders only appear on the desktop." : {
       "localizations" : {
         "ar" : {
@@ -50061,6 +50617,12 @@
           }
         }
       }
+    },
+    "Not allowed. Voice input can't hear you until it is." : {
+
+    },
+    "Not asked yet" : {
+
     },
     "Not available" : {
       "localizations" : {
@@ -50583,6 +51145,18 @@
           }
         }
       }
+    },
+    "Not said aloud: %@" : {
+
+    },
+    "Not said aloud: another app is using the microphone" : {
+
+    },
+    "Not said aloud: quiet mode is on" : {
+
+    },
+    "Not said aloud: you were typing" : {
+
     },
     "Not signed in" : {
       "localizations" : {
@@ -51686,6 +52260,9 @@
         }
       }
     },
+    "Nothing new to copy from Apple Notes" : {
+
+    },
     "Nothing remembered yet" : {
       "localizations" : {
         "ar" : {
@@ -51743,6 +52320,9 @@
           }
         }
       }
+    },
+    "Nothing removed from Apple Notes" : {
+
     },
     "Nothing running or due soon" : {
       "localizations" : {
@@ -52324,6 +52904,9 @@
         }
       }
     },
+    "Notice when a session needs you" : {
+
+    },
     "Notifications" : {
       "localizations" : {
         "ar" : {
@@ -52556,6 +53139,9 @@
         }
       }
     },
+    "Now %@" : {
+
+    },
     "OK" : {
       "localizations" : {
         "ar" : {
@@ -52613,6 +53199,9 @@
           }
         }
       }
+    },
+    "Off" : {
+      "comment" : "Reasoning effort: the model doesn't reason before answering"
     },
     "Okay, no reminder." : {
       "localizations" : {
@@ -52672,6 +53261,12 @@
         }
       }
     },
+    "On this Mac, with Apple's dictation model." : {
+
+    },
+    "On this Mac, with Apple's speech model. Nothing you say leaves it." : {
+
+    },
     "One thing needs you." : {
       "localizations" : {
         "ar" : {
@@ -52729,6 +53324,9 @@
           }
         }
       }
+    },
+    "Only compact voices are installed, and they sound robotic. Download an enhanced or premium voice for a warmer one." : {
+
     },
     "Only if it's installed somewhere unusual." : {
       "localizations" : {
@@ -52846,6 +53444,9 @@
         }
       }
     },
+    "Only notes already copied into the notebook can be removed from Apple Notes. Copy them first." : {
+
+    },
     "Only urgent things will interrupt you." : {
       "localizations" : {
         "ar" : {
@@ -52903,6 +53504,9 @@
           }
         }
       }
+    },
+    "Only when I spoke" : {
+
     },
     "Only when I'm hidden, you're in fullscreen, or something is urgent." : {
       "localizations" : {
@@ -53426,6 +54030,12 @@
         }
       }
     },
+    "Open %@ once yourself, then try again." : {
+
+    },
+    "Open Now" : {
+
+    },
     "Open Settings › AI and paste the key again." : {
       "localizations" : {
         "ar" : {
@@ -53541,6 +54151,9 @@
           }
         }
       }
+    },
+    "Open System Settings" : {
+
     },
     "Open Terminal, run claude and sign in, then try again." : {
       "localizations" : {
@@ -54475,24 +55088,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بلغت مراقبات الوكلاء الآخرين حدها الأقصى. أوقف واحدة أولًا."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لدى الوكلاء الآخرين مراقبة واحدة قيد التشغيل بالفعل. أوقفها أولًا."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لدى الوكلاء الآخرين مراقبتان قيد التشغيل بالفعل. أوقف إحداهما أولًا."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -54505,10 +55100,28 @@
                   "value" : "لدى الوكلاء الآخرين %lld مراقبة قيد التشغيل بالفعل. أوقف واحدة منها أولًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لدى الوكلاء الآخرين مراقبة واحدة قيد التشغيل بالفعل. أوقفها أولًا."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "لدى الوكلاء الآخرين %lld مراقبة قيد التشغيل بالفعل. أوقف واحدة منها أولًا."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لدى الوكلاء الآخرين مراقبتان قيد التشغيل بالفعل. أوقف إحداهما أولًا."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بلغت مراقبات الوكلاء الآخرين حدها الأقصى. أوقف واحدة أولًا."
                 }
               }
             }
@@ -54718,6 +55331,9 @@
         }
       }
     },
+    "Other agents and extensions keep their own rules." : {
+
+    },
     "Outcome" : {
       "localizations" : {
         "ar" : {
@@ -54897,24 +55513,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "PDF، دون صفحات"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "PDF، صفحة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "PDF، صفحتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -54927,10 +55525,28 @@
                   "value" : "PDF، %lld صفحة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "PDF، صفحة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "PDF، %lld صفحة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "PDF، صفحتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "PDF، دون صفحات"
                 }
               }
             }
@@ -55081,6 +55697,9 @@
           }
         }
       }
+    },
+    "Partly cloudy" : {
+
     },
     "Paste" : {
       "localizations" : {
@@ -55662,6 +56281,9 @@
         }
       }
     },
+    "Paused · %@" : {
+      "comment" : "“Paused · Every 10 s · stops 11:00”"
+    },
     "Pay as you go with the provider. Keys stay in your Keychain." : {
       "localizations" : {
         "ar" : {
@@ -56010,7 +56632,17 @@
         }
       }
     },
+    "Pick another one in Settings › Voice." : {
+
+    },
+    "Pick another voice in Settings › Voice." : {
+
+    },
+    "Pick something from the list, or press ⌘N to write something new." : {
+
+    },
     "Pick something on the left, or press ⌘N to write something new." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -56241,6 +56873,9 @@
           }
         }
       }
+    },
+    "Premium" : {
+      "comment" : "An Apple voice's quality"
     },
     "Presence" : {
       "localizations" : {
@@ -56596,24 +57231,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "إرجاع %lld عنصر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "إرجاع عنصر واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "إرجاع عنصرين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -56626,7 +57243,25 @@
                   "value" : "إرجاع %lld عنصرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "إرجاع عنصر واحد"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "إرجاع %lld عنصر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "إرجاع عنصرين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "إرجاع %lld عنصر"
@@ -57535,6 +58170,28 @@
         }
       }
     },
+    "Rain" : {
+
+    },
+    "Rain in %@" : {
+
+    },
+    "Read %lld notes from Apple Notes" : {
+
+    },
+    "Read %lld notes from Apple Notes in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Read %1$lld notes from Apple Notes in %2$@"
+          }
+        }
+      }
+    },
+    "Read Apple Notes" : {
+
+    },
     "Read Sidefolk's status" : {
       "localizations" : {
         "ar" : {
@@ -58115,6 +58772,29 @@
         }
       }
     },
+    "Read the titles, folders and dates of up to %lld Apple Notes whose title has “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Read the titles, folders and dates of up to %1$lld Apple Notes whose title has “%2$@”"
+          }
+        }
+      }
+    },
+    "Read the titles, folders and dates of up to %lld notes in “%@” in Apple Notes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Read the titles, folders and dates of up to %1$lld notes in “%2$@” in Apple Notes"
+          }
+        }
+      }
+    },
+    "Read the titles, folders and dates of up to %lld of your Apple Notes" : {
+
+    },
     "Read the web page %@" : {
       "localizations" : {
         "ar" : {
@@ -58172,6 +58852,12 @@
           }
         }
       }
+    },
+    "Read your open reminders in Apple Reminders" : {
+
+    },
+    "Read your open reminders in the list “%@” in Apple Reminders" : {
+
     },
     "Reading and writing what you copied." : {
       "localizations" : {
@@ -58346,6 +59032,18 @@
           }
         }
       }
+    },
+    "Reading them when you ask, and copying notes into the notebook. macOS asks you once for each app." : {
+
+    },
+    "Reads private data" : {
+
+    },
+    "Ready" : {
+
+    },
+    "Reasoning effort for “%@”" : {
+      "comment" : "The effort menu under a model field"
     },
     "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log." : {
       "localizations" : {
@@ -58752,6 +59450,9 @@
           }
         }
       }
+    },
+    "Release: %@" : {
+      "comment" : "While talking: what releasing the talk key will do, e.g. “Release: Reminder · Today 17:00 · no AI”"
     },
     "Remember about you" : {
       "localizations" : {
@@ -59978,6 +60679,9 @@
         }
       }
     },
+    "Remove notes from Apple Notes" : {
+
+    },
     "Remove or rename it, then try again." : {
       "localizations" : {
         "ar" : {
@@ -60383,6 +61087,9 @@
           }
         }
       }
+    },
+    "Removed %lld copied notes" : {
+
     },
     "Removed the folder %@" : {
       "localizations" : {
@@ -61086,6 +61793,9 @@
         }
       }
     },
+    "Replies stay on screen." : {
+
+    },
     "Requests" : {
       "localizations" : {
         "ar" : {
@@ -61143,6 +61853,9 @@
           }
         }
       }
+    },
+    "Requests are understood in English without AI; with AI, in any language." : {
+
     },
     "Requests go to %@." : {
       "localizations" : {
@@ -61665,6 +62378,9 @@
           }
         }
       }
+    },
+    "Results" : {
+      "comment" : "Title of notebook search results of every kind: “Results in Sidefolk”"
     },
     "Resume" : {
       "localizations" : {
@@ -62710,6 +63426,9 @@
         }
       }
     },
+    "Run it now" : {
+
+    },
     "Run on this Mac" : {
       "localizations" : {
         "ar" : {
@@ -63121,24 +63840,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعمل دون نماذج."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعمل مع نموذج واحد."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعمل مع نموذجين."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -63151,10 +63852,28 @@
                   "value" : "يعمل مع %lld نموذجًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعمل مع نموذج واحد."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "يعمل مع %lld نموذج."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعمل مع نموذجين."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعمل دون نماذج."
                 }
               }
             }
@@ -63311,24 +64030,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعمل دون نماذج. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعمل مع نموذج واحد. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعمل مع نموذجين. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -63341,10 +64042,28 @@
                   "value" : "يعمل مع %lld نموذجًا. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعمل مع نموذج واحد. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "يعمل مع %lld نموذج. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعمل مع نموذجين. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعمل دون نماذج. تعمل النماذج المعلّمة بـ«سحابي» على ollama.com، وليس على هذا الـ Mac."
                 }
               }
             }
@@ -63843,6 +64562,15 @@
           }
         }
       }
+    },
+    "Said aloud" : {
+
+    },
+    "Said aloud: %@" : {
+
+    },
+    "Same as Sidefolk (%@)" : {
+
     },
     "Same as the Mac (%@)" : {
       "localizations" : {
@@ -64662,6 +65390,9 @@
         }
       }
     },
+    "Saved in your Keychain. Listing voices is free; each spoken line uses characters of your ElevenLabs plan." : {
+
+    },
     "Saved to %@" : {
       "localizations" : {
         "ar" : {
@@ -64719,6 +65450,12 @@
           }
         }
       }
+    },
+    "Says one short sentence." : {
+
+    },
+    "Says one short sentence. It uses about 50 characters of your ElevenLabs plan." : {
+
     },
     "Scarf" : {
       "localizations" : {
@@ -65898,6 +66635,9 @@
         }
       }
     },
+    "Sends the words %@ says to ElevenLabs (api.elevenlabs.io), with your key: reminders and notes it reads back too. ElevenLabs keeps a history of requests unless your plan turns that off." : {
+
+    },
     "Sent to %@ (%@) at %@" : {
       "localizations" : {
         "ar" : {
@@ -66549,6 +67289,7 @@
       }
     },
     "Shell commands, always shown word for word before they run." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -66606,6 +67347,9 @@
         }
       }
     },
+    "Shell commands, shown word for word before they run unless Full access is on." : {
+
+    },
     "Show" : {
       "localizations" : {
         "ar" : {
@@ -66660,6 +67404,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示"
+          }
+        }
+      }
+    },
+    "Show %@ every %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show %1$@ every %2$@"
           }
         }
       }
@@ -66721,6 +67475,9 @@
           }
         }
       }
+    },
+    "Show %@ regularly" : {
+
     },
     "Show Companion" : {
       "localizations" : {
@@ -66837,6 +67594,9 @@
           }
         }
       }
+    },
+    "Show a value regularly" : {
+
     },
     "Show folks on duty" : {
       "localizations" : {
@@ -67124,6 +67884,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示欢迎"
+          }
+        }
+      }
+    },
+    "Showing %@ again" : {
+
+    },
+    "Showing %@ every %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Showing %1$@ every %2$@"
+          }
+        }
+      }
+    },
+    "Showing %lld–%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Showing %1$lld–%2$lld"
           }
         }
       }
@@ -68056,6 +68839,9 @@
         }
       }
     },
+    "Sidefolk needs your OK to use %@" : {
+
+    },
     "Sidefolk only touches files inside these folders. Anything it deletes goes to the Trash." : {
       "localizations" : {
         "ar" : {
@@ -68636,6 +69422,9 @@
         }
       }
     },
+    "Sidefolk will do what you ask without checking with you first: moving and trashing files in the folders you shared, opening links and apps, reading pages and your Apple Notes, running commands and using extensions." : {
+
+    },
     "Sidefolk will run" : {
       "localizations" : {
         "ar" : {
@@ -69041,6 +69830,9 @@
           }
         }
       }
+    },
+    "Sidefolk, Full access is on" : {
+
     },
     "Signed in" : {
       "localizations" : {
@@ -69506,6 +70298,15 @@
         }
       }
     },
+    "Skip that step and continue" : {
+
+    },
+    "Skipped" : {
+
+    },
+    "Skipped while you were away (%lld)" : {
+
+    },
     "Sleep when you're away" : {
       "localizations" : {
         "ar" : {
@@ -69623,6 +70424,7 @@
       }
     },
     "Small" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70260,6 +71062,9 @@
         }
       }
     },
+    "Snow" : {
+
+    },
     "Some of it was already done; Activity shows what." : {
       "localizations" : {
         "ar" : {
@@ -70614,6 +71419,24 @@
         }
       }
     },
+    "Speaking…" : {
+
+    },
+    "Speech model" : {
+
+    },
+    "Speech recognition isn't allowed for Sidefolk. Nothing was sent." : {
+
+    },
+    "Speed" : {
+
+    },
+    "Spoken replies" : {
+
+    },
+    "Spoken replies need your ElevenLabs key and a voice." : {
+
+    },
     "Spotlight search isn't available on this Mac." : {
       "localizations" : {
         "ar" : {
@@ -70789,6 +71612,7 @@
       }
     },
     "Standard" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71258,6 +72082,18 @@
         }
       }
     },
+    "Stop %@" : {
+
+    },
+    "Stop repeating" : {
+
+    },
+    "Stop showing %@" : {
+
+    },
+    "Stop the task" : {
+
+    },
     "Stop watching" : {
       "localizations" : {
         "ar" : {
@@ -71490,6 +72326,9 @@
         }
       }
     },
+    "Stopped showing %@" : {
+
+    },
     "Stopped watching %@" : {
       "localizations" : {
         "ar" : {
@@ -71606,6 +72445,9 @@
         }
       }
     },
+    "Stops %@" : {
+      "comment" : "“Stops 15:30”, “Stops Tomorrow 10:00”"
+    },
     "Stops after telling you once" : {
       "localizations" : {
         "ar" : {
@@ -71664,7 +72506,14 @@
         }
       }
     },
+    "Switch on %@ under Sidefolk, then ask again." : {
+
+    },
+    "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode." : {
+
+    },
     "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71779,6 +72628,12 @@
           }
         }
       }
+    },
+    "System Settings › Accessibility › Spoken Content › System voice › Manage Voices" : {
+
+    },
+    "System Settings › Privacy & Security › Automation" : {
+
     },
     "System information" : {
       "localizations" : {
@@ -71896,6 +72751,9 @@
         }
       }
     },
+    "System voice" : {
+
+    },
     "Tags" : {
       "localizations" : {
         "ar" : {
@@ -72012,7 +72870,27 @@
         }
       }
     },
+    "Talk shortcut" : {
+
+    },
+    "Talk with" : {
+
+    },
+    "Talking" : {
+      "comment" : "Shown above what the companion says about voice input itself"
+    },
+    "Tap %@ to open the Ask panel, hold it to talk. You can also press and hold %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tap %1$@ to open the Ask panel, hold it to talk. You can also press and hold %2$@."
+          }
+        }
+      }
+    },
     "Tap me when a session needs you" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -72360,6 +73238,9 @@
         }
       }
     },
+    "Tell me where the value is: one JSON path, selector or pattern." : {
+
+    },
     "Tell me which command to run." : {
       "localizations" : {
         "ar" : {
@@ -72476,6 +73357,9 @@
         }
       }
     },
+    "Tell me which place, like “Fukuoka” or “Paris, France”." : {
+
+    },
     "Tell me which program to watch, by name or by its process number." : {
       "localizations" : {
         "ar" : {
@@ -72533,6 +73417,9 @@
           }
         }
       }
+    },
+    "Tell me which value to show: CPU, memory, battery, disk or network." : {
+
     },
     "Tell me which web address to watch." : {
       "localizations" : {
@@ -72649,6 +73536,9 @@
           }
         }
       }
+    },
+    "Temperature in %@" : {
+
     },
     "Tempo turns up when a reminder is less than 15 minutes away." : {
       "localizations" : {
@@ -72881,6 +73771,9 @@
           }
         }
       }
+    },
+    "Test voice" : {
+
     },
     "Testing…" : {
       "localizations" : {
@@ -73351,24 +74244,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بلغت مراقبات هذا التطبيق حدها الأقصى. أوقف واحدة أولًا."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لدى هذا التطبيق مراقبة واحدة قيد التشغيل بالفعل. أوقفها أولًا."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لدى هذا التطبيق مراقبتان قيد التشغيل بالفعل. أوقف إحداهما أولًا."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -73381,10 +74256,28 @@
                   "value" : "لدى هذا التطبيق %lld مراقبة قيد التشغيل بالفعل. أوقف واحدة منها أولًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لدى هذا التطبيق مراقبة واحدة قيد التشغيل بالفعل. أوقفها أولًا."
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "لدى هذا التطبيق %lld مراقبة قيد التشغيل بالفعل. أوقف واحدة منها أولًا."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لدى هذا التطبيق مراقبتان قيد التشغيل بالفعل. أوقف إحداهما أولًا."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بلغت مراقبات هذا التطبيق حدها الأقصى. أوقف واحدة أولًا."
                 }
               }
             }
@@ -73651,6 +74544,9 @@
           }
         }
       }
+    },
+    "That could be %@. Which one should I stop?" : {
+
     },
     "That didn't work: %@" : {
       "localizations" : {
@@ -75160,6 +76056,9 @@
         }
       }
     },
+    "That pattern isn't a regular expression I can use." : {
+
+    },
     "That program" : {
       "localizations" : {
         "ar" : {
@@ -75449,6 +76348,9 @@
           }
         }
       }
+    },
+    "That step can't run anymore. Nothing was changed." : {
+
     },
     "That time has already passed." : {
       "localizations" : {
@@ -76320,6 +77222,9 @@
         }
       }
     },
+    "That's too many notes for one step (the limit is %lld)." : {
+
+    },
     "That's too many recipients (the limit is 10)." : {
       "localizations" : {
         "ar" : {
@@ -76668,29 +77573,17 @@
         }
       }
     },
+    "The command printed nothing and exited with code %d." : {
+
+    },
+    "The command printed nothing." : {
+
+    },
     "The command took longer than %lld seconds, so I stopped it." : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "استغرق الأمر أكثر من %lld ثانية، لذا أوقفته."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "استغرق الأمر أكثر من ثانية واحدة، لذا أوقفته."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "استغرق الأمر أكثر من ثانيتين، لذا أوقفته."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -76703,7 +77596,25 @@
                   "value" : "استغرق الأمر أكثر من %lld ثانية، لذا أوقفته."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "استغرق الأمر أكثر من ثانية واحدة، لذا أوقفته."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "استغرق الأمر أكثر من %lld ثانية، لذا أوقفته."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "استغرق الأمر أكثر من ثانيتين، لذا أوقفته."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "استغرق الأمر أكثر من %lld ثانية، لذا أوقفته."
@@ -77153,24 +78064,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتوي الملحق على أكثر من %lld ملف."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتوي الملحق على أكثر من ملف واحد."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتوي الملحق على أكثر من ملفين."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -77183,7 +78076,25 @@
                   "value" : "يحتوي الملحق على أكثر من %lld ملفًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يحتوي الملحق على أكثر من ملف واحد."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يحتوي الملحق على أكثر من %lld ملف."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يحتوي الملحق على أكثر من ملفين."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "يحتوي الملحق على أكثر من %lld ملف."
@@ -77975,6 +78886,18 @@
           }
         }
       }
+    },
+    "The microphone is on only while you hold the shortcut, and what you say is understood on this Mac. The recording is never kept; the words join your requests like typed ones." : {
+
+    },
+    "The microphone is ready. Hold to talk." : {
+
+    },
+    "The microphone opens the moment you press it." : {
+
+    },
+    "The microphone went away while you were talking. Nothing was sent." : {
+
     },
     "The model “%@” can't use tools, so I can't act with it. Nothing was changed." : {
       "localizations" : {
@@ -79316,6 +80239,15 @@
         }
       }
     },
+    "The speech model is ready. Hold to talk again." : {
+
+    },
+    "The step I asked about is in Now, where you can still run it." : {
+
+    },
+    "The task waits for your answer, a day at most." : {
+
+    },
     "The text to look for is too long (200 characters at most)." : {
       "localizations" : {
         "ar" : {
@@ -79664,6 +80596,18 @@
         }
       }
     },
+    "The weather service said %@." : {
+
+    },
+    "The weather service sent no current weather." : {
+
+    },
+    "The weather service sent no value." : {
+
+    },
+    "The weather service sent something I can't read." : {
+
+    },
     "The words to look for are too long (200 characters at most)." : {
       "localizations" : {
         "ar" : {
@@ -79721,6 +80665,12 @@
           }
         }
       }
+    },
+    "Their copies are in your notebook" : {
+
+    },
+    "Their copies stay in your notebook. Notes keeps deleted notes in Recently Deleted for 30 days." : {
+
     },
     "There are files in %@ now, so I left the folder." : {
       "localizations" : {
@@ -80772,6 +81722,15 @@
         }
       }
     },
+    "This Mac" : {
+
+    },
+    "This Mac can't listen in this language. Pick another one." : {
+
+    },
+    "This Mac has no battery." : {
+
+    },
     "This came up while reading outside content. Check it carefully." : {
       "localizations" : {
         "ar" : {
@@ -81178,6 +82137,15 @@
         }
       }
     },
+    "This report doesn't say what to show." : {
+
+    },
+    "This report doesn't say where." : {
+
+    },
+    "This report has no web address." : {
+
+    },
     "This server can't be added." : {
       "localizations" : {
         "ar" : {
@@ -81293,6 +82261,9 @@
           }
         }
       }
+    },
+    "This version of Claude Code has no effort setting. Update it to choose one." : {
+
     },
     "This version of Codex can't be run safely by Sidefolk." : {
       "localizations" : {
@@ -81525,6 +82496,9 @@
           }
         }
       }
+    },
+    "Thunderstorm" : {
+
     },
     "Time" : {
       "localizations" : {
@@ -83208,6 +84182,15 @@
         }
       }
     },
+    "Turn Off" : {
+
+    },
+    "Turn Off Full Access" : {
+
+    },
+    "Turn On Full Access" : {
+
+    },
     "Turn Quiet Off" : {
       "localizations" : {
         "ar" : {
@@ -83381,6 +84364,9 @@
           }
         }
       }
+    },
+    "Turn on Full access?" : {
+
     },
     "Type a request, or drop something on me." : {
       "localizations" : {
@@ -83730,6 +84716,9 @@
         }
       }
     },
+    "Typed requests get a short spoken answer too." : {
+
+    },
     "Unarchive" : {
       "localizations" : {
         "ar" : {
@@ -83961,6 +84950,9 @@
           }
         }
       }
+    },
+    "Undo “%@”" : {
+
     },
     "Undone: %@." : {
       "localizations" : {
@@ -84194,6 +85186,9 @@
         }
       }
     },
+    "Unknown sky" : {
+
+    },
     "Unknown tool" : {
       "localizations" : {
         "ar" : {
@@ -84251,6 +85246,9 @@
           }
         }
       }
+    },
+    "Until this request is done, Sidefolk does this again without asking. Offered only for steps that send nothing anywhere but to your AI." : {
+
     },
     "Until tomorrow" : {
       "localizations" : {
@@ -84425,6 +85423,9 @@
           }
         }
       }
+    },
+    "Untitled note" : {
+
     },
     "Update %@" : {
       "localizations" : {
@@ -85709,6 +86710,9 @@
         }
       }
     },
+    "Using Apple Notes and Reminders" : {
+
+    },
     "Using an extension…" : {
       "localizations" : {
         "ar" : {
@@ -85766,6 +86770,12 @@
           }
         }
       }
+    },
+    "Value" : {
+
+    },
+    "Value on %@" : {
+
     },
     "Version %@" : {
       "localizations" : {
@@ -85889,6 +86899,15 @@
         }
       }
     },
+    "Voice" : {
+      "comment" : "A Settings tab: talking to the companion and its spoken replies. Seven tabs share one toolbar: keep it short"
+    },
+    "Voice input" : {
+
+    },
+    "Volume" : {
+
+    },
     "Wait a minute and try again." : {
       "localizations" : {
         "ar" : {
@@ -85946,6 +86965,9 @@
           }
         }
       }
+    },
+    "Wait before skipping or stopping" : {
+
     },
     "Waiting a moment before asking that site again." : {
       "localizations" : {
@@ -87600,24 +88622,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا أراقب شيئًا"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أراقب شيئًا واحدًا"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "أراقب شيئين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -87630,10 +88634,28 @@
                   "value" : "أراقب %lld شيئًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أراقب شيئًا واحدًا"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "أراقب %lld شيء"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أراقب شيئين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا أراقب شيئًا"
                 }
               }
             }
@@ -87901,6 +88923,12 @@
         }
       }
     },
+    "Weather" : {
+
+    },
+    "Weather in %@" : {
+
+    },
     "Web addresses with a name and password in them aren't allowed." : {
       "localizations" : {
         "ar" : {
@@ -88017,6 +89045,9 @@
         }
       }
     },
+    "Web value" : {
+
+    },
     "Welcome" : {
       "localizations" : {
         "ar" : {
@@ -88129,6 +89160,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "内容"
+          }
+        }
+      }
+    },
+    "What %@ says is always shown on screen too. Quiet mode keeps %@ silent, and so does a call or typing again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "What %1$@ says is always shown on screen too. Quiet mode keeps %2$@ silent, and so does a call or typing again."
           }
         }
       }
@@ -88539,6 +89580,9 @@
         }
       }
     },
+    "What you switched off under “What Sidefolk may do” stays off." : {
+
+    },
     "When" : {
       "localizations" : {
         "ar" : {
@@ -88596,6 +89640,9 @@
           }
         }
       }
+    },
+    "When Sidefolk waits for your OK on something you asked for. Other agents' questions count as a no after two minutes." : {
+
     },
     "When should I remind you to “%@”?" : {
       "localizations" : {
@@ -88713,7 +89760,11 @@
         }
       }
     },
+    "When — e.g. “tomorrow 9am” or “every 30 minutes”; leave empty to keep %@" : {
+
+    },
     "When — e.g. “tomorrow 9am”; leave empty to keep %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -88886,6 +89937,9 @@
           }
         }
       }
+    },
+    "Which address should I watch?" : {
+
     },
     "Which address should I watch? For example localhost:3000 or example.com/status." : {
       "localizations" : {
@@ -89066,24 +90120,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "في أثناء غيابك: لا شيء"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "في أثناء غيابك: أمر واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "في أثناء غيابك: أمران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -89096,10 +90132,28 @@
                   "value" : "في أثناء غيابك: %lld أمرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "في أثناء غيابك: أمر واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "في أثناء غيابك: %lld أمر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "في أثناء غيابك: أمران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "في أثناء غيابك: لا شيء"
                 }
               }
             }
@@ -89309,6 +90363,9 @@
         }
       }
     },
+    "Wind in %@" : {
+
+    },
     "Window" : {
       "localizations" : {
         "ar" : {
@@ -89366,6 +90423,9 @@
           }
         }
       }
+    },
+    "With a notification each time" : {
+
     },
     "Without AI" : {
       "localizations" : {
@@ -89482,6 +90542,9 @@
           }
         }
       }
+    },
+    "Working in a folder you haven't shared, saving a new skill, or removing notes from Apple Notes." : {
+
     },
     "Working on it…" : {
       "localizations" : {
@@ -90418,6 +91481,18 @@
         }
       }
     },
+    "You can switch back any time from the menu bar, the Ask panel or here." : {
+
+    },
+    "You didn't answer in time, so the task stopped here." : {
+
+    },
+    "You didn't answer in time, so this step was skipped." : {
+
+    },
+    "You didn't answer in time. Nothing was changed." : {
+
+    },
     "You said no." : {
       "localizations" : {
         "ar" : {
@@ -90997,6 +92072,9 @@
           }
         }
       }
+    },
+    "Your ElevenLabs plan is out of characters. Nothing was said." : {
+
     },
     "Your answer goes to: %@" : {
       "localizations" : {
@@ -92390,6 +93468,9 @@
         }
       }
     },
+    "a value" : {
+
+    },
     "a watcher called “%@”" : {
       "localizations" : {
         "ar" : {
@@ -93150,6 +94231,18 @@
         }
       }
     },
+    "capability.watch" : {
+      "comment" : "A permission: watching pages, files and programs. Also in “%@ is turned off in Sidefolk's Permissions settings.”",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Watching"
+          }
+        }
+      }
+    },
     "change that" : {
       "localizations" : {
         "ar" : {
@@ -93207,6 +94300,9 @@
           }
         }
       }
+    },
+    "changed %@" : {
+
     },
     "checked %@" : {
       "comment" : "“checked 5 min ago”",
@@ -93621,6 +94717,9 @@
         }
       }
     },
+    "created %@" : {
+
+    },
     "default model" : {
       "localizations" : {
         "ar" : {
@@ -93855,6 +94954,9 @@
         }
       }
     },
+    "done without asking" : {
+
+    },
     "every %@" : {
       "localizations" : {
         "ar" : {
@@ -93918,24 +95020,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل %lld يوم"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل يوم"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل يومين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -93948,7 +95032,25 @@
                   "value" : "كل %lld يومًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل يوم"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld يوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل يومين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "كل %lld يوم"
@@ -94166,24 +95268,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل %lld ساعة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل ساعة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل ساعتين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -94196,7 +95280,25 @@
                   "value" : "كل %lld ساعة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل ساعة"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld ساعة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل ساعتين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "كل %lld ساعة"
@@ -94409,29 +95511,14 @@
         }
       }
     },
+    "every %lld minutes" : {
+
+    },
     "every %lld months" : {
       "localizations" : {
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل %lld شهر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل شهر"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل شهرين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -94444,7 +95531,25 @@
                   "value" : "كل %lld شهرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل شهر"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld شهر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل شهرين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "كل %lld شهر"
@@ -94662,24 +95767,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل %lld أسبوع"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل أسبوع"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل أسبوعين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -94692,7 +95779,25 @@
                   "value" : "كل %lld أسبوعًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل أسبوع"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld أسبوع"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل أسبوعين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "كل %lld أسبوع"
@@ -94852,24 +95957,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل %1$lld أسبوع، أيام %2$@"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل أسبوع، أيام %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل أسبوعين، أيام %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -94882,7 +95969,25 @@
                   "value" : "كل %1$lld أسبوعًا، أيام %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل أسبوع، أيام %2$@"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %1$lld أسبوع، أيام %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل أسبوعين، أيام %2$@"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "كل %1$lld أسبوع، أيام %2$@"
@@ -95042,24 +96147,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل %lld سنة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل سنة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "كل سنتين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -95072,7 +96159,25 @@
                   "value" : "كل %lld سنة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل سنة"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld سنة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل سنتين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "كل %lld سنة"
@@ -95342,6 +96447,9 @@
           }
         }
       }
+    },
+    "every minute" : {
+
     },
     "every month" : {
       "localizations" : {
@@ -96103,24 +97211,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يُحذف بعد %lld يوم"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يُحذف بعد يوم واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يُحذف بعد يومين"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -96133,7 +97223,25 @@
                   "value" : "يُحذف بعد %lld يومًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يُحذف بعد يوم واحد"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يُحذف بعد %lld يوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يُحذف بعد يومين"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "يُحذف بعد %lld يوم"
@@ -96755,6 +97863,12 @@
         }
       }
     },
+    "macOS asks the first time you hold the shortcut." : {
+
+    },
+    "macOS didn't let Sidefolk use %@. Nothing was changed." : {
+
+    },
     "macOS didn't let me %@ at %@." : {
       "localizations" : {
         "ar" : {
@@ -96818,6 +97932,12 @@
           }
         }
       }
+    },
+    "macOS is downloading it into its own storage, not into Sidefolk." : {
+
+    },
+    "macOS needs to download this language's speech model once. It goes into the system's storage." : {
+
     },
     "macOS wants you to approve Sidefolk in Login Items." : {
       "localizations" : {
@@ -97691,6 +98811,9 @@
         }
       }
     },
+    "nothing like that is running" : {
+
+    },
     "nothing to change. Give new text, a collection, a status or tags." : {
       "localizations" : {
         "ar" : {
@@ -98390,6 +99513,42 @@
         }
       }
     },
+    "size.large" : {
+      "comment" : "Companion size",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Large"
+          }
+        }
+      }
+    },
+    "size.medium" : {
+      "comment" : "Companion size, between Small and Large",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Medium"
+          }
+        }
+      }
+    },
+    "size.small" : {
+      "comment" : "Companion size",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Small"
+          }
+        }
+      }
+    },
     "snooze takes a single time, not a repeat" : {
       "localizations" : {
         "ar" : {
@@ -98505,6 +99664,21 @@
           }
         }
       }
+    },
+    "state.done" : {
+      "comment" : "Checkbox and status: the task or reminder is finished",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "stops %@" : {
+      "comment" : "“stops 11:00”, “stops Tomorrow 10:00”"
     },
     "stuck: %@" : {
       "localizations" : {
@@ -99561,6 +100735,12 @@
         }
       }
     },
+    "until %@" : {
+
+    },
+    "until you stop it" : {
+
+    },
     "used %@’s tool %@, which Sidefolk didn't give it" : {
       "comment" : "Follows “Codex …” and “because it …”",
       "localizations" : {
@@ -99622,6 +100802,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用了 %1$@ 的工具 %2$@，而 Sidefolk 并没有提供给它"
+          }
+        }
+      }
+    },
+    "watch.state.active" : {
+      "comment" : "Status chip on a watch that is running",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Watching"
+          }
+        }
+      }
+    },
+    "weather.conditions" : {
+      "comment" : "The sky, then the temperature: “Partly cloudy, 18 °C”",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
           }
         }
       }
@@ -102156,6 +103360,9 @@
         }
       }
     },
+    "“%@” needs at least one note id." : {
+
+    },
     "“%@” points at this computer or your local network, so I won't fetch it." : {
       "localizations" : {
         "ar" : {
@@ -102451,24 +103658,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحتوي «نبذة عنك» بالفعل على %lld معلومة."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحتوي «نبذة عنك» بالفعل على معلومة واحدة."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحتوي «نبذة عنك» بالفعل على معلومتين."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -102481,7 +103670,25 @@
                   "value" : "تحتوي «نبذة عنك» بالفعل على %lld معلومة."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتوي «نبذة عنك» بالفعل على معلومة واحدة."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتوي «نبذة عنك» بالفعل على %lld معلومة."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتوي «نبذة عنك» بالفعل على معلومتين."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "تحتوي «نبذة عنك» بالفعل على %lld معلومة."
@@ -102925,6 +104132,9 @@
           }
         }
       }
+    },
+    "“every_seconds” must be more than 0 and at most 7 days." : {
+
     },
     "“id” is required" : {
       "localizations" : {
@@ -103390,6 +104600,9 @@
         }
       }
     },
+    "“notes” needs at least one note." : {
+
+    },
     "“paths” needs at least one path." : {
       "localizations" : {
         "ar" : {
@@ -103447,6 +104660,9 @@
           }
         }
       }
+    },
+    "“source” must be metric, weather or web." : {
+
     },
     "“status” must be open or done." : {
       "localizations" : {
@@ -103798,6 +105014,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "• %1$@（%2$@，ID %3$@）：%4$@，每 %5$@"
+          }
+        }
+      }
+    },
+    "↓ %@/s ↑ %@/s" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "↓ %1$@/s ↑ %2$@/s"
           }
         }
       }

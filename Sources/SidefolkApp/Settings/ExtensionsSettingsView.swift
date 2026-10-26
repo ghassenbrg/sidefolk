@@ -468,7 +468,7 @@ struct AgentsGroup: View {
             disconnect: { Task { await model.disconnectClaudeCode() } }
         ) {
             VStack(alignment: .leading, spacing: 4) {
-                Toggle("Tap me when a session needs you", isOn: $hooks)
+                Toggle("Notice when a session needs you", isOn: $hooks)
                     .toggleStyle(.checkbox)
                     .font(Theme.Font.body)
                     .foregroundStyle(Theme.ink)

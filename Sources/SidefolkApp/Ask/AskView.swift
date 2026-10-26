@@ -114,7 +114,7 @@ struct AskView: View {
                         if canWatch(attachment) {
                             Button("Watch") { model.actions?.perform(.watch, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                         }
-                        Button("Ask…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
+                        Button("Ask About It…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                     }
                 }
             }
