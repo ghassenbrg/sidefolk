@@ -53,7 +53,7 @@ struct InstallPreviewSheet: View {
                 .background(Theme.dangerSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             }
             VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Eyebrow(text: "It will be able to")
+                Eyebrow(text: "What it can do")
                 if preview.permissionLines.isEmpty {
                     Text("Nothing beyond its own data folder.").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 }
