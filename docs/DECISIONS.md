@@ -139,3 +139,19 @@ about model-built URLs, not the user's own words.
 where the user can pick an option or type an answer; `ask.user` accepts free-text answers. Bubbles
 never lose their action buttons when they shrink, and questions never shrink. **Why:** the UX review
 found unanswerable collapsed bubbles and a two-minute clarification ping-pong.
+
+### D23 — `sidefolk run` tees stderr so failures can say what went wrong (2026-10-26)
+**Decision:** the helper keeps stdin and stdout the caller's own, but passes stderr through a tee: a
+pseudo-terminal with the caller's terminal settings and size when stderr is a terminal (so colours and
+progress bars still work; output processing is off so bytes pass untouched), a pipe otherwise. Only on a
+non-zero exit do the last three lines, cleaned of escape codes, go to the app. They are shown to the
+user and never given to a model. **Why:** "npm test failed (exit 1)" is not actionable; the last
+error line usually is. **Trade-off:** something the command leaves running in the background loses its
+stderr when `sidefolk run` returns (it waits half a second for it).
+
+### D24 — Extension tool descriptions never reach the model (2026-10-26)
+**Decision:** the model sees an extension tool as a neutral line (its title, which extension, its risk)
+and an input schema with free text removed, not the author's description. **Why:** a description is
+text written by a third party and loaded into every run; tainting every run instead would make every
+link and memory write ask for approval. Tool names and titles (60 characters at most) remain a small
+residual channel (SECURITY T2).

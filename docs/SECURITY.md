@@ -213,8 +213,11 @@ name that was swapped in after the check is still read through `O_NOFOLLOW_ANY` 
   response. The redirect delegate re-checks every hop (max 5, no https→http).
 - `.ephemeral` session with no cookies or credentials, auth challenges cancelled, 15 s timeout,
   2 MiB streamed cap, text, HTML, JSON or XML only.
-- Watchers the user creates in the UI may target localhost or the LAN after confirmation. The
-  `allowPrivate` flag exists only on that UI path, never in tool schemas.
+- Watchers the user asks for themselves (typed in the Ask panel or made with a button: caller
+  `user`, untainted) may target localhost, the LAN and `.local` hosts with no further question
+  (DECISIONS D21). The `allow_local` flag is set by the tool from the caller, never read from tool
+  input; agents, external clients, extensions and tainted turns are refused with a message saying
+  to ask directly.
 - Open URL: http(s) low (medium when tainted); `mailto` medium; `file:` goes through `PathPolicy`
   and an executable-type block; `javascript:`, `data:`, `blob:` and `about:` never. Any other
   scheme is high risk and shows the handler app (`NSWorkspace.urlForApplication(toOpen:)`), e.g.
