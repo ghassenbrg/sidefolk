@@ -16,18 +16,19 @@ through tools you allow — and other AI agents (Claude Code, Codex, any MCP cli
   “add oat milk to my groceries list”, “watch https://example.com/pricing”, “tell me when report.pdf
   appears in Downloads”, “quiet for 1 hour”, “what ideas did I save for Sidefolk?” all finish instantly
   on your Mac. The hint under the input tells you what Enter will do and whether it uses AI.
-- **Thinks when you need it.** Questions and open-ended requests go to the brain you chose: your
+- **Thinks when you need it.** Questions and open-ended requests go to the AI you chose: your
   Claude subscription through Claude Code, an Anthropic API key, or any OpenAI-compatible endpoint
-  (OpenAI, Ollama, LM Studio, OpenRouter). The brain acts through Sidefolk’s tools, never around them.
+  (OpenAI, Ollama, LM Studio, OpenRouter). The AI acts through Sidefolk’s tools, never around them.
 - **Remembers, visibly.** A Notebook with an Inbox, “About you” (facts it keeps in mind), and your
   projects, topics and lists. Everything is editable, searchable, and in the Trash for 30 days.
 - **Keeps time.** Reminders with natural times and repeats, snooze, done, missed-reminder summaries,
   a morning brief, and system notifications as a fallback when Sidefolk isn’t running.
 - **Watches things.** Web pages (meaningful changes only), sites going down or up, files and folders,
-  processes finishing, commands you approve, and watchers from extensions.
+  processes finishing, commands you approve, and watches from extensions. A watch on
+  `localhost:3000` works when you ask for it yourself.
 - **Works with your agents.** `sidefolk mcp` gives Claude Code, Codex and other MCP clients a small,
   safe set of tools (save a note, set a reminder, watch, notify you, ask you). `sidefolk run -- npm test`
-  tells you when a long command ends. Optional Claude Code hooks let the companion notice when a
+  tells you when a long command ends, and when it fails, the last lines it printed. Optional Claude Code hooks let the companion notice when a
   session needs you.
 - **Extensible.** Install sandboxed extensions (a manifest plus any executable speaking MCP), add
   existing MCP servers, or let the companion use skills — written instructions it loads when needed.
@@ -46,7 +47,7 @@ open build/Sidefolk.app
 ```
 
 Drag `build/Sidefolk.app` to `/Applications` to keep it. On first launch the companion introduces
-itself in a few bubbles; choose a brain later in **Settings › AI** (everything local works without one).
+itself in a few bubbles; choose an AI later in **Settings › AI** (everything local works without one).
 
 ## Develop
 
@@ -55,7 +56,8 @@ swift build                      # everything
 make test                        # 670 tests (Swift Testing), serial: ~25 s
 make dev                         # debug app with its own data in build/dev-home (never your real data)
 swift run sidefolk-render out/   # character contact sheets for visual review
-swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # Home and Settings rendered with sample data
+swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # Home, Settings, Ask panel, bubbles; light and dark
+swift scripts/dev.swift snap     # snapshot the running debug app's windows (see AGENTS.md)
 ```
 
 Read [AGENTS.md](AGENTS.md) before changing things; the plan and decisions live in [docs/](docs):
@@ -74,7 +76,7 @@ Read [AGENTS.md](AGENTS.md) before changing things; the plan and decisions live 
 | `Tests/SidefolkCoreTests/` | Core tests |
 | `extensions/` | Sample extensions (System Vitals, Hello Folk) |
 | `Resources/` | Info.plist, icon, bundled skills, character sheets |
-| `scripts/` | `build-app.sh` (assemble and sign the .app), `release.sh` (Developer ID, DMG, notarization) |
+| `scripts/` | `build-app.sh` (assemble and sign the .app), `release.sh` (Developer ID, DMG, notarization), `dev.swift` (drive the debug app) |
 
 ## Release
 
@@ -99,7 +101,7 @@ accounts, no telemetry. Settings › Privacy & Permissions exports or deletes ev
 ## Troubleshooting
 
 - **Nothing happens on ⌘⇧Space** — another app may use that shortcut; change it in Settings › General.
-- **“I need a brain for that”** — pick a provider in Settings › AI; local commands keep working.
+- **“That needs AI, which isn’t set up yet”** — pick a provider in Settings › AI; local commands keep working.
 - **Claude Code isn’t found** — Settings › AI › Claude Code shows where it looked; set a custom path.
 - **An extension “didn’t start”** — run `sidefolk ext validate <folder>`; Settings › Extensions shows
   its last error. Diagnostics (logs without your content) export from Settings › Privacy.
