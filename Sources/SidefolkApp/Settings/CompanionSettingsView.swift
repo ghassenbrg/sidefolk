@@ -50,9 +50,10 @@ struct CompanionSettingsView: View {
                 SettingsRow(title: "Liveliness", detail: livelinessDetail) {
                     Picker("Liveliness", selection: Binding(get: { model.settings.liveliness },
                                                             set: { level in model.update { $0.liveliness = level } })) {
-                        Text("Minimal").tag(CompanionLiveliness.minimal)
-                        Text("Balanced").tag(CompanionLiveliness.balanced)
-                        Text("Lively").tag(CompanionLiveliness.lively)
+                        // Their own keys: "Minimal" is also a reasoning effort, which other languages word apart.
+                        Text(String(localized: "liveliness.minimal", defaultValue: "Minimal", comment: "How lively the companion is: moves only when something happens")).tag(CompanionLiveliness.minimal)
+                        Text(String(localized: "liveliness.balanced", defaultValue: "Balanced", comment: "How lively the companion is: the default")).tag(CompanionLiveliness.balanced)
+                        Text(String(localized: "liveliness.lively", defaultValue: "Lively", comment: "How lively the companion is: the most moments")).tag(CompanionLiveliness.lively)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()

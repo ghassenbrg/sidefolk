@@ -11672,24 +11672,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا تذكيرات اليوم"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تذكير واحد اليوم"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تذكيران اليوم"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -11702,10 +11684,28 @@
                   "value" : "%lld تذكيرًا اليوم"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكير واحد اليوم"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld تذكير اليوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكيران اليوم"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تذكيرات اليوم"
                 }
               }
             }
@@ -29838,6 +29838,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "伙伴名称"
+          }
+        }
+      }
+    },
+    "Companions made from data in Sidefolk's companions folder. They wear the color and scarf chosen above." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رفاق مصنوعون من بيانات في مجلد companions الخاص بـ Sidefolk. يرتدون اللون والوشاح المختارين أعلاه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begleiter aus Daten im Ordner „companions“ von Sidefolk. Sie tragen die oben gewählte Farbe und den Schal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acompañantes hechos con datos en la carpeta companions de Sidefolk. Llevan el color y la bufanda elegidos arriba."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des compagnons faits de données, dans le dossier companions de Sidefolk. Ils portent la couleur et l’écharpe choisies ci-dessus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compagni fatti di dati nella cartella companions di Sidefolk. Indossano il colore e la sciarpa scelti sopra."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkのcompanionsフォルダにあるデータでつくった相棒です。上で選んだ色とスカーフを身につけます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 companions 폴더에 있는 데이터로 만든 컴패니언이에요. 위에서 고른 색상과 목도리를 착용해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Companheiros feitos de dados na pasta companions do Sidefolk. Eles usam a cor e o cachecol escolhidos acima."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 Sidefolk 的 companions 文件夹中的数据制作的伙伴。它们会穿戴上面选择的颜色和围巾。"
           }
         }
       }
@@ -57324,6 +57382,64 @@
         }
       }
     },
+    "Liveliness" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحيوية"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebendigkeit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vivacidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vivacité"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vivacità"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動きの多さ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활발함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vivacidade"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活跃程度"
+          }
+        }
+      }
+    },
     "Load a skill" : {
       "localizations" : {
         "ar" : {
@@ -58249,6 +58365,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "MCP 服务器在 Sidefolk 的沙盒之外运行，拥有你的全部权限，并能访问你共享给 Sidefolk 的文件夹。请只添加你信任的服务器。它们的工具在做任何更改前都会询问，返回的内容会被视为不可信。"
+          }
+        }
+      }
+    },
+    "Made by you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من صنعك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von dir erstellt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hechos por ti"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créés par vous"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creati da te"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分で作成"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 만든 항목"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criados por você"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你制作的"
           }
         }
       }
@@ -59710,6 +59884,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”的更多选项"
+          }
+        }
+      }
+    },
+    "More moments, more often, and eyes that follow the pointer across the screen." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لحظات أكثر وبتكرار أكبر، وعينان تتبعان المؤشر عبر الشاشة كلها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr Momente, öfter, und Augen, die dem Zeiger über den ganzen Bildschirm folgen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más momentos, más a menudo, y ojos que siguen al puntero por toda la pantalla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de moments, plus souvent, et des yeux qui suivent le pointeur sur tout l’écran."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Più momenti, più spesso, e occhi che seguono il puntatore su tutto lo schermo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動きがもっと多く、もっと頻繁に。目が画面じゅうのポインタを追います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "더 많은 움직임을 더 자주 보여 주고, 눈이 화면 전체에서 포인터를 따라가요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais momentos, com mais frequência, e olhos que seguem o ponteiro pela tela toda."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多小动作、更频繁，眼睛会在整个屏幕上跟随指针。"
           }
         }
       }
@@ -61852,6 +62084,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已移到废纸篓。"
+          }
+        }
+      }
+    },
+    "Moves only when something happens, then rests. The lightest on battery." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يتحرك إلا عند حدوث شيء، ثم يرتاح. الأخف على البطارية."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegt sich nur, wenn etwas passiert, und ruht dann. Am sparsamsten für den Akku."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo se mueve cuando pasa algo y luego descansa. Lo más ligero para la batería."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne bouge que lorsqu’il se passe quelque chose, puis se repose. Le plus léger pour la batterie."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si muove solo quando succede qualcosa, poi riposa. Il più leggero per la batteria."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何かあったときだけ動き、そのあとは休みます。バッテリーへの負担がいちばん少ない設定です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무슨 일이 있을 때만 움직이고 그다음엔 쉬어요. 배터리 부담이 가장 적어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só se move quando algo acontece e depois descansa. O mais leve para a bateria."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只在有事发生时才动，之后就休息。最省电。"
           }
         }
       }
@@ -67895,6 +68185,64 @@
         }
       }
     },
+    "Now and then a stretch, a yawn or a glance at your work; sits down when nothing happens. Still while you type." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بين حين وآخر تمطٍّ أو تثاؤب أو نظرة إلى عملك، ويجلس حين لا يحدث شيء. لا يتحرك أثناء كتابتك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab und zu ein Strecken, ein Gähnen oder ein Blick auf deine Arbeit; setzt sich, wenn nichts passiert. Bleibt still, während du tippst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De vez en cuando, un estiramiento, un bostezo o un vistazo a tu trabajo; se sienta cuando no pasa nada. No se mueve mientras escribes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De temps en temps un étirement, un bâillement ou un coup d’œil à votre travail ; s’assoit quand il ne se passe rien. Immobile pendant que vous tapez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni tanto uno stiracchiamento, uno sbadiglio o un’occhiata al tuo lavoro; si siede quando non succede nulla. Non si muove mentre scrivi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ときどき伸びをしたり、あくびをしたり、作業をちらっと見たりします。何もないときは座ります。入力中はじっとしています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가끔 기지개를 켜거나 하품하거나 작업을 힐끗 봐요. 아무 일이 없으면 앉아요. 입력하는 동안에는 가만히 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De vez em quando, uma espreguiçada, um bocejo ou uma olhada no seu trabalho; senta quando nada acontece. Não se mexe enquanto você digita."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偶尔伸个懒腰、打个哈欠，或看一眼你的工作；没事时就坐下。你打字时保持不动。"
+          }
+        }
+      }
+    },
     "OK" : {
       "localizations" : {
         "ar" : {
@@ -70759,24 +71107,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعرض الوكلاء الآخرون بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعرض الوكلاء الآخرون بالفعل قيمة مباشرة واحدة. أوقفها أولًا."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يعرض الوكلاء الآخرون بالفعل قيمتين مباشرتين. أوقف إحداهما أولًا."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -70789,7 +71119,25 @@
                   "value" : "يعرض الوكلاء الآخرون بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعرض الوكلاء الآخرون بالفعل قيمة مباشرة واحدة. أوقفها أولًا."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعرض الوكلاء الآخرون بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يعرض الوكلاء الآخرون بالفعل قيمتين مباشرتين. أوقف إحداهما أولًا."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "يعرض الوكلاء الآخرون بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
@@ -110953,6 +111301,64 @@
         }
       }
     },
+    "Use" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使う"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用"
+          }
+        }
+      }
+    },
     "Use a full address like https://api.openai.com/v1 or http://localhost:11434/v1." : {
       "localizations" : {
         "ar" : {
@@ -125570,6 +125976,204 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "链接"
+          }
+        }
+      }
+    },
+    "liveliness.balanced" : {
+      "comment" : "How lively the companion is: the default",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوازن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgewogen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Balanced"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Equilibrado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Équilibré"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Equilibrato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ふつう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "균형"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Equilibrado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "均衡"
+          }
+        }
+      }
+    },
+    "liveliness.lively" : {
+      "comment" : "How lively the companion is: the most moments",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حيوي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebhaft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lively"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vif"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vivace"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "にぎやか"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활발"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活泼"
+          }
+        }
+      }
+    },
+    "liveliness.minimal" : {
+      "comment" : "How lively the companion is: moves only when something happens",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هادئ"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimal"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Minimal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mínimo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimal"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "控えめ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최소"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mínimo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "简约"
           }
         }
       }
