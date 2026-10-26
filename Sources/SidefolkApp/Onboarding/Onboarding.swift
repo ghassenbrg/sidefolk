@@ -94,36 +94,43 @@ final class Onboarding {
 
     private func show(_ step: Step) {
         let name = coordinator.runtime.settings.current.companionName
-        let item: AttentionItem
+        coordinator.presentLocal(Self.item(for: step, name: name, hotkey: coordinator.hotkeyLabel))
+    }
+
+    /// The bubble for `step`, in the app's language (UISnapshots shows the same words).
+    static func item(for step: Step, name: String, hotkey: String) -> AttentionItem {
         switch step {
         case .hello:
-            item = bubble("Hi, I'm \(name).", "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
-                          [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)], kind: Self.welcome)
+            bubble("Hi, I'm \(name).", "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
+                   [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)], kind: welcome)
         case .tryReminder:
-            item = bubble("Give me something to remember.", "Click me or press \(coordinator.hotkeyLabel). Try a reminder: no AI needed.",
-                          [("show", "Show me", true), ("later", "Not now", false)])
+            bubble("Give me something to remember.", "Click me or press \(hotkey). Try a reminder: no AI needed.",
+                   [("show", "Show me", true), ("later", "Not now", false)])
         case .notifications:
-            item = bubble("Can I use Mac notifications?", "Only when I'm hidden, you're in fullscreen, or something is urgent.",
-                          [("allow", "Allow notifications", true), ("later", "Not now", false)])
+            bubble("Can I use Mac notifications?", "Only when I'm hidden, you're in fullscreen, or something is urgent.",
+                   [("allow", "Allow notifications", true), ("later", "Not now", false)])
         case .agents:
-            item = bubble("Want a tap when your coding agents need you?",
-                          "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup.",
-                          [("connect", "Connect…", true), ("later", "Not now", false)])
+            bubble("Want a tap when your coding agents need you?",
+                   "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup.",
+                   [("connect", "Connect…", true), ("later", "Not now", false)])
         case .login:
-            item = bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
-                          [("yes", "Start at login", true), ("no", "Not now", false)])
+            bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
+                   [("yes", "Start at login", true), ("no", "Not now", false)])
         case .done:
-            item = bubble("That's it.", "Ask “what did I save about…” any time. Drop files or links on me, double-click me for your notebook, or find me in the menu bar.",
-                          [("ok", "Got it", true)])
+            bubble("That's it.", """
+                Ask “what did I save about…” any time. Drop files or links on me, double-click me for your notebook, \
+                or find me in the menu bar.
+                """, [("ok", "Got it", true)])
         }
-        coordinator.presentLocal(item)
     }
 
     /// The first bubble, which also shows the family (BubbleView).
     static let welcome = "welcome"
 
-    private func bubble(_ title: String, _ body: String, _ actions: [(String, String, Bool)], kind: String? = nil) -> AttentionItem {
-        AttentionItem(level: .attention, source: Self.source, title: title, body: body,
-                      actions: actions.map { AttentionAction(id: $0.0, title: $0.1, isPrimary: $0.2) }, refKind: kind)
+    private static func bubble(_ title: String.LocalizationValue, _ body: String.LocalizationValue,
+                               _ actions: [(id: String, title: String.LocalizationValue, primary: Bool)], kind: String? = nil) -> AttentionItem {
+        AttentionItem(level: .attention, source: source, title: String(localized: title), body: String(localized: body),
+                      actions: actions.map { AttentionAction(id: $0.id, title: String(localized: $0.title), isPrimary: $0.primary) },
+                      refKind: kind)
     }
 }

@@ -52,15 +52,15 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let ask = menu.addItem(withTitle: "Ask Sidefolk…", action: #selector(ask), keyEquivalent: "")
+        let ask = menu.addItem(withTitle: String(localized: "Ask Sidefolk…"), action: #selector(ask), keyEquivalent: "")
         ask.target = self
         ask.toolTip = hotkeyLabel()
 
         menu.addItem(.separator())
-        let header = menu.addItem(withTitle: "Now", action: nil, keyEquivalent: "")
+        let header = menu.addItem(withTitle: String(localized: "Now"), action: nil, keyEquivalent: "")
         header.isEnabled = false
         if nowCache.isEmpty {
-            let none = menu.addItem(withTitle: "Nothing running or due soon", action: nil, keyEquivalent: "")
+            let none = menu.addItem(withTitle: String(localized: "Nothing running or due soon"), action: nil, keyEquivalent: "")
             none.isEnabled = false
         }
         for (i, entry) in nowCache.prefix(6).enumerated() {
@@ -72,12 +72,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
         if isQuiet() {
-            let q = menu.addItem(withTitle: "Turn Quiet Off", action: #selector(quietOff), keyEquivalent: "")
+            let q = menu.addItem(withTitle: String(localized: "Turn Quiet Off"), action: #selector(quietOff), keyEquivalent: "")
             q.target = self
         } else {
-            let quiet = NSMenuItem(title: "Quiet", action: nil, keyEquivalent: "")
+            let quiet = NSMenuItem(title: String(localized: "Quiet"), action: nil, keyEquivalent: "")
             let sub = NSMenu()
-            for (title, seconds) in [("For 30 minutes", 1800.0), ("For 1 hour", 3600), ("For 3 hours", 10800), ("Until tomorrow", -1)] {
+            let spans: [(String, Double)] = [(String(localized: "For 30 minutes"), 1800), (String(localized: "For 1 hour"), 3600),
+                                             (String(localized: "For 3 hours"), 10800), (String(localized: "Until tomorrow"), -1)]
+            for (title, seconds) in spans {
                 let mi = sub.addItem(withTitle: title, action: #selector(quietFor(_:)), keyEquivalent: "")
                 mi.target = self
                 mi.representedObject = seconds
@@ -85,18 +87,19 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             quiet.submenu = sub
             menu.addItem(quiet)
         }
-        let toggle = menu.addItem(withTitle: companionVisible() ? "Hide Companion" : "Show Companion", action: #selector(toggleCompanion), keyEquivalent: "")
+        let toggle = menu.addItem(withTitle: companionVisible() ? String(localized: "Hide Companion") : String(localized: "Show Companion"),
+                                  action: #selector(toggleCompanion), keyEquivalent: "")
         toggle.target = self
 
         menu.addItem(.separator())
-        let home = menu.addItem(withTitle: "Open Sidefolk", action: #selector(openHome), keyEquivalent: "o")
+        let home = menu.addItem(withTitle: String(localized: "Open Sidefolk"), action: #selector(openHome), keyEquivalent: "o")
         home.target = self
-        let settings = menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        let settings = menu.addItem(withTitle: String(localized: "Settings…"), action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(.separator())
-        let about = menu.addItem(withTitle: "About Sidefolk", action: #selector(showAbout), keyEquivalent: "")
+        let about = menu.addItem(withTitle: String(localized: "About Sidefolk"), action: #selector(showAbout), keyEquivalent: "")
         about.target = self
-        menu.addItem(withTitle: "Quit Sidefolk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: String(localized: "Quit Sidefolk"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         refreshNow()
     }
 

@@ -5,42 +5,24 @@ import SidefolkCore
 enum Describe {
     // MARK: Time
 
-    /// "Every weekday", "Every 2 weeks on Mon and Thu", "Every day until 12 Dec".
+    /// "Every weekday", "Every 2 weeks on Mon and Thu", "Every day until 12 Dec": the same words as
+    /// cards and notices (`TimeFormat.recurrence`), starting a line.
     static func recurrence(_ r: Recurrence) -> String {
-        let n = r.interval
-        var text: String
-        switch r.frequency {
-        case .hourly: text = n == 1 ? "Every hour" : "Every \(n) hours"
-        case .daily: text = n == 1 ? "Every day" : "Every \(n) days"
-        case .weekdays: text = "Every weekday"
-        case .weekly:
-            text = n == 1 ? "Every week" : "Every \(n) weeks"
-            if !r.weekdays.isEmpty {
-                let names = r.weekdays.sorted().map(weekdayName)
-                text = (n == 1 ? "Every " : text + " on ") + list(names)
-            }
-        case .monthly: text = n == 1 ? "Every month" : "Every \(n) months"
-        case .yearly: text = n == 1 ? "Every year" : "Every \(n) years"
-        }
+        var text = TimeFormat.recurrence(r, calendar: .autoupdatingCurrent)
         if let until = r.until {
-            text += " until " + until.formatted(.dateTime.day().month(.abbreviated))
+            text = String(localized: "\(text) until \(until.formatted(.dateTime.day().month(.abbreviated)))",
+                          comment: "“every day until 12 Dec”")
         }
-        return text
-    }
-
-    /// ISO weekday (1 = Monday … 7 = Sunday) to "Mon".
-    static func weekdayName(_ iso: Int) -> String {
-        let symbols = Calendar.current.shortWeekdaySymbols // Sunday first
-        return symbols[((iso % 7) + 7) % 7]
+        return text.prefix(1).uppercased() + text.dropFirst()
     }
 
     /// "every 30 s", "every 5 min", "every 2 h", "every day".
     static func interval(_ seconds: Double) -> String {
         let s = Int(seconds.rounded())
-        if s < 60 { return "every \(s) s" }
-        if s < 3600 { return "every \(s / 60) min" }
-        if s < 86400 { return s % 3600 == 0 ? "every \(s / 3600) h" : "every \(s / 60) min" }
-        return s == 86400 ? "every day" : "every \(s / 86400) days"
+        if s < 60 { return String(localized: "every \(s) s") }
+        if s < 3600 { return String(localized: "every \(s / 60) min") }
+        if s < 86400 { return s % 3600 == 0 ? String(localized: "every \(s / 3600) h") : String(localized: "every \(s / 60) min") }
+        return s == 86400 ? String(localized: "every day") : String(localized: "every \(s / 86400) days")
     }
 
     // MARK: Watchers
@@ -54,20 +36,20 @@ enum Describe {
     static func watcherKind(_ kind: String) -> WatcherKind {
         let k = kind.lowercased()
         if k.hasPrefix("ext") || k.contains("/") {
-            return WatcherKind(symbol: "puzzlepiece.extension", label: "Extension")
+            return WatcherKind(symbol: "puzzlepiece.extension", label: String(localized: "Extension"))
         }
         if k.contains("site") || k.hasSuffix("up") || k.contains("http") {
-            return WatcherKind(symbol: "antenna.radiowaves.left.and.right", label: "Site")
+            return WatcherKind(symbol: "antenna.radiowaves.left.and.right", label: String(localized: "Site"))
         }
         if k.contains("web") || k.contains("page") || k.contains("url") {
-            return WatcherKind(symbol: "globe", label: "Web page")
+            return WatcherKind(symbol: "globe", label: String(localized: "Web page"))
         }
-        if k.contains("folder") || k.contains("dir") { return WatcherKind(symbol: "folder", label: "Folder") }
-        if k.contains("file") { return WatcherKind(symbol: "doc", label: "File") }
-        if k.contains("process") || k.contains("pid") { return WatcherKind(symbol: "cpu", label: "Process") }
-        if k.contains("command") || k.contains("shell") { return WatcherKind(symbol: "terminal", label: "Command") }
-        if k.contains(".") { return WatcherKind(symbol: "puzzlepiece.extension", label: "Extension") }
-        return WatcherKind(symbol: "binoculars", label: "Watch")
+        if k.contains("folder") || k.contains("dir") { return WatcherKind(symbol: "folder", label: String(localized: "Folder")) }
+        if k.contains("file") { return WatcherKind(symbol: "doc", label: String(localized: "File")) }
+        if k.contains("process") || k.contains("pid") { return WatcherKind(symbol: "cpu", label: String(localized: "Process")) }
+        if k.contains("command") || k.contains("shell") { return WatcherKind(symbol: "terminal", label: String(localized: "Command")) }
+        if k.contains(".") { return WatcherKind(symbol: "puzzlepiece.extension", label: String(localized: "Extension")) }
+        return WatcherKind(symbol: "binoculars", label: String(localized: "Watch"))
     }
 
     /// What the watcher looks at (a URL, a path, a process), when the config says.
@@ -112,11 +94,11 @@ enum Describe {
     static func caller(_ raw: String, companion: String) -> String {
         let parts = raw.split(separator: ":", maxSplits: 1).map(String.init)
         switch parts.first ?? raw {
-        case "user": return "You"
+        case "user": return String(localized: "You")
         case "agent": return companion
-        case "routine": return "Routine"
-        case "external": return parts.count > 1 ? agentName(parts[1]) : "Agent"
-        case "extension": return parts.count > 1 ? extensionName(parts[1]) : "Extension"
+        case "routine": return String(localized: "Routine")
+        case "external": return parts.count > 1 ? agentName(parts[1]) : String(localized: "Agent")
+        case "extension": return parts.count > 1 ? extensionName(parts[1]) : String(localized: "Extension")
         default: return raw
         }
     }
@@ -140,22 +122,9 @@ enum Describe {
     /// The session's headline: "Claude Code in sidefolk".
     static func session(_ s: AgentSession) -> String {
         let who = agentName(s.agent)
-        if let project = s.projectName { return "\(who) in \(project)" }
-        return s.title ?? who
-    }
-
-    // MARK: Lists
-
-    /// "a", "a and b", "a, b and c".
-    static func list(_ items: [String]) -> String {
-        switch items.count {
-        case 0: ""
-        case 1: items[0]
-        default: items.dropLast().joined(separator: ", ") + " and " + items.last!
+        if let project = s.projectName {
+            return String(localized: "\(who) in \(project)", comment: "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”")
         }
-    }
-
-    static func count(_ n: Int, _ singular: String, _ plural: String? = nil) -> String {
-        "\(n) " + (n == 1 ? singular : plural ?? singular + "s")
+        return s.title ?? who
     }
 }

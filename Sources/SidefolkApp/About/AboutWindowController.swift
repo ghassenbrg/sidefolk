@@ -17,6 +17,8 @@ struct AboutView: View {
             Text("Version \(Self.version)").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
             VStack(spacing: Theme.Space.xs) {
                 Text("Your AI sidekicks, always here.").font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("A companion that remembers, reminds, watches, and works with your agents.")
                     .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .multilineTextAlignment(.center)
@@ -75,7 +77,7 @@ final class AboutWindowController: NSObject, NSWindowDelegate {
     static func configure(_ window: NSWindow) {
         window.contentViewController = NSHostingController(rootView: AboutView())
         window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.title = "About Sidefolk"
+        window.title = String(localized: "About Sidefolk")
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.backgroundColor = NSColor(Theme.surface)

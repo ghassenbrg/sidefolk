@@ -10,7 +10,7 @@ struct PrivacySettingsView: View {
     @State private var confirmingDelete = false
 
     /// The capabilities a person can switch off, in the words the Settings page uses.
-    private static let switches: [(Capability, String, String)] = [
+    private static let switches: [(Capability, LocalizedStringKey, LocalizedStringKey)] = [
         (.shell, "Running commands", "Shell commands, always shown word for word before they run."),
         (.network, "Internet access", "Fetching pages and checking sites."),
         (.clipboard, "Clipboard", "Reading and writing what you copied."),
@@ -27,7 +27,7 @@ struct PrivacySettingsView: View {
                         get: { model.settings.historyDays }, set: { days in model.update { $0.historyDays = days } }
                     )) {
                         ForEach(Array(Set([1, 7, 30, model.settings.historyDays])).sorted(), id: \.self) { days in
-                            Text(days == 1 ? "1 day" : "\(days) days").tag(days)
+                            Text("\(days) days").tag(days)
                         }
                     }
                     .pickerStyle(.menu)
@@ -56,7 +56,8 @@ struct PrivacySettingsView: View {
                     count(s.exchanges, "Requests")
                 }
                 .padding(.vertical, Theme.Space.m)
-                SettingsRow(title: "Data folder", detail: "\(FolderAccess.displayPath(s.dataFolder)) · \(bytes(s.databaseBytes))") {
+                SettingsRow(title: Text("Data folder"),
+                            detail: Text(verbatim: "\(FolderAccess.displayPath(s.dataFolder)) · \(Wording.bytes(s.databaseBytes))")) {
                     Button("Show in Finder") { model.services.revealDataFolder() }.buttonStyle(.sf(.secondary))
                 }
             } else {
@@ -65,16 +66,15 @@ struct PrivacySettingsView: View {
         }
     }
 
-    private func count(_ n: Int, _ label: String) -> some View {
+    private func count(_ n: Int, _ label: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             Text(n.formatted()).font(Theme.Font.heading).foregroundStyle(Theme.ink)
             Text(label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                .lineLimit(1).minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
     }
-
-    private func bytes(_ n: Int64) -> String { ByteCountFormatter.string(fromByteCount: n, countStyle: .file) }
 
     // MARK: Folders
 
@@ -119,8 +119,8 @@ struct PrivacySettingsView: View {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = false
-        panel.prompt = "Share Folder"
-        panel.message = "Choose a folder Sidefolk may read and organize."
+        panel.prompt = String(localized: "Share Folder")
+        panel.message = String(localized: "Choose a folder Sidefolk may read and organize.")
         Task {
             let response: NSApplication.ModalResponse
             if let window = NSApp.keyWindow { response = await panel.beginSheetModal(for: window) } else { response = panel.runModal() }
@@ -154,19 +154,20 @@ struct PrivacySettingsView: View {
 
     private func grantDetail(_ g: Grant) -> String {
         var parts: [String] = []
-        if let folder = g.scope.string("folder") { parts.append("in \(FolderAccess.displayPath(folder))") }
-        if let command = g.scope.string("command") { parts.append("exactly “\(command.clipped(60))”") }
-        if let host = g.scope.string("host") { parts.append("on \(host)") }
-        if let ext = g.scope.string("extension") { parts.append("for \(ext)") }
+        if let folder = g.scope.string("folder") { parts.append(String(localized: "in \(FolderAccess.displayPath(folder))")) }
+        if let command = g.scope.string("command") { parts.append(String(localized: "exactly “\(command.clipped(60))”")) }
+        if let host = g.scope.string("host") { parts.append(String(localized: "on \(host)", comment: "A web address it is allowed on: “on example.com”")) }
+        if let ext = g.scope.string("extension") { parts.append(String(localized: "for \(ext)", comment: "An extension it is allowed for")) }
         let who = switch g.callerKind {
-        case "agent": "when \(model.settings.companionName) asks"
-        case "external": "when other agents ask"
-        case "routine": "in routines"
-        case "extension": "for extensions"
-        default: "for anyone"
+        case "agent": String(localized: "when \(model.settings.companionName) asks")
+        case "external": String(localized: "when other agents ask")
+        case "routine": String(localized: "in routines")
+        case "extension": String(localized: "for extensions")
+        default: String(localized: "for anyone")
         }
         parts.append(who)
-        parts.append(g.lastUsedAt.map { "last used \(TimeText.relative($0))" } ?? "not used yet")
+        parts.append(g.lastUsedAt.map { String(localized: "last used \(TimeText.relative($0))", comment: "“last used 2 days ago”") }
+            ?? String(localized: "not used yet"))
         return parts.joined(separator: " · ")
     }
 
@@ -202,11 +203,13 @@ struct PrivacySettingsView: View {
     private var data: some View {
         SettingsGroup(title: "Your data") {
             SettingsRow(title: "Export data", detail: "Notes, reminders, watches and settings as one JSON file. No keys.") {
-                Button("Export Data…") { save(name: "Sidefolk Export", type: .json) { await model.exportData(to: $0) } }
+                Button("Export Data…") { save(name: String(localized: "Sidefolk Export"), type: .json) { await model.exportData(to: $0) } }
                     .buttonStyle(.sf(.secondary))
             }
             SettingsRow(title: "Diagnostics", detail: "Logs and versions for a bug report, without your notes or messages.") {
-                Button("Export Diagnostics…") { save(name: "Sidefolk Diagnostics", type: .zip) { await model.exportDiagnostics(to: $0) } }
+                Button("Export Diagnostics…") {
+                    save(name: String(localized: "Sidefolk Diagnostics"), type: .zip) { await model.exportDiagnostics(to: $0) }
+                }
                     .buttonStyle(.sf(.secondary))
             }
             SettingsToggle(title: "Debug logging", detail: "More detail in the local log. Turn it off when you're done.",
@@ -262,10 +265,10 @@ struct DeleteAllSheet: View {
                 .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 6) {
-                Text("Type “delete” to confirm.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                TextField("Confirmation", text: $typed, prompt: Text("delete"))
+                Text("Type “\(Self.word)” to confirm.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                TextField("Confirmation", text: $typed, prompt: Text(verbatim: Self.word))
                     .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Type delete to confirm")
+                    .accessibilityLabel(Text("Type “\(Self.word)” to confirm."))
             }
             if let error { InlineError(error: error) }
             HStack {
@@ -280,11 +283,19 @@ struct DeleteAllSheet: View {
                     }
                 }
                 .buttonStyle(.sfDestructive)
-                .disabled(typed.trimmingCharacters(in: .whitespaces).lowercased() != "delete" || deleting)
+                .disabled(!confirmed || deleting)
             }
         }
         .padding(Theme.Space.xl)
         .frame(width: 440)
         .background(Theme.surface)
+    }
+
+    /// The word to type, in the app's language; the English one works too.
+    private static let word = String(localized: "delete", comment: "The word typed to confirm deleting everything; lower case")
+
+    private var confirmed: Bool {
+        let typed = typed.trimmingCharacters(in: .whitespaces).lowercased()
+        return typed == Self.word.lowercased() || typed == "delete"
     }
 }

@@ -42,7 +42,7 @@ struct GeneralSettingsView: View {
             }
 
             SettingsGroup(title: "Notifications") {
-                SettingsRow(title: "System notifications", detail: notificationDetail) {
+                SettingsRow(title: Text("System notifications"), detail: notificationDetail) {
                     if model.notificationsAllowed == true {
                         Chip("Allowed", tone: .success, systemImage: "checkmark")
                     } else {
@@ -64,11 +64,11 @@ struct GeneralSettingsView: View {
         }
     }
 
-    private var notificationDetail: String {
+    private var notificationDetail: Text {
         switch model.notificationsAllowed {
-        case true: "Reminders can reach you when the companion is hidden or you're in another Space."
-        case false: "Not allowed yet. Without them, reminders only appear on the desktop."
-        case nil: "Checking…"
+        case true: Text("Reminders can reach you when the companion is hidden or you're in another Space.")
+        case false: Text("Not allowed yet. Without them, reminders only appear on the desktop.")
+        case nil: Text("Checking…")
         }
     }
 
@@ -92,11 +92,11 @@ struct GeneralSettingsView: View {
         }
     }
 
-    private func hourRow(_ title: String, hours: ClosedRange<Int>, key: WritableKeyPath<AppSettings, Int> & Sendable) -> some View {
+    private func hourRow(_ title: LocalizedStringKey, hours: ClosedRange<Int>, key: WritableKeyPath<AppSettings, Int> & Sendable) -> some View {
         let value = model.settings[keyPath: key]
         return SettingsRow(title: title) {
             Picker(title, selection: Binding(get: { model.settings[keyPath: key] }, set: { h in model.update { $0[keyPath: key] = h } })) {
-                ForEach(Array(Set(hours).union([value])).sorted(), id: \.self) { Text(TimeText.hour($0)).tag($0) }
+                ForEach(Array(Set(hours).union([value])).sorted(), id: \.self) { Text(verbatim: TimeText.hour($0)).tag($0) }
             }
             .pickerStyle(.menu)
             .labelsHidden()
@@ -120,7 +120,7 @@ private struct LanguageRow: View {
     private let running = AppLanguage.current
 
     var body: some View {
-        SettingsRow(title: "Language", detail: detail) {
+        SettingsRow(title: Text("Language"), detail: detail) {
             HStack(spacing: Theme.Space.s) {
                 if (chosen ?? AppLanguage.system) != running {
                     Button("Restart now") { AppLanguage.relaunch() }.buttonStyle(.sf(.primary))
@@ -139,9 +139,9 @@ private struct LanguageRow: View {
         }
     }
 
-    private var detail: String {
+    private var detail: Text {
         (chosen ?? AppLanguage.system) == running
-            ? "Typed requests are understood in English without AI; with AI, in any language."
-            : "Sidefolk switches language when it restarts."
+            ? Text("Typed requests are understood in English without AI; with AI, in any language.")
+            : Text("Sidefolk switches language when it restarts.")
     }
 }

@@ -48,7 +48,7 @@ struct CompanionSettingsView: View {
         Binding(get: { model.settings[keyPath: key] }, set: { on in model.update { $0[keyPath: key] = on } })
     }
 
-    private func title(_ mode: PresenceMode) -> String {
+    private func title(_ mode: PresenceMode) -> LocalizedStringKey {
         switch mode {
         case .always: "Always"
         case .whenNeeded: "Only when needed"
@@ -56,7 +56,7 @@ struct CompanionSettingsView: View {
         }
     }
 
-    private func detail(_ mode: PresenceMode) -> String {
+    private func detail(_ mode: PresenceMode) -> LocalizedStringKey {
         switch mode {
         case .always: "The companion stays on your desktop, beside your work."
         case .whenNeeded: "A small peek at the edge of the screen until something needs you."

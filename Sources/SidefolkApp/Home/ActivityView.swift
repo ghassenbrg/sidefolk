@@ -21,15 +21,16 @@ struct ActivityView: View {
 
     private var stats: some View {
         HStack(spacing: Theme.Space.m) {
-            Stat(title: "Agent runs this week", value: "\(model.weekRuns)", folk: "byte")
+            Stat(title: "Agent runs this week", value: model.weekRuns.formatted(), folk: "byte")
             Stat(title: "Tokens this week", value: tokens, folk: "byte")
-            Stat(title: "Actions this week", value: "\(model.weekActions)", folk: "guard")
+            Stat(title: "Actions this week", value: model.weekActions.formatted(), folk: "guard")
         }
     }
 
     private var tokens: String {
         let fmt: (Int) -> String = { $0.formatted(.number.notation(.compactName)) }
-        return "\(fmt(model.weekInputTokens)) in · \(fmt(model.weekOutputTokens)) out"
+        return String(localized: "\(fmt(model.weekInputTokens)) in · \(fmt(model.weekOutputTokens)) out",
+                      comment: "Tokens sent to and received from the AI this week: “12K in · 3K out”")
     }
 
     private var filters: some View {
@@ -95,7 +96,7 @@ struct ActivityView: View {
         case .time:
             Text(TimeText.short(e.at)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
         case .who:
-            Text(Describe.caller(e.caller, companion: model.companionName)).font(Theme.Font.body).foregroundStyle(Theme.ink)
+            Text(verbatim: Describe.caller(e.caller, companion: model.companionName)).font(Theme.Font.body).foregroundStyle(Theme.ink)
         case .what:
             Text(e.summary).font(Theme.Font.body).foregroundStyle(Theme.ink).help(e.summary)
         case .risk:
@@ -112,7 +113,7 @@ struct ActivityView: View {
         case .low: Chip("Low", tone: .neutral)
         case .medium: Chip("Medium", tone: .warning)
         case .high: Chip("High", tone: .danger)
-        case nil: Chip(risk.capitalized, tone: .neutral)
+        case nil: Chip(verbatim: risk.capitalized, tone: .neutral)
         }
     }
 
@@ -142,7 +143,7 @@ struct ActivityView: View {
 private enum ActivityColumn: CaseIterable {
     case time, who, what, risk, decision, outcome
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .time: "Time"
         case .who: "Who"
@@ -183,12 +184,14 @@ private struct ActivityRow<Cell: View>: View {
             ForEach(ActivityColumn.allCases, id: \.self) { column in
                 Group {
                     if header {
-                        Text(column.title.uppercased()).font(Theme.Font.eyebrow).kerning(0.6).foregroundStyle(Theme.inkMuted)
+                        Eyebrow(Text(column.title))
                     } else {
                         cell(column)
                     }
                 }
                 .lineLimit(1)
+                // Fixed columns shrink a longer word a little before cutting it.
+                .minimumScaleFactor(column.width == nil ? 1 : 0.8)
                 .frame(minWidth: column.minWidth, maxWidth: column.width ?? .infinity, alignment: .leading)
             }
         }
@@ -204,7 +207,7 @@ private extension ActivityEntry {
 }
 
 private struct Stat: View {
-    var title: String
+    var title: LocalizedStringKey
     var value: String
     var folk: String
 

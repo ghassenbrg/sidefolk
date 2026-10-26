@@ -8,7 +8,7 @@ final class ActivityModel {
     enum Show: Hashable { case all, needsAttention }
 
     /// Caller kinds as the filter names them; nil means everyone.
-    static let callerKinds: [(kind: String, title: String)] = [
+    static let callerKinds: [(kind: String, title: LocalizedStringResource)] = [
         ("user", "You"), ("agent", "Sidefolk"), ("routine", "Routines"), ("external", "Other agents"), ("extension", "Extensions"),
     ]
 

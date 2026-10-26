@@ -21,9 +21,9 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         guard let center else { return }
         center.delegate = self
         let actions = [
-            UNNotificationAction(identifier: "done", title: "Done"),
-            UNNotificationAction(identifier: "snooze10", title: "10 min"),
-            UNNotificationAction(identifier: "tomorrow", title: "Tomorrow"),
+            UNNotificationAction(identifier: "done", title: String(localized: "Done")),
+            UNNotificationAction(identifier: "snooze10", title: String(localized: "10 min")),
+            UNNotificationAction(identifier: "tomorrow", title: String(localized: "Tomorrow")),
         ]
         let reminder = UNNotificationCategory(identifier: "reminder", actions: actions, intentIdentifiers: [])
         let generic = UNNotificationCategory(identifier: "generic", actions: [], intentIdentifiers: [])
@@ -63,7 +63,7 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         for r in reminders.prefix(60) {
             let content = UNMutableNotificationContent()
             content.title = r.title
-            content.body = r.body ?? "Sidefolk isn't running, so here's your reminder."
+            content.body = r.body ?? String(localized: "Sidefolk isn't running, so here's your reminder.")
             content.sound = .default
             let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: r.date)
             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)

@@ -83,7 +83,7 @@ private struct HomeSidebar: View {
             if !notebook.archived.isEmpty {
                 Section("Archived") {
                     ForEach(notebook.archived) { c in
-                        Label { Text(c.name) } icon: { icon("archivebox", Theme.inkMuted) }
+                        Label { Text(NotebookCollections.shownName(c)) } icon: { icon("archivebox", Theme.inkMuted) }
                             .badge(notebook.counts[c.id] ?? 0)
                             .tag(HomeSelection.collection(c.id))
                             .contextMenu {
@@ -100,7 +100,8 @@ private struct HomeSidebar: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Button { sheet = .create } label: {
-                    Label("New collection", systemImage: "plus")
+                    // Two lines rather than cut off, where a language needs the room.
+                    Label("New collection", systemImage: "plus").lineLimit(2)
                 }
                 .buttonStyle(.sfPlain)
                 Spacer()
@@ -131,15 +132,19 @@ private struct HomeSidebar: View {
             Button("Cancel", role: .cancel) {}
         } message: { c in
             let n = notebook.counts[c.id] ?? 0
-            Text(n == 0 ? "It's empty." : "Its \(Describe.count(n, "item")) move to the Trash for 30 days. Restored items go to the Inbox.")
+            if n == 0 {
+                Text("It's empty.")
+            } else {
+                Text("\(n) items in it move to the Trash for 30 days. Restored items go to the Inbox.")
+            }
         }
     }
 
     private func collectionRow(_ c: NotebookCollection) -> some View {
-        Label { Text(c.name) } icon: { icon(symbol(c), c.kind == .profile ? Theme.aqua : Theme.folkColor("pip")) }
+        Label { Text(NotebookCollections.shownName(c)) } icon: { icon(symbol(c), c.kind == .profile ? Theme.aqua : Theme.folkColor("pip")) }
             .badge(notebook.counts[c.id] ?? 0)
             .tag(HomeSelection.collection(c.id))
-            .help(c.kind == .profile ? "Sidefolk keeps these in mind in every conversation." : c.name)
+            .help(c.kind == .profile ? Text("Sidefolk keeps these in mind in every conversation.") : Text(verbatim: c.name))
             .contextMenu {
                 if c.kind != .inbox && c.kind != .profile {
                     Button("Rename…") { sheet = .rename(c) }
@@ -191,7 +196,7 @@ struct CollectionSheet: View {
     @State private var error: UserFacingError?
     @Environment(\.dismiss) private var dismiss
 
-    private static let kinds: [(NotebookCollection.Kind, String, String)] = [
+    private static let kinds: [(NotebookCollection.Kind, LocalizedStringResource, LocalizedStringResource)] = [
         (.project, "Project", "Notes, ideas and tasks for something you're making."),
         (.topic, "Topic", "Things you're learning or thinking about."),
         (.list, "List", "Groceries, books to read, places to go."),
@@ -210,7 +215,9 @@ struct CollectionSheet: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    Text(Self.kinds.first { $0.0 == kind }?.2 ?? "").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    if let detail = Self.kinds.first(where: { $0.0 == kind })?.2 {
+                        Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    }
                 }
             }
             if let error { InlineError(error: error) }

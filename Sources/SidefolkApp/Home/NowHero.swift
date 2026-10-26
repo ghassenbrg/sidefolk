@@ -4,18 +4,19 @@ import SwiftUI
 /// The top of Now: the day and a greeting on a quiet aqua-to-blue wash, your companion standing
 /// beside them, and the thing you most often came for, asking it something (D33).
 struct NowHero: View {
-    var greeting: String
-    var status: String
+    var greeting: Text
+    var status: Text
     var settings: AppSettings
     var ask: () -> Void
 
     var body: some View {
         HStack(alignment: .bottom, spacing: Theme.Space.l) {
             VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                Eyebrow(text: Date().formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                Text(greeting).font(Theme.Font.hero).foregroundStyle(Theme.ink)
+                Eyebrow(Text(verbatim: Date().formatted(.dateTime.weekday(.wide).day().month(.wide))))
+                greeting.font(Theme.Font.hero).foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
-                Text(status).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                status.font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 Button(action: ask) {
                     Label("Ask \(settings.companionName)…", systemImage: "bubble.left.fill")
                 }

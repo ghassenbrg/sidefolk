@@ -70,10 +70,14 @@ extension AppCoordinator {
         return ProviderKeys.host(of: url)
     }
 
+    /// The last request as it went out: a line for people, then the payload exactly as the model read it
+    /// (its section names included, so they stay English).
     func lastContextPreview() async -> String? {
         guard let p = await agent.lastSent() else { return nil }
-        var text = "Sent to \(p.provider) (\(p.model.isEmpty ? "default model" : p.model)) at "
-            + p.at.formatted(date: .abbreviated, time: .standard) + (p.tainted ? " — included outside content" : "") + "\n\n"
+        let model = p.model.isEmpty ? String(localized: "default model") : p.model
+        let at = p.at.formatted(date: .abbreviated, time: .standard)
+        var text = (p.tainted ? String(localized: "Sent to \(p.provider) (\(model)) at \(at), with outside content")
+            : String(localized: "Sent to \(p.provider) (\(model)) at \(at)")) + "\n\n"
         text += "SYSTEM\n" + p.system + "\n\n"
         for m in p.messages { text += m.role.rawValue.uppercased() + "\n" + m.text + "\n\n" }
         text += "TOOLS\n" + p.tools.joined(separator: ", ")

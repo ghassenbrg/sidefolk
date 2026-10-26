@@ -22,34 +22,35 @@ struct AIProviderStatus {
 }
 
 extension AIChoice {
+    /// The option's name: a product's own name, or what it is.
     var title: String {
         switch self {
-        case .none: "No AI"
+        case .none: String(localized: "No AI")
         case .claudeCode: "Claude Code"
         case .codex: "Codex"
         case .anthropic: "Anthropic"
-        case .preset(.custom): "Your own server"
+        case .preset(.custom): String(localized: "Your own server")
         case .preset(let preset): preset.name
         }
     }
 
     var subtitle: String {
         switch self {
-        case .none: "Everything local keeps working. Questions wait until you pick an AI."
-        case .claudeCode: "Your Claude subscription, through the claude command."
-        case .codex: "Your ChatGPT plan, through the codex command."
-        case .anthropic: "Claude models, pay as you go."
+        case .none: String(localized: "Everything local keeps working. Questions wait until you pick an AI.")
+        case .claudeCode: String(localized: "Your Claude subscription, through the claude command.")
+        case .codex: String(localized: "Your ChatGPT plan, through the codex command.")
+        case .anthropic: String(localized: "Claude models, pay as you go.")
         case .preset(let preset):
             switch preset {
-            case .openAI: "GPT models, pay as you go."
-            case .gemini: "Google's Gemini models."
-            case .mistral: "Mistral's models."
-            case .groq: "Open models, served fast."
-            case .xai: "Grok models."
-            case .deepSeek: "DeepSeek's models."
-            case .openRouter: "Many providers' models behind one key."
-            case .ollama, .lmStudio: "Free models that run on this Mac."
-            case .custom: "Any server that speaks OpenAI's chat API."
+            case .openAI: String(localized: "GPT models, pay as you go.")
+            case .gemini: String(localized: "Google's Gemini models.")
+            case .mistral: String(localized: "Mistral's models.")
+            case .groq: String(localized: "Open models, served fast.")
+            case .xai: String(localized: "Grok models.")
+            case .deepSeek: String(localized: "DeepSeek's models.")
+            case .openRouter: String(localized: "Many providers' models behind one key.")
+            case .ollama, .lmStudio: String(localized: "Free models that run on this Mac.")
+            case .custom: String(localized: "Any server that speaks OpenAI's chat API.")
             }
         }
     }

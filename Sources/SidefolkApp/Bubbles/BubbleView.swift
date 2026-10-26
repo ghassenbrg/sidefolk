@@ -52,11 +52,10 @@ struct BubbleView: View {
                 }
                 // Buttons stay when the bubble shrinks: a collapsed reminder can still be answered.
                 if !item.actions.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(item.actions.prefix(3), id: \.id) { action in
-                            Button(action.title) { model.respond?(item, action.id) }
-                                .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
-                        }
+                    // One row when the verbs fit; stacked, never cut off, when a language makes them longer.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 6) { actions(item) }
+                        VStack(alignment: .leading, spacing: 6) { actions(item) }
                     }
                 }
                 if model.waitingCount > 1 {
@@ -70,11 +69,15 @@ struct BubbleView: View {
             .onTapGesture { model.expanded = true }
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.bubble, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.bubble, style: .continuous).strokeBorder(accent(for: item).opacity(0.45), lineWidth: 1))
-            .overlay(alignment: model.tail?.onTop == true ? .topLeading : .bottomLeading) {
+            .overlay {
                 if let tail = model.tail {
+                    // `tail.x` is measured on screen from the left edge, toward the companion, so the
+                    // tail is placed left to right even when the text reads right to left.
                     BubbleTail(border: accent(for: item).opacity(0.45), pointsUp: tail.onTop)
                         .frame(width: BubbleTail.width, height: BubbleTail.height)
                         .offset(x: tail.x - BubbleTail.width / 2, y: tail.onTop ? 1 - BubbleTail.height : BubbleTail.height - 1)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: tail.onTop ? .topLeading : .bottomLeading)
+                        .environment(\.layoutDirection, .leftToRight)
                         .accessibilityHidden(true)
                 }
             }
@@ -88,6 +91,13 @@ struct BubbleView: View {
 
     /// Room around the card for its shadow and tail.
     static let margin: CGFloat = 10
+
+    private func actions(_ item: AttentionItem) -> some View {
+        ForEach(item.actions.prefix(3), id: \.id) { action in
+            Button { model.respond?(item, action.id) } label: { Text(verbatim: action.title) }
+                .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
+        }
+    }
 
     private func symbol(for item: AttentionItem) -> String {
         switch item.refKind ?? item.source {

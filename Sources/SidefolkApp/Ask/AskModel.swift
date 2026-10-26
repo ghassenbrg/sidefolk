@@ -165,7 +165,8 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
-        let request = trimmed.isEmpty ? "What should I do with this?" : trimmed
+        // Shown as the request's caption and sent with the item; the model answers in any language.
+        let request = trimmed.isEmpty ? String(localized: "What should I do with this?") : trimmed
         text = ""
         let sent = attachment
         attachment = nil

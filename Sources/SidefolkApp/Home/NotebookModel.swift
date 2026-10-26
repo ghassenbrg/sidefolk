@@ -11,7 +11,7 @@ final class NotebookModel {
         case all, notes, ideas, tasks, links
         var id: Self { self }
 
-        var title: String {
+        var title: LocalizedStringResource {
             switch self {
             case .all: "All"
             case .notes: "Notes"
@@ -109,7 +109,8 @@ final class NotebookModel {
         counts = Dictionary(grouping: live, by: \.collectionId).mapValues(\.count)
     }
 
-    func collectionName(_ id: String) -> String? { (collections + archived).first { $0.id == id }?.name }
+    /// The name people see (the Inbox and “About you” in the app's language).
+    func collectionName(_ id: String) -> String? { collection(id: id).map(NotebookCollections.shownName) }
 
     /// "About you" is part of the Notebook from day one (DECISIONS D6).
     private func ensureProfile() async {
@@ -203,13 +204,13 @@ final class NotebookModel {
         if item.id == draft?.id { draft?.updatedAt = item.updatedAt }
         if let i = items.firstIndex(where: { $0.id == item.id }) { items[i] = item }
         if item.collectionId != stored.collectionId, item.collectionId != collectionId {
-            let name = collection(id: item.collectionId)?.name ?? "another collection"
+            let name = collectionName(item.collectionId) ?? String(localized: "another collection")
             if selectedId == item.id {
                 selectedId = nil
                 draft = nil
             }
             items.removeAll { $0.id == item.id }
-            showToast("Moved to \(name).")
+            showToast(String(localized: "Moved to \(name)."))
         }
         runtime.events.changed(.notebook)
     }
@@ -245,8 +246,9 @@ final class NotebookModel {
         runtime.events.changed(.notebook)
         await reloadItems()
         await reloadTrash()
-        let title = item.title.isEmpty ? "Note" : "“\(item.title.clipped(40))”"
-        showToast("\(title) moved to the Trash.", actionTitle: "Undo") { [weak self] in
+        let message = item.title.isEmpty ? String(localized: "Moved to the Trash.")
+            : String(localized: "“\(item.title.clipped(40))” moved to the Trash.")
+        showToast(message, actionTitle: String(localized: "Undo")) { [weak self] in
             Task { await self?.restore(item, quietly: true) }
         }
     }
@@ -258,7 +260,7 @@ final class NotebookModel {
         await reloadTrash()
         toast = nil
         if !quietly {
-            showToast("Restored to \(collection(id: item.collectionId)?.name ?? "the Notebook").")
+            showToast(String(localized: "Restored to \(collectionName(item.collectionId) ?? String(localized: "the Notebook"))."))
         }
     }
 
@@ -286,7 +288,7 @@ final class NotebookModel {
             await reloadCollections()
             return .success(collection(id: created.id) ?? created)
         } catch {
-            return .failure(UserFacingError("I couldn't create that collection. Nothing changed.", detail: String(describing: error)))
+            return .failure(UserFacingError("I couldn't create that collection. Nothing was changed.", detail: String(describing: error)))
         }
     }
 
@@ -306,7 +308,7 @@ final class NotebookModel {
         try? await store.setArchived(collectionId: c.id, archived)
         runtime.events.changed(.notebook)
         await reloadCollections()
-        showToast(archived ? "Archived “\(c.name)”." : "“\(c.name)” is back.")
+        showToast(archived ? String(localized: "Archived “\(c.name)”.") : String(localized: "“\(c.name)” is back."))
     }
 
     /// Deleting a collection never deletes notes outright: its items move to the Trash (as Inbox
@@ -329,12 +331,8 @@ final class NotebookModel {
         runtime.events.changed(.notebook)
         if collectionId == c.id { collectionId = nil }
         await reload()
-        let moved = switch contained.count {
-        case 0: ""
-        case 1: " Its one item is in the Trash."
-        case let n: " Its \(n) items are in the Trash."
-        }
-        showToast("Deleted “\(c.name)”." + moved)
+        showToast(contained.isEmpty ? String(localized: "Deleted “\(c.name)”.")
+            : String(localized: "Deleted “\(c.name)”. Its items are in the Trash."))
     }
 
     // MARK: Toast

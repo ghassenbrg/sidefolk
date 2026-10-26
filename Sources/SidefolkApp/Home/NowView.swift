@@ -23,19 +23,19 @@ struct NowView: View {
 
     private var busy: Bool { !model.jobs.isEmpty || !model.workingSessions.isEmpty }
 
-    private var greeting: String {
+    private var greeting: Text {
         switch Calendar.current.component(.hour, from: Date()) {
-        case 5..<12: "Good morning"
-        case 12..<18: "Good afternoon"
-        default: "Good evening"
+        case 5..<12: Text("Good morning")
+        case 12..<18: Text("Good afternoon")
+        default: Text("Good evening")
         }
     }
 
-    private var status: String {
+    private var status: Text {
         switch model.needsYouCount {
-        case 0: "Nothing needs you right now."
-        case 1: "One thing needs you."
-        case let n: "\(n) things need you."
+        case 0: Text("Nothing needs you right now.")
+        case 1: Text("One thing needs you.")
+        case let n: Text("\(n) things need you.")
         }
     }
 
@@ -62,10 +62,10 @@ struct NowView: View {
             SectionHeader(title: "Coming up", folk: "tempo", count: model.reminders.count)
             ForEach(model.groups()) { group in
                 VStack(alignment: .leading, spacing: 6) {
-                    Eyebrow(text: group.title).padding(.leading, Theme.Space.xs)
+                    Eyebrow(Text(verbatim: group.title)).padding(.leading, Theme.Space.xs)
                     RowsCard {
                         ForEach(group.reminders) { r in
-                            ReminderRow(reminder: r, group: group.title, model: model)
+                            ReminderRow(reminder: r, later: group.day == .later, model: model)
                         }
                     }
                 }
@@ -116,7 +116,7 @@ struct NowView: View {
                 }
                 ForEach(model.jobs) { j in
                     RunningRow(symbol: "terminal", title: j.title, started: j.startedAt,
-                               detail: j.cwd.map { "in " + FolderAccess.displayPath($0) }, command: j.command)
+                               detail: j.cwd.map { String(localized: "in \(FolderAccess.displayPath($0))") }, command: j.command)
                 }
             }
         }
@@ -164,8 +164,7 @@ private struct SessionNeedsYouRow: View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
             IconTile(symbol: "hand.raised", folk: "byte")
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(Describe.agentName(session.agent)) needs you\(session.projectName.map { " in \($0)" } ?? "")")
-                    .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                headline.font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 if let detail = session.detail, !detail.isEmpty {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
@@ -176,6 +175,12 @@ private struct SessionNeedsYouRow: View {
         }
         .nowRow()
         .accessibilityElement(children: .contain)
+    }
+
+    private var headline: Text {
+        let agent = Describe.agentName(session.agent)
+        guard let project = session.projectName else { return Text("\(agent) needs you") }
+        return Text("\(agent) needs you in \(project)", comment: "“Claude Code needs you in sidefolk”: the agent, then the project")
     }
 }
 
@@ -195,7 +200,7 @@ private struct AttentionRow: View {
                 Text(TimeText.short(item.createdAt)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 HStack(spacing: 6) {
                     ForEach(item.actions, id: \.id) { action in
-                        Button(action.title) { respond(action.id) }
+                        Button { respond(action.id) } label: { Text(verbatim: action.title) }
                             .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
                     }
                     Button("Dismiss") { respond(nil) }.buttonStyle(.sf(.plain))
@@ -235,7 +240,7 @@ private struct AttentionRow: View {
 /// A round checkbox, Things-style. Marks a reminder or task done.
 struct CheckCircle: View {
     var checked: Bool
-    var label: String
+    var label: Text
     var action: () -> Void
 
     var body: some View {
@@ -258,19 +263,21 @@ struct CheckCircle: View {
 
 private struct ReminderRow: View {
     var reminder: Reminder
-    var group: String
+    /// In the Later group, times carry their day.
+    var later: Bool
     var model: NowModel
     @State private var editing = false
 
     var body: some View {
         HStack(spacing: Theme.Space.m) {
-            CheckCircle(checked: false, label: "Mark “\(reminder.title)” done") { Task { await model.complete(reminder) } }
+            CheckCircle(checked: false, label: Text("Mark “\(reminder.title)” done")) { Task { await model.complete(reminder) } }
             VStack(alignment: .leading, spacing: 2) {
                 Text(reminder.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2)
                 HStack(spacing: Theme.Space.s) {
                     Text(when).foregroundStyle(overdue ? Theme.danger : Theme.inkMuted)
                     if let rule = reminder.recurrence {
-                        Label(Describe.recurrence(rule), systemImage: "repeat").labelStyle(.titleAndIcon)
+                        Label { Text(verbatim: Describe.recurrence(rule)) } icon: { Image(systemName: "repeat") }
+                            .labelStyle(.titleAndIcon)
                     }
                     if let who = Describe.source(reminder.source) { Text("from \(who)") }
                 }
@@ -316,8 +323,9 @@ private struct ReminderRow: View {
     /// "10 minutes" inside the Snooze menu; "Snooze 10 minutes" where the menu doesn't say it.
     @ViewBuilder private func snoozeItems(prefixed: Bool) -> some View {
         ForEach(NowModel.Snooze.allCases, id: \.self) { option in
-            let title = model.title(for: option)
-            Button(prefixed ? "Snooze \(title.lowercasedFirst)" : title) { Task { await model.snooze(reminder, option) } }
+            Button { Task { await model.snooze(reminder, option) } } label: {
+                Text(verbatim: prefixed ? model.snoozeTitle(for: option) : model.title(for: option))
+            }
         }
     }
 
@@ -326,15 +334,11 @@ private struct ReminderRow: View {
     private var dueSoon: Bool { due.timeIntervalSinceNow < 3600 }
 
     private var when: String {
-        let time = TimeFormat.clock(due, calendar: .autoupdatingCurrent)
-        if overdue { return "Overdue since \(TimeText.short(due))" }
-        if reminder.state == .snoozed { return "Snoozed until \(group == "Later" ? TimeText.short(due) : time)" }
-        return group == "Later" ? TimeText.short(due) : time
+        let time = later ? TimeText.short(due) : TimeFormat.clock(due, calendar: .autoupdatingCurrent)
+        if overdue { return String(localized: "Overdue since \(TimeText.short(due))") }
+        if reminder.state == .snoozed { return String(localized: "Snoozed until \(time)") }
+        return time
     }
-}
-
-private extension String {
-    var lowercasedFirst: String { prefix(1).lowercased() + dropFirst() }
 }
 
 private struct NewReminderRow: View {
@@ -357,7 +361,7 @@ private struct NewReminderRow: View {
                 TextField("When", text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"))
                     .textFieldStyle(.plain)
                     .font(Theme.Font.body)
-                    .frame(width: 190)
+                    .frame(minWidth: 190, maxWidth: 240)
                     .focused($focus, equals: .when)
                     .onSubmit { Task { await model.addReminder() } }
                     .accessibilityLabel("When")
@@ -425,9 +429,9 @@ private struct WatcherRow: View {
     private func meta(_ kind: Describe.WatcherKind) -> String {
         var parts = [kind.label, Describe.interval(watcher.intervalS)]
         if let checked = watcher.lastCheckedAt {
-            parts.append("checked \(TimeText.relative(checked))")
+            parts.append(String(localized: "checked \(TimeText.relative(checked))", comment: "“checked 5 min ago”"))
         } else {
-            parts.append("not checked yet")
+            parts.append(String(localized: "not checked yet"))
         }
         return parts.joined(separator: " · ")
     }
@@ -449,7 +453,7 @@ private struct RunningRow: View {
     var started: Date
     var detail: String?
     var command: String?
-    var actionTitle: String?
+    var actionTitle: LocalizedStringKey?
     var action: () -> Void = {}
 
     var body: some View {
@@ -458,7 +462,7 @@ private struct RunningRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
                 TimelineView(.periodic(from: .now, by: 30)) { context in
-                    Text(([elapsed(at: context.date)] + [detail].compactMap { $0 }).joined(separator: " · "))
+                    Text(verbatim: ([elapsed(at: context.date)] + [detail].compactMap { $0 }).joined(separator: " · "))
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                 }
                 if let command {
@@ -477,7 +481,7 @@ private struct RunningRow: View {
 
     private func elapsed(at now: Date) -> String {
         let seconds = now.timeIntervalSince(started)
-        return seconds < 60 ? "Just started" : "Running for \(TimeText.span(seconds))"
+        return seconds < 60 ? String(localized: "Just started") : String(localized: "Running for \(TimeText.span(seconds))")
     }
 }
 

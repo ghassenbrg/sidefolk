@@ -77,7 +77,7 @@ struct NotebookEditor: View {
         HStack(spacing: Theme.Space.s) {
             Picker("Kind", selection: field(item, \.kind, item.kind)) {
                 ForEach(NotebookItem.Kind.allCases, id: \.self) { kind in
-                    Label(ItemKindStyle.title(kind), systemImage: ItemKindStyle.symbol(kind)).tag(kind)
+                    Label { Text(ItemKindStyle.title(kind)) } icon: { Image(systemName: ItemKindStyle.symbol(kind)) }.tag(kind)
                 }
             }
             .pickerStyle(.menu)
@@ -85,7 +85,7 @@ struct NotebookEditor: View {
             .fixedSize()
             .help("Kind")
             Picker("Collection", selection: field(item, \.collectionId, item.collectionId)) {
-                ForEach(model.collections) { c in Text(c.name).tag(c.id) }
+                ForEach(model.collections) { c in Text(NotebookCollections.shownName(c)).tag(c.id) }
             }
             .pickerStyle(.menu)
             .labelsHidden()
@@ -115,10 +115,12 @@ struct NotebookEditor: View {
     }
 
     private func meta(_ item: NotebookItem) -> some View {
-        var parts = ["Created \(TimeText.short(item.createdAt))"]
-        if item.updatedAt.timeIntervalSince(item.createdAt) > 1 { parts.append("Edited \(TimeText.relative(item.updatedAt))") }
-        if let who = Describe.source(item.source) { parts.append("Saved by \(who)") }
-        return Text(parts.joined(separator: " · ")).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+        var parts = [String(localized: "Created \(TimeText.short(item.createdAt))")]
+        if item.updatedAt.timeIntervalSince(item.createdAt) > 1 {
+            parts.append(String(localized: "Edited \(TimeText.relative(item.updatedAt))", comment: "“Edited 5 min ago”"))
+        }
+        if let who = Describe.source(item.source) { parts.append(String(localized: "Saved by \(who)")) }
+        return Text(verbatim: parts.joined(separator: " · ")).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
     }
 
     private func linkField(_ item: NotebookItem) -> some View {
@@ -128,7 +130,7 @@ struct NotebookEditor: View {
             TextField("Link", text: Binding(
                 get: { url.wrappedValue ?? "" },
                 set: { url.wrappedValue = $0.isEmpty ? nil : $0 }
-            ), prompt: Text("https://…"))
+            ), prompt: Text(verbatim: "https://…"))
             .textFieldStyle(.plain)
             .font(Theme.Font.body)
             .accessibilityLabel("Link")

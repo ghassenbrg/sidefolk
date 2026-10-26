@@ -82,7 +82,7 @@ final class CompanionWindowController {
         character.look = look
         character.displayName = name
         container.setAccessibilityLabel(name)
-        container.setAccessibilityHelp("Press to talk to \(name).")
+        container.setAccessibilityHelp(String(localized: "Press to talk to \(name)."))
         layoutContent()
     }
 
@@ -254,9 +254,9 @@ final class CompanionWindowController {
 
     static func folkLabel(_ duty: DutyFolk) -> String {
         switch duty {
-        case .tempo: "Tempo: a reminder is coming up"
-        case .scout: "Scout: watching things for you"
-        case .byte: "Byte: an agent or command is running"
+        case .tempo: String(localized: "Tempo: a reminder is coming up")
+        case .scout: String(localized: "Scout: watching things for you")
+        case .byte: String(localized: "Byte: an agent or command is running")
         }
     }
 
@@ -386,7 +386,7 @@ final class CompanionContainerView: NSView {
         registerForDraggedTypes([.fileURL, .URL, .string])
         setAccessibilityRole(.button)
         setAccessibilityLabel("Sidefolk")
-        setAccessibilityHelp("Press to talk to Sidefolk.")
+        setAccessibilityHelp(String(localized: "Press to talk to \("Sidefolk")."))
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }

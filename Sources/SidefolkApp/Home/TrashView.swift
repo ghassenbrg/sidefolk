@@ -17,7 +17,8 @@ struct TrashView: View {
                 RowsCard { ForEach(model.trash) { item in row(item) } }
             }
         }
-        .alert("Delete “\(confirming?.title.clipped(40) ?? "")” forever?", isPresented: Binding(
+        .alert("Delete “\(confirming.map { $0.title.isEmpty ? String(localized: "Untitled") : $0.title.clipped(40) } ?? "")” forever?",
+               isPresented: Binding(
             get: { confirming != nil }, set: { if !$0 { confirming = nil } }
         ), presenting: confirming) { item in
             Button("Delete forever", role: .destructive) { Task { await model.deleteForever(item) } }
@@ -31,7 +32,7 @@ struct TrashView: View {
         HStack(spacing: Theme.Space.m) {
             IconTile(symbol: ItemKindStyle.symbol(item.kind), folk: "pip")
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title.isEmpty ? "Untitled" : item.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(item.title.isEmpty ? String(localized: "Untitled") : item.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
                 Text(detail(item)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
             Spacer(minLength: Theme.Space.s)
@@ -44,10 +45,11 @@ struct TrashView: View {
     }
 
     private func detail(_ item: NotebookItem) -> String {
-        let from = model.collection(id: item.collectionId)?.name ?? "the Notebook"
-        guard let deleted = item.deletedAt else { return "From \(from)" }
+        let from = model.collection(id: item.collectionId).map(NotebookCollections.shownName) ?? String(localized: "the Notebook")
+        guard let deleted = item.deletedAt else { return String(localized: "From \(from)") }
         let left = max(0, 30 - Int(Date().timeIntervalSince(deleted) / 86400))
-        let gone = left == 0 ? "gone today" : left == 1 ? "gone tomorrow" : "gone in \(left) days"
-        return "From \(from) · deleted \(TimeText.relative(deleted)) · \(gone)"
+        let gone = left == 0 ? String(localized: "gone today") : left == 1 ? String(localized: "gone tomorrow") : String(localized: "gone in \(left) days")
+        return String(localized: "From \(from) · deleted \(TimeText.relative(deleted)) · \(gone)",
+                      comment: "“From Inbox · deleted 2 days ago · gone in 28 days”")
     }
 }

@@ -34,13 +34,16 @@ extension AppCoordinator {
 extension AppCoordinator: AskActions {
     func hint(for text: String) -> String? {
         if let title = ask.pendingReminderTitle {
-            guard let when = whenParser.parse(text, now: Date()) else { return "When should I remind you to “\(title.clipped(30))”?" }
-            return "Reminder · \(TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent)) · no AI"
+            guard let when = whenParser.parse(text, now: Date()) else {
+                return String(localized: "When should I remind you to “\(title.clipped(30))”?")
+            }
+            return String(localized: "Reminder · \(TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent)) · no AI")
         }
         if let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections) {
             return parsed.hint
         }
-        return runtime.settings.current.provider.kind == .none ? "Needs AI — not set up yet" : "Ask \(providerLabel)"
+        return runtime.settings.current.provider.kind == .none ? String(localized: "Needs AI — not set up yet")
+            : String(localized: "Ask \(providerLabel)")
     }
 
     var whenParser: WhenParser { WhenParser(calendar: .autoupdatingCurrent, settings: runtime.settings.current) }
@@ -48,10 +51,10 @@ extension AppCoordinator: AskActions {
     var providerLabel: String {
         let provider = runtime.settings.current.provider
         switch provider.kind {
-        case .none: return "no AI"
+        case .none: return String(localized: "no AI")
         case .claudeCode: return "Claude"
         case .codex: return "Codex"
-        case .anthropic: return "Claude (API)"
+        case .anthropic: return String(localized: "Claude (API)")
         case .openAICompatible:
             let model = provider.model.isEmpty ? provider.preset.defaultModel(available: nil) ?? "" : provider.model
             return model.isEmpty ? provider.preset.name : model
@@ -63,9 +66,10 @@ extension AppCoordinator: AskActions {
         // else is a new request and the pending one is dropped.
         if let title = model.pendingReminderTitle, attachment == nil {
             let lower = text.lowercased().trimmingCharacters(in: .punctuationCharacters.union(.whitespaces))
+            // Typed commands are understood in English without AI (D28); the words shown are localized.
             if ["cancel", "never mind", "nevermind", "nvm", "forget it", "no", "stop"].contains(lower) {
                 model.pendingReminderTitle = nil
-                model.add(.info("Okay, no reminder."), caption: text)
+                model.add(.info(String(localized: "Okay, no reminder.")), caption: text)
                 return
             }
             if let when = runtime.intentParser.parseTime(text, now: Date()), when.date > Date(),
@@ -107,7 +111,8 @@ extension AppCoordinator: AskActions {
         for prefix in ["to ", "that "] where title.lowercased().hasPrefix(prefix) { title = String(title.dropFirst(prefix.count)) }
         guard title.count >= 2 else { return nil }
         title = title.prefix(1).uppercased() + title.dropFirst()
-        let label = "Remind me " + TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent)
+        let label = String(localized: "Remind me \(TimeFormat.when(when.date, now: Date(), calendar: .autoupdatingCurrent))",
+                           comment: "A button: “Remind me Tomorrow 09:00”")
         return ReminderGuess(title: title, when: when.date, recurrence: when.recurrence, label: label)
     }
 
@@ -139,12 +144,12 @@ extension AppCoordinator: AskActions {
             case .needsTime(let title, let reason, let important):
                 model.pendingReminderTitle = title
                 model.pendingReminderImportant = important
-                let question = "When should I remind you to “\(title.prefix(1).lowercased() + title.dropFirst())”?"
+                let question = String(localized: "When should I remind you to “\(title.prefix(1).lowercased() + title.dropFirst())”?")
                 model.add(.info([reason, question].compactMap { $0 }.joined(separator: " ")), caption: caption)
                 model.focusRequest += 1
             case .needsTarget(let kind, let becomes):
                 model.pendingWatch = (kind, becomes)
-                model.add(.info("Which address should I watch? For example localhost:3000 or example.com/status."), caption: caption)
+                model.add(.info(String(localized: "Which address should I watch? For example localhost:3000 or example.com/status.")), caption: caption)
                 model.focusRequest += 1
             case .info(let text):
                 model.add(.info(text), caption: caption)
@@ -156,7 +161,7 @@ extension AppCoordinator: AskActions {
 
     func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel) {
         model.busy = true
-        model.phase = thinkHarder ? "Thinking harder…" : "Thinking…"
+        model.phase = Self.thinkingLine(harder: thinkHarder)
         let agentAttachment = attachment.map { a -> AgentAttachment in
             AgentAttachment(text: a.text ?? a.label, source: a.label, untrusted: true)
         }
@@ -174,11 +179,11 @@ extension AppCoordinator: AskActions {
             for await event in handle.events {
                 switch event {
                 case .phase(.thinking):
-                    model.phase = thinkHarder ? "Thinking harder…" : "Thinking…"
+                    model.phase = Self.thinkingLine(harder: thinkHarder)
                 case .phase(.working(let category)):
                     model.phase = Self.phaseLine(category)
                 case .phase(.waitingForApproval):
-                    model.phase = "Waiting for your OK…"
+                    model.phase = String(localized: "Waiting for your OK…")
                 case .toolFinished(let activity, let ok):
                     // Read-only results feed the answer; only changes become cards (DECISIONS D5).
                     if ok, activity.mutates, let card = activity.card {
@@ -207,17 +212,21 @@ extension AppCoordinator: AskActions {
         }
     }
 
+    static func thinkingLine(harder: Bool) -> String {
+        harder ? String(localized: "Thinking harder…") : String(localized: "Thinking…")
+    }
+
     static func phaseLine(_ category: ToolCategory) -> String {
         switch category {
-        case .notes: "Writing it down…"
-        case .memory: "Remembering…"
-        case .time: "Setting the reminder…"
-        case .watch: "Setting up the watch…"
-        case .files: "Looking at your files…"
-        case .web: "Reading the page…"
-        case .system: "Working on it…"
-        case .agents: "Checking on your agents…"
-        case .extensions: "Using an extension…"
+        case .notes: String(localized: "Writing it down…")
+        case .memory: String(localized: "Remembering…")
+        case .time: String(localized: "Setting the reminder…")
+        case .watch: String(localized: "Setting up the watch…")
+        case .files: String(localized: "Looking at your files…")
+        case .web: String(localized: "Reading the page…")
+        case .system: String(localized: "Working on it…")
+        case .agents: String(localized: "Checking on your agents…")
+        case .extensions: String(localized: "Using an extension…")
         }
     }
 
@@ -230,9 +239,9 @@ extension AppCoordinator: AskActions {
         Task {
             do {
                 if let label = try await runtime.executor.undo.undo(activityId) {
-                    model.add(.info("Undone: \(label)."))
+                    model.add(.info(String(localized: "Undone: \(label).")))
                 } else {
-                    model.add(.info("That can't be undone anymore."))
+                    model.add(.info(String(localized: "That can't be undone anymore.")))
                 }
             } catch {
                 model.add(.error(UserFacingError("I couldn't undo that.", detail: String(describing: error)), retryable: false))
@@ -286,7 +295,7 @@ extension AppCoordinator: AskActions {
         let title = text.trimmingCharacters(in: .whitespacesAndNewlines).clipped(80)
         model.pendingReminderTitle = title
         model.pendingReminderImportant = false
-        model.add(.info("When should I remind you to “\(title)”?"), caption: nil)
+        model.add(.info(String(localized: "When should I remind you to “\(title)”?")), caption: nil)
         model.focusRequest += 1
     }
 
@@ -297,9 +306,11 @@ extension AppCoordinator: AskActions {
         func at(_ hour: Int, daysFromNow days: Int) -> Date? {
             calendar.date(byAdding: .day, value: days, to: now).flatMap { calendar.date(bySettingHour: hour, minute: 0, second: 0, of: $0) }
         }
-        var times: [(label: String, date: Date)] = [("In 1 hour", now.addingTimeInterval(3600))]
-        if let evening = at(settings.eveningHour, daysFromNow: 0), evening > now.addingTimeInterval(3600) { times.append(("This evening", evening)) }
-        if let morning = at(settings.morningHour, daysFromNow: 1) { times.append(("Tomorrow", morning)) }
+        var times: [(label: String, date: Date)] = [(String(localized: "In 1 hour"), now.addingTimeInterval(3600))]
+        if let evening = at(settings.eveningHour, daysFromNow: 0), evening > now.addingTimeInterval(3600) {
+            times.append((String(localized: "This evening"), evening))
+        }
+        if let morning = at(settings.morningHour, daysFromNow: 1) { times.append((String(localized: "Tomorrow"), morning)) }
         return times
     }
 
@@ -333,12 +344,12 @@ extension AppCoordinator: AskActions {
             runLocal(.note(kind: .note, text: attachment.text ?? attachment.label, collection: nil), caption: attachment.label, into: model)
         case (.remind, _):
             let title: String = switch attachment.kind {
-            case .url(let url): "Look at \(url.host ?? "the link")"
-            case .file(let file): "Look at \(file.lastPathComponent)"
+            case .url(let url): url.host.map { String(localized: "Look at \($0)") } ?? String(localized: "Look at the link")
+            case .file(let file): String(localized: "Look at \(file.lastPathComponent)")
             case .text: (attachment.text ?? attachment.label).clipped(80)
             }
             model.pendingReminderTitle = title
-            model.add(.info("When should I remind you to “\(title)”?"), caption: attachment.label)
+            model.add(.info(String(localized: "When should I remind you to “\(title)”?")), caption: attachment.label)
             model.focusRequest += 1
         case (.watch, .url(let url)):
             runLocal(.watch(WatchIntent(kind: "url_change", target: url.absoluteString)), caption: attachment.label, into: model)
@@ -348,10 +359,10 @@ extension AppCoordinator: AskActions {
             runLocal(.watch(WatchIntent(kind: folder ? "folder_new_file" : "file_changes", target: file.path)),
                      caption: attachment.label, into: model)
         case (.watch, .text):
-            model.add(.info("I can watch links and files, not text."))
+            model.add(.info(String(localized: "I can watch links and files, not text.")))
         case (.ask, _):
             model.attachment = attachment
-            model.add(.info("What should I do with \(attachment.label)? Type it below."))
+            model.add(.info(String(localized: "What should I do with \(attachment.label)? Type it below.")))
             model.focusRequest += 1
         }
     }

@@ -17,7 +17,7 @@ struct ApprovalCard: View {
                     Text(request.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(riskLabel).font(Theme.Font.eyebrow)
+                Text(riskLabel).font(Theme.Font.eyebrow).textCase(.uppercase)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(riskTint, in: Capsule())
                     .foregroundStyle(Theme.ink)
@@ -29,7 +29,7 @@ struct ApprovalCard: View {
                         .font(Theme.Font.caption).foregroundStyle(Theme.danger)
                 }
                 if request.caller != .user {
-                    Text("Asked by \(askerName)").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                    asker.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 }
                 HStack(spacing: 6) {
                     Button("Not now") { decide(.deny) }
@@ -68,14 +68,14 @@ struct ApprovalCard: View {
         }
     }
 
-    private var askerName: String {
+    private var asker: Text {
         switch request.caller {
         // The name is whatever the other app sent; nothing checks it.
-        case .external(let client): "another app that says it's \(AgentFacingTools.displayName(client))"
-        case .extension(let id): "the extension \(id)"
-        case .agent: "Sidefolk"
-        case .routine: "a routine"
-        case .user: "you"
+        case .external(let client): Text("Asked by another app that says it's \(AgentFacingTools.displayName(client))")
+        case .extension(let id): Text("Asked by the extension \(id)")
+        case .agent: Text("Asked by Sidefolk")
+        case .routine: Text("Asked by a routine")
+        case .user: Text("Asked by you")
         }
     }
 
@@ -85,7 +85,7 @@ struct ApprovalCard: View {
             EmptyView()
         case .command(let command):
             DisclosureGroup(isExpanded: $showDetails) {
-                Text(command).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                Text(verbatim: command).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                     .padding(Theme.Space.s).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
             } label: {
@@ -93,11 +93,12 @@ struct ApprovalCard: View {
             }
             .onAppear { showDetails = true }
         case .url(let url):
-            Text(url).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted).lineLimit(2).textSelection(.enabled)
+            Text(verbatim: url).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted).lineLimit(2).textSelection(.enabled)
         case .paths(let paths):
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(paths.prefix(5), id: \.self) { p in
-                    Text(FolderAccess.displayPath(p)).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                    Text(verbatim: FolderAccess.displayPath(p)).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted)
+                        .lineLimit(1)
                 }
                 if paths.count > 5 { Text("and \(paths.count - 5) more").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint) }
             }
@@ -110,22 +111,24 @@ struct ApprovalCard: View {
             .padding(Theme.Space.s)
             .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
         case .folderAccess(let folder, let write):
-            Text("\(write ? "Read and change" : "Read") files in \(FolderAccess.displayPath(folder))")
+            let path = FolderAccess.displayPath(folder)
+            (write ? Text("Read and change files in \(path)") : Text("Read files in \(path)"))
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
         }
     }
 
-    private var allowTitle: String {
+    private var allowTitle: LocalizedStringKey {
         if case .folderAccess = request.details { return "Allow once" }
         return request.risk == .high ? "Allow ⌘⏎" : "Allow"
     }
 
-    private var riskLabel: String {
-        if case .folderAccess(_, let write) = request.details { return write ? "FOLDER ACCESS · CAN CHANGE FILES" : "FOLDER ACCESS · READ ONLY" }
+    /// Shown in capitals (`textCase`), so each language capitalizes its own words.
+    private var riskLabel: LocalizedStringKey {
+        if case .folderAccess(_, let write) = request.details { return write ? "Folder access · can change files" : "Folder access · read only" }
         return switch request.risk {
-        case .low: "LOW"
-        case .medium: "CHANGES THINGS"
-        case .high: "HIGH RISK"
+        case .low: "Low"
+        case .medium: "Changes things"
+        case .high: "High risk"
         }
     }
 

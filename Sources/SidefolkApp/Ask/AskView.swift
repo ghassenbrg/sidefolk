@@ -51,14 +51,14 @@ struct AskView: View {
             }
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
             headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
-            Text(hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+            Text(verbatim: hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 .padding(.leading, Theme.Space.xs)
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.top, Theme.Space.m)
     }
 
-    private func headerButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
+    private func headerButton(_ symbol: String, help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) { Image(systemName: symbol).imageScale(.small) }
             .buttonStyle(.sf(.plain))
             .help(help)
@@ -85,7 +85,7 @@ struct AskView: View {
             }
             if let attachment = model.attachment {
                 HStack(spacing: 6) {
-                    Chip(text: attachment.label, systemImage: icon(for: attachment))
+                    Chip(verbatim: attachment.label, tone: .accent, systemImage: icon(for: attachment))
                     Button { model.attachment = nil } label: { Image(systemName: "xmark.circle.fill") }
                         .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
                         .accessibilityLabel("Remove attachment")
@@ -108,8 +108,10 @@ struct AskView: View {
             }
             HStack(spacing: 4) {
                 Image(systemName: "return").imageScale(.small)
-                Text(hintLine)
-                    .lineLimit(1)
+                // Two lines at most: the hint stays short in English, and other languages run longer.
+                Text(verbatim: hintLine)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .font(Theme.Font.hint)
             .foregroundStyle(model.hint == nil && !model.busy ? Theme.inkFaint : Theme.inkMuted)
@@ -135,13 +137,13 @@ struct AskView: View {
     }
 
     private var hintLine: String {
-        if let question = model.pendingQuestion { return "Your answer goes to: \(question.title)" }
-        if model.busy { return model.phase ?? "Working…" }
+        if let question = model.pendingQuestion { return String(localized: "Your answer goes to: \(question.title)") }
+        if model.busy { return model.phase ?? String(localized: "Working…") }
         if let hint = model.hint { return hint }
-        if model.pendingReminderTitle != nil { return "When? Try “tomorrow 9am” or “in 2 hours”" }
-        if model.pendingWatch != nil { return "Which address? e.g. localhost:3000 or example.com/status" }
-        if model.attachment != nil { return "Pick what to do, or type what you want" }
-        return "Type something, or drop a file or link on me"
+        if model.pendingReminderTitle != nil { return String(localized: "When? Try “tomorrow 9am” or “in 2 hours”") }
+        if model.pendingWatch != nil { return String(localized: "Which address? e.g. localhost:3000 or example.com/status") }
+        if model.attachment != nil { return String(localized: "Pick what to do, or type what you want") }
+        return String(localized: "Type something, or drop a file or link on me")
     }
 
     private func canWatch(_ a: Attachment) -> Bool {
@@ -169,13 +171,13 @@ private struct RequestView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(spacing: 4) {
-                Text(request.caption ?? "").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
+                Text(verbatim: request.caption ?? "").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
                 Spacer(minLength: 0)
                 Button { model.remove(request) } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
                     .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
                     .opacity(hovering ? 1 : 0)
                     .help("Remove")
-                    .accessibilityLabel("Remove “\(request.caption ?? "this result")”")
+                    .accessibilityLabel(request.caption.map { Text("Remove “\($0)”") } ?? Text("Remove this result"))
             }
             ForEach(request.entries) { entry in
                 EntryView(entry: entry, model: model, retry: request.caption == nil ? nil : { model.retry(request) })
@@ -215,7 +217,7 @@ private struct EntryView: View {
         case .list(let title, let cards):
             SFCard(accent: Theme.folkColor("pip")) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Eyebrow(text: title)
+                    Eyebrow(Text(verbatim: title))
                     if cards.isEmpty {
                         Text("Nothing found.").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     }
@@ -261,7 +263,13 @@ private struct EntryView: View {
                         Button {
                             model.actions?.remind(guess, in: model)
                         } label: {
-                            Label("\(guess.label): \(guess.title)", systemImage: "alarm").lineLimit(1)
+                            Label {
+                                Text("\(guess.label): \(guess.title)",
+                                     comment: "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””")
+                            } icon: {
+                                Image(systemName: "alarm")
+                            }
+                            .lineLimit(1)
                         }
                         .buttonStyle(.sf(.primary))
                     }
@@ -390,15 +398,21 @@ private struct QuestionCard: View {
                     Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
                 if !item.actions.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(item.actions, id: \.id) { action in
-                            Button(action.title) { answer(action.id) }.buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
-                        }
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 6) { options }
+                        VStack(alignment: .leading, spacing: 6) { options }
                     }
                 }
                 Text(item.actions.isEmpty ? "Type your answer above and press Return." : "Or type a different answer above.")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
             }
+        }
+    }
+
+    private var options: some View {
+        ForEach(item.actions, id: \.id) { action in
+            Button { answer(action.id) } label: { Text(verbatim: action.title) }
+                .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
         }
     }
 }
@@ -432,8 +446,8 @@ private struct WhenChips: View {
 
     private func chips(_ times: [(label: String, date: Date)]) -> some View {
         ForEach(times, id: \.label) { time in
-            Button(time.label) { choose(time.date) }.buttonStyle(.sf(.secondary)).fixedSize()
-                .help(TimeText.short(time.date))
+            Button { choose(time.date) } label: { Text(verbatim: time.label) }.buttonStyle(.sf(.secondary)).fixedSize()
+                .help(Text(verbatim: TimeText.short(time.date)))
         }
     }
 

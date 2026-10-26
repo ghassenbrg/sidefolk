@@ -25,32 +25,32 @@ struct ProviderSetup: View {
             EmptyView()
         case .claudeCode:
             if case .ready? = ai.detection?.claude {
-                ModelPicker(title: "Model", detail: "Answers most requests.", value: provider.model, placeholder: "sonnet") { ai.setModel($0) }
-                ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: "opus") {
-                    ai.setSmartModel($0)
+                ModelPicker(title: "Model", detail: "Answers most requests.", value: provider.model, placeholder: Text(verbatim: "sonnet")) {
+                    ai.setModel($0)
                 }
+                ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel,
+                            placeholder: Text(verbatim: "opus")) { ai.setSmartModel($0) }
             }
             PathRow(title: "Custom path to claude", value: provider.claudePath, placeholder: "/usr/local/bin/claude") { ai.setCLIPath($0, codex: false) }
         case .codex:
             if case .ready? = ai.detection?.codex {
                 let models = ai.detection?.codexModels ?? []
-                ModelPicker(title: "Model", detail: "Empty uses Codex's default.", value: provider.model, placeholder: "Codex's default",
+                ModelPicker(title: "Model", detail: "Empty uses Codex's default.", value: provider.model, placeholder: Text("Codex's default"),
                             options: models) { ai.setModel($0) }
                 ModelPicker(title: "Think harder", detail: "Always asks Codex for high reasoning effort; empty keeps the model above.",
-                            value: provider.smartModel, placeholder: "Same model", options: models) { ai.setSmartModel($0) }
+                            value: provider.smartModel, placeholder: Text("Same model"), options: models) { ai.setSmartModel($0) }
             }
             PathRow(title: "Custom path to codex", value: provider.codexPath, placeholder: "/usr/local/bin/codex") { ai.setCLIPath($0, codex: true) }
         case .anthropic:
-            KeyRow(ai: ai, target: .anthropic, prompt: "sk-ant-…")
-            ModelPicker(title: "Model", detail: "Empty uses Sidefolk's default.", value: provider.model, placeholder: AnthropicModel.defaultModel) {
-                ai.setModel($0)
-            }
-            ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: "Same model") {
+            KeyRow(ai: ai, target: .anthropic, prompt: Text(verbatim: "sk-ant-…"))
+            ModelPicker(title: "Model", detail: "Empty uses Sidefolk's default.", value: provider.model,
+                        placeholder: Text(verbatim: AnthropicModel.defaultModel)) { ai.setModel($0) }
+            ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: Text("Same model")) {
                 ai.setSmartModel($0)
             }
         case .preset(let preset):
             if preset == .custom { AddressRow(ai: ai) }
-            if preset.keyNeed != .none { KeyRow(ai: ai, target: .preset(preset), prompt: preset == .custom ? "Optional" : "Paste key") }
+            if preset.keyNeed != .none { KeyRow(ai: ai, target: .preset(preset), prompt: preset == .custom ? Text("Optional") : Text("Paste key")) }
             if preset.keyNeed != .required || ai.keySaved[.preset(preset)] == true {
                 presetModels(preset)
             }
@@ -61,12 +61,13 @@ struct ProviderSetup: View {
         let options = ai.models ?? []
         let suggested = preset.defaultModel(available: nil) ?? ""
         ModelPicker(title: "Model", detail: "Answers most requests.", value: provider.model,
-                    placeholder: suggested.isEmpty ? "Pick a model" : suggested, options: options, loading: ai.loadingModels) { ai.setModel($0) }
+                    placeholder: suggested.isEmpty ? Text("Pick a model") : Text(verbatim: suggested), options: options,
+                    loading: ai.loadingModels) { ai.setModel($0) }
         if let chosen = options.first(where: { $0.id == provider.model }), chosen.usesTools == false {
             Label("This model can't use tools, and Sidefolk acts through them. Pick one that can.", systemImage: "exclamationmark.triangle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger)
         }
-        ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: "Same model",
+        ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: Text("Same model"),
                     options: options, loading: ai.loadingModels) { ai.setSmartModel($0) }
         if let error = ai.modelsError { InlineError(error: error) }
     }
@@ -103,12 +104,12 @@ private struct StatusLine: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
                 Image(systemName: symbol).foregroundStyle(color)
-                Text(status.line).font(Theme.Font.caption).foregroundStyle(Theme.ink)
+                Text(verbatim: status.line).font(Theme.Font.caption).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
                 Spacer(minLength: Theme.Space.s)
                 if let link = status.link {
-                    Link(destination: link.url) { Label(link.title, systemImage: "arrow.up.right") }
+                    Link(destination: link.url) { Label { Text(verbatim: link.title) } icon: { Image(systemName: "arrow.up.right") } }
                         .font(Theme.Font.captionStrong)
                         .fixedSize()
                 }
@@ -147,7 +148,7 @@ private struct CommandLine: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
-            Text(command)
+            Text(verbatim: command)
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(Theme.ink)
                 .textSelection(.enabled)
@@ -170,8 +171,8 @@ private struct CommandLine: View {
 
 /// A field's label on the left, its control on the right, inside an option's setup.
 private struct SetupRow<Control: View>: View {
-    var title: String
-    var detail: String?
+    var title: LocalizedStringKey
+    var detail: LocalizedStringKey?
     @ViewBuilder var control: Control
 
     var body: some View {
@@ -191,10 +192,11 @@ private struct SetupRow<Control: View>: View {
 /// A model name to type, or to pick from what the provider lists (marked when it can't use tools
 /// or runs in a cloud).
 private struct ModelPicker: View {
-    var title: String
-    var detail: String
+    var title: LocalizedStringKey
+    var detail: LocalizedStringKey
     var value: String
-    var placeholder: String
+    /// What an empty field means: a model's name (verbatim) or words.
+    var placeholder: Text
     var options: [ModelOption] = []
     var loading = false
     var commit: (String) -> Void
@@ -208,7 +210,7 @@ private struct ModelPicker: View {
                 } else if !options.isEmpty {
                     Menu {
                         ForEach(options) { option in
-                            Button(Self.label(option)) { commit(option.id) }
+                            Button { commit(option.id) } label: { Text(verbatim: Self.label(option)) }
                         }
                     } label: {
                         Image(systemName: "chevron.up.chevron.down")
@@ -216,7 +218,7 @@ private struct ModelPicker: View {
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
                     .fixedSize()
-                    .accessibilityLabel("Choose a \(title.lowercased()) model")
+                    .accessibilityLabel(Text("Choose from the list for “\(Text(title))”", comment: "A menu of models beside the field it fills"))
                 }
             }
         }
@@ -224,9 +226,9 @@ private struct ModelPicker: View {
 
     static func label(_ option: ModelOption) -> String {
         var notes: [String] = []
-        if option.cloud { notes.append("Cloud") }
-        if option.usesTools == false { notes.append("can't use tools") }
-        return notes.isEmpty ? option.id : "\(option.id) — \(notes.joined(separator: ", "))"
+        if option.cloud { notes.append(String(localized: "Cloud", comment: "A model that runs on Ollama's servers, not this Mac")) }
+        if option.usesTools == false { notes.append(String(localized: "can't use tools")) }
+        return notes.isEmpty ? option.id : "\(option.id) — \(Wording.list(notes))"
     }
 }
 
@@ -234,7 +236,7 @@ private struct ModelPicker: View {
 private struct KeyRow: View {
     var ai: AISettingsModel
     var target: APIKeyTarget
-    var prompt: String
+    var prompt: Text
     @State private var draft = ""
 
     var body: some View {
@@ -248,7 +250,7 @@ private struct KeyRow: View {
         } else {
             SetupRow(title: "API key", detail: target == .preset(.custom) ? "Only if the server needs one." : nil) {
                 HStack(spacing: Theme.Space.s) {
-                    SecureField("API key", text: $draft, prompt: Text(prompt))
+                    SecureField("API key", text: $draft, prompt: prompt)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 170)
                         .onSubmit(save)
@@ -267,14 +269,15 @@ private struct KeyRow: View {
 }
 
 private struct PathRow: View {
-    var title: String
+    var title: LocalizedStringKey
     var value: String
+    /// An example path, shown as it is.
     var placeholder: String
     var commit: (String) -> Void
 
     var body: some View {
         SetupRow(title: title, detail: "Only if it's installed somewhere unusual.") {
-            CommitField(label: title, prompt: placeholder, value: value, width: 220, monospaced: true, commit: commit)
+            CommitField(label: title, prompt: Text(verbatim: placeholder), value: value, width: 220, monospaced: true, commit: commit)
         }
     }
 }
@@ -288,8 +291,8 @@ private struct AddressRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             SetupRow(title: "Address", detail: "The API's base address.") {
-                CommitField(label: "Server address", prompt: "https://api.example.com/v1", value: ai.provider.baseURL, width: 240,
-                            monospaced: true, commit: propose)
+                CommitField(label: "Server address", prompt: Text(verbatim: "https://api.example.com/v1"), value: ai.provider.baseURL,
+                            width: 240, monospaced: true, commit: propose)
             }
             if let error = ai.baseURLError { InlineError(error: error) }
         }
@@ -321,8 +324,7 @@ private struct TestRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            SetupRow(title: "Test", detail: local ? "Sends one tiny request to the model."
-                     : "Sends one tiny request. It counts toward your usage.") {
+            SetupRow(title: "Test", detail: detail) {
                 Button(ai.testing ? "Testing…" : "Test") {
                     // Ends editing in an address or path field, so the test uses what was typed; model
                     // fields save as you type. The test starts once SwiftUI has saved the edit.
@@ -343,5 +345,9 @@ private struct TestRow: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private var detail: LocalizedStringKey {
+        local ? "Sends one tiny request to the model." : "Sends one tiny request. It counts toward your usage."
     }
 }

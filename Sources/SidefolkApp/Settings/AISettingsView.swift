@@ -53,7 +53,7 @@ struct AISettingsView: View {
         }
     }
 
-    private func options(_ title: String, _ list: [AIChoice], footer: String? = nil) -> some View {
+    private func options(_ title: LocalizedStringKey, _ list: [AIChoice], footer: LocalizedStringKey? = nil) -> some View {
         SettingsGroup(title: title, footer: footer) {
             ForEach(list, id: \.self) { option in
                 ProviderOption(option: option, ai: ai)
@@ -64,7 +64,7 @@ struct AISettingsView: View {
     @ViewBuilder private var payload: some View {
         if let preview = ai.contextPreview, !preview.isEmpty {
             ScrollView {
-                Text(preview)
+                Text(verbatim: preview)
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.ink)
                     .textSelection(.enabled)
@@ -103,7 +103,7 @@ private struct ProviderOption: View {
                     }
                     Spacer(minLength: Theme.Space.s)
                     if let badge = status.badge {
-                        Chip(badge.text, tone: badge.tone, systemImage: badge.symbol)
+                        Chip(verbatim: badge.text, tone: badge.tone, systemImage: badge.symbol)
                     }
                 }
                 .padding(.horizontal, Theme.Space.l)

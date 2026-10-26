@@ -56,9 +56,11 @@ struct ExtensionsSettingsView: View {
                     HStack(spacing: Theme.Space.s) {
                         Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         ForEach(model.samples, id: \.folder) { sample in
-                            Button("\(sample.name)…") {
+                            Button {
                                 model.clearExtensionError()
                                 Task { preview = await model.preview(folder: sample.folder) }
+                            } label: {
+                                Text(verbatim: "\(sample.name)…")
                             }
                             .buttonStyle(.sf(.plain))
                         }
@@ -77,8 +79,8 @@ struct ExtensionsSettingsView: View {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.prompt = "Review Extension"
-        panel.message = "Choose an extension folder. You'll see what it can do before anything is installed."
+        panel.prompt = String(localized: "Review Extension")
+        panel.message = String(localized: "Choose an extension folder. You'll see what it can do before anything is installed.")
         Task {
             let response: NSApplication.ModalResponse
             if let window = NSApp.keyWindow { response = await panel.beginSheetModal(for: window) } else { response = panel.runModal() }
@@ -185,10 +187,16 @@ private struct ExtensionRow: View {
 
     private var toolsLine: String? {
         var parts: [String] = []
-        if !ext.toolNames.isEmpty { parts.append("Tools: " + ext.toolNames.joined(separator: ", ")) }
-        if !ext.watcherNames.isEmpty { parts.append("Watchers: " + ext.watcherNames.joined(separator: ", ")) }
+        if !ext.toolNames.isEmpty { parts.append(ExtensionWords.tools(ext.toolNames)) }
+        if !ext.watcherNames.isEmpty { parts.append(ExtensionWords.watchers(ext.watcherNames)) }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
+}
+
+/// What an extension adds, as Settings and the install preview list it.
+private enum ExtensionWords {
+    static func tools(_ names: [String]) -> String { String(localized: "Tools: \(Wording.list(names))") }
+    static func watchers(_ names: [String]) -> String { String(localized: "Watchers: \(Wording.list(names))") }
 }
 
 /// Small caption lines with a leading mark, for permission and warning lists.
@@ -218,7 +226,8 @@ struct InstallPreviewSheet: View {
             HStack(alignment: .top, spacing: Theme.Space.m) {
                 FolkBadge(name: "guard", size: 36)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(preview.isUpdate ? "Update" : "Install") \(preview.name)?").font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                    (preview.isUpdate ? Text("Update \(preview.name)?") : Text("Install \(preview.name)?"))
+                        .font(Theme.Font.heading).foregroundStyle(Theme.ink)
                     Text("Version \(preview.version) · from \(FolderAccess.displayPath(preview.sourceFolder.path))")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1).truncationMode(.middle)
                 }
@@ -257,10 +266,10 @@ struct InstallPreviewSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Eyebrow(text: "It adds")
                     if !preview.toolNames.isEmpty {
-                        Text("Tools: " + preview.toolNames.joined(separator: ", ")).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        Text(ExtensionWords.tools(preview.toolNames)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     }
                     if !preview.watcherNames.isEmpty {
-                        Text("Watchers: " + preview.watcherNames.joined(separator: ", ")).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        Text(ExtensionWords.watchers(preview.watcherNames)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     }
                 }
             }
@@ -270,7 +279,7 @@ struct InstallPreviewSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }.buttonStyle(.sfSecondary).keyboardShortcut(.cancelAction)
-                Button(installing ? "Installing…" : "\(preview.isUpdate ? "Update" : "Install") \(preview.name)") {
+                Button(installing ? "Installing…" : preview.isUpdate ? "Update \(preview.name)" : "Install \(preview.name)") {
                     installing = true
                     Task {
                         error = await model.install(preview)
@@ -325,7 +334,7 @@ struct AddServerSheet: View {
             if !command.trimmingCharacters(in: .whitespaces).isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Eyebrow(text: "Sidefolk will run")
-                    Text(([command] + parsedArguments).joined(separator: " "))
+                    Text(verbatim: ([command] + parsedArguments).joined(separator: " "))
                         .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(Theme.ink)
                         .textSelection(.enabled)
@@ -361,10 +370,11 @@ struct AddServerSheet: View {
         .background(Theme.surface)
     }
 
-    private func field(_ label: String, text: Binding<String>, prompt: String, monospaced: Bool) -> some View {
+    /// `prompt` is an example, shown as it is.
+    private func field(_ label: LocalizedStringKey, text: Binding<String>, prompt: String, monospaced: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-            TextField(label, text: text, prompt: Text(prompt))
+            TextField(label, text: text, prompt: Text(verbatim: prompt))
                 .textFieldStyle(.roundedBorder)
                 .font(monospaced ? .system(size: 12, design: .monospaced) : Theme.Font.body)
                 .accessibilityLabel(label)
@@ -380,7 +390,7 @@ struct AddServerSheet: View {
         let packages = parsedArguments.filter { !$0.hasPrefix("-") }
         guard let package = packages.first else { return nil }
         let versioned = package.dropFirst().contains("@") || package.contains("==")
-        return versioned ? nil : "\(cmd) downloads the newest \(package) every time it starts. Pin a version, like \(package)@1.2.3."
+        return versioned ? nil : String(localized: "\(cmd) downloads the newest \(package) every time it starts. Pin a version, like \(package)@1.2.3.")
     }
 }
 
@@ -444,11 +454,13 @@ struct AgentsGroup: View {
     private func claude(_ s: IntegrationStatus) -> some View {
         AgentCard(
             name: "Claude Code",
-            status: !s.claudeCodeFound ? "Not installed" : s.claudeMCPInstalled ? (s.claudeHooksInstalled ? "Connected, with session taps" : "Connected") : "Not connected",
+            status: !s.claudeCodeFound ? String(localized: "Not installed")
+                : s.claudeMCPInstalled ? (s.claudeHooksInstalled ? String(localized: "Connected, with session taps") : String(localized: "Connected"))
+                : String(localized: "Not connected"),
             connected: s.claudeMCPInstalled,
             found: s.claudeCodeFound,
-            changes: ["Adds a “sidefolk” MCP server to ~/.claude.json, so Claude Code can save notes, set reminders, watch and notify."]
-                + (hooks ? ["Adds hooks to ~/.claude/settings.json, so I notice when a session needs you or finishes."] : []),
+            changes: [String(localized: "Adds a “sidefolk” MCP server to ~/.claude.json, so Claude Code can save notes, set reminders, watch and notify.")]
+                + (hooks ? [String(localized: "Adds hooks to ~/.claude/settings.json, so I notice when a session needs you or finishes.")] : []),
             busy: model.integrationBusy,
             connect: { Task { await model.connectClaudeCode(hooks: hooks) } },
             disconnect: { Task { await model.disconnectClaudeCode() } }
@@ -471,11 +483,11 @@ struct AgentsGroup: View {
 
     private func commandLine(_ s: IntegrationStatus) -> some View {
         AgentCard(
-            name: "sidefolk command",
-            status: s.cliLinked ? "Installed" : "Not installed",
+            name: String(localized: "sidefolk command", comment: "The `sidefolk` command-line tool; keep “sidefolk” as it is"),
+            status: s.cliLinked ? String(localized: "Installed") : String(localized: "Not installed"),
             connected: s.cliLinked,
             found: true,
-            changes: ["Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends."],
+            changes: [String(localized: "Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends.")],
             busy: model.integrationBusy,
             connect: { Task { await model.installCommandLineTool() } },
             disconnect: { Task { await model.removeCommandLineTool() } }
@@ -485,10 +497,11 @@ struct AgentsGroup: View {
     private func codex(_ s: IntegrationStatus) -> some View {
         AgentCard(
             name: "Codex",
-            status: !s.codexFound ? "Not installed" : s.codexMCPInstalled ? "Connected" : "Not connected",
+            status: !s.codexFound ? String(localized: "Not installed")
+                : s.codexMCPInstalled ? String(localized: "Connected") : String(localized: "Not connected"),
             connected: s.codexMCPInstalled,
             found: s.codexFound,
-            changes: ["Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools."],
+            changes: [String(localized: "Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools.")],
             busy: model.integrationBusy,
             connect: { Task { await model.connectCodex() } },
             disconnect: { Task { await model.disconnectCodex() } }
@@ -513,7 +526,7 @@ private struct AgentCard<Extra: View>: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     Text(name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    Chip(status, tone: connected ? .success : .neutral, systemImage: connected ? "checkmark" : nil)
+                    Chip(verbatim: status, tone: connected ? .success : .neutral, systemImage: connected ? "checkmark" : nil)
                 }
                 if found {
                     VStack(alignment: .leading, spacing: 3) {

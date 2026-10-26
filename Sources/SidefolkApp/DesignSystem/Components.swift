@@ -85,23 +85,38 @@ struct SFCard<Content: View>: View {
     }
 }
 
+// Text in the shared components (D28): each takes catalog keys, so a literal at the call site is
+// collected by `make strings` as it is, and `Text` for anything else: `Text(verbatim:)` for names,
+// paths and words already localized where they were made, `Text("…")` beside other text.
+
 /// Small uppercase label above a group.
 struct Eyebrow: View {
-    var text: String
+    var text: Text
     var color: Color = Theme.inkMuted
+
+    init(_ text: Text, color: Color = Theme.inkMuted) {
+        self.text = text
+        self.color = color
+    }
+
+    init(text: LocalizedStringKey, color: Color = Theme.inkMuted) {
+        self.init(Text(text), color: color)
+    }
+
     var body: some View {
-        Text(text.uppercased()).font(Theme.Font.eyebrow).kerning(0.6).foregroundStyle(color)
+        // Upper case in the text's own language, after it is translated.
+        text.textCase(.uppercase).font(Theme.Font.eyebrow).kerning(0.6).foregroundStyle(color)
     }
 }
 
 struct Chip: View {
-    var text: String
+    var text: Text
     var systemImage: String?
     var tint: Color = Theme.accentSoft
     var body: some View {
         HStack(spacing: 4) {
             if let systemImage { Image(systemName: systemImage).imageScale(.small) }
-            Text(text).lineLimit(1)
+            text.lineLimit(1)
         }
         .font(Theme.Font.captionStrong)
         .foregroundStyle(Theme.ink)
@@ -113,13 +128,26 @@ struct Chip: View {
 
 /// A friendly empty state with one line of guidance.
 struct EmptyState: View {
-    var title: String
-    var message: String
+    var title: Text
+    var message: Text
     var systemImage: String
     /// A folk to show instead of the symbol: empty pages are where the family can say hello.
     var folk: String?
     /// Or any picture, such as your companion at work, at its own size.
     var art: NSImage?
+
+    init(title: Text, message: Text, systemImage: String, folk: String? = nil, art: NSImage? = nil) {
+        self.title = title
+        self.message = message
+        self.systemImage = systemImage
+        self.folk = folk
+        self.art = art
+    }
+
+    init(title: LocalizedStringKey, message: LocalizedStringKey, systemImage: String, folk: String? = nil, art: NSImage? = nil) {
+        self.init(title: Text(title), message: Text(message), systemImage: systemImage, folk: folk, art: art)
+    }
+
     var body: some View {
         VStack(spacing: Theme.Space.s) {
             if let art {
@@ -129,8 +157,8 @@ struct EmptyState: View {
             } else {
                 Image(systemName: systemImage).font(.system(size: 28, weight: .light)).foregroundStyle(Theme.inkFaint)
             }
-            Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            Text(message).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).multilineTextAlignment(.center)
+            title.font(Theme.Font.heading).foregroundStyle(Theme.ink).multilineTextAlignment(.center)
+            message.font(Theme.Font.body).foregroundStyle(Theme.inkMuted).multilineTextAlignment(.center)
         }
         .frame(maxWidth: 320)
         .padding(Theme.Space.xxl)
@@ -141,12 +169,9 @@ struct EmptyState: View {
 /// use the same 24-hour words as hints, cards and notifications (`TimeFormat`), so a reminder reads the
 /// same everywhere.
 enum TimeText {
+    /// "Yesterday 18:20", "Today 09:00", "Tue 09:00".
     static func short(_ date: Date, now: Date = Date()) -> String {
-        let cal = Calendar.current
-        if let yesterday = cal.date(byAdding: .day, value: -1, to: now), cal.isDate(date, inSameDayAs: yesterday) {
-            return "Yesterday \(TimeFormat.clock(date, calendar: cal))"
-        }
-        return TimeFormat.when(date, now: now, calendar: cal)
+        TimeFormat.when(date, now: now, calendar: .autoupdatingCurrent)
     }
 
     static func relative(_ date: Date, now: Date = Date()) -> String {
@@ -155,20 +180,20 @@ enum TimeText {
         return f.localizedString(for: date, relativeTo: now)
     }
 
+    /// "42s", "4m 12s", "1h 5m", in the app's language.
     static func duration(_ seconds: TimeInterval) -> String {
         let s = Int(seconds.rounded())
-        if s < 60 { return "\(s)s" }
-        if s < 3600 { return "\(s / 60)m \(s % 60)s" }
-        return "\(s / 3600)h \((s % 3600) / 60)m"
+        let units: Set<Duration.UnitsFormatStyle.Unit> = s < 3600 ? [.minutes, .seconds] : [.hours, .minutes]
+        return Duration.seconds(s).formatted(.units(allowed: units, width: .narrow))
     }
 
     /// Coarse durations for things that run a while: "under a minute", "14 min", "2 h 5 min", "3 days".
     static func span(_ seconds: TimeInterval) -> String {
         let m = Int(seconds / 60)
-        if m < 1 { return "under a minute" }
-        if m < 60 { return "\(m) min" }
-        if m < 48 * 60 { return m % 60 == 0 ? "\(m / 60) h" : "\(m / 60) h \(m % 60) min" }
-        return "\(m / 1440) days"
+        if m < 1 { return String(localized: "under a minute") }
+        if m < 60 { return String(localized: "\(m) min") }
+        if m < 48 * 60 { return m % 60 == 0 ? String(localized: "\(m / 60) h") : String(localized: "\(m / 60) h \(m % 60) min") }
+        return String(localized: "\(m / 1440) days")
     }
 
     /// "09:00" for an hour of the day.
@@ -260,14 +285,18 @@ enum ChipTone {
 }
 
 extension Chip {
-    init(_ text: String, tone: ChipTone, systemImage: String? = nil) {
-        self.init(text: text, systemImage: systemImage, tint: tone.tint)
+    init(_ text: LocalizedStringKey, tone: ChipTone, systemImage: String? = nil) {
+        self.init(text: Text(text), systemImage: systemImage, tint: tone.tint)
+    }
+
+    init(verbatim text: String, tone: ChipTone, systemImage: String? = nil) {
+        self.init(text: Text(verbatim: text), systemImage: systemImage, tint: tone.tint)
     }
 }
 
 /// A section title with its folk, a count, and optional trailing controls.
 struct SectionHeader<Trailing: View>: View {
-    var title: String
+    var title: LocalizedStringKey
     var folk: String?
     var count: Int?
     @ViewBuilder var trailing: Trailing
@@ -277,7 +306,7 @@ struct SectionHeader<Trailing: View>: View {
             if let folk { FolkBadge(name: folk, size: 26) }
             Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
             if let count, count > 0 {
-                Text("\(count)").font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
+                Text(count.formatted()).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
                     .padding(.horizontal, 6).padding(.vertical, 1)
                     .background(Theme.surfaceRaised, in: Capsule())
                     .overlay(Capsule().strokeBorder(Theme.line))
@@ -291,7 +320,7 @@ struct SectionHeader<Trailing: View>: View {
 }
 
 extension SectionHeader where Trailing == EmptyView {
-    init(title: String, folk: String? = nil, count: Int? = nil) {
+    init(title: LocalizedStringKey, folk: String? = nil, count: Int? = nil) {
         self.init(title: title, folk: folk, count: count) { EmptyView() }
     }
 }
@@ -329,9 +358,9 @@ struct RowsCard<Content: View>: View {
 /// One line of muted guidance inside a card when a list is empty, with the step that fills it on
 /// the same line (a separate row under it read as a second, unrelated item).
 struct InlineEmpty: View {
-    var text: String
+    var text: LocalizedStringKey
     var systemImage: String?
-    var actionTitle: String?
+    var actionTitle: LocalizedStringKey?
     var action: () -> Void = {}
 
     var body: some View {
@@ -349,7 +378,8 @@ struct InlineEmpty: View {
     }
 }
 
-/// A short confirmation at the bottom of a window, with an optional undo.
+/// A short confirmation at the bottom of a window, with an optional undo. Its words are final:
+/// the model that shows it words them (`String(localized:)`), names included.
 struct Toast: View {
     var message: String
     var actionTitle: String?
@@ -357,9 +387,9 @@ struct Toast: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.m) {
-            Text(message).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+            Text(verbatim: message).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
             if let actionTitle {
-                Button(actionTitle, action: action).buttonStyle(.sf(.secondary))
+                Button(action: action) { Text(verbatim: actionTitle) }.buttonStyle(.sf(.secondary))
             }
         }
         .padding(.leading, Theme.Space.l)
@@ -373,8 +403,8 @@ struct Toast: View {
 
 /// A large page title with a one-line subtitle, as on every Home section.
 struct PageTitle: View {
-    var title: String
-    var subtitle: String?
+    var title: LocalizedStringKey
+    var subtitle: LocalizedStringKey?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -417,17 +447,27 @@ struct PageScroll<Content: View>: View {
 
 /// A titled group of settings in one card, with an optional note under it.
 struct SettingsGroup<Content: View>: View {
-    var title: String
-    var footer: String?
+    var title: Text
+    var footer: Text?
     @ViewBuilder var content: Content
+
+    init(title: Text, footer: Text? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.footer = footer
+        self.content = content()
+    }
+
+    init(title: LocalizedStringKey, footer: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) {
+        self.init(title: Text(title), footer: footer.map { Text($0) }, content: content)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            Eyebrow(text: title).padding(.leading, Theme.Space.xs)
+            Eyebrow(title).padding(.leading, Theme.Space.xs)
                 .accessibilityAddTraits(.isHeader)
             RowsCard { content }
             if let footer {
-                Text(footer).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                footer.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, Theme.Space.xs)
             }
@@ -437,16 +477,26 @@ struct SettingsGroup<Content: View>: View {
 
 /// A settings row: what it is (and one line of why) on the left, the control on the right.
 struct SettingsRow<Control: View>: View {
-    var title: String
-    var detail: String?
+    var title: Text
+    var detail: Text?
     @ViewBuilder var control: Control
+
+    init(title: Text, detail: Text? = nil, @ViewBuilder control: () -> Control) {
+        self.title = title
+        self.detail = detail
+        self.control = control()
+    }
+
+    init(title: LocalizedStringKey, detail: LocalizedStringKey? = nil, @ViewBuilder control: () -> Control) {
+        self.init(title: Text(title), detail: detail.map { Text($0) }, control: control)
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: Theme.Space.l) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                title.font(Theme.Font.body).foregroundStyle(Theme.ink)
                 if let detail {
-                    Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    detail.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -461,13 +511,23 @@ struct SettingsRow<Control: View>: View {
 
 /// A switch row; the title doubles as the switch's accessibility label.
 struct SettingsToggle: View {
-    var title: String
-    var detail: String?
+    var title: Text
+    var detail: Text?
     @Binding var isOn: Bool
+
+    init(title: Text, detail: Text? = nil, isOn: Binding<Bool>) {
+        self.title = title
+        self.detail = detail
+        _isOn = isOn
+    }
+
+    init(title: LocalizedStringKey, detail: LocalizedStringKey? = nil, isOn: Binding<Bool>) {
+        self.init(title: Text(title), detail: detail.map { Text($0) }, isOn: isOn)
+    }
 
     var body: some View {
         SettingsRow(title: title, detail: detail) {
-            Toggle(title, isOn: $isOn).toggleStyle(.switch).labelsHidden().tint(Theme.accent)
+            Toggle(isOn: $isOn) { title }.toggleStyle(.switch).labelsHidden().tint(Theme.accent)
         }
     }
 }
@@ -475,8 +535,8 @@ struct SettingsToggle: View {
 /// One option of a single choice, with a line of explanation. Several of them in a card make a
 /// radio group whose options can say what they mean.
 struct ChoiceRow: View {
-    var title: String
-    var detail: String?
+    var title: LocalizedStringKey
+    var detail: LocalizedStringKey?
     var selected: Bool
     var action: () -> Void
 
@@ -515,18 +575,35 @@ struct ChoiceRow: View {
 /// unless `live`: then every change is saved at once, for values a button next to it uses
 /// (clicking a button doesn't end editing).
 struct CommitField: View {
-    var label: String
-    var prompt: String = ""
+    var label: Text
+    /// Grey text while empty: words (`Text("Optional")`) or an example (`Text(verbatim: "sk-ant-…")`).
+    var prompt: Text?
     var value: String
-    var width: CGFloat? = 240
-    var monospaced = false
-    var live = false
+    var width: CGFloat?
+    var monospaced: Bool
+    var live: Bool
     var commit: (String) -> Void
     @State private var draft = ""
     @FocusState private var focused: Bool
 
+    init(label: Text, prompt: Text? = nil, value: String, width: CGFloat? = 240, monospaced: Bool = false, live: Bool = false,
+         commit: @escaping (String) -> Void) {
+        self.label = label
+        self.prompt = prompt
+        self.value = value
+        self.width = width
+        self.monospaced = monospaced
+        self.live = live
+        self.commit = commit
+    }
+
+    init(label: LocalizedStringKey, prompt: Text? = nil, value: String, width: CGFloat? = 240, monospaced: Bool = false,
+         live: Bool = false, commit: @escaping (String) -> Void) {
+        self.init(label: Text(label), prompt: prompt, value: value, width: width, monospaced: monospaced, live: live, commit: commit)
+    }
+
     var body: some View {
-        TextField(label, text: $draft, prompt: Text(prompt))
+        TextField(text: $draft, prompt: prompt) { label }
             .labelsHidden()
             .textFieldStyle(.roundedBorder)
             .font(monospaced ? .system(size: 12, design: .monospaced) : Theme.Font.body)
@@ -552,7 +629,7 @@ struct InlineError: View {
 
     var body: some View {
         Label {
-            Text(error.description).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: error.description).fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "exclamationmark.circle.fill")
         }

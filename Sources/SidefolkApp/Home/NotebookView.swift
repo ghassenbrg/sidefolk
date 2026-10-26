@@ -29,12 +29,32 @@ enum ItemKindStyle {
         }
     }
 
-    static func title(_ kind: NotebookItem.Kind) -> String {
+    static func title(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
         switch kind {
         case .note: "Note"
         case .idea: "Idea"
         case .task: "Task"
         case .link: "Link"
+        }
+    }
+
+    /// The new-item button: "New note".
+    static func new(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
+        switch kind {
+        case .note: "New note"
+        case .idea: "New idea"
+        case .task: "New task"
+        case .link: "New link"
+        }
+    }
+
+    /// Under an empty collection: "Write a note".
+    static func write(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
+        switch kind {
+        case .note: "Write a note"
+        case .idea: "Write an idea"
+        case .task: "Write a task"
+        case .link: "Save a link"
         }
     }
 }
@@ -60,20 +80,20 @@ private struct ItemList: View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(collection.name).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1)
+                    Text(name).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1)
                         .accessibilityAddTraits(.isHeader)
-                    Text(countLine).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    countLine.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
                 Spacer(minLength: Theme.Space.s)
                 Button {
                     Task { await model.newItem() }
                 } label: {
-                    Label("New \(ItemKindStyle.title(model.filter.kind ?? .note).lowercased())", systemImage: "square.and.pencil")
+                    Label { Text(ItemKindStyle.new(newKind)) } icon: { Image(systemName: "square.and.pencil") }
                         .labelStyle(.iconOnly)
                 }
                 .buttonStyle(.sf(.secondary))
                 .keyboardShortcut("n", modifiers: .command)
-                .help("New \(ItemKindStyle.title(model.filter.kind ?? .note).lowercased()) (⌘N)")
+                .help(Text("\(String(localized: ItemKindStyle.new(newKind))) (⌘N)", comment: "A button's name, then its shortcut"))
             }
             if collection.kind == .profile {
                 Label("Sidefolk keeps these in mind in every conversation. Change or delete anything.",
@@ -98,9 +118,11 @@ private struct ItemList: View {
         .padding(Theme.Space.l)
     }
 
-    private var countLine: String {
+    private var name: String { NotebookCollections.shownName(collection) }
+
+    private var countLine: Text {
         let n = model.counts[collection.id] ?? 0
-        return n == 0 ? "Empty" : Describe.count(n, "item")
+        return n == 0 ? Text("Empty") : Text("\(n) items")
     }
 
     private var searchField: some View {
@@ -108,7 +130,7 @@ private struct ItemList: View {
             searchBox
             if searching {
                 Picker("Search in", selection: $model.everywhere) {
-                    Text(collection.name).tag(false)
+                    Text(name).tag(false)
                     Text("Everywhere").tag(true)
                 }
                 .pickerStyle(.segmented)
@@ -126,11 +148,11 @@ private struct ItemList: View {
     private var searchBox: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search", text: $model.query, prompt: Text(model.everywhere ? "Search everything" : "Search \(collection.name)"))
+            TextField("Search", text: $model.query, prompt: searchPrompt)
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
                 .focused($searchFocused)
-                .accessibilityLabel(model.everywhere ? "Search everything" : "Search \(collection.name)")
+                .accessibilityLabel(searchPrompt)
             if !model.query.isEmpty {
                 Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.plain)
@@ -144,6 +166,8 @@ private struct ItemList: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line))
     }
 
+    private var searchPrompt: Text { model.everywhere ? Text("Search everything") : Text("Search \(name)") }
+
     @ViewBuilder private var list: some View {
         if model.items.isEmpty {
             VStack(spacing: 0) {
@@ -155,7 +179,7 @@ private struct ItemList: View {
                         .padding(.top, -Theme.Space.l)
                 }
                 if !searching {
-                    Button("Write a \(ItemKindStyle.title(newKind).lowercased())") { Task { await model.newItem() } }
+                    Button { Task { await model.newItem() } } label: { Text(ItemKindStyle.write(newKind)) }
                         .buttonStyle(.sfPrimary)
                         .padding(.top, -Theme.Space.l)
                 }
@@ -203,17 +227,23 @@ private struct ItemList: View {
     private var searching: Bool { !model.query.trimmingCharacters(in: .whitespaces).isEmpty }
     private var newKind: NotebookItem.Kind { model.filter.kind ?? .note }
 
-    private var emptyTitle: String {
-        if searching { return "Nothing matches" }
-        if collection.kind == .profile { return "Nothing about you yet" }
-        return model.filter == .all ? "Nothing here yet" : "No \(model.filter.title.lowercased()) here"
+    private var emptyTitle: Text {
+        if searching { return Text("Nothing matches") }
+        if collection.kind == .profile { return Text("Nothing about you yet") }
+        switch model.filter {
+        case .all: return Text("Nothing here yet")
+        case .notes: return Text("No notes here")
+        case .ideas: return Text("No ideas here")
+        case .tasks: return Text("No tasks here")
+        case .links: return Text("No links here")
+        }
     }
 
-    private var emptyMessage: String {
-        if searching { return model.everywhere ? "Try fewer or different words." : "Try fewer words, or search the whole notebook." }
-        if collection.kind == .profile { return "Tell me things like “I prefer short answers” and I'll keep them here." }
-        if collection.kind == .inbox { return "Anything you save without saying where lands here." }
-        return "Write one here, or ask me to save something to \(collection.name)."
+    private var emptyMessage: Text {
+        if searching { return model.everywhere ? Text("Try fewer or different words.") : Text("Try fewer words, or search the whole notebook.") }
+        if collection.kind == .profile { return Text("Tell me things like “I prefer short answers” and I'll keep them here.") }
+        if collection.kind == .inbox { return Text("Anything you save without saying where lands here.") }
+        return Text("Write one here, or ask me to save something to \(name).")
     }
 
     private var emptyFolk: String {
@@ -242,7 +272,8 @@ private struct ItemRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.s + 2) {
             if item.kind == .task {
-                CheckCircle(checked: item.status == .done, label: item.status == .done ? "Mark “\(displayTitle)” not done" : "Mark “\(displayTitle)” done") {
+                CheckCircle(checked: item.status == .done,
+                            label: item.status == .done ? Text("Mark “\(displayTitle)” not done") : Text("Mark “\(displayTitle)” done")) {
                     Task { await model.toggleDone(item) }
                 }
                 .padding(.top, 1)
@@ -296,7 +327,7 @@ private struct ItemRow: View {
         .accessibilityAction { model.select(item.id) }
     }
 
-    private var displayTitle: String { item.title.isEmpty ? "Untitled" : item.title }
+    private var displayTitle: String { item.title.isEmpty ? String(localized: "Untitled") : item.title }
 
     /// Searching everywhere: where a result from another collection lives.
     private var elsewhere: String? {

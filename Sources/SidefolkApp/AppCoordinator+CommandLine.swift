@@ -19,14 +19,13 @@ extension AppCoordinator {
         }
         NSApp.activate()
         let alert = NSAlert()
-        alert.messageText = "Install the sidefolk command?"
-        alert.informativeText = """
+        alert.messageText = String(localized: "Install the sidefolk command?")
+        alert.informativeText = String(localized: """
             Adds a link at ~/.local/bin/sidefolk so you can type “sidefolk run -- npm test” in a terminal. \
             Nothing else changes. If ~/.local/bin isn't on your PATH, add this line to ~/.zshrc:
-            export PATH="$HOME/.local/bin:$PATH"
-            """
-        alert.addButton(withTitle: "Install")
-        alert.addButton(withTitle: "Cancel")
+            """) + "\nexport PATH=\"$HOME/.local/bin:$PATH\""
+        alert.addButton(withTitle: String(localized: "Install"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         do {
             try fm.createDirectory(atPath: (target as NSString).deletingLastPathComponent, withIntermediateDirectories: true)

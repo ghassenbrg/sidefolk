@@ -7,9 +7,18 @@ import SidefolkCore
 @MainActor @Observable
 final class NowModel {
     struct ReminderGroup: Identifiable {
-        var id: String { title }
-        var title: String
+        enum Day { case today, tomorrow, later }
+        var day: Day
         var reminders: [Reminder]
+        var id: Day { day }
+
+        var title: String {
+            switch day {
+            case .today: String(localized: "Today")
+            case .tomorrow: String(localized: "Tomorrow")
+            case .later: String(localized: "Later")
+            }
+        }
     }
 
     struct RecentEntry: Identifiable {
@@ -72,15 +81,17 @@ final class NowModel {
             let done = r.state == .done
             let at = done ? r.updatedAt : (r.lastFiredAt ?? r.updatedAt)
             entries.append(RecentEntry(id: "r" + r.id, symbol: done ? "checkmark.circle" : "alarm", folk: "tempo",
-                                       title: r.title, detail: done ? "Done" : "Reminded you", date: at))
+                                       title: r.title, detail: done ? String(localized: "Done") : String(localized: "Reminded you"),
+                                       date: at))
         }
         for j in (try? await rt.jobs.recent(limit: 20)) ?? [] where j.state != .running {
             let at = j.endedAt ?? j.startedAt
             let took = TimeText.span(at.timeIntervalSince(j.startedAt))
             let detail = switch j.state {
-            case .succeeded: "Finished after \(took)"
-            case .failed: j.exitCode.map { "Failed with exit code \($0) after \(took)" } ?? "Failed after \(took)"
-            case .cancelled: "Stopped after \(took)"
+            case .succeeded: String(localized: "Finished after \(took)")
+            case .failed: j.exitCode.map { String(localized: "Failed with exit code \(String($0)) after \(took)") }
+                ?? String(localized: "Failed after \(took)")
+            case .cancelled: String(localized: "Stopped after \(took)")
             case .running: ""
             }
             entries.append(RecentEntry(id: "j" + j.id, symbol: j.state == .failed ? "xmark.octagon" : "terminal",
@@ -88,13 +99,13 @@ final class NowModel {
         }
         for w in (try? await rt.watcherStore.all()) ?? [] where w.state == .triggered {
             entries.append(RecentEntry(id: "w" + w.id, symbol: "binoculars", folk: "scout", title: w.title,
-                                       detail: "Spotted the change", date: w.updatedAt))
+                                       detail: String(localized: "Spotted the change"), date: w.updatedAt))
         }
         for s in (try? await rt.sessions.recent(limit: 20)) ?? [] where s.state == .finished {
             let end = s.endedAt ?? s.updatedAt
+            let took = TimeText.span(end.timeIntervalSince(s.startedAt))
             entries.append(RecentEntry(id: "s" + s.id, symbol: "checkmark.seal", folk: "byte",
-                                       title: Describe.session(s), detail: "Finished after \(TimeText.span(end.timeIntervalSince(s.startedAt)))",
-                                       date: end))
+                                       title: Describe.session(s), detail: String(localized: "Finished after \(took)"), date: end))
         }
         return Array(entries.sorted { $0.date > $1.date }.prefix(10))
     }
@@ -109,8 +120,8 @@ final class NowModel {
             let due = r.nextDue ?? r.fireAt
             if due < startOfTomorrow { today.append(r) } else if due < startOfLater { tomorrow.append(r) } else { later.append(r) }
         }
-        return [ReminderGroup(title: "Today", reminders: today), ReminderGroup(title: "Tomorrow", reminders: tomorrow),
-                ReminderGroup(title: "Later", reminders: later)].filter { !$0.reminders.isEmpty }
+        return [ReminderGroup(day: .today, reminders: today), ReminderGroup(day: .tomorrow, reminders: tomorrow),
+                ReminderGroup(day: .later, reminders: later)].filter { !$0.reminders.isEmpty }
     }
 
     // MARK: Actions
@@ -156,9 +167,18 @@ final class NowModel {
 
     func title(for option: Snooze) -> String {
         switch option {
-        case .tenMinutes: "10 minutes"
-        case .oneHour: "1 hour"
-        case .tomorrowMorning: "Tomorrow morning (\(TimeText.hour(runtime.settings.current.morningHour)))"
+        case .tenMinutes: String(localized: "10 minutes")
+        case .oneHour: String(localized: "1 hour")
+        case .tomorrowMorning: String(localized: "Tomorrow morning (\(TimeText.hour(runtime.settings.current.morningHour)))")
+        }
+    }
+
+    /// The same where no Snooze menu says it: "Snooze 10 minutes".
+    func snoozeTitle(for option: Snooze) -> String {
+        switch option {
+        case .tenMinutes: String(localized: "Snooze 10 minutes")
+        case .oneHour: String(localized: "Snooze 1 hour")
+        case .tomorrowMorning: String(localized: "Snooze until tomorrow morning (\(TimeText.hour(runtime.settings.current.morningHour)))")
         }
     }
 

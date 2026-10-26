@@ -77,14 +77,14 @@ extension AppCoordinator {
         guard !previews.isEmpty else { return nil }
         let body = previews.map { p in
             "\(p.integration.title) — \(FolderAccess.displayPath(p.file.path))\n" + p.changes.map { "• \($0)" }.joined(separator: "\n")
-                + (p.backup.map { "\nBackup: \(FolderAccess.displayPath($0.path))" } ?? "")
+                + (p.backup.map { "\n" + String(localized: "Backup: \(FolderAccess.displayPath($0.path))") } ?? "")
         }.joined(separator: "\n\n")
         NSApp.activate()
         let alert = NSAlert()
-        alert.messageText = install ? "Connect Sidefolk to your agents?" : "Disconnect Sidefolk from your agents?"
-        alert.informativeText = body + "\n\nRestart running sessions to pick this up."
-        alert.addButton(withTitle: install ? "Connect" : "Disconnect")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = install ? String(localized: "Connect Sidefolk to your agents?") : String(localized: "Disconnect Sidefolk from your agents?")
+        alert.informativeText = body + "\n\n" + String(localized: "Restart running sessions to pick this up.")
+        alert.addButton(withTitle: install ? String(localized: "Connect") : String(localized: "Disconnect"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         for p in previews {
             do {
@@ -129,9 +129,9 @@ enum AlreadyRunning {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
         let alert = NSAlert()
-        alert.messageText = "Sidefolk is already running"
-        alert.informativeText = "Look for it on your desktop or in the menu bar. This copy will close."
-        alert.addButton(withTitle: "OK")
+        alert.messageText = String(localized: "Sidefolk is already running")
+        alert.informativeText = String(localized: "Look for it on your desktop or in the menu bar. This copy will close.")
+        alert.addButton(withTitle: String(localized: "OK"))
         alert.runModal()
         AppDelegate.quit(prepare: false)
     }

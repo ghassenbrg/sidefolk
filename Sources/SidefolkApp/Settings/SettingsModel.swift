@@ -10,12 +10,12 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .general: "General"
-        case .companion: "Companion"
-        case .ai: "AI"
-        case .agents: "Agents"
-        case .privacy: "Privacy & Permissions"
-        case .extensions: "Extensions"
+        case .general: String(localized: "General")
+        case .companion: String(localized: "Companion")
+        case .ai: String(localized: "AI")
+        case .agents: String(localized: "Agents")
+        case .privacy: String(localized: "Privacy & Permissions", comment: "A Settings tab. Six tabs share one toolbar, so keep it short (“Privacy” will do)")
+        case .extensions: String(localized: "Extensions")
         }
     }
 
@@ -177,7 +177,7 @@ final class SettingsModel {
         } catch let error as UserFacingError {
             folderError = error
         } catch {
-            folderError = UserFacingError("I couldn't add that folder. Nothing changed.", detail: String(describing: error))
+            folderError = UserFacingError("I couldn't add that folder. Nothing was changed.", detail: String(describing: error))
         }
         await loadPermissions()
     }
@@ -219,7 +219,7 @@ final class SettingsModel {
         if let error = await services.exportData(to: url) {
             dataMessage = .failure(error)
         } else {
-            dataMessage = .success("Exported to \(FolderAccess.displayPath(url.path)).")
+            dataMessage = .success(String(localized: "Exported to \(FolderAccess.displayPath(url.path))."))
         }
     }
 
@@ -227,7 +227,7 @@ final class SettingsModel {
         if let error = await services.exportDiagnostics(to: url) {
             dataMessage = .failure(error)
         } else {
-            dataMessage = .success("Diagnostics saved to \(FolderAccess.displayPath(url.path)). They contain no notes or messages.")
+            dataMessage = .success(String(localized: "Diagnostics saved to \(FolderAccess.displayPath(url.path)). They contain no notes or messages."))
         }
     }
 
@@ -247,13 +247,13 @@ final class SettingsModel {
     /// Asks before letting changed tools run: they can do things the user never agreed to.
     func reviewToolChanges(_ ext: ExtensionInfo) async {
         let alert = NSAlert()
-        alert.messageText = "Let \(ext.name) use its changed tools?"
-        alert.informativeText = """
-            These changed or appeared since you installed it: \(ext.pendingTools.joined(separator: ", ")). \
+        alert.messageText = String(localized: "Let \(ext.name) use its changed tools?")
+        alert.informativeText = String(localized: """
+            These changed or appeared since you installed it: \(Wording.list(ext.pendingTools)). \
             Approve only if you expected an update from \(ext.name).
-            """
-        alert.addButton(withTitle: "Approve")
-        alert.addButton(withTitle: "Not now")
+            """)
+        alert.addButton(withTitle: String(localized: "Approve"))
+        alert.addButton(withTitle: String(localized: "Not now"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         extensionError = await services.approveToolChanges(ext.id)
         extensions = await services.extensions()

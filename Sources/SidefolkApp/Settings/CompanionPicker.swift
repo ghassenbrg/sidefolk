@@ -38,14 +38,21 @@ struct CompanionPicker: View {
                 .frame(width: 176, height: 176)
                 .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 .accessibilityLabel("\(settings.companionName), as it looks on your desktop")
-            Picker("Try", selection: $trying) {
-                ForEach(Trial.allCases, id: \.self) { Text($0.title).tag($0) }
+            // Segments while the four names fit under the stage; a menu where a language makes them longer.
+            ViewThatFits(in: .horizontal) {
+                trial.pickerStyle(.segmented).fixedSize()
+                trial.pickerStyle(.menu).fixedSize()
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
             .frame(width: 236)
             .accessibilityLabel("Try a state")
         }
+    }
+
+    private var trial: some View {
+        Picker("Try", selection: $trying) {
+            ForEach(Trial.allCases, id: \.self) { Text($0.title).tag($0) }
+        }
+        .labelsHidden()
     }
 
     private var details: some View {
@@ -55,7 +62,7 @@ struct CompanionPicker: View {
                 Text(CompanionArt.role(chosen)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             }
             labelled("Name") {
-                CommitField(label: "Companion name", prompt: chosen.defaultName, value: settings.companionName, width: 200) { name in
+                CommitField(label: "Companion name", prompt: Text(verbatim: chosen.defaultName), value: settings.companionName, width: 200) { name in
                     let clean = name.isEmpty ? chosen.defaultName : String(name.prefix(30))
                     model.update { $0.companionName = clean }
                 }
@@ -81,7 +88,7 @@ struct CompanionPicker: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func labelled(_ title: String, @ViewBuilder _ control: () -> some View) -> some View {
+    private func labelled(_ title: LocalizedStringKey, @ViewBuilder _ control: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
             control()
@@ -93,7 +100,7 @@ struct CompanionPicker: View {
         CompanionArt.species(chosen).hasOwnAccents || style.accessory != .none
     }
 
-    private var colourDetail: String {
+    private var colourDetail: LocalizedStringKey {
         switch chosen {
         case .sidefolk: "Its eyes, ear lights and what it wears."
         case .spark: "Its headphones, antenna, eyes and what it wears."
@@ -124,7 +131,7 @@ struct CompanionPicker: View {
         }
     }
 
-    static func title(_ accessory: CompanionAccessory) -> String {
+    static func title(_ accessory: CompanionAccessory) -> LocalizedStringKey {
         switch accessory {
         case .none: "Nothing"
         case .scarf: "Scarf"
@@ -135,7 +142,7 @@ struct CompanionPicker: View {
     enum Trial: CaseIterable {
         case idle, thinking, working, sleeping
 
-        var title: String {
+        var title: LocalizedStringKey {
             switch self {
             case .idle: "Idle"
             case .thinking: "Thinking"
@@ -189,7 +196,7 @@ private struct CompanionCard: View {
                 Image(nsImage: image).resizable().scaledToFit().frame(width: 84, height: 84)
                 Text(choice.defaultName).font(selected ? Theme.Font.bodyStrong : Theme.Font.body).foregroundStyle(Theme.ink)
                 Text(CompanionArt.role(choice)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .multilineTextAlignment(.center).lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.center).lineLimit(2, reservesSpace: true).minimumScaleFactor(0.85)
             }
             .padding(.horizontal, Theme.Space.xs)
             .padding(.vertical, Theme.Space.s)
@@ -243,7 +250,7 @@ private struct AccentSwatches: View {
         }
     }
 
-    private func name(_ accent: CompanionAccent) -> String {
+    private func name(_ accent: CompanionAccent) -> LocalizedStringKey {
         switch accent {
         case .aqua: "Aqua"
         case .coral: "Coral"

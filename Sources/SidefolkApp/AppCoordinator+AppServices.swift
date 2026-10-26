@@ -34,7 +34,7 @@ extension AppCoordinator: AppServices {
             _ = try await runtime.scheduler.edit(id: id, title: title, fireAt: date, recurrence: recurrence)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't change that reminder.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't change that reminder."))
         }
     }
 
@@ -74,8 +74,8 @@ extension AppCoordinator: AppServices {
         let summary = preview.report.summary
         var warnings = (summary?.warnings ?? []) + preview.report.warnings
         if let diff = preview.update {
-            warnings.insert("Updates \(diff.fromVersion) to \(diff.toVersion).", at: 0)
-            warnings += diff.addedPermissions.map { "New permission: \($0)" }
+            warnings.insert(String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"), at: 0)
+            warnings += diff.addedPermissions.map { String(localized: "New permission: \($0)") }
         }
         return .success(ExtensionInstallPreview(
             id: manifest.id, name: manifest.name, version: manifest.version, description: manifest.description ?? "",
@@ -88,7 +88,7 @@ extension AppCoordinator: AppServices {
             _ = try await runtime.extensions.install(from: preview.sourceFolder)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't install \(preview.name).")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't install \(preview.name)."))
         }
     }
 
@@ -100,7 +100,7 @@ extension AppCoordinator: AppServices {
             try? MCPServerSecrets.save([:], for: id, store: secrets)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't remove that extension.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't remove that extension."))
         }
     }
 
@@ -109,7 +109,7 @@ extension AppCoordinator: AppServices {
             try await runtime.extensions.approveToolChanges(id: id)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't approve those tools.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't approve those tools."))
         }
     }
 
@@ -120,7 +120,7 @@ extension AppCoordinator: AppServices {
             _ = try await runtime.extensions.addMCPServer(name: name, command: command, arguments: arguments)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't add that MCP server.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't add that MCP server."))
         }
     }
 
@@ -157,7 +157,7 @@ extension AppCoordinator: AppServices {
             try await DataPorter(runtime: runtime).export(to: url)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't export your data.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't export your data."))
         }
     }
 
@@ -172,7 +172,7 @@ extension AppCoordinator: AppServices {
             AppDelegate.quit(prepare: false)
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't delete everything.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't delete everything."))
         }
     }
 
@@ -212,7 +212,7 @@ extension AppCoordinator: AppServices {
             guard ditto.terminationStatus == 0 else { throw UserFacingError("Zipping the diagnostics failed.") }
             return nil
         } catch {
-            return Self.userFacing(error, fallback: "I couldn't export diagnostics.")
+            return Self.userFacing(error, fallback: String(localized: "I couldn't export diagnostics."))
         }
     }
 
@@ -240,6 +240,7 @@ extension AppCoordinator: AppServices {
 
     // MARK: Helpers
 
+    /// `fallback` is already worded in the app's language.
     static func userFacing(_ error: Error, fallback: String) -> UserFacingError {
         if let e = error as? UserFacingError { return e }
         return UserFacingError(verbatim: fallback, detail: String(describing: error))
@@ -251,7 +252,8 @@ extension AppCoordinator: AppServices {
             kind: e.kind == .mcp ? .mcpServer : .sidefolk, enabled: e.enabled, folk: e.folk ?? "byte",
             toolNames: e.tools.map { $0.title.isEmpty ? $0.name : $0.title }, watcherNames: e.watchers.map(\.title),
             permissionLines: e.summary.lines.map(\.text), warnings: e.summary.warnings + (e.hasPendingToolChanges
-                ? ["Some tools changed since you installed it; they're on hold until you approve the change."] : []) + e.toolWarnings,
+                ? [String(localized: "Some tools changed since you installed it; they're on hold until you approve the change.")] : [])
+                + e.toolWarnings,
             sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: bundled,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title })
     }

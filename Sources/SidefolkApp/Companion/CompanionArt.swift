@@ -29,9 +29,9 @@ enum CompanionArt {
     /// One line about who it is, under its name.
     static func role(_ choice: CompanionChoice) -> String {
         switch choice {
-        case .mochi: "Your AI companion"
-        case .sidefolk: "The original robot"
-        case .spark: "A little robot helper"
+        case .mochi: String(localized: "Your AI companion")
+        case .sidefolk: String(localized: "The original robot")
+        case .spark: String(localized: "A little robot helper")
         default: species(choice).folk?.role ?? ""
         }
     }

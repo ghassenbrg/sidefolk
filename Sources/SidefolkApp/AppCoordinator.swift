@@ -211,9 +211,9 @@ final class AppCoordinator {
 
     static func introduction(_ folk: DutyFolk) -> (String, String) {
         switch folk {
-        case .tempo: ("That's Tempo.", "Tempo turns up when a reminder is less than 15 minutes away.")
-        case .scout: ("That's Scout.", "Scout stays out while I'm watching something for you.")
-        case .byte: ("That's Byte.", "Byte keeps me company while an agent or a command is working.")
+        case .tempo: (String(localized: "That's Tempo."), String(localized: "Tempo turns up when a reminder is less than 15 minutes away."))
+        case .scout: (String(localized: "That's Scout."), String(localized: "Scout stays out while I'm watching something for you."))
+        case .byte: (String(localized: "That's Byte."), String(localized: "Byte keeps me company while an agent or a command is working."))
         }
     }
 
@@ -265,12 +265,13 @@ final class AppCoordinator {
         var entries: [StatusItemController.NowEntry] = []
         let now = Date()
         for s in ((try? await runtime.sessions.live()) ?? []) where s.state == .needsYou {
-            entries.append(.init(title: "\(s.agent == "codex" ? "Codex" : "Claude") needs you", detail: s.projectName ?? "a session",
+            entries.append(.init(title: String(localized: "\(s.agent == "codex" ? "Codex" : "Claude") needs you"),
+                                 detail: s.projectName ?? String(localized: "a session"),
                                  symbol: "hand.raised", action: { [weak self] in self?.openSession(s) }))
         }
         let open = await runtime.attention.open().filter { $0.level >= .attention }
         if !open.isEmpty {
-            entries.append(.init(title: "Needs you (\(open.count))", detail: open[0].title.clipped(30), symbol: "tray.full",
+            entries.append(.init(title: String(localized: "Needs you (\(open.count))"), detail: open[0].title.clipped(30), symbol: "tray.full",
                                  action: { [weak self] in self?.openHome() }))
         }
         for r in ((try? await runtime.reminderStore.pending()) ?? []).prefix(3) {
@@ -279,12 +280,13 @@ final class AppCoordinator {
                                  symbol: "alarm", action: { [weak self] in self?.openHome() }))
         }
         for j in ((try? await runtime.jobs.running()) ?? []).prefix(2) {
-            entries.append(.init(title: j.title.clipped(40), detail: "running \(TimeText.duration(now.timeIntervalSince(j.startedAt)))",
+            entries.append(.init(title: j.title.clipped(40),
+                                 detail: String(localized: "running \(TimeText.duration(now.timeIntervalSince(j.startedAt)))", comment: "“running 4m 12s”"),
                                  symbol: "terminal", action: { [weak self] in self?.openHome() }))
         }
         let watching = ((try? await runtime.watcherStore.active()) ?? []).count
         if watching > 0 {
-            entries.append(.init(title: "Watching \(watching) thing\(watching == 1 ? "" : "s")", detail: "Scout is on it",
+            entries.append(.init(title: String(localized: "Watching \(watching) things"), detail: String(localized: "Scout is on it"),
                                  symbol: "binoculars", action: { [weak self] in self?.openHome() }))
         }
         return entries
@@ -389,7 +391,9 @@ final class AppCoordinator {
     private func creditExternal(_ activity: ToolActivity, ok: Bool) {
         guard ok, activity.mutates, case .external(let client) = activity.caller, let card = activity.card else { return }
         let name = AgentFacingTools.displayName(client)
-        let item = AttentionItem(level: .gentle, source: "external:\(client)", title: "\(name): \(card.title)",
+        let item = AttentionItem(level: .gentle, source: "external:\(client)",
+                                 title: String(localized: "\(name): \(card.title)",
+                                               comment: "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””"),
                                  body: card.subtitle, refKind: "credit")
         companion.character.play(.nod)
         bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
@@ -525,17 +529,17 @@ extension AppCoordinator: CompanionDelegate {
         func item(_ title: String, _ action: @escaping () -> Void) {
             menu.addItem(ClosureTarget.item(title, action))
         }
-        item("Ask…") { [weak self] in self?.showAsk() }
-        item("Open Sidefolk") { [weak self] in self?.openHome() }
+        item(String(localized: "Ask…")) { [weak self] in self?.showAsk() }
+        item(String(localized: "Open Sidefolk")) { [weak self] in self?.openHome() }
         menu.addItem(.separator())
         if runtime.settings.current.isQuiet(at: Date()) {
-            item("Turn Quiet Off") { [weak self] in self?.setQuiet(for: nil) }
+            item(String(localized: "Turn Quiet Off")) { [weak self] in self?.setQuiet(for: nil) }
         } else {
-            item("Quiet for 1 Hour") { [weak self] in self?.setQuiet(for: 3600) }
+            item(String(localized: "Quiet for 1 Hour")) { [weak self] in self?.setQuiet(for: 3600) }
         }
-        item("Hide Companion") { [weak self] in self?.showCompanion(false) }
+        item(String(localized: "Hide Companion")) { [weak self] in self?.showCompanion(false) }
         menu.addItem(.separator())
-        item("Settings…") { [weak self] in self?.openSettings() }
+        item(String(localized: "Settings…")) { [weak self] in self?.openSettings() }
         return menu
     }
 
@@ -552,6 +556,7 @@ extension AppCoordinator: CompanionDelegate {
     func companionReceived(_ drop: Attachment) {
         var attachment = drop
         if case .file(let url) = drop.kind {
+            // What the AI reads with the request (D28: text for models stays English).
             attachment.text = "Dropped file: \(url.path)"
         }
         ask.attachment = attachment
