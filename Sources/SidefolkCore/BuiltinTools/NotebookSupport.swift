@@ -22,10 +22,17 @@ public enum NotebookCollections {
         try await notebook.collections().filter { $0.kind != .profile }
     }
 
-    /// The exact name, or one unambiguous whole-word prefix (`NotebookStore.match`), among filable collections.
+    /// The exact name, or one unambiguous whole-word prefix (`NotebookStore.match`), among filable collections;
+    /// failing that, the name without what kind of collection it is ("my shopping list" for "Shopping"), the way
+    /// people name a list to another agent, which can't create one instead.
     static func resolve(_ name: String, notebook: NotebookStore) async throws -> NotebookCollection? {
         if isProfileName(name) { throw profileRefusal }
-        return NotebookStore.match(name, in: try await filable(notebook))
+        let all = try await filable(notebook)
+        if let found = NotebookStore.match(name, in: all) { return found }
+        let bare = name.trimmedText.lowercased()
+            .replacingOccurrences(of: #"^(my|the)\s+"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"\s+(list|project|topic)$"#, with: "", options: .regularExpression)
+        return bare.isEmpty || bare == name.trimmedText.lowercased() ? nil : NotebookStore.match(bare, in: all)
     }
 
     static func isInboxName(_ name: String) -> Bool { name.trimmedText.lowercased() == NotebookStore.inboxName.lowercased() }
@@ -70,9 +77,9 @@ public enum NotebookCollections {
     /// add projects or lists whose names would sit next to the user's own (SECURITY T4).
     static func mayCreate(_ caller: Caller) -> Bool { caller.kind != "external" && caller.kind != "extension" }
 
+    /// The way out is in the message itself: the agent that has to act on it reads the message, not the recovery.
     static func creationRefusal(_ name: String) -> UserFacingError {
-        UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one.",
-                        recovery: "Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
+        UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one. Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
     }
 
     /// The name people see: the Inbox and “About you” in the app's language, any other as it was named.

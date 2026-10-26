@@ -87,14 +87,18 @@ tainted turns need approval showing the full text.
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
 without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create
 a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
-together), notify/`ask_user`, `status`, and non-command watchers (10 active for all clients
-together, each stopping after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so
-parallel calls can't overshoot).
-Reading user data (notes, memories, reminders) asks, with an optional per-client grant that is off
-by default. Files, clipboard, open, web fetch, command watchers, skills, settings and extensions
-are not exposed. Clients pair during one-click connect (per-client key, after confirmation and
-backup). That gives revocation and quotas, not a boundary against same-uid code. Names are shown
-as unverified. Rate limits: 60 calls/min and 4 concurrent per connection, 120 calls/min for all
+together), `reminders.cancel` (only reminders that client name set; others read as not found),
+notify/`ask_user`, `status`, non-command watchers (10 active for all clients together, each stopping
+after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so parallel calls can't
+overshoot), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
+web values and no weather, which would reach a server; a fast one stops within the hour) (D42).
+They see descriptions and schemas written for them (`ExternalToolPolicy.externalSpec`): no
+`collection_kind`, no critical level, no command kinds, `source: metric` only.
+Reading user data (notes, reminders, `agenda.today`) asks every time; an external caller never gets
+"Always". Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,
+settings and extensions are not exposed. There is no per-client key: Connect only adds the MCP entry
+(after confirmation and backup), any same-uid process can connect, and names are self-chosen and
+shown as unverified, so the quotas that matter are the ones shared by all external clients. Rate limits: 60 calls/min and 4 concurrent per connection, 120 calls/min for all
 external clients together, and 600 session/job/status messages a minute for the whole socket.
 External callers can never answer approvals. E9 ("ping me when tests pass") needs only notify or a
 process-exit watcher, not command watchers.
@@ -110,6 +114,28 @@ focused. "Open" uses a stored pid only while it still runs that app (pids get re
 
 *Residual:* data the user lets an agent read goes to that agent's provider. Same-uid code can
 still name its own ancestor, or a known terminal, as a session's host.
+
+**T28 What Sidefolk installs into other agents (M/M), D42.** Connect writes three kinds of things into
+Claude Code's and Codex's folders: the MCP entry (T4), hooks (Claude Code's `settings.json`, Codex's
+`hooks.json`) and the Sidefolk skill (`<agent folder>/skills/sidefolk/SKILL.md`), an instruction file both
+agents load into their models' context.
+- Only on the person's click, after a dialog listing every file, change and backup (D16); never at launch.
+  Each file is backed up before it changes, except a skill exactly as Sidefolk writes it.
+- The skill is fixed text from the app's signed Resources, the same for everyone: nothing personal, no
+  paths, no secrets. It tells agents not to store secrets, not to spam, to respect quiet mode and not to
+  write instructions for other AIs. It grants nothing: whatever it says, Guard, quotas and approvals decide
+  (T4), and a model ignoring it gets exactly what one without it gets.
+- Sidefolk knows its own skill by a marker line, and removes only a marked file, never through a symbolic
+  link: a skill folder linked from a checkout (common) is left alone, so a Disconnect can't delete files in
+  someone's repository, and an install can't write into one.
+- Codex's hooks need Codex's own review: Codex lists new hooks as untrusted and asks the person; Sidefolk
+  never writes Codex's trust hashes (`[hooks.state]` in `config.toml`). Hook payloads are untrusted input
+  (T4: capped, fail open, 2 s budget). `--agent` takes only `claude-code` or `codex`.
+- Sidefolk's own CLI brains skip all of it: Claude Code ignores user settings and runs with skills off, Codex
+  runs with `--ignore-user-config`, no skill list and the `hooks` feature off (T7).
+*Residual:* same-uid code can rewrite the installed skill to steer the person's agents (out of scope, §1;
+Connect shows it as outdated and replaces it); the person's agent may follow the skill's examples a little
+too literally (one notice per event is advice, not a limit: AttentionPolicy's limits are).
 
 **T5 Tool loops (M/M).** 10 steps / 120 s, 25 calls per turn. A third identical call (tool + args)
 stops the run. Routines get a daily run and token budget.
@@ -501,8 +527,9 @@ binary targets or build plugins from dependencies.
   10 min are not yet deduplicated.
 - Watcher floors: web 5 min, site 60 s, command 60 s. Reports (D35): metrics 5 s, weather and web
   values 60 s (still one request a minute per host), command output 10 s; at most 4 live at once,
-  ending after an hour or a day unless the user said "until I stop it". `watch.report` is not offered
-  to external agents: a web value would let them read pages through Sidefolk (T4). A web value or a
+  ending after an hour or a day unless the user said "until I stop it". `watch.report` is offered
+  to external agents for this Mac's metrics only: a web value would let them read pages through
+  Sidefolk (T4). A web value or a
   command's output is untrusted in the tool result (T2). At most 50 active, with per-caller quotas.
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
@@ -519,7 +546,7 @@ titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Voice,
 key lives in the Keychain bound to that host (as T18), requests are never redirected, and the key is
 removed with everything else. Replies stay silent while another app records and in quiet mode.
 
-**T28 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
+**T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
 chose. Found in the 0.1.0 review and fixed:
@@ -694,7 +721,13 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     named in a call is the only one its process can read, and only read for `"read"`; an unshared folder
     asks the agent and a "no" runs nothing; built-in extensions follow the app, keep the person's choice,
     come back off when they gain a permission, and refuse removal; icons are checked as images only.
-15. **Crashes and fail-closed (T28):** huge numbers typed, sent by another agent or stored in a row never trap;
+15. **Other agents (T4, T28):** a fake MCP client over stdio against a whole Sidefolk sees exactly the
+    exposed tools with their external schemas; can't set critical, create a collection, watch localhost,
+    run a command watcher or read a web value; cancels only its own reminders; asks before every read
+    (`agenda.today` denied reads nothing). Connect's skill: installed once, a foreign file backed up and
+    never removed, a linked folder left alone, removed with its empty folder; Codex hooks merged beside the
+    person's own, removed exactly, nothing written to Codex's trust state.
+16. **Crashes and fail-closed (T29):** huge numbers typed, sent by another agent or stored in a row never trap;
     a stopped task's call is refused with every capability still off and nothing done, and is in Activity; a
     policy that can't be read is never replaced by the default; a seeded fuzz of the time and report syntax
     (`NewSyntaxFuzzTests`). End to end (`Tests/SidefolkCoreTests/E2E`): Full access against a page that tries
@@ -723,6 +756,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - Never offers MCP sampling, roots or elicitation to extensions; never downloads or auto-updates
   extension code.
 - Never edits `~/.claude`, `~/.claude.json` or `~/.codex` without a click, a confirmation and a
-  backup.
+  backup; never writes through a linked skill folder, and never answers Codex's hook trust review
+  for the person (T28).
 - Never runs the brain when isolation cannot be verified.
 - Never sends telemetry.

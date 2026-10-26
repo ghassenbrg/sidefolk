@@ -80,6 +80,18 @@ struct AgentConfigFile {
         }
     }
 
+    /// Removes the file, which must still be as read (`changedMeanwhile` otherwise), then its folder when
+    /// asked and nothing else is in it (`rmdir` refuses a folder that isn't empty, so nothing else goes).
+    func delete(expecting snapshot: Snapshot, removingEmptyFolder: Bool) throws {
+        let path = target
+        var st = stat()
+        guard snapshot.text != nil, stat(path, &st) == 0, Self.mtime(st) == snapshot.modified else {
+            throw IntegrationError.changedMeanwhile(url.path)
+        }
+        guard unlink(path) == 0 else { throw IntegrationError.unwritable(url.path, String(cString: strerror(errno))) }
+        if removingEmptyFolder { rmdir((path as NSString).deletingLastPathComponent) }
+    }
+
     private func write(_ data: Data, to path: String, mode: mode_t, exclusive: Bool) throws {
         let fd = open(path, O_WRONLY | O_CREAT | O_NOFOLLOW | O_CLOEXEC | (exclusive ? O_EXCL : O_TRUNC), mode)
         guard fd >= 0 else { throw IntegrationError.unwritable(path, String(cString: strerror(errno))) }

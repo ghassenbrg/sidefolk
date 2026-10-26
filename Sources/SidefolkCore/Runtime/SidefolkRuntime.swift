@@ -104,6 +104,8 @@ public final class SidefolkRuntime: Sendable {
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
         registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) }))
+        registry.register(AgendaTool(scheduler: scheduler, notebook: notebook, watchers: watchers,
+                                     parser: { [settings] in WhenParser(settings: settings.current) }))
         registry.register(AgentFacingTools.make(attention: attention))
         registry.register(AgentFacingTools.status(StatusReader(db: db)))
         registry.register(SkillTools.all(skills))

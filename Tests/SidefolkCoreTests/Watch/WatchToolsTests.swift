@@ -45,8 +45,9 @@ import Testing
     @Test func theToolboxIsWhatWasPromised() {
         let specs = Dictionary(uniqueKeysWithValues: WatchTools.make(engine: engine).map { ($0.spec.name, $0.spec) })
         #expect(Set(specs.keys) == ["watch.create", "watch.command", "watch.report", "watch.list", "watch.stop", "watch.pause", "watch.resume"])
-        for name in ["watch.create", "watch.list", "watch.stop"] { #expect(specs[name]?.external == true, "\(name)") }
-        for name in ["watch.command", "watch.report", "watch.pause", "watch.resume"] { #expect(specs[name]?.external == false, "\(name)") }
+        // watch.report reaches other agents for this Mac's metrics only (ExternalToolPolicy, D42).
+        for name in ["watch.create", "watch.report", "watch.list", "watch.stop"] { #expect(specs[name]?.external == true, "\(name)") }
+        for name in ["watch.command", "watch.pause", "watch.resume"] { #expect(specs[name]?.external == false, "\(name)") }
 
         let create = specs["watch.create"]!
         #expect(create.risk == .low)

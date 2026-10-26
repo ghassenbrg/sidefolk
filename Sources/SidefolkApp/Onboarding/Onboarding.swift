@@ -46,7 +46,7 @@ final class Onboarding {
             Task {
                 let status = await coordinator.integrationStatus()
                 if status.claudeCodeFound { _ = await coordinator.connectClaudeCode(hooks: true) }
-                if status.codexFound, !status.codexMCPInstalled { _ = await coordinator.connectCodex() }
+                if status.codexFound, !status.codexMCPInstalled { _ = await coordinator.connectCodex(hooks: true) }
                 advance(to: .tryReminder)
             }
         case (.agents, _):

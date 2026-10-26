@@ -74,7 +74,7 @@ public struct SessionEvent: Sendable, Equatable {
     }
 }
 
-/// Keeps `AgentSession` rows in step with Claude Code hook events and taps the user when a session
+/// Keeps `AgentSession` rows in step with Claude Code and Codex hook events and taps the user when a session
 /// needs them or finished a long piece of work. Repeated events never repeat the tap.
 public actor SessionTracker {
     /// Brings the session's host app (Terminal, iTerm2, VS Code…) to the front.
@@ -136,13 +136,14 @@ public actor SessionTracker {
             session.detail = e.toolName.map { String(localized: "Using \($0)") }
             session.endedAt = nil
             await withdrawNeedsYou(session.id)
-        case "Notification":
+        case "Notification", "PermissionRequest":
             if e.notificationType == "auth_success" { break }
             // Claude Code repeats "waiting for your input" a minute after it stopped; the
             // finished tap already covered that.
             if e.notificationType == "idle_prompt", before == .idle { break }
             session.state = .needsYou
-            session.detail = e.message ?? String(localized: "Waiting for you")
+            // Codex has no Notification hook: its PermissionRequest is the moment it waits for an approval.
+            session.detail = e.message ?? e.toolName.map { String(localized: "Asks to use \($0)") } ?? String(localized: "Waiting for you")
             if before != .needsYou { await tapNeedsYou(session) }
         case "Stop":
             guard before != .idle else { break }

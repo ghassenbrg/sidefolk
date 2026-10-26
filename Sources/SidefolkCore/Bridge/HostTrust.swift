@@ -10,12 +10,14 @@ import Foundation
 /// from that process, not from the payload. Without such a pid, only the bundle id of a well-known
 /// terminal or editor is kept. Anything else means "Open" does nothing.
 public enum HostTrust {
-    /// Terminals and editors agents commonly run in. Bringing one of these forward is harmless even
-    /// when the event was forged: it is the user's own terminal.
+    /// Terminals, editors and agent apps agents commonly run in. Bringing one of these forward is
+    /// harmless even when the event was forged: it is the user's own terminal or agent app.
     static let knownHosts: Set<String> = [
         "com.apple.Terminal", "com.googlecode.iterm2", "com.mitchellh.ghostty", "dev.warp.Warp-Stable",
         "net.kovidgoyal.kitty", "org.alacritty", "com.github.wez.wezterm",
         "com.microsoft.VSCode", "com.microsoft.VSCodeInsiders", "com.todesktop.230313mzl4w4u92", "dev.zed.Zed",
+        // Claude's desktop app, and Codex's (ChatGPT): sessions they run report them as their host.
+        "com.anthropic.claudefordesktop", "com.openai.codex",
     ]
 
     /// How deep to look for the host above the sender; the helper climbs at most as far.

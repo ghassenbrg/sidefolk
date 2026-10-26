@@ -1,21 +1,31 @@
 import Darwin
 import Foundation
 
-/// `sidefolk hook <EventName>`, run by Claude Code as a command hook. It reads the hook payload
-/// (untrusted, capped), adds which app hosts the session, forwards a small subset to the app and
-/// returns. It never prints, never fails and stays within a 2 s budget: a hook must never block
-/// or slow the user's session (T4).
+/// `sidefolk hook <EventName> [--agent codex]`, run by Claude Code (or Codex, whose hooks take the same
+/// payload) as a command hook. It reads the hook payload (untrusted, capped), adds which app hosts the
+/// session, forwards a small subset to the app and returns. It never prints, never fails and stays
+/// within a 2 s budget: a hook must never block or slow the user's session (T4).
 public enum HookForwarder {
     public static let payloadLimit = 256 * 1024
     public static let budget: TimeInterval = 2
+    /// The agents whose hooks Sidefolk installs; anything else is taken for Claude Code, the default.
+    public static let agents: Set<String> = ["claude-code", "codex"]
 
-    public static func run(event: String, socketPath: String, input: Int32 = STDIN_FILENO,
+    /// The agent named by `--agent <name>` among a hook's arguments after the event name.
+    public static func agent(in arguments: [String]) -> String {
+        guard let flag = arguments.firstIndex(of: "--agent"), arguments.indices.contains(flag + 1),
+              agents.contains(arguments[flag + 1]) else { return "claude-code" }
+        return arguments[flag + 1]
+    }
+
+    public static func run(event: String, agent: String = "claude-code", socketPath: String, input: Int32 = STDIN_FILENO,
                            environment: [String: String] = ProcessInfo.processInfo.environment) async {
         let started = Date()
         guard isEventName(event) else { return }
         let bytes = readInput(input, limit: payloadLimit, deadline: started.addingTimeInterval(budget / 2))
-        guard let e = sessionEvent(name: event, payload: bytes, host: ProcessAncestry.host(environment: environment),
+        guard var e = sessionEvent(name: event, payload: bytes, host: ProcessAncestry.host(environment: environment),
                                    tty: ProcessAncestry.controllingTTY()) else { return }
+        e.agent = agents.contains(agent) ? agent : "claude-code"
         let remaining = budget - Date().timeIntervalSince(started) - 0.1
         guard remaining > 0.1 else { return }
         guard let client = try? await BridgeClient.connect(socketPath: socketPath, client: "sidefolk-hook", timeout: remaining) else { return }
@@ -28,7 +38,7 @@ public enum HookForwarder {
         (1...40).contains(name.count) && name.allSatisfy { $0.isASCII && $0.isLetter }
     }
 
-    /// The event Sidefolk needs from a Claude Code hook payload. A payload cut at the size cap
+    /// The event Sidefolk needs from a Claude Code or Codex hook payload. A payload cut at the size cap
     /// isn't valid JSON, so the leading fields are then picked out of the text.
     static func sessionEvent(name: String, payload: [UInt8], host: HostApp?, tty: String?) -> SessionEvent? {
         let text = String(decoding: payload, as: UTF8.self)

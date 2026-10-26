@@ -33,7 +33,8 @@ extension AppCoordinator {
         #else
         let env: [String: String] = [:]
         #endif
-        return AgentIntegrations(locations: .standard(), helperPath: stableHelperPath, helperEnvironment: env)
+        return AgentIntegrations(locations: .standard(), helperPath: stableHelperPath, helperEnvironment: env,
+                                 skill: ResourceLocator.agentSkill)
     }
 
     func integrationStatus() async -> IntegrationStatus {
@@ -44,30 +45,56 @@ extension AppCoordinator {
             if case .unavailable = state(i) { return false }
             return state(i) != nil
         }
+        func skillNote(_ i: AgentIntegration) -> String? {
+            if case .unavailable(let why) = state(i), available(i == .claudeSkill ? .claudeHooks : .codexHooks) { return why }
+            return nil
+        }
         let claudeFound = (try? ClaudeBinary.locate(configured: runtime.settings.current.provider.claudePath).get()) != nil || available(.claudeMCP)
         return IntegrationStatus(claudeCodeFound: claudeFound, claudeMCPInstalled: installed(.claudeMCP),
+                                 claudeSkillInstalled: installed(.claudeSkill), claudeSkillNote: skillNote(.claudeSkill),
                                  claudeHooksInstalled: installed(.claudeHooks), codexFound: available(.codexMCP),
-                                 codexMCPInstalled: installed(.codexMCP), cliLinked: commandLineToolInstalled,
-                                 helperPath: stableHelperPath)
+                                 codexMCPInstalled: installed(.codexMCP), codexSkillInstalled: installed(.codexSkill),
+                                 codexSkillNote: skillNote(.codexSkill), codexHooksInstalled: installed(.codexHooks),
+                                 cliLinked: commandLineToolInstalled, helperPath: stableHelperPath)
     }
 
+    /// Connect brings the agent to what the card shows: tools and skill in, session updates in or out.
     func connectClaudeCode(hooks: Bool) async -> UserFacingError? {
-        await change([.claudeMCP] + (hooks ? [.claudeHooks] : []), install: true)
+        await change(install: [.claudeMCP] + skill(.claudeSkill) + (hooks ? [.claudeHooks] : []), remove: hooks ? [] : [.claudeHooks])
     }
 
-    func disconnectClaudeCode() async -> UserFacingError? { await change([.claudeMCP, .claudeHooks], install: false) }
-    func connectCodex() async -> UserFacingError? { await change([.codexMCP], install: true) }
-    func disconnectCodex() async -> UserFacingError? { await change([.codexMCP], install: false) }
+    func disconnectClaudeCode() async -> UserFacingError? { await change(remove: [.claudeMCP, .claudeSkill, .claudeHooks]) }
+
+    func connectCodex(hooks: Bool) async -> UserFacingError? {
+        await change(install: [.codexMCP] + skill(.codexSkill) + (hooks ? [.codexHooks] : []), remove: hooks ? [] : [.codexHooks])
+    }
+
+    func disconnectCodex() async -> UserFacingError? { await change(remove: [.codexMCP, .codexSkill, .codexHooks]) }
+
+    /// The skill goes along when this copy of Sidefolk has one and its place isn't someone else's link;
+    /// otherwise the card says why, and the tools connect without it.
+    private func skill(_ integration: AgentIntegration) -> [AgentIntegration] {
+        if case .unavailable = integrations.status(integration).state { return [] }
+        return [integration]
+    }
+
+    /// For MCP clients Sidefolk doesn't connect itself: the command, a snippet per client, the skill's folder.
+    func copySetupInstructions() {
+        installHelperLink()
+        let text = integrations.setupInstructions(skillFolder: ResourceLocator.agentSkillFolder?.path)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
 
     /// Shows exactly what will change in which file (and the backup), then applies it on confirmation.
     /// This is the only path by which Sidefolk edits another agent's configuration (AGENTS.md rules).
-    func change(_ list: [AgentIntegration], install: Bool) async -> UserFacingError? {
+    func change(install: [AgentIntegration] = [], remove: [AgentIntegration] = []) async -> UserFacingError? {
         installHelperLink()
         let tool = integrations
         var previews: [IntegrationPreview] = []
-        for i in list {
+        for (i, installing) in install.map({ ($0, true) }) + remove.map({ ($0, false) }) {
             do {
-                let p = try tool.preview(i, install: install)
+                let p = try tool.preview(i, install: installing)
                 if p.changesSomething { previews.append(p) }
             } catch {
                 return UserFacingError("I couldn't read \(tool.file(for: i).lastPathComponent).", recovery: "Nothing was changed.",
@@ -79,17 +106,18 @@ extension AppCoordinator {
             "\(p.integration.title) — \(FolderAccess.displayPath(p.file.path))\n" + p.changes.map { "• \($0)" }.joined(separator: "\n")
                 + (p.backup.map { "\n" + String(localized: "Backup: \(FolderAccess.displayPath($0.path))") } ?? "")
         }.joined(separator: "\n\n")
+        let connecting = previews.contains(where: \.install)
         NSApp.activate()
         let alert = NSAlert()
-        alert.messageText = install ? String(localized: "Connect Sidefolk to your agents?") : String(localized: "Disconnect Sidefolk from your agents?")
+        alert.messageText = connecting ? String(localized: "Connect Sidefolk to your agents?") : String(localized: "Disconnect Sidefolk from your agents?")
         alert.informativeText = body + "\n\n" + String(localized: "Restart running sessions to pick this up.")
-        alert.addButton(withTitle: install ? String(localized: "Connect") : String(localized: "Disconnect"))
+        alert.addButton(withTitle: connecting ? String(localized: "Connect") : String(localized: "Disconnect"))
         alert.addButton(withTitle: String(localized: "Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         for p in previews {
             do {
-                let result = install ? try tool.install(p.integration) : try tool.remove(p.integration)
-                Log.shared.info("integrations", install ? "installed" : "removed",
+                let result = p.install ? try tool.install(p.integration) : try tool.remove(p.integration)
+                Log.shared.info("integrations", p.install ? "installed" : "removed",
                                 ["integration": p.integration.rawValue, "backup": result.backup?.path ?? ""])
             } catch {
                 return UserFacingError("I couldn't update \(p.file.lastPathComponent).", recovery: "That file was left as it was.",

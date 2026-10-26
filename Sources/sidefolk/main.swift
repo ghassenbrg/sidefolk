@@ -34,11 +34,12 @@ case "run":
     }
 
 case "hook":
-    // Fail open: whatever happens, Claude Code gets exit 0 and no output within the budget.
+    // Fail open: whatever happens, the agent gets exit 0 and no output within the budget.
     signal(SIGPIPE, SIG_IGN)
     DispatchQueue.global().asyncAfter(deadline: .now() + HookForwarder.budget) { exit(0) }
     if arguments.count >= 2 {
-        await HookForwarder.run(event: arguments[1], socketPath: paths.socket.path)
+        await HookForwarder.run(event: arguments[1], agent: HookForwarder.agent(in: Array(arguments.dropFirst(2))),
+                                socketPath: paths.socket.path)
     }
     exit(0)
 

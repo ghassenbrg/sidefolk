@@ -276,17 +276,20 @@ public actor WatcherEngine {
 
     // MARK: Limits
 
-    /// How long a watcher lives (each time it is started): a day for other agents' (T4), else by mode. A report the
-    /// person asked to keep "until I stop it" has no end of its own (nil).
+    /// How long a watcher lives (each time it is started), by mode. A report the person asked to keep "until I stop
+    /// it" has no end of its own (nil). Other agents' watchers end within a day whatever they asked for (T4), and a
+    /// fast report of theirs within the hour like anyone's.
     func lifetime(_ w: Watcher) -> TimeInterval? {
-        if WatchSource.isExternal(w.source) { return WatchLimits.externalExpiry }
+        let own: TimeInterval?
         switch w.mode {
-        case .once: return WatchLimits.onceExpiry
-        case .repeat: return WatchLimits.repeatExpiry
+        case .once: own = WatchLimits.onceExpiry
+        case .repeat: own = WatchLimits.repeatExpiry
         case .report:
-            if w.config["until_stopped"]?.boolValue == true { return nil }
-            return w.intervalS < 60 ? WatchLimits.fastReportLifetime : WatchLimits.reportLifetime
+            if w.config["until_stopped"]?.boolValue == true { own = nil }
+            else { own = w.intervalS < 60 ? WatchLimits.fastReportLifetime : WatchLimits.reportLifetime }
         }
+        guard WatchSource.isExternal(w.source) else { return own }
+        return min(own ?? WatchLimits.externalExpiry, WatchLimits.externalExpiry)
     }
 
     /// At most 50 watchers going, 10 from external agents (all of them together: their names are
