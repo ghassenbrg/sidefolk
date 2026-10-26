@@ -49,7 +49,9 @@ extension AppCoordinator: AppServices {
 
     func openSession(_ session: AgentSession) {
         let platform = runtime.platform
-        Task { _ = await platform.activateApplication(pid: session.hostPid, bundleId: session.hostApp) }
+        // The stored pid only while it still runs the app it was verified as (pids get reused).
+        let host = HostTrust.target(for: session)
+        Task { _ = await platform.activateApplication(pid: host.pid, bundleId: host.bundleId) }
     }
 
     func open(item: NotebookItem) { openHome(item: item) }
