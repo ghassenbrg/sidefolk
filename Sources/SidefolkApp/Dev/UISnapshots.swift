@@ -250,6 +250,12 @@ enum UISnapshots {
         ask.add(.doneWithoutAsking("Rename 3 files in ~/Documents/Invoices", fullAccess: full))
         if full {
             ask.add(.doneWithoutAsking("Move 2 files in ~/Downloads to the Trash", fullAccess: true))
+        } else {
+            // After a note was read, a step that keeps everything on the Mac can be allowed for the request.
+            ask.add(.approval(ApprovalRequest(tool: "applenotes.copy", title: String(localized: "Copy Apple Notes to the notebook"),
+                                              summary: "Copy 50 notes from Apple Notes into “Cooking”, “Travel”", risk: .medium,
+                                              caller: .agent(runId: "r"), details: .none, canAlways: false, tainted: true,
+                                              canAllowForRequest: true)))
         }
         ask.add(.skipped("Read https://example.com/pricing", why: "You didn't answer in time, so this step was skipped."))
         ask.add(.answer("I renamed the invoices. I didn't read the pricing page: you weren't there to say yes, so it's waiting in Now.",
