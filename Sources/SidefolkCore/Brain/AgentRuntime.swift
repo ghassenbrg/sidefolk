@@ -247,7 +247,12 @@ public actor AgentRuntime {
         var outcome = "ok"
         var errorText: String?
         do {
-            var reply = try await choice.backend.run(task, toolbox: toolbox, emit: emit)
+            // The backend runs on its own task so the toolbox can end it: when nobody answered a card
+            // and the person's setting says to stop the task (D37).
+            let backend = choice.backend
+            let work = Task { try await backend.run(task, toolbox: toolbox, emit: emit) }
+            toolbox.onStop { work.cancel() }
+            var reply = try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }
             reply.tainted = toolbox.isTainted
             emit(.reply(reply))
             let answered = Exchange(threadId: threadId, role: .assistant, content: reply.text,
@@ -255,8 +260,9 @@ public actor AgentRuntime {
                                     now: later(than: asked))
             await persist { try await exchanges.append(answered) }
         } catch {
-            let failure = Self.userFacing(error, changed: changedSomething(toolbox), provider: provider)
-            outcome = error is CancellationError ? "cancelled" : "failed"
+            let unanswered = toolbox.stoppedUnanswered && error is CancellationError
+            let failure = Self.userFacing(unanswered ? Self.unansweredStop : error, changed: changedSomething(toolbox), provider: provider)
+            outcome = unanswered ? "unanswered" : error is CancellationError ? "cancelled" : "failed"
             errorText = Redactor.redact(failure.detail ?? failure.message).clipped(300)
             emit(.failed(failure))
             let note = Exchange(threadId: threadId, role: .event, content: failure.message,
@@ -324,6 +330,12 @@ public actor AgentRuntime {
 
     private func changedSomething(_ toolbox: BrainToolbox) -> Bool {
         toolbox.outcomes.contains { $0.isOK && (executor.registry.tool(named: $0.activity.tool)?.spec.mutates ?? true) }
+    }
+
+    /// How a run ends when nobody answered a card and the person's setting says to stop (D37).
+    static var unansweredStop: UserFacingError {
+        UserFacingError("I stopped: you didn't answer in time. Nothing was changed.",
+                        recovery: "The step I asked about is in Now, where you can still run it.", detail: "unanswered")
     }
 
     /// Every failure the user sees is worded for them; raw errors stay in `detail` for diagnostics.

@@ -272,13 +272,10 @@ extension AppCoordinator: AskActions {
         Task {
             // The user's click, but not the user's words when the turn read outside content (SECURITY T2).
             let out = await runtime.executor.execute(name: "notes.save", input: ["text": .string(text)], caller: .user, tainted: tainted)
-            switch out.status {
-            case .ok(let r):
+            if case .ok(let r) = out.status {
                 if let card = r.card { model.add(.result(card, activityId: out.activity.id, undo: out.activity.undoAvailable)) }
-            case .denied(let why):
-                model.add(.error(UserFacingError(verbatim: why), retryable: false))
-            case .failed(let e):
-                model.add(.error(e, retryable: false))
+            } else if let problem = out.problem {
+                model.add(.error(problem, retryable: false))
             }
         }
     }

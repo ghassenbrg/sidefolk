@@ -148,6 +148,7 @@ extension ToolOutcome {
         case .ok(let r): r.text
         case .denied(let why): why
         case .failed(let e): e.message + (e.recovery.map { " " + $0 } ?? "")
+        case .unanswered: modelText
         }
     }
     var failure: UserFacingError? { if case .failed(let e) = status { return e } else { return nil } }

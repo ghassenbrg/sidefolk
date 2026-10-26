@@ -38,7 +38,7 @@ final class ActivityModel {
     var attentionCount: Int { entries.filter(Self.needsAttention).count }
 
     static func needsAttention(_ e: ActivityEntry) -> Bool {
-        [.denied, .blocked, .failed].contains(e.decision)
+        [.denied, .blocked, .failed, .skipped].contains(e.decision)
     }
 
     func reload() async {

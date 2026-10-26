@@ -73,7 +73,8 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
                 usage.limit = "steps"
                 return Self.stopped(.steps, outcomes: outcomes, limits: limits)
             }
-            let remaining = task.deadline.timeIntervalSince(clock.now)
+            // Time spent waiting for the person's answers isn't the run's (D37).
+            let remaining = (toolbox.deadline(from: task.deadline) ?? .distantFuture).timeIntervalSince(clock.now)
             if remaining <= 0 {
                 usage.limit = "deadline"
                 return try Self.timedOut(outcomes, limits: limits)

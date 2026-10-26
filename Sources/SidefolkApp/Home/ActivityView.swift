@@ -125,6 +125,10 @@ struct ActivityView: View {
         case .denied: Chip("Denied", tone: .danger, systemImage: "hand.raised")
         case .blocked: Chip("Blocked", tone: .danger, systemImage: "nosign")
         case .failed: Chip("Failed", tone: .danger, systemImage: "exclamationmark.triangle")
+        // Done without asking: the mode answered for the person (D37), so it never looks like they did.
+        case .autoMode: Chip("Auto", tone: .accent, systemImage: "bolt")
+        case .fullAccess: Chip("Full access", tone: .warning, systemImage: "bolt.fill")
+        case .skipped: Chip("Skipped", tone: .warning, systemImage: "clock.badge.xmark")
         }
     }
 

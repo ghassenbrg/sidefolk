@@ -223,7 +223,7 @@ enum SampleData {
         try await rt.permissions.addGrant(move)
         try await rt.permissions.addGrant(Grant(tool: "shell.run", scope: ["command": "npm test"], callerKind: "agent", now: ago(60 * 30)))
         try await rt.permissions.addGrant(Grant(tool: "web.fetch", scope: ["host": "github.com"], callerKind: "external", now: ago(60 * 24)))
-        try await rt.permissions.setPolicy(GuardPolicy(mode: .standard, disabled: [.clipboard]))
+        try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 
         return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)
     }

@@ -37,6 +37,13 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         self.tainted = tainted
         self.createdAt = createdAt
     }
+
+    /// Whether the person reading `other` was asked exactly this: same tool, same caller, same
+    /// words and details (they come from the arguments), same risk and the same warning.
+    public func asksTheSame(as other: ApprovalRequest) -> Bool {
+        tool == other.tool && caller == other.caller && title == other.title && summary == other.summary
+            && details == other.details && risk == other.risk && tainted == other.tainted
+    }
 }
 
 public enum ApprovalDecision: Sendable, Hashable {

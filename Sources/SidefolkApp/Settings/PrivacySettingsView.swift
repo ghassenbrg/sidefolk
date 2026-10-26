@@ -177,12 +177,12 @@ struct PrivacySettingsView: View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
             SettingsGroup(title: "Guard") {
                 ChoiceRow(title: "Standard", detail: "Asks once for each kind of action and remembers “Always allow”.",
-                          selected: model.policy.mode == .standard) {
-                    Task { await model.setPolicy { $0.mode = .standard } }
+                          selected: model.policy.mode == .askOncePerKind) {
+                    Task { await model.setPolicy { $0.mode = .askOncePerKind } }
                 }
                 ChoiceRow(title: "Cautious", detail: "Asks every time something would change outside Sidefolk, even if you allowed it before.",
-                          selected: model.policy.mode == .cautious) {
-                    Task { await model.setPolicy { $0.mode = .cautious } }
+                          selected: model.policy.mode == .askEveryTime) {
+                    Task { await model.setPolicy { $0.mode = .askEveryTime } }
                 }
             }
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes.") {
