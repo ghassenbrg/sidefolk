@@ -26,7 +26,7 @@ enum DropAction { case save, remind, watch, ask }
 struct AskEntry: Identifiable, Equatable {
     enum Content: Equatable {
         case result(ResultCard, activityId: String?, undo: Bool)
-        case answer(String, canThinkHarder: Bool)
+        case answer(String, canThinkHarder: Bool, tainted: Bool)
         case list(title: String, cards: [ResultCard])
         case approval(ApprovalRequest)
         case error(UserFacingError, retryable: Bool)
@@ -61,7 +61,8 @@ protocol AskActions: AnyObject {
     func undo(activityId: String, in model: AskModel)
     func answer(approval: ApprovalRequest, decision: ApprovalDecision)
     func open(card: ResultCard)
-    func saveAnswer(_ text: String, in model: AskModel)
+    /// `tainted`: the words came from a turn that read outside content.
+    func saveAnswer(_ text: String, tainted: Bool, in model: AskModel)
     func saveAsTask(_ text: String, in model: AskModel)
     func remind(_ guess: ReminderGuess, in model: AskModel)
     func answer(question: AttentionItem, actionId: String)

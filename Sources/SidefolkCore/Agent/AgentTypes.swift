@@ -9,9 +9,12 @@ public enum AgentPhase: Sendable, Hashable {
 public struct AgentReply: Sendable {
     public var text: String
     public var cards: [ResultCard]
-    public init(text: String, cards: [ResultCard] = []) {
+    /// The turn read outside content, so the words may echo it (saving them keeps them marked as the agent's).
+    public var tainted: Bool
+    public init(text: String, cards: [ResultCard] = [], tainted: Bool = false) {
         self.text = text
         self.cards = cards
+        self.tainted = tainted
     }
 }
 

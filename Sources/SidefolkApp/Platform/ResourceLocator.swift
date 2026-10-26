@@ -20,7 +20,7 @@ enum ResourceLocator {
 
 /// Environment values for a user-added MCP server live in one Keychain item, "mcp.<server>", as JSON.
 nonisolated enum MCPServerSecrets {
-    static func key(server: String) -> String { "mcp.\(server)" }
+    static func key(server: String) -> String { SecretKey.mcpServer(server) }
 
     static func environment(for server: String, store: any SecretStore) -> [String: String] {
         guard let secret = try? store.get(key(server: server)),

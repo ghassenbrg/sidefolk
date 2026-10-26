@@ -183,7 +183,8 @@ extension AppCoordinator: AskActions {
 
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !answer.isEmpty {
-                        model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != ""),
+                        model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != "",
+                                          tainted: reply.tainted),
                                   caption: caption())
                     }
                 case .failed(let error):
@@ -252,9 +253,10 @@ extension AppCoordinator: AskActions {
         openHome()
     }
 
-    func saveAnswer(_ text: String, in model: AskModel) {
+    func saveAnswer(_ text: String, tainted: Bool, in model: AskModel) {
         Task {
-            let out = await runtime.executor.execute(name: "notes.save", input: ["text": .string(text)], caller: .user)
+            // The user's click, but not the user's words when the turn read outside content (SECURITY T2).
+            let out = await runtime.executor.execute(name: "notes.save", input: ["text": .string(text)], caller: .user, tainted: tainted)
             switch out.status {
             case .ok(let r):
                 if let card = r.card { model.add(.result(card, activityId: out.activity.id, undo: out.activity.undoAvailable)) }

@@ -2,7 +2,7 @@ import SidefolkCore
 import SwiftUI
 
 /// Guard's question to the user. Shows exactly what would happen (never the model's wording),
-/// stays inert for a moment so a stray keypress can't approve it, and high risk needs ⌘⏎.
+/// stays inert for a moment so a stray keypress can't approve it; high risk needs ⌘⏎, other apps a click.
 struct ApprovalCard: View {
     var request: ApprovalRequest
     var decide: (ApprovalDecision) -> Void
@@ -56,10 +56,12 @@ struct ApprovalCard: View {
         let button = Button(allowTitle) { decide(.allowOnce) }
             .buttonStyle(.sf(request.risk == .high ? .destructive : .primary))
             .disabled(!armed)
-        // Return approves only your own and Sidefolk's medium requests; other agents need a click (or ⌘⏎ for high).
-        if request.risk == .high {
+        // Keys approve only your own and Sidefolk's requests (Return, or ⌘⏎ for high risk). Other apps and
+        // extensions always need a click: they may ask while you are typing somewhere else.
+        let ours = request.caller.kind == "user" || request.caller.kind == "agent"
+        if ours, request.risk == .high {
             button.keyboardShortcut(.return, modifiers: .command)
-        } else if request.caller.kind == "user" || request.caller.kind == "agent" {
+        } else if ours {
             button.keyboardShortcut(.defaultAction)
         } else {
             button
@@ -68,7 +70,8 @@ struct ApprovalCard: View {
 
     private var askerName: String {
         switch request.caller {
-        case .external(let client): "\(AgentFacingTools.displayName(client)) (another app)"
+        // The name is whatever the other app sent; nothing checks it.
+        case .external(let client): "another app that says it's \(AgentFacingTools.displayName(client))"
         case .extension(let id): "the extension \(id)"
         case .agent: "Sidefolk"
         case .routine: "a routine"

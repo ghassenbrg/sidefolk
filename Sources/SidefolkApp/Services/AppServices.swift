@@ -21,6 +21,8 @@ struct ExtensionInfo: Identifiable, Hashable {
     var sandboxed: Bool
     var lastError: String?
     var bundled: Bool
+    /// Tools that changed or appeared since the user approved the extension; on hold until approved again.
+    var pendingTools: [String] = []
 }
 
 /// What installing an extension would allow, shown before the user confirms.
@@ -103,6 +105,8 @@ protocol AppServices: AnyObject {
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError?
     func setExtensionEnabled(_ id: String, _ enabled: Bool) async
     func uninstallExtension(_ id: String) async -> UserFacingError?
+    /// Lets the changed tools of an extension run (after the user read what changed).
+    func approveToolChanges(_ id: String) async -> UserFacingError?
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError?
     /// Sample extensions shipped with the app that aren't installed yet.
     func sampleExtensions() async -> [(name: String, folder: URL)]

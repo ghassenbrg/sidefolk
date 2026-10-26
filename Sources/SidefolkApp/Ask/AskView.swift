@@ -171,8 +171,8 @@ private struct EntryView: View {
                     }
                 }
             }
-        case .answer(let text, let canThinkHarder):
-            AnswerCard(text: text, canThinkHarder: canThinkHarder, model: model)
+        case .answer(let text, let canThinkHarder, let tainted):
+            AnswerCard(text: text, canThinkHarder: canThinkHarder, tainted: tainted, model: model)
         case .approval(let request):
             ApprovalCard(request: request) { decision in model.actions?.answer(approval: request, decision: decision) }
         case .error(let error, let retryable):
@@ -206,7 +206,7 @@ private struct EntryView: View {
                     }
                     HStack(spacing: 6) {
                         Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary))
-                        Button("Save as note") { model.actions?.saveAnswer(text, in: model) }.buttonStyle(.sf(.secondary))
+                        Button("Save as note") { model.actions?.saveAnswer(text, tainted: false, in: model) }.buttonStyle(.sf(.secondary))
                         Spacer(minLength: 0)
                         Button("Set up AI…") { model.actions?.openSettingsAI() }.buttonStyle(.sf(.plain))
                     }
@@ -275,6 +275,7 @@ struct ResultCardView<Actions: View>: View {
 private struct AnswerCard: View {
     var text: String
     var canThinkHarder: Bool
+    var tainted: Bool
     var model: AskModel
     @State private var expanded = false
 
@@ -293,7 +294,7 @@ private struct AnswerCard: View {
                     if text.count > 400 {
                         Button(expanded ? "Less" : "More") { expanded.toggle() }.buttonStyle(.sf(.secondary))
                     }
-                    Button("Save") { model.actions?.saveAnswer(text, in: model) }.buttonStyle(.sf(.secondary))
+                    Button("Save") { model.actions?.saveAnswer(text, tainted: tainted, in: model) }.buttonStyle(.sf(.secondary))
                     Button("Copy") {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(text, forType: .string)

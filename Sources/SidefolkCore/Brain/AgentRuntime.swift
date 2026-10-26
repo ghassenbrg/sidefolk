@@ -218,7 +218,8 @@ public actor AgentRuntime {
         var outcome = "ok"
         var errorText: String?
         do {
-            let reply = try await choice.backend.run(task, toolbox: toolbox, emit: emit)
+            var reply = try await choice.backend.run(task, toolbox: toolbox, emit: emit)
+            reply.tainted = toolbox.isTainted
             emit(.reply(reply))
             let answered = Exchange(threadId: threadId, role: .assistant, content: reply.text,
                                     meta: ExchangeMeta.assistant(runId: runId, cards: reply.cards, tainted: toolbox.isTainted),

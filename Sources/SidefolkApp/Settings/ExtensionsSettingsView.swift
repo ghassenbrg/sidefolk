@@ -155,13 +155,24 @@ private struct ExtensionRow: View {
                 if let tools = toolsLine {
                     Text(tools).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).fixedSize(horizontal: false, vertical: true)
                 }
+                // Tools on hold for approval, or a manifest and program that disagree: worth knowing, not errors.
+                ForEach(ext.warnings, id: \.self) { warning in
+                    Label(warning, systemImage: "exclamationmark.triangle")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                }
                 if let error = ext.lastError {
                     Label(error, systemImage: "exclamationmark.circle.fill")
                         .font(Theme.Font.caption).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
                 }
-                if !ext.bundled {
-                    Button("Uninstall…", action: uninstall).buttonStyle(.sf(.secondary)).padding(.top, 2)
+                HStack(spacing: Theme.Space.s) {
+                    if !ext.pendingTools.isEmpty {
+                        Button("Review changed tools…") { Task { await model.reviewToolChanges(ext) } }.buttonStyle(.sf(.primary))
+                    }
+                    if !ext.bundled {
+                        Button("Uninstall…", action: uninstall).buttonStyle(.sf(.secondary))
+                    }
                 }
+                .padding(.top, 2)
             }
             Spacer(minLength: Theme.Space.s)
             Toggle("Enable \(ext.name)", isOn: Binding(get: { ext.enabled }, set: { on in Task { await model.setEnabled(ext, on) } }))

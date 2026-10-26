@@ -33,14 +33,17 @@ final class EnvironmentMonitor {
             MainActor.assumeIsolated { self?.setAway(true) }
         })
         let dnc = DistributedNotificationCenter.default()
+        // Any process can post these two, so they are only a hint: the window server has the answer.
         observers.append(dnc.addObserver(forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
+                guard ScreenLock.isLocked else { return }
                 self?.isLocked = true
                 self?.setAway(true)
             }
         })
         observers.append(dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
+                guard !ScreenLock.isLocked else { return }
                 self?.isLocked = false
                 self?.setAway(false)
             }

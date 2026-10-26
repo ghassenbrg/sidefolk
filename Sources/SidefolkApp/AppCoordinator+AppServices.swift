@@ -102,6 +102,15 @@ extension AppCoordinator: AppServices {
         }
     }
 
+    func approveToolChanges(_ id: String) async -> UserFacingError? {
+        do {
+            try await runtime.extensions.approveToolChanges(id: id)
+            return nil
+        } catch {
+            return Self.userFacing(error, fallback: "I couldn't approve those tools.")
+        }
+    }
+
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError? {
         let preview = await runtime.extensions.previewMCPServer(name: name, command: command, arguments: arguments)
         if let problem = preview.errors.first { return UserFacingError(problem) }
@@ -217,9 +226,8 @@ extension AppCoordinator: AppServices {
     func deleteAllData() async -> UserFacingError? {
         do {
             _ = await runtime.stop()
-            try await DataPorter(runtime: runtime).deleteEverything()
-            for key in [SecretKey.anthropicAPIKey, SecretKey.openAIAPIKey] { try? secrets.delete(key) }
-            for ext in (try? await runtime.extensionStore.all()) ?? [] { try? MCPServerSecrets.save([:], for: ext.id, store: secrets) }
+            // Also removes the provider keys and every extension's Keychain item (read before the rows go).
+            try await DataPorter(runtime: runtime).deleteEverything(secrets: secrets)
             _ = LoginItem.set(false)
             UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier ?? "app.sidefolk")
             Log.shared.info("app", "all data deleted")
@@ -240,7 +248,8 @@ extension AppCoordinator: AppServices {
             try fm.createDirectory(at: staging, withIntermediateDirectories: true)
             defer { try? fm.removeItem(at: staging) }
             if fm.fileExists(atPath: runtime.paths.logs.path) {
-                try fm.copyItem(at: runtime.paths.logs, to: staging.appendingPathComponent("Logs"))
+                // Each line redacted again on the way out (paths, tokens), not the raw files.
+                try Log.copySanitized(from: runtime.paths.logs, to: staging.appendingPathComponent("Logs"))
             }
             var s = runtime.settings.current
             s.companionName = "(hidden)"
@@ -304,8 +313,9 @@ extension AppCoordinator: AppServices {
             kind: e.kind == .mcp ? .mcpServer : .sidefolk, enabled: e.enabled, folk: e.folk ?? "byte",
             toolNames: e.tools.map { $0.title.isEmpty ? $0.name : $0.title }, watcherNames: e.watchers.map(\.title),
             permissionLines: e.summary.lines.map(\.text), warnings: e.summary.warnings + (e.hasPendingToolChanges
-                ? ["Some tools changed since you installed it; they're on hold until you approve the change."] : []),
-            sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: bundled)
+                ? ["Some tools changed since you installed it; they're on hold until you approve the change."] : []) + e.toolWarnings,
+            sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: bundled,
+            pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title })
     }
 
     /// Sample extensions shipped inside the app.

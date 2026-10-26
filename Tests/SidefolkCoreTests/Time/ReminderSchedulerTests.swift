@@ -458,14 +458,17 @@ import Testing
         let r = try await scheduler.create(title: "Soon", at: Date().addingTimeInterval(0.4))
 
         var state = Reminder.State.scheduled
+        var shown: [String] = []
+        // The reminder is marked fired a moment before its notice is saved: wait for both.
         for _ in 0..<60 {
             try await Task.sleep(for: .milliseconds(100))
             state = try await ReminderStore(db).reminder(id: r.id)?.state ?? .scheduled
-            if state == .fired { break }
+            shown = try await AttentionStore(db).recent().map(\.title)
+            if state == .fired, !shown.isEmpty { break }
         }
         await scheduler.stop()
         #expect(state == .fired)
-        #expect(try await AttentionStore(db).recent().map(\.title) == ["Soon"])
+        #expect(shown == ["Soon"])
     }
 
     @Test func creatingAnEarlierReminderRearmsTheTimer() async throws {

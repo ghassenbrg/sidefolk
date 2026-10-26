@@ -178,10 +178,11 @@ public struct ToolContext: Sendable {
     }
 
     /// Where something a tool writes came from. Sidefolk's own agent acting in a clean turn acts for
-    /// the user ("user:agent"); in a tainted turn its writes stay marked as the agent's.
+    /// the user ("user:agent"); in a tainted turn its writes stay marked as the agent's, and so does
+    /// the user saving an answer such a turn wrote (the words are still the agent's).
     public var provenanceTag: String {
         switch caller {
-        case .user: "user"
+        case .user: tainted ? "agent" : "user"
         case .agent: tainted ? "agent" : "user:agent"
         case .routine: "routine"
         case .external(let client): "external:\(client)"

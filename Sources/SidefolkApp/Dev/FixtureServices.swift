@@ -106,6 +106,7 @@ final class FixtureServices: AppServices {
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? { nil }
     func setExtensionEnabled(_ id: String, _ enabled: Bool) async {}
+    func approveToolChanges(_ id: String) async -> UserFacingError? { nil }
     func uninstallExtension(_ id: String) async -> UserFacingError? { nil }
 
     func installCommandLineTool() async -> UserFacingError? { nil }

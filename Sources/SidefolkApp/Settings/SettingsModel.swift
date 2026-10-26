@@ -344,6 +344,21 @@ final class SettingsModel {
         extensions = await services.extensions()
     }
 
+    /// Asks before letting changed tools run: they can do things the user never agreed to.
+    func reviewToolChanges(_ ext: ExtensionInfo) async {
+        let alert = NSAlert()
+        alert.messageText = "Let \(ext.name) use its changed tools?"
+        alert.informativeText = """
+            These changed or appeared since you installed it: \(ext.pendingTools.joined(separator: ", ")). \
+            Approve only if you expected an update from \(ext.name).
+            """
+        alert.addButton(withTitle: "Approve")
+        alert.addButton(withTitle: "Not now")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        extensionError = await services.approveToolChanges(ext.id)
+        extensions = await services.extensions()
+    }
+
     func preview(folder: URL) async -> ExtensionInstallPreview? {
         extensionError = nil
         switch await services.previewExtension(at: folder) {
