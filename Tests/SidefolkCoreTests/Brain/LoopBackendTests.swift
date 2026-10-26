@@ -39,7 +39,7 @@ import Testing
 
         #expect(model.requests.count == 3)
         #expect(counter.value == 3)
-        #expect(reply.text.hasPrefix("I ran out of steps before finishing. Done so far: Saved “n1”; Saved “n2”; Saved “n3”."))
+        #expect(reply.text.hasPrefix("I ran out of steps before finishing. Done so far: Saved “n1”, Saved “n2”, Saved “n3”."))
         #expect(reply.cards.count == 3)
         #expect(backend.takeUsage(runId: "run-1")?.limit == "steps")
     }

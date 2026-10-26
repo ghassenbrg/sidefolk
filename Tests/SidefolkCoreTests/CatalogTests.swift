@@ -1,4 +1,5 @@
 import Foundation
+import SidefolkCore
 import Testing
 
 /// The string catalog the app is built with. Tests run without it (their runner has no translations),
@@ -70,6 +71,13 @@ import Testing
                 #expect(translated.hasSuffix(sentence), "\(language): “\(key)”")
             }
         }
+    }
+
+    /// Chinese and Japanese put no space between sentences, so the ending goes without one too.
+    @Test func nothingWasChangedGoesWithOrWithoutASpace() {
+        #expect(Wording.droppingNothingChanged(from: "Stopped. Nothing was changed.") == "Stopped.")
+        #expect(Wording.droppingNothingChanged(from: "止まりました。Nothing was changed.") == "止まりました。")
+        #expect(Wording.droppingNothingChanged(from: "Saved it.") == "Saved it.")
     }
 
     @Test func oneIsSingularInEnglish() {
