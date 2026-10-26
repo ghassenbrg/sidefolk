@@ -53,9 +53,12 @@ struct NotebookEditor: View {
         } else {
             VStack {
                 Spacer()
-                // Just the symbol: the list beside it already has someone saying hello.
-                EmptyState(title: "Nothing selected", message: "Pick something from the list, or press ⌘N to write something new.",
-                           systemImage: "note.text")
+                // Just the symbol: the list beside it already has someone saying hello. An empty list
+                // speaks for both sides (its own empty state and button), so this side stays blank.
+                if !model.items.isEmpty {
+                    EmptyState(title: "Nothing selected", message: "Pick something from the list, or press ⌘N to write something new.",
+                               systemImage: "note.text")
+                }
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
