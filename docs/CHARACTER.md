@@ -1,8 +1,9 @@
 # Character
 
 `SidefolkCharacter` draws the companion and the Folk Family on Core Animation (AppKit + QuartzCore
-only). The default companion, the Sidefolk robot, is layered vectors (D2); Mochi and Spark are
-sprite companions drawn from pose images (D27). Contact sheets live in `Resources/Character/`, the
+only). The default companion is Mochi, the white rabbit with navy ear tips and a mint/aqua scarf
+(D29). The original Sidefolk robot remains selectable as layered vectors, including its four light
+colors (D2); Mochi and Spark use pose images (D27). Contact sheets live in `Resources/Character/`, the
 app icon in `Resources/Icon/`, the sprite art in `Resources/Companions/`.
 
 ## Using it

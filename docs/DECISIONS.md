@@ -177,6 +177,7 @@ all logo lockups derive from that master. Color, navy and white SVGs have no emb
 filters, transforms or clipping masks.
 
 ### D27 — Three companions to choose from; two are sprites; the robot's light colour is the only customisation (2026-10-26)
+The default-appearance decision below is superseded by D29; all three choices remain available.
 **Decision:** Settings › Companion offers the vector Sidefolk robot (default), Mochi and Spark, as
 cards that show each one as drawn, switching live. Mochi and Spark are the founder's two earlier
 characters (the legacy app's bunny "Pip" and robot "Spark"), drawn from 16 pose images each by a
@@ -215,3 +216,19 @@ it. A second rule-based parser per language would be a large, separate project (
 fuzz-tested over 600k inputs), so it is deferred rather than done badly.
 **Alternatives:** translate only the menus (half-translated apps feel broken); write parsers for two
 languages now (high effort, uneven quality).
+
+### D29 — Mochi becomes the brand mascot; the original robot remains a companion (2026-10-26)
+**Decision:** adopt the founder's Mochi rabbit brand guide: white rabbit, navy ear tips and eyes,
+mint/aqua scarf, unchanged wordmark and palette, rabbit family logos, blue app icon and a native
+rabbit-ear/face/scarf menu template. Fresh settings and missing/unknown appearance values default
+to Mochi. Explicit saved companion choices, custom names and robot accent colors are preserved.
+The original `.sidefolk` vector robot and Spark stay selectable; the robot retains all four light
+colors. Only the default and picker ordering change.
+**Why:** the founder selected the rabbit as the main identity and explicitly asked to keep the
+original robot. Brand identity and a person's chosen desktop appearance are distinct.
+**Implementation:** all 16 existing Mochi poses receive a deterministic white/navy/scarf palette
+grade from archived originals, preserving pose scale and alpha. Logos and icon portrait follow the
+new guide and the founder’s close-up icon crop; monochrome and menu marks share hand-drawn native
+vector geometry matching the close-up’s ears, paw, rays and separated scarf. Raw icon sources
+have a simple blue-gradient square or transparent background; only separate macOS exports get a
+geometric mask.

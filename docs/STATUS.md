@@ -1,9 +1,26 @@
 # Status
 
-Updated: 2026-10-26, late morning (orchestrated by Claude; specialist agents in worktrees, merged
-into `rework`).
+Updated: 2026-10-26. Latest: Mochi rabbit brand rollout, with the original robot preserved.
 
 ## Done and verified
+- **Mochi brand rollout (2026-10-26, D29):** Mochi is the brand mascot and fresh-install default.
+  Explicit saved choices, names and accents are preserved. Settings still offers the original
+  Sidefolk robot with all four light colors and Spark. Replaced the production logo marks, blue
+  app icon/ICNS/Xcode assets, menu-bar PNG/PDF/SVG and resource-free brand fallback with the rabbit.
+  Kept the hand-authored wordmark; new family/portrait masters follow the supplied rabbit guide.
+  Refined the app portrait against the close-up (tilted face, asymmetric ears, low scarf crop,
+  simple blue gradient). Redrew the monochrome rabbit to follow its close-up’s ear curves, side
+  paw, two rays and separated scarf tail. Native SVG/PDF/PNG share the same smooth geometry.
+  All 16 Mochi poses now use white/navy/mint-aqua, graded from archived sources with exact alpha
+  and dimensions preserved. The original robot rig and Spark art are unchanged. Robot brand
+  masters are archived in `Resources/Brand/archive/robot/`.
+  Verified 851 tests (842 core + 9 character), Xcode asset compilation, raw icon corners, vector
+  templates, uncut logo bounds, all pose alpha channels, and light/dark Home/Companion snapshots
+  in `build/qa-mochi-ui/` (including the robot selected in coral). Signed debug and release
+  assemblies verified, including exact bundled assets and exclusion of source archives. Native
+  SVG/PDF reviewed against the supplied monochrome crop in `build/qa-rabbit-vector.png`.
+  Delivery: `build/Sidefolk-Mochi-brand-assets.zip`. No implementation work remains half done. Next: use
+  `build/Sidefolk.app` for the founder's visual check; saved robot selections remain selectable.
 - **Folk Family companion concepts (2026-10-26):** `folk-family/` contains 13 named folders:
   Sidefolk, redesigned legacy Mochi and Spark, plus Pip, Byte, Seed, Melody, Scout, Tempo, Play,
   Guard, Nova and Brew. Each has a clean transparent 1254×1254 PNG, untouched source PNG and name/
@@ -14,7 +31,7 @@ into `rework`).
   `scripts/companion-concept-sheets.swift` rebuilds clean exports and sheets without model calls.
   No concept-generation work remains half done. Next: the founder chooses which designs to take
   into pose sets/animation; these studies are static artwork, not installed animated skins.
-- **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (D1–D25), SECURITY (threat model T1–T24),
+- **Spec and design:** PRODUCT, ARCHITECTURE, DECISIONS (through D29), SECURITY (threat model T1–T24),
   MACOS-NOTES, VOICE, FOUNDING, CHARACTER, EXTENSIONS.
 - **Character:** Core Animation rig with 11 states and 10 props, all 10 folks, app icon and menu bar
   template. Calm states settle after 20 s, loops are capped at 24 fps and pause while hidden (D20).
@@ -83,7 +100,7 @@ into `rework`).
     Settings (General, Companion, AI, Agents, Privacy & Permissions, Extensions).
   - Embodied onboarding (hello, agents, a real reminder, notifications, login), data export, delete
     everything (Keychain items included), diagnostics export with redacted logs.
-- **Tests:** 833 in 90 suites. `make test` runs them serially and they pass consistently (about 40 s).
+- **Tests:** 851 in 93 suites (842 core + 9 character). `make test` runs serially (about 40 s).
 
 ## Reviews done (second round) and what came of them
 UX/product, security, QA/plugin developer and performance reviews (reports were working files, not in

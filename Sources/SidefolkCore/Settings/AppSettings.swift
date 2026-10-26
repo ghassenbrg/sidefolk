@@ -22,10 +22,9 @@ public enum CompanionSize: String, Codable, Sendable, CaseIterable {
     }
 }
 
-/// Who lives on the desktop (DECISIONS D27): the vector robot, or one of the founder's two earlier
-/// characters drawn as sprites.
+/// Who lives on the desktop: the new default Mochi rabbit, the original vector robot, or Spark.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
-    case sidefolk, mochi, spark
+    case mochi, sidefolk, spark
 
     /// The name it goes by until the user gives it another.
     public var defaultName: String {
@@ -75,9 +74,9 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
 /// Everything the user can change. Stored as one JSON document; every field has a default so
 /// older or newer stored versions decode safely.
 public struct AppSettings: Codable, Sendable, Equatable {
-    public var companionName = "Sidefolk"
+    public var companionName = "Mochi"
     /// Change it with `choose(_:)`, which keeps the name in step.
-    public var companion: CompanionChoice = .sidefolk
+    public var companion: CompanionChoice = .mochi
     public var accent: CompanionAccent = .aqua
     public var presence: PresenceMode = .always
     public var size: CompanionSize = .medium

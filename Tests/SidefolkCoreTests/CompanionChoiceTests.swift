@@ -7,16 +7,16 @@ import Testing
         try JSONDecoder().decode(AppSettings.self, from: Data(json.utf8))
     }
 
-    @Test func olderSettingsKeepTheRobot() throws {
+    @Test func settingsWithoutAnAppearanceUseTheRabbit() throws {
         let s = try decode(#"{"companionName": "Sidefolk", "size": "large"}"#)
-        #expect(s.companion == .sidefolk)
+        #expect(s.companion == .mochi)
         #expect(s.accent == .aqua)
         #expect(s.size == .large)
     }
 
     @Test func unknownValuesFallBackWithoutLosingTheRest() throws {
         let s = try decode(#"{"companion": "pebble", "accent": "purple", "companionName": "Bob"}"#)
-        #expect(s.companion == .sidefolk)
+        #expect(s.companion == .mochi)
         #expect(s.accent == .aqua)
         #expect(s.companionName == "Bob")
     }
@@ -29,6 +29,20 @@ import Testing
         #expect(back.companion == .spark)
         #expect(back.accent == .coral)
         #expect(back.companionName == "Spark")
+    }
+
+    @Test func aNewSetupStartsWithMochi() {
+        let settings = AppSettings()
+        #expect(settings.companion == .mochi)
+        #expect(settings.companionName == "Mochi")
+        #expect(CompanionChoice.allCases.contains(.sidefolk))
+    }
+
+    @Test func aSavedRobotAndItsCustomizationSurviveTheRebrand() throws {
+        let settings = try decode(#"{"companion":"sidefolk","accent":"coral","companionName":"Biscuit"}"#)
+        #expect(settings.companion == .sidefolk)
+        #expect(settings.accent == .coral)
+        #expect(settings.companionName == "Biscuit")
     }
 
     @Test func defaultNameFollowsTheCompanion() {

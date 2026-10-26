@@ -1,7 +1,8 @@
 # Sprite companions
 
 Mochi (`mochi/`) and Spark (`spark/`) are the two characters from the founder's earlier design,
-offered in Settings › Companion beside the vector Sidefolk robot (docs/DECISIONS.md D27).
+offered in Settings › Companion beside the original vector Sidefolk robot (D27). Mochi is now the
+default and the brand mascot (D29); the robot and all its light-color controls remain available.
 
 ## Source
 
@@ -18,6 +19,12 @@ with Codex image generation, with a real alpha channel at about 1250 px:
 - `scripts/companion-art.swift` turns the generated pictures into these 512 × 512 PNGs: one scale per
   companion taken from idle, the feet on one baseline, and the corrections in `<id>-scale.json` for
   poses the model drew a little larger or smaller than idle.
+
+The new rabbit branding grades all 16 Mochi poses from cream/black/mint to white/navy/mint-aqua with
+`scripts/rebrand-mochi.swift`. It preserves each pose's exact pixel dimensions and alpha, so the
+animation scale, alignment and hit regions do not change. Original ungraded poses are archived in
+`masters/mochi-legacy/`; repeated builds always use those originals, not previously graded exports.
+Spark and the original robot are unaffected by this palette pass.
 
 ## Licence
 

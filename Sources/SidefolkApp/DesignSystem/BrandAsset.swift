@@ -15,6 +15,7 @@ enum BrandAsset: String {
     case markColor = "mark-color"
     case markNavy = "mark-navy"
     case markWhite = "mark-white"
+    case mascotColor = "mascot-color"
     case menuBar = "SidefolkMenuBar"
 
     var image: NSImage? {

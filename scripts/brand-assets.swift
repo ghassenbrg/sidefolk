@@ -121,41 +121,20 @@ for (name, ink) in [("color", Optional<(Double, Double, Double)>.none), ("navy",
         .replacingOccurrences(of: "#2ED4D9", with: name == "white" ? "#FFFFFF" : "#0F2D5B")
     try svg.write(to: exports.appendingPathComponent("wordmark-\(name).svg"), atomically: true, encoding: .utf8)
 }
-let mark = normalized(read("Resources/Brand/masters/mark-clean.png"))
-let primaryCrop = read("Resources/Brand/masters/logo-group.png").cropping(to:
-    CGRect(x: 200, y: 55, width: 1100, height: 700))!
-let primaryContext = context(primaryCrop.width, primaryCrop.height)
-primaryContext.draw(primaryCrop, in: CGRect(x: 0, y: 0, width: primaryCrop.width, height: primaryCrop.height))
-let pp = primaryContext.data!.assumingMemoryBound(to: UInt8.self)
-// The wordmark's upper-right rays cross the crop boundary. They belong to the lettering,
-// which is extracted independently from the original board.
-for y in 645..<700 { for x in 1030..<1100 {
-    let i = (y*1100+x)*4
-    let r = Double(pp[i])/255, g = Double(pp[i+1])/255, b = Double(pp[i+2])/255
-    if g > 0.5, b/g < 1.15, r < g*0.99 { for j in 0..<4 { pp[i+j] = 0 } }
-} }
-// Remove detached crop-edge flecks (including the discarded ray's pale antialias rim).
-var seen = [Bool](repeating: false, count: 1100*700)
-for start in seen.indices where !seen[start] && pp[start*4+3] > 8 {
-    var island = [start], cursor = 0
-    seen[start] = true
-    while cursor < island.count {
-        let at = island[cursor], x = at%1100, y = at/1100
-        cursor += 1
-        for next in [x > 0 ? at-1 : -1, x < 1099 ? at+1 : -1,
-                     y > 0 ? at-1100 : -1, y < 699 ? at+1100 : -1] where next >= 0 {
-            if !seen[next], pp[next*4+3] > 8 { seen[next] = true; island.append(next) }
-        }
-    }
-    if island.count < 256 { for at in island { for j in 0..<4 { pp[at*4+j] = 0 } } }
-}
-let primaryMark = normalized(primaryContext.makeImage()!)
-let mono = normalized(read("Resources/Brand/masters/mark-monochrome.png"), ink: navy)
+let mark = normalized(read("Resources/Brand/masters/rabbit-portrait.png"))
+let primaryMark = normalized(read("Resources/Brand/masters/rabbit-family.png"))
+let mono = normalized(read("Resources/Brand/exports/mascot-navy.png"))
+try save(normalized(read("Resources/Brand/masters/mascot-mochi.png")), exports.appendingPathComponent("mascot-color.png"))
 func tint(_ image: CGImage, _ ink: (Double, Double, Double)) -> CGImage {
     normalized(image, ink: ink, trimOutput: false)
 }
 func lockup(horizontal: Bool, mark: CGImage, word: CGImage) -> CGImage {
-    let w = horizontal ? 1600 : 1200, h = horizontal ? 520 : 1200
+    let w = horizontal ? 1600 : 1200
+    // Long rabbit ears make this artwork taller than the earlier robot group. Derive the
+    // canvas from the actual art instead of cropping the ears or the wordmark at fixed height.
+    let stackHeight = 1080.0 * Double(mark.height)/Double(mark.width)
+        + 22 + 1060.0 * Double(word.height)/Double(word.width) + 96
+    let h = horizontal ? 520 : Int(ceil(stackHeight))
     let c = context(w, h)
     c.interpolationQuality = .high
     if horizontal {
@@ -184,22 +163,27 @@ for horizontal in [false, true] {
     try save(lockup(horizontal: horizontal, mark: mono, word: tint(wordmark, navy)), exports.appendingPathComponent("\(name)-navy.png"))
     try save(lockup(horizontal: horizontal, mark: tint(mono, (1,1,1)), word: tint(wordmark, (1,1,1))), exports.appendingPathComponent("\(name)-white.png"))
 }
-// The reusable source is raw artwork on an edge-to-edge flat square. Platform padding and
+// The reusable source is raw artwork on an edge-to-edge square. Platform padding and
 // masks belong only in derived exports, never in the source. No rendered tile, bevel or shadow.
 try save(mark, icon.appendingPathComponent("icon-artwork.png"))
 let raw = context(2048, 2048)
-raw.setFillColor(CGColor(gray: 1, alpha: 1))
-raw.fill(CGRect(x: 0, y: 0, width: 2048, height: 2048))
+// A simple blue gradient matches the supplied icon art. It is background color, not tile lighting.
+let blueGradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!, colors: [
+    CGColor(srgbRed: 91/255, green: 164/255, blue: 250/255, alpha: 1),
+    CGColor(srgbRed: 144/255, green: 228/255, blue: 242/255, alpha: 1)
+] as CFArray, locations: [0, 1])!
+raw.drawLinearGradient(blueGradient, start: CGPoint(x: 1024, y: 0),
+                       end: CGPoint(x: 1024, y: 2048), options: [])
 raw.interpolationQuality = .high
-let artworkWidth = 1680.0, artworkHeight = artworkWidth * Double(mark.height)/Double(mark.width)
-raw.draw(mark, in: CGRect(x: (2048-artworkWidth)/2, y: (2048-artworkHeight)/2,
+let artworkHeight = 1950.0, artworkWidth = artworkHeight * Double(mark.width)/Double(mark.height)
+raw.draw(mark, in: CGRect(x: (2048-artworkWidth)/2, y: -20,
                          width: artworkWidth, height: artworkHeight))
 let rawSource = raw.makeImage()!
 try save(rawSource, icon.appendingPathComponent("icon-source-2048.png"))
 try save(scaled(rawSource, 1024, 1024), icon.appendingPathComponent("icon-1024.png"))
 
 // Legacy ICNS gets only the native macOS outline/inset as a deterministic 2D mask. Its tile
-// is perfectly flat white, with no lighting, rim, extruded edge, surface gradient or shadow.
+// has no lighting, rim, extruded edge or shadow. The artwork retains its simple blue gradient.
 let ac = context(1024, 1024)
 ac.addPath(CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824),
                  cornerWidth: 185, cornerHeight: 185, transform: nil))

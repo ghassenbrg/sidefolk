@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 //                                            and every sprite companion's states, badges, hit shapes and poses
 //   sidefolk-render --icon <dir>             icon-macos-1024.png, Sidefolk.iconset/ and Sidefolk.icns
 //   sidefolk-render --menu-bar <dir>         native template PNGs (1x/2x/3x) and vector PDF
+//   sidefolk-render --brand-mascot <dir>     rabbit vector marks in navy and white
 //   sidefolk-render --live <state> <secs> [companion]
 //                                            a real window, for CPU checks ("cycle" walks every state)
 
@@ -18,6 +19,20 @@ let usage = "usage: sidefolk-render <outdir> | --icon <dir> | --menu-bar <dir> |
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
     switch args.first {
+    case "--brand-mascot" where args.count == 2:
+        let dir = URL(fileURLWithPath: args[1])
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            for (name, ink) in [("navy", CGColor(srgbRed: 15/255, green: 45/255, blue: 91/255, alpha: 1)),
+                                ("white", CGColor(gray: 1, alpha: 1))] {
+                save(CharacterRenderer.mascotMark(size: CGSize(width: 520, height: 560), scale: 2, ink: ink),
+                     dir.appendingPathComponent("mascot-\(name).png"))
+                try CharacterRenderer.mascotPDF(size: CGSize(width: 260, height: 280), ink: ink)
+                    .write(to: dir.appendingPathComponent("mascot-\(name).pdf"))
+                try RabbitBrandMark.svg(ink: name == "white" ? "#FFFFFF" : "#0F2D5B")
+                    .write(to: dir.appendingPathComponent("mascot-\(name).svg"), atomically: true, encoding: .utf8)
+            }
+        } catch { fatalError("Mascot export failed: \(error)") }
     case "--icon" where args.count == 2:
         Icons.write(to: URL(fileURLWithPath: args[1]))
     case "--menu-bar" where args.count == 2:
@@ -31,6 +46,8 @@ MainActor.assumeIsolated {
                      dir.appendingPathComponent("SidefolkMenuBar\(suffix).png"))
             }
             try CharacterRenderer.menuBarPDF(size: size).write(to: dir.appendingPathComponent("SidefolkMenuBar.pdf"))
+            let svg = RabbitBrandMark.svg(ink: "#000000", menuBar: true)
+            try svg.write(to: dir.appendingPathComponent("SidefolkMenuBar.svg"), atomically: true, encoding: .utf8)
         } catch {
             fatalError("Menu bar asset export failed: \(error)")
         }

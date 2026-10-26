@@ -1,5 +1,6 @@
 {
   "tool": "Codex image generation (codex-imagegen skill, gpt-6-luna relaying to the image model), 2026-10-26",
+  "current_palette_pass": "Mochi is now the brand mascot (D29). scripts/rebrand-mochi.swift grades the 16 archived original poses from masters/mochi-legacy to white/navy/mint-aqua without changing dimensions, alpha or pose geometry. Historical imagegen briefs below describe the original ungraded artwork.",
   "why": "The legacy sprites were keyed out of lossy chroma-green sheets and kept green fringes; these are generated with a real alpha channel at about 1254 px, then normalised by scripts/companion-art.swift.",
   "legacy references": "git show main:public/crew/pip/3d/<pose>.webp (the bunny, offered as Mochi) and main:public/crew/spark/3d/<pose>.webp",
   "jobs": [

@@ -36,7 +36,11 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 # Sprite companions: one folder of poses each; their README stays in the repository.
 if [[ -d Resources/Companions ]]; then
   mkdir -p "$APP/Contents/Resources/Companions"
-  for dir in Resources/Companions/*/; do cp -R "${dir%/}" "$APP/Contents/Resources/Companions/"; done
+  for dir in Resources/Companions/*/; do
+    # Source archives are for regeneration, not installed companion sets.
+    [[ -f "${dir}idle.png" ]] || continue
+    cp -R "${dir%/}" "$APP/Contents/Resources/Companions/"
+  done
 fi
 # One <language>.lproj per translation; macOS picks the user's language (or the one chosen in Settings).
 [[ -f Resources/Localization/Localizable.xcstrings ]] && \

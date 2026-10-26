@@ -74,6 +74,8 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P0 Character engine: layered vector rig on Core Animation, pose-based states with smooth
   transitions, blink/breathe idle, props per activity, reduced motion, near-zero idle CPU.
 - P0 Presence modes: Always / Only when needed (peek) / Menu bar only.
+- P0 Companion choices: Mochi rabbit by default, original Sidefolk robot with its four light colors,
+  and Spark. Switching is live; existing saved choices and custom names are preserved (D27, D29).
 - P0 Ask panel beside the companion: input with a hint line (what Enter does, whether it uses AI),
   result cards (max 3 visible), approval cards, Undo; quick intents close it 1 s after the card.
 - P0 Speech bubbles for proactive events, with actions; a count badge when several wait.
