@@ -166,3 +166,29 @@ for small sizes and lets macOS tint its alpha. The live vector rig remains as sp
 **Why:** the identity must match the approved reference and work as real framework assets, rather
 than mockups, a presentation sheet, or enlarged low-resolution crops. The deterministic
 `make brand-assets` pipeline rebuilds each file from committed inputs without another model call.
+
+### D27 — Three companions to choose from; two are sprites; the robot's light colour is the only customisation (2026-10-26)
+**Decision:** Settings › Companion offers the vector Sidefolk robot (default), Mochi and Spark, as
+cards that show each one as drawn, switching live. Mochi and Spark are the founder's two earlier
+characters (the legacy app's bunny "Pip" and robot "Spark"), drawn from 16 pose images each by a
+`SpriteDirector` behind the same `CharacterView` contract as the robot's `Director` (state, gestures,
+badges, alpha-based hit testing, anchor frame, the D20 settling rules). The bunny is offered as
+**Mochi** because Pip is the coral folk in the Folk Family (D3); Spark keeps its name. A companion
+named with a built-in default takes the new companion's name when switching; a name the user chose
+stays. The robot's light (visor marks, ear pods, the marks drawn in that light) can be aqua, coral,
+mint or light blue; nothing else is customisable.
+**Why:** the founder wants a choice and a little personalisation. The two characters exist only as
+pose renders, and rebuilding them as rigs would take weeks for a look the renders already have, so
+sprites (crossfaded poses, alternating frames for busy states) are the honest way to offer them; the
+robot stays a vector rig (D2). Sprites cost no more at rest: they settle to zero animations like the
+rig. Customisation stops at a brand-palette light colour because every further knob (shell colours,
+accessories, per-sprite tints) either breaks the approved identity or needs art that doesn't exist,
+and each knob is a combination to keep working in every state. Pose files are measured rather than
+assumed (PNG preferred over WebP, any pixel size, feet on the floor line, scale from the idle pose),
+so redrawn art can replace the legacy cuts without code changes.
+**Alternatives:** rigging Mochi and Spark as vectors (slow, would not look like the renders); one view
+type per kind of companion (the app would juggle two); free colour pickers (off-brand); a tint for
+the sprites' mint parts (the legacy recolouring; looks painted-on on 3D renders).
+**Implications:** sprite companions have no effect marks or held props beyond what their poses show,
+and no eye tracking (they lean toward the pointer instead). A new sprite companion is a folder of
+the 16 poses plus a `CompanionChoice` case.

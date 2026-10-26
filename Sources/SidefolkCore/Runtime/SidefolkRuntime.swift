@@ -94,10 +94,11 @@ public final class SidefolkRuntime: Sendable {
         registry.register(ExtensionWatchTool(host: extensions, engine: watchers))
     }
 
-    /// The local language understanding, configured with the user's idea of "morning" and "evening".
+    /// The local language understanding, configured with the user's idea of "morning" and "evening",
+    /// and the companion's current name ("mochi, remind me…").
     public var intentParser: IntentParser {
         let s = settings.current
-        return IntentParser(morningHour: s.morningHour, afternoonHour: s.afternoonHour, eveningHour: s.eveningHour)
+        return IntentParser(when: WhenParser(settings: s), companionNames: ["sidefolk", "pip", s.companionName])
     }
 
     /// Starts the background engines and the local API other agents connect to.

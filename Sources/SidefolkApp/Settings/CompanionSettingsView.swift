@@ -1,12 +1,15 @@
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Companion: how present the companion is on the desktop and how it behaves there.
+/// Settings › Companion: who the companion is, how present it is on the desktop and how it
+/// behaves there.
 struct CompanionSettingsView: View {
     var model: SettingsModel
 
     var body: some View {
         SettingsPage {
+            CompanionPicker(model: model)
+
             SettingsGroup(title: "Presence") {
                 ForEach(PresenceMode.allCases, id: \.self) { mode in
                     ChoiceRow(title: title(mode), detail: detail(mode), selected: model.settings.presence == mode) {
@@ -26,8 +29,14 @@ struct CompanionSettingsView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
-                SettingsToggle(title: "Eyes follow the pointer", detail: "A glance now and then, never a stare.",
-                               isOn: setting(\.eyesFollowPointer))
+                // Sprite companions' eyes are painted on: they lean toward the pointer instead.
+                if model.settings.companion == .sidefolk {
+                    SettingsToggle(title: "Eyes follow the pointer", detail: "A glance now and then, never a stare.",
+                                   isOn: setting(\.eyesFollowPointer))
+                } else {
+                    SettingsToggle(title: "Turn toward the pointer", detail: "A small lean now and then, never a stare.",
+                                   isOn: setting(\.eyesFollowPointer))
+                }
                 SettingsToggle(title: "Show folks on duty",
                                detail: "Tempo, Scout and Byte sit beside the companion while a reminder, watch or agent is live.",
                                isOn: setting(\.showFolks))

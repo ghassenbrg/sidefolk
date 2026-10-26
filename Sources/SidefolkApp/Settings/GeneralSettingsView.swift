@@ -23,8 +23,9 @@ struct GeneralSettingsView: View {
                         .accessibilityLabel("Ask shortcut")
                 }
                 SettingsRow(title: "Name", detail: "What your companion is called in bubbles and menus.") {
-                    CommitField(label: "Companion name", prompt: "Sidefolk", value: model.settings.companionName, width: 180) { name in
-                        let clean = name.isEmpty ? "Sidefolk" : String(name.prefix(30))
+                    let fallback = model.settings.companion.defaultName
+                    CommitField(label: "Companion name", prompt: fallback, value: model.settings.companionName, width: 180) { name in
+                        let clean = name.isEmpty ? fallback : String(name.prefix(30))
                         model.update { $0.companionName = clean }
                     }
                 }

@@ -17,6 +17,11 @@ enum UISnapshots {
         let args = CommandLine.arguments
         guard let flag = args.firstIndex(of: "--ui-snapshots"), flag + 1 < args.count else { return }
         let dir = URL(fileURLWithPath: args[flag + 1], isDirectory: true)
+        // Run from the repository, pictures use its resources (companion art, logos) like the app bundle.
+        if ProcessInfo.processInfo.environment["SIDEFOLK_RESOURCES"] == nil,
+           FileManager.default.fileExists(atPath: "Resources/Companions") {
+            setenv("SIDEFOLK_RESOURCES", FileManager.default.currentDirectoryPath + "/Resources", 0)
+        }
         let app = NSApplication.shared
         // Prohibited: no Dock icon, no menu bar, never takes focus from the user.
         app.setActivationPolicy(.prohibited)
@@ -100,6 +105,12 @@ enum UISnapshots {
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // The companion picker with a sprite companion chosen, then the robot in another light.
+            settings.update { $0.choose(.mochi) }
+            try await page("page-settings-companion-mochi", SettingsTabContent(tab: .companion, model: settings), width: width)
+            settings.update { $0.choose(.sidefolk); $0.accent = .coral }
+            try await page("page-settings-companion-coral", SettingsTabContent(tab: .companion, model: settings), width: width)
+            settings.update { $0.accent = .aqua }
             for kind in [ProviderKind.anthropic, .openAICompatible, .none] {
                 settings.setProvider(kind)
                 try await page("page-settings-ai-\(kind.rawValue)", SettingsTabContent(tab: .ai, model: settings), width: width)
