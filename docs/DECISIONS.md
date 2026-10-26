@@ -347,3 +347,109 @@ from the vector PDF exports, so they stay sharp at any size without a 4096 px bi
 **Why:** the founder found the logo "a little bit small" and asked for the companion, the folks and
 the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
 small places get one clear element (lettering, a face) instead of a reduced composition.
+
+### D37 — Approval modes, and no task left waiting on a question (2026-10-26)
+**Decision:** Settings › Privacy & Permissions starts with how much Sidefolk asks before its own agent
+acts, one choice with a line each:
+- **Ask every time** (was "Cautious"): every medium and high action asks; "Always allow" is ignored.
+- **Ask once per kind** (was "Standard", still the default): as before, grants honoured.
+- **Auto:** medium-risk actions in a clean turn run without a card. High risk, and anything in a turn
+  that read outside content (a web page, file, the clipboard, a drop, an extension's or MCP server's
+  output: the T2 taint), ask exactly as before.
+- **Full access:** everything runs without a card except, in a tainted turn, what could carry data out
+  (list below). It is turned on only through a sheet that says what it means; the menu bar's
+  "Full access…" opens that sheet in Settings.
+
+And "If I don't answer", for the cards Sidefolk's own agent waits on: **keep waiting** (a day at most,
+then the task stops), **skip that step and continue after N minutes** (the default, 10 minutes), or
+**stop the task after N minutes** (2, 5, 10, 30 or 60).
+
+**Invariants, in every mode** (`ModeMatrixTests`, `UnansweredTests`, `PolicyStorageTests`):
+1. *Off stays off, protected stays protected.* Capabilities switched off and forbidden locations
+   (T10) are denied before the mode is looked at. The folder list is *where* Sidefolk may work, not
+   *how often* it asks: a folder outside it still gets its card in every mode (other agents and
+   extensions are refused, as before).
+2. *Prompt injection still needs the person.* Auto changes nothing in a tainted turn. In Full access a
+   tainted turn still asks before any call that could carry what it read, or anything in the context,
+   off the Mac or into later moments (`PermissionEngine.couldCarryOut`), each for a reason:
+   - network or another app at an address the person didn't type: the address is where a model-built
+     request carries data (T2, T11). An address the person typed runs, as it already did;
+   - running a program (`shell`): a command can send anything anywhere (T9). Command watchers are
+     refused outright in tainted turns anyway;
+   - changing files (`files.write`): a granted folder may sync (iCloud Drive, Dropbox), and a move can
+     put a private file into one (T21);
+   - extension and MCP tools: they receive model-built input and may have network or run unsandboxed
+     (T13, T16); the same goes for extension watchers;
+   - clipboard and memory writes: pastejacking (T12) and persistent injection (T3) into later clean
+     turns, where Auto and Full access would then act without asking.
+   Instructions to read in full (a new skill) ask in every mode, clean turns too: they steer later
+   runs (T3). What Full access does let a tainted turn do without a card is what keeps data on the Mac
+   and inside Sidefolk: reading the clipboard, a skill to the Trash (undoable), and the low-risk
+   actions that ran anyway.
+3. *Other agents and extensions keep their own rules.* Modes only ever loosen Guard for Sidefolk's own
+   agent (`Caller.agent`): runs the person started from the Ask panel, answering their own words.
+   Other agents (external MCP clients) are the confused-deputy threat (T4): a hostile repo can steer
+   them, their names are self-chosen, and the person's choice is about their own requests. So in every
+   mode their low-risk calls run, everything else asks every time with no "Always", one card at a time,
+   two minutes and then no. Extensions and routines as callers keep "Ask once per kind" rules too.
+   "Ask every time" applies to every caller: asking more is always safe. Extension *tools* called by
+   Sidefolk's own agent follow its mode, with the tainted-turn rule above.
+4. *Everything is in Activity.* Every call is logged with its decision: new chips say **Auto**,
+   **Full access** (done without asking) and **Skipped**. Activity now offers the same Undo the Ask
+   panel does (15 minutes; `UndoCenter.undoableRows`). Deleting goes to the Trash; that is in the
+   tools, so no mode can change it.
+5. *Nothing is silent.* An action a mode answered for the person shows in the Ask panel as "done
+   without asking", in a bubble when the panel is hidden, and in Activity. The mode itself is always
+   visible: a chip in the Ask panel header (filled red for Full access), an Approvals submenu in the
+   menu bar, whose icon turns orange in Full access with "Full access is on · Turn Off" first in its
+   menu, and a banner at the top of Now.
+
+**Never stalling:** a card Sidefolk's own agent waits on follows the setting; every other card still
+waits two minutes and counts as no (T1). When the wait runs out on "skip", the model reads "Skipped:
+the user didn't answer in time, so this step was skipped and nothing was done. Carry on…" and the run
+goes on; on "stop" (and at the end of a day of "keep waiting") the run is cancelled and ends with "I
+stopped: you didn't answer in time." Time spent waiting for the person doesn't count against the
+run's own two minutes (`BrainToolbox.deadline(from:)`: the deadline moves by every wait and can't pass
+while a card is open), for the API loop and both CLI brains; the CLIs' own tool-call timeouts are set
+just above a day (Codex `tool_timeout_sec`, Claude Code's per-server `timeout`) so they never give up
+first. A skipped or stopped step waits in Now › Needs you (and the menu bar's Now list) with the
+question its card asked, word for word, and **Run it now**: that click answers that question (same
+tool, arguments and words, `ApprovalRequest.asksTheSame`); Guard still checks everything else, and a
+new question shows as a normal card. Steps are kept in memory, 20 at most for a day; after a restart
+they are only in Activity, whose redacted arguments can't run again. No card anywhere waits forever.
+
+**Why:** the founder wants to choose how much Sidefolk asks, like Claude Code and Codex, and never to
+come back after an hour to a task stuck on a question (before, a card waited two minutes and the run's
+own deadline had passed by then anyway). Modes are about how often to ask; the boundaries that make
+asking meaningful (capabilities, protected places, folders, taint, other agents) stay where they were,
+so the worst a mode can do is act on the person's own request without checking with them.
+
+**Alternatives:** a "just do it this time" for one request in the Ask panel (not built: a second,
+less visible way to loosen Guard, easy to trigger by habit with a modifier on Return, and decided
+before Sidefolk knows whether the turn will read outside content; the chip and the menu switch are
+one click and stay in view); Full access widening the folder list (no: "where" is a separate, standing
+decision); detecting "away" from idle time or a locked screen (a fixed wait is predictable, and
+someone can be away without locking); saving skipped steps in the database (they hold model-built
+arguments, which Activity deliberately keeps redacted).
+
+**Implications:** `GuardPolicy` (`guard.policy` in SQLite, never UserDefaults, so `defaults write`
+can't turn on Full access, T8) gains `unanswered`; the old `standard`/`cautious` load as the new names,
+an unknown mode reads as the default and never as more access, and each field (and each capability) is
+read on its own so one unknown value can't turn switched-off capabilities back on. SECURITY T1, T2, T9
+and §5 note the exceptions.
+
+**Residual risks:**
+- Full access runs model-written commands (command watchers, extension programs) and moves files to
+  the Trash in clean turns without the person reading the exact text first: a model *mistake*, not
+  only an injection, acts at once. The sheet says so; Activity, Undo and the Trash are the way back.
+- A clean turn is only as clean as taint tracking. What reaches the context without setting it can
+  steer Auto and Full access with no card: extension tool names and titles (60 characters), notes the
+  person saved from elsewhere as their own, text they paste into the request itself.
+- In clean turns Auto and Full access fetch and open model-built addresses without a card, so a
+  misbehaving model can send context (About you, notes) to a server of its choosing.
+- "Run it now" acts on arguments chosen when the step was asked, up to a day earlier; they are shown
+  word for word, but files or pages may have changed since.
+- A long wait keeps the run, its CLI brain process and the Ask panel's busy state alive for as long as
+  the setting says (a day with "keep waiting"); Stop ends it.
+- The CLIs' longer tool-call timeouts are set from their documented options and checked in tests of
+  the invocation, not in a live run (no quota spent).
