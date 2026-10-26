@@ -164,9 +164,7 @@ final class NowModel {
 
     /// The banner's way out of Full access, back to the default.
     func turnOffFullAccess() async {
-        var policy = (try? await runtime.permissions.policy()) ?? GuardPolicy()
-        policy.mode = .askOncePerKind
-        try? await runtime.permissions.setPolicy(policy)
+        try? await runtime.permissions.updatePolicy { $0.mode = .askOncePerKind }
         runtime.events.changed(.permissions)
         await reload()
     }

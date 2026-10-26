@@ -146,7 +146,15 @@ public final class ToolExecutor: Sendable {
 
         // Evaluate, possibly twice: once for folder access, once for the action itself.
         for _ in 0..<3 {
-            let policy = (try? await permissions.policy()) ?? GuardPolicy()
+            // Fail closed: the default policy has nothing switched off, so a failed read (or a stopped task,
+            // which GRDB refuses) must never stand in for the person's settings.
+            guard let policy = try? await permissions.policy() else {
+                let why = Task.isCancelled ? String(localized: "The request was stopped before this ran.")
+                    : String(localized: "Sidefolk couldn't read its permission settings, so it didn't do this.")
+                await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
+                act.error = why
+                return ToolOutcome(activity: act, status: .denied(why))
+            }
             let grants = (try? await permissions.grants()) ?? []
             let folders = ((try? await permissions.folders()) ?? []) + extraFolders
             let decision = engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller,
@@ -291,7 +299,10 @@ public final class ToolExecutor: Sendable {
                                   tool: spec.name, risk: spec.risk.rawValue, decision: decision, summary: act.summary,
                                   args: Redactor.arguments(input), outcome: outcome.map { Redactor.redact($0).clipped(300) },
                                   error: error.map { Redactor.redact($0).clipped(300) }, runId: caller.runId)
-        let row = try? await activity.log(entry).id
+        // Detached so the audit row lands even when the run was just stopped: GRDB's async access throws once
+        // its task is cancelled, and a step refused by Stop or Quit would vanish from Activity.
+        let activity = self.activity
+        let row = await Task.detached { try? await activity.log(entry).id }.value
         if undoable, let row { await undo.link(row: row, to: act.id) }
         events.changed(.activity)
     }
@@ -330,6 +341,9 @@ public struct TimeoutError: Error, Sendable {}
 /// `work` runs in its own task, is cancelled at the deadline and is left to finish on its own. Its
 /// late result is dropped; any side effect it still has happens after the caller was told it stopped.
 public func withTimeout<T: Sendable>(_ seconds: TimeInterval, _ work: @escaping @Sendable () async throws -> T) async throws -> T {
+    // `work` runs in a task of its own, which doesn't inherit cancellation: started for a caller that is
+    // already gone, it would act (set the clipboard, move a file) while the caller hears it was stopped.
+    try Task.checkCancellation()
     let first = FirstResult<T>()
     let worker = Task {
         do { first.finish(.success(try await work())) } catch { first.finish(.failure(error)) }

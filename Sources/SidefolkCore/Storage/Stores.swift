@@ -36,6 +36,14 @@ public struct JobStore: Sendable {
     public func recent(limit: Int = 50) async throws -> [Job] {
         try await db.writer.read { db in try Job.order(Column("started_at").desc).limit(limit).fetchAll(db) }
     }
+
+    /// Finished jobs started before `cutoff`. Each keeps a command line and its last stderr lines, so they
+    /// don't stay forever; a job still running is kept whatever its age.
+    public func purge(olderThan cutoff: Date) async throws -> Int {
+        try await db.writer.write { db in
+            try Job.filter(Column("state") != "running" && Column("started_at") < cutoff.timeIntervalSince1970).deleteAll(db)
+        }
+    }
 }
 
 /// The audit trail of every tool execution and permission decision.
@@ -166,6 +174,9 @@ public struct AgentRunStore: Sendable {
     public init(_ db: AppDatabase) { self.db = db }
 
     public func save(_ r: AgentRun) async throws { try await db.writer.write { db in try r.save(db) } }
+    public func purge(olderThan cutoff: Date) async throws -> Int {
+        try await db.writer.write { db in try AgentRun.filter(Column("started_at") < cutoff.timeIntervalSince1970).deleteAll(db) }
+    }
     public func recent(limit: Int = 100) async throws -> [AgentRun] {
         try await db.writer.read { db in try AgentRun.order(Column("started_at").desc).limit(limit).fetchAll(db) }
     }

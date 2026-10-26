@@ -10,15 +10,17 @@ public final class Log: Sendable {
     public static let shared = Log()
 
     private let subsystem = "app.sidefolk"
-    private let state = Mutex<(dir: URL?, handle: FileHandle?, day: String, debug: Bool)>((nil, nil, "", false))
+    private let state = Mutex<(dir: URL?, handle: FileHandle?, day: String, debug: Bool, bytes: Int)>((nil, nil, "", false, 0))
+    /// One day's file stops growing here: something logging in a loop must not fill the disk.
+    static let maxDayBytes = 16 << 20
 
     public func configure(directory: URL, debug: Bool) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         state.withLock {
             try? $0.handle?.close()
-            $0 = (directory, nil, "", debug)
+            $0 = (directory, nil, "", debug, 0)
         }
-        prune(directory: directory, keepDays: 7)
+        Self.prune(directory: directory, keepDays: 7)
     }
 
     public func setDebug(_ on: Bool) { state.withLock { $0.debug = on } }
@@ -58,15 +60,21 @@ public final class Log: Sendable {
             let day = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
             if s.handle == nil || s.day != day {
                 try? s.handle?.close()
+                // A new day: last week's files go, even when Sidefolk has run for weeks.
+                if !s.day.isEmpty { Self.prune(directory: dir, keepDays: 7) }
                 let url = dir.appendingPathComponent("sidefolk-\(day).jsonl")
                 if !FileManager.default.fileExists(atPath: url.path) {
                     FileManager.default.createFile(atPath: url.path, contents: nil, attributes: [.posixPermissions: 0o600])
                 }
                 s.handle = try? FileHandle(forWritingTo: url)
-                _ = try? s.handle?.seekToEnd()
+                s.bytes = Int((try? s.handle?.seekToEnd()) ?? 0)
                 s.day = day
             }
-            s.handle?.write(data + Data("\n".utf8))
+            guard s.bytes < Self.maxDayBytes else { return }
+            // `write(contentsOf:)` throws; the older `write(_:)` raises an Objective-C exception on a full
+            // disk, which nothing can catch, and takes the app down.
+            let line = data + Data("\n".utf8)
+            if (try? s.handle?.write(contentsOf: line)) != nil { s.bytes += line.count }
         }
     }
 
@@ -87,7 +95,7 @@ public final class Log: Sendable {
         }
     }
 
-    private func prune(directory: URL, keepDays: Int) {
+    private static func prune(directory: URL, keepDays: Int) {
         let cutoff = Date().addingTimeInterval(-Double(keepDays) * 86400)
         let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         for f in files where f.pathExtension == "jsonl" {

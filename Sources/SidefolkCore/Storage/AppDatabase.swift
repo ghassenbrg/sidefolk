@@ -16,7 +16,9 @@ public final class AppDatabase: Sendable {
         config.foreignKeysEnabled = true
         config.label = "sidefolk"
         // Deleted notes are overwritten on disk, not just unlinked (SECURITY T19).
-        config.prepareDatabase { db in try db.execute(sql: "PRAGMA secure_delete = ON") }
+        // The WAL is reused, not shrunk, after a checkpoint: without a limit one big copy (a Notes library)
+        // leaves it at its largest for good.
+        config.prepareDatabase { db in try db.execute(sql: "PRAGMA secure_delete = ON; PRAGMA journal_size_limit = 4194304") }
         let pool = try DatabasePool(path: url.path, configuration: config)
         for suffix in ["", "-wal", "-shm"] {
             try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path + suffix)

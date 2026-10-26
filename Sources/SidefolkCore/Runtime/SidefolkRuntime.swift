@@ -41,6 +41,7 @@ public final class SidefolkRuntime: Sendable {
     /// Which Apple Notes are already in the notebook (DECISIONS D38).
     public let appleNotesLedger: AppleNotesLedger
     private let server: LocalAPIServer
+    private let upkeep = DailyChore()
 
     /// - Parameters:
     ///   - bundledResources: the app's Resources folder (bundled skills, built-in and sample extensions).
@@ -140,6 +141,8 @@ public final class SidefolkRuntime: Sendable {
         // Approval cards for removing Apple Notes name them from this, without waiting.
         _ = try? await appleNotesLedger.load()
         await attention.restoreWaiting()
+        // The app tidied up at launch; this keeps doing it for as long as Sidefolk runs.
+        await upkeep.start { [weak self] in await self?.housekeeping() }
     }
 
     /// After sleep or a clock change: re-arm timers.
@@ -156,6 +159,7 @@ public final class SidefolkRuntime: Sendable {
         await watchers.stop()
         await extensions.shutdown()
         server.stop()
+        await upkeep.stop()
         return fallback
     }
 
@@ -170,7 +174,7 @@ public final class SidefolkRuntime: Sendable {
         return runtime
     }
 
-    /// Removes expired history, old activity and long-trashed notes.
+    /// Removes expired history, old activity, runs and jobs, and long-trashed notes.
     public func housekeeping() async {
         let s = settings.current
         let now = clock.now
@@ -178,6 +182,8 @@ public final class SidefolkRuntime: Sendable {
         _ = try? await activity.purge(olderThan: now.addingTimeInterval(-Double(s.activityDays) * 86400))
         _ = try? await notebook.purgeTrash(olderThan: now.addingTimeInterval(-30 * 86400))
         _ = try? await sessions.purge(olderThan: now.addingTimeInterval(-14 * 86400))
+        _ = try? await jobs.purge(olderThan: now.addingTimeInterval(-14 * 86400))
+        _ = try? await runs.purge(olderThan: now.addingTimeInterval(-Double(s.activityDays) * 86400))
         _ = try? await AttentionStore(db).purge(olderThan: now.addingTimeInterval(-30 * 86400))
     }
 }

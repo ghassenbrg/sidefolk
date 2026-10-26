@@ -29,9 +29,7 @@ extension AppCoordinator {
         let permissions = runtime.permissions
         let events = runtime.events
         Task {
-            var policy = (try? await permissions.policy()) ?? GuardPolicy()
-            policy.mode = mode
-            try? await permissions.setPolicy(policy)
+            try? await permissions.updatePolicy { $0.mode = mode }
             events.changed(.permissions)
         }
     }

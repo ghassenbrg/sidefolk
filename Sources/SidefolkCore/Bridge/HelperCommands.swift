@@ -20,7 +20,7 @@ public enum HelperCommands {
         do {
             token = try SocketConnector.brainToken(environment: environment)
         } catch {
-            FileHandle.standardError.write(Data("sidefolk mcp: \(error)\n".utf8))
+            try? FileHandle.standardError.write(contentsOf: Data("sidefolk mcp: \(error)\n".utf8))
             return 1
         }
         await MCPStdioBridge(connector: SocketConnector(socketPath: paths.socket.path, token: token)).run()
@@ -51,7 +51,7 @@ public enum HelperCommands {
             do {
                 return try await send(.jobStart, startJSON, socket: socket, timeout: 1.5).string("id")
             } catch {
-                FileHandle.standardError.write(Data("sidefolk: Sidefolk isn't running, so you won't get a notice when this ends.\n".utf8))
+                try? FileHandle.standardError.write(contentsOf: Data("sidefolk: Sidefolk isn't running, so you won't get a notice when this ends.\n".utf8))
                 return nil
             }
         }

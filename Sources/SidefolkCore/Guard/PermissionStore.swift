@@ -42,8 +42,20 @@ public struct PermissionStore: Sendable {
     }
 
     public func policy() async throws -> GuardPolicy {
-        try await KVStore(db).get("guard.policy", as: GuardPolicy.self) ?? GuardPolicy()
+        try await KVStore(db).get(Self.policyKey, as: GuardPolicy.self) ?? GuardPolicy()
     }
 
-    public func setPolicy(_ p: GuardPolicy) async throws { try await KVStore(db).set("guard.policy", p) }
+    public func setPolicy(_ p: GuardPolicy) async throws { try await KVStore(db).set(Self.policyKey, p) }
+
+    /// Changes one part of the policy in one step. Reading it with `try?` and saving a default when the read
+    /// failed would switch back on every capability the person had turned off; this throws instead.
+    public func updatePolicy(_ change: @escaping @Sendable (inout GuardPolicy) -> Void) async throws {
+        try await db.writer.write { db in
+            var policy = try KeyValue.fetchOne(db, key: Self.policyKey)?.value.decode(GuardPolicy.self) ?? GuardPolicy()
+            change(&policy)
+            try KeyValue(key: Self.policyKey, value: try JSONValue.from(policy)).save(db)
+        }
+    }
+
+    static let policyKey = "guard.policy"
 }

@@ -251,13 +251,16 @@ public actor ExtensionHost {
                 await stop(id)
                 runtimes[id]?.record.enabled = false
             }
-            try await store.save(runtimes[id]!.record)
+            // Each await above lets another call in (an uninstall from Settings, say): look again, never force.
+            guard let saved = runtimes[id]?.record else { throw UserFacingError("The extension stopped while it was being installed.") }
+            try await store.save(saved)
             installer.finish(committed)
             registerTools(id)
             if enabled { touch(id) }
             Log.shared.info("extensions", "installed", ["id": id, "version": manifest.version])
             events.changed(.extensions)
-            return makeInfo(id)!
+            guard let info = makeInfo(id) else { throw UserFacingError("The extension stopped while it was being installed.") }
+            return info
         } catch {
             if let client = runtimes[id]?.client { await client.shutdown() }
             registry.unregister(owner: id)

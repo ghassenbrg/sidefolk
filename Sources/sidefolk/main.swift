@@ -9,7 +9,7 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 let paths = SidefolkPaths.standard()
 
 func fail(_ message: String, code: Int32 = 64) -> Never {
-    FileHandle.standardError.write(Data("sidefolk: \(message)\n\n\(HelperCommands.usage)\n".utf8))
+    try? FileHandle.standardError.write(contentsOf: Data("sidefolk: \(message)\n\n\(HelperCommands.usage)\n".utf8))
     exit(code)
 }
 
@@ -28,7 +28,7 @@ case "run":
         do {
             CommandRunner.exitLike(try await HelperCommands.run(request, paths: paths))
         } catch {
-            FileHandle.standardError.write(Data("sidefolk: \(error)\n".utf8))
+            try? FileHandle.standardError.write(contentsOf: Data("sidefolk: \(error)\n".utf8))
             exit(127)
         }
     }

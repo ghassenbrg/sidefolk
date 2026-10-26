@@ -215,11 +215,12 @@ final class SettingsModel {
         await loadPermissions()
     }
 
-    func setPolicy(_ change: (inout GuardPolicy) -> Void) async {
-        var next = policy
-        change(&next)
-        policy = next
-        try? await runtime.permissions.setPolicy(next)
+    /// Changes the stored policy, not this window's copy of it: a copy that failed to load is the default, and
+    /// saving it would switch back on what the person turned off.
+    func setPolicy(_ change: @escaping @Sendable (inout GuardPolicy) -> Void) async {
+        change(&policy)
+        try? await runtime.permissions.updatePolicy(change)
+        if let saved = try? await runtime.permissions.policy() { policy = saved }
         runtime.events.changed(.permissions)
     }
 
