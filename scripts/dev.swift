@@ -5,6 +5,7 @@
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | settings:extensions | find:milk | drop:https://example.com
+//   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

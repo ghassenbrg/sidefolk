@@ -1,0 +1,682 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@?"
+          }
+        }
+      }
+    },
+    "%@ files in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ files in %2$@"
+          }
+        }
+      }
+    },
+    "%@ needs you%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ needs you%2$@"
+          }
+        }
+      }
+    },
+    "%@ — %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ — %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@…" : {
+
+    },
+    "%lld" : {
+
+    },
+    "%lld days" : {
+
+    },
+    "+%lld more waiting" : {
+
+    },
+    "1 day" : {
+
+    },
+    "AI settings…" : {
+
+    },
+    "API key" : {
+
+    },
+    "Access to %@" : {
+
+    },
+    "Activity" : {
+
+    },
+    "Add Folder…" : {
+
+    },
+    "Add MCP Server…" : {
+
+    },
+    "Add Server" : {
+
+    },
+    "Add Session Taps" : {
+
+    },
+    "Add an MCP server" : {
+
+    },
+    "Add reminder" : {
+
+    },
+    "Adding…" : {
+
+    },
+    "All" : {
+
+    },
+    "Allow notifications" : {
+
+    },
+    "Always allow" : {
+
+    },
+    "Archive" : {
+
+    },
+    "Archived" : {
+
+    },
+    "Ask %@" : {
+
+    },
+    "Ask shortcut" : {
+
+    },
+    "Ask, remind, note, watch…" : {
+
+    },
+    "Asked by %@" : {
+
+    },
+    "Ask…" : {
+
+    },
+    "Be quiet" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Cancel reminder" : {
+
+    },
+    "Check now" : {
+
+    },
+    "Clear search" : {
+
+    },
+    "Collection" : {
+
+    },
+    "Confirmation" : {
+
+    },
+    "Connect" : {
+
+    },
+    "Connect %@" : {
+
+    },
+    "Connect your agents…" : {
+
+    },
+    "Copy" : {
+
+    },
+    "Create collection" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete %@" : {
+
+    },
+    "Delete All Data…" : {
+
+    },
+    "Delete Everything" : {
+
+    },
+    "Delete all Sidefolk data?" : {
+
+    },
+    "Delete collection" : {
+
+    },
+    "Delete forever" : {
+
+    },
+    "Delete skill" : {
+
+    },
+    "Delete the skill “%@”?" : {
+
+    },
+    "Delete “%@” forever?" : {
+
+    },
+    "Delete “%@”?" : {
+
+    },
+    "Delete…" : {
+
+    },
+    "Deleting…" : {
+
+    },
+    "Disconnect" : {
+
+    },
+    "Disconnect %@" : {
+
+    },
+    "Dismiss" : {
+
+    },
+    "Done" : {
+
+    },
+    "Edit reminder" : {
+
+    },
+    "Edit…" : {
+
+    },
+    "Enable %@" : {
+
+    },
+    "Everyone" : {
+
+    },
+    "Everywhere" : {
+
+    },
+    "Exact command" : {
+
+    },
+    "Export Data…" : {
+
+    },
+    "Export Diagnostics…" : {
+
+    },
+    "Find" : {
+
+    },
+    "For 1 hour" : {
+
+    },
+    "For 3 hours" : {
+
+    },
+    "For 30 minutes" : {
+
+    },
+    "From" : {
+
+    },
+    "Install %@ first, then connect it here." : {
+
+    },
+    "Install from Folder…" : {
+
+    },
+    "Installing…" : {
+
+    },
+    "It runs in a sandbox limited to the lines above. You can turn it off or uninstall it any time." : {
+
+    },
+    "It's empty." : {
+
+    },
+    "Its %@ move to the Trash for 30 days. Restored items go to the Inbox." : {
+
+    },
+    "Its instructions are removed. This can't be undone." : {
+
+    },
+    "Its tools and watches stop, and its files are removed." : {
+
+    },
+    "Its tools stop working right away." : {
+
+    },
+    "Keep recent requests for" : {
+
+    },
+    "Kind" : {
+
+    },
+    "Large" : {
+
+    },
+    "Last request" : {
+
+    },
+    "Last request sent to the AI" : {
+
+    },
+    "Less" : {
+
+    },
+    "Link" : {
+
+    },
+    "Look again" : {
+
+    },
+    "MCP servers run outside Sidefolk's sandbox, with your full permissions and the folders you shared with Sidefolk. Only add servers you trust. Their tools ask before changing anything, and what they return is treated as untrusted." : {
+
+    },
+    "Mark done" : {
+
+    },
+    "Mark not done" : {
+
+    },
+    "Medium" : {
+
+    },
+    "More" : {
+
+    },
+    "More for “%@”" : {
+
+    },
+    "Move to Trash" : {
+
+    },
+    "Move to Trash (⌘⌫)" : {
+
+    },
+    "Name" : {
+
+    },
+    "Needs attention" : {
+
+    },
+    "Needs attention (%lld)" : {
+
+    },
+    "New %@" : {
+
+    },
+    "New %@ (⌘N)" : {
+
+    },
+    "New collection" : {
+
+    },
+    "New reminder" : {
+
+    },
+    "No outcome" : {
+
+    },
+    "Not now" : {
+
+    },
+    "Notebook" : {
+
+    },
+    "Notes, reminders and watches work without AI. AI is only used for questions and open-ended requests." : {
+
+    },
+    "Nothing beyond its own data folder." : {
+
+    },
+    "Nothing found." : {
+
+    },
+    "Nothing sent yet. After your first question, you'll see here exactly what went out." : {
+
+    },
+    "Now" : {
+
+    },
+    "Open" : {
+
+    },
+    "Open Sidefolk" : {
+
+    },
+    "Open at login" : {
+
+    },
+    "Open link" : {
+
+    },
+    "Open session" : {
+
+    },
+    "Or type a different answer above." : {
+
+    },
+    "Pause" : {
+
+    },
+    "Permission request: %@" : {
+
+    },
+    "Presets" : {
+
+    },
+    "Read and change" : {
+
+    },
+    "Read only" : {
+
+    },
+    "Remind me…" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Remove Session Taps" : {
+
+    },
+    "Remove attachment" : {
+
+    },
+    "Remove key" : {
+
+    },
+    "Remove the key and switch" : {
+
+    },
+    "Rename collection" : {
+
+    },
+    "Rename…" : {
+
+    },
+    "Restore" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Review changed tools…" : {
+
+    },
+    "Revoke" : {
+
+    },
+    "Revoke %@" : {
+
+    },
+    "Save" : {
+
+    },
+    "Save as note" : {
+
+    },
+    "Save as task" : {
+
+    },
+    "Save key" : {
+
+    },
+    "Search" : {
+
+    },
+    "Search %@" : {
+
+    },
+    "Search everything" : {
+
+    },
+    "Search everywhere" : {
+
+    },
+    "Search in" : {
+
+    },
+    "Send your saved key to %@?" : {
+
+    },
+    "Set up AI…" : {
+
+    },
+    "Show" : {
+
+    },
+    "Show in Finder" : {
+
+    },
+    "Show welcome" : {
+
+    },
+    "Sidefolk" : {
+
+    },
+    "Sidefolk keeps these in mind in every conversation. Change or delete anything." : {
+
+    },
+    "Size" : {
+
+    },
+    "Small" : {
+
+    },
+    "Snooze" : {
+
+    },
+    "Snooze “%@”" : {
+
+    },
+    "Stop" : {
+
+    },
+    "Stop watching" : {
+
+    },
+    "Tags" : {
+
+    },
+    "Tags, separated by spaces" : {
+
+    },
+    "Tap me when a session needs you" : {
+
+    },
+    "Test connection" : {
+
+    },
+    "Testing…" : {
+
+    },
+    "Text" : {
+
+    },
+    "That needs AI — or I can do this:" : {
+
+    },
+    "That needs AI, which isn't set up." : {
+
+    },
+    "Think harder" : {
+
+    },
+    "This came up while reading outside content. Check it carefully." : {
+
+    },
+    "This can't be undone." : {
+
+    },
+    "This removes every note, reminder, watcher, folder grant and extension, your history and logs, and the keys saved in your Keychain. Sidefolk starts fresh. This can't be undone." : {
+
+    },
+    "Title" : {
+
+    },
+    "Trash" : {
+
+    },
+    "Try a sample:" : {
+
+    },
+    "Try again" : {
+
+    },
+    "Turn off" : {
+
+    },
+    "Type delete to confirm" : {
+
+    },
+    "Type your answer above and press Return." : {
+
+    },
+    "Type your answer…" : {
+
+    },
+    "Type “delete” to confirm." : {
+
+    },
+    "Unarchive" : {
+
+    },
+    "Undo" : {
+
+    },
+    "Uninstall" : {
+
+    },
+    "Uninstall “%@”?" : {
+
+    },
+    "Uninstall…" : {
+
+    },
+    "Until tomorrow morning" : {
+
+    },
+    "Untitled" : {
+
+    },
+    "Use a model" : {
+
+    },
+    "Use my key with %@" : {
+
+    },
+    "Version %@ · from %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Version %1$@ · from %2$@"
+          }
+        }
+      }
+    },
+    "Waiting since %@" : {
+
+    },
+    "Watch" : {
+
+    },
+    "Watch something…" : {
+
+    },
+    "What" : {
+
+    },
+    "When" : {
+
+    },
+    "When — e.g. “tomorrow 9am”; leave empty to keep %@" : {
+
+    },
+    "When, like “tomorrow 9:00”" : {
+
+    },
+    "Write a %@" : {
+
+    },
+    "Write anything…" : {
+
+    },
+    "Your key was saved for %@. Sidefolk only sends a key to the server it was saved for." : {
+
+    },
+    "and %lld more" : {
+
+    },
+    "delete" : {
+
+    },
+    "from %@" : {
+
+    },
+    "https://…" : {
+
+    },
+    "in %@" : {
+
+    },
+    "sk-ant-…" : {
+
+    },
+    "sk-…" : {
+
+    },
+    "—" : {
+
+    }
+  },
+  "version" : "1.0"
+}

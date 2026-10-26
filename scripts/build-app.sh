@@ -33,6 +33,9 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 [[ -d Resources/Brand/exports ]] && cp -R Resources/Brand/exports "$APP/Contents/Resources/Brand"
 [[ -d Resources/MenuBar ]] && cp -R Resources/MenuBar "$APP/Contents/Resources/MenuBar"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$APP/Contents/Resources/Skills"
+# One <language>.lproj per translation; macOS picks the user's language (or the one chosen in Settings).
+[[ -f Resources/Localization/Localizable.xcstrings ]] && \
+  xcrun xcstringstool compile Resources/Localization/Localizable.xcstrings --output-directory "$APP/Contents/Resources" > /dev/null
 cp THIRD_PARTY_NOTICES.md LICENSE "$APP/Contents/Resources/" 2>/dev/null || true
 [[ -d extensions ]] && cp -R extensions "$APP/Contents/Resources/Extensions"
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.
