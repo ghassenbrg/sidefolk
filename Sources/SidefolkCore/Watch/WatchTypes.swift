@@ -18,9 +18,12 @@ public struct ProbeResult: Sendable, Equatable {
     /// Set by a probe's very first look when something is off but not wrong enough to fail ("it isn't answering",
     /// "that program isn't running"). Only the card that confirms the new watcher shows it.
     public var firstLookNote: String?
+    /// What a report read this time (`Watcher.Mode.report`): shown in place of a notice.
+    public var reading: ReadingText?
 
     public init(state: JSONValue, triggered: Bool = false, summary: String = "", detail: String? = nil,
-                openTarget: String? = nil, level: AttentionLevel? = nil, recheckIn: TimeInterval? = nil, firstLookNote: String? = nil) {
+                openTarget: String? = nil, level: AttentionLevel? = nil, recheckIn: TimeInterval? = nil, firstLookNote: String? = nil,
+                reading: ReadingText? = nil) {
         self.state = state
         self.triggered = triggered
         self.summary = summary
@@ -29,6 +32,42 @@ public struct ProbeResult: Sendable, Equatable {
         self.level = level
         self.recheckIn = recheckIn
         self.firstLookNote = firstLookNote
+        self.reading = reading
+    }
+}
+
+/// A value a report read: words for people, in the app's language ("18,4 °C"), and the same in English for a
+/// model ("18.4 °C"). `fromOutside` marks text taken from a web page or a command's output (SECURITY T2).
+public struct ReadingText: Sendable, Equatable {
+    public var shown: String
+    public var forModel: String
+    public var fromOutside: Bool
+
+    public init(shown: String, forModel: String, fromOutside: Bool = false) {
+        self.shown = shown
+        self.forModel = forModel
+        self.fromOutside = fromOutside
+    }
+}
+
+/// The latest value of a report, as the app shows it beside the companion and on Now. Carries what the app needs
+/// so that a reading every few seconds costs no database read.
+public struct WatchReading: Sendable, Hashable {
+    public var watcherId: String
+    public var title: String
+    public var value: String
+    public var at: Date
+    public var intervalS: TimeInterval
+    /// The person asked for a notification with every reading.
+    public var notify: Bool
+
+    public init(watcherId: String, title: String, value: String, at: Date, intervalS: TimeInterval, notify: Bool) {
+        self.watcherId = watcherId
+        self.title = title
+        self.value = value
+        self.at = at
+        self.intervalS = intervalS
+        self.notify = notify
     }
 }
 
@@ -60,6 +99,9 @@ public protocol WatcherProbe: Sendable {
     func check(_ watcher: Watcher, now: Date) async throws -> ProbeResult
     /// Things that should trigger an early check, derived from the config and the last state.
     func eventTargets(for watcher: Watcher) -> [WatchEventTarget]
+    /// The floor for this watcher, when it depends on more than the kind (a command that reports its output
+    /// may run more often than one that waits for a change).
+    func minimumInterval(for watcher: Watcher) -> TimeInterval
 }
 
 public extension WatcherProbe {
@@ -68,6 +110,7 @@ public extension WatcherProbe {
     var repeatCooldown: TimeInterval { WatchLimits.defaultCooldown }
     func prepare(_ watcher: Watcher) throws -> Watcher { watcher }
     func eventTargets(for watcher: Watcher) -> [WatchEventTarget] { [] }
+    func minimumInterval(for watcher: Watcher) -> TimeInterval { minimumInterval }
 }
 
 /// A watcher that cannot be created or changed. The message is written for the user, in the app's language.
@@ -95,10 +138,13 @@ public enum ProbeError: Error, Sendable, Equatable, CustomStringConvertible {
     case deferred(until: Date)
     /// The Mac has no network. Does not count as a failure, and nothing is shown.
     case offline
+    /// Asking again can't help (no such place, no battery, no value where the page was told to look): the watcher
+    /// stops with this message instead of retrying.
+    case invalid(String)
 
     public var description: String {
         switch self {
-        case .failed(let m): m
+        case .failed(let m), .invalid(let m): m
         case .deferred: String(localized: "Waiting a moment before asking that site again.")
         case .offline: String(localized: "No internet connection.")
         }
@@ -112,8 +158,14 @@ public enum WatchLimits {
     /// Every external agent together (T4): a new client name doesn't buy new room.
     public static let maxActiveExternal = 10
     public static let maxActiveCommands = 5
+    /// Live readouts at once: each is a pill beside the companion.
+    public static let maxActiveReports = 4
     public static let onceExpiry: TimeInterval = 7 * 86400
     public static let repeatExpiry: TimeInterval = 30 * 86400
+    /// A report stops on its own unless the person said to keep going: after an hour when it reads more often
+    /// than once a minute, after a day otherwise (D35).
+    public static let fastReportLifetime: TimeInterval = 3600
+    public static let reportLifetime: TimeInterval = 86400
     /// External agents' watchers stop after a day, however they were set up (T4).
     public static let externalExpiry: TimeInterval = 86400
     public static let defaultCooldown: TimeInterval = 30 * 60
@@ -123,6 +175,8 @@ public enum WatchLimits {
     public static let failuresBeforeNotice = 3
     /// Notice titles and snippets are kept short (T17).
     public static let summaryLimit = 200
+    /// A report's value: a number or a short line (the pill beside the companion shows the start of it).
+    public static let readingLimit = 80
 }
 
 /// The built-in watcher kinds.
@@ -134,9 +188,24 @@ public enum WatchKind {
     public static let folderNewFile = "folder_new_file"
     public static let processExits = "process_exits"
     public static let command = "command"
+    /// Reports (`watch.report`): a system metric, the weather somewhere, a value on a web page.
+    public static let metric = "metric"
+    public static let weather = "weather"
+    public static let webValue = "web_value"
 
-    /// Kinds the `watch.create` tool offers (the command kind has its own tool).
+    /// Kinds the `watch.create` tool offers (the command kind has its own tool, reports have `watch.report`).
     public static let creatable = [urlChange, siteStatus, fileAppears, fileChanges, folderNewFile, processExits]
+}
+
+/// The fastest each kind of report may read, stated in the tool descriptions so models pick valid values. Faster
+/// requests are raised to these and the answer says so; nothing is refused for being too frequent (D35).
+public enum ReportFloors {
+    /// CPU, memory, battery, disk, network: a few system calls, no process, no network.
+    public static let metric: TimeInterval = 5
+    /// A command starts a process each time.
+    public static let command: TimeInterval = 10
+    /// Someone else's server, which HostThrottle already asks at most once a minute.
+    public static let web: TimeInterval = 60
 }
 
 /// Who made a watcher, recorded in `watchers.source`. It decides what the watcher may do.

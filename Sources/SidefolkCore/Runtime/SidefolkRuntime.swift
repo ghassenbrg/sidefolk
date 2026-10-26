@@ -87,7 +87,7 @@ public final class SidefolkRuntime: Sendable {
 
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
-        registry.register(WatchTools.make(engine: watchers))
+        registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) }))
         registry.register(AgentFacingTools.make(attention: attention))
         registry.register(AgentFacingTools.status(StatusReader(db: db)))
         registry.register(SkillTools.all(skills))

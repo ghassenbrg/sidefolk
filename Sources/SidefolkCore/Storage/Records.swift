@@ -246,7 +246,8 @@ public struct Reminder: SidefolkRecord, Identifiable, Hashable {
 public struct Watcher: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "watchers"
     public enum State: String, Codable, Sendable { case active, paused, triggered, expired, error }
-    public enum Mode: String, Codable, Sendable { case once, `repeat` }
+    /// once: tell once, then stop. repeat: tell every time it happens. report: tell the current value every check (D35).
+    public enum Mode: String, Codable, Sendable { case once, `repeat`, report }
 
     public var id: String
     public var kind: String

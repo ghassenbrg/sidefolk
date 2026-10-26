@@ -38,16 +38,20 @@ public struct IntentParser: Sendable {
         self.init(when: WhenParser(calendar: calendar, morningHour: morningHour, afternoonHour: afternoonHour, eveningHour: eveningHour), home: home)
     }
 
-    /// - Parameter knownCollections: names of the user's notebook collections, so "ideas for Sidefolk" can tell a collection from a search word.
-    public func parse(_ text: String, now: Date, knownCollections: [String] = []) -> ParsedIntent? {
+    /// - Parameters:
+    ///   - knownCollections: names of the user's notebook collections, so "ideas for Sidefolk" can tell a collection from a search word.
+    ///   - watching: what is being watched or reported, so "stop the Fukuoka temperature" can name one.
+    public func parse(_ text: String, now: Date, knownCollections: [String] = [], watching: [WatchName] = []) -> ParsedIntent? {
         guard let p = prepare(text) else { return nil }
-        let ctx = Context(now: now, known: knownCollections)
-        return quiet(p.command, ctx) ?? watch(p.command, ctx) ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
+        let ctx = Context(now: now, known: knownCollections, watching: watching)
+        return quiet(p.command, ctx) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? watch(p.command, ctx)
+            ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
     }
 
     struct Context {
         let now: Date
         let known: [String]
+        var watching: [WatchName] = []
     }
 
     // MARK: Cleaning the text

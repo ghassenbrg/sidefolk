@@ -44,9 +44,9 @@ import Testing
 
     @Test func theToolboxIsWhatWasPromised() {
         let specs = Dictionary(uniqueKeysWithValues: WatchTools.make(engine: engine).map { ($0.spec.name, $0.spec) })
-        #expect(Set(specs.keys) == ["watch.create", "watch.command", "watch.list", "watch.stop", "watch.pause", "watch.resume"])
+        #expect(Set(specs.keys) == ["watch.create", "watch.command", "watch.report", "watch.list", "watch.stop", "watch.pause", "watch.resume"])
         for name in ["watch.create", "watch.list", "watch.stop"] { #expect(specs[name]?.external == true, "\(name)") }
-        for name in ["watch.command", "watch.pause", "watch.resume"] { #expect(specs[name]?.external == false, "\(name)") }
+        for name in ["watch.command", "watch.report", "watch.pause", "watch.resume"] { #expect(specs[name]?.external == false, "\(name)") }
 
         let create = specs["watch.create"]!
         #expect(create.risk == .low)
@@ -60,6 +60,15 @@ import Testing
         let command = specs["watch.command"]!
         #expect(command.risk == .high)
         #expect(command.capabilities == [.watch, .shell])
+
+        // Reports state their floors where models choose the interval (D35).
+        let report = specs["watch.report"]!
+        #expect(report.risk == .low)
+        #expect(report.capabilities == [.watch, .network])
+        #expect(report.description.contains("metrics every 5 s, weather and web every 60 s"))
+        #expect(report.description.contains("every 10 s at the fastest"))
+        #expect(command.description.contains("10 at the fastest"))
+        #expect(report.inputSchema["properties"]?["metric"]?["enum"]?.arrayValue?.count == Metric.allCases.count)
     }
 
     @Test func allowLocalIsNotInAnyToolSchema() {

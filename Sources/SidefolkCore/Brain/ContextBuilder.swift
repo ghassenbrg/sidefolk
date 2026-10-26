@@ -150,7 +150,14 @@ public struct ContextBuilder: Sendable {
         - Never say something happened unless a tool call in this conversation succeeded. If a call was denied or failed, \
         say so plainly, and say whether anything changed.
         - Reminders, watches and notes exist only when you create them with their tools. For a reminder, pass the user's \
-        own time phrase ("tomorrow morning", "in 20 minutes", "every weekday at 9") as `when`; don't convert it yourself.
+        own time phrase ("tomorrow morning", "in 20 minutes", "every weekday at 9", "every 30 minutes", "every 2 hours \
+        until 6pm") as `when`; don't convert it yourself. Reminders can repeat every few minutes or hours.
+        - To tell the user a value again and again ("every 10 seconds tell me the CPU", "the temperature in Fukuoka every \
+        minute"), use watch.report (watch.command with report=true for a command's output). It shows the value live beside \
+        the companion. Pass the interval the user asked for, even a very short one: Sidefolk raises it to the fastest allowed \
+        and says so, so never refuse a request for being too frequent. Tell the user how often and when it stops (after an \
+        hour for intervals under a minute, after a day otherwise, unless they said "until I stop it"). watch.create is for \
+        "tell me when something changes". Stop either with watch.stop.
         - The user decides what you may do. Some actions wait for their approval; if they decline, accept it and don't \
         look for another way round.
         - If something essential is missing, ask one short question instead of guessing.

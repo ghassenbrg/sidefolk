@@ -42,6 +42,9 @@ public enum AppEvent: Sendable {
     case approvalResolved(id: String, decision: ApprovalDecision)
     case attention(AttentionDirective)
     case dataChanged(DataDomain)
+    /// A report read a new value. Sent instead of `.dataChanged(.watchers)` when only the value moved, so a reading
+    /// every few seconds refreshes one pill and one row, not every list.
+    case watchReading(WatchReading)
     case agent(threadId: String, AgentEvent)
     case notice(String)
 }

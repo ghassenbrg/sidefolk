@@ -45,7 +45,8 @@ public struct LocalIntentRunner: Sendable {
 
     public func parse(_ text: String) async -> ParsedIntent? {
         let names = ((try? await runtime.notebook.collections()) ?? []).map(\.name)
-        return runtime.intentParser.parse(Self.expandSlash(text), now: runtime.clock.now, knownCollections: names)
+        let watching = await runtime.watchers.list().map(WatchName.init)
+        return runtime.intentParser.parse(Self.expandSlash(text), now: runtime.clock.now, knownCollections: names, watching: watching)
     }
 
     public func run(_ intent: LocalIntent) async -> LocalOutcome {
@@ -76,6 +77,23 @@ public struct LocalIntentRunner: Sendable {
                 input["contains"] = .string(contains)
             }
             return await execute("watch.create", .object(input))
+        case .report(let r):
+            var input: [String: JSONValue] = ["every_seconds": .number(r.everySeconds)]
+            switch r.source {
+            case .metric(let metric):
+                input["source"] = "metric"
+                input["metric"] = .string(metric.rawValue)
+            case .weather(let place, let quantity):
+                input["source"] = "weather"
+                input["place"] = .string(place)
+                input["quantity"] = .string(quantity.rawValue)
+            }
+            if let until = r.until { input["until"] = .string(until) }
+            if r.untilStopped { input["until_stopped"] = true }
+            if r.notify { input["notify"] = true }
+            return await execute("watch.report", .object(input))
+        case .stopWatch(let ids, let words):
+            return await stop(ids, words: words)
         case .quiet(let until):
             await runtime.settings.update { $0.quietUntil = until ?? .distantFuture }
             await runtime.attention.update { $0.quiet = true }
@@ -94,6 +112,21 @@ public struct LocalIntentRunner: Sendable {
         case .needsTarget(let kind, let becomes):
             return .needsTarget(kind: kind, becomes: becomes)
         }
+    }
+
+    /// Stops what the words named, through `watch.stop` like any other stop. Several matches are named back
+    /// rather than all stopped: "stop the temperature" with two cities should ask which.
+    private func stop(_ ids: [String], words: String) async -> LocalOutcome {
+        let said = words.trimmingCharacters(in: .whitespaces).clipped(40)
+        guard !ids.isEmpty else {
+            return .info(said.isEmpty ? String(localized: "I'm not showing or watching anything right now.")
+                : String(localized: "I'm not showing or watching anything like “\(said)”."))
+        }
+        guard ids.count == 1 else {
+            let titles = await runtime.watchers.list().filter { ids.contains($0.id) }.map { "“\($0.title)”" }
+            return .info(String(localized: "That could be \(Wording.list(titles)). Which one should I stop?"))
+        }
+        return await execute("watch.stop", ["id": .string(ids[0])])
     }
 
     private func execute(_ tool: String, _ input: JSONValue) async -> LocalOutcome {

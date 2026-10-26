@@ -28,6 +28,8 @@ enum QA {
         case .note(let kind, let text, let collection, _): return "note(\(kind)) “\(text)” in \(collection ?? "Inbox")"
         case .aboutMe(let fact): return "aboutMe “\(fact)”"
         case .watch(let w): return "watch \(w.kind) \(w.target) contains=\(w.contains ?? "-")"
+        case .report(let r): return "report \(r.source) every \(r.everySeconds) s until \(r.until ?? (r.untilStopped ? "stopped" : "-"))"
+        case .stopWatch(let ids, let words): return "stop \(ids) “\(words)”"
         case .quiet(let until): return "quiet until \(until.map { TimeTest.show($0) } ?? "off")"
         case .quietOff: return "quietOff"
         case .find(let q, let kind, let collection): return "find “\(q)” kind=\(kind.map { "\($0)" } ?? "-") in \(collection ?? "-")"
