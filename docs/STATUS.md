@@ -87,7 +87,8 @@ pass; all ten languages complete (2141 strings each); release build 0.1.0 made a
   `release.yml` publishes a snapshot (prerelease, signed when the secrets exist) or a Developer ID
   signed, notarized production release from a `v<version>` tag or Actions › Run workflow.
   `scripts/package.sh` makes the disk image alone. *Checked:* actionlint and shellcheck clean, the
-  release plan in every case, the DMG from `package.sh`; not yet run on GitHub's runners, and the
+  release plan in every case, the DMG from `package.sh`; CI green on GitHub (run 40420280161, about 8
+  minutes: build, 1162 + 34 tests, translations, app). The Release workflow hasn't run yet, and its
   signing path needs the Developer ID secrets (docs/RELEASE.md). Both run on GitHub's `xcode-27` image:
   Xcode 26.6's Swift 6.3 crashed on valid code (two compiler crashes), after three fixes for it.
 - **Tests:** 1195 (1161 core in 150 suites + 34 character). `make test` runs serially (about 50 s).
