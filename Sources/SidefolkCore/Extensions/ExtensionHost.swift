@@ -170,9 +170,11 @@ public actor ExtensionHost {
                                            title: title(rt, def), risk: risk(rt, def.name),
                                            quarantined: rt.pin.pending[name] != nil))
         }
-        return ExtensionInfo(id: id, name: rt.pin.name, version: rt.record.version, kind: rt.record.kind,
+        let builtIn = rt.pin.origin == .bundled
+        return ExtensionInfo(id: id, name: (builtIn ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name,
+                             version: rt.record.version, kind: rt.record.kind,
                              enabled: rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
-                             description: rt.pin.description, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
+                             description: (builtIn ? BuiltInExtensionWords.description(id) : nil) ?? rt.pin.description, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings)
@@ -421,7 +423,8 @@ public actor ExtensionHost {
         guard let m = rt.manifest else { return [] }
         return m.watchers.keys.sorted().compactMap { name in
             guard let w = m.watchers[name] else { return nil }
-            return ExtensionWatcherKind(extensionId: rt.record.id, watcher: name, title: w.title,
+            let words = rt.pin.origin == .bundled ? BuiltInExtensionWords.watcher(rt.record.id, name) : nil
+            return ExtensionWatcherKind(extensionId: rt.record.id, watcher: name, title: words ?? w.title,
                                         description: w.description ?? "", config: w.config)
         }
     }
@@ -1003,6 +1006,7 @@ public actor ExtensionHost {
     }
 
     private func title(_ rt: Runtime, _ def: MCPToolDefinition) -> String {
+        if rt.pin.origin == .bundled, let t = BuiltInExtensionWords.tool(rt.record.id, def.name) { return t }
         if let t = rt.manifest?.tools[def.name]?.title { return t }
         if let t = def.title, !t.isEmpty { return t }
         return def.name.replacingOccurrences(of: "_", with: " ").capitalized
