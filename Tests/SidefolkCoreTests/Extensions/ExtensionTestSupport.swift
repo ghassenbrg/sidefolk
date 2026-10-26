@@ -32,7 +32,7 @@ enum ExtFixtures {
     static let git = ProgramResolver.system.resolve("git")
     /// Tests that reach the network (one tiny public clone) run only with SIDEFOLK_LIVE_NETWORK=1.
     static let liveNetwork = ProcessInfo.processInfo.environment["SIDEFOLK_LIVE_NETWORK"] == "1"
-    static let noPython: Comment = "python3 not found (xcrun --find python3 failed); skipping tests that run extensions"
+    static let noPython: Comment = "python3 not found (no developer tools, Homebrew or python.org Python); skipping tests that run extensions"
 
     /// A new, empty folder with its real path (`/private/var/…`, not `/var/…`).
     static func tempDir(_ label: String = "ext") throws -> URL {

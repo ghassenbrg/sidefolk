@@ -72,6 +72,11 @@ public final class BundledExtensions: Sendable {
 
     /// Nil when the extension is in place; otherwise why it isn't.
     private func reconcile(_ entry: Entry, host: ExtensionHost) async -> String? {
+        // Said for people, not developers: on a Mac without Apple's developer tools there is no python3 or git.
+        if let data = FileManager.default.contents(atPath: entry.folder.appendingPathComponent(ExtensionManifest.fileName).path),
+           let manifest = try? ExtensionManifest.decode(data), let missing = host.missingProgram(for: manifest) {
+            return Self.missing(missing, for: entry.name)
+        }
         let preview = await host.preview(folder: entry.folder)
         guard preview.report.isValid, let manifest = preview.report.manifest, manifest.id == entry.id else {
             // The checks name the manifest field; people only need what is wrong ("git isn't installed …").
@@ -112,6 +117,21 @@ public final class BundledExtensions: Sendable {
         }
         if let notice { host.events.publish(.notice(notice)) }
         return nil
+    }
+
+    /// What is missing and how to get it, in plain words. Apple's Command Line Tools bring both Python and Git;
+    /// the person installs them (Sidefolk never runs anything that would start that install).
+    static func missing(_ program: String, for name: String) -> String {
+        switch program {
+        case "python3":
+            String(localized: "\(name) needs Python, which isn't on this Mac. Apple's Command Line Tools include it: open Terminal, type xcode-select --install, then restart Sidefolk.")
+        case "git":
+            String(localized: "\(name) needs Git, which isn't on this Mac. Apple's Command Line Tools include it: open Terminal, type xcode-select --install, then restart Sidefolk.")
+        case "node":
+            String(localized: "\(name) needs Node.js, which isn't on this Mac. Install it from nodejs.org, then restart Sidefolk.")
+        default:
+            String(localized: "\(name) needs \(program), which isn't on this Mac.")
+        }
     }
 }
 

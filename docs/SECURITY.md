@@ -646,8 +646,9 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - **python3:** framework builds (Homebrew and Xcode) re-exec
   `…/Python.framework/Versions/X/Resources/Python.app/Contents/MacOS/Python`; allow it. Homebrew
   needs `/opt/homebrew/{Cellar,opt,lib}` (`ssl` loads `opt/openssl@3`) but not `etc` or `var`.
-  `/usr/bin/python3` is an xcrun shim that fails in the sandbox; resolve it at install with
-  `xcrun --find python3` + `realpath`.
+  `/usr/bin/python3` is an xcrun shim that fails in the sandbox; resolve it from the developer folder
+  `xcode-select` points at (read from its link, never by running `xcrun`, which offers to install the
+  developer tools on a Mac without them) + `realpath`.
 - **node:** a standalone binary needs only itself. Homebrew node also needs its dylibs in
   `/opt/homebrew/opt`.
 

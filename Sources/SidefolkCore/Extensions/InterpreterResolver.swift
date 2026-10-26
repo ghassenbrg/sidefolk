@@ -21,7 +21,10 @@ public struct ResolvedInterpreter: Codable, Sendable, Hashable {
 }
 
 /// Finds `python3`, `node` and `sh` in fixed, trusted places. `/usr/bin/python3` is an xcrun shim that
-/// fails inside the sandbox, so Python is located with `xcrun --find python3` and `realpath` (SECURITY §3).
+/// fails inside the sandbox, and running it, or xcrun itself, on a Mac without the developer tools pops
+/// Apple's "install the command line developer tools" dialog. So nothing is run: Apple's Python is read
+/// from the developer folder (`ProgramResolver.developerFolders`), then Homebrew's and python.org's, each
+/// through `realpath` (SECURITY §3). A Mac with none of them has no `python3`, and says so.
 public struct InterpreterResolver: Sendable {
     public static let supported: Set<String> = ["python3", "node", "sh"]
 
@@ -44,10 +47,15 @@ public struct InterpreterResolver: Sendable {
     }
 
     static func systemCandidates(_ name: String) -> [String] {
+        candidates(name, developer: ProgramResolver.developerFolders())
+    }
+
+    /// - Parameter developer: the developer folders that exist on this Mac, the selected one first.
+    static func candidates(_ name: String, developer: [String]) -> [String] {
         switch name {
         case "python3":
-            return [xcrunFind("python3"), "/opt/homebrew/bin/python3", "/usr/local/bin/python3",
-                    "/Library/Frameworks/Python.framework/Versions/Current/bin/python3"].compactMap { $0 }
+            return developer.map { "\($0)/usr/bin/python3" }
+                + ["/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/Library/Frameworks/Python.framework/Versions/Current/bin/python3"]
         case "node": return ["/opt/homebrew/bin/node", "/usr/local/bin/node"]
         case "sh": return ["/bin/sh"]
         default: return []
@@ -85,23 +93,5 @@ public struct InterpreterResolver: Sendable {
         runtime = runtime.filter { seen.insert($0).inserted }
         return ResolvedInterpreter(name: name, path: path, reexec: reexec, runtime: runtime,
                                    flags: name == "python3" ? ["-I", "-B"] : [])
-    }
-
-    /// `xcrun --find <tool>`; nil when developer tools are missing.
-    static func xcrunFind(_ tool: String) -> String? {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
-        p.arguments = ["--find", tool]
-        p.environment = ["PATH": "/usr/bin:/bin", "HOME": NSHomeDirectory()]
-        let out = Pipe()
-        p.standardOutput = out
-        p.standardError = FileHandle.nullDevice
-        p.standardInput = FileHandle.nullDevice
-        do { try SpawnLock.withLock { try p.run() } } catch { return nil }
-        let data = out.fileHandleForReading.readDataToEndOfFile()
-        p.waitUntilExit()
-        guard p.terminationStatus == 0 else { return nil }
-        let path = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        return path.hasPrefix("/") ? path : nil
     }
 }

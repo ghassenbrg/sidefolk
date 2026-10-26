@@ -179,6 +179,14 @@ public actor ExtensionHost {
     }
 
     /// What installing `folder` would do. Never runs the extension.
+    /// The interpreter or named program (`python3`, `git`) the manifest needs and this Mac doesn't have, found
+    /// the way an install would find it, without running anything.
+    nonisolated func missingProgram(for manifest: ExtensionManifest) -> String? {
+        let command = manifest.run.command
+        if InterpreterResolver.supported.contains(command), config.resolver.resolve(command) == nil { return command }
+        return manifest.permissions.exec.first { !$0.contains("/") && ProgramResolver.known[$0] != nil && config.programs.resolve($0) == nil }
+    }
+
     public func preview(folder: URL) -> InstallPreview {
         let report = validator.validate(folder: folder, mode: .source)
         var preview = InstallPreview(report: report)

@@ -183,7 +183,7 @@ Good to know:
 - **Python runs with `-I -B`** (isolated mode, no bytecode). Isolated mode doesn't put your script's
   folder on `sys.path`, so for multi-file Python add this before your imports:
   `sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))`.
-  Python comes from Apple's developer tools (`xcrun --find python3`, currently Python 3.9), which may
+  Python comes from Apple's developer tools (the folder `xcode-select` points at, currently Python 3.9), which may
   be older than the `python3` you use in Terminal; Homebrew or python.org Pythons are used only if
   the developer tools are missing. Use the standard library, or vendor packages into your folder.
 - **Node** is looked up in `/opt/homebrew/bin` and `/usr/local/bin`. **sh** is `/bin/sh`; every

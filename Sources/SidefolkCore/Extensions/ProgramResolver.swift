@@ -58,12 +58,17 @@ public struct ProgramResolver: Sendable {
     }
 
     static func systemCandidates(_ name: String) -> [String] {
+        developerFolders().map { "\($0)/usr/bin/\(name)" } + ["/opt/homebrew/bin/\(name)", "/usr/local/bin/\(name)"]
+    }
+
+    /// Where Apple's developer tools are, the one `xcode-select` chose first, read from its link and the usual
+    /// places: never by running `xcode-select` or `xcrun`, which offer to install the tools on a Mac without them.
+    static func developerFolders() -> [String] {
         var developer: [String] = []
         if let selected = try? FileManager.default.destinationOfSymbolicLink(atPath: "/private/var/db/xcode_select_link") {
             developer.append(selected)
         }
-        developer += ["/Library/Developer/CommandLineTools", "/Applications/Xcode.app/Contents/Developer"]
-        return developer.map { "\($0)/usr/bin/\(name)" } + ["/opt/homebrew/bin/\(name)", "/usr/local/bin/\(name)"]
+        return developer + ["/Library/Developer/CommandLineTools", "/Applications/Xcode.app/Contents/Developer"]
     }
 
     /// `<prefix>/bin/<name>`: helpers live under the same prefix; Homebrew's need its shared libraries.
