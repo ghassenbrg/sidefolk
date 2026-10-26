@@ -1,0 +1,13 @@
+{
+  "id": "com.example.status-page",
+  "name": "Status Page",
+  "version": "0.1.0",
+  "sidefolk": ">=0.1",
+  "description": "Whether a service is up, from its public status page.",
+  "author": "Example Inc.",
+  "run": { "command": "node", "args": ["main.mjs"] },
+  "permissions": { "network": true },
+  "tools": {
+    "service_status": { "title": "Service status", "risk": "low", "category": "web", "mutates": false }
+  }
+}

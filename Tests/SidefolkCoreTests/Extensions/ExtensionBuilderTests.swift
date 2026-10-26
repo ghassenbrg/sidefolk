@@ -205,6 +205,24 @@ struct ExtensionBuilderTests {
         await h.host.shutdown()
     }
 
+    /// The developer skill's templates (skills/sidefolk-extension/templates) pass the checks and start in
+    /// their sandbox, as `sidefolk ext validate` would show (Node only where Node is installed).
+    @Test func theDeveloperTemplatesStartInTheirSandbox() async throws {
+        let templates = ExtFixtures.repoRoot.appendingPathComponent("skills/sidefolk-extension/templates")
+        let expected = ["python": ["ext.word-count.count_words", "ext.word-count.greet"], "node": ["ext.status-page.service_status"],
+                        "sh": ["ext.today.today"]]
+        for (name, tools) in expected.sorted(by: { $0.key < $1.key }) {
+            if name == "node", InterpreterResolver.system.resolve("node") == nil { continue }
+            let folder = templates.appendingPathComponent(name)
+            let report = ExtensionValidator.validate(at: folder)
+            #expect(report.isValid, "\(name): \(report.errors)")
+            let trial = await ExtensionValidator.trial(at: folder)
+            #expect(trial.problem == nil, "\(name): \(String(describing: trial.problem))")
+            #expect(trial.tools == tools, "\(name)")
+            #expect(trial.warnings.isEmpty, "\(name): \(trial.warnings)")
+        }
+    }
+
     @Test func thePromptOffersToBuildOnlyWhenTheToolIsThere() {
         let draft = ToolSpec(name: "extensions.draft", title: "", description: "", inputSchema: Schema.object([:]), risk: .low,
                              capabilities: [], category: .extensions, mutates: true)

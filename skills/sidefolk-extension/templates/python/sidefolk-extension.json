@@ -1,0 +1,24 @@
+{
+  "id": "com.example.word-count",
+  "name": "Word Count",
+  "version": "0.1.0",
+  "sidefolk": ">=0.1",
+  "description": "Counts the words in the text files of a folder you name, and says hello.",
+  "author": "Example Inc.",
+  "icon": "icon.png",
+  "run": { "command": "python3", "args": ["main.py"] },
+  "tools": {
+    "count_words": {
+      "title": "Count words in a folder", "risk": "low", "category": "files", "mutates": false,
+      "paths": { "folder": "read" }
+    },
+    "greet": { "title": "Say hello", "risk": "low", "mutates": false }
+  },
+  "watchers": {
+    "countdown": {
+      "title": "Countdown",
+      "description": "Fires once after a number of checks.",
+      "config": { "checks": { "type": "integer", "default": 3, "minimum": 1, "maximum": 100 } }
+    }
+  }
+}
