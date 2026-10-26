@@ -824,6 +824,12 @@ writer that crashed on a full disk, and `make app` deleting the bundle a running
   (`WatchReading.notifies`); a clock set back clamps every watcher's next check to what it could have been.
 - *Quit stops runs.* Quitting cancels requests in flight, so a CLI brain's process group gets SIGTERM instead of
   finishing a turn on the person's quota.
+- *Nothing runs to find a program.* `xcrun`, `xcode-select` and the `/usr/bin` shims offer to install Apple's
+  developer tools on a Mac without them, so Python is read from the developer folder's link like git
+  (`ProgramResolver.developerFolders`), and a built-in that needs Python, Git or Node this Mac lacks says so
+  plainly, with how to get it.
+- *Card labels are true.* A medium card names the call's `ApprovalRequest.Effect` (uses the internet, reads
+  files…), worked out from what Sidefolk lets the call do, never from an extension's own word.
 - *Build beside, then swap.* `scripts/build-app.sh` assembles and signs in a staging bundle and swaps it in; the
   replaced bundle stays until `lsof` says nothing runs from it (docs/RELEASE.md).
 **Measured** (release-optimized build of this commit, macOS 27, Apple silicon, isolated `SIDEFOLK_HOME`, companion
