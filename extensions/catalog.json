@@ -3,6 +3,7 @@
   "extensions": [
     { "folder": "git", "on": true },
     { "folder": "world-clock", "on": true },
-    { "folder": "system-vitals", "on": true }
+    { "folder": "system-vitals", "on": true },
+    { "folder": "weather", "on": false }
   ]
 }

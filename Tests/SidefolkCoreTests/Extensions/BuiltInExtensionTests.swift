@@ -200,16 +200,69 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
+    /// Weather's Python with Open-Meteo's answers canned: its words and its once-per-wet-spell rule.
+    @Test func weatherDescribesAForecastAndWarnsOncePerWetSpell() throws {
+        let folder = ExtFixtures.repoRoot.appendingPathComponent("extensions/weather").path
+        let script = """
+            import json, sys
+            sys.path.insert(0, \(String(reflecting: folder)))
+            import main
+            data = {"current_units": {"temperature_2m": "°C", "wind_speed_10m": "km/h"},
+                    "current": {"temperature_2m": 12.4, "apparent_temperature": 10.2, "weather_code": 61, "wind_speed_10m": 14.6},
+                    "daily": {"time": ["2026-10-26", "2026-10-27"], "weather_code": [61, 2], "temperature_2m_min": [8.2, 6.9],
+                              "temperature_2m_max": [13.1, 15.4], "precipitation_probability_max": [80, None]}}
+            print(main.describe(data, "Lyon, France"))
+            def hours(chances):
+                return {"current": {"time": "2026-10-26T14:00"}, "hourly": {"precipitation_probability": chances,
+                        "time": ["2026-10-26T13:00", "2026-10-26T14:00", "2026-10-26T15:00", "2026-10-26T16:00"]}}
+            first = main.rain_check(hours([90, 10, 70, 80]), "Lyon", 3, 60, {})
+            again = main.rain_check(hours([90, 10, 70, 80]), "Lyon", 3, 60, first["state"])
+            dry = main.rain_check(hours([90, 0, 0, 0]), "Lyon", 3, 60, again["state"])
+            wet = main.rain_check(hours([0, 0, 0, 65]), "Lyon", 3, 60, dry["state"])
+            print(json.dumps([first, again, dry, wet]))
+            """
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: try #require(ExtFixtures.python).path)
+        p.arguments = ["-I", "-B", "-c", script]
+        let out = Pipe()
+        p.standardOutput = out
+        try p.run()
+        let text = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        p.waitUntilExit()
+        let lines = text.split(separator: "\n").map(String.init)
+        #expect(lines.first == "Lyon, France, now: light rain, 12°C (feels like 10°C), wind 15 km/h.", "\(text)")
+        #expect(lines.dropFirst().first == "Today: light rain, 8 to 13°C, 80% chance of rain.")
+        #expect(lines.dropFirst(2).first == "Tomorrow: partly cloudy, 7 to 15°C, ?% chance of rain.")
+        let checks = try JSONValue.parse(try #require(lines.last)).arrayValue ?? []
+        #expect(checks.map { $0["triggered"]?.boolValue } == [true, false, false, true], "the past hour (13:00) never counts")
+        #expect(checks.first?["summary"] == "Rain is likely in Lyon around 15:00 (70% chance).")
+    }
+
+    @Test(.enabled(if: ExtFixtures.liveNetwork, "set SIDEFOLK_LIVE_NETWORK=1 to ask Open-Meteo"))
+    func weatherReachesOpenMeteoFromItsSandbox() async throws {
+        let h = try HostEnv()
+        try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/weather"))
+        let forecast = try #require(await h.call("ext.weather.forecast", ["place": "Lyon", "days": 2]).okText)
+        #expect(forecast.hasPrefix("Lyon, Auvergne-Rhône-Alpes, France, now:") && forecast.contains("Tomorrow:"), "\(forecast)")
+        let check = try await h.host.checkWatcher(extensionId: "dev.sidefolk.weather", watcher: "rain_soon", config: ["place": "Lyon"], state: .null)
+        #expect(check.summary.contains("Lyon"))
+        await h.host.shutdown()
+    }
+
     @Test func theShippedCatalogInstallsAsFirstParty() async throws {
         let h = try HostEnv()
         let bundled = BundledExtensions(directory: ExtFixtures.repoRoot.appendingPathComponent("extensions"))
-        #expect(bundled.entries().map(\.id) == ["dev.sidefolk.git", "dev.sidefolk.world-clock", "dev.sidefolk.system-vitals"])
+        #expect(bundled.entries().map(\.id) == ["dev.sidefolk.git", "dev.sidefolk.world-clock", "dev.sidefolk.system-vitals",
+                                                "dev.sidefolk.weather"])
+        #expect(bundled.entries().map(\.on) == [true, true, true, false])
         #expect(bundled.samples().map(\.lastPathComponent) == ["hello-folk"])
         await bundled.install(into: h.host)
         #expect(bundled.unavailable.isEmpty, "\(bundled.unavailable)")
         let installed = await h.host.extensions()
-        #expect(installed.map(\.id).sorted() == ["dev.sidefolk.git", "dev.sidefolk.system-vitals", "dev.sidefolk.world-clock"])
-        #expect(installed.allSatisfy { $0.origin == .bundled && $0.enabled && $0.iconPath != nil })
+        #expect(installed.map(\.id).sorted() == ["dev.sidefolk.git", "dev.sidefolk.system-vitals", "dev.sidefolk.weather",
+                                                 "dev.sidefolk.world-clock"])
+        #expect(installed.allSatisfy { $0.origin == .bundled && $0.iconPath != nil })
+        #expect(installed.filter { !$0.enabled }.map(\.id) == ["dev.sidefolk.weather"], "Weather sends a place to Open-Meteo: off until switched on")
         // Their own descriptions and schema reach the model: first-party text from the app (D39), unlike D24's rule.
         let clone = try #require(h.env.registry.tool(named: "ext.git.clone")?.spec)
         #expect(clone.description.contains("Clones a public Git repository"))

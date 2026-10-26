@@ -1,6 +1,8 @@
 #!/usr/bin/env swift
 // Draws the icons of the extensions Sidefolk ships, as one-page square PDFs (vector, a few KB each):
-//   swift scripts/extension-icons.swift [--png <folder>]
+//   swift scripts/extension-icons.swift [--png <folder>] [extension folder names…]
+// Name the ones you changed: a PDF records when it was written, so redrawing the others would change
+// their files, and every Mac would reinstall them with the next app (BundledExtensions).
 // Each icon is full-bleed; Sidefolk rounds the corners where it shows one. Colours are the folks'
 // (Resources/Brand, Theme.folkColor). --png also writes 256 px previews for a look.
 import AppKit
@@ -113,12 +115,36 @@ func helloFolk(_ c: CGContext) {
     for x in [186, 256, 326] as [CGFloat] { dot(c, CGPoint(x: x, y: 280), radius: 24, fill: rgb(0xF2685A)) }
 }
 
+/// Weather: a sun behind a cloud (Scout's sun into a summer sky).
+func weather(_ c: CGContext) {
+    background(c, top: 0x9CCBFA, bottom: 0x4E95EA)
+    let sun = CGPoint(x: 310, y: 330)
+    stroke(c, rgb(0xFFC93C), width: 22) { p in
+        for i in 0..<8 {
+            let angle = CGFloat(i) * .pi / 4
+            p.move(to: CGPoint(x: sun.x + cos(angle) * 104, y: sun.y + sin(angle) * 104))
+            p.addLine(to: CGPoint(x: sun.x + cos(angle) * 134, y: sun.y + sin(angle) * 134))
+        }
+    }
+    dot(c, sun, radius: 78, fill: rgb(0xFFC93C))
+    let cloud = CGMutablePath()
+    cloud.addRoundedRect(in: CGRect(x: 96, y: 128, width: 300, height: 112), cornerWidth: 56, cornerHeight: 56)
+    cloud.addEllipse(in: CGRect(x: 140, y: 168, width: 140, height: 140))
+    cloud.addEllipse(in: CGRect(x: 236, y: 156, width: 118, height: 118))
+    c.addPath(cloud)
+    c.setFillColor(white)
+    c.fillPath()
+}
+
 let icons: [(folder: String, draw: (CGContext) -> Void)] = [
-    ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk),
+    ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk), ("weather", weather),
 ]
 
-let pngFolder = CommandLine.arguments.firstIndex(of: "--png").map { URL(fileURLWithPath: CommandLine.arguments[$0 + 1]) }
-for icon in icons {
+let arguments = Array(CommandLine.arguments.dropFirst())
+let pngIndex = arguments.firstIndex(of: "--png")
+let pngFolder = pngIndex.map { URL(fileURLWithPath: arguments[$0 + 1]) }
+let named = Set(arguments.enumerated().filter { pngIndex == nil || ($0.offset != pngIndex! && $0.offset != pngIndex! + 1) }.map(\.element))
+for icon in icons where named.isEmpty || named.contains(icon.folder) {
     let url = root.appendingPathComponent("extensions/\(icon.folder)/icon.pdf")
     var box = CGRect(x: 0, y: 0, width: side, height: side)
     let pdf = CGContext(url as CFURL, mediaBox: &box, [kCGPDFContextCreator: "Sidefolk extension-icons.swift"] as CFDictionary)!
