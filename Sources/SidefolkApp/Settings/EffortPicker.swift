@@ -8,7 +8,7 @@ struct EffortChoice {
     var selection: ReasoningEffort?
     /// What the model does when nothing is sent, when the provider says.
     var standard: ReasoningEffort?
-    var set: (ReasoningEffort?) -> Void
+    var set: @MainActor @Sendable (ReasoningEffort?) -> Void
 }
 
 /// "Effort [Extra high ▾]" under a model field.
