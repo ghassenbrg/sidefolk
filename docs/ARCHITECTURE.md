@@ -184,7 +184,7 @@ Each provider has a main model and an optional smart one for "Think harder" (D8)
 Folder with `sidefolk-extension.json`:
 ```json
 { "id": "dev.sidefolk.system-vitals", "name": "System Vitals", "version": "1.0.0",
-  "sidefolk": ">=1.0", "folk": "byte", "description": "...",
+  "sidefolk": ">=0.1", "folk": "byte", "description": "...",
   "run": { "command": "python3", "args": ["main.py"] },
   "permissions": { "network": false, "files": { "read": [], "write": [] }, "exec": ["/usr/bin/pmset"] },
   "tools": { "battery": { "risk": "low", "category": "system" } },

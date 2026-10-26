@@ -41,7 +41,7 @@ struct AboutView: View {
         .background(Theme.surface)
     }
 
-    /// "1.0.0 (212)": the marketing version and, inside an app bundle, its build.
+    /// "0.1.0 (212)": the marketing version and, inside an app bundle, its build.
     static var version: String {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
         return build.map { "\(SidefolkVersion.current) (\($0))" } ?? SidefolkVersion.current
