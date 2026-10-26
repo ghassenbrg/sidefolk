@@ -12,14 +12,17 @@ enum ItemProvenance {
     /// user's own words, so reading it back taints the turn (docs/SECURITY.md T3). Nor is what
     /// Sidefolk's agent wrote while untrusted content steered its turn: that is recorded as plain
     /// "agent" (a clean turn records "user:agent").
+    /// Notes copied from another app ("app:notes") are that app's content, not words typed to Sidefolk.
     static func isForeign(_ source: String) -> Bool {
-        source.hasPrefix("external") || source.hasPrefix("extension") || source.hasPrefix("routine") || source == "agent"
+        source.hasPrefix("external") || source.hasPrefix("extension") || source.hasPrefix("routine") || source.hasPrefix("app:")
+            || source == "agent"
     }
 
     /// "from codex" for foreign sources, nil for the user's own and Sidefolk's.
     static func note(for source: String) -> String? {
         guard isForeign(source) else { return nil }
         if source == "agent" { return "written while reading untrusted content" }
+        if source == "app:notes" { return "copied from Apple Notes" }
         let name = source.split(separator: ":", maxSplits: 1).dropFirst().first.map(String.init)
         return "from \(name ?? source)"
     }

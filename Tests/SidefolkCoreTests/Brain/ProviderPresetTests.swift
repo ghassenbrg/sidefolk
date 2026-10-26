@@ -198,15 +198,13 @@ import Testing
             }
             func check() async -> Result<String, UserFacingError> { .success("ok") }
         }
-        let asked = BridgeRecorder<[Bool]>([])
-        let factory = BrainFactory.standard(secrets: InMemorySecretStore(), codexBackend: { _, thinkHarder in
-            asked.value.withLock { $0.append(thinkHarder) }
-            return Fake()
-        })
+        let factory = BrainFactory.standard(secrets: InMemorySecretStore(), codexBackend: { _ in Fake() })
         var provider = ProviderSettings()
-        provider.kind = .codex
-        #expect(try factory.make(provider, thinkHarder: true).model == "", "Codex's default model")
-        #expect(asked.value.withLock { $0 } == [true])
+        provider.switchProvider(to: .codex)
+        let harder = try factory.make(provider, thinkHarder: true)
+        #expect(harder.model == "", "Codex's default model")
+        #expect(harder.effort == .high, "Think harder starts where it always was")
+        #expect(try factory.make(provider, thinkHarder: false).effort == nil)
         let none = BrainFactory.standard(secrets: InMemorySecretStore())
         #expect(throws: UserFacingError.self) { _ = try none.make(provider, thinkHarder: false) }
     }

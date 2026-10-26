@@ -104,7 +104,10 @@ struct OpenAppTool: Tool {
 
     let spec = ToolSpec(
         name: "open.app", title: String(localized: "Open an app"),
-        description: "Open or bring forward an app by its name (\"Safari\") or bundle identifier (\"com.apple.Safari\").",
+        description: """
+            Open or bring forward an app by its name ("Safari") or bundle identifier ("com.apple.Safari"). This only shows \
+            the app to the user: you can't see, read or change anything inside it afterwards.
+            """,
         inputSchema: Schema.object(["name": Schema.string("App name or bundle identifier")], required: ["name"]),
         risk: .low, capabilities: [.apps], category: .system, mutates: false)
 

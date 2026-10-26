@@ -23,6 +23,8 @@ enum ClaudeFixtures {
           --allowedTools, --allowed-tools <tools...>  Comma or space-separated list of tool names to allow
           --bare                                Minimal mode. Explicitly provide context via: --system-prompt[-file]
           --disable-slash-commands              Disable all skills and commands
+          --effort <level>                      Effort level for the current session
+                                                (low, medium, high, xhigh, max)
           --input-format <format>               Input format (only works with --print)
           --mcp-config <configs...>             Load MCP servers from JSON files or strings
           --model <model>                       Model for the current session
@@ -191,6 +193,34 @@ struct BackendHarness {
         #expect(text.hasSuffix("The user's new message:\nnow PROMPT-LATEST"))
     }
 
+    /// `--effort` only with a level this CLI lists and the model takes (D36).
+    @Test func effortReachesArgv() {
+        let flags = ClaudeFlags(restricted: true, settingSources: true, systemPromptFile: true, efforts: [.low, .medium, .high, .xhigh, .max])
+        func effortArgs(_ model: String, _ effort: ReasoningEffort?, _ flags: ClaudeFlags) -> [String] {
+            var t = task
+            t.model = model
+            t.effort = effort
+            let args = ClaudeCodeBackend.invocation(task: t, flags: flags, claudePath: "/c/claude", runDir: "/r", helperPath: "/h",
+                                                    sidefolkHome: "/home", environment: [:]).arguments
+            return args.firstIndex(of: "--effort").map { Array(args[$0...($0 + 1)]) } ?? []
+        }
+        #expect(effortArgs("opus", .xhigh, flags) == ["--effort", "xhigh"])
+        #expect(effortArgs("", .max, flags) == ["--effort", "max"], "Claude Code's default model")
+        #expect(effortArgs("claude-opus-4-6", .xhigh, flags) == [], "4.6 has no xhigh")
+        #expect(effortArgs("claude-sonnet-4-5", .low, flags) == [], "Sonnet 4.5 takes no effort")
+        #expect(effortArgs("sonnet", nil, flags) == [], "Default sends nothing")
+        #expect(effortArgs("sonnet", .off, flags) == [], "not a level Claude Code lists")
+        let older = ClaudeFlags(restricted: true, settingSources: true, systemPromptFile: true)
+        #expect(effortArgs("opus", .high, older) == [], "a CLI without --effort")
+    }
+
+    @Test func effortLevelsComeFromHelp() {
+        #expect(ClaudeBinary.efforts(fromHelp: "  --effort <level>  Effort level (low, medium, high)\n  --model <m>") == [.low, .medium, .high])
+        #expect(ClaudeBinary.efforts(fromHelp: "  --effort <level>  Effort level\n  --model <m>  Model (sonnet, opus)") == [],
+                "another flag's list isn't the effort's")
+        #expect(ClaudeBinary.efforts(fromHelp: "  --model <m>  Model") == [])
+    }
+
     @Test func unsafeModelNamesAreDropped() {
         #expect(CLIBrain.isSafeModelName("claude-sonnet-4-5"))
         #expect(CLIBrain.isSafeModelName("opus[1m]"))
@@ -239,7 +269,8 @@ struct BackendHarness {
     @Test func helpProbe() {
         let (missing, flags) = ClaudeBinary.flags(fromHelp: ClaudeFixtures.help)
         #expect(missing.isEmpty)
-        #expect(flags == ClaudeFlags(restricted: true, settingSources: true, systemPromptFile: true))
+        #expect(flags == ClaudeFlags(restricted: true, settingSources: true, systemPromptFile: true,
+                                     efforts: [.low, .medium, .high, .xhigh, .max]))
 
         let old = ClaudeFixtures.help.replacingOccurrences(of: "--strict-mcp-config", with: "--strict-mcp-config-x")
         #expect(ClaudeBinary.flags(fromHelp: old).missing == ["--strict-mcp-config"])

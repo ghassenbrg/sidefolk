@@ -7,11 +7,18 @@ public struct ModelOption: Sendable, Hashable, Identifiable {
     public var usesTools: Bool?
     /// Runs on the provider's servers, not this Mac (Ollama's cloud models): the request leaves the Mac.
     public var cloud: Bool
+    /// The reasoning efforts it takes, when the provider says (Codex's catalog does); empty when unknown.
+    public var efforts: [ReasoningEffort]
+    /// What it uses when none is asked for, when the provider says.
+    public var defaultEffort: ReasoningEffort?
 
-    public init(id: String, usesTools: Bool? = nil, cloud: Bool = false) {
+    public init(id: String, usesTools: Bool? = nil, cloud: Bool = false, efforts: [ReasoningEffort] = [],
+                defaultEffort: ReasoningEffort? = nil) {
         self.id = id
         self.usesTools = usesTools
         self.cloud = cloud
+        self.efforts = efforts
+        self.defaultEffort = defaultEffort
     }
 }
 

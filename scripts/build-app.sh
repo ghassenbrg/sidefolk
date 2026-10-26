@@ -32,6 +32,8 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 [[ -f Resources/Icon/Sidefolk.icns ]] && cp Resources/Icon/Sidefolk.icns "$APP/Contents/Resources/Sidefolk.icns"
 [[ -d Resources/Brand/exports ]] && cp -R Resources/Brand/exports "$APP/Contents/Resources/Brand"
 [[ -d Resources/MenuBar ]] && cp -R Resources/MenuBar "$APP/Contents/Resources/MenuBar"
+# Provider logos (D36): the PDFs only; their SVG sources and credits stay in the repository.
+[[ -d Resources/Brand/third-party/logos ]] && cp -R Resources/Brand/third-party/logos "$APP/Contents/Resources/ProviderLogos"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$APP/Contents/Resources/Skills"
 # One <language>.lproj per translation; macOS picks the user's language (or the one chosen in Settings).
 [[ -f Resources/Localization/Localizable.xcstrings ]] && \

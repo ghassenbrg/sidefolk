@@ -47,6 +47,8 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Sidefolk reads Apple Notes and Reminders when you ask, and copies notes into its notebook. It changes nothing in them unless you approve each change.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Sidefolk</string>
 	<key>NSAppTransportSecurity</key>

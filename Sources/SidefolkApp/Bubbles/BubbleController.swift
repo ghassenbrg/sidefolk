@@ -17,6 +17,9 @@ final class BubbleController {
     init() {
         hosted = HostedPanel(rootView: BubbleView(model: model), allowsKey: false)
         hosted.panel.level = .floating
+        // The bubble draws its own soft shadow. A window shadow would be traced from those faint
+        // pixels too and show as a gritty grey outline around the card and its tail.
+        hosted.panel.hasShadow = false
         hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
             self?.dismiss(id: item.id)

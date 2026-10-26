@@ -96,6 +96,12 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
     public var model: String = ""
     /// Used by "Think harder"; empty means the main model.
     public var smartModel: String = ""
+    /// How hard the main model thinks: a `ReasoningEffort` raw value, or empty for the provider's
+    /// default, which sends nothing (D36). Kept as text, like the models, so a word from a newer
+    /// Sidefolk survives a round trip.
+    public var effort: String = ""
+    /// The same for "Think harder".
+    public var smartEffort: String = ""
     /// Which OpenAI-compatible service (D26). Settings saved before presets existed get the preset their address matches.
     public var preset: ProviderPreset = .custom
     /// For a custom OpenAI-compatible endpoint; presets have fixed addresses.
@@ -109,27 +115,38 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
     public var modelMemory: [String: ModelPair] = [:]
     public init() {}
 
+    /// A provider's models and efforts. The efforts are nil only in pairs saved before D36.
     public struct ModelPair: Codable, Sendable, Equatable {
         public var model: String
         public var smartModel: String
+        public var effort: String?
+        public var smartEffort: String?
     }
 
     /// "codex", "openAICompatible.gemini".
     public var memoryKey: String { kind == .openAICompatible ? "\(kind.rawValue).\(preset.rawValue)" : kind.rawValue }
 
-    /// Switches provider: the models in use are remembered for the provider left behind, and the new
-    /// one gets the models it had last time, or none yet (its default; Claude Code's is "sonnet").
+    /// "Think harder" on Codex asked for high effort before efforts could be chosen, so that is where
+    /// it starts; everything else starts at the provider's default.
+    static func standardSmartEffort(_ kind: ProviderKind) -> String {
+        kind == .codex ? ReasoningEffort.high.rawValue : ""
+    }
+
+    /// Switches provider: the models and efforts in use are remembered for the provider left behind,
+    /// and the new one gets what it had last time, or none yet (its default; Claude Code's model is "sonnet").
     public mutating func switchProvider(to kind: ProviderKind, preset: ProviderPreset? = nil) {
-        modelMemory[memoryKey] = ModelPair(model: model, smartModel: smartModel)
+        modelMemory[memoryKey] = ModelPair(model: model, smartModel: smartModel, effort: effort, smartEffort: smartEffort)
         self.kind = kind
         if let preset { self.preset = preset }
         let saved = modelMemory[memoryKey]
         model = saved?.model ?? (kind == .claudeCode ? "sonnet" : "")
         smartModel = saved?.smartModel ?? ""
+        effort = saved?.effort ?? ""
+        smartEffort = saved?.smartEffort ?? Self.standardSmartEffort(kind)
     }
 
     enum CodingKeys: String, CodingKey {
-        case kind, model, smartModel, preset, baseURL, claudePath, codexPath, modelMemory
+        case kind, model, smartModel, effort, smartEffort, preset, baseURL, claudePath, codexPath, modelMemory
     }
 
     /// Every field has a default, so settings written by an older or newer Sidefolk still load (a
@@ -140,6 +157,10 @@ public struct ProviderSettings: Codable, Sendable, Equatable {
         read(.kind, &kind)
         read(.model, &model)
         read(.smartModel, &smartModel)
+        read(.effort, &effort)
+        // Saved before efforts existed: keep what "Think harder" did then.
+        smartEffort = Self.standardSmartEffort(kind)
+        read(.smartEffort, &smartEffort)
         read(.baseURL, &baseURL)
         read(.claudePath, &claudePath)
         read(.codexPath, &codexPath)

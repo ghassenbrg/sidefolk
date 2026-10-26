@@ -255,16 +255,23 @@ struct IconTile: View {
     var symbol: String
     var folk: String
     var size: CGFloat = 28
+    /// A service's own logo, drawn instead of the symbol when it loads (D36).
+    var logo: ProviderLogo?
 
     var body: some View {
         RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
             .fill(Theme.folkColor(folk).opacity(0.24))
             .frame(width: size, height: size)
             .overlay {
-                Image(systemName: symbol)
-                    .font(.system(size: size * 0.46, weight: .medium))
-                    .foregroundStyle(Theme.ink)
+                if let image = logo?.image {
+                    // A little wider than tall, so wide marks (Claude Code's) aren't smaller than square ones.
+                    Image(nsImage: image).renderingMode(.template).resizable().scaledToFit()
+                        .frame(width: size * 0.6, height: size * 0.54)
+                } else {
+                    Image(systemName: symbol).font(.system(size: size * 0.46, weight: .medium))
+                }
             }
+            .foregroundStyle(Theme.ink)
             .accessibilityHidden(true)
     }
 }

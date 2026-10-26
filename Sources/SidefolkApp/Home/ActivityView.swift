@@ -230,7 +230,8 @@ private struct Stat: View {
         HStack(spacing: Theme.Space.m) {
             FolkBadge(name: folk, size: 26)
             VStack(alignment: .leading, spacing: 1) {
-                Text(value).font(Theme.Font.heading).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.75)
+                // German doesn't shorten thousands (“218.400 gesendet · 28.080 empfangen”), so leave it room to shrink.
+                Text(value).font(Theme.Font.heading).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.6)
                 Text(title).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1).minimumScaleFactor(0.85)
             }
             Spacer(minLength: 0)

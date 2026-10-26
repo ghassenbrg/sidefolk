@@ -62,7 +62,7 @@ public struct UserFacingError: Error, Sendable, Equatable, CustomStringConvertib
     }
 
     public var description: String {
-        [message, recovery].compactMap { $0 }.joined(separator: " ")
+        Wording.sentences([message, recovery].compactMap { $0 })
     }
 }
 

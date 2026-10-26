@@ -46,11 +46,14 @@ final class MacPlatform: PlatformBridge {
 
     nonisolated func activateApplication(pid: Int?, bundleId: String?) async -> Bool {
         await MainActor.run {
-            if let pid, let app = NSRunningApplication(processIdentifier: pid_t(pid)) { return app.activate() }
-            if let bundleId, let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
-                return app.activate()
-            }
-            return false
+            let app = pid.flatMap { NSRunningApplication(processIdentifier: pid_t($0)) }
+                ?? bundleId.flatMap { NSRunningApplication.runningApplications(withBundleIdentifier: $0).first }
+            guard let app, app.activationPolicy == .regular else { return false }
+            // Activation is cooperative since macOS 14: the active app (Sidefolk, just clicked) has
+            // to yield to the other one, or the request is quietly ignored.
+            NSApp.yieldActivation(to: app)
+            if app.isHidden { app.unhide() }
+            return app.activate()
         }
     }
 

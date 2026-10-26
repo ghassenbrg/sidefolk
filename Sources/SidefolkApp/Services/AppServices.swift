@@ -49,8 +49,10 @@ struct SkillInfo: Identifiable, Hashable {
 /// What Settings › AI shows next to each provider. Everything here is read locally: no prompt, no quota.
 struct ProviderDetection: Hashable {
     var claude: CLIStatus
+    /// The levels Claude Code's `--effort` takes; empty when it has no such flag.
+    var claudeEfforts: [ReasoningEffort] = []
     var codex: CLIStatus
-    /// Codex's own model list (bundled with the CLI); empty when it can't be read.
+    /// Codex's own model list (bundled with the CLI), with each model's efforts; empty when it can't be read.
     var codexModels: [ModelOption] = []
     var ollama: LocalServerState
     var lmStudio: LocalServerState

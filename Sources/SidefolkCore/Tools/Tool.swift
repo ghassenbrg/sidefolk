@@ -17,6 +17,8 @@ public enum Capability: String, Codable, Sendable, CaseIterable {
     case notebook, memory, time, watch, clipboard, apps, network, shell, agents, extensions, system
     case filesRead = "files.read"
     case filesWrite = "files.write"
+    /// Reading the Mac's own apps (Apple Notes, Reminders) through Apple Events (DECISIONS D38).
+    case macApps = "mac.apps"
 }
 
 /// Drives which prop the companion holds and which folk may cameo.

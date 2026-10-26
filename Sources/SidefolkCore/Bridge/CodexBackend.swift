@@ -20,8 +20,6 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
     let paths: SidefolkPaths
     let helperPath: String
     let registry: any RunTokenRegistry
-    /// "high" for "Think harder"; nil keeps the model's default effort.
-    let reasoningEffort: String?
     private let baseEnvironment: [String: String]
     private let ledger = UsageLedger()
     /// Binaries whose switches didn't hold, process-wide: the app builds a backend per run, and a
@@ -33,22 +31,20 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
     ///   - codexPath: a path that passed `CodexBinary.locate`.
     ///   - helperPath: absolute path of the `sidefolk` helper that Codex launches as `mcp`.
     public init(codexPath: String, paths: SidefolkPaths, helperPath: String, registry: any RunTokenRegistry,
-                reasoningEffort: String? = nil, environment: [String: String] = ProcessInfo.processInfo.environment) {
+                environment: [String: String] = ProcessInfo.processInfo.environment) {
         self.codexPath = codexPath
         self.paths = paths
         self.helperPath = helperPath
         self.registry = registry
-        self.reasoningEffort = reasoningEffort
         baseEnvironment = environment
     }
 
     /// The backend for the app's runtime, or nil when no acceptable `codex` or helper exists.
-    public static func make(provider: ProviderSettings, thinkHarder: Bool, paths: SidefolkPaths, helperPath: String,
+    public static func make(provider: ProviderSettings, paths: SidefolkPaths, helperPath: String,
                             registry: any RunTokenRegistry) -> CodexBackend? {
         guard helperPath.hasPrefix("/"), FileManager.default.isExecutableFile(atPath: helperPath),
               case .success(let path) = CodexBinary.locate(configured: provider.codexPath) else { return nil }
-        return CodexBackend(codexPath: path, paths: paths, helperPath: helperPath, registry: registry,
-                            reasoningEffort: thinkHarder ? "high" : nil)
+        return CodexBackend(codexPath: path, paths: paths, helperPath: helperPath, registry: registry)
     }
 
     public func takeUsage(runId: String) -> BrainUsage? { ledger.take(runId) }
@@ -72,7 +68,7 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
         let token = BrainTokenRegistry.makeToken()
         try PrivateDirectory.writeSecretFile(folder.path + "/token", contents: token)
         let invocation = Self.invocation(task: task, install: install, runDir: folder.path, helperPath: helperPath,
-                                         sidefolkHome: paths.home.path, reasoningEffort: reasoningEffort, environment: baseEnvironment)
+                                         sidefolkHome: paths.home.path, environment: baseEnvironment)
         for (name, contents) in invocation.files { try PrivateDirectory.writeSecretFile(folder.path + "/" + name, contents: contents) }
         registry.register(token: token, toolbox: toolbox)
         defer { registry.unregister(token: token) }
@@ -232,7 +228,7 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
     /// Everything about the spawn except the token, built without side effects so tests can check
     /// that argv carries neither the prompt nor the token.
     static func invocation(task: BrainTask, install: CodexInstall, runDir: String, helperPath: String, sidefolkHome: String,
-                           reasoningEffort: String?, environment: [String: String]) -> Invocation {
+                           environment: [String: String]) -> Invocation {
         var args = ["exec", "--json", "--strict-config", "--ephemeral", "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
                     "--sandbox", "read-only", "--cd", runDir]
         if CLIBrain.isSafeModelName(task.model) { args += ["--model", task.model] }
@@ -264,7 +260,10 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
             // Sidefolk decides when the wait ends, and the run's deadline doesn't count that time.
             ("mcp_servers.sidefolk.tool_timeout_sec", String(CLIBrain.toolCallSeconds)),
         ]
-        if let reasoningEffort { config.append(("model_reasoning_effort", toml(reasoningEffort))) }
+        // Only a level this Codex lists for the model (D36); "Default" leaves Codex's own.
+        if let effort = EffortSupport.accepted(task.effort, in: EffortSupport.codex(model: task.model, catalog: install.models)) {
+            config.append(("model_reasoning_effort", toml(effort.rawValue)))
+        }
         for (key, value) in config { args += ["-c", "\(key)=\(value)"] }
         for feature in install.featuresToDisable { args += ["--disable", feature] }
         args.append("-")

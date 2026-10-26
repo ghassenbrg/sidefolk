@@ -1,12 +1,15 @@
 import Foundation
 
-/// The backend for one run and the model name it will use ("" lets Claude Code pick its default).
+/// The backend for one run, the model name it will use ("" lets a CLI pick its default) and the
+/// reasoning effort to ask for (nil sends nothing).
 public struct BrainChoice: Sendable {
     public var backend: any BrainBackend
     public var model: String
-    public init(backend: any BrainBackend, model: String) {
+    public var effort: ReasoningEffort?
+    public init(backend: any BrainBackend, model: String, effort: ReasoningEffort? = nil) {
         self.backend = backend
         self.model = model
+        self.effort = effort
     }
 }
 
@@ -18,7 +21,7 @@ public struct BrainFactory: Sendable {
         self.choose = choose
     }
 
-    /// - Parameter thinkHarder: use the smart model (when set) and a larger output allowance.
+    /// - Parameter thinkHarder: use the smart model (when set), its effort and a larger output allowance.
     public func make(_ provider: ProviderSettings, thinkHarder: Bool) throws(UserFacingError) -> BrainChoice {
         try choose(provider, thinkHarder)
     }
@@ -26,20 +29,24 @@ public struct BrainFactory: Sendable {
     /// - Parameters:
     ///   - secrets: where API keys live (`KeychainSecretStore` in the app).
     ///   - claudeCodeBackend: builds the Claude Code CLI backend; nil while it isn't available.
-    ///   - codexBackend: builds the Codex CLI backend (the flag is "think harder"); nil while it isn't available.
+    ///   - codexBackend: builds the Codex CLI backend; nil while it isn't available.
     public static func standard(
         secrets: any SecretStore, transport: any HTTPTransport = URLSessionTransport(), retry: RetryPolicy = .standard,
         limits: LoopLimits = .standard, clock: any Clock = SystemClock(),
         claudeCodeBackend: (@Sendable (ProviderSettings) -> (any BrainBackend)?)? = nil,
-        codexBackend: (@Sendable (ProviderSettings, Bool) -> (any BrainBackend)?)? = nil
+        codexBackend: (@Sendable (ProviderSettings) -> (any BrainBackend)?)? = nil
     ) -> BrainFactory {
         let keys = ProviderKeys(store: secrets)
         return BrainFactory { (provider: ProviderSettings, thinkHarder: Bool) throws(UserFacingError) -> BrainChoice in
-            let main = provider.model.trimmingCharacters(in: .whitespacesAndNewlines)
-            let smart = provider.smartModel.trimmingCharacters(in: .whitespacesAndNewlines)
-            let chosen = thinkHarder && !smart.isEmpty ? smart : main
+            let name = provider.modelName(thinkHarder: thinkHarder)
+            // The CLIs learn what they accept when they're probed, so their backends check the effort.
+            let requested = provider.requestedEffort(thinkHarder: thinkHarder)
+            let effort = EffortSupport.accepted(requested, in: EffortSupport.levels(provider, thinkHarder: thinkHarder))
             var loopLimits = limits
-            if thinkHarder { loopLimits.maxOutputTokens = max(loopLimits.maxOutputTokens, 16_000) }
+            // Thinking counts toward the output allowance, and the top efforts think at length.
+            if thinkHarder || effort.map({ $0 >= .xhigh }) == true {
+                loopLimits.maxOutputTokens = max(loopLimits.maxOutputTokens, 16_000)
+            }
 
             switch provider.kind {
             case .none:
@@ -51,22 +58,22 @@ public struct BrainFactory: Sendable {
                     throw UserFacingError("Claude Code isn't ready to help yet. Nothing was changed.",
                                           recovery: "Check Claude Code in Settings › AI, or choose another provider.")
                 }
-                return BrainChoice(backend: backend, model: chosen)
+                return BrainChoice(backend: backend, model: name, effort: requested)
 
             case .codex:
-                guard let backend = codexBackend?(provider, thinkHarder) else {
+                guard let backend = codexBackend?(provider) else {
                     throw UserFacingError("Codex isn't ready to help yet. Nothing was changed.",
                                           recovery: "Check Codex in Settings › AI, or choose another provider.")
                 }
-                return BrainChoice(backend: backend, model: chosen)
+                return BrainChoice(backend: backend, model: name, effort: requested)
 
             case .anthropic:
                 guard let key = try keys.key(account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost) else {
                     throw UserFacingError("I need your Anthropic API key for that.", recovery: "Add it in Settings › AI.")
                 }
-                let name = chosen.isEmpty ? AnthropicModel.defaultModel : chosen
                 let model = AnthropicModel(apiKey: key, transport: transport, retry: retry)
-                return BrainChoice(backend: LoopBackend(model: model, checkModel: name, limits: loopLimits, clock: clock), model: name)
+                return BrainChoice(backend: LoopBackend(model: model, checkModel: name, limits: loopLimits, clock: clock), model: name,
+                                   effort: effort)
 
             case .openAICompatible:
                 let preset = provider.preset
@@ -77,15 +84,15 @@ public struct BrainFactory: Sendable {
                                           recovery: "Add it in Settings › AI.")
                 }
                 let model = try OpenAICompatibleModel(baseURL: provider.resolvedBaseURL, apiKey: key,
-                                                      name: preset == .custom ? nil : preset.name, transport: transport, retry: retry)
-                // No model chosen yet: the preset's first suggestion, as Settings shows it.
-                var name = OpenAICompatibleModel.wireName(chosen)
-                if name.isEmpty, thinkHarder { name = preset.defaultSmartModel(available: nil) ?? "" }
-                if name.isEmpty { name = preset.defaultModel(available: nil) ?? "" }
+                                                      name: preset == .custom ? nil : preset.name,
+                                                      effortStyle: preset == .openRouter ? .reasoningObject : .reasoningEffort,
+                                                      transport: transport, retry: retry)
+                // No model chosen yet: `modelName` took the preset's first suggestion, as Settings shows it.
                 guard !name.isEmpty else {
                     throw UserFacingError("I need to know which \(model.providerName) model to use.", recovery: "Choose one in Settings › AI.")
                 }
-                return BrainChoice(backend: LoopBackend(model: model, checkModel: name, limits: loopLimits, clock: clock), model: name)
+                return BrainChoice(backend: LoopBackend(model: model, checkModel: name, limits: loopLimits, clock: clock), model: name,
+                                   effort: effort)
             }
         }
     }

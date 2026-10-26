@@ -217,6 +217,10 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
                            sidefolkHome: String, environment: [String: String]) -> Invocation {
         var args = ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
         if CLIBrain.isSafeModelName(task.model) { args += ["--model", task.model] }
+        // Only a level this CLI lists, and the model takes (D36); "Default" leaves Claude Code's own.
+        if let effort = EffortSupport.accepted(task.effort, in: EffortSupport.claudeCode(model: task.model, cli: flags.efforts)) {
+            args += ["--effort", effort.rawValue]
+        }
         args += ["--tools", "", "--strict-mcp-config", "--mcp-config", runDir + "/mcp.json", "--disable-slash-commands",
                  "--no-session-persistence", "--permission-prompts", "none", "--allowedTools", "mcp__sidefolk"]
         // --restricted ignores user, project and local settings (hooks, plugins, env); an empty

@@ -118,6 +118,8 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 ### Hands and Guard
 - P0 Built-in tools: notebook, about-you, reminders, watchers, clipboard, open URL/app/file,
   files (list/read/search/move/rename/create folder/trash) in granted folders, web fetch, time.
+- P1 The Mac's own apps (D38): Apple Notes (list, read, copy into the notebook organized, and move
+  after a whole copy when asked) and Apple Reminders (read), through Apple Events with Guard approvals.
 - P0 Guard: risk levels, caller trust, taint, folder grants, protected paths, approvals, audit.
 - P0 Secrets in the Keychain.
 

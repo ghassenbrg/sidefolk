@@ -10,6 +10,15 @@ public struct CodexInstall: Sendable, Equatable {
     public var version: String
     /// Every feature to switch off for the run: all that are on by default, except the few the brain needs.
     public var featuresToDisable: [String]
+    /// The catalog bundled with this version (models and the efforts each takes); empty when it can't print it.
+    public var models: [ModelOption]
+
+    public init(path: String, version: String, featuresToDisable: [String], models: [ModelOption] = []) {
+        self.path = path
+        self.version = version
+        self.featuresToDisable = featuresToDisable
+        self.models = models
+    }
 }
 
 /// How the user signed in to Codex (`codex login status`).
@@ -105,9 +114,8 @@ public enum CodexBinary {
             let env = CodexBackend.environment(base: environment, tmp: workdir, codexPath: path)
             switch await probe(path, environment: env, cwd: workdir) {
             case .success(let install):
-                async let login = loginStatus(path, environment: env, cwd: workdir)
-                async let models = listModels(path, environment: env, cwd: workdir)
-                return (.ready(path: path, version: install.version, login: await login), await models)
+                return (.ready(path: path, version: install.version, login: await loginStatus(path, environment: env, cwd: workdir)),
+                        install.models)
             case .failure(let error):
                 return (.unusable(error.description), [])
             }
@@ -160,8 +168,8 @@ public enum CodexBinary {
 
     private static let cache = Mutex<[CLIBrain.Fingerprint: CodexInstall]>([:])
 
-    /// Runs `--version`, `exec --help` and `features list` once per binary (an update is probed
-    /// again). Never sends a prompt.
+    /// Runs `--version`, `exec --help`, `features list` and reads the bundled model catalog once per
+    /// binary (an update is probed again). Never sends a prompt.
     public static func probe(_ path: String, environment: [String: String], cwd: String) async -> Result<CodexInstall, UserFacingError> {
         if let reason = CLIBrain.problem(with: path) {
             return .failure(UserFacingError("Sidefolk won't run Codex: \(reason)", recovery: "Reinstall Codex or choose another provider."))
@@ -184,15 +192,22 @@ public enum CodexBinary {
         }
         // "codex-cli 0.160.0"
         let version = versionText.split(separator: " ").last.map(String.init) ?? versionText
-        let install = CodexInstall(path: path, version: version.clipped(40), featuresToDisable: features.disable)
+        let install = CodexInstall(path: path, version: version.clipped(40), featuresToDisable: features.disable,
+                                   models: await listModels(path, environment: environment, cwd: cwd))
         cache.withLock { $0[fingerprint] = install }
         return .success(install)
     }
 
-    /// The models Codex lists for people to pick (`visibility: list`), from `codex debug models --bundled`.
+    /// The models Codex lists for people to pick (`visibility: list`), from `codex debug models --bundled`,
+    /// with the reasoning efforts each takes.
     public static func models(fromCatalog text: String) -> [ModelOption] {
         let models = (try? JSONValue.parse(text))?["models"]?.arrayValue ?? []
-        return models.filter { $0.string("visibility") == "list" }.compactMap { $0.string("slug") }.map { ModelOption(id: $0) }
+        return models.filter { $0.string("visibility") == "list" }.compactMap { model in
+            guard let slug = model.string("slug") else { return nil }
+            let levels = (model["supported_reasoning_levels"]?.arrayValue ?? []).compactMap { $0.string("effort") }
+            return ModelOption(id: slug, efforts: ReasoningEffort.known(levels),
+                               defaultEffort: model.string("default_reasoning_level").flatMap(ReasoningEffort.init(rawValue:)))
+        }
     }
 
     /// The catalog bundled with this Codex, read offline; empty when this version can't print it.

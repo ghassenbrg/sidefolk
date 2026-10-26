@@ -106,6 +106,12 @@ user folders or agent configs.
   processes, speaks MCP (`initialize`, `tools/list`, `tools/call`) plus Sidefolk watcher methods
   (`sidefolk/watch.check`), enforces timeouts, isolates crashes, enable/disable/uninstall.
 - `SkillLibrary` — reads skills, exposes an index to the context builder, `skills.load` tool.
+- `MacApps/` (D38) — the Mac's own apps as built-in tools: `AppleEventsRunner` runs fixed JavaScript
+  for Automation programs (`OsascriptRunner`: `/usr/bin/osascript` child, script on stdin, params as
+  JSON); `AppleNotes` (an index of accounts, folders and notes cached 2 min, snippets, whole notes as
+  Markdown via `NoteMarkdown`, removal into Recently Deleted); `AppleNotesLedger` (which notes are in
+  the notebook, `kv` key `applenotes.copied`); `AppleReminders` (open reminders). Tools:
+  `applenotes.list/read/copy/remove`, `applereminders.list`, capability `mac.apps`.
 - `LocalAPIServer` — unix socket JSON-lines server: `hello`, `tools/list`, `tools/call`,
   `status`; peer uid check; tokens map brain runs to `Caller.agent`.
 - `Diagnostics` — `os.Logger` categories + JSONL file sink with `Redactor` (keys, tokens, long
@@ -137,7 +143,7 @@ agent_runs(id TEXT PK, thread_id, provider, model, started_at, ended_at, steps, 
            output_tokens, outcome, error)
 attention(id TEXT PK, level, source, title, body, actions JSON, state[pending|shown|acknowledged|
           expired], created_at, shown_at, acknowledged_at, renudged)
-kv(key TEXT PK, value JSON)   -- domain settings that must live with the data
+kv(key TEXT PK, value JSON)   -- domain settings that must live with the data; applenotes.copied (D38)
 ```
 
 All timestamps are UTC seconds (REAL). IDs are ULID-like sortable strings.
@@ -186,7 +192,7 @@ Each provider has a main model and an optional smart one for "Think harder" (D8)
 Folder with `sidefolk-extension.json`:
 ```json
 { "id": "dev.sidefolk.system-vitals", "name": "System Vitals", "version": "1.0.0",
-  "sidefolk": ">=1.0", "folk": "byte", "description": "...",
+  "sidefolk": ">=0.1", "folk": "byte", "description": "...",
   "run": { "command": "python3", "args": ["main.py"] },
   "permissions": { "network": false, "files": { "read": [], "write": [] }, "exec": ["/usr/bin/pmset"] },
   "tools": { "battery": { "risk": "low", "category": "system" } },
