@@ -81,6 +81,8 @@ struct BubbleView: View {
                         .accessibilityHidden(true)
                 }
             }
+            // One shadow for card and tail together: without the group, the tail's own shadow fell on the card.
+            .compositingGroup()
             .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
             .padding(Self.margin)
             .onHover { model.hovering = $0 }

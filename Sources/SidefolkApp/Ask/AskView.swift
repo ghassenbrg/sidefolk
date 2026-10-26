@@ -187,6 +187,7 @@ struct AskView: View {
         if let question = model.pendingQuestion { return String(localized: "Your answer goes to: \(question.title)") }
         if model.busy { return model.phase ?? String(localized: "Working…") }
         if let hint = model.hint { return hint }
+        if model.replying { return String(localized: "Your reply follows up on the answer below") }
         if model.pendingReminderTitle != nil { return String(localized: "When? Try “tomorrow 9am” or “in 2 hours”") }
         if model.pendingWatch != nil { return String(localized: "Which address? e.g. localhost:3000 or example.com/status") }
         if model.attachment != nil { return String(localized: "Pick what to do, or type what you want") }

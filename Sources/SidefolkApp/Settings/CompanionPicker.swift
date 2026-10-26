@@ -86,7 +86,7 @@ struct CompanionPicker: View {
                 .labelsHidden()
                 .fixedSize()
             }
-            labelled("Colour") {
+            labelled("Color") {
                 VStack(alignment: .leading, spacing: 4) {
                     AccentSwatches(selected: style.color) { color in restyle { $0.color = color } }
                         .disabled(!colours)
@@ -115,7 +115,7 @@ struct CompanionPicker: View {
         switch chosen {
         case .sidefolk: "Its eyes, ear lights and what it wears."
         case .spark: "Its headphones, antenna, eyes and what it wears."
-        default: colours ? "What it wears." : "Give it something to wear to choose a colour."
+        default: colours ? "What it wears." : "Give it something to wear to choose a color."
         }
     }
 
