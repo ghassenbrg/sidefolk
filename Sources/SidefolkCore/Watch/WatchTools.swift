@@ -340,7 +340,8 @@ struct WatchCommandTool: Tool {
             name: "watch.command", title: String(localized: "Watch with a command"),
             description: """
             Run a shell command on a schedule and tell the user when the result matches (it exits with a given code, \
-            its output has some words, or its output changes). The user approves the exact command first. \
+            its output has some words, or its output changes). The user approves the exact command first \
+            unless they turned on Full access. \
             Prefer watch.create when a web page, file, folder or program can be watched directly.
             """,
             inputSchema: Schema.object([

@@ -10,6 +10,9 @@ struct ActivityView: View {
             PageTitle(title: "Activity", subtitle: "Everything Sidefolk did, who asked, and what was allowed.")
             stats
             filters
+            if let message = model.undoMessage {
+                Text(verbatim: message).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
             table
         }
         .padding(.horizontal, Theme.Space.xl)
@@ -104,7 +107,15 @@ struct ActivityView: View {
         case .decision:
             decisionChip(e.decision)
         case .outcome:
-            outcome(e)
+            HStack(spacing: 6) {
+                outcome(e)
+                // The same Undo the Ask panel offers, whatever mode it ran in (D37).
+                if let row = e.id, model.undoable.contains(row) {
+                    Spacer(minLength: 0)
+                    Button("Undo") { Task { await model.undo(e) } }.buttonStyle(.sf(.secondary)).fixedSize()
+                        .accessibilityLabel(Text("Undo “\(e.summary)”"))
+                }
+            }
         }
     }
 

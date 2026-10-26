@@ -185,6 +185,7 @@ enum SampleData {
 
         // Activity and agent runs
         let entries: [(Double, String, String, String, ActivityEntry.Decision, String, String?, String?)] = [
+            (1, "agent", "files.rename", "medium", .autoMode, "Rename “Scan 0412.pdf” to “Invoice April.pdf”", "Renamed", nil),
             (2, "agent", "notebook.search", "low", .auto, "Search the notebook for “sidefolk ideas”", "Found 4 items", nil),
             (6, "external:claude-code", "shell.run", "high", .denied, "Run “git push origin main” in ~/git/sidefolk", nil, "You said not now."),
             (35, "external:claude-code", "notebook.add", "low", .auto, "Save an idea to Inbox", "Saved “Folks could have their own sounds”", nil),
@@ -201,6 +202,7 @@ enum SampleData {
             (60 * 20, "agent", "apps.open", "low", .auto, "Open github.com/sidefolk/sidefolk", "Opened in Safari", nil),
             (60 * 26, "user", "notebook.add", "low", .auto, "Save a note to Inbox", "Saved “Karim's new address”", nil),
             (60 * 30, "agent", "shell.run", "high", .allowed, "Run “npm test” in ~/git/pockito", "Exit 0 after 41 s", nil),
+            (60 * 40, "agent", "files.trash", "high", .fullAccess, "Move 2 files in ~/Downloads to the Trash", "Moved to the Trash", nil),
             (60 * 50, "external:claude-code", "notify", "low", .auto, "Tell you that the build finished", "Shown as a bubble", nil),
         ]
         for (minutes, caller, tool, risk, decision, summary, outcome, error) in entries {

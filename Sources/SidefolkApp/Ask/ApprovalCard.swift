@@ -7,7 +7,6 @@ struct ApprovalCard: View {
     var request: ApprovalRequest
     var decide: (ApprovalDecision) -> Void
     @State private var armed = false
-    @State private var showDetails = false
 
     var body: some View {
         SFCard(accent: Theme.folkColor("guard")) {
@@ -79,8 +78,40 @@ struct ApprovalCard: View {
         }
     }
 
-    @ViewBuilder private var details: some View {
-        switch request.details {
+    private var details: some View { ApprovalDetails(details: request.details) }
+
+    private var allowTitle: LocalizedStringKey {
+        if case .folderAccess = request.details { return "Allow once" }
+        return request.risk == .high ? "Allow ⌘⏎" : "Allow"
+    }
+
+    /// Shown in capitals (`textCase`), so each language capitalizes its own words.
+    private var riskLabel: LocalizedStringKey {
+        if case .folderAccess(_, let write) = request.details { return write ? "Folder access · can change files" : "Folder access · read only" }
+        return switch request.risk {
+        case .low: "Low"
+        case .medium: "Changes things"
+        case .high: "High risk"
+        }
+    }
+
+    private var riskTint: Color {
+        switch request.risk {
+        case .low: Theme.accentSoft
+        case .medium: Theme.surfaceSunken
+        case .high: Theme.dangerSoft
+        }
+    }
+}
+
+/// Exactly what an approval is about: the verbatim command, the full address, the paths, the text to
+/// read. Shown on the card, and again beside a skipped step in Now (D37).
+struct ApprovalDetails: View {
+    var details: ApprovalRequest.Details
+    @State private var showDetails = false
+
+    var body: some View {
+        switch details {
         case .none:
             EmptyView()
         case .command(let command):
@@ -114,29 +145,6 @@ struct ApprovalCard: View {
             let path = FolderAccess.displayPath(folder)
             (write ? Text("Read and change files in \(path)") : Text("Read files in \(path)"))
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-        }
-    }
-
-    private var allowTitle: LocalizedStringKey {
-        if case .folderAccess = request.details { return "Allow once" }
-        return request.risk == .high ? "Allow ⌘⏎" : "Allow"
-    }
-
-    /// Shown in capitals (`textCase`), so each language capitalizes its own words.
-    private var riskLabel: LocalizedStringKey {
-        if case .folderAccess(_, let write) = request.details { return write ? "Folder access · can change files" : "Folder access · read only" }
-        return switch request.risk {
-        case .low: "Low"
-        case .medium: "Changes things"
-        case .high: "High risk"
-        }
-    }
-
-    private var riskTint: Color {
-        switch request.risk {
-        case .low: Theme.accentSoft
-        case .medium: Theme.surfaceSunken
-        case .high: Theme.dangerSoft
         }
     }
 }

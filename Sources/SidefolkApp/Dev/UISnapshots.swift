@@ -104,10 +104,22 @@ enum UISnapshots {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
             }
             try await page("page-now", NowView(model: full.now), width: 870)
+            // With Full access on, Now leads with it (D37).
+            let homePolicy = try await full.services.runtime.permissions.policy()
+            try await full.services.runtime.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+            await full.now.reload()
+            try await page("page-now-full-access", NowView(model: full.now), width: 870)
+            try await full.services.runtime.permissions.setPolicy(homePolicy)
+            await full.now.reload()
             let width = SettingsWindowController.width
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
+            let policy = settings.policy
+            await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
+            try await page("page-settings-privacy-full-access", SettingsTabContent(tab: .privacy, model: settings), width: width)
+            await settings.setPolicy { $0 = policy }
             // The companion chooser with Spark chosen, then the robot in coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)
@@ -128,8 +140,10 @@ enum UISnapshots {
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
-            try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Mochi",
-                                                      portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
+            for (name, ask) in [("desktop-ask", sampleAsk()), ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess))] {
+                try await page(name, AskView(model: ask, companionName: "Mochi",
+                                             portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
+            }
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
@@ -139,15 +153,18 @@ enum UISnapshots {
             try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
+            try await page("sheet-full-access", FullAccessSheet(model: settings), width: 460)
         }
         print("ui-snapshots: wrote \(dir.path) (\(Bundle.main.preferredLocalizations.first ?? "en"))")
     }
 
     // MARK: Fixtures
 
+    /// A minute of an unanswered approval lasts a millisecond here, so sample steps can be skipped (D37).
     private static func runtime() async throws -> SidefolkRuntime {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-ui-\(UUID().uuidString)", isDirectory: true)
-        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform())
+        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform(),
+                                       approvalMinute: 0.001)
         try await rt.notebook.inbox()
         return rt
     }
@@ -156,8 +173,21 @@ enum UISnapshots {
         let rt = try await runtime()
         let model = HomeModel(services: FixtureServices(runtime: rt))
         let sample = empty ? nil : try await SampleData.fill(rt, notebook: model.notebook)
+        if !empty { try await skipSteps(rt) }
         await model.reloadAll()
         return (model, sample)
+    }
+
+    /// Two steps Sidefolk's agent asked about while nobody was there, through the real path: a page
+    /// to read (skipped, the run went on) and a command to run on a schedule (the task stopped).
+    private static func skipSteps(_ rt: SidefolkRuntime) async throws {
+        let policy = try await rt.permissions.policy()
+        _ = await rt.executor.execute(name: "web.fetch", input: ["url": "https://example.com/pricing"], caller: .agent(runId: "sample"))
+        var stopping = policy
+        stopping.unanswered.action = .stop
+        try await rt.permissions.setPolicy(stopping)
+        _ = await rt.executor.execute(name: "watch.command", input: ["command": "npm run e2e", "exit_code": 0], caller: .agent(runId: "sample"))
+        try await rt.permissions.setPolicy(policy)
     }
 
     private static func makeSettings() async throws -> (SettingsModel, FixtureServices) {
@@ -199,6 +229,24 @@ enum UISnapshots {
         return ask
     }
 
+    /// A panel in Auto or Full access after a request that went on while nobody answered: what was
+    /// done without asking, and the step that was skipped (D37).
+    private static func awayAsk(_ mode: GuardMode) -> AskModel {
+        let ask = AskModel()
+        ask.mode = mode
+        let full = mode == .fullAccess
+        ask.add(.result(ResultCard(kind: .file, title: "Renamed 3 invoices", subtitle: "~/Documents/Invoices"), activityId: nil, undo: true),
+                caption: "tidy up my invoices and check the pricing page")
+        ask.add(.doneWithoutAsking("Rename 3 files in ~/Documents/Invoices", fullAccess: full))
+        if full {
+            ask.add(.doneWithoutAsking("Move 2 files in ~/Downloads to the Trash", fullAccess: true))
+        }
+        ask.add(.skipped("Read https://example.com/pricing", why: "You didn't answer in time, so this step was skipped."))
+        ask.add(.answer("I renamed the invoices. I didn't read the pricing page: you weren't there to say yes, so it's waiting in Now.",
+                        canThinkHarder: false, tainted: false))
+        return ask
+    }
+
     private static func sampleBubbles() -> [(String, BubbleModel)] {
         func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
             let model = BubbleModel()
@@ -222,6 +270,10 @@ enum UISnapshots {
                                                         AttentionAction(id: "no", title: "No")],
                                               refKind: "ask"),
                                 tail: .init(onTop: true, x: 60))),
+            ("done-without-asking", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
+                                                         title: String(localized: "Done without asking: \("Rename 3 files in ~/Documents/Invoices")",
+                                                                       comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
+                                                         body: GuardMode.auto.title, refKind: "unasked"))),
             ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
                                            body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
             ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),

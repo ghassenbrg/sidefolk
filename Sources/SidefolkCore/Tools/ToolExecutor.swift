@@ -43,30 +43,6 @@ public struct ToolOutcome: Sendable {
     }
 }
 
-/// Recent undoable actions, kept for 15 minutes. An older one is neither offered nor performed:
-/// what it would put back may have changed since.
-public actor UndoCenter {
-    public static let lifetime: TimeInterval = 900
-    private var entries: [String: (UndoAction, Date)] = [:]
-    public init() {}
-
-    public func register(_ action: UndoAction, id: String, now: Date = Date()) {
-        entries = entries.filter { now.timeIntervalSince($0.value.1) < Self.lifetime }
-        entries[id] = (action, now)
-    }
-
-    public func has(_ id: String, now: Date = Date()) -> Bool {
-        guard let (_, at) = entries[id] else { return false }
-        return now.timeIntervalSince(at) < Self.lifetime
-    }
-
-    public func undo(_ id: String, now: Date = Date()) async throws -> String? {
-        guard let (action, at) = entries.removeValue(forKey: id), now.timeIntervalSince(at) < Self.lifetime else { return nil }
-        try await action.perform()
-        return action.label
-    }
-}
-
 /// The only path by which anything runs a tool: Guard, approval, execution, audit, events.
 public final class ToolExecutor: Sendable {
     public let registry: ToolRegistry
@@ -280,7 +256,8 @@ public final class ToolExecutor: Sendable {
                 act.error = "\(tool.spec.title) reported a problem"
                 await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: result.text.clipped(300))
             } else {
-                await log(tool.spec, act, caller: caller, input: input, decision: decision, outcome: result.card?.title ?? result.text.clipped(160), error: nil)
+                await log(tool.spec, act, caller: caller, input: input, decision: decision, outcome: result.card?.title ?? result.text.clipped(160),
+                          error: nil, undoable: act.undoAvailable)
             }
             events.publish(.toolFinished(act, ok: !result.isError))
             return ToolOutcome(activity: act, status: .ok(result))
@@ -294,13 +271,15 @@ public final class ToolExecutor: Sendable {
         }
     }
 
+    /// - Parameter undoable: the call's undo is registered; Activity offers it on this row too.
     private func log(_ spec: ToolSpec, _ act: ToolActivity, caller: Caller, input: JSONValue, decision: ActivityEntry.Decision,
-                     outcome: String?, error: String?) async {
+                     outcome: String?, error: String?, undoable: Bool = false) async {
         let entry = ActivityEntry(at: clock.now, caller: caller.kind == "agent" ? "agent" : "\(caller.kind):\(caller)",
                                   tool: spec.name, risk: spec.risk.rawValue, decision: decision, summary: act.summary,
                                   args: Redactor.arguments(input), outcome: outcome.map { Redactor.redact($0).clipped(300) },
                                   error: error.map { Redactor.redact($0).clipped(300) }, runId: caller.runId)
-        _ = try? await activity.log(entry)
+        let row = try? await activity.log(entry).id
+        if undoable, let row { await undo.link(row: row, to: act.id) }
         events.changed(.activity)
     }
 

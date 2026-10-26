@@ -187,6 +187,22 @@ import Testing
 
     // MARK: Nothing is silent
 
+    @Test func activityOffersTheSameUndo() async throws {
+        let env = try await env(mode: .fullAccess)
+        let undone = CallCounter()
+        env.registry.register(ProbeTool(risk: .high, result: { _ in
+            ToolResult(text: "Trashed.", undo: UndoAction(label: "Put back 2 files") { undone.bump() })
+        }))
+        let out = await env.executor.execute(name: "test.probe", input: [:], caller: .agent(runId: "r"))
+        #expect(out.isOK && out.activity.undoAvailable)
+        let row = try #require(try await env.activity.recent()[0].id)
+        #expect(await env.executor.undo.undoableRows() == [row])
+        #expect(try await env.executor.undo.undo(row: row) == "Put back 2 files")
+        #expect(undone.value == 1)
+        #expect(await env.executor.undo.undoableRows().isEmpty)
+        #expect(try await env.executor.undo.undo(row: row) == nil)
+    }
+
     @Test func actsWithoutAskingAreRecordedAsSuch() async throws {
         for (mode, tag) in [(GuardMode.auto, ActivityEntry.Decision.autoMode), (.fullAccess, .fullAccess)] {
             let env = try await env(mode: mode)

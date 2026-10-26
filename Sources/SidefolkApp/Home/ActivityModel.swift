@@ -15,6 +15,10 @@ final class ActivityModel {
     var show: Show = .all
     var callerKind: String?
     private(set) var entries: [ActivityEntry] = []
+    /// Rows whose action can still be undone (the last 15 minutes), by row id.
+    private(set) var undoable: Set<Int64> = []
+    /// What the last Undo here did, or why it couldn't.
+    private(set) var undoMessage: String?
     private(set) var weekRuns = 0
     private(set) var weekInputTokens = 0
     private(set) var weekOutputTokens = 0
@@ -41,8 +45,22 @@ final class ActivityModel {
         [.denied, .blocked, .failed, .skipped].contains(e.decision)
     }
 
+    /// Undoes what a row did. Sidefolk's own actions and other agents' are undone by different executors.
+    func undo(_ entry: ActivityEntry) async {
+        guard let row = entry.id else { return }
+        do {
+            var label = try await runtime.executor.undo.undo(row: row)
+            if label == nil { label = try await runtime.gateway.undo.undo(row: row) }
+            undoMessage = label.map { String(localized: "Undone: \($0).") } ?? String(localized: "That can't be undone anymore.")
+        } catch {
+            undoMessage = String(localized: "I couldn't undo that.")
+        }
+        await reload()
+    }
+
     func reload() async {
         entries = (try? await runtime.activity.recent(limit: 1000)) ?? []
+        undoable = await runtime.executor.undo.undoableRows().union(await runtime.gateway.undo.undoableRows())
         let weekStart = Calendar.current.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date().addingTimeInterval(-7 * 86400)
         if let totals = try? await runtime.runs.totals(since: weekStart) {
             weekRuns = totals.runs

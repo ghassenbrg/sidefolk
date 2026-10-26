@@ -190,6 +190,13 @@ extension AppCoordinator: AskActions {
                         shownCards.insert(card.title)
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
                     }
+                    // What the mode answered for the person, and what nobody answered, always show (D37).
+                    if ok, activity.actedWithoutAsking {
+                        model.add(.doneWithoutAsking(activity.summary, fullAccess: activity.decision == .fullAccess), caption: caption())
+                    }
+                    if activity.decision == .skipped {
+                        model.add(.skipped(activity.summary, why: activity.error ?? ""), caption: caption())
+                    }
                 case .reply(let reply):
 
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
