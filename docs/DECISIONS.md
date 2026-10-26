@@ -710,7 +710,7 @@ existing tool wasn't possible, and a general "run this command" tool would have 
 - **Built-in extensions.** Sidefolk ships extensions in `extensions/`, listed in `extensions/catalog.json`
   with whether each starts on (`BundledExtensions`). Bundled, on: Git (clone a public https repository,
   status, pull fast-forward only, log), World Clock (time anywhere, conversions; no permissions), System
-  Vitals. Optional, off: Weather (Open-Meteo; the place asked about leaves the Mac). **No core tier:**
+  Vitals, and Weather (Open-Meteo; the place asked about leaves the Mac; on since 2026-10-27, below). **No core tier:**
   anything fundamental is a built-in tool (D38), and an addition the person can't switch off is one they
   can't refuse. Built-ins are installed like any extension, can be switched off but not removed, and are
   reinstalled whenever the app's copy differs from the installed one (update or damage), keeping whether
@@ -772,6 +772,11 @@ executable code" now reads "none runs outside a sandbox without an install the p
 freshly installed extension's tools are offered from the person's next request (tools are fixed per run).
 Built-in descriptions now reach the model, so they are reviewed like prompts. Extensions still can't hold
 secrets, choose hosts, or reach Unix sockets; the catalog lists those as the next platform pieces.
+
+**Addendum (2026-10-27):** Weather starts on. The design review found weather the most common first
+question, and D35's weather reports already send the place asked about to Open-Meteo by default, so
+keeping the extension off protected nothing and left the question unanswered. An install where the
+person switched Weather off keeps it off.
 
 ### D40 — With no AI chosen, the Ask panel offers the plan this Mac is signed in to (2026-10-27)
 **Decision:** when a request needs AI and the provider is "No AI", the "That needs AI" card probes the

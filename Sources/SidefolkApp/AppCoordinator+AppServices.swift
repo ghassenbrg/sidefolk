@@ -63,8 +63,7 @@ extension AppCoordinator: AppServices {
     // MARK: Extensions and skills
 
     func extensions() async -> [ExtensionInfo] {
-        // Built-ins in the catalog's order, the ones on for everyone first, rather than by name, which
-        // put Weather (off) between System Vitals and World Clock.
+        // Built-ins in the catalog's order rather than by name, so the list reads as the catalog intends.
         let order = Dictionary(runtime.bundledExtensions.entries().enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
         let infos = await runtime.extensions.extensions().map(Self.info)
         return infos.enumerated().sorted { a, b in

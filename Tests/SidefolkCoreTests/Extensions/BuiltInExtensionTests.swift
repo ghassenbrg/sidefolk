@@ -254,7 +254,7 @@ struct BuiltInExtensionTests {
         let bundled = BundledExtensions(directory: ExtFixtures.repoRoot.appendingPathComponent("extensions"))
         #expect(bundled.entries().map(\.id) == ["dev.sidefolk.git", "dev.sidefolk.world-clock", "dev.sidefolk.system-vitals",
                                                 "dev.sidefolk.weather"])
-        #expect(bundled.entries().map(\.on) == [true, true, true, false])
+        #expect(bundled.entries().map(\.on) == [true, true, true, true])
         #expect(bundled.samples().map(\.lastPathComponent) == ["hello-folk"])
         await bundled.install(into: h.host)
         #expect(bundled.unavailable.isEmpty, "\(bundled.unavailable)")
@@ -262,7 +262,7 @@ struct BuiltInExtensionTests {
         #expect(installed.map(\.id).sorted() == ["dev.sidefolk.git", "dev.sidefolk.system-vitals", "dev.sidefolk.weather",
                                                  "dev.sidefolk.world-clock"])
         #expect(installed.allSatisfy { $0.origin == .bundled && $0.iconPath != nil })
-        #expect(installed.filter { !$0.enabled }.map(\.id) == ["dev.sidefolk.weather"], "Weather sends a place to Open-Meteo: off until switched on")
+        #expect(installed.allSatisfy { $0.enabled }, "every built-in starts on (D39, 2026-10-27)")
         // Their own descriptions and schema reach the model: first-party text from the app (D39), unlike D24's rule.
         let clone = try #require(h.env.registry.tool(named: "ext.git.clone")?.spec)
         #expect(clone.description.contains("Clones a public Git repository"))
