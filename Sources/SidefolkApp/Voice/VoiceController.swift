@@ -191,6 +191,8 @@ final class VoiceController {
                                  recovery: "Allow it in System Settings › Privacy & Security › Speech Recognition."))
         } catch MicrophoneCapture.Failure.noMicrophone {
             fail(UserFacingError("I can't find a microphone. Nothing was sent."))
+        } catch is CancellationError {
+            // Esc: `cancel()` has already put everything back.
         } catch {
             fail(UserFacingError("I couldn't start listening. Nothing was sent.", recovery: "Try again in a moment.",
                                  detail: String(describing: error)))
