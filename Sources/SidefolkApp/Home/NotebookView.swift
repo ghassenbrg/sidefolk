@@ -1,3 +1,4 @@
+import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
@@ -147,7 +148,7 @@ private struct ItemList: View {
         if model.items.isEmpty {
             VStack(spacing: 0) {
                 Spacer()
-                EmptyState(title: emptyTitle, message: emptyMessage, systemImage: emptySymbol, folk: emptyFolk)
+                EmptyState(title: emptyTitle, message: emptyMessage, systemImage: emptySymbol, folk: emptyFolk, art: emptyArt)
                 if searching, !model.everywhere {
                     Button("Search everywhere") { model.everywhere = true }
                         .buttonStyle(.sfSecondary)
@@ -218,6 +219,13 @@ private struct ItemList: View {
     private var emptyFolk: String {
         if searching { return "scout" }
         return collection.kind == .profile ? "seed" : "pip"
+    }
+
+    /// An empty collection shows your companion with its notepad out, ready to write; searches and
+    /// About you keep their folks.
+    private var emptyArt: NSImage? {
+        guard !searching, collection.kind != .profile else { return nil }
+        return CompanionArt.portrait(for: model.services.runtime.settings.current, state: .working(.notepad), side: 120)
     }
 
     private var emptySymbol: String {

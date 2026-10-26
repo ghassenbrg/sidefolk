@@ -74,7 +74,7 @@ protocol AskActions: AnyObject {
     func answer(question: AttentionItem, actionId: String)
     func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
-    func openSettingsAI()
+    func openSettings(tab: SettingsTab?)
     func openHome()
 }
 

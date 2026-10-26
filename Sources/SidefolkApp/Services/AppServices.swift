@@ -160,8 +160,11 @@ protocol AppServices: AnyObject {
     func settingsChanged()
     func showCompanion(_ visible: Bool)
     func replayOnboarding()
-    /// Opens Settings › Agents (connect Claude Code / Codex, install the sidefolk command).
-    func openAgentSettings()
-    /// Opens the Ask panel with the start of a sentence typed in, for the user to finish.
+    /// Opens Settings, on `tab` if given (Agents: connect Claude Code / Codex, install the sidefolk command).
+    func openSettings(tab: SettingsTab?)
+    /// Opens the About window: the logo, the version, the notices.
+    func showAbout()
+    /// Opens the Ask panel with the start of a sentence typed in, for the user to finish; with an
+    /// empty one, as it was left.
     func openAsk(prefill: String)
 }

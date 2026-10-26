@@ -91,6 +91,11 @@ enum UISnapshots {
             }
             settingsWindow.orderOut(nil)
 
+            let aboutWindow = SnapshotWindow()
+            AboutWindowController.configure(aboutWindow)
+            try await capture(aboutWindow, size: CGSize(width: 380, height: 470), dark: dark, to: file("window-about"))
+            aboutWindow.orderOut(nil)
+
             // Full pages.
             func page(_ name: String, _ view: some View, width: CGFloat) async throws {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
@@ -120,7 +125,8 @@ enum UISnapshots {
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
-            try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Pip", hotkey: "⇧⌘Space"), width: 380)
+            try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Mochi",
+                                                      portrait: CompanionArt.portrait(for: AppSettings(), side: 44), hotkey: "⇧⌘Space"), width: 380)
             for (name, bubble) in sampleBubbles() {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
@@ -215,6 +221,11 @@ enum UISnapshots {
                                 tail: .init(onTop: true, x: 60))),
             ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: "That's Scout.",
                                            body: "Scout stays out while I'm watching something for you.", refKind: "intro"))),
+            ("welcome", bubble(AttentionItem(level: .attention, source: Onboarding.source, title: "Hi, I'm Mochi.",
+                                             body: "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
+                                             actions: [AttentionAction(id: "hi", title: "Hi Mochi", isPrimary: true),
+                                                       AttentionAction(id: "skip", title: "Skip intro")],
+                                             refKind: Onboarding.welcome))),
         ]
     }
 

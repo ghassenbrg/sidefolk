@@ -1,7 +1,7 @@
 import AppKit
 import SidefolkCore
 
-/// The menu bar icon: Ask, what's live now, quiet mode, show/hide, Home, Settings, Quit.
+/// The menu bar icon: Ask, what's live now, quiet mode, show/hide, Home, Settings, About, Quit.
 final class StatusItemController: NSObject, NSMenuDelegate {
     struct NowEntry {
         var title: String
@@ -16,6 +16,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onAsk: (() -> Void)?
     var onOpenHome: (() -> Void)?
     var onOpenSettings: (() -> Void)?
+    var onAbout: (() -> Void)?
     var onToggleCompanion: (() -> Void)?
     var onQuiet: ((TimeInterval?) -> Void)?
     var nowProvider: (() async -> [NowEntry])?
@@ -93,6 +94,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let settings = menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(.separator())
+        let about = menu.addItem(withTitle: "About Sidefolk", action: #selector(showAbout), keyEquivalent: "")
+        about.target = self
         menu.addItem(withTitle: "Quit Sidefolk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         refreshNow()
     }
@@ -100,6 +103,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     @objc private func ask() { onAsk?() }
     @objc private func openHome() { onOpenHome?() }
     @objc private func openSettings() { onOpenSettings?() }
+    @objc private func showAbout() { onAbout?() }
     @objc private func toggleCompanion() { onToggleCompanion?() }
     @objc private func quietOff() { onQuiet?(nil) }
     @objc private func quietFor(_ sender: NSMenuItem) {

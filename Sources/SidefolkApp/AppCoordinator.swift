@@ -29,6 +29,7 @@ final class AppCoordinator {
     var currentRun: String?
     private(set) lazy var home = HomeWindowController(services: self)
     private(set) lazy var settingsWindow = SettingsWindowController(services: self)
+    private lazy var about = AboutWindowController()
     /// Collection names for the intent parser ("ideas for Sidefolk").
     var knownCollections: [String] = []
     private var moodTimer: Task<Void, Never>?
@@ -42,7 +43,8 @@ final class AppCoordinator {
 
     func start() async {
         let s = runtime.settings.current
-        askPanel = AskPanelController(model: ask, companionName: s.companionName, hotkey: hotkeyLabel)
+        askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44),
+                                      hotkey: hotkeyLabel)
         ask.actions = self
         askPanel.onVisibilityChange = { [weak self] visible in
             self?.mood.panelOpen = visible
@@ -77,6 +79,7 @@ final class AppCoordinator {
         statusItem.onAsk = { [weak self] in self?.toggleAsk() }
         statusItem.onOpenHome = { [weak self] in self?.openHome() }
         statusItem.onOpenSettings = { [weak self] in self?.openSettings() }
+        statusItem.onAbout = { [weak self] in self?.showAbout() }
         statusItem.onQuiet = { [weak self] seconds in self?.setQuiet(for: seconds) }
         statusItem.isQuiet = { [weak self] in self?.runtime.settings.current.isQuiet(at: Date()) ?? false }
         statusItem.hotkeyLabel = { [weak self] in self?.hotkeyLabel ?? "" }
@@ -160,7 +163,7 @@ final class AppCoordinator {
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
         companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
-        askPanel?.update(companionName: s.companionName, hotkey: hotkeyLabel)
+        askPanel?.update(companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44), hotkey: hotkeyLabel)
         renderMood()
     }
 
@@ -290,6 +293,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command == "about" { showAbout(); return }
         if command.hasPrefix("language:") {
             let code = String(command.dropFirst(9))
             AppLanguage.chosen = code == "system" ? nil : code
@@ -404,6 +408,11 @@ final class AppCoordinator {
     func openSettings(tab: SettingsTab? = nil) {
         askPanel.hide()
         settingsWindow.show(tab: tab)
+    }
+
+    func showAbout() {
+        askPanel.hide()
+        about.show()
     }
 
     func setQuiet(for seconds: TimeInterval?) {

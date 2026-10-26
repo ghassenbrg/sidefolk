@@ -294,3 +294,56 @@ companion (thirteen copies of the same motion code); per-companion extras (later
 **Implications:** the sprite engine, pose art and its scripts are gone. `CharacterSpecies.available`
 gates what is offered. Folks' faces and accessories match the on-duty folks, which stay the
 `FolkRig` drawings (shared through `FolkKit`).
+
+### D31 — The wordmark is built from strokes and calibrated against the founder's lettering (2026-10-26)
+**Decision:** the "Sidefolk" wordmark matches `Resources/Brand/reference/wordmark-reference.png`.
+`scripts/wordmark.swift` constructs every letter as the lettering is drawn: round-capped strokes of one
+stem weight, rings for the d and o, a round dot for the i, two lighter rays; the S and e are a main
+stroke plus a same-width stroke that branches off tangentially and rejoins it, which gives the counters
+round ends and the curves their weight without seams. Core Graphics outlines and merges the strokes
+into one path per letter; the numbers were calibrated by fitting the construction's coverage to the
+reference (S 97.8 %, other letters 96–98 %, the rays 92 % because they are thin and the reference is
+soft). `--check` writes the overlay and difference (`Resources/Brand/wordmark-fit.png`). Every
+wordmark and logo export is regenerated from this master.
+**Why:** the founder found the previous hand-authored outlines wrong ("the S is weird") and an earlier
+trace wobbly. Building from strokes keeps the shapes geometric and consistent (all stems one weight),
+and measuring against the reference makes "like this" checkable instead of a matter of taste.
+**Alternatives:** tracing the reference (wobbly, inherits its blur); hand-drawn Bézier outlines (what
+drifted); a variable-width brush stroke for the S (smooth, but its fit was worse and its counters came
+out pointed); unioning untangent turn arcs (round counters, but small notches where edges crossed).
+
+### D32 — The menu bar shows a reduced Mochi glyph, not the shrunk monochrome mark (2026-10-26)
+**Decision:** the 18 pt template is its own drawing (`MochiMenuGlyph`): a 1.5 pt outline of Mochi's
+head and ears, the ear tips filled (the brand's navy tips), two wide-set eyes and the nose, with the
+eyes and nose on whole pixels at 2x. One alpha shape, `isTemplate`, so macOS tints it on any bar. The
+large monochrome mark (rays, paw, scarf) stays for lockups and print, where its detail reads.
+**Why:** the founder found the old template "not the best": shrinking the full mark to 18 pt put
+rays, a paw, a scarf and an outline in 36 pixels, which read as noise beside system glyphs. Six
+candidates were drawn at real size beside wifi, battery and search on light and dark bars, at 1x and
+2x (`Resources/Brand/menu-bar-candidates.png`). Solid silhouettes were bolder than every system glyph
+and merged the ears; a plain outline read as any bunny; adding the scarf crowded the 1x pixels. The
+filled ear tips plus the nose are the two details that say Mochi at this size, and the outline matches
+the weight of the symbols around it.
+
+### D33 — Where the brand appears in the app, and in which variant (2026-10-26)
+**Decision:** the full-colour art is the hero and appears where it has room; the lettering keeps its
+two colours on every surface. Specifically:
+- **Home sidebar:** the wordmark alone at 30 pt (navy "Side" + aqua "folk" on light, the new
+  `wordmark-reversed` with white "Side" on dark); clicking it opens About. It replaces a 30 pt cropped
+  portrait beside 17 pt lettering, which read as a sticker.
+- **Now:** a greeting card on a quiet aqua-to-blue wash with *your* companion, drawn by its rig in its
+  style at 176 pt, and an "Ask <name>…" button. The mascot is shown where it is large, not shrunk.
+- **About window** (app menu, menu bar menu, sidebar wordmark): the family art and the wordmark,
+  version, tagline, notices. It replaces the standard panel, which could only show the icon.
+- **First hello bubble:** the family art (`family-color`), as the bubble's code always meant.
+- **Ask panel:** the companion's face in a small disc beside its name, so you see who you're asking.
+- **Empty pages:** your companion with its notepad in an empty collection; folks where their job is
+  the subject (Scout for search, Seed for About you, Guard for Activity, Brew for Trash).
+- **Menu bar:** the monochrome glyph (D32). **Settings:** no brand header; macOS Settings windows
+  carry their identity in the toolbar, and About is a click away.
+Single-colour wordmarks and lockups (navy, white) stay for print and partners; the app never shows
+all-white or all-navy lettering, because the aqua "folk" is half of the name's look. Wordmarks load
+from the vector PDF exports, so they stay sharp at any size without a 4096 px bitmap in memory.
+**Why:** the founder found the logo "a little bit small" and asked for the companion, the folks and
+the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
+small places get one clear element (lettering, a face) instead of a reduced composition.

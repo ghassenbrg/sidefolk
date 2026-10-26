@@ -118,9 +118,13 @@ struct EmptyState: View {
     var systemImage: String
     /// A folk to show instead of the symbol: empty pages are where the family can say hello.
     var folk: String?
+    /// Or any picture, such as your companion at work, at its own size.
+    var art: NSImage?
     var body: some View {
         VStack(spacing: Theme.Space.s) {
-            if let folk, let art = FolkArt.image(folk, size: 88) {
+            if let art {
+                Image(nsImage: art).resizable().frame(width: art.size.width, height: art.size.height).accessibilityHidden(true)
+            } else if let folk, let art = FolkArt.image(folk, size: 88) {
                 Image(nsImage: art).resizable().scaledToFit().frame(width: 88, height: 88).accessibilityHidden(true)
             } else {
                 Image(systemName: systemImage).font(.system(size: 28, weight: .light)).foregroundStyle(Theme.inkFaint)
@@ -322,17 +326,23 @@ struct RowsCard<Content: View>: View {
     }
 }
 
-/// One line of muted guidance inside a card when a list is empty.
+/// One line of muted guidance inside a card when a list is empty, with the step that fills it on
+/// the same line (a separate row under it read as a second, unrelated item).
 struct InlineEmpty: View {
     var text: String
     var systemImage: String?
+    var actionTitle: String?
+    var action: () -> Void = {}
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
             if let systemImage { Image(systemName: systemImage).foregroundStyle(Theme.inkFaint) }
             Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
+            Spacer(minLength: Theme.Space.s)
+            if let actionTitle {
+                Button(actionTitle, action: action).buttonStyle(.sf(.secondary)).fixedSize()
+            }
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m + 2)

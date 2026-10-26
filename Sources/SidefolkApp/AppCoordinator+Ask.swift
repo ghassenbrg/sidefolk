@@ -274,8 +274,6 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func openSettingsAI() { openSettings(tab: .ai) }
-
     func saveAsTask(_ text: String, in model: AskModel) {
         runLocal(.note(kind: .task, text: text, collection: nil), caption: nil, into: model)
     }

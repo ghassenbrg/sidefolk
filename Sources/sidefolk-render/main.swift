@@ -47,8 +47,7 @@ MainActor.assumeIsolated {
                      dir.appendingPathComponent("SidefolkMenuBar\(suffix).png"))
             }
             try CharacterRenderer.menuBarPDF(size: size).write(to: dir.appendingPathComponent("SidefolkMenuBar.pdf"))
-            let svg = RabbitBrandMark.svg(ink: "#000000", menuBar: true)
-            try svg.write(to: dir.appendingPathComponent("SidefolkMenuBar.svg"), atomically: true, encoding: .utf8)
+            try MochiMenuGlyph.svg().write(to: dir.appendingPathComponent("SidefolkMenuBar.svg"), atomically: true, encoding: .utf8)
         } catch {
             fatalError("Menu bar asset export failed: \(error)")
         }

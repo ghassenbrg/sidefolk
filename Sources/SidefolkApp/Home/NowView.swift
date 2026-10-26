@@ -8,11 +8,8 @@ struct NowView: View {
 
     var body: some View {
         PageScroll {
-            HStack(alignment: .center, spacing: Theme.Space.l) {
-                PageTitle(title: greeting, subtitle: subtitle)
-                if let family = BrandAsset.markColor.image {
-                    Image(nsImage: family).resizable().scaledToFit().frame(height: 72).accessibilityHidden(true)
-                }
+            NowHero(greeting: greeting, status: status, settings: model.services.runtime.settings.current) {
+                model.services.openAsk(prefill: "")
             }
             if model.needsYouCount > 0 { needsYou }
             // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
@@ -34,12 +31,11 @@ struct NowView: View {
         }
     }
 
-    private var subtitle: String {
-        let day = Date().formatted(.dateTime.weekday(.wide).day().month(.wide))
+    private var status: String {
         switch model.needsYouCount {
-        case 0: return "\(day) · Nothing needs you right now."
-        case 1: return "\(day) · One thing needs you."
-        case let n: return "\(day) · \(n) things need you."
+        case 0: "Nothing needs you right now."
+        case 1: "One thing needs you."
+        case let n: "\(n) things need you."
         }
     }
 
@@ -93,12 +89,9 @@ struct NowView: View {
             RowsCard {
                 if model.watchers.isEmpty {
                     InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
-                                systemImage: "binoculars")
-                    HStack {
-                        Button("Watch something…") { model.services.openAsk(prefill: "tell me when ") }.buttonStyle(.sf(.secondary))
-                        Spacer()
+                                systemImage: "binoculars", actionTitle: "Watch something…") {
+                        model.services.openAsk(prefill: "tell me when ")
                     }
-                    .padding(.horizontal, Theme.Space.l).padding(.bottom, Theme.Space.m)
                 }
                 ForEach(model.watchers) { w in WatcherRow(watcher: w, model: model) }
             }
@@ -113,12 +106,9 @@ struct NowView: View {
             RowsCard {
                 if model.jobs.isEmpty && model.workingSessions.isEmpty {
                     InlineEmpty(text: "Nothing running. Connect Claude Code or Codex to see their sessions here, or start a command with “sidefolk run -- npm test”.",
-                                systemImage: "terminal")
-                    HStack {
-                        Button("Connect your agents…") { model.services.openAgentSettings() }.buttonStyle(.sf(.secondary))
-                        Spacer()
+                                systemImage: "terminal", actionTitle: "Connect your agents…") {
+                        model.services.openSettings(tab: .agents)
                     }
-                    .padding(.horizontal, Theme.Space.l).padding(.bottom, Theme.Space.m)
                 }
                 ForEach(model.workingSessions) { s in
                     RunningRow(symbol: "sparkles", title: Describe.session(s), started: s.startedAt, detail: s.detail,

@@ -1,8 +1,28 @@
 # Status
 
-Updated: 2026-10-26. Latest: core strings localizable (D28); asset-set preservation for the Mochi brand.
+Updated: 2026-10-26. Latest: design pass: wordmark rebuilt to the founder's lettering (D31), menu bar Mochi glyph (D32), brand in the app and Settings in reach (D33).
 
 ## Done and verified
+- **Design pass (2026-10-26, D31–D33):**
+  - *Wordmark (D31):* `scripts/wordmark.swift` builds every letter from round-capped strokes, rings
+    and a dot, fitted to `Resources/Brand/reference/wordmark-reference.png` (S 97.8 %, letters
+    96–98 %; overlay and difference in `Resources/Brand/wordmark-fit.png`, `--check` regenerates it,
+    `--fit` recalibrates). All wordmark/logo exports and `preview.png` regenerated; new
+    `wordmark-reversed` (white "Side", aqua "folk") and `family-color` exports.
+  - *Menu bar (D32):* `MochiMenuGlyph` (outline head, filled ear tips, eyes, nose; face on the 2x
+    grid) replaces the shrunk monochrome mark; six candidates compared beside system symbols in
+    `Resources/Brand/menu-bar-candidates.png` (`scripts/menu-bar-candidates.swift`).
+  - *In the app (D33):* Settings from a gear in the Home sidebar footer and the Ask panel header
+    (plus the menu bar item and ⌘,); sidebar wordmark at 30 pt opening a new About window (also in the
+    menu bar menu); Now greeting card with your companion drawn by its rig and "Ask <name>…"; first
+    hello shows the family; empty collections show the companion with its notepad; the Ask panel shows
+    the companion's face. Audit fixes: empty Watching/Running keep their button on the line; General
+    no longer repeats the companion's name (it lives in Settings › Companion).
+  - Verified: UI snapshots light/dark before (`build/design-before/`) and after
+    (`build/design-after/`), the debug app (Home, About, Ask panel and the real status item via
+    `swift scripts/dev.swift snap`), `swift build`, full serial suite after merging rework (885 core + 9 character).
+  - Not done: `make strings` for the new UI strings (English fallback works); the founder's look at
+    the new wordmark and glyph. Next: see "Design next" below.
 - **Languages, core pass (D28, 2026-10-26):** every string people read that Sources/SidefolkCore
   builds is in the catalog (`make strings`: 1088 strings, English only, no translations yet):
   errors, result cards, undo labels, tool titles and approval summaries, Guard's reasons, attention
@@ -180,3 +200,10 @@ Nothing. All second-round review follow-ups are merged.
 3. Languages: the App pass and the Brain pass (see Known issues), then translations into the nine
    languages with GLOSSARY.md, then a look at each language in the dev app (Settings › General ›
    Language).
+
+## Design next (from the 2026-10-26 pass)
+1. A hand-drawn Mochi pose for the About window and onboarding (Mochi waving with the folks around,
+   on a transparent background) would replace the family art where the companion speaks.
+2. Settings › Agents shows Byte three times; give Claude Code, Codex and the command their own marks.
+3. Run `make strings` and translate the new strings (About, Ask button, Settings tooltips).
+4. Check the hero and wordmark with each companion and in each accent colour by hand.

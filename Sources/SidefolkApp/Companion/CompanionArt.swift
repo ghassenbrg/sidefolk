@@ -38,10 +38,20 @@ enum CompanionArt {
 
     /// The companion standing idle in its style, as the Settings gallery shows it.
     static func preview(_ choice: CompanionChoice, style: CompanionStyle, side: CGFloat) -> NSImage {
-        let key = "\(choice.rawValue).\(style.color.rawValue).\(style.accessory.rawValue).\(side)"
+        picture(choice, style: style, state: .idle, side: side)
+    }
+
+    /// The companion the settings choose, still in `state`, as Home and the Ask panel show it.
+    static func portrait(for settings: AppSettings, state: CharacterState = .idle, side: CGFloat) -> NSImage {
+        let choice = offered.contains(settings.companion) ? settings.companion : .mochi
+        return picture(choice, style: settings.style(for: choice), state: state, side: side)
+    }
+
+    private static func picture(_ choice: CompanionChoice, style: CompanionStyle, state: CharacterState, side: CGFloat) -> NSImage {
+        let key = "\(choice.rawValue).\(style.color.rawValue).\(style.accessory.rawValue).\(state.name).\(side)"
         if let cached = previews[key] { return cached }
         let size = CGSize(width: side, height: side)
-        let image = NSImage(cgImage: CharacterRenderer.image(state: .idle, size: size, scale: 2, look: look(choice, style: style)),
+        let image = NSImage(cgImage: CharacterRenderer.image(state: state, size: size, scale: 2, look: look(choice, style: style)),
                             size: size)
         previews[key] = image
         return image
