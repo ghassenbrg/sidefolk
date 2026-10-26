@@ -12,9 +12,12 @@ public struct JobReport: Sendable, Equatable {
     public var exitCode: Int?
     public var signal: Int?
     public var durationSeconds: Double?
+    /// The last lines a failed command printed to stderr (at most three, one line each). Written by
+    /// the command, so it is only ever shown to the user.
+    public var errorTail: String?
 
     public init(id: String? = nil, title: String, command: String? = nil, cwd: String? = nil, pid: Int? = nil,
-                exitCode: Int? = nil, signal: Int? = nil, durationSeconds: Double? = nil) {
+                exitCode: Int? = nil, signal: Int? = nil, durationSeconds: Double? = nil, errorTail: String? = nil) {
         self.id = id
         self.title = title
         self.command = command
@@ -23,6 +26,7 @@ public struct JobReport: Sendable, Equatable {
         self.exitCode = exitCode
         self.signal = signal
         self.durationSeconds = durationSeconds
+        self.errorTail = errorTail
     }
 
     public var json: JSONValue {
@@ -34,6 +38,7 @@ public struct JobReport: Sendable, Equatable {
         o["exit_code"] = exitCode.map { .number(Double($0)) }
         o["signal"] = signal.map { .number(Double($0)) }
         o["duration_seconds"] = durationSeconds.map(JSONValue.number)
+        o["error_tail"] = errorTail.map(JSONValue.string)
         return .object(o)
     }
 
@@ -48,6 +53,9 @@ public struct JobReport: Sendable, Equatable {
         exitCode = json["exit_code"]?.intValue.flatMap { (0...255).contains($0) ? $0 : nil }
         signal = json["signal"]?.intValue.flatMap { (1...64).contains($0) ? $0 : nil }
         durationSeconds = json["duration_seconds"]?.doubleValue.flatMap { $0.isFinite && $0 >= 0 && $0 < 365 * 86400 ? $0 : nil }
+        let tail = (json.string("error_tail") ?? "").components(separatedBy: "\n").suffix(3)
+            .map { SessionEvent.oneLine($0, 160) }.filter { !$0.isEmpty }
+        errorTail = tail.isEmpty ? nil : tail.joined(separator: "\n")
     }
 }
 
@@ -89,6 +97,7 @@ public actor JobTracker {
         let duration = r.durationSeconds ?? now.timeIntervalSince(job.startedAt)
         job.endedAt = now
         job.exitCode = r.exitCode
+        job.outputTail = r.errorTail
         job.state = r.signal != nil ? .cancelled : (r.exitCode == 0 ? .succeeded : .failed)
         try? await store.save(job)
         events.changed(.runs)
@@ -119,11 +128,21 @@ public actor JobTracker {
         case .cancelled: title = "\(job.title) was stopped after \(took)"
         default: title = "\(job.title) failed (exit \(job.exitCode ?? -1))"
         }
-        let body = job.state == .failed ? "After \(took)" + (job.cwd.map { " in \(URL(fileURLWithPath: $0).lastPathComponent)" } ?? "") : nil
         let quiet = duration < shortJob || job.state == .cancelled
+        guard job.state == .failed else {
+            return AttentionRequest(level: quiet ? .gentle : .attention, source: "job", title: title,
+                                    actions: quiet ? [] : [AttentionAction(id: "dismiss", title: "Dismiss", isPrimary: true)],
+                                    refKind: "job", refId: job.id)
+        }
+        // A failure says what it printed last, when, and where, with the two things you'd do next.
+        let when = duration < 1 ? "Right away" : "After \(took)"
+        let place = job.cwd.map { " in \(URL(fileURLWithPath: $0).lastPathComponent)" } ?? ""
+        let body = [job.outputTail, when + place].compactMap { $0 }.joined(separator: "\n")
+        var actions: [AttentionAction] = []
+        if job.command != nil { actions.append(AttentionAction(id: "copy", title: "Copy command", isPrimary: true)) }
+        if job.cwd != nil { actions.append(AttentionAction(id: "open", title: "Open folder")) }
         return AttentionRequest(level: quiet ? .gentle : .attention, source: "job", title: title, body: body,
-                                actions: quiet ? [] : [AttentionAction(id: "dismiss", title: "Dismiss", isPrimary: true)],
-                                refKind: "job", refId: job.id)
+                                actions: actions, refKind: "job", refId: job.id)
     }
 
     /// "4m 12s", "12s", "1h 3m".

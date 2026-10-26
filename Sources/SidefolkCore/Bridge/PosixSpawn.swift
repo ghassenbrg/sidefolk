@@ -11,6 +11,8 @@ enum PosixSpawn {
         var closeOtherDescriptors = false
         /// Child fds 0, 1, 2 come from these descriptors; nil keeps ours.
         var stdio: (Int32, Int32, Int32)?
+        /// Only the child's fd 2 comes from here (the others stay ours); ignored when `stdio` is set.
+        var stderr: Int32?
         var cwd: String?
         /// Signals reset to their default action in the child (we may be ignoring them).
         var defaultSignals: [Int32] = [SIGINT, SIGTERM, SIGHUP, SIGQUIT, SIGPIPE, SIGCHLD]
@@ -46,8 +48,11 @@ enum PosixSpawn {
             posix_spawn_file_actions_adddup2(&actions, input, 0)
             posix_spawn_file_actions_adddup2(&actions, output, 1)
             posix_spawn_file_actions_adddup2(&actions, error, 2)
-        } else if options.closeOtherDescriptors {
-            for fd: Int32 in 0...2 { posix_spawn_file_actions_addinherit_np(&actions, fd) }
+        } else {
+            if let error = options.stderr { posix_spawn_file_actions_adddup2(&actions, error, 2) }
+            if options.closeOtherDescriptors {
+                for fd: Int32 in 0...2 { posix_spawn_file_actions_addinherit_np(&actions, fd) }
+            }
         }
         if let cwd = options.cwd {
             if #available(macOS 26, *) {

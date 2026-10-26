@@ -138,6 +138,29 @@ struct TrackerEnv {
         #expect(try await t.items().last?.title == "make failed (exit 2)")
     }
 
+    @Test func failedJobShowsWhatItPrintedAndOffersTheNextSteps() async throws {
+        let t = try await TrackerEnv()
+        let report = JobReport(title: "sh -c 'echo boom >&2; exit 2'", command: "sh -c 'echo boom >&2; exit 2'", cwd: "/tmp/sidefolk",
+                               exitCode: 2, durationSeconds: 0.2, errorTail: "boom")
+        // Through the socket's JSON, as the helper sends it.
+        let received = try #require(JobReport(json: report.json))
+        #expect(received.errorTail == "boom")
+        let job = await t.jobs.finish(received, client: "cli")
+        #expect(job.outputTail == "boom")
+        let item = try #require(try await t.items().last)
+        #expect(item.body == "boom\nRight away in sidefolk")
+        #expect(item.actions.map(\.id) == ["copy", "open"])
+    }
+
+    @Test func errorTailFromTheSocketIsCappedToThreeShortLines() throws {
+        let long = String(repeating: "x", count: 500)
+        let json: JSONValue = ["title": "t", "error_tail": .string("one\ntwo\n\u{1B}three\nfour\n\(long)")]
+        let tail = try #require(JobReport(json: json)?.errorTail).components(separatedBy: "\n")
+        #expect(tail.count == 3)
+        #expect(tail[0] == "three" && tail[1] == "four")
+        #expect(tail[2].count <= 160)
+    }
+
     @Test func shortJobsAreGentle() async throws {
         let t = try await TrackerEnv()
         let job = await t.jobs.start(JobReport(title: "ls"), client: "cli")

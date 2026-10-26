@@ -113,6 +113,10 @@ final class AppCoordinator {
             guard action == "open" else { return }
             await MainActor.run { self?.openHome() }
         }
+        await runtime.attention.onAction(kind: "job") { [weak self] item, action in
+            guard let id = item.refId, let job = try? await self?.runtime.jobs.job(id: id) else { return }
+            await MainActor.run { Self.jobAction(action, job) }
+        }
         await runtime.housekeeping()
         do {
             try await runtime.start()
@@ -187,6 +191,22 @@ final class AppCoordinator {
         let fallback = await runtime.stop()
         notifier.scheduleFallback(fallback.map { (id: $0.id, title: $0.title, body: $0.body, date: $0.date) })
         Log.shared.info("app", "quit", ["fallbackReminders": String(fallback.count)])
+    }
+
+    /// The buttons on a failed `sidefolk run` notice.
+    static func jobAction(_ action: String?, _ job: Job) {
+        switch action {
+        case "copy":
+            guard let command = job.command else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(command, forType: .string)
+        case "open":
+            // Shown in Finder, never "opened": a folder named Foo.app would launch.
+            guard let cwd = job.cwd, FileManager.default.fileExists(atPath: cwd) else { return }
+            NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: cwd)
+        default:
+            break
+        }
     }
 
     /// Coalesces bursts of changes into one refresh of the menu bar list.

@@ -38,10 +38,10 @@ public struct RunUsageError: Error, Equatable {
     public var message: String
 }
 
-/// Runs a command for `sidefolk run` in the caller's own process context: inherited stdio,
+/// Runs a command for `sidefolk run` in the caller's own process context: inherited stdin and stdout,
 /// environment, working folder, descriptors and process group, so terminal job control and
-/// sandboxes behave exactly as if the user had typed the command (T4). Sidefolk only hears about
-/// start and end.
+/// sandboxes behave exactly as if the user had typed the command (T4). Stderr passes through a tee
+/// that keeps its last lines for a failure notice (`StderrTee`). Sidefolk only hears about start and end.
 public enum CommandRunner {
     static let handledSignals: [Int32] = [SIGINT, SIGTERM, SIGHUP, SIGQUIT]
 
@@ -58,7 +58,8 @@ public enum CommandRunner {
     }
 
     /// Starts the command with signal forwarding in place.
-    public static func start(_ command: [String]) throws -> Running {
+    /// - Parameter stderr: the descriptor to give the command as fd 2 (nil keeps ours).
+    static func start(_ command: [String], stderr: Int32? = nil) throws -> Running {
         let child = ChildPID()
         // Ignore first so a signal between spawn and the sources being ready can't kill us; the
         // child gets default handling back through POSIX_SPAWN_SETSIGDEF.
@@ -74,7 +75,7 @@ public enum CommandRunner {
         }
         do {
             let pid = try PosixSpawn.run(command[0], arguments: Array(command.dropFirst()), environment: nil, searchPath: true,
-                                    options: PosixSpawn.Options(defaultSignals: handledSignals + [SIGPIPE, SIGCHLD]))
+                                    options: PosixSpawn.Options(stderr: stderr, defaultSignals: handledSignals + [SIGPIPE, SIGCHLD]))
             child.value.store(pid, ordering: .releasing)
             return Running(pid: pid, sources: sources)
         } catch {

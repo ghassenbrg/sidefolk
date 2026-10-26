@@ -34,7 +34,16 @@ public enum HelperCommands {
         let cwd = FileManager.default.currentDirectoryPath
         let report = JobReport(title: request.displayTitle, command: CommandRunner.display(request.command).clipped(500), cwd: cwd)
         let socket = paths.socket.path
-        let running = try CommandRunner.start(request.command)
+        let tee = StderrTee.make()
+        let running: CommandRunner.Running
+        do {
+            running = try CommandRunner.start(request.command, stderr: tee?.childEnd)
+        } catch {
+            tee?.childStarted()
+            _ = tee?.finish(within: 0)
+            throw error
+        }
+        tee?.childStarted()
         var start = report
         start.pid = Int(running.pid)
         let startJSON = start.json
@@ -52,8 +61,13 @@ public enum HelperCommands {
         finish.id = id
         let elapsed = ContinuousClock.now - started
         finish.durationSeconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
+        let errorOutput = tee?.finish() ?? ""
         switch termination {
-        case .exited(let code): finish.exitCode = Int(code)
+        case .exited(let code):
+            finish.exitCode = Int(code)
+            // Only a failure says what it printed: that is what the notice needs, and nothing more leaves the terminal.
+            let lines = StderrTee.lastLines(errorOutput)
+            if code != 0, !lines.isEmpty { finish.errorTail = lines.joined(separator: "\n") }
         case .signaled(let signal): finish.signal = Int(signal)
         }
         // The app may have started while the command ran; a finish without an id still counts.
