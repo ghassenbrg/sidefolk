@@ -36,7 +36,7 @@ enum UISnapshots {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let (full, filled) = try await makeHome(empty: false)
         let (empty, _) = try await makeHome(empty: true)
-        let settings = try await makeSettings()
+        let (settings, fixtures) = try await makeSettings()
         guard let sample = filled else { return }
 
         for dark in [false, true] {
@@ -100,12 +100,17 @@ enum UISnapshots {
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
-            for kind in [ProviderKind.anthropic, .openAICompatible, .none] {
-                settings.setProvider(kind)
-                try await page("page-settings-ai-\(kind.rawValue)", SettingsTabContent(tab: .ai, model: settings), width: width)
+            // Settings › AI with each provider chosen, in the states that need different words.
+            for (name, choice, setUp) in aiStates {
+                setUp(fixtures, settings)
+                settings.ai.choose(choice)
+                await settings.ai.refresh()
+                try await page("page-settings-ai-\(name)", AISettingsView(model: settings), width: width)
             }
-            settings.setProvider(.claudeCode)
-            await settings.checkProvider()
+            fixtures.detection = FixtureServices.sampleDetection
+            settings.ai.choose(.codex)
+            await settings.ai.refresh()
+            await settings.ai.test()
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
@@ -140,14 +145,30 @@ enum UISnapshots {
         return (model, sample)
     }
 
-    private static func makeSettings() async throws -> SettingsModel {
+    private static func makeSettings() async throws -> (SettingsModel, FixtureServices) {
         let rt = try await runtime()
         let services = FixtureServices(runtime: rt, keys: [.anthropic])
         _ = try await SampleData.fill(rt, notebook: NotebookModel(services: services))
         let model = SettingsModel(services: services)
         await model.refresh()
-        return model
+        return (model, services)
     }
+
+    /// Settings › AI pages: file name, the option chosen, and the fixture state it's shown in.
+    private static let aiStates: [(String, AIChoice, @MainActor (FixtureServices, SettingsModel) -> Void)] = [
+        ("codex-ready", .codex, { f, _ in f.detection = FixtureServices.sampleDetection }),
+        ("codex-signed-out", .codex, { f, _ in f.detection.codex = .ready(path: "/usr/local/bin/codex", version: "0.160.0", login: .signedOut) }),
+        ("codex-not-found", .codex, { f, _ in f.detection.codex = .notFound }),
+        ("claude-code", .claudeCode, { f, _ in f.detection = FixtureServices.sampleDetection }),
+        ("anthropic", .anthropic, { _, _ in }),
+        ("groq-no-key", .preset(.groq), { _, _ in }),
+        ("openai-key", .preset(.openAI), { f, _ in f.keys.insert(.preset(.openAI)) }),
+        ("ollama-running", .preset(.ollama), { _, _ in }),
+        ("ollama-not-running", .preset(.ollama), { f, _ in f.detection.ollama = .installedNotRunning }),
+        ("lmstudio-not-installed", .preset(.lmStudio), { _, _ in }),
+        ("custom", .preset(.custom), { _, s in s.update { $0.provider.baseURL = "https://llm.example.com/v1" } }),
+        ("none", .none, { _, _ in }),
+    ]
 
     /// A panel after a few requests: a result, an answer and a pending approval.
     private static func sampleAsk() -> AskModel {

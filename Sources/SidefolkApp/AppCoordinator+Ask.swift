@@ -22,6 +22,8 @@ extension AppCoordinator {
         let tokens = runtime.tokens
         let factory = BrainFactory.standard(secrets: secrets, claudeCodeBackend: { provider in
             ClaudeCodeBackend.make(provider: provider, paths: paths, helperPath: helper, registry: tokens)
+        }, codexBackend: { provider, thinkHarder in
+            CodexBackend.make(provider: provider, thinkHarder: thinkHarder, paths: paths, helperPath: helper, registry: tokens)
         })
         let settings = runtime.settings
         return AgentRuntime(executor: runtime.executor, db: runtime.db, events: runtime.events, context: context,
@@ -44,11 +46,15 @@ extension AppCoordinator: AskActions {
     var whenParser: WhenParser { WhenParser(calendar: .autoupdatingCurrent, settings: runtime.settings.current) }
 
     var providerLabel: String {
-        switch runtime.settings.current.provider.kind {
-        case .none: "no AI"
-        case .claudeCode: "Claude"
-        case .anthropic: "Claude (API)"
-        case .openAICompatible: runtime.settings.current.provider.model.isEmpty ? "your model" : runtime.settings.current.provider.model
+        let provider = runtime.settings.current.provider
+        switch provider.kind {
+        case .none: return "no AI"
+        case .claudeCode: return "Claude"
+        case .codex: return "Codex"
+        case .anthropic: return "Claude (API)"
+        case .openAICompatible:
+            let model = provider.model.isEmpty ? provider.preset.defaultModel(available: nil) ?? "" : provider.model
+            return model.isEmpty ? provider.preset.name : model
         }
     }
 

@@ -140,13 +140,38 @@ public actor AgentRuntime {
                               messages: built.messages, tools: offeredTools().map(\.modelName), tainted: built.tainted, at: clock.now)
     }
 
-    /// Settings › AI "Check connection".
+    /// Settings › AI status: the free check (binary, sign-in, key, model list), never a prompt.
     public func checkProvider(_ provider: ProviderSettings? = nil) async -> Result<String, UserFacingError> {
         do {
             let choice = try factory.make(provider ?? settings().provider, thinkHarder: false)
             return await choice.backend.check()
         } catch {
             return .failure(error)
+        }
+    }
+
+    /// Settings › AI "Test", only on the user's click: the free check, then one tiny request without
+    /// tools, which counts toward the user's usage. Nothing is stored.
+    public func testProvider(_ provider: ProviderSettings? = nil) async -> Result<String, UserFacingError> {
+        let choice: BrainChoice
+        do { choice = try factory.make(provider ?? settings().provider, thinkHarder: false) } catch { return .failure(error) }
+        if case .failure(let error) = await choice.backend.check() { return .failure(error) }
+        let start = clock.now
+        let runId = "test-" + Identifier.make(now: start)
+        let task = BrainTask(runId: runId, threadId: runId, system: "You check that a connection works. Answer with one word.",
+                             messages: [ChatMessage(role: .user, text: "Reply with the word ok.")], model: choice.model,
+                             maxSteps: 1, deadline: start.addingTimeInterval(60))
+        let toolbox = BrainToolbox(runId: runId, specs: [], executor: executor, emit: { _ in })
+        defer { _ = (choice.backend as? any BrainUsageReporting)?.takeUsage(runId: runId) }
+        do {
+            let reply = try await choice.backend.run(task, toolbox: toolbox, emit: { _ in })
+            await toolbox.close()
+            let seconds = String(format: "%.1f", clock.now.timeIntervalSince(start))
+            let model = choice.model.isEmpty ? "its default model" : choice.model
+            return .success("\(choice.backend.providerName) answered “\(reply.text.clipped(30))” in \(seconds) s using \(model).")
+        } catch {
+            await toolbox.close()
+            return .failure(Self.userFacing(error, changed: false, provider: choice.backend.providerName))
         }
     }
 

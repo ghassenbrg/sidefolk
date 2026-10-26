@@ -1,7 +1,7 @@
 import Foundation
 
-/// Any server speaking OpenAI's `POST {base}/chat/completions` with function tools: OpenAI, Ollama
-/// (`http://localhost:11434/v1`, no key), LM Studio, OpenRouter.
+/// Any server speaking OpenAI's `POST {base}/chat/completions` with function tools: the presets in
+/// `ProviderPreset` (OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, OpenRouter, Ollama, LM Studio) or a custom one.
 public struct OpenAICompatibleModel: TurnModel {
     public let providerName: String
     public let baseURL: URL
@@ -9,12 +9,13 @@ public struct OpenAICompatibleModel: TurnModel {
     private let http: ProviderHTTP
 
     /// Throws when the address is unusable, including plain `http://` to anything but this Mac.
-    public init(baseURL: String, apiKey: Secret?, transport: any HTTPTransport = URLSessionTransport(),
+    /// - Parameter name: what errors call the service ("Groq"); derived from the address when nil.
+    public init(baseURL: String, apiKey: Secret?, name: String? = nil, transport: any HTTPTransport = URLSessionTransport(),
                 retry: RetryPolicy = .standard) throws(UserFacingError) {
         let url = try Self.validate(baseURL: baseURL)
         self.baseURL = url
         self.apiKey = apiKey.flatMap { $0.isEmpty ? nil : $0 }
-        providerName = Self.displayName(for: url)
+        providerName = name ?? Self.displayName(for: url)
         http = ProviderHTTP(transport: transport, retry: retry, provider: providerName, local: Self.isLoopback(url.host))
     }
 

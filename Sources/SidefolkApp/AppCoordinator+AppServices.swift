@@ -139,71 +139,7 @@ extension AppCoordinator: AppServices {
 
     func deleteSkill(_ name: String) async { _ = try? runtime.skills.delete(name: name) }
 
-    // MARK: AI
-
-    func detectProviders() async -> ProviderDetection {
-        var detection = ProviderDetection(claudePath: nil, claudeVersion: nil, ollamaRunning: false, ollamaModels: [])
-        if case .success(let path) = ClaudeBinary.locate(configured: runtime.settings.current.provider.claudePath) {
-            detection.claudePath = FolderAccess.displayPath(path)
-            let cwd = runtime.paths.brainWorkdir.path
-            let env = ["HOME": NSHomeDirectory(), "PATH": "/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin:" + (path as NSString).deletingLastPathComponent]
-            if case .success(let install) = await ClaudeBinary.probe(path, environment: env, cwd: cwd) {
-                detection.claudeVersion = install.version
-            }
-        }
-        // Ollama answers locally without a key; a short timeout keeps Settings snappy when it isn't running.
-        var request = URLRequest(url: URL(string: "http://127.0.0.1:11434/api/tags")!)
-        request.timeoutInterval = 1.5
-        if let (data, response) = try? await URLSession(configuration: .ephemeral).data(for: request),
-           (response as? HTTPURLResponse)?.statusCode == 200 {
-            detection.ollamaRunning = true
-            let models = (try? JSONValue.parse(String(decoding: data, as: UTF8.self)))?["models"]?.arrayValue ?? []
-            detection.ollamaModels = models.compactMap { $0.string("name") }.prefix(20).map { $0 }
-        }
-        return detection
-    }
-
-    func checkProvider() async -> Result<String, UserFacingError> { await agent.checkProvider() }
-
-    func hasAPIKey(for kind: ProviderKind) -> Bool {
-        switch kind {
-        case .anthropic: return (try? secrets.get(SecretKey.anthropicAPIKey)) != nil
-        case .openAICompatible: return (try? secrets.get(SecretKey.openAIAPIKey)) != nil
-        default: return false
-        }
-    }
-
-    func setAPIKey(_ key: String?, for kind: ProviderKind) {
-        let keys = ProviderKeys(store: secrets)
-        switch kind {
-        case .anthropic:
-            if let key, !key.isEmpty {
-                try? keys.save(Secret(key), account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost)
-            } else {
-                try? secrets.delete(SecretKey.anthropicAPIKey)
-            }
-        case .openAICompatible:
-            let base = URL(string: runtime.settings.current.provider.baseURL) ?? URL(string: "https://api.openai.com/v1")!
-            if let key, !key.isEmpty {
-                try? keys.save(Secret(key), account: SecretKey.openAIAPIKey, host: ProviderKeys.host(of: base))
-            } else {
-                try? secrets.delete(SecretKey.openAIAPIKey)
-            }
-        default:
-            break
-        }
-        runtime.events.changed(.settings)
-    }
-
-    func lastContextPreview() async -> String? {
-        guard let p = await agent.lastSent() else { return nil }
-        var text = "Sent to \(p.provider) (\(p.model.isEmpty ? "default model" : p.model)) at "
-            + p.at.formatted(date: .abbreviated, time: .standard) + (p.tainted ? " — included outside content" : "") + "\n\n"
-        text += "SYSTEM\n" + p.system + "\n\n"
-        for m in p.messages { text += m.role.rawValue.uppercased() + "\n" + m.text + "\n\n" }
-        text += "TOOLS\n" + p.tools.joined(separator: ", ")
-        return text
-    }
+    // AI: AppCoordinator+AIServices.swift
 
     // MARK: Privacy and data
 
