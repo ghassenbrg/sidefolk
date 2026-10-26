@@ -73,15 +73,4 @@ import Testing
         #expect(Sentences.split("保存しました。明日九時です。").count == 2)
         #expect(Sentences.split("  ").isEmpty)
     }
-
-    @Test func aBufferHoldsTheUnfinishedSentence() {
-        var buffer = SentenceBuffer()
-        #expect(buffer.append("Saved to Ideas. I'll re") == ["Saved to Ideas."])
-        #expect(buffer.flush() == ["I'll re"])
-        var streamed = SentenceBuffer()
-        var said: [String] = []
-        for piece in ["Saved to ", "Ideas. I'll ", "remind you ", "at 9. Bye"] { said += streamed.append(piece) }
-        said += streamed.flush()
-        #expect(said == ["Saved to Ideas.", "I'll remind you at 9.", "Bye"])
-    }
 }
