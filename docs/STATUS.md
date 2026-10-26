@@ -20,7 +20,7 @@ Updated: 2026-10-26. Latest: design pass: wordmark rebuilt to the founder's lett
     no longer repeats the companion's name (it lives in Settings › Companion).
   - Verified: UI snapshots light/dark before (`build/design-before/`) and after
     (`build/design-after/`), the debug app (Home, About, Ask panel and the real status item via
-    `swift scripts/dev.swift snap`), `swift build`, full serial suite (885 core + 8 character).
+    `swift scripts/dev.swift snap`), `swift build`, full serial suite after merging rework (885 core + 9 character).
   - Not done: `make strings` for the new UI strings (English fallback works); the founder's look at
     the new wordmark and glyph. Next: see "Design next" below.
 - **Languages, core pass (D28, 2026-10-26):** every string people read that Sources/SidefolkCore
