@@ -4,6 +4,7 @@ import SwiftUI
 /// The Home window: a sidebar (Now, Activity, the Notebook's collections, Trash) and the selected page.
 struct HomeView: View {
     @Bindable var model: HomeModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationSplitView {
@@ -20,7 +21,7 @@ struct HomeView: View {
                     model.notebook.toast = nil
                 }
                 .padding(.bottom, Theme.Space.xl)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
                 .id(toast.id)
             }
         }

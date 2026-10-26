@@ -216,9 +216,9 @@ manifest and a small program that speaks [MCP](https://modelcontextprotocol.io).
 macOS sandbox built from what the manifest asks for, and shows you those permissions in plain words
 before you install it.
 
-- **Built in:** Git (clone a public repository into a folder you name, status, pull, log), World Clock
-  and System Vitals are on; Weather is installed but off, because the places you ask about go to
-  Open-Meteo. You can switch any of them off.
+- **Built in:** Git (clone a public repository into a folder you name, status, pull, log), World Clock,
+  System Vitals and Weather (forecasts and a rain watcher; only the place you ask about goes to
+  Open-Meteo). All four start on, and you can switch any of them off.
 - **Install one:** Settings › Extensions › Install from folder…, or drop the folder on the companion.
 - **Add an MCP server you already use:** Settings › Extensions › Add MCP Server. It runs outside the
   sandbox and is labelled that way.

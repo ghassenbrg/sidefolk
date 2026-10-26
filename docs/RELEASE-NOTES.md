@@ -75,8 +75,8 @@ reminds and keeps watch, and your AI agents can talk to it.
 ### Extensions
 - Sandboxed extensions (a manifest plus a program speaking MCP), with a permission sheet in plain words,
   pinned files, tamper detection, icons, and changed tools held for review (D13, D24).
-- Built in: Git (clone public https repositories into a folder you name, status, pull, log), World Clock
-  and System Vitals, on; Weather (forecasts and a rain watcher), off until you switch it on (D39).
+- Built in, all on and each switchable off: Git (clone public https repositories into a folder you name,
+  status, pull, log), World Clock, System Vitals, and Weather (forecasts and a rain watcher) (D39).
 - Sidefolk can write an extension for you: it proposes it, writes a text-only draft, tries it with no
   permissions, and shows the normal install sheet. Only your click installs it (D39).
 - Plain MCP servers can be added; they run unsandboxed and are labelled so.

@@ -50,11 +50,18 @@ struct ExtensionsSettingsView: View {
 
     private var builtIns: [ExtensionInfo] { model.extensions.filter(\.bundled) }
 
+    /// Extensions answer requests in your own words, so without an AI they have nothing to answer.
+    private var builtInFooter: LocalizedStringKey {
+        if model.settings.provider.kind == .none {
+            return "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › AI first."
+        }
+        return "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want."
+    }
+
     // MARK: Built in
 
     private var builtIn: some View {
-        SettingsGroup(title: "Built in",
-                      footer: "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want.") {
+        SettingsGroup(title: "Built in", footer: builtInFooter) {
             ForEach(builtIns) { ext in
                 ExtensionRow(ext: ext, model: model, uninstall: nil)
             }

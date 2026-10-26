@@ -1,8 +1,8 @@
 # Which extensions should ship with Sidefolk
 
-> **Status:** decided and partly built (26 October 2026, DECISIONS D39). Git, World Clock and System
-> Vitals ship switched on, Weather ships switched off; the rest of this page is the backlog and the
-> reasoning behind it.
+> **Status:** decided and partly built (26 October 2026, DECISIONS D39). Git, World Clock, System
+> Vitals and Weather ship switched on (Weather since 27 October); the rest of this page is the backlog
+> and the reasoning behind it.
 
 Sidefolk ships **no Core extension**, **three Bundled ones** (Git, World Clock, System Vitals: installed
 and on, each can be switched off) and **one Optional one** (Weather: installed, off until the person

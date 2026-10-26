@@ -9,6 +9,7 @@ struct AskView: View {
     var portrait: NSImage?
     var hotkey: String
     @FocusState private var inputFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -108,13 +109,13 @@ struct AskView: View {
                 }
                 if model.text.isEmpty, !model.busy {
                     // Drops work without AI: the common things are one click away.
-                    HStack(spacing: 6) {
+                    ButtonRow {
                         Button("Save") { model.actions?.perform(.save, with: attachment, in: model) }.buttonStyle(.sf(.primary))
                         Button("Remind me…") { model.actions?.perform(.remind, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                         if canWatch(attachment) {
                             Button("Watch") { model.actions?.perform(.watch, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                         }
-                        Button("Ask About It…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
+                        Button("Ask about it…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
                     }
                 }
             }
@@ -141,15 +142,20 @@ struct AskView: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             ForEach(model.pinnedEntries) { entry in
                 EntryView(entry: entry, model: model)
-                    .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+                    .transition(arrival)
             }
             ForEach(model.visibleRequests) { request in
                 RequestView(request: request, model: model)
-                    .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+                    .transition(arrival)
             }
         }
-        .animation(.spring(duration: 0.3), value: model.entries)
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.3), value: model.entries)
         .padding(Theme.Space.m)
+    }
+
+    /// New cards slide in from the input; with Reduce Motion they only fade in, like the companion's states.
+    private var arrival: AnyTransition {
+        reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity)
     }
 
     private var placeholder: LocalizedStringKey {
@@ -187,6 +193,7 @@ struct AskView: View {
         if let question = model.pendingQuestion { return String(localized: "Your answer goes to: \(question.title)") }
         if model.busy { return model.phase ?? String(localized: "Working…") }
         if let hint = model.hint { return hint }
+        if model.replying { return String(localized: "Your reply follows up on the answer below") }
         if model.pendingReminderTitle != nil { return String(localized: "When? Try “tomorrow 9am” or “in 2 hours”") }
         if model.pendingWatch != nil { return String(localized: "Which address? e.g. localhost:3000 or example.com/status") }
         if model.attachment != nil { return String(localized: "Pick what to do, or type what you want") }
@@ -240,15 +247,6 @@ private struct EntryView: View {
     var model: AskModel
     /// Sends the request again, replacing these cards (failed requests only).
     var retry: (() -> Void)? = nil
-
-    /// What works without AI: keep the words as a task or a note, or set a reminder for them.
-    @ViewBuilder private func localActions(_ text: String, guess: ReminderGuess?) -> some View {
-        Button("Save as task") { model.actions?.saveAsTask(text, in: model) }.buttonStyle(.sf(guess == nil ? .primary : .secondary)).fixedSize()
-        if guess == nil {
-            Button("Remind me…") { model.actions?.askWhen(toRemind: text, in: model) }.buttonStyle(.sf(.secondary)).fixedSize()
-        }
-        Button("Save as note") { model.actions?.saveAnswer(text, tainted: false, in: model) }.buttonStyle(.sf(.secondary)).fixedSize()
-    }
 
     var body: some View {
         switch entry.content {
@@ -305,33 +303,8 @@ private struct EntryView: View {
                     }
                 }
             }
-        case .needsBrain(let text, let guess):
-            SFCard(accent: Theme.folkColor("byte")) {
-                VStack(alignment: .leading, spacing: Theme.Space.s) {
-                    Text(guess == nil ? "That needs AI, which isn't set up." : "That needs AI — or I can do this:")
-                        .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    if let guess {
-                        Button {
-                            model.actions?.remind(guess, in: model)
-                        } label: {
-                            Label {
-                                Text("\(guess.label): \(guess.title)",
-                                     comment: "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””")
-                            } icon: {
-                                Image(systemName: "alarm")
-                            }
-                            .lineLimit(1)
-                        }
-                        .buttonStyle(.sf(.primary))
-                    }
-                    // Never truncated: the actions wrap when a language makes them longer.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { localActions(text, guess: guess) }
-                        VStack(alignment: .leading, spacing: 6) { localActions(text, guess: guess) }
-                    }
-                    Button("Set up AI…") { model.actions?.openSettings(tab: .ai) }.buttonStyle(.sf(.plain))
-                }
-            }
+        case .needsBrain(let request):
+            NoAICard(request: request, entry: entry.id, model: model)
         case .question(let item):
             QuestionCard(item: item) { actionId in model.actions?.answer(question: item, actionId: actionId) }
         case .info(let text):
@@ -423,7 +396,7 @@ struct ResultCardView<Actions: View>: View {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                HStack(spacing: 6) { actions }
+                ButtonRow { actions }
             }
         }
         .accessibilityElement(children: .contain)
@@ -473,7 +446,7 @@ private struct AnswerCard: View {
                         guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.user == nil else { return .discarded }
                         return .systemAction
                     })
-                HStack(spacing: 6) {
+                ButtonRow {
                     if asks {
                         Button("Reply") { model.reply() }.buttonStyle(.sf(.primary))
                     }
@@ -521,10 +494,7 @@ private struct QuestionCard: View {
                     Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
                 if !item.actions.isEmpty {
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { options }
-                        VStack(alignment: .leading, spacing: 6) { options }
-                    }
+                    ButtonRow { options }
                 }
                 Text(item.actions.isEmpty ? "Type your answer above and press Return." : "Or type a different answer above.")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)

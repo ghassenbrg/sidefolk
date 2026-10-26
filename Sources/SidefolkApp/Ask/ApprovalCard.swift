@@ -39,7 +39,7 @@ struct ApprovalCard: View {
                 if request.caller != .user {
                     asker.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 }
-                HStack(spacing: 6) {
+                ButtonRow {
                     Button("Not now") { decide(.deny) }
                         .buttonStyle(.sf(.secondary))
                         .keyboardShortcut(.cancelAction)

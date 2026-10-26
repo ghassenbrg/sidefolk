@@ -63,7 +63,12 @@ extension AppCoordinator: AppServices {
     // MARK: Extensions and skills
 
     func extensions() async -> [ExtensionInfo] {
-        await runtime.extensions.extensions().map(Self.info)
+        // Built-ins in the catalog's order rather than by name, so the list reads as the catalog intends.
+        let order = Dictionary(runtime.bundledExtensions.entries().enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let infos = await runtime.extensions.extensions().map(Self.info)
+        return infos.enumerated().sorted { a, b in
+            (order[a.element.id] ?? Int.max, a.offset) < (order[b.element.id] ?? Int.max, b.offset)
+        }.map(\.element)
     }
 
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {

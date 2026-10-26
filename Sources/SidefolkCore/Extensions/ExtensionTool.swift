@@ -11,19 +11,22 @@ public struct ExtensionTool: Tool {
     /// Parameters naming a folder the person chooses (`tools.<name>.paths`): Guard checks them like any
     /// file tool's paths, and the sandbox opens exactly those for this call.
     public let folderParameters: [String: ExtensionManifest.FolderUse]
+    /// One of Sidefolk's own extensions (D39): its approval cards may say what a call does in a sentence.
+    public let firstParty: Bool
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
 
     /// Seconds a manifest may give one call (`tools.<name>.timeout`).
     public static let timeouts = 1...300
 
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
-         folderParameters: [String: ExtensionManifest.FolderUse] = [:],
+         folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.remoteName = remoteName
         self.folderParameters = folderParameters
+        self.firstParty = firstParty
         self.invoke = invoke
     }
 
@@ -39,7 +42,11 @@ public struct ExtensionTool: Tool {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    /// A built-in's call as a sentence (BuiltInToolSummary); anyone else's as its title and its exact arguments (T1).
     public func summary(for input: JSONValue) -> String {
+        if firstParty, let sentence = BuiltInToolSummary.sentence(extensionId: extensionId, tool: remoteName, input: input) {
+            return sentence
+        }
         let args = (input.objectValue?.isEmpty ?? true) ? "" : " " + input.jsonString
         return "\(spec.title) (\(extensionName))\(args)"
     }

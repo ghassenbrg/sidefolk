@@ -103,6 +103,7 @@ final class AppCoordinator {
         statusItem.onQuiet = { [weak self] seconds in self?.setQuiet(for: seconds) }
         statusItem.isQuiet = { [weak self] in self?.runtime.settings.current.isQuiet(at: Date()) ?? false }
         statusItem.hotkeyLabel = { [weak self] in self?.hotkeyLabel ?? "" }
+        statusItem.companionName = { [weak self] in self?.runtime.settings.current.companionName ?? "Sidefolk" }
         statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
         statusItem.onToggleCompanion = { [weak self] in
             guard let self else { return }

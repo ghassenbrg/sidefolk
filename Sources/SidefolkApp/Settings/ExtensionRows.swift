@@ -48,6 +48,16 @@ struct ExtensionRow: View {
                     Label(error, systemImage: "exclamationmark.circle.fill")
                         .font(Theme.Font.caption).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
                 }
+                if ext.bundled, ext.enabled, let example = BuiltInExamples.request(for: ext.id) {
+                    // What to say to use it, one click from the Ask panel; nothing is sent until Return.
+                    Button { model.services.openAsk(prefill: example) } label: {
+                        Label { Text("Try “\(example)”", comment: "A button under a built-in extension: opens the Ask panel with these words") }
+                            icon: { Image(systemName: "text.bubble") }
+                    }
+                    .buttonStyle(.sf(.secondary))
+                    .padding(.top, 2)
+                    .help("Opens the Ask panel with these words, ready to send")
+                }
                 if !ext.pendingTools.isEmpty || uninstall != nil {
                     HStack(spacing: Theme.Space.s) {
                         if !ext.pendingTools.isEmpty {

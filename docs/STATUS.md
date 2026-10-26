@@ -37,7 +37,7 @@ builder), all ten languages translated (2008 strings each), and a production rev
   its own high-risk approval, into Recently Deleted); open reminders. Each part of a note is read on
   its own, so one Notes can't hand over (-1728, found on the founder's library) costs only itself.
 - **Extensions without limits (D39):** built-in Git (clone, status, pull, log over https), World
-  Clock, System Vitals (on) and Weather (off), installed and updated with the app; per-call folders,
+  Clock, System Vitals and Weather (all on), installed and updated with the app; per-call folders,
   `git` by name and per-tool timeouts in manifests; icons for every extension; Sidefolk drafts an
   extension when it lacks a capability (validated, test-run with no permissions, installed only from
   the preview); `skills/sidefolk-extension/SKILL.md` for developers; the catalog study in
