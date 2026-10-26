@@ -394,6 +394,12 @@ export SIDEFOLK_NOTARY_PROFILE=sidefolk
 scripts/release.sh
 ```
 
+`scripts/package.sh` makes the disk image alone, for an install on your own Mac.
+
+On GitHub, **CI** builds and tests every push and pull request to `main`, and **Release** (Actions › Release ›
+Run workflow) publishes a snapshot or, from a `v<version>` tag, a signed and notarized production release.
+Secrets and settings: [docs/RELEASE.md](docs/RELEASE.md#github-actions).
+
 ## Licence, credits and trademarks
 
 **Licence.** Sidefolk is © 2026 Ghassen Bargougui, all rights reserved ([LICENSE](LICENSE)). The code

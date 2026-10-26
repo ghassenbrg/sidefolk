@@ -6,7 +6,9 @@
 #   SIDEFOLK_NOTARY_PROFILE  a notarytool keychain profile created once with:
 #                            xcrun notarytool store-credentials <profile> --apple-id <id> --team-id <TEAMID>
 # Optional: SIDEFOLK_SKIP_NOTARIZE=1 to stop after signing (for a local smoke test);
-#           SIDEFOLK_UNIVERSAL=1 for one binary that runs on Apple silicon and Intel (see docs/RELEASE.md).
+#           SIDEFOLK_UNIVERSAL=1 for one binary that runs on Apple silicon and Intel (see docs/RELEASE.md);
+#           SIDEFOLK_RELEASE_LABEL=snapshot.391 names the image Sidefolk-<version>-<label>.dmg;
+#           SIDEFOLK_NOTARY_KEYCHAIN, the keychain holding the profile when it isn't the login one (CI).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -36,13 +38,15 @@ if codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q "get-task-all
 VERSION="$(defaults read "$PWD/$APP/Contents/Info" CFBundleShortVersionString)"
 BUILD="$(defaults read "$PWD/$APP/Contents/Info" CFBundleVersion)"
 
+PROFILE=(--keychain-profile "${SIDEFOLK_NOTARY_PROFILE:-}")
+[[ -n "${SIDEFOLK_NOTARY_KEYCHAIN:-}" ]] && PROFILE+=(--keychain "$SIDEFOLK_NOTARY_KEYCHAIN")
 notarize() {
   local id
-  id="$(xcrun notarytool submit "$1" --keychain-profile "$SIDEFOLK_NOTARY_PROFILE" --wait --output-format json \
+  id="$(xcrun notarytool submit "$1" "${PROFILE[@]}" --wait --output-format json \
         | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | head -1)"
   [[ -n "$id" ]] || fail "notarytool gave no submission id for $1."
-  if ! xcrun notarytool info "$id" --keychain-profile "$SIDEFOLK_NOTARY_PROFILE" | grep -q "status: Accepted"; then
-    xcrun notarytool log "$id" --keychain-profile "$SIDEFOLK_NOTARY_PROFILE" >&2 || true
+  if ! xcrun notarytool info "$id" "${PROFILE[@]}" | grep -q "status: Accepted"; then
+    xcrun notarytool log "$id" "${PROFILE[@]}" >&2 || true
     fail "notarization of $1 was not accepted (log above)."
   fi
 }
@@ -59,14 +63,7 @@ if [[ "${SIDEFOLK_SKIP_NOTARIZE:-}" != "1" ]]; then
   spctl --assess --type execute --verbose "$APP"
 fi
 
-DMG="build/Sidefolk-$VERSION.dmg"
-STAGE="build/dmg"
-rm -rf "$STAGE" "$DMG"
-mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/Sidefolk.app"
-ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "Sidefolk" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
-rm -rf "$STAGE"
+DMG="$(scripts/package.sh "${SIDEFOLK_RELEASE_LABEL:-}" | tail -1)"
 codesign --force --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$DMG"
 
 if [[ "${SIDEFOLK_SKIP_NOTARIZE:-}" == "1" ]]; then
@@ -78,5 +75,6 @@ notarize "$DMG"
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
 spctl --assess --type open --context context:primary-signature --verbose "$DMG"
-shasum -a 256 "$DMG" | tee "$DMG.sha256"
+# The checksum again: stapling changed the image.
+(cd build && shasum -a 256 "$(basename "$DMG")" | tee "$(basename "$DMG").sha256")
 echo "Release ready: $DMG ($VERSION build $BUILD)"

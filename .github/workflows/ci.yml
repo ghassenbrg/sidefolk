@@ -1,0 +1,50 @@
+name: CI
+
+# Every push to main and every pull request into it, nothing else: build, the whole test suite, and
+# the release app bundle (which also compiles the string catalog).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    # The repository variables SIDEFOLK_MACOS_RUNNER (for example xcode-27) and SIDEFOLK_XCODE (for
+    # example 26.6) change the machine and the Xcode without editing this file (docs/RELEASE.md).
+    runs-on: ${{ vars.SIDEFOLK_MACOS_RUNNER || 'macos-26' }}
+    timeout-minutes: 60
+    env:
+      SIDEFOLK_XCODE: ${{ vars.SIDEFOLK_XCODE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the app's build number is the commit count
+
+      - name: Select Xcode
+        run: scripts/ci/select-xcode.sh
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test --no-parallel
+
+      - name: Translations
+        run: |
+          python3 scripts/translations.py status | tee "$RUNNER_TEMP/translations.txt"
+          # A string not yet translated shows in English; worth a look, not a failed build.
+          if awk 'NR > 1 { split($2, n, "/"); if (n[1] != n[2]) missing = 1 } END { exit !missing }' "$RUNNER_TEMP/translations.txt"; then
+            echo "::warning title=Translations::Some languages miss strings: run make strings, then scripts/translations.py export/check/import."
+          fi
+
+      - name: Assemble the app
+        run: scripts/build-app.sh release

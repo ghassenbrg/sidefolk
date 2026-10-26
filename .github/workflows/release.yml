@@ -1,0 +1,136 @@
+name: Release
+
+# A production release (the version in Version.swift, signed, notarized, tagged v<version>) or a
+# snapshot (a prerelease of the commit, tagged v<version>-snapshot.<build>). Start it from
+# Actions › Release › Run workflow and choose the channel, or push a tag v<version> for production.
+# docs/RELEASE.md lists the secrets and repository variables it reads.
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: What to release
+        type: choice
+        options: [snapshot, production]
+        default: snapshot
+      universal:
+        description: One binary for Apple silicon and Intel (untested on Intel)
+        type: boolean
+        default: false
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release (${{ inputs.channel || 'production' }})
+    runs-on: ${{ vars.SIDEFOLK_MACOS_RUNNER || 'macos-26' }}
+    timeout-minutes: 90
+    env:
+      SIDEFOLK_XCODE: ${{ vars.SIDEFOLK_XCODE }}
+      SIDEFOLK_UNIVERSAL: ${{ inputs.universal && '1' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the build number is the commit count, and tags must be known
+
+      - name: Select Xcode
+        run: scripts/ci/select-xcode.sh
+
+      - name: Import the signing certificate
+        id: signing
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          if [[ -z "$MACOS_CERTIFICATE_P12" ]]; then
+            echo "signing=no" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Not signed::No Developer ID secrets, so a snapshot is ad hoc signed and not notarized."
+          else
+            scripts/ci/import-signing.sh >> "$GITHUB_OUTPUT"
+            echo "signing=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Plan
+        id: plan
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          SIGNING: ${{ steps.signing.outputs.signing }}
+        run: scripts/ci/release-plan.sh | tee -a "$GITHUB_OUTPUT"
+
+      - name: Test, build, sign and notarize
+        if: steps.signing.outputs.signing == 'yes'
+        env:
+          SIDEFOLK_SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
+          SIDEFOLK_NOTARY_PROFILE: sidefolk-notary
+          SIDEFOLK_NOTARY_KEYCHAIN: ${{ steps.signing.outputs.keychain }}
+          SIDEFOLK_RELEASE_LABEL: ${{ steps.plan.outputs.label }}
+        run: scripts/release.sh
+
+      - name: Test and build (ad hoc signed)
+        if: steps.signing.outputs.signing != 'yes'
+        env:
+          LABEL: ${{ steps.plan.outputs.label }}
+        run: |
+          swift test --no-parallel
+          scripts/build-app.sh release
+          scripts/package.sh "$LABEL"
+
+      - name: Keep the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sidefolk-${{ steps.plan.outputs.tag }}
+          path: |
+            ${{ steps.plan.outputs.dmg }}
+            ${{ steps.plan.outputs.dmg }}.sha256
+          if-no-files-found: error
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ steps.plan.outputs.channel }}
+          TAG: ${{ steps.plan.outputs.tag }}
+          VERSION: ${{ steps.plan.outputs.version }}
+          BUILD: ${{ steps.plan.outputs.build }}
+          DMG: ${{ steps.plan.outputs.dmg }}
+          SIGNING: ${{ steps.signing.outputs.signing }}
+        run: |
+          if [[ "$CHANNEL" == production ]]; then
+            gh release create "$TAG" "$DMG" "$DMG.sha256" --target "$GITHUB_SHA" \
+              --title "Sidefolk $VERSION" --notes-file docs/RELEASE-NOTES.md
+            exit 0
+          fi
+          if [[ "$SIGNING" == yes ]]; then
+            opening="Signed with Developer ID and notarized."
+          else
+            opening="Not notarized: the first time, macOS refuses to open it. Allow it in System Settings › Privacy & Security, or run \`xattr -dr com.apple.quarantine /Applications/Sidefolk.app\`."
+          fi
+          # A snapshot of the same commit replaces the earlier one.
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" "$DMG" "$DMG.sha256" --target "$GITHUB_SHA" --prerelease \
+            --title "Sidefolk $VERSION snapshot $BUILD" \
+            --notes "A snapshot of ${GITHUB_SHA::8} for testing, not a release. $opening"
+
+      - name: Keep only the latest snapshots
+        if: steps.plan.outputs.channel == 'snapshot'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP: ${{ vars.SIDEFOLK_KEEP_SNAPSHOTS || '10' }}
+        run: |
+          gh release list --limit 200 --json tagName,isPrerelease,createdAt \
+            --jq '[.[] | select(.isPrerelease and (.tagName | test("-snapshot\\.")))] | sort_by(.createdAt) | reverse | .[(env.KEEP | tonumber):] | .[].tagName' |
+            while read -r old; do gh release delete "$old" --yes --cleanup-tag; done
+
+      - name: Remove the signing keychain
+        if: always() && steps.signing.outputs.keychain != ''
+        env:
+          KEYCHAIN: ${{ steps.signing.outputs.keychain }}
+        run: security delete-keychain "$KEYCHAIN"

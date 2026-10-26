@@ -26,6 +26,58 @@ what to check by hand. Decisions that aren't code (licence, name, website, prici
   with `spctl --assess --type execute`; builds the DMG (app plus an Applications link), signs it, notarizes,
   staples and validates the DMG, checks it with `spctl`, and writes `build/Sidefolk-<version>.dmg.sha256`.
   A rejected submission prints the notary log. `SIDEFOLK_SKIP_NOTARIZE=1` stops after signing.
+  `SIDEFOLK_RELEASE_LABEL` names the image `Sidefolk-<version>-<label>.dmg`; `SIDEFOLK_NOTARY_KEYCHAIN` points
+  notarytool at a keychain other than the login one (CI).
+- `scripts/package.sh [label]`: the disk image alone (app plus an Applications link) and its `.sha256`, from
+  `build/Sidefolk.app` as it is; nothing more is signed or notarized. For an install on your own Mac, or an
+  unsigned snapshot.
+
+## GitHub Actions
+
+Two workflows in `.github/workflows/`, both on a macOS runner.
+
+- **CI** (`ci.yml`) runs on every push to `main` and every pull request into `main` (and `master`, if the
+  branch is ever renamed), nothing else: `swift build`, the full serial test suite, a translations report (a
+  warning, not a failure, when a language misses strings) and `scripts/build-app.sh release`, ad hoc signed.
+- **Release** (`release.yml`) makes either:
+  - a **production** release: the version in `Version.swift`, tagged `v<version>`, signed with Developer ID,
+    notarized, with `docs/RELEASE-NOTES.md` as its notes. Push the tag (`git tag v0.1.0 && git push origin
+    v0.1.0`), or run the workflow with *production*. It refuses without the signing secrets, when a pushed tag
+    doesn't match `Version.swift`, and when `v<version>` already marks another commit (raise the version);
+  - a **snapshot**: a prerelease of the chosen branch's commit, tagged `v<version>-snapshot.<build>`, signed
+    and notarized when the secrets exist and ad hoc signed otherwise (its notes then say how to open it). A
+    snapshot of the same commit replaces the earlier one, and only the latest ten are kept.
+
+  Run it from **Actions › Release › Run workflow**: pick the branch, the channel (snapshot by default) and,
+  if wanted, *universal* (Apple silicon and Intel). The image and its checksum are attached to the release
+  and kept as the run's artifact. `scripts/ci/release-plan.sh` decides channel, tag and file name and can be
+  run locally first (`CHANNEL=production SIGNING=yes scripts/ci/release-plan.sh`).
+
+**Secrets** (Settings › Secrets and variables › Actions), all needed for signing; without them only
+unsigned snapshots can be made:
+
+| Secret | What |
+|---|---|
+| `MACOS_CERTIFICATE_P12` | The "Developer ID Application" certificate with its private key, exported from Keychain Access as .p12, then `base64 -i cert.p12 \| pbcopy` |
+| `MACOS_CERTIFICATE_PASSWORD` | The password chosen when exporting it |
+| `APPLE_ID` | The Apple Account of the developer team |
+| `APPLE_TEAM_ID` | The team ID (10 characters) |
+| `APPLE_APP_PASSWORD` | An app-specific password for that account (account.apple.com › Sign-In and Security) |
+
+`scripts/ci/import-signing.sh` puts the certificate in a keychain of the job's own and stores notarytool's
+credentials there; the job deletes it at the end.
+
+**Variables** (same page, Variables tab), all optional:
+
+| Variable | Default | What |
+|---|---|---|
+| `SIDEFOLK_MACOS_RUNNER` | `macos-26` | The runner image, e.g. `xcode-27` (the preview image with Xcode 27) |
+| `SIDEFOLK_XCODE` | the image's default | An Xcode on that image, e.g. `26.6` (`/Applications/Xcode_26.6.app`) |
+| `SIDEFOLK_KEEP_SNAPSHOTS` | `10` | How many snapshot releases to keep |
+
+The project is developed with Xcode 27 (Swift 6.4) and needs at least the macOS 26 SDK (voice uses
+SpeechAnalyzer) and Swift 6.2 (`Package.swift`). `macos-26` defaults to Xcode 26.6; if a build there fails on
+a newer Swift feature, set `SIDEFOLK_MACOS_RUNNER` to `xcode-27`.
 
 ## Checklist
 
