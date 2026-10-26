@@ -396,9 +396,46 @@ struct WhenCase: Sendable, CustomTestStringConvertible {
         #expect(resolve("fortnightly")?.recurrence == Recurrence(frequency: .weekly, interval: 2))
     }
 
-    @Test func repeatsEveryThirtyMinutesCannotBeExpressed() {
-        // Recurrence's smallest step is an hour; better to say nothing than to get it wrong.
-        #expect(resolve("every 30 minutes") == nil)
+    @Test func everyNMinutes() {
+        let r = resolve("every 30 minutes")
+        #expect(r?.recurrence == Recurrence(frequency: .minutely, interval: 30))
+        #expect(TimeTest.show(r?.date) == "Wed 2025-10-22 10:30")
+        #expect(resolve("every minute")?.recurrence == Recurrence(frequency: .minutely))
+        #expect(resolve("every 1 minute")?.recurrence == Recurrence(frequency: .minutely))
+        #expect(resolve("every 20 min")?.recurrence == Recurrence(frequency: .minutely, interval: 20))
+        #expect(resolve("every other minute")?.recurrence == Recurrence(frequency: .minutely, interval: 2))
+        #expect(resolve("every half hour")?.recurrence == Recurrence(frequency: .minutely, interval: 30))
+        #expect(resolve("every half an hour")?.recurrence == Recurrence(frequency: .minutely, interval: 30))
+        // Elapsed minutes have no time of day of their own: "at 9" is left over, not merged in.
+        #expect(resolve("every 30 minutes at 9")?.remaining == "at 9")
+    }
+
+    @Test func secondsAreTooFineForARepeat() {
+        // A reminder repeats at most once a minute; seconds are never rounded into a schedule here.
+        #expect(resolve("every 30 seconds")?.recurrence == nil)
+        #expect(resolve("every second")?.recurrence == nil)
+    }
+
+    @Test func aRepeatCanEnd() {
+        let r = resolve("every 10 minutes until 6pm")
+        #expect(r?.recurrence == Recurrence(frequency: .minutely, interval: 10, until: TimeTest.date(2025, 10, 22, 18)))
+        #expect(TimeTest.show(r?.date) == "Wed 2025-10-22 10:10")
+        #expect(r?.matched == "every 10 minutes until 6pm")
+        #expect(resolve("every 2 hours till 6")?.recurrence?.until == TimeTest.date(2025, 10, 22, 18))
+        #expect(resolve("every hour until 17:30")?.recurrence?.until == TimeTest.date(2025, 10, 22, 17, 30))
+        // A day without a time ends when the day does.
+        let friday = resolve("every day at 8 until friday")
+        #expect(friday?.recurrence?.until == TimeTest.date(2025, 10, 24, 23, 59, 59))
+        #expect(resolve("every 30 minutes until tomorrow at noon")?.recurrence?.until == TimeTest.date(2025, 10, 23, 12))
+        // A clock time alone is today's: one that has passed is not stretched into tomorrow.
+        #expect(resolve("every 10 minutes until 9am") == nil)
+        // An end before the first time is no schedule at all.
+        #expect(parser.parse("every hour until 10:30", now: TimeTest.wednesday10)?.recurrence == nil)
+    }
+
+    @Test func untilAfterSomethingElseIsNotAnEnd() {
+        #expect(resolve("every 10 minutes until I stop it")?.recurrence == Recurrence(frequency: .minutely, interval: 10))
+        #expect(resolve("every 10 minutes until I stop it")?.remaining == "until I stop it")
     }
 
     // MARK: Phrases inside sentences

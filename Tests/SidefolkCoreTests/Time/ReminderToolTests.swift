@@ -89,7 +89,31 @@ import Testing
         // Tomorrow is Thursday, so the first Monday/Wednesday/Friday is Friday.
         #expect(saved.fireAt == t.date(2025, 10, 24, 7))
         #expect(saved.recurrence?.until == t.date(2025, 12, 31, 23, 59).addingTimeInterval(59))
-        #expect(result.card?.subtitle == "Fri 07:00 · every Mon, Wed, Fri")
+        #expect(result.card?.subtitle == "Fri 07:00 · every Mon, Wed, Fri until Dec 31")
+    }
+
+    @Test func everyFewMinutesFromAPhraseOrARule() async throws {
+        let (t, run) = try await setup()
+        let phrase = try ok(await run.execute(name: "reminders.create", input: ["title": "Drink water", "when": "every 10 minutes until 6pm"],
+                                              caller: .agent(runId: "r1")))
+        #expect(phrase.text.contains("repeating every 10 minutes until Wed 22 Oct 2025 18:00"))
+        #expect(phrase.card?.subtitle == "Today 10:10 · every 10 minutes until 18:00")
+
+        let rule = try ok(await run.execute(name: "reminders.create",
+                                            input: ["title": "Stretch", "when": "in 30 minutes", "recurrence": ["frequency": "minutely", "interval": 30]],
+                                            caller: .agent(runId: "r1")))
+        #expect(rule.card?.subtitle == "Today 10:30 · every 30 minutes")
+        let saved = await t.scheduler.upcoming()
+        #expect(saved.map(\.recurrence?.frequency) == [.minutely, .minutely])
+    }
+
+    @Test func secondsAreRaisedToAMinuteAndSaid() async throws {
+        let (t, run) = try await setup()
+        let result = try ok(await run.execute(name: "reminders.create", input: ["title": "Blink", "when": "every 30 seconds"],
+                                              caller: .agent(runId: "r1")))
+        #expect(result.text.contains("repeats every minute"))
+        #expect(result.card?.detail == "A reminder repeats at most once a minute.")
+        #expect(await t.scheduler.upcoming().first?.recurrence == Recurrence(frequency: .minutely))
     }
 
     @Test func rejectsTimesInThePastAndNonsense() async throws {

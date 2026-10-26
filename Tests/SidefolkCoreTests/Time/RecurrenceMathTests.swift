@@ -43,6 +43,19 @@ import Testing
         #expect(next(TimeTest.date(2025, 10, 22, 8), r, anchor: anchor) == "Wed 2025-10-22 09:15")
     }
 
+    @Test func minutelyIsElapsedTimeAndEnds() {
+        let anchor = TimeTest.date(2025, 10, 22, 10, 10)
+        let r = Recurrence(frequency: .minutely, interval: 10, until: TimeTest.date(2025, 10, 22, 18))
+        #expect(next(TimeTest.date(2025, 10, 22, 10, 10), r, anchor: anchor) == "Wed 2025-10-22 10:20")
+        #expect(next(TimeTest.date(2025, 10, 22, 13, 37), r, anchor: anchor) == "Wed 2025-10-22 13:40")
+        #expect(next(TimeTest.date(2025, 10, 22, 17, 55), r, anchor: anchor) == "Wed 2025-10-22 18:00")
+        #expect(next(TimeTest.date(2025, 10, 22, 18), r, anchor: anchor) == "nil")
+        // Daylight saving doesn't bend elapsed minutes: 01:50 + 20 min is 03:10 on the night clocks go forward.
+        let night = TimeTest.date(2025, 3, 9, 1, 50, in: ny)
+        let after = nextOccurrence(after: night, recurrence: Recurrence(frequency: .minutely, interval: 20), anchor: night, calendar: ny)
+        #expect(after.map { $0.timeIntervalSince(night) } == 1200)
+    }
+
     @Test func weekdaysSkipTheWeekend() {
         let anchor = TimeTest.date(2025, 10, 20, 8, 30)  // Monday
         let r = Recurrence(frequency: .weekdays)

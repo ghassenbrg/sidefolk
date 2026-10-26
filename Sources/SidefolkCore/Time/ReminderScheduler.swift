@@ -23,6 +23,8 @@ public actor ReminderScheduler {
         public static let done = "done"
         public static let snooze10 = "snooze10"
         public static let tomorrow = "tomorrow"
+        /// Ends a series (offered on reminders that repeat within the hour).
+        public static let stop = "stop"
     }
 
     /// Later than this after its time, a reminder is reported as missed.
@@ -321,16 +323,33 @@ public actor ReminderScheduler {
         if r.recurrence == nil, !firing.missed, firing.dueAt.timeIntervalSince(r.createdAt) > 120 {
             lines.append(askedText(r.createdAt, own: own))
         }
+        if let rule = r.recurrence {
+            // The last time's notice is old news now: one "Stretch" waits for an answer, not twelve.
+            await attention.withdraw(refKind: "reminder", refId: r.id)
+            // Every few minutes or hours: say why it keeps coming, and offer to stop it right here.
+            if rule.frequency.isElapsed { lines.append(TimeFormat.recurrence(rule, now: clock.now, calendar: calendar).capitalizedFirst) }
+        }
         await attention.post(AttentionRequest(
             level: r.level, source: Self.attentionSource(r.source), title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
-            actions: [
-                AttentionAction(id: ActionID.done, title: String(localized: "Done"), isPrimary: true),
-                AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")),
-                AttentionAction(id: ActionID.tomorrow, title: String(localized: "Tomorrow")),
-            ],
-            refKind: "reminder", refId: r.id
+            actions: Self.actions(for: r), refKind: "reminder", refId: r.id
         ))
         return nil
+    }
+
+    /// Done, 10 min, Tomorrow; a reminder that comes back within the hour offers Stop instead of Tomorrow, and drops
+    /// "10 min" when it repeats that often anyway.
+    static func actions(for r: Reminder) -> [AttentionAction] {
+        var actions = [AttentionAction(id: ActionID.done, title: String(localized: "Done"), isPrimary: true)]
+        guard let rule = r.recurrence, rule.frequency.isElapsed else {
+            actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
+            actions.append(AttentionAction(id: ActionID.tomorrow, title: String(localized: "Tomorrow")))
+            return actions
+        }
+        if rule.frequency == .hourly || rule.interval > 10 {
+            actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
+        }
+        actions.append(AttentionAction(id: ActionID.stop, title: String(localized: "Stop repeating")))
+        return actions
     }
 
     private func missedText(_ due: Date) -> String {
@@ -372,6 +391,7 @@ public actor ReminderScheduler {
             case ActionID.done: try await complete(id: id)
             case ActionID.snooze10: try await snooze(id: id, until: clock.now.addingTimeInterval(600))
             case ActionID.tomorrow: try await snooze(id: id, until: tomorrowMorning())
+            case ActionID.stop: try await cancel(id: id)
             default: break
             }
         } catch {
@@ -438,7 +458,7 @@ public actor ReminderScheduler {
     /// The series anchor as wall-clock time in the current time zone (see `RecurrenceMath.floating`).
     private func seriesAnchor(for r: Reminder) async -> Date {
         let stored = await storedAnchor(for: r)
-        guard r.recurrence?.frequency != .hourly, let zone = TimeZone(identifier: r.timezone) else { return stored }
+        guard r.recurrence?.frequency.isElapsed != true, let zone = TimeZone(identifier: r.timezone) else { return stored }
         return RecurrenceMath.floating(stored, from: zone, to: calendar)
     }
 
@@ -448,7 +468,7 @@ public actor ReminderScheduler {
         let now = clock.now
         guard let pending = try? await store.pending() else { return }
         for r in pending where r.timezone != zone {
-            guard let rule = r.recurrence, rule.frequency != .hourly else { continue }
+            guard let rule = r.recurrence, !rule.frequency.isElapsed else { continue }
             let anchor = await seriesAnchor(for: r)
             let next = RecurrenceMath.nextOccurrence(after: now, recurrence: rule, anchor: anchor, calendar: calendar) ?? r.fireAt
             _ = try? await update(r.id) { r in

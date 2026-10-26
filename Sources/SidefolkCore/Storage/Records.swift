@@ -158,9 +158,16 @@ public struct Job: SidefolkRecord, Identifiable, Hashable {
 // MARK: Time
 
 public struct Recurrence: Codable, Sendable, Hashable {
-    public enum Frequency: String, Codable, Sendable, CaseIterable { case hourly, daily, weekdays, weekly, monthly, yearly }
+    public enum Frequency: String, Codable, Sendable, CaseIterable {
+        case minutely, hourly, daily, weekdays, weekly, monthly, yearly
+
+        /// Counted in elapsed time, not on the wall clock: "every 30 minutes" stays 30 real minutes apart across
+        /// daylight saving and time zone moves, and has no time of day of its own.
+        public var isElapsed: Bool { self == .minutely || self == .hourly }
+    }
     public var frequency: Frequency
-    /// Every N units (1 = every day/week/...).
+    /// Every N units (1 = every minute/hour/day/...). Minutes are the finest step: a reminder never repeats
+    /// more often than once a minute (a value that must come faster is a report, not a reminder).
     public var interval: Int
     /// For weekly: ISO weekdays 1 = Monday ... 7 = Sunday. Empty means the weekday of the first fire.
     public var weekdays: [Int]
