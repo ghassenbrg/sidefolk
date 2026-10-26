@@ -57,7 +57,8 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
     public func check() async -> Result<String, UserFacingError> {
         if let reason = disabledReason { return .failure(Self.disabledError(reason)) }
         return await install().map { install in
-            "Codex \(install.version) at \(FolderAccess.displayPath(install.path)), signed in."
+            String(localized: "\("Codex") \(install.version) at \(FolderAccess.displayPath(install.path)), signed in.",
+                   comment: "A program, its version and where it is: “Codex 0.160.0 at /opt/homebrew/bin/codex, signed in.”")
         }
     }
 

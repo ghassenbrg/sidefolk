@@ -41,13 +41,17 @@ public struct OpenAICompatibleModel: TurnModel {
             let json = try? JSONValue.parse(response.body)
             let ids = (json?["data"]?.arrayValue ?? json?["models"]?.arrayValue ?? []).compactMap { $0.string("id") ?? $0.string("name") }
                 .map(Self.wireName)
-            guard !model.isEmpty else { return .success("Connected to \(providerName).") }
+            guard !model.isEmpty else { return .success(String(localized: "Connected to \(providerName).")) }
             guard Self.lists(model, in: ids) else {
-                let some = ids.prefix(5).joined(separator: ", ")
-                return .failure(UserFacingError("\(providerName) is reachable, but it doesn't have “\(model)”.",
-                                                recovery: some.isEmpty ? "Check the model name in Settings › AI." : "Available: \(some)."))
+                let some = Array(ids.prefix(5))
+                // Each recovery is its own String(localized:): a ternary passed to an optional
+                // String.LocalizationValue parameter loses its second literal from the catalog.
+                let recovery = some.isEmpty ? String(localized: "Check the model name in Settings › AI.")
+                    : String(localized: "Available: \(Wording.list(some)).")
+                return .failure(UserFacingError(verbatim: String(localized: "\(providerName) is reachable, but it doesn't have “\(model)”."),
+                                                recovery: recovery))
             }
-            return .success("Connected to \(providerName). \(model) is ready.")
+            return .success(String(localized: "Connected to \(providerName). \(model) is ready."))
         } catch let e as UserFacingError {
             return .failure(e)
         } catch {
@@ -103,7 +107,7 @@ public struct OpenAICompatibleModel: TurnModel {
             switch url.port {
             case 11434: return "Ollama"
             case 1234: return "LM Studio"
-            default: return "your local AI server"
+            default: return String(localized: "your local AI server")
             }
         }
         return host
@@ -234,9 +238,10 @@ public struct OpenAICompatibleModel: TurnModel {
                                    recovery: "Check the key in Settings › AI, or paste a new one.", detail: detail)
         // A provider's own JSON error saying "not found" is about the model; a bare 404 page means a wrong address.
         case 404 where lower.contains("model") || (ProviderHTTP.isJSONError(response.body) && lower.contains("not found")):
-            return UserFacingError("\(name) doesn't have the model “\(model)”. Nothing was changed.",
-                                   recovery: name == "Ollama" ? "Run “ollama pull \(model)”, or choose another model in Settings › AI."
-                                       : "Choose another model in Settings › AI.", detail: detail)
+            let recovery = name == "Ollama" ? String(localized: "Run “ollama pull \(model)”, or choose another model in Settings › AI.")
+                : String(localized: "Choose another model in Settings › AI.")
+            return UserFacingError(verbatim: String(localized: "\(name) doesn't have the model “\(model)”. Nothing was changed."),
+                                   recovery: recovery, detail: detail)
         case 404:
             return UserFacingError("I couldn't find an AI service at that address. Nothing was changed.",
                                    recovery: "Check the address in Settings › AI (it usually ends in /v1).", detail: detail)

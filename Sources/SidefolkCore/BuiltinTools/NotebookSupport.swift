@@ -7,7 +7,7 @@ extension String {
 
 /// Finding and creating the collections notes are filed into. "About you" (the profile) is never a
 /// filing target: facts about the user go through the `profile.*` tools (DECISIONS D6).
-enum NotebookCollections {
+public enum NotebookCollections {
     static let profileName = "About you"
 
     static var profileRefusal: UserFacingError {
@@ -76,7 +76,7 @@ enum NotebookCollections {
     }
 
     /// The name people see: the Inbox and “About you” in the app's language, any other as it was named.
-    static func shownName(_ c: NotebookCollection) -> String {
+    public static func shownName(_ c: NotebookCollection) -> String {
         switch c.kind {
         case .inbox: String(localized: "Inbox")
         case .profile: String(localized: "About you")

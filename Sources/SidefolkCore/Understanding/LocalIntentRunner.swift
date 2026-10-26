@@ -130,7 +130,7 @@ public struct LocalIntentRunner: Sendable {
             title = String(localized: "Found for “\(query.clipped(30))”")
         } else {
             let what = kind.map(NoteText.plural) ?? String(localized: "Found")
-            title = target.map { String(localized: "\(what) in \(NotebookCollections.shownName($0))", comment: "“Ideas in Sidefolk”") } ?? what
+            title = target.map { String(localized: "\(what) in \(NotebookCollections.shownName($0))", comment: "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”") } ?? what
         }
         return .list(title: "\(title) (\(cards.count))", cards: cards)
     }

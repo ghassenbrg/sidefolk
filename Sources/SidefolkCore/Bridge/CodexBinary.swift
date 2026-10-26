@@ -84,11 +84,14 @@ public enum CodexBinary {
             .failure(UserFacingError("Sidefolk won't run Codex from there: \(reason)",
                                      recovery: "Reinstall Codex or choose another provider in Settings › AI."))
         case .notFound:
-            .failure(UserFacingError("I couldn't find Codex on this Mac.", recovery: "Install it with \(installHint), then run codex login."))
+            .failure(UserFacingError("I couldn't find Codex on this Mac.",
+                                     recovery: "Install it with \(installCommand) (or \(brewCommand)), then run codex login."))
         }
     }
 
-    public static let installHint = "npm install -g @openai/codex (or brew install --cask codex)"
+    /// Commands stay out of the sentence, so translations can't change them.
+    private static let installCommand = "npm install -g @openai/codex"
+    private static let brewCommand = "brew install --cask codex"
 
     /// For Settings: found, vetted, probed and asked whether it's signed in, plus the models it
     /// lists. Never a prompt.
@@ -120,8 +123,8 @@ public enum CodexBinary {
         for file in [path, target].compactMap({ $0 }) {
             let folder = (file as NSString).deletingLastPathComponent
             var st = stat()
-            guard stat(folder, &st) == 0 else { return "\(folder) can't be read" }
-            guard st.st_mode & 0o022 == 0 else { return "\(folder) can be changed by other users" }
+            guard stat(folder, &st) == 0 else { return String(localized: "\(folder) can't be read") }
+            guard st.st_mode & 0o022 == 0 else { return String(localized: "\(folder) can be changed by other users") }
         }
         return nil
     }

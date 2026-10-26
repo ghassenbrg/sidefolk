@@ -55,7 +55,8 @@ public enum CodexStream {
     }
 
     /// Allow-list: messages, reasoning, plans, warnings and Sidefolk's own MCP tools. Anything else,
-    /// including item types this version of Sidefolk doesn't know, stops the run.
+    /// including item types this version of Sidefolk doesn't know, stops the run. What it did is a
+    /// fragment people read after “Codex …” and “because it …”, so it is in the app's language.
     static func classify(_ item: JSONValue, completed: Bool, started: Bool) -> CodexItem {
         let type = item.string("type") ?? "?"
         switch type {
@@ -67,20 +68,26 @@ public enum CodexStream {
             let server = item.string("server") ?? "?"
             let tool = item.string("tool") ?? "?"
             guard server == "sidefolk" else {
-                return .forbidden("used \(server.clipped(40))’s tool \(tool.clipped(40)), which Sidefolk didn't give it", switchesFailed: true)
+                return .forbidden(String(localized: "used \(server.clipped(40))’s tool \(tool.clipped(40)), which Sidefolk didn't give it",
+                                         comment: "Follows “Codex …” and “because it …”"), switchesFailed: true)
             }
             return started ? .sidefolkTool(name: tool, arguments: item["arguments"] ?? .object([:])) : .progress
         case "command_execution":
-            return .forbidden("tried to run a command (\((item.string("command") ?? "").clipped(80)))", switchesFailed: true)
+            return .forbidden(String(localized: "tried to run a command (\((item.string("command") ?? "").clipped(80)))",
+                                     comment: "Follows “Codex …” and “because it …”"), switchesFailed: true)
         case "file_change":
             let paths = (item["changes"]?.arrayValue ?? []).compactMap { $0.string("path") }
-            return .forbidden("tried to change files (\(paths.prefix(3).joined(separator: ", ").clipped(120)))", switchesFailed: true)
+            return .forbidden(String(localized: "tried to change files (\(paths.prefix(3).joined(separator: ", ").clipped(120)))",
+                                     comment: "Follows “Codex …” and “because it …”"), switchesFailed: true)
         case "web_search":
-            return .forbidden("tried to search the web (\((item.string("query") ?? "").clipped(80)))", switchesFailed: true)
+            return .forbidden(String(localized: "tried to search the web (\((item.string("query") ?? "").clipped(80)))",
+                                     comment: "Follows “Codex …” and “because it …”"), switchesFailed: true)
         case "collab_tool_call":
-            return .forbidden("tried to start helper agents", switchesFailed: false)
+            return .forbidden(String(localized: "tried to start helper agents", comment: "Follows “Codex …” and “because it …”"),
+                              switchesFailed: false)
         default:
-            return .forbidden("did something Sidefolk doesn't recognise (\(type.clipped(40)))", switchesFailed: false)
+            return .forbidden(String(localized: "did something Sidefolk doesn't recognise (\(type.clipped(40)))",
+                                     comment: "Follows “Codex …” and “because it …”"), switchesFailed: false)
         }
     }
 

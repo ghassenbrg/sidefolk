@@ -142,6 +142,8 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
     }
 
     // MARK: Replies
+    //
+    // What the person reads when the model said nothing of its own, in the app's language (D28).
 
     enum StopReason: String { case steps, deadline, repeated = "repeat", tools }
 
@@ -150,9 +152,11 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
         var text = turn.text.trimmingCharacters(in: .whitespacesAndNewlines)
         if text.isEmpty {
             switch turn.stop {
-            case .refusal: text = "I can't help with that one."
-            case .maxTokens: text = "My answer got cut off before I could finish. Try asking for less at once."
-            default: text = outcomes.contains(where: \.isOK) ? (cards.isEmpty ? "Done." : "") : "I don't have an answer for that."
+            case .refusal: text = String(localized: "I can't help with that one.")
+            case .maxTokens: text = String(localized: "My answer got cut off before I could finish. Try asking for less at once.")
+            default:
+                text = outcomes.contains(where: \.isOK) ? (cards.isEmpty ? String(localized: "Done.") : "")
+                    : String(localized: "I don't have an answer for that.")
             }
         }
         return AgentReply(text: text, cards: cards)
@@ -160,13 +164,15 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
 
     static func stopped(_ reason: StopReason, outcomes: [ToolOutcome], limits: LoopLimits) -> AgentReply {
         let lead = switch reason {
-        case .steps: "I ran out of steps before finishing."
-        case .deadline: "That was taking too long, so I stopped."
-        case .repeated: "I stopped because I kept repeating the same step."
-        case .tools: "I stopped after \(limits.maxToolCalls) actions, my limit for one request."
+        case .steps: String(localized: "I ran out of steps before finishing.")
+        case .deadline: String(localized: "That was taking too long, so I stopped.")
+        case .repeated: String(localized: "I stopped because I kept repeating the same step.")
+        case .tools: String(localized: "I stopped after \(limits.maxToolCalls) actions, my limit for one request.")
         }
         let done = progress(outcomes)
-        return AgentReply(text: done.isEmpty ? "\(lead) Nothing was changed." : "\(lead) \(done)", cards: cards(outcomes))
+        return AgentReply(text: done.isEmpty ? String(localized: "\(lead) Nothing was changed.", comment: "Why I stopped, then this sentence")
+                              : String(localized: "\(lead) \(done)", comment: "Why I stopped, then what was done: two sentences"),
+                          cards: cards(outcomes))
     }
 
     static func timedOut(_ outcomes: [ToolOutcome], limits: LoopLimits) throws(UserFacingError) -> AgentReply {
@@ -178,8 +184,14 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
     }
 
     static func interrupted(by error: UserFacingError, outcomes: [ToolOutcome]) -> AgentReply {
-        let problem = error.message.replacingOccurrences(of: " Nothing was changed.", with: "")
-        return AgentReply(text: "\(progress(outcomes)) Then something went wrong: \(problem)", cards: cards(outcomes))
+        // Something was done, so the ending that says nothing changed goes, in either language.
+        var problem = error.message
+        for ending in [" " + String(localized: "Nothing was changed."), " Nothing was changed."] {
+            problem = problem.replacingOccurrences(of: ending, with: "")
+        }
+        return AgentReply(text: String(localized: "\(progress(outcomes)) Then something went wrong: \(problem)",
+                                       comment: "What was done (“Done so far: …”), then the error"),
+                          cards: cards(outcomes))
     }
 
     /// "Done so far: Saved “Tea ideas”; Reminder at 9:00." from the successful calls.
@@ -191,7 +203,8 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
         }
         guard !lines.isEmpty else { return "" }
         let shown = lines.prefix(4).joined(separator: "; ")
-        return "Done so far: \(shown)\(lines.count > 4 ? " and \(lines.count - 4) more" : "")."
+        return lines.count > 4 ? String(localized: "Done so far: \(String(localized: "\(shown) and \(lines.count - 4) more")).")
+            : String(localized: "Done so far: \(shown).")
     }
 
     static func cards(_ outcomes: [ToolOutcome]) -> [ResultCard] {

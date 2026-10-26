@@ -31,6 +31,7 @@ public enum ProviderPreset: String, Codable, Sendable, CaseIterable {
     public static let apiKeyPresets: [ProviderPreset] = [.openAI, .gemini, .mistral, .groq, .xai, .deepSeek, .openRouter]
     public static let localPresets: [ProviderPreset] = [.ollama, .lmStudio]
 
+    /// The service's own name, which isn't translated; "Custom endpoint" is in the app's language.
     public var name: String {
         switch self {
         case .openAI: "OpenAI"
@@ -42,7 +43,7 @@ public enum ProviderPreset: String, Codable, Sendable, CaseIterable {
         case .openRouter: "OpenRouter"
         case .ollama: "Ollama"
         case .lmStudio: "LM Studio"
-        case .custom: "Custom endpoint"
+        case .custom: String(localized: "Custom endpoint")
         }
     }
 

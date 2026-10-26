@@ -55,7 +55,10 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
     /// Binary, version and flag probe only: never a prompt.
     public func check() async -> Result<String, UserFacingError> {
         if let reason = disabledReason { return .failure(Self.disabledError(reason)) }
-        return await install().map { "Claude Code \($0.version) at \(FolderAccess.displayPath($0.path))" }
+        return await install().map {
+            String(localized: "\("Claude Code") \($0.version) at \(FolderAccess.displayPath($0.path))",
+                   comment: "A program, its version and where it is: “Claude Code 2.1.0 at ~/.local/bin/claude”")
+        }
     }
 
     public func run(_ task: BrainTask, toolbox: BrainToolbox, emit: @escaping @Sendable (AgentEvent) -> Void) async throws -> AgentReply {

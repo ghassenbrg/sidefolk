@@ -1,3 +1,5 @@
+import Foundation
+
 /// What the character holds while working, chosen by the running tool's category.
 public enum CharacterProp: String, CaseIterable, Sendable {
     case none, notepad, clock, binoculars, folder, globe, laptop, card, book, bell
@@ -41,19 +43,19 @@ public enum CharacterBadge: Hashable, Sendable {
 }
 
 extension CharacterProp {
-    /// What the character is doing with this prop, for VoiceOver.
-    var activity: String {
+    /// What `name` is doing with this prop, for VoiceOver, in the app's language.
+    func activity(_ name: String) -> String {
         switch self {
-        case .none: "working"
-        case .notepad: "writing a note"
-        case .clock: "keeping time"
-        case .binoculars: "watching for something"
-        case .folder: "working with files"
-        case .globe: "looking something up on the web"
-        case .laptop: "working with an agent"
-        case .card: "preparing a card"
-        case .book: "reading"
-        case .bell: "ringing a reminder"
+        case .none: String(localized: "\(name) is working")
+        case .notepad: String(localized: "\(name) is writing a note")
+        case .clock: String(localized: "\(name) is keeping time")
+        case .binoculars: String(localized: "\(name) is watching for something")
+        case .folder: String(localized: "\(name) is working with files")
+        case .globe: String(localized: "\(name) is looking something up on the web")
+        case .laptop: String(localized: "\(name) is working with an agent")
+        case .card: String(localized: "\(name) is preparing a card")
+        case .book: String(localized: "\(name) is reading")
+        case .bell: String(localized: "\(name) is ringing a reminder")
         }
     }
 }

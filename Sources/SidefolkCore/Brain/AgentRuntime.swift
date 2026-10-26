@@ -167,9 +167,12 @@ public actor AgentRuntime {
         do {
             let reply = try await choice.backend.run(task, toolbox: toolbox, emit: { _ in })
             await toolbox.close()
-            let seconds = String(format: "%.1f", clock.now.timeIntervalSince(start))
-            let model = choice.model.isEmpty ? "its default model" : choice.model
-            return .success("\(choice.backend.providerName) answered “\(reply.text.clipped(30))” in \(seconds) s using \(model).")
+            let seconds = clock.now.timeIntervalSince(start).formatted(.number.precision(.fractionLength(1)).locale(Wording.locale))
+            let answer = reply.text.clipped(30)
+            let provider = choice.backend.providerName
+            return .success(choice.model.isEmpty
+                ? String(localized: "\(provider) answered “\(answer)” in \(seconds) s using its default model.")
+                : String(localized: "\(provider) answered “\(answer)” in \(seconds) s using \(choice.model)."))
         } catch {
             await toolbox.close()
             return .failure(Self.userFacing(error, changed: false, provider: choice.backend.providerName))
@@ -324,7 +327,7 @@ public actor AgentRuntime {
     }
 
     /// Every failure the user sees is worded for them; raw errors stay in `detail` for diagnostics.
-    static func userFacing(_ error: Error, changed: Bool, provider: String = "the AI service") -> UserFacingError {
+    static func userFacing(_ error: Error, changed: Bool, provider: String = String(localized: "the AI service")) -> UserFacingError {
         var e: UserFacingError
         switch error {
         case let u as UserFacingError: e = u

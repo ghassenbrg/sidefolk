@@ -19,18 +19,19 @@ public enum Folk: String, CaseIterable, Sendable {
         }
     }
 
+    /// What the folk looks after, in the app's language (Settings' gallery, VoiceOver).
     public var role: String {
         switch self {
-        case .pip: "Ideas & notes"
-        case .byte: "Code, agents & extensions"
-        case .seed: "Learning & growth"
-        case .melody: "Music & focus"
-        case .scout: "Search & watching"
-        case .tempo: "Reminders & time"
-        case .play: "Fun & celebration"
-        case .guard_: "Security & approvals"
-        case .nova: "Design & creativity"
-        case .brew: "Rituals & breaks"
+        case .pip: String(localized: "Ideas & notes")
+        case .byte: String(localized: "Code, agents & extensions")
+        case .seed: String(localized: "Learning & growth")
+        case .melody: String(localized: "Music & focus")
+        case .scout: String(localized: "Search & watching")
+        case .tempo: String(localized: "Reminders & time")
+        case .play: String(localized: "Fun & celebration")
+        case .guard_: String(localized: "Security & approvals")
+        case .nova: String(localized: "Design & creativity")
+        case .brew: String(localized: "Rituals & breaks")
         }
     }
 

@@ -34,7 +34,7 @@ public struct AnthropicModel: TurnModel {
             guard response.status == 200 else { return .failure(Self.error(for: response, model: name)) }
             let json = try? JSONValue.parse(response.body)
             let display = json?.string("display_name") ?? name
-            return .success("Connected to Anthropic. \(display) is ready.")
+            return .success(String(localized: "Connected to \("Anthropic"). \(display) is ready."))
         } catch let e as UserFacingError {
             return .failure(e)
         } catch {

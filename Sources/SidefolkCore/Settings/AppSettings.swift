@@ -78,13 +78,14 @@ public enum ProviderKind: String, Codable, Sendable, CaseIterable {
     /// OpenAI's chat completions API, spoken by many services: which one is `ProviderSettings.preset`.
     case openAICompatible
 
+    /// For people, in the app's language.
     public var displayName: String {
         switch self {
-        case .none: "No AI"
-        case .claudeCode: "Claude Code (your Claude subscription)"
-        case .codex: "Codex (your ChatGPT plan)"
-        case .anthropic: "Anthropic API"
-        case .openAICompatible: "OpenAI-compatible"
+        case .none: String(localized: "No AI")
+        case .claudeCode: String(localized: "Claude Code (your Claude subscription)")
+        case .codex: String(localized: "Codex (your ChatGPT plan)")
+        case .anthropic: String(localized: "Anthropic API")
+        case .openAICompatible: String(localized: "OpenAI-compatible")
         }
     }
 }

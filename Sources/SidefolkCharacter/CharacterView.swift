@@ -97,19 +97,20 @@ public final class CharacterView: NSView {
         director.restingFrame.applying(canvasToView)
     }
 
+    /// What VoiceOver says about the companion, in the app's language (`name` is the companion's).
     public static func accessibilityLabel(for state: CharacterState, name: String = "Sidefolk") -> String {
         switch state {
-        case .idle: "\(name) is here"
-        case .sleeping: "\(name) is resting"
-        case .listening: "\(name) is listening"
-        case .thinking: "\(name) is thinking"
-        case .working(let prop): "\(name) is \(prop.activity)"
-        case .waiting: "\(name) needs your approval"
-        case .success: "\(name) finished"
-        case .error: "\(name) hit a problem"
-        case .alert: "\(name) needs your attention"
-        case .dragging: "\(name) is being moved"
-        case .celebrating: "\(name) is celebrating"
+        case .idle: String(localized: "\(name) is here")
+        case .sleeping: String(localized: "\(name) is resting")
+        case .listening: String(localized: "\(name) is listening")
+        case .thinking: String(localized: "\(name) is thinking")
+        case .working(let prop): prop.activity(name)
+        case .waiting: String(localized: "\(name) needs your approval")
+        case .success: String(localized: "\(name) finished")
+        case .error: String(localized: "\(name) hit a problem")
+        case .alert: String(localized: "\(name) needs your attention")
+        case .dragging: String(localized: "\(name) is being moved")
+        case .celebrating: String(localized: "\(name) is celebrating")
         }
     }
 

@@ -26,21 +26,22 @@ enum CLIBrain {
     // MARK: Executables
 
     /// Why this path must not be run, or nil if it may be: absolute, a regular file (links resolved)
-    /// owned by the user or root, executable, and not writable by anyone else.
+    /// owned by the user or root, executable, and not writable by anyone else. The reason is shown in
+    /// Settings › AI, so it is in the app's language.
     static func problem(with path: String) -> String? {
-        guard path.hasPrefix("/") else { return "the path must be absolute" }
+        guard path.hasPrefix("/") else { return String(localized: "the path must be absolute") }
         var linkInfo = stat()
-        guard lstat(path, &linkInfo) == 0 else { return "\(path) doesn't exist" }
+        guard lstat(path, &linkInfo) == 0 else { return String(localized: "\(path) doesn't exist") }
         if linkInfo.st_mode & S_IFMT == S_IFLNK, linkInfo.st_uid != getuid(), linkInfo.st_uid != 0 {
-            return "\(path) is a link owned by another user"
+            return String(localized: "\(path) is a link owned by another user")
         }
-        guard let resolved = realpath(path, nil) else { return "\(path) is a broken link" }
+        guard let resolved = realpath(path, nil) else { return String(localized: "\(path) is a broken link") }
         defer { free(resolved) }
         var st = stat()
-        guard stat(resolved, &st) == 0, st.st_mode & S_IFMT == S_IFREG else { return "\(path) is not a file" }
-        guard st.st_uid == getuid() || st.st_uid == 0 else { return "\(path) belongs to another user" }
-        guard st.st_mode & 0o022 == 0 else { return "\(path) can be changed by other users" }
-        guard st.st_mode & 0o111 != 0 else { return "\(path) is not executable" }
+        guard stat(resolved, &st) == 0, st.st_mode & S_IFMT == S_IFREG else { return String(localized: "\(path) is not a file") }
+        guard st.st_uid == getuid() || st.st_uid == 0 else { return String(localized: "\(path) belongs to another user") }
+        guard st.st_mode & 0o022 == 0 else { return String(localized: "\(path) can be changed by other users") }
+        guard st.st_mode & 0o111 != 0 else { return String(localized: "\(path) is not executable") }
         return nil
     }
 
