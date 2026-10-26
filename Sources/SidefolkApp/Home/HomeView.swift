@@ -56,6 +56,10 @@ private struct HomeSidebar: View {
 
     var body: some View {
         List(selection: $model.selection) {
+            BrandLockup()
+                .selectionDisabled()
+                .listRowSeparator(.hidden)
+                .padding(.bottom, Theme.Space.s)
             Section {
                 Label { Text("Now") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
@@ -235,5 +239,23 @@ struct CollectionSheet: View {
                 }
             }
         }
+    }
+}
+
+/// The family and the wordmark at the top of the sidebar, in the variant that reads on this appearance.
+private struct BrandLockup: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let mark = BrandAsset.markColor.image {
+                Image(nsImage: mark).resizable().scaledToFit().frame(height: 30)
+            }
+            if let word = (scheme == .dark ? BrandAsset.wordmarkWhite : BrandAsset.wordmarkColor).image {
+                Image(nsImage: word).resizable().scaledToFit().frame(height: 17)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Sidefolk")
     }
 }

@@ -4,6 +4,17 @@ import SidefolkCore
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: AppCoordinator?
 
+    /// The standard panel (it shows the new icon and the version) with the brand's line under it.
+    @objc func showAbout(_ sender: Any?) {
+        let centered = NSMutableParagraphStyle()
+        centered.alignment = .center
+        let credits = NSAttributedString(string: "Your AI sidekicks, always here.\nA companion that remembers, reminds, watches, and works with your agents.",
+                                         attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor,
+                                                      .paragraphStyle: centered])
+        NSApp.activate()
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+    }
+
     @objc func openSettings(_ sender: Any?) { coordinator?.openSettings() }
     @objc func openAsk(_ sender: Any?) { coordinator?.showAsk() }
 
@@ -80,7 +91,7 @@ enum MainMenu {
         let main = NSMenu()
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "About Sidefolk", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "About Sidefolk", action: #selector(AppDelegate.showAbout(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings(_:)), keyEquivalent: ",")
         appMenu.addItem(withTitle: "Ask Sidefolk…", action: #selector(AppDelegate.openAsk(_:)), keyEquivalent: "")
