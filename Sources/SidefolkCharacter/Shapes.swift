@@ -69,6 +69,25 @@ enum Shapes {
 
     static func foot(_ center: CGPoint) -> CGPath { Paths.ellipse(center, 14, 9.5) }
 
+    /// A soft, slightly squared round (a superellipse), `top` times as wide at the top as at the
+    /// bottom: heads, bellies and blobs of the soft companions.
+    static func roundish(center: CGPoint, width: CGFloat, height: CGFloat, top: CGFloat = 1, squareness: CGFloat = 2.4) -> CGPath {
+        let n = 36
+        let points = (0..<n).map { i -> CGPoint in
+            let t = CGFloat(i) / CGFloat(n) * 2 * .pi
+            let c = cos(t), s = sin(t)
+            let x = copysign(pow(abs(c), 2 / squareness), c), y = copysign(pow(abs(s), 2 / squareness), s)
+            let widen = s > 0 ? 1 - (1 - top) * s : 1
+            return center + pt(x * width / 2 * widen, y * height / 2)
+        }
+        return Paths.blob(points)
+    }
+
+    /// A short rounded arm hanging from the origin (the shoulder sits a little inside the body).
+    static func nub(width: CGFloat, length: CGFloat) -> CGPath {
+        Paths.roundedRect(CGRect(x: -width / 2, y: -length, width: width, height: length + 4), width / 2)
+    }
+
     static func earPod(_ center: CGPoint) -> CGPath { Paths.ellipse(center, 13.5, 25) }
 
     /// The parts that never move relative to the body, merged into one outline.

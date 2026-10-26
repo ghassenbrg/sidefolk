@@ -13,6 +13,15 @@ enum Effect: Hashable {
 private struct EffectRig {
     let layer: CALayer
     var loops: [Loop] = []
+    /// What is added to the stage or body: the layer itself, or a holder that moves it beside
+    /// another figure's head (pops and bounces then still grow from the effect's own point).
+    var mount: CALayer
+
+    init(layer: CALayer, loops: [Loop] = []) {
+        self.layer = layer
+        self.loops = loops
+        mount = layer
+    }
 }
 
 /// Shows and hides effects. Each effect's model state is a good still frame (offscreen renders
@@ -32,15 +41,19 @@ final class Effects {
             guard light != oldValue else { return }
             let showing = shown
             show([], animated: false, moving: moving)
-            rigs.values.forEach { $0.layer.removeFromSuperlayer() }
+            rigs.values.forEach { $0.mount.removeFromSuperlayer() }
             rigs = [:]
             show(showing, animated: false, moving: moving)
         }
     }
 
-    init(stage: CALayer, body: CALayer) {
+    /// Where each effect sits relative to its place beside the robot's head.
+    private let offset: (Effect) -> CGPoint
+
+    init(stage: CALayer, body: CALayer, offset: @escaping (Effect) -> CGPoint) {
         self.stage = stage
         self.body = body
+        self.offset = offset
     }
 
     func show(_ next: Set<Effect>, animated: Bool, moving: Bool) {
@@ -49,14 +62,14 @@ final class Effects {
         for effect in leaving {
             guard let rig = rigs[effect] else { continue }
             stopLoops(rig)
-            if animated { fade(rig.layer.superlayer) }
-            rig.layer.removeFromSuperlayer()
+            if animated { fade(rig.mount.superlayer) }
+            rig.mount.removeFromSuperlayer()
         }
         for effect in arriving {
-            let rig = rigs[effect] ?? Effects.build(effect, light)
+            let rig = rigs[effect] ?? make(effect)
             rigs[effect] = rig
             let parent = effect.ridesBody ? body : stage
-            parent.addSublayer(rig.layer)
+            parent.addSublayer(rig.mount)
             if animated {
                 let pop = CASpringAnimation(perceptualDuration: 0.35, bounce: 0.35)
                 pop.keyPath = "transform.scale"
@@ -77,11 +90,22 @@ final class Effects {
     /// The question mark used by the look-around gesture, built on demand and hidden at rest.
     func question() -> CALayer {
         if let rig = rigs[.question] { return rig.layer }
-        let rig = Effects.build(.question, light)
+        let rig = make(.question)
         rig.layer.opacity = 0
         rigs[.question] = rig
-        stage.addSublayer(rig.layer)
+        stage.addSublayer(rig.mount)
         return rig.layer
+    }
+
+    private func make(_ effect: Effect) -> EffectRig {
+        var rig = Effects.build(effect, light)
+        let shift = offset(effect)
+        guard shift != .zero else { return rig }
+        let holder = Layers.canvas()
+        holder.setAffineTransform(CGAffineTransform(translationX: shift.x, y: shift.y))
+        holder.addSublayer(rig.layer)
+        rig.mount = holder
+        return rig
     }
 
     private func startLoops(_ rig: EffectRig) {

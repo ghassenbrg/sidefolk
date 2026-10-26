@@ -53,6 +53,17 @@ enum Palette {
     static let shell = [RGB(0xFFFFFF), RGB(0xFBFCFF), RGB(0xEEF0F7), RGB(0xD9DDEA), RGB(0xC2C8DA)]
     static let shellEdge = RGB(0xB4BBD0)
 
+    /// Mochi's soft white, a touch warmer than the robot's shell; highlight to core shadow.
+    static let fur = [RGB(0xFFFFFF), RGB(0xFDFCFC), RGB(0xF1F0F4), RGB(0xDEDDE6), RGB(0xC9C9D6)]
+    /// Bead eyes and noses (sampled from the mascot), and Mochi's ear tips.
+    static let eyeInk = RGB(0x14254F)
+    static let earTip = RGB(0x22365F)
+
+    /// Spark's cream shell (sampled from its render) and its dark navy hands, feet and stalk.
+    static let cream = [RGB(0xFFFBF7), RGB(0xFBF3EC), RGB(0xF1E5DC), RGB(0xE1D2C8), RGB(0xCCBBB0)]
+    static let creamEdge = RGB(0xC7B6AA)
+    static let darkPart = [RGB(0x44506F), RGB(0x323B5A), RGB(0x262D48), RGB(0x1C2238), RGB(0x14192A)]
+
     /// Dark ink for folk faces and small glyphs.
     static let ink = RGB(0x1A2240)
     static let blush = RGB(0xFF6F91)

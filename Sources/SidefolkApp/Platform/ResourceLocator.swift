@@ -16,9 +16,6 @@ enum ResourceLocator {
 
     /// Sample extensions shipped with the app, offered in Settings › Extensions.
     static var sampleExtensions: URL? { resources?.appendingPathComponent("Extensions", isDirectory: true) }
-
-    /// One folder of pose images per sprite companion (`Companions/mochi/idle.png`, …).
-    static var companions: URL? { resources?.appendingPathComponent("Companions", isDirectory: true) }
 }
 
 /// Environment values for a user-added MCP server live in one Keychain item, "mcp.<server>", as JSON.
