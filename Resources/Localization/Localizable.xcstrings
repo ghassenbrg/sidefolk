@@ -1653,6 +1653,12 @@
     },
     "%@ couldn't do that. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر على %@ تنفيذ ذلك. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1763,6 +1769,12 @@
     },
     "%@ didn't answer in time. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يردّ %@ في الوقت المناسب. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2606,6 +2618,12 @@
     "%@ finished after %@" : {
       "comment" : "A command, then how long it ran: “npm test finished after 3 min”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهى %1$@ بعد %2$@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2845,6 +2863,12 @@
     },
     "%@ free" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المتاح: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4316,6 +4340,12 @@
     "%@ is listening to you" : {
       "comment" : "VoiceOver, while the microphone is on",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ في حالة إصغاء إليك"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6808,6 +6838,12 @@
     "%@ of %@" : {
       "comment" : "Memory in use, then all of it: “9.9 GB of 16 GB”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ من %2$@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7960,6 +7996,12 @@
     },
     "%@, charging" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@، قيد الشحن"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8012,6 +8054,12 @@
     },
     "%@, on power" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@، موصول بالكهرباء"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10009,6 +10057,48 @@
     },
     "%lld matches. Which one?" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تطابقات. أيّها تقصد؟"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تطابقًا. أيّها تقصد؟"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تطابق واحد. أيّها تقصد؟"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تطابق. أيّها تقصد؟"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تطابقان. أيّها تقصد؟"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تطابقات. أيّها تقصد؟"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -10309,6 +10399,48 @@
     },
     "%lld notes in Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملاحظات في ملاحظات Apple"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملاحظة في ملاحظات Apple"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملاحظة واحدة في ملاحظات Apple"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملاحظة في ملاحظات Apple"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملاحظتان في ملاحظات Apple"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا ملاحظات في ملاحظات Apple"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -10361,6 +10493,12 @@
     },
     "%lld of %lld copied so far" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُسخ %1$lld من %2$lld حتى الآن"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10419,6 +10557,48 @@
     },
     "%lld open reminders in Apple Reminders" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تذكيرات مفتوحة في تذكيرات Apple"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تذكيرًا مفتوحًا في تذكيرات Apple"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكير واحد مفتوح في تذكيرات Apple"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تذكير مفتوح في تذكيرات Apple"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكيران مفتوحان في تذكيرات Apple"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تذكيرات مفتوحة في تذكيرات Apple"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -10719,6 +10899,12 @@
     },
     "%lld stayed in Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بقي %lld في «ملاحظات»"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10962,6 +11148,48 @@
     "%lld things. First: %@" : {
       "comment" : "Said aloud for a list: how many, then the first one",
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld أشياء. الأول: %2$@"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld شيئًا. الأول: %2$@"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيء واحد. الأول: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld شيء. الأول: %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيئان. الأول: %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا شيء. الأول: %2$@"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -11990,6 +12218,12 @@
     },
     "A collection name is too long (the limit is 60 characters)." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم المجموعة طويل جدًا (الحد الأقصى 60 حرفًا)."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12564,6 +12798,12 @@
     },
     "A reminder repeats at most once a minute." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتكرر التذكير مرة واحدة في الدقيقة على الأكثر."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12732,6 +12972,12 @@
     },
     "A short spoken answer to what you said aloud. Typed requests get text." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ردّ منطوق قصير على ما قلته بصوت مسموع. أما الطلبات المكتوبة فتحصل على ردّ نصي."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13786,6 +14032,12 @@
     },
     "Acts on its own. Still asks before high-risk actions and anything a web page, file or extension could have steered." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتصرف من تلقاء نفسه. لا يزال يسأل قبل الإجراءات عالية الخطورة وقبل أي شيء كان بإمكان صفحة ويب أو ملف أو ملحق توجيهه."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13838,6 +14090,12 @@
     },
     "Acts without asking. Still asks before anything a web page, file or extension steered could send your data out." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتصرف دون أن يسأل. لا يزال يسأل قبل أي شيء وجّهته صفحة ويب أو ملف أو ملحق وقد يُرسل بياناتك إلى الخارج."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14180,6 +14438,12 @@
     },
     "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف أحرفًا على elevenlabs.io، أو اختر صوت Apple في الإعدادات › الصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14464,6 +14728,12 @@
     },
     "Add them in Settings › Voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضفهما في الإعدادات › الصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14516,6 +14786,12 @@
     },
     "Add your ElevenLabs key first." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف مفتاح ElevenLabs أولًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15282,6 +15558,48 @@
     },
     "After %lld minutes, the task carries on without it. The step waits in Now, where you can still run it." : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقائق، تواصل المهمة عملها من دون هذه الخطوة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقيقة، تواصل المهمة عملها من دون هذه الخطوة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد دقيقة واحدة، تواصل المهمة عملها من دون هذه الخطوة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقيقة، تواصل المهمة عملها من دون هذه الخطوة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد دقيقتين، تواصل المهمة عملها من دون هذه الخطوة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقيقة، تواصل المهمة عملها من دون هذه الخطوة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -15334,6 +15652,48 @@
     },
     "After %lld minutes, the task stops. The step waits in Now, where you can still run it." : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقائق، تتوقف المهمة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقيقة، تتوقف المهمة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد دقيقة واحدة، تتوقف المهمة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقيقة، تتوقف المهمة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد دقيقتين، تتوقف المهمة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بعد %lld دقيقة، تتوقف المهمة. وتنتظر الخطوة في «الآن»، حيث يمكنك تنفيذها."
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -15792,6 +16152,12 @@
     },
     "Allow for this request" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح لهذا الطلب"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15844,6 +16210,12 @@
     },
     "Allow it in System Settings › Privacy & Security › Microphone." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسمح به في إعدادات النظام › الخصوصية والأمن › الميكروفون."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15896,6 +16268,12 @@
     },
     "Allow it in System Settings › Privacy & Security › Speech Recognition." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسمح به في إعدادات النظام › الخصوصية والأمن › التعرّف على الكلام."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16180,6 +16558,12 @@
     },
     "Allowed. It prefers the Mac's own microphone." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسموح. يُفضَّل ميكروفون هذا الـ Mac نفسه."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16639,6 +17023,12 @@
     },
     "An AI voice. %@ says one short line, and never reads out links, file paths or code." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوت مولَّد بالذكاء الاصطناعي. كلام %@ سطر واحد قصير، ولا يُقرأ فيه رابط أو مسار ملف أو شيفرة أبدًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17510,6 +17900,12 @@
     },
     "Anything a web page, file or extension it read could be steering to send your data out: an address you didn't type, a command, a file change, an extension, your clipboard or memory." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أي شيء قد توجّهه صفحة ويب أو ملف أو ملحق قرأه لإرسال بياناتك إلى الخارج: عنوان لم تكتبه، أو أمر، أو تغيير في ملف، أو ملحق، أو حافظتك أو الذاكرة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17620,6 +18016,12 @@
     },
     "Apple Notes and Reminders" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاحظات Apple وتذكيراتها"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17672,6 +18074,12 @@
     },
     "Apple voices" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصوات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17724,6 +18132,12 @@
     },
     "Approval mode: %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع الموافقة: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17777,6 +18191,12 @@
     "Approvals: %@" : {
       "comment" : "Menu bar: the approval mode, “Approvals: Auto”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الموافقات: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18293,6 +18713,12 @@
     },
     "Ask About It…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسأل عن هذا…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18403,6 +18829,12 @@
     },
     "Ask every time" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السؤال في كل مرة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18455,6 +18887,12 @@
     },
     "Ask once per kind" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السؤال مرة لكل نوع"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19145,6 +19583,12 @@
     },
     "Asks before anything that changes something outside Sidefolk, even if you allowed it before." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسأل قبل أي شيء يغيّر ما هو خارج Sidefolk، حتى لو سمحت به من قبل."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19198,6 +19642,12 @@
     "Asks every time" : {
       "comment" : "A small label in the Ask panel: the approval mode",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسأل في كل مرة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19310,6 +19760,12 @@
     "Asks once" : {
       "comment" : "A small label in the Ask panel: the approval mode",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسأل مرة واحدة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19421,6 +19877,12 @@
     },
     "Asks once for each kind of action and remembers “Always allow”. The default." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسأل مرة واحدة لكل نوع من الإجراءات ويتذكّر «السماح دائمًا». الافتراضي."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19589,6 +20051,12 @@
     },
     "Attachments left in Apple Notes: %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المرفقات التي بقيت في ملاحظات Apple: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19641,6 +20109,12 @@
     },
     "Auto" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تلقائي"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19867,6 +20341,12 @@
     },
     "Basic" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أساسي"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19919,6 +20399,12 @@
     },
     "Basic: macOS 15's older recognizer, on this Mac. It makes more mistakes; macOS 26 brings a better one." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أساسي: أداة التعرّف الأقدم في macOS 15، على هذا الـ Mac. ترتكب أخطاءً أكثر؛ ويأتي macOS 26 بأداة أفضل."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20029,6 +20515,12 @@
     },
     "Battery" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البطارية"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20197,6 +20689,12 @@
     },
     "Best installed (%@)" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أفضل صوت مثبّت (%@)"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20597,6 +21095,12 @@
     },
     "CPU" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المعالج"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22332,6 +22836,12 @@
     },
     "Check the key in Settings › Voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقّق من المفتاح في الإعدادات › الصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22674,6 +23184,12 @@
     },
     "Check your internet connection and try again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقّق من اتصالك بالإنترنت وحاول مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22784,6 +23300,12 @@
     },
     "Check your internet connection." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقّق من اتصالك بالإنترنت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23474,6 +23996,12 @@
     },
     "Choose a voice" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر صوتًا"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25094,6 +25622,12 @@
     },
     "Cloudy" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غائم"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26133,6 +26667,12 @@
     "Compact" : {
       "comment" : "An Apple voice's quality",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مدمج"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27003,6 +27543,48 @@
     },
     "Copied %lld notes from Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُسخت %lld ملاحظات من ملاحظات Apple"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُسخت %lld ملاحظة من ملاحظات Apple"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُسخت ملاحظة واحدة من ملاحظات Apple"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُسخت %lld ملاحظة من ملاحظات Apple"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُسخت ملاحظتان من ملاحظات Apple"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم تُنسخ أي ملاحظة من ملاحظات Apple"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -27055,6 +27637,12 @@
     },
     "Copied 25 notes from Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُسخت 25 ملاحظة من ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27223,6 +27811,48 @@
     },
     "Copy %lld notes from Apple Notes into %@" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نسخ %1$lld ملاحظات من ملاحظات Apple إلى %2$@"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نسخ %1$lld ملاحظة من ملاحظات Apple إلى %2$@"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نسخ ملاحظة واحدة من ملاحظات Apple إلى %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نسخ %1$lld ملاحظة من ملاحظات Apple إلى %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نسخ ملاحظتين من ملاحظات Apple إلى %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نسخ %1$lld ملاحظة من ملاحظات Apple إلى %2$@"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -27275,6 +27905,12 @@
     },
     "Copy Apple Notes to the notebook" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخ ملاحظات Apple إلى الدفتر"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28958,6 +29594,12 @@
     "Default" : {
       "comment" : "Reasoning effort: send nothing, so the model uses its own",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتراضي"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29011,6 +29653,12 @@
     "Default (%@)" : {
       "comment" : "Reasoning effort: send nothing; the model's own level in parentheses",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتراضي (%@)"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30746,6 +31394,12 @@
     "Done without asking: %@" : {
       "comment" : "A bubble: what Sidefolk did on its own in Auto or Full access",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم دون سؤال: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30856,6 +31510,12 @@
     },
     "Done: %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30908,6 +31568,12 @@
     },
     "Download" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنزيل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31018,6 +31684,12 @@
     },
     "Downloading the speech model" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ تنزيل نموذج الكلام"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31071,6 +31743,12 @@
     "Downloading the speech model… %lld%%" : {
       "comment" : "The number is a percentage",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ تنزيل نموذج الكلام… %lld%%"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31123,6 +31801,12 @@
     },
     "Drizzle" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رذاذ"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31175,6 +31859,12 @@
     },
     "Each entry in “notes” needs an “id” and a “collection”." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج كل عنصر في «notes» إلى «id» و«collection»."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31461,6 +32151,12 @@
     "Effort" : {
       "comment" : "Reasoning effort, beside its menu under a model field",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جهد التفكير"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31513,6 +32209,12 @@
     },
     "ElevenLabs" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabs"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31565,6 +32267,12 @@
     },
     "ElevenLabs couldn't find that voice. Nothing was said." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر على ElevenLabs العثور على هذا الصوت. لم يُنطق شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31617,6 +32325,12 @@
     },
     "ElevenLabs couldn't make the voice. Nothing was said." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر على ElevenLabs إنتاج الصوت. لم يُنطق شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31669,6 +32383,12 @@
     },
     "ElevenLabs didn't accept your key. Nothing was said." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يقبل ElevenLabs مفتاحك. لم يُنطق شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31721,6 +32441,12 @@
     },
     "ElevenLabs is busy right now. Nothing was said." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabs مشغول حاليًا. لم يُنطق شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31773,6 +32499,12 @@
     },
     "ElevenLabs sent something I couldn't read. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرسل ElevenLabs شيئًا لم أستطع قراءته. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32232,6 +32964,12 @@
     "Enhanced" : {
       "comment" : "An Apple voice's quality",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محسّن"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32400,6 +33138,12 @@
     },
     "Every %@ is the fastest for this; I'll check every %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل %1$@ هي أسرع وتيرة لهذا النوع؛ سأتحقق كل %2$@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32696,6 +33440,12 @@
     },
     "Everything it does shows in Activity, with Undo where it can. Files it deletes go to the Trash." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يظهر كل ما يفعله في «النشاط»، مع إمكانية التراجع حيثما أمكن. والملفات التي يحذفها تذهب إلى سلة المهملات."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33503,6 +34253,12 @@
     "Extra high" : {
       "comment" : "Reasoning effort, between High and Max",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مرتفع جدًا"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33794,6 +34550,12 @@
     "Feels like in %@" : {
       "comment" : "The felt temperature in a place",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإحساس بالحرارة في %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34194,6 +34956,12 @@
     },
     "Fog" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ضباب"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34710,6 +35478,12 @@
     },
     "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in Activity." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسري هذا على ما تطلب من Sidefolk فعله. للوكلاء والملحقات الأخرى قواعدها الخاصة، ويظهر كل شيء في «النشاط»."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35424,6 +36198,12 @@
     },
     "Free disk" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مساحة القرص المتاحة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35773,6 +36553,12 @@
     },
     "From Apple Notes › %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من ملاحظات Apple › %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35825,6 +36611,12 @@
     },
     "From Apple Notes › %@ · %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من ملاحظات Apple › %1$@ · %2$@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35883,6 +36675,12 @@
     },
     "Full access" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوصول الكامل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35935,6 +36733,12 @@
     },
     "Full access is on" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوصول الكامل قيد التشغيل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35987,6 +36791,12 @@
     },
     "Full access…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوصول الكامل…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36271,6 +37081,12 @@
     },
     "Get better voices…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحصول على أصوات أفضل…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36323,6 +37139,12 @@
     },
     "Getting ready to listen…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التجهيز للإصغاء…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36375,6 +37197,12 @@
     },
     "Getting your last words…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التقاط آخر كلماتك…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37547,6 +38375,12 @@
     "Hi, I'm %@. This is how I'll answer you." : {
       "comment" : "Said aloud by Settings › Voice › Test voice",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مرحبًا، أنا %@. هكذا سأجيبك."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37890,6 +38724,12 @@
     },
     "Hold the Ask shortcut" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الضغط مطوّلًا على اختصار «اسأل»"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37942,6 +38782,12 @@
     },
     "Hold the shortcut and talk, release to send. Esc cancels." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط مطوّلًا على الاختصار وتحدّث، ثم أفلت للإرسال. مفتاح Esc يلغي."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37994,6 +38840,12 @@
     },
     "Hold your talk shortcut. You can also press and hold %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط مطوّلًا على اختصار التحدث. يمكنك أيضًا الضغط مطوّلًا على %@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38046,6 +38898,12 @@
     },
     "How much Sidefolk asks" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقدار ما يسأل عنه Sidefolk"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38098,6 +38956,12 @@
     },
     "Humidity in %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرطوبة في %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38208,6 +39072,12 @@
     },
     "I can only use simple selectors, like span.price, #total or td." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكنني استخدام سوى محددات بسيطة، مثل span.price أو #total أو td."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38260,6 +39130,12 @@
     },
     "I can show the temperature, feels like, humidity, wind, rain or conditions." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنني عرض درجة الحرارة أو الإحساس بالحرارة أو الرطوبة أو الرياح أو المطر أو حالة الطقس."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38370,6 +39246,12 @@
     },
     "I can't bring that session to the front." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أستطيع إحضار تلك الجلسة إلى الواجهة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38544,6 +39426,12 @@
     },
     "I can't find a microphone. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أجد ميكروفونًا. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38712,6 +39600,12 @@
     },
     "I can't hear you: Sidefolk isn't allowed to use the microphone. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أستطيع سماعك: لا يُسمح لـ Sidefolk باستخدام الميكروفون. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38822,6 +39716,12 @@
     },
     "I can't listen in that language on this Mac. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أستطيع الإصغاء إلى تلك اللغة على هذا الـ Mac. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39048,6 +39948,12 @@
     },
     "I can't read “%@” as a JSON path, like current.temperature_2m or data[0].price." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أستطيع قراءة «%@» كمسار JSON، مثل current.temperature_2m أو data[0].price."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39802,6 +40708,12 @@
     },
     "I couldn't download the speech model. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ تنزيل نموذج الكلام. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39854,6 +40766,12 @@
     },
     "I couldn't download the speech model. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ تنزيل نموذج الكلام. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40196,6 +41114,12 @@
     },
     "I couldn't find a place called “%@”." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أجد مكانًا باسم «%@»."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40480,6 +41404,12 @@
     },
     "I couldn't list your ElevenLabs voices." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ عرض أصوات ElevenLabs الخاصة بك."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40532,6 +41462,12 @@
     },
     "I couldn't look up that place." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ البحث عن ذلك المكان."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40990,6 +41926,12 @@
     },
     "I couldn't play the voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ تشغيل الصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41332,6 +42274,12 @@
     },
     "I couldn't reach ElevenLabs. Nothing was said." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ الوصول إلى ElevenLabs. لم يُنطق شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41616,6 +42564,12 @@
     },
     "I couldn't read that from the Mac." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت عليّ قراءة ذلك من الـ Mac."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41668,6 +42622,12 @@
     },
     "I couldn't read the free disk space." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت عليّ قراءة المساحة المتاحة على القرص."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41720,6 +42680,12 @@
     },
     "I couldn't read the memory use." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت عليّ قراءة استخدام الذاكرة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41830,6 +42796,12 @@
     },
     "I couldn't read “%@” as a time to stop." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت عليّ قراءة «%@» كوقت للتوقف."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42114,6 +43086,12 @@
     },
     "I couldn't say that out loud. It's on the screen." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ قول ذلك بصوت مسموع. إنه على الشاشة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42166,6 +43144,12 @@
     },
     "I couldn't start %@. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ تشغيل %@. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42218,6 +43202,12 @@
     },
     "I couldn't start listening. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ بدء الإصغاء. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42676,6 +43666,12 @@
     },
     "I didn't catch that. Fix the words and press Return, or hold to talk again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أتبيّن ما قلته. صحّح الكلمات واضغط مفتاح الرجوع، أو اضغط مطوّلًا لتتحدث مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42728,6 +43724,12 @@
     },
     "I didn't catch that. Hold to talk again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أتبيّن ما قلته. اضغط مطوّلًا لتتحدث مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43070,6 +44072,12 @@
     },
     "I found no value at “%@” on %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أجد قيمة عند «%1$@» في %2$@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43898,6 +44906,12 @@
     },
     "I stopped showing %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقفت عن عرض %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44008,6 +45022,12 @@
     },
     "I stopped: you didn't answer in time. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقفت: لم تُجب في الوقت المناسب. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44640,6 +45660,48 @@
     },
     "I'm already showing %lld live values. Stop one first." : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أعرض بالفعل %lld قيم مباشرة. أوقف واحدة منها أولًا."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أعرض بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أعرض بالفعل قيمة مباشرة واحدة. أوقفها أولًا."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أعرض بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أعرض بالفعل قيمتين مباشرتين. أوقف إحداهما أولًا."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أعرض بالفعل %lld قيمة مباشرة. أوقف واحدة منها أولًا."
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -44882,6 +45944,12 @@
     },
     "I'm not showing or watching anything like “%@”." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أعرض ولا أراقب أي شيء مثل «%@»."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44934,6 +46002,12 @@
     },
     "I'm not showing or watching anything right now." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أعرض ولا أراقب أي شيء الآن."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45218,6 +46292,12 @@
     },
     "If I don't answer" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إذا لم أُجب"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45328,6 +46408,12 @@
     },
     "If macOS is asking whether Sidefolk may use %@, answer it, then try again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إذا كان macOS يسأل عمّا إذا كان يُسمح لـ Sidefolk باستخدام %@، فأجب عن ذلك ثم حاول مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45438,6 +46524,12 @@
     },
     "In System Settings › Privacy & Security › Automation, switch on %@ under Sidefolk." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في إعدادات النظام › الخصوصية والأمن › الأتمتة، شغّل %@ تحت Sidefolk."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45490,6 +46582,12 @@
     },
     "In every mode" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في كل الأوضاع"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47496,6 +48594,12 @@
     },
     "It still asks before" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يزال يسأل قبل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47613,6 +48717,12 @@
     },
     "It stopped unexpectedly too often (%lld× in %lld min), so Sidefolk turned it off." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقف بشكل غير متوقع مرات كثيرة جدًا (%1$lld× خلال %2$lld د)، لذا أوقفه Sidefolk."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47729,6 +48839,12 @@
     },
     "It was in %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كانت في %@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47781,6 +48897,12 @@
     },
     "It was set to stop at %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كان مضبوطًا على التوقف عند %@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48198,6 +49320,12 @@
     "It's on the screen." : {
       "comment" : "Said aloud when the answer is only a link or code",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنه على الشاشة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48367,6 +49495,12 @@
     },
     "Its files changed since you installed it (%@). Install it again to use it." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّرت ملفاته منذ تثبيته (%@). ثبّته مجددًا لاستخدامه."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48651,6 +49785,12 @@
     },
     "Its own shortcut" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختصار خاص به"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48993,6 +50133,12 @@
     },
     "Its window may be closed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ربما أُغلقت نافذتها."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49161,6 +50307,12 @@
     },
     "Keep going" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المواصلة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49271,6 +50423,12 @@
     },
     "Keep waiting" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مواصلة الانتظار"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50484,6 +51642,12 @@
     },
     "List Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50536,6 +51700,12 @@
     },
     "List Apple Reminders" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض تذكيرات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51342,6 +52512,12 @@
     },
     "Listening" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الإصغاء"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51394,6 +52570,12 @@
     },
     "Listening (basic recognition)… Release to send, Esc to cancel" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الإصغاء (تعرّف أساسي)… أفلت للإرسال، أو Esc للإلغاء"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51446,6 +52628,12 @@
     },
     "Listening…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الإصغاء…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51498,6 +52686,12 @@
     },
     "Listening… Release to send, Esc to cancel" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الإصغاء… أفلت للإرسال، أو Esc للإلغاء"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51550,6 +52744,12 @@
     },
     "Live" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مباشر"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51718,6 +52918,12 @@
     },
     "Load voices" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحميل الأصوات"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52409,6 +53615,12 @@
     },
     "Made on this Mac. Nothing is sent anywhere." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُنتَج على هذا الـ Mac. لا يُرسل شيء إلى أي مكان."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52868,6 +54080,12 @@
     "Max" : {
       "comment" : "Reasoning effort: the most a model can think",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأقصى"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53095,6 +54313,12 @@
     },
     "Microphone" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الميكروفون"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53148,6 +54372,12 @@
     "Minimal" : {
       "comment" : "Reasoning effort",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأدنى"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54283,6 +55513,48 @@
     },
     "Move %lld notes in Apple Notes to Recently Deleted" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل %lld ملاحظات في ملاحظات Apple إلى «المحذوفة مؤخرًا»"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل %lld ملاحظة في ملاحظات Apple إلى «المحذوفة مؤخرًا»"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل ملاحظة واحدة في ملاحظات Apple إلى «المحذوفة مؤخرًا»"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل %lld ملاحظة في ملاحظات Apple إلى «المحذوفة مؤخرًا»"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل ملاحظتين في ملاحظات Apple إلى «المحذوفة مؤخرًا»"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نقل %lld ملاحظة في ملاحظات Apple إلى «المحذوفة مؤخرًا»"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -55311,6 +56583,48 @@
     },
     "Moved %lld notes to Recently Deleted in Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقلت %lld ملاحظات إلى «المحذوفة مؤخرًا» في ملاحظات Apple"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقلت %lld ملاحظة إلى «المحذوفة مؤخرًا» في ملاحظات Apple"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقلت ملاحظة واحدة إلى «المحذوفة مؤخرًا» في ملاحظات Apple"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقلت %lld ملاحظة إلى «المحذوفة مؤخرًا» في ملاحظات Apple"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "نُقلت ملاحظتان إلى «المحذوفة مؤخرًا» في ملاحظات Apple"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم تُنقل أي ملاحظة إلى «المحذوفة مؤخرًا» في ملاحظات Apple"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -55827,6 +57141,12 @@
     },
     "Natural voices in many languages, with your own ElevenLabs key." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصوات طبيعية بلغات كثيرة، بمفتاح ElevenLabs الخاص بك."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56169,6 +57489,12 @@
     },
     "Network" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشبكة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57735,6 +59061,12 @@
     },
     "No matching Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد ملاحظات مطابقة في ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58022,7 +59354,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا مهارات بعد. اطلب «write a skill for my weekly review» ثم وافق عليها."
+            "value" : "لا مهارات بعد. اطلب «اكتب مهارة لمراجعتي الأسبوعية» ثم وافق عليها."
           }
         },
         "de" : {
@@ -58077,6 +59409,12 @@
     },
     "No such folder in Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يوجد مجلد كهذا في ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58245,6 +59583,12 @@
     },
     "Nobody answered by %@, so the task stopped here." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُجب أحد بحلول %@، لذا توقفت المهمة هنا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58297,6 +59641,12 @@
     },
     "Nobody answered by %@, so the task went on without it." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُجب أحد بحلول %@، لذا واصلت المهمة عملها من دون هذه الخطوة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58407,6 +59757,12 @@
     },
     "Not allowed. Voice input can't hear you until it is." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غير مسموح. لا يستطيع الإدخال الصوتي سماعك إلى أن يُسمح به."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58459,6 +59815,12 @@
     },
     "Not asked yet" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُطلب بعد"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59033,6 +60395,12 @@
     },
     "Not said aloud: %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُنطق بصوت مسموع: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59085,6 +60453,12 @@
     },
     "Not said aloud: another app is using the microphone" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُنطق بصوت مسموع: تطبيق آخر يستخدم الميكروفون"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59137,6 +60511,12 @@
     },
     "Not said aloud: quiet mode is on" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُنطق بصوت مسموع: وضع الهدوء قيد التشغيل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59189,6 +60569,12 @@
     },
     "Not said aloud: you were typing" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُنطق بصوت مسموع: كنت تكتب"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60343,6 +61729,12 @@
     },
     "Nothing new to copy from Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا جديد لنسخه من ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60453,6 +61845,12 @@
     },
     "Nothing removed from Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُزَل أي ملاحظة من ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61085,6 +62483,12 @@
     },
     "Notice when a session needs you" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الانتباه عندما تحتاج إليك جلسة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61369,6 +62773,12 @@
     },
     "Now %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآن %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61480,6 +62890,12 @@
     "Off" : {
       "comment" : "Reasoning effort: the model doesn't reason before answering",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61590,6 +63006,12 @@
     },
     "On this Mac, with Apple's dictation model." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "على هذا الـ Mac، بنموذج الإملاء من Apple."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61642,6 +63064,12 @@
     },
     "On this Mac, with Apple's speech model. Nothing you say leaves it." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "على هذا الـ Mac، بنموذج الكلام من Apple. لا يغادره شيء مما تقوله."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61752,6 +63180,12 @@
     },
     "Only compact voices are installed, and they sound robotic. Download an enhanced or premium voice for a warmer one." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأصوات المثبّتة كلها مدمجة، وتبدو آلية. نزّل صوتًا محسّنًا أو ممتازًا لتحصل على صوت أدفأ."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61920,6 +63354,12 @@
     },
     "Only notes already copied into the notebook can be removed from Apple Notes. Copy them first." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن إزالة سوى الملاحظات المنسوخة بالفعل إلى الدفتر من ملاحظات Apple. انسخها أولًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62030,6 +63470,12 @@
     },
     "Only when I spoke" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عندما أتحدث فقط"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62604,6 +64050,12 @@
     },
     "Open %@ once yourself, then try again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح %@ بنفسك مرة واحدة، ثم حاول مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62656,6 +64108,12 @@
     },
     "Open Now" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح «الآن»"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62824,6 +64282,12 @@
     },
     "Open System Settings" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح إعدادات النظام"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64052,6 +65516,12 @@
     },
     "Other agents and extensions keep their own rules." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للوكلاء والملحقات الأخرى قواعدها الخاصة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64468,6 +65938,12 @@
     },
     "Partly cloudy" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غائم جزئيًا"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65101,6 +66577,12 @@
     "Paused · %@" : {
       "comment" : "“Paused · Every 10 s · stops 11:00”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف مؤقتًا · %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65501,6 +66983,12 @@
     },
     "Pick another one in Settings › Voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر لغة أخرى في الإعدادات › الصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65553,6 +67041,12 @@
     },
     "Pick another voice in Settings › Voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر صوتًا آخر في الإعدادات › الصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65605,6 +67099,12 @@
     },
     "Pick something from the list, or press ⌘N to write something new." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر شيئًا من القائمة، أو اضغط ⌘N لكتابة شيء جديد."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65891,6 +67391,12 @@
     "Premium" : {
       "comment" : "An Apple voice's quality",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ممتاز"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67237,6 +68743,12 @@
     "Rainfall in %@" : {
       "comment" : "How much rain falls in a place, as a live value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هطول الأمطار في %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67253,6 +68765,48 @@
     },
     "Read %lld notes from Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %lld ملاحظات من ملاحظات Apple"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %lld ملاحظة من ملاحظات Apple"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة ملاحظة واحدة من ملاحظات Apple"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %lld ملاحظة من ملاحظات Apple"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة ملاحظتين من ملاحظات Apple"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %lld ملاحظة من ملاحظات Apple"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -67305,6 +68859,48 @@
     },
     "Read %lld notes from Apple Notes in %@" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %1$lld ملاحظات من ملاحظات Apple في %2$@"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %1$lld ملاحظة من ملاحظات Apple في %2$@"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة ملاحظة واحدة من ملاحظات Apple في %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %1$lld ملاحظة من ملاحظات Apple في %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة ملاحظتين من ملاحظات Apple في %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة %1$lld ملاحظة من ملاحظات Apple في %2$@"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -67357,6 +68953,12 @@
     },
     "Read Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قراءة ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67989,6 +69591,48 @@
     },
     "Read the titles, folders and dates of up to %lld Apple Notes whose title has “%@”" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظات من ملاحظات Apple يحتوي عنوانها على «%2$@»"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظة من ملاحظات Apple يحتوي عنوانها على «%2$@»"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عنوان ومجلد وتاريخ ملاحظة واحدة على الأكثر من ملاحظات Apple يحتوي عنوانها على «%2$@»"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظة من ملاحظات Apple يحتوي عنوانها على «%2$@»"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ملاحظتين على الأكثر من ملاحظات Apple يحتوي عنوانهما على «%2$@»"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظة من ملاحظات Apple يحتوي عنوانها على «%2$@»"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -68041,6 +69685,48 @@
     },
     "Read the titles, folders and dates of up to %lld notes in “%@” in Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظات في «%2$@» ضمن ملاحظات Apple"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظة في «%2$@» ضمن ملاحظات Apple"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عنوان ومجلد وتاريخ ملاحظة واحدة على الأكثر في «%2$@» ضمن ملاحظات Apple"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظة في «%2$@» ضمن ملاحظات Apple"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ملاحظتين على الأكثر في «%2$@» ضمن ملاحظات Apple"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %1$lld ملاحظة في «%2$@» ضمن ملاحظات Apple"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -68093,6 +69779,48 @@
     },
     "Read the titles, folders and dates of up to %lld of your Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %lld ملاحظات من ملاحظات Apple الخاصة بك"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %lld ملاحظة من ملاحظات Apple الخاصة بك"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عنوان ومجلد وتاريخ ملاحظة واحدة على الأكثر من ملاحظات Apple الخاصة بك"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %lld ملاحظة من ملاحظات Apple الخاصة بك"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ملاحظتين على الأكثر من ملاحظات Apple الخاصة بك"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قراءة عناوين ومجلدات وتواريخ ما يصل إلى %lld ملاحظة من ملاحظات Apple الخاصة بك"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -68203,6 +69931,12 @@
     },
     "Read your open reminders in Apple Reminders" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قراءة تذكيراتك المفتوحة في تذكيرات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68255,6 +69989,12 @@
     },
     "Read your open reminders in the list “%@” in Apple Reminders" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قراءة تذكيراتك المفتوحة في القائمة «%@» ضمن تذكيرات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68481,6 +70221,12 @@
     },
     "Reading them when you ask, and copying notes into the notebook. macOS asks you once for each app." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قراءتها عندما تطلب، ونسخ الملاحظات إلى الدفتر. يسألك macOS مرة واحدة لكل تطبيق."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68533,6 +70279,12 @@
     },
     "Reads private data" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ بيانات خاصة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68585,6 +70337,12 @@
     },
     "Ready" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جاهز"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68638,6 +70396,12 @@
     "Reasoning effort for “%@”" : {
       "comment" : "The effort menu under a model field",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جهد التفكير لـ «%@»"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68693,7 +70457,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تتيح لك الطلبات الأخيرة المتابعة («and tomorrow too»). ولا تُعرض أبدًا كسجل دردشة."
+            "value" : "تتيح لك الطلبات الأخيرة المتابعة («وغدًا أيضًا»). ولا تُعرض أبدًا كسجل دردشة."
           }
         },
         "de" : {
@@ -69097,6 +70861,12 @@
     "Release: %@" : {
       "comment" : "While talking: what releasing the talk key will do, e.g. “Release: Reminder · Today 17:00 · no AI”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عند الإفلات: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70374,6 +72144,12 @@
     },
     "Remove notes from Apple Notes" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة ملاحظات من ملاحظات Apple"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70832,6 +72608,48 @@
     },
     "Removed %lld copied notes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُزيلت %lld ملاحظات منسوخة"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُزيلت %lld ملاحظة منسوخة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُزيلت ملاحظة منسوخة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُزيلت %lld ملاحظة منسوخة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُزيلت ملاحظتان منسوختان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم تُزَل أي ملاحظة منسوخة"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -71586,6 +73404,12 @@
     },
     "Replies stay on screen." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبقى الردود على الشاشة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71635,6 +73459,9 @@
           }
         }
       }
+    },
+    "Reply" : {
+
     },
     "Requests" : {
       "localizations" : {
@@ -71696,6 +73523,12 @@
     },
     "Requests are understood in English without AI; with AI, in any language." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُفهم الطلبات بالإنجليزية دون ذكاء اصطناعي؛ ومعه بأي لغة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72271,6 +74104,12 @@
     "Results" : {
       "comment" : "Title of notebook search results of every kind: “Results in Sidefolk”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النتائج"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73367,6 +75206,12 @@
     },
     "Run it now" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنفيذ الخطوة الآن"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74553,6 +76398,12 @@
     },
     "Said aloud" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُطق بصوت مسموع"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74605,6 +76456,12 @@
     },
     "Said aloud: %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُطق بصوت مسموع: %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74657,6 +76514,12 @@
     },
     "Same as Sidefolk (%@)" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مثل Sidefolk (%@)"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75527,6 +77390,12 @@
     },
     "Saved in your Keychain. Listing voices is free; each spoken line uses characters of your ElevenLabs plan." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محفوظ في سلسلة المفاتيح. عرض الأصوات مجاني؛ أما كل سطر منطوق فيستهلك أحرفًا من خطتك في ElevenLabs."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75637,6 +77506,12 @@
     },
     "Says one short sentence." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينطق جملة قصيرة واحدة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75689,6 +77564,12 @@
     },
     "Says one short sentence. It uses about 50 characters of your ElevenLabs plan." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينطق جملة قصيرة واحدة. يستهلك نحو 50 حرفًا من خطتك في ElevenLabs."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76919,6 +78800,12 @@
     },
     "Sends the words %@ says to ElevenLabs (api.elevenlabs.io), with your key: reminders and notes it reads back too. ElevenLabs keeps a history of requests unless your plan turns that off." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يرسل الكلمات المنطوقة على لسان %@ إلى ElevenLabs (api.elevenlabs.io) بمفتاحك، بما فيها التذكيرات والملاحظات التي تُقرأ بصوت عالٍ. يحتفظ ElevenLabs بسجل للطلبات ما لم تُوقف خطتك ذلك."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77680,6 +79567,12 @@
     },
     "Shell commands, shown word for word before they run unless Full access is on." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أوامر shell، تُعرض كلمةً بكلمة قبل تشغيلها ما لم يكن الوصول الكامل قيد التشغيل."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77790,6 +79683,12 @@
     },
     "Show %@ every %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض %1$@ كل %2$@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77906,6 +79805,12 @@
     },
     "Show %@ regularly" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض %@ بانتظام"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78074,6 +79979,12 @@
     },
     "Show a value regularly" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض قيمة بانتظام"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78416,6 +80327,12 @@
     },
     "Showing %@ again" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعرض %@ مجددًا"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78468,6 +80385,12 @@
     },
     "Showing %@ every %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعرض %1$@ كل %2$@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78526,6 +80449,12 @@
     },
     "Showing %lld–%lld" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض %1$lld–%2$lld"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79512,6 +81441,12 @@
     },
     "Sidefolk needs your OK to use %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج Sidefolk إلى موافقتك لاستخدام %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80144,6 +82079,12 @@
     },
     "Sidefolk will do what you ask without checking with you first: moving and trashing files in the folders you shared, opening links and apps, reading pages and your Apple Notes, running commands and using extensions." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سينفّذ Sidefolk ما تطلبه دون الرجوع إليك أولًا: نقل الملفات وإرسالها إلى سلة المهملات في المجلدات التي شاركتها، وفتح الروابط والتطبيقات، وقراءة الصفحات وملاحظات Apple الخاصة بك، وتشغيل الأوامر واستخدام الملحقات."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80602,6 +82543,12 @@
     },
     "Sidefolk, Full access is on" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk، الوصول الكامل قيد التشغيل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81118,6 +83065,12 @@
     },
     "Skip that step and continue" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تخطي تلك الخطوة والمواصلة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81170,6 +83123,12 @@
     },
     "Skipped" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متخطّى"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81222,6 +83181,12 @@
     },
     "Skipped while you were away (%lld)" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم تخطيها أثناء غيابك (%lld)"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82029,6 +83994,12 @@
     },
     "Snow" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثلج"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82435,6 +84406,12 @@
     },
     "Speaking…" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ النطق…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82487,6 +84464,12 @@
     },
     "Speech model" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نموذج الكلام"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82539,6 +84522,12 @@
     },
     "Speech recognition isn't allowed for Sidefolk. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التعرّف على الكلام غير مسموح به لـ Sidefolk. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82591,6 +84580,12 @@
     },
     "Speed" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السرعة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82643,6 +84638,12 @@
     },
     "Spoken replies" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الردود المنطوقة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82695,6 +84696,12 @@
     },
     "Spoken replies need your ElevenLabs key and a voice." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحتاج الردود المنطوقة إلى مفتاح ElevenLabs وصوت."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83392,6 +85399,12 @@
     },
     "Stop %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83444,6 +85457,12 @@
     },
     "Stop repeating" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف التكرار"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83496,6 +85515,12 @@
     },
     "Stop showing %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف عرض %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83548,6 +85573,12 @@
     },
     "Stop the task" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف المهمة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83832,6 +85863,12 @@
     },
     "Stopped showing %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُوقف عرض %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84001,6 +86038,12 @@
     "Stops %@" : {
       "comment" : "“Stops 15:30”, “Stops Tomorrow 10:00”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينتهي %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84111,6 +86154,12 @@
     },
     "Switch on %@ under Sidefolk, then ask again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شغّل %@ تحت Sidefolk، ثم اطلب ذلك مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84163,6 +86212,12 @@
     },
     "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عند إيقافه، لا يستطيع Sidefolk ولا الوكلاء المرتبطون القيام به إطلاقًا، حتى لو وافقت، في كل الأوضاع."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84332,6 +86387,12 @@
     },
     "System Settings › Accessibility › Spoken Content › System voice › Manage Voices" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات النظام › تسهيلات الاستخدام › المحتوى المنطوق › صوت النظام › إدارة الأصوات"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84384,6 +86445,12 @@
     },
     "System Settings › Privacy & Security › Automation" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات النظام › الخصوصية والأمن › الأتمتة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84552,6 +86619,12 @@
     },
     "System voice" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوت النظام"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84720,6 +86793,12 @@
     },
     "Talk shortcut" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختصار التحدث"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84772,6 +86851,12 @@
     },
     "Talk with" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التحدث بواسطة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84825,6 +86910,12 @@
     "Talking" : {
       "comment" : "Shown above what the companion says about voice input itself",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التحدث"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84877,6 +86968,12 @@
     },
     "Tap %@ to open the Ask panel, hold it to talk. You can also press and hold %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على %1$@ لفتح لوحة «اسأل»، أو اضغط مطوّلًا عليه للتحدث. يمكنك أيضًا الضغط مطوّلًا على %2$@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85113,7 +87210,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "أخبرني بأشياء مثل «I prefer short answers» وسأحتفظ بها هنا."
+            "value" : "أخبرني بأشياء مثل «أفضّل الإجابات القصيرة» وسأحتفظ بها هنا."
           }
         },
         "de" : {
@@ -85284,6 +87381,12 @@
     },
     "Tell me where the value is: one JSON path, selector or pattern." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخبرني أين توجد القيمة: مسار JSON أو محدِّد أو نمط واحد."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85452,6 +87555,12 @@
     },
     "Tell me which place, like “Fukuoka” or “Paris, France”." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخبرني بالمكان، مثل «Fukuoka» أو «Paris, France»."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85562,6 +87671,12 @@
     },
     "Tell me which value to show: CPU, memory, battery, disk or network." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخبرني بالقيمة التي تريد عرضها: المعالج أو الذاكرة أو البطارية أو القرص أو الشبكة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85730,6 +87845,12 @@
     },
     "Temperature in %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "درجة الحرارة في %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86014,6 +88135,12 @@
     },
     "Test voice" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تجربة الصوت"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86836,6 +88963,12 @@
     },
     "That could be %@. Which one should I stop?" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قد تقصد %@. أيّها أوقف؟"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88396,6 +90529,12 @@
     },
     "That pattern isn't a regular expression I can use." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا النمط ليس تعبيرًا نمطيًا يمكنني استخدامه."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88738,6 +90877,12 @@
     },
     "That step can't run anymore. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يعد تنفيذ هذه الخطوة ممكنًا. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89660,6 +91805,12 @@
     },
     "That's too many notes for one step (the limit is %lld)." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عدد الملاحظات أكبر مما تتحمله خطوة واحدة (الحد الأقصى: %lld)."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90060,6 +92211,12 @@
     },
     "The command printed nothing and exited with code %d." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يطبع الأمر شيئًا وانتهى بالرمز %d."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90112,6 +92269,12 @@
     },
     "The command printed nothing." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يطبع الأمر شيئًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91472,6 +93635,12 @@
     },
     "The microphone is on only while you hold the shortcut, and what you say is understood on this Mac. The recording is never kept; the words join your requests like typed ones." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يعمل الميكروفون إلا أثناء ضغطك مطوّلًا على الاختصار، ويُفهم ما تقوله على هذا الـ Mac. لا يُحفظ التسجيل أبدًا؛ وتنضم الكلمات إلى طلباتك مثل الطلبات المكتوبة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91524,6 +93693,12 @@
     },
     "The microphone is ready. Hold to talk." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الميكروفون جاهز. اضغط مطوّلًا للتحدث."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91576,6 +93751,12 @@
     },
     "The microphone opens the moment you press it." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُفتح الميكروفون لحظة الضغط عليه."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91628,6 +93809,12 @@
     },
     "The microphone went away while you were talking. Nothing was sent." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقطع الميكروفون أثناء حديثك. لم يُرسل شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93020,6 +95207,12 @@
     },
     "The speech model is ready. Hold to talk again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نموذج الكلام جاهز. اضغط مطوّلًا للتحدث مجددًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93072,6 +95265,12 @@
     },
     "The step I asked about is in Now, where you can still run it." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الخطوة التي سألتك عنها موجودة في «الآن»، حيث يمكنك تنفيذها."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93124,6 +95323,12 @@
     },
     "The task waits for your answer, a day at most." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنتظر المهمة إجابتك يومًا واحدًا على الأكثر."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93524,6 +95729,12 @@
     },
     "The weather service said %@." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ردّت خدمة الطقس بـ %@."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93576,6 +95787,12 @@
     },
     "The weather service sent no current weather." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم ترسل خدمة الطقس بيانات الطقس الحالي."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93628,6 +95845,12 @@
     },
     "The weather service sent no value." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم ترسل خدمة الطقس أي قيمة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93680,6 +95903,12 @@
     },
     "The weather service sent something I can't read." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرسلت خدمة الطقس شيئًا لا أستطيع قراءته."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93790,6 +96019,12 @@
     },
     "Their copies are in your notebook" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخها موجودة في دفترك"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93842,6 +96077,12 @@
     },
     "Their copies stay in your notebook. Notes keeps deleted notes in Recently Deleted for 30 days." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبقى نسخها في دفترك. يحتفظ تطبيق «ملاحظات» بالملاحظات المحذوفة في «المحذوفة مؤخرًا» لمدة 30 يومًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -94944,6 +97185,12 @@
     },
     "This Mac" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الـ Mac"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -94996,6 +97243,12 @@
     },
     "This Mac can't listen in this language. Pick another one." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يستطيع هذا الـ Mac الإصغاء إلى هذه اللغة. اختر لغة أخرى."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95048,6 +97301,12 @@
     },
     "This Mac has no battery." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يحتوي هذا الـ Mac على بطارية."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95506,6 +97765,12 @@
     },
     "This report doesn't say what to show." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يحدد هذا التقرير ما يجب عرضه."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95558,6 +97823,12 @@
     },
     "This report doesn't say where." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يحدد هذا التقرير المكان."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95610,6 +97881,12 @@
     },
     "This report has no web address." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس لهذا التقرير عنوان ويب."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95778,6 +98055,12 @@
     },
     "This version of Claude Code has no effort setting. Update it to choose one." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يحتوي هذا الإصدار من Claude Code على إعداد لجهد التفكير. حدّثه لتتمكن من اختيار مستوى."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -96062,6 +98345,12 @@
     },
     "Thunderstorm" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عاصفة رعدية"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -97796,6 +100085,12 @@
     },
     "Turn Off" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -97848,6 +100143,12 @@
     },
     "Turn Off Full Access" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف الوصول الكامل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -97900,6 +100201,12 @@
     },
     "Turn On Full Access" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل الوصول الكامل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -98126,6 +100433,12 @@
     },
     "Turn on Full access?" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تريد تشغيل الوصول الكامل؟"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -98408,6 +100721,9 @@
         }
       }
     },
+    "Type your reply…" : {
+
+    },
     "Type “%@” to confirm." : {
       "localizations" : {
         "ar" : {
@@ -98526,6 +100842,12 @@
     },
     "Typed requests get a short spoken answer too." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحصل الطلبات المكتوبة أيضًا على ردّ منطوق قصير."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -98810,6 +101132,12 @@
     },
     "Undo “%@”" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التراجع عن «%@»"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -99094,6 +101422,12 @@
     },
     "Unknown sky" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حالة الطقس غير معروفة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -99204,6 +101538,12 @@
     },
     "Until this request is done, Sidefolk does this again without asking. Offered only for steps that send nothing anywhere but to your AI." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلى أن ينتهي هذا الطلب، سيكرر Sidefolk ذلك دون أن يسأل. لا يُعرض إلا للخطوات التي لا ترسل شيئًا إلى أي مكان سوى الذكاء الاصطناعي الخاص بك."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -99430,6 +101770,12 @@
     },
     "Untitled note" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاحظة بلا عنوان"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -100765,6 +103111,12 @@
     },
     "Using Apple Notes and Reminders" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام ملاحظات Apple وتذكيراتها"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -100875,6 +103227,12 @@
     },
     "Value" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القيمة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -100927,6 +103285,12 @@
     },
     "Value on %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قيمة على %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -101102,6 +103466,12 @@
     "Voice" : {
       "comment" : "A Settings tab: talking to the companion and its spoken replies. Seven tabs share one toolbar: keep it short",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصوت"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -101154,6 +103524,12 @@
     },
     "Voice input" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإدخال الصوتي"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -101206,6 +103582,12 @@
     },
     "Volume" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مستوى الصوت"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -101316,6 +103698,12 @@
     },
     "Wait before skipping or stopping" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الانتظار قبل التخطي أو الإيقاف"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -103322,6 +105710,12 @@
     },
     "Weather" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الطقس"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -103374,6 +105768,12 @@
     },
     "Weather in %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الطقس في %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -103542,6 +105942,12 @@
     },
     "Web value" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قيمة ويب"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -103710,6 +106116,12 @@
     },
     "What %@ says is always shown on screen too. Quiet mode keeps %@ silent, and so does a call or typing again." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلام %1$@ يظهر دائمًا على الشاشة أيضًا. وضع الهدوء يُسكت %2$@، وكذلك المكالمة أو معاودة الكتابة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -104174,6 +106586,12 @@
     },
     "What you switched off under “What Sidefolk may do” stays off." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما أوقفته ضمن «ما يُسمح لـ Sidefolk بفعله» يبقى متوقفًا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -104284,6 +106702,12 @@
     },
     "When Sidefolk waits for your OK on something you asked for. Other agents' questions count as a no after two minutes." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عندما ينتظر Sidefolk موافقتك على شيء طلبته. تُعدّ أسئلة الوكلاء الآخرين رفضًا بعد دقيقتين."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -104452,6 +106876,12 @@
     },
     "When — e.g. “tomorrow 9am” or “every 30 minutes”; leave empty to keep %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متى — مثل «tomorrow 9am» أو «every 30 minutes»؛ اتركه فارغًا للإبقاء على %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -104679,6 +107109,12 @@
     },
     "Which address should I watch?" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أي عنوان أراقب؟"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -105153,6 +107589,12 @@
     },
     "Wind in %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرياح في %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -105263,6 +107705,12 @@
     },
     "With a notification each time" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مع إشعار في كل مرة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -105431,6 +107879,12 @@
     },
     "Working in a folder you haven't shared, saving a new skill, or removing notes from Apple Notes." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العمل في مجلد لم تشاركه، أو حفظ مهارة جديدة، أو إزالة ملاحظات من ملاحظات Apple."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -106418,6 +108872,12 @@
     },
     "You can switch back any time from the menu bar, the Ask panel or here." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنك العودة في أي وقت من شريط القائمة أو لوحة «اسأل» أو من هنا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -106470,6 +108930,12 @@
     },
     "You didn't answer in time, so the task stopped here." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُجب في الوقت المناسب، لذا توقفت المهمة هنا."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -106522,6 +108988,12 @@
     },
     "You didn't answer in time, so this step was skipped." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُجب في الوقت المناسب، لذا جرى تخطي هذه الخطوة."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -106574,6 +109046,12 @@
     },
     "You didn't answer in time. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُجب في الوقت المناسب. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107206,6 +109684,12 @@
     },
     "Your ElevenLabs plan is out of characters. Nothing was said." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نفدت أحرف خطتك في ElevenLabs. لم يُنطق شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -108650,6 +111134,12 @@
     },
     "a value" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قيمة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -109464,6 +111954,12 @@
       "comment" : "A permission: watching pages, files and programs. Also in “%@ is turned off in Sidefolk's Permissions settings.”",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المراقبة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -109580,6 +112076,12 @@
     },
     "changed %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عُدّلت %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -110045,6 +112547,12 @@
     },
     "created %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُنشئت %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -110331,6 +112839,12 @@
     },
     "done without asking" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم دون سؤال"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -110937,6 +113451,48 @@
     },
     "every %lld minutes" : {
       "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld دقائق"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld دقيقة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل دقيقة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld دقيقة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل دقيقتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "كل %lld دقيقة"
+                }
+              }
+            }
+          }
+        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -111923,6 +114479,12 @@
     },
     "every minute" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل دقيقة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113387,6 +115949,12 @@
     },
     "macOS asks the first time you hold the shortcut." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسألك macOS في أول مرة تضغط فيها مطوّلًا على الاختصار."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113439,6 +116007,12 @@
     },
     "macOS didn't let Sidefolk use %@. Nothing was changed." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يسمح macOS لـ Sidefolk باستخدام %@. لم يتغيّر شيء."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113555,6 +116129,12 @@
     },
     "macOS is downloading it into its own storage, not into Sidefolk." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينزّله macOS إلى مساحة التخزين الخاصة به، لا إلى Sidefolk."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113607,6 +116187,12 @@
     },
     "macOS needs to download this language's speech model once. It goes into the system's storage." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج macOS إلى تنزيل نموذج الكلام لهذه اللغة مرة واحدة. ويُحفظ في مساحة تخزين النظام."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -114009,6 +116595,12 @@
       "comment" : "The Mac's memory (RAM) in use, as a live value; not Sidefolk's memory of you",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذاكرة RAM"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -114555,6 +117147,12 @@
     },
     "nothing like that is running" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء مثل ذلك قيد التشغيل"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115308,6 +117906,12 @@
       "comment" : "Companion size",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كبير"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115368,6 +117972,12 @@
       "comment" : "Companion size, between Small and Large",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوسط"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115428,6 +118038,12 @@
       "comment" : "Companion size",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صغير"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115488,6 +118104,12 @@
       "comment" : "Weather: a clear sky (not the Clear button)",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صافٍ"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115512,6 +118134,12 @@
       "comment" : "Weather: it is raining",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مطر"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115652,6 +118280,12 @@
       "comment" : "Checkbox and status: the task or reminder is finished",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115711,6 +118345,12 @@
     "stops %@" : {
       "comment" : "“stops 11:00”, “stops Tomorrow 10:00”",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينتهي %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -116818,6 +119458,12 @@
     },
     "until %@" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حتى %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -116870,6 +119516,12 @@
     },
     "until you stop it" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حتى توقفه"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -116989,6 +119641,12 @@
       "comment" : "Status chip on a watch that is running",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قيد المراقبة"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117049,6 +119707,12 @@
       "comment" : "The sky, then the temperature: “Partly cloudy, 18 °C”",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@، %2$@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -119637,6 +122301,12 @@
     },
     "“%@” needs at least one note id." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج «%@» إلى معرّف ملاحظة واحد على الأقل."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -120459,6 +123129,12 @@
     },
     "“every_seconds” must be more than 0 and at most 7 days." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن يكون «every_seconds» أكبر من 0 وبحد أقصى 7 أيام."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -120975,6 +123651,12 @@
     },
     "“notes” needs at least one note." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج «notes» إلى ملاحظة واحدة على الأقل."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -121085,6 +123767,12 @@
     },
     "“source” must be metric, weather or web." : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن يكون «source» هو metric أو weather أو web."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -121491,6 +124179,12 @@
     },
     "↓ %@/s ↑ %@/s" : {
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↓ %1$@/ث ↑ %2$@/ث"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
