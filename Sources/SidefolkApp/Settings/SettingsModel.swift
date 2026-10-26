@@ -250,7 +250,7 @@ final class SettingsModel {
         drafts = await services.extensionDrafts()
     }
 
-    /// Shows the install preview for `folder` (Sidefolk's AI asked the person to review a draft).
+    /// Shows the install preview for `folder` over Settings (a draft's Review… button).
     func review(folder: URL) async {
         installPreview = await preview(folder: folder)
     }

@@ -146,7 +146,7 @@ final class FixtureServices: AppServices {
         id: "local.strava-runs", name: "Strava Runs", version: "0.1.0",
         description: "Your latest runs from Strava: distance, pace and time.",
         sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Sidefolk/ExtensionDrafts/local.strava-runs"),
-        permissionLines: ["Can use the internet"], warnings: [], toolNames: ["latest_runs"], watcherNames: [], isUpdate: false,
+        permissionLines: ["Can use the internet"], warnings: [], toolNames: ["Latest runs"], watcherNames: [], isUpdate: false,
         fromDraft: true)
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? { nil }

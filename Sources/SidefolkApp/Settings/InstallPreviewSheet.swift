@@ -7,6 +7,8 @@ import SwiftUI
 struct InstallPreviewSheet: View {
     var preview: ExtensionInstallPreview
     var model: SettingsModel
+    /// Closes the window it is shown in (`InstallPreviewWindow`); nil when it is a sheet.
+    var close: (() -> Void)? = nil
     @State private var armed = false
     @State private var installing = false
     @State private var error: UserFacingError?
@@ -81,13 +83,13 @@ struct InstallPreviewSheet: View {
                 Button("Show Files") { NSWorkspace.shared.activateFileViewerSelecting([preview.sourceFolder]) }
                     .buttonStyle(.sf(.plain))
                 Spacer()
-                Button("Cancel") { dismiss() }.buttonStyle(.sfSecondary).keyboardShortcut(.cancelAction)
+                Button("Cancel", action: finish).buttonStyle(.sfSecondary).keyboardShortcut(.cancelAction)
                 Button(installing ? "Installing…" : preview.isUpdate ? "Update \(preview.name)" : "Install \(preview.name)") {
                     installing = true
                     Task {
                         error = await model.install(preview)
                         installing = false
-                        if error == nil { dismiss() }
+                        if error == nil { finish() }
                     }
                 }
                 .buttonStyle(.sfPrimary)
@@ -102,6 +104,10 @@ struct InstallPreviewSheet: View {
             try? await Task.sleep(for: .milliseconds(800))
             armed = true
         }
+    }
+
+    private func finish() {
+        if let close { close() } else { dismiss() }
     }
 
     private var origin: Text {

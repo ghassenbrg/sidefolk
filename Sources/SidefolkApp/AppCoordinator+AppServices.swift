@@ -88,7 +88,9 @@ extension AppCoordinator: AppServices {
         return .success(ExtensionInstallPreview(
             id: manifest.id, name: manifest.name, version: manifest.version, description: manifest.description ?? "",
             sourceFolder: folder, permissionLines: summary?.lines.map(\.text) ?? [], warnings: warnings,
-            toolNames: manifest.tools.keys.sorted(), watcherNames: manifest.watchers.keys.sorted(), isUpdate: preview.update != nil,
+            // Titles, as the person will see the tools everywhere else.
+            toolNames: manifest.tools.keys.sorted().map { manifest.tools[$0]?.title ?? $0 },
+            watcherNames: manifest.watchers.keys.sorted().map { manifest.watchers[$0]?.title ?? $0 }, isUpdate: preview.update != nil,
             folk: manifest.folk, iconPath: preview.report.iconPath,
             fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/")))
     }

@@ -457,7 +457,7 @@ When a request needs something no tool does, Sidefolk's AI can offer to build an
    executable, no icon. Sidefolk sets its id (`local.<name>`) and author ("Sidefolk, for you").
 2. The draft is checked exactly like an install, and started once **with every permission removed**
    (no network, no folders, no programs), to see that it answers. The AI reads the result and fixes it.
-3. `extensions.review` opens the normal install preview in Settings › Extensions. The person reads what
+3. `extensions.review` opens the normal install preview in a window of its own. The person reads what
    it may do and installs it, or doesn't. Nothing is installed any other way.
 
 Only Sidefolk's own agent (or the person) can use these tools, never in a request that read outside

@@ -318,6 +318,12 @@ final class AppCoordinator {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
             return
         }
+        if command.hasPrefix("review:") {
+            // The same tool Sidefolk's AI calls when a draft is ready: the install preview opens over Settings.
+            let name = String(command.dropFirst("review:".count))
+            Task { _ = await runtime.executor.execute(name: "extensions.review", input: ["name": .string(name)], caller: .user) }
+            return
+        }
         if command.hasPrefix("companion:") {
             // companion:<id>[:<colour>[:<accessory>]], the same changes the Settings chooser makes.
             let parts = command.split(separator: ":").dropFirst().map(String.init)

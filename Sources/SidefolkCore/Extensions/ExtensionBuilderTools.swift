@@ -92,7 +92,7 @@ struct ReviewExtensionTool: Tool {
 
     let spec = ToolSpec(
         name: "extensions.review", title: String(localized: "Show an extension draft for review"),
-        description: "Opens the install preview for a finished draft in Settings › Extensions, where the person reads what it can do "
+        description: "Opens the install preview for a finished draft in a window of its own, where the person reads what it can do "
             + "and installs it, or doesn't. Use it once the draft passes extensions.draft's checks.",
         inputSchema: Schema.object(["name": ExtensionBuilderTools.nameSchema], required: ["name"]),
         risk: .low, capabilities: [.extensions], category: .extensions, mutates: false)
@@ -114,10 +114,10 @@ struct ReviewExtensionTool: Tool {
         }
         events.publish(.reviewExtension(folder))
         return ToolResult(
-            text: "The install preview for “\(manifest.name)” is open in Settings › Extensions. The person reads what it may do and "
+            text: "The install preview for “\(manifest.name)” is open in its own window. The person reads what it may do and "
                 + "decides there; nothing is installed until they click Install. Say so in one sentence. Once installed, its tools are "
                 + "offered from their next request. Don't open it again unless they ask.",
-            card: ResultCard(kind: .info, title: String(localized: "Review “\(manifest.name)”"), subtitle: String(localized: "Open in Settings › Extensions")))
+            card: ResultCard(kind: .info, title: String(localized: "Review “\(manifest.name)”"), subtitle: String(localized: "Waiting for you to review it")))
     }
 }
 

@@ -396,7 +396,8 @@ person names in a request.
 - *Before approval:* the draft is validated (T13) and started once in a sandbox with `permissions`
   replaced by `{}` (no network, no folders, no programs, no fork), in a throwaway Sidefolk home, for at most
   the 30 s call limit, under the watchdog. That is the only time unapproved model-written code runs.
-- *Installing:* only the normal install sheet in Settings (permission lines, warnings, sandbox, update
+- *Installing:* only the normal install preview (its own window when Sidefolk hands a draft over, a sheet
+  in Settings otherwise: permission lines, warnings, sandbox, update
   diff, 800 ms arming), opened by `extensions.review` or by the person; the model has no install tool.
   Installed drafts are origin `draft`, labelled "Written for you", and their descriptions don't reach the
   model (T2, T3: they would persist into every run).

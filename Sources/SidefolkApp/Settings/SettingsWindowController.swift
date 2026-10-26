@@ -24,6 +24,7 @@ struct SettingsTabContent: View {
 @MainActor
 final class SettingsWindowController: NSObject, NSWindowDelegate {
     private let model: SettingsModel
+    private let reviewWindow = InstallPreviewWindow()
     private var window: NSWindow?
     private var tabs: NSTabViewController?
 
@@ -49,11 +50,13 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     func close() { window?.performClose(nil) }
 
-    /// Settings › Extensions with the install preview of `folder` over it: Sidefolk's AI finished a draft,
-    /// and the person decides there (D39).
+    /// The install preview of `folder` in its own window: Sidefolk's AI finished a draft, and the person
+    /// decides there (D39). If it can't be previewed, Settings › Extensions says why.
     func review(folder: URL) {
-        show(tab: .extensions)
-        Task { await model.review(folder: folder) }
+        Task {
+            guard let preview = await model.preview(folder: folder) else { return show(tab: .extensions) }
+            reviewWindow.show(preview, model: model)
+        }
     }
 
     private func makeWindow() -> NSWindow {

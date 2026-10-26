@@ -480,7 +480,8 @@ existing tool wasn't possible, and a general "run this command" tool would have 
   a text-only draft into `ExtensionDrafts/local.<name>/` (Sidefolk sets the id and author; no binaries,
   links, executable bits or icon), which is validated like an install and started once with **every
   permission removed** so the AI can fix it before anyone is asked; then `extensions.review` opens the
-  normal install preview in Settings › Extensions ("written by Sidefolk for you", Show Files). Only the
+  normal install preview, in a window of its own ("written by Sidefolk for you", Show Files; a sheet over
+  Settings would stay hidden while the app isn't active, and the Ask panel never activates it). Only the
   person's click installs it. The tools refuse other agents, routines and extensions, and any request that
   read outside content (as command watchers do, T9). The "What you can reach" section offers to build one
   when the tool is offered. Installed drafts are origin `draft`, "Written for you", and follow D24.

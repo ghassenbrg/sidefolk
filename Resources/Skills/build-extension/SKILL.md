@@ -139,8 +139,8 @@ After three failed attempts, stop and tell the person what is wrong.
 ## 5. Hand it over
 
 When the checks pass and it started, call `extensions.review` with the draft's name. It opens the
-install preview in Settings › Extensions. Then say one sentence, like "It's ready: read what it may do
-in Settings and click Install if you're happy." Don't say it is installed; it isn't until they click.
+install preview in a window of its own. Then say one sentence, like "It's ready: read what it may do in
+the window that opened and click Install if you're happy." Don't say it is installed; it isn't until they click.
 Its tools are offered from their next request after they install it.
 
 ## Changing an extension you built
