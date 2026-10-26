@@ -55,23 +55,27 @@ extension AIChoice {
         }
     }
 
-    /// The service's own logo, where Simple Icons has one (D36). OpenAI (and so Codex), Groq and xAI
-    /// aren't there, and Sidefolk doesn't draw imitations: they keep their initials.
+    /// The service's own logo (D36). Claude Code and the Anthropic API both show Claude's mark: the API
+    /// row's own subtitle says "Claude models", and Claude is the name people look for, where Anthropic's
+    /// letter A would read as a different service. Codex has its own mark, apart from OpenAI's.
     var logo: ProviderLogo? {
         switch self {
-        case .claudeCode: .claudeCode
-        case .anthropic: .anthropic
+        case .claudeCode, .anthropic: .claude
+        case .codex: .codex
+        case .preset(.openAI): .openAI
         case .preset(.gemini): .gemini
         case .preset(.mistral): .mistral
+        case .preset(.groq): .groq
+        case .preset(.xai): .xai
         case .preset(.deepSeek): .deepSeek
         case .preset(.openRouter): .openRouter
         case .preset(.ollama): .ollama
         case .preset(.lmStudio): .lmStudio
-        default: nil
+        case .preset(.custom), .none: nil
         }
     }
 
-    /// Initials for the option's tile when it has no logo, or while the logos can't be loaded.
+    /// Initials for the option's tile while the logos can't be loaded (a dev build without `SIDEFOLK_RESOURCES`).
     var monogram: String {
         switch self {
         case .none: ""
