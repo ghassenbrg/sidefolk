@@ -112,7 +112,7 @@ final class Onboarding {
             item = bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
                           [("yes", "Start at login", true), ("no", "Not now", false)])
         case .done:
-            item = bubble("That's it.", "Drop files or links on me, double-click me for your notebook, or find me in the menu bar.",
+            item = bubble("That's it.", "Ask “what did I save about…” any time. Drop files or links on me, double-click me for your notebook, or find me in the menu bar.",
                           [("ok", "Got it", true)])
         }
         coordinator.presentLocal(item)
