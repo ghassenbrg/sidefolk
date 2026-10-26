@@ -19,6 +19,10 @@ enum Theme {
     static let surfaceSunken = Color(light: 0xF4F7FB, dark: 0x0E1A2E)
     static let surfaceRaised = Color(light: 0xFFFFFF, dark: 0x1B2C49)
     static let line = Color(light: 0xE2E8F0, dark: 0x26385A)
+    /// What a service's logo sits on, and the ink of one drawn in a single colour (D36). Both are neutral so
+    /// brand colours never clash with a folk colour, and the ink is the pure black or white the owners ask for.
+    static let logoPlate = Color(light: 0xFFFFFF, dark: 0x0E1A2E)
+    static let logoInk = Color(light: 0x000000, dark: 0xFFFFFF)
     static let accent = aqua
     /// Text on aqua: navy keeps 7:1 contrast.
     static let onAccent = Color(hex: 0x0F2D5B)

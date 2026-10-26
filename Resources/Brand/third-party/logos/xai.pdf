@@ -1,0 +1,57 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 24 24] /Contents 4 0 R /Resources << /ExtGState <<  >> /Shading <<  >> >> >>
+endobj
+4 0 obj
+<<  /Length 281 >>
+stream
+1 0 0 -1 0 24 cm
+q
+0 0 0 rg
+6.469 8.776 m
+16.512 23 l
+12.048 23 l
+2.005 8.776 l
+6.47 8.776 l
+h
+6.465 16.676 m
+8.698 19.84 l
+6.467 23 l
+2 23 l
+6.465 16.676 l
+h
+22 2.582 m
+22 23 l
+18.341 23 l
+18.341 7.764 l
+22 2.582 l
+h
+22 1 m
+12.048 15.095 l
+9.815 11.932 l
+17.533 1 l
+22 1 l
+h
+f*
+Q
+
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+trailer
+<< /Size 5 /Root 1 0 R >>
+startxref
+584
+%%EOF

@@ -472,9 +472,8 @@ current model doesn't take shows as Default and isn't sent, but is kept. Thinkin
 model's default (Anthropic: no `thinking` field). Extra high and Max raise the API loop's output
 allowance to 16k, as "Think harder" does. "Think harder" on Codex starts at High, which it always
 sent.
-Services show their own logo where Simple Icons has one (16.35.0, CC0: Anthropic, Claude Code,
-Gemini, Mistral, DeepSeek, OpenRouter, Ollama, LM Studio), as vector PDFs drawn as templates in the
-ink colour; the rest keep monograms or symbols. Credits and trademark note in
+Services show their own logo as vector PDFs (see the logo addendum below, which replaced the first
+choice of Simple Icons, black-only marks and monograms). Credits and trademark note in
 `Resources/Brand/third-party/README.md`.
 **Why:** the founder runs Codex at different efforts per model (gpt-6-luna at extra high, gpt-6.1-sol
 at high) and asked for logos so the services are recognisable. Offering a level a model rejects
@@ -482,11 +481,24 @@ would turn a setting into a failed request; offering nothing where support is un
 **Alternatives:** one effort for both slots (can't express the founder's setup); every level for
 every provider (requests that fail); Codex's "ultra" (it delegates to sub-agents, which the isolated
 brain switches off, D26); enabling Anthropic thinking explicitly (changes models whose default is
-off); drawing logos for OpenAI, Groq and xAI (imitations of trademarks); full-colour logos (clash
-with the folk-colour tiles and dark mode).
+off); Sidefolk drawing its own logos for OpenAI, Groq and xAI (imitations of trademarks).
 **Implications:** the per-family tables go stale as providers ship models; a model Sidefolk can't
 place shows no control until the table learns it. The CLIs tell Sidefolk themselves, so they stay
 current. Logos load from resources: dev builds see them with `SIDEFOLK_RESOURCES`.
+**Addendum, logos (2026-10-26):** the founder wanted every brand's real, recognisable mark, and Simple
+Icons has none for OpenAI, Codex, Groq or xAI (and draws Claude Code as the terminal mascot, not Claude).
+So the logos now come from LobeHub Icons (`@lobehub/icons-static-svg` 1.101.0, MIT, kept as downloaded):
+Claude's starburst for Claude Code and for the Anthropic API row (it sells Claude models, and
+Anthropic's letter A would read as another service), OpenAI's knot, Codex's own cloud-and-prompt mark,
+Gemini's gradient sparkle, DeepSeek's whale, Mistral's stripes, Ollama's llama, and LM Studio, Groq, xAI
+and OpenRouter in black or white (OpenRouter's own Ink and Cloud). Marks the owner draws in colour keep
+every colour. Marks that are black or white by design are templates tinted pure black or white, not
+the navy ink, which would be a recolouring. All sit on a neutral plate (`Theme.logoPlate`), so the old
+objection to colour logos, that they clash with the folk-colour tiles, is gone with the tiles. The
+script now writes the PDFs itself: CoreSVG bends arcs written with run-together flags, drops opacity
+on `currentColor`, and a PDF context drops a gradient's alpha (Gemini). MIT covers LobeHub's drawings,
+not the owners' trademarks; the README records each brand's rules and what isn't verified (Anthropic
+says use is limited to what it permits; OpenAI's and xAI's pages couldn't be read).
 
 ### D37 — Approval modes, and no task left waiting on a question (2026-10-26)
 **Decision:** Settings › Privacy & Permissions starts with how much Sidefolk asks before its own agent

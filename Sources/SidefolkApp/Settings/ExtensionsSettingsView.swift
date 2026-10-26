@@ -455,7 +455,7 @@ struct AgentsGroup: View {
         AgentCard(
             name: "Claude Code",
             symbol: "sparkle",
-            logo: .claudeCode,
+            logo: .claude,
             status: !s.claudeCodeFound ? String(localized: "Not installed")
                 : s.claudeMCPInstalled ? (s.claudeHooksInstalled ? String(localized: "Connected, with session taps") : String(localized: "Connected"))
                 : String(localized: "Not connected"),
@@ -501,6 +501,7 @@ struct AgentsGroup: View {
         AgentCard(
             name: "Codex",
             symbol: "chevron.left.forwardslash.chevron.right",
+            logo: .codex,
             status: !s.codexFound ? String(localized: "Not installed")
                 : s.codexMCPInstalled ? String(localized: "Connected") : String(localized: "Not connected"),
             connected: s.codexMCPInstalled,
@@ -516,7 +517,7 @@ struct AgentsGroup: View {
 private struct AgentCard<Extra: View>: View {
     var name: String
     var symbol: String
-    /// The agent's own logo where Simple Icons has one; the symbol otherwise (D36).
+    /// The agent's own logo; the symbol where it has none, or while the logos can't be loaded (D36).
     var logo: ProviderLogo? = nil
     var status: String
     var connected: Bool
@@ -529,7 +530,7 @@ private struct AgentCard<Extra: View>: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
-            // Each agent its own mark on Byte's colour (agents are Byte's job); one Byte per card read as three.
+            // Each agent its own mark (one Byte per card read as three); the command, which has no logo, keeps Byte's colour.
             IconTile(symbol: symbol, folk: "byte", size: 32, logo: logo)
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
