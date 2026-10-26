@@ -192,11 +192,11 @@ public final class LocalAPIServer: Sendable {
                 close(client)
                 continue
             }
-            let conn = BridgeConnection(id: id, fd: client, lineLimit: limits.maxLineBytes)
+            let conn = BridgeConnection(id: id, fd: client, lineLimit: limits.maxLineBytes, peerPID: UnixSocket.peerPID(client))
             state.withLock { $0.connections[id] = conn }
             conn.start(queue: queue, onLine: { [weak self] c, line in self?.handle(line, on: c) },
                        onEnd: { [weak self] c in self?.drop(c) })
-            Log.shared.debug("bridge", "connection opened", ["id": "\(id)", "pid": UnixSocket.peerPID(client).map { "\($0)" } ?? "?"])
+            Log.shared.debug("bridge", "connection opened", ["id": "\(id)", "pid": conn.peerPID.map { "\($0)" } ?? "?"])
         }
     }
 
@@ -282,10 +282,12 @@ public final class LocalAPIServer: Sendable {
                 conn.send(BridgeProtocol.reply(id: id, result: snapshot.json))
             }
         case .sessionEvent:
-            guard let tracker = services.sessions, let event = SessionEvent(json: params) else {
+            guard let tracker = services.sessions, let parsed = SessionEvent(json: params) else {
                 conn.send(BridgeProtocol.failure(id: id, .badRequest, "Not a session event Sidefolk understands."))
                 return
             }
+            // Checked here, on the read, while the sender is connected and waiting for its reply.
+            let event = HostTrust.verified(parsed, peer: conn.peerPID)
             Task {
                 await tracker.apply(event)
                 conn.send(BridgeProtocol.reply(id: id, result: ["ok": true]))
@@ -381,6 +383,8 @@ enum BridgeCaller: Sendable {
 /// One accepted socket: reads lines on the server queue, writes replies from any task.
 final class BridgeConnection: Sendable {
     let id: UInt64
+    /// The process that connected, if the kernel said (`LOCAL_PEERPID`).
+    let peerPID: pid_t?
     private let fd: Int32
     private let io = Mutex(true)
     private let session: Mutex<SessionState>
@@ -405,8 +409,9 @@ final class BridgeConnection: Sendable {
         if closed { task.cancel() }
     }
 
-    init(id: UInt64, fd: Int32, lineLimit: Int) {
+    init(id: UInt64, fd: Int32, lineLimit: Int, peerPID: pid_t?) {
         self.id = id
+        self.peerPID = peerPID
         self.fd = fd
         session = Mutex(SessionState(buffer: BridgeLineBuffer(limit: lineLimit)))
     }

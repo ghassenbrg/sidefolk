@@ -75,7 +75,8 @@ public final class SidefolkRuntime: Sendable {
         gateway = ExternalToolGateway(registry: registry, permissions: permissions, broker: broker, activity: activity,
                                       events: events, clock: clock)
         sessionTracker = SessionTracker(store: sessions, attention: attention, events: events, clock: clock, open: { session in
-            _ = await platform.activateApplication(pid: session.hostPid, bundleId: session.hostApp)
+            let host = HostTrust.target(for: session)
+            _ = await platform.activateApplication(pid: host.pid, bundleId: host.bundleId)
         })
         jobTracker = JobTracker(store: jobs, attention: attention, events: events, clock: clock)
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)

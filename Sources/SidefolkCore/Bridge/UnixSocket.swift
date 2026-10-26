@@ -59,7 +59,8 @@ public enum UnixSocket {
         }
     }
 
-    /// The uid of the process on the other end (`LOCAL_PEERCRED`). PIDs are only for logs: they get reused.
+    /// The uid of the process on the other end (`LOCAL_PEERCRED`). The uid is the access check; a pid
+    /// never is, since pids get reused (see `peerPID`).
     public static func peerUID(_ fd: Int32) -> uid_t? {
         var cred = xucred()
         var len = socklen_t(MemoryLayout<xucred>.size)
@@ -69,6 +70,8 @@ public enum UnixSocket {
         return cred.cr_uid
     }
 
+    /// The pid that connected (`LOCAL_PEERPID`). Used in logs, and to tell whether a session event's
+    /// host app sits above its sender while that sender is still connected (`HostTrust`).
     static func peerPID(_ fd: Int32) -> pid_t? {
         var pid: pid_t = 0
         var len = socklen_t(MemoryLayout<pid_t>.size)
