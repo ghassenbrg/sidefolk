@@ -87,9 +87,9 @@ public struct ProcessExitsProbe: WatcherProbe {
         var w = watcher
         let name = w.config.string("name")
         let pid = w.config["pid"]?.intValue
-        guard name != nil || pid != nil else { throw WatchError.invalid("Tell me which program to watch, by name or by its process number.") }
-        if let pid, pid <= 0 || pid > Int(Int32.max) { throw WatchError.invalid("That isn't a valid process number.") }
-        if let name, name.count > 100 || name.contains("/") { throw WatchError.invalid("Use the program's name, like Xcode, not a path.") }
+        guard name != nil || pid != nil else { throw WatchError.invalid(String(localized: "Tell me which program to watch, by name or by its process number.")) }
+        if let pid, pid <= 0 || pid > Int(Int32.max) { throw WatchError.invalid(String(localized: "That isn't a valid process number.")) }
+        if let name, name.count > 100 || name.contains("/") { throw WatchError.invalid(String(localized: "Use the program's name, like Xcode, not a path.")) }
         var config: [String: JSONValue] = [:]
         if let name { config["name"] = .string(name) }
         if let pid { config["pid"] = .number(Double(pid)) }
@@ -97,8 +97,10 @@ public struct ProcessExitsProbe: WatcherProbe {
         return w
     }
 
+    /// A process number goes in as text: as a number it would get a thousands separator ("Process 4,312").
     static func label(_ config: JSONValue) -> String {
-        (config.string("name") ?? config["pid"]?.intValue.map { "Process \($0)" } ?? "That program").displaySafe.clipped(60)
+        (config.string("name") ?? config["pid"]?.intValue.map { String(localized: "Process \(String($0))") } ?? String(localized: "That program"))
+            .displaySafe.clipped(60)
     }
 
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
@@ -126,12 +128,12 @@ public struct ProcessExitsProbe: WatcherProbe {
             return ProbeResult(state: .object(state))
         }
         if wasSeen {
-            return ProbeResult(state: ["seen": false, "reported": true], triggered: true, summary: "\(label) exited")
+            return ProbeResult(state: ["seen": false, "reported": true], triggered: true, summary: String(localized: "\(label) exited"))
         }
         // Never seen running. Say so once, in the card that confirms the new watcher ("Xcode isn't running"), and keep
         // waiting for it to start and then quit; no notice on top of the card, and none again and again.
         return ProbeResult(state: ["seen": false, "reported": true],
-                           firstLookNote: previous == nil ? "\(label) isn't running right now." : nil)
+                           firstLookNote: previous == nil ? String(localized: "\(label) isn't running right now.") : nil)
     }
 
     public func eventTargets(for watcher: Watcher) -> [WatchEventTarget] {

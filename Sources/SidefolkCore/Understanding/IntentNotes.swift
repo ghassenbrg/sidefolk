@@ -22,10 +22,10 @@ extension IntentParser {
 
     private static func label(_ kind: NotebookItem.Kind) -> String {
         switch kind {
-        case .note: "Note"
-        case .idea: "Idea"
-        case .task: "Task"
-        case .link: "Link"
+        case .note: String(localized: "Note")
+        case .idea: String(localized: "Idea")
+        case .task: String(localized: "Task")
+        case .link: String(localized: "Link")
         }
     }
 
@@ -180,15 +180,15 @@ extension IntentParser {
             }
         }
         let finalKind = resolved.isTaskList && kind == .note ? .task : kind
-        let where_ = resolved.name ?? "Inbox"
+        let where_ = resolved.name ?? String(localized: "Inbox")
         return ParsedIntent(intent: .note(kind: finalKind, text: body, collection: resolved.name, collectionKind: resolved.kind ?? (resolved.name == nil ? nil : listKind)),
-                            hint: "\(Self.label(finalKind)) → \(where_) · no AI")
+                            hint: ParsedIntent.hint("\(Self.label(finalKind)) → \(where_)"))
     }
 
     private func remembered(_ fact: String) -> ParsedIntent? {
         let clean = fact.unquoted.capitalizedFirst
         guard !clean.isEmpty else { return nil }
-        return ParsedIntent(intent: .aboutMe(fact: clean), hint: "Remember in About you · no AI")
+        return ParsedIntent(intent: .aboutMe(fact: clean), hint: ParsedIntent.hint(String(localized: "Remember in About you")))
     }
 
     // MARK: Searching
@@ -238,9 +238,13 @@ extension IntentParser {
     }
 
     private func findHint(kind: NotebookItem.Kind?, query: String, collection: String?) -> String {
-        guard kind != nil || collection != nil else { return "Search notebook · no AI" }
-        let what = kind.map { "\(Self.label($0).lowercased())s" } ?? "notebook"
-        let place = collection.map { " in \($0)" } ?? ""
-        return "Search \(what)\(place) · no AI"
+        let what = switch kind {
+        case .note?: String(localized: "notes", comment: "What a search looks through: “Search notes”")
+        case .idea?: String(localized: "ideas", comment: "What a search looks through: “Search ideas”")
+        case .task?: String(localized: "tasks", comment: "What a search looks through: “Search tasks”")
+        case .link?: String(localized: "links", comment: "What a search looks through: “Search links”")
+        case nil: String(localized: "notebook", comment: "What a search looks through: “Search notebook”")
+        }
+        return ParsedIntent.hint(collection.map { String(localized: "Search \(what) in \($0)") } ?? String(localized: "Search \(what)"))
     }
 }

@@ -10,7 +10,7 @@ struct NotesSaveTool: Tool {
     let events: EventBus
 
     let spec = ToolSpec(
-        name: "notes.save", title: "Save to notebook",
+        name: "notes.save", title: String(localized: "Save to notebook"),
         description: """
             Save a note, idea, task or link in the user's notebook. The first line of `text` becomes the title and the \
             rest the body. Saves to the Inbox unless `collection` names a project or topic (it is created if it \
@@ -29,7 +29,7 @@ struct NotesSaveTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         let title = NoteText.split(input.string("text") ?? "").title
-        return "Save “\(title.clipped(60))” to \(input.string("collection") ?? NotebookStore.inboxName)"
+        return String(localized: "Save “\(title.clipped(60))” to \(input.string("collection") ?? String(localized: "Inbox"))")
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -67,19 +67,19 @@ struct NotesSaveTool: Tool {
         try await notebook.add(item)
         events.changed(.notebook)
 
-        let where_ = "\(target.collection.name) › \(NoteText.plural(finalKind))"
+        let where_ = "\(NotebookCollections.shownName(target.collection)) › \(NoteText.plural(finalKind))"
         var message = "Saved \(finalKind.rawValue) “\(title.clipped(80))” to \(target.collection.name) (id \(item.id))."
         var detail: String?
         if target.created {
             message += " “\(target.collection.name)” didn't exist, so I created it as a new \(target.collection.kind.rawValue)."
-            detail = "New \(target.collection.kind.rawValue) “\(target.collection.name)” created."
+            detail = NotebookCollections.createdNote(target.collection)
         }
         let notebook = self.notebook, events = self.events, id = item.id
         return ToolResult(
             text: message,
-            card: ResultCard(kind: .note, title: "Saved to \(where_)", subtitle: title.clipped(80), detail: detail, refId: id, url: url,
-                             itemKind: finalKind),
-            undo: UndoAction(label: "Removed “\(title.clipped(40))”") {
+            card: ResultCard(kind: .note, title: String(localized: "Saved to \(where_)"), subtitle: title.clipped(80), detail: detail, refId: id,
+                             url: url, itemKind: finalKind),
+            undo: UndoAction(label: String(localized: "Removed “\(title.clipped(40))”")) {
                 _ = try await notebook.trash(itemId: id)
                 events.changed(.notebook)
             },
@@ -92,7 +92,7 @@ struct NotesSearchTool: Tool {
     let notebook: NotebookStore
 
     let spec = ToolSpec(
-        name: "notes.search", title: "Search notebook",
+        name: "notes.search", title: String(localized: "Search notebook"),
         description: """
             Full-text search over the user's notes, ideas, tasks and links. Returns ids, titles, collections and \
             short snippets, best matches first. Use it to answer "what did I save about …".
@@ -106,9 +106,9 @@ struct NotesSearchTool: Tool {
         risk: .low, capabilities: [.notebook], category: .notes, mutates: false, external: true)
 
     func summary(for input: JSONValue) -> String {
-        var s = "Search your notes for “\((input.string("query") ?? "").clipped(60))”"
-        if let c = input.string("collection") { s += " in \(c)" }
-        return s
+        let query = (input.string("query") ?? "").clipped(60)
+        if let c = input.string("collection") { return String(localized: "Search your notes for “\(query)” in \(c)") }
+        return String(localized: "Search your notes for “\(query)”")
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -118,20 +118,20 @@ struct NotesSearchTool: Tool {
         var collectionId: String?
         if let name = input.string("collection") {
             guard let c = try await NotebookCollections.resolve(name, notebook: notebook) else {
-                throw ToolError.notFound("a collection called “\(name)”")
+                throw ToolError.notFound(String(localized: "a collection called “\(name)”"))
             }
             collectionId = c.id
         }
         let items = try await notebook.search(query, collectionId: collectionId, kinds: kind.map { [$0] }, limit: limit)
         guard !items.isEmpty else {
             return ToolResult(text: "No notes matched “\(query.clipped(60))”.",
-                              card: ResultCard(kind: .list, title: "No matching notes", subtitle: query.clipped(60)))
+                              card: ResultCard(kind: .list, title: String(localized: "No matching notes"), subtitle: query.clipped(60)))
         }
         let collections = try await NotebookCollections.byId(notebook)
         let body = items.map { NoteFormat.line($0, collections: collections) }.joined(separator: "\n")
         return ToolResult(
             text: "\(ToolFormat.count(items.count, "note")) matched “\(query.clipped(60))”:\n\(body)",
-            card: ResultCard(kind: .list, title: "\(ToolFormat.count(items.count, "match", "matches")) for “\(query.clipped(40))”",
+            card: ResultCard(kind: .list, title: String(localized: "\(items.count) matches for “\(query.clipped(40))”"),
                              subtitle: items.prefix(3).map { $0.title.clipped(30) }.joined(separator: " · ")),
             untrusted: NoteFormat.hasForeign(items, collections: collections))
     }
@@ -141,7 +141,7 @@ struct NotesListTool: Tool {
     let notebook: NotebookStore
 
     let spec = ToolSpec(
-        name: "notes.list", title: "List notes",
+        name: "notes.list", title: String(localized: "List notes"),
         description: "List the newest notes, ideas, tasks and links, optionally for one collection, kind or status.",
         inputSchema: Schema.object([
             "collection": Schema.string("Only this project, topic or list"),
@@ -152,8 +152,8 @@ struct NotesListTool: Tool {
         risk: .low, capabilities: [.notebook], category: .notes, mutates: false)
 
     func summary(for input: JSONValue) -> String {
-        if let c = input.string("collection") { return "List what's in \(c)" }
-        return "List your newest notes"
+        if let c = input.string("collection") { return String(localized: "List what's in \(c)") }
+        return String(localized: "List your newest notes")
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -161,11 +161,14 @@ struct NotesListTool: Tool {
         let limit = input.clampedInt("limit", default: 20, in: 1...50)
         var status: NotebookItem.Status?
         if let raw = input.string("status") {
-            guard let s = NotebookItem.Status(rawValue: raw.lowercased()) else { throw ToolError.invalidInput("“status” must be open or done.") }
+            guard let s = NotebookItem.Status(rawValue: raw.lowercased()) else {
+                throw ToolError.invalidInput(String(localized: "“status” must be open or done."))
+            }
             status = s
         }
         var collectionId: String?
         var scope = "everywhere"
+        var shownScope = String(localized: "everywhere")
         // The scope quotes the collection's own name, which a partial name may have matched.
         var foreignScope = false
         if let name = input.string("collection") {
@@ -173,21 +176,22 @@ struct NotesListTool: Tool {
             let found = NotebookCollections.isProfileName(name)
                 ? try await NotebookCollections.profile(notebook, create: false)
                 : try await NotebookCollections.resolve(name, notebook: notebook)
-            guard let c = found else { throw ToolError.notFound("a collection called “\(name)”") }
+            guard let c = found else { throw ToolError.notFound(String(localized: "a collection called “\(name)”")) }
             collectionId = c.id
             scope = "in \(c.name)"
+            shownScope = String(localized: "in \(NotebookCollections.shownName(c))")
             foreignScope = NotebookCollections.isForeign(c)
         }
         let items = try await notebook.items(collectionId: collectionId, kinds: kind.map { [$0] }, status: status, limit: limit)
         guard !items.isEmpty else {
-            return ToolResult(text: "Nothing found \(scope).", card: ResultCard(kind: .list, title: "Nothing here yet", subtitle: scope),
+            return ToolResult(text: "Nothing found \(scope).", card: ResultCard(kind: .list, title: String(localized: "Nothing here yet"), subtitle: shownScope),
                               untrusted: foreignScope)
         }
         let collections = try await NotebookCollections.byId(notebook)
         return ToolResult(
             text: "\(ToolFormat.count(items.count, "item")) \(scope), newest first:\n"
                 + items.map { NoteFormat.line($0, collections: collections) }.joined(separator: "\n"),
-            card: ResultCard(kind: .list, title: ToolFormat.count(items.count, "item"), subtitle: scope),
+            card: ResultCard(kind: .list, title: String(localized: "\(items.count) items"), subtitle: shownScope),
             untrusted: foreignScope || NoteFormat.hasForeign(items, collections: collections))
     }
 }
@@ -197,7 +201,7 @@ struct NotesUpdateTool: Tool {
     let events: EventBus
 
     let spec = ToolSpec(
-        name: "notes.update", title: "Change a note",
+        name: "notes.update", title: String(localized: "Change a note"),
         description: """
             Change an existing note by id: replace its text (first line = title), move it to another collection, \
             mark a task open or done, or replace its tags. Find ids with notes.search or notes.list.
@@ -213,16 +217,24 @@ struct NotesUpdateTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         var changes: [String] = []
-        if input["text"] != nil { changes.append("text") }
-        if let c = input.string("collection") { changes.append("move to \(c)") }
-        if let s = input.string("status") { changes.append("mark \(s)") }
-        if input["tags"] != nil { changes.append("tags") }
-        return "Change a note (" + (changes.isEmpty ? "nothing" : changes.joined(separator: ", ")) + ")"
+        if input["text"] != nil { changes.append(String(localized: "text")) }
+        if let c = input.string("collection") { changes.append(String(localized: "move to \(c)")) }
+        if let s = input.string("status") { changes.append(Self.mark(s)) }
+        if input["tags"] != nil { changes.append(String(localized: "tags")) }
+        return String(localized: "Change a note (\(changes.isEmpty ? String(localized: "nothing") : Wording.list(changes)))")
+    }
+
+    private static func mark(_ status: String) -> String {
+        switch NotebookItem.Status(rawValue: status.lowercased()) {
+        case .done: String(localized: "mark done")
+        case .open: String(localized: "mark open")
+        case nil: String(localized: "mark \(status)")
+        }
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let id = try input.requiredText("id", limit: 64)
-        guard var item = try await notebook.item(id: id) else { throw ToolError.notFound("a note with that id") }
+        guard var item = try await notebook.item(id: id) else { throw ToolError.notFound(String(localized: "a note with that id")) }
         guard item.deletedAt == nil else {
             throw UserFacingError("That note is in the Trash, so I left it alone.", recovery: "Restore it from the Trash first.")
         }
@@ -230,7 +242,9 @@ struct NotesUpdateTool: Tool {
             throw UserFacingError("That's a fact in “About you”. Use the profile tools to change it.")
         }
         let previous = item
+        // What changed, in English for the model and in the app's language for the card.
         var changed: [String] = []
+        var shownChanged: [String] = []
 
         if input.string("text") != nil {
             let (title, body) = NoteText.split(try input.requiredText("text", limit: NoteText.maxText))
@@ -240,6 +254,7 @@ struct NotesUpdateTool: Tool {
             // trusted just because Sidefolk's own agent edited it.
             if !(ItemProvenance.isForeign(item.source) && context.caller != .user) { item.source = context.provenanceTag }
             changed.append("text")
+            shownChanged.append(String(localized: "text"))
         }
         var movedTo: (collection: NotebookCollection, created: Bool)?
         if let name = input.string("collection") {
@@ -248,19 +263,26 @@ struct NotesUpdateTool: Tool {
                 item.collectionId = target.collection.id
                 movedTo = target
                 changed.append("moved to \(target.collection.name)")
+                shownChanged.append(String(localized: "moved to \(NotebookCollections.shownName(target.collection))"))
             }
         }
         if let raw = input.string("status") {
-            guard let status = NotebookItem.Status(rawValue: raw.lowercased()) else { throw ToolError.invalidInput("“status” must be open or done.") }
-            if status != item.status { changed.append("marked \(status.rawValue)") }
+            guard let status = NotebookItem.Status(rawValue: raw.lowercased()) else {
+                throw ToolError.invalidInput(String(localized: "“status” must be open or done."))
+            }
+            if status != item.status {
+                changed.append("marked \(status.rawValue)")
+                shownChanged.append(status == .done ? String(localized: "marked done") : String(localized: "marked open"))
+            }
             item.status = status
         }
         if let tags = input.textList("tags") {
             item.tags = NoteText.cleanTags(tags).joined(separator: " ")
             changed.append("tags")
+            shownChanged.append(String(localized: "tags"))
         }
         guard !changed.isEmpty else {
-            throw ToolError.invalidInput("nothing to change. Give new text, a collection, a status or tags.")
+            throw ToolError.invalidInput(String(localized: "nothing to change. Give new text, a collection, a status or tags."))
         }
 
         item.updatedAt = context.now
@@ -272,9 +294,9 @@ struct NotesUpdateTool: Tool {
         let notebook = self.notebook, events = self.events
         return ToolResult(
             text: message,
-            card: ResultCard(kind: .note, title: "Updated \(item.kind.rawValue)", subtitle: item.title.clipped(80), detail: changed.joined(separator: ", "),
+            card: ResultCard(kind: .note, title: NoteText.updated(item.kind), subtitle: item.title.clipped(80), detail: Wording.list(shownChanged),
                              refId: item.id, itemKind: item.kind),
-            undo: UndoAction(label: "Restored “\(previous.title.clipped(40))”") {
+            undo: UndoAction(label: String(localized: "Restored “\(previous.title.clipped(40))”")) {
                 // Put the words back, not the note itself: if it was moved to the Trash since, it stays there.
                 var back = previous
                 if let current = try await notebook.item(id: previous.id) { back.deletedAt = current.deletedAt }
@@ -290,16 +312,16 @@ struct NotesTrashTool: Tool {
     let events: EventBus
 
     let spec = ToolSpec(
-        name: "notes.trash", title: "Move a note to the Trash",
+        name: "notes.trash", title: String(localized: "Move a note to the Trash"),
         description: "Move a note to the Trash by id. It stays restorable for 30 days.",
         inputSchema: Schema.object(["id": Schema.string("The note's id")], required: ["id"]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: true)
 
-    func summary(for input: JSONValue) -> String { "Move a note to the Trash" }
+    func summary(for input: JSONValue) -> String { String(localized: "Move a note to the Trash") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let id = try input.requiredText("id", limit: 64)
-        guard let item = try await notebook.item(id: id) else { throw ToolError.notFound("a note with that id") }
+        guard let item = try await notebook.item(id: id) else { throw ToolError.notFound(String(localized: "a note with that id")) }
         guard item.deletedAt == nil else { throw UserFacingError("That note is already in the Trash.") }
         if try await NotebookCollections.isProfile(collectionId: item.collectionId, notebook: notebook) {
             throw UserFacingError("That's a fact in “About you”. Use “forget” to remove it.")
@@ -309,8 +331,8 @@ struct NotesTrashTool: Tool {
         let notebook = self.notebook, events = self.events
         return ToolResult(
             text: "Moved “\(item.title.clipped(80))” to the Trash. It can be restored for 30 days.",
-            card: ResultCard(kind: .note, title: "Moved to Trash", subtitle: item.title.clipped(80), refId: id, itemKind: item.kind),
-            undo: UndoAction(label: "Restored “\(item.title.clipped(40))”") {
+            card: ResultCard(kind: .note, title: String(localized: "Moved to Trash"), subtitle: item.title.clipped(80), refId: id, itemKind: item.kind),
+            undo: UndoAction(label: String(localized: "Restored “\(item.title.clipped(40))”")) {
                 try await notebook.restore(itemId: id)
                 events.changed(.notebook)
             })
@@ -321,19 +343,19 @@ struct CollectionsListTool: Tool {
     let notebook: NotebookStore
 
     let spec = ToolSpec(
-        name: "collections.list", title: "List collections",
+        name: "collections.list", title: String(localized: "List collections"),
         description: "List the notebook's collections (Inbox, projects, topics, lists) with how many items each holds.",
         inputSchema: Schema.object([:]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: false)
 
-    func summary(for input: JSONValue) -> String { "List your notebook collections" }
+    func summary(for input: JSONValue) -> String { String(localized: "List your notebook collections") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let collections = try await notebook.collections()
         let counts = try await NotebookCollections.itemCounts(notebook)
         guard !collections.isEmpty else {
             return ToolResult(text: "The notebook has no collections yet. Notes go to the Inbox.",
-                              card: ResultCard(kind: .collection, title: "No collections yet"))
+                              card: ResultCard(kind: .collection, title: String(localized: "No collections yet")))
         }
         let lines = collections.map { c in
             var meta = [c.kind == .profile ? "about you" : c.kind.rawValue, ToolFormat.count(counts[c.id] ?? 0, "item")]
@@ -342,8 +364,8 @@ struct CollectionsListTool: Tool {
         }
         // A name someone else chose is their words, not the user's (SECURITY T2, T3).
         return ToolResult(text: "Collections:\n" + lines.map { "- " + $0 }.joined(separator: "\n"),
-                          card: ResultCard(kind: .collection, title: ToolFormat.count(collections.count, "collection"),
-                                           subtitle: collections.prefix(4).map(\.name).joined(separator: " · ")),
+                          card: ResultCard(kind: .collection, title: String(localized: "\(collections.count) collections"),
+                                           subtitle: collections.prefix(4).map(NotebookCollections.shownName).joined(separator: " · ")),
                           untrusted: collections.contains(where: NotebookCollections.isForeign))
     }
 }
@@ -353,7 +375,7 @@ struct CollectionsCreateTool: Tool {
     let events: EventBus
 
     let spec = ToolSpec(
-        name: "collections.create", title: "Create a collection",
+        name: "collections.create", title: String(localized: "Create a collection"),
         description: "Create a project, topic or list to file notes in. If one with that name exists it is reused.",
         inputSchema: Schema.object([
             "name": Schema.string("Name, e.g. “Sidefolk” or “Reading list”"),
@@ -361,14 +383,14 @@ struct CollectionsCreateTool: Tool {
         ], required: ["name"]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: true)
 
-    func summary(for input: JSONValue) -> String { "Create the collection “\((input.string("name") ?? "").clipped(60))”" }
+    func summary(for input: JSONValue) -> String { String(localized: "Create the collection “\((input.string("name") ?? "").clipped(60))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let name = try input.requiredText("name", limit: 60)
         var kind = NotebookCollection.Kind.project
         if let raw = input.string("kind") {
             guard let k = NotebookCollection.Kind(rawValue: raw.lowercased()), [.project, .topic, .list].contains(k) else {
-                throw ToolError.invalidInput("“kind” must be project, topic or list.")
+                throw ToolError.invalidInput(String(localized: "“kind” must be project, topic or list."))
             }
             kind = k
         }
@@ -377,21 +399,22 @@ struct CollectionsCreateTool: Tool {
             // The Inbox always exists (it is made on first use); a look-alike second one is never wanted.
             let inbox = try await notebook.inbox(now: context.now)
             return ToolResult(text: "“\(inbox.name)” already exists.",
-                              card: ResultCard(kind: .collection, title: inbox.name, subtitle: "Already exists", refId: inbox.id))
+                              card: ResultCard(kind: .collection, title: NotebookCollections.shownName(inbox),
+                                               subtitle: String(localized: "Already exists"), refId: inbox.id))
         }
         // Reuse only an exact (case-insensitive) match here; fuzzy matching is for filing notes.
         let existing = try await NotebookCollections.filable(notebook).first { $0.name.lowercased() == name.lowercased() }
         if let existing {
             return ToolResult(text: "“\(existing.name)” already exists.",
-                              card: ResultCard(kind: .collection, title: existing.name, subtitle: "Already exists", refId: existing.id))
+                              card: ResultCard(kind: .collection, title: existing.name, subtitle: String(localized: "Already exists"), refId: existing.id))
         }
         let created = try await NotebookCollections.create(name, kind: kind, notebook: notebook, context: context)
         events.changed(.notebook)
         let notebook = self.notebook, events = self.events, id = created.id
         return ToolResult(
             text: "Created the \(kind.rawValue) “\(created.name)”.",
-            card: ResultCard(kind: .collection, title: created.name, subtitle: "New \(kind.rawValue)", refId: id),
-            undo: UndoAction(label: "Removed “\(created.name.clipped(40))”") {
+            card: ResultCard(kind: .collection, title: created.name, subtitle: NotebookCollections.newLabel(kind), refId: id),
+            undo: UndoAction(label: String(localized: "Removed “\(created.name.clipped(40))”")) {
                 // Never cascade-delete notes that were filed here since.
                 guard try await NotebookCollections.totalItemCount(collectionId: id, notebook: notebook) == 0 else {
                     throw UserFacingError("“\(created.name)” has notes in it now, so I left it.")

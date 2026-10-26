@@ -11,7 +11,7 @@ the MCP bridge, and one process per running extension.
 │ SidefolkCharacter: Rig (CALayers) · Pose · Choreographer · Folks                        │
 │            ▲ CompanionPresenter (MainActor, @Observable) ◄── AppEvents                  │
 ├────────────┼────────────────────────── SidefolkCore ────────────────────────────────────┤
-│  AgentRuntime ── Backends: Loop(Anthropic | OpenAI-compat) · ClaudeCode(CLI+MCP bridge)  │
+│  AgentRuntime ── Backends: Loop(Anthropic | OpenAI-compat) · ClaudeCode · Codex (CLI+MCP)│
 │      │ ContextBuilder (budgeted)      ModelRouter (fast/smart)                           │
 │  ToolExecutor ─► Guard (PermissionEngine + ApprovalBroker + Grants) ─► Tool registry     │
 │      │                                     builtin tools · extension tools · MCP tools   │
@@ -78,10 +78,17 @@ user folders or agent configs.
   model (`ModelRouter`), runs a backend, streams `AgentEvent`s, records an `AgentRun`.
   - `LoopBackend` drives `TurnModel` providers (`AnthropicModel`, `OpenAICompatibleModel`):
     request → tool calls → executor → results → repeat, max 10 steps / 120 s by default.
+    `OpenAICompatibleModel` serves every `ProviderPreset` (see AI providers below).
   - `ClaudeCodeBackend` runs `claude -p --output-format stream-json --tools "" --strict-mcp-config
     --mcp-config <sidefolk bridge>` in the brain workdir with an isolated settings source; the
     brain can only call Sidefolk tools, which arrive over the socket tagged with a per-run token
     and go through the same executor.
+  - `CodexBackend` runs `codex exec --json --ignore-user-config --ignore-rules --sandbox read-only
+    --ephemeral`, every non-essential Codex feature off, and `-c mcp_servers.sidefolk…` pointing at
+    the same bridge (SECURITY T7). Codex doesn't list its tools up front, so `CodexStream` watches
+    the event stream and stops the run on anything but Sidefolk's tools.
+  - `CLIBrain` holds what the two CLI brains share: binary vetting, the prompt-free probe, the
+    environment allow-list, the one-message conversation, the per-run private folder.
   - `ScriptedModel` (tests only) replays canned turns.
 - `ReminderScheduler` (actor) — one timer for the next due reminder (no polling), re-armed on
   change, wake, clock change; fires to `AttentionCenter`; recurrence; snooze; missed-on-launch
@@ -152,14 +159,25 @@ through `EventBus` streams consumed by `@MainActor @Observable` presenters. No l
 
 ## AI providers
 
+Settings › AI groups them by how the user pays (D26): a plan they already have, an API key, this
+Mac, a custom endpoint, or no AI. Status comes from local reads only (`ClaudeBinary.status`,
+`CodexBinary.status`, `LocalServers.probe`, the Keychain, `ModelCatalog.list`); "Test" is the one
+action that sends a prompt.
+
 | Provider | Auth | Notes |
 |----------|------|-------|
 | Claude Code | the user's `claude` login | Brain runs with `--tools ""` so only Sidefolk tools exist; isolated cwd and settings; no session persistence. |
+| Codex | the user's `codex login` (ChatGPT plan) | `codex exec` isolated as in T7; Codex's default model unless one is picked from its bundled catalog; "Think harder" adds `model_reasoning_effort="high"`. |
 | Anthropic API | API key (Keychain) | Messages API with tool use. |
-| OpenAI-compatible | optional key, base URL | OpenAI, Ollama (`http://localhost:11434/v1`), LM Studio, OpenRouter. |
+| OpenAI-compatible | per preset | `ProviderPreset`: OpenAI, Google Gemini (its OpenAI-compatible endpoint), Mistral, Groq, xAI, DeepSeek, OpenRouter (key required, fixed address), Ollama (`/api/tags`), LM Studio (`/v1/models`), or a custom address with an optional key. |
 
-Each provider has Fast and Smart model names. Router: Fast by default; Smart when the user asks
-for depth, a skill requests it, or the model calls `think_harder`.
+Keys live in the Keychain, one account per preset (`ProviderPreset.keyAccount`), each bound to its
+host (`ProviderKeys`); a key saved before presets existed still works for the host it was saved for.
+Model lists come from the provider (`GET /models`, free) and Gemini's "models/…" ids are used without
+the prefix; the first suggestion the provider actually offers becomes the default, and each
+provider keeps its own model when the user switches (`ProviderSettings.switchProvider`).
+
+Each provider has a main model and an optional smart one for "Think harder" (D8).
 
 ## Extension protocol (summary; full guide in docs/EXTENSIONS.md)
 

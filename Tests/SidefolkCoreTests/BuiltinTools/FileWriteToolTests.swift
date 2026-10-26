@@ -105,7 +105,8 @@ import Testing
         let denied = await t.run("files.move", ["paths": paths(file), "to_folder": .string(dest)])
         let asked = try #require(await answer.value)
         #expect(asked.risk == .medium)
-        #expect(asked.summary == "Move 1 item to \(dest)")
+        // The test runner has no string catalog, so a count reads as its key; CatalogTests checks the English singular.
+        #expect(asked.summary == "Move 1 items to \(dest)")
         #expect(denied.wasDenied)
         #expect(t.exists(file))
         let yes = t.env.autoAnswer(.allowOnce)

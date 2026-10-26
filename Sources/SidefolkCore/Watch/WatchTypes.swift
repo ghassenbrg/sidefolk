@@ -70,7 +70,7 @@ public extension WatcherProbe {
     func eventTargets(for watcher: Watcher) -> [WatchEventTarget] { [] }
 }
 
-/// A watcher that cannot be created or changed. The message is written for the user.
+/// A watcher that cannot be created or changed. The message is written for the user, in the app's language.
 public enum WatchError: Error, Sendable, Equatable, CustomStringConvertible {
     case invalid(String)
     case unknownKind(String)
@@ -81,8 +81,8 @@ public enum WatchError: Error, Sendable, Equatable, CustomStringConvertible {
     public var description: String {
         switch self {
         case .invalid(let m), .limit(let m), .notAllowed(let m): m
-        case .unknownKind(let k): "I don't know how to watch “\(k)”."
-        case .notFound(let m): "I couldn't find \(m)."
+        case .unknownKind(let k): String(localized: "I don't know how to watch “\(k)”.")
+        case .notFound(let m): String(localized: "I couldn't find \(m).")
         }
     }
 }
@@ -99,8 +99,8 @@ public enum ProbeError: Error, Sendable, Equatable, CustomStringConvertible {
     public var description: String {
         switch self {
         case .failed(let m): m
-        case .deferred: "Waiting a moment before asking that site again."
-        case .offline: "No internet connection."
+        case .deferred: String(localized: "Waiting a moment before asking that site again.")
+        case .offline: String(localized: "No internet connection.")
         }
     }
 }

@@ -113,10 +113,12 @@ public enum IntegrationError: Error, Equatable, CustomStringConvertible {
     public var description: String {
         switch self {
         case .unavailable(let why): why
-        case .unreadable(let path, let why): "\(FolderAccess.displayPath(path)) can't be read: \(why)."
-        case .unwritable(let path, let why): "\(FolderAccess.displayPath(path)) can't be written: \(why)."
-        case .malformed(let path, let why): "\(FolderAccess.displayPath(path)) isn't what Sidefolk expected (\(why)), so it wasn't changed."
-        case .changedMeanwhile(let path): "\(FolderAccess.displayPath(path)) changed while Sidefolk was editing it. Nothing was written; try again."
+        case .unreadable(let path, let why): String(localized: "\(FolderAccess.displayPath(path)) can't be read: \(why).")
+        case .unwritable(let path, let why): String(localized: "\(FolderAccess.displayPath(path)) can't be written: \(why).")
+        case .malformed(let path, let why):
+            String(localized: "\(FolderAccess.displayPath(path)) isn't what Sidefolk expected (\(why)), so it wasn't changed.")
+        case .changedMeanwhile(let path):
+            String(localized: "\(FolderAccess.displayPath(path)) changed while Sidefolk was editing it. Nothing was written; try again.")
         }
     }
 }

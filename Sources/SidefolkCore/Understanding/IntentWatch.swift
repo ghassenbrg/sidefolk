@@ -76,7 +76,7 @@ extension IntentParser {
 
     /// A site or page is meant, but where is not said: ask for the address instead of sending the question to the AI.
     private func needsTarget(_ rest: String) -> ParsedIntent? {
-        let hint = "Watch · which address? · no AI"
+        let hint = ParsedIntent.hint(String(localized: "Watch"), String(localized: "which address?"))
         if let c = Self.anySiteStatus.match(rest) {
             let down = ["down", "offline", "unreachable"].contains(c["state"]?.lowercased() ?? "")
             return ParsedIntent(intent: .needsTarget(kind: WatchKind.siteStatus, becomes: down ? "down" : "up"), hint: hint)
@@ -214,15 +214,17 @@ extension IntentParser {
     // MARK: Hints
 
     private func parsed(_ w: WatchIntent) -> ParsedIntent {
-        let subject: String
+        let watch: String
         switch w.kind {
-        case "site_status": subject = w.contains == "down" ? "\(display(w.target)) goes down" : "\(display(w.target)) is up"
-        case "folder_new_file": subject = "\(abbreviated(w.target)) for new files"
-        case "file_appears": subject = abbreviated(w.target)
-        case "process_exits": subject = "\(w.target) exits"
-        default: subject = w.contains.map { "\(display(w.target)) for “\($0)”" } ?? display(w.target)
+        case "site_status":
+            watch = w.contains == "down" ? String(localized: "Watch \(display(w.target)) goes down") : String(localized: "Watch \(display(w.target)) is up")
+        case "folder_new_file": watch = String(localized: "Watch \(abbreviated(w.target)) for new files")
+        case "file_appears": watch = String(localized: "Watch \(abbreviated(w.target))")
+        case "process_exits": watch = String(localized: "Watch \(w.target) exits")
+        default:
+            watch = w.contains.map { String(localized: "Watch \(display(w.target)) for “\($0)”") } ?? String(localized: "Watch \(display(w.target))")
         }
-        return ParsedIntent(intent: .watch(w), hint: "Watch \(subject) · no AI")
+        return ParsedIntent(intent: .watch(w), hint: ParsedIntent.hint(watch))
     }
 
     private func display(_ url: String) -> String {

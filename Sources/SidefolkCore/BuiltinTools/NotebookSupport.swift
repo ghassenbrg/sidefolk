@@ -11,7 +11,7 @@ enum NotebookCollections {
     static let profileName = "About you"
 
     static var profileRefusal: UserFacingError {
-        UserFacingError("“\(profileName)” holds facts about you, so notes can't be filed there.",
+        UserFacingError("“About you” holds facts about you, so notes can't be filed there.",
                         recovery: "Use “remember” for facts and preferences.")
     }
 
@@ -34,7 +34,7 @@ enum NotebookCollections {
     static func newKind(_ raw: JSONValue?) throws -> NotebookCollection.Kind {
         guard let text = raw?.stringValue?.trimmedText.lowercased(), !text.isEmpty else { return .project }
         guard let kind = NotebookCollection.Kind(rawValue: text), [.project, .topic, .list].contains(kind) else {
-            throw ToolError.invalidInput("“collection_kind” must be project, topic or list.")
+            throw ToolError.invalidInput(String(localized: "“collection_kind” must be project, topic or list."))
         }
         return kind
     }
@@ -56,11 +56,11 @@ enum NotebookCollections {
 
     static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, context: ToolContext) async throws -> NotebookCollection {
         let clean = name.trimmedText.clipped(60)
-        guard !clean.isEmpty else { throw ToolError.invalidInput("a collection needs a name.") }
+        guard !clean.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
         if isProfileName(clean) { throw profileRefusal }
         // The Inbox always exists (it is made on first use); a look-alike "inbox" project would split notes.
         if isInboxName(clean) {
-            throw UserFacingError("“\(NotebookStore.inboxName)” is always there: it's where notes go when no collection is named.")
+            throw UserFacingError("“Inbox” is always there: it's where notes go when no collection is named.")
         }
         guard mayCreate(context.caller) else { throw creationRefusal(clean) }
         return try await notebook.createCollection(name: clean, kind: kind, source: context.provenanceTag, now: context.now)
@@ -73,6 +73,33 @@ enum NotebookCollections {
     static func creationRefusal(_ name: String) -> UserFacingError {
         UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one.",
                         recovery: "Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
+    }
+
+    /// The name people see: the Inbox and “About you” in the app's language, any other as it was named.
+    static func shownName(_ c: NotebookCollection) -> String {
+        switch c.kind {
+        case .inbox: String(localized: "Inbox")
+        case .profile: String(localized: "About you")
+        case .project, .topic, .list: c.name
+        }
+    }
+
+    /// "New project", under the name of a collection that was just made.
+    static func newLabel(_ kind: NotebookCollection.Kind) -> String {
+        switch kind {
+        case .topic: String(localized: "New topic")
+        case .list: String(localized: "New list")
+        default: String(localized: "New project")
+        }
+    }
+
+    /// "New project “Sidefolk” created.", on the card of a note that made its collection.
+    static func createdNote(_ c: NotebookCollection) -> String {
+        switch c.kind {
+        case .topic: String(localized: "New topic “\(c.name)” created.")
+        case .list: String(localized: "New list “\(c.name)” created.")
+        default: String(localized: "New project “\(c.name)” created.")
+        }
     }
 
     /// Whether the collection's name is someone else's words (another agent, an extension, a tainted turn).
@@ -182,15 +209,25 @@ enum NoteText {
     static func parseKind(_ raw: String?) throws -> NotebookItem.Kind? {
         guard let raw = raw?.trimmedText.lowercased(), !raw.isEmpty else { return nil }
         if let kind = NotebookItem.Kind(rawValue: raw) ?? NotebookItem.Kind(rawValue: String(raw.dropLast())) { return kind }
-        throw ToolError.invalidInput("“kind” must be one of note, idea, task, link.")
+        throw ToolError.invalidInput(String(localized: "“kind” must be one of note, idea, task, link."))
+    }
+
+    /// "Updated idea", on the card of a changed item.
+    static func updated(_ kind: NotebookItem.Kind) -> String {
+        switch kind {
+        case .note: String(localized: "Updated note")
+        case .idea: String(localized: "Updated idea")
+        case .task: String(localized: "Updated task")
+        case .link: String(localized: "Updated link")
+        }
     }
 
     static func plural(_ kind: NotebookItem.Kind) -> String {
         switch kind {
-        case .note: "Notes"
-        case .idea: "Ideas"
-        case .task: "Tasks"
-        case .link: "Links"
+        case .note: String(localized: "Notes")
+        case .idea: String(localized: "Ideas")
+        case .task: String(localized: "Tasks")
+        case .link: String(localized: "Links")
         }
     }
 }

@@ -188,7 +188,7 @@ public actor WatcherEngine {
     @discardableResult
     public func pause(_ id: String) async throws -> Watcher {
         await ensureLoaded()
-        guard var w = watchers[id] else { throw WatchError.notFound("that watcher") }
+        guard var w = watchers[id] else { throw WatchError.notFound(String(localized: "that watcher")) }
         guard w.state == .active else { return w }
         inflight.removeValue(forKey: id)?.cancel()
         w.state = .paused
@@ -205,7 +205,7 @@ public actor WatcherEngine {
     @discardableResult
     public func resume(_ id: String) async throws -> Watcher {
         await ensureLoaded()
-        guard var w = watchers[id] else { throw WatchError.notFound("that watcher") }
+        guard var w = watchers[id] else { throw WatchError.notFound(String(localized: "that watcher")) }
         guard w.state != .active else { return w }
         guard probes[w.kind] != nil else { throw WatchError.unknownKind(w.kind) }
         try checkRoom(for: w)
@@ -248,19 +248,19 @@ public actor WatcherEngine {
     func checkRoom(for w: Watcher) throws {
         let others = watchers.values.filter { $0.state == .active && $0.id != w.id }
         if others.count >= WatchLimits.maxActive {
-            throw WatchError.limit("I'm already watching \(WatchLimits.maxActive) things. Stop one before starting another.")
+            throw WatchError.limit(String(localized: "I'm already watching \(WatchLimits.maxActive) things. Stop one before starting another."))
         }
         if WatchSource.isExternal(w.source) {
             let external = others.filter { WatchSource.isExternal($0.source) }
             if external.filter({ $0.source == w.source }).count >= WatchLimits.maxActivePerExternalClient {
-                throw WatchError.limit("That app already has \(WatchLimits.maxActivePerExternalClient) watchers going. Stop one first.")
+                throw WatchError.limit(String(localized: "That app already has \(WatchLimits.maxActivePerExternalClient) watchers going. Stop one first."))
             }
             if external.count >= WatchLimits.maxActiveExternal {
-                throw WatchError.limit("Other agents already have \(external.count) watches running. Stop one first.")
+                throw WatchError.limit(String(localized: "Other agents already have \(external.count) watches running. Stop one first."))
             }
         }
         if w.kind == WatchKind.command, others.filter({ $0.kind == WatchKind.command }).count >= WatchLimits.maxActiveCommands {
-            throw WatchError.limit("\(WatchLimits.maxActiveCommands) command watchers are already running. Stop one first.")
+            throw WatchError.limit(String(localized: "\(WatchLimits.maxActiveCommands) command watchers are already running. Stop one first."))
         }
     }
 

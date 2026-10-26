@@ -73,30 +73,78 @@ public struct CompanionStyle: Codable, Sendable, Equatable {
 public enum ProviderKind: String, Codable, Sendable, CaseIterable {
     case none
     case claudeCode
+    case codex
     case anthropic
+    /// OpenAI's chat completions API, spoken by many services: which one is `ProviderSettings.preset`.
     case openAICompatible
 
     public var displayName: String {
         switch self {
         case .none: "No AI"
         case .claudeCode: "Claude Code (your Claude subscription)"
+        case .codex: "Codex (your ChatGPT plan)"
         case .anthropic: "Anthropic API"
-        case .openAICompatible: "OpenAI-compatible (OpenAI, Ollama, LM Studio, OpenRouter)"
+        case .openAICompatible: "OpenAI-compatible"
         }
     }
 }
 
 public struct ProviderSettings: Codable, Sendable, Equatable {
     public var kind: ProviderKind = .none
-    /// Main model ("sonnet", "claude-sonnet-4-5", "gpt-4o-mini", "llama3.1").
+    /// Main model ("sonnet", "claude-sonnet-4-5", "gpt-5-mini", "llama3.1"); empty lets a CLI use its default.
     public var model: String = ""
     /// Used by "Think harder"; empty means the main model.
     public var smartModel: String = ""
-    /// For OpenAI-compatible endpoints.
+    /// Which OpenAI-compatible service (D26). Settings saved before presets existed get the preset their address matches.
+    public var preset: ProviderPreset = .custom
+    /// For a custom OpenAI-compatible endpoint; presets have fixed addresses.
     public var baseURL: String = ""
     /// Path to the `claude` executable when it is not found automatically.
     public var claudePath: String = ""
+    /// Path to the `codex` executable when it is not found automatically.
+    public var codexPath: String = ""
+    /// The models each provider was left with, by `memoryKey`, so switching never carries one
+    /// provider's model name to another (an Ollama model in a Gemini setup) and switching back restores it.
+    public var modelMemory: [String: ModelPair] = [:]
     public init() {}
+
+    public struct ModelPair: Codable, Sendable, Equatable {
+        public var model: String
+        public var smartModel: String
+    }
+
+    /// "codex", "openAICompatible.gemini".
+    public var memoryKey: String { kind == .openAICompatible ? "\(kind.rawValue).\(preset.rawValue)" : kind.rawValue }
+
+    /// Switches provider: the models in use are remembered for the provider left behind, and the new
+    /// one gets the models it had last time, or none yet (its default; Claude Code's is "sonnet").
+    public mutating func switchProvider(to kind: ProviderKind, preset: ProviderPreset? = nil) {
+        modelMemory[memoryKey] = ModelPair(model: model, smartModel: smartModel)
+        self.kind = kind
+        if let preset { self.preset = preset }
+        let saved = modelMemory[memoryKey]
+        model = saved?.model ?? (kind == .claudeCode ? "sonnet" : "")
+        smartModel = saved?.smartModel ?? ""
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case kind, model, smartModel, preset, baseURL, claudePath, codexPath, modelMemory
+    }
+
+    /// Every field has a default, so settings written by an older or newer Sidefolk still load (a
+    /// synthesized decoder would throw over one missing key, and the whole provider would be lost).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func read<T: Decodable>(_ key: CodingKeys, _ into: inout T) { if let v = try? c.decode(T.self, forKey: key) { into = v } }
+        read(.kind, &kind)
+        read(.model, &model)
+        read(.smartModel, &smartModel)
+        read(.baseURL, &baseURL)
+        read(.claudePath, &claudePath)
+        read(.codexPath, &codexPath)
+        read(.modelMemory, &modelMemory)
+        preset = (try? c.decode(ProviderPreset.self, forKey: .preset)) ?? ProviderPreset.matching(baseURL: baseURL)
+    }
 }
 
 /// Everything the user can change. Stored as one JSON document; every field has a default so

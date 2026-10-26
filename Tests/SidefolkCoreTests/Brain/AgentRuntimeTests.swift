@@ -43,7 +43,7 @@ import Testing
         #expect(events.count == 2)
         let failure = try #require(events.first?.failure)
         #expect(failure.message == "That needs AI, which isn't set up yet.")
-        #expect(failure.recovery == "Choose Claude Code, an API key or Ollama in Settings › AI.")
+        #expect(failure.recovery == "Choose Claude Code, Codex, an API key or Ollama in Settings › AI.")
         #expect(try await AgentRunStore(env.db).recent().isEmpty)
     }
 
@@ -232,7 +232,7 @@ import Testing
         let (_, missing) = await h.run(AgentRequest(text: "hi"))
         #expect(missing.first?.failure?.message == "I need your Anthropic API key for that.")
 
-        try ProviderKeys(store: secrets).save(Secret("sk-local"), account: SecretKey.openAIAPIKey, host: "api.openai.com")
+        try ProviderKeys(store: secrets).save(Secret("sk-local"), account: ProviderPreset.custom.keyAccount, host: "api.openai.com")
         box.update {
             $0.provider.kind = .openAICompatible
             $0.provider.baseURL = "https://proxy.example.com/v1"

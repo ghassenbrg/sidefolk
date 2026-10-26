@@ -6,6 +6,10 @@ The current references are `reference/mochi-brand-guide.png` and the app-icon/mo
 Sidefolk robot remains a selectable, customizable companion in the app. Its earlier branding
 masters are retained in `archive/robot/`.
 
+See [the asset-set index](../ASSETS.md) for every character, source, reference and archive folder.
+[generated-image-index.json](generated-image-index.json) inventories all 22 generated originals,
+including the superseded robot studies, with repository paths and SHA-256 hashes.
+
 ## Files and native use
 
 | Asset | Location | Usage |

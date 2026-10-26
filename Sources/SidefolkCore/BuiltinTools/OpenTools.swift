@@ -6,7 +6,7 @@ struct OpenURLTool: Tool {
     let platform: any PlatformBridge
 
     let spec = ToolSpec(
-        name: "open.url", title: "Open a link",
+        name: "open.url", title: String(localized: "Open a link"),
         description: """
             Open a web link (http or https) in the user's default browser. Other kinds of link, such as file:, \
             javascript: or custom app schemes, are refused. To start an email use open.email.
@@ -14,7 +14,7 @@ struct OpenURLTool: Tool {
         inputSchema: Schema.object(["url": Schema.string("The full web address, e.g. https://example.com/pricing")], required: ["url"]),
         risk: .low, capabilities: [.apps], category: .system, mutates: false)
 
-    func summary(for input: JSONValue) -> String { "Open \((input.string("url") ?? "").clipped(120)) in your browser" }
+    func summary(for input: JSONValue) -> String { String(localized: "Open \((input.string("url") ?? "").clipped(120)) in your browser") }
 
     func scope(for input: JSONValue) -> ToolScope { ToolScope(url: input.string("url")) }
 
@@ -28,7 +28,7 @@ struct OpenURLTool: Tool {
         let host = url.host ?? url.absoluteString
         return ToolResult(
             text: "Opened \(url.absoluteString) in the browser.",
-            card: ResultCard(kind: .web, title: "Opened \(host)", subtitle: url.absoluteString.clipped(80), url: url.absoluteString))
+            card: ResultCard(kind: .web, title: String(localized: "Opened \(host)"), subtitle: url.absoluteString.clipped(80), url: url.absoluteString))
     }
 }
 
@@ -38,7 +38,7 @@ struct OpenEmailTool: Tool {
     let platform: any PlatformBridge
 
     let spec = ToolSpec(
-        name: "open.email", title: "Start an email",
+        name: "open.email", title: String(localized: "Start an email"),
         description: "Open a new, unsent email draft in the user's mail app. Sidefolk can't send it; the user reviews and sends.",
         inputSchema: Schema.object([
             "to": Schema.string("Recipient address, or several separated by commas"),
@@ -48,9 +48,9 @@ struct OpenEmailTool: Tool {
         risk: .medium, capabilities: [.apps], category: .system, mutates: false)
 
     func summary(for input: JSONValue) -> String {
-        var s = "Start an email to \((input.string("to") ?? "").clipped(80))"
-        if let subject = input.string("subject") { s += " about “\(subject.clipped(60))”" }
-        return s
+        let to = (input.string("to") ?? "").clipped(80)
+        if let subject = input.string("subject") { return String(localized: "Start an email to \(to) about “\(subject.clipped(60))”") }
+        return String(localized: "Start an email to \(to)")
     }
 
     func scope(for input: JSONValue) -> ToolScope { ToolScope(url: try? Self.mailtoURL(input).absoluteString) }
@@ -63,13 +63,13 @@ struct OpenEmailTool: Tool {
         let to = input.string("to") ?? ""
         return ToolResult(
             text: "Opened a new email draft to \(to.clipped(120)). Nothing was sent; the user has to review and send it.",
-            card: ResultCard(kind: .info, title: "Started an email", subtitle: to.clipped(80)))
+            card: ResultCard(kind: .info, title: String(localized: "Started an email"), subtitle: to.clipped(80)))
     }
 
     /// Builds the mailto URL ourselves so only addresses, a subject and a body can ever reach the mail app.
     static func mailtoURL(_ input: JSONValue) throws -> URL {
         let recipients = input.textList("to") ?? []
-        guard !recipients.isEmpty else { throw ToolError.invalidInput("“to” needs at least one email address.") }
+        guard !recipients.isEmpty else { throw ToolError.invalidInput(String(localized: "“to” needs at least one email address.")) }
         guard recipients.count <= 10 else { throw UserFacingError("That's too many recipients (the limit is 10).") }
         for address in recipients where !isEmailAddress(address) {
             throw UserFacingError("“\(address.clipped(60))” doesn't look like an email address.")
@@ -103,12 +103,12 @@ struct OpenAppTool: Tool {
     let platform: any PlatformBridge
 
     let spec = ToolSpec(
-        name: "open.app", title: "Open an app",
+        name: "open.app", title: String(localized: "Open an app"),
         description: "Open or bring forward an app by its name (\"Safari\") or bundle identifier (\"com.apple.Safari\").",
         inputSchema: Schema.object(["name": Schema.string("App name or bundle identifier")], required: ["name"]),
         risk: .low, capabilities: [.apps], category: .system, mutates: false)
 
-    func summary(for input: JSONValue) -> String { "Open \((input.string("name") ?? "an app").clipped(60))" }
+    func summary(for input: JSONValue) -> String { String(localized: "Open \((input.string("name") ?? String(localized: "an app")).clipped(60))") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let name = try input.requiredText("name", limit: 100)
@@ -119,6 +119,6 @@ struct OpenAppTool: Tool {
         guard await platform.openApplication(name) else {
             throw UserFacingError("I couldn't open an app called “\(name.clipped(60))”.", recovery: "Check the spelling.")
         }
-        return ToolResult(text: "Opened \(name).", card: ResultCard(kind: .info, title: "Opened \(name)"))
+        return ToolResult(text: "Opened \(name).", card: ResultCard(kind: .info, title: String(localized: "Opened \(name)")))
     }
 }

@@ -160,7 +160,7 @@ public final class SkillLibrary: Sendable {
     /// Moves a user skill to the Trash; bundled skills can't be deleted. Returns where it went.
     @discardableResult
     public func delete(name: String) throws -> URL? {
-        guard let s = skill(named: name) else { throw ToolError.notFound("a skill called “\(name)”") }
+        guard let s = skill(named: name) else { throw ToolError.notFound(String(localized: "a skill called “\(name)”")) }
         guard s.origin == .user else { throw UserFacingError("“\(name)” comes with Sidefolk and can't be deleted.") }
         let trashed = try trash(s.folder)
         events?.changed(.skills)

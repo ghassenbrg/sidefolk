@@ -40,7 +40,7 @@ struct ProfileRememberTool: Tool {
     let events: EventBus
 
     let spec = ToolSpec(
-        name: "profile.remember", title: "Remember about you",
+        name: "profile.remember", title: String(localized: "Remember about you"),
         description: """
             Remember a lasting fact or preference about the user ("prefers short answers", "dog is called Bo", \
             "works in UTC+1"). Only for things worth knowing in future conversations, never for one-off tasks \
@@ -49,21 +49,22 @@ struct ProfileRememberTool: Tool {
         inputSchema: Schema.object(["fact": Schema.string("One short statement, e.g. “Prefers metric units”")], required: ["fact"]),
         risk: .low, capabilities: [.memory], category: .memory, mutates: true, external: true)
 
-    func summary(for input: JSONValue) -> String { "Remember: “\((input.string("fact") ?? "").clipped(100))”" }
+    func summary(for input: JSONValue) -> String { String(localized: "Remember: “\((input.string("fact") ?? "").clipped(100))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let fact = try input.requiredText("fact", limit: ProfileLimits.maxFactLength)
         let existing = await ProfileFacts.all(notebook: notebook, includeUntrusted: true)
         if let same = existing.first(where: { normalized(factText($0)) == normalized(fact) }) {
             return ToolResult(text: "Already remembered: “\(factText(same).clipped(100))”.",
-                              card: ResultCard(kind: .memory, title: "Already remembered", subtitle: factText(same).clipped(80), refId: same.id))
+                              card: ResultCard(kind: .memory, title: String(localized: "Already remembered"), subtitle: factText(same).clipped(80),
+                                               refId: same.id))
         }
         guard existing.count < ProfileLimits.maxFacts else {
             throw UserFacingError("“About you” already holds \(ProfileLimits.maxFacts) facts.",
                                   recovery: "Forget a few that no longer matter, then try again.")
         }
         guard let profile = try await NotebookCollections.profile(notebook, create: true, now: context.now) else {
-            throw ToolError.unavailable("I couldn't open “About you”.")
+            throw ToolError.unavailable(String(localized: "I couldn't open “About you”."))
         }
         let (title, body) = NoteText.split(fact)
         // Sidefolk's own agent remembers on the user's behalf, so its facts carry "user:agent": the context builder
@@ -77,8 +78,8 @@ struct ProfileRememberTool: Tool {
         let notebook = self.notebook, events = self.events, id = item.id
         return ToolResult(
             text: "Remembered: “\(fact.clipped(100))” (id \(id)).",
-            card: ResultCard(kind: .memory, title: "Remembered", subtitle: fact.clipped(80), refId: id),
-            undo: UndoAction(label: "Forgot “\(fact.clipped(40))”") {
+            card: ResultCard(kind: .memory, title: String(localized: "Remembered"), subtitle: fact.clipped(80), refId: id),
+            undo: UndoAction(label: String(localized: "Forgot “\(fact.clipped(40))”")) {
                 _ = try await notebook.trash(itemId: id)
                 events.changed(.notebook)
                 events.changed(.memories)
@@ -90,18 +91,18 @@ struct ProfileListTool: Tool {
     let notebook: NotebookStore
 
     let spec = ToolSpec(
-        name: "profile.list", title: "What I know about you",
+        name: "profile.list", title: String(localized: "What I know about you"),
         description: "List the facts and preferences remembered about the user, with ids.",
         inputSchema: Schema.object([:]),
         risk: .low, capabilities: [.memory], category: .memory, mutates: false)
 
-    func summary(for input: JSONValue) -> String { "List what Sidefolk remembers about you" }
+    func summary(for input: JSONValue) -> String { String(localized: "List what Sidefolk remembers about you") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let facts = await ProfileFacts.all(notebook: notebook, includeUntrusted: true)
         guard !facts.isEmpty else {
             return ToolResult(text: "Nothing is remembered about the user yet.",
-                              card: ResultCard(kind: .memory, title: "Nothing remembered yet"))
+                              card: ResultCard(kind: .memory, title: String(localized: "Nothing remembered yet")))
         }
         let lines = facts.map { f -> String in
             var meta = ToolFormat.day(f.createdAt)
@@ -110,7 +111,7 @@ struct ProfileListTool: Tool {
         }
         return ToolResult(
             text: "\(ToolFormat.count(facts.count, "fact")) about the user:\n" + lines.joined(separator: "\n"),
-            card: ResultCard(kind: .memory, title: ToolFormat.count(facts.count, "fact") + " remembered"),
+            card: ResultCard(kind: .memory, title: String(localized: "\(facts.count) facts remembered")),
             untrusted: NoteFormat.hasForeign(facts))
     }
 }
@@ -120,17 +121,17 @@ struct ProfileForgetTool: Tool {
     let events: EventBus
 
     let spec = ToolSpec(
-        name: "profile.forget", title: "Forget a fact",
+        name: "profile.forget", title: String(localized: "Forget a fact"),
         description: "Forget one remembered fact by id (from profile.list). It moves to the Trash and can be restored.",
         inputSchema: Schema.object(["id": Schema.string("The fact's id")], required: ["id"]),
         risk: .low, capabilities: [.memory], category: .memory, mutates: true)
 
-    func summary(for input: JSONValue) -> String { "Forget a fact about you" }
+    func summary(for input: JSONValue) -> String { String(localized: "Forget a fact about you") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let id = try input.requiredText("id", limit: 64)
         guard let item = try await notebook.item(id: id), item.deletedAt == nil else {
-            throw ToolError.notFound("a remembered fact with that id")
+            throw ToolError.notFound(String(localized: "a remembered fact with that id"))
         }
         guard let profile = try await NotebookCollections.profile(notebook, create: false), item.collectionId == profile.id else {
             throw UserFacingError("That isn't one of the facts about you. Use the notes tools for notes.")
@@ -142,8 +143,8 @@ struct ProfileForgetTool: Tool {
         let notebook = self.notebook, events = self.events
         return ToolResult(
             text: "Forgot “\(text.clipped(100))”.",
-            card: ResultCard(kind: .memory, title: "Forgot", subtitle: text.clipped(80), refId: id),
-            undo: UndoAction(label: "Remembered “\(text.clipped(40))” again") {
+            card: ResultCard(kind: .memory, title: String(localized: "Forgot"), subtitle: text.clipped(80), refId: id),
+            undo: UndoAction(label: String(localized: "Remembered “\(text.clipped(40))” again")) {
                 try await notebook.restore(itemId: id)
                 events.changed(.notebook)
                 events.changed(.memories)
