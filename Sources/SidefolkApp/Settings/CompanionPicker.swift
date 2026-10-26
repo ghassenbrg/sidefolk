@@ -43,7 +43,7 @@ struct CompanionPicker: View {
                 trial.pickerStyle(.segmented).fixedSize()
                 trial.pickerStyle(.menu).fixedSize()
             }
-            .frame(width: 236)
+            .frame(width: 250)
             .accessibilityLabel("Try a state")
         }
     }
