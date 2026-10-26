@@ -118,6 +118,12 @@
     "%@ couldn't accept that request. Nothing was changed." : {
 
     },
+    "%@ didn't accept the key." : {
+
+    },
+    "%@ didn't list its models." : {
+
+    },
     "%@ didn't start (it answered something other than MCP)." : {
 
     },
@@ -379,6 +385,9 @@
         }
       }
     },
+    "%@ needs an API key." : {
+
+    },
     "%@ needs an API key. Nothing was changed." : {
 
     },
@@ -511,16 +520,6 @@
     },
     "%@ was turned off because its files changed." : {
 
-    },
-    "%@ — %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ — %2$@"
-          }
-        }
-      }
     },
     "%@, %@" : {
       "localizations" : {
@@ -1102,6 +1101,12 @@
     "Check Claude Code's managed settings, then restart Sidefolk, or choose another provider." : {
 
     },
+    "Check Codex in Settings › AI, or choose another provider." : {
+
+    },
+    "Check Codex in Terminal." : {
+
+    },
     "Check now" : {
 
     },
@@ -1153,7 +1158,10 @@
     "Check your workspace access in the Anthropic Console." : {
 
     },
-    "Choose Claude Code, an API key or Ollama in Settings › AI." : {
+    "Choose Claude Code, Codex, an API key or Ollama in Settings › AI." : {
+
+    },
+    "Choose a %@ model" : {
 
     },
     "Choose a later end date." : {
@@ -1219,7 +1227,34 @@
     "Clipboard is empty" : {
 
     },
+    "Codex %@, so I stopped it." : {
+
+    },
+    "Codex can't use the model “%@”." : {
+
+    },
+    "Codex couldn't be read." : {
+
+    },
+    "Codex didn't start." : {
+
+    },
+    "Codex isn't ready to help yet. Nothing was changed." : {
+
+    },
     "Codex isn't set up on this Mac." : {
+
+    },
+    "Codex isn't signed in." : {
+
+    },
+    "Codex kept calling tools, so I stopped it." : {
+
+    },
+    "Codex stopped with an error." : {
+
+    },
+    "Codex took too long, so I stopped it." : {
 
     },
     "Collection" : {
@@ -1235,6 +1270,9 @@
 
     },
     "Connect your agents…" : {
+
+    },
+    "Copied" : {
 
     },
     "Copied to the clipboard" : {
@@ -1554,6 +1592,9 @@
     "I couldn't find Claude Code on this Mac." : {
 
     },
+    "I couldn't find Codex on this Mac." : {
+
+    },
     "I couldn't find a site called “%@”." : {
 
     },
@@ -1587,6 +1628,9 @@
     "I couldn't put back %@. You can restore it from the Trash." : {
 
     },
+    "I couldn't reach %@ on this Mac." : {
+
+    },
     "I couldn't reach %@ on this Mac. Nothing was changed." : {
 
     },
@@ -1594,6 +1638,9 @@
 
     },
     "I couldn't reach Claude." : {
+
+    },
+    "I couldn't reach OpenAI." : {
 
     },
     "I couldn't reach that site." : {
@@ -1662,6 +1709,9 @@
     "I need to know which %@ model to use." : {
 
     },
+    "I need your %@ API key for that. Nothing was changed." : {
+
+    },
     "I need your Anthropic API key for that." : {
 
     },
@@ -1726,6 +1776,9 @@
 
     },
     "Install it again." : {
+
+    },
+    "Install it with %@, then run codex login." : {
 
     },
     "Install it, or set its path in Settings › AI." : {
@@ -2302,6 +2355,9 @@
     "Open Terminal, run claude and sign in, then try again." : {
 
     },
+    "Open Terminal, run codex login, then try again." : {
+
+    },
     "Open a link" : {
 
     },
@@ -2360,6 +2416,9 @@
         }
       }
     },
+    "Paste a new key below." : {
+
+    },
     "Paste the key again in Settings › AI to use it with %@." : {
 
     },
@@ -2381,6 +2440,9 @@
     "Pick a time in the future." : {
 
     },
+    "Pick another model in Settings › AI, or leave it empty for Codex's default." : {
+
+    },
     "Pick another name." : {
 
     },
@@ -2388,9 +2450,6 @@
 
     },
     "Plain http is only allowed for servers on this Mac. Nothing was saved." : {
-
-    },
-    "Presets" : {
 
     },
     "Process %@" : {
@@ -2473,6 +2532,12 @@
 
     },
     "Reinstall Claude Code or choose another provider." : {
+
+    },
+    "Reinstall Codex or choose another provider in Settings › AI." : {
+
+    },
+    "Reinstall Codex or choose another provider." : {
 
     },
     "Remember about you" : {
@@ -2582,6 +2647,9 @@
     "Rename…" : {
 
     },
+    "Restart Sidefolk to try again, or choose another provider in Settings › AI." : {
+
+    },
     "Restart now" : {
 
     },
@@ -2628,6 +2696,9 @@
 
     },
     "Run claude in Terminal to see what's wrong." : {
+
+    },
+    "Run codex in Terminal to see what's wrong." : {
 
     },
     "Run sidefolk ext validate on its folder: it starts the program in the same sandbox and shows what it prints." : {
@@ -2793,6 +2864,9 @@
     "Sidefolk stopped using Claude Code because it couldn't keep it isolated." : {
 
     },
+    "Sidefolk stopped using Codex because it %@." : {
+
+    },
     "Sidefolk tools in Claude Code" : {
 
     },
@@ -2803,6 +2877,12 @@
 
     },
     "Sidefolk won't run Claude Code: %@" : {
+
+    },
+    "Sidefolk won't run Codex from there: %@" : {
+
+    },
+    "Sidefolk won't run Codex: %@" : {
 
     },
     "Sidefolk's AI folder isn't private." : {
@@ -2836,6 +2916,9 @@
 
     },
     "Snoozed to %@" : {
+
+    },
+    "Some of it was already done; Activity shows what." : {
 
     },
     "Something called %@ already uses the id %@." : {
@@ -2939,7 +3022,7 @@
     "Tell you when %@ quits" : {
 
     },
-    "Test connection" : {
+    "Test" : {
 
     },
     "Testing…" : {
@@ -3294,6 +3377,9 @@
     "This extension can't be installed." : {
 
     },
+    "This model can't use tools, and Sidefolk acts through them. Pick one that can." : {
+
+    },
     "This removes every note, reminder, watcher, folder grant and extension, your history and logs, and the keys saved in your Keychain. Sidefolk starts fresh. This can't be undone." : {
 
     },
@@ -3301,6 +3387,9 @@
 
     },
     "This version of Claude Code can't be run safely by Sidefolk." : {
+
+    },
+    "This version of Codex can't be run safely by Sidefolk." : {
 
     },
     "This watcher has no command." : {
@@ -3352,6 +3441,9 @@
 
     },
     "Try again; if it keeps happening, check Claude Code in Terminal." : {
+
+    },
+    "Try again; if it keeps happening, check Codex in Terminal." : {
 
     },
     "Try asking in a different way." : {
@@ -3417,6 +3509,9 @@
     "Update Claude Code (claude update) or choose another provider." : {
 
     },
+    "Update Codex (npm install -g @openai/codex@latest) or choose another provider." : {
+
+    },
     "Updated idea" : {
 
     },
@@ -3430,9 +3525,6 @@
 
     },
     "Use a full address like https://api.openai.com/v1 or http://localhost:11434/v1." : {
-
-    },
-    "Use a model" : {
 
     },
     "Use an https address." : {
@@ -3653,6 +3745,9 @@
     "You can change it in System Settings › General › Login Items." : {
 
     },
+    "You can still type a model name." : {
+
+    },
     "You said no." : {
 
     },
@@ -3666,6 +3761,9 @@
 
     },
     "Your Anthropic key isn't allowed to do that. Nothing was changed." : {
+
+    },
+    "Your ChatGPT plan's Codex limit is reached for now." : {
 
     },
     "Your key was saved for %@. Sidefolk only sends a key to the server it was saved for." : {
@@ -4053,12 +4151,6 @@
 
     },
     "rename that" : {
-
-    },
-    "sk-ant-…" : {
-
-    },
-    "sk-…" : {
 
     },
     "snooze takes a single time, not a repeat" : {

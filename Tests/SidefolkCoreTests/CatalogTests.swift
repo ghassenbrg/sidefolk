@@ -54,6 +54,24 @@ import Testing
         }
     }
 
+    /// The app removes "Nothing was changed." from the end of a message when something did change, so
+    /// every translation must end such messages with its own translation of that sentence.
+    @Test func nothingWasChangedReadsTheSameInEveryLanguage() {
+        let c = Self.catalog
+        func value(_ key: String, _ language: String) -> String? {
+            let unit = ((c.strings[key]?["localizations"] as? Catalog.Entry)?[language] as? Catalog.Entry)?["stringUnit"] as? Catalog.Entry
+            return unit?["value"] as? String
+        }
+        let languages = Set(c.strings.values.flatMap { (($0["localizations"] as? Catalog.Entry) ?? [:]).keys }).subtracting(["en"])
+        for language in languages {
+            guard let sentence = value("Nothing was changed.", language) else { continue }
+            for key in c.strings.keys where key.hasSuffix(" Nothing was changed.") {
+                guard let translated = value(key, language) else { continue }
+                #expect(translated.hasSuffix(sentence), "\(language): “\(key)”")
+            }
+        }
+    }
+
     @Test func oneIsSingularInEnglish() {
         let c = Self.catalog
         #expect(c.shown("%lld open tasks", 1) == "1 open task")

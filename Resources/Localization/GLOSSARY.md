@@ -60,7 +60,9 @@ Translate these once and use the same word everywhere, including in Settings and
    comes first in these keys and must stay the first argument.
 4. **Voice** (docs/VOICE.md): short, plain and warm. Lead with the thing. No exclamation marks, no
    emoji, no jokes in errors. "I" is the companion speaking about what it did or will do. Errors say
-   what failed, whether anything changed ("Nothing was changed."), and one next step. Buttons are
+   what failed, whether anything changed ("Nothing was changed."), and one next step. Translate
+   "Nothing was changed." exactly the same way everywhere, as the last sentence: when something did
+   change, the app removes that ending and adds its own sentence instead. Buttons are
    verbs. Where your language has formal and informal "you", choose once for the whole app and keep
    it everywhere.
 5. **Fragments.** Some keys are pieces of a sentence and start in lower case because they continue

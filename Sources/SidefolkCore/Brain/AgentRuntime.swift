@@ -338,7 +338,14 @@ public actor AgentRuntime {
         }
         if changed {
             e.changedNothing = false
-            e.message = e.message.replacingOccurrences(of: " Nothing was changed.", with: " Some of it was already done; Activity shows what.")
+            // The sentence ends many messages; drop it in whichever language the message is in (the
+            // glossary keeps its translation identical everywhere, and CatalogTests checks that).
+            let nothing = String(localized: "Nothing was changed.")
+            for ending in [" " + nothing, " Nothing was changed."] where e.message.hasSuffix(ending) {
+                e.message.removeLast(ending.count)
+                break
+            }
+            e.message += " " + String(localized: "Some of it was already done; Activity shows what.")
         }
         return e
     }
