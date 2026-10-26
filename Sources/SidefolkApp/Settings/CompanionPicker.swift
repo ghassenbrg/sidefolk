@@ -38,15 +38,26 @@ struct CompanionPicker: View {
                 .frame(width: 176, height: 176)
                 .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 .accessibilityLabel("\(settings.companionName), as it looks on your desktop")
-            // Segments while the four names fit under the stage; a menu where a language makes them longer.
-            ViewThatFits(in: .horizontal) {
-                trial.pickerStyle(.segmented).fixedSize()
-                trial.pickerStyle(.menu).fixedSize()
+            Group {
+                if Self.trialSegmentsFit {
+                    trial.pickerStyle(.segmented).frame(width: 236)
+                } else {
+                    trial.pickerStyle(.menu).fixedSize()
+                }
             }
-            .frame(width: 250)
             .accessibilityLabel("Try a state")
         }
     }
+
+    /// Segments under the stage while the four names fit: AppKit squeezes them a little (English
+    /// needs 272 points at rest, shown in 236), and a longer language gets a menu instead of cut words.
+    /// The language is fixed for the launch, so it is measured once.
+    private static let trialSegmentsFit: Bool = {
+        let control = NSSegmentedControl(labels: Trial.allCases.map { String(localized: $0.title) }, trackingMode: .selectOne,
+                                         target: nil, action: nil)
+        control.segmentDistribution = .fit
+        return control.fittingSize.width <= 280
+    }()
 
     private var trial: some View {
         Picker("Try", selection: $trying) {
@@ -142,7 +153,7 @@ struct CompanionPicker: View {
     enum Trial: CaseIterable {
         case idle, thinking, working, sleeping
 
-        var title: LocalizedStringKey {
+        var title: LocalizedStringResource {
             switch self {
             case .idle: "Idle"
             case .thinking: "Thinking"
