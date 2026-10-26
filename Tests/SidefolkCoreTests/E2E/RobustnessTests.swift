@@ -116,7 +116,9 @@ import Testing
         let chore = DailyChore(every: 0.02)
         let count = Shared(0)
         await chore.start { count.change { $0 += 1 } }
-        try await Task.sleep(for: .milliseconds(150))
+        // Waits for the second run rather than a fixed time: a busy CI machine wakes sleepers late.
+        let deadline = Date().addingTimeInterval(5)
+        while count.value < 2, Date() < deadline { try await Task.sleep(for: .milliseconds(10)) }
         await chore.stop()
         let seen = count.value
         #expect(seen >= 2)
