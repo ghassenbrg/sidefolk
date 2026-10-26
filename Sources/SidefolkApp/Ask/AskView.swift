@@ -9,6 +9,7 @@ struct AskView: View {
     var portrait: NSImage?
     var hotkey: String
     @FocusState private var inputFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -141,15 +142,20 @@ struct AskView: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             ForEach(model.pinnedEntries) { entry in
                 EntryView(entry: entry, model: model)
-                    .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+                    .transition(arrival)
             }
             ForEach(model.visibleRequests) { request in
                 RequestView(request: request, model: model)
-                    .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+                    .transition(arrival)
             }
         }
-        .animation(.spring(duration: 0.3), value: model.entries)
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.3), value: model.entries)
         .padding(Theme.Space.m)
+    }
+
+    /// New cards slide in from the input; with Reduce Motion they only fade in, like the companion's states.
+    private var arrival: AnyTransition {
+        reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity)
     }
 
     private var placeholder: LocalizedStringKey {
