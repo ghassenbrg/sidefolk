@@ -13,5 +13,6 @@ if [[ -n "$want" ]]; then
   fi
   sudo xcode-select -s "$app/Contents/Developer"
 fi
-xcodebuild -version | head -1
-swift --version 2>&1 | head -1
+# sed reads to the end: head would close the pipe early, and xcodebuild aborts on the broken pipe.
+xcodebuild -version | sed -n 1p
+swift --version 2>&1 | sed -n 1p

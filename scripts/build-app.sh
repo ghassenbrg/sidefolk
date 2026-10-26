@@ -60,7 +60,7 @@ find "$STAGE/Contents/Resources" -name '.DS_Store' -delete
 
 IDENTITY="${SIDEFOLK_SIGN_IDENTITY:-}"
 if [[ -z "$IDENTITY" ]]; then
-  IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Apple Development[^"]*\)".*/\1/p' | head -1)"
+  IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Apple Development[^"]*\)".*/\1/p' | sed -n 1p)"
 fi
 [[ -z "$IDENTITY" ]] && IDENTITY="-"
 

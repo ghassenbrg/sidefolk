@@ -32,7 +32,7 @@ security list-keychains -d user -s "$keychain" "${existing[@]}"
 xcrun notarytool store-credentials sidefolk-notary --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
   --password "$APPLE_APP_PASSWORD" --keychain "$keychain" >/dev/null
 
-identity="$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' | head -1)"
+identity="$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' | sed -n 1p)"
 [[ -n "$identity" ]] || fail 'the certificate holds no "Developer ID Application" identity.'
 echo "identity=$identity"
 echo "keychain=$keychain"

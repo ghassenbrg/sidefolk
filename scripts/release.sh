@@ -43,7 +43,7 @@ PROFILE=(--keychain-profile "${SIDEFOLK_NOTARY_PROFILE:-}")
 notarize() {
   local id
   id="$(xcrun notarytool submit "$1" "${PROFILE[@]}" --wait --output-format json \
-        | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | head -1)"
+        | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | sed -n 1p)"
   [[ -n "$id" ]] || fail "notarytool gave no submission id for $1."
   if ! xcrun notarytool info "$id" "${PROFILE[@]}" | grep -q "status: Accepted"; then
     xcrun notarytool log "$id" "${PROFILE[@]}" >&2 || true
