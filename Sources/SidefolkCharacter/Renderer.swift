@@ -55,7 +55,7 @@ public enum CharacterRenderer {
         return data as Data
     }
 
-    /// Mochi's rabbit ears, face and scarf simplified for an 18 pt macOS template.
+    /// Mochi's head as the 18 pt macOS template (`MochiMenuGlyph`).
     /// A template must use alpha alone so macOS can tint it for any menu bar appearance.
     @MainActor
     public static func menuBarTemplate(size: CGSize, scale: CGFloat) -> CGImage {
@@ -78,7 +78,7 @@ public enum CharacterRenderer {
     }
 
     private static func drawMenuBar(in context: CGContext, size: CGSize) {
-        RabbitBrandMark.draw(in: context, size: size, ink: CGColor(gray: 0, alpha: 1))
+        MochiMenuGlyph.draw(in: context, size: size)
     }
 
     // MARK: Plumbing

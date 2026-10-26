@@ -249,3 +249,16 @@ and measuring against the reference makes "like this" checkable instead of a mat
 **Alternatives:** tracing the reference (wobbly, inherits its blur); hand-drawn Bézier outlines (what
 drifted); a variable-width brush stroke for the S (smooth, but its fit was worse and its counters came
 out pointed); unioning untangent turn arcs (round counters, but small notches where edges crossed).
+
+### D31 — The menu bar shows a reduced Mochi glyph, not the shrunk monochrome mark (2026-10-26)
+**Decision:** the 18 pt template is its own drawing (`MochiMenuGlyph`): a 1.5 pt outline of Mochi's
+head and ears, the ear tips filled (the brand's navy tips), two wide-set eyes and the nose, with the
+eyes and nose on whole pixels at 2x. One alpha shape, `isTemplate`, so macOS tints it on any bar. The
+large monochrome mark (rays, paw, scarf) stays for lockups and print, where its detail reads.
+**Why:** the founder found the old template "not the best": shrinking the full mark to 18 pt put
+rays, a paw, a scarf and an outline in 36 pixels, which read as noise beside system glyphs. Six
+candidates were drawn at real size beside wifi, battery and search on light and dark bars, at 1x and
+2x (`Resources/Brand/menu-bar-candidates.png`). Solid silhouettes were bolder than every system glyph
+and merged the ears; a plain outline read as any bunny; adding the scarf crowded the 1x pixels. The
+filled ear tips plus the nose are the two details that say Mochi at this size, and the outline matches
+the weight of the symbols around it.

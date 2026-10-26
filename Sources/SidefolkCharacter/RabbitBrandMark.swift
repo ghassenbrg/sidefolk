@@ -90,11 +90,9 @@ public enum RabbitBrandMark {
         c.restoreGState()
     }
 
-    public static func svg(ink: String = "#0F2D5B", menuBar: Bool = false) -> String {
-        let viewport = menuBar ? "width=\"18\" height=\"18\" viewBox=\"8 16 280 280\""
-            : "width=\"260\" height=\"280\" viewBox=\"18 16 260 280\""
-        return """
-        <svg xmlns="http://www.w3.org/2000/svg" \(viewport)>
+    public static func svg(ink: String = "#0F2D5B") -> String {
+        """
+        <svg xmlns="http://www.w3.org/2000/svg" width="260" height="280" viewBox="18 16 260 280">
         <title>Sidefolk Mochi rabbit mascot</title>
         <defs>
         <clipPath id="rabbit-shell"><path d="\(shell)"/></clipPath>
@@ -112,6 +110,68 @@ public enum RabbitBrandMark {
         <path d="\(rays)" fill="none" stroke="\(ink)" stroke-width="11" stroke-linecap="round"/>
         </g>
         </svg>
+        """
+    }
+}
+
+/// Mochi's head reduced to what reads in the menu bar (D31): a 1.5 pt outline of the head and ears,
+/// the ear tips filled like the brand's navy tips, two eyes and the nose. No rays, paw or scarf: at
+/// 18 pt they turned the large mark into noise. Drawn in an 18 pt box with the eyes and nose on the
+/// 2x pixel grid; it is one alpha shape, so macOS tints it as a template in any menu bar.
+public enum MochiMenuGlyph {
+    /// The glyph in its 18 × 18 pt box, y down. Built on each call: it is drawn a handful of times.
+    public static var path: CGPath {
+        func ellipse(_ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, angle: Double = 0) -> CGPath {
+            var t = CGAffineTransform(translationX: cx, y: cy).rotated(by: angle * .pi / 180)
+            return CGPath(ellipseIn: CGRect(x: -rx, y: -ry, width: 2 * rx, height: 2 * ry), transform: &t)
+        }
+        let head = ellipse(9, 11.2, 6.6, 5.3)
+        let ears = [(x: 5.8, angle: -16.0), (x: 12.2, angle: 16.0)]
+        let earShapes = ears.map { ellipse($0.x, 5.2, 2.05, 4.1, angle: $0.angle) }
+        let outline = earShapes.reduce(head) { $0.union($1) }
+            .copy(strokingWithWidth: 1.5, lineCap: .round, lineJoin: .round, miterLimit: 10)
+        // The upper part of each ear, cut square to the ear's own axis.
+        let tips = zip(earShapes, ears).map { shape, ear -> CGPath in
+            var t = CGAffineTransform(translationX: ear.x, y: 5.2).rotated(by: ear.angle * .pi / 180)
+            return shape.intersection(CGPath(rect: CGRect(x: -4, y: -6, width: 8, height: 5.4), transform: &t))
+        }
+        let face = [ellipse(6, 11.75, 1, 1.25), ellipse(12, 11.75, 1, 1.25), ellipse(9, 13, 1, 0.5)]
+        return (tips + face).reduce(outline) { $0.union($1) }
+    }
+
+    /// Fills the glyph in black, scaled to `size`, in a y-up context (bitmaps and PDF pages).
+    public static func draw(in c: CGContext, size: CGSize) {
+        c.saveGState()
+        c.translateBy(x: 0, y: size.height)
+        c.scaleBy(x: size.width / 18, y: -size.height / 18)
+        c.setFillColor(CGColor(gray: 0, alpha: 1))
+        c.addPath(path)
+        c.fillPath()
+        c.restoreGState()
+    }
+
+    public static func svg() -> String {
+        func n(_ v: CGFloat) -> String { String(format: "%.3f", Double(v)) }
+        var d: [String] = []
+        path.applyWithBlock { element in
+            let e = element.pointee
+            let count = switch e.type { case .addQuadCurveToPoint: 2; case .addCurveToPoint: 3; case .closeSubpath: 0; default: 1 }
+            let p = (0..<count).map { "\(n(e.points[$0].x)) \(n(e.points[$0].y))" }
+            switch e.type {
+            case .moveToPoint: d.append("M \(p[0])")
+            case .addLineToPoint: d.append("L \(p[0])")
+            case .addQuadCurveToPoint: d.append("Q \(p[0]) \(p[1])")
+            case .addCurveToPoint: d.append("C \(p[0]) \(p[1]) \(p[2])")
+            case .closeSubpath: d.append("Z")
+            @unknown default: break
+            }
+        }
+        return """
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+        <title>Sidefolk menu bar template</title>
+        <path fill="#000000" d="\(d.joined(separator: " "))"/>
+        </svg>
+
         """
     }
 }

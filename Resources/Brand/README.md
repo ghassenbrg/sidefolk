@@ -17,11 +17,12 @@ masters are retained in `archive/robot/`.
 | Derived macOS icon | `../Icon/icon-macos-1024.png`, `../Icon/Sidefolk.iconset/` | Flat macOS outline/inset only. PNGs: 16/32/128/256/512 pt at 1x and 2x. No rendered edge effects. |
 | Xcode asset catalog | `../Icon/Sidefolk.xcassets/` | Drop into an Xcode project. `AppIcon` contains macOS representations; `AppIconSource` and `IconArtwork` are reusable image sets. |
 | Menu bar template | `../MenuBar/SidefolkMenuBar.pdf` | True vector alpha template; `NSImage.isTemplate = true`, size 18 × 18 pt. |
-| Portable menu vector | `../MenuBar/SidefolkMenuBar.svg` | The same rabbit geometry in a square 18 pt SVG. |
-| Menu bar PNGs | `../MenuBar/SidefolkMenuBar{,@2x,@3x}.png` | 18/36/54 px; native rabbit-ear, face and scarf template, automatically tinted by macOS. |
+| Portable menu vector | `../MenuBar/SidefolkMenuBar.svg` | The same glyph in a square 18 pt SVG. |
+| Menu bar PNGs | `../MenuBar/SidefolkMenuBar{,@2x,@3x}.png` | 18/36/54 px; Mochi's head as a menu bar glyph (outline, filled ear tips, eyes, nose), automatically tinted by macOS. |
+| Menu bar study | `menu-bar-candidates.png` | QA only: the candidates beside system symbols on light and dark bars, at 1x and 2x (`scripts/menu-bar-candidates.swift`). |
 | Logos | `exports/logo-{stacked,horizontal}-{color,navy,white}.png` | Tightly framed transparent lockups; preserve aspect ratio. |
 | Icon marks | `exports/mark-{color,navy,white}.png` | Standalone rabbit portrait/monochrome mark without tile or lettering. |
-| Mascot vectors | `exports/mascot-{navy,white}.{svg,pdf,png}` | Hand-drawn rabbit mark, sharing geometry with the menu template. |
+| Mascot vectors | `exports/mascot-{navy,white}.{svg,pdf,png}` | Hand-drawn rabbit mark for large monochrome use (lockups, print); the menu bar has its own reduced glyph. |
 | Full-body mascot | `exports/mascot-color.png` | Mochi character study, transparent and unframed. |
 | Wordmarks | `exports/wordmark-{color,navy,white}.png` | Flat lettering, 4096 px wide; no bevel, glow or shadow. |
 | Vector wordmarks | `exports/wordmark-{color,navy,white}.{svg,pdf}` | One filled outline per letter built from strokes (below), canonical flat colors, no fonts, clipping masks, filters or embedded raster. |
