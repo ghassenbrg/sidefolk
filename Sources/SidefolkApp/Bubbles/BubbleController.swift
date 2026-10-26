@@ -17,6 +17,7 @@ final class BubbleController {
     init() {
         hosted = HostedPanel(rootView: BubbleView(model: model), allowsKey: false)
         hosted.panel.level = .floating
+        hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
             self?.dismiss(id: item.id)
             self?.onRespond?(item, action)
@@ -110,6 +111,14 @@ final class BubbleController {
             show(next, presentation)
         }
         updateCount()
+    }
+
+    /// Points the tail at the companion: under the bubble when it sits above, on top when below.
+    private func aimTail(from frame: NSRect, at anchor: NSRect) {
+        let onTop = frame.minY < anchor.midY
+        let x = anchor.midX - frame.minX - BubbleView.margin
+        let width = frame.width - 2 * BubbleView.margin
+        model.tail = BubbleModel.Tail(onTop: onTop, x: min(max(x, 22), width - 22))
     }
 
     private func updateCount() {

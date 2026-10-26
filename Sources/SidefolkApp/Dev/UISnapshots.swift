@@ -3,13 +3,15 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Renders the Home and Settings windows with sample data to PNGs, in light and dark, then exits:
+/// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
+/// and dark, then exits:
 /// `SidefolkApp --ui-snapshots <dir>`. Lets agents (who can't see the screen) review the UI.
 /// Uses an in-memory database, a temp home and fixture services: no real data is read or touched.
 ///
 /// - `window-*`: the real windows, titlebar and toolbar included, as the controllers build them.
 /// - `page-*`: a page at its full height, to review everything below the fold.
 /// - `sheet-*`: sheets on their own.
+/// - `desktop-*`: the Ask panel and bubbles (on a plain background, without the desktop behind them).
 enum UISnapshots {
     static func runIfRequested() {
         let args = CommandLine.arguments
@@ -106,6 +108,12 @@ enum UISnapshots {
             await settings.checkProvider()
             try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
 
+            // Desktop surfaces: the Ask panel and the kinds of bubble.
+            try await page("desktop-ask", AskView(model: sampleAsk(), companionName: "Pip", hotkey: "⇧⌘Space"), width: 380)
+            for (name, bubble) in sampleBubbles() {
+                try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
+            }
+
             // Sheets.
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
             try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
@@ -139,6 +147,48 @@ enum UISnapshots {
         let model = SettingsModel(services: services)
         await model.refresh()
         return model
+    }
+
+    /// A panel after a few requests: a result, an answer and a pending approval.
+    private static func sampleAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .reminder, title: "Stretch", subtitle: "Today 17:00"), activityId: nil, undo: true),
+                caption: "remind me at 5 to stretch")
+        ask.add(.answer("Next up is **Stretch** at 17:00, and Scout is watching example.com for changes.",
+                        canThinkHarder: false, tainted: false), caption: "what's coming up?")
+        ask.add(.approval(ApprovalRequest(tool: "files.move", title: "Move 3 files?", summary: "Move 3 items to ~/Downloads/Invoices",
+                                          risk: .medium, caller: .agent(runId: "r"),
+                                          details: .paths(["~/Downloads/a.pdf", "~/Downloads/b.pdf", "~/Downloads/c.pdf"]),
+                                          canAlways: false)))
+        return ask
+    }
+
+    private static func sampleBubbles() -> [(String, BubbleModel)] {
+        func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
+            let model = BubbleModel()
+            model.item = item
+            model.tail = tail
+            return model
+        }
+        return [
+            ("reminder", bubble(AttentionItem(level: .attention, source: "reminder", title: "Stretch", body: "You asked at 16:40.",
+                                              actions: [AttentionAction(id: "done", title: "Done", isPrimary: true),
+                                                        AttentionAction(id: "snooze", title: "In 10 min")],
+                                              refKind: "reminder", refId: "r1"))),
+            ("job-failed", bubble(AttentionItem(level: .attention, source: "job", title: "npm test failed (exit 1)",
+                                                body: "FAIL src/app.test.ts\nExpected 2, received 3\nAfter 4m 12s in sidefolk",
+                                                actions: [AttentionAction(id: "copy", title: "Copy command", isPrimary: true),
+                                                          AttentionAction(id: "open", title: "Open folder")],
+                                                refKind: "job", refId: "j1"))),
+            ("question", bubble(AttentionItem(level: .attention, source: "external:codex", title: "Codex asks",
+                                              body: "Deploy to staging now?",
+                                              actions: [AttentionAction(id: "yes", title: "Yes", isPrimary: true),
+                                                        AttentionAction(id: "no", title: "No")],
+                                              refKind: "ask"),
+                                tail: .init(onTop: true, x: 60))),
+            ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: "That's Scout.",
+                                           body: "Scout stays out while I'm watching something for you.", refKind: "intro"))),
+        ]
     }
 
     // MARK: Rendering

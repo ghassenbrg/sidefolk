@@ -101,10 +101,6 @@ struct AskView: View {
                 EntryView(entry: entry, model: model)
                     .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
             }
-            if model.hiddenCount > 0 {
-                Button("Earlier (\(model.hiddenCount)) ›") { model.actions?.openHome() }
-                    .buttonStyle(.sfPlain).font(Theme.Font.caption)
-            }
         }
         .animation(.spring(duration: 0.3), value: model.entries)
         .padding(Theme.Space.m)

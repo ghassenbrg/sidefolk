@@ -117,6 +117,7 @@ public final class SidefolkRuntime: Sendable {
         await watchers.start()
         await sessionTracker.start()
         _ = await jobTracker.reconcile()
+        await attention.restoreWaiting()
     }
 
     /// After sleep or a clock change: re-arm timers.

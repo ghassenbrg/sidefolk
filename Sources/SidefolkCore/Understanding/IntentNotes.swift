@@ -215,11 +215,12 @@ extension IntentParser {
         for pattern in Self.findPatterns {
             guard let c = pattern.match(t) else { continue }
             let kind = c["kind"].map(Self.kind(of:))
-            let q = c["q"]?.unquoted
+            // `find " "` unquotes to a space: no words is no query.
+            let q = c["q"].map { $0.unquoted.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
             if kind == nil, q == nil { continue }
             if let q {
-                let words = q.split(separator: " ")
-                guard words.count <= 5 else { continue }
+                let words = q.split(whereSeparator: \.isWhitespace)
+                guard !words.isEmpty, words.count <= 5 else { continue }
                 if kind == nil, Self.notASearch.contains(words[0].lowercased()) { continue }
                 if words.count == 1, Self.prepositions.contains(words[0].lowercased()) { continue }
             }

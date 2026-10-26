@@ -10,12 +10,16 @@ struct NowView: View {
         PageScroll {
             PageTitle(title: "Now", subtitle: subtitle)
             if model.needsYouCount > 0 { needsYou }
+            // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
+            if busy { running }
             comingUp
             watching
-            running
+            if !busy { running }
             if !model.recent.isEmpty { recently }
         }
     }
+
+    private var busy: Bool { !model.jobs.isEmpty || !model.workingSessions.isEmpty }
 
     private var subtitle: String {
         let day = Date().formatted(.dateTime.weekday(.wide).day().month(.wide))
@@ -75,7 +79,13 @@ struct NowView: View {
             SectionHeader(title: "Watching", folk: "scout", count: model.watchers.count)
             RowsCard {
                 if model.watchers.isEmpty {
-                    InlineEmpty(text: "Not watching anything. Ask me to watch a page, a file or a site.", systemImage: "binoculars")
+                    InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
+                                systemImage: "binoculars")
+                    HStack {
+                        Button("Watch something…") { model.services.openAsk(prefill: "tell me when ") }.buttonStyle(.sf(.secondary))
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Space.l).padding(.bottom, Theme.Space.m)
                 }
                 ForEach(model.watchers) { w in WatcherRow(watcher: w, model: model) }
             }
@@ -266,9 +276,11 @@ private struct ReminderRow: View {
                 .lineLimit(1)
             }
             Spacer(minLength: Theme.Space.s)
-            snoozeMenu
+            // Snooze is a button only when it is about to matter; a list of future reminders stays quiet.
+            if dueSoon { snoozeMenu }
             Menu {
                 Button("Edit…") { editing = true }
+                if !dueSoon { Menu("Snooze") { snoozeItems(prefixed: false) } }
                 Button("Cancel reminder", role: .destructive) { Task { await model.cancel(reminder) } }
             } label: {
                 Image(systemName: "ellipsis")
@@ -308,6 +320,7 @@ private struct ReminderRow: View {
 
     private var due: Date { reminder.nextDue ?? reminder.fireAt }
     private var overdue: Bool { due < Date() }
+    private var dueSoon: Bool { due.timeIntervalSinceNow < 3600 }
 
     private var when: String {
         let time = TimeFormat.clock(due, calendar: .autoupdatingCurrent)

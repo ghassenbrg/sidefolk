@@ -44,6 +44,7 @@ private struct ItemList: View {
     @Bindable var model: NotebookModel
     var collection: NotebookCollection
     @FocusState private var listFocused: Bool
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -102,12 +103,33 @@ private struct ItemList: View {
     }
 
     private var searchField: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            searchBox
+            if searching {
+                Picker("Search in", selection: $model.everywhere) {
+                    Text(collection.name).tag(false)
+                    Text("Everywhere").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.small)
+            }
+        }
+        // ⌘F, as everywhere on the Mac.
+        .background {
+            Button("Find") { searchFocused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var searchBox: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search", text: $model.query, prompt: Text("Search \(collection.name)"))
+            TextField("Search", text: $model.query, prompt: Text(model.everywhere ? "Search everything" : "Search \(collection.name)"))
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
-                .accessibilityLabel("Search \(collection.name)")
+                .focused($searchFocused)
+                .accessibilityLabel(model.everywhere ? "Search everything" : "Search \(collection.name)")
             if !model.query.isEmpty {
                 Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.plain)
@@ -126,6 +148,11 @@ private struct ItemList: View {
             VStack(spacing: 0) {
                 Spacer()
                 EmptyState(title: emptyTitle, message: emptyMessage, systemImage: emptySymbol)
+                if searching, !model.everywhere {
+                    Button("Search everywhere") { model.everywhere = true }
+                        .buttonStyle(.sfSecondary)
+                        .padding(.top, -Theme.Space.l)
+                }
                 if !searching {
                     Button("Write a \(ItemKindStyle.title(newKind).lowercased())") { Task { await model.newItem() } }
                         .buttonStyle(.sfPrimary)
@@ -182,7 +209,7 @@ private struct ItemList: View {
     }
 
     private var emptyMessage: String {
-        if searching { return "Try fewer words, or look in another collection." }
+        if searching { return model.everywhere ? "Try fewer or different words." : "Try fewer words, or search the whole notebook." }
         if collection.kind == .profile { return "Tell me things like “I prefer short answers” and I'll keep them here." }
         if collection.kind == .inbox { return "Anything you save without saying where lands here." }
         return "Write one here, or ask me to save something to \(collection.name)."
@@ -227,6 +254,7 @@ private struct ItemRow: View {
                 }
                 HStack(spacing: 6) {
                     Text(TimeText.short(item.updatedAt))
+                    if let place = elsewhere { Text("in \(place)") }
                     ForEach(item.tagList.prefix(3), id: \.self) { Text("#" + $0) }
                 }
                 .font(Theme.Font.caption)
@@ -256,6 +284,12 @@ private struct ItemRow: View {
     }
 
     private var displayTitle: String { item.title.isEmpty ? "Untitled" : item.title }
+
+    /// Searching everywhere: where a result from another collection lives.
+    private var elsewhere: String? {
+        guard model.everywhere, !model.query.isEmpty, item.collectionId != model.collectionId else { return nil }
+        return model.collectionName(item.collectionId)
+    }
 
     private var snippet: String? {
         if item.kind == .link, let url = item.url {

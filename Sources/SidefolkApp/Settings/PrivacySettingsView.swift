@@ -201,7 +201,7 @@ struct PrivacySettingsView: View {
 
     private var data: some View {
         SettingsGroup(title: "Your data") {
-            SettingsRow(title: "Export data", detail: "Notes, reminders, watchers and settings as one JSON file. No keys.") {
+            SettingsRow(title: "Export data", detail: "Notes, reminders, watches and settings as one JSON file. No keys.") {
                 Button("Export Data…") { save(name: "Sidefolk Export", type: .json) { await model.exportData(to: $0) } }
                     .buttonStyle(.sf(.secondary))
             }
@@ -223,7 +223,7 @@ struct PrivacySettingsView: View {
                 .padding(.horizontal, Theme.Space.l)
                 .padding(.vertical, Theme.Space.m)
             }
-            SettingsRow(title: "Delete all Sidefolk data", detail: "Notes, reminders, watchers, history, logs and saved keys. This can't be undone.") {
+            SettingsRow(title: "Delete all Sidefolk data", detail: "Notes, reminders, watches, history, logs and saved keys. This can't be undone.") {
                 Button("Delete All Data…") { confirmingDelete = true }.buttonStyle(.sf(.destructive))
             }
         }

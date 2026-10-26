@@ -19,6 +19,12 @@ import Testing
         }
     }
 
+    /// Found by the random test above: a quoted blank is not a search.
+    @Test(arguments: ["find \t \" \"", "find \"\"", "search for ' '", "find `  `"])
+    func blankQuotedSearchesDoNotCrash(text: String) {
+        if case .find(let query, _, _)? = parser.parse(text, now: now)?.intent { #expect(!query.trimmingCharacters(in: .whitespaces).isEmpty) }
+    }
+
     @Test func typingOneLetterAtATimeStaysCheap() {
         let text = "remind me every weekday at 9 to do the standup notes and send the document to the whole team please"
         let start = Date()

@@ -4,7 +4,8 @@ import SidefolkCore
 /// First run happens on the desktop, through the companion — no wizard (DECISIONS D4, PRODUCT §5).
 /// Each step is one bubble; Esc/× skips the step, nothing blocks using Sidefolk meanwhile.
 final class Onboarding {
-    enum Step: CaseIterable { case hello, tryReminder, notifications, agents, login, done }
+    /// Agents come second: a tap when a coding session needs you is the thing nothing else does (DECISIONS D12).
+    enum Step: CaseIterable { case hello, agents, tryReminder, notifications, login, done }
 
     private unowned let coordinator: AppCoordinator
     private(set) var step: Step?
@@ -28,7 +29,7 @@ final class Onboarding {
         case (.hello, "skip"):
             finish()
         case (.hello, _):
-            advance(to: .tryReminder)
+            advance(to: .agents)
         case (.tryReminder, "show"):
             waitingForReminder = true
             coordinator.showAsk(prefill: "remind me in 2 minutes to stretch")
@@ -37,19 +38,19 @@ final class Onboarding {
         case (.notifications, "allow"):
             Task {
                 await coordinator.requestNotifications()
-                advance(to: .agents)
+                advance(to: .login)
             }
         case (.notifications, _):
-            advance(to: .agents)
+            advance(to: .login)
         case (.agents, "connect"):
             Task {
                 let status = await coordinator.integrationStatus()
                 if status.claudeCodeFound { _ = await coordinator.connectClaudeCode(hooks: true) }
                 if status.codexFound, !status.codexMCPInstalled { _ = await coordinator.connectCodex() }
-                advance(to: .login)
+                advance(to: .tryReminder)
             }
         case (.agents, _):
-            advance(to: .login)
+            advance(to: .tryReminder)
         case (.login, "yes"):
             _ = coordinator.setOpenAtLogin(true)
             advance(to: .done)
@@ -73,13 +74,13 @@ final class Onboarding {
     private func advance(to next: Step) {
         Task {
             var target = next
-            if target == .notifications, await coordinator.notificationsAuthorized() { target = .agents }
             if target == .agents {
                 let status = await coordinator.integrationStatus()
                 let claudeDone = !status.claudeCodeFound || status.claudeHooksInstalled
                 let codexDone = !status.codexFound || status.codexMCPInstalled
-                if claudeDone && codexDone { target = .login }
+                if claudeDone && codexDone { target = .tryReminder }
             }
+            if target == .notifications, await coordinator.notificationsAuthorized() { target = .login }
             if target == .login, coordinator.openAtLogin { target = .done }
             step = target
             show(target)
@@ -100,19 +101,19 @@ final class Onboarding {
                           [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)])
         case .tryReminder:
             item = bubble("Give me something to remember.", "Click me or press \(coordinator.hotkeyLabel). Try a reminder: no AI needed.",
-                          [("show", "Show me", true), ("later", "Later", false)])
+                          [("show", "Show me", true), ("later", "Not now", false)])
         case .notifications:
             item = bubble("Can I use Mac notifications?", "Only when I'm hidden, you're in fullscreen, or something is urgent.",
                           [("allow", "Allow notifications", true), ("later", "Not now", false)])
         case .agents:
             item = bubble("Want a tap when your coding agents need you?",
                           "I'll add myself to Claude Code and Codex. You'll see exactly what changes, and I keep a backup.",
-                          [("connect", "Connect…", true), ("later", "Later", false)])
+                          [("connect", "Connect…", true), ("later", "Not now", false)])
         case .login:
             item = bubble("Start me when you log in?", "Reminders and watches only work while I'm running.",
                           [("yes", "Start at login", true), ("no", "Not now", false)])
         case .done:
-            item = bubble("That's it.", "Drop files or links on me, double-click me for your notebook, or find me in the menu bar.",
+            item = bubble("That's it.", "Ask “what did I save about…” any time. Drop files or links on me, double-click me for your notebook, or find me in the menu bar.",
                           [("ok", "Got it", true)])
         }
         coordinator.presentLocal(item)

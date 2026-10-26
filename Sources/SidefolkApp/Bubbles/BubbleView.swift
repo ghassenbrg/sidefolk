@@ -8,6 +8,13 @@ final class BubbleModel {
     var waitingCount = 0
     var hovering = false
     var respond: ((AttentionItem, String?) -> Void)?
+    /// Where the tail meets the bubble, from its left edge; on the top edge when the bubble sits below.
+    var tail: Tail?
+
+    struct Tail: Equatable {
+        var onTop: Bool
+        var x: CGFloat
+    }
 }
 
 /// A speech bubble from the companion: the thing first, a short line, up to three verbs.
@@ -19,7 +26,7 @@ struct BubbleView: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(alignment: .top, spacing: Theme.Space.s) {
                     // The companion's own voice needs no icon; notices from things it watches get one.
-                    if item.source != "onboarding" {
+                    if item.source != Onboarding.source, item.source != AppCoordinator.ownVoice {
                         Image(systemName: symbol(for: item)).foregroundStyle(accent(for: item)).font(.system(size: 14, weight: .semibold))
                             .padding(.top, 1)
                     }
@@ -58,13 +65,24 @@ struct BubbleView: View {
             .onTapGesture { model.expanded = true }
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.bubble, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.bubble, style: .continuous).strokeBorder(accent(for: item).opacity(0.45), lineWidth: 1))
+            .overlay(alignment: model.tail?.onTop == true ? .topLeading : .bottomLeading) {
+                if let tail = model.tail {
+                    BubbleTail(border: accent(for: item).opacity(0.45), pointsUp: tail.onTop)
+                        .frame(width: BubbleTail.width, height: BubbleTail.height)
+                        .offset(x: tail.x - BubbleTail.width / 2, y: tail.onTop ? 1 - BubbleTail.height : BubbleTail.height - 1)
+                        .accessibilityHidden(true)
+                }
+            }
             .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
-            .padding(10)
+            .padding(Self.margin)
             .onHover { model.hovering = $0 }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(item.title)
         }
     }
+
+    /// Room around the card for its shadow and tail.
+    static let margin: CGFloat = 10
 
     private func symbol(for item: AttentionItem) -> String {
         switch item.refKind ?? item.source {
@@ -84,6 +102,32 @@ struct BubbleView: View {
         case "watcher": Theme.folkColor("scout")
         case "job", "session": Theme.folkColor("byte")
         default: item.level == .critical ? Theme.coral : Theme.aqua
+        }
+    }
+}
+
+/// The little point that makes a bubble the companion's speech. Its base overlaps the card's border
+/// by a point so the border looks open where the tail joins.
+struct BubbleTail: View {
+    static let width: CGFloat = 16
+    static let height: CGFloat = 9
+    var border: Color
+    var pointsUp: Bool
+
+    var body: some View {
+        ZStack {
+            outline(closed: true).fill(Theme.surface)
+            outline(closed: false).stroke(border, lineWidth: 1)
+        }
+        .scaleEffect(x: 1, y: pointsUp ? -1 : 1)
+    }
+
+    private func outline(closed: Bool) -> Path {
+        Path { p in
+            p.move(to: CGPoint(x: 0, y: 0))
+            p.addLine(to: CGPoint(x: Self.width / 2, y: Self.height))
+            p.addLine(to: CGPoint(x: Self.width, y: 0))
+            if closed { p.closeSubpath() }
         }
     }
 }

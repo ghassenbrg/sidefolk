@@ -24,7 +24,7 @@ struct ExtensionsSettingsView: View {
             Button("Uninstall", role: .destructive) { Task { await model.uninstall(ext) } }
             Button("Cancel", role: .cancel) {}
         } message: { ext in
-            Text(ext.kind == .mcpServer ? "Its tools stop working right away." : "Its tools and watchers stop, and its files are removed.")
+            Text(ext.kind == .mcpServer ? "Its tools stop working right away." : "Its tools and watches stop, and its files are removed.")
         }
         .alert("Delete the skill “\(deletingSkill?.name ?? "")”?", isPresented: Binding(
             get: { deletingSkill != nil }, set: { if !$0 { deletingSkill = nil } }

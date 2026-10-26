@@ -36,6 +36,8 @@ final class HostedPanel<Content: View> {
     private var lastPlacement: (() -> Void)?
     private var resizeObserver: NSObjectProtocol?
     private var replacing = false
+    /// Called after every placement with the panel's frame and the anchor it was placed beside.
+    var onPlaced: ((NSRect, NSRect) -> Void)?
 
     init(rootView: Content, allowsKey: Bool) {
         panel = FloatingPanel()
@@ -81,5 +83,6 @@ final class HostedPanel<Content: View> {
         replacing = true
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
         replacing = false
+        onPlaced?(panel.frame, anchor)
     }
 }

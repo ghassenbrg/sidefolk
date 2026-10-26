@@ -34,12 +34,15 @@ struct GeneralSettingsView: View {
                 quietRow
             }
 
-            SettingsGroup(title: "Times of day", footer: "“Tomorrow morning”, “this afternoon” and “tonight” mean these times.") {
+            SettingsGroup(title: "Times of day", footer: "“Tomorrow morning”, “this afternoon” and “this evening” mean these times; “tonight” is 21:00.") {
                 hourRow("Morning", hours: 5...11, key: \.morningHour)
                 hourRow("Afternoon", hours: 12...17, key: \.afternoonHour)
                 hourRow("Evening", hours: 16...23, key: \.eveningHour)
+            }
+
+            SettingsGroup(title: "Morning brief") {
                 SettingsToggle(title: "Morning brief",
-                               detail: "At \(TimeText.hour(model.settings.morningHour)), today's reminders, open tasks and watchers in one bubble.",
+                               detail: "At \(TimeText.hour(model.settings.morningHour)), today's reminders, open tasks and watches in one bubble.",
                                isOn: Binding(get: { model.settings.morningBrief }, set: { on in model.update { $0.morningBrief = on } }))
             }
 

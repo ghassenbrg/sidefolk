@@ -66,7 +66,7 @@ final class AppCoordinator {
         bubbles.anchorProvider = { [weak self] in self?.anchor() }
         bubbles.onRespond = { [weak self] item, action in self?.respond(to: item, action: action) }
         bubbles.onAutoDismiss = { [weak self] item in
-            guard let self, item.source != Onboarding.source else { return }
+            guard let self, item.source != Onboarding.source, item.source != Self.ownVoice else { return }
             Task { await self.runtime.attention.respond(id: item.id, actionId: nil) }
         }
 
@@ -176,8 +176,33 @@ final class AppCoordinator {
                                 activeWatchers: watchers.count, liveAgentWork: jobs.count + working)
             companion.setFolks(roster.onDuty, visible: runtime.settings.current.showFolks)
             companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
+            introduceNewFolks(roster.onDuty)
         }
     }
+
+    /// The first time a folk turns up, the companion says who it is: once, gently, never during onboarding.
+    private func introduceNewFolks(_ folks: [DutyFolk]) {
+        guard runtime.settings.current.showFolks, !onboarding.isRunning else { return }
+        let key = "introducedFolks"
+        var met = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+        guard let folk = folks.first(where: { !met.contains($0.rawValue) }) else { return }
+        met.insert(folk.rawValue)
+        UserDefaults.standard.set(met.sorted(), forKey: key)
+        let (title, body) = Self.introduction(folk)
+        let item = AttentionItem(level: .gentle, source: Self.ownVoice, title: title, body: body, refKind: "intro")
+        bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+    }
+
+    static func introduction(_ folk: DutyFolk) -> (String, String) {
+        switch folk {
+        case .tempo: ("That's Tempo.", "Tempo turns up when a reminder is less than 15 minutes away.")
+        case .scout: ("That's Scout.", "Scout stays out while I'm watching something for you.")
+        case .byte: ("That's Byte.", "Byte keeps me company while an agent or a command is working.")
+        }
+    }
+
+    /// Bubbles the companion says itself, outside the attention center (folk introductions).
+    static let ownVoice = "companion"
 
     /// Shows a bubble that doesn't go through the attention center (onboarding).
     func presentLocal(_ item: AttentionItem) {
@@ -252,6 +277,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command.hasPrefix("find:") { home.showSearch(String(command.dropFirst(5))); return }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
             if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
@@ -423,6 +449,7 @@ final class AppCoordinator {
             onboarding.respond(action: action)
             return
         }
+        if item.source == Self.ownVoice { return }
         if action == "open", item.source == "summary" { openHome() }
         Task { await runtime.attention.respond(id: item.id, actionId: action) }
     }

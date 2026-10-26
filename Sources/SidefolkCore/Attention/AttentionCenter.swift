@@ -122,6 +122,22 @@ public actor AttentionCenter {
 
     public func open() async -> [AttentionItem] { (try? await store.open()) ?? [] }
 
+    /// After a restart: notices that were still waiting (held while away, quiet or typing) get their
+    /// turn again, several as one summary. Questions from the last run are closed, since nobody is
+    /// waiting for their answer any more; anything older than a day stays in the Now list only.
+    public func restoreWaiting() async {
+        let cutoff = clock.now.addingTimeInterval(-86_400)
+        for item in (try? await store.open()) ?? [] where item.state == .pending {
+            if item.refKind == "ask" {
+                await expire(id: item.id)
+            } else if item.createdAt > cutoff, item.source != "summary" {
+                held[item.id] = item
+            }
+        }
+        await reconsiderHeld(summarise: true)
+        await publishBacklog()
+    }
+
     // MARK: Internals
 
     private func handler(for item: AttentionItem) -> ActionHandler? {
