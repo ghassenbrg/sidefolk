@@ -207,7 +207,12 @@ public struct IntentParser: Sendable {
         var parts = [String(localized: "Reminder"), TimeFormat.when(date, now: ctx.now, calendar: when.calendar)]
         if let rule = found.recurrence { parts.append(TimeFormat.recurrence(rule, now: ctx.now, calendar: when.calendar)) }
         if important { parts.append(String(localized: "important")) }
-        return ParsedIntent(intent: .remind(title: title, when: date, recurrence: found.recurrence, important: important),
+        // The series' own start, only where it changes what comes after the first fire (a clamped 31st).
+        let anchor = found.recurrence.flatMap { rule in
+            RecurrenceMath.nextOccurrence(after: date, recurrence: rule, anchor: found.anchor, calendar: when.calendar)
+                == RecurrenceMath.nextOccurrence(after: date, recurrence: rule, anchor: date, calendar: when.calendar) ? nil : found.anchor
+        }
+        return ParsedIntent(intent: .remind(title: title, when: date, recurrence: found.recurrence, important: important, anchor: anchor),
                             hint: ParsedIntent.hint(parts.joined(separator: " · ")))
     }
 

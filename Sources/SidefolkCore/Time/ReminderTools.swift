@@ -161,13 +161,17 @@ public enum ReminderTools {
             var rule = parsed.recurrence
             var anchor = parsed.anchor
             if let explicit = try recurrence(from: input["recurrence"], now: now) {
+                // The series' day when the first fire had to be clamped ("the 31st" said in November): from the
+                // local parser, as the user's own call only (models never see this key), and never after the first fire.
+                let given = context.caller == .user ? input.string("anchor").flatMap { ISO8601DateFormatter().date(from: $0) } : nil
+                let seriesAnchor = given.map { min($0, parsed.date) } ?? parsed.date
                 // The first fire is the first time that fits the rule on or after the requested moment.
                 guard let first = RecurrenceMath.nextOccurrence(after: parsed.date.addingTimeInterval(-1), recurrence: explicit,
-                                                                anchor: parsed.date, calendar: calendar) else {
+                                                                anchor: seriesAnchor, calendar: calendar) else {
                     throw UserFacingError("That repeat ends before it starts.", recovery: "Choose a later end date.")
                 }
                 date = first
-                anchor = parsed.date
+                anchor = seriesAnchor
                 rule = explicit
             }
 

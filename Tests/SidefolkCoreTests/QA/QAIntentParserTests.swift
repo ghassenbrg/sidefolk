@@ -106,7 +106,7 @@ import Testing
         "remind me to water the plants every first monday",
     ]) func scheduleWordsNeverLeakIntoTheTitle(text: String) {
         let got = QA.parse(text)
-        if case .remind(let title, _, let recurrence, _)? = got {
+        if case .remind(let title, _, let recurrence, _, _)? = got {
             let lower = title.lowercased()
             #expect(!["every", "except", "last", "first"].contains { lower.contains($0) } && recurrence != nil,
                     "“\(text)” → \(QA.describe(got))")
@@ -117,7 +117,7 @@ import Testing
     @Test func thisWeekendOnASaturdayIsNotNextWeek() {
         let saturday = QA.at(2025, 10, 25, 10)
         let got = QA.parse("remind me this weekend to call", now: saturday)
-        if case .remind(_, let when, _, _)? = got {
+        if case .remind(_, let when, _, _, _)? = got {
             #expect(when < QA.at(2025, 10, 27, 0), "→ \(QA.describe(got))")
         }
     }

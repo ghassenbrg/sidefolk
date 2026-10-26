@@ -44,7 +44,9 @@ public struct ReportIntent: Sendable, Equatable {
 /// What the user meant, worked out without a model.
 public enum LocalIntent: Sendable, Equatable {
     /// `important` reminders are the ones that still interrupt during quiet mode ("urgent: remind me ...").
-    case remind(title: String, when: Date, recurrence: Recurrence?, important: Bool = false)
+    /// `anchor` is set when a monthly or yearly series starts on a clamped day (`WhenResult.anchor`): "every month
+    /// on the 31st" said in November fires on the 30th first, and must still come back on the 31st.
+    case remind(title: String, when: Date, recurrence: Recurrence?, important: Bool = false, anchor: Date? = nil)
     /// `collection` is a name as typed (or the known spelling); nil means the Inbox. `text` is exactly what was typed.
     /// `collectionKind` is what to make the collection if it does not exist yet ("add milk to my groceries list" makes a
     /// list); nil leaves that to the tool's default.

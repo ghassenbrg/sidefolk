@@ -76,14 +76,16 @@ import Testing
     static func problem(_ parsed: ParsedIntent, now: Date, titles: Bool) -> String? {
         guard parsed.hint.hasSuffix("no AI") else { return "hint “\(parsed.hint)”" }
         switch parsed.intent {
-        case .remind(let title, let when, let rule, _):
+        case .remind(let title, let when, let rule, _, let anchor):
             if when <= now { return "fires in the past (\(TimeTest.show(when)))" }
             if title.isEmpty { return "no title" }
             if titles, Self.timeWords.found(in: title) { return "time words in the title “\(title)”" }
             guard let rule else { return nil }
             if !(1...Recurrence.maxInterval).contains(rule.interval) { return "interval \(rule.interval)" }
             if let until = rule.until, until < when { return "ends (\(TimeTest.show(until))) before it starts" }
-            let first = RecurrenceMath.nextOccurrence(after: when.addingTimeInterval(-1), recurrence: rule, anchor: when, calendar: TimeTest.utc)
+            if let anchor, anchor > when { return "the series starts (\(TimeTest.show(anchor))) after its first fire" }
+            let first = RecurrenceMath.nextOccurrence(after: when.addingTimeInterval(-1), recurrence: rule, anchor: anchor ?? when,
+                                                      calendar: TimeTest.utc)
             if first != when { return "first fire \(TimeTest.show(first)) isn't \(TimeTest.show(when))" }
         case .report(let r):
             if !(r.everySeconds > 0 && r.everySeconds <= WatchLimits.maxInterval) { return "every \(r.everySeconds) s" }

@@ -21,7 +21,7 @@ enum QA {
     static func describe(_ intent: LocalIntent?) -> String {
         guard let intent else { return "nil (left to the AI)" }
         switch intent {
-        case .remind(let title, let when, let rec, let important):
+        case .remind(let title, let when, let rec, let important, _):
             return "remind “\(title)” at \(TimeTest.show(when))" + (important ? " (important)" : "") + (rec.map { " repeating \($0.frequency) x\($0.interval) \($0.weekdays)" } ?? "")
         case .needsTime(let title, let reason, _): return "needsTime “\(title)” (\(reason ?? "no reason"))"
         case .needsTarget(let kind, let becomes): return "needsTarget \(kind) \(becomes ?? "-")"

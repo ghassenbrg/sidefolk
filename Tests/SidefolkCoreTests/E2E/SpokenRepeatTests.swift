@@ -55,6 +55,26 @@ import Testing
         await w.runtime.scheduler.stop()
     }
 
+    /// "Every month on the 31st" said in November fires on the 30th, then must come back to the 31st. The local path
+    /// lost the series' day, so the rent reminder drifted to the 30th (or the 28th, said in February) for good.
+    @Test func aMonthlyDayKeepsItsDayFromTheLocalPath() async throws {
+        let start = Calendar.current.date(from: DateComponents(year: 2025, month: 11, day: 5, hour: 10))!
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("sf-e2e-\(UUID().uuidString.prefix(8))", isDirectory: true)
+        let clock = ManualClock(start)
+        let runtime = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform(), clock: clock)
+        let runner = LocalIntentRunner(runtime: runtime)
+        let parsed = try #require(await runner.parse("remind me every month on the 31st to pay rent"))
+        _ = await runner.run(parsed.intent)
+        let first = try #require(await runtime.scheduler.upcoming().first)
+        #expect(Calendar.current.component(.day, from: first.fireAt) == 30)
+        await runtime.scheduler.start()
+        clock.set(first.fireAt.addingTimeInterval(60))
+        await runtime.scheduler.tick()
+        let next = try #require(await runtime.scheduler.upcoming().first)
+        #expect(Calendar.current.dateComponents([.month, .day], from: next.fireAt) == DateComponents(month: 12, day: 31))
+        await runtime.scheduler.stop()
+    }
+
     /// The same request through the AI, in Auto mode: the reminder needs no card, the medium-risk watch runs
     /// without one too (clean turn), and the answer's first sentence is what gets said.
     @Test func aSpokenRequestThroughTheAIInAutoMode() async throws {

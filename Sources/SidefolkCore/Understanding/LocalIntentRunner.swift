@@ -51,8 +51,10 @@ public struct LocalIntentRunner: Sendable {
 
     public func run(_ intent: LocalIntent) async -> LocalOutcome {
         switch intent {
-        case .remind(let title, let when, let recurrence, let important):
+        case .remind(let title, let when, let recurrence, let important, let anchor):
             var input: [String: JSONValue] = ["title": .string(title), "when": .string(ISO8601DateFormatter().string(from: when))]
+            // Only the user's own calls may carry it; it isn't in the schema models see.
+            if let anchor, recurrence != nil { input["anchor"] = .string(ISO8601DateFormatter().string(from: anchor)) }
             // Only important reminders interrupt during quiet mode.
             if important { input["level"] = .string("critical") }
             if let r = recurrence {

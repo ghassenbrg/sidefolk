@@ -79,7 +79,8 @@ extension AppCoordinator: AskActions {
             if let when = runtime.intentParser.parseTime(text, now: Date()), when.date > Date(),
                when.remaining.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).isEmpty {
                 model.pendingReminderTitle = nil
-                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence, important: model.pendingReminderImportant),
+                runLocal(.remind(title: title, when: when.date, recurrence: when.recurrence, important: model.pendingReminderImportant,
+                                 anchor: when.recurrence == nil ? nil : when.anchor),
                          caption: "\(title) — \(text)", into: model, reply: reply)
                 return
             }
