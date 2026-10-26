@@ -649,6 +649,9 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - **python3:** framework builds (Homebrew and Xcode) re-exec
   `…/Python.framework/Versions/X/Resources/Python.app/Contents/MacOS/Python`; allow it. Homebrew
   needs `/opt/homebrew/{Cellar,opt,lib}` (`ssl` loads `opt/openssl@3`) but not `etc` or `var`.
+- **node (Homebrew):** reads OpenSSL's settings, `/opt/homebrew/etc/openssl@<n>/openssl.cnf`, at every start
+  and exits when it can't (found on GitHub's runner, whose node uses openssl@4). That one file is readable for
+  any OpenSSL version under either Homebrew prefix; the certificate stores beside it stay network-only.
   `/usr/bin/python3` is an xcrun shim that fails in the sandbox; resolve it from the developer folder
   `xcode-select` points at (read from its link, never by running `xcrun`, which offers to install the
   developer tools on a Mac without them) + `realpath`.

@@ -112,6 +112,35 @@ import Testing
 }
 
 extension SandboxProfileTests {
+    static let openSSLSettings = ["/opt/homebrew/etc/openssl@4/openssl.cnf", "/opt/homebrew/etc/openssl@3/openssl.cnf",
+                                  "/usr/local/etc/openssl@3/openssl.cnf"].first { FileManager.default.fileExists(atPath: $0) }
+
+    /// Homebrew's node reads OpenSSL's settings at start, with or without the internet (GitHub's runner
+    /// has openssl@4, which the rules didn't name). The settings read; the certificates beside them
+    /// don't, without the internet.
+    @Test(.enabled(if: openSSLSettings != nil, "needs Homebrew's OpenSSL"))
+    func openSSLSettingsReadWithoutTheInternet() async throws {
+        let settings = try #require(Self.openSSLSettings)
+        let root = try ExtFixtures.tempDir("sbpl-ssl")
+        defer { ExtensionFiles.removeTree(root.path) }
+        let profile = try SandboxProfile.make(.init(extensionDir: root.path, dataDir: root.path, executable: "/bin/cat",
+                                                    permissions: ExtensionPermissions()))
+        let file = root.appendingPathComponent("p.sb")
+        try Data(profile.text.utf8).write(to: file)
+        func cat(_ path: String) async throws -> ExtensionProcessExit {
+            let process = try ExtensionProcess(spec: ExtensionProcessSpec(
+                executable: "/usr/bin/sandbox-exec", arguments: ["-f", file.path] + profile.arguments + ["/bin/cat", path],
+                environment: ["PATH": "/usr/bin:/bin"]))
+            try process.start(onOutput: { _ in }, onExit: { _ in })
+            return await process.waitForExit()
+        }
+        #expect(try await cat(settings).cause == .exited(0))
+        let certificates = URL(fileURLWithPath: settings).deletingLastPathComponent().appendingPathComponent("cert.pem").path
+        if FileManager.default.fileExists(atPath: certificates) {
+            #expect(try await cat(certificates).cause != .exited(0))
+        }
+    }
+
     /// `run.command` may be a compiled program inside the extension folder; it must start in its sandbox.
     @Test func compiledProgramInsideTheFolderStarts() async throws {
         let root = try ExtFixtures.tempDir("sbpl-native")

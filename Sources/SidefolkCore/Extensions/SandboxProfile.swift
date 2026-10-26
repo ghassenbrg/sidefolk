@@ -143,6 +143,9 @@ public struct SandboxProfile: Sendable, Hashable {
       (subpath "/dev/fd"))
     (allow file-map-executable (subpath "/usr/lib") (subpath "/System") (subpath "/Library/Apple"))
     (allow file-write-data (literal "/dev/null") (literal "/dev/zero"))
+    ;; OpenSSL's settings, which Homebrew's node reads at start with or without the internet: only
+    ;; that file, for any OpenSSL version, under either Homebrew prefix.
+    (allow file-read* (regex #"^/(opt/homebrew|usr/local)/etc/openssl(@[0-9.]+)?/openssl\\.cnf$"))
 
     """
 
@@ -153,8 +156,8 @@ public struct SandboxProfile: Sendable, Hashable {
     (allow system-socket)
     (allow network-outbound (remote ip "*:*"))
     (allow network-outbound (literal "/private/var/run/mDNSResponder"))
-    (allow file-read* (subpath "/private/etc/ssl") (subpath "/opt/homebrew/etc/ca-certificates")
-      (subpath "/opt/homebrew/etc/openssl@3"))
+    (allow file-read* (subpath "/private/etc/ssl")
+      (regex #"^/(opt/homebrew|usr/local)/etc/(ca-certificates|openssl(@[0-9.]+)?)/"))
 
     """
 }
