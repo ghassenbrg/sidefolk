@@ -1,7 +1,8 @@
 # Status
 
 Updated: 2026-10-27. Version 0.1.0. Latest: the production review is merged (design D40, hardening
-D41, agents D42, the launch kit); 1172 tests pass; the reviews' 130 new strings are being translated.
+D41, agents D42, the launch kit); 1172 tests pass; all ten languages complete (2131 strings each);
+release build 0.1.0 (379) made and verified; launch screenshots refreshed.
 
 ## Done and verified
 - **Version 0.1.0** (`SidefolkVersion.current`); bundled extensions and the docs ask for `sidefolk >=0.1`.
@@ -272,7 +273,6 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   `sidefolk status` answers, idle measured (see above).
 
 ## In progress
-- **Translations of the reviews' 130 new strings** (fr, es, it / de, pt-BR, ar / ja, ko, zh-Hans).
 - **Lively companions:** a proof of concept on the branch `poc/lively-companions` (moments,
   postures, an idle scheduler, Liveliness Minimal/Balanced/Lively, custom companions as data, a 3D
   spike); waiting for the founder's decision. Its write-up is docs/research/lively-companions.md on
@@ -314,11 +314,9 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   identity or ad hoc.
 
 ## Next
-1. Import the round-four translations, build the release (`make app`), re-run
-   `swift scripts/launch-screenshots.swift` so the kit shows the final screens.
-2. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
+1. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
    Developer ID signing and notarization (`scripts/release.sh`); ask Anthropic about its marks.
-3. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
+2. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
    "Today" timeline with an end-of-day recap.
 
 ## Design next (from the 2026-10-26 pass)
