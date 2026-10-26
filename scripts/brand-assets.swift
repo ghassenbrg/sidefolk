@@ -60,12 +60,16 @@ func normalized(_ image: CGImage, ink: (Double, Double, Double)? = nil, trimOutp
 }
 let navy = (15.0/255, 45.0/255, 91.0/255)
 let aqua = (46.0/255, 212.0/255, 217.0/255)
-// The wordmark is authored vector geometry, not a contour trace of the small reference.
-// Keep one editable SVG master; all platform formats are rendered from exactly these paths.
+// The wordmark is constructed vector geometry (scripts/wordmark.swift), not a contour trace of the
+// reference. One SVG master; all platform formats are rendered from exactly these paths.
 final class WordmarkSource: NSObject, XMLParserDelegate {
     var paths: [(CGPath, String)] = []
+    var size = CGSize.zero
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
                 qualifiedName qName: String?, attributes: [String: String]) {
+        if elementName == "svg", let box = attributes["viewBox"]?.split(separator: " ").compactMap({ Double($0) }), box.count == 4 {
+            size = CGSize(width: box[2], height: box[3])
+        }
         guard elementName == "path", let data = attributes["d"], let fill = attributes["fill"] else { return }
         let expression = try! NSRegularExpression(pattern: #"[MLCZ]|[-+]?[0-9]*\.?[0-9]+"#)
         let tokens = expression.matches(in: data, range: NSRange(data.startIndex..., in: data))
@@ -93,11 +97,13 @@ let wordmarkSource = WordmarkSource()
 let wordmarkSVG = try String(contentsOf: brand.appendingPathComponent("masters/wordmark.svg"), encoding: .utf8)
 let parser = XMLParser(data: Data(wordmarkSVG.utf8))
 parser.delegate = wordmarkSource
-precondition(parser.parse() && wordmarkSource.paths.count == 11, "Invalid wordmark master")
+// scripts/wordmark.swift writes the master: one path per letter and one per ray.
+precondition(parser.parse() && wordmarkSource.paths.count == 10 && wordmarkSource.size.width > 0, "Invalid wordmark master")
+let wordmarkSize = wordmarkSource.size
 func drawWordmark(_ c: CGContext, width: CGFloat, height: CGFloat, ink: (Double, Double, Double)? = nil) {
     c.saveGState()
     c.translateBy(x: 0, y: height)
-    c.scaleBy(x: width/300, y: -height/84)
+    c.scaleBy(x: width/wordmarkSize.width, y: -height/wordmarkSize.height)
     for (path, fill) in wordmarkSource.paths {
         let color = ink ?? (fill == "#0F2D5B" ? navy : aqua)
         c.setFillColor(CGColor(srgbRed: color.0, green: color.1, blue: color.2, alpha: 1))
@@ -105,15 +111,15 @@ func drawWordmark(_ c: CGContext, width: CGFloat, height: CGFloat, ink: (Double,
     }
     c.restoreGState()
 }
-let wc = context(4096, 1147)
+let wc = context(4096, Int((4096 * wordmarkSize.height / wordmarkSize.width).rounded()))
 drawWordmark(wc, width: CGFloat(wc.width), height: CGFloat(wc.height))
 let wordmark = wc.makeImage()!
 try fm.createDirectory(at: exports, withIntermediateDirectories: true)
 for (name, ink) in [("color", Optional<(Double, Double, Double)>.none), ("navy", navy), ("white", (1.0,1.0,1.0))] {
     let pdf = NSMutableData()
-    var mediaBox = CGRect(x: 0, y: 0, width: 300, height: 84)
+    var mediaBox = CGRect(origin: .zero, size: wordmarkSize)
     let pc = CGContext(consumer: CGDataConsumer(data: pdf)!, mediaBox: &mediaBox, nil)!
-    pc.beginPDFPage(nil); drawWordmark(pc, width: 300, height: 84, ink: ink)
+    pc.beginPDFPage(nil); drawWordmark(pc, width: wordmarkSize.width, height: wordmarkSize.height, ink: ink)
     pc.endPDFPage(); pc.closePDF()
     try (pdf as Data).write(to: exports.appendingPathComponent("wordmark-\(name).pdf"))
     let svg = ink == nil ? wordmarkSVG : wordmarkSVG

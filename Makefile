@@ -26,6 +26,7 @@ render:
 
 brand-assets:
 	swift scripts/rebrand-mochi.swift
+	swift scripts/wordmark.swift
 	swift run sidefolk-render --brand-mascot Resources/Brand/exports
 	swift scripts/brand-assets.swift
 	swift run sidefolk-render --menu-bar Resources/MenuBar

@@ -232,3 +232,20 @@ new guide and the founder’s close-up icon crop; monochrome and menu marks shar
 vector geometry matching the close-up’s ears, paw, rays and separated scarf. Raw icon sources
 have a simple blue-gradient square or transparent background; only separate macOS exports get a
 geometric mask.
+
+### D30 — The wordmark is built from strokes and calibrated against the founder's lettering (2026-10-26)
+**Decision:** the "Sidefolk" wordmark matches `Resources/Brand/reference/wordmark-reference.png`.
+`scripts/wordmark.swift` constructs every letter as the lettering is drawn: round-capped strokes of one
+stem weight, rings for the d and o, a round dot for the i, two lighter rays; the S and e are a main
+stroke plus a same-width stroke that branches off tangentially and rejoins it, which gives the counters
+round ends and the curves their weight without seams. Core Graphics outlines and merges the strokes
+into one path per letter; the numbers were calibrated by fitting the construction's coverage to the
+reference (S 97.8 %, other letters 96–98 %, the rays 92 % because they are thin and the reference is
+soft). `--check` writes the overlay and difference (`Resources/Brand/wordmark-fit.png`). Every
+wordmark and logo export is regenerated from this master.
+**Why:** the founder found the previous hand-authored outlines wrong ("the S is weird") and an earlier
+trace wobbly. Building from strokes keeps the shapes geometric and consistent (all stems one weight),
+and measuring against the reference makes "like this" checkable instead of a matter of taste.
+**Alternatives:** tracing the reference (wobbly, inherits its blur); hand-drawn Bézier outlines (what
+drifted); a variable-width brush stroke for the S (smooth, but its fit was worse and its counters came
+out pointed); unioning untangent turn arcs (round counters, but small notches where edges crossed).
