@@ -15,11 +15,21 @@ permissioned tools and extensions, and other AI agents can reach it over MCP.
 
 ```sh
 swift build                      # everything
-swift test                       # core tests (Swift Testing)
+make test                        # core tests (Swift Testing), serially: swift test --no-parallel (D18), ~40 s
 make dev                         # build + assemble build/Sidefolk-dev.app + launch with SIDEFOLK_HOME=build/dev-home
-make app                         # release build/Sidefolk.app (ad-hoc signed)
+make app                         # release build/Sidefolk.app (Apple Development identity if present, else ad hoc)
 swift run sidefolk-render out/   # character contact sheets for visual review
+swift run SidefolkApp --ui-snapshots out/   # Home, Settings, Ask panel and bubbles, light and dark, sample data
 ```
+
+Agents can't see the screen. To check the running debug app:
+- `swift scripts/dev.swift snap` writes a PNG of every visible Sidefolk window to `$SIDEFOLK_HOME/snapshots/`
+  (read them as images); `swift scripts/dev.swift "ask:…"`, `respond:<action>`, `dismiss`, `approve`, `deny`,
+  `home`, `settings:<tab>`, `find:<query>`, `drop:<url or path>` drive it (list at the top of the script).
+- Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
+- `sidefolk` (in `build/Sidefolk-dev.app/Contents/Helpers/`) with the same `SIDEFOLK_HOME` talks to that app.
+- When a test run seems stuck, run it through `script -q log.txt swift test --no-parallel < /dev/null`:
+  plain redirection buffers the output, so the last lines lie about where it stopped.
 
 ## Rules
 
