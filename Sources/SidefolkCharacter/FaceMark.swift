@@ -28,8 +28,8 @@ final class FaceMark {
         Self.add(line, to: layer)
         line.strokeColor = ink.cg()
         if glint {
-            let dot = Layers.shape(Paths.circle(pt(Self.box / 2 + 2.2 * scale, Self.box / 2 + 2.8 * scale), 1.55 * scale),
-                                   fill: RGB.white.cg(0.95))
+            let dot = Layers.shape(Paths.circle(pt(Self.box / 2 + 2.3 * scale, Self.box / 2 + 3 * scale), 1.8 * scale),
+                                   fill: RGB.white.cg())
             layer.addSublayer(dot)
             shine = dot
         } else {

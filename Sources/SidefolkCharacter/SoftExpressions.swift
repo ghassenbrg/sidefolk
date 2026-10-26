@@ -36,6 +36,7 @@ enum SoftExpressions {
         }
         look.pose.scaleFace(face.scale)
         (look.pose.earL, look.pose.earR) = ears(state)
+        look.pose.earFold = state == .sleeping ? 1 : 0
     }
 
     /// Ears, antennae and sprouts: they perk up for news, droop for trouble and sleep.

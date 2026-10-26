@@ -35,6 +35,8 @@ struct Pose: Equatable, Sendable {
     /// Ears, antennae and tufts: 0 rests, positive droops outward, negative perks up.
     var earL: CGFloat = 0
     var earR: CGFloat = 0
+    /// Soft ears folded back and down along the head (asleep): 0 upright, 1 folded.
+    var earFold: CGFloat = 0
     /// The catchlight in bead eyes: 1 for open eyes, 0 when they are arcs or closed.
     var shine: CGFloat = 1
     /// Its signature thing in hand (1) or put away (0).
