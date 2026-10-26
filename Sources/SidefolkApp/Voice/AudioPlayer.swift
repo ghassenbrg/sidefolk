@@ -14,6 +14,7 @@ final class AudioPlayer: AudioSink {
     /// Bumped by `stop()`, so callbacks from dropped buffers are ignored.
     private var generation = 0
     private var observer: NSObjectProtocol?
+    private var tapped = false
     var onLevel: ((Float?) -> Void)?
 
     init() {
@@ -43,11 +44,7 @@ final class AudioPlayer: AudioSink {
 
     func stop() {
         generation += 1
-        if engine.isRunning {
-            node.stop()
-            node.removeTap(onBus: 0)
-            engine.stop()
-        }
+        shutDown()
         pending = 0
         finishWaiting()
         onLevel?(nil)
@@ -57,13 +54,10 @@ final class AudioPlayer: AudioSink {
     private func prepare(sampleRate: Double, frames: Int) -> AVAudioPCMBuffer? {
         guard let wanted = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false) else { return nil }
         if format != wanted || !engine.isRunning {
-            if engine.isRunning {
-                node.stop()
-                node.removeTap(onBus: 0)
-                engine.stop()
-            }
+            shutDown()
             engine.connect(node, to: engine.mainMixerNode, format: wanted)
             node.installTap(onBus: 0, bufferSize: 1024, format: nil, block: Self.meter(self, generation))
+            tapped = true
             format = wanted
             do {
                 try engine.start()
@@ -79,12 +73,18 @@ final class AudioPlayer: AudioSink {
         guard generation == self.generation else { return }
         pending = max(0, pending - 1)
         guard pending == 0 else { return }
-        // Done talking: let the hardware go.
-        node.stop()
-        node.removeTap(onBus: 0)
-        engine.stop()
+        shutDown()
         onLevel?(nil)
         finishWaiting()
+    }
+
+    /// Lets the hardware go: nothing plays and nothing is measured. The engine may also have stopped
+    /// by itself (the output device changed), with its tap still on.
+    private func shutDown() {
+        if engine.isRunning { node.stop() }
+        if tapped { node.removeTap(onBus: 0) }
+        tapped = false
+        engine.stop()
     }
 
     private func finishWaiting() {

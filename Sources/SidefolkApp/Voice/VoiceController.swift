@@ -155,9 +155,18 @@ final class VoiceController {
     }
 
     private func open(_ file: URL?) async {
-        if file == nil, !(await Self.microphoneAllowed()) {
-            return fail(UserFacingError("I can't hear you: Sidefolk isn't allowed to use the microphone. Nothing was sent.",
-                                        recovery: "Allow it in System Settings › Privacy & Security › Microphone."))
+        if file == nil {
+            let asking = AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined
+            guard await Self.microphoneAllowed() else {
+                return fail(UserFacingError("I can't hear you: Sidefolk isn't allowed to use the microphone. Nothing was sent.",
+                                            recovery: "Allow it in System Settings › Privacy & Security › Microphone."))
+            }
+            // The key was let go to answer macOS's question: nothing was heard yet.
+            if asking, !holding {
+                host.ask.voice = nil
+                host.ask.add(.info(String(localized: "The microphone is ready. Hold to talk.")))
+                return
+            }
         }
         let language = host.currentSettings.voice.language
         do {
