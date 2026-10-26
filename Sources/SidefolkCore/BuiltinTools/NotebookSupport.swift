@@ -39,16 +39,22 @@ enum NotebookCollections {
         return kind
     }
 
-    /// Finds or creates in one transaction, so parallel saves to a new project make it once.
+    /// Finds or creates in one transaction, so parallel saves to a new project make it once. A new one
+    /// records who named it; other agents only file into collections that exist (`mayCreate`).
     static func resolveOrCreate(_ name: String, kind: NotebookCollection.Kind = .project, notebook: NotebookStore,
-                                now: Date) async throws -> (collection: NotebookCollection, created: Bool) {
-        if isInboxName(name) { return (try await notebook.inbox(now: now), false) }
+                                context: ToolContext) async throws -> (collection: NotebookCollection, created: Bool) {
+        if isInboxName(name) { return (try await notebook.inbox(now: context.now), false) }
         if isProfileName(name) { throw profileRefusal }
-        let (collection, created) = try await notebook.collection(named: name, kind: kind, excluding: [.profile], now: now)
+        guard mayCreate(context.caller) else {
+            guard let found = try await resolve(name, notebook: notebook) else { throw creationRefusal(name) }
+            return (found, false)
+        }
+        let (collection, created) = try await notebook.collection(named: name, kind: kind, excluding: [.profile],
+                                                                  source: context.provenanceTag, now: context.now)
         return (collection, created)
     }
 
-    static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, now: Date) async throws -> NotebookCollection {
+    static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, context: ToolContext) async throws -> NotebookCollection {
         let clean = name.trimmedText.clipped(60)
         guard !clean.isEmpty else { throw ToolError.invalidInput("a collection needs a name.") }
         if isProfileName(clean) { throw profileRefusal }
@@ -56,8 +62,21 @@ enum NotebookCollections {
         if isInboxName(clean) {
             throw UserFacingError("“\(NotebookStore.inboxName)” is always there: it's where notes go when no collection is named.")
         }
-        return try await notebook.createCollection(name: clean, kind: kind, now: now)
+        guard mayCreate(context.caller) else { throw creationRefusal(clean) }
+        return try await notebook.createCollection(name: clean, kind: kind, source: context.provenanceTag, now: context.now)
     }
+
+    /// The notebook's shape is the user's: other agents and extensions file into what exists, and never
+    /// add projects or lists whose names would sit next to the user's own (SECURITY T4).
+    static func mayCreate(_ caller: Caller) -> Bool { caller.kind != "external" && caller.kind != "extension" }
+
+    static func creationRefusal(_ name: String) -> UserFacingError {
+        UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one.",
+                        recovery: "Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
+    }
+
+    /// Whether the collection's name is someone else's words (another agent, an extension, a tainted turn).
+    static func isForeign(_ c: NotebookCollection) -> Bool { !ContextBuilder.isUserSourced(c.source) }
 
     /// The "About you" collection; created on demand when `create` is true.
     static func profile(_ notebook: NotebookStore, create: Bool, now: Date = Date()) async throws -> NotebookCollection? {
@@ -78,9 +97,9 @@ enum NotebookCollections {
         try await notebook.collection(id: collectionId)?.kind == .profile
     }
 
-    /// id → name for every collection, archived ones included, so old items still show where they live.
-    static func names(_ notebook: NotebookStore) async throws -> [String: String] {
-        Dictionary(uniqueKeysWithValues: try await notebook.collections(includeArchived: true).map { ($0.id, $0.name) })
+    /// id → collection for every collection, archived ones included, so old items still show where they live.
+    static func byId(_ notebook: NotebookStore) async throws -> [String: NotebookCollection] {
+        Dictionary(uniqueKeysWithValues: try await notebook.collections(includeArchived: true).map { ($0.id, $0) })
     }
 
     /// Live (not trashed) item counts per collection.
@@ -178,9 +197,10 @@ enum NoteText {
 
 /// Compact one-line renderings of notebook items for the model.
 enum NoteFormat {
-    static func line(_ item: NotebookItem, collections: [String: String], snippet: Bool = true) -> String {
+    static func line(_ item: NotebookItem, collections: [String: NotebookCollection], snippet: Bool = true) -> String {
         var parts = ["[\(item.kind.rawValue)] \(ToolFormat.oneLine(ExternalText.clean(item.title), 100))"]
-        var meta = [collections[item.collectionId] ?? "?", ToolFormat.day(item.createdAt)]
+        let place = collections[item.collectionId].map { ToolFormat.oneLine(ExternalText.clean($0.name), 60) }
+        var meta = [place ?? "?", ToolFormat.day(item.createdAt)]
         if item.status == .done { meta.append("done") }
         if !item.tagList.isEmpty { meta.append("#" + item.tagList.joined(separator: " #")) }
         if let origin = ItemProvenance.note(for: item.source) { meta.append(origin) }
@@ -195,4 +215,9 @@ enum NoteFormat {
 
     /// True when any item was written by something other than the user or Sidefolk's own agent.
     static func hasForeign(_ items: [NotebookItem]) -> Bool { items.contains { ItemProvenance.isForeign($0.source) } }
+
+    /// The same, counting the collection names `line` quotes next to each item.
+    static func hasForeign(_ items: [NotebookItem], collections: [String: NotebookCollection]) -> Bool {
+        hasForeign(items) || items.contains { collections[$0.collectionId].map(NotebookCollections.isForeign) == true }
+    }
 }

@@ -31,15 +31,20 @@ public struct NotebookCollection: SidefolkRecord, Identifiable, Hashable {
     public var name: String
     public var kind: Kind
     public var emoji: String?
+    /// Who named it, as for items (`user | user:agent | agent | …`): a name is quoted to the model only
+    /// when it is the user's own (SECURITY T3).
+    public var source: String
     public var createdAt: Date
     public var updatedAt: Date
     public var archivedAt: Date?
 
-    public init(id: String = Identifier.make(), name: String, kind: Kind, emoji: String? = nil, now: Date = Date()) {
+    public init(id: String = Identifier.make(), name: String, kind: Kind, emoji: String? = nil, source: String = "user",
+                now: Date = Date()) {
         self.id = id
         self.name = name
         self.kind = kind
         self.emoji = emoji
+        self.source = source
         createdAt = now
         updatedAt = now
     }

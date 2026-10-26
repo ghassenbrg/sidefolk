@@ -96,7 +96,9 @@ public struct ContextBuilder: Sendable {
         }
 
         let collections = (try? await notebook.collections(includeArchived: true)) ?? []
-        let names = Dictionary(collections.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        // A note is placed by its collection's name only when the user named it (T3).
+        let names = Dictionary(collections.filter { Self.isUserSourced($0.source) }.map { ($0.id, $0.name) },
+                               uniquingKeysWith: { first, _ in first })
         let profiles = Set(collections.filter { $0.kind == .profile }.map(\.id))
 
         add("about", "# About you", await aboutYou(profiles: profiles), share: 0.30)

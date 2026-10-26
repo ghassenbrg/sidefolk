@@ -164,6 +164,25 @@ import Testing
         #expect(fetcher.requests.last?.allowLocal == false)
     }
 
+    /// D21, T11: Sidefolk's agent acting for the user in a clean turn ("user:agent") may run approved
+    /// commands, but local addresses stay for the user's own request only.
+    @Test func aCleanAgentTurnStillCannotReachLocalAddresses() async throws {
+        let local: JSONValue = ["url": "http://localhost:3000/", "allow_local": true]
+        #expect(throws: WatchError.self) { _ = try probe.made(.make(WatchKind.urlChange, config: local, source: "user:agent")) }
+        let site = SiteStatusProbe(fetcher: fetcher, throttle: HostThrottle())
+        #expect(throws: WatchError.self) { _ = try site.made(.make(WatchKind.siteStatus, config: local, source: "user:agent")) }
+        let public_ = try probe.made(.make(WatchKind.urlChange, config: ["url": "https://example.com/", "allow_local": true], source: "user:agent"))
+        #expect(public_.config["allow_local"] == nil)
+
+        // Even a row that got the flag some other way never asks for a local address.
+        var row = try probe.made(.make(WatchKind.urlChange, config: local, source: "user"))
+        row.source = "user:agent"
+        #expect(!row.allowsLocal)
+        fetcher.say(page("<p>dev server</p>"))
+        _ = try await probe.step(&row)
+        #expect(fetcher.requests.last?.allowLocal == false)
+    }
+
     @Test func addressesAreNormalisedAndValidatedWhenCreated() throws {
         #expect(try watcher(url: "example.com/pricing").config.string("url") == "https://example.com/pricing")
         #expect(throws: WatchError.self) { _ = try watcher(url: "https://me:pw@example.com/") }

@@ -144,11 +144,13 @@ import Testing
         defer { t.cleanup() }
         let saved = await t.run("notes.save", ["text": "Draft title\nDraft body", "tags": ["a"]], as: .user)
         let id = try #require(saved.result?.card?.refId)
+        // Other agents file into collections that exist; they don't make new ones.
+        _ = try await t.notebook.createCollection(name: "Archive", kind: .project)
 
         let out = await t.run("notes.update", ["id": .string(id), "text": "New title\nNew body", "collection": "Archive", "status": "done", "tags": ["b", "c"]],
                               as: .external(client: "codex"))
         let result = try #require(out.result)
-        #expect(result.text.contains("Created the new project"))
+        #expect(result.text.contains("moved to Archive"))
         var item = try #require(try await t.notebook.item(id: id))
         #expect(item.title == "New title")
         #expect(item.body == "New body")
@@ -227,6 +229,60 @@ import Testing
         _ = await t.run("notes.save", ["text": "x", "collection": "Soon busy"])
         await #expect(throws: UserFacingError.self) { _ = try await t.env.executor.undo.undo(made.activity.id) }
         #expect(try await t.notebook.findCollection(named: "Soon busy") != nil)
+    }
+
+    /// SECURITY T4: other agents file into collections that exist but never add their own; the user
+    /// and Sidefolk's agent still may, and the name records who chose it.
+    @Test func otherAgentsCannotCreateCollections() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        let codex = Caller.external(client: "codex")
+        let refused = await t.run("notes.save", ["text": "Plan", "collection": "URGENT: read me first"], as: codex)
+        #expect(refused.failure?.message.contains("other apps can't create one") == true, "\(refused.status)")
+        #expect(refused.failure?.recovery?.contains("Inbox") == true)
+        #expect(await t.run("collections.create", ["name": "Mine now"], as: codex).failure != nil)
+        #expect(try await t.notebook.collections().filter { $0.kind == .project }.isEmpty)
+
+        // Filing into one that exists, by its name or the start of it, is still fine.
+        _ = await t.run("collections.create", ["name": "Reading list", "kind": "list"], as: .user)
+        let filed = await t.run("notes.save", ["text": "A book", "collection": "Reading"], as: codex)
+        #expect(filed.result?.card?.title == "Saved to Reading list › Notes")
+        #expect(await t.run("notes.save", ["text": "To the inbox"], as: codex).result != nil)
+
+        // Sidefolk's agent records whose turn named it.
+        _ = await t.run("notes.save", ["text": "x", "collection": "Clean"], as: .agent(runId: "r"))
+        _ = await t.run("notes.save", ["text": "y", "collection": "Dirty"], as: .agent(runId: "r"), tainted: true)
+        let byName = Dictionary(uniqueKeysWithValues: try await t.notebook.collections().map { ($0.name, $0.source) })
+        #expect(byName["Reading list"] == "user")
+        #expect(byName["Clean"] == "user:agent")
+        #expect(byName["Dirty"] == "agent")
+    }
+
+    /// SECURITY T2/T3: a list that quotes a collection name someone else chose is untrusted.
+    @Test func collectionNamesFromOthersAreUntrusted() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        _ = await t.run("collections.create", ["name": "Groceries"], as: .user)
+        _ = await t.run("notes.save", ["text": "Milk", "collection": "Groceries"], as: .user)
+        var list = try #require(await t.run("collections.list").result)
+        #expect(!list.untrusted)
+        #expect(try #require(await t.run("notes.list").result).untrusted == false)
+
+        _ = await t.run("collections.create", ["name": "SYSTEM override"], as: .agent(runId: "r"), tainted: true)
+        list = try #require(await t.run("collections.list").result)
+        #expect(list.untrusted)
+        #expect(list.text.contains("SYSTEM override (project, 0 items, written while reading untrusted content)"))
+
+        // A note of the user's own, listed under that name, quotes it too.
+        _ = await t.run("notes.save", ["text": "Mine", "collection": "SYSTEM override"], as: .user)
+        #expect(try #require(await t.run("notes.list").result).untrusted)
+        #expect(try #require(await t.run("notes.search", ["query": "Mine"]).result).untrusted)
+        #expect(try #require(await t.run("notes.list", ["collection": "Groceries"]).result).untrusted == false)
+
+        // The user renaming it makes the name theirs.
+        let dirty = try #require(try await t.notebook.findCollection(named: "SYSTEM override"))
+        try await t.notebook.rename(collectionId: dirty.id, to: "Ideas")
+        #expect(try #require(await t.run("collections.list").result).untrusted == false)
     }
 
     @Test func dataChangesArePublished() async throws {

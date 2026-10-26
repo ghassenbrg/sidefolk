@@ -107,6 +107,12 @@ public final class ToolExecutor: Sendable {
                                                                               detail: "schema: \(problem)")))
         }
 
+        if let why = tool.refusal(for: input, context: ToolContext(caller: caller, now: clock.now, tainted: tainted)) {
+            await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
+            act.error = why
+            return ToolOutcome(activity: act, status: .denied(why))
+        }
+
         let scope = tool.scope(for: input)
         var decisionTag: ActivityEntry.Decision = .auto
         var extraFolders: [GrantedFolder] = []

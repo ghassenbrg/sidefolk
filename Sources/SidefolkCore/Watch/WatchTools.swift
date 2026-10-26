@@ -124,7 +124,10 @@ enum WatchInput {
         if let exact = mine.first(where: { $0.id == ref }) { return exact }
         func pick(_ matches: [Watcher]) throws -> Watcher? {
             if matches.count > 1 {
-                let names = matches.prefix(4).map { "“\($0.title)” (\($0.id.prefix(6)))" }.joined(separator: ", ")
+                // An error isn't marked untrusted, so only the user's own titles are quoted in it (T3).
+                let names = matches.prefix(4).map { w in
+                    WatchSource.isUserSourced(w.source) ? "“\(w.title)” (\(w.id.prefix(6)))" : "one from another app or agent (\(w.id.prefix(6)))"
+                }.joined(separator: ", ")
                 throw ToolError.invalidInput("That matches more than one watcher: \(names). Use the id.")
             }
             return matches.first
@@ -236,7 +239,7 @@ struct WatchCreateTool: Tool {
         let requested = try WatchInput.interval(input)
         let watcher = Watcher(kind: kind, title: title, config: config, condition: condition, intervalS: requested,
                               mode: try WatchInput.mode(input), level: try WatchInput.level(input, caller: context.caller),
-                              source: WatchSource.string(for: context.caller), now: context.now)
+                              source: WatchSource.string(for: context), now: context.now)
         let added: Watcher
         do { added = try await engine.add(watcher) } catch { throw WatchInput.watchError(error) }
         let look = await engine.firstLook(of: added.id, polite: context.caller != .user)
@@ -304,11 +307,20 @@ struct WatchCommandTool: Tool {
         return scope
     }
 
+    /// Refused before the approval card: a command written while untrusted content steered the turn is
+    /// never run, so asking the user to approve it would be pointless.
+    func refusal(for input: JSONValue, context: ToolContext) -> String? {
+        guard !WatchSource.mayRunCommands(WatchSource.string(for: context)) else { return nil }
+        if context.tainted, ["user", "agent"].contains(context.caller.kind) {
+            return "I can't set up a command watcher in this conversation: it has read content from outside, "
+                + "so the command might not be the user's own. Ask again in a new conversation."
+        }
+        return "Only you, or Sidefolk with your approval, can set up a command watcher."
+    }
+
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         // Defence in depth: Guard never offers this tool to these callers, and the engine refuses them too.
-        guard WatchSource.mayRunCommands(WatchSource.string(for: context.caller)) else {
-            throw ToolError.unavailable("Only you, or Sidefolk with your approval, can set up a command watcher.")
-        }
+        if let why = refusal(for: input, context: context) { throw ToolError.unavailable(why) }
         guard let command = input.string("command") else { throw ToolError.invalidInput("Tell me which command to run.") }
         var config: JSONValue = ["command": .string(command)]
         if let cwd = input.string("cwd") { config = config.setting("cwd", .string(cwd)) }
@@ -321,7 +333,7 @@ struct WatchCommandTool: Tool {
         let watcher = Watcher(kind: WatchKind.command, title: input.string("title") ?? WatchWords.defaultTitle(kind: WatchKind.command, config: config),
                               config: config, condition: condition, intervalS: requested,
                               mode: try WatchInput.mode(input), level: try WatchInput.level(input, caller: context.caller),
-                              source: WatchSource.string(for: context.caller), now: context.now)
+                              source: WatchSource.string(for: context), now: context.now)
         let added: Watcher
         do { added = try await engine.add(watcher) } catch { throw WatchInput.watchError(error) }
         let look = await engine.firstLook(of: added.id, polite: false)
@@ -388,8 +400,8 @@ struct WatchListTool: Tool {
                 + (w.fireCount > 0 ? ", fired \(w.fireCount)×" : "")
         }
         let card = ResultCard(kind: .list, title: all.count == 1 ? "1 watcher" : "\(all.count) watchers", detail: lines.joined(separator: "\n"))
-        // Titles made by other agents are their words, not ours.
-        let outside = all.contains { WatchSource.isExternal($0.source) || $0.source.hasPrefix("extension:") }
+        // Titles made by other agents, extensions, routines or a tainted turn are not the user's words.
+        let outside = all.contains { !WatchSource.isUserSourced($0.source) }
         return ToolResult(text: lines.joined(separator: "\n"), card: card, untrusted: outside)
     }
 }
@@ -410,7 +422,8 @@ struct WatchStopTool: Tool {
         guard let removed = await engine.remove(w.id) else { throw ToolError.notFound("that watcher") }
         let engine = self.engine
         let undo = UndoAction(label: "Watching \(removed.title) again") { _ = try await engine.add(removed) }
-        return ToolResult(text: "Stopped watching \(removed.title).", card: ResultCard(kind: .watcher, title: "Stopped watching \(removed.title)", refId: removed.id), undo: undo)
+        return ToolResult(text: "Stopped watching \(removed.title).", card: ResultCard(kind: .watcher, title: "Stopped watching \(removed.title)", refId: removed.id),
+                          undo: undo, untrusted: !WatchSource.isUserSourced(removed.source))
     }
 }
 
@@ -431,7 +444,8 @@ struct WatchPauseTool: Tool {
         do { paused = try await engine.pause(w.id) } catch { throw WatchInput.watchError(error) }
         let engine = self.engine
         let undo = UndoAction(label: "Resumed \(paused.title)") { _ = try await engine.resume(paused.id) }
-        return ToolResult(text: "Paused \(paused.title).", card: ResultCard(kind: .watcher, title: "Paused \(paused.title)", refId: paused.id), undo: undo)
+        return ToolResult(text: "Paused \(paused.title).", card: ResultCard(kind: .watcher, title: "Paused \(paused.title)", refId: paused.id),
+                          undo: undo, untrusted: !WatchSource.isUserSourced(paused.source))
     }
 }
 
@@ -452,6 +466,7 @@ struct WatchResumeTool: Tool {
         do { resumed = try await engine.resume(w.id) } catch { throw WatchInput.watchError(error) }
         let engine = self.engine
         let undo = UndoAction(label: "Paused \(resumed.title)") { _ = try await engine.pause(resumed.id) }
-        return ToolResult(text: "Watching \(resumed.title) again.", card: ResultCard(kind: .watcher, title: "Watching \(resumed.title) again", refId: resumed.id), undo: undo)
+        return ToolResult(text: "Watching \(resumed.title) again.", card: ResultCard(kind: .watcher, title: "Watching \(resumed.title) again", refId: resumed.id),
+                          undo: undo, untrusted: !WatchSource.isUserSourced(resumed.source))
     }
 }

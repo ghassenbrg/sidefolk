@@ -166,7 +166,7 @@ public enum ReminderTools {
             let scheduler = shared.scheduler
             var text = "Reminder set: “\(reminder.title)” for \(TimeFormat.full(date, calendar: calendar))"
             if let rule { text += ", repeating \(TimeFormat.recurrence(rule))" }
-            if level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
+            if reminder.level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(id)"
             return ToolResult(
                 text: text, card: shared.card(reminder, now: now),

@@ -13,8 +13,6 @@ public enum ExternalToolPolicy {
     ]
     /// Exposed, but reading the user's data (notes, reminders) always asks first (T4).
     public static let asking: Set<String> = ["notes.search", "notes.list", "reminders.list"]
-    /// Watchers an external agent may keep active at once (T4).
-    public static let maxActiveWatchers = 10
 
     public static func isExposed(_ name: String) -> Bool { direct.contains(name) || asking.contains(name) }
 
@@ -79,14 +77,10 @@ public final class ExternalToolGateway: Sendable {
     private let source: ToolRegistry
     private let exposed = ToolRegistry()
     private let executor: ToolExecutor
-    private let watchers: WatcherStore?
-    /// Creations that count against a quota run one at a time, so parallel calls can't all see room.
-    private let quotas = AsyncGate()
 
     public init(registry: ToolRegistry, permissions: PermissionStore, broker: ApprovalBroker, activity: ActivityStore,
-                events: EventBus, watchers: WatcherStore? = nil, clock: any Clock = SystemClock()) {
+                events: EventBus, clock: any Clock = SystemClock()) {
         source = registry
-        self.watchers = watchers
         executor = ToolExecutor(registry: exposed, permissions: permissions, broker: broker, activity: activity,
                                 events: events, clock: clock)
     }
@@ -107,7 +101,7 @@ public final class ExternalToolGateway: Sendable {
                                    caller: caller, error: "Not exposed")
             return ToolOutcome(activity: act, status: .failed(UserFacingError("Sidefolk doesn't offer a tool called \(name) to other agents.")))
         }
-        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec), watchers: watchers, quotas: quotas)
+        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec))
         exposed.register(facade)
         let input = ExternalToolPolicy.adjustedInput(base.spec.name, input: input, schema: facade.spec.inputSchema, client: client)
         // Evaluating medium calls as tainted makes Guard ask every time and never offer
@@ -121,26 +115,17 @@ public final class ExternalToolGateway: Sendable {
 
 /// An exposed tool as external agents get it: the external spec, refusals checked at run time
 /// (after Guard, so they are audited), otherwise the real tool.
+/// Watcher quotas live in `WatcherEngine.add`, counted in the same actor step as the insert.
 struct ExternalFacade: Tool {
     let base: any Tool
     let spec: ToolSpec
-    let watchers: WatcherStore?
-    let quotas: AsyncGate
 
     func summary(for input: JSONValue) -> String { base.summary(for: input) }
     func scope(for input: JSONValue) -> ToolScope { base.scope(for: input) }
+    func refusal(for input: JSONValue, context: ToolContext) -> String? { base.refusal(for: input, context: context) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }
-        guard spec.name == "watch.create", let watchers else { return try await base.run(input, context: context) }
-        // Counted and created under one gate: checked separately, parallel calls all saw room.
-        let base = self.base
-        return try await quotas.run {
-            let theirs = try await watchers.active().filter { $0.source.hasPrefix("external:") }
-            if theirs.count >= ExternalToolPolicy.maxActiveWatchers {
-                throw ToolError.unavailable("Other agents already have \(theirs.count) watches running. Stop one first.")
-            }
-            return try await base.run(input, context: context)
-        }
+        return try await base.run(input, context: context)
     }
 }

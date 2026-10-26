@@ -472,14 +472,44 @@ import Testing
         _ = try await engine.resume(first.id)
     }
 
-    @Test func eachExternalAppGetsTen() async throws {
+    @Test func externalAppsShareTen() async throws {
         let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
         for _ in 0..<WatchLimits.maxActivePerExternalClient {
             _ = try await engine.add(.make("fake", interval: 600, source: "external:codex", now: now))
         }
         await #expect(throws: WatchError.self) { try await engine.add(.make("fake", interval: 600, source: "external:codex", now: now)) }
-        _ = try await engine.add(.make("fake", interval: 600, source: "external:claude-code", now: now))
+        // A new name doesn't buy new room: the cap is for all of them together.
+        await #expect(throws: WatchError.self) { try await engine.add(.make("fake", interval: 600, source: "external:claude-code", now: now)) }
         _ = try await engine.add(.make("fake", interval: 600, source: "user", now: now))
+    }
+
+    /// The slot is taken in the same actor step as the count, so parallel adds can't all see room.
+    @Test func parallelExternalAddsNeverPassTheCap() async throws {
+        let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
+        let now = self.now
+        await withTaskGroup(of: Void.self) { group in
+            for i in 0..<(WatchLimits.maxActiveExternal + 8) {
+                group.addTask { _ = try? await engine.add(.make("fake", interval: 600, source: "external:agent-\(i)", now: now)) }
+            }
+        }
+        #expect(await engine.list().filter { $0.state == .active }.count == WatchLimits.maxActiveExternal)
+        #expect(try await env.store.active().count == WatchLimits.maxActiveExternal)
+    }
+
+    @Test func externalWatchersStopAfterADay() async throws {
+        let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
+        let theirs = try await engine.add(.make("fake", interval: 600, mode: .repeat, source: "external:codex", now: now))
+        #expect(theirs.expiresAt == now.addingTimeInterval(WatchLimits.externalExpiry))
+        // An earlier expiry they asked for stands; a later one is cut to a day.
+        var short = Watcher.make("fake", interval: 600, source: "external:codex", now: now)
+        short.expiresAt = now.addingTimeInterval(3600)
+        #expect(try await engine.add(short).expiresAt == now.addingTimeInterval(3600))
+        var long = Watcher.make("fake", interval: 600, source: "external:codex", now: now)
+        long.expiresAt = now.addingTimeInterval(10 * 86400)
+        #expect(try await engine.add(long).expiresAt == now.addingTimeInterval(WatchLimits.externalExpiry))
+        // Everyone else keeps the usual lifetimes.
+        let mine = try await engine.add(.make("fake", interval: 600, mode: .repeat, source: "user:agent", now: now))
+        #expect(mine.expiresAt == now.addingTimeInterval(WatchLimits.repeatExpiry))
     }
 
     @Test func atMostFiveCommandWatchers() async throws {
@@ -494,8 +524,8 @@ import Testing
 
     @Test func commandsCannotBeAddedByExternalAppsAtAll() async throws {
         let engine = env.engine()
-        for source in ["external:codex", "extension:dev.x", "routine:r1"] {
-            await #expect(throws: WatchError.self) {
+        for source in ["external:codex", "extension:dev.x", "routine:r1", "agent"] {
+            await #expect(throws: WatchError.self, "\(source)") {
                 try await engine.add(.make(WatchKind.command, config: ["command": "echo hi"], condition: ["changed": true], source: source, now: now))
             }
         }

@@ -210,11 +210,15 @@ public protocol Tool: Sendable {
     /// One plain-language line for approvals and Activity ("Move 3 files to Downloads/PDFs").
     func summary(for input: JSONValue) -> String
     func scope(for input: JSONValue) -> ToolScope
+    /// Why this call can't run at all, decided before Guard asks anything: an approval card for a call
+    /// the tool would then refuse is a question with no right answer. Nil lets Guard decide.
+    func refusal(for input: JSONValue, context: ToolContext) -> String?
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult
 }
 
 public extension Tool {
     func scope(for input: JSONValue) -> ToolScope { .none }
+    func refusal(for input: JSONValue, context: ToolContext) -> String? { nil }
 }
 
 /// JSON Schema helpers so tool definitions stay short and consistent.

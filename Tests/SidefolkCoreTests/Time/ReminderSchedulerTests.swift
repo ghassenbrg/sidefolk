@@ -236,6 +236,81 @@ import Testing
         #expect(await t.posted().count == 1)
     }
 
+    /// QA #7: undoing the cancel of a monthly reminder on the 31st keeps it on the 31st, even when
+    /// it was cancelled after a short month moved its next time to the 30th.
+    @Test func undoingACancelKeepsTheMonthlyAnchor() async throws {
+        let t = try await SchedulerEnv(now: TimeTest.date(2025, 10, 30, 8))
+        await t.scheduler.start()
+        let anchor = t.date(2025, 10, 31, 9)
+        let r = try await t.scheduler.create(title: "Pay rent", at: anchor, recurrence: Recurrence(frequency: .monthly), anchor: anchor)
+        t.clock.set(anchor)
+        await t.scheduler.tick()
+        #expect(await t.reminder(r.id)?.fireAt == t.date(2025, 11, 30, 9))
+
+        // Cancelled and brought back the way the user does it: the tool, then Undo.
+        let calendar = t.calendar
+        t.env.registry.register(ReminderTools.make(scheduler: t.scheduler, parser: { TimeTest.parser(calendar) }))
+        let before = await t.reminder(r.id)
+        let cancelled = await t.env.executor.execute(name: "reminders.cancel", input: ["id": .string(r.id)], caller: .user)
+        #expect(await t.reminder(r.id)?.state == .cancelled)
+        #expect(try await t.env.executor.undo.undo(cancelled.activity.id) == "Bring back reminder")
+        #expect(await t.reminder(r.id) == before)
+
+        t.clock.set(t.date(2025, 11, 30, 9))
+        await t.scheduler.tick()
+        #expect(await t.reminder(r.id)?.fireAt == t.date(2025, 12, 31, 9), "back on the 31st, not the 30th")
+        // A restart reads the same anchor from storage.
+        let again = t.restarted()
+        await again.start()
+        t.clock.set(t.date(2025, 12, 31, 9))
+        await again.tick()
+        #expect(await t.reminder(r.id)?.fireAt == t.date(2026, 1, 31, 9))
+    }
+
+    // MARK: Whose reminder it is
+
+    /// SECURITY T24: critical is kept only for the user's own reminders ("user:agent" is a clean agent
+    /// turn acting for the user); anyone else's is stored as an ordinary alert.
+    @Test func onlyTheUsersOwnRemindersMayBeCritical() async throws {
+        let t = try await SchedulerEnv()
+        let at = t.clock.now.addingTimeInterval(600)
+        for (source, expected) in [("user", AttentionLevel.critical), ("user:agent", .critical), ("agent", .attention),
+                                   ("external:codex", .attention), ("extension:dev.x", .attention), ("routine", .attention)] {
+            let r = try await t.scheduler.create(title: "Check \(source)", at: at, level: .critical, source: source)
+            #expect(r.level == expected, "\(source)")
+            #expect(await t.reminder(r.id)?.level == expected, "\(source)")
+        }
+    }
+
+    /// Another agent's reminder fires under a source of its own, so it doesn't share the user's
+    /// reminders' right to skip spacing; the bubble still looks and answers like a reminder.
+    @Test func otherAgentsRemindersFireUnderTheirOwnSource() async throws {
+        let t = try await SchedulerEnv()
+        await t.scheduler.start()
+        let at = t.clock.now.addingTimeInterval(600)
+        let mine = try await t.scheduler.create(title: "Mine", at: at)
+        let theirs = try await t.scheduler.create(title: "Theirs", at: at.addingTimeInterval(1), source: "external:codex")
+        let tainted = try await t.scheduler.create(title: "Tainted", at: at.addingTimeInterval(2), source: "agent")
+        t.clock.set(at.addingTimeInterval(2))
+        await t.scheduler.tick()
+
+        let items = await t.posted()
+        let byRef = Dictionary(uniqueKeysWithValues: items.compactMap { i in i.refId.map { ($0, i) } })
+        #expect(byRef[mine.id]?.source == "reminder")
+        #expect(byRef[theirs.id]?.source == "reminder:external")
+        #expect(byRef[tainted.id]?.source == "reminder:agent")
+        #expect(items.allSatisfy { $0.refKind == "reminder" })
+        #expect(byRef[mine.id]?.state == .shown)
+        #expect(byRef[theirs.id]?.state == .pending, "waits its turn behind the user's reminder")
+        #expect(byRef[mine.id]?.body?.contains("You asked") == true)
+        #expect(byRef[theirs.id]?.body?.contains("Another app or agent set this") == true, "the user didn't ask for it")
+
+        // Done still reaches the scheduler through refKind.
+        let item = try #require(byRef[theirs.id])
+        await t.attention.respond(id: item.id, actionId: ReminderScheduler.ActionID.done)
+        #expect(await t.reminder(theirs.id)?.state == .done)
+    }
+
     @Test func idsCanBeGivenAsAPrefix() async throws {
         let t = try await SchedulerEnv()
         let r = try await t.scheduler.create(title: "Find me", at: t.clock.now.addingTimeInterval(60))

@@ -130,6 +130,11 @@ public enum ProcessAncestry {
 
     static func parent(of pid: pid_t) -> pid_t? { bsdInfo(pid).map { pid_t($0.pbi_ppid) } }
 
+    /// The bundle id of the outermost app a running process lives in, read from the process itself.
+    static func bundleId(of pid: pid_t) -> String? {
+        executablePath(of: pid).flatMap(topLevelBundle).flatMap { Bundle(path: $0)?.bundleIdentifier }
+    }
+
     static func executablePath(of pid: pid_t) -> String? {
         var buffer = [UInt8](repeating: 0, count: 4 * Int(MAXPATHLEN))
         let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))

@@ -147,6 +147,8 @@ public actor WatcherEngine {
         // Only the user's own watchers may be critical; everything else stays at "attention" or below.
         if w.level > .attention, w.source != "user" { w.level = .attention }
         w = try probe.prepare(w)
+        // From the quota check to the insert below there is no `await`, so the actor runs it as one step
+        // and the slot is taken before any other add can look: parallel creations can't all see room.
         try checkRoom(for: w)
         w.state = .active
         w.nextCheckAt = now
@@ -155,7 +157,9 @@ public actor WatcherEngine {
         w.lastError = nil
         w.errorCount = 0
         w.fireCount = 0
-        if w.expiresAt == nil { w.expiresAt = now.addingTimeInterval(defaultExpiry(w.mode)) }
+        let lifetime = now.addingTimeInterval(defaultExpiry(w))
+        // External agents' watchers never outlive a day, whatever they asked for (T4, T24).
+        if w.expiresAt == nil || WatchSource.isExternal(w.source) { w.expiresAt = min(w.expiresAt ?? lifetime, lifetime) }
         w.createdAt = now
         w.updatedAt = now
         watchers[w.id] = w
@@ -210,7 +214,7 @@ public actor WatcherEngine {
         w.errorCount = 0
         w.lastError = nil
         w.nextCheckAt = now
-        w.expiresAt = max(w.expiresAt ?? now, now.addingTimeInterval(defaultExpiry(w.mode)))
+        w.expiresAt = max(w.expiresAt ?? now, now.addingTimeInterval(defaultExpiry(w)))
         w.updatedAt = now
         cooldownUntil[id] = nil
         watchers[id] = w
@@ -232,18 +236,28 @@ public actor WatcherEngine {
 
     // MARK: Limits
 
-    func defaultExpiry(_ mode: Watcher.Mode) -> TimeInterval {
-        mode == .once ? WatchLimits.onceExpiry : WatchLimits.repeatExpiry
+    /// How long a watcher lives (each time it is started): a day for other agents' (T4), else by mode.
+    func defaultExpiry(_ w: Watcher) -> TimeInterval {
+        if WatchSource.isExternal(w.source) { return WatchLimits.externalExpiry }
+        return w.mode == .once ? WatchLimits.onceExpiry : WatchLimits.repeatExpiry
     }
 
-    /// At most 50 watchers going, 10 from any one external agent, 5 command watchers (docs/SECURITY.md T24).
+    /// At most 50 watchers going, 10 from external agents (all of them together: their names are
+    /// self-chosen), 5 command watchers (docs/SECURITY.md T4, T24). Call it in the same actor step that
+    /// makes the watcher active, so the count can't go stale.
     func checkRoom(for w: Watcher) throws {
         let others = watchers.values.filter { $0.state == .active && $0.id != w.id }
         if others.count >= WatchLimits.maxActive {
             throw WatchError.limit("I'm already watching \(WatchLimits.maxActive) things. Stop one before starting another.")
         }
-        if WatchSource.isExternal(w.source), others.filter({ $0.source == w.source }).count >= WatchLimits.maxActivePerExternalClient {
-            throw WatchError.limit("That app already has \(WatchLimits.maxActivePerExternalClient) watchers going. Stop one first.")
+        if WatchSource.isExternal(w.source) {
+            let external = others.filter { WatchSource.isExternal($0.source) }
+            if external.filter({ $0.source == w.source }).count >= WatchLimits.maxActivePerExternalClient {
+                throw WatchError.limit("That app already has \(WatchLimits.maxActivePerExternalClient) watchers going. Stop one first.")
+            }
+            if external.count >= WatchLimits.maxActiveExternal {
+                throw WatchError.limit("Other agents already have \(external.count) watches running. Stop one first.")
+            }
         }
         if w.kind == WatchKind.command, others.filter({ $0.kind == WatchKind.command }).count >= WatchLimits.maxActiveCommands {
             throw WatchError.limit("\(WatchLimits.maxActiveCommands) command watchers are already running. Stop one first.")

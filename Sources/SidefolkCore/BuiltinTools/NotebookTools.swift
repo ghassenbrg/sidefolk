@@ -56,7 +56,7 @@ struct NotesSaveTool: Tool {
         let target: (collection: NotebookCollection, created: Bool)
         if let name = input.string("collection") {
             target = try await NotebookCollections.resolveOrCreate(name, kind: try NotebookCollections.newKind(input["collection_kind"]),
-                                                                   notebook: notebook, now: context.now)
+                                                                   notebook: notebook, context: context)
         } else {
             target = (try await notebook.inbox(now: context.now), false)
         }
@@ -81,7 +81,9 @@ struct NotesSaveTool: Tool {
             undo: UndoAction(label: "Removed “\(title.clipped(40))”") {
                 _ = try await notebook.trash(itemId: id)
                 events.changed(.notebook)
-            })
+            },
+            // A partial name may have matched a collection someone else named; the reply quotes it.
+            untrusted: NotebookCollections.isForeign(target.collection))
     }
 }
 
@@ -124,13 +126,13 @@ struct NotesSearchTool: Tool {
             return ToolResult(text: "No notes matched “\(query.clipped(60))”.",
                               card: ResultCard(kind: .list, title: "No matching notes", subtitle: query.clipped(60)))
         }
-        let names = try await NotebookCollections.names(notebook)
-        let body = items.map { NoteFormat.line($0, collections: names) }.joined(separator: "\n")
+        let collections = try await NotebookCollections.byId(notebook)
+        let body = items.map { NoteFormat.line($0, collections: collections) }.joined(separator: "\n")
         return ToolResult(
             text: "\(ToolFormat.count(items.count, "note")) matched “\(query.clipped(60))”:\n\(body)",
             card: ResultCard(kind: .list, title: "\(ToolFormat.count(items.count, "match", "matches")) for “\(query.clipped(40))”",
                              subtitle: items.prefix(3).map { $0.title.clipped(30) }.joined(separator: " · ")),
-            untrusted: NoteFormat.hasForeign(items))
+            untrusted: NoteFormat.hasForeign(items, collections: collections))
     }
 }
 
@@ -163,6 +165,8 @@ struct NotesListTool: Tool {
         }
         var collectionId: String?
         var scope = "everywhere"
+        // The scope quotes the collection's own name, which a partial name may have matched.
+        var foreignScope = false
         if let name = input.string("collection") {
             // Reading "About you" is fine here; only filing into it is refused.
             let found = NotebookCollections.isProfileName(name)
@@ -171,17 +175,19 @@ struct NotesListTool: Tool {
             guard let c = found else { throw ToolError.notFound("a collection called “\(name)”") }
             collectionId = c.id
             scope = "in \(c.name)"
+            foreignScope = NotebookCollections.isForeign(c)
         }
         let items = try await notebook.items(collectionId: collectionId, kinds: kind.map { [$0] }, status: status, limit: limit)
         guard !items.isEmpty else {
-            return ToolResult(text: "Nothing found \(scope).", card: ResultCard(kind: .list, title: "Nothing here yet", subtitle: scope))
+            return ToolResult(text: "Nothing found \(scope).", card: ResultCard(kind: .list, title: "Nothing here yet", subtitle: scope),
+                              untrusted: foreignScope)
         }
-        let names = try await NotebookCollections.names(notebook)
+        let collections = try await NotebookCollections.byId(notebook)
         return ToolResult(
             text: "\(ToolFormat.count(items.count, "item")) \(scope), newest first:\n"
-                + items.map { NoteFormat.line($0, collections: names) }.joined(separator: "\n"),
+                + items.map { NoteFormat.line($0, collections: collections) }.joined(separator: "\n"),
             card: ResultCard(kind: .list, title: ToolFormat.count(items.count, "item"), subtitle: scope),
-            untrusted: NoteFormat.hasForeign(items))
+            untrusted: foreignScope || NoteFormat.hasForeign(items, collections: collections))
     }
 }
 
@@ -236,7 +242,7 @@ struct NotesUpdateTool: Tool {
         }
         var movedTo: (collection: NotebookCollection, created: Bool)?
         if let name = input.string("collection") {
-            let target = try await NotebookCollections.resolveOrCreate(name, notebook: notebook, now: context.now)
+            let target = try await NotebookCollections.resolveOrCreate(name, notebook: notebook, context: context)
             if target.collection.id != item.collectionId {
                 item.collectionId = target.collection.id
                 movedTo = target
@@ -272,7 +278,8 @@ struct NotesUpdateTool: Tool {
                 if let current = try await notebook.item(id: previous.id) { back.deletedAt = current.deletedAt }
                 try await notebook.update(back)
                 events.changed(.notebook)
-            })
+            },
+            untrusted: movedTo.map { NotebookCollections.isForeign($0.collection) } == true)
     }
 }
 
@@ -327,11 +334,15 @@ struct CollectionsListTool: Tool {
                               card: ResultCard(kind: .collection, title: "No collections yet"))
         }
         let lines = collections.map { c in
-            "\(c.name) (\(c.kind == .profile ? "about you" : c.kind.rawValue), \(ToolFormat.count(counts[c.id] ?? 0, "item")))"
+            var meta = [c.kind == .profile ? "about you" : c.kind.rawValue, ToolFormat.count(counts[c.id] ?? 0, "item")]
+            if let origin = ItemProvenance.note(for: c.source) { meta.append(origin) }
+            return "\(ToolFormat.oneLine(ExternalText.clean(c.name), 60)) (\(meta.joined(separator: ", ")))"
         }
+        // A name someone else chose is their words, not the user's (SECURITY T2, T3).
         return ToolResult(text: "Collections:\n" + lines.map { "- " + $0 }.joined(separator: "\n"),
                           card: ResultCard(kind: .collection, title: ToolFormat.count(collections.count, "collection"),
-                                           subtitle: collections.prefix(4).map(\.name).joined(separator: " · ")))
+                                           subtitle: collections.prefix(4).map(\.name).joined(separator: " · ")),
+                          untrusted: collections.contains(where: NotebookCollections.isForeign))
     }
 }
 
@@ -372,7 +383,7 @@ struct CollectionsCreateTool: Tool {
             return ToolResult(text: "“\(existing.name)” already exists.",
                               card: ResultCard(kind: .collection, title: existing.name, subtitle: "Already exists", refId: existing.id))
         }
-        let created = try await NotebookCollections.create(name, kind: kind, notebook: notebook, now: context.now)
+        let created = try await NotebookCollections.create(name, kind: kind, notebook: notebook, context: context)
         events.changed(.notebook)
         let notebook = self.notebook, events = self.events, id = created.id
         return ToolResult(

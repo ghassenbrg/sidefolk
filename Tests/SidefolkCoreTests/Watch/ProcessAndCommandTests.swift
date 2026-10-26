@@ -330,20 +330,23 @@ final class FakeProcessTable: ProcessTable {
     }
 
     @Test func onlyTheUserOrTheApprovedAgentCanMakeOne() throws {
-        for source in ["external:codex", "extension:dev.x", "routine:abc"] {
+        // Plain "agent" is Sidefolk's agent in a tainted turn: the command may have been dictated to it.
+        for source in ["external:codex", "extension:dev.x", "routine:abc", "agent"] {
             #expect(throws: WatchError.notAllowed("Only you, or Sidefolk after you approve the exact command, can set up a command watcher.")) {
                 _ = try watcher("echo hi", source: source)
             }
         }
         _ = try watcher("echo hi", source: "user")
-        _ = try watcher("echo hi", source: "agent")
+        _ = try watcher("echo hi", source: "user:agent")
         #expect(probe.minimumInterval == 60)
     }
 
     @Test func aRowFromAnotherSourceIsNotRunEvenIfItGotIntoTheDatabase() async throws {
-        var w = try watcher("touch /tmp/should-never-exist-\(UUID().uuidString)")
-        w.source = "external:codex"
-        await #expect(throws: ProbeError.self) { try await probe.step(&w) }
+        for source in ["external:codex", "agent"] {
+            var w = try watcher("touch /tmp/should-never-exist-\(UUID().uuidString)")
+            w.source = source
+            await #expect(throws: ProbeError.self, "\(source)") { try await probe.step(&w) }
+        }
     }
 
     @Test func badFoldersAndCodesAreRefused() throws {
