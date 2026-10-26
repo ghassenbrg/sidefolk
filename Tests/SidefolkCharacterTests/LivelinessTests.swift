@@ -103,12 +103,10 @@ import Testing
         let v = CharacterView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
         #expect(v.liveliness == .minimal)
         let profile = Liveliness.minimal.profile
-        #expect(profile.settleAfter == Director.settleAfter && profile.every == nil && profile.sitAfter == nil)
-        #expect(profile.antics.isEmpty && !profile.wakes && !profile.newsReactions)
+        #expect(profile.every == nil && profile.sitAfter == nil)
+        #expect(profile.antics.isEmpty && !profile.newsReactions)
         #expect(!v.reactsToNews)
         #expect(Mind(profile: profile).nextTick(hour: 12, roll: 0.5) == nil)
-        // Balanced moves on its own but still settles its loops at 20 s.
-        #expect(Liveliness.balanced.profile.settleAfter == 20)
     }
 
     // MARK: Choosing

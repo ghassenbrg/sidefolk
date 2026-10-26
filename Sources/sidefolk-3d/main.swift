@@ -25,7 +25,9 @@ MainActor.assumeIsolated {
         try? png.write(to: URL(fileURLWithPath: args[1]))
         print("wrote \(args[1])")
     case "--live" where args.count >= 2:
-        Window3D.run(seconds: Double(args[1]) ?? 20, still: args.contains("--still"))
+        setvbuf(stdout, nil, _IOLBF, 0)
+        let alternate = args.firstIndex(of: "--alternate").flatMap { $0 + 1 < args.count ? Double(args[$0 + 1]) : nil }
+        Window3D.run(seconds: Double(args[1]) ?? 20, still: args.contains("--still"), alternate: alternate)
     default:
         print("usage: sidefolk-3d --snap <file.png> | --live <seconds> [--still]")
         exit(2)
@@ -193,7 +195,7 @@ final class Mochi3D {
 enum Window3D {
     static var blinkTimer: Timer?
 
-    static func run(seconds: Double, still: Bool) {
+    static func run(seconds: Double, still: Bool, alternate: Double?) {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         let window = NSWindow(contentRect: NSRect(x: 260, y: 40, width: 200, height: 200), styleMask: [.borderless],
@@ -224,6 +226,19 @@ enum Window3D {
             }
         }
         print("[3d] pid \(ProcessInfo.processInfo.processIdentifier) window \(window.windowNumber) \(still ? "still" : "alive") for \(seconds)s")
+        if let alternate {
+            // Hidden and shown in turns, each switch logged, for measure-alternating.sh.
+            let clock = DateFormatter()
+            clock.dateFormat = "HH:mm:ss"
+            print("[alternate] \(clock.string(from: Date())) shown")
+            Timer.scheduledTimer(withTimeInterval: alternate, repeats: true) { _ in
+                MainActor.assumeIsolated {
+                    if window.isVisible { window.orderOut(nil) } else { window.orderFrontRegardless() }
+                    view.isPlaying = window.isVisible && !still
+                    print("[alternate] \(clock.string(from: Date())) \(window.isVisible ? "shown" : "hidden")")
+                }
+            }
+        }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(seconds))
             NSApp.terminate(nil)

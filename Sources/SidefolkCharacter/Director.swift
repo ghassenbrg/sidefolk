@@ -36,8 +36,6 @@ final class Director {
     /// Hidden or fully covered: no loops at all.
     private(set) var paused = false
     static let settleAfter: TimeInterval = 20
-    /// How long calm states breathe after a change; the liveliness level may lengthen it.
-    var settleDelay = Director.settleAfter
 
     /// How it holds itself while idle (other states stand).
     var posture = CharacterPosture.stand
@@ -210,7 +208,7 @@ final class Director {
         loops = [breathing()] + Choreography.loops(for: state, figure: rig) + rig.loops(for: state) + (prop?.rig.loops ?? [])
         loops.forEach { $0.layer.add($0.animation, forKey: $0.key) }
         guard Self.settles(state) else { return }
-        let timer = Timer(timeInterval: settleDelay, repeats: false) { [weak self] _ in
+        let timer = Timer(timeInterval: Self.settleAfter, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.settle() }
         }
         timer.tolerance = 2

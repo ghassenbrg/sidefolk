@@ -15,8 +15,11 @@ struct LiveOptions {
     /// Captures what Core Animation shows, 25 frames a second, into this folder (and a film.mp4).
     var film: URL?
     var reducedMotion = false
+    /// Hides and shows the window every this many seconds, logging each switch: WindowServer's
+    /// cost of the companion is the difference between the two halves (measure-alternating.sh).
+    var alternate: Double?
 
-    static let usage = "--liveliness minimal|balanced|lively  --pace <n>  --backdrop  --film <dir>  --reduced-motion"
+    static let usage = "--liveliness minimal|balanced|lively  --pace <n>  --backdrop  --film <dir>  --reduced-motion  --alternate <secs>"
 
     init?(_ args: [String]) {
         var rest = args[...]
@@ -30,6 +33,9 @@ struct LiveOptions {
                 pace = value
             case "--backdrop": backdrop = true
             case "--reduced-motion": reducedMotion = true
+            case "--alternate":
+                guard let value = rest.popFirst().flatMap(Double.init), value >= 2 else { return nil }
+                alternate = value
             case "--film":
                 guard let value = rest.popFirst() else { return nil }
                 film = URL(fileURLWithPath: value)
@@ -69,7 +75,10 @@ enum Live {
                 }
             }
         } else if name == "demo" {
-            Demo.play(view, stage: stage)
+            // Played again and again for as long as the run lasts.
+            for round in 0..<max(1, Int(seconds / Demo.length)) {
+                Demo.play(view, stage: stage, after: Double(round) * Demo.length)
+            }
         } else if let state = states.first(where: { $0.name == name }) {
             view.state = state
             // Calm states should drop to zero running animations once they settle (D20).
@@ -87,6 +96,7 @@ enum Live {
             exit(2)
         }
         let film = options.film.map { Film(view: view, into: $0) }
+        if let period = options.alternate { Alternation.start(window, every: period) }
         print("[live] pid \(ProcessInfo.processInfo.processIdentifier) window \(window.windowNumber) showing \(name) for \(seconds)s, "
               + "liveliness \(options.liveliness.rawValue)")
         Task { @MainActor in
@@ -226,7 +236,9 @@ final class Stage: NSView {
 /// Every moment in turn, then the postures: for recordings and a quick look.
 @MainActor
 enum Demo {
-    static func play(_ view: CharacterView, stage: Stage) {
+    static let length: TimeInterval = 47
+
+    static func play(_ view: CharacterView, stage: Stage, after delay: TimeInterval = 0) {
         let right = { NSPoint(x: (stage.window?.frame.maxX ?? 0) + 300, y: (stage.window?.frame.midY ?? 0) - 40) }
         let left = { NSPoint(x: (stage.window?.frame.minX ?? 0) - 300, y: (stage.window?.frame.midY ?? 0)) }
         let script: [(TimeInterval, String, () -> Void)] = [
@@ -251,7 +263,7 @@ enum Demo {
             (40.0, "lie down", { view.setPosture(.lie, animated: true) }),
             (43.0, "gets up", { view.noteInteraction() }),
         ]
-        let start = Date()
+        let start = Date().addingTimeInterval(delay)
         for (at, name, action) in script {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(at - Date().timeIntervalSince(start)))
@@ -309,4 +321,28 @@ final class Film {
         process.waitUntilExit()
         print("[film] wrote \(dir.appendingPathComponent("film.mp4").path)")
     }
+}
+
+/// `--alternate`: the window hidden, then shown, in turns; each switch logged with the time, so a
+/// sampler of WindowServer can tell the halves apart.
+@MainActor
+enum Alternation {
+    static var timer: Timer?
+    static let clock: DateFormatter = {
+        let clock = DateFormatter()
+        clock.dateFormat = "HH:mm:ss"
+        return clock
+    }()
+
+    static func start(_ window: NSWindow, every period: TimeInterval) {
+        log(true)
+        timer = Timer.scheduledTimer(withTimeInterval: period, repeats: true) { _ in
+            MainActor.assumeIsolated {
+                if window.isVisible { window.orderOut(nil) } else { window.orderFrontRegardless() }
+                log(window.isVisible)
+            }
+        }
+    }
+
+    static func log(_ shown: Bool) { print("[alternate] \(clock.string(from: Date())) \(shown ? "shown" : "hidden")") }
 }

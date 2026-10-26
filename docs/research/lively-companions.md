@@ -19,7 +19,9 @@ with variety and holds still while you type, **reactions** to clicks, stroking, 
 throwing, **ambient** behaviour by time of day, and a **Liveliness** setting (Minimal, Balanced,
 Lively) where Minimal is exactly today's companion. It works for all thirteen companions and for
 **custom companions made from data** (a `species.json` and SVG parts), with a template and an
-example cat, Miso. Measured cost: see [Measurements](#measurements).
+example cat, Miso. Measured cost: the companion's own process stays at 0.03–0.05% of a core at every
+level; WindowServer pays roughly 4–13% of a core *while* anything animates, so Balanced averages
+about 0.5% and Lively about 1.2% (see [Measurements](#measurements)).
 
 **Recommendation in one line:** approve Balanced as the default with the moments, postures and
 hands-on reactions; approve custom companions as data behind a "Made by you" section; keep sound
@@ -135,8 +137,8 @@ decides:
   most once per 45 s, a glance at the window being typed in (its frame from `CGWindowList`, no
   permission: only bounds, never titles or contents).
 - **Quiet for long** (nothing happened *to the companion*): sit after 100 s, lie down after 220 s
-  (Balanced); halved at night (22:00–06:00). The app's own "sleep when away" still takes over at
-  5 minutes without input.
+  (Balanced); halved at night (22:00–06:00). The app's own "Sleep when you're away" still takes
+  over when the person leaves.
 - Otherwise **a moment**, by weight: never one of the last two again; sneeze and double-take at
   most once per 10 minutes; only quiet ones sitting or lying; at night three times the yawns and no
   hops or wiggles; peeks only when there is a window to peek at.
@@ -165,7 +167,8 @@ window, and in Lively, eyes that follow the pointer across the whole screen (fai
 - The app: `AppSettings.liveliness` (default Balanced on this branch), Settings › Companion ›
   Behavior › Liveliness, and in `CompanionWindowController`: boop, petting, throw, landing,
   startle, cheer, lively gaze. Verified with the UI snapshots (`build/lively-poc/ui/`); the
-  running app itself was not tried on this Mac (another dev app was running, D-rule: one at a time).
+  running app itself was not tried (another Sidefolk dev app was running on this Mac, and only
+  one may run at a time).
 - `sidefolk-render --live … --liveliness …` is the same behaviour in a window you can click,
   stroke, drag and throw.
 
@@ -173,7 +176,7 @@ window, and in Lively, eyes that follow the pointer across the whole screen (fai
 
 | | Minimal | Balanced (proposed default) | Lively |
 |---|---|---|---|
-| Breathing after something happens | 20 s, then still (D20) | 20 s, then still | 45 s, and each moment restarts it |
+| Breathing after something happens | 20 s, then still (D20) | 20 s, then still | 20 s, then still (kept going it would cost WindowServer a tenth of a core all the time; see Measurements) |
 | Moments on its own | none | every 28–65 s (×1.3 at night) | every 10–26 s, more kinds (hop, wiggle, double take) |
 | Sits / lies down when quiet | no | after 100 s / 220 s (half at night) | after 150 s / 300 s |
 | Glances at your window | no | while you type, at most every 45 s | same |
@@ -182,22 +185,22 @@ window, and in Lively, eyes that follow the pointer across the whole screen (fai
 | Boop, pet, throw, land | yes (only when you do it) | yes | yes |
 | **Reduce Motion** (any level) | nothing starts on its own; moments show only their faces, crossfaded; no throw flight; state changes crossfade as today |
 
-Minimal is today's companion exactly: no timer is armed, `settleAfter` stays 20 s, the loops are
-the same (tested: `minimalIsTheCompanionOfD20`). The only difference is that it answers your own
+Minimal is today's companion exactly: no timer is armed and the loops and their 20 s settling are
+untouched (tested: `minimalIsTheCompanionOfD20`). The only difference is that it answers your own
 hand, which costs nothing until you touch it.
 
 ## The options and what they cost
 
 | Option | Feel | CPU and battery | Art | Engineering |
 |---|---|---|---|---|
-| **Moments, postures, reactions on the vector rig** (built) | Large step: it acts on its own, has weight, notices | One-shots only; ≈0% between moments (measured below) | None: drawn in code from the existing parts | Done as a POC; ~1 week to production polish |
+| **Moments, postures, reactions on the vector rig** (built) | Large step: it acts on its own, has weight, notices | One-shots only: the app ≈ 0%; WindowServer only while a moment plays (≈ 0.5% of a core on average in Balanced) | None: drawn in code from the existing parts | Done as a POC; ~1 week to production polish |
 | More moments as data (play with a prop, trip over, nap twitch, chase the pointer) | Each adds variety | Same | None | Hours each |
 | Walking along the screen bottom and window tops (Shimeji) | Very alive | The window moves every frame while walking: app and WindowServer a few % for those seconds | A walk cycle (hop-walk suits stubby legs; code) | ~1 week; needs window geometry from `CGWindowList` (no permission) |
 | True spring physics for ears and scarf | Ears that react to every move | A per-frame update (display link) while anything moves; today's precomputed damped keys are 90% of the look | None | Medium |
 | Rive state machines | Designer-authored, richest motion | GPU rendering every frame while animating; similar to ours at rest if paused | Heavy: an animator per companion; our 13 vector rigs would be redrawn | Runtime dependency (`RiveRuntime`), new pipeline; loses props, styles and data species |
 | Lottie | Polished canned clips | Similar | Heavy | No interactivity: rejected |
 | Pre-rendered sprites or generated frames | | | Rejected by D2/D27/D30: AI can't make consistent frames; sprites can't hold props or follow the pointer | |
-| 3D (SceneKit/RealityKit) | Depth, light, turning heads | A GPU render every frame while anything moves (measured below) | A modeller per companion, or a generation pipeline we don't have | See [3D](#3d) |
+| 3D (SceneKit/RealityKit) | Depth, light, turning heads | A GPU frame for every moving frame and 1.4% in the app (measured below) | A modeller per companion, or a generation pipeline we don't have | See [3D](#3d) |
 | Sound | Big for character, risky for annoyance | Negligible | Sound design | See [Sound](#sound) |
 
 ## Sound
@@ -242,9 +245,10 @@ window with breathing, ear sway, blinks, head turning toward the pointer and a c
   and the scarf fitted to each: a 3D artist for weeks, or text-to-3D generation (Meshy, Tripo,
   Rodin) that today gives a static mesh, not a rig, and not on-brand. We have neither the artist
   nor the tools.
-- **Cost.** See [Measurements](#measurements): idle with SceneKit loops running costs far more than
-  the vector rig at rest, because every moving frame is a full GPU render plus WindowServer
-  compositing; paused it is near zero. D20-style settling would still be required.
+- **Cost.** See [Measurements](#measurements): while animating, the same order as the vector rig
+  (here the app draws its own Metal frames: 1.4% of a core in the process, even hidden, plus GPU;
+  WindowServer only composites). The vector rig costs nothing at rest; a 3D scene does unless it
+  is paused, so D20-style settling would still be required.
 - **Carrying the 2D look over.** The brand is soft vector shading with ink faces. In 3D: a toon or
   soft PBR material on white, faces as textures or decals (keep the ink strokes as 2D overlays so
   expressions still morph), outlines with an inverted-hull pass. Expect "a 3D toy of Mochi", not
@@ -335,12 +339,55 @@ The example and the template pass; tests cover each refusal (`CustomCompanionTes
 
 ## Measurements
 
-Release build of `sidefolk-render --live idle 240 <id> --liveliness <level>` (a 200 pt window,
-the same `CharacterView` the app uses), sampled by `top` every 2 s for the companion's process and
-for WindowServer, on the dev Mac (macOS 27). `build/lively-poc/measure.sh` reproduces it; raw logs
-in `build/lively-poc/cpu/`.
+Release builds of `sidefolk-render --live idle 240 <id> --liveliness <level>` (a 200 pt window,
+the same `CharacterView` the app uses) and of the 3D spike, on the dev Mac (macOS 27), sampled by
+`top` every 2 s. `scripts/lively-poc/measure.sh` and `measure-alternating.sh` reproduce them (output in `build/lively-poc/cpu/`).
 
-MEASUREMENTS
+**The companion's own process** (`top -pid`, 240 s per level, Mochi, release; 113–114 samples):
+
+| Level | CPU average | CPU peak | Memory | Time a moment was playing |
+|---|---|---|---|---|
+| Minimal | 0.03% | 0.8% | 11 MB | 0 of 47 five-second checks |
+| Balanced | 0.05% | 0.8% | 12 MB | 3 of 47 (≈ 6%) |
+| Lively | 0.05% | 0.5% | 11 MB | 7 of 47 (≈ 15%) |
+
+The process itself costs nothing worth mentioning at any level: moments are a handful of animation
+descriptions and timers, and Core Animation interpolates them out of process.
+
+**WindowServer and the GPU** are where an animating companion really costs (D20 found the same):
+on macOS the render server that draws our layer tree is WindowServer. The dev Mac was busy during
+these runs (load average 7–9; WindowServer swung between 9% and 40% of a core on its own), so
+single runs were useless. `measure-alternating.sh` keeps one process running and hides and shows its
+window every 10 s; WindowServer while shown minus while hidden is the companion's share, and drift
+cancels. Two sessions, 3–4 minutes per condition:
+
+| While… | WindowServer (share of one core) | Whole GPU (utilization points) | Its own process |
+|---|---|---|---|
+| 2D: moments back to back (the demo, looping) | +4 to +13% | +7.5 | 0.1% |
+| 2D: Mochi breathing (the 20 s after any change, every level) | +7 to +12% | +4.2 | < 0.1% |
+| 2D: the robot breathing | +4% | +2.3 | 0.2% |
+| 2D: settled (after 20 s, every level) | ≈ 0 (within noise) | ≈ 0 | 0.03% |
+| 3D spike: Mochi alive (SceneKit, 30 fps) | +1 to +5% | +2.5 | 1.4%, hidden too |
+
+What it means:
+
+- **Cost follows the time spent animating.** Whatever moves costs WindowServer roughly 4–13% of a
+  core while it moves, 2D or 3D; at rest, 2D costs nothing. So the average per level is the share of
+  time something animates times that: **Minimal** adds nothing to today; **Balanced** ≈ 6% × ~8% ≈
+  **0.5% of a core** on average; **Lively** ≈ 15% × ~8% ≈ **1.2%**. That is why every level still
+  settles its breathing after 20 s: an early version let Lively's moments restart the breathing,
+  which would have cost the full 7–12% all the time.
+- **A finding for today's companion:** Mochi breathing costs about twice the robot. Its ears sway
+  inside the rasterized body layer, so every frame re-rasterizes the whole body. Swaying the ears
+  outside the rasterized layer (or not at all while breathing) should cut the 20 s after every
+  change roughly in half, whatever is decided here.
+- **3D** moves the drawing into the app (SceneKit renders its own Metal frames: 1.4% of a core in
+  the process, even hidden, plus GPU) and leaves WindowServer only compositing. While animating it
+  is the same order as 2D; it has no cheap "settled" state unless the scene is paused, and every
+  companion would need modelling. No reason to switch for cost or for feel today.
+
+Raw logs and summaries: `build/lively-poc/cpu/` (`summary-mochi.txt`, `alternating/summary.txt`).
+Re-run on a quiet Mac before quoting the WindowServer figures outside the team.
 
 ## Recommendation
 
@@ -389,7 +436,7 @@ R=.build/release/sidefolk-render
 $R --live idle 600 mochi --liveliness lively
 $R --live idle 600 mochi --liveliness balanced --pace 8      # the scheduler, 8× faster
 $R --live demo 47 mochi                                      # every moment in turn
-$R --live demo 47 guard_ ; $R --live demo 47 sidefolk        # any companion (ids as in --only)
+$R --live demo 47 guard ; $R --live demo 47 sidefolk         # any companion (ids as in --only)
 $R --live demo 47 companions/miso                            # a custom one, by folder
 
 # Pictures: strips and GIFs of every moment; sheets of a custom companion; check one.
@@ -399,7 +446,8 @@ $R --check-companion companions/miso
 
 # Films without screen capture (Core Animation's own frames), and CPU per level.
 $R --live demo 47 mochi --liveliness balanced --film build/lively-poc/film-demo-mochi
-build/lively-poc/measure.sh 240 mochi
+scripts/lively-poc/measure.sh 240 mochi        # per level; measure-alternating.sh: WindowServer and GPU
+scripts/lively-poc/films.sh                    # the films; record.sh: a real screen recording of the window
 
 # The 3D spike.
 swift run -c release sidefolk-3d --live 60
@@ -408,3 +456,18 @@ swift run -c release sidefolk-3d --live 60
 In the app (`make dev`, with a fresh `SIDEFOLK_HOME`): Settings › Companion › Behavior ›
 Liveliness; copy `companions/miso` into `$SIDEFOLK_HOME/companions/` before launching to see it
 under "Made by you".
+
+What is in `build/lively-poc/` (ignored by the repository; regenerate with the scripts above):
+
+- `antics/antics-<id>.png` and `antics/antics-<id>/<moment>.gif`: every moment of all thirteen
+  companions and Miso, offscreen from the same numbers the live animations play.
+- `films/*.mp4|gif`: Core Animation's own frames of the live window (springs, blinks and loops
+  included): the demo for Mochi, Miso, the robot and Guard, Mochi under Reduce Motion, and the
+  scheduler at 10× pace in Balanced and Lively. Someone was typing on the Mac during the scheduler
+  films, so they show the typing rule as much as the moments: it sat, lay down and mostly held still.
+- `recordings/rec-*.mp4`: real screen recordings (`screencapture -l`) of the window alone, on a
+  paper backdrop: the Mochi and Miso demos.
+- `custom/`: Miso's and the template's contact sheets (states, small, hit, gaze, styles).
+- `ui/`: the app's UI snapshots with Miso under "Made by you" and the Liveliness control.
+- `3d/mochi-3d.png`: the SceneKit spike.
+- `cpu/`: logs and summaries of the measurements.

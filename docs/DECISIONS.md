@@ -699,3 +699,26 @@ Notes' Recently Deleted folder is recognised by name, in English and in Notes' o
 (read from NotesShared's strings); where it isn't found, removing is refused. The scripts are checked against
 the apps' scripting dictionaries and a stand-in object model that the real scripts run against through
 osascript, never against real notes: the founder's manual test is the first run on a real library.
+
+### Proposed (not decided) — Companions with a life of their own; custom companions as data (2026-10-26)
+*Branch `poc/lively-companions`, waiting for the founder; gets its number when merged.*
+**Proposal:** the shared `Director` plays **moments** (one-shot bits of life written as data:
+tracks on identity layers plus face and gaze beats, fitted to each body so nothing leaves the
+window), **postures** (sit, lie down) and **reactions** (boop, pet, drop, throw, startle on news,
+cheer when done), chosen by an idle scheduler that holds still while the person types and is
+sleepier at night. A **Liveliness** setting: Minimal (today's companion, D20 unchanged), Balanced
+(default: a moment every 28–65 s, still loops settle at 20 s) and Lively (every 10–26 s, more kinds,
+eyes on the pointer across the screen; loops still settle at 20 s). Reduce Motion starts nothing on its own.
+**Custom companions** are a folder with `species.json` and SVG parts, read strictly as data (never
+code), checked to draw inside the window in every state, loaded from `companions/` and from
+installed extensions.
+**Why:** the founder found the companions doll-like; life comes from small self-initiated moments,
+attention, weight and time, all of which fit the existing vector engine at near-zero idle cost
+(docs/research/lively-companions.md, Measurements). Data companions reuse the `Species` path D30
+made, without a code path or a sandbox.
+**Alternatives:** constant idle loops (D20's measured cost), Rive/Lottie (art pipeline, runtime,
+loses props and data species), 3D in SceneKit/RealityKit (a full GPU frame per moving frame, a
+modelling pipeline we don't have; spike kept), walking across the screen (later).
+**Implications:** `AppSettings.liveliness` (default Balanced) and `customCompanion`; Settings ›
+Companion gains Liveliness and "Made by you"; the companion window answers clicks, strokes and throws;
+new Settings words need the catalog.

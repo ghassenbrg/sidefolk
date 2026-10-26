@@ -207,7 +207,26 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
   `sidefolk status` answers, idle measured (see above).
 
 ## In progress
-Nothing. All second-round review follow-ups are merged.
+- **Lively companions, proof of concept (branch `poc/lively-companions`, on `main`; NOT merged,
+  waiting for the founder):** the companions get a life of their own on the shared Director:
+  17 moments as data (ear twitch, stretch, yawn, scratch, hop, wiggle, peek, glance, sneeze,
+  double take; boop, pet, startle, cheer, land, spin, dizzy), fitted to each body so nothing
+  leaves the window; sit and lie-down postures; an idle scheduler (`Life`/`Mind`) that holds still
+  while the person types, glances at the window being typed in, sits then lies down when quiet,
+  is sleepier at night; petting by stroking, throwing with a short flight; a Liveliness setting
+  (Minimal = D20 as it is, Balanced default, Lively) in Settings › Companion. Custom companions
+  as data (`species.json` + SVG parts, strict, never run) from `<home>/companions/` and installed
+  extensions, with `companions/template/` and Miso (a cat) as examples and "Made by you" in
+  Settings. A SceneKit spike (`sidefolk-3d`). Write-up, format, measurements and recommendation:
+  docs/research/lively-companions.md; proposed decision at the end of DECISIONS.md (unnumbered).
+  - *Verified:* `swift build`; full serial suite (952 core + 31 character, incl. every moment of
+    every companion rendered and checked inside its window); UI snapshots of Settings › Companion;
+    release CPU runs and films (`build/lively-poc/`, scripts there).
+  - *Not verified:* the running app (another dev app was running on this Mac; one at a time):
+    petting thresholds, the throw and the startle in the real companion window are untried there.
+  - *Next if approved:* try it in the dev app for a day; select a custom companion in the
+    chooser itself; reload companion folders without a restart; strings into the catalog; number
+    the decision.
 
 ## Known issues / not yet verified
 - **Languages, no translations yet:** the catalog is complete but English only; every language

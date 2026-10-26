@@ -173,7 +173,6 @@ public final class CharacterView: NSView {
             moment = moment.flipped
         }
         director.perform(moment, name: antic)
-        if byItself, liveliness.profile.wakes { director.wake() }
     }
 
     /// The look direction (-1...1) from the companion toward a screen point.
@@ -186,7 +185,6 @@ public final class CharacterView: NSView {
 
     private func applyLiveliness() {
         let profile = liveliness.profile
-        director.settleDelay = profile.settleAfter
         guard profile.every != nil else {
             life?.stop()
             life = nil
@@ -241,7 +239,6 @@ public final class CharacterView: NSView {
         let old = director
         let next = Director(look, live: true)
         next.reducedMotion = reducedMotion
-        next.settleDelay = liveliness.profile.settleAfter
         next.show(old.state, animated: false)
         next.setBadges(badges, animated: false)
         next.setGaze(gaze)
