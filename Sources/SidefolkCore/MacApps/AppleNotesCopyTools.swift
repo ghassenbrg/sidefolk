@@ -113,6 +113,10 @@ struct AppleNotesCopyTool: Tool {
             for note in fetched {
                 guard let assignment = assigned[note.id] else { continue }
                 let label = "\(AppleNotes.handle(for: note.id)) “\(MacAppAccess.line(note.title, 80))”"
+                if let code = note.unreadable {
+                    skipped.append("\(label): Notes wouldn't hand over its text (Apple Events error \(code)); it stays in Notes")
+                    continue
+                }
                 let collection: NotebookCollection
                 do {
                     if let known = collections[assignment.collection.lowercased()] {
@@ -175,7 +179,7 @@ struct AppleNotesCopyTool: Tool {
                                 source: "app:notes", now: now)
         item.createdAt = note.created ?? now
         item.updatedAt = note.modified ?? item.createdAt
-        return (item, !cut && note.attachments.isEmpty)
+        return (item, !cut && note.attachments.isEmpty && !note.attachmentsPartial)
     }
 
     private func result(made: [(note: FetchedNote, item: NotebookItem, collection: NotebookCollection)], skipped: [String],

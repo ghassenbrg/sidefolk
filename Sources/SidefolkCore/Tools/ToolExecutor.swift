@@ -274,7 +274,8 @@ public final class ToolExecutor: Sendable {
             act.error = ufe.message
             await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: ufe.detail ?? ufe.message)
             events.publish(.toolFinished(act, ok: false))
-            Log.shared.warning("tools", "\(tool.spec.name) failed", ["error": String(describing: error)])
+            // The detail (an Apple Events code, an HTTP status) is what diagnoses a failure from the log.
+            Log.shared.warning("tools", "\(tool.spec.name) failed", ["error": String(describing: error), "detail": ufe.detail ?? ""])
             return ToolOutcome(activity: act, status: .failed(ufe))
         }
     }

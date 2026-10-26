@@ -47,6 +47,19 @@ import Testing
         #expect(notes[0].attachments == ["ticket.pdf"] && notes[0].folderName == "Notes" && !notes[0].truncated)
     }
 
+    /// The founder's real library: Notes answered "Can't get object" (-1728) partway through a note, and
+    /// the whole copy failed three times. One stubborn part now costs only itself.
+    @Test func oneStubbornPartCostsOnlyItself() async throws {
+        var fixture = NotesFixture.sample()
+        fixture.notes[0].html = "!-1728"
+        fixture.notes[1].attachments.append(("!-1728", ""))
+        let notes = try await AppleNotes(runner: fixture.standInRunner).fetch([NotesFixture.id(1), NotesFixture.id(2)], maxChars: 400_000)
+        #expect(notes.count == 2)
+        #expect(notes[0].unreadable == -1728)
+        #expect(notes[1].unreadable == nil && notes[1].attachmentsPartial)
+        #expect(notes[1].attachments == ["ticket.pdf", "attachment"])
+    }
+
     @Test func removeMovesToRecentlyDeletedAndSaysWhereItWent() async throws {
         let fixture = NotesFixture.sample()
         let notes = AppleNotes(runner: fixture.standInRunner)

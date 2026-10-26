@@ -83,6 +83,10 @@ public struct FetchedNote: Sendable, Hashable {
     public var attachments: [String]
     /// The body was longer than the cap and was cut.
     public var truncated: Bool
+    /// Notes wouldn't hand over the body: its Apple Events error number. Such a note is not copied.
+    public var unreadable: Int? = nil
+    /// Some attachments couldn't be named, so `attachments` may be short of what the note holds.
+    public var attachmentsPartial = false
 }
 
 /// Sidefolk's view of Apple Notes, through `AppleEventsRunner` (DECISIONS D38). Reading is the
@@ -153,7 +157,8 @@ public final class AppleNotes: Sendable {
                 id: id, title: title, folderId: item["folder"]?.stringValue ?? "", folderName: item["folderName"]?.stringValue ?? "",
                 created: Self.date(item["created"]), modified: Self.date(item["modified"]), locked: item["locked"]?.boolValue ?? false,
                 markdown: NoteMarkdown.droppingTitle(title, from: markdown),
-                attachments: names.map { $0.isEmpty ? "attachment" : $0 }, truncated: item["truncated"]?.boolValue ?? false)
+                attachments: names.map { $0.isEmpty ? "attachment" : $0 }, truncated: item["truncated"]?.boolValue ?? false,
+                unreadable: item["unreadable"]?.intValue, attachmentsPartial: item["attachmentsPartial"]?.boolValue ?? false)
         }
     }
 

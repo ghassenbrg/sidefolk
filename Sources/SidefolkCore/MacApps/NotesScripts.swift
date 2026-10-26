@@ -80,19 +80,35 @@ enum NotesScripts {
               if (missing(e)) { out.push({ id: id, missing: true }); continue; }
               throw e;
             }
-            const folder = note.container;
-            item.folder = folder.id();
-            item.folderName = folder.name();
-            item.created = note.creationDate();
-            item.modified = note.modificationDate();
-            item.locked = note.passwordProtected();
+            // Each part on its own: Notes answers "Can't get object" (-1728) for some attachments
+            // (inline links, tags, tables) and some containers, and one such part must cost neither
+            // the note nor the rest of the batch.
+            try { const folder = note.container; item.folder = folder.id(); item.folderName = folder.name(); } catch (e) {}
+            try { item.created = note.creationDate(); } catch (e) {}
+            try { item.modified = note.modificationDate(); } catch (e) {}
+            try { item.locked = note.passwordProtected(); } catch (e) { item.locked = false; }
             const atts = note.attachments;
-            item.attachments = atts.name().map(n => n || '');
+            try {
+              item.attachments = atts.name().map(n => n || '');
+            } catch (e) {
+              item.attachments = [];
+              item.attachmentsPartial = true;
+              try {
+                const count = atts.length;
+                for (let i = 0; i < count; i++) {
+                  try { item.attachments.push(atts[i].name() || ''); } catch (e2) { item.attachments.push(''); }
+                }
+              } catch (e2) {}
+            }
             try { item.cids = atts.contentIdentifier().map(c => c || ''); } catch (e) { item.cids = []; }
             if (!item.locked) {
-              const html = note.body().replace(/(\\bsrc\\s*=\\s*["'])data:[^"']*/gi, '$1data:');
-              item.truncated = html.length > params.maxChars;
-              item.html = html.slice(0, params.maxChars);
+              try {
+                const html = note.body().replace(/(\\bsrc\\s*=\\s*["'])data:[^"']*/gi, '$1data:');
+                item.truncated = html.length > params.maxChars;
+                item.html = html.slice(0, params.maxChars);
+              } catch (e) {
+                item.unreadable = (e && e.errorNumber) || -1;
+              }
             }
             out.push(item);
           }

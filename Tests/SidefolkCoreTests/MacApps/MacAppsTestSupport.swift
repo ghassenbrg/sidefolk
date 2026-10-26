@@ -125,7 +125,8 @@ struct NotesFixture: Sendable {
 
     /// The library as an object model shaped like JXA's: element arrays you can call, read a property
     /// of in bulk (`notes.name()`), look up `byId`, filter `whose`, and count; objects whose properties
-    /// are functions; `delete`. A note that is gone throws -1728, as Notes does.
+    /// are functions; `delete`. A note that is gone throws -1728, as Notes does, and so does a body or
+    /// an attachment name written "!-1728" (Notes can't describe some inline links, tags and tables).
     var standIn: String {
         """
         function makeStandIn() {
@@ -144,11 +145,13 @@ struct NotesFixture: Sendable {
                 if (p === 'byId') return id => get().find(x => x.id() === id) || missing();
                 if (p === 'whose') return q => elements(() => get().filter(x => Object.keys(q).every(k => x[k]() === q[k])));
                 if (p === 'length') return get().length;
+                if (/^[0-9]+$/.test(p)) return get()[Number(p)];
                 return () => get().map(x => x[p]());
               }
             });
           }
           const date = s => s === null ? null : new Date(s);
+          const or = v => { if (typeof v === 'string' && v.startsWith('!')) throw fail(Number(v.slice(1))); return v; };
           function folder(f) {
             return {
               id: () => f.id, name: () => f.name,
@@ -158,10 +161,10 @@ struct NotesFixture: Sendable {
           }
           function note(n) {
             return {
-              id: () => n.id, name: () => n.name, body: () => n.body, plaintext: () => n.plaintext,
+              id: () => n.id, name: () => n.name, body: () => or(n.body), plaintext: () => n.plaintext,
               creationDate: () => date(n.created), modificationDate: () => date(n.modified), passwordProtected: () => n.locked,
               get container() { return folder(data.folders.find(f => f.id === n.folder)); },
-              get attachments() { return elements(() => n.attachments.map(a => ({ name: () => a.name, contentIdentifier: () => a.cid }))); }
+              get attachments() { return elements(() => n.attachments.map(a => ({ name: () => or(a.name), contentIdentifier: () => a.cid }))); }
             };
           }
           function account(a) {
