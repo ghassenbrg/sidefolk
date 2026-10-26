@@ -21,7 +21,9 @@ struct EffortPicker: View {
         HStack(spacing: Theme.Space.xs) {
             Text("Effort", comment: "Reasoning effort, beside its menu under a model field")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-            Picker(selection: Binding(get: { choice.selection }, set: choice.set)) {
+            // A closure, not `choice.set` itself: Swift 6.3 (Xcode 26) crashes turning that function value
+            // into Binding's @isolated(any) setter.
+            Picker(selection: Binding(get: { choice.selection }, set: { choice.set($0) })) {
                 defaultLabel.tag(ReasoningEffort?.none)
                 Divider()
                 ForEach(choice.levels, id: \.self) { level in
