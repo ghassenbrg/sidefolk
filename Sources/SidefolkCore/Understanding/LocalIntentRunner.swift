@@ -131,15 +131,9 @@ public struct LocalIntentRunner: Sendable {
 
     private func execute(_ tool: String, _ input: JSONValue) async -> LocalOutcome {
         let out = await runtime.executor.execute(name: tool, input: input, caller: .user)
-        switch out.status {
-        case .ok(let result):
-            let card = result.card ?? ResultCard(kind: .info, title: result.text.clipped(120))
-            return .card(card, activityId: out.activity.id, undo: out.activity.undoAvailable)
-        case .denied(let why):
-            return .failed(UserFacingError(verbatim: why))
-        case .failed(let error):
-            return .failed(error)
-        }
+        guard case .ok(let result) = out.status else { return .failed(out.problem!) }
+        let card = result.card ?? ResultCard(kind: .info, title: result.text.clipped(120))
+        return .card(card, activityId: out.activity.id, undo: out.activity.undoAvailable)
     }
 
     private func find(query: String, kind: NotebookItem.Kind?, collection: String?) async -> LocalOutcome {

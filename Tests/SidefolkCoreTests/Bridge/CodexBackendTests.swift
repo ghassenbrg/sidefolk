@@ -23,6 +23,17 @@ enum CodexFixtures {
     static let retrying = #"{"type":"error","message":"Reconnecting... 2/5 (unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses)"}"#
     static let unauthorized = #"{"type":"turn.failed","error":{"message":"unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses, request id: req_acde"}}"#
 
+    /// `codex debug models --bundled` (0.160.0), trimmed to the fields Sidefolk reads, three listed
+    /// models and a hidden one. "ultra" delegates to sub-agents, so Sidefolk never offers it.
+    static let catalog = """
+        {"models":[
+        {"slug":"gpt-6.1-sol","visibility":"list","default_reasoning_level":"low","supported_reasoning_levels":[{"effort":"low","description":"Fast responses with lighter reasoning"},{"effort":"medium"},{"effort":"high"},{"effort":"xhigh"},{"effort":"max"},{"effort":"ultra","description":"Maximum reasoning with automatic task delegation"}]},
+        {"slug":"gpt-6-luna","visibility":"list","default_reasoning_level":"medium","supported_reasoning_levels":[{"effort":"low"},{"effort":"medium"},{"effort":"high"},{"effort":"xhigh"},{"effort":"max"}]},
+        {"slug":"gpt-5.5","visibility":"list","default_reasoning_level":"medium","supported_reasoning_levels":[{"effort":"low"},{"effort":"medium"},{"effort":"high"},{"effort":"xhigh"}]},
+        {"slug":"codex-auto-review","visibility":"hide","default_reasoning_level":"medium","supported_reasoning_levels":[{"effort":"low"}]}
+        ]}
+        """
+
     /// `codex exec --help`, trimmed to the flags (same layout as 0.160.0).
     static let help = """
         Run Codex non-interactively
@@ -103,6 +114,10 @@ struct FakeCodex {
             SIDEFOLK_FEATURES_END
               exit 0 ;;
               "login status") \(login) ;;
+              "debug models") cat <<'SIDEFOLK_CATALOG_END'
+            \(CodexFixtures.catalog.replacingOccurrences(of: "\n", with: ""))
+            SIDEFOLK_CATALOG_END
+              exit 0 ;;
             esac
             C='\(dir.path)/capture'
             for a in "$@"; do printf '%s\\n' "$a"; done > "$C/argv"
@@ -131,8 +146,8 @@ struct FakeCodex {
 }
 
 extension BackendHarness {
-    func codex(_ fake: FakeCodex, helper: String = "/usr/bin/true", effort: String? = nil) -> CodexBackend {
-        CodexBackend(codexPath: fake.path, paths: paths, helperPath: helper, registry: tokens, reasoningEffort: effort,
+    func codex(_ fake: FakeCodex, helper: String = "/usr/bin/true") -> CodexBackend {
+        CodexBackend(codexPath: fake.path, paths: paths, helperPath: helper, registry: tokens,
                      environment: ["HOME": "/Users/x", "USER": "tester", "LANG": "en_GB.UTF-8", "OPENAI_API_KEY": "sk-CANARY0000000000",
                                    "DYLD_INSERT_LIBRARIES": "/tmp/x.dylib", "NODE_OPTIONS": "--require /tmp/evil.js"])
     }
@@ -244,7 +259,7 @@ extension BackendHarness {
     @Test func argvIsIsolatedAndCarriesNoUserData() {
         let runDir = "/Users/x/Library/Application Support/Sidefolk/brain/run-r1"
         let inv = CodexBackend.invocation(task: task, install: install, runDir: runDir, helperPath: "/Apps/Side \"folk\"/sidefolk",
-                                          sidefolkHome: "/home", reasoningEffort: nil, environment: base)
+                                          sidefolkHome: "/home", environment: base)
         let args = inv.arguments
         for secret in ["SYSTEM-SECRET", "PROMPT-SECRET", "PROMPT-LATEST"] {
             #expect(!args.contains { $0.contains(secret) })
@@ -273,6 +288,8 @@ extension BackendHarness {
         #expect(config("mcp_servers.sidefolk.args") == #"["mcp"]"#)
         #expect(config("mcp_servers.sidefolk.env.SIDEFOLK_RUN_DIR") == "\"\(runDir)\"")
         #expect(config("mcp_servers.sidefolk.default_tools_approval_mode") == #""approve""#)
+        // A card may wait for the person a day at most (D37); Codex must not give up on the call first.
+        #expect(config("mcp_servers.sidefolk.tool_timeout_sec") == String(24 * 60 * 60 + 300))
         #expect(config("model_reasoning_effort") == nil)
         for feature in install.featuresToDisable { #expect(follows("--disable", feature) || args.contains(feature)) }
         #expect(args.filter { $0 == "--disable" }.count == install.featuresToDisable.count)
@@ -284,23 +301,53 @@ extension BackendHarness {
         #expect(!inv.input.contains("SYSTEM-SECRET"))
     }
 
-    @Test func thinkHarderAndModelsReachArgv() {
+    @Test func effortsAndModelsReachArgv() {
         var named = task
         named.model = "gpt-5.5"
+        named.effort = .high
         let inv = CodexBackend.invocation(task: named, install: install, runDir: "/r", helperPath: "/h", sidefolkHome: "/home",
-                                          reasoningEffort: "high", environment: [:])
+                                          environment: [:])
         #expect(inv.arguments[inv.arguments.firstIndex(of: "--model")! + 1] == "gpt-5.5")
         #expect(inv.arguments.contains(#"model_reasoning_effort="high""#))
         named.model = "--dangerously-bypass-approvals-and-sandbox"
+        named.effort = nil
         let unsafe = CodexBackend.invocation(task: named, install: install, runDir: "/r", helperPath: "/h", sidefolkHome: "/home",
-                                             reasoningEffort: nil, environment: [:])
+                                             environment: [:])
         #expect(!unsafe.arguments.contains("--model"))
         #expect(!unsafe.arguments.contains("--dangerously-bypass-approvals-and-sandbox"))
+        #expect(!unsafe.arguments.contains { $0.hasPrefix("model_reasoning_effort") }, "Default sends nothing")
+    }
+
+    /// The founder's setup: everyday gpt-6-luna at extra high, "Think harder" gpt-6.1-sol at high. A
+    /// level the catalog doesn't list for the model is never sent.
+    @Test func effortsFollowTheCatalog() {
+        let catalog = CodexBinary.models(fromCatalog: CodexFixtures.catalog)
+        #expect(catalog.map(\.id) == ["gpt-6.1-sol", "gpt-6-luna", "gpt-5.5"])
+        #expect(catalog[0].efforts == [.low, .medium, .high, .xhigh, .max], "ultra is dropped")
+        #expect(catalog[0].defaultEffort == .low)
+        #expect(catalog[2].efforts == [.low, .medium, .high, .xhigh])
+        let withCatalog = CodexInstall(path: install.path, version: install.version, featuresToDisable: install.featuresToDisable,
+                                       models: catalog)
+        func effortArgs(_ model: String, _ effort: ReasoningEffort?) -> [String] {
+            var t = task
+            t.model = model
+            t.effort = effort
+            let args = CodexBackend.invocation(task: t, install: withCatalog, runDir: "/r", helperPath: "/h", sidefolkHome: "/home",
+                                               environment: [:]).arguments
+            return args.indices.filter { args[$0] == "-c" && args[$0 + 1].hasPrefix("model_reasoning_effort=") }.map { args[$0 + 1] }
+        }
+        #expect(effortArgs("gpt-6-luna", .xhigh) == [#"model_reasoning_effort="xhigh""#])
+        #expect(effortArgs("gpt-6.1-sol", .high) == [#"model_reasoning_effort="high""#])
+        #expect(effortArgs("gpt-6.1-sol", .max) == [#"model_reasoning_effort="max""#])
+        #expect(effortArgs("gpt-5.5", .max) == [], "gpt-5.5 stops at xhigh")
+        #expect(effortArgs("gpt-6-luna", .minimal) == [], "not a level Codex lists")
+        #expect(effortArgs("", .xhigh) == [#"model_reasoning_effort="xhigh""#], "Codex's default model: what every model shares")
+        #expect(effortArgs("", .max) == [])
     }
 
     @Test func environmentIsAllowListed() {
         let inv = CodexBackend.invocation(task: task, install: install, runDir: "/r", helperPath: "/h", sidefolkHome: "/home",
-                                          reasoningEffort: nil, environment: base)
+                                          environment: base)
         #expect(Set(inv.environment.keys) == ["HOME", "USER", "LOGNAME", "LANG", "TMPDIR", "PATH", "CODEX_HOME"])
         #expect(inv.environment["TMPDIR"] == "/r/tmp")
         #expect(inv.environment["CODEX_HOME"] == "/Users/x/.codex-work")
@@ -321,13 +368,16 @@ extension BackendHarness {
         let backend = h.codex(fake)
         #expect(try await backend.check().get().hasPrefix("Codex 0.160.0"))
 
-        let task = h.task()
+        var task = h.task()
+        task.model = "gpt-6-luna"
+        task.effort = .xhigh
         let reply = try await backend.run(task, toolbox: h.toolbox(task.runId), emit: { _ in })
         #expect(reply.text == "Saved it to your Inbox.", "the last message is the answer, not the commentary before a tool call")
 
         let argv = fake.captured("argv").components(separatedBy: "\n")
         #expect(argv.contains("--ignore-user-config"))
         #expect(argv.contains("teleport_tool"), "an unreviewed feature is switched off")
+        #expect(argv.contains(#"model_reasoning_effort="xhigh""#), "a level the probed catalog lists for the model")
         #expect(!argv.contains { $0.contains("folks with jobs") || $0.contains("likes tea") })
         #expect(fake.captured("token-mode") == "600")
         #expect(fake.captured("instructions-mode") == "600")

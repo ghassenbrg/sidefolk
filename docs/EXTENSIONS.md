@@ -60,7 +60,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
   "id": "dev.sidefolk.system-vitals",
   "name": "System Vitals",
   "version": "1.0.0",
-  "sidefolk": ">=1.0",
+  "sidefolk": ">=0.1",
   "description": "Battery, disk and memory at a glance.",
   "folk": "byte",
   "author": "Sidefolk",
@@ -88,7 +88,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `id` | yes | Reverse-DNS, lowercase: `^[a-z0-9]+(\.[a-z0-9-]+)+$`, at most 64 characters. The installed copy lives in `Extensions/<id>/`. The last part (`system-vitals`) names its tools, so it must be unique among your extensions. |
 | `name` | yes | 1–60 characters of plain text, shown everywhere. |
 | `version` | yes | `1.0` or `1.0.0`, optionally with `-beta.1`. |
-| `sidefolk` | no | Minimum Sidefolk version, written `>=1.0`. |
+| `sidefolk` | no | Minimum Sidefolk version, written `>=0.1`. |
 | `description` | no | At most 300 characters. |
 | `folk` | no | The folk that appears while it works, e.g. `byte`. |
 | `author` | no | At most 100 characters. |
@@ -180,7 +180,7 @@ the last 16 KB for its diagnostics.
 ### Startup
 
 ```json
-→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"Sidefolk","version":"1.0.0"}}}
+→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"Sidefolk","version":"0.1.0"}}}
 ← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"system-vitals","version":"1.0.0"}}}
 → {"jsonrpc":"2.0","method":"notifications/initialized"}
 ```

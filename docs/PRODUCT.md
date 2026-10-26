@@ -124,6 +124,8 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 ### Hands and Guard
 - P0 Built-in tools: notebook, about-you, reminders, watchers, clipboard, open URL/app/file,
   files (list/read/search/move/rename/create folder/trash) in granted folders, web fetch, time.
+- P1 The Mac's own apps (D38): Apple Notes (list, read, copy into the notebook organized, and move
+  after a whole copy when asked) and Apple Reminders (read), through Apple Events with Guard approvals.
 - P0 Guard: risk levels, caller trust, taint, folder grants, protected paths, approvals, audit.
 - P0 Secrets in the Keychain.
 
@@ -211,6 +213,12 @@ external MCP agent, extension. Rules:
 - Destructive file operations move to Trash; nothing is hard-deleted by tools.
 - Shell commands are shown verbatim; "always" can only be granted for that exact command.
 - External agents and routines cannot answer approvals; approvals always come from the user.
+- How much Sidefolk asks before its own agent acts is the person's choice (D37): Ask every time,
+  Ask once per kind (default), Auto, or Full access (only after a sheet that says what it means).
+  No mode lifts the rules above for content-steered actions that could send data out, for other
+  agents or for extensions; the mode is always visible (Ask panel chip, menu bar, Now).
+- If the person doesn't answer, a card of Sidefolk's own agent never holds the task: by default the
+  step is skipped after 10 minutes and the task carries on; the step waits in Now with "Run it now".
 
 ## 11. Attention model
 

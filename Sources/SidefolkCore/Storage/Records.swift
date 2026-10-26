@@ -318,7 +318,14 @@ public struct Exchange: SidefolkRecord, Identifiable, Hashable {
 
 public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "activity"
-    public enum Decision: String, Codable, Sendable { case auto, allowed, always, denied, blocked, failed }
+    public enum Decision: String, Codable, Sendable {
+        case auto, allowed, always, denied, blocked, failed
+        /// Done without asking because the person chose Auto or Full access (D37).
+        case autoMode = "auto_mode"
+        case fullAccess = "full_access"
+        /// Nobody answered in time; the step was skipped, or its task stopped (D37).
+        case skipped
+    }
 
     public var id: Int64?
     public var at: Date

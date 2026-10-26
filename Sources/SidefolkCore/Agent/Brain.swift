@@ -19,16 +19,20 @@ public struct BrainTask: Sendable {
     public var system: String
     public var messages: [ChatMessage]
     public var model: String
+    /// The reasoning effort to ask for (D36); nil sends nothing. Backends send it only where the
+    /// provider and model accept it (`EffortSupport`).
+    public var effort: ReasoningEffort?
     public var maxSteps: Int
     public var deadline: Date
 
     public init(runId: String, threadId: String, system: String, messages: [ChatMessage], model: String,
-                maxSteps: Int = 10, deadline: Date) {
+                effort: ReasoningEffort? = nil, maxSteps: Int = 10, deadline: Date) {
         self.runId = runId
         self.threadId = threadId
         self.system = system
         self.messages = messages
         self.model = model
+        self.effort = effort
         self.maxSteps = maxSteps
         self.deadline = deadline
     }
@@ -47,6 +51,15 @@ public final class BrainToolbox: Sendable {
     private let closed = Mutex(false)
     private let emit: @Sendable (AgentEvent) -> Void
     private let results = Mutex<[ToolOutcome]>([])
+    private let pause = Mutex(Pause())
+    private let stop = Mutex<(requested: Bool, action: (@Sendable () -> Void)?)>((false, nil))
+
+    /// Time spent waiting for the person's answer, which doesn't count against the run (D37).
+    private struct Pause {
+        var open = 0
+        var since: Date?
+        var total: TimeInterval = 0
+    }
 
     public init(runId: String, specs: [ToolSpec], executor: ToolExecutor, startTainted: Bool = false,
                 mentions: UserMentions = .none, emit: @escaping @Sendable (AgentEvent) -> Void) {
@@ -60,6 +73,44 @@ public final class BrainToolbox: Sendable {
 
     public var isTainted: Bool { tainted.withLock { $0 } }
     public var outcomes: [ToolOutcome] { results.withLock { $0 } }
+
+    /// When the run must end: `base` moved by every wait for the person's answer, or nil while a card
+    /// is waiting (the deadline can't pass then). Time spent deciding, or away, isn't the run's time,
+    /// so a run that waited ten minutes on a skipped step still has its own budget left (D37).
+    public func deadline(from base: Date) -> Date? {
+        pause.withLock { p in p.open > 0 ? nil : base.addingTimeInterval(p.total) }
+    }
+
+    /// The person didn't answer in time and their setting says to stop the task.
+    public var stoppedUnanswered: Bool { stop.withLock { $0.requested } }
+
+    /// What ends the run when `stoppedUnanswered` becomes true; the runtime cancels the backend with it.
+    public func onStop(_ action: @escaping @Sendable () -> Void) {
+        let now = stop.withLock { s -> Bool in
+            s.action = action
+            return s.requested
+        }
+        if now { action() }
+    }
+
+    private func beginWait() {
+        let now = executor.clock.now
+        pause.withLock { p in
+            if p.open == 0 { p.since = now }
+            p.open += 1
+        }
+    }
+
+    private func endWait() {
+        let now = executor.clock.now
+        pause.withLock { p in
+            p.open -= 1
+            if p.open == 0, let since = p.since {
+                p.total += max(0, now.timeIntervalSince(since))
+                p.since = nil
+            }
+        }
+    }
 
     /// The run ended: later calls are refused and cards still waiting are denied, so an Allow
     /// clicked afterwards never acts for a run that is gone.
@@ -79,9 +130,26 @@ public final class BrainToolbox: Sendable {
         let spec = specs.first { $0.name == name || $0.modelName == name }!
         emit(.phase(.working(spec.category)))
         let emit = self.emit
+        // One call may wait twice (folder access, then the action); the pause covers both.
+        let waited = Mutex(false)
         let outcome = await executor.execute(name: spec.name, input: input, caller: .agent(runId: runId), tainted: isTainted,
-                                             mentions: mentions, onWaiting: { _ in emit(.phase(.waitingForApproval)) })
+                                             mentions: mentions, onWaiting: { [self] _ in
+            let first = waited.withLock { w in
+                defer { w = true }
+                return !w
+            }
+            if first { beginWait() }
+            emit(.phase(.waitingForApproval))
+        })
+        if waited.withLock({ $0 }) { endWait() }
         if outcome.untrusted { tainted.withLock { $0 = true } }
+        if case .unanswered(stop: true) = outcome.status {
+            let action = stop.withLock { s -> (@Sendable () -> Void)? in
+                s.requested = true
+                return s.action
+            }
+            action?()
+        }
         results.withLock { $0.append(outcome) }
         emit(.toolFinished(outcome.activity, ok: outcome.isOK))
         emit(.phase(.thinking))

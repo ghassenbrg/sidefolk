@@ -73,15 +73,16 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
                 usage.limit = "steps"
                 return Self.stopped(.steps, outcomes: outcomes, limits: limits)
             }
-            let remaining = task.deadline.timeIntervalSince(clock.now)
+            // Time spent waiting for the person's answers isn't the run's (D37).
+            let remaining = (toolbox.deadline(from: task.deadline) ?? .distantFuture).timeIntervalSince(clock.now)
             if remaining <= 0 {
                 usage.limit = "deadline"
                 return try Self.timedOut(outcomes, limits: limits)
             }
 
             emit(.phase(.thinking))
-            let request = TurnRequest(model: task.model, system: task.system, messages: transcript, tools: toolbox.specs,
-                                      maxOutputTokens: limits.maxOutputTokens, timeBudget: remaining)
+            let request = TurnRequest(model: task.model, effort: task.effort, system: task.system, messages: transcript,
+                                      tools: toolbox.specs, maxOutputTokens: limits.maxOutputTokens, timeBudget: remaining)
             let turn: ModelTurn
             do {
                 turn = try await withTimeout(remaining) { try await model.respond(to: request) }
@@ -185,16 +186,13 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
 
     static func interrupted(by error: UserFacingError, outcomes: [ToolOutcome]) -> AgentReply {
         // Something was done, so the ending that says nothing changed goes, in either language.
-        var problem = error.message
-        for ending in [" " + String(localized: "Nothing was changed."), " Nothing was changed."] {
-            problem = problem.replacingOccurrences(of: ending, with: "")
-        }
+        let problem = Wording.droppingNothingChanged(from: error.message)
         return AgentReply(text: String(localized: "\(progress(outcomes)) Then something went wrong: \(problem)",
                                        comment: "What was done (“Done so far: …”), then the error"),
                           cards: cards(outcomes))
     }
 
-    /// "Done so far: Saved “Tea ideas”; Reminder at 9:00." from the successful calls.
+    /// "Done so far: Saved “Tea ideas”, Reminder at 9:00." from the successful calls.
     static func progress(_ outcomes: [ToolOutcome]) -> String {
         var lines: [String] = []
         for o in outcomes where o.isOK {
@@ -202,7 +200,7 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
             if !line.isEmpty, !lines.contains(line) { lines.append(line) }
         }
         guard !lines.isEmpty else { return "" }
-        let shown = lines.prefix(4).joined(separator: "; ")
+        let shown = Wording.list(Array(lines.prefix(4)))
         return lines.count > 4 ? String(localized: "Done so far: \(String(localized: "\(shown) and \(lines.count - 4) more")).")
             : String(localized: "Done so far: \(shown).")
     }

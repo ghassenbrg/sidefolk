@@ -30,8 +30,11 @@ as user-given only when it, or for opening a link its site, appears in the user'
 Approval cards render the tool's deterministic `summary(input)` and raw args (full URL, absolute
 path, verbatim command), never model prose. Approval is bound to `SHA-256(tool, canonical args)`
 and re-checked at execution. Allow is inert for 800 ms, Return never defaults to Allow on high,
-timeout 120 s → deny for every caller, and a run's cards are denied when the run ends (or its
-socket connection drops), so a late Allow never acts for a caller that is gone. Other agents
+a card waits 120 s and then counts as a no, except the cards of Sidefolk's own agent, which follow
+the person's "If I don't answer" setting (skip the step or stop the task after N minutes, a day at
+most; D37), and a run's cards are denied when the run ends (or its socket connection drops), so a
+late Allow never acts for a caller that is gone. How often the person is asked is their approval
+mode (D37); modes loosen Guard only for Sidefolk's own agent and never touch the rules below. Other agents
 share one pending card: while it waits, their further requests are refused at once (their names
 are self-chosen, so a per-name limit would be none). "Always" grants are never given for high
 risk or to external callers, are scoped by caller kind, revocable, and expire after 90 days
@@ -39,13 +42,18 @@ unused. A site grant never covers a URL with a query or fragment. *Residual:* th
 without reading.
 
 **T2 Prompt injection (H/H).** Sources: web pages, watcher payloads, files, clipboard, drops,
-command output, extension and MCP results *and tool descriptions*, notes, memories, reminders and
+command output, extension and MCP results *and tool descriptions*, Apple Notes and Reminders (every
+`applenotes.*` and `applereminders.list` result, titles and folder names included), notes, memories, reminders and
 watchers written by external agents (or by Sidefolk's agent in a tainted turn). Every `ToolResult`
 carries `untrusted`; a list or read that quotes anyone else's words sets it (`reminders.*` and
 `watch.*` when a title isn't user-sourced, notes, and `collections.list`, `notes.*` when a quoted
 collection name isn't). Taint is sticky for the turn (or routine run) and
 set only by code. While tainted, all medium/high calls ask (grants ignored), and so do clipboard
-writes and memory/skill/routine creation. Network and open calls ask (medium) whenever their
+writes and memory/skill/routine creation. Auto changes none of this; Full access still asks, in a
+tainted turn, for every call that could carry data out (network or open at an untyped address,
+commands, file changes, extension and MCP tools, clipboard and memory writes) and lets the rest run
+(D37). A tainted card for a step that can carry nothing out (not high risk, nothing to read in full)
+offers "Allow for this request" instead of "Always": that tool runs without a card until the run ends. Network and open calls ask (medium) whenever their
 normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
 while tainted, and opening a site the user named runs in a clean turn (`UserMentions`: scheme,
 `www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
@@ -62,8 +70,9 @@ host. *Residual:* injection can still steer low-risk actions; extension tool nam
 
 **T3 Persistent injection (M/H).** Items, collections, memories, reminders, watchers, skills and
 routines record `source` (`user | user:agent | agent | external:<client> | extension:<id>`;
-watchers made by a routine keep `routine:<id>`): Sidefolk's agent records `user:agent` in a clean
-turn and plain `agent` in a tainted one (`ToolContext.provenanceTag`). Collections named before
+watchers made by a routine keep `routine:<id>`; notes copied from Apple Notes record `app:notes`
+whoever asked, D38): Sidefolk's agent records `user:agent` in a clean turn and plain `agent` in a
+tainted one (`ToolContext.provenanceTag`). Collections named before
 their source was recorded count as the user's. The context builder auto-includes only user-sourced
 notes and memories and places a note by its collection's name only when the user named it, and
 "Right now" quotes only user-sourced reminder and watcher titles; the rest are counted. Job titles
@@ -197,12 +206,13 @@ between versions (the probe and `--strict-config` catch removed switches, not ch
 127.0.0.1, require a token, and reject an `Origin` header or a non-loopback `Host` (DNS
 rebinding). No AppleScript dictionary, no XPC, no data in distributed notifications. A
 `sidefolk://` scheme only navigates. `UserDefaults` holds cosmetics only, so `defaults write`
-cannot flip grants, base URLs or extension state.
+cannot flip grants, the approval mode, base URLs or extension state.
 
 ### C. Hands
 
 **T9 Shell command watchers (M/H).** Created only by the user, or by Sidefolk's agent in a clean
-turn (`user:agent`) with high-risk approval; never by external callers, extensions, routines or a
+turn (`user:agent`) with high-risk approval (or without one when the person turned on Full access,
+D37); never by external callers, extensions, routines or a
 tainted turn (`agent`), which is refused before any card is shown (`Tool.refusal`, logged as
 blocked). The probe checks the source again before every run. The grant is bound to
 `SHA-256(command + "\0" + canonical cwd)` (no cwd is its own value), so any change voids it;
@@ -283,6 +293,32 @@ name that was swapped in after the check is still read through `O_NOFOLLOW_ANY` 
 Writes are low, but medium when tainted (pastejacking `curl … | sh`), and show the exact text. A
 dropped file grants a one-turn read of that file only; dropped items are never opened or run.
 
+**T25 The Mac's own apps through Apple Events (M/H), D38.** Apple Notes and Reminders are read with
+Apple Events once the person has said yes to macOS's Automation prompt; from then on any Apple Event
+Sidefolk sends to that app works, so what is sent is fixed:
+- Only Sidefolk's own JavaScript for Automation programs run (`NotesScripts`, `RemindersScripts`); the model
+  fills typed tool inputs that reach a program as one ASCII-escaped JSON value (`AutomationScript`), never
+  spliced into code. `/usr/bin/osascript` runs as a child in its own process group with only fds 0–2, a fixed
+  environment, the script on stdin (nothing personal in argv), a 75 s deadline, and 16 MiB of output at most.
+- Capability `mac.apps` can be switched off. Reading and copying are medium, removing is high; nothing is
+  offered to external callers or extensions. Every result is untrusted (T2), and so is a copy read back
+  later (`app:notes`, T3).
+- Read only by default. `applenotes.copy` never changes Notes. `applenotes.remove` is refused before any card
+  for a note that wasn't copied, lists every note by title on its card, and at run time keeps in Notes any note
+  whose copy is missing, trashed, cut or left attachments behind, that changed after it was copied, that is
+  locked, or whose account has no Recently Deleted folder (where deleting would be for good). It reports a note
+  as moved only when Notes then shows it in Recently Deleted.
+- Embedded images are dropped inside the script (`src="data:…"`), so a photo never travels as base64;
+  attachments are named, never read or copied. Bodies are capped (400 KB of HTML, 100 000 characters copied).
+- A refusal by macOS shows a button to Privacy & Security › Automation; `PrivacyPane` is the only non-web
+  address a card may open.
+
+*Residual:* the Automation grant covers anything Sidefolk sends to that app, so a flaw in a fixed script, or
+a child of Sidefolk that sends Apple Events itself (an approved command watcher, an MCP server the person
+added), reaches the app with Sidefolk's grant. Recently Deleted is recognised by its name (English, and Notes'
+word for the Mac's language); a person's own top-level folder with exactly that name would be taken for it,
+and its notes would not be listed.
+
 ### D. Extensions and MCP servers
 
 **T13 Manifest validation (M/H).** Strict `Decodable`: unknown keys rejected, a missing `network`
@@ -359,7 +395,8 @@ provider keys with their host bindings and each MCP server's `mcp.<id>` item, co
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
 not ignored. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
-extension pins and command watchers, so tampered rows are ignored.
+extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are
+ignored.
 
 **T20 Logging leaks (H/M).** `os.Logger` values are `.private`; messages are fixed text and
 anything that came from outside (extension ids, methods, tool and skill names) goes in fields. A
@@ -391,8 +428,8 @@ paths and queries are dropped, hosts stay.
 - Hardened runtime without exceptions: no `disable-library-validation`, DYLD env, `get-task-allow`
   or JIT.
 - Helpers are signed by the same team. The CLI link goes into `~/.local/bin` only.
-- TCC: Notifications, plus Local Network only for user-created LAN watchers. Never Full Disk
-  Access, Accessibility, Screen Recording or Automation.
+- TCC: Notifications, Local Network only for user-created LAN watchers, and Automation for Notes
+  and Reminders only (T25). Never Full Disk Access, Accessibility or Screen Recording.
 
 **T23 Supply chain (L/H).** GRDB and KeyboardShortcuts use `from:` ranges, and
 `Package.resolved` is committed. Release builds run `swift build -c release
@@ -536,7 +573,9 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 3. **Guard:** taint makes the next medium call ask and ignores grants; a non-user URL asks; an
    exact-command grant rejects `cmd; rm -rf ~` and whitespace variants; external callers cannot
    reach file, clipboard or command tools; the extension risk floor holds; an args-hash mismatch
-   aborts.
+   aborts. Approval modes (D37): every mode × risk × taint × caller, the invariants in every mode
+   (switched-off capabilities, protected places, folder cards, other agents' rules), an unknown or
+   old stored mode never loosening Guard, and every wait for an answer ending.
 4. **Socket:** foreign uid rejected (seam over `LOCAL_PEERCRED`); no token → `.external`; bad,
    expired or reused token → disconnect; oversized line rejected; symlinked, foreign-owned or 0755
    run dir refused; a live socket is never unlinked; mode is 0600; a session event's host pid that
@@ -560,13 +599,18 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     limit; step and call caps; repeated-call breaker; one pending approval per caller.
 12. **Storage:** modes 0700/0600 including wal and shm; delete-all removes everything, Keychain
     included.
+13. **Mac apps (T25):** tool inputs never become script (quotes, `</script>`, U+2028 echo back unchanged
+    through osascript); a refusal by macOS becomes the Settings card; reads taint and ask again while
+    tainted; removing is refused for notes not copied, kept for cut, changed or attachment-bearing copies
+    and for accounts without Recently Deleted; the scripts run against a stand-in, never the real apps.
 
 ## 5. What Sidefolk never does
 
 - Never lets the model, routines, external agents or extensions answer approvals, create grants,
   change settings, install extensions or touch Sidefolk's own data.
-- Never runs model- or agent-written commands without the user approving the verbatim text; never
-  "always" for high risk; no AI-generated executable code.
+- Never runs model- or agent-written commands without the user approving the verbatim text, unless
+  the person turned on Full access, and then never from a turn that read outside content (D37);
+  never "always" for high risk; no AI-generated executable code.
 - Never hard-deletes, sets exec bits or strips quarantine.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.
@@ -574,7 +618,10 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   distributed notifications.
 - Never fetches non-http(s) URLs, or private addresses from model-built URLs; never loads remote
   images.
-- Never asks for admin rights, Full Disk Access, Accessibility, Screen Recording or Automation.
+- Never asks for admin rights, Full Disk Access, Accessibility or Screen Recording; Automation only
+  for Notes and Reminders, driven by fixed scripts (T25).
+- Never removes anything from another app unless its whole copy is in the notebook and the person
+  approved that removal (T25).
 - Never offers MCP sampling, roots or elicitation to extensions; never downloads or auto-updates
   extension code.
 - Never edits `~/.claude`, `~/.claude.json` or `~/.codex` without a click, a confirmation and a

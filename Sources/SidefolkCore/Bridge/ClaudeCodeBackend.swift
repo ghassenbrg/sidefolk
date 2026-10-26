@@ -91,7 +91,7 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
         }
 
         let outcome = await withTaskCancellationHandler {
-            await consume(child, deadline: task.deadline)
+            await consume(child, deadline: { toolbox.deadline(from: task.deadline) })
         } onCancel: {
             child.signalGroup(SIGTERM)
             DispatchQueue.global().asyncAfter(deadline: .now() + 2) { child.signalGroup(SIGKILL) }
@@ -158,10 +158,10 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
     }
 
     /// Reads stream-json until the result. The init event is checked before anything else counts.
-    func consume(_ child: PipedChild, deadline: Date) async -> Outcome {
+    func consume(_ child: PipedChild, deadline: @escaping @Sendable () -> Date?) async -> Outcome {
         let timedOut = Mutex(false)
         let timer = Task {
-            try await Task.sleep(for: .seconds(max(0, deadline.timeIntervalSinceNow)))
+            try await CLIBrain.sleep(until: deadline)
             timedOut.withLock { $0 = true }
             child.signalGroup(SIGTERM)
         }
@@ -217,6 +217,10 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
                            sidefolkHome: String, environment: [String: String]) -> Invocation {
         var args = ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
         if CLIBrain.isSafeModelName(task.model) { args += ["--model", task.model] }
+        // Only a level this CLI lists, and the model takes (D36); "Default" leaves Claude Code's own.
+        if let effort = EffortSupport.accepted(task.effort, in: EffortSupport.claudeCode(model: task.model, cli: flags.efforts)) {
+            args += ["--effort", effort.rawValue]
+        }
         args += ["--tools", "", "--strict-mcp-config", "--mcp-config", runDir + "/mcp.json", "--disable-slash-commands",
                  "--no-session-persistence", "--permission-prompts", "none", "--allowedTools", "mcp__sidefolk"]
         // --restricted ignores user, project and local settings (hooks, plugins, env); an empty
@@ -238,11 +242,14 @@ public final class ClaudeCodeBackend: BrainBackend, BrainUsageReporting {
                           input: message.jsonString + "\n", files: files)
     }
 
-    /// The MCP config: only the Sidefolk bridge, told where this run's token is.
+    /// The MCP config: only the Sidefolk bridge, told where this run's token is. Its per-call timeout
+    /// (milliseconds) covers a card waiting for the person as long as their setting says (D37);
+    /// Sidefolk ends every wait itself.
     static func mcpConfig(helperPath: String, runDir: String, sidefolkHome: String) -> String {
         let config: JSONValue = ["mcpServers": ["sidefolk": [
             "type": "stdio", "command": .string(helperPath), "args": ["mcp"],
             "env": ["SIDEFOLK_RUN_DIR": .string(runDir), "SIDEFOLK_HOME": .string(sidefolkHome)],
+            "timeout": .number(Double(CLIBrain.toolCallSeconds * 1000)),
         ]]]
         return config.jsonString
     }

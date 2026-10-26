@@ -25,29 +25,31 @@ struct ProviderSetup: View {
             EmptyView()
         case .claudeCode:
             if case .ready? = ai.detection?.claude {
-                ModelPicker(title: "Model", detail: "Answers most requests.", value: provider.model, placeholder: Text(verbatim: "sonnet")) {
-                    ai.setModel($0)
-                }
+                ModelPicker(title: "Model", detail: "Answers most requests.", value: provider.model, placeholder: Text(verbatim: "sonnet"),
+                            effort: effort(thinkHarder: false)) { ai.setModel($0) }
                 ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel,
-                            placeholder: Text(verbatim: "opus")) { ai.setSmartModel($0) }
+                            placeholder: Text(verbatim: "opus"), effort: effort(thinkHarder: true)) { ai.setSmartModel($0) }
+                if ai.detection?.claudeEfforts.isEmpty == true {
+                    Text("This version of Claude Code has no effort setting. Update it to choose one.")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                }
             }
             PathRow(title: "Custom path to claude", value: provider.claudePath, placeholder: "/usr/local/bin/claude") { ai.setCLIPath($0, codex: false) }
         case .codex:
             if case .ready? = ai.detection?.codex {
                 let models = ai.detection?.codexModels ?? []
                 ModelPicker(title: "Model", detail: "Empty uses Codex's default.", value: provider.model, placeholder: Text("Codex's default"),
-                            options: models) { ai.setModel($0) }
-                ModelPicker(title: "Think harder", detail: "Always asks Codex for high reasoning effort; empty keeps the model above.",
-                            value: provider.smartModel, placeholder: Text("Same model"), options: models) { ai.setSmartModel($0) }
+                            options: models, effort: effort(thinkHarder: false)) { ai.setModel($0) }
+                ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel,
+                            placeholder: Text("Same model"), options: models, effort: effort(thinkHarder: true)) { ai.setSmartModel($0) }
             }
             PathRow(title: "Custom path to codex", value: provider.codexPath, placeholder: "/usr/local/bin/codex") { ai.setCLIPath($0, codex: true) }
         case .anthropic:
             KeyRow(ai: ai, target: .anthropic, prompt: Text(verbatim: "sk-ant-…"))
             ModelPicker(title: "Model", detail: "Empty uses Sidefolk's default.", value: provider.model,
-                        placeholder: Text(verbatim: AnthropicModel.defaultModel)) { ai.setModel($0) }
-            ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: Text("Same model")) {
-                ai.setSmartModel($0)
-            }
+                        placeholder: Text(verbatim: AnthropicModel.defaultModel), effort: effort(thinkHarder: false)) { ai.setModel($0) }
+            ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: Text("Same model"),
+                        effort: effort(thinkHarder: true)) { ai.setSmartModel($0) }
         case .preset(let preset):
             if preset == .custom { AddressRow(ai: ai) }
             if preset.keyNeed != .none { KeyRow(ai: ai, target: .preset(preset), prompt: preset == .custom ? Text("Optional") : Text("Paste key")) }
@@ -62,14 +64,23 @@ struct ProviderSetup: View {
         let suggested = preset.defaultModel(available: nil) ?? ""
         ModelPicker(title: "Model", detail: "Answers most requests.", value: provider.model,
                     placeholder: suggested.isEmpty ? Text("Pick a model") : Text(verbatim: suggested), options: options,
-                    loading: ai.loadingModels) { ai.setModel($0) }
+                    loading: ai.loadingModels, effort: effort(thinkHarder: false)) { ai.setModel($0) }
         if let chosen = options.first(where: { $0.id == provider.model }), chosen.usesTools == false {
             Label("This model can't use tools, and Sidefolk acts through them. Pick one that can.", systemImage: "exclamationmark.triangle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger)
         }
         ModelPicker(title: "Think harder", detail: "Empty uses the model above.", value: provider.smartModel, placeholder: Text("Same model"),
-                    options: options, loading: ai.loadingModels) { ai.setSmartModel($0) }
+                    options: options, loading: ai.loadingModels, effort: effort(thinkHarder: true)) { ai.setSmartModel($0) }
         if let error = ai.modelsError { InlineError(error: error) }
+    }
+
+    /// The slot's effort menu, or nil when its provider and model take no effort setting.
+    private func effort(thinkHarder: Bool) -> EffortChoice? {
+        let levels = ai.effortLevels(thinkHarder: thinkHarder)
+        guard !levels.isEmpty else { return nil }
+        return EffortChoice(levels: levels, selection: ai.effort(thinkHarder: thinkHarder), standard: ai.defaultEffort(thinkHarder: thinkHarder)) {
+            ai.setEffort($0, thinkHarder: thinkHarder)
+        }
     }
 
     private var isLocal: Bool {
@@ -199,27 +210,32 @@ private struct ModelPicker: View {
     var placeholder: Text
     var options: [ModelOption] = []
     var loading = false
+    /// The model's reasoning effort, under its field; nil when the provider and model take none.
+    var effort: EffortChoice?
     var commit: (String) -> Void
 
     var body: some View {
         SetupRow(title: title, detail: detail) {
-            HStack(spacing: Theme.Space.xs) {
-                CommitField(label: title, prompt: placeholder, value: value, width: 200, monospaced: true, live: true, commit: commit)
-                if loading {
-                    ProgressView().controlSize(.small)
-                } else if !options.isEmpty {
-                    Menu {
-                        ForEach(options) { option in
-                            Button { commit(option.id) } label: { Text(verbatim: Self.label(option)) }
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                HStack(spacing: Theme.Space.xs) {
+                    CommitField(label: title, prompt: placeholder, value: value, width: 200, monospaced: true, live: true, commit: commit)
+                    if loading {
+                        ProgressView().controlSize(.small)
+                    } else if !options.isEmpty {
+                        Menu {
+                            ForEach(options) { option in
+                                Button { commit(option.id) } label: { Text(verbatim: Self.label(option)) }
+                            }
+                        } label: {
+                            Image(systemName: "chevron.up.chevron.down")
                         }
-                    } label: {
-                        Image(systemName: "chevron.up.chevron.down")
+                        .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
+                        .fixedSize()
+                        .accessibilityLabel(Text("Choose from the list for “\(Text(title))”", comment: "A menu of models beside the field it fills"))
                     }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                    .accessibilityLabel(Text("Choose from the list for “\(Text(title))”", comment: "A menu of models beside the field it fills"))
                 }
+                if let effort { EffortPicker(slot: title, choice: effort) }
             }
         }
     }

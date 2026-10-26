@@ -54,6 +54,8 @@ final class SettingsModel {
     private(set) var folders: [GrantedFolder] = []
     private(set) var grants: [Grant] = []
     private(set) var policy = GuardPolicy()
+    /// The sheet that says what Full access means is showing (from Settings or the menu bar).
+    var confirmingFullAccess = false
     private(set) var folderError: UserFacingError?
     private(set) var dataMessage: Result<String, UserFacingError>?
 
@@ -209,6 +211,11 @@ final class SettingsModel {
         policy = next
         try? await runtime.permissions.setPolicy(next)
         runtime.events.changed(.permissions)
+    }
+
+    /// Full access only after its sheet (`FullAccessSheet`); every other mode at once.
+    func setMode(_ mode: GuardMode) async {
+        await setPolicy { $0.mode = mode }
     }
 
     func toolTitle(_ name: String) -> String {

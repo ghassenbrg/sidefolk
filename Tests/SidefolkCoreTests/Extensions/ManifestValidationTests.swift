@@ -197,7 +197,7 @@ import Testing
     }
 
     @Test func sidefolkVersionRequirement() throws {
-        #expect(try validate(ExtFixtures.manifest(extra: ["sidefolk": ">=1.0"]), folder: "v1").isValid)
+        #expect(try validate(ExtFixtures.manifest(extra: ["sidefolk": ">=0.1"]), folder: "v1").isValid)
         #expect(try validate(ExtFixtures.manifest(extra: ["sidefolk": ">=99.0"]), folder: "v2").errors.first?.message.contains("needs Sidefolk") == true)
         #expect(fields(try validate(ExtFixtures.manifest(extra: ["sidefolk": "~1.0"]), folder: "v3")) == ["sidefolk"])
         #expect(ManifestValidator.satisfies(">=1.0.1", current: "1.0.0") == false)

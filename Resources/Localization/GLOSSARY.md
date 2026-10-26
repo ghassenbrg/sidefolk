@@ -34,7 +34,7 @@ Translate these once and use the same word everywhere, including in Settings and
 | note, idea, task, link | The four kinds of notebook item. |
 | Now | The Home page that shows what is live: reminders, watches, agent sessions, things waiting. |
 | Activity | The log of every action Sidefolk or an agent took. |
-| Trash | Use your language's name for the macOS Trash (Corbeille, Papelera, Papierkorb, Cestino, Lixeira, ゴミ箱, 휴지통, 废纸篓, سلة المهملات). Things stay there 30 days. |
+| Trash | Use your language's name for the macOS Trash (Corbeille, Papelera, Papierkorb, Cestino, Lixo, ゴミ箱, 휴지통, 废纸篓, سلة المهملات). Things stay there 30 days. |
 | watch, watcher, watching | Sidefolk keeping an eye on something (a page, a site, a file, a folder, a program, a command) and saying when it happens. "A watch" and "a watcher" are the same thing. |
 | reminder | Something Sidefolk tells you at a time. Done, Snooze ("10 min", "Tomorrow"). |
 | quiet mode, Quiet | While it is on, only urgent things interrupt. |
@@ -88,7 +88,7 @@ Do the same for the person.
    it everywhere.
 5. **Fragments.** Some keys are pieces of a sentence and start in lower case because they continue
    one: "when it changes" follows "I'll tell you %@"; "notes", "ideas" and "notebook" follow
-   "Search %@"; "open that folder" follows "macOS didn't let me %@ at %@."; "5 min" follows "every %@".
+   "Search %@"; "open that folder" follows "macOS didn't let me %@ at %@."
    Translate them so the whole sentence reads well, and keep the case.
 6. **Punctuation.** The English text uses “curly quotes”; use your language's own (« » in French,
    „ “ in German, 「」 in Japanese). Keep " · " between parts of a line and "›" between menu levels

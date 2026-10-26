@@ -176,7 +176,7 @@ public struct ManifestValidator: Sendable {
         }
         if let req = m.sidefolk {
             switch Self.satisfies(req, current: SidefolkVersion.current) {
-            case nil: issues.append(ValidationIssue(field: "sidefolk", message: "must look like >=1.0."))
+            case nil: issues.append(ValidationIssue(field: "sidefolk", message: "must look like >=0.1."))
             case false?: issues.append(ValidationIssue(field: "sidefolk", message: "needs Sidefolk \(req.dropFirst(2)) or later; this is \(SidefolkVersion.current)."))
             case true?: break
             }

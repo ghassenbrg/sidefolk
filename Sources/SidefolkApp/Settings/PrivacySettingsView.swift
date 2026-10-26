@@ -3,23 +3,26 @@ import SidefolkCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Settings › Privacy & Permissions: what is stored, which folders Sidefolk may use, what is
-/// always allowed, how cautious Guard is, and the user's data (export, delete).
+/// Settings › Privacy & Permissions: how much Sidefolk asks and what it may do, what is stored,
+/// which folders Sidefolk may use, what is always allowed, and the user's data (export, delete).
 struct PrivacySettingsView: View {
     var model: SettingsModel
     @State private var confirmingDelete = false
 
     /// The capabilities a person can switch off, in the words the Settings page uses.
     private static let switches: [(Capability, LocalizedStringKey, LocalizedStringKey)] = [
-        (.shell, "Running commands", "Shell commands, always shown word for word before they run."),
+        (.shell, "Running commands", "Shell commands, shown word for word before they run unless Full access is on."),
         (.network, "Internet access", "Fetching pages and checking sites."),
         (.clipboard, "Clipboard", "Reading and writing what you copied."),
         (.filesWrite, "Changing files", "Moving, renaming and creating files in your folders."),
         (.apps, "Opening apps and links", "Launching apps and opening web pages."),
+        (.macApps, "Apple Notes and Reminders",
+         "Reading them when you ask, and copying notes into the notebook. macOS asks you once for each app."),
     ]
 
     var body: some View {
         SettingsPage {
+            guardSettings
             keeps
             SettingsGroup(title: "History", footer: "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log.") {
                 SettingsRow(title: "Keep recent requests for") {
@@ -37,7 +40,6 @@ struct PrivacySettingsView: View {
             }
             folders
             grants
-            guardSettings
             data
         }
         .sheet(isPresented: $confirmingDelete) { DeleteAllSheet(model: model) }
@@ -173,19 +175,12 @@ struct PrivacySettingsView: View {
 
     // MARK: Guard
 
+    /// How much Sidefolk asks comes first: it is the choice people come here to make (D37).
     private var guardSettings: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
-            SettingsGroup(title: "Guard") {
-                ChoiceRow(title: "Standard", detail: "Asks once for each kind of action and remembers “Always allow”.",
-                          selected: model.policy.mode == .standard) {
-                    Task { await model.setPolicy { $0.mode = .standard } }
-                }
-                ChoiceRow(title: "Cautious", detail: "Asks every time something would change outside Sidefolk, even if you allowed it before.",
-                          selected: model.policy.mode == .cautious) {
-                    Task { await model.setPolicy { $0.mode = .cautious } }
-                }
-            }
-            SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes.") {
+            ApprovalModeGroup(model: model)
+            UnansweredGroup(model: model)
+            SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.") {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in
                     SettingsToggle(title: title, detail: detail, isOn: Binding(
                         get: { !model.policy.disabled.contains(capability) },

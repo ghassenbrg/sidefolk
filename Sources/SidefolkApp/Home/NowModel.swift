@@ -35,6 +35,12 @@ final class NowModel {
     }
 
     private(set) var attention: [AttentionItem] = []
+    /// Steps nobody answered in time; they wait here with "Run it now" (D37).
+    private(set) var skipped: [SkippedStep] = []
+    /// What the last "Run it now" did, said under the list.
+    private(set) var skippedRun: Result<String, UserFacingError>?
+    /// Full access shows as a banner at the top of Now while it is on (D37).
+    private(set) var mode: GuardMode = .askOncePerKind
     private(set) var sessionsNeedingYou: [AgentSession] = []
     private(set) var reminders: [Reminder] = []
     private(set) var watchers: [Watcher] = []
@@ -57,10 +63,12 @@ final class NowModel {
         self.services = services
     }
 
-    var needsYouCount: Int { attention.count + sessionsNeedingYou.count }
+    var needsYouCount: Int { attention.count + sessionsNeedingYou.count + skipped.count }
 
     func reload() async {
         let rt = runtime
+        skipped = await rt.executor.skipped.list()
+        mode = (try? await rt.permissions.policy())?.mode ?? .askOncePerKind
         let open = await rt.attention.open()
         let live = (try? await rt.sessions.live()) ?? []
         let needing = live.filter { $0.state == .needsYou }
@@ -131,6 +139,37 @@ final class NowModel {
     }
 
     // MARK: Actions
+
+    /// The person's click answers the question the step's card asked; Guard still checks everything
+    /// else, and asks in the Ask panel if something changed since.
+    func runSkipped(_ step: SkippedStep) async {
+        guard let out = await runtime.executor.runSkipped(id: step.id) else {
+            skippedRun = .failure(UserFacingError("That step can't run anymore. Nothing was changed."))
+            await reload()
+            return
+        }
+        if let problem = out.problem {
+            skippedRun = .failure(problem)
+        } else {
+            skippedRun = .success(out.activity.card?.title ?? out.activity.summary)
+        }
+        await reload()
+    }
+
+    func dismissSkipped(_ step: SkippedStep) async {
+        skippedRun = nil
+        await runtime.executor.skipped.dismiss(step.id)
+        await reload()
+    }
+
+    /// The banner's way out of Full access, back to the default.
+    func turnOffFullAccess() async {
+        var policy = (try? await runtime.permissions.policy()) ?? GuardPolicy()
+        policy.mode = .askOncePerKind
+        try? await runtime.permissions.setPolicy(policy)
+        runtime.events.changed(.permissions)
+        await reload()
+    }
 
     func respond(_ item: AttentionItem, action: String?) async {
         await runtime.attention.respond(id: item.id, actionId: action)

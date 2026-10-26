@@ -353,8 +353,8 @@ struct WatchCommandTool: Tool {
             its output has some words, or its output changes). With report=true it instead shows the output's last line \
             every time, live beside the companion (every_seconds, 10 at the fastest; a faster request is raised and the result \
             says so; it stops after 1 hour when faster than once a minute, otherwise after 1 day, unless until or until_stopped). \
-            The user approves the exact command first. Prefer watch.create when a web page, file, folder or program can be \
-            watched directly, and watch.report for CPU, memory, battery, disk, network or the weather.
+            The user approves the exact command first unless they turned on Full access. Prefer watch.create when a web page, \
+            file, folder or program can be watched directly, and watch.report for CPU, memory, battery, disk, network or the weather.
             """,
             inputSchema: Schema.object([
                 "command": Schema.string("The shell command, exactly as it should run."),

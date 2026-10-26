@@ -9,7 +9,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var id: String
     public var name: String
     public var version: String
-    /// Sidefolk versions it works with, e.g. ">=1.0".
+    /// Sidefolk versions it works with, e.g. ">=0.1".
     public var sidefolk: String?
     public var description: String?
     /// The folk that appears when it works.
