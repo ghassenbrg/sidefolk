@@ -6,6 +6,8 @@ import QuartzCore
 final class Director {
     let rig: any Figure
     let species: CharacterSpecies
+    /// Who it is (`CharacterLook.identity`): a built-in companion or a custom one.
+    let identity: String
     var stage: CALayer { rig.stage }
     var restingFrame: CGRect { rig.restingFrame }
 
@@ -64,8 +66,9 @@ final class Director {
     init(_ look: CharacterLook, live: Bool) {
         self.live = live
         species = look.species
+        identity = look.identity
         style = look.style
-        let rig = Species.figure(for: look.species)
+        let rig = Species.figure(for: look)
         rig.dress(look.style)
         self.rig = rig
         effects = Effects(stage: rig.stageFX, body: rig.bodyFX, offset: { [unowned rig] in rig.markOffset($0) })

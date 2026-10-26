@@ -1,0 +1,34 @@
+{
+  "format": 1,
+  "id": "template",
+  "name": "Template",
+  "description": "A round little bear to start from: copy this folder, rename it and the id, then change it.",
+  "author": "Sidefolk",
+  "body": {
+    "colors": ["#FFFFFF", "#F3F7FF", "#E1EAFB", "#CAD8F2", "#B3C4E6"],
+    "edge": "#A3B5D8",
+    "torso": { "roundish": { "center": [100, 46], "size": [68, 44], "top": 0.86, "squareness": 2 } },
+    "head": { "roundish": { "center": [100, 100], "size": [90, 76], "top": 0.96, "squareness": 2.1 } },
+    "neck": [100, 66],
+    "scale": 1
+  },
+  "feet": { "at": [[87, 27], [113, 27]], "size": [25, 15] },
+  "arms": {
+    "shoulders": [[71, 57], [129, 57]],
+    "shape": { "ellipse": { "center": [0, -9], "radius": [6.5, 11.5] } }
+  },
+  "face": {
+    "eyes": [[80, 96], [120, 96]],
+    "mouth": [100, 86],
+    "nose": { "center": [100, 91], "size": [7, 4.4] },
+    "scale": 1.1,
+    "cheeks": true,
+    "temper": "calm"
+  },
+  "ears": [
+    { "part": "parts/ear.svg", "base": [72, 126], "angle": 0.45, "side": "left", "floppiness": 0.25 },
+    { "part": "parts/ear.svg", "base": [128, 126], "angle": -0.45, "side": "right", "floppiness": 0.25 }
+  ],
+  "collar": { "center": [100, 64], "halfWidth": 30, "sag": 4.5, "height": 18, "tail": 1.45 },
+  "marks": { "zzz": [-16, 4], "dots": [18, -16] }
+}

@@ -2,6 +2,11 @@
 public struct CharacterLook: Equatable, Sendable {
     public var species: CharacterSpecies
     public var style: CharacterStyle
+    /// A companion made from data (`CustomCompanion`), drawn on a soft rig instead of `species`.
+    public var custom: CustomCompanion?
+
+    /// Who is drawn, whatever it wears: another identity means another body.
+    var identity: String { custom.map { "custom:\($0.id)" } ?? species.rawValue }
 
     public init(_ species: CharacterSpecies, style: CharacterStyle? = nil) {
         self.species = species

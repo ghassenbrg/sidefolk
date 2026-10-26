@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -34 40 40">
+  <!-- An ear stands on the origin (where it joins the head) and rises up: SVG's y goes down, so its
+       top is at negative y. The first shape takes the body's colours; the others their own fill,
+       or the companion's style colour with fill="currentColor". -->
+  <circle cx="0" cy="-14" r="15"/>
+  <circle cx="0" cy="-15" r="8.5" fill="#F4BCC8"/>
+</svg>

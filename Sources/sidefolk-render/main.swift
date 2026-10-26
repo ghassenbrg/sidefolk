@@ -17,9 +17,14 @@ import UniformTypeIdentifiers
 //   sidefolk-render --live <state|cycle|demo> <secs> [<id>] [--liveliness L] [--pace n] [--backdrop] [--film dir]
 //                                            a real window, for CPU checks ("cycle" walks every state, "demo"
 //                                            plays every moment); click, stroke, drag or throw it
+//   sidefolk-render --check-companion <folder>
+//                                            reads a custom companion (species.json + parts) and says what is wrong
+//
+// Wherever an <id> is taken, a custom companion works too: a folder path (companions/miso), or the id
+// of one in $SIDEFOLK_HOME/companions/.
 
 let usage = "usage: sidefolk-render <outdir> [--only <id>] | --icon <dir> | --menu-bar <dir> | --antics <dir> [--only <id>]"
-    + " | --live <state|cycle|demo> <seconds> [<id>] [\(LiveOptions.usage)]"
+    + " | --live <state|cycle|demo> <seconds> [<id>] [\(LiveOptions.usage)] | --check-companion <folder>"
 
 MainActor.assumeIsolated {
     let args = Array(CommandLine.arguments.dropFirst())
@@ -57,18 +62,20 @@ MainActor.assumeIsolated {
         }
     case "--live" where args.count >= 3:
         let hasId = args.count > 3 && !args[3].hasPrefix("--")
-        let id = hasId ? args[3] : "sidefolk"
-        guard let species = CharacterSpecies(rawValue: id) else { print("no companion called \(id)"); exit(2) }
+        let who = Companion.named(hasId ? args[3] : "sidefolk")
         guard let options = LiveOptions(Array(args.dropFirst(hasId ? 4 : 3))) else { print(usage); exit(2) }
-        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: CharacterLook(species), options: options)
+        Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: who.look, options: options)
     case "--antics" where args.count == 2 || (args.count == 4 && args[2] == "--only"):
-        let only = args.count == 4 ? CharacterSpecies(rawValue: args[3]) : nil
-        if args.count == 4, only == nil { print("no companion called \(args[3])"); exit(2) }
-        AnticSheets.write(to: URL(fileURLWithPath: args[1]), looks: (only.map { [$0] } ?? CharacterSpecies.allCases).map { ($0.rawValue, $0.displayName, CharacterLook($0)) })
+        let who = args.count == 4 ? [Companion.named(args[3])] : CharacterSpecies.allCases.map(Companion.init)
+        AnticSheets.write(to: URL(fileURLWithPath: args[1]), looks: who.map { ($0.id, $0.name, $0.look) })
+    case "--check-companion" where args.count == 2:
+        let report = CustomCompanions.load(folder: URL(fileURLWithPath: args[1]))
+        report.errors.forEach { print("error: \($0)") }
+        report.warnings.forEach { print("warning: \($0)") }
+        guard let companion = report.companion else { exit(1) }
+        print("ok: \(companion.name) (\(companion.id)) draws in every state")
     case let dir? where !dir.hasPrefix("-") && (args.count == 1 || (args.count == 3 && args[1] == "--only")):
-        let only = args.count == 3 ? CharacterSpecies(rawValue: args[2]) : nil
-        if args.count == 3, only == nil { print("no companion called \(args[2])"); exit(2) }
-        Sheets.write(to: URL(fileURLWithPath: dir), only: only)
+        Sheets.write(to: URL(fileURLWithPath: dir), only: args.count == 3 ? Companion.named(args[2]) : nil)
     default:
         print(usage)
         exit(2)
@@ -83,11 +90,11 @@ enum Sheets {
     static let paper = NSColor(srgbRed: 0.945, green: 0.953, blue: 0.97, alpha: 1)
     static let ink = NSColor(srgbRed: 0.1, green: 0.13, blue: 0.25, alpha: 1)
 
-    static func write(to dir: URL, only: CharacterSpecies?) {
+    static func write(to dir: URL, only: Companion?) {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         if let only {
             writeCompanion(only, to: dir)
-            print("wrote \(only.rawValue) sheets to \(dir.path)")
+            print("wrote \(only.id) sheets to \(dir.path)")
             return
         }
         let states = CharacterState.gallery
@@ -119,16 +126,16 @@ enum Sheets {
         save(menubarSheet(), dir.appendingPathComponent("menubar.png"))
         save(Icons.image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
         save(iconSizes(), dir.appendingPathComponent("icon-sizes.png"))
-        CharacterSpecies.allCases.forEach { writeCompanion($0, to: dir) }
+        CharacterSpecies.allCases.forEach { writeCompanion(Companion($0), to: dir) }
         print("wrote contact sheets to \(dir.path)")
     }
 
     /// One companion in every state, small with badges, its hit shapes, its gaze, its styles, and
     /// beside its reference art.
-    static func writeCompanion(_ species: CharacterSpecies, to dir: URL) {
-        let look = CharacterLook(species)
+    static func writeCompanion(_ who: Companion, to dir: URL) {
+        let look = who.look
         let states = CharacterState.gallery
-        let name = species.displayName, id = species.rawValue
+        let name = who.name, id = who.id
         func image(_ state: CharacterState, _ side: CGFloat, badges: Set<CharacterBadge> = [], gaze: CGVector? = nil,
                    look: CharacterLook = look) -> CGImage {
             CharacterRenderer.image(state: state, size: CGSize(width: side, height: side), scale: scale, badges: badges, gaze: gaze, look: look)
@@ -149,13 +156,15 @@ enum Sheets {
         let styles = CharacterAccessory.allCases.flatMap { accessory in
             CharacterAccent.allCases.map { color in
                 ("\(color.rawValue) · \(accessory.rawValue)", {
-                    image(.idle, 150, look: CharacterLook(species, style: CharacterStyle(color: color, accessory: accessory)))
+                    var styled = look
+                    styled.style = CharacterStyle(color: color, accessory: accessory)
+                    return image(.idle, 150, look: styled)
                 })
             }
         }
         save(sheet(title: "\(name) styles: colour × what it wears", columns: 4, cell: CGSize(width: 160, height: 176), items: styles),
              dir.appendingPathComponent("companion-\(id)-styles.png"))
-        if let reference = Reference.image(for: species) {
+        if let species = who.species, let reference = Reference.image(for: species) {
             save(compare(name, reference: reference,
                          renders: [CharacterState.idle, .listening, .success, .sleeping].map { ($0.name, image($0, 300)) }),
                  dir.appendingPathComponent("compare-\(id).png"))
@@ -361,5 +370,51 @@ enum Reference {
         }
         guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else { return nil }
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
+    }
+}
+
+// MARK: Who
+
+/// A companion to draw: one of Sidefolk's own, or a custom one made from data.
+struct Companion {
+    var id: String
+    var name: String
+    var look: CharacterLook
+    var species: CharacterSpecies?
+
+    init(_ species: CharacterSpecies) {
+        self.init(id: species.rawValue, name: species.displayName, look: CharacterLook(species), species: species)
+    }
+
+    init(id: String, name: String, look: CharacterLook, species: CharacterSpecies? = nil) {
+        self.id = id
+        self.name = name
+        self.look = look
+        self.species = species
+    }
+
+    /// A built-in id, a custom companion's folder (anything with a "/"), or the id of one in
+    /// $SIDEFOLK_HOME/companions/. Exits with the reasons when it can't be drawn.
+    @MainActor
+    static func named(_ name: String) -> Companion {
+        if let species = CharacterSpecies(rawValue: name) { return Companion(species) }
+        let report: CompanionReport?
+        if name.contains("/") {
+            report = CustomCompanions.load(folder: URL(fileURLWithPath: name))
+        } else if let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"] {
+            report = CustomCompanions.loadAll(home: URL(fileURLWithPath: home)).first { $0.companion?.id == name || $0.folder.lastPathComponent == name }
+        } else {
+            report = nil
+        }
+        guard let report else {
+            print("no companion called \(name) (custom ones: a folder path, or an id in $SIDEFOLK_HOME/companions)")
+            exit(2)
+        }
+        guard let custom = report.companion else {
+            report.errors.forEach { print("error: \($0)") }
+            exit(2)
+        }
+        report.warnings.forEach { print("warning: \($0)") }
+        return Companion(id: custom.id, name: custom.name, look: CharacterLook(custom: custom))
     }
 }

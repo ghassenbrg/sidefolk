@@ -150,7 +150,7 @@ final class SoftRig: Figure {
         scan.addSublayer(mouthMark.layer)
         if let nose = species.face.nose {
             scan.addSublayer(Layers.shape(Paths.ellipse(pt(nose.midX, nose.midY), nose.width / 2, nose.height / 2),
-                                          fill: Palette.eyeInk.cg()))
+                                          fill: (species.face.noseColor ?? Palette.eyeInk).cg()))
         }
         faceGesture.addSublayer(faceGear)
         headTilt.addSublayer(headGear)

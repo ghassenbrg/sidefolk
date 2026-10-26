@@ -29,7 +29,7 @@ public final class CharacterView: NSView {
     public var look = CharacterLook(.sidefolk) {
         didSet {
             guard look != oldValue else { return }
-            if look.species == director.species {
+            if look.identity == director.identity {
                 director.style = look.style
             } else {
                 replaceDirector()
