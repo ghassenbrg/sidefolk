@@ -343,6 +343,7 @@ final class CompanionWindowController {
         let distance = hypot(dx, dy)
         if distance < 260, distance > 6 {
             character.setGaze(CGVector(dx: max(-1, min(1, dx / 160)), dy: max(-1, min(1, dy / 160))))
+            folkViews.values.forEach { $0.wake() }
         } else {
             character.setGaze(nil)
         }
