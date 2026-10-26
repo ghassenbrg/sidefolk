@@ -1349,6 +1349,16 @@
         }
       }
     },
+    "%@ can't work in %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ can't work in %2$@."
+          }
+        }
+      }
+    },
     "%@ changed" : {
       "localizations" : {
         "ar" : {
@@ -1592,6 +1602,9 @@
           }
         }
       }
+    },
+    "%@ comes with Sidefolk." : {
+
     },
     "%@ couldn't accept that request. Nothing was changed." : {
       "localizations" : {
@@ -3757,6 +3770,9 @@
         }
       }
     },
+    "%@ is a link to somewhere else, so Sidefolk leaves it as it is." : {
+
+    },
     "%@ is already there" : {
       "localizations" : {
         "ar" : {
@@ -5858,6 +5874,9 @@
         }
       }
     },
+    "%@ isn't shared with Sidefolk for this." : {
+
+    },
     "%@ isn't there" : {
       "localizations" : {
         "ar" : {
@@ -6293,6 +6312,25 @@
           }
         }
       }
+    },
+    "%@ needs %@, which isn't on this Mac." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ needs %2$@, which isn't on this Mac."
+          }
+        }
+      }
+    },
+    "%@ needs Git, which isn't on this Mac. Apple's Command Line Tools include it: open Terminal, type xcode-select --install, then restart Sidefolk." : {
+
+    },
+    "%@ needs Node.js, which isn't on this Mac. Install it from nodejs.org, then restart Sidefolk." : {
+
+    },
+    "%@ needs Python, which isn't on this Mac. Apple's Command Line Tools include it: open Terminal, type xcode-select --install, then restart Sidefolk." : {
+
     },
     "%@ needs an API key." : {
       "localizations" : {
@@ -7867,6 +7905,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 的文件已更改，因此已被关闭。"
+          }
+        }
+      }
+    },
+    "%@ was updated with Sidefolk and can now do more (%@). I turned it off until you switch it on in Settings › Extensions." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ was updated with Sidefolk and can now do more (%2$@). I turned it off until you switch it on in Settings › Extensions."
           }
         }
       }
@@ -11120,6 +11168,28 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld 个未完成任务"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld reminders today" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reminder today"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reminders today"
                 }
               }
             }
@@ -15110,6 +15180,9 @@
         }
       }
     },
+    "Add the Skill" : {
+
+    },
     "Add them in Settings › Voice." : {
       "localizations" : {
         "ar" : {
@@ -15225,6 +15298,9 @@
           }
         }
       }
+    },
+    "Added by you" : {
+
     },
     "Adding…" : {
       "localizations" : {
@@ -15702,6 +15778,9 @@
         }
       }
     },
+    "Adds hooks to ~/.codex/hooks.json, so I notice when a session needs you or finishes. Codex asks you to trust them once." : {
+
+    },
     "Adds the MCP server “sidefolk” (runs %@ mcp) to Claude Code's user settings." : {
       "localizations" : {
         "ar" : {
@@ -15759,6 +15838,15 @@
           }
         }
       }
+    },
+    "Adds the Sidefolk skill in %@, which tells the agent when and how to use Sidefolk's tools." : {
+
+    },
+    "Adds the Sidefolk skill to ~/.claude/skills, so Claude Code knows when and how to use it." : {
+
+    },
+    "Adds the Sidefolk skill to ~/.codex/skills, so Codex knows when and how to use it." : {
+
     },
     "Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends." : {
       "localizations" : {
@@ -17713,6 +17801,9 @@
         }
       }
     },
+    "An extension already installed from it stays installed." : {
+
+    },
     "An extension watcher needs the extension and the watcher's name." : {
       "localizations" : {
         "ar" : {
@@ -17951,6 +18042,12 @@
           }
         }
       }
+    },
+    "Answer with Claude Code" : {
+
+    },
+    "Answer with Codex" : {
+
     },
     "Answers most requests." : {
       "localizations" : {
@@ -19288,6 +19385,7 @@
       }
     },
     "Ask About It…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -19402,6 +19500,9 @@
           }
         }
       }
+    },
+    "Ask about it…" : {
+
     },
     "Ask every time" : {
       "localizations" : {
@@ -20509,6 +20610,9 @@
         }
       }
     },
+    "Asks to use %@" : {
+
+    },
     "Ask…" : {
       "localizations" : {
         "ar" : {
@@ -21146,6 +21250,15 @@
           }
         }
       }
+    },
+    "Battery low" : {
+
+    },
+    "Battery status" : {
+
+    },
+    "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low." : {
+
     },
     "Be quiet" : {
       "localizations" : {
@@ -21843,6 +21956,9 @@
         }
       }
     },
+    "Can read a folder you name, for that request only, once you approve it" : {
+
+    },
     "Can read and change files in %@" : {
       "localizations" : {
         "ar" : {
@@ -21901,6 +22017,9 @@
         }
       }
     },
+    "Can read and change files in a folder you name, for that request only, once you approve it" : {
+
+    },
     "Can run %@" : {
       "localizations" : {
         "ar" : {
@@ -21955,6 +22074,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可以运行 %@"
+          }
+        }
+      }
+    },
+    "Can run %@ (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can run %1$@ (%2$@)"
           }
         }
       }
@@ -22539,6 +22668,9 @@
           }
         }
       }
+    },
+    "Changes files" : {
+
     },
     "Changes things" : {
       "localizations" : {
@@ -23641,6 +23773,9 @@
           }
         }
       }
+    },
+    "Check the status of the repository in %@" : {
+
     },
     "Check your connection and the address." : {
       "localizations" : {
@@ -25035,6 +25170,9 @@
         }
       }
     },
+    "Claude Code answers from now on. You can change that in Settings › AI." : {
+
+    },
     "Claude Code couldn't be read." : {
       "localizations" : {
         "ar" : {
@@ -25150,6 +25288,9 @@
           }
         }
       }
+    },
+    "Claude Code is on this Mac: I can answer with your Claude plan." : {
+
     },
     "Claude Code isn't ready to help yet. Nothing was changed." : {
       "localizations" : {
@@ -26079,6 +26220,23 @@
         }
       }
     },
+    "Clone %@ into %@" : {
+      "comment" : "Approval and Activity: the Git extension clones a repository",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clone %1$@ into %2$@"
+          }
+        }
+      }
+    },
+    "Clone a repository" : {
+
+    },
+    "Clone public repositories into a folder you choose, and check, update and read the history of the ones you have." : {
+
+    },
     "Close" : {
       "localizations" : {
         "ar" : {
@@ -26428,6 +26586,12 @@
         }
       }
     },
+    "Codex answers from now on. You can change that in Settings › AI." : {
+
+    },
+    "Codex asks you to trust them once, the next time it starts. Your other hooks stay as they are." : {
+
+    },
     "Codex can't use the model “%@”." : {
       "localizations" : {
         "ar" : {
@@ -26601,6 +26765,9 @@
           }
         }
       }
+    },
+    "Codex is on this Mac: I can answer with your ChatGPT plan." : {
+
     },
     "Codex isn't ready to help yet. Nothing was changed." : {
       "localizations" : {
@@ -26834,6 +27001,9 @@
         }
       }
     },
+    "Codex session updates" : {
+
+    },
     "Codex stopped with an error." : {
       "localizations" : {
         "ar" : {
@@ -27066,7 +27236,11 @@
         }
       }
     },
+    "Color" : {
+
+    },
     "Colour" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -28059,6 +28233,29 @@
         }
       }
     },
+    "Convert %@ here to the time in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Convert %1$@ here to the time in %2$@"
+          }
+        }
+      }
+    },
+    "Convert %@ in %@ to the time in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Convert %1$@ in %2$@ to the time in %3$@"
+          }
+        }
+      }
+    },
+    "Convert a time between places" : {
+
+    },
     "Copied" : {
       "localizations" : {
         "ar" : {
@@ -28728,6 +28925,9 @@
           }
         }
       }
+    },
+    "Copy Setup Instructions" : {
+
     },
     "Copy command" : {
       "localizations" : {
@@ -29894,6 +30094,9 @@
           }
         }
       }
+    },
+    "Cursor, VS Code, Zed or any app that speaks MCP: copy the command, a setup snippet for each, and where the Sidefolk skill is." : {
+
     },
     "Custom endpoint" : {
       "localizations" : {
@@ -31927,6 +32130,12 @@
         }
       }
     },
+    "Disk space" : {
+
+    },
+    "Disk space low" : {
+
+    },
     "Dismiss" : {
       "localizations" : {
         "ar" : {
@@ -32566,6 +32775,15 @@
           }
         }
       }
+    },
+    "Draft" : {
+
+    },
+    "Drafted “%@”" : {
+
+    },
+    "Drafts" : {
+
     },
     "Drizzle" : {
       "localizations" : {
@@ -34844,6 +35062,12 @@
         }
       }
     },
+    "Extension draft" : {
+
+    },
+    "Extension drafts" : {
+
+    },
     "Extensions" : {
       "localizations" : {
         "ar" : {
@@ -34901,6 +35125,9 @@
           }
         }
       }
+    },
+    "Extensions Sidefolk wrote at your request. Nothing in a draft runs until you review it and install it." : {
+
     },
     "Extensions aren't running." : {
       "localizations" : {
@@ -37441,6 +37668,9 @@
         }
       }
     },
+    "From the %@ extension" : {
+      "comment" : "Under an approval's title: which extension's tool asks"
+    },
     "Full access" : {
       "localizations" : {
         "ar" : {
@@ -37905,6 +38135,9 @@
         }
       }
     },
+    "Get the forecast for %@ from Open-Meteo" : {
+
+    },
     "Getting ready to listen…" : {
       "localizations" : {
         "ar" : {
@@ -38079,7 +38312,11 @@
         }
       }
     },
+    "Give it something to wear to choose a color." : {
+
+    },
     "Give it something to wear to choose a colour." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -42459,6 +42696,9 @@
           }
         }
       }
+    },
+    "I couldn't move that draft to the Trash." : {
+
     },
     "I couldn't open an app called “%@”." : {
       "localizations" : {
@@ -48842,6 +49082,12 @@
         }
       }
     },
+    "It can use the internet while it works in a folder you name, so it could upload what's in that folder." : {
+
+    },
+    "It didn't pass Sidefolk's checks." : {
+
+    },
     "It downloads the latest %@ every time it starts. Pin a version, like %@==1.2.3." : {
       "localizations" : {
         "ar" : {
@@ -49818,6 +50064,7 @@
       }
     },
     "It will be able to" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -50414,6 +50661,9 @@
           }
         }
       }
+    },
+    "Its files couldn't be read." : {
+
     },
     "Its folder is missing." : {
       "localizations" : {
@@ -52736,6 +52986,9 @@
         }
       }
     },
+    "List extension drafts" : {
+
+    },
     "List notes" : {
       "localizations" : {
         "ar" : {
@@ -54186,6 +54439,12 @@
         }
       }
     },
+    "Look up the time here" : {
+
+    },
+    "Look up the time in %@" : {
+
+    },
     "Looking at your files…" : {
       "localizations" : {
         "ar" : {
@@ -55116,6 +55375,9 @@
           }
         }
       }
+    },
+    "Memory use" : {
+      "comment" : "The Mac's memory (RAM) in use"
     },
     "Menu bar only" : {
       "localizations" : {
@@ -56797,6 +57059,9 @@
         }
       }
     },
+    "Move the draft “%@” to the Trash?" : {
+
+    },
     "Move the skill “%@” to the Trash" : {
       "localizations" : {
         "ar" : {
@@ -56970,6 +57235,9 @@
           }
         }
       }
+    },
+    "Move to Trash…" : {
+
     },
     "Moved %lld items" : {
       "localizations" : {
@@ -59768,6 +60036,7 @@
       }
     },
     "No extensions yet. Install one from a folder, or add an MCP server." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -62377,6 +62646,9 @@
         }
       }
     },
+    "Nothing added yet. Install an extension from a folder, add an MCP server, or ask Sidefolk to build one." : {
+
+    },
     "Nothing beyond its own data folder." : {
       "localizations" : {
         "ar" : {
@@ -64466,6 +64738,9 @@
         }
       }
     },
+    "Only sandboxed extensions can work in a folder you name." : {
+
+    },
     "Only urgent things will interrupt you." : {
       "localizations" : {
         "ar" : {
@@ -66090,6 +66365,9 @@
         }
       }
     },
+    "Opens a link or app" : {
+
+    },
     "Opens the Ask panel from any app." : {
       "localizations" : {
         "ar" : {
@@ -66147,6 +66425,9 @@
           }
         }
       }
+    },
+    "Opens the Ask panel with these words, ready to send" : {
+
     },
     "Optional" : {
       "localizations" : {
@@ -66570,6 +66851,28 @@
         }
       }
     },
+    "Other agents already show %lld live values. Stop one first." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Other agents already show %lld live value. Stop one first."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Other agents already show %lld live values. Stop one first."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Other agents and extensions keep their own rules." : {
       "localizations" : {
         "ar" : {
@@ -66627,6 +66930,9 @@
           }
         }
       }
+    },
+    "Other apps" : {
+
     },
     "Outcome" : {
       "localizations" : {
@@ -68852,6 +69158,12 @@
         }
       }
     },
+    "Pull the latest changes" : {
+
+    },
+    "Pull the latest changes into %@" : {
+
+    },
     "Put %lld items back" : {
       "localizations" : {
         "ar" : {
@@ -69796,6 +70108,9 @@
         }
       }
     },
+    "Rain soon" : {
+
+    },
     "Rainfall in %@" : {
       "comment" : "How much rain falls in a place, as a live value",
       "localizations" : {
@@ -70583,6 +70898,9 @@
         }
       }
     },
+    "Read extension drafts" : {
+
+    },
     "Read files in %@" : {
       "localizations" : {
         "ar" : {
@@ -70699,6 +71017,9 @@
         }
       }
     },
+    "Read the battery's charge" : {
+
+    },
     "Read the clipboard" : {
       "localizations" : {
         "ar" : {
@@ -70757,6 +71078,9 @@
         }
       }
     },
+    "Read the extension draft “%@”" : {
+
+    },
     "Read the file %@" : {
       "localizations" : {
         "ar" : {
@@ -70814,6 +71138,15 @@
           }
         }
       }
+    },
+    "Read the free disk space" : {
+
+    },
+    "Read the memory use" : {
+
+    },
+    "Read the recent commits in %@" : {
+
     },
     "Read the text on your clipboard" : {
       "localizations" : {
@@ -71501,6 +71834,9 @@
         }
       }
     },
+    "Read today's reminders and open tasks" : {
+
+    },
     "Read your open reminders in Apple Reminders" : {
       "localizations" : {
         "ar" : {
@@ -71849,6 +72185,9 @@
         }
       }
     },
+    "Reads files" : {
+
+    },
     "Reads private data" : {
       "localizations" : {
         "ar" : {
@@ -71965,6 +72304,9 @@
         }
       }
     },
+    "Ready for you to review" : {
+
+    },
     "Reasoning effort for “%@”" : {
       "comment" : "The effort menu under a model field",
       "localizations" : {
@@ -72023,6 +72365,9 @@
           }
         }
       }
+    },
+    "Recent commits" : {
+
     },
     "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log." : {
       "localizations" : {
@@ -74542,6 +74887,9 @@
         }
       }
     },
+    "Removes Sidefolk's hooks from Codex. Your other hooks stay." : {
+
+    },
     "Removes [%@] from Codex's config. The rest stays." : {
       "localizations" : {
         "ar" : {
@@ -74657,6 +75005,9 @@
           }
         }
       }
+    },
+    "Removes the Sidefolk skill from %@. Your other skills stay." : {
+
     },
     "Rename %@ to “%@”" : {
       "localizations" : {
@@ -75185,6 +75536,9 @@
           }
         }
       }
+    },
+    "Repository status" : {
+
     },
     "Requests" : {
       "localizations" : {
@@ -76173,6 +76527,9 @@
         }
       }
     },
+    "Review an Extension" : {
+
+    },
     "Review changed tools…" : {
       "localizations" : {
         "ar" : {
@@ -76288,6 +76645,12 @@
           }
         }
       }
+    },
+    "Review “%@”" : {
+
+    },
+    "Review…" : {
+
     },
     "Revoke" : {
       "localizations" : {
@@ -77887,6 +78250,9 @@
         }
       }
     },
+    "Runs a program" : {
+
+    },
     "Runs with your full permissions" : {
       "localizations" : {
         "ar" : {
@@ -78700,6 +79066,7 @@
       }
     },
     "Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -81700,6 +82067,9 @@
         }
       }
     },
+    "Show Files" : {
+
+    },
     "Show a value regularly" : {
       "localizations" : {
         "ar" : {
@@ -81757,6 +82127,9 @@
           }
         }
       }
+    },
+    "Show an extension draft for review" : {
+
     },
     "Show folks on duty" : {
       "localizations" : {
@@ -81931,6 +82304,9 @@
           }
         }
       }
+    },
+    "Show the extension draft “%@” for review" : {
+
     },
     "Show the welcome again" : {
       "localizations" : {
@@ -82523,6 +82899,9 @@
           }
         }
       }
+    },
+    "Sidefolk couldn't read its permission settings, so it didn't do this." : {
+
     },
     "Sidefolk couldn't settle the permissions for this action." : {
       "localizations" : {
@@ -83336,6 +83715,16 @@
         }
       }
     },
+    "Sidefolk replaced your copy of %@ (%@) with its built-in version %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sidefolk replaced your copy of %1$@ (%2$@) with its built-in version %3$@."
+          }
+        }
+      }
+    },
     "Sidefolk saves a backup next to each file before changing it. Disconnect removes only what it added." : {
       "localizations" : {
         "ar" : {
@@ -83393,6 +83782,12 @@
           }
         }
       }
+    },
+    "Sidefolk skill in Claude Code" : {
+
+    },
+    "Sidefolk skill in Codex" : {
+
     },
     "Sidefolk starts quietly when you log in." : {
       "localizations" : {
@@ -84147,6 +84542,9 @@
           }
         }
       }
+    },
+    "Sidefolk wrote this for you. It runs only with the permissions below, and you can read its files first." : {
+
     },
     "Sidefolk's AI folder isn't private." : {
       "localizations" : {
@@ -87062,6 +87460,9 @@
         }
       }
     },
+    "Still has problems" : {
+
+    },
     "Stop" : {
       "localizations" : {
         "ar" : {
@@ -87875,6 +88276,9 @@
         }
       }
     },
+    "Switch it off instead." : {
+
+    },
     "Switch on %@ under Sidefolk, then ask again." : {
       "localizations" : {
         "ar" : {
@@ -88223,6 +88627,9 @@
           }
         }
       }
+    },
+    "System Vitals" : {
+      "comment" : "A built-in extension: battery, disk and memory"
     },
     "System information" : {
       "localizations" : {
@@ -96284,6 +96691,9 @@
         }
       }
     },
+    "The request was stopped before this ran." : {
+
+    },
     "The request was withdrawn before it ran." : {
       "localizations" : {
         "ar" : {
@@ -97159,6 +97569,9 @@
           }
         }
       }
+    },
+    "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly." : {
+
     },
     "The tool %@ isn't available here." : {
       "localizations" : {
@@ -98205,6 +98618,7 @@
       }
     },
     "There's no collection called “%@”, and other apps can't create one." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -98261,6 +98675,9 @@
           }
         }
       }
+    },
+    "There's no collection called “%@”, and other apps can't create one. Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first." : {
+
     },
     "There's no space left to do that." : {
       "localizations" : {
@@ -98441,6 +98858,12 @@
           }
         }
       }
+    },
+    "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › AI first." : {
+
+    },
+    "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want." : {
+
     },
     "Things stay here for 30 days, then they're gone for good." : {
       "localizations" : {
@@ -99253,6 +99676,9 @@
           }
         }
       }
+    },
+    "This copy of Sidefolk has no skill to install." : {
+
     },
     "This evening" : {
       "localizations" : {
@@ -100182,6 +100608,9 @@
         }
       }
     },
+    "Time around the world" : {
+
+    },
     "Times of day" : {
       "localizations" : {
         "ar" : {
@@ -100355,6 +100784,9 @@
           }
         }
       }
+    },
+    "Today's weather and the week ahead for any place, and a heads-up before rain, from Open-Meteo. Only the place you ask about leaves your Mac." : {
+
     },
     "Tokens this week" : {
       "localizations" : {
@@ -100819,6 +101251,9 @@
           }
         }
       }
+    },
+    "Try Again" : {
+
     },
     "Try a more specific search or a smaller folder." : {
       "localizations" : {
@@ -101689,6 +102124,9 @@
           }
         }
       }
+    },
+    "Try “%@”" : {
+      "comment" : "A button under a built-in extension: opens the Ask panel with these words"
     },
     "Try “in 20 min” or “tomorrow 9:00”." : {
       "localizations" : {
@@ -104829,6 +105267,12 @@
         }
       }
     },
+    "Uses an extension" : {
+
+    },
+    "Uses the internet" : {
+
+    },
     "Using %@" : {
       "localizations" : {
         "ar" : {
@@ -105241,6 +105685,9 @@
         }
       }
     },
+    "Version %@ · written by Sidefolk for you" : {
+
+    },
     "Voice" : {
       "comment" : "A Settings tab: talking to the companion and its spoken replies. Seven tabs share one toolbar: keep it short",
       "localizations" : {
@@ -105647,6 +106094,9 @@
           }
         }
       }
+    },
+    "Waiting for you to review it" : {
+
     },
     "Waiting for your OK…" : {
       "localizations" : {
@@ -107487,6 +107937,7 @@
       }
     },
     "Weather" : {
+      "comment" : "A built-in extension: forecasts from Open-Meteo",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -107543,6 +107994,9 @@
           }
         }
       }
+    },
+    "Weather forecast" : {
+
     },
     "Weather in %@" : {
       "localizations" : {
@@ -108188,6 +108642,9 @@
         }
       }
     },
+    "What it can do" : {
+
+    },
     "What it wears." : {
       "localizations" : {
         "ar" : {
@@ -108419,6 +108876,9 @@
           }
         }
       }
+    },
+    "What's on today" : {
+
     },
     "When" : {
       "localizations" : {
@@ -109829,6 +110289,9 @@
         }
       }
     },
+    "World Clock" : {
+      "comment" : "A built-in extension: the time in other places"
+    },
     "Write a note" : {
       "localizations" : {
         "ar" : {
@@ -109944,6 +110407,9 @@
           }
         }
       }
+    },
+    "Write an extension draft" : {
+
     },
     "Write an idea" : {
       "localizations" : {
@@ -110119,6 +110585,9 @@
         }
       }
     },
+    "Write the extension draft “%@”" : {
+
+    },
     "Writing it down…" : {
       "localizations" : {
         "ar" : {
@@ -110176,6 +110645,12 @@
           }
         }
       }
+    },
+    "Written by Sidefolk %@" : {
+      "comment" : "When an extension draft was written: “Written by Sidefolk 5 minutes ago”"
+    },
+    "Written for you" : {
+
     },
     "Yesterday" : {
       "localizations" : {
@@ -111924,6 +112399,9 @@
         }
       }
     },
+    "Your reply follows up on the answer below" : {
+
+    },
     "Yours" : {
       "localizations" : {
         "ar" : {
@@ -112155,6 +112633,9 @@
           }
         }
       }
+    },
+    "a draft called “%@”" : {
+
     },
     "a file" : {
       "localizations" : {
@@ -114084,6 +114565,9 @@
           }
         }
       }
+    },
+    "clone https://github.com/octocat/Hello-World into ~/Downloads" : {
+      "comment" : "A request to try with the Git extension; keep the link and the folder as they are"
     },
     "command" : {
       "localizations" : {
@@ -117469,6 +117953,9 @@
           }
         }
       }
+    },
+    "how much disk space do I have left?" : {
+      "comment" : "A request to try with the System Vitals extension"
     },
     "ideas" : {
       "comment" : "What a search looks through: “Search ideas”",
@@ -121809,6 +122296,9 @@
         }
       }
     },
+    "what time is it in Tokyo?" : {
+      "comment" : "A request to try with the World Clock extension"
+    },
     "when %@ asks" : {
       "localizations" : {
         "ar" : {
@@ -122852,6 +123342,9 @@
           }
         }
       }
+    },
+    "will it rain in Lisbon this week?" : {
+      "comment" : "A request to try with the Weather extension"
     },
     "your local AI server" : {
       "localizations" : {
