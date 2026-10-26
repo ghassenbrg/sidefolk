@@ -89,7 +89,7 @@ public actor ExtensionHost {
         guard let pin = try? record.granted?.decode(ExtensionPin.self) else {
             var broken = record
             broken.enabled = false
-            broken.lastError = "Its saved settings couldn't be read. Remove it and install it again."
+            broken.lastError = String(localized: "Its saved settings couldn't be read. Remove it and install it again.")
             try? await store.save(broken)
             return
         }
@@ -99,17 +99,18 @@ public actor ExtensionHost {
             let folder = installer.installedFolder(record.id)
             if let problem = integrity.verify(id: record.id, folder: folder, pins: pin.files) {
                 rt.record.enabled = false
-                rt.record.lastError = "Its files changed since you installed it (\(problem)) Install it again to use it."
+                rt.record.lastError = String(localized: "Its files changed since you installed it (\(problem)) Install it again to use it.")
                 if record.enabled {
                     try? await store.save(rt.record)
-                    events.publish(.notice("\(pin.name) was changed on disk, so I turned it off. Install it again to use it."))
+                    events.publish(.notice(String(localized: "\(pin.name) was changed on disk, so I turned it off. Install it again to use it.")))
                 }
             } else {
                 let report = validator.validate(folder: URL(fileURLWithPath: folder), mode: .installed)
                 rt.manifest = report.manifest
                 if !report.isValid, record.enabled {
                     rt.record.enabled = false
-                    rt.record.lastError = "It no longer passes Sidefolk's checks: \(report.errors.first?.description ?? "unknown problem")."
+                    let issue = report.errors.first?.description ?? String(localized: "unknown problem")
+                    rt.record.lastError = String(localized: "It no longer passes Sidefolk's checks: \(issue).")
                     try? await store.save(rt.record)
                 }
             }
@@ -183,10 +184,10 @@ public actor ExtensionHost {
 
     private func conflict(id: String, short: String, kind: ExtensionRecord.Kind) -> String? {
         if let existing = runtimes[id], existing.record.kind != kind {
-            return "Something called \(existing.pin.name) already uses the id \(id)."
+            return String(localized: "Something called \(existing.pin.name) already uses the id \(id).")
         }
         if let other = runtimes.values.first(where: { $0.record.id != id && shortName($0) == short }) {
-            return "\(other.pin.name) already uses the name “\(short)” for its tools."
+            return String(localized: "\(other.pin.name) already uses the name “\(short)” for its tools.")
         }
         return nil
     }
@@ -197,10 +198,10 @@ public actor ExtensionHost {
     public func install(from folder: URL) async throws -> ExtensionInfo {
         let report = validator.validate(folder: folder, mode: .source)
         guard report.isValid, let manifest = report.manifest else {
-            throw UserFacingError("This extension can't be installed.", recovery: report.errors.first.map { "\($0)" })
+            throw UserFacingError(verbatim: String(localized: "This extension can't be installed."), recovery: report.errors.first?.description)
         }
         let id = manifest.id
-        if let why = conflict(id: id, short: manifest.shortName, kind: .sidefolk) { throw UserFacingError(why) }
+        if let why = conflict(id: id, short: manifest.shortName, kind: .sidefolk) { throw UserFacingError(verbatim: why) }
 
         let previous = runtimes[id]
         if previous != nil { await stop(id) }
@@ -210,7 +211,8 @@ public actor ExtensionHost {
         do {
             let final = validator.validate(folder: URL(fileURLWithPath: committed.folder), mode: .installed)
             guard final.isValid, final.manifest == manifest, let start = final.launch, let permissions = final.permissions else {
-                throw UserFacingError("The installed copy didn't pass Sidefolk's checks.", recovery: final.errors.first.map { "\($0)" })
+                throw UserFacingError(verbatim: String(localized: "The installed copy didn't pass Sidefolk's checks."),
+                                      recovery: final.errors.first?.description)
             }
             integrity.forget(id)
             var record = previous?.record ?? ExtensionRecord(id: id, version: manifest.version, path: committed.folder,
@@ -245,7 +247,7 @@ public actor ExtensionHost {
 
     /// Removes the extension, its data folder and its record.
     public func uninstall(id: String) async throws {
-        guard runtimes[id] != nil else { throw ToolError.notFound("an extension called \(id)") }
+        guard runtimes[id] != nil else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
         await stop(id)
         runtimes[id] = nil
         registry.unregister(owner: id)
@@ -257,7 +259,7 @@ public actor ExtensionHost {
     }
 
     public func setEnabled(_ enabled: Bool, id: String) async throws {
-        guard var rt = runtimes[id] else { throw ToolError.notFound("an extension called \(id)") }
+        guard var rt = runtimes[id] else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
         if enabled {
             if rt.record.kind == .sidefolk {
                 integrity.forget(id)
@@ -284,7 +286,7 @@ public actor ExtensionHost {
 
     /// Accepts every changed or new tool definition the extension now reports.
     public func approveToolChanges(id: String) async throws {
-        guard var rt = runtimes[id] else { throw ToolError.notFound("an extension called \(id)") }
+        guard var rt = runtimes[id] else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
         rt.pin.tools.merge(rt.pin.pending) { _, new in new }
         rt.pin.pending = [:]
         rt.record.granted = try JSONValue.from(rt.pin)
@@ -302,18 +304,18 @@ public actor ExtensionHost {
         let slug = Self.slug(name)
         let id = "mcp." + slug
         if name.trimmingCharacters(in: .whitespaces).isEmpty || name.count > 60 || ExtensionText.clean(name) != name || slug.isEmpty {
-            errors.append("Give it a short plain name.")
+            errors.append(String(localized: "Give it a short plain name."))
         }
         let resolved = resolveCommand(command)
-        if resolved == nil { errors.append("Couldn't find the program “\(command)”.") }
+        if resolved == nil { errors.append(String(localized: "Couldn't find the program “\(command)”.")) }
         if arguments.count > 64 || arguments.contains(where: { $0.contains("\0") || $0.utf8.count > 4096 }) {
-            errors.append("Too many or too long arguments.")
+            errors.append(String(localized: "Too many or too long arguments."))
         }
         for key in environmentKeys where !Self.isAllowedSecretKey(key) {
-            errors.append("“\(key)” can't be set for a server.")
+            errors.append(String(localized: "“\(key)” can't be set for a server."))
         }
         if let why = conflict(id: id, short: slug, kind: .mcp) { errors.append(why) }
-        if runtimes[id] != nil { errors.append("A server called \(name) is already added.") }
+        if runtimes[id] != nil { errors.append(String(localized: "A server called \(name) is already added.")) }
         return MCPServerPreview(id: id, name: name, resolvedCommand: resolved, arguments: arguments,
                                 summary: .forMCPServer(command: resolved ?? command, arguments: arguments), errors: errors)
     }
@@ -323,7 +325,7 @@ public actor ExtensionHost {
     public func addMCPServer(name: String, command: String, arguments: [String], environmentKeys: [String] = []) async throws -> ExtensionInfo {
         let preview = previewMCPServer(name: name, command: command, arguments: arguments, environmentKeys: environmentKeys)
         guard preview.canAdd, let resolved = preview.resolvedCommand else {
-            throw UserFacingError("This server can't be added.", recovery: preview.errors.first)
+            throw UserFacingError(verbatim: String(localized: "This server can't be added."), recovery: preview.errors.first)
         }
         let id = preview.id
         let record = ExtensionRecord(id: id, version: "unknown", path: resolved, enabled: true, kind: .mcp)
@@ -402,8 +404,8 @@ public actor ExtensionHost {
     /// filled). The returned summary is cleaned and at most 200 characters; it is still untrusted.
     public func checkWatcher(extensionId id: String, watcher: String, config: JSONValue,
                              state: JSONValue) async throws -> (triggered: Bool, state: JSONValue, summary: String) {
-        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable("That extension is turned off.") }
-        guard let meta = rt.manifest?.watchers[watcher] else { throw ToolError.notFound("the watcher \(watcher) in \(rt.pin.name)") }
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
+        guard let meta = rt.manifest?.watchers[watcher] else { throw ToolError.notFound(String(localized: "the watcher \(watcher) in \(rt.pin.name)")) }
         let settings = try WatcherConfig.validate(config, fields: meta.config)
         guard state.jsonString.utf8.count <= 64 * 1024 else { throw UserFacingError("The watcher's saved state is too large.") }
         begin(id)
@@ -414,14 +416,14 @@ public actor ExtensionHost {
             guard r.state.jsonString.utf8.count <= 64 * 1024 else { throw UserFacingError("\(rt.pin.name) returned too much watcher state.") }
             return (r.triggered, r.state, ExtensionText.line(r.summary, characters: 200))
         } catch let error as MCPError {
-            throw userFacing(error, action: "checking “\(meta.title)”", name: rt.pin.name)
+            throw userFacing(error, action: String(localized: "checking “\(meta.title)”"), name: rt.pin.name)
         }
     }
 
     // MARK: Tool calls
 
     func callTool(_ id: String, remote: String, title: String, input: JSONValue) async throws -> ToolResult {
-        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable("That extension is turned off.") }
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         try ensureApproved(id, remote, title)
         begin(id)
         defer { end(id) }
@@ -434,7 +436,7 @@ public actor ExtensionHost {
             // The tool's own explanation helps the model fix its call; it is the extension's text, so untrusted.
             let clean = ExtensionText.untrusted(message, bytes: 4_000)
             return ToolResult(text: clean.isEmpty ? "(no explanation given)" : clean,
-                              card: ResultCard(kind: .extensionResult, title: "“\(title)” reported a problem", subtitle: rt.pin.name,
+                              card: ResultCard(kind: .extensionResult, title: String(localized: "“\(title)” reported a problem"), subtitle: rt.pin.name,
                                                detail: clean.clipped(200)),
                               untrusted: true, isError: true)
         } catch let error as MCPError {
@@ -447,7 +449,7 @@ public actor ExtensionHost {
     }
 
     private func ensureApproved(_ id: String, _ remote: String, _ title: String) throws {
-        guard let rt = runtimes[id] else { throw ToolError.unavailable("That extension is no longer installed.") }
+        guard let rt = runtimes[id] else { throw ToolError.unavailable(String(localized: "That extension is no longer installed.")) }
         if rt.pin.pending[remote] != nil || rt.pin.tools[remote] == nil {
             throw UserFacingError("“\(title)” changed since you approved it, so it is on hold.",
                                   recovery: "Review it in Settings › Extensions › \(rt.pin.name).")
@@ -457,6 +459,7 @@ public actor ExtensionHost {
         }
     }
 
+    /// `action` is what was asked of it: a quoted tool title, or "checking “Disk space”".
     private func userFacing(_ error: MCPError, action: String, name: String) -> UserFacingError {
         switch error {
         case .server(_, let message), .toolFailed(let message):
@@ -481,7 +484,7 @@ public actor ExtensionHost {
     // MARK: Processes
 
     private func ensureRunning(_ id: String) async throws -> MCPClient {
-        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable("That extension is turned off.") }
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         if let c = rt.client, c.isAlive { return c }
         if let starting = rt.starting { return try await starting.value }
         let task = Task { try await self.launch(id, approveAll: false) }
@@ -492,13 +495,13 @@ public actor ExtensionHost {
 
     /// Starts the process, initializes MCP, lists tools and reconciles them with the pins.
     private func launch(_ id: String, approveAll: Bool) async throws -> MCPClient {
-        guard let rt = runtimes[id] else { throw ToolError.unavailable("That extension is no longer installed.") }
+        guard let rt = runtimes[id] else { throw ToolError.unavailable(String(localized: "That extension is no longer installed.")) }
         let spec: ExtensionProcessSpec
         switch rt.record.kind {
         case .sidefolk:
             if let problem = integrity.verify(id: id, folder: installer.installedFolder(id), pins: rt.pin.files) {
-                await disable(id, reason: "Its files changed since you installed it (\(problem)) Install it again to use it.",
-                              notice: "\(rt.pin.name) was changed on disk, so I turned it off. Install it again to use it.")
+                await disable(id, reason: String(localized: "Its files changed since you installed it (\(problem)) Install it again to use it."),
+                              notice: String(localized: "\(rt.pin.name) was changed on disk, so I turned it off. Install it again to use it."))
                 throw UserFacingError("\(rt.pin.name) was turned off because its files changed.",
                                       recovery: "Install it again from Settings › Extensions.")
             }
@@ -543,10 +546,16 @@ public actor ExtensionHost {
         let missing = declared.subtracting(offered)
         let undeclared = offered.subtracting(declared)
         if !missing.isEmpty {
-            notes.append("The manifest describes \(names(missing)), but the program doesn't offer \(missing.count == 1 ? "a tool" : "tools") by that name.")
+            let listed = names(missing)
+            notes.append(missing.count == 1
+                ? String(localized: "The manifest describes \(listed), but the program doesn't offer a tool by that name.")
+                : String(localized: "The manifest describes \(listed), but the program doesn't offer tools by that name."))
         }
         if !undeclared.isEmpty {
-            notes.append("The program offers \(names(undeclared)), which the manifest doesn't describe, so \(undeclared.count == 1 ? "it runs" : "they run") as medium risk with default settings.")
+            let listed = names(undeclared)
+            notes.append(undeclared.count == 1
+                ? String(localized: "The program offers \(listed), which the manifest doesn't describe, so it runs as medium risk with default settings.")
+                : String(localized: "The program offers \(listed), which the manifest doesn't describe, so they run as medium risk with default settings."))
         }
         return notes
     }
@@ -554,18 +563,24 @@ public actor ExtensionHost {
     /// "didn't start" with a cause: how the process ended (our words, so it may reach the model) and
     /// its last stderr line (its words, so only in what people read: `recovery` and `detail`).
     static func startFailure(name: String, error: Error, exit: ExtensionProcessExit?, stderr: String) -> UserFacingError {
-        var cause = ""
+        let message: String
         switch exit?.cause {
-        case .exited(let code)? where code != 0 || exit?.requested == false: cause = " (it exited with status \(code))"
-        case .signaled(let signal)? where exit?.requested == false: cause = " (it was stopped by signal \(signal))"
+        case .exited(let code)? where code != 0 || exit?.requested == false:
+            message = String(localized: "\(name) didn't start (it exited with status \(code)).")
+        case .signaled(let signal)? where exit?.requested == false:
+            message = String(localized: "\(name) didn't start (it was stopped by signal \(signal)).")
         default:
-            if case MCPError.timeout? = error as? MCPError { cause = " (it didn't answer in time)" }
-            else if case MCPError.badResponse? = error as? MCPError { cause = " (it answered something other than MCP)" }
+            if case MCPError.timeout? = error as? MCPError { message = String(localized: "\(name) didn't start (it didn't answer in time).") }
+            else if case MCPError.badResponse? = error as? MCPError {
+                message = String(localized: "\(name) didn't start (it answered something other than MCP).")
+            } else {
+                message = String(localized: "\(name) didn't start.")
+            }
         }
         let last = stderr.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.last { !$0.isEmpty }
-        var recovery = "Run sidefolk ext validate on its folder: it starts the program in the same sandbox and shows what it prints."
-        if let last { recovery = "It printed: “\(ExtensionText.line(last, characters: 200))”. " + recovery }
-        return UserFacingError("\(name) didn't start\(cause).", recovery: recovery, changedNothing: true,
+        let validate = String(localized: "Run sidefolk ext validate on its folder: it starts the program in the same sandbox and shows what it prints.")
+        let recovery = last.map { String(localized: "It printed: “\(ExtensionText.line($0, characters: 200))”. \(validate)") } ?? validate
+        return UserFacingError(verbatim: message, recovery: recovery, changedNothing: true,
                                detail: [String(describing: error), stderr].filter { !$0.isEmpty }.joined(separator: "\n"))
     }
 
@@ -679,7 +694,10 @@ public actor ExtensionHost {
         if !quarantined.isEmpty {
             let titles = quarantined.compactMap { name in rt.pin.pending[name].map { title(rt, $0) } }
             Log.shared.warning("extensions", "changed tools", ["id": id, "tools": quarantined.joined(separator: ",")])
-            events.publish(.notice("\(rt.pin.name) changed \(titles.joined(separator: ", ")). I put \(quarantined.count == 1 ? "it" : "them") on hold until you review the change in Settings › Extensions."))
+            let changed = Wording.list(titles)
+            events.publish(.notice(quarantined.count == 1
+                ? String(localized: "\(rt.pin.name) changed \(changed). I put it on hold until you review the change in Settings › Extensions.")
+                : String(localized: "\(rt.pin.name) changed \(changed). I put them on hold until you review the change in Settings › Extensions.")))
             events.changed(.extensions)
         }
     }
@@ -722,9 +740,10 @@ public actor ExtensionHost {
         runtimes[id]?.crashes = crashes
         guard crashes.count >= config.crashLimit, rt.record.enabled else { return }
         let minutes = Int((config.crashWindow / 60).rounded())
-        var why = "It stopped unexpectedly \(crashes.count) times in \(minutes) minutes, so Sidefolk turned it off."
-        if let reason { why += " Last time: \(reason)" }
-        await disable(id, reason: why, notice: "\(rt.pin.name) kept crashing, so I turned it off. You can turn it back on in Settings › Extensions.")
+        var why = String(localized: "It stopped unexpectedly \(crashes.count) times in \(minutes) minutes, so Sidefolk turned it off.")
+        if let reason { why += " " + String(localized: "Last time: \(reason)") }
+        await disable(id, reason: why,
+                      notice: String(localized: "\(rt.pin.name) kept crashing, so I turned it off. You can turn it back on in Settings › Extensions."))
     }
 
     private func disable(_ id: String, reason: String, notice: String?) async {
@@ -809,7 +828,7 @@ public actor ExtensionHost {
         let id = rt.record.id
         let remote = def.name
         return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote) { [weak self] input in
-            guard let self else { throw ToolError.unavailable("Extensions aren't running.") }
+            guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input)
         }
     }

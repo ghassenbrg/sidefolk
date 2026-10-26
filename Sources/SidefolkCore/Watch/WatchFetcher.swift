@@ -183,7 +183,7 @@ final class FetchJob: NSObject, URLSessionDataDelegate, @unchecked Sendable {
             return .cancel
         }
         if (200..<300).contains(http.statusCode), case .other(let name) = WebContent.kind(contentType: http.value(forHTTPHeaderField: "Content-Type"), sniffing: Data()) {
-            fail(ProbeError.failed("That address isn't a web page or text (it sent “\(name)”)."))
+            fail(ProbeError.failed(String(localized: "That address isn't a web page or text (it sent “\(name)”).")))
             return .cancel
         }
         return .allow

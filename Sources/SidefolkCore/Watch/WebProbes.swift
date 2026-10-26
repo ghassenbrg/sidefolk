@@ -8,7 +8,7 @@ enum WebTarget {
     /// host rules come from the shared `URLPolicy`; the DNS check happens at every request, where it cannot go stale.
     static func normalise(_ text: String?, allowLocal: Bool) throws -> URL {
         guard var s = text?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
-            throw WatchError.invalid("Tell me which web address to watch.")
+            throw WatchError.invalid(String(localized: "Tell me which web address to watch."))
         }
         // No scheme typed ("example.com/x", "localhost:3000"): assume one. "mailto:x" or "javascript:x" stay as they are and are refused.
         if !s.contains("://"), s.range(of: #"^[^/:\s]+:(?!\d+(?:/|$))"#, options: .regularExpression) == nil { s = defaultScheme(for: s) + s }
@@ -34,7 +34,7 @@ enum WebTarget {
     /// Only the user's own request may reach this Mac or the local network (docs/SECURITY.md T11), so whoever
     /// is refused here is not the user: say what to do instead.
     static func localRefusal(_ host: String) -> String {
-        "“\(host)” points at this computer or your local network. Ask me directly to watch it — I only watch local addresses when you ask."
+        String(localized: "“\(host)” points at this computer or your local network. Ask me directly to watch it — I only watch local addresses when you ask.")
     }
 
     static func url(in config: JSONValue) -> URL? { config.string("url").flatMap(URL.init(string:)) }
@@ -81,14 +81,14 @@ struct ProbeFetching: Sendable {
             switch error.code {
             case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff: throw ProbeError.offline
             case .cancelled: throw CancellationError()
-            case .timedOut: return .unreachable("The site didn't answer in time.")
-            case .cannotFindHost, .dnsLookupFailed: return .unreachable("I couldn't find that website.")
-            case .cannotConnectToHost: return .unreachable("The site refused the connection.")
-            case .networkConnectionLost: return .unreachable("The connection dropped.")
+            case .timedOut: return .unreachable(String(localized: "The site didn't answer in time."))
+            case .cannotFindHost, .dnsLookupFailed: return .unreachable(String(localized: "I couldn't find that website."))
+            case .cannotConnectToHost: return .unreachable(String(localized: "The site refused the connection."))
+            case .networkConnectionLost: return .unreachable(String(localized: "The connection dropped."))
             case .secureConnectionFailed, .serverCertificateUntrusted, .serverCertificateHasBadDate,
                  .serverCertificateNotYetValid, .serverCertificateHasUnknownRoot, .clientCertificateRejected:
-                return .unreachable("The site's security certificate isn't valid.")
-            default: return .unreachable("I couldn't reach the site.")
+                return .unreachable(String(localized: "The site's security certificate isn't valid."))
+            default: return .unreachable(String(localized: "I couldn't reach the site."))
             }
         }
     }
@@ -140,16 +140,16 @@ public struct UrlChangeProbe: WatcherProbe {
         let url = try WebTarget.normalise(w.config.string("url"), allowLocal: w.allowsLocal)
         w.config = w.config.setting("url", .string(url.absoluteString))
         let condition = PageCondition(w.condition)
-        if !condition.changed && !condition.hasText { throw WatchError.invalid("Tell me what to look for on the page, or to watch for any change.") }
+        if !condition.changed && !condition.hasText { throw WatchError.invalid(String(localized: "Tell me what to look for on the page, or to watch for any change.")) }
         for text in [condition.contains, condition.notContains].compactMap({ $0 }) where text.count > 200 {
-            throw WatchError.invalid("The words to look for are too long (200 characters at most).")
+            throw WatchError.invalid(String(localized: "The words to look for are too long (200 characters at most)."))
         }
         w.condition = condition.json
         return w
     }
 
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
-        guard let url = WebTarget.url(in: w.config) else { throw ProbeError.failed("This watcher has no web address.") }
+        guard let url = WebTarget.url(in: w.config) else { throw ProbeError.failed(String(localized: "This watcher has no web address.")) }
         let condition = PageCondition(w.condition)
         let previous = w.lastState
         let request = FetchRequest(url: url, ifNoneMatch: previous?.string("etag"), ifModifiedSince: previous?.string("last_modified"),
@@ -161,13 +161,13 @@ public struct UrlChangeProbe: WatcherProbe {
         }
         if response.status == 304, let previous { return ProbeResult(state: previous) }
         guard (200..<300).contains(response.status) else {
-            throw ProbeError.failed("The page said \(ProbeFetching.httpWords(response.status)).")
+            throw ProbeError.failed(String(localized: "The page said \(ProbeFetching.httpWords(response.status))."))
         }
 
         let text = PageText.normalise(response.body, contentType: response.contentType)
         let name = WebTarget.displayName(url)
         if text.isEmpty, previous?["text"]?.stringValue?.isEmpty == false {
-            throw ProbeError.failed("The page came back empty.")
+            throw ProbeError.failed(String(localized: "The page came back empty."))
         }
 
         var state: [String: JSONValue] = [
@@ -187,11 +187,11 @@ public struct UrlChangeProbe: WatcherProbe {
             guard matched, !wasMatched else { return ProbeResult(state: .object(state)) }
             let summary: String
             if let want = condition.contains, condition.notContains == nil {
-                summary = "\(name) now says “\(want.clipped(60))”"
+                summary = String(localized: "\(name) now says “\(want.clipped(60))”")
             } else if let gone = condition.notContains, condition.contains == nil {
-                summary = "“\(gone.clipped(60))” is gone from \(name)"
+                summary = String(localized: "“\(gone.clipped(60))” is gone from \(name)")
             } else {
-                summary = "\(name) now matches what you were waiting for"
+                summary = String(localized: "\(name) now matches what you were waiting for")
             }
             let line = condition.contains.flatMap { want in text.components(separatedBy: "\n").first { TextDiff.contains($0, want) } }
             return ProbeResult(state: .object(state), triggered: true, summary: summary, detail: line?.clipped(160), openTarget: open)
@@ -202,7 +202,7 @@ public struct UrlChangeProbe: WatcherProbe {
         }
         let change = TextDiff.compare(old: before, new: text)
         guard change.isSignificant else { return ProbeResult(state: .object(state)) }
-        return ProbeResult(state: .object(state), triggered: true, summary: "\(name) changed", detail: change.snippet, openTarget: open)
+        return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: change.snippet, openTarget: open)
     }
 
     static func hash(_ text: String) -> String {
@@ -231,13 +231,13 @@ public struct SiteStatusProbe: WatcherProbe {
         let url = try WebTarget.normalise(w.config.string("url"), allowLocal: w.allowsLocal)
         w.config = w.config.setting("url", .string(url.absoluteString))
         let becomes = w.condition.string("becomes")?.lowercased() ?? "any"
-        guard ["up", "down", "any"].contains(becomes) else { throw WatchError.invalid("“becomes” must be up, down or any.") }
+        guard ["up", "down", "any"].contains(becomes) else { throw WatchError.invalid(String(localized: "“becomes” must be up, down or any.")) }
         w.condition = ["becomes": .string(becomes)]
         return w
     }
 
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
-        guard let url = WebTarget.url(in: w.config) else { throw ProbeError.failed("This watcher has no web address.") }
+        guard let url = WebTarget.url(in: w.config) else { throw ProbeError.failed(String(localized: "This watcher has no web address.")) }
         let becomes = w.condition.string("becomes") ?? "any"
         let method = w.config.string("method")?.uppercased() == "GET" ? "GET" : "HEAD"
 
@@ -252,7 +252,7 @@ public struct SiteStatusProbe: WatcherProbe {
                     r = again
                 }
             }
-            observed = r.status < 400 ? (true, "") : (false, "It answered \(ProbeFetching.httpWords(r.status)).")
+            observed = r.status < 400 ? (true, "") : (false, String(localized: "It answered \(ProbeFetching.httpWords(r.status))."))
         }
 
         let observation = observed.up ? "up" : "down"
@@ -288,7 +288,8 @@ public struct SiteStatusProbe: WatcherProbe {
 
         let name = WebTarget.displayName(url)
         return observed.up
-            ? ProbeResult(state: .object(state), triggered: true, summary: "\(name) is back up", openTarget: url.absoluteString)
-            : ProbeResult(state: .object(state), triggered: true, summary: "\(name) is down", detail: observed.why, openTarget: url.absoluteString)
+            ? ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) is back up"), openTarget: url.absoluteString)
+            : ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) is down"), detail: observed.why,
+                          openTarget: url.absoluteString)
     }
 }

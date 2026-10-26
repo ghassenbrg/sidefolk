@@ -13,8 +13,20 @@ public enum WatchTools {
 
 // MARK: Wording shared by the tools
 
+/// How watchers are described: for people in the app's language, and `…ForModel` in English for the
+/// tool results a model reads (DECISIONS D28).
 enum WatchWords {
+    /// "5 min", "30 s", "2 h", "3 days".
     static func every(_ seconds: TimeInterval) -> String {
+        switch seconds {
+        case ..<90: seconds >= 60 ? String(localized: "1 min") : String(localized: "\(Int(seconds.rounded())) s")
+        case ..<5400: String(localized: "\(Int((seconds / 60).rounded())) min")
+        case ..<129_600: String(localized: "\(Int((seconds / 3600).rounded())) h")
+        default: String(localized: "\(Int((seconds / 86400).rounded())) days")
+        }
+    }
+
+    static func everyForModel(_ seconds: TimeInterval) -> String {
         switch seconds {
         case ..<90: seconds >= 60 ? "1 min" : "\(Int(seconds.rounded())) s"
         case ..<5400: "\(Int((seconds / 60).rounded())) min"
@@ -23,8 +35,37 @@ enum WatchWords {
         }
     }
 
-    /// What the watcher will tell you, in a few words.
+    /// What the watcher will tell you, in a few words: "when it changes".
     static func promise(_ w: Watcher) -> String {
+        switch w.kind {
+        case WatchKind.urlChange:
+            let c = PageCondition(w.condition)
+            if let text = c.contains { return String(localized: "when it says “\(text.clipped(60))”") }
+            if let text = c.notContains { return String(localized: "when “\(text.clipped(60))” is gone") }
+            return String(localized: "when it changes")
+        case WatchKind.siteStatus:
+            switch w.condition.string("becomes") {
+            case "up": return String(localized: "when it's back up")
+            case "down": return String(localized: "when it goes down")
+            default: return String(localized: "when it goes down or comes back")
+            }
+        case WatchKind.fileAppears:
+            return w.condition["gone"]?.boolValue == true ? String(localized: "when it's gone") : String(localized: "when it appears")
+        case WatchKind.fileChanges: return String(localized: "when it changes")
+        case WatchKind.folderNewFile: return String(localized: "when a new file lands")
+        case WatchKind.processExits: return String(localized: "when it quits")
+        case WatchKind.command:
+            let c = CommandCondition(w.condition)
+            if let code = c.exitCode {
+                return code == 0 ? String(localized: "when it succeeds") : String(localized: "when it exits with code \(code)")
+            }
+            if let text = c.outputContains { return String(localized: "when its output has “\(text.clipped(60))”") }
+            return String(localized: "when its output changes")
+        default: return String(localized: "when something happens")
+        }
+    }
+
+    static func promiseForModel(_ w: Watcher) -> String {
         switch w.kind {
         case WatchKind.urlChange:
             let c = PageCondition(w.condition)
@@ -50,31 +91,46 @@ enum WatchWords {
         }
     }
 
+    /// The name a new watcher gets when none is given; people see it, so it is in their language.
     static func defaultTitle(kind: String, config: JSONValue) -> String {
         switch kind {
         case WatchKind.urlChange, WatchKind.siteStatus:
             // Typed as "example.com/pricing", so give it the https:// it will be watched with before naming it.
             return (try? WebTarget.normalise(config.string("url"), allowLocal: true)).map(WebTarget.displayName)
-                ?? (config.string("url") ?? "a web page").clipped(70)
+                ?? (config.string("url") ?? String(localized: "a web page")).clipped(70)
         case WatchKind.folderNewFile:
-            return "\(WatchedPath.name(config.string("path") ?? "")) folder"
+            return String(localized: "\(WatchedPath.name(config.string("path") ?? "")) folder")
         case WatchKind.fileAppears, WatchKind.fileChanges:
             return WatchedPath.name(config.string("path") ?? "")
         case WatchKind.processExits:
             return ProcessExitsProbe.label(config)
         case WatchKind.command:
-            return (config.string("command") ?? "command").clipped(40)
+            return (config.string("command") ?? String(localized: "command")).clipped(40)
         default:
             return kind
         }
     }
 
+    /// "next check in 5 min".
     static func state(_ w: Watcher, now: Date) -> String {
+        switch w.state {
+        case .active:
+            guard let next = w.nextCheckAt else { return String(localized: "active") }
+            let wait = next.timeIntervalSince(now)
+            return wait <= 5 ? String(localized: "checking now") : String(localized: "next check in \(every(wait))")
+        case .paused: return String(localized: "paused")
+        case .triggered: return String(localized: "done (it fired)")
+        case .expired: return String(localized: "expired")
+        case .error: return String(localized: "stuck: \(w.lastError ?? String(localized: "unknown problem"))")
+        }
+    }
+
+    static func stateForModel(_ w: Watcher, now: Date) -> String {
         switch w.state {
         case .active:
             guard let next = w.nextCheckAt else { return "active" }
             let wait = next.timeIntervalSince(now)
-            return wait <= 5 ? "checking now" : "next check in \(every(wait))"
+            return wait <= 5 ? "checking now" : "next check in \(everyForModel(wait))"
         case .paused: return "paused"
         case .triggered: return "done (it fired)"
         case .expired: return "expired"
@@ -87,7 +143,7 @@ enum WatchInput {
     static func level(_ input: JSONValue, caller: Caller) throws -> AttentionLevel {
         guard let text = input.string("level") else { return .attention }
         guard let level = AttentionLevel(rawValue: text.lowercased()), level != .ambient else {
-            throw ToolError.invalidInput("“level” must be gentle, attention or critical.")
+            throw ToolError.invalidInput(String(localized: "“level” must be gentle, attention or critical."))
         }
         // Only the user's own request may be critical.
         return (level == .critical && caller != .user) ? .attention : level
@@ -95,13 +151,13 @@ enum WatchInput {
 
     static func mode(_ input: JSONValue) throws -> Watcher.Mode {
         guard let text = input.string("mode") else { return .once }
-        guard let mode = Watcher.Mode(rawValue: text.lowercased()) else { throw ToolError.invalidInput("“mode” must be once or repeat.") }
+        guard let mode = Watcher.Mode(rawValue: text.lowercased()) else { throw ToolError.invalidInput(String(localized: "“mode” must be once or repeat.")) }
         return mode
     }
 
     static func interval(_ input: JSONValue) throws -> TimeInterval {
         guard let minutes = input["interval_minutes"]?.doubleValue else { return 0 }
-        guard minutes > 0, minutes <= 7 * 24 * 60 else { throw ToolError.invalidInput("“interval_minutes” must be between a fraction of a minute and 7 days.") }
+        guard minutes > 0, minutes <= 7 * 24 * 60 else { throw ToolError.invalidInput(String(localized: "“interval_minutes” must be between a fraction of a minute and 7 days.")) }
         return minutes * 60
     }
 
@@ -126,16 +182,17 @@ enum WatchInput {
             if matches.count > 1 {
                 // An error isn't marked untrusted, so only the user's own titles are quoted in it (T3).
                 let names = matches.prefix(4).map { w in
-                    WatchSource.isUserSourced(w.source) ? "“\(w.title)” (\(w.id.prefix(6)))" : "one from another app or agent (\(w.id.prefix(6)))"
+                    WatchSource.isUserSourced(w.source) ? "“\(w.title)” (\(w.id.prefix(6)))"
+                        : String(localized: "one from another app or agent (\(String(w.id.prefix(6))))")
                 }.joined(separator: ", ")
-                throw ToolError.invalidInput("That matches more than one watcher: \(names). Use the id.")
+                throw ToolError.invalidInput(String(localized: "That matches more than one watcher: \(names). Use the id."))
             }
             return matches.first
         }
         if ref.count >= 4, let w = try pick(mine.filter { $0.id.hasPrefix(ref) }) { return w }
         if let w = try pick(mine.filter { $0.title.caseInsensitiveCompare(ref) == .orderedSame }) { return w }
         if ref.count >= 3, let w = try pick(mine.filter { $0.title.range(of: ref, options: .caseInsensitive) != nil }) { return w }
-        throw ToolError.notFound("a watcher called “\(ref.clipped(60))”")
+        throw ToolError.notFound(String(localized: "a watcher called “\(ref.clipped(60))”"))
     }
 }
 
@@ -146,7 +203,7 @@ struct WatchCreateTool: Tool {
 
     var spec: ToolSpec {
         ToolSpec(
-            name: "watch.create", title: "Watch something",
+            name: "watch.create", title: String(localized: "Watch something"),
             description: """
             Keep an eye on something and tell the user when it happens, even while they are busy. kind: \
             url_change (a web page changed, or now says/stops saying some words), site_status (a website went down or came back up), \
@@ -171,17 +228,18 @@ struct WatchCreateTool: Tool {
     }
 
     func summary(for input: JSONValue) -> String {
-        let target = (input.string("target") ?? "something").clipped(120)
+        let target = (input.string("target") ?? String(localized: "something")).clipped(120)
         switch input.string("kind") {
         case WatchKind.urlChange:
-            if let text = input.string("contains") { return "Watch \(target) until it says “\(text.clipped(40))”" }
-            return "Watch \(target) for changes"
-        case WatchKind.siteStatus: return "Watch whether \(target) is up"
-        case WatchKind.fileAppears: return input["gone"]?.boolValue == true ? "Watch for \(target) to disappear" : "Watch for \(target) to appear"
-        case WatchKind.fileChanges: return "Watch \(target) for changes"
-        case WatchKind.folderNewFile: return "Watch \(target) for new files"
-        case WatchKind.processExits: return "Tell you when \(target) quits"
-        default: return "Watch \(target)"
+            if let text = input.string("contains") { return String(localized: "Watch \(target) until it says “\(text.clipped(40))”") }
+            return String(localized: "Watch \(target) for changes")
+        case WatchKind.siteStatus: return String(localized: "Watch whether \(target) is up")
+        case WatchKind.fileAppears:
+            return input["gone"]?.boolValue == true ? String(localized: "Watch for \(target) to disappear") : String(localized: "Watch for \(target) to appear")
+        case WatchKind.fileChanges: return String(localized: "Watch \(target) for changes")
+        case WatchKind.folderNewFile: return String(localized: "Watch \(target) for new files")
+        case WatchKind.processExits: return String(localized: "Tell you when \(target) quits")
+        default: return String(localized: "Watch \(target)")
         }
     }
 
@@ -200,9 +258,9 @@ struct WatchCreateTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let kind = input.string("kind"), WatchKind.creatable.contains(kind) else {
-            throw ToolError.invalidInput("“kind” must be one of \(WatchKind.creatable.joined(separator: ", ")).")
+            throw ToolError.invalidInput(String(localized: "“kind” must be one of \(WatchKind.creatable.joined(separator: ", "))."))
         }
-        guard let target = input.string("target") else { throw ToolError.invalidInput("Tell me what to watch (“target”).") }
+        guard let target = input.string("target") else { throw ToolError.invalidInput(String(localized: "Tell me what to watch (“target”).")) }
 
         var config: JSONValue = .object([:])
         var condition: JSONValue = .object([:])
@@ -249,10 +307,10 @@ struct WatchCreateTool: Tool {
 
 enum WatchResults {
     static func started(_ w: Watcher, requested: TimeInterval, engine: WatcherEngine, look: FirstLook = FirstLook()) -> ToolResult {
-        let every = WatchWords.every(w.intervalS)
-        var text = "Watching \(w.title) every \(every); I'll tell the user \(WatchWords.promise(w)). Its id is \(w.id)."
-        var title = "Watching \(w.title) every \(every)"
-        var subtitle = "I'll tell you \(WatchWords.promise(w))"
+        let every = WatchWords.everyForModel(w.intervalS)
+        var text = "Watching \(w.title) every \(every); I'll tell the user \(WatchWords.promiseForModel(w)). Its id is \(w.id)."
+        var title = String(localized: "Watching \(w.title) every \(WatchWords.every(w.intervalS))")
+        var subtitle = String(localized: "I'll tell you \(WatchWords.promise(w))")
         // The first look has already gone wrong: say so instead of promising something that is not happening yet.
         if let trouble = WatchTrouble(w, look) {
             title = trouble.title
@@ -261,13 +319,13 @@ enum WatchResults {
         }
         if requested > 0, w.intervalS > requested { text += " That's the shortest gap allowed for this kind of watcher." }
         if let expires = w.expiresAt {
-            text += " It stops on its own after \(WatchWords.every(expires.timeIntervalSince(w.createdAt)))."
+            text += " It stops on its own after \(WatchWords.everyForModel(expires.timeIntervalSince(w.createdAt)))."
         }
         let card = ResultCard(kind: .watcher, title: title, subtitle: subtitle,
-                              detail: w.mode == .repeat ? "Keeps going until you stop it" : "Stops after telling you once",
+                              detail: w.mode == .repeat ? String(localized: "Keeps going until you stop it") : String(localized: "Stops after telling you once"),
                               refId: w.id, url: w.config.string("url"))
         let id = w.id
-        let undo = UndoAction(label: "Stopped watching \(w.title)") { _ = await engine.remove(id) }
+        let undo = UndoAction(label: String(localized: "Stopped watching \(w.title)")) { _ = await engine.remove(id) }
         return ToolResult(text: text, card: card, undo: undo)
     }
 }
@@ -279,7 +337,7 @@ struct WatchCommandTool: Tool {
 
     var spec: ToolSpec {
         ToolSpec(
-            name: "watch.command", title: "Watch with a command",
+            name: "watch.command", title: String(localized: "Watch with a command"),
             description: """
             Run a shell command on a schedule and tell the user when the result matches (it exits with a given code, \
             its output has some words, or its output changes). The user approves the exact command first. \
@@ -299,7 +357,7 @@ struct WatchCommandTool: Tool {
             risk: .high, capabilities: [.watch, .shell], category: .watch, mutates: true, external: false)
     }
 
-    func summary(for input: JSONValue) -> String { "Run “\((input.string("command") ?? "").clipped(160))” on a schedule" }
+    func summary(for input: JSONValue) -> String { String(localized: "Run “\((input.string("command") ?? "").clipped(160))” on a schedule") }
 
     func scope(for input: JSONValue) -> ToolScope {
         var scope = ToolScope(command: input.string("command"))
@@ -312,16 +370,18 @@ struct WatchCommandTool: Tool {
     func refusal(for input: JSONValue, context: ToolContext) -> String? {
         guard !WatchSource.mayRunCommands(WatchSource.string(for: context)) else { return nil }
         if context.tainted, ["user", "agent"].contains(context.caller.kind) {
-            return "I can't set up a command watcher in this conversation: it has read content from outside, "
-                + "so the command might not be the user's own. Ask again in a new conversation."
+            return String(localized: """
+                I can't set up a command watcher in this conversation: it has read content from outside, \
+                so the command might not be the user's own. Ask again in a new conversation.
+                """)
         }
-        return "Only you, or Sidefolk with your approval, can set up a command watcher."
+        return String(localized: "Only you, or Sidefolk with your approval, can set up a command watcher.")
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         // Defence in depth: Guard never offers this tool to these callers, and the engine refuses them too.
         if let why = refusal(for: input, context: context) { throw ToolError.unavailable(why) }
-        guard let command = input.string("command") else { throw ToolError.invalidInput("Tell me which command to run.") }
+        guard let command = input.string("command") else { throw ToolError.invalidInput(String(localized: "Tell me which command to run.")) }
         var config: JSONValue = ["command": .string(command)]
         if let cwd = input.string("cwd") { config = config.setting("cwd", .string(cwd)) }
         var condition: JSONValue = .object([:])
@@ -354,22 +414,22 @@ struct WatchTrouble {
         let name = w.title
         switch w.kind {
         case WatchKind.siteStatus:
-            title = "I can't reach \(name) right now"
+            title = String(localized: "I can't reach \(name) right now")
             subtitle = w.condition.string("becomes") == "down"
-                ? "\(Self.sentence(why)) It's already down, so I'll tell you if it comes back and goes down again."
-                : "\(Self.sentence(why)) I'll keep checking and tell you when it's back up."
+                ? String(localized: "\(Self.sentence(why)) It's already down, so I'll tell you if it comes back and goes down again.")
+                : String(localized: "\(Self.sentence(why)) I'll keep checking and tell you when it's back up.")
             forTheModel = "it isn't answering right now (\(Self.plain(why))). I'll keep checking."
         case WatchKind.urlChange:
-            title = "I can't reach \(name) right now"
-            subtitle = "\(Self.sentence(why)) I'll keep trying."
+            title = String(localized: "I can't reach \(name) right now")
+            subtitle = String(localized: "\(Self.sentence(why)) I'll keep trying.")
             forTheModel = "I can't reach it right now (\(Self.plain(why))). I'll keep trying."
         case WatchKind.processExits:
             title = Self.plain(why)
-            subtitle = "I'll tell you if it starts and then quits."
+            subtitle = String(localized: "I'll tell you if it starts and then quits.")
             forTheModel = "\(Self.plain(why)). I'll tell the user if it starts and then quits."
         default:
-            title = "I can't check \(name) right now"
-            subtitle = "\(Self.sentence(why)) I'll keep trying."
+            title = String(localized: "I can't check \(name) right now")
+            subtitle = String(localized: "\(Self.sentence(why)) I'll keep trying.")
             forTheModel = "the first check failed (\(Self.plain(why))). I'll keep trying."
         }
     }
@@ -384,22 +444,26 @@ struct WatchListTool: Tool {
     let engine: WatcherEngine
 
     var spec: ToolSpec {
-        ToolSpec(name: "watch.list", title: "List watchers", description: "List what Sidefolk is watching, with each watcher's id and state.",
+        ToolSpec(name: "watch.list", title: String(localized: "List watchers"), description: "List what Sidefolk is watching, with each watcher's id and state.",
                  inputSchema: Schema.object([:]), risk: .low, capabilities: [.watch], category: .watch, mutates: false, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { "List what I'm watching" }
+    func summary(for input: JSONValue) -> String { String(localized: "List what I'm watching") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let all = await engine.list().filter { WatchSource.canManage(caller: context.caller, watcherSource: $0.source) }
         guard !all.isEmpty else {
-            return ToolResult(text: "Nothing is being watched.", card: ResultCard(kind: .list, title: "Nothing is being watched"))
+            return ToolResult(text: "Nothing is being watched.", card: ResultCard(kind: .list, title: String(localized: "Nothing is being watched")))
         }
         let lines = all.prefix(50).map { w in
-            "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.state(w, now: context.now)), every \(WatchWords.every(w.intervalS))"
+            "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.stateForModel(w, now: context.now)), every \(WatchWords.everyForModel(w.intervalS))"
                 + (w.fireCount > 0 ? ", fired \(w.fireCount)×" : "")
         }
-        let card = ResultCard(kind: .list, title: all.count == 1 ? "1 watcher" : "\(all.count) watchers", detail: lines.joined(separator: "\n"))
+        let shown = all.prefix(50).map { w in
+            let line = String(localized: "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.state(w, now: context.now)), every \(WatchWords.every(w.intervalS))")
+            return w.fireCount > 0 ? line + String(localized: ", fired \(w.fireCount)×") : line
+        }
+        let card = ResultCard(kind: .list, title: String(localized: "\(all.count) watchers"), detail: shown.joined(separator: "\n"))
         // Titles made by other agents, extensions, routines or a tainted turn are not the user's words.
         let outside = all.contains { !WatchSource.isUserSourced($0.source) }
         return ToolResult(text: lines.joined(separator: "\n"), card: card, untrusted: outside)
@@ -410,19 +474,20 @@ struct WatchStopTool: Tool {
     let engine: WatcherEngine
 
     var spec: ToolSpec {
-        ToolSpec(name: "watch.stop", title: "Stop watching", description: "Stop and remove a watcher. id is its id or its title.",
+        ToolSpec(name: "watch.stop", title: String(localized: "Stop watching"), description: "Stop and remove a watcher. id is its id or its title.",
                  inputSchema: Schema.object(["id": Schema.string("The watcher's id (or its title).")], required: ["id"]),
                  risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { "Stop watching “\((input.string("id") ?? "").clipped(60))”" }
+    func summary(for input: JSONValue) -> String { String(localized: "Stop watching “\((input.string("id") ?? "").clipped(60))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let w = try await WatchInput.resolve(input.string("id") ?? "", caller: context.caller, engine: engine)
-        guard let removed = await engine.remove(w.id) else { throw ToolError.notFound("that watcher") }
+        guard let removed = await engine.remove(w.id) else { throw ToolError.notFound(String(localized: "that watcher")) }
         let engine = self.engine
-        let undo = UndoAction(label: "Watching \(removed.title) again") { _ = try await engine.add(removed) }
-        return ToolResult(text: "Stopped watching \(removed.title).", card: ResultCard(kind: .watcher, title: "Stopped watching \(removed.title)", refId: removed.id),
+        let undo = UndoAction(label: String(localized: "Watching \(removed.title) again")) { _ = try await engine.add(removed) }
+        return ToolResult(text: "Stopped watching \(removed.title).",
+                          card: ResultCard(kind: .watcher, title: String(localized: "Stopped watching \(removed.title)"), refId: removed.id),
                           undo: undo, untrusted: !WatchSource.isUserSourced(removed.source))
     }
 }
@@ -431,20 +496,20 @@ struct WatchPauseTool: Tool {
     let engine: WatcherEngine
 
     var spec: ToolSpec {
-        ToolSpec(name: "watch.pause", title: "Pause a watcher", description: "Pause a watcher without removing it. id is its id or its title.",
+        ToolSpec(name: "watch.pause", title: String(localized: "Pause a watcher"), description: "Pause a watcher without removing it. id is its id or its title.",
                  inputSchema: Schema.object(["id": Schema.string("The watcher's id (or its title).")], required: ["id"]),
                  risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: false)
     }
 
-    func summary(for input: JSONValue) -> String { "Pause “\((input.string("id") ?? "").clipped(60))”" }
+    func summary(for input: JSONValue) -> String { String(localized: "Pause “\((input.string("id") ?? "").clipped(60))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let w = try await WatchInput.resolve(input.string("id") ?? "", caller: context.caller, engine: engine)
         let paused: Watcher
         do { paused = try await engine.pause(w.id) } catch { throw WatchInput.watchError(error) }
         let engine = self.engine
-        let undo = UndoAction(label: "Resumed \(paused.title)") { _ = try await engine.resume(paused.id) }
-        return ToolResult(text: "Paused \(paused.title).", card: ResultCard(kind: .watcher, title: "Paused \(paused.title)", refId: paused.id),
+        let undo = UndoAction(label: String(localized: "Resumed \(paused.title)")) { _ = try await engine.resume(paused.id) }
+        return ToolResult(text: "Paused \(paused.title).", card: ResultCard(kind: .watcher, title: String(localized: "Paused \(paused.title)"), refId: paused.id),
                           undo: undo, untrusted: !WatchSource.isUserSourced(paused.source))
     }
 }
@@ -453,20 +518,22 @@ struct WatchResumeTool: Tool {
     let engine: WatcherEngine
 
     var spec: ToolSpec {
-        ToolSpec(name: "watch.resume", title: "Resume a watcher", description: "Start a paused, finished or expired watcher again. id is its id or its title.",
+        ToolSpec(name: "watch.resume", title: String(localized: "Resume a watcher"),
+                 description: "Start a paused, finished or expired watcher again. id is its id or its title.",
                  inputSchema: Schema.object(["id": Schema.string("The watcher's id (or its title).")], required: ["id"]),
                  risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: false)
     }
 
-    func summary(for input: JSONValue) -> String { "Resume “\((input.string("id") ?? "").clipped(60))”" }
+    func summary(for input: JSONValue) -> String { String(localized: "Resume “\((input.string("id") ?? "").clipped(60))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let w = try await WatchInput.resolve(input.string("id") ?? "", caller: context.caller, engine: engine)
         let resumed: Watcher
         do { resumed = try await engine.resume(w.id) } catch { throw WatchInput.watchError(error) }
         let engine = self.engine
-        let undo = UndoAction(label: "Paused \(resumed.title)") { _ = try await engine.pause(resumed.id) }
-        return ToolResult(text: "Watching \(resumed.title) again.", card: ResultCard(kind: .watcher, title: "Watching \(resumed.title) again", refId: resumed.id),
+        let undo = UndoAction(label: String(localized: "Paused \(resumed.title)")) { _ = try await engine.pause(resumed.id) }
+        return ToolResult(text: "Watching \(resumed.title) again.",
+                          card: ResultCard(kind: .watcher, title: String(localized: "Watching \(resumed.title) again"), refId: resumed.id),
                           undo: undo, untrusted: !WatchSource.isUserSourced(resumed.source))
     }
 }

@@ -21,11 +21,11 @@ public enum SkillTools {
 
 struct ListSkillsTool: Tool {
     let library: SkillLibrary
-    let spec = ToolSpec(name: "skills.list", title: "List skills",
+    let spec = ToolSpec(name: "skills.list", title: String(localized: "List skills"),
                         description: "Lists the skills Sidefolk knows: step-by-step instructions for recurring jobs. Load one with skills.load before following it.",
                         inputSchema: Schema.object([:]), risk: .low, capabilities: [], category: .agents, mutates: false)
 
-    func summary(for input: JSONValue) -> String { "List skills" }
+    func summary(for input: JSONValue) -> String { String(localized: "List skills") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let skills = library.index()
@@ -38,16 +38,16 @@ struct ListSkillsTool: Tool {
 
 struct LoadSkillTool: Tool {
     let library: SkillLibrary
-    let spec = ToolSpec(name: "skills.load", title: "Load a skill",
+    let spec = ToolSpec(name: "skills.load", title: String(localized: "Load a skill"),
                         description: "Returns a skill's instructions so you can follow them.",
                         inputSchema: Schema.object(["name": Schema.string("The skill's name, from skills.list.")], required: ["name"]),
                         risk: .low, capabilities: [], category: .agents, mutates: false)
 
-    func summary(for input: JSONValue) -> String { "Load the skill “\(input.string("name") ?? "")”" }
+    func summary(for input: JSONValue) -> String { String(localized: "Load the skill “\(input.string("name") ?? "")”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let name = input.string("name"), let skill = library.skill(named: name) else {
-            throw ToolError.notFound("a skill called “\(input.string("name") ?? "")”")
+            throw ToolError.notFound(String(localized: "a skill called “\(input.string("name") ?? "")”"))
         }
         var header = "Skill: \(skill.name)\n\(skill.description)"
         if !skill.tools.isEmpty { header += "\nTools it uses: \(skill.tools.joined(separator: ", "))" }
@@ -61,7 +61,7 @@ struct LoadSkillTool: Tool {
 struct CreateSkillTool: Tool {
     let library: SkillLibrary
     let spec = ToolSpec(
-        name: "skills.create", title: "Create a skill",
+        name: "skills.create", title: String(localized: "Create a skill"),
         description: "Saves new step-by-step instructions as a skill for a job the user will ask for again. The user sees the full text before it is saved.",
         inputSchema: Schema.object([
             "name": Schema.string("Short name: lowercase letters, digits and dashes, like weekly-plan."),
@@ -71,7 +71,7 @@ struct CreateSkillTool: Tool {
         risk: .medium, capabilities: [], category: .agents, mutates: true)
 
     func summary(for input: JSONValue) -> String {
-        "Create the skill “\(input.string("name") ?? "")”: \(input.string("description") ?? "")"
+        String(localized: "Create the skill “\(input.string("name") ?? "")”: \(input.string("description") ?? "")")
     }
 
     /// The approval card shows this verbatim, and an "always" grant can only ever match this exact text.
@@ -93,20 +93,20 @@ struct CreateSkillTool: Tool {
                                        instructions: input["instructions"]?.stringValue ?? "",
                                        source: SkillTools.source(for: context.caller))
         let library = self.library
-        let undo = UndoAction(label: "Remove the skill “\(name)”") { try library.delete(name: name) }
-        return ToolResult(text: "Saved the skill “\(skill.name)”.", card: ResultCard(kind: .info, title: skill.name, subtitle: "New skill"),
+        let undo = UndoAction(label: String(localized: "Remove the skill “\(name)”")) { try library.delete(name: name) }
+        return ToolResult(text: "Saved the skill “\(skill.name)”.", card: ResultCard(kind: .info, title: skill.name, subtitle: String(localized: "New skill")),
                           undo: undo)
     }
 }
 
 struct DeleteSkillTool: Tool {
     let library: SkillLibrary
-    let spec = ToolSpec(name: "skills.delete", title: "Delete a skill",
+    let spec = ToolSpec(name: "skills.delete", title: String(localized: "Delete a skill"),
                         description: "Moves a skill the user or Sidefolk created to the Trash. Built-in skills can't be deleted.",
                         inputSchema: Schema.object(["name": Schema.string("The skill's name.")], required: ["name"]),
                         risk: .medium, capabilities: [], category: .agents, mutates: true)
 
-    func summary(for input: JSONValue) -> String { "Move the skill “\(input.string("name") ?? "")” to the Trash" }
+    func summary(for input: JSONValue) -> String { String(localized: "Move the skill “\(input.string("name") ?? "")” to the Trash") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         switch context.caller {
@@ -118,8 +118,8 @@ struct DeleteSkillTool: Tool {
         let name = input.string("name") ?? ""
         let trashed = try library.delete(name: name)
         let library = self.library
-        let undo = trashed.map { url in UndoAction(label: "Put back the skill “\(name)”") { try library.restore(url, name: name) } }
-        return ToolResult(text: "Moved the skill “\(name)” to the Trash.", card: ResultCard(kind: .info, title: name, subtitle: "Deleted"),
+        let undo = trashed.map { url in UndoAction(label: String(localized: "Put back the skill “\(name)”")) { try library.restore(url, name: name) } }
+        return ToolResult(text: "Moved the skill “\(name)” to the Trash.", card: ResultCard(kind: .info, title: name, subtitle: String(localized: "Deleted")),
                           undo: undo)
     }
 }

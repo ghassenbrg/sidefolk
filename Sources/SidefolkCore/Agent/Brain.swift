@@ -72,7 +72,7 @@ public final class BrainToolbox: Sendable {
     public func call(_ name: String, input: JSONValue) async -> ToolOutcome {
         let allowed = specs.contains { $0.name == name || $0.modelName == name } && !closed.withLock { $0 }
         guard allowed else {
-            let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system,
+            let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: String(localized: "Not available"), category: .system,
                                    caller: .agent(runId: runId), error: "Tool not available")
             return ToolOutcome(activity: act, status: .failed(UserFacingError("The tool \(name) isn't available here.")))
         }

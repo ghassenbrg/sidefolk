@@ -133,7 +133,7 @@ public actor SessionTracker {
             if session.title == nil, let prompt = e.prompt, !prompt.isEmpty { session.title = prompt }
             if before != .working { workingSince[session.id] = now }
             session.state = .working
-            session.detail = e.toolName.map { "Using \($0)" }
+            session.detail = e.toolName.map { String(localized: "Using \($0)") }
             session.endedAt = nil
             await withdrawNeedsYou(session.id)
         case "Notification":
@@ -142,18 +142,18 @@ public actor SessionTracker {
             // finished tap already covered that.
             if e.notificationType == "idle_prompt", before == .idle { break }
             session.state = .needsYou
-            session.detail = e.message ?? "Waiting for you"
+            session.detail = e.message ?? String(localized: "Waiting for you")
             if before != .needsYou { await tapNeedsYou(session) }
         case "Stop":
             guard before != .idle else { break }
             session.state = .idle
-            session.detail = "Finished"
+            session.detail = String(localized: "Finished")
             await withdrawNeedsYou(session.id)
             let started = workingSince.removeValue(forKey: session.id) ?? (before == .working ? session.startedAt : now)
             await tapFinished(session, worked: now.timeIntervalSince(started))
         case "SessionEnd":
             session.state = .finished
-            session.detail = "Ended"
+            session.detail = String(localized: "Ended")
             session.endedAt = now
             workingSince[session.id] = nil
             await withdrawNeedsYou(session.id)
@@ -170,8 +170,8 @@ public actor SessionTracker {
 
     private func tapNeedsYou(_ s: AgentSession) async {
         let item = await attention.post(AttentionRequest(
-            level: .attention, source: "session:\(s.id)", title: "\(Self.agentName(s.agent)) needs you in \(Self.project(s))",
-            body: s.detail, actions: [AttentionAction(id: "open", title: "Open", isPrimary: true), AttentionAction(id: "dismiss", title: "Dismiss")],
+            level: .attention, source: "session:\(s.id)", title: String(localized: "\(Self.agentName(s.agent)) needs you in \(Self.project(s))"),
+            body: s.detail, actions: Self.actions,
             refKind: "session", refId: s.id))
         needsYouItem[s.id] = item.id
     }
@@ -179,9 +179,14 @@ public actor SessionTracker {
     private func tapFinished(_ s: AgentSession, worked: TimeInterval) async {
         await attention.post(AttentionRequest(
             level: worked >= Self.longWork ? .attention : .gentle, source: "session:\(s.id)",
-            title: "\(Self.agentName(s.agent)) finished in \(Self.project(s))", body: s.title,
-            actions: [AttentionAction(id: "open", title: "Open", isPrimary: true), AttentionAction(id: "dismiss", title: "Dismiss")],
+            title: String(localized: "\(Self.agentName(s.agent)) finished in \(Self.project(s))"), body: s.title,
+            actions: Self.actions,
             refKind: "session", refId: s.id))
+    }
+
+    private static var actions: [AttentionAction] {
+        [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true),
+         AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))]
     }
 
     private func withdrawNeedsYou(_ sessionId: String) async {
@@ -197,5 +202,5 @@ public actor SessionTracker {
         }
     }
 
-    static func project(_ s: AgentSession) -> String { s.projectName ?? "a session" }
+    static func project(_ s: AgentSession) -> String { s.projectName ?? String(localized: "a session") }
 }

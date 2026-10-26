@@ -52,4 +52,9 @@ public struct ParsedIntent: Sendable, Equatable {
         self.intent = intent
         self.hint = hint
     }
+
+    /// A hint from its parts in the app's language, ending with the promise that no AI is involved.
+    static func hint(_ parts: String...) -> String {
+        (parts + [String(localized: "no AI")]).joined(separator: " · ")
+    }
 }

@@ -169,14 +169,14 @@ final class ExtensionIntegrity: Sendable {
 
     /// Nil when every file matches its pin; otherwise a sentence saying what changed.
     func verify(id: String, folder: String, pins: [ExtensionFilePin], now: Date = Date()) -> String? {
-        guard let st = ExtensionFS.lstat(folder), ExtensionFS.isDirectory(st) else { return "Its folder is missing." }
+        guard let st = ExtensionFS.lstat(folder), ExtensionFS.isDirectory(st) else { return String(localized: "Its folder is missing.") }
         let entries: [ExtensionFiles.Entry]
-        do { entries = try ExtensionFiles.walk(folder) } catch { return "Its folder now contains a link or a special file." }
+        do { entries = try ExtensionFiles.walk(folder) } catch { return String(localized: "Its folder now contains a link or a special file.") }
         let files = entries.filter { !$0.isDirectory }
         let pinned = Dictionary(uniqueKeysWithValues: pins.map { ($0.path, $0) })
-        if let extra = files.first(where: { pinned[$0.path] == nil }) { return "A file was added: \(extra.path)." }
+        if let extra = files.first(where: { pinned[$0.path] == nil }) { return String(localized: "A file was added: \(extra.path).") }
         let present = Set(files.map(\.path))
-        if let missing = pins.first(where: { !present.contains($0.path) }) { return "A file is missing: \(missing.path)." }
+        if let missing = pins.first(where: { !present.contains($0.path) }) { return String(localized: "A file is missing: \(missing.path).") }
 
         let previous = cache.withLock { $0[id] }
         let full = previous.map { now.timeIntervalSince($0.fullAt) >= fullInterval } ?? true
@@ -189,7 +189,7 @@ final class ExtensionIntegrity: Sendable {
             guard fp.mode == pin.mode, fp.size == pin.size,
                   (try? ExtensionHash.sha256(file: folder + "/" + f.path)) == pin.sha256 else {
                 cache.withLock { $0[id] = nil }
-                return "A file changed: \(f.path)."
+                return String(localized: "A file changed: \(f.path).")
             }
         }
         cache.withLock { $0[id] = Verified(fingerprints: fingerprints, fullAt: full ? now : previous!.fullAt) }

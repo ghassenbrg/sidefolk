@@ -124,32 +124,36 @@ public actor JobTracker {
         let took = formatDuration(duration)
         let title: String
         switch job.state {
-        case .succeeded: title = "\(job.title) finished in \(took)"
-        case .cancelled: title = "\(job.title) was stopped after \(took)"
-        default: title = "\(job.title) failed (exit \(job.exitCode ?? -1))"
+        case .succeeded: title = String(localized: "\(job.title) finished in \(took)")
+        case .cancelled: title = String(localized: "\(job.title) was stopped after \(took)")
+        default: title = String(localized: "\(job.title) failed (exit \(job.exitCode ?? -1))")
         }
         let quiet = duration < shortJob || job.state == .cancelled
         guard job.state == .failed else {
             return AttentionRequest(level: quiet ? .gentle : .attention, source: "job", title: title,
-                                    actions: quiet ? [] : [AttentionAction(id: "dismiss", title: "Dismiss", isPrimary: true)],
+                                    actions: quiet ? [] : [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"), isPrimary: true)],
                                     refKind: "job", refId: job.id)
         }
         // A failure says what it printed last, when, and where, with the two things you'd do next.
-        let when = duration < 1 ? "Right away" : "After \(took)"
-        let place = job.cwd.map { " in \(URL(fileURLWithPath: $0).lastPathComponent)" } ?? ""
-        let body = [job.outputTail, when + place].compactMap { $0 }.joined(separator: "\n")
+        let when: String
+        switch (duration < 1, job.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }) {
+        case (true, nil): when = String(localized: "Right away")
+        case (true, let folder?): when = String(localized: "Right away in \(folder)")
+        case (false, nil): when = String(localized: "After \(took)")
+        case (false, let folder?): when = String(localized: "After \(took) in \(folder)")
+        }
+        let body = [job.outputTail, when].compactMap { $0 }.joined(separator: "\n")
         var actions: [AttentionAction] = []
-        if job.command != nil { actions.append(AttentionAction(id: "copy", title: "Copy command", isPrimary: true)) }
-        if job.cwd != nil { actions.append(AttentionAction(id: "open", title: "Open folder")) }
+        if job.command != nil { actions.append(AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true)) }
+        if job.cwd != nil { actions.append(AttentionAction(id: "open", title: String(localized: "Open folder"))) }
         return AttentionRequest(level: quiet ? .gentle : .attention, source: "job", title: title, body: body,
                                 actions: actions, refKind: "job", refId: job.id)
     }
 
-    /// "4m 12s", "12s", "1h 3m".
+    /// "4m 12s", "12s", "1h 3m", in the app's language.
     public static func formatDuration(_ seconds: TimeInterval) -> String {
         let s = Int(seconds.rounded())
-        if s < 60 { return "\(s)s" }
-        if s < 3600 { return "\(s / 60)m \(s % 60)s" }
-        return "\(s / 3600)h \((s % 3600) / 60)m"
+        let units: Set<Duration.UnitsFormatStyle.Unit> = s < 3600 ? [.minutes, .seconds] : [.hours, .minutes]
+        return Duration.seconds(s).formatted(.units(allowed: units, width: .narrow).locale(Wording.locale))
     }
 }

@@ -67,10 +67,11 @@ public enum ReminderTools {
             }
         }
 
-        func line(_ r: Reminder, now: Date) -> String {
+        /// One reminder for the model, in English.
+        func line(_ r: Reminder) -> String {
             var s = "\(r.id) · \(r.title)"
-            if let due = r.nextDue { s += " · \(TimeFormat.when(due, now: now, calendar: calendar))" }
-            if let rule = r.recurrence { s += " · \(TimeFormat.recurrence(rule))" }
+            if let due = r.nextDue { s += " · \(TimeFormat.full(due, calendar: calendar))" }
+            if let rule = r.recurrence { s += " · \(TimeFormat.recurrenceForModel(rule))" }
             if r.state != .scheduled { s += " · \(r.state.rawValue)" }
             return s
         }
@@ -78,14 +79,14 @@ public enum ReminderTools {
         func card(_ r: Reminder, now: Date, prefix: String? = nil) -> ResultCard {
             var parts: [String] = []
             if let due = r.nextDue { parts.append(TimeFormat.when(due, now: now, calendar: calendar)) }
-            if let rule = r.recurrence { parts.append(TimeFormat.recurrence(rule)) }
+            if let rule = r.recurrence { parts.append(TimeFormat.recurrence(rule, calendar: calendar)) }
             if let prefix { parts.insert(prefix, at: 0) }
             return ResultCard(kind: .reminder, title: r.title, subtitle: parts.isEmpty ? nil : parts.joined(separator: " · "), refId: r.id)
         }
 
         func existing(_ input: JSONValue) async throws -> Reminder {
-            guard let id = input.string("id") else { throw ToolError.invalidInput("“id” is required") }
-            guard let r = await scheduler.reminder(matching: id) else { throw ToolError.notFound("a reminder with id \(id)") }
+            guard let id = input.string("id") else { throw ToolError.invalidInput(String(localized: "“id” is required")) }
+            guard let r = await scheduler.reminder(matching: id) else { throw ToolError.notFound(String(localized: "a reminder with id \(id)")) }
             return r
         }
     }
@@ -98,7 +99,7 @@ public enum ReminderTools {
 
         var spec: ToolSpec {
             ToolSpec(
-                name: "reminders.create", title: "Set a reminder",
+                name: "reminders.create", title: String(localized: "Set a reminder"),
                 description: """
                 Remind the user about something at a time. `when` takes plain language ("tomorrow morning", "in 20 minutes", \
                 "friday at 3pm", "every weekday at 9") or ISO 8601. Reminders survive restarts and show a bubble with Done and Snooze. \
@@ -122,12 +123,13 @@ public enum ReminderTools {
         }
 
         func summary(for input: JSONValue) -> String {
-            "Remind you “\((input.string("title") ?? "…").clipped(80))” \(input.string("when") ?? "")".trimmingCharacters(in: .whitespaces)
+            String(localized: "Remind you “\((input.string("title") ?? "…").clipped(80))” \(input.string("when") ?? "")")
+                .trimmingCharacters(in: .whitespaces)
         }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-            guard let title = input.string("title") else { throw ToolError.invalidInput("“title” is required") }
-            guard let whenText = input.string("when") else { throw ToolError.invalidInput("“when” is required") }
+            guard let title = input.string("title") else { throw ToolError.invalidInput(String(localized: "“title” is required")) }
+            guard let whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
             let now = context.now
             let parsed = try shared.future(whenText, now: now)
             let calendar = shared.calendar
@@ -147,7 +149,7 @@ public enum ReminderTools {
             }
 
             let asked = input.string("level").map { $0.lowercased() }.flatMap(AttentionLevel.init(rawValue:)) ?? .attention
-            guard asked != .ambient else { throw ToolError.invalidInput("“level” must be gentle, attention or critical") }
+            guard asked != .ambient else { throw ToolError.invalidInput(String(localized: "“level” must be gentle, attention or critical")) }
             // Critical breaks through Quiet mode, full screen and the away hold with sound, so only the
             // user's own click sets it (SECURITY T24); agents get attention at most.
             let level = context.caller == .user ? asked : min(asked, .attention)
@@ -165,31 +167,34 @@ public enum ReminderTools {
             let id = reminder.id
             let scheduler = shared.scheduler
             var text = "Reminder set: “\(reminder.title)” for \(TimeFormat.full(date, calendar: calendar))"
-            if let rule { text += ", repeating \(TimeFormat.recurrence(rule))" }
+            if let rule { text += ", repeating \(TimeFormat.recurrenceForModel(rule))" }
             if reminder.level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(id)"
             return ToolResult(
                 text: text, card: shared.card(reminder, now: now),
-                undo: UndoAction(label: "Cancel reminder") { _ = try await scheduler.cancel(id: id) }
+                undo: UndoAction(label: String(localized: "Cancel reminder")) { _ = try await scheduler.cancel(id: id) }
             )
         }
 
         private func recurrence(from json: JSONValue?, now: Date) throws -> Recurrence? {
             guard let json, json.objectValue != nil else { return nil }
-            guard let name = json.string("frequency")?.lowercased() else { throw ToolError.invalidInput("recurrence needs a “frequency”") }
+            guard let name = json.string("frequency")?.lowercased() else { throw ToolError.invalidInput(String(localized: "recurrence needs a “frequency”")) }
             let synonyms = ["hour": "hourly", "day": "daily", "week": "weekly", "month": "monthly", "year": "yearly", "weekday": "weekdays"]
             guard let frequency = Recurrence.Frequency(rawValue: synonyms[name] ?? name) else {
-                throw ToolError.invalidInput("recurrence frequency must be one of \(Recurrence.Frequency.allCases.map(\.rawValue).joined(separator: ", "))")
+                let names = Recurrence.Frequency.allCases.map(\.rawValue).joined(separator: ", ")
+                throw ToolError.invalidInput(String(localized: "recurrence frequency must be one of \(names)"))
             }
             var days: [Int] = []
             for value in json["weekdays"]?.arrayValue ?? [] {
-                guard let d = Self.isoWeekday(value) else { throw ToolError.invalidInput("weekdays are 1 (Monday) to 7 (Sunday)") }
+                guard let d = Self.isoWeekday(value) else { throw ToolError.invalidInput(String(localized: "weekdays are 1 (Monday) to 7 (Sunday)")) }
                 days.append(d)
             }
             var rule = Recurrence(frequency: frequency, interval: json["interval"]?.intValue ?? 1, weekdays: Array(Set(days)).sorted())
             if let untilText = json.string("until") {
                 let p = shared.parser()
-                guard let until = p.parse(untilText, now: now) else { throw ToolError.invalidInput("couldn't read the end date “\(untilText.clipped(40))”") }
+                guard let until = p.parse(untilText, now: now) else {
+                    throw ToolError.invalidInput(String(localized: "couldn't read the end date “\(untilText.clipped(40))”"))
+                }
                 // A date without a time ends at the end of that day.
                 rule.until = until.hasTime ? until.date : (p.calendar.date(byAdding: .day, value: 1, to: p.calendar.startOfDay(for: until.date))?.addingTimeInterval(-1) ?? until.date)
             }
@@ -212,27 +217,27 @@ public enum ReminderTools {
 
         var spec: ToolSpec {
             ToolSpec(
-                name: "reminders.list", title: "List reminders",
+                name: "reminders.list", title: String(localized: "List reminders"),
                 description: "List the user's upcoming reminders, soonest first, with their ids. Set include_done to also see recently finished ones.",
                 inputSchema: Schema.object(["include_done": Schema.boolean("Also list recently fired, done and cancelled reminders.")]),
                 risk: .low, capabilities: [.time], category: .time, mutates: false, external: true
             )
         }
 
-        func summary(for input: JSONValue) -> String { "List your reminders" }
+        func summary(for input: JSONValue) -> String { String(localized: "List your reminders") }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let now = context.now
             let upcoming = await shared.scheduler.upcoming()
-            var lines = upcoming.map { shared.line($0, now: now) }
+            var lines = upcoming.map { shared.line($0) }
             let includeDone = input["include_done"]?.boolValue ?? false
             var finished: [Reminder] = []
             if includeDone {
                 finished = await shared.scheduler.recent(limit: 20)
-                lines += finished.map { shared.line($0, now: now) }
+                lines += finished.map { shared.line($0) }
             }
             let count = upcoming.count
-            let title = count == 0 ? "No upcoming reminders" : (count == 1 ? "1 upcoming reminder" : "\(count) upcoming reminders")
+            let title = count == 0 ? String(localized: "No upcoming reminders") : String(localized: "\(count) upcoming reminders")
             let body = lines.isEmpty ? "You have no reminders." : lines.joined(separator: "\n")
             let detail = upcoming.prefix(5).map { "\(TimeFormat.when($0.nextDue ?? $0.fireAt, now: now, calendar: shared.calendar)) \($0.title)" }.joined(separator: "\n")
             return ToolResult(text: body, card: ResultCard(kind: .list, title: title, detail: detail.isEmpty ? nil : detail),
@@ -248,25 +253,28 @@ public enum ReminderTools {
 
         var spec: ToolSpec {
             ToolSpec(
-                name: "reminders.cancel", title: "Cancel a reminder",
+                name: "reminders.cancel", title: String(localized: "Cancel a reminder"),
                 description: "Cancel a reminder by id (from reminders.list). A repeating reminder stops repeating.",
                 inputSchema: Schema.object(["id": Schema.string("The reminder's id.")], required: ["id"]),
                 risk: .low, capabilities: [.time], category: .time, mutates: true
             )
         }
 
-        func summary(for input: JSONValue) -> String { "Cancel a reminder" }
+        func summary(for input: JSONValue) -> String { String(localized: "Cancel a reminder") }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let r = try await shared.existing(input)
             let scheduler = shared.scheduler
             let foreign = Shared.isForeign(r)
             guard let before = try await scheduler.cancel(id: r.id), before.state != .cancelled else {
-                return ToolResult(text: "“\(r.title)” was already cancelled.", card: shared.card(r, now: context.now, prefix: "Already cancelled"),
+                return ToolResult(text: "“\(r.title)” was already cancelled.",
+                                  card: shared.card(r, now: context.now, prefix: String(localized: "Already cancelled")),
                                   untrusted: foreign)
             }
-            return ToolResult(text: "Cancelled “\(r.title)”.", card: ResultCard(kind: .reminder, title: r.title, subtitle: "Cancelled", refId: r.id),
-                              undo: UndoAction(label: "Bring back reminder") { try await scheduler.restore(before) }, untrusted: foreign)
+            return ToolResult(text: "Cancelled “\(r.title)”.",
+                              card: ResultCard(kind: .reminder, title: r.title, subtitle: String(localized: "Cancelled"), refId: r.id),
+                              undo: UndoAction(label: String(localized: "Bring back reminder")) { try await scheduler.restore(before) },
+                              untrusted: foreign)
         }
     }
 
@@ -276,14 +284,14 @@ public enum ReminderTools {
 
         var spec: ToolSpec {
             ToolSpec(
-                name: "reminders.complete", title: "Mark a reminder done",
+                name: "reminders.complete", title: String(localized: "Mark a reminder done"),
                 description: "Mark a reminder as done by id. A repeating reminder keeps repeating; use reminders.cancel to stop it.",
                 inputSchema: Schema.object(["id": Schema.string("The reminder's id.")], required: ["id"]),
                 risk: .low, capabilities: [.time], category: .time, mutates: true
             )
         }
 
-        func summary(for input: JSONValue) -> String { "Mark a reminder done" }
+        func summary(for input: JSONValue) -> String { String(localized: "Mark a reminder done") }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let r = try await shared.existing(input)
@@ -293,13 +301,14 @@ public enum ReminderTools {
             if r.state == .cancelled {
                 throw UserFacingError("That reminder was cancelled, so there's nothing to mark done.")
             }
-            guard let before = try await scheduler.complete(id: r.id) else { throw ToolError.notFound("a reminder with id \(r.id)") }
-            let now = context.now
+            guard let before = try await scheduler.complete(id: r.id) else { throw ToolError.notFound(String(localized: "a reminder with id \(r.id)")) }
             let after = await scheduler.reminder(matching: r.id) ?? r
-            let note = after.recurrence != nil ? "It will remind you again \(after.nextDue.map { TimeFormat.when($0, now: now, calendar: shared.calendar) } ?? "later")." : ""
+            let next = after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "later"
+            let note = after.recurrence != nil ? "It will remind you again \(next)." : ""
             return ToolResult(text: "Marked “\(r.title)” done. \(note)".trimmingCharacters(in: .whitespaces),
-                              card: ResultCard(kind: .reminder, title: r.title, subtitle: after.recurrence == nil ? "Done" : "Done for now", refId: r.id),
-                              undo: before == after ? nil : UndoAction(label: "Undo done") { try await scheduler.restore(before) },
+                              card: ResultCard(kind: .reminder, title: r.title,
+                                               subtitle: after.recurrence == nil ? String(localized: "Done") : String(localized: "Done for now"), refId: r.id),
+                              undo: before == after ? nil : UndoAction(label: String(localized: "Undo done")) { try await scheduler.restore(before) },
                               untrusted: foreign)
         }
     }
@@ -310,7 +319,7 @@ public enum ReminderTools {
 
         var spec: ToolSpec {
             ToolSpec(
-                name: "reminders.snooze", title: "Snooze a reminder",
+                name: "reminders.snooze", title: String(localized: "Snooze a reminder"),
                 description: "Postpone a reminder to a later time. `when` is plain language (\"in 10 minutes\", \"tomorrow morning\") or ISO 8601.",
                 inputSchema: Schema.object([
                     "id": Schema.string("The reminder's id."),
@@ -320,21 +329,24 @@ public enum ReminderTools {
             )
         }
 
-        func summary(for input: JSONValue) -> String { "Snooze a reminder \(input.string("when") ?? "")".trimmingCharacters(in: .whitespaces) }
+        func summary(for input: JSONValue) -> String {
+            String(localized: "Snooze a reminder \(input.string("when") ?? "")").trimmingCharacters(in: .whitespaces)
+        }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-            guard let whenText = input.string("when") else { throw ToolError.invalidInput("“when” is required") }
+            guard let whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
             let r = try await shared.existing(input)
             let parsed = try shared.future(whenText, now: context.now)
-            guard parsed.recurrence == nil else { throw ToolError.invalidInput("snooze takes a single time, not a repeat") }
+            guard parsed.recurrence == nil else { throw ToolError.invalidInput(String(localized: "snooze takes a single time, not a repeat")) }
             let scheduler = shared.scheduler
             guard let before = try await scheduler.snooze(id: r.id, until: parsed.date), before.state == .scheduled || before.state == .snoozed || before.state == .fired else {
-                throw UserFacingError("“\(r.title)” is \(r.state.rawValue), so it can't be snoozed.")
+                throw r.state == .cancelled ? UserFacingError("“\(r.title)” was cancelled, so it can't be snoozed.")
+                    : UserFacingError("“\(r.title)” is done, so it can't be snoozed.")
             }
             let when = TimeFormat.when(parsed.date, now: context.now, calendar: shared.calendar)
             return ToolResult(text: "Snoozed “\(r.title)” until \(TimeFormat.full(parsed.date, calendar: shared.calendar)).",
-                              card: ResultCard(kind: .reminder, title: r.title, subtitle: "Snoozed to \(when)", refId: r.id),
-                              undo: UndoAction(label: "Undo snooze") { try await scheduler.restore(before) },
+                              card: ResultCard(kind: .reminder, title: r.title, subtitle: String(localized: "Snoozed to \(when)"), refId: r.id),
+                              undo: UndoAction(label: String(localized: "Undo snooze")) { try await scheduler.restore(before) },
                               untrusted: Shared.isForeign(r))
         }
     }

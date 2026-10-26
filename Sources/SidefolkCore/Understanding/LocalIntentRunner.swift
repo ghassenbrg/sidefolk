@@ -79,13 +79,14 @@ public struct LocalIntentRunner: Sendable {
         case .quiet(let until):
             await runtime.settings.update { $0.quietUntil = until ?? .distantFuture }
             await runtime.attention.update { $0.quiet = true }
-            let label = until.map { "until \(TimeFormat.when($0, now: runtime.clock.now, calendar: .autoupdatingCurrent))" } ?? "until you turn it off"
-            return .card(ResultCard(kind: .info, title: "Quiet \(label).", subtitle: "Only urgent things will interrupt you."),
+            let title = until.map { String(localized: "Quiet until \(TimeFormat.when($0, now: runtime.clock.now, calendar: .autoupdatingCurrent)).") }
+                ?? String(localized: "Quiet until you turn it off.")
+            return .card(ResultCard(kind: .info, title: title, subtitle: String(localized: "Only urgent things will interrupt you.")),
                          activityId: "", undo: false)
         case .quietOff:
             await runtime.settings.update { $0.quietUntil = nil }
             await runtime.attention.update { $0.quiet = false }
-            return .card(ResultCard(kind: .info, title: "Quiet is off."), activityId: "", undo: false)
+            return .card(ResultCard(kind: .info, title: String(localized: "Quiet is off.")), activityId: "", undo: false)
         case .find(let query, let kind, let collection):
             return await find(query: query, kind: kind, collection: collection)
         case .needsTime(let title, let reason, let important):
@@ -102,7 +103,7 @@ public struct LocalIntentRunner: Sendable {
             let card = result.card ?? ResultCard(kind: .info, title: result.text.clipped(120))
             return .card(card, activityId: out.activity.id, undo: out.activity.undoAvailable)
         case .denied(let why):
-            return .failed(UserFacingError(why))
+            return .failed(UserFacingError(verbatim: why))
         case .failed(let error):
             return .failed(error)
         }
@@ -118,14 +119,19 @@ public struct LocalIntentRunner: Sendable {
         } else {
             items = (try? await notebook.search(query, collectionId: target?.id, kinds: kinds, limit: 20)) ?? []
         }
-        let names = Dictionary(uniqueKeysWithValues: ((try? await notebook.collections(includeArchived: true)) ?? []).map { ($0.id, $0.name) })
+        let names = Dictionary(uniqueKeysWithValues: ((try? await notebook.collections(includeArchived: true)) ?? [])
+            .map { ($0.id, NotebookCollections.shownName($0)) })
         let cards = items.map { item in
             ResultCard(kind: .note, title: item.title, subtitle: [names[item.collectionId], TimeFormat.day(item.updatedAt, now: runtime.clock.now, calendar: .autoupdatingCurrent)]
                 .compactMap { $0 }.joined(separator: " · "), refId: item.id, url: item.url, itemKind: item.kind)
         }
-        var title = kind.map { "\($0.rawValue.capitalized)s" } ?? "Found"
-        if let target { title += " in \(target.name)" }
-        if !query.isEmpty, kind == nil { title = "Found for “\(query.clipped(30))”" }
+        let title: String
+        if !query.isEmpty, kind == nil {
+            title = String(localized: "Found for “\(query.clipped(30))”")
+        } else {
+            let what = kind.map(NoteText.plural) ?? String(localized: "Found")
+            title = target.map { String(localized: "\(what) in \(NotebookCollections.shownName($0))", comment: "“Ideas in Sidefolk”") } ?? what
+        }
         return .list(title: "\(title) (\(cards.count))", cards: cards)
     }
 }

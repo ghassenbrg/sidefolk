@@ -189,7 +189,7 @@ public struct IntentParser: Sendable {
         guard found.confidence != .low, !(found.isExplicitInstant && found.date <= ctx.now) else {
             // The words said "remind me" but the time is already over: ask when.
             guard strong else { return nil }
-            return ask(title: title, reason: "\(found.matched.capitalizedFirst) has passed.", important: important)
+            return ask(title: title, reason: String(localized: "\(found.matched.capitalizedFirst) has passed."), important: important)
         }
         var date = found.date
         // "tonight at 12" is the midnight that ends tonight, not noon.
@@ -197,14 +197,16 @@ public struct IntentParser: Sendable {
            when.calendar.component(.minute, from: date) == 0, let midnight = when.calendar.date(byAdding: .hour, value: 12, to: date) {
             date = midnight
         }
-        var hint = "Reminder · \(TimeFormat.when(date, now: ctx.now, calendar: when.calendar))"
-        if let rule = found.recurrence { hint += " · \(TimeFormat.recurrence(rule))" }
-        if important { hint += " · important" }
-        return ParsedIntent(intent: .remind(title: title, when: date, recurrence: found.recurrence, important: important), hint: hint + " · no AI")
+        var parts = [String(localized: "Reminder"), TimeFormat.when(date, now: ctx.now, calendar: when.calendar)]
+        if let rule = found.recurrence { parts.append(TimeFormat.recurrence(rule, calendar: when.calendar)) }
+        if important { parts.append(String(localized: "important")) }
+        return ParsedIntent(intent: .remind(title: title, when: date, recurrence: found.recurrence, important: important),
+                            hint: ParsedIntent.hint(parts.joined(separator: " · ")))
     }
 
     private func ask(title: String, reason: String?, important: Bool) -> ParsedIntent {
-        ParsedIntent(intent: .needsTime(title: title, reason: reason, important: important), hint: "Reminder · I'll ask when · no AI")
+        ParsedIntent(intent: .needsTime(title: title, reason: reason, important: important),
+                     hint: ParsedIntent.hint(String(localized: "Reminder"), String(localized: "I'll ask when")))
     }
 
     private static let titleLeads: Set<String> = ["to", "that", "about", "of", "for", "me"]
@@ -243,17 +245,17 @@ public struct IntentParser: Sendable {
 
     private func quiet(_ t: String, _ ctx: Context) -> ParsedIntent? {
         if Self.quietOff.contains(where: { $0.match(t) != nil }) {
-            return ParsedIntent(intent: .quietOff, hint: "Quiet off · no AI")
+            return ParsedIntent(intent: .quietOff, hint: ParsedIntent.hint(String(localized: "Quiet off")))
         }
         for pattern in Self.quietOn {
             guard let c = pattern.match(t) else { continue }
             guard let prep = c["prep"]?.lowercased(), let rest = c["rest"] else {
-                return ParsedIntent(intent: .quiet(until: nil), hint: "Quiet until you turn it off · no AI")
+                return ParsedIntent(intent: .quiet(until: nil), hint: ParsedIntent.hint(String(localized: "Quiet until you turn it off")))
             }
             guard let end = quietEnd(prep: prep, rest: rest, ctx) else { return nil }
             let label = when.calendar.isDate(end, inSameDayAs: ctx.now)
                 ? TimeFormat.clock(end, calendar: when.calendar) : TimeFormat.when(end, now: ctx.now, calendar: when.calendar)
-            return ParsedIntent(intent: .quiet(until: end), hint: "Quiet until \(label) · no AI")
+            return ParsedIntent(intent: .quiet(until: end), hint: ParsedIntent.hint(String(localized: "Quiet until \(label)")))
         }
         return nil
     }

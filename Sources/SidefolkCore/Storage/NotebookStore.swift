@@ -70,7 +70,7 @@ public struct NotebookStore: Sendable {
     public func collection(named name: String, kind: NotebookCollection.Kind = .project, excluding: Set<NotebookCollection.Kind> = [],
                            source: String = "user", now: Date = Date()) async throws -> (NotebookCollection, created: Bool) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60)
-        guard !clean.isEmpty else { throw ToolError.invalidInput("a collection needs a name.") }
+        guard !clean.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
         let skipped = excluding.map(\.rawValue)
         return try await db.writer.write { db in
             let live = try NotebookCollection.filter(Column("archived_at") == nil).filter(!skipped.contains(Column("kind"))).fetchAll(db)

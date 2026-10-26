@@ -73,7 +73,7 @@ struct FilesSearchTool: Tool {
     init(searcher: any FileSearching = SpotlightSearch()) { self.searcher = searcher }
 
     let spec = ToolSpec(
-        name: "files.search", title: "Find files",
+        name: "files.search", title: String(localized: "Find files"),
         description: """
             Search inside one folder the user has shared, using Spotlight (names and contents). Returns matching \
             paths with size and date. Hidden files and anything outside the folder are left out.
@@ -86,8 +86,8 @@ struct FilesSearchTool: Tool {
         risk: .low, capabilities: [.filesRead], category: .files, mutates: false)
 
     func summary(for input: JSONValue) -> String {
-        let folder = FilePaths.scopePath(input.string("folder")) ?? input.string("folder") ?? "a folder"
-        return "Search \(FilePaths.display(folder)) for “\((input.string("query") ?? "").clipped(60))”"
+        let folder = FilePaths.display(FilePaths.scopePath(input.string("folder")) ?? input.string("folder") ?? String(localized: "a folder"))
+        return String(localized: "Search \(folder) for “\((input.string("query") ?? "").clipped(60))”")
     }
 
     func scope(for input: JSONValue) -> ToolScope {
@@ -114,7 +114,7 @@ struct FilesSearchTool: Tool {
         let where_ = FilePaths.display(folder)
         guard !kept.isEmpty else {
             return ToolResult(text: "Nothing in \(where_) matched “\(query.clipped(60))”.",
-                              card: ResultCard(kind: .list, title: "No files found", subtitle: query.clipped(60)))
+                              card: ResultCard(kind: .list, title: String(localized: "No files found"), subtitle: query.clipped(60)))
         }
         let lines = kept.map { path -> String in
             var st = stat()
@@ -128,7 +128,7 @@ struct FilesSearchTool: Tool {
         }
         return ToolResult(
             text: "\(ToolFormat.count(kept.count, "file")) in \(where_) matched “\(query.clipped(60))”:\n" + lines.joined(separator: "\n"),
-            card: ResultCard(kind: .file, title: "\(ToolFormat.count(kept.count, "match", "matches")) for “\(query.clipped(40))”", subtitle: where_),
+            card: ResultCard(kind: .file, title: String(localized: "\(kept.count) matches for “\(query.clipped(40))”"), subtitle: where_),
             untrusted: true)
     }
 }

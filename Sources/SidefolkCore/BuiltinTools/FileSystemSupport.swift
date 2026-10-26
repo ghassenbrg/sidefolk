@@ -17,11 +17,11 @@ enum FilePaths {
     /// The canonical path for a tool that is about to touch it. Throws a message people can act on.
     static func resolve(_ raw: String) throws -> String {
         let raw = raw.trimmedText
-        guard !raw.isEmpty else { throw ToolError.invalidInput("a path is required.") }
+        guard !raw.isEmpty else { throw ToolError.invalidInput(String(localized: "a path is required.")) }
         guard let path = FolderAccess.canonical(raw) else {
             throw UserFacingError("I need a full path that starts with / or ~, without “..” parts or broken links.")
         }
-        if let reason = FolderAccess.forbiddenReason([path]) { throw UserFacingError(reason) }
+        if let reason = FolderAccess.forbiddenReason([path]) { throw UserFacingError(verbatim: reason) }
         return path
     }
 
@@ -67,7 +67,7 @@ enum FilePaths {
     /// A single file or folder name: no separators, not hidden, not "." or "..", within the filesystem limit.
     static func validateName(_ name: String) throws -> String {
         let name = name.trimmedText
-        guard !name.isEmpty else { throw ToolError.invalidInput("a name is required.") }
+        guard !name.isEmpty else { throw ToolError.invalidInput(String(localized: "a name is required.")) }
         guard !name.contains("/"), !name.contains("\0"), name != ".", name != "..",
               !name.unicodeScalars.contains(where: { $0.properties.generalCategory == .control }) else {
             throw UserFacingError("“\(name.clipped(60))” can't be used as a file name. It must be just a name, with no “/”.")
@@ -164,8 +164,10 @@ enum SafeFile {
 }
 
 enum FileFailure {
-    static func make(_ code: Int32, path: String, action: String) -> UserFacingError {
+    /// `action` completes “macOS didn't let me …” and “I couldn't …”, like "open that folder".
+    static func make(_ code: Int32, path: String, action: String.LocalizationValue) -> UserFacingError {
         let shown = FilePaths.display(path)
+        let action = String(localized: action)
         switch code {
         case ENOENT: return UserFacingError("I couldn't find \(shown).")
         case EACCES, EPERM:

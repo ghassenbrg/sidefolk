@@ -38,33 +38,33 @@ public struct CommandProbe: WatcherProbe {
     public func prepare(_ watcher: Watcher) throws -> Watcher {
         var w = watcher
         guard WatchSource.mayRunCommands(w.source) else {
-            throw WatchError.notAllowed("Only you, or Sidefolk after you approve the exact command, can set up a command watcher.")
+            throw WatchError.notAllowed(String(localized: "Only you, or Sidefolk after you approve the exact command, can set up a command watcher."))
         }
-        guard let command = w.config.string("command") else { throw WatchError.invalid("Tell me which command to run.") }
-        guard command.count <= 2000, !command.contains("\0") else { throw WatchError.invalid("That command is too long to watch.") }
+        guard let command = w.config.string("command") else { throw WatchError.invalid(String(localized: "Tell me which command to run.")) }
+        guard command.count <= 2000, !command.contains("\0") else { throw WatchError.invalid(String(localized: "That command is too long to watch.")) }
         var config: [String: JSONValue] = ["command": .string(command)]
         if let cwd = w.config.string("cwd") {
             let expanded = (cwd as NSString).expandingTildeInPath
             guard expanded.hasPrefix("/"), let canonical = FolderAccess.canonical(expanded) else {
-                throw WatchError.invalid("The folder to run in needs a full path without “..”.")
+                throw WatchError.invalid(String(localized: "The folder to run in needs a full path without “..”."))
             }
             if let why = FolderAccess.forbiddenReason([canonical]) { throw WatchError.invalid(why) }
-            guard FileFacts.read(canonical)?.isDirectory == true else { throw WatchError.invalid("I can't find the folder to run in.") }
+            guard FileFacts.read(canonical)?.isDirectory == true else { throw WatchError.invalid(String(localized: "I can't find the folder to run in.")) }
             config["cwd"] = .string(canonical)
         }
         w.config = .object(config)
 
         let condition = CommandCondition(w.condition)
-        if let code = condition.exitCode, !(0...255).contains(code) { throw WatchError.invalid("An exit code is a number from 0 to 255.") }
-        if let text = condition.outputContains, text.count > 200 { throw WatchError.invalid("The text to look for is too long (200 characters at most).") }
+        if let code = condition.exitCode, !(0...255).contains(code) { throw WatchError.invalid(String(localized: "An exit code is a number from 0 to 255.")) }
+        if let text = condition.outputContains, text.count > 200 { throw WatchError.invalid(String(localized: "The text to look for is too long (200 characters at most).")) }
         w.condition = condition.json
         return w
     }
 
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
         // The row could have been written by anything; the rule is enforced again where the code runs.
-        guard WatchSource.mayRunCommands(w.source) else { throw ProbeError.failed("This command watcher wasn't made by you, so I won't run it.") }
-        guard let command = w.config.string("command") else { throw ProbeError.failed("This watcher has no command.") }
+        guard WatchSource.mayRunCommands(w.source) else { throw ProbeError.failed(String(localized: "This command watcher wasn't made by you, so I won't run it.")) }
+        guard let command = w.config.string("command") else { throw ProbeError.failed(String(localized: "This watcher has no command.")) }
         let condition = CommandCondition(w.condition)
 
         // No folder given: run in a fresh empty one, removed afterwards.
@@ -73,7 +73,7 @@ public struct CommandProbe: WatcherProbe {
         var cwd = w.config.string("cwd")
         if let folder = cwd {
             guard FolderAccess.canonical(folder) == folder, FileFacts.read(folder)?.isDirectory == true else {
-                throw ProbeError.failed("The folder this command runs in has changed or is gone.")
+                throw ProbeError.failed(String(localized: "The folder this command runs in has changed or is gone."))
             }
         } else {
             let dir = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-cmd-\(UUID().uuidString)")
@@ -84,9 +84,9 @@ public struct CommandProbe: WatcherProbe {
 
         let result: ShellResult
         do { result = try await ShellRunner.run(command, cwd: cwd ?? "/", timeout: timeout, grace: grace) } catch {
-            throw ProbeError.failed("I couldn't start the command.")
+            throw ProbeError.failed(String(localized: "I couldn't start the command."))
         }
-        if result.timedOut { throw ProbeError.failed("The command took longer than \(Int(timeout.rounded(.up))) seconds, so I stopped it.") }
+        if result.timedOut { throw ProbeError.failed(String(localized: "The command took longer than \(Int(timeout.rounded(.up))) seconds, so I stopped it.")) }
 
         let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
         let hash = SHA256.hash(data: Data(output.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
@@ -95,25 +95,26 @@ public struct CommandProbe: WatcherProbe {
         var state: [String: JSONValue] = ["exit": .number(Double(result.exitCode)), "hash": .string(hash), "tail": .string(tail)]
         let label = w.title.displaySafe.clipped(60)
         let shown = output.displaySafe.suffix(180)
-        let detail = shown.isEmpty ? nil : "Output: " + shown
+        let detail = shown.isEmpty ? nil : String(localized: "Output: \(String(shown))")
 
         if let code = condition.exitCode {
             let matched = Int(result.exitCode) == code
             state["matched"] = .bool(matched)
             guard matched, previous?["matched"]?.boolValue != true else { return ProbeResult(state: .object(state)) }
-            let summary = code == 0 ? "\(label) succeeded" : "\(label) exited with code \(code)"
+            let summary = code == 0 ? String(localized: "\(label) succeeded") : String(localized: "\(label) exited with code \(code)")
             return ProbeResult(state: .object(state), triggered: true, summary: summary, detail: detail)
         }
         if let text = condition.outputContains {
             let matched = result.output.range(of: text, options: .caseInsensitive) != nil
             state["matched"] = .bool(matched)
             guard matched, previous?["matched"]?.boolValue != true else { return ProbeResult(state: .object(state)) }
-            return ProbeResult(state: .object(state), triggered: true, summary: "\(label): found “\(text.displaySafe.clipped(60))”", detail: detail)
+            return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(label): found “\(text.displaySafe.clipped(60))”"),
+                               detail: detail)
         }
         guard let before = previous?["hash"]?.stringValue else { return ProbeResult(state: .object(state)) } // first run is the baseline
         guard before != hash else { return ProbeResult(state: .object(state)) }
         let was = previous?["tail"]?.stringValue?.displaySafe.suffix(90) ?? ""
         let change = was.isEmpty ? detail : "“\(was)” → “\(output.displaySafe.suffix(90))”"
-        return ProbeResult(state: .object(state), triggered: true, summary: "\(label): the output changed", detail: change)
+        return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(label): the output changed"), detail: change)
     }
 }

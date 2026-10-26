@@ -59,10 +59,12 @@ public struct DataPorter: Sendable {
         if let secrets {
             let keys = ProviderKeys(store: secrets)
             for account in SecretKey.providerKeys {
-                do { try keys.remove(account: account) } catch { leftovers.append("Keychain item \(account)") }
+                do { try keys.remove(account: account) } catch { leftovers.append(String(localized: "Keychain item \(account)")) }
             }
             for id in ids {
-                do { try secrets.delete(SecretKey.mcpServer(id)) } catch { leftovers.append("Keychain item \(SecretKey.mcpServer(id))") }
+                do { try secrets.delete(SecretKey.mcpServer(id)) } catch {
+                    leftovers.append(String(localized: "Keychain item \(SecretKey.mcpServer(id))"))
+                }
             }
         }
         try await db.writer.write { db in
@@ -80,7 +82,7 @@ public struct DataPorter: Sendable {
         try await db.writer.vacuum()
         let report = DeletionReport(extensionIds: ids, leftovers: leftovers)
         guard leftovers.isEmpty else {
-            throw UserFacingError("I deleted your data, but couldn't remove: \(leftovers.joined(separator: ", ")).",
+            throw UserFacingError("I deleted your data, but couldn't remove: \(Wording.list(leftovers)).",
                                   recovery: "Remove what's left in Finder (or Keychain Access), then quit Sidefolk.",
                                   changedNothing: false)
         }

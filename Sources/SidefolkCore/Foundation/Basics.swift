@@ -38,13 +38,23 @@ public final class ManualClock: Clock, @unchecked Sendable {
 }
 
 /// An error whose message is written for people, with optional detail kept for diagnostics.
+/// `message` and `recovery` are in the app's language: a literal passed to `init(_:)` is a key in the
+/// string catalog and is looked up when the error is made. `detail` stays technical and English.
 public struct UserFacingError: Error, Sendable, Equatable, CustomStringConvertible {
     public var message: String
     public var recovery: String?
     public var changedNothing: Bool
     public var detail: String?
 
-    public init(_ message: String, recovery: String? = nil, changedNothing: Bool = true, detail: String? = nil) {
+    public init(_ message: String.LocalizationValue, recovery: String.LocalizationValue? = nil, changedNothing: Bool = true,
+                detail: String? = nil) {
+        self.init(verbatim: String(localized: message), recovery: recovery.map { String(localized: $0) },
+                  changedNothing: changedNothing, detail: detail)
+    }
+
+    /// For text that is already final: worded (and localized) elsewhere, built at runtime, or a
+    /// service's own message. It is shown exactly as given.
+    public init(verbatim message: String, recovery: String? = nil, changedNothing: Bool = true, detail: String? = nil) {
         self.message = message
         self.recovery = recovery
         self.changedNothing = changedNothing
