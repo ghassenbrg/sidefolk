@@ -76,7 +76,8 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
 - **Not exercised by hand:** hooks inside a real Claude Code session; the notifications permission
   prompt; login item from /Applications; multi-monitor and fullscreen behaviour; "Connect…" for
   Claude Code/Codex (it edits real config files, so only the user should click it).
-- **Watching big folders:** a folder with more than 5,000 items can't be watched yet (QA #9).
+- **Watching huge folders:** a folder with more than 20,000 items can't be watched (a bound on memory
+  and stored state).
 - **Signing:** no Developer ID identity on this Mac, so `scripts/release.sh` (sign, notarize, staple)
   is ready but needs the founder's credentials. Builds are signed with the "Apple Development"
   identity or ad hoc.
@@ -84,5 +85,4 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
 ## Next
 1. Merge the security follow-up branch, adapt the app, full test run.
 2. Release build (`make app`), final check, handoff.
-3. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review),
-   watching folders with more than 5,000 items.
+3. Next iteration: a human "Today" timeline with an end-of-day recap (from the strategy review).
