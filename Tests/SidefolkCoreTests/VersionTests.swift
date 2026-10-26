@@ -1,3 +1,3 @@
 import Testing
 @testable import SidefolkCore
-@Test func version() { #expect(SidefolkVersion.current == "1.0.0") }
+@Test func version() { #expect(SidefolkVersion.current == "0.1.0") }

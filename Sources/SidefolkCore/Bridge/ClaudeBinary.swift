@@ -16,11 +16,14 @@ public struct ClaudeFlags: Sendable, Equatable {
     public var settingSources: Bool
     /// Hidden in `--help` but named there as `--system-prompt[-file]`; keeps the prompt out of argv.
     public var systemPromptFile: Bool
+    /// The levels `--effort` takes, as `--help` lists them; empty when this CLI has no such flag (D36).
+    public var efforts: [ReasoningEffort]
 
-    public init(restricted: Bool, settingSources: Bool, systemPromptFile: Bool) {
+    public init(restricted: Bool, settingSources: Bool, systemPromptFile: Bool, efforts: [ReasoningEffort] = []) {
         self.restricted = restricted
         self.settingSources = settingSources
         self.systemPromptFile = systemPromptFile
+        self.efforts = efforts
     }
 }
 
@@ -53,18 +56,19 @@ public enum ClaudeBinary {
         return reasons.first.map(CLILocation.unusable) ?? .notFound
     }
 
-    /// For Settings: found, vetted and probed (`--version`, `--help`), never a prompt.
+    /// For Settings: found, vetted and probed (`--version`, `--help`), never a prompt; with the
+    /// efforts its `--effort` takes.
     public static func status(configured: String, workdir: String,
-                              environment: [String: String] = ProcessInfo.processInfo.environment) async -> CLIStatus {
+                              environment: [String: String] = ProcessInfo.processInfo.environment) async -> (CLIStatus, [ReasoningEffort]) {
         switch find(configured: configured) {
-        case .notFound: return .notFound
-        case .unusable(let reason): return .unusable(reason)
+        case .notFound: return (.notFound, [])
+        case .unusable(let reason): return (.unusable(reason), [])
         case .found(let path):
             try? PrivateDirectory.ensure(workdir)
             let env = CLIBrain.environment(base: environment, tmp: workdir, cliPath: path)
             switch await probe(path, environment: env, cwd: workdir) {
-            case .success(let install): return .ready(path: path, version: install.version, login: nil)
-            case .failure(let error): return .unusable(error.description)
+            case .success(let install): return (.ready(path: path, version: install.version, login: nil), install.flags.efforts)
+            case .failure(let error): return (.unusable(error.description), [])
             }
         }
     }
@@ -85,8 +89,20 @@ public enum ClaudeBinary {
         let missing = requiredFlags.filter { !CLIBrain.mentions(help, $0) }
         let flags = ClaudeFlags(restricted: CLIBrain.mentions(help, "--restricted"),
                                 settingSources: CLIBrain.mentions(help, "--setting-sources"),
-                                systemPromptFile: CLIBrain.mentions(help, "--system-prompt-file") || help.contains("--system-prompt[-file]"))
+                                systemPromptFile: CLIBrain.mentions(help, "--system-prompt-file") || help.contains("--system-prompt[-file]"),
+                                efforts: efforts(fromHelp: help))
         return (missing, flags)
+    }
+
+    /// "--effort <level>  Effort level for the current session (low, medium, high, xhigh, max)": the
+    /// list in the first parentheses of the flag's entry. A flag without a readable list offers nothing.
+    static func efforts(fromHelp help: String) -> [ReasoningEffort] {
+        guard let flag = help.range(of: "--effort ") else { return [] }
+        let entry = help[flag.upperBound...].prefix(300)
+        // The entry ends where the next flag's line starts.
+        let own = entry.range(of: #"\n\s*--"#, options: .regularExpression).map { entry[..<$0.lowerBound] } ?? entry
+        guard let open = own.firstIndex(of: "("), let close = own[open...].firstIndex(of: ")") else { return [] }
+        return ReasoningEffort.known(own[own.index(after: open)..<close].split(separator: ",").map(String.init))
     }
 
     private static let cache = Mutex<[CLIBrain.Fingerprint: ClaudeInstall]>([:])

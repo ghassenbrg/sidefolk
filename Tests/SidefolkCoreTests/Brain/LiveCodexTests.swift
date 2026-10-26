@@ -22,8 +22,8 @@ import Testing
             try await runtime.start()
             await runtime.settings.update { $0.provider.kind = .codex }
             let tokens = runtime.tokens
-            let factory = BrainFactory.standard(secrets: InMemorySecretStore(), codexBackend: { provider, thinkHarder in
-                CodexBackend.make(provider: provider, thinkHarder: thinkHarder, paths: paths, helperPath: helper, registry: tokens)
+            let factory = BrainFactory.standard(secrets: InMemorySecretStore(), codexBackend: { provider in
+                CodexBackend.make(provider: provider, paths: paths, helperPath: helper, registry: tokens)
             })
             let settings = runtime.settings
             agent = AgentRuntime(executor: runtime.executor, db: runtime.db, events: runtime.events,
@@ -37,8 +37,10 @@ import Testing
         }
     }
 
+    /// At low effort, so the run also proves Codex takes `-c model_reasoning_effort` (D36).
     @Test(.enabled(if: enabled)) func answersOneWord() async throws {
         let stack = try await Stack()
+        await stack.runtime.settings.update { $0.provider.effort = ReasoningEffort.low.rawValue }
         let result = await stack.agent.testProvider()
         await stack.stop()
         let text = try result.get()

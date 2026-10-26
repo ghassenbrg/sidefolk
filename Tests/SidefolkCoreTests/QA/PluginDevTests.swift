@@ -13,7 +13,7 @@ struct PluginDevTests {
       "id": "com.example.pomodoro",
       "name": "Pomodoro & Focus",
       "version": "1.0.0",
-      "sidefolk": ">=1.0",
+      "sidefolk": ">=0.1",
       "description": "Start a focus session, ask how long is left, and get told when it is over.",
       "author": "QA plugin developer",
       "run": { "command": "python3", "args": ["main.py"] },

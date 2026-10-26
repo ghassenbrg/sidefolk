@@ -22,8 +22,8 @@ extension AppCoordinator {
         let tokens = runtime.tokens
         let factory = BrainFactory.standard(secrets: secrets, claudeCodeBackend: { provider in
             ClaudeCodeBackend.make(provider: provider, paths: paths, helperPath: helper, registry: tokens)
-        }, codexBackend: { provider, thinkHarder in
-            CodexBackend.make(provider: provider, thinkHarder: thinkHarder, paths: paths, helperPath: helper, registry: tokens)
+        }, codexBackend: { provider in
+            CodexBackend.make(provider: provider, paths: paths, helperPath: helper, registry: tokens)
         })
         let settings = runtime.settings
         return AgentRuntime(executor: runtime.executor, db: runtime.db, events: runtime.events, context: context,

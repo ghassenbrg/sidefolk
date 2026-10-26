@@ -348,6 +348,37 @@ from the vector PDF exports, so they stay sharp at any size without a 4096 px bi
 the logo to be used to make the app warmer. Each placement is where the art has room to be itself;
 small places get one clear element (lettering, a face) instead of a reduced composition.
 
+### D36 — Reasoning effort per model slot, only where accepted; services shown by their own logos (2026-10-26)
+**Decision:** each provider's everyday and "Think harder" model has its own reasoning effort, stored
+in `ProviderSettings.effort`/`smartEffort` and remembered per provider with its models. "Default"
+sends nothing. `EffortSupport` lists the levels a provider and model take, and it is both what
+Settings offers and the only thing ever sent: Claude Code's `--effort` levels as its `--help` lists
+them (a full model id also limited to what that model takes); Codex's levels per model from its
+bundled catalog (`codex debug models --bundled`, read in the probe), sent as `-c
+model_reasoning_effort`; the Anthropic API's `output_config.effort` (Opus 4.5 low–high, 4.6 adds
+max, 4.7 and later all five; Sonnet/Haiku 4.5 and older none); `reasoning_effort` for OpenAI, Gemini,
+Mistral, Groq and xAI by documented model family; OpenRouter's `reasoning.effort` for any model but
+its routers. Ollama, LM Studio, DeepSeek and custom servers get no control. A saved level the
+current model doesn't take shows as Default and isn't sent, but is kept. Thinking itself keeps each
+model's default (Anthropic: no `thinking` field). Extra high and Max raise the API loop's output
+allowance to 16k, as "Think harder" does. "Think harder" on Codex starts at High, which it always
+sent.
+Services show their own logo where Simple Icons has one (16.35.0, CC0: Anthropic, Claude Code,
+Gemini, Mistral, DeepSeek, OpenRouter, Ollama, LM Studio), as vector PDFs drawn as templates in the
+ink colour; the rest keep monograms or symbols. Credits and trademark note in
+`Resources/Brand/third-party/README.md`.
+**Why:** the founder runs Codex at different efforts per model (gpt-6-luna at extra high, gpt-6.1-sol
+at high) and asked for logos so the services are recognisable. Offering a level a model rejects
+would turn a setting into a failed request; offering nothing where support is unknown is honest.
+**Alternatives:** one effort for both slots (can't express the founder's setup); every level for
+every provider (requests that fail); Codex's "ultra" (it delegates to sub-agents, which the isolated
+brain switches off, D26); enabling Anthropic thinking explicitly (changes models whose default is
+off); drawing logos for OpenAI, Groq and xAI (imitations of trademarks); full-colour logos (clash
+with the folk-colour tiles and dark mode).
+**Implications:** the per-family tables go stale as providers ship models; a model Sidefolk can't
+place shows no control until the table learns it. The CLIs tell Sidefolk themselves, so they stay
+current. Logos load from resources: dev builds see them with `SIDEFOLK_RESOURCES`.
+
 ### D38 — The Mac's own apps through built-in tools on Apple Events, Apple Notes first (2026-10-26)
 **What failed:** the founder asked Sidefolk to "check my Apple Notes and move them, well organized, into
 our notebook". The model could open an app (`open.app`) but not read one, and nothing said so: the system

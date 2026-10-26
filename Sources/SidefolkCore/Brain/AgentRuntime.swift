@@ -161,7 +161,7 @@ public actor AgentRuntime {
         let runId = "test-" + Identifier.make(now: start)
         let task = BrainTask(runId: runId, threadId: runId, system: "You check that a connection works. Answer with one word.",
                              messages: [ChatMessage(role: .user, text: "Reply with the word ok.")], model: choice.model,
-                             maxSteps: 1, deadline: start.addingTimeInterval(60))
+                             effort: choice.effort, maxSteps: 1, deadline: start.addingTimeInterval(60))
         let toolbox = BrainToolbox(runId: runId, specs: [], executor: executor, emit: { _ in })
         defer { _ = (choice.backend as? any BrainUsageReporting)?.takeUsage(runId: runId) }
         do {
@@ -243,7 +243,7 @@ public actor AgentRuntime {
         let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted,
                                    mentions: Self.mentions(in: request), emit: emit)
         let task = BrainTask(runId: runId, threadId: threadId, system: built.system, messages: built.messages, model: choice.model,
-                             maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))
+                             effort: choice.effort, maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))
         var outcome = "ok"
         var errorText: String?
         do {
@@ -343,12 +343,10 @@ public actor AgentRuntime {
             e.changedNothing = false
             // The sentence ends many messages; drop it in whichever language the message is in (the
             // glossary keeps its translation identical everywhere, and CatalogTests checks that).
-            let nothing = String(localized: "Nothing was changed.")
-            for ending in [" " + nothing, " Nothing was changed."] where e.message.hasSuffix(ending) {
-                e.message.removeLast(ending.count)
-                break
-            }
-            e.message += " " + String(localized: "Some of it was already done; Activity shows what.")
+            e.message = Wording.sentences([
+                Wording.droppingNothingChanged(from: e.message),
+                String(localized: "Some of it was already done; Activity shows what."),
+            ])
         }
         return e
     }

@@ -174,7 +174,15 @@ enum UISnapshots {
 
     /// Settings › AI pages: file name, the option chosen, and the fixture state it's shown in.
     private static let aiStates: [(String, AIChoice, @MainActor (FixtureServices, SettingsModel) -> Void)] = [
-        ("codex-ready", .codex, { f, _ in f.detection = FixtureServices.sampleDetection }),
+        // The founder's setup (D36): everyday gpt-6-luna at extra high, "Think harder" gpt-6.1-sol at high.
+        ("codex-ready", .codex, { f, s in
+            f.detection = FixtureServices.sampleDetection
+            s.update { s in
+                s.provider.switchProvider(to: .codex)
+                (s.provider.model, s.provider.effort) = ("gpt-6-luna", ReasoningEffort.xhigh.rawValue)
+                (s.provider.smartModel, s.provider.smartEffort) = ("gpt-6.1-sol", ReasoningEffort.high.rawValue)
+            }
+        }),
         ("codex-signed-out", .codex, { f, _ in f.detection.codex = .ready(path: "/usr/local/bin/codex", version: "0.160.0", login: .signedOut) }),
         ("codex-not-found", .codex, { f, _ in f.detection.codex = .notFound }),
         ("claude-code", .claudeCode, { f, _ in f.detection = FixtureServices.sampleDetection }),

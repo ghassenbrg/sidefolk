@@ -2,7 +2,7 @@
   "id": "dev.sidefolk.hello-folk",
   "name": "Hello Folk",
   "version": "1.0.0",
-  "sidefolk": ">=1.0",
+  "sidefolk": ">=0.1",
   "description": "The smallest working extension: one tool and one watcher. Copy this folder to start your own.",
   "author": "Sidefolk",
   "run": { "command": "python3", "args": ["main.py"] },

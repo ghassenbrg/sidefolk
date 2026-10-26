@@ -86,6 +86,8 @@ public enum TurnMessage: Sendable {
 
 public struct TurnRequest: Sendable {
     public var model: String
+    /// Already checked against what the model accepts (`EffortSupport`); nil sends nothing.
+    public var effort: ReasoningEffort?
     public var system: String
     public var messages: [TurnMessage]
     public var tools: [ToolSpec]
@@ -93,9 +95,10 @@ public struct TurnRequest: Sendable {
     /// Seconds left in the run. Adapters never sleep for a retry past it.
     public var timeBudget: TimeInterval
 
-    public init(model: String, system: String, messages: [TurnMessage], tools: [ToolSpec], maxOutputTokens: Int,
-                timeBudget: TimeInterval) {
+    public init(model: String, effort: ReasoningEffort? = nil, system: String, messages: [TurnMessage], tools: [ToolSpec],
+                maxOutputTokens: Int, timeBudget: TimeInterval) {
         self.model = model
+        self.effort = effort
         self.system = system
         self.messages = messages
         self.tools = tools
