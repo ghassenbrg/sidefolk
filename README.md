@@ -1,125 +1,127 @@
 # Sidefolk
 
-A desktop companion for macOS. Pip lives on your desktop, brings you your reminders, and acts
-out what your AI tools (Claude Code, Codex) are doing: it brings you their requests and takes you
-back to their work sessions.
+**A friendly AI companion that lives on your Mac.** A small character sits on your desktop,
+remembers what you tell it, reminds you at the right moment, watches things for you, acts
+through tools you allow — and other AI agents (Claude Code, Codex, any MCP client) can reach it too.
 
-**Where it's going:** [docs/PLAN-V2.md](docs/PLAN-V2.md), the plan agreed on 24 October 2026
-(reminders, notes, AI sessions with worker companions, quick actions, in a real Mac app). This
-README describes the app after phase 0 (the reset). Everything v0.1 had (a crew of 18
-characters, art styles, comfort presets…) is in git at the `v0.1-zoo` tag. The older Electron
-app is at `legacy-v0`.
+<p align="center"><img src="Resources/Brand/exports/logo-horizontal-color.png" width="720" alt="Sidefolk with Mochi and the Folk Family"></p>
 
-## Run it
+Mochi, the white rabbit with navy ear tips and a mint/aqua scarf, is the main mascot and the default
+companion. **Settings › Companion** also offers the original Sidefolk robot with its four light
+colors, and Spark. Your saved companion choice and custom name stay yours.
 
-Requires Rust (stable), Node 22+, and macOS 14+.
+## What it does
 
-```sh
-npm install
-npm run dev           # the desktop app, Tauri dev build (logs go to the terminal)
-npm run web           # browser preview: companion at http://127.0.0.1:1420 (?zoom=3),
-                      # the Sidefolk window at /settings.html, both with sample data
-npm test              # unit tests
-npm run check:webkit  # with npm run web running: every view in WebKit, fails on errors
-                      # (once: npx playwright install webkit)
-npm run build         # optimized src-tauri/target/release/bundle/macos/Sidefolk.app
-npm run measure       # CPU/RAM of the built app and its WebKit helpers
-npm run sprites       # cut public/pip/*.png from the generated sheets in art/pip
-```
+- **Lives on your desktop.** The companion stands on the bottom edge of the screen, shows what it is
+  doing at a glance (thinking, writing, watching, waiting for your OK, done) and gets out of the way.
+  Folks from the Folk Family sit beside it while their kind of job is running: Tempo for upcoming
+  reminders, Scout while watching, Byte while an agent or command runs.
+- **Understands plain language without AI.** “remind me tomorrow at 9 to send the deck”, “idea: …”,
+  “add oat milk to my groceries list”, “watch https://example.com/pricing”, “tell me when report.pdf
+  appears in Downloads”, “quiet for 1 hour”, “what ideas did I save for Sidefolk?” all finish instantly
+  on your Mac. The hint under the input tells you what Enter will do and whether it uses AI.
+- **Thinks when you need it.** Questions and open-ended requests go to the AI you chose: a plan you
+  already pay for (Claude through Claude Code, ChatGPT through Codex), an API key (Anthropic, OpenAI,
+  Google Gemini, Mistral, Groq, xAI, DeepSeek, OpenRouter), a model on your Mac (Ollama, LM Studio),
+  or your own OpenAI-compatible server. The AI acts through Sidefolk’s tools, never around them.
+- **Remembers, visibly.** A Notebook with an Inbox, “About you” (facts it keeps in mind), and your
+  projects, topics and lists. Everything is editable, searchable, and in the Trash for 30 days.
+- **Keeps time.** Reminders with natural times and repeats, snooze, done, missed-reminder summaries,
+  a morning brief, and system notifications as a fallback when Sidefolk isn’t running.
+- **Watches things.** Web pages (meaningful changes only), sites going down or up, files and folders,
+  processes finishing, commands you approve, and watches from extensions. A watch on
+  `localhost:3000` works when you ask for it yourself.
+- **Works with your agents.** `sidefolk mcp` gives Claude Code, Codex and other MCP clients a small,
+  safe set of tools (save a note, set a reminder, watch, notify you, ask you). `sidefolk run -- npm test`
+  tells you when a long command ends, and when it fails, the last lines it printed. Optional Claude Code hooks let the companion notice when a
+  session needs you.
+- **Extensible.** Install sandboxed extensions (a manifest plus any executable speaking MCP), add
+  existing MCP servers, or let the companion use skills — written instructions it loads when needed.
+- **You stay in control.** A deterministic Guard decides what may run — never the model. Risky actions
+  ask first in plain language, files are only touched in folders you shared, outside content can’t
+  quietly steer actions, and every action is in the Activity log.
 
-Releasing (signing, notarizing, auto-update): [docs/RELEASE.md](docs/RELEASE.md).
+## Install
 
-## Use it
-
-**Pip stays where you put it.** Drag it anywhere; it never wanders. ⌘⇧Space hides it or
-calls it to your cursor. It falls asleep after a while without keyboard or mouse input.
-
-**Click Pip (or right-click) to talk to it.** One field; the line under it says what Enter
-will do before anything happens. Everything is understood on your Mac, without AI:
-
-| Type | What happens |
-|---|---|
-| `remind me tomorrow at 9 to check the results` | A reminder; Pip brings it at that time, even when hidden |
-| `reminders` | What's coming up |
-| `open session` · `open api session` | Bring a work session forward, or continue it in a terminal |
-| `open Sidefolk` · `hide` | The Sidefolk window, or hide the companion |
-| `rename to Bun` | A new name for your companion |
-
-Anything else gets a short answer; it's never sent to an AI tool.
-
-**Every card closes** with its ×. A request you close stays in the Sidefolk window under
-Requests until it's answered or the tool stops waiting.
-
-**The Sidefolk window** (menu bar icon → Open Sidefolk…): Home (what needs you, your work
-sessions, reminders coming up), Requests (each one with its exact command, Decline / Allow
-once; "Sent" shows only once it went through), Reminders (add, edit, complete, delete with
-Undo) and Settings.
-
-**With Claude Code or Codex** (Settings → Connected tools): Pip shows what each work session is
-doing, brings you its requests when no terminal or editor is in front (Decline / Allow once, or
-answer in the tool's own window), and tells you when it finishes or fails. Companion tools let
-sessions send you a note, ask a question, set a reminder or check whether you're around (MCP:
-`notify`, `ask`, `remind`, `presence`).
-
-## Settings and data
-
-Settings: companion size, reduce motion, larger text, sleep time, sound and voice, hide from
-screen recordings (on by default), connected tools, where sessions open, the shortcut (press it
-to record) and start at login. Everything lives in
-`~/Library/Application Support/dev.sidefolk.companion` and never leaves the Mac:
-
-| File | What |
-|---|---|
-| `settings.json` | Preferences, position and display |
-| `crew.json` | The companion's name |
-| `reminders.json` | Reminders |
-| `journal/*.jsonl` | Sessions, prompts, outcomes, requests; one file per UTC day, 30 days |
-| `token` | Secret the MCP shim sends to the app |
-| `backups/` | Exact copies of agent configs before each change |
-| `logs/` | Crash and page errors, for bug reports |
-
-`SIDEFOLK_DATA_DIR` overrides the folder and `SIDEFOLK_CLAUDE_SETTINGS` points the hook
-installer at a test copy. Agents must never install into your real global settings themselves.
+Sidefolk needs macOS 15 or later. Until a signed release is published, build it yourself:
 
 ```sh
-npm run typecheck && npm test
-(cd src-tauri && cargo build && cargo test)
-# Opt-in tests: the hook installer on a COPY of your settings, agent CLIs on temp configs.
-TEST_DIR=$(mktemp -d); cp ~/.claude/settings.json "$TEST_DIR/claude-settings.json"
-(cd src-tauri && SIDEFOLK_CLAUDE_SETTINGS="$TEST_DIR/claude-settings.json" cargo test copied_user_settings_round_trip -- --ignored)
-(cd src-tauri && cargo test agents_cli_round_trip -- --ignored --test-threads=1)
+git clone <this repository> && cd sidefolk
+make app            # builds build/Sidefolk.app (release)
+open build/Sidefolk.app
 ```
 
-## Layout
+Drag `build/Sidefolk.app` to `/Applications` to keep it. On first launch the companion introduces
+itself in a few bubbles; choose an AI later in **Settings › AI** (everything local works without one).
 
+## Develop
+
+```sh
+swift build                      # everything
+make test                        # 851 tests (Swift Testing), serial: ~40 s
+make dev                         # debug app with its own data in build/dev-home (never your real data)
+swift run sidefolk-render out/   # character contact sheets for visual review
+swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # Home, Settings, Ask panel, bubbles; light and dark
+swift run SidefolkApp --ui-snapshots /tmp/sf-fr --language fr   # the same in another language
+make strings                     # collect every string people read into the catalog
+scripts/pseudo-l10n.py --language ar   # pictures in a made-up long translation (ar: right to left)
+swift scripts/dev.swift snap     # snapshot the running debug app's windows (see AGENTS.md)
 ```
-src/                 the companion's page (TypeScript)
-  main.ts            boot, events from Rust, frame loop, welcome-back
-  companion.ts       the companion: requests, commands, opening sessions, status for the window
-  familiar.ts        the companion on screen: Pip's frames, mind, card and status badge
-  pip.ts             Pip: frame per pose, breathing, blinks, hop, status light, hit testing
-  agents.ts          folds agent sessions into one thing to act out
-  commands.ts        what the field understands (pure, local)
-  reminders.ts       reminder scheduler and cards; when.ts parses times (chrono-node)
-  agent-tools.ts     AI tools' MCP calls shown on the companion
-  away.ts            the welcome-back briefing (pure)
-  mind.ts            behavior: idle routine, reactions, directives, dragging, frame rate
-  bubble.ts          the card: lines, requests (who, context, facts, choices), the field
-  input.ts           click-through: interactive only over Pip's opaque pixels or its card
-  tokens.css         design tokens; states.ts status words and glyphs; icons.ts icons and mark
-  dashboard/         the Sidefolk window: app.ts, home, requests, reminders, settings
-src-tauri/src/       Rust core
-  overlay.rs         transparent work-area window, refit, cursor and idle stream
-  panel.rs           macOS non-activating panel on every Space, typing focus
-  hooks.rs           127.0.0.1:47821: Claude Code hooks, /mcp/call, dev endpoints
-  codex.rs           codex app-server driver (used again in phase 6)
-  sessions.rs        "Open session": finds where a session runs, focuses or resumes it
-  mcp.rs             `sidefolk --mcp` stdio shim and the tool endpoint
-  mcp_setup.rs       companion tools installer (claude/codex mcp add, with backups)
-  claude_setup.rs    confirmed hook installer, backup and uninstall
-  journal.rs · reminders.rs · crew.rs · settings.rs · prefs.rs · tray.rs · voice.rs
-art/                 pip/ (generated sprite sheets and how to remake them), brand SVGs, icon
-creative-design/     the design package; v2/ holds the Pip and Spark concept sheets
-public/pip/          Pip's frames (`npm run sprites`)
-scripts/             make_icons.py, make_sprites.py, measure.sh, webkit-check.mjs
+
+Read [AGENTS.md](AGENTS.md) before changing things; the plan and decisions live in [docs/](docs):
+[PRODUCT](docs/PRODUCT.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [DECISIONS](docs/DECISIONS.md) ·
+[SECURITY](docs/SECURITY.md) · [EXTENSIONS](docs/EXTENSIONS.md) · [CHARACTER](docs/CHARACTER.md) ·
+[VOICE](docs/VOICE.md) · [STATUS](docs/STATUS.md) · [MACOS-NOTES](docs/MACOS-NOTES.md).
+
+### Repository map
+
+| Path | What lives there |
+|------|------------------|
+| `Sources/SidefolkCore/` | Everything that isn’t UI: storage, Guard, tools, brain, time, watchers, bridge, extensions, skills |
+| `Sources/SidefolkCharacter/` | The Core Animation character rig, folks, icon renderer |
+| `Sources/SidefolkApp/` | The app: companion window, Ask panel, bubbles, menu bar, Home, Settings, onboarding |
+| `Sources/sidefolk/` | The `sidefolk` command-line helper (mcp, run, hook, status, ext validate) |
+| `Tests/SidefolkCoreTests/` | Core tests |
+| `extensions/` | Sample extensions (System Vitals, Hello Folk) |
+| `Resources/` | Info.plist, icon, bundled skills, character sheets |
+| `scripts/` | `build-app.sh` (assemble and sign the .app), `release.sh` (Developer ID, DMG, notarization), `dev.swift` (drive the debug app) |
+
+## Release
+
+`scripts/release.sh` runs the tests, builds, signs with hardened runtime, makes a DMG, notarizes and
+staples it. It needs two things that aren’t in the repository:
+
+```sh
+export SIDEFOLK_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+xcrun notarytool store-credentials sidefolk --apple-id you@example.com --team-id TEAMID
+export SIDEFOLK_NOTARY_PROFILE=sidefolk
+scripts/release.sh
 ```
+
+## Privacy
+
+Everything Sidefolk keeps is in `~/Library/Application Support/Sidefolk` (owner-only permissions),
+logs in `~/Library/Logs/Sidefolk` (secrets redacted), API keys in your Keychain. Nothing is sent
+anywhere except: requests to the AI provider you chose (Settings › AI shows exactly what was last
+sent), pages you asked it to read or watch, and network access you granted to extensions. No
+accounts, no telemetry. Settings › Privacy & Permissions exports or deletes everything.
+
+## Troubleshooting
+
+- **Nothing happens on ⌘⇧Space** — another app may use that shortcut; change it in Settings › General.
+- **“That needs AI, which isn’t set up yet”** — pick a provider in Settings › AI; local commands keep working.
+- **Claude Code or Codex isn’t found** — Settings › AI shows the command to install it; set a custom path
+  if it’s somewhere unusual. Codex must be signed in (`codex login` in Terminal).
+- **An extension “didn’t start”** — run `sidefolk ext validate <folder>`; Settings › Extensions shows
+  its last error. Diagnostics (logs without your content) export from Settings › Privacy.
+- **Reminders while the Mac sleeps** — the companion sleeps too; missed reminders appear once you’re back.
+
+## Known limitations
+
+See [docs/STATUS.md](docs/STATUS.md). In short: macOS only, English language understanding, voice
+input and calendar awareness are not in V1, watchers run only while Sidefolk runs, and network-enabled
+extensions can reach your local network (the sandbox can’t restrict destinations yet).
+
+## License
+
+Proprietary — see [LICENSE](LICENSE). Third-party components: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

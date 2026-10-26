@@ -1,68 +1,43 @@
 # Agent guide
 
-Sidefolk is a 3D desktop pet (Tauri 2 + three.js, macOS first) that gives AI agents a body:
-it lives on the desktop with zero token cost, acts out what Claude Code and Codex are doing,
-asks you for their permissions, and can hand them work.
+Sidefolk is a native macOS desktop AI companion (Swift 6, SwiftPM, AppKit + SwiftUI + Core
+Animation). A small character lives on the desktop, remembers, reminds, watches, acts through
+permissioned tools and extensions, and other AI agents can reach it over MCP.
 
 ## Start here
 
-Several agents (Claude Code, Codex, others) work on this repo in turns. Shared memory lives in
-[memory/](memory/):
-
-1. Read [memory/STATUS.md](memory/STATUS.md): what is done, what is in progress, the next step.
-2. Skim [memory/DECISIONS.md](memory/DECISIONS.md) and [memory/LEARNINGS.md](memory/LEARNINGS.md)
-   before changing anything they cover.
-3. Before you stop (or when you sense your session or usage limit is close), update
-   STATUS.md so the next agent can continue without asking: what you changed, what is half
-   done, the exact next step, how you verified things.
-
-Where the product is going and in what order: [docs/PLAN-V2.md](docs/PLAN-V2.md) (in review
-with the user; nothing gets built before they approve it). [docs/ROADMAP.md](docs/ROADMAP.md)
-is the v0.1 history.
-
-UI work follows the design package in [creative-design/](creative-design/) (DESIGN-SYSTEM.md,
-APP-UX.md) where PLAN-V2 doesn't say otherwise; v2 concept art is in creative-design/v2.
-Use the tokens in `src/tokens.css` and the status vocabulary in `src/states.ts`; don't add
-colors, sizes or state words of your own.
-
-Background reading: [README.md](README.md), [docs/PHASE0.md](docs/PHASE0.md),
-[docs/PHASE1.md](docs/PHASE1.md), [art/pip/README.md](art/pip/README.md),
-[docs/RELEASE.md](docs/RELEASE.md).
+1. [docs/STATUS.md](docs/STATUS.md): what is done, in progress, next.
+2. [docs/PRODUCT.md](docs/PRODUCT.md): V1 spec. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how it fits.
+3. [docs/DECISIONS.md](docs/DECISIONS.md) before changing anything a decision covers; add new major decisions there.
+4. Before you stop, update docs/STATUS.md (what changed, what is half done, exact next step, how verified).
 
 ## Commands
 
 ```sh
-npm install
-npm run dev        # desktop overlay, Tauri dev build (logs go to the terminal)
-npm run web        # browser preview at http://127.0.0.1:1420 (?zoom=3; keys 0-7 fake agent events, r a reminder, p switches project, c opens the field)
-                   # and the Sidefolk window at /settings.html with sample data (?tab=review:codex-1)
-npm run typecheck
-npm test           # vitest: commands, routing, reminders, briefings, descriptions, the window's logic
-npm run check:webkit  # with npm run web running: every view in WebKit (the app's engine), fails on errors
-npm run build      # release Sidefolk.app
-npm run measure    # CPU/RAM of the built app
-npm run sprites    # rebuild public/pip/*.png from the generated sheets in art/pip
+swift build                      # everything
+make test                        # core tests (Swift Testing), serially: swift test --no-parallel (D18), ~40 s
+make dev                         # build + assemble build/Sidefolk-dev.app + launch with SIDEFOLK_HOME=build/dev-home
+make app                         # release build/Sidefolk.app (Apple Development identity if present, else ad hoc)
+swift run sidefolk-render out/   # character contact sheets for visual review
+swift run SidefolkApp --ui-snapshots out/   # Home, Settings, Ask panel and bubbles, light and dark, sample data
 ```
 
-Rust only: `cd src-tauri && cargo build && cargo test`. Ignored tests run real CLIs or one live
-model call; run them only when that part changes (README lists them).
-
-Driving the dev app without clicks: POST JSON to `http://127.0.0.1:47821/dev/ui` with
-`{"action": "state" | "bubbles" | "welcome" | "run:<command>" | "choose:<button label>"}` and
-read the `[ui]` lines in the dev log.
+Agents can't see the screen. To check the running debug app:
+- `swift scripts/dev.swift snap` writes a PNG of every visible Sidefolk window to `$SIDEFOLK_HOME/snapshots/`
+  (read them as images); `swift scripts/dev.swift "ask:…"`, `respond:<action>`, `dismiss`, `approve`, `deny`,
+  `home`, `settings:<tab>`, `find:<query>`, `drop:<url or path>` drive it (list at the top of the script).
+- Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
+- `sidefolk` (in `build/Sidefolk-dev.app/Contents/Helpers/`) with the same `SIDEFOLK_HOME` talks to that app.
+- When a test run seems stuck, run it through `script -q log.txt swift test --no-parallel < /dev/null`:
+  plain redirection buffers the output, so the last lines lie about where it stopped.
 
 ## Rules
 
-- Never edit the user's global agent config (`~/.claude/settings.json`, `~/.claude.json`,
-  `~/.codex/config.toml`) yourself. The app's own installers may change it only when the user
-  clicks them, after a confirmation and a backup. While developing, use
-  `claude --settings hooks/claude-settings.json`, a copy through `SIDEFOLK_CLAUDE_SETTINGS`, or
-  point `CLAUDE_CONFIG_DIR` / `CODEX_HOME` at temporary folders.
-- Live model calls cost the user's quota. Keep them rare and tiny, and prefer the
-  debug-only endpoints (`/dev/ui`, `/dev/codex`, `/dev/resolve` on 127.0.0.1:47821) and the
-  browser preview.
-- Screen capture is not available to agents here. Verify the desktop app through its dev log
-  (`[ui] ...` lines) and ask the user for hand checks.
-- Commit only when the user asks, and never add `Co-Authored-By` trailers. Work happens on
-  `main`; the local tag `legacy-v0` marks the old app.
-- Match the surrounding code: small modules, comments that explain why, no dead code.
+- Tests and dev runs never touch the user's real data or agent configs: use `SIDEFOLK_HOME`, temp
+  folders, and pass paths explicitly. Never edit `~/.claude*`, `~/.codex` yourself; the app may
+  change them only when the user clicks, after confirmation and a backup.
+- Live model calls cost the user's quota: keep them rare and tiny; tests use scripted models.
+- Every tool runs through `ToolExecutor` (Guard + audit). No side doors.
+- No fake features: nothing shown as working unless it works.
+- Match the surrounding code: small files, comments that explain why, no dead code.
+- Commit in coherent milestones without Co-Authored-By trailers.

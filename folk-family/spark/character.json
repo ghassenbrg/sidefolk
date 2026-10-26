@@ -1,0 +1,9 @@
+{
+  "description" : "Redesigned legacy robot",
+  "height" : 1254,
+  "image" : "spark.png",
+  "name" : "Spark",
+  "source" : "source.png",
+  "status" : "static companion concept",
+  "width" : 1254
+}

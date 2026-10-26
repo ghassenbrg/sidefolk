@@ -1,0 +1,346 @@
+import SidefolkCharacter
+import SidefolkCore
+import SwiftUI
+
+/// Home › a collection: its items on the left, the selected one in the editor on the right.
+struct NotebookView: View {
+    @Bindable var model: NotebookModel
+    var collection: NotebookCollection
+
+    var body: some View {
+        HSplitView {
+            ItemList(model: model, collection: collection)
+                .frame(minWidth: 260, idealWidth: 320, maxWidth: 440)
+            NotebookEditor(model: model)
+                .frame(minWidth: 340, maxWidth: .infinity)
+        }
+        .background(Theme.surface)
+    }
+}
+
+/// What kind of item it is, as an icon and a word.
+enum ItemKindStyle {
+    static func symbol(_ kind: NotebookItem.Kind) -> String {
+        switch kind {
+        case .note: "note.text"
+        case .idea: "lightbulb"
+        case .task: "checkmark.circle"
+        case .link: "link"
+        }
+    }
+
+    static func title(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
+        switch kind {
+        case .note: "Note"
+        case .idea: "Idea"
+        case .task: "Task"
+        case .link: "Link"
+        }
+    }
+
+    /// The new-item button: "New note".
+    static func new(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
+        switch kind {
+        case .note: "New note"
+        case .idea: "New idea"
+        case .task: "New task"
+        case .link: "New link"
+        }
+    }
+
+    /// Under an empty collection: "Write a note".
+    static func write(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
+        switch kind {
+        case .note: "Write a note"
+        case .idea: "Write an idea"
+        case .task: "Write a task"
+        case .link: "Save a link"
+        }
+    }
+}
+
+// MARK: - Item list
+
+private struct ItemList: View {
+    @Bindable var model: NotebookModel
+    var collection: NotebookCollection
+    @FocusState private var listFocused: Bool
+    @FocusState private var searchFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            Rectangle().fill(Theme.line).frame(height: 1)
+            list
+        }
+        .background(Theme.surfaceSunken)
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1)
+                        .accessibilityAddTraits(.isHeader)
+                    countLine.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                }
+                Spacer(minLength: Theme.Space.s)
+                Button {
+                    Task { await model.newItem() }
+                } label: {
+                    Label { Text(ItemKindStyle.new(newKind)) } icon: { Image(systemName: "square.and.pencil") }
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.sf(.secondary))
+                .keyboardShortcut("n", modifiers: .command)
+                .help(Text("\(String(localized: ItemKindStyle.new(newKind))) (⌘N)", comment: "A button's name, then its shortcut"))
+            }
+            if collection.kind == .profile {
+                Label("Sidefolk keeps these in mind in every conversation. Change or delete anything.",
+                      systemImage: "person.crop.circle")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(Theme.Space.s + 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+            }
+            if collection.kind != .profile {
+                Picker("Show", selection: $model.filter) {
+                    ForEach(NotebookModel.KindFilter.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.small)
+            }
+            searchField
+        }
+        .padding(Theme.Space.l)
+    }
+
+    private var name: String { NotebookCollections.shownName(collection) }
+
+    private var countLine: Text {
+        let n = model.counts[collection.id] ?? 0
+        return n == 0 ? Text("Empty") : Text("\(n) items")
+    }
+
+    private var searchField: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            searchBox
+            if searching {
+                Picker("Search in", selection: $model.everywhere) {
+                    Text(name).tag(false)
+                    Text("Everywhere").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.small)
+            }
+        }
+        // ⌘F, as everywhere on the Mac.
+        .background {
+            Button("Find") { searchFocused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var searchBox: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
+            TextField("Search", text: $model.query, prompt: searchPrompt)
+                .textFieldStyle(.plain)
+                .font(Theme.Font.body)
+                .focused($searchFocused)
+                .accessibilityLabel(searchPrompt)
+            if !model.query.isEmpty {
+                Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.inkFaint)
+                    .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, Theme.Space.s)
+        .padding(.vertical, 6)
+        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line))
+    }
+
+    private var searchPrompt: Text { model.everywhere ? Text("Search everything") : Text("Search \(name)") }
+
+    @ViewBuilder private var list: some View {
+        if model.items.isEmpty {
+            VStack(spacing: 0) {
+                Spacer()
+                EmptyState(title: emptyTitle, message: emptyMessage, systemImage: emptySymbol, folk: emptyFolk, art: emptyArt)
+                if searching, !model.everywhere {
+                    Button("Search everywhere") { model.everywhere = true }
+                        .buttonStyle(.sfSecondary)
+                        .padding(.top, -Theme.Space.l)
+                }
+                if !searching {
+                    Button { Task { await model.newItem() } } label: { Text(ItemKindStyle.write(newKind)) }
+                        .buttonStyle(.sfPrimary)
+                        .padding(.top, -Theme.Space.l)
+                }
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+        } else {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(model.items) { item in
+                            ItemRow(item: item, selected: model.selectedId == item.id, model: model)
+                                .id(item.id)
+                        }
+                    }
+                    .padding(Theme.Space.s)
+                }
+                .focusable()
+                .focusEffectDisabled()
+                .focused($listFocused)
+                .onMoveCommand { direction in
+                    moveSelection(direction)
+                    if let id = model.selectedId { proxy.scrollTo(id) }
+                }
+                .onDeleteCommand {
+                    if let item = model.items.first(where: { $0.id == model.selectedId }) {
+                        Task { await model.moveToTrash(item) }
+                    }
+                }
+            }
+        }
+    }
+
+    private func moveSelection(_ direction: MoveCommandDirection) {
+        let ids = model.items.map(\.id)
+        guard !ids.isEmpty else { return }
+        let index = model.selectedId.flatMap { ids.firstIndex(of: $0) }
+        switch direction {
+        case .down: model.select(ids[min((index ?? -1) + 1, ids.count - 1)])
+        case .up: model.select(ids[max((index ?? ids.count) - 1, 0)])
+        default: break
+        }
+    }
+
+    private var searching: Bool { !model.query.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var newKind: NotebookItem.Kind { model.filter.kind ?? .note }
+
+    private var emptyTitle: Text {
+        if searching { return Text("Nothing matches") }
+        if collection.kind == .profile { return Text("Nothing about you yet") }
+        switch model.filter {
+        case .all: return Text("Nothing here yet")
+        case .notes: return Text("No notes here")
+        case .ideas: return Text("No ideas here")
+        case .tasks: return Text("No tasks here")
+        case .links: return Text("No links here")
+        }
+    }
+
+    private var emptyMessage: Text {
+        if searching { return model.everywhere ? Text("Try fewer or different words.") : Text("Try fewer words, or search the whole notebook.") }
+        if collection.kind == .profile { return Text("Tell me things like “I prefer short answers” and I'll keep them here.") }
+        if collection.kind == .inbox { return Text("Anything you save without saying where lands here.") }
+        return Text("Write one here, or ask me to save something to \(name).")
+    }
+
+    private var emptyFolk: String {
+        if searching { return "scout" }
+        return collection.kind == .profile ? "seed" : "pip"
+    }
+
+    /// An empty collection shows your companion with its notepad out, ready to write; searches and
+    /// About you keep their folks.
+    private var emptyArt: NSImage? {
+        guard !searching, collection.kind != .profile else { return nil }
+        return CompanionArt.portrait(for: model.services.runtime.settings.current, state: .working(.notepad), side: 120)
+    }
+
+    private var emptySymbol: String {
+        if searching { return "magnifyingglass" }
+        return collection.kind == .profile ? "person.crop.circle" : "tray"
+    }
+}
+
+private struct ItemRow: View {
+    var item: NotebookItem
+    var selected: Bool
+    var model: NotebookModel
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Space.s + 2) {
+            if item.kind == .task {
+                CheckCircle(checked: item.status == .done,
+                            label: item.status == .done ? Text("Mark “\(displayTitle)” not done") : Text("Mark “\(displayTitle)” done")) {
+                    Task { await model.toggleDone(item) }
+                }
+                .padding(.top, 1)
+            } else {
+                Image(systemName: ItemKindStyle.symbol(item.kind))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.inkFaint)
+                    .frame(width: 18)
+                    .padding(.top, 1)
+                    .accessibilityHidden(true)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(displayTitle)
+                    .font(Theme.Font.bodyStrong)
+                    .foregroundStyle(item.status == .done ? Theme.inkMuted : (item.title.isEmpty ? Theme.inkFaint : Theme.ink))
+                    .strikethrough(item.status == .done, color: Theme.inkFaint)
+                    .lineLimit(2)
+                if let snippet {
+                    Text(snippet).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        .lineLimit(item.kind == .link ? 1 : 2)
+                        .truncationMode(item.kind == .link ? .middle : .tail)
+                }
+                HStack(spacing: 6) {
+                    Text(TimeText.short(item.updatedAt))
+                    if let place = elsewhere { Text("in \(place)") }
+                    ForEach(item.tagList.prefix(3), id: \.self) { Text("#" + $0) }
+                }
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.inkFaint)
+                .lineLimit(1)
+                if let who = Describe.source(item.source) {
+                    Chip("from \(who)", tone: .accent, systemImage: "sparkles")
+                        .padding(.top, 1)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Theme.Space.s + 2)
+        .padding(.vertical, Theme.Space.s + 1)
+        .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .onTapGesture { model.select(item.id) }
+        .contextMenu {
+            if item.kind == .task {
+                Button(item.status == .done ? "Mark not done" : "Mark done") { Task { await model.toggleDone(item) } }
+            }
+            Button("Move to Trash") { Task { await model.moveToTrash(item) } }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction { model.select(item.id) }
+    }
+
+    private var displayTitle: String { item.title.isEmpty ? String(localized: "Untitled") : item.title }
+
+    /// Searching everywhere: where a result from another collection lives.
+    private var elsewhere: String? {
+        guard model.everywhere, !model.query.isEmpty, item.collectionId != model.collectionId else { return nil }
+        return model.collectionName(item.collectionId)
+    }
+
+    private var snippet: String? {
+        if item.kind == .link, let url = item.url {
+            return url.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: "")
+        }
+        let line = item.body.split(whereSeparator: \.isNewline).first.map(String.init)?.trimmingCharacters(in: .whitespaces)
+        return line?.isEmpty == false ? line : nil
+    }
+}
+

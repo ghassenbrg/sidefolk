@@ -1,8 +1,20 @@
-node_modules/
-dist/
-src-tauri/target/
-src-tauri/gen/
-output/
-release/
+.build/
+build/
+.swiftpm/
+*.xcodeproj
+xcuserdata/
+DerivedData/
 .DS_Store
-*.blend1
+*.dmg
+*.p12
+*.cer
+*.mobileprovision
+.env
+.env.*
+!.env.example
+.claude/worktrees/
+.claude/settings.local.json
+
+# Research workspace (reports worth keeping are copied into docs/)
+research_notes/
+reports/
