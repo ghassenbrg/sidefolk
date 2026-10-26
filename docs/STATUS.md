@@ -1,8 +1,16 @@
 # Status
 
-Updated: 2026-10-26. Latest: Mochi rabbit brand rollout, with the original robot preserved.
+Updated: 2026-10-26. Latest: asset-set preservation for the Mochi brand and Folk Family.
 
 ## Done and verified
+- **Asset-set preservation (2026-10-26):** `Resources/ASSETS.md` indexes the named character,
+  branding, icon, template, pose and reference sets. Preserved the three early robot generations
+  previously found only in the image cache under `Resources/Brand/archive/robot/early-generations/`,
+  and the user's rejected wordmark/icon examples under `Resources/Brand/reference/quality-feedback/`.
+  `Resources/Brand/generated-image-index.json` records all 22 generated originals with repository
+  paths and SHA-256 hashes; verified each against its untouched imagegen output. All character
+  sources, comparison sheets, references and prompts remain in Git. No runtime changes or work
+  left half done. Next: use the asset index when selecting or revising artwork.
 - **Mochi brand rollout (2026-10-26, D29):** Mochi is the brand mascot and fresh-install default.
   Explicit saved choices, names and accents are preserved. Settings still offers the original
   Sidefolk robot with all four light colors and Spark. Replaced the production logo marks, blue
