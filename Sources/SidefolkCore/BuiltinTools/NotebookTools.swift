@@ -77,7 +77,8 @@ struct NotesSaveTool: Tool {
         let notebook = self.notebook, events = self.events, id = item.id
         return ToolResult(
             text: message,
-            card: ResultCard(kind: .note, title: "Saved to \(where_)", subtitle: title.clipped(80), detail: detail, refId: id, url: url),
+            card: ResultCard(kind: .note, title: "Saved to \(where_)", subtitle: title.clipped(80), detail: detail, refId: id, url: url,
+                             itemKind: finalKind),
             undo: UndoAction(label: "Removed “\(title.clipped(40))”") {
                 _ = try await notebook.trash(itemId: id)
                 events.changed(.notebook)
@@ -271,7 +272,8 @@ struct NotesUpdateTool: Tool {
         let notebook = self.notebook, events = self.events
         return ToolResult(
             text: message,
-            card: ResultCard(kind: .note, title: "Updated note", subtitle: item.title.clipped(80), detail: changed.joined(separator: ", "), refId: item.id),
+            card: ResultCard(kind: .note, title: "Updated \(item.kind.rawValue)", subtitle: item.title.clipped(80), detail: changed.joined(separator: ", "),
+                             refId: item.id, itemKind: item.kind),
             undo: UndoAction(label: "Restored “\(previous.title.clipped(40))”") {
                 // Put the words back, not the note itself: if it was moved to the Trash since, it stays there.
                 var back = previous
@@ -307,7 +309,7 @@ struct NotesTrashTool: Tool {
         let notebook = self.notebook, events = self.events
         return ToolResult(
             text: "Moved “\(item.title.clipped(80))” to the Trash. It can be restored for 30 days.",
-            card: ResultCard(kind: .note, title: "Moved to Trash", subtitle: item.title.clipped(80), refId: id),
+            card: ResultCard(kind: .note, title: "Moved to Trash", subtitle: item.title.clipped(80), refId: id, itemKind: item.kind),
             undo: UndoAction(label: "Restored “\(item.title.clipped(40))”") {
                 try await notebook.restore(itemId: id)
                 events.changed(.notebook)

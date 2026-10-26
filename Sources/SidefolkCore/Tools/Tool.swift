@@ -126,14 +126,18 @@ public struct ResultCard: Codable, Sendable, Hashable {
     public var detail: String?
     public var refId: String?
     public var url: String?
+    /// For notebook items: note, idea, task or link, so the card can show the right icon.
+    public var itemKind: NotebookItem.Kind?
 
-    public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil) {
+    public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil,
+                itemKind: NotebookItem.Kind? = nil) {
         self.kind = kind
         self.title = title
         self.subtitle = subtitle
         self.detail = detail
         self.refId = refId
         self.url = url
+        self.itemKind = itemKind
     }
 }
 

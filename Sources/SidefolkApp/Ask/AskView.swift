@@ -224,7 +224,7 @@ struct ResultCardView<Actions: View>: View {
         SFCard(accent: Self.accent(for: card.kind)) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    Image(systemName: Self.symbol(for: card.kind)).foregroundStyle(Self.accent(for: card.kind))
+                    Image(systemName: card.itemKind.map(ItemKindStyle.symbol) ?? Self.symbol(for: card.kind)).foregroundStyle(Self.accent(for: card.kind))
                     Text(card.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }

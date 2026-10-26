@@ -121,7 +121,7 @@ public struct LocalIntentRunner: Sendable {
         let names = Dictionary(uniqueKeysWithValues: ((try? await notebook.collections(includeArchived: true)) ?? []).map { ($0.id, $0.name) })
         let cards = items.map { item in
             ResultCard(kind: .note, title: item.title, subtitle: [names[item.collectionId], TimeFormat.day(item.updatedAt, now: runtime.clock.now, calendar: .autoupdatingCurrent)]
-                .compactMap { $0 }.joined(separator: " · "), refId: item.id, url: item.url)
+                .compactMap { $0 }.joined(separator: " · "), refId: item.id, url: item.url, itemKind: item.kind)
         }
         var title = kind.map { "\($0.rawValue.capitalized)s" } ?? "Found"
         if let target { title += " in \(target.name)" }
