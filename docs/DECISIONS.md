@@ -171,3 +171,17 @@ separate transparent artwork PNG. No bevel, raised tile, cast shadow or edge lig
 Only derived legacy macOS ICNS/iconset representations get a flat inset rounded mask. An Xcode
 asset catalog includes both the raw image sets and the macOS AppIcon set. The rendered-tile master
 was rejected and removed.
+
+### D28 — Ten languages for everything people read; plain-language commands stay English (2026-10-26)
+**Decision:** the interface, notices and messages ship in English, French, Spanish, German, Italian,
+Portuguese (Brazil), Japanese, Korean, Chinese (Simplified) and Arabic. Sidefolk follows the Mac's
+language and can be switched in Settings › General (it relaunches). Strings come from one String
+Catalog (`make strings`, compiled into the app by `build-app.sh`). Text written for models (tool
+results, prompts, tool descriptions) stays English. The local, no-AI understanding of typed requests
+stays English in V1; with AI configured, requests work in any language, and the buttons (Save,
+Remind me…, Watch) work in every language.
+**Why:** a companion that lives on your desktop should speak your language; the founder asked for
+it. A second rule-based parser per language would be a large, separate project (the English one is
+fuzz-tested over 600k inputs), so it is deferred rather than done badly.
+**Alternatives:** translate only the menus (half-translated apps feel broken); write parsers for two
+languages now (high effort, uneven quality).
