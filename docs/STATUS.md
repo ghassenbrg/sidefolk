@@ -1,8 +1,10 @@
 # Status
 
-Updated: 2026-10-27. Version 0.1.0. Latest: the production review is merged (design D40, hardening
-D41, agents D42, the launch kit) and lively companions (D43, Balanced by default, no 3D); 1195 tests
-pass; all ten languages complete (2141 strings each); release build 0.1.0 made and verified.
+Updated: 2026-10-28. Version 0.1.0. Latest: the founder's feedback on snapshot 404, fixed: voice opens
+the default input (build 404 got no audio at all), "evey 10s" and an AI that promised without acting,
+the Ask panel's results as notifications (D5 amended), thirteen built-in extensions as programs of
+their own so none needs Python (D39 amended), and play with the companion (D44). 1221 tests pass; all
+ten languages complete (2244 strings each); a release build with every extension program verified.
 
 ## Done and verified
 - **Version 0.1.0** (`SidefolkVersion.current`); bundled extensions and the docs ask for `sidefolk >=0.1`.
@@ -36,6 +38,31 @@ pass; all ten languages complete (2141 strings each); release build 0.1.0 made a
 - **Apple Notes and Reminders (D38):** list, read and copy notes into the notebook (move only with
   its own high-risk approval, into Recently Deleted); open reminders. Each part of a note is read on
   its own, so one Notes can't hand over (-1728, found on the founder's library) costs only itself.
+- **Built-ins as programs of their own (D39, amended 2026-10-28):** the founder read "Git needs Python"
+  on 404. Every built-in is a Swift program (`extensions/<folder>/Sources` on `extensions/Kit`), built
+  and signed with the app, run in the same sandbox; only Git needs something (git). Thirteen: Git, World
+  Clock, System Vitals (+ about this Mac), Weather (+ sun and moon), Calculator, Currency (ECB), Playtime
+  (chance, trivia with a score, rock-paper-scissors) and Images on; PDF Tools, QR Codes, Archives, Dev
+  Toolbox and Feeds off, named to the model in one line each. New manifest permission `media` (the GPU
+  and video decoder image code needs). A copy keeps its original's quarantine: Sidefolk quarantines what
+  it writes, and Gatekeeper held every program at launch until the app's own copies lost that mark.
+  *Checked:* every program in its sandbox by tests (live ECB, swift.org, Open-Meteo and a GitHub clone
+  with `SIDEFOLK_LIVE_NETWORK=1`), all thirteen installed in the dev app, Settings › Extensions.
+- **Ask panel as notifications (D5 amended):** every result a scroll away, newest first; two fingers
+  sideways slide one off; "Clear all"; a fingertip-sized X; notices that need nothing fade after 20 s;
+  a new word about talking replaces the last. *Checked:* dev app snapshots (`swipe:` drives the gesture).
+- **Voice capture (2026-10-28):** 404 logged `mic_buffers: 0` on every press, 4 s held. The capture no
+  longer points the engine's audio unit at the built-in microphone; it opens the default input, rebuilds
+  once when nothing arrives within a second, logs opens and the first sound, and says when the
+  microphone sent nothing. *Not yet checked with the real microphone* (the founder's next try).
+- **Promises without action:** a reply that claims an action from a run that called no tool (gemma on
+  Ollama: "I'll show you the temperature in Fukuoka") gets one more turn saying nothing happened
+  (`UnbackedClaim`, English only). Reports read "evey 10s" as every 10 s, and the hint shows the rate
+  really used (weather once a minute).
+- **Play (D44):** tricks in plain words, Play in the companion's menu or by the AI (`companion.play`):
+  dance, wave, bow, flip, hop, cheer, nod, giggle; a tickle makes it giggle; catch-me (20 s, best kept)
+  and a one-minute breathing exercise with captions; Lively dances now and then. *Checked:* the moments
+  rendered for every companion, the games in the dev app by snapshot (`play:`, `click`).
 - **Extensions without limits (D39):** built-in Git (clone, status, pull, log over https), World
   Clock, System Vitals and Weather (all on), installed and updated with the app; per-call folders,
   `git` by name and per-tool timeouts in manifests; icons for every extension; Sidefolk drafts an
@@ -322,8 +349,10 @@ then run the signed, notarized release and test the downloaded DMG on a clean Ma
   AirPods), Apple Notes on a real library after the -1728 fix, "clone … under ~/git" with a real AI,
   the menu bar's Approvals submenu and orange Full access icon, a live ElevenLabs voice, "Answer with
   Claude Code" from the no-AI card, Connect adding the skill and Codex's hook trust dialog, a first
-  launch on a clean Mac without the developer tools (the built-ins are Python, so they say what's
-  missing), macOS 15 and 26.
+  launch on a clean Mac without the developer tools (every built-in but Git should work there now),
+  a two-finger swipe on a real trackpad, catch-me with a real mouse, macOS 15 and 26.
+- **Built-ins' limits:** QR Codes needs an Apple GPU (a virtual machine's isn't opened); Currency covers
+  the ECB's 30 currencies (no TND, AED…); the promise check reads English replies only.
 - **Release blockers that need the founder** (docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence,
   Developer ID and notarization, the name and domain, a privacy policy and support contact, Open-Meteo's
   terms if Sidefolk is paid, Anthropic's (and OpenAI's) approval of their logos.
@@ -353,9 +382,10 @@ then run the signed, notarized release and test the downloaded DMG on a clean Ma
   identity or ad hoc. Apple took 29 minutes over the first accepted app; later ones should be quicker.
 
 ## Next
-1. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
-   ask Anthropic about its marks. The signed, notarized snapshot 404 is ready to try on a clean Mac;
-   then the production v0.1.0 (Actions › Release › production, or push the tag).
+1. The founder: try the next snapshot (Actions › Release › snapshot, from this commit): hold to talk
+   (if it still hears nothing, the log's `"cat":"voice"` lines now say whether the microphone opened and
+   when sound came), the built-ins on a clean Mac, Play; ask Anthropic about its marks; then production
+   v0.1.0 (Actions › Release › production, or push the tag).
 2. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
    "Today" timeline with an end-of-day recap.
 
