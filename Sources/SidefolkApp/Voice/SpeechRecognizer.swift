@@ -12,6 +12,12 @@ nonisolated protocol SpeechRecognizer: AnyObject, Sendable {
     /// No more audio: the final words, "" when nothing was understood.
     func finish() async -> String
     func cancel() async
+    /// Counts for the log (what went in, what came out); never the words.
+    var report: [String: String] { get }
+}
+
+nonisolated extension SpeechRecognizer {
+    var report: [String: String] { [:] }
 }
 
 /// Which recognizer serves a language, and whether it is ready to listen.

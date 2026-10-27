@@ -45,6 +45,8 @@ final class VoiceController {
     private var work: Task<Void, Never>?
     /// The talk key or the companion is held now.
     private(set) var holding = false
+    /// When the key went down, for the log and to tell a press too short to listen from a missed one.
+    private var pressedAt = Date()
     /// Bumped by every interruption: replies to requests made before it stay silent.
     private var generation = 0
     /// A spoken request is still being worked on (its run can be cancelled by an interruption).
@@ -89,12 +91,20 @@ final class VoiceController {
             if case .preparing? = host.ask.voice { return finishedTalking() }
             host.ask.voice = .finishing
             host.voiceMood(hearing: false, transcribing: true)
+            let released = Date()
             let heard = await recognizer.finish()
+            let mic = capture.meter.reading
+            // Counts only, never the words (D34).
+            Log.shared.info("voice", "heard", recognizer.report.merging([
+                "held_ms": Self.milliseconds(since: pressedAt, to: released), "finish_ms": Self.milliseconds(since: released),
+                "characters": "\(heard.count)", "device": mic.device, "format": mic.format, "mic_buffers": "\(mic.buffers)",
+                "mic_seconds": String(format: "%.2f", mic.seconds), "mic_peak_dbfs": Self.decibels(mic.peak),
+            ]) { a, _ in a })
             self.recognizer = nil
             finishedTalking()
             guard host.ask.voice == .finishing else { return }
             host.ask.voice = nil
-            await deliver(heard)
+            await deliver(heard, mic: mic)
         }
     }
 
@@ -129,6 +139,8 @@ final class VoiceController {
 
     private func start(feed file: URL?) {
         holding = true
+        pressedAt = Date()
+        capture.meter.reset()
         host.showAskForVoice()
         host.ask.text = ""
         host.ask.voice = .starting
@@ -175,7 +187,11 @@ final class VoiceController {
             let recognizer = try await Recognition.make(language)
             self.recognizer = recognizer
             try await recognizer.start { [weak self] words in self?.heard(words) }
+            Log.shared.info("voice", "listening", ["after_ms": Self.milliseconds(since: pressedAt), "still_held": "\(holding)",
+                                                   "recognizer": String(describing: type(of: recognizer))])
             guard host.ask.voice == .starting else { return }
+            // Let go while the recognizer was getting ready: opening the microphone now would hear nothing.
+            if file == nil, !holding { return }
             host.ask.voice = .listening(basic: recognizer is BasicRecognizer)
             if let file {
                 try await Self.play(file, into: recognizer)
@@ -223,19 +239,30 @@ final class VoiceController {
     }
 
     /// Sends what was heard, or says it wasn't caught and leaves it to edit.
-    private func deliver(_ heard: String) async {
-        guard let words = VoicePolicy.usableTranscript(heard) else { return missed(heard) }
+    private func deliver(_ heard: String, mic: MicrophoneMeter.Reading) async {
+        guard let words = VoicePolicy.usableTranscript(heard) else { return missed(heard, mic: mic) }
         // A run the talk key cancelled may still be winding down.
         for _ in 0..<20 where host.ask.busy && host.ask.pendingQuestion == nil { try? await Task.sleep(for: .milliseconds(100)) }
         host.ask.text = words
         host.ask.submit(spoken: true)
     }
 
-    private func missed(_ heard: String) {
+    private func missed(_ heard: String, mic: MicrophoneMeter.Reading) {
         host.voiceMissed()
         let words = heard.trimmingCharacters(in: .whitespacesAndNewlines)
-        notice(.info(words.isEmpty ? String(localized: "I didn't catch that. Hold to talk again.")
-            : String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")))
+        let message: String
+        if !words.isEmpty {
+            message = String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")
+        } else if mic.buffers == 0 {
+            // Let go before the microphone opened (the first press of the day takes a moment).
+            message = String(localized: "Hold a moment longer: I was still getting ready to listen. Talk once my ears are up.")
+        } else if mic.silent {
+            message = String(localized: "I only heard silence from \(mic.device). Check it's the microphone you're talking into, in System Settings › Sound.",
+                             comment: "A microphone's name, like “MacBook Pro Microphone”")
+        } else {
+            message = String(localized: "I didn't catch that. Hold to talk again.")
+        }
+        notice(.info(message))
         host.ask.text = words
         host.ask.focusRequest += 1
     }
@@ -370,6 +397,15 @@ final class VoiceController {
     }
 
     /// Built outside the main actor: the microphone delivers on its own thread.
+    private static func milliseconds(since start: Date, to end: Date = Date()) -> String {
+        "\(Int(end.timeIntervalSince(start) * 1000))"
+    }
+
+    /// The meter's peak in dBFS, for the log ("-inf" for digital silence).
+    private static func decibels(_ peak: Float) -> String {
+        peak > 0 ? String(format: "%.1f", 20 * log10(peak)) : "-inf"
+    }
+
     nonisolated private static func feed(_ recognizer: any SpeechRecognizer) -> @Sendable (AVAudioPCMBuffer) -> Void {
         { buffer in recognizer.append(buffer) }
     }

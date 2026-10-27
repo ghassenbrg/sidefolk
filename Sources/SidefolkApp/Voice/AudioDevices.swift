@@ -19,6 +19,22 @@ enum AudioDevices {
         }
     }
 
+    /// The input macOS uses unless an app picks another (System Settings › Sound).
+    static func defaultInput() -> AudioDeviceID? {
+        read(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultInputDevice, as: AudioDeviceID.self)
+    }
+
+    /// "MacBook Pro Microphone": what the person sees in System Settings › Sound.
+    static func name(of device: AudioDeviceID) -> String? {
+        var address = AudioObjectPropertyAddress(mSelector: kAudioObjectPropertyName, mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var name: Unmanaged<CFString>?
+        var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+        let status = withUnsafeMutablePointer(to: &name) { AudioObjectGetPropertyData(device, &address, 0, nil, &size, $0) }
+        guard status == noErr, let name else { return nil }
+        return name.takeRetainedValue() as String
+    }
+
     // MARK: Plumbing
 
     private static func devices() -> [AudioDeviceID] {

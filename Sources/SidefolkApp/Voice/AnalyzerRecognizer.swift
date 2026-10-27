@@ -19,6 +19,21 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
         var converter: AVAudioConverter?
         /// Everything heard so far, for a finish that runs out of time.
         var latest = ""
+        // For the log.
+        var buffersIn = 0
+        var secondsOut = 0.0
+        var notConverted = 0
+        var updates = 0
+        var timedOut = false
+    }
+
+    var report: [String: String] {
+        state.withLock { s in
+            ["engine": dictation ? "dictation" : "transcriber", "locale": locale.identifier,
+             "analyzer_format": s.format.map { "\(Int($0.sampleRate)) Hz, \($0.channelCount) ch" } ?? "none",
+             "buffers_in": "\(s.buffersIn)", "seconds_out": String(format: "%.2f", s.secondsOut),
+             "not_converted": "\(s.notConverted)", "updates": "\(s.updates)", "timed_out": "\(s.timedOut)"]
+        }
     }
 
     init(locale: Locale, dictation: Bool) {
@@ -30,7 +45,7 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
         let module: any SpeechModule
         let results: Task<String, Never>
         let update: @Sendable (String) -> Void = { [weak self] text in
-            self?.state.withLock { $0.latest = text }
+            self?.state.withLock { $0.latest = text; $0.updates += 1 }
             Task { @MainActor in partial(text) }
         }
         if dictation {
@@ -71,7 +86,12 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
 
     func append(_ buffer: AVAudioPCMBuffer) {
         state.withLock { s in
-            guard let inputs = s.inputs, let converted = Self.convert(buffer, to: s.format, using: &s.converter) else { return }
+            s.buffersIn += 1
+            guard let inputs = s.inputs, let converted = Self.convert(buffer, to: s.format, using: &s.converter) else {
+                s.notConverted += 1
+                return
+            }
+            s.secondsOut += Double(converted.frameLength) / converted.format.sampleRate
             inputs.yield(AnalyzerInput(buffer: converted))
         }
     }
@@ -93,6 +113,7 @@ nonisolated final class AnalyzerRecognizer: SpeechRecognizer, @unchecked Sendabl
             }
             let first = await group.next() ?? nil
             if first == nil {
+                state.withLock { $0.timedOut = true }
                 await analyzer?.cancelAndFinishNow()
                 results?.cancel()
             }
