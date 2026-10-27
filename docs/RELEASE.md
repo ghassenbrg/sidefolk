@@ -27,7 +27,9 @@ what to check by hand. Decisions that aren't code (licence, name, website, prici
   staples and validates the DMG, checks it with `spctl`, and writes `build/Sidefolk-<version>.dmg.sha256`.
   A rejected submission prints the notary log. `SIDEFOLK_SKIP_NOTARIZE=1` stops after signing.
   `SIDEFOLK_RELEASE_LABEL` names the image `Sidefolk-<version>-<label>.dmg`; `SIDEFOLK_NOTARY_KEYCHAIN` points
-  notarytool at a keychain other than the login one (CI).
+  notarytool at a keychain other than the login one (CI). It prints each phase and each submission ID, and
+  gives Apple `SIDEFOLK_NOTARY_MINUTES` (180) across both submissions, asking again after a network blip: a
+  new team's first submissions can wait over an hour. The Release job's 210-minute limit covers that wait.
 - `scripts/package.sh [label]`: the disk image alone (app plus an Applications link) and its `.sha256`, from
   `build/Sidefolk.app` as it is; nothing more is signed or notarized. For an install on your own Mac, or an
   unsigned snapshot.

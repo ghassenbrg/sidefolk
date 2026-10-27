@@ -30,7 +30,9 @@ jobs:
   release:
     name: Release (${{ inputs.channel || 'production' }})
     runs-on: ${{ vars.SIDEFOLK_MACOS_RUNNER || 'xcode-27' }}
-    timeout-minutes: 90
+    # About 15 minutes of tests and build, then up to 3 hours for Apple's notary service
+    # (SIDEFOLK_NOTARY_MINUTES in scripts/release.sh): a new team's first submissions can be slow.
+    timeout-minutes: 210
     env:
       SIDEFOLK_XCODE: ${{ vars.SIDEFOLK_XCODE }}
       SIDEFOLK_UNIVERSAL: ${{ inputs.universal && '1' || '' }}

@@ -90,8 +90,13 @@ pass; all ten languages complete (2141 strings each); release build 0.1.0 made a
   release plan in every case, the DMG from `package.sh`; CI green on GitHub (run 40420280161, about 8
   minutes: build, 1162 + 34 tests, translations, app). The Release workflow made its first snapshot,
   `v0.1.0-snapshot.400` (run 40480402125, about 10 minutes, ad hoc signed): the downloaded DMG matched its
-  checksum, mounted, and held a valid 0.1.0 (400) app. The signed path needs the Developer ID secrets
-  (docs/RELEASE.md) and hasn't run. Both run on GitHub's `xcode-27` image:
+  checksum, mounted, and held a valid 0.1.0 (400) app. The first signed snapshot (run 40502001451,
+  build 403) imported the Developer ID secrets, passed the tests and signed the app (verified), then
+  waited 39 minutes on Apple's notary service (submission d41ddcc9-5f3c-47fd-9a3b-d5b41379a2bb) until a
+  network blip on the runner ended the wait, so nothing was published. `release.sh` now prints each
+  phase and submission ID, asks Apple again after a blip, and waits up to 3 hours; the job's limit is
+  210 minutes. Checked with a fake notarytool (accepted, blip, rejected, deadline, unreachable, failed
+  upload) and shellcheck; not yet re-run on GitHub. Both run on GitHub's `xcode-27` image:
   Xcode 26.6's Swift 6.3 crashed on valid code (two compiler crashes), after three fixes for it.
 - **Tests:** 1195 (1161 core in 150 suites + 34 character). `make test` runs serially (about 50 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
@@ -338,13 +343,14 @@ then run the signed, notarized release and test the downloaded DMG on a clean Ma
   reach the model.
 - **Extensions can't hold secrets yet**, so Git can't reach private repositories or SSH remotes, and
   connectors (GitHub, Notion, Linear) wait for it.
-- **Signing:** no Developer ID identity on this Mac, so `scripts/release.sh` (sign, notarize, staple)
-  is ready but needs the founder's credentials. Builds are signed with the "Apple Development"
-  identity or ad hoc.
+- **Signing:** the Developer ID certificate and notary credentials live only in GitHub's secrets, so
+  the Release workflow signs and notarizes; local builds are signed with the "Apple Development"
+  identity or ad hoc. No notarization has come back yet (Apple's first check of a new team is slow).
 
 ## Next
 1. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
-   Developer ID signing and notarization (`scripts/release.sh`); ask Anthropic about its marks.
+   ask Anthropic about its marks. Re-run the signed snapshot (Actions › Release) and check the DMG is
+   notarized before the production v0.1.0.
 2. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
    "Today" timeline with an end-of-day recap.
 

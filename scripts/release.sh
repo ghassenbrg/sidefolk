@@ -8,11 +8,14 @@
 # Optional: SIDEFOLK_SKIP_NOTARIZE=1 to stop after signing (for a local smoke test);
 #           SIDEFOLK_UNIVERSAL=1 for one binary that runs on Apple silicon and Intel (see docs/RELEASE.md);
 #           SIDEFOLK_RELEASE_LABEL=snapshot.391 names the image Sidefolk-<version>-<label>.dmg;
-#           SIDEFOLK_NOTARY_KEYCHAIN, the keychain holding the profile when it isn't the login one (CI).
+#           SIDEFOLK_NOTARY_KEYCHAIN, the keychain holding the profile when it isn't the login one (CI);
+#           SIDEFOLK_NOTARY_MINUTES, how long Apple may take over both submissions (default 180).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 fail() { echo "release: $*" >&2; exit 1; }
+# The CI log shows the script's own lines too, so a long quiet stretch says what it is waiting on.
+phase() { printf '\n== %s\n' "$*"; }
 
 [[ -n "${SIDEFOLK_SIGN_IDENTITY:-}" ]] || fail "set SIDEFOLK_SIGN_IDENTITY to your Developer ID Application identity."
 [[ "$SIDEFOLK_SIGN_IDENTITY" == Developer\ ID\ Application* ]] || fail "SIDEFOLK_SIGN_IDENTITY must be a Developer ID Application identity (got: $SIDEFOLK_SIGN_IDENTITY)."
@@ -23,9 +26,11 @@ fi
 [[ -z "$(git status --porcelain)" ]] || fail "the working tree has changes; release from a clean, committed tree."
 
 # Tests must pass before anything is signed.
+phase "Running the tests"
 swift test --no-parallel
 
 APP="build/Sidefolk.app"
+phase "Building and signing $APP"
 SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
 # Re-sign with a secure timestamp (build-app.sh uses --timestamp=none for speed), inside out.
 codesign --force --options runtime --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$APP/Contents/Helpers/sidefolk"
@@ -40,19 +45,44 @@ BUILD="$(defaults read "$PWD/$APP/Contents/Info" CFBundleVersion)"
 
 PROFILE=(--keychain-profile "${SIDEFOLK_NOTARY_PROFILE:-}")
 [[ -n "${SIDEFOLK_NOTARY_KEYCHAIN:-}" ]] && PROFILE+=(--keychain "$SIDEFOLK_NOTARY_KEYCHAIN")
+# Empty when Apple can't be reached, rather than ending the script (pipefail).
+notary_status() { xcrun notarytool info "$1" "${PROFILE[@]}" 2>/dev/null | sed -n 's/^ *status: //p' | sed -n 1p || true; }
 notarize() {
-  local id
-  id="$(xcrun notarytool submit "$1" "${PROFILE[@]}" --wait --output-format json \
-        | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | sed -n 1p)"
+  local id status="" left misses=0
+  phase "Notarizing $(basename "$1") with Apple"
+  id="$(xcrun notarytool submit "$1" "${PROFILE[@]}" --output-format json \
+        | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | sed -n 1p)" || true
   [[ -n "$id" ]] || fail "notarytool gave no submission id for $1."
-  if ! xcrun notarytool info "$id" "${PROFILE[@]}" | grep -q "status: Accepted"; then
-    xcrun notarytool log "$id" "${PROFILE[@]}" >&2 || true
-    fail "notarization of $1 was not accepted (log above)."
-  fi
+  echo "Submission $id. Apple has until $(date -r "$NOTARY_DEADLINE" '+%H:%M %Z')."
+  # A network blip ends `notarytool wait` while Apple carries on, so it is asked again until the deadline.
+  while :; do
+    left=$(( NOTARY_DEADLINE - $(date +%s) ))
+    (( left > 0 )) || break
+    xcrun notarytool wait "$id" "${PROFILE[@]}" --timeout "$left" || true
+    status="$(notary_status "$id")"
+    case "$status" in
+      "In Progress") misses=0 ;;
+      "") (( ++misses < 20 )) || fail "Apple's notary service has been out of reach for 10 minutes (submission $id)." ;;
+      *) break ;;
+    esac
+    sleep 30
+  done
+  case "$status" in
+    Accepted) ;;
+    "In Progress" | "")
+      fail "Apple hadn't finished checking $1 after $NOTARY_MINUTES minutes. It carries on: \`xcrun notarytool info $id\` says when, then release again." ;;
+    *)
+      xcrun notarytool log "$id" "${PROFILE[@]}" >&2 || true
+      fail "notarization of $1 came back $status (log above)." ;;
+  esac
 }
 
 # The app is notarized and stapled first, so a copy dragged out of the DMG opens offline too.
 if [[ "${SIDEFOLK_SKIP_NOTARIZE:-}" != "1" ]]; then
+  # Apple usually answers in minutes, but a new team's first submissions can wait an hour or more for
+  # a closer look. One budget covers the app and the image, so the CI job's timeout can cover it.
+  NOTARY_MINUTES="${SIDEFOLK_NOTARY_MINUTES:-180}"
+  NOTARY_DEADLINE=$(( $(date +%s) + NOTARY_MINUTES * 60 ))
   ZIP="build/Sidefolk-$VERSION-$BUILD.zip"
   rm -f "$ZIP"
   ditto -c -k --keepParent "$APP" "$ZIP"
@@ -63,6 +93,7 @@ if [[ "${SIDEFOLK_SKIP_NOTARIZE:-}" != "1" ]]; then
   spctl --assess --type execute --verbose "$APP"
 fi
 
+phase "Packaging and signing the disk image"
 DMG="$(scripts/package.sh "${SIDEFOLK_RELEASE_LABEL:-}" | tail -1)"
 codesign --force --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$DMG"
 
