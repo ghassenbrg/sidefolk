@@ -45,7 +45,10 @@ ten languages complete (2244 strings each); a release build with every extension
   (chance, trivia with a score, rock-paper-scissors) and Images on; PDF Tools, QR Codes, Archives, Dev
   Toolbox and Feeds off, named to the model in one line each. New manifest permission `media` (the GPU
   and video decoder image code needs). A copy keeps its original's quarantine: Sidefolk quarantines what
-  it writes, and Gatekeeper held every program at launch until the app's own copies lost that mark.
+  it writes, and Gatekeeper held every program at launch until the copies lost that mark. The app's own
+  built-ins drop it altogether (a downloaded app marks every file inside it, as 404 in /Applications
+  shows); a folder someone installs keeps its download's mark. *Checked:* a copy of the dev app with
+  Chrome's mark on every extension file installed all thirteen, unmarked.
   *Checked:* every program in its sandbox by tests (live ECB, swift.org, Open-Meteo and a GitHub clone
   with `SIDEFOLK_LIVE_NETWORK=1`), all thirteen installed in the dev app, Settings › Extensions.
 - **Ask panel as notifications (D5 amended):** every result a scroll away, newest first; two fingers

@@ -236,7 +236,7 @@ public actor ExtensionHost {
         let previous = runtimes[id]
         if previous != nil { await stop(id) }
         registry.unregister(owner: id)
-        let staged = try installer.stage(source: folder, id: id)
+        let staged = try installer.stage(source: folder, id: id, quarantine: origin == .bundled ? .none : .original)
         let committed = try installer.commit(staged)
         do {
             let final = validator.validate(folder: URL(fileURLWithPath: committed.folder), mode: .installed)

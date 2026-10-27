@@ -62,8 +62,14 @@ enum ExtensionFiles {
         return out
     }
 
+    /// What a copied file's quarantine becomes. A downloaded folder's copy keeps the download's mark for Gatekeeper
+    /// to judge (`original`). The app's own built-ins drop it (`none`): their files are sealed in the signed,
+    /// notarized app Gatekeeper already let run, and the install checks the copy against them; a downloaded app
+    /// marks every file inside it, and Gatekeeper would otherwise stop each built-in's program at launch.
+    enum Quarantine { case original, none }
+
     /// Copies `source` into a new folder `dest` (which must not exist), file by file, without following links.
-    static func copy(from source: String, to dest: String) throws {
+    static func copy(from source: String, to dest: String, quarantine: Quarantine = .original) throws {
         let entries = try walk(source, skipping: skippedNames)
         guard mkdir(dest, 0o700) == 0 else { throw ExtensionError.io("Couldn't create \(dest): \(String(cString: strerror(errno)))") }
         for e in entries {
@@ -71,12 +77,12 @@ enum ExtensionFiles {
             if e.isDirectory {
                 guard mkdir(target, 0o700) == 0 else { throw ExtensionError.io("Couldn't create \(target)") }
             } else {
-                try copyFile(source + "/" + e.path, to: target, expected: e.st)
+                try copyFile(source + "/" + e.path, to: target, expected: e.st, quarantine: quarantine)
             }
         }
     }
 
-    private static func copyFile(_ from: String, to: String, expected: stat) throws {
+    private static func copyFile(_ from: String, to: String, expected: stat, quarantine policy: Quarantine) throws {
         let src = open(from, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
         guard src >= 0 else { throw ExtensionError.io("Couldn't read \(from)") }
         defer { close(src) }
@@ -102,15 +108,14 @@ enum ExtensionFiles {
         }
         // Keep only the executable bit from the source; everything else is normalised when locking.
         _ = fchmod(dst, expected.st_mode & 0o111 != 0 ? 0o700 : 0o600)
-        keepQuarantine(of: src, on: dst)
+        if policy == .none { _ = fremovexattr(dst, quarantine, 0) } else { keepQuarantine(of: src, on: dst) }
     }
 
     static let quarantine = "com.apple.quarantine"
 
     /// The copy is as trusted as its original. Sidefolk quarantines every file it writes (LSFileQuarantineEnabled),
     /// and Gatekeeper then held a built-in's program at launch, signed inside the app though it was (build 406):
-    /// so a copy of an unquarantined file loses that mark, and a copy of a quarantined one (downloaded) keeps the
-    /// original's, for Gatekeeper to judge.
+    /// so a copy of an unquarantined file loses that mark, and a copy of a quarantined one keeps the original's.
     static func keepQuarantine(of src: Int32, on dst: Int32) {
         let size = fgetxattr(src, quarantine, nil, 0, 0, 0)
         guard size > 0 else {

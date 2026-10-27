@@ -36,11 +36,11 @@ struct ExtensionInstaller: Sendable {
     }
 
     /// Copies `source` (without links, special files or `.git`), locks it read-only and pins every file.
-    func stage(source: URL, id: String) throws -> Staged {
+    func stage(source: URL, id: String, quarantine: ExtensionFiles.Quarantine = .original) throws -> Staged {
         guard let src = ExtensionFS.realpath(source.path) else { throw UserFacingError("The extension folder is missing.") }
         let staging = try base() + "/.staging-" + Identifier.make()
         do {
-            try ExtensionFiles.copy(from: src, to: staging)
+            try ExtensionFiles.copy(from: src, to: staging, quarantine: quarantine)
             try ExtensionFiles.lock(staging)
             return Staged(id: id, folder: staging, pins: try ExtensionFiles.pin(staging))
         } catch {

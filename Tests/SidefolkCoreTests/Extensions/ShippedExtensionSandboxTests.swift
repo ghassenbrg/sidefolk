@@ -212,5 +212,10 @@ struct ExtensionCopyQuarantineTests {
         }
         #expect(quarantine("signed") == nil)
         #expect(quarantine("downloaded") == mark)
+
+        // The app's own built-ins: a downloaded app marks every file inside it, and the copy drops the mark.
+        try ExtensionFiles.copy(from: source.path, to: root.appendingPathComponent("builtin").path, quarantine: .none)
+        let size = getxattr(root.appendingPathComponent("builtin/downloaded").path, ExtensionFiles.quarantine, nil, 0, 0, 0)
+        #expect(size < 0)
     }
 }

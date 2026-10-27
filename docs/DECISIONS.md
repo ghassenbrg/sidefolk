@@ -797,7 +797,11 @@ Core Image and ImageIO need on Apple silicon (two IOKit user clients and one ser
 the install sheet. The Python sample (hello-folk) stays in the repository for developers and no longer
 ships. *Alternatives:* bundling a Python runtime (tens of MB, a second toolchain to sign and notarize);
 one multi-tool program for every built-in (each folder pins its own files, so it would be copied thirteen
-times); `/usr/bin/curl` or `osascript` for the network parts ("can run anything").
+times); `/usr/bin/curl` or `osascript` for the network parts ("can run anything"). *Quarantine:* Sidefolk
+quarantines every file it writes (`LSFileQuarantineEnabled`), and a downloaded app's files all carry the
+download's mark, so Gatekeeper stopped each copied program at launch. A built-in's copy drops the mark (its
+files are sealed in the signed, notarized app Gatekeeper already let run, and the install checks the copy
+against them); any other install keeps its original's mark for Gatekeeper to judge.
 
 ### D40 — With no AI chosen, the Ask panel offers the plan this Mac is signed in to (2026-10-27)
 **Decision:** when a request needs AI and the provider is "No AI", the "That needs AI" card probes the
