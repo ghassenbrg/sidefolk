@@ -88,8 +88,10 @@ pass; all ten languages complete (2141 strings each); release build 0.1.0 made a
   signed, notarized production release from a `v<version>` tag or Actions › Run workflow.
   `scripts/package.sh` makes the disk image alone. *Checked:* actionlint and shellcheck clean, the
   release plan in every case, the DMG from `package.sh`; CI green on GitHub (run 40420280161, about 8
-  minutes: build, 1162 + 34 tests, translations, app). The Release workflow hasn't run yet, and its
-  signing path needs the Developer ID secrets (docs/RELEASE.md). Both run on GitHub's `xcode-27` image:
+  minutes: build, 1162 + 34 tests, translations, app). The Release workflow made its first snapshot,
+  `v0.1.0-snapshot.400` (run 40480402125, about 10 minutes, ad hoc signed): the downloaded DMG matched its
+  checksum, mounted, and held a valid 0.1.0 (400) app. The signed path needs the Developer ID secrets
+  (docs/RELEASE.md) and hasn't run. Both run on GitHub's `xcode-27` image:
   Xcode 26.6's Swift 6.3 crashed on valid code (two compiler crashes), after three fixes for it.
 - **Tests:** 1195 (1161 core in 150 suites + 34 character). `make test` runs serially (about 50 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
@@ -297,6 +299,13 @@ instead of +41 on a 120 Hz display; Sidefolk itself 0.07% CPU, 24 MB; no databas
 
 ## In progress
 Nothing.
+
+Release readiness review (2026-10-27): reviewed the release and launch checklists, repository
+status, local signing identities, and GitHub releases and release runs. `main` was clean; no GitHub
+release or release workflow run was listed, and this Mac has an Apple Development identity but no
+Developer ID signing identity. No build or test was run for this review. Next: the founder chooses
+the publisher and licence, sets up Developer ID, and agrees on the download and support details;
+then run the signed, notarized release and test the downloaded DMG on a clean Mac.
 
 ## Known issues / not yet verified
 - **Not yet tried by hand with the real thing:** the microphone (its permission prompt, hold to talk,
