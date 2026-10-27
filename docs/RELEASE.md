@@ -67,6 +67,12 @@ unsigned snapshots can be made:
 `scripts/ci/import-signing.sh` puts the certificate in a keychain of the job's own and stores notarytool's
 credentials there; the job deletes it at the end.
 
+The team is `2XQJWQBD4W` ("Ghassen Bargougui", an individual membership). `4YY3SMSAS3` in "Apple Development:
+… (4YY3SMSAS3)" names the person, not the team. The Developer ID certificate made on 2026-10-27 expires on
+**2027-02-01**, with the original Developer ID authority (G1) that issued it: builds signed with a timestamp
+and notarized before then keep opening, but releases after it need a new certificate in Xcode and new
+`MACOS_CERTIFICATE_P12` and `MACOS_CERTIFICATE_PASSWORD` secrets.
+
 **Variables** (same page, Variables tab), all optional:
 
 | Variable | Default | What |
