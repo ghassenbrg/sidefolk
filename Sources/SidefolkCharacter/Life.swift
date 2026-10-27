@@ -18,7 +18,7 @@ struct Mind {
     private var lastTypingGlance = Date.distantPast
 
     /// Funny moments surprise only when they are rare.
-    static let rare: Set<CharacterAntic> = [.sneeze, .doubleTake]
+    static let rare: Set<CharacterAntic> = [.sneeze, .doubleTake, .dance]
     static let rareGap: TimeInterval = 600
     /// What still fits sitting, and lying down.
     static let sitting: Set<CharacterAntic> = [.earTwitch, .yawn, .scratch, .glance, .peek]
@@ -52,6 +52,7 @@ struct Mind {
             weights[.yawn] = weights[.yawn].map { $0 * 3 }
             weights[.hop] = nil
             weights[.wiggle] = nil
+            weights[.dance] = nil
         }
         if window == nil { weights[.peek] = nil }
         recent.suffix(2).forEach { weights[$0] = nil }

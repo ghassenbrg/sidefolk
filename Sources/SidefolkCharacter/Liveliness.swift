@@ -9,7 +9,7 @@ public enum Liveliness: String, CaseIterable, Sendable {
     /// doing), sitting down and later lying down when nothing happens, startled by news, glad
     /// when something is done. Every level settles its loops after 20 s (D20); moments are one-shots.
     case balanced
-    /// More often and more variety (hops, wiggles, sneezes, double-takes) and eyes that follow the
+    /// More often and more variety (hops, wiggles, sneezes, double-takes, a little dance now and then) and eyes that follow the
     /// pointer across the screen. Breathing still settles at 20 s: kept going, it would cost
     /// WindowServer about a tenth of a core all the time (docs/research, Measurements).
     case lively
@@ -27,7 +27,7 @@ public enum Liveliness: String, CaseIterable, Sendable {
         case .lively:
             LifeProfile(every: 10...26, sitAfter: 150, lieAfter: 300,
                         antics: [.earTwitch: 3, .stretch: 1, .yawn: 0.8, .scratch: 1.2, .peek: 1.4, .glance: 1.6, .hop: 1.4,
-                                 .wiggle: 1.2, .sneeze: 0.5, .doubleTake: 0.7],
+                                 .wiggle: 1.2, .sneeze: 0.5, .doubleTake: 0.7, .dance: 0.5],
                         newsReactions: true)
         }
     }
@@ -39,10 +39,12 @@ public enum CharacterAntic: String, CaseIterable, Sendable {
     case earTwitch, stretch, yawn, scratch, hop, wiggle, peek, glance, sneeze, doubleTake
     // Answering the person or the news.
     case boop, pet, startle, cheer, land, spin, dizzy
+    // Tricks the person asks for, and play (D44): tickled, it giggles; one slow breath for the breathing exercise.
+    case wave, dance, bow, nod, giggle, breathe
 
     /// The ones the idle scheduler may pick.
     public static let idle: [CharacterAntic] = [.earTwitch, .stretch, .yawn, .scratch, .hop, .wiggle, .peek, .glance, .sneeze,
-                                                .doubleTake]
+                                                .doubleTake, .dance]
 }
 
 /// How it holds itself while idle: standing, sitting, then lying down when nothing happens for long.

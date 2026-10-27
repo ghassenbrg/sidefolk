@@ -952,3 +952,23 @@ don't have); walking across the screen (later); sound (designed with voice, opt-
 **Implications:** `AppSettings.liveliness` (default Balanced) and `customCompanion`; Settings ›
 Companion gains Liveliness and "Made by you"; the companion window answers clicks, strokes and throws;
 `sidefolk-render --live`, `--antics` and `--check-companion` review it.
+
+### D44 — Playing with the companion: tricks, a tickle, catch-me and a breath (2026-10-28)
+**Decision:** the companion does tricks when asked (dance, wave, bow, flip, hop, cheer, nod, giggle, or a
+trick of its choosing), giggles when stroked again soon after a pet, and plays two small games: **catch-me**
+(for 20 seconds it hops about near its spot, faster as it goes, and each click catches it; the best score is
+kept) and **breathe with me** (five slow breaths, in four seconds, hold one, out six, the body breathing along
+and one line of text above it). They are asked for in plain words ("dance!", "do a trick", "let's play catch",
+"help me relax", no AI), from Play in the companion's menu, or by the AI through `companion.play`, which only
+publishes `AppEvent.companion` for the app to play, so the AI can cheer with the person (a right trivia answer)
+or offer a break. Lively mode also breaks into a short dance on its own now and then (rare, never at night).
+**Why:** the founder wants the companion to be relaxing and funny to play with, not only useful: a few minutes'
+break, a laugh. Tricks are data like the other moments (D43), so they cost nothing at rest; the games use the
+window and the moments the engine already has. A tool rather than an app-only path keeps every action, the
+person's own words included, going through the executor and its audit.
+**Alternatives:** a mini-game window (a second UI to design and keep up; play with the companion itself is the
+point); games as an extension (sandboxed programs can't move or animate the companion); sound (opt-in, later).
+**Implications:** `CharacterAntic` gains wave, dance, bow, nod, giggle and breathe (one breath lasts 11 s, the
+only moment over four); `IntentParser.play`; Play submenu; `CompanionPlayer` and its caption panel, which
+never takes a click; dev commands `play:<act>` and `click`.
+

@@ -56,6 +56,8 @@ public enum AppEvent: Sendable {
     case notice(String)
     /// Sidefolk's AI finished an extension draft: show the person its install preview (D39).
     case reviewExtension(URL)
+    /// A trick or a game for the companion (D44), from the person's words or the AI.
+    case companion(CompanionAct)
 }
 
 /// Broadcasts events to any number of async subscribers. Slow subscribers drop the oldest events.

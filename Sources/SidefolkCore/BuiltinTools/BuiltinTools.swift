@@ -41,6 +41,8 @@ public enum BuiltinTools {
             FilesTrashTool(),
             // Web
             WebFetchTool(fetcher: fetcher),
+            // The companion itself (D44)
+            CompanionPlayTool(events: events),
         ]
     }
 }

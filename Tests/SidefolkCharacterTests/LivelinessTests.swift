@@ -8,7 +8,8 @@ import Testing
     @Test(arguments: CharacterAntic.allCases)
     func everyMomentEndsWhereItStarted(_ antic: CharacterAntic) {
         let moment = Antics.make(antic)
-        #expect(moment.duration > 0.3 && moment.duration < 4)
+        // Moments are brief; one breath of the breathing exercise is the exception the person asked for.
+        #expect(moment.duration > 0.3 && moment.duration < (antic == .breathe ? 12 : 4))
         for track in moment.tracks {
             #expect(track.keys.count == track.times.count, "\(antic) \(track.part)")
             #expect(track.times.first == 0 && track.times.last == 1, "\(antic) \(track.part)")
@@ -162,7 +163,7 @@ import Testing
         var mind = Mind(profile: Liveliness.lively.profile)
         for roll in stride(from: 0.0, to: 1, by: 0.02) {
             if case .moment(let antic, _) = decide(&mind, hour: 2, roll: roll) {
-                #expect(antic != .hop && antic != .wiggle)
+                #expect(antic != .hop && antic != .wiggle && antic != .dance)
             }
         }
         #expect(mind.nextTick(hour: 2, roll: 0.5)! > mind.nextTick(hour: 14, roll: 0.5)!)

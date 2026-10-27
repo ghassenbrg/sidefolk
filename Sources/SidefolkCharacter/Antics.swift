@@ -235,6 +235,12 @@ enum Antics {
         case .land: land
         case .spin: spin
         case .dizzy: dizzy
+        case .wave: wave
+        case .dance: dance
+        case .bow: bow
+        case .nod: nod
+        case .giggle: giggle
+        case .breathe: breathe
         }
     }
 
@@ -393,4 +399,73 @@ enum Antics {
         ] + ears([0, 0.15, -0.15, 0.12, -0.08, 0.04, 0], swing: true),
         faces: [(0, .dizzy), (0.9, nil)])
     }()
+
+    // MARK: Tricks and play (D44)
+
+    /// Hello! One paw up, waving side to side, head tilted, a big smile.
+    static let wave = Antic(duration: 1.7, tracks: [
+        Track(.armR, [.rest, .turn(2.1), .turn(2.5), .turn(2.0), .turn(2.5), .turn(2.0), .turn(2.4), .rest],
+              at: [0, 0.18, 0.32, 0.46, 0.6, 0.74, 0.86, 1]),
+        Track(.head, [.rest, .turn(-0.07), .turn(-0.07), .rest], at: [0, 0.18, 0.86, 1]),
+        Track(.body, [.rest, .squash(0.98, 1.02, up: 1), .squash(0.98, 1.02, up: 1), .rest], at: [0, 0.18, 0.86, 1]),
+    ] + ears([0, -0.12, 0.05, -0.1, 0.05, -0.1, 0], at: [0, 0.18, 0.32, 0.46, 0.6, 0.8, 1]),
+    faces: [(0.05, .joy), (0.92, nil)], snappy: true)
+
+    /// A little dance: bouncing on the beat, swaying side to side, paws up in turn, a twirl of the ears.
+    static let dance: Antic = {
+        let beats = 8
+        let times = (0...beats).map { Double($0) / Double(beats) }
+        let body = times.indices.map { i -> Key in
+            guard i > 0, i < beats else { return .rest }
+            let side: CGFloat = i.isMultiple(of: 2) ? -1 : 1
+            return i.isMultiple(of: 2) ? Key(sx: 1.05, sy: 0.94, turn: 0.06 * side) : Key(sx: 0.97, sy: 1.03, dy: 6, turn: 0.06 * side)
+        }
+        let left = times.indices.map { i -> Key in i == 0 || i == beats ? .rest : .turn(i % 4 == 1 ? 2.0 : i % 4 == 3 ? 0.4 : 1.1) }
+        let right = times.indices.map { i -> Key in i == 0 || i == beats ? .rest : .turn(i % 4 == 3 ? 2.0 : i % 4 == 1 ? 0.4 : 1.1) }
+        let ears = times.indices.map { i -> CGFloat in i == 0 || i == beats ? 0 : (i.isMultiple(of: 2) ? 0.2 : -0.15) }
+        return Antic(duration: 3.2, tracks: [Track(.body, body, at: times), Track(.armL, left, at: times), Track(.armR, right, at: times),
+                                             Track(.head, times.indices.map { i in i == 0 || i == beats ? .rest : .turn(i.isMultiple(of: 2) ? 0.06 : -0.06) },
+                                                   at: times)]
+            + Self.ears(ears, at: times, swing: true),
+            faces: [(0.04, .joy), (0.95, nil)], snappy: true)
+    }()
+
+    /// A deep, polite bow: down low, eyes closed, a pause, and back up.
+    static let bow = Antic(duration: 1.9, tracks: [
+        Track(.body, [.rest, .squash(1.06, 0.86), .squash(1.06, 0.86), .squash(0.98, 1.02), .rest], at: [0, 0.3, 0.62, 0.82, 1]),
+        Track(.head, [.rest, Key(dy: -6, turn: 0), Key(dy: -6, turn: 0), .rest], at: [0, 0.3, 0.62, 1]),
+        Track(.face, [.rest, .nudge(0, -4), .nudge(0, -4), .rest], at: [0, 0.3, 0.62, 1]),
+    ] + arms([0, -0.3, -0.3, 0.2, 0], at: [0, 0.3, 0.62, 0.82, 1])
+      + ears([0, 0.12, 0.12, -0.06, 0], at: [0, 0.3, 0.62, 0.84, 1]),
+    faces: [(0.22, .bliss), (0.78, .joy), (0.96, nil)], snappy: true)
+
+    /// Yes, yes: two small nods.
+    static let nod = Antic(duration: 1.0, tracks: [
+        Track(.head, [.rest, .nudge(0, -3), .rest, .nudge(0, -3), .rest], at: [0, 0.22, 0.45, 0.68, 1]),
+        Track(.face, [.rest, .nudge(0, -3), .rest, .nudge(0, -3), .rest], at: [0, 0.22, 0.45, 0.68, 1]),
+    ] + ears([0, 0.08, 0, 0.08, 0], at: [0, 0.22, 0.45, 0.68, 1]),
+    faces: [(0.05, .joy), (0.9, nil)], snappy: true)
+
+    /// Tickled: it squirms and laughs, eyes squeezed, shaking from side to side.
+    static let giggle: Antic = {
+        let steps = 10
+        let times = (0...steps).map { Double($0) / Double(steps) }
+        let body = times.indices.map { i -> Key in
+            i == 0 || i == steps ? .rest : Key(sx: 1.03, sy: 0.97, dx: i.isMultiple(of: 2) ? -2.5 : 2.5, turn: i.isMultiple(of: 2) ? -0.035 : 0.035)
+        }
+        return Antic(duration: 1.4, tracks: [Track(.body, body, at: times)]
+            + arms(times.indices.map { i in i == 0 || i == steps ? 0 : (i.isMultiple(of: 2) ? -0.5 : -0.35) }, at: times)
+            + ears(times.indices.map { i in i == 0 || i == steps ? 0 : (i.isMultiple(of: 2) ? 0.22 : -0.12) }, at: times, swing: true),
+            faces: [(0, .squeeze), (0.25, .joy), (0.5, .squeeze), (0.75, .joy), (0.95, nil)], snappy: true)
+    }()
+
+    /// One slow breath for the breathing exercise: in for four seconds (growing a little, ears rising, eyes
+    /// closed), held for one, out for six. The only moment longer than a few seconds: the person asked for it.
+    static let breathe = Antic(duration: 11, tracks: [
+        Track(.body, [.rest, .squash(1.05, 1.07, up: 2), .squash(1.05, 1.07, up: 2), .squash(0.99, 0.99), .rest],
+              at: [0, 0.36, 0.45, 0.9, 1]),
+        Track(.head, [.rest, .nudge(0, 2), .nudge(0, 2), .rest], at: [0, 0.36, 0.45, 1]),
+    ] + arms([0, 0.5, 0.5, 0, 0], at: [0, 0.36, 0.45, 0.9, 1])
+      + ears([0, -0.18, -0.18, 0.06, 0], at: [0, 0.36, 0.45, 0.9, 1]),
+    faces: [(0.04, .bliss), (0.97, nil)])
 }

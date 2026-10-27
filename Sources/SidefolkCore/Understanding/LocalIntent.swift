@@ -70,6 +70,8 @@ public enum LocalIntent: Sendable, Equatable {
     /// for the address and finish with `IntentParser.watch(address:kind:becomes:)`. `kind` is `site_status` or
     /// `url_change`; for `site_status`, `becomes` is "up" or "down".
     case needsTarget(kind: String, becomes: String?)
+    /// A trick or a game with the companion (D44).
+    case companion(CompanionAct)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

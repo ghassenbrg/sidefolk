@@ -21,6 +21,12 @@ final class AppCoordinator {
     let notifier: SystemNotifier
     let monitor: EnvironmentMonitor
     let companion = CompanionWindowController()
+    /// Tricks and games with the companion (D44).
+    lazy var player: CompanionPlayer = {
+        let player = CompanionPlayer(companion: companion)
+        player.anchorProvider = { [weak self] in self?.anchor() }
+        return player
+    }()
     private(set) var onboarding: Onboarding!
     var mood = CompanionMood()
     private var roster = DutyRoster()
@@ -346,6 +352,8 @@ final class AppCoordinator {
             return
         }
         if command == "voice:stop" { _ = voice.cancel(); return }
+        if command.hasPrefix("play:"), let act = CompanionAct(rawValue: String(command.dropFirst(5))) { runtime.events.publish(.companion(act)); return }
+        if command == "click" { companionClicked(); return }
         if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }
         if command.hasPrefix("voice:volume:"), let volume = Double(command.dropFirst("voice:volume:".count)) {
             // 0 checks spoken replies and the mouth without a sound on the developer's Mac.
@@ -522,6 +530,13 @@ final class AppCoordinator {
         case .reviewExtension(let folder):
             askPanel.hide()
             settingsWindow.review(folder: folder)
+        case .companion(let act):
+            // A game needs the companion in view and the panel out of the way; a trick plays beside it.
+            if act.isGame {
+                askPanel.hide()
+                if !companion.isVisible { showCompanion(true) }
+            }
+            player.play(act)
         case .dataChanged(let domain):
             if domain == .permissions { refreshMode() }
             if [.reminders, .watchers, .runs, .attention, .skipped].contains(domain) { scheduleNowRefresh() }
@@ -590,6 +605,8 @@ final class AppCoordinator {
 
 extension AppCoordinator: CompanionDelegate {
     func companionClicked() {
+        // In catch-me, a click is a catch (D44).
+        if player.click() { return }
         // A click while it talks only silences it (D34).
         if voice.isSpeaking {
             voice.interrupt(cancelRun: true)
@@ -603,6 +620,7 @@ extension AppCoordinator: CompanionDelegate {
     func companionHoldEnded() { voice.end() }
 
     func companionDoubleClicked() {
+        guard player.game == nil else { return }
         askPanel.hide()
         openHome()
     }
@@ -614,6 +632,7 @@ extension AppCoordinator: CompanionDelegate {
         }
         item(String(localized: "Ask…")) { [weak self] in self?.showAsk() }
         item(String(localized: "Open Sidefolk")) { [weak self] in self?.openHome() }
+        menu.addItem(playMenu())
         menu.addItem(.separator())
         if runtime.settings.current.isQuiet(at: Date()) {
             item(String(localized: "Turn Quiet Off")) { [weak self] in self?.setQuiet(for: nil) }
@@ -626,7 +645,31 @@ extension AppCoordinator: CompanionDelegate {
         return menu
     }
 
+    /// Play (D44): tricks, then the two games, or a way out of the one running.
+    private func playMenu() -> NSMenuItem {
+        let play = NSMenu()
+        if player.game != nil {
+            play.addItem(ClosureTarget.item(String(localized: "Stop Playing")) { [weak self] in self?.player.stop() })
+        } else {
+            for act in [CompanionAct.dance, .wave, .bow, .flip, .giggle, .trick] {
+                play.addItem(ClosureTarget.item(act.title) { [weak self] in self?.player.play(act) })
+            }
+            play.addItem(.separator())
+            for act in [CompanionAct.catchMe, .breathe] {
+                play.addItem(ClosureTarget.item(act.title) { [weak self] in
+                    self?.askPanel.hide()
+                    self?.player.play(act)
+                })
+            }
+        }
+        let item = NSMenuItem(title: String(localized: "Play", comment: "The companion's menu: tricks and games"), action: nil, keyEquivalent: "")
+        item.submenu = play
+        return item
+    }
+
     func companionDragChanged(_ dragging: Bool) {
+        // Picked up mid-game: the game ends where the person put it.
+        if dragging { player.stop() }
         mood.dragging = dragging
         if dragging { askPanel.hide() }
         renderMood()

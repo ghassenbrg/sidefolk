@@ -139,9 +139,16 @@ public final class CharacterView: NSView {
         let inside = bounds.contains(local) && characterPath.contains(local)
         guard inside || stroking else { return }
         stroking = inside
-        guard petting.add(local, inside: inside, at: CACurrentMediaTime()), Self.pettable(state), performing != .pet else { return }
+        let now = CACurrentMediaTime()
+        guard petting.add(local, inside: inside, at: now), Self.pettable(state), performing != .pet, performing != .giggle else { return }
         noteInteraction()
-        // It leans into the hand: toward the side being stroked.
+        // Stroked on and on: tickled, it giggles (D44). Otherwise it leans into the hand, toward the side being stroked.
+        if now - lastPet < 3.5 {
+            lastPet = 0
+            director.perform(Antics.giggle, name: .giggle)
+            return
+        }
+        lastPet = now
         let moment = Antics.pet
         director.perform(local.x > characterFrame.midX ? moment.flipped : moment, name: .pet)
     }
@@ -154,6 +161,8 @@ public final class CharacterView: NSView {
     private var life: Life?
     private var petting = PettingDetector()
     private var stroking = false
+    /// When the last pet began, to tell a second round of stroking (a tickle) from a first.
+    private var lastPet: CFTimeInterval = 0
     /// What it senses of the desk (tests swap it).
     var surroundings: any Surroundings = Desktop()
 

@@ -115,6 +115,8 @@ public struct LocalIntentRunner: Sendable {
             return .needsTime(title: title, reason: reason, important: important)
         case .needsTarget(let kind, let becomes):
             return .needsTarget(kind: kind, becomes: becomes)
+        case .companion(let act):
+            return await execute("companion.play", ["act": .string(act.rawValue)])
         }
     }
 

@@ -402,6 +402,23 @@ final class CompanionWindowController {
 
     var isFlying: Bool { flightTimer != nil }
 
+    /// Hops to `origin` for a game (D44): the window glides there while the companion hops. The person's own spot
+    /// isn't saved; the game brings it back there at the end.
+    func hop(to origin: NSPoint, done: (@MainActor @Sendable () -> Void)? = nil) {
+        character.perform(.hop)
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = character.reducedMotion ? 0 : 0.3
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            panel.animator().setFrame(NSRect(origin: origin, size: panel.frame.size), display: true)
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                self?.layoutContent()
+                self?.delegate?.companionMoved()
+                done?()
+            }
+        }
+    }
+
     func moveToScreen(of point: NSPoint) {
         guard let target = NSScreen.screens.first(where: { $0.frame.contains(point) }), target != screen else { return }
         let v = target.visibleFrame

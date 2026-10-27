@@ -17,6 +17,9 @@ reminds and keeps watch, and your AI agents can talk to it.
   a sneeze…), sitting and lying down when nothing happens, a boop when clicked, petting by stroking,
   and a landing when dropped or thrown. Liveliness: Minimal (moves only when something happens),
   Balanced (the default) or Lively; Reduce Motion is respected; still while you type.
+- Play with it (D44): say "dance!", "take a bow", "do a trick" or choose Play in its menu; stroke it again
+  and it giggles; "let's play catch" (boop it as it hops about for 20 seconds, best score kept) or "help me
+  relax" (one minute of slow breathing together). The AI can cheer with you too.
 - Your own companions: a folder with `species.json` and SVG shapes, read strictly as data, listed
   under "Made by you" (`companions/template/`, and Miso as an example).
 - Folks on duty beside it: Tempo while a reminder is close, Scout while something is watched, Byte
