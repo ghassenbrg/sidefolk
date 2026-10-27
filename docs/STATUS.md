@@ -95,8 +95,13 @@ pass; all ten languages complete (2141 strings each); release build 0.1.0 made a
   waited 39 minutes on Apple's notary service (submission d41ddcc9-5f3c-47fd-9a3b-d5b41379a2bb) until a
   network blip on the runner ended the wait, so nothing was published. `release.sh` now prints each
   phase and submission ID, asks Apple again after a blip, and waits up to 3 hours; the job's limit is
-  210 minutes. Checked with a fake notarytool (accepted, blip, rejected, deadline, unreachable, failed
-  upload) and shellcheck; not yet re-run on GitHub. Both run on GitHub's `xcode-27` image:
+  210 minutes (checked first with a fake notarytool in six cases). The re-run, run 40510126126, made
+  `v0.1.0-snapshot.404`, signed and notarized: 39 minutes, of which Apple took 29 for the app
+  (submission 3107d33a-980f-46b3-aa6a-3a3821ae9db1) and 23 seconds for the DMG. The downloaded DMG
+  matched its checksum; the DMG, app and helper are signed "Developer ID Application: Ghassen Bargougui
+  (2XQJWQBD4W)" with a secure timestamp, the app with the hardened runtime and no get-task-allow;
+  `stapler validate` passes for the DMG and app, and `spctl` accepts both as "Notarized Developer ID".
+  Both workflows run on GitHub's `xcode-27` image:
   Xcode 26.6's Swift 6.3 crashed on valid code (two compiler crashes), after three fixes for it.
 - **Tests:** 1195 (1161 core in 150 suites + 34 character). `make test` runs serially (about 50 s).
 - **Languages, app pass (D28, 2026-10-26):** every string people read in Sources/SidefolkApp, the
@@ -345,12 +350,12 @@ then run the signed, notarized release and test the downloaded DMG on a clean Ma
   connectors (GitHub, Notion, Linear) wait for it.
 - **Signing:** the Developer ID certificate and notary credentials live only in GitHub's secrets, so
   the Release workflow signs and notarizes; local builds are signed with the "Apple Development"
-  identity or ad hoc. No notarization has come back yet (Apple's first check of a new team is slow).
+  identity or ad hoc. Apple took 29 minutes over the first accepted app; later ones should be quicker.
 
 ## Next
 1. The founder: decide on lively companions; try the microphone, Apple Notes and Git clone by hand;
-   ask Anthropic about its marks. Re-run the signed snapshot (Actions › Release) and check the DMG is
-   notarized before the production v0.1.0.
+   ask Anthropic about its marks. The signed, notarized snapshot 404 is ready to try on a clean Mac;
+   then the production v0.1.0 (Actions › Release › production, or push the tag).
 2. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
    "Today" timeline with an end-of-day recap.
 
