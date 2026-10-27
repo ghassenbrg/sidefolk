@@ -16,6 +16,17 @@ cd "$(dirname "$0")/.."
 fail() { echo "release: $*" >&2; exit 1; }
 # The CI log shows the script's own lines too, so a long quiet stretch says what it is waiting on.
 phase() { printf '\n== %s\n' "$*"; }
+# Signs with Apple's secure timestamp. Its server is now and then out of reach for a moment ("The timestamp
+# service is not available", run 40541043721), and there are fifteen programs to sign, so each is tried again.
+sign() {
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    codesign --force --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$@" && return 0
+    echo "release: signing ${*: -1} failed (try $attempt of 5); trying again in 15 seconds." >&2
+    sleep 15
+  done
+  fail "couldn't sign ${*: -1}."
+}
 
 [[ -n "${SIDEFOLK_SIGN_IDENTITY:-}" ]] || fail "set SIDEFOLK_SIGN_IDENTITY to your Developer ID Application identity."
 [[ "$SIDEFOLK_SIGN_IDENTITY" == Developer\ ID\ Application* ]] || fail "SIDEFOLK_SIGN_IDENTITY must be a Developer ID Application identity (got: $SIDEFOLK_SIGN_IDENTITY)."
@@ -33,12 +44,11 @@ APP="build/Sidefolk.app"
 phase "Building and signing $APP"
 SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
 # Re-sign with a secure timestamp (build-app.sh uses --timestamp=none for speed), inside out.
-codesign --force --options runtime --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$APP/Contents/Helpers/sidefolk"
+sign --options runtime "$APP/Contents/Helpers/sidefolk"
 for program in "$APP"/Contents/Resources/Extensions/*/bin/*; do
-  codesign --force --options runtime --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$program"
+  sign --options runtime "$program"
 done
-codesign --force --options runtime --timestamp --entitlements Resources/Sidefolk.entitlements \
-  --sign "$SIDEFOLK_SIGN_IDENTITY" "$APP"
+sign --options runtime --entitlements Resources/Sidefolk.entitlements "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 # No debug entitlement may ship (it lets other processes attach to Sidefolk).
 if codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q "get-task-allow"; then fail "get-task-allow is in the signature."; fi
@@ -98,7 +108,7 @@ fi
 
 phase "Packaging and signing the disk image"
 DMG="$(scripts/package.sh "${SIDEFOLK_RELEASE_LABEL:-}" | tail -1)"
-codesign --force --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$DMG"
+sign "$DMG"
 
 if [[ "${SIDEFOLK_SKIP_NOTARIZE:-}" == "1" ]]; then
   echo "Signed $DMG (not notarized)."
