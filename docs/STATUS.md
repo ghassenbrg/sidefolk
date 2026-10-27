@@ -385,7 +385,10 @@ then run the signed, notarized release and test the downloaded DMG on a clean Ma
   identity or ad hoc. Apple took 29 minutes over the first accepted app; later ones should be quicker.
 
 ## Next
-1. The founder: try the next snapshot (Actions › Release › snapshot, from this commit): hold to talk
+1. The founder: try snapshot 411 (signed and notarized by run 40544541115; checked: checksum, Developer ID
+   and timestamps on the DMG, the app, its helper and all thirteen extension programs, stapled tickets,
+   Gatekeeper "Notarized Developer ID"; run 40541043721 before it stopped on a timestamp-server blip, now
+   retried): hold to talk
    (if it still hears nothing, the log's `"cat":"voice"` lines now say whether the microphone opened and
    when sound came), the built-ins on a clean Mac, Play; ask Anthropic about its marks; then production
    v0.1.0 (Actions › Release › production, or push the tag).
