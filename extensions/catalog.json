@@ -1,9 +1,18 @@
 {
-  "about": "Extensions that ship with Sidefolk (DECISIONS D39, docs/research/extensions-catalog.md). Each is installed with the app and updated with it; \"on\" says whether it starts switched on. Folders not listed here are samples people can install from Settings.",
+  "about": "Extensions that ship with Sidefolk (DECISIONS D39, docs/research/extensions-catalog.md). Each is a small program built with the app (extensions/<folder>/Sources), installed with it and updated with it; \"on\" says whether it starts switched on. hello-folk is a sample for developers and doesn't ship.",
   "extensions": [
     { "folder": "git", "on": true },
     { "folder": "world-clock", "on": true },
     { "folder": "system-vitals", "on": true },
-    { "folder": "weather", "on": true }
+    { "folder": "weather", "on": true },
+    { "folder": "calculator", "on": true },
+    { "folder": "currency", "on": true },
+    { "folder": "playtime", "on": true },
+    { "folder": "images", "on": true },
+    { "folder": "pdf", "on": false },
+    { "folder": "qr-codes", "on": false },
+    { "folder": "archives", "on": false },
+    { "folder": "dev-toolbox", "on": false },
+    { "folder": "feeds", "on": false }
   ]
 }

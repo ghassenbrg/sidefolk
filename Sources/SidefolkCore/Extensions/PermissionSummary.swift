@@ -10,18 +10,21 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var programs: [ResolvedProgram]
     /// The most any tool does in a folder the person names in a call (`tools.<name>.paths`); nil when none does.
     public var folders: ExtensionManifest.FolderUse?
+    /// The graphics hardware and media decoders (`permissions.media`).
+    public var media: Bool
 
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
-                programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil) {
+                programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false) {
         self.network = network
         self.read = read
         self.write = write
         self.exec = exec
         self.programs = programs
         self.folders = folders
+        self.media = media
     }
 
-    /// Pins saved before programs and per-call folders existed have neither.
+    /// Pins saved before programs, per-call folders and media existed have none of them.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         network = try c.decode(Bool.self, forKey: .network)
@@ -30,6 +33,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         exec = try c.decode([String].self, forKey: .exec)
         programs = try c.decodeIfPresent([ResolvedProgram].self, forKey: .programs) ?? []
         folders = try c.decodeIfPresent(ExtensionManifest.FolderUse.self, forKey: .folders)
+        media = try c.decodeIfPresent(Bool.self, forKey: .media) ?? false
     }
 
     /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …). Programs named
@@ -58,7 +62,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 /// (SECURITY T13, T16). Deterministic: built from the manifest, never from model text.
 public struct PermissionSummary: Sendable, Hashable {
     public struct Line: Sendable, Hashable {
-        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, none, unsandboxed }
+        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, none, unsandboxed }
         public var kind: Kind
         public var text: String
         /// Worth drawing attention to on the install sheet.
@@ -98,6 +102,9 @@ public struct PermissionSummary: Sendable, Hashable {
         }
         for program in p.programs {
             lines.append(Line(kind: .exec, text: String(localized: "Can run \(program.name) (\(show(program.path)))"), caution: false))
+        }
+        if p.media {
+            lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's graphics hardware for pictures"), caution: false))
         }
         if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))

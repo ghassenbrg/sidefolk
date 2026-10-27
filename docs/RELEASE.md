@@ -121,10 +121,9 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
       another computer).
 - [ ] Login item from /Applications; `sidefolk` installs on PATH from Settings › Agents and answers
       `sidefolk status`.
-- [ ] A built-in extension runs in its sandbox (World Clock). On a Mac **without** Apple's developer tools:
-      no "install the command line developer tools" dialog appears at launch, and Settings › Extensions says
-      each built-in needs Python and how to get it (every built-in is a Python program today; see "Open
-      decisions").
+- [ ] Built-in extensions run in their sandbox (World Clock, Calculator, Images on a photo). On a Mac **without**
+      Apple's developer tools: no "install the command line developer tools" dialog appears at launch, every
+      built-in but Git works, and Settings › Extensions says Git needs Git and how to get it.
 - [ ] Quit and relaunch: reminders and watchers survive; the fallback notifications fire while it is quit.
 - [ ] Idle: `top -l 1 -pid $(pgrep -x Sidefolk)` shows ~0 % CPU after the companion settles (see D41 for the
       numbers measured on the dev Mac).
@@ -152,11 +151,6 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
 | DMG background, volume icon, licence in the DMG | Not done (plain DMG) |
 
 ## Open decisions
-
-- **Built-ins on a clean Mac.** World Clock, System Vitals, Weather and Git are Python programs, and a Mac
-  without Apple's Command Line Tools has no Python. Sidefolk now says so instead of failing (and never runs
-  the `/usr/bin` shims that would offer the install), but those four don't work until the person installs the
-  tools. Options: ship them as small compiled programs, or say "needs the Command Line Tools" on the website.
 
 - **Intel Macs.** macOS 15 still runs on Intel Macs. A universal build doubles the binary size and needs one test
   on Intel (extensions' interpreters, sandbox-exec and the companion's rendering).

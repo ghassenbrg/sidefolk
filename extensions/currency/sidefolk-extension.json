@@ -1,0 +1,52 @@
+{
+  "id": "dev.sidefolk.currency",
+  "name": "Currency",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "Converts money between the euro and 30 major currencies with the European Central Bank's daily reference rates, and tells you when a rate crosses a line. Nothing about you is sent.",
+  "folk": "seed",
+  "author": "Sidefolk",
+  "icon": "icon.pdf",
+  "run": {
+    "command": "bin/ext-currency"
+  },
+  "permissions": {
+    "network": true
+  },
+  "tools": {
+    "convert_currency": {
+      "title": "Convert money",
+      "risk": "low",
+      "category": "web",
+      "mutates": false
+    }
+  },
+  "watchers": {
+    "rate_crosses": {
+      "title": "Exchange rate",
+      "description": "Tells you once when an exchange rate goes above or below a line.",
+      "config": {
+        "from": {
+          "type": "string",
+          "description": "The currency, like USD.",
+          "required": true
+        },
+        "to": {
+          "type": "string",
+          "description": "The currency it is priced in, like JPY.",
+          "required": true
+        },
+        "above": {
+          "type": "number",
+          "description": "Tell me when the rate goes above this.",
+          "minimum": 0
+        },
+        "below": {
+          "type": "number",
+          "description": "Tell me when the rate goes below this.",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

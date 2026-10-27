@@ -25,20 +25,22 @@ import Testing
 
     func fields(_ r: ValidationReport) -> [String] { r.errors.map(\.field) }
 
-    @Test func bundledSamplesAreValid() {
-        for name in ["system-vitals", "hello-folk"] {
-            let r = ExtensionValidator.validate(at: ExtFixtures.repoRoot.appendingPathComponent("extensions/\(name)"),
-                                                paths: paths, resolver: Self.resolver)
-            #expect(r.isValid, "\(name): \(r.errors)")
-            #expect(r.warnings.isEmpty, "\(name): \(r.warnings)")
+    @Test func shippedExtensionsAndTheSampleAreValid() {
+        let folders = ExtFixtures.builtInFolders.map(ExtFixtures.builtIn) + [ExtFixtures.repoRoot.appendingPathComponent("extensions/hello-folk")]
+        for folder in folders {
+            let r = ExtensionValidator.validate(at: folder, paths: paths, resolver: Self.resolver)
+            #expect(r.isValid, "\(folder.lastPathComponent): \(r.errors)")
+            #expect(r.warnings.isEmpty, "\(folder.lastPathComponent): \(r.warnings)")
         }
-        let vitals = ExtensionValidator.validate(at: ExtFixtures.repoRoot.appendingPathComponent("extensions/system-vitals"),
-                                                 paths: paths, resolver: Self.resolver)
-        #expect(vitals.summary?.texts == ["Can run /usr/bin/pmset", "Can run /usr/bin/vm_stat", "Can run /usr/sbin/sysctl",
-                                          "No access to your files or the internet"])
-        #expect(vitals.toolRisks.map(\.risk) == [.low, .low, .low])
-        #expect(vitals.launch?.program == "main.py")
+        let vitals = ExtensionValidator.validate(at: ExtFixtures.builtIn("system-vitals"), paths: paths, resolver: Self.resolver)
+        #expect(vitals.summary?.texts == ["Can run /usr/bin/pmset", "No access to your files or the internet"])
+        #expect(vitals.toolRisks.map(\.risk) == [.low, .low, .low, .low])
+        // A program of its own, inside the signed app: no interpreter to find on the Mac.
+        #expect(vitals.launch?.interpreter == nil && vitals.launch?.program == "bin/ext-system-vitals")
         #expect(vitals.text.contains("Valid."))
+        let images = ExtensionValidator.validate(at: ExtFixtures.builtIn("images"), paths: paths, resolver: Self.resolver)
+        #expect(images.summary?.texts == ["Can read and change files in a folder you name, for that request only, once you approve it",
+                                          "Can use the Mac's graphics hardware for pictures"])
     }
 
     @Test func unknownKeysAreRejectedAnywhere() throws {

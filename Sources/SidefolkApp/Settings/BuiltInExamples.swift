@@ -16,6 +16,24 @@ enum BuiltInExamples {
             String(localized: "how much disk space do I have left?", comment: "A request to try with the System Vitals extension")
         case "dev.sidefolk.weather":
             String(localized: "will it rain in Lisbon this week?", comment: "A request to try with the Weather extension")
+        case "dev.sidefolk.calculator":
+            String(localized: "how many days until 25 December?", comment: "A request to try with the Calculator extension")
+        case "dev.sidefolk.currency":
+            String(localized: "how much is 50 dollars in euros?", comment: "A request to try with the Currency extension")
+        case "dev.sidefolk.playtime":
+            String(localized: "let's play trivia", comment: "A request to try with the Playtime extension (a quiz game)")
+        case "dev.sidefolk.images":
+            String(localized: "make the photos in ~/Downloads smaller", comment: "A request to try with the Images extension; keep the folder as it is")
+        case "dev.sidefolk.pdf":
+            String(localized: "combine the PDFs in ~/Downloads into one", comment: "A request to try with the PDF Tools extension; keep the folder as it is")
+        case "dev.sidefolk.qr-codes":
+            String(localized: "make a QR code of https://example.com on my Desktop", comment: "A request to try with the QR Codes extension; keep the link")
+        case "dev.sidefolk.archives":
+            String(localized: "zip the Screenshots folder on my Desktop", comment: "A request to try with the Archives extension")
+        case "dev.sidefolk.dev-toolbox":
+            String(localized: "what date is the Unix time 1800000000?", comment: "A request to try with the Dev Toolbox extension; keep the number")
+        case "dev.sidefolk.feeds":
+            String(localized: "what's new on the swift.org blog?", comment: "A request to try with the Feeds extension; keep the address")
         default:
             nil
         }

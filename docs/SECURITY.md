@@ -633,6 +633,10 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 ;; only with exec entries (or for sh): children inherit this sandbox
 (allow process-fork)
 
+;; media=true adds (pictures on Apple silicon, measured on macOS 27; a VM's GPU is not among them):
+;; (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
+;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder"))
+
 ;; network=true adds (all-or-nothing, see limits):
 ;; (allow system-socket) (allow network-outbound (remote ip "*:*"))
 ;; (allow network-outbound (literal "/private/var/run/mDNSResponder"))  ; DNS
@@ -644,6 +648,9 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   `/System` (holds the dyld shared cache) and `/usr/share`; map-executable on `/usr/lib` and
   `/System`; `/dev/null` and `/dev/urandom`; timezone files; broad `file-read-metadata`;
   `sysctl-read`.
+- **A compiled Swift program** (every built-in extension, D39): nothing beyond the base rules; Swift and
+  Foundation load from `/usr/lib/swift` and `/System`. With `network`, `URLSession` works on the base
+  `trustd.agent` lookup and the mDNSResponder socket. Core Image and HEIC or PNG output need `media`.
 - **sh:** `/bin/sh` reads `/private/var/select/sh` and execs `/bin/bash`, so allow both. A script's
   external commands must each be listed (`head` was denied).
 - **python3:** framework builds (Homebrew and Xcode) re-exec

@@ -26,6 +26,35 @@ enum ExtFixtures {
         }
     }
 
+    /// Where `swift test` put the built products, the extension programs among them.
+    static let products = Bundle(for: ProductsMarker.self).bundleURL.deletingLastPathComponent()
+
+    /// The extensions Sidefolk ships: the folders in `extensions/` that hold a program's sources.
+    static let builtInFolders: [String] = {
+        let all = (try? FileManager.default.contentsOfDirectory(atPath: repoRoot.appendingPathComponent("extensions").path)) ?? []
+        return all.filter { FileManager.default.fileExists(atPath: repoRoot.appendingPathComponent("extensions/\($0)/Sources").path) }.sorted()
+    }()
+
+    /// The built-ins put together the way scripts/build-app.sh puts them in the app: the catalog, and each folder's
+    /// manifest, icon and program (built with the tests, which depend on them).
+    static let builtIns: URL = {
+        let dir = try! tempDir("builtins")
+        let source = repoRoot.appendingPathComponent("extensions")
+        let fm = FileManager.default
+        try! fm.copyItem(at: source.appendingPathComponent(BundledExtensions.catalogFile), to: dir.appendingPathComponent(BundledExtensions.catalogFile))
+        for folder in builtInFolders {
+            let to = dir.appendingPathComponent(folder, isDirectory: true)
+            try! fm.createDirectory(at: to.appendingPathComponent("bin"), withIntermediateDirectories: true)
+            for file in [ExtensionManifest.fileName, "icon.pdf"] {
+                try! fm.copyItem(at: source.appendingPathComponent("\(folder)/\(file)"), to: to.appendingPathComponent(file))
+            }
+            try! fm.copyItem(at: products.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
+        }
+        return dir
+    }()
+
+    static func builtIn(_ folder: String) -> URL { builtIns.appendingPathComponent(folder, isDirectory: true) }
+
     static let python = InterpreterResolver.system.resolve("python3")
     static let hasPython = python != nil
     /// Apple's or Homebrew's git, found the way built-in extensions find it.
@@ -155,6 +184,9 @@ enum ExtFixtures {
         send({"jsonrpc": "2.0", "id": msg["id"], "result": result})
     """#
 }
+
+/// Its bundle sits among the built products.
+private final class ProductsMarker {}
 
 /// An isolated host over a temp Sidefolk home, removed when the test ends.
 final class HostEnv {

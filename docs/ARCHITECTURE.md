@@ -49,7 +49,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Database | `~/Library/Application Support/Sidefolk/sidefolk.sqlite` (WAL) |
 | Extensions | `~/Library/Application Support/Sidefolk/Extensions/<id>/` |
 | Extension drafts (written by Sidefolk's AI, D39) | `~/Library/Application Support/Sidefolk/ExtensionDrafts/local.<name>/` |
-| Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/` with `catalog.json` (repo: `extensions/`) |
+| Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/<folder>/` (manifest, icon, `bin/ext-<folder>`) with `catalog.json`; sources in `extensions/<folder>/Sources`, on `extensions/Kit` |
 | Skills | `~/Library/Application Support/Sidefolk/Skills/<name>/SKILL.md` |
 | Skill for other agents (D42) | `Sidefolk.app/Contents/Resources/AgentSkills/sidefolk` (repo: `skills/sidefolk`); Connect copies it to `~/.claude/skills/sidefolk`, `~/.codex/skills/sidefolk` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |
@@ -117,6 +117,10 @@ user folders or agent configs.
   `ProgramResolver` finds programs named in `exec` (`git`); `ExtensionIcon` checks icons.
 - `BundledExtensions` (D39) — at launch, installs the app's built-in extensions on or off as
   `catalog.json` says, reinstalls them when the shipped files change, lists the ones this Mac can't run.
+  Each built-in is a Swift executable target (`ext-<folder>`, Package.swift's `builtInExtensions`) on
+  `SidefolkExtensionKit` (`extensions/Kit`: the stdio MCP loop, schemas, paths, programs, the web);
+  `scripts/build-app.sh` copies each program into its folder and signs it before the app. Switched-off
+  built-ins reach the model as one line each (`ExtensionContext.switchedOff`), not as tools.
 - `ExtensionDrafts` and `ExtensionBuilderTools` (D39) — `extensions.draft` (text-only drafts, validated
   and started once with nothing granted), `extensions.review` (posts `AppEvent.reviewExtension`; the app
   opens the install sheet), `extensions.read_draft`; the `build-extension` skill drives them.

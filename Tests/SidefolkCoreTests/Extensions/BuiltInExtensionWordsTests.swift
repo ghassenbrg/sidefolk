@@ -7,7 +7,8 @@ import Testing
 /// place and not the other.
 struct BuiltInExtensionWordsTests {
     @Test func everyBuiltInWordMatchesItsManifestInEnglish() throws {
-        for folder in ["git", "world-clock", "system-vitals", "weather"] {
+        #expect(ExtFixtures.builtInFolders.count >= 13)
+        for folder in ExtFixtures.builtInFolders {
             let url = ExtFixtures.repoRoot.appendingPathComponent("extensions/\(folder)/\(ExtensionManifest.fileName)")
             let manifest = try ExtensionManifest.decode(try Data(contentsOf: url))
             #expect(BuiltInExtensionWords.name(manifest.id) == manifest.name, "\(folder)")

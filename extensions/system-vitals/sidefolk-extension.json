@@ -1,22 +1,23 @@
 {
   "id": "dev.sidefolk.system-vitals",
   "name": "System Vitals",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",
-  "run": { "command": "python3", "args": ["main.py"] },
+  "run": { "command": "bin/ext-system-vitals" },
   "permissions": {
     "network": false,
     "files": { "read": [], "write": [] },
-    "exec": ["/usr/bin/pmset", "/usr/bin/vm_stat", "/usr/sbin/sysctl"]
+    "exec": ["/usr/bin/pmset"]
   },
   "tools": {
     "battery": { "title": "Battery status", "risk": "low", "category": "system", "mutates": false },
     "disk": { "title": "Disk space", "risk": "low", "category": "system", "mutates": false },
-    "memory": { "title": "Memory use", "risk": "low", "category": "system", "mutates": false }
+    "memory": { "title": "Memory use", "risk": "low", "category": "system", "mutates": false },
+    "about": { "title": "About this Mac", "risk": "low", "category": "system", "mutates": false }
   },
   "watchers": {
     "battery_low": {

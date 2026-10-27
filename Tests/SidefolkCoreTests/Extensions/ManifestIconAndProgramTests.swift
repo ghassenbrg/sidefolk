@@ -88,8 +88,8 @@ import Testing
     }
 
     @Test func shippedIconsPassTheChecks() {
-        for name in ["git", "world-clock", "system-vitals", "hello-folk"] {
-            let folder = ExtFixtures.repoRoot.appendingPathComponent("extensions/\(name)")
+        for folder in ExtFixtures.builtInFolders.map(ExtFixtures.builtIn) + [ExtFixtures.repoRoot.appendingPathComponent("extensions/hello-folk")] {
+            let name = folder.lastPathComponent
             let r = ManifestValidator(paths: paths, resolver: ManifestValidationTests.resolver, programs: Self.programs).validate(folder: folder)
             #expect(r.isValid, "\(name): \(r.errors)")
             #expect(r.iconPath != nil, "\(name)")

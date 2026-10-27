@@ -96,6 +96,14 @@ public struct ExtensionWatchTool: Tool {
 /// Context lines about what extension watchers exist, for the agent. Only identifiers appear: titles
 /// and descriptions are the extension author's words and would reach every system prompt (SECURITY T2).
 public enum ExtensionContext {
+    /// "PDF Tools (A PDF's details and text, …)" for each built-in that is installed but off. Their words ship in the
+    /// signed app (D39), so they may reach the model; anyone else's extension never appears here.
+    public static func switchedOff(_ installed: [ExtensionInfo]) -> [String] {
+        installed.filter { $0.origin == .bundled && !$0.enabled }.sorted { $0.name < $1.name }.map { e in
+            "\(ExtensionText.line(e.name, characters: 40))" + (e.description.map { " (\(ExtensionText.line($0, characters: 110)))" } ?? "")
+        }
+    }
+
     public static func watcherLines(_ kinds: [ExtensionWatcherKind]) -> String? {
         guard !kinds.isEmpty else { return nil }
         return kinds.prefix(12).map { k in

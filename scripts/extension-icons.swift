@@ -136,8 +136,117 @@ func weather(_ c: CGContext) {
     c.fillPath()
 }
 
+func fill(_ c: CGContext, _ color: CGColor, _ build: (CGMutablePath) -> Void) {
+    let path = CGMutablePath()
+    build(path)
+    c.addPath(path)
+    c.setFillColor(color)
+    c.fillPath()
+}
+
+/// Calculator: a white calculator, a display and nine keys (Nova's lilac).
+func calculator(_ c: CGContext) {
+    background(c, top: 0xD9C4FA, bottom: 0x9B7BE6)
+    fill(c, white) { $0.addRoundedRect(in: CGRect(x: 136, y: 88, width: 240, height: 336), cornerWidth: 44, cornerHeight: 44) }
+    fill(c, navy) { $0.addRoundedRect(in: CGRect(x: 168, y: 318, width: 176, height: 70), cornerWidth: 16, cornerHeight: 16) }
+    for row in 0..<3 { for col in 0..<3 {
+        let key = CGRect(x: 168 + CGFloat(col) * 62, y: 124 + CGFloat(row) * 62, width: 50, height: 50)
+        fill(c, row == 0 && col == 2 ? rgb(0x9B7BE6) : rgb(0x0F2D5B, 0.18)) { $0.addRoundedRect(in: key, cornerWidth: 12, cornerHeight: 12) }
+    } }
+}
+
+/// Currency: two coins, one in front of the other, each with its raised rim (Seed's mint).
+func currency(_ c: CGContext) {
+    background(c, top: 0xA6EDCF, bottom: 0x3BBF8F)
+    dot(c, CGPoint(x: 206, y: 306), radius: 118, fill: rgb(0xFFFFFF, 0.55), ring: rgb(0x0F2D5B, 0.25), ringWidth: 14)
+    dot(c, CGPoint(x: 306, y: 206), radius: 118, fill: white, ring: navy, ringWidth: 18)
+    dot(c, CGPoint(x: 306, y: 206), radius: 78, fill: rgb(0x3BBF8F, 0.25), ring: rgb(0x3BBF8F), ringWidth: 12)
+}
+
+/// Playtime: a die showing five (Play's red).
+func playtime(_ c: CGContext) {
+    background(c, top: 0xFF9C8F, bottom: 0xE0464B)
+    fill(c, white) { $0.addRoundedRect(in: CGRect(x: 116, y: 116, width: 280, height: 280), cornerWidth: 64, cornerHeight: 64) }
+    for (x, y) in [(186, 186), (326, 186), (256, 256), (186, 326), (326, 326)] as [(CGFloat, CGFloat)] {
+        dot(c, CGPoint(x: x, y: y), radius: 30, fill: rgb(0xE0464B))
+    }
+}
+
+/// Images: a picture with a sun over two hills (Melody's purple).
+func images(_ c: CGContext) {
+    background(c, top: 0xCDB2FA, bottom: 0x8A5CE6)
+    fill(c, white) { $0.addRoundedRect(in: CGRect(x: 92, y: 120, width: 328, height: 272), cornerWidth: 40, cornerHeight: 40) }
+    dot(c, CGPoint(x: 330, y: 312), radius: 34, fill: rgb(0xFFC93C))
+    fill(c, rgb(0x8A5CE6)) { p in
+        p.move(to: CGPoint(x: 120, y: 150)); p.addLine(to: CGPoint(x: 220, y: 290)); p.addLine(to: CGPoint(x: 300, y: 190))
+        p.addLine(to: CGPoint(x: 340, y: 240)); p.addLine(to: CGPoint(x: 392, y: 150)); p.closeSubpath()
+    }
+}
+
+/// PDF Tools: a page with its corner folded and lines of text (Pip's coral).
+func pdf(_ c: CGContext) {
+    background(c, top: 0xFFA195, bottom: 0xF2685A)
+    fill(c, white) { p in
+        p.move(to: CGPoint(x: 140, y: 80)); p.addLine(to: CGPoint(x: 372, y: 80)); p.addLine(to: CGPoint(x: 372, y: 350))
+        p.addLine(to: CGPoint(x: 296, y: 432)); p.addLine(to: CGPoint(x: 140, y: 432)); p.closeSubpath()
+    }
+    fill(c, rgb(0xF2685A, 0.45)) { p in p.move(to: CGPoint(x: 296, y: 432)); p.addLine(to: CGPoint(x: 296, y: 350)); p.addLine(to: CGPoint(x: 372, y: 350)); p.closeSubpath() }
+    stroke(c, rgb(0xF2685A), width: 20) { p in
+        for (y, end) in [(300, 260), (244, 330), (188, 330), (132, 290)] as [(CGFloat, CGFloat)] { p.move(to: CGPoint(x: 182, y: y)); p.addLine(to: CGPoint(x: end, y: y)) }
+    }
+}
+
+/// QR Codes: three finder squares and a scatter of modules (Byte's blue).
+func qrCodes(_ c: CGContext) {
+    background(c, top: 0x7CA0FA, bottom: 0x3D66DB)
+    fill(c, white) { $0.addRoundedRect(in: CGRect(x: 96, y: 96, width: 320, height: 320), cornerWidth: 36, cornerHeight: 36) }
+    for (x, y) in [(128, 288), (288, 288), (128, 128)] as [(CGFloat, CGFloat)] {
+        fill(c, navy) { $0.addRoundedRect(in: CGRect(x: x, y: y, width: 96, height: 96), cornerWidth: 18, cornerHeight: 18) }
+        fill(c, white) { $0.addRoundedRect(in: CGRect(x: x + 18, y: y + 18, width: 60, height: 60), cornerWidth: 10, cornerHeight: 10) }
+        fill(c, navy) { $0.addRoundedRect(in: CGRect(x: x + 32, y: y + 32, width: 32, height: 32), cornerWidth: 6, cornerHeight: 6) }
+    }
+    for (x, y) in [(288, 128), (336, 160), (304, 208), (352, 240), (256, 176), (240, 240), (368, 128)] as [(CGFloat, CGFloat)] {
+        fill(c, navy) { $0.addRoundedRect(in: CGRect(x: x, y: y, width: 32, height: 32), cornerWidth: 6, cornerHeight: 6) }
+    }
+}
+
+/// Archives: a parcel with a zip down its middle (Brew's tan).
+func archives(_ c: CGContext) {
+    background(c, top: 0xF3DDB8, bottom: 0xC99A5B)
+    fill(c, white) { $0.addRoundedRect(in: CGRect(x: 112, y: 104, width: 288, height: 304), cornerWidth: 40, cornerHeight: 40) }
+    fill(c, rgb(0xC99A5B)) { $0.addRect(CGRect(x: 236, y: 104, width: 40, height: 304)) }
+    for i in 0..<6 {
+        let y = 360 - CGFloat(i) * 40
+        fill(c, navy) { $0.addRoundedRect(in: CGRect(x: i.isMultiple(of: 2) ? 226 : 256, y: y, width: 30, height: 18), cornerWidth: 6, cornerHeight: 6) }
+    }
+    fill(c, navy) { $0.addRoundedRect(in: CGRect(x: 228, y: 136, width: 56, height: 64), cornerWidth: 14, cornerHeight: 14) }
+}
+
+/// Dev Toolbox: angle brackets around a slash (Byte's blue, a shade deeper).
+func devToolbox(_ c: CGContext) {
+    background(c, top: 0x5A7FE8, bottom: 0x23409E)
+    stroke(c, white, width: 38) { p in
+        p.move(to: CGPoint(x: 196, y: 350)); p.addLine(to: CGPoint(x: 112, y: 256)); p.addLine(to: CGPoint(x: 196, y: 162))
+        p.move(to: CGPoint(x: 316, y: 350)); p.addLine(to: CGPoint(x: 400, y: 256)); p.addLine(to: CGPoint(x: 316, y: 162))
+    }
+    stroke(c, rgb(0xFFC93C), width: 34) { p in p.move(to: CGPoint(x: 284, y: 372)); p.addLine(to: CGPoint(x: 228, y: 140)) }
+}
+
+/// Feeds: the feed symbol, a dot and two waves (Scout's sun into orange).
+func feeds(_ c: CGContext) {
+    background(c, top: 0xFFD46B, bottom: 0xF2913C)
+    dot(c, CGPoint(x: 164, y: 164), radius: 44, fill: white)
+    stroke(c, white, width: 44) { p in
+        p.addArc(center: CGPoint(x: 140, y: 140), radius: 150, startAngle: 0, endAngle: .pi / 2, clockwise: false)
+        p.move(to: CGPoint(x: 140 + 264, y: 140))
+        p.addArc(center: CGPoint(x: 140, y: 140), radius: 264, startAngle: 0, endAngle: .pi / 2, clockwise: false)
+    }
+}
+
 let icons: [(folder: String, draw: (CGContext) -> Void)] = [
     ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk), ("weather", weather),
+    ("calculator", calculator), ("currency", currency), ("playtime", playtime), ("images", images), ("pdf", pdf), ("qr-codes", qrCodes),
+    ("archives", archives), ("dev-toolbox", devToolbox), ("feeds", feeds),
 ]
 
 let arguments = Array(CommandLine.arguments.dropFirst())

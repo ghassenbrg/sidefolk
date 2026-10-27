@@ -1,0 +1,34 @@
+{
+  "id": "dev.sidefolk.calculator",
+  "name": "Calculator",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "Sums, percentages, unit conversions and date maths worked out exactly, so an answer never rests on a guess.",
+  "folk": "nova",
+  "author": "Sidefolk",
+  "icon": "icon.pdf",
+  "run": {
+    "command": "bin/ext-calculator"
+  },
+  "permissions": {},
+  "tools": {
+    "calculate": {
+      "title": "Calculate",
+      "risk": "low",
+      "category": "system",
+      "mutates": false
+    },
+    "convert_units": {
+      "title": "Convert units",
+      "risk": "low",
+      "category": "system",
+      "mutates": false
+    },
+    "date_math": {
+      "title": "Date maths",
+      "risk": "low",
+      "category": "time",
+      "mutates": false
+    }
+  }
+}

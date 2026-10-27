@@ -23,8 +23,8 @@ else
 fi
 [[ "${SIDEFOLK_UNIVERSAL:-}" == "1" ]] && SWIFT_FLAGS+=(--arch arm64 --arch x86_64)
 
-swift build "${SWIFT_FLAGS[@]}" --product SidefolkApp
-swift build "${SWIFT_FLAGS[@]}" --product sidefolk
+# Every product: the app, its helper, and the programs of the extensions it ships.
+swift build "${SWIFT_FLAGS[@]}"
 BIN="$(swift build "${SWIFT_FLAGS[@]}" --show-bin-path)"
 
 BASE="$(basename "$APP" .app)"
@@ -52,10 +52,19 @@ printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 [[ -f Resources/Localization/Localizable.xcstrings ]] && \
   xcrun xcstringstool compile Resources/Localization/Localizable.xcstrings --output-directory "$STAGE/Contents/Resources" > /dev/null
 cp THIRD_PARTY_NOTICES.md LICENSE "$STAGE/Contents/Resources/" 2>/dev/null || true
-[[ -d extensions ]] && cp -R extensions "$STAGE/Contents/Resources/Extensions"
+# The extensions Sidefolk ships (extensions/catalog.json): each one's manifest and icon, and the program it runs,
+# built above, so none needs anything installed on the Mac. Samples for developers stay in the repository.
+mkdir -p "$STAGE/Contents/Resources/Extensions"
+cp extensions/catalog.json "$STAGE/Contents/Resources/Extensions/"
+for source in extensions/*/Sources; do
+  name="$(basename "$(dirname "$source")")"
+  dest="$STAGE/Contents/Resources/Extensions/$name"
+  mkdir -p "$dest/bin"
+  cp "extensions/$name/sidefolk-extension.json" "extensions/$name/icon.pdf" "$dest/"
+  cp "$BIN/ext-$name" "$dest/bin/ext-$name"
+done
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.
 for b in "$BIN"/*.bundle; do [[ -e "$b" ]] && cp -R "$b" "$STAGE/Contents/Resources/"; done
-find "$STAGE/Contents/Resources" -name '__pycache__' -prune -exec rm -rf {} +
 find "$STAGE/Contents/Resources" -name '.DS_Store' -delete
 
 IDENTITY="${SIDEFOLK_SIGN_IDENTITY:-}"
@@ -64,8 +73,11 @@ if [[ -z "$IDENTITY" ]]; then
 fi
 [[ -z "$IDENTITY" ]] && IDENTITY="-"
 
-# Inside out: helper first, then the app (signing the app first invalidates nested code).
+# Inside out: helper and extension programs first, then the app (signing the app first invalidates nested code).
 codesign --force --options runtime --timestamp=none --sign "$IDENTITY" "$STAGE/Contents/Helpers/sidefolk"
+for program in "$STAGE"/Contents/Resources/Extensions/*/bin/*; do
+  codesign --force --options runtime --timestamp=none --sign "$IDENTITY" "$program"
+done
 codesign --force --options runtime --timestamp=none --entitlements Resources/Sidefolk.entitlements \
   --sign "$IDENTITY" "$STAGE"
 codesign --verify --deep --strict "$STAGE"

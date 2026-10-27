@@ -34,6 +34,9 @@ phase "Building and signing $APP"
 SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
 # Re-sign with a secure timestamp (build-app.sh uses --timestamp=none for speed), inside out.
 codesign --force --options runtime --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$APP/Contents/Helpers/sidefolk"
+for program in "$APP"/Contents/Resources/Extensions/*/bin/*; do
+  codesign --force --options runtime --timestamp --sign "$SIDEFOLK_SIGN_IDENTITY" "$program"
+done
 codesign --force --options runtime --timestamp --entitlements Resources/Sidefolk.entitlements \
   --sign "$SIDEFOLK_SIGN_IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"

@@ -45,19 +45,24 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var files: Files
         /// Absolute paths of programs it may run.
         public var exec: [String]
+        /// The Mac's graphics hardware and media decoders, which modern image code needs (resizing a photo,
+        /// rendering a QR code). No files or network come with it.
+        public var media: Bool
 
-        public init(network: Bool = false, files: Files = Files(), exec: [String] = []) {
+        public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false) {
             self.network = network
             self.files = files
             self.exec = exec
+            self.media = media
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
             exec = try c.decodeIfPresent([String].self, forKey: "exec") ?? []
+            media = try c.decodeIfPresent(Bool.self, forKey: "media") ?? false
         }
     }
 

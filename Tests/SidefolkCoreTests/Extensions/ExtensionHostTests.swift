@@ -3,36 +3,10 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// Integration tests that run real extensions under sandbox-exec with this Mac's python3.
+/// Integration tests that run real extensions under sandbox-exec with this Mac's python3. The extensions that ship
+/// with Sidefolk are programs of their own and are tested in BuiltInExtensionTests.
 @Suite(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
 struct ExtensionHostTests {
-    @Test func systemVitalsRunsInTheSandbox() async throws {
-        let h = try HostEnv()
-        let info = try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/system-vitals"))
-        #expect(info.tools.map(\.name) == ["ext.system-vitals.battery", "ext.system-vitals.disk", "ext.system-vitals.memory"])
-        #expect(info.tools.allSatisfy { $0.risk == .low && !$0.quarantined })
-        #expect(info.watchers.map(\.watcher) == ["battery_low", "disk_low"])
-
-        let battery = await h.call("ext.system-vitals.battery")
-        let text = try #require(battery.okText, "\(String(describing: battery.failure))")
-        #expect(text.hasPrefix("Battery at") || text.hasPrefix("This Mac has no battery"), "\(text)")
-        #expect(battery.untrusted)
-
-        let disk = try #require(await h.call("ext.system-vitals.disk").okText)
-        #expect(disk.contains("GB free of"), "\(disk)")
-        let memory = try #require(await h.call("ext.system-vitals.memory").okText)
-        #expect(memory.contains("memory pressure is"), "\(memory)")
-        #expect(!memory.contains("unknown"))
-
-        // The startup disk always has more than 0.5 GB free here, and less than a petabyte.
-        let low = try await h.host.checkWatcher(extensionId: info.id, watcher: "disk_low", config: ["below_gb": 1_000_000], state: .null)
-        #expect(low.triggered)
-        #expect(low.state == ["low": true])
-        let again = try await h.host.checkWatcher(extensionId: info.id, watcher: "disk_low", config: ["below_gb": 1_000_000], state: low.state)
-        #expect(!again.triggered)
-        await h.host.shutdown()
-    }
-
     @Test func helloFolkTemplateWorks() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/hello-folk"))

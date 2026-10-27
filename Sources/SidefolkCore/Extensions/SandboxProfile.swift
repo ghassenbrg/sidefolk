@@ -112,6 +112,9 @@ public struct SandboxProfile: Sendable, Hashable {
         if inputs.permissions.network {
             sb += networkRules
         }
+        if inputs.permissions.media {
+            sb += mediaRules
+        }
         return SandboxProfile(text: sb, parameters: params)
     }
 
@@ -146,6 +149,17 @@ public struct SandboxProfile: Sendable, Hashable {
     ;; OpenSSL's settings, which Homebrew's node reads at start with or without the internet: only
     ;; that file, for any OpenSSL version, under either Homebrew prefix.
     (allow file-read* (regex #"^/(opt/homebrew|usr/local)/etc/openssl(@[0-9.]+)?/openssl\\.cnf$"))
+
+    """
+
+    /// Image work on Apple silicon: Core Image renders on the GPU even when asked for its software renderer, and
+    /// ImageIO reads a photo the hardware decoded through the video decoder service. Two user clients and one
+    /// service, measured on macOS 27 (resize, HEIC/PNG/JPEG out, a QR code drawn and read); no files, no network.
+    static let mediaRules = """
+
+    ;; media (granted at install): the GPU and the decoders, nothing else
+    (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
+    (allow mach-lookup (global-name "com.apple.coremedia.videodecoder"))
 
     """
 

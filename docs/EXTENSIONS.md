@@ -11,13 +11,14 @@ Examples live in this repository:
 | Folder | What it shows |
 |---|---|
 | [`extensions/hello-folk`](../extensions/hello-folk) | The smallest working extension: one tool, one watcher, ~50 lines of Python. Copy it to start. |
-| [`extensions/system-vitals`](../extensions/system-vitals) | Battery, disk and memory tools, `battery_low` and `disk_low` watchers, and an exec allow-list. |
+| [`extensions/system-vitals`](../extensions/system-vitals) | Battery, disk, memory and "about this Mac", `battery_low` and `disk_low` watchers, one program in `exec`. |
 | [`extensions/git`](../extensions/git) | Folders named per call (`paths`), `git` found by name, the internet, a long `timeout`. |
-| [`extensions/world-clock`](../extensions/world-clock) | No permissions at all. |
-| [`extensions/weather`](../extensions/weather) | The internet only, and a watcher that fires once per change. |
+| [`extensions/images`](../extensions/images) | A file read and a folder written per call, and `media` for the graphics hardware. |
+| [`extensions/currency`](../extensions/currency) | The internet only, a cache in its data folder, and a watcher that fires once per crossing. |
 | [`skills/sidefolk-extension/templates`](../skills/sidefolk-extension/templates) | Starting points in Python, Node and sh. |
 
-The last four ship with Sidefolk ([Built-in extensions](#built-in-extensions)). For a guided path
+Every folder with a `Sources/` ships with Sidefolk ([Built-in extensions](#built-in-extensions)): those are
+Swift programs built on [`extensions/Kit`](../extensions/Kit), so they need nothing installed on the Mac. For a guided path
 through this page, install the [`sidefolk-extension` skill](../skills/sidefolk-extension/SKILL.md) in
 Claude Code or Codex. You can also add any existing MCP server (see
 [Plain MCP servers](#plain-mcp-servers)); it runs without a sandbox and is labelled that way.
@@ -109,6 +110,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `permissions.files.read` | no | Folders it may read, absolute or starting with `~/`. |
 | `permissions.files.write` | no | Folders it may read and change. |
 | `permissions.exec` | no | Absolute paths of programs it may run, like `/usr/bin/pmset`, or `git` by name ([Programs by name](#programs-by-name)). |
+| `permissions.media` | no | `true` opens the Mac's graphics hardware and media decoders, which image code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo). No files or network come with it. |
 | `tools.<name>` | no | Sidefolk's metadata for a tool your program lists: `title`, `risk` (`low`, `medium`, `high`), `category` (`notes`, `memory`, `time`, `watch`, `files`, `web`, `system`, `agents`, `extensions`) and `mutates` (`false` if it only reads). Tool names: `^[a-z0-9_]{1,64}$`. |
 | `tools.<name>.paths` | no | Parameters that name a folder or file the person chooses, each `"read"` or `"write"` (at most 4). See [Folders named per call](#folders-named-per-call). |
 | `tools.<name>.timeout` | no | Seconds one call may take, 1–300; 30 if missing. For slow work like cloning. |
@@ -191,6 +193,10 @@ Good to know:
 - **Environment:** only `HOME`, `TMPDIR`, `PATH=/usr/bin:/bin`, `LANG`, `PYTHONDONTWRITEBYTECODE`,
   `SIDEFOLK_EXTENSION_ID` and `SIDEFOLK_DATA_DIR`. Nothing from Sidefolk's own environment.
 - **Descriptors:** only stdin, stdout and stderr are inherited.
+- **Pictures need `media`.** On Apple silicon Core Image renders on the GPU even when asked for its software
+  renderer, and ImageIO reads a photo the hardware decoded through the video decoder service; both fail in the
+  sandbox without `"media": true`, which opens exactly those (two IOKit user clients and one service). A
+  virtual machine's GPU isn't among them.
 - **System services for specific programs.** Some system programs need a system service to work.
   Sidefolk opens it only when that program is in `exec`: `/usr/bin/pmset` gets
   `com.apple.PowerManagement.control` (battery state).
@@ -424,14 +430,30 @@ off and tells you.
 
 ## Built-in extensions
 
-Some extensions ship with Sidefolk (`extensions/catalog.json`, copied into the app with their folders):
+These ship with Sidefolk (`extensions/catalog.json`). Each is a small Swift program built with the app on
+[`extensions/Kit`](../extensions/Kit) and signed inside it (`Contents/Resources/Extensions/<folder>/bin/`),
+so none needs Python, Node or anything else installed; Git needs git, which it exists to use.
 
-| Extension | Starts | Permissions |
-|---|---|---|
-| Git | On | The internet, `git`, a folder named per call |
-| World Clock | On | None |
-| System Vitals | On | `pmset`, `vm_stat`, `sysctl` |
-| Weather | Off | The internet (Open-Meteo) |
+| Extension | Starts | Permissions | What it does |
+|---|---|---|---|
+| Git | On | The internet, `git`, a folder named per call | Clone, status, pull, log |
+| World Clock | On | None | The time anywhere, conversions with daylight saving |
+| System Vitals | On | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers |
+| Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon; a rain watcher |
+| Calculator | On | None | Exact sums and percentages, units, date maths |
+| Currency | On | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
+| Playtime | On | None | Coin, dice and random picks, a trivia quiz with a score, rock, paper, scissors |
+| Images | On | A folder named per call, `media` | Photo details; copies converted, smaller or without location |
+| PDF Tools | Off | A folder named per call | Details, text, combine, take pages out |
+| QR Codes | Off | A folder named per call, `media` | Make a QR code picture, read one |
+| Archives | Off | `zip`, `ditto`, a folder named per call | Zip files and folders, open zip files |
+| Dev Toolbox | Off | A file named per call | JSON, base64, URL and hex, JWTs, timestamps, UUIDs, checksums |
+| Feeds | Off | The internet | Latest posts from RSS and Atom; a new-post watcher |
+
+Every tool of an extension that is on reaches the model with each request, so only the everyday ones start
+on. The ones that are off cost one line: the model is told their names and what they do, and suggests
+switching one on in Settings › Extensions when it would help. Nothing writes over an original: pictures,
+PDFs and zips are always new files.
 
 They are installed at launch like any extension (validated, copied, locked, pinned, started once), with
 three differences:
@@ -482,7 +504,7 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 
 | Symptom | Likely cause and fix |
 |---|---|
-| "python3 isn't installed on this Mac", "git isn't installed on this Mac" | Install Apple's command line tools: `xcode-select --install` (or git with Homebrew). |
+| "… needs Python, which isn't on this Mac", "Git needs Git, …" | Install Apple's command line tools: `xcode-select --install` (or git with Homebrew). The built-ins other than Git need nothing. |
 | "~/x isn't shared with Sidefolk for this." | A folder parameter named a folder outside what the person shared, or one replaced by a link since Guard looked. |
 | "… must be a compiled program" | `run.command` points at a script. Use `"command": "python3", "args": ["main.py"]`. |
 | `ModuleNotFoundError` for your own module | Python's isolated mode; add your folder to `sys.path` (see above). |

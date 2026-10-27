@@ -4,8 +4,8 @@ import Testing
 
 /// A Mac without Apple's developer tools has no python3 and no git, only the /usr/bin shims, and running a shim
 /// (or `xcrun`) there pops Apple's "install the command line developer tools" dialog. Before the 0.1.0 review
-/// Sidefolk ran `xcrun --find python3` at every launch. Now nothing is run to find a program, and the built-ins
-/// that can't run say what is missing and how to get it.
+/// Sidefolk ran `xcrun --find python3` at every launch. Now nothing is run to find a program; the built-ins are
+/// programs of their own, so on such a Mac only Git is missing something, and it says what and how to get it.
 @Suite struct NoDeveloperToolsTests {
     /// Resolvers for a clean Mac: nothing in any developer folder, Homebrew or python.org.
     static func cleanMac(_ config: inout ExtensionHost.Configuration) {
@@ -13,19 +13,21 @@ import Testing
         config.programs = ProgramResolver { _ in [] }
     }
 
-    @Test func theBuiltInsSayWhatIsMissingAndHowToGetIt() async throws {
+    @Test func onACleanMacOnlyGitWaitsForSomething() async throws {
         let h = try HostEnv(configure: Self.cleanMac)
-        let bundled = BundledExtensions(directory: ExtFixtures.repoRoot.appendingPathComponent("extensions", isDirectory: true))
+        let bundled = BundledExtensions(directory: ExtFixtures.builtIns)
         let shipped = bundled.entries()
-        #expect(!shipped.isEmpty)
+        #expect(shipped.count >= 13)
         await bundled.install(into: h.host)
 
-        #expect(Set(bundled.unavailable.map(\.id)) == Set(shipped.map(\.id)), "every built-in needs Python today")
-        for problem in bundled.unavailable {
-            #expect(problem.message == "\(problem.name) needs Python, which isn't on this Mac. Apple's Command Line Tools include it: "
-                + "open Terminal, type xcode-select --install, then restart Sidefolk.", "\(problem.message)")
-        }
-        #expect(await h.host.extensions().isEmpty)
+        #expect(bundled.unavailable.map(\.id) == ["dev.sidefolk.git"], "the founder's \"Git needs Python\" is gone")
+        #expect(bundled.unavailable.first?.message == "Git needs Git, which isn't on this Mac. Apple's Command Line Tools include it: "
+            + "open Terminal, type xcode-select --install, then restart Sidefolk.")
+        let installed = await h.host.extensions()
+        #expect(Set(installed.map(\.id)) == Set(shipped.map(\.id)).subtracting(["dev.sidefolk.git"]))
+        // And they work there: World Clock answers with nothing found on the Mac.
+        #expect(await h.call("ext.world-clock.current_time", ["places": ["UTC"]]).okText?.contains("in UTC (UTC+0)") == true)
+        await h.host.shutdown()
     }
 
     @Test func gitAloneMissingIsNamed() {

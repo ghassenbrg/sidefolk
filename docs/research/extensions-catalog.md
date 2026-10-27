@@ -1,8 +1,9 @@
 # Which extensions should ship with Sidefolk
 
-> **Status:** decided and partly built (26 October 2026, DECISIONS D39). Git, World Clock, System
-> Vitals and Weather ship switched on (Weather since 27 October); the rest of this page is the backlog
-> and the reasoning behind it.
+> **Status:** decided and built (26–28 October 2026, DECISIONS D39). Thirteen built-ins ship as compiled
+> programs inside the app, so none needs Python (28 October): Git, World Clock, System Vitals, Weather,
+> Calculator, Currency, Playtime and Images on; PDF Tools, QR Codes, Archives, Dev Toolbox and Feeds off.
+> The rest of this page is the reasoning, and the backlog that still waits for platform pieces.
 
 Sidefolk ships **no Core extension**, **three Bundled ones** (Git, World Clock, System Vitals: installed
 and on, each can be switched off) and **one Optional one** (Weather: installed, off until the person

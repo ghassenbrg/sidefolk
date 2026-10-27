@@ -3,10 +3,10 @@ import Synchronization
 import Testing
 @testable import SidefolkCore
 
-/// The extensions Sidefolk ships (D39), run for real under sandbox-exec with this Mac's python3 and git.
-/// Nothing reaches the network unless SIDEFOLK_LIVE_NETWORK=1 (one clone of a tiny public repository).
-@Suite(.enabled(if: ExtFixtures.hasPython && ExtFixtures.git != nil, "python3 and git (developer tools or Homebrew) needed"))
+/// The extensions Sidefolk ships (D39), each a program of its own, run for real under sandbox-exec as the app runs them.
+/// Only Git needs anything on the Mac (git itself). Nothing reaches the network unless SIDEFOLK_LIVE_NETWORK=1.
 struct BuiltInExtensionTests {
+    static let noGit: Comment = "git (developer tools or Homebrew) needed"
 
     /// git outside any sandbox, with no system or global configuration, to make a repository to look at.
     static func run(_ args: [String], in dir: URL) throws {
@@ -35,9 +35,10 @@ struct BuiltInExtensionTests {
         return repo
     }
 
-    @Test func gitReadsOnlyTheFolderACallNames() async throws {
+    @Test(.enabled(if: ExtFixtures.git != nil, noGit))
+    func gitReadsOnlyTheFolderACallNames() async throws {
         let h = try HostEnv()
-        let info = try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/git"))
+        let info = try await h.host.install(from: ExtFixtures.builtIn("git"))
         #expect(info.tools.map(\.name) == ["ext.git.clone", "ext.git.log", "ext.git.pull", "ext.git.status"])
         #expect(info.tools.allSatisfy { $0.risk == .medium }, "the internet puts every tool at medium or above")
         #expect(info.iconPath?.hasSuffix("/dev.sidefolk.git/icon.pdf") == true)
@@ -69,9 +70,10 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test func cloneRefusesWhatItCantDoWithoutTouchingTheNetwork() async throws {
+    @Test(.enabled(if: ExtFixtures.git != nil, noGit))
+    func cloneRefusesWhatItCantDoWithoutTouchingTheNetwork() async throws {
         let h = try HostEnv()
-        try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/git"))
+        try await h.host.install(from: ExtFixtures.builtIn("git"))
         let work = h.root.appendingPathComponent("work")
         try FileManager.default.createDirectory(at: work.appendingPathComponent("taken"), withIntermediateDirectories: true)
         try await h.env.permissions.grantFolder(work.path, access: .readwrite)
@@ -93,10 +95,10 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: ExtFixtures.liveNetwork, "set SIDEFOLK_LIVE_NETWORK=1 to clone from GitHub"))
+    @Test(.enabled(if: ExtFixtures.liveNetwork && ExtFixtures.git != nil, "set SIDEFOLK_LIVE_NETWORK=1 to clone from GitHub"))
     func clonesAPublicRepositoryIntoTheNamedFolder() async throws {
         let h = try HostEnv()
-        try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/git"))
+        try await h.host.install(from: ExtFixtures.builtIn("git"))
         let work = h.root.appendingPathComponent("git")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
         try await h.env.permissions.grantFolder(work.path, access: .readwrite)
@@ -110,7 +112,8 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test func aFolderNamedInACallIsTheOnlyOneTheSandboxOpens() async throws {
+    @Test(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
+    func aFolderNamedInACallIsTheOnlyOneTheSandboxOpens() async throws {
         let h = try HostEnv()
         let shared = h.root.appendingPathComponent("shared")
         for (dir, file, text) in [("a", "note.txt", "shared"), ("b", "secret.txt", "secret")] {
@@ -136,11 +139,11 @@ struct BuiltInExtensionTests {
     /// The founder's request, "please clone this repository under ~/git", through the agent loop with a
     /// scripted model: the folder card, then the action card, then the clone in its own sandbox. Offline,
     /// the destination is taken, so git is never reached; with SIDEFOLK_LIVE_NETWORK=1 it really clones.
-    @Test(arguments: [false, true])
+    @Test(.enabled(if: ExtFixtures.git != nil, noGit), arguments: [false, true])
     func theFoundersRequestClonesBehindTwoApprovals(live: Bool) async throws {
         guard !live || ExtFixtures.liveNetwork else { return }
         let h = try HostEnv()
-        try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/git"))
+        try await h.host.install(from: ExtFixtures.builtIn("git"))
         let codeFolder = h.root.appendingPathComponent("git")
         let destination = codeFolder.appendingPathComponent("Hello-World")
         try FileManager.default.createDirectory(at: live ? codeFolder : destination, withIntermediateDirectories: true)
@@ -184,7 +187,7 @@ struct BuiltInExtensionTests {
 
     @Test func worldClockAnswersWithoutAnyPermission() async throws {
         let h = try HostEnv()
-        let info = try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/world-clock"))
+        let info = try await h.host.install(from: ExtFixtures.builtIn("world-clock"))
         #expect(info.summary.texts == ["No access to your files or the internet"])
         #expect(info.tools.allSatisfy { $0.risk == .low })
         let now = try #require(await h.call("ext.world-clock.current_time", ["places": ["UTC", "Narnia"]]).okText)
@@ -200,69 +203,36 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    /// Weather's Python with Open-Meteo's answers canned: its words and its once-per-wet-spell rule.
-    @Test func weatherDescribesAForecastAndWarnsOncePerWetSpell() throws {
-        let folder = ExtFixtures.repoRoot.appendingPathComponent("extensions/weather").path
-        let script = """
-            import json, sys
-            sys.path.insert(0, \(String(reflecting: folder)))
-            import main
-            data = {"current_units": {"temperature_2m": "°C", "wind_speed_10m": "km/h"},
-                    "current": {"temperature_2m": 12.4, "apparent_temperature": 10.2, "weather_code": 61, "wind_speed_10m": 14.6},
-                    "daily": {"time": ["2026-10-26", "2026-10-27"], "weather_code": [61, 2], "temperature_2m_min": [8.2, 6.9],
-                              "temperature_2m_max": [13.1, 15.4], "precipitation_probability_max": [80, None]}}
-            print(main.describe(data, "Lyon, France"))
-            def hours(chances):
-                return {"current": {"time": "2026-10-26T14:00"}, "hourly": {"precipitation_probability": chances,
-                        "time": ["2026-10-26T13:00", "2026-10-26T14:00", "2026-10-26T15:00", "2026-10-26T16:00"]}}
-            first = main.rain_check(hours([90, 10, 70, 80]), "Lyon", 3, 60, {})
-            again = main.rain_check(hours([90, 10, 70, 80]), "Lyon", 3, 60, first["state"])
-            dry = main.rain_check(hours([90, 0, 0, 0]), "Lyon", 3, 60, again["state"])
-            wet = main.rain_check(hours([0, 0, 0, 65]), "Lyon", 3, 60, dry["state"])
-            print(json.dumps([first, again, dry, wet]))
-            """
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: try #require(ExtFixtures.python).path)
-        p.arguments = ["-I", "-B", "-c", script]
-        let out = Pipe()
-        p.standardOutput = out
-        try p.run()
-        let text = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-        p.waitUntilExit()
-        let lines = text.split(separator: "\n").map(String.init)
-        #expect(lines.first == "Lyon, France, now: light rain, 12°C (feels like 10°C), wind 15 km/h.", "\(text)")
-        #expect(lines.dropFirst().first == "Today: light rain, 8 to 13°C, 80% chance of rain.")
-        #expect(lines.dropFirst(2).first == "Tomorrow: partly cloudy, 7 to 15°C, ?% chance of rain.")
-        let checks = try JSONValue.parse(try #require(lines.last)).arrayValue ?? []
-        #expect(checks.map { $0["triggered"]?.boolValue } == [true, false, false, true], "the past hour (13:00) never counts")
-        #expect(checks.first?["summary"] == "Rain is likely in Lyon around 15:00 (70% chance).")
-    }
-
     @Test(.enabled(if: ExtFixtures.liveNetwork, "set SIDEFOLK_LIVE_NETWORK=1 to ask Open-Meteo"))
     func weatherReachesOpenMeteoFromItsSandbox() async throws {
         let h = try HostEnv()
-        try await h.host.install(from: ExtFixtures.repoRoot.appendingPathComponent("extensions/weather"))
+        try await h.host.install(from: ExtFixtures.builtIn("weather"))
         let forecast = try #require(await h.call("ext.weather.forecast", ["place": "Lyon", "days": 2]).okText)
         #expect(forecast.hasPrefix("Lyon, Auvergne-Rhône-Alpes, France, now:") && forecast.contains("Tomorrow:"), "\(forecast)")
+        let sun = try #require(await h.call("ext.weather.sun_and_moon", ["place": "Lyon"]).okText)
+        #expect(sun.contains("sunrise") && sun.contains("The moon is"), "\(sun)")
         let check = try await h.host.checkWatcher(extensionId: "dev.sidefolk.weather", watcher: "rain_soon", config: ["place": "Lyon"], state: .null)
         #expect(check.summary.contains("Lyon"))
         await h.host.shutdown()
     }
 
-    @Test func theShippedCatalogInstallsAsFirstParty() async throws {
+    @Test(.enabled(if: ExtFixtures.git != nil, noGit))
+    func theShippedCatalogInstallsAsFirstParty() async throws {
         let h = try HostEnv()
-        let bundled = BundledExtensions(directory: ExtFixtures.repoRoot.appendingPathComponent("extensions"))
-        #expect(bundled.entries().map(\.id) == ["dev.sidefolk.git", "dev.sidefolk.world-clock", "dev.sidefolk.system-vitals",
-                                                "dev.sidefolk.weather"])
-        #expect(bundled.entries().map(\.on) == [true, true, true, true])
-        #expect(bundled.samples().map(\.lastPathComponent) == ["hello-folk"])
+        let bundled = BundledExtensions(directory: ExtFixtures.builtIns)
+        let ids = ["git", "world-clock", "system-vitals", "weather", "calculator", "currency", "playtime", "images", "pdf", "qr-codes",
+                   "archives", "dev-toolbox", "feeds"].map { "dev.sidefolk." + $0 }
+        #expect(bundled.entries().map(\.id) == ids)
+        let on = Set(["git", "world-clock", "system-vitals", "weather", "calculator", "currency", "playtime", "images"].map { "dev.sidefolk." + $0 })
+        #expect(bundled.entries().map(\.on) == ids.map(on.contains))
+        #expect(Set(ExtFixtures.builtInFolders) == Set(bundled.entries().map(\.folder.lastPathComponent)), "every program ships, and only those")
+        #expect(bundled.samples().isEmpty, "the Python sample stays in the repository")
         await bundled.install(into: h.host)
         #expect(bundled.unavailable.isEmpty, "\(bundled.unavailable)")
         let installed = await h.host.extensions()
-        #expect(installed.map(\.id).sorted() == ["dev.sidefolk.git", "dev.sidefolk.system-vitals", "dev.sidefolk.weather",
-                                                 "dev.sidefolk.world-clock"])
+        #expect(installed.map(\.id).sorted() == ids.sorted())
         #expect(installed.allSatisfy { $0.origin == .bundled && $0.iconPath != nil })
-        #expect(installed.allSatisfy { $0.enabled }, "every built-in starts on (D39, 2026-10-27)")
+        #expect(Set(installed.filter(\.enabled).map(\.id)) == on, "the catalog decides what starts on")
         // Their own descriptions and schema reach the model: first-party text from the app (D39), unlike D24's rule.
         let clone = try #require(h.env.registry.tool(named: "ext.git.clone")?.spec)
         #expect(clone.description.contains("Clones a public Git repository"))

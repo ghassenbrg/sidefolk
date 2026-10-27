@@ -102,6 +102,24 @@ enum ExtensionFiles {
         }
         // Keep only the executable bit from the source; everything else is normalised when locking.
         _ = fchmod(dst, expected.st_mode & 0o111 != 0 ? 0o700 : 0o600)
+        keepQuarantine(of: src, on: dst)
+    }
+
+    static let quarantine = "com.apple.quarantine"
+
+    /// The copy is as trusted as its original. Sidefolk quarantines every file it writes (LSFileQuarantineEnabled),
+    /// and Gatekeeper then held a built-in's program at launch, signed inside the app though it was (build 406):
+    /// so a copy of an unquarantined file loses that mark, and a copy of a quarantined one (downloaded) keeps the
+    /// original's, for Gatekeeper to judge.
+    static func keepQuarantine(of src: Int32, on dst: Int32) {
+        let size = fgetxattr(src, quarantine, nil, 0, 0, 0)
+        guard size > 0 else {
+            _ = fremovexattr(dst, quarantine, 0)
+            return
+        }
+        var value = [UInt8](repeating: 0, count: size)
+        guard fgetxattr(src, quarantine, &value, size, 0, 0) == size else { return }
+        _ = fsetxattr(dst, quarantine, value, size, 0, 0)
     }
 
     /// Files become 0444 (0555 if executable) and folders 0555, deepest first.

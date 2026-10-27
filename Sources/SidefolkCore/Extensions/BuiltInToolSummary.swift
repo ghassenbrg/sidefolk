@@ -13,6 +13,10 @@ enum BuiltInToolSummary {
             return line.isEmpty ? nil : line
         }
         func folder(_ key: String) -> String? { text(key).map { FolderAccess.displayPath(($0 as NSString).expandingTildeInPath) } }
+        func number(_ key: String) -> String? {
+            guard case .number(let n)? = input[key] else { return nil }
+            return n == n.rounded() && abs(n) < 1e15 ? String(Int64(n)) : String(n)
+        }
         func places(_ key: String) -> String? {
             let all = (input[key]?.arrayValue ?? []).compactMap(\.stringValue).map { ToolFormat.oneLine(ExtensionText.clean($0), 60) }
             return all.isEmpty || all.contains(where: \.isEmpty) ? nil : Wording.list(all)
@@ -44,6 +48,53 @@ enum BuiltInToolSummary {
             return String(localized: "Read the free disk space")
         case ("dev.sidefolk.system-vitals", "memory"):
             return String(localized: "Read the memory use")
+        case ("dev.sidefolk.system-vitals", "about"):
+            return String(localized: "Read this Mac's details")
+        case ("dev.sidefolk.weather", "sun_and_moon"):
+            return text("place").map { String(localized: "Get sunrise and sunset for \($0) from Open-Meteo") }
+        case ("dev.sidefolk.calculator", "calculate"):
+            return text("expression").map { String(localized: "Work out \($0)") }
+        case ("dev.sidefolk.calculator", "convert_units"):
+            guard let value = number("value"), let from = text("from"), let to = text("to") else { return nil }
+            return String(localized: "Convert \(value) \(from) to \(to)")
+        case ("dev.sidefolk.calculator", "date_math"):
+            return String(localized: "Work out a date")
+        case ("dev.sidefolk.currency", "convert_currency"):
+            guard let amount = number("amount"), let from = text("from"), let to = places("to") else { return nil }
+            return String(localized: "Convert \(amount) \(from) to \(to) with the European Central Bank's rates")
+        case ("dev.sidefolk.playtime", "chance"):
+            return String(localized: "Leave it to chance")
+        case ("dev.sidefolk.playtime", "trivia"):
+            return String(localized: "Play a round of trivia")
+        case ("dev.sidefolk.playtime", "rock_paper_scissors"):
+            return String(localized: "Play rock, paper, scissors")
+        case ("dev.sidefolk.images", "image_info"), ("dev.sidefolk.pdf", "pdf_info"):
+            return folder("path").map { String(localized: "Read the details of \($0)") }
+        case ("dev.sidefolk.images", "convert_images"):
+            guard let folder = folder("folder") else { return nil }
+            return input["remove_location"]?.boolValue == true
+                ? String(localized: "Make copies of the pictures in \(folder) without their location")
+                : String(localized: "Make converted copies of the pictures in \(folder)")
+        case ("dev.sidefolk.pdf", "pdf_text"):
+            return folder("path").map { String(localized: "Read the text of \($0)") }
+        case ("dev.sidefolk.pdf", "combine_pdfs"):
+            return folder("folder").map { String(localized: "Combine PDFs in \($0) into a new one") }
+        case ("dev.sidefolk.pdf", "extract_pages"):
+            guard let folder = folder("folder"), let file = text("file"), let pages = text("pages") else { return nil }
+            return String(localized: "Save pages \(pages) of \(file) as a new PDF in \(folder)")
+        case ("dev.sidefolk.qr-codes", "make_qr"):
+            return folder("folder").map { String(localized: "Make a QR code picture in \($0)") }
+        case ("dev.sidefolk.qr-codes", "read_qr"):
+            return folder("path").map { String(localized: "Read the QR code in \($0)") }
+        case ("dev.sidefolk.archives", "zip"):
+            return folder("folder").map { String(localized: "Make a zip file in \($0)") }
+        case ("dev.sidefolk.archives", "unzip"):
+            guard let folder = folder("folder"), let file = text("file") else { return nil }
+            return String(localized: "Unpack \(file) in \(folder)")
+        case ("dev.sidefolk.dev-toolbox", "checksum"):
+            return folder("path").map { String(localized: "Work out the checksum of \($0)") }
+        case ("dev.sidefolk.feeds", "read_feed"):
+            return text("url").map { String(localized: "Read the latest posts from \($0)") }
         default:
             return nil
         }

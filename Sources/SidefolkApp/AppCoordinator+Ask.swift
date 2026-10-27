@@ -14,7 +14,8 @@ extension AppCoordinator {
                 let lines = [await live(), ExtensionContext.watcherLines(await extensions.watcherKinds())].compactMap { $0 }
                 return lines.isEmpty ? nil : lines.joined(separator: "\n")
             },
-            skills: { skills.index() }
+            skills: { skills.index() },
+            switchedOff: { ExtensionContext.switchedOff(await extensions.extensions()) }
         )
         let context = ContextBuilder(notebook: runtime.notebook, exchanges: runtime.exchanges, sources: sources)
         let paths = runtime.paths

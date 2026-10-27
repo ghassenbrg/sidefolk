@@ -311,7 +311,7 @@ public struct ManifestValidator: Sendable {
 
     func checkPermissions(_ p: ExtensionManifest.Permissions, folder: String, issues: inout [ValidationIssue],
                           warnings: inout [String]) -> ExtensionPermissions {
-        var result = ExtensionPermissions(network: p.network)
+        var result = ExtensionPermissions(network: p.network, media: p.media)
         for (field, list) in [("read", p.files.read), ("write", p.files.write), ("exec", p.exec)] where list.count > 32 {
             issues.append(ValidationIssue(field: "permissions.\(field)", message: "can list at most 32 entries."))
         }

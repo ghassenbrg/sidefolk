@@ -1,0 +1,41 @@
+{
+  "id": "dev.sidefolk.archives",
+  "name": "Archives",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "Zips files and folders so you can send them, and opens zip files you receive, with macOS's own tools.",
+  "folk": "brew",
+  "author": "Sidefolk",
+  "icon": "icon.pdf",
+  "run": {
+    "command": "bin/ext-archives"
+  },
+  "permissions": {
+    "exec": [
+      "/usr/bin/zip",
+      "/usr/bin/ditto"
+    ]
+  },
+  "tools": {
+    "zip": {
+      "title": "Make a zip file",
+      "risk": "medium",
+      "category": "files",
+      "mutates": true,
+      "paths": {
+        "folder": "write"
+      },
+      "timeout": 300
+    },
+    "unzip": {
+      "title": "Open a zip file",
+      "risk": "medium",
+      "category": "files",
+      "mutates": true,
+      "paths": {
+        "folder": "write"
+      },
+      "timeout": 300
+    }
+  }
+}

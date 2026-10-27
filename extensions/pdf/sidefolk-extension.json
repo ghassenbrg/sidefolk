@@ -1,0 +1,54 @@
+{
+  "id": "dev.sidefolk.pdf",
+  "name": "PDF Tools",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "A PDF's details and text, several PDFs combined into one, and some of their pages saved as a new PDF. Your originals stay as they are.",
+  "folk": "pip",
+  "author": "Sidefolk",
+  "icon": "icon.pdf",
+  "run": {
+    "command": "bin/ext-pdf"
+  },
+  "permissions": {},
+  "tools": {
+    "pdf_info": {
+      "title": "PDF details",
+      "risk": "low",
+      "category": "files",
+      "mutates": false,
+      "paths": {
+        "path": "read"
+      }
+    },
+    "pdf_text": {
+      "title": "Read a PDF's text",
+      "risk": "low",
+      "category": "files",
+      "mutates": false,
+      "paths": {
+        "path": "read"
+      }
+    },
+    "combine_pdfs": {
+      "title": "Combine PDFs",
+      "risk": "medium",
+      "category": "files",
+      "mutates": true,
+      "paths": {
+        "folder": "write"
+      },
+      "timeout": 120
+    },
+    "extract_pages": {
+      "title": "Take pages out of a PDF",
+      "risk": "medium",
+      "category": "files",
+      "mutates": true,
+      "paths": {
+        "folder": "write"
+      },
+      "timeout": 120
+    }
+  }
+}

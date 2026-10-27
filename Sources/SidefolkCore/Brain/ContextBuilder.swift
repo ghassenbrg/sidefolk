@@ -23,13 +23,18 @@ public struct ContextSources: Sendable {
     /// `LiveStateSummary.provider(db:)` builds them from the stores.
     public var liveState: @Sendable () async -> String?
     public var skills: @Sendable () async -> [SkillSummary]
+    /// Built-in extensions installed but switched off, one line each (`ExtensionContext.switchedOff`): what the AI
+    /// can suggest switching on, at a line's cost instead of every tool's.
+    public var switchedOff: @Sendable () async -> [String]
 
     public init(frontmostApp: @escaping @Sendable () async -> FrontmostApp? = { nil },
                 liveState: @escaping @Sendable () async -> String? = { nil },
-                skills: @escaping @Sendable () async -> [SkillSummary] = { [] }) {
+                skills: @escaping @Sendable () async -> [SkillSummary] = { [] },
+                switchedOff: @escaping @Sendable () async -> [String] = { [] }) {
         self.frontmostApp = frontmostApp
         self.liveState = liveState
         self.skills = skills
+        self.switchedOff = switchedOff
     }
 }
 
@@ -84,7 +89,7 @@ public struct ContextBuilder: Sendable {
         let now = clock.now
         let budget = thinkHarder ? budgets.thinkHarderSystem : budgets.system
         let frontmost = await sources.frontmostApp()
-        let core = [Self.persona(name: settings.companionName), Self.rules, Self.reach(tools),
+        let core = [Self.persona(name: settings.companionName), Self.rules, Self.reach(tools, switchedOff: await sources.switchedOff()),
                     Self.environment(now: now, timeZone: timeZone, settings: settings, frontmost: frontmost)]
             + (spoken ? [Self.spokenRequest] : [])
         var parts = [core.joined(separator: "\n\n")]
@@ -183,7 +188,7 @@ public struct ContextBuilder: Sendable {
 
     /// What the model can and can't reach on this Mac, from the tools it is offered, so it says plainly
     /// what it can't do instead of opening an app and sending the user off to do it by hand (DECISIONS D38).
-    static func reach(_ tools: [ToolSpec]) -> String {
+    static func reach(_ tools: [ToolSpec], switchedOff: [String] = []) -> String {
         let names = Set(tools.map(\.name))
         var apps: [String] = []
         if names.contains("applenotes.list") {
@@ -209,6 +214,10 @@ public struct ContextBuilder: Sendable {
                 + "by hand unless they ask how.",
             "- Big jobs (many notes) go in batches: do a batch, say what's done and what's left, and continue when the user asks.",
         ]
+        if !switchedOff.isEmpty {
+            lines.append("- Built-in extensions the user has switched off (Settings › Extensions): " + switchedOff.joined(separator: "; ")
+                + ". When one of them would do what the user asks, say which, and that they can switch it on there; you can't use it until they do.")
+        }
         return lines.joined(separator: "\n")
     }
 

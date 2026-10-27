@@ -784,6 +784,21 @@ question, and D35's weather reports already send the place asked about to Open-M
 keeping the extension off protected nothing and left the question unanswered. An install where the
 person switched Weather off keeps it off.
 
+**Addendum (2026-10-28): the built-ins are programs of their own, and there are thirteen.** The founder
+installed Sidefolk and read "Git needs Python": every built-in was a Python script, and a Mac without
+Apple's Command Line Tools has no Python. Each is now a small Swift program (`extensions/<folder>/Sources`,
+on `extensions/Kit`), built with the app and signed inside it, run under the same sandbox as any extension;
+Git needs only git. Nine new ones: Calculator, Currency (the ECB's file, a rate watcher), Playtime and
+Images start on; PDF Tools, QR Codes, Archives, Dev Toolbox and Feeds ship off. *Why on and off:* every tool
+of an enabled extension reaches the model with each request (tokens on every run), so only everyday ones
+start on; the others reach the model as one line each ("switched off in Settings: PDF Tools (…)"), so it can
+suggest switching one on. A new manifest permission, `media`, opens the GPU and the video decoder that
+Core Image and ImageIO need on Apple silicon (two IOKit user clients and one service, measured), named on
+the install sheet. The Python sample (hello-folk) stays in the repository for developers and no longer
+ships. *Alternatives:* bundling a Python runtime (tens of MB, a second toolchain to sign and notarize);
+one multi-tool program for every built-in (each folder pins its own files, so it would be copied thirteen
+times); `/usr/bin/curl` or `osascript` for the network parts ("can run anything").
+
 ### D40 — With no AI chosen, the Ask panel offers the plan this Mac is signed in to (2026-10-27)
 **Decision:** when a request needs AI and the provider is "No AI", the "That needs AI" card probes the
 subscription CLIs the way Settings › AI does (`ClaudeBinary.status`, `CodexBinary.status`: version, help

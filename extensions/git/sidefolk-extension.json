@@ -1,13 +1,13 @@
 {
   "id": "dev.sidefolk.git",
   "name": "Git",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Clone public repositories into a folder you choose, and check, update and read the history of the ones you have.",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",
-  "run": { "command": "python3", "args": ["main.py"] },
+  "run": { "command": "bin/ext-git" },
   "permissions": {
     "network": true,
     "exec": ["git"]

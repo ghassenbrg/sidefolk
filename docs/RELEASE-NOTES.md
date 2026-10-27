@@ -31,6 +31,8 @@ reminds and keeps watch, and your AI agents can talk to it.
   "About you" facts, watches, live values, quiet mode, search and stop (D4).
 - Every request ends in a card, not a transcript. Cards for saved things offer Undo; an answer that
   ends with a question offers Reply.
+- The cards behave like notifications: newest first, older ones a scroll away, two fingers sideways to
+  slide one off, "Clear all", and notices that need nothing fade on their own (D5).
 
 ### Memory
 - Notebook: Inbox, About you, projects, topics and lists of notes, ideas, tasks and links. Full-text
@@ -81,8 +83,13 @@ reminds and keeps watch, and your AI agents can talk to it.
 ### Extensions
 - Sandboxed extensions (a manifest plus a program speaking MCP), with a permission sheet in plain words,
   pinned files, tamper detection, icons, and changed tools held for review (D13, D24).
-- Built in, all on and each switchable off: Git (clone public https repositories into a folder you name,
-  status, pull, log), World Clock, System Vitals, and Weather (forecasts and a rain watcher) (D39).
+- Thirteen built in, each a small program inside the app, so none needs Python or anything else installed
+  (Git needs git). On from the start, each switchable off: Git (clone public https repositories into a folder
+  you name, status, pull, log), World Clock, System Vitals, Weather (forecasts, sunrise, sunset and the moon,
+  a rain watcher), Calculator (exact sums, units, date maths), Currency (the ECB's daily rates, a rate
+  watcher), Playtime (coin, dice, random picks, rock, paper, scissors, a trivia quiz that keeps your score)
+  and Images (photo details; copies converted, smaller or without location). Ready to switch on: PDF Tools,
+  QR Codes, Archives, Dev Toolbox and Feeds (D39).
 - Sidefolk can write an extension for you: it proposes it, writes a text-only draft, tries it with no
   permissions, and shows the normal install sheet. Only your click installs it (D39).
 - Plain MCP servers can be added; they run unsandboxed and are labelled so.
@@ -106,8 +113,8 @@ reminds and keeps watch, and your AI agents can talk to it.
 - A Mac with Apple silicon and macOS 15 or later. `scripts/build-app.sh` builds for the Mac it runs on
   (arm64 on Apple silicon); a universal build has not been made or tested.
 - Optional: the `claude` or `codex` command signed in, an API key, or Ollama or LM Studio, for AI.
-  Python 3 and git (Apple's Command Line Tools or Homebrew) for the built-in extensions. macOS 26 or
-  later for the better speech recognition.
+  git (Apple's Command Line Tools or Homebrew) for the Git extension; the other built-ins need nothing.
+  macOS 26 or later for the better speech recognition.
 - To build: Xcode 26 or later (Swift 6.2).
 
 ## Known limits
