@@ -1,7 +1,8 @@
 import SidefolkCore
 import SwiftUI
 
-/// The panel beside the companion: one input, a hint line, and up to three result cards.
+/// The panel beside the companion: one input, a hint line, and the results, newest first. Each can be swiped
+/// away with two fingers like a notification, "Clear all" empties them, and notices that need nothing fade.
 struct AskView: View {
     @Bindable var model: AskModel
     var companionName: String
@@ -10,6 +11,8 @@ struct AskView: View {
     var hotkey: String
     @FocusState private var inputFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// How tall the results are, so the scroll area is as tall as them until it reaches its limit.
+    @State private var resultsHeight: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,6 +30,7 @@ struct AskView: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous).strokeBorder(Theme.line.opacity(0.8)))
         .onAppear { inputFocused = true }
         .onChange(of: model.focusRequest) { inputFocused = true }
+        .onHover { model.hovering = $0 }
     }
 
     private var header: some View {
@@ -49,11 +53,14 @@ struct AskView: View {
             let clearable = model.hasResults && !model.busy
             if clearable {
                 Button { model.clearResults() } label: {
-                    Text("Clear").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                    Text("Clear all").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(Theme.line.opacity(0.7)))
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .fixedSize()
-                .help("Remove these results")
+                .help("Remove every result below")
                 .padding(.trailing, Theme.Space.xs)
             }
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
@@ -139,19 +146,31 @@ struct AskView: View {
     }
 
     private var results: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            ForEach(model.pinnedEntries) { entry in
-                EntryView(entry: entry, model: model)
-                    .transition(arrival)
+        ScrollViewReader { scroller in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Space.s) {
+                    ForEach(model.pinnedEntries) { entry in
+                        EntryView(entry: entry, model: model)
+                            .transition(arrival)
+                    }
+                    ForEach(model.visibleRequests) { request in
+                        RequestView(request: request, model: model)
+                            .transition(arrival)
+                    }
+                }
+                .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.3), value: model.entries)
+                .padding(Theme.Space.m)
+                .id(Self.top)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { resultsHeight = $0 }
             }
-            ForEach(model.visibleRequests) { request in
-                RequestView(request: request, model: model)
-                    .transition(arrival)
-            }
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(height: min(max(resultsHeight, 1), model.resultsMaxHeight))
+            // Something new arrives at the top: show it, even when the older ones were scrolled to.
+            .onChange(of: model.latestCaption) { withAnimation { scroller.scrollTo(Self.top, anchor: .top) } }
         }
-        .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.3), value: model.entries)
-        .padding(Theme.Space.m)
     }
+
+    private static let top = "top"
 
     /// New cards slide in from the input; with Reduce Motion they only fade in, like the companion's states.
     private var arrival: AnyTransition {
@@ -216,30 +235,46 @@ struct AskView: View {
     }
 }
 
-/// One request: its words, with a way to remove it, then what came of it.
+/// One request: its words, with a way to remove it, then what came of it. Two fingers sideways slide it away.
 private struct RequestView: View {
     var request: AskModel.Request
     var model: AskModel
     @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(spacing: 4) {
                 Text(verbatim: request.caption ?? "").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
                 Spacer(minLength: 0)
-                Button { model.remove(request) } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
-                    .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
-                    .opacity(hovering ? 1 : 0)
-                    .help("Remove")
-                    .accessibilityLabel(request.caption.map { Text("Remove “\($0)”") } ?? Text("Remove this result"))
+                // A target the size of a fingertip, not of the glyph.
+                Button { model.dismiss(request.id, toward: 1) } label: {
+                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(Theme.line.opacity(hovering ? 0.8 : 0)))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain).foregroundStyle(Theme.inkMuted)
+                .opacity(hovering ? 1 : 0)
+                .help("Remove")
+                .accessibilityLabel(request.caption.map { Text("Remove “\($0)”") } ?? Text("Remove this result"))
             }
+            .frame(minHeight: 22)
             ForEach(request.entries) { entry in
                 EntryView(entry: entry, model: model, retry: request.caption == nil ? nil : { model.retry(request) })
             }
         }
         .contentShape(Rectangle())
-        .onHover { hovering = $0 }
+        .offset(x: offset)
+        .opacity(1 - min(abs(offset) / 360, 0.8))
+        .animation(reduceMotion ? nil : .spring(duration: 0.25), value: offset)
+        .onHover { inside in
+            hovering = inside
+            if inside { model.hoveredRequest = request.id } else if model.hoveredRequest == request.id { model.hoveredRequest = nil }
+        }
     }
+
+    private var offset: CGFloat { model.swipe?.id == request.id ? model.swipe!.offset : 0 }
 }
 
 private struct EntryView: View {

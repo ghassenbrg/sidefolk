@@ -48,6 +48,24 @@ import Testing
         #expect(report("the Fukuoka temperature every minute")?.source == .weather(place: "Fukuoka", quantity: .temperature))
     }
 
+    @Test func aSlipInEveryStillReads() {
+        let fukuoka = ReportIntent(source: .weather(place: "Fukuoka", quantity: .temperature), everySeconds: 10)
+        #expect(report("show me temperature in fukuoka evey 10s") == fukuoka)
+        #expect(report("show me the cpu evry 5 seconds")?.everySeconds == 5)
+        #expect(report("tell me the battery ever minute")?.everySeconds == 60)
+        #expect(report("memory eveyr other minute")?.everySeconds == 120)
+        // Only right before how often: anywhere else the word is the person's.
+        #expect(IntentParser.fixEverySlip("show me every 10s") == "show me every 10s")
+        #expect(IntentParser.fixEverySlip("the very best cpu") == "the very best cpu")
+        #expect(IntentParser.fixEverySlip("even 5 minutes") == "even 5 minutes")
+    }
+
+    @Test func theHintSaysHowOftenItReallyReads() {
+        // Weather is read once a minute at most: a faster request is raised, and the hint says so up front.
+        #expect(parse("show me temperature in fukuoka evey 10s")?.hint == "Show Temperature in Fukuoka every 1 min · no AI")
+        #expect(parse("show me the cpu every 2s")?.hint == "Show CPU every 5 s · no AI")
+    }
+
     @Test func endsAndNotifications() {
         #expect(report("tell me the CPU every 10 seconds until I stop it")?.untilStopped == true)
         #expect(report("every minute tell me the battery until 6pm")?.until == "6pm")

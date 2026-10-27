@@ -27687,6 +27687,7 @@
       }
     },
     "Clear" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -27740,6 +27741,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除"
+          }
+        }
+      }
+    },
+    "Clear all" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسح الكل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles löschen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout effacer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancella tutto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて消去"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 지우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar tudo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部清除"
           }
         }
       }
@@ -42917,6 +42976,64 @@
         }
       }
     },
+    "Hold a moment longer: I was still getting ready to listen. Talk once my ears are up." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط مطوّلًا لفترة أطول قليلًا: كنت ما أزال أستعد للاستماع. تحدّث عندما ترتفع أذناي."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte etwas länger gedrückt: Ich war noch dabei, mich aufs Zuhören vorzubereiten. Sprich, sobald meine Ohren oben sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén pulsado un poco más: aún me estaba preparando para escuchar. Habla cuando tenga las orejas levantadas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenez un peu plus longtemps : je me préparais encore à écouter. Parlez une fois mes oreilles dressées."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni premuto ancora un attimo: mi stavo ancora preparando ad ascoltare. Parla quando ho le orecchie dritte."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう少し長く押し続けてください。まだ聞く準備をしているところでした。耳が立ってから話してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "조금 더 길게 눌러 주세요. 아직 들을 준비를 하고 있었어요. 귀가 쫑긋 서면 말하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segure um pouco mais: eu ainda estava me preparando para ouvir. Fale quando minhas orelhas estiverem em pé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请多按住一会儿：我还在准备听。等我的耳朵竖起来再说话。"
+          }
+        }
+      }
+    },
     "Hold the Ask shortcut" : {
       "localizations" : {
         "ar" : {
@@ -48387,6 +48504,65 @@
         }
       }
     },
+    "I got no sound at all from %@, so nothing was sent. Try once more; if it keeps happening, quit and reopen Sidefolk." : {
+      "comment" : "A microphone's name, like “MacBook Pro Microphone”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يصلني أي صوت من %@، لذا لم يُرسل شيء. حاول مرة أخرى؛ وإن تكرر ذلك، فأغلق Sidefolk ثم افتحه من جديد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vom %@ kam überhaupt kein Ton, deshalb wurde nichts gesendet. Versuch es noch einmal; wenn es wieder passiert, beende Sidefolk und öffne es neu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No me llegó ningún sonido del %@, así que no se ha enviado nada. Inténtalo otra vez; si sigue pasando, cierra Sidefolk y vuelve a abrirlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’ai reçu aucun son du %@, donc rien n’a été envoyé. Réessayez ; si cela se reproduit, quittez puis rouvrez Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dal %@ non è arrivato alcun suono, quindi non ho inviato nulla. Riprova; se succede ancora, esci da Sidefolk e riaprilo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@から音がまったく届かなかったため、何も送信していません。もう一度試してください。繰り返し起きる場合は、Sidefolkを終了して開き直してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서 소리가 전혀 들어오지 않아 아무것도 보내지 않았어요. 다시 해 보세요. 계속 이러면 Sidefolk를 종료했다가 다시 여세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não recebi nenhum som do %@, então nada foi enviado. Tente de novo; se continuar acontecendo, feche e reabra o Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有从%@收到任何声音，所以没有发送内容。请再试一次；如果反复出现，请退出并重新打开 Sidefolk。"
+          }
+        }
+      }
+    },
     "I need a full path that starts with / or ~, without “..” parts or broken links." : {
       "localizations" : {
         "ar" : {
@@ -48789,6 +48965,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我只处理网址（http 和 https），不处理“%@:”链接。"
+          }
+        }
+      }
+    },
+    "I only heard silence from %@. Check it's the microphone you're talking into, in System Settings › Sound." : {
+      "comment" : "A microphone's name, like “MacBook Pro Microphone”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أسمع من %@ سوى الصمت. تحقّق في إعدادات النظام › الصوت من أنه الميكروفون الذي تتحدث فيه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vom %@ kam nur Stille. Prüfe in Systemeinstellungen › Ton, ob das das Mikrofon ist, in das du sprichst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo oí silencio del %@. Comprueba en Ajustes del Sistema › Sonido que es el micrófono al que le hablas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’ai entendu que du silence du %@. Vérifiez dans Réglages Système › Son que c’est bien le microphone dans lequel vous parlez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dal %@ ho sentito solo silenzio. Controlla in Impostazioni di Sistema › Suono che sia il microfono in cui stai parlando."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@からは無音しか聞こえませんでした。システム設定 › サウンドで、話しかけているマイクが選ばれているか確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서 조용한 소리만 들렸어요. 시스템 설정 › 사운드에서 말하고 있는 마이크가 맞는지 확인하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só ouvi silêncio do %@. Confira em Ajustes do Sistema › Som se é o microfone em que você está falando."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从%@只听到了静音。请在“系统设置 › 声音”中确认它就是你正在说话的麦克风。"
           }
         }
       }
@@ -79190,6 +79425,64 @@
         }
       }
     },
+    "Remove every result below" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة كل النتائج أدناه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Ergebnisse unten entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar todos los resultados de abajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer tous les résultats ci-dessous"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovi tutti i risultati qui sotto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下の結果をすべて削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래 결과 모두 제거"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover todos os resultados abaixo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除下方所有结果"
+          }
+        }
+      }
+    },
     "Remove key" : {
       "localizations" : {
         "ar" : {
@@ -79481,6 +79774,7 @@
       }
     },
     "Remove these results" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -129201,6 +129495,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入内容"
+          }
+        }
+      }
+    },
+    "the microphone" : {
+      "comment" : "Stands in for a microphone's name after “from”: “I only heard silence from the microphone”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الميكروفون"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mikrofon"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "micrófono"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "microphone"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "microfono"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マイク"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마이크"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "microfone"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "麦克风"
           }
         }
       }

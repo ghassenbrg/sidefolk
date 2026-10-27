@@ -346,6 +346,7 @@ final class AppCoordinator {
             return
         }
         if command == "voice:stop" { _ = voice.cancel(); return }
+        if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }
         if command.hasPrefix("voice:volume:"), let volume = Double(command.dropFirst("voice:volume:".count)) {
             // 0 checks spoken replies and the mouth without a sound on the developer's Mac.
             Task { await runtime.settings.update { $0.voice.volume = min(max(volume, 0), 1) } }

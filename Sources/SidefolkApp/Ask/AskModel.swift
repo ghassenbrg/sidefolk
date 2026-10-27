@@ -60,6 +60,8 @@ struct AskEntry: Identifiable, Equatable {
     var caption: String?
     var content: Content
     var createdAt = Date()
+    /// A notice that needs nothing from anyone ("Undone", a word about talking) goes away on its own then.
+    var fadesAt: Date?
 
     static func == (a: AskEntry, b: AskEntry) -> Bool { a.id == b.id && a.content == b.content && a.caption == b.caption }
 
@@ -140,8 +142,19 @@ final class AskModel {
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
 
-    /// Requests shown under the input; older ones drop off. This is not a chat.
-    static let visibleRequests = 2
+    /// Results kept: the newest under the input, older ones a scroll away. Cards, not a chat (D5).
+    static let keptEntries = 40
+    /// How long a notice that needs nothing stays.
+    static let noticeSeconds: TimeInterval = 20
+    /// The pointer is over the panel: nothing fades while someone may be reading it.
+    var hovering = false
+    /// A request being swiped away with two fingers, and how far it has moved.
+    var swipe: (id: UUID, offset: CGFloat)?
+    /// The request under the pointer, the one a two-finger swipe moves.
+    var hoveredRequest: UUID?
+    /// The tallest the results may grow before they scroll: the panel stays on screen.
+    var resultsMaxHeight: CGFloat = 520
+    private var fading: Task<Void, Never>?
 
     var hint: String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -168,14 +181,25 @@ final class AskModel {
         return requests
     }
 
-    /// The latest requests, newest first, right under the input where the eye already is.
-    var visibleRequests: [Request] { Array(requests.suffix(Self.visibleRequests).reversed()) }
+    /// The requests, newest first, right under the input where the eye already is.
+    var visibleRequests: [Request] { requests.reversed() }
 
     var hasResults: Bool { entries.contains { !$0.isPinned } }
 
     func remove(_ request: Request) {
         let gone = Set(request.entries.map(\.id))
         entries.removeAll { gone.contains($0.id) }
+        if swipe.map({ gone.contains($0.id) }) == true { swipe = nil }
+    }
+
+    /// Swiped or clicked away: the card slides off the way it was going, then goes.
+    func dismiss(_ id: UUID, toward direction: CGFloat) {
+        guard let request = requests.first(where: { $0.id == id }) else { return }
+        swipe = (id, direction < 0 ? -460 : 460)
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(180))
+            self?.remove(request)
+        }
     }
 
     /// Everything but the questions and approvals still waiting for an answer.
@@ -228,9 +252,41 @@ final class AskModel {
     /// The words of the newest request, to tell whether a newer one came in since.
     var latestCaption: String? { entries.last { $0.caption != nil }?.caption }
 
-    func add(_ content: AskEntry.Content, caption: String? = nil) {
-        entries.append(AskEntry(caption: caption, content: content))
-        if entries.count > 30 { entries.removeFirst(entries.count - 30) }
+    /// `fades`: a notice that needs nothing from anyone, gone after `noticeSeconds` unless someone is reading.
+    func add(_ content: AskEntry.Content, caption: String? = nil, fades: Bool = false) {
+        entries.append(AskEntry(caption: caption, content: content, fadesAt: fades ? Date().addingTimeInterval(Self.noticeSeconds) : nil))
+        if entries.count > Self.keptEntries { entries.removeFirst(entries.count - Self.keptEntries) }
+        if fades { fadeLater() }
+    }
+
+    /// Removes earlier notices under this caption: a new word about talking replaces the last one.
+    func removeNotices(caption: String) {
+        for request in requests where request.caption == caption && request.entries.allSatisfy({ $0.fadesAt != nil }) { remove(request) }
+    }
+
+    /// A request made only of notices goes whole; a notice under another card ("Undone") goes alone. A
+    /// notice that carries a request's words stays with the rest of it.
+    func fade(at now: Date) {
+        let due = { (e: AskEntry) in e.fadesAt.map { $0 <= now } ?? false }
+        var gone = Set<UUID>()
+        for request in requests {
+            if request.entries.allSatisfy(due) { gone.formUnion(request.entries.map(\.id)) } else { gone.formUnion(request.entries.dropFirst().filter(due).map(\.id)) }
+        }
+        entries.removeAll { gone.contains($0.id) }
+        for i in entries.indices where due(entries[i]) { entries[i].fadesAt = nil }
+    }
+
+    /// Requests made only of notices go once their time is up, never under the pointer.
+    private func fadeLater() {
+        guard fading == nil else { return }
+        fading = Task { [weak self] in
+            while let self, let next = self.entries.compactMap(\.fadesAt).min() {
+                try? await Task.sleep(for: .seconds(max(0.5, next.timeIntervalSinceNow)))
+                if self.hovering { try? await Task.sleep(for: .seconds(2)); continue }
+                self.fade(at: Date())
+            }
+            self?.fading = nil
+        }
     }
 
     func replace(_ id: UUID, with content: AskEntry.Content) {

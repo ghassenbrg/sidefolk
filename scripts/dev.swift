@@ -9,6 +9,7 @@
 //   swift scripts/dev.swift companion:mochi | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
+//   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

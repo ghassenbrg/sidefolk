@@ -43,7 +43,7 @@ extension IntentParser {
     // MARK: Reports
 
     func report(_ command: String, _ ctx: Context) -> ParsedIntent? {
-        var text = " " + command.lowercased().replacingOccurrences(of: "’", with: "'") + " "
+        var text = " " + Self.fixEverySlip(command.lowercased().replacingOccurrences(of: "’", with: "'")) + " "
         guard let seconds = Self.seconds(in: text), let found = Self.interval.firstRange(in: text) else { return nil }
         text.replaceSubrange(found, with: " ")
         guard !Self.interval.found(in: text) else { return nil }   // two intervals: not for guessing
@@ -70,6 +70,20 @@ extension IntentParser {
         guard let source = subject(text, original: command) else { return nil }
         report.source = source
         return ParsedIntent(intent: .report(report), hint: hint(report, ctx))
+    }
+
+    /// "evey 10s", "evry minute", "ever 5 seconds": a slip in "every" right before how often, the one word every
+    /// report has. Anywhere else the word is left as typed.
+    static func fixEverySlip(_ text: String) -> String {
+        var words = text.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
+        for i in words.indices.dropLast() where words[i] != "every" && (4...6).contains(words[i].count) && words[i].allSatisfy(\.isLetter) {
+            let next = words[i + 1]
+            let saysHowOften = next.first?.isNumber == true || WhenLexicon.numberWords[next] != nil
+                || ["other", "half", "second", "sec", "minute", "min", "hour"].contains { next.hasPrefix($0) }
+            guard saysHowOften, WhenLexicon.editDistance(Array(words[i]), Array("every"), limit: 1) <= 1 else { continue }
+            words[i] = "every"
+        }
+        return words.joined(separator: " ")
     }
 
     /// What is reported, when it is the only thing the words name.
@@ -165,11 +179,13 @@ extension IntentParser {
 
     private func hint(_ r: ReportIntent, _ ctx: Context) -> String {
         let what: String
+        let fastest: TimeInterval
         switch r.source {
-        case .metric(let m): what = m.title
-        case .weather(let place, let quantity): what = quantity.title(place)
+        case .metric(let m): (what, fastest) = (m.title, ReportFloors.metric)
+        case .weather(let place, let quantity): (what, fastest) = (quantity.title(place), ReportFloors.web)
         }
-        var parts = [String(localized: "Show \(what) every \(WatchWords.every(r.everySeconds))")]
+        // How often it will really read: a faster request is raised (D35), and the hint must not promise more.
+        var parts = [String(localized: "Show \(what) every \(WatchWords.every(max(r.everySeconds, fastest)))")]
         if r.untilStopped {
             parts.append(String(localized: "until you stop it"))
         } else if let until = r.until, let end = when.parse(until, now: ctx.now)?.date {

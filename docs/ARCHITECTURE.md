@@ -82,7 +82,9 @@ user folders or agent configs.
 - `AgentRuntime` — handles a user turn: builds context (`ContextBuilder`, token budget), picks a
   model (`ModelRouter`), runs a backend, streams `AgentEvent`s, records an `AgentRun`.
   - `LoopBackend` drives `TurnModel` providers (`AnthropicModel`, `OpenAICompatibleModel`):
-    request → tool calls → executor → results → repeat, max 10 steps / 120 s by default.
+    request → tool calls → executor → results → repeat, max 10 steps / 120 s by default. A reply
+    that claims an action from a run that called no tool (`UnbackedClaim`, English) gets one more
+    turn with a note that nothing happened, so it acts or says what it can't do.
     `OpenAICompatibleModel` serves every `ProviderPreset` (see AI providers below).
   - `ClaudeCodeBackend` runs `claude -p --output-format stream-json --tools "" --strict-mcp-config
     --mcp-config <sidefolk bridge>` in the brain workdir with an isolated settings source; the
@@ -219,8 +221,8 @@ core; the app holds the audio and speech frameworks.
   `VoiceAudio` pieces out); `SpeechPlayer`, the playback queue over an `AudioSink` (sentence by
   sentence, instant `stop()`, levels for the mouth); `ElevenLabs` (voices, models, streamed PCM).
 - **App** (`Sources/SidefolkApp/Voice/`): `VoiceController` runs a turn: the talk key or a held
-  companion → `MicrophoneCapture` (AVAudioEngine tap, built-in microphone preferred, rebuilt on
-  hardware changes) → a `SpeechRecognizer` (`AnalyzerRecognizer` on macOS 26+, `BasicRecognizer`
+  companion → `MicrophoneCapture` (AVAudioEngine tap on the default input, rebuilt on hardware
+  changes or when no buffer comes within a second) → a `SpeechRecognizer` (`AnalyzerRecognizer` on macOS 26+, `BasicRecognizer`
   before) whose partial words fill the Ask box → release → `AskModel.submit(spoken:)`, the normal
   pipeline. Replies come back through `VoiceController.reply`, which applies `VoicePolicy` and plays
   through `AudioPlayer` (an `AudioSink`) with `AppleVoice` or `ElevenLabsVoice`. The companion's pose

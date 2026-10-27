@@ -65,6 +65,7 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
         var transcript: [TurnMessage] = task.messages.map { $0.role == .user ? .user($0.text) : .assistant($0.text) }
         var outcomes: [ToolOutcome] = []
         var seen: [String: Int] = [:]
+        var nudged = false
         let model = self.model
 
         while true {
@@ -100,7 +101,16 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
 
             // A turn cut off by the output limit may hold a truncated tool call; never run it.
             let calls = turn.stop == .maxTokens ? [] : turn.toolCalls
-            if calls.isEmpty { return Self.answer(turn, outcomes: outcomes) }
+            if calls.isEmpty {
+                // Said it did something without doing anything: one more turn to act, or to say so.
+                if !nudged, outcomes.isEmpty, !toolbox.specs.isEmpty, turn.stop != .maxTokens, UnbackedClaim.found(in: turn.text) {
+                    nudged = true
+                    transcript.append(.modelTurn(turn))
+                    transcript.append(.user(UnbackedClaim.nudge))
+                    continue
+                }
+                return Self.answer(turn, outcomes: outcomes)
+            }
 
             transcript.append(.modelTurn(turn))
             var results: [ToolResultMessage] = []

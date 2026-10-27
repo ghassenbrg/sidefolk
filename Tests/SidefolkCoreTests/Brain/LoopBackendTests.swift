@@ -28,6 +28,63 @@ import Testing
         #expect(backend.takeUsage(runId: "run-1") == nil)
     }
 
+    @Test func aPromiseWithoutAToolGetsOneMoreTurn() async throws {
+        let env = try TestEnv()
+        let counter = CallCounter()
+        env.registry.register(noteTool(counter: counter))
+        let model = ScriptedModel([
+            .turn(.reply("I'll save that for you.")),
+            .turn(.calling([call("c1")])),
+            .turn(.reply("Saved it.")),
+        ])
+        let backend = LoopBackend(model: model, checkModel: "m", clock: env.clock)
+
+        let reply = try await backend.run(brainTask(env), toolbox: toolbox(env), emit: { _ in })
+
+        #expect(reply.text == "Saved it.")
+        #expect(counter.value == 1)
+        #expect(model.requests.count == 3)
+        guard case .user(let nudge)? = model.requests[1].messages.last else { Issue.record("expected the nudge"); return }
+        #expect(nudge == UnbackedClaim.nudge)
+    }
+
+    @Test func thePromiseIsNudgedOnlyOnce() async throws {
+        let env = try TestEnv()
+        env.registry.register(noteTool())
+        let model = ScriptedModel([.turn(.reply("I'll save that.")), .turn(.reply("I'll save that, promise."))])
+        let backend = LoopBackend(model: model, checkModel: "m", clock: env.clock)
+
+        let reply = try await backend.run(brainTask(env), toolbox: toolbox(env), emit: { _ in })
+
+        #expect(model.requests.count == 2)
+        #expect(reply.text == "I'll save that, promise.")
+    }
+
+    @Test func anAnswerThatPromisesNothingIsNotNudged() async throws {
+        let env = try TestEnv()
+        env.registry.register(noteTool())
+        let model = ScriptedModel([.turn(.reply("Fukuoka is in Kyushu, Japan."))])
+        let backend = LoopBackend(model: model, checkModel: "m", clock: env.clock)
+
+        let reply = try await backend.run(brainTask(env), toolbox: toolbox(env), emit: { _ in })
+
+        #expect(model.requests.count == 1)
+        #expect(reply.text == "Fukuoka is in Kyushu, Japan.")
+    }
+
+    @Test func whatCountsAsAClaim() {
+        for claim in ["I'll show you the temperature in Fukuoka every minute.", "I’ve set a reminder for 9:00.", "I'm watching the page now.",
+                      "Reminder set for tomorrow.", "Done! It's in your notes.", "I will remind you at 5.", "I have saved it to Ideas.",
+                      "I'll keep an eye on it.", "I'm going to start watching that site."] {
+            #expect(UnbackedClaim.found(in: claim), "\(claim)")
+        }
+        for answer in ["Fukuoka is about 18°C today.", "I can't set reminders in the past.", "Should I set a reminder?",
+                       "I'm not sure which city you mean.", "I'll need the address first.", "I am happy to help.",
+                       "I have a question: which folder?", "Settings are in the gear menu."] {
+            #expect(!UnbackedClaim.found(in: answer), "\(answer)")
+        }
+    }
+
     @Test func stepBudgetEndsWithSummary() async throws {
         let env = try TestEnv()
         let counter = CallCounter()

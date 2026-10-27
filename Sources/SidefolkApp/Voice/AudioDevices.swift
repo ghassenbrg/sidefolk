@@ -3,13 +3,6 @@ import Foundation
 
 /// Core Audio questions voice needs answered, without asking for any permission.
 enum AudioDevices {
-    /// The Mac's own microphone, when it has one. Listening through it leaves AirPods in their
-    /// high-quality mode (opening their microphone switches them to call quality) and keeps a dock or
-    /// interface someone plugged in for other work out of it.
-    static func builtInInput() -> AudioDeviceID? {
-        devices().first { isBuiltIn($0) && hasInput($0) }
-    }
-
     /// Whether another app is recording right now (a call, a voice memo): the same signal behind
     /// the orange dot. The companion stays silent then (D34). Bluetooth headsets may not report it.
     static func inputInUseElsewhere() -> Bool {
@@ -37,27 +30,12 @@ enum AudioDevices {
 
     // MARK: Plumbing
 
-    private static func devices() -> [AudioDeviceID] {
-        list(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDevices)
-    }
-
     private static func processes() -> [AudioObjectID] {
         list(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyProcessObjectList)
     }
 
     private static func pid(of process: AudioObjectID) -> pid_t? {
         read(process, kAudioProcessPropertyPID, as: pid_t.self)
-    }
-
-    private static func isBuiltIn(_ device: AudioDeviceID) -> Bool {
-        read(device, kAudioDevicePropertyTransportType, as: UInt32.self) == kAudioDeviceTransportTypeBuiltIn
-    }
-
-    private static func hasInput(_ device: AudioDeviceID) -> Bool {
-        var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams, mScope: kAudioObjectPropertyScopeInput,
-                                                 mElement: kAudioObjectPropertyElementMain)
-        var size: UInt32 = 0
-        return AudioObjectGetPropertyDataSize(device, &address, 0, nil, &size) == noErr && size > 0
     }
 
     private static func list(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector) -> [AudioObjectID] {

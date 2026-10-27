@@ -36,6 +36,11 @@ speed (CLI brains take seconds to start), offline use. **Alternatives:** slash c
 **Decision:** every request ends in a card (saved note, reminder, watch, answer, approval). Short
 history is kept for follow-ups (10-minute thread window) but not displayed as a chat log.
 **Why:** product review: a transcript makes Sidefolk "a chat app with a mascot".
+**Amended 2026-10-27:** the cards behave like notifications, not like a two-card window: all of them
+(the last 40 entries) stay reachable by scrolling, newest first; two fingers sideways slide one away,
+"Clear all" empties them, and notices that need nothing ("Undone", a word about talking) fade after
+20 seconds unless the pointer is on the panel. *Why:* the founder lost older results with no way to
+see or clear them, and the per-card X was too small to hit.
 
 ### D6 — Memories fold into the Notebook as "About you" (2026-10-26)
 **Decision:** no separate memory store. Durable facts/preferences are notes in a pinned profile
@@ -358,9 +363,10 @@ small places get one clear element (lettering, a face) instead of a reduced comp
   opens 0.3 s after the press, and a three-key chord is held while talking; people who mind either
   give talking its own shortcut. The companion's ears go up when the microphone is really on.
 - **Off by default.** Nothing asks for the microphone until the person turns voice input on and
-  holds the key. The microphone is open only while the key is held (the orange dot is honest), the
-  Mac's own microphone is preferred (AirPods stay out of call quality), and the capture is rebuilt
-  when the audio hardware changes. Audio is never stored; the words join history as text, marked spoken.
+  holds the key. The microphone is open only while the key is held (the orange dot is honest), it
+  is the input chosen in System Settings › Sound, and the capture is rebuilt when the audio hardware
+  changes or sends nothing for a second. (Preferring the Mac's own microphone kept AirPods out of
+  call quality, but pointing the engine's audio unit at it by hand left build 404 with no audio at all.) Audio is never stored; the words join history as text, marked spoken.
 - **Recognition on this Mac.** SpeechAnalyzer with SpeechTranscriber on macOS 26+, DictationTranscriber
   for languages it lacks (Arabic, here), the language's model downloaded by macOS with progress
   (Settings › Voice, or the first press); on macOS 15 the older recognizer forced on device, labelled

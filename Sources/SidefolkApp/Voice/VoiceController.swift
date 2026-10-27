@@ -97,7 +97,8 @@ final class VoiceController {
             // Counts only, never the words (D34).
             Log.shared.info("voice", "heard", recognizer.report.merging([
                 "held_ms": Self.milliseconds(since: pressedAt, to: released), "finish_ms": Self.milliseconds(since: released),
-                "characters": "\(heard.count)", "device": mic.device, "format": mic.format, "mic_buffers": "\(mic.buffers)",
+                "characters": "\(heard.count)", "device": mic.device, "format": mic.format, "mic_opens": "\(mic.opens)",
+                "mic_buffers": "\(mic.buffers)", "mic_first_ms": mic.waited.map { "\(Int($0 / .milliseconds(1)))" } ?? "none",
                 "mic_seconds": String(format: "%.2f", mic.seconds), "mic_peak_dbfs": Self.decibels(mic.peak),
             ]) { a, _ in a })
             self.recognizer = nil
@@ -253,9 +254,12 @@ final class VoiceController {
         let message: String
         if !words.isEmpty {
             message = String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")
-        } else if mic.buffers == 0 {
+        } else if mic.opens == 0 {
             // Let go before the microphone opened (the first press of the day takes a moment).
             message = String(localized: "Hold a moment longer: I was still getting ready to listen. Talk once my ears are up.")
+        } else if mic.buffers == 0 {
+            message = String(localized: "I got no sound at all from \(mic.device), so nothing was sent. Try once more; if it keeps happening, quit and reopen Sidefolk.",
+                             comment: "A microphone's name, like “MacBook Pro Microphone”")
         } else if mic.silent {
             message = String(localized: "I only heard silence from \(mic.device). Check it's the microphone you're talking into, in System Settings › Sound.",
                              comment: "A microphone's name, like “MacBook Pro Microphone”")
@@ -268,8 +272,11 @@ final class VoiceController {
     }
 
     /// Something about talking itself, as a request of its own, so it doesn't read as part of the last answer.
+    /// It replaces the last one; a plain word fades on its own, a problem stays until it is dealt with.
     private func notice(_ content: AskEntry.Content) {
-        host.ask.add(content, caption: String(localized: "Talking", comment: "Shown above what the companion says about voice input itself"))
+        let caption = String(localized: "Talking", comment: "Shown above what the companion says about voice input itself")
+        host.ask.removeNotices(caption: caption)
+        if case .info = content { host.ask.add(content, caption: caption, fades: true) } else { host.ask.add(content, caption: caption) }
     }
 
     private func fail(_ error: UserFacingError) {

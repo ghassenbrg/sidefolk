@@ -72,7 +72,7 @@ extension AppCoordinator: AskActions {
             // Typed commands are understood in English without AI (D28); the words shown are localized.
             if ["cancel", "never mind", "nevermind", "nvm", "forget it", "no", "stop"].contains(lower) {
                 model.pendingReminderTitle = nil
-                model.add(.info(String(localized: "Okay, no reminder.")), caption: text)
+                model.add(.info(String(localized: "Okay, no reminder.")), caption: text, fades: true)
                 voice.reply(SpokenLine.line(String(localized: "Okay, no reminder.")), to: reply, in: model)
                 return
             }
@@ -309,9 +309,9 @@ extension AppCoordinator: AskActions {
         Task {
             do {
                 if let label = try await runtime.executor.undo.undo(activityId) {
-                    model.add(.info(String(localized: "Undone: \(label).")))
+                    model.add(.info(String(localized: "Undone: \(label).")), fades: true)
                 } else {
-                    model.add(.info(String(localized: "That can't be undone anymore.")))
+                    model.add(.info(String(localized: "That can't be undone anymore.")), fades: true)
                 }
             } catch {
                 model.add(.error(UserFacingError("I couldn't undo that.", detail: String(describing: error)), retryable: false))
