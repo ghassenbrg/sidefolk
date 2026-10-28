@@ -49,6 +49,12 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         Task { @MainActor in window.makeFirstResponder(nil) }
     }
 
+    /// Privacy & Permissions, scrolled to Your location (a card that asked which place, D48).
+    func showYourLocation() {
+        show(tab: .privacy)
+        model.location.reveal = true
+    }
+
     /// Privacy & Permissions with the sheet that says what Full access means (from the menu bar).
     func confirmFullAccess() {
         show(tab: .privacy)

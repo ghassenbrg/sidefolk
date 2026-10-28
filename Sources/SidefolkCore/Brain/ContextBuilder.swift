@@ -231,6 +231,7 @@ public struct ContextBuilder: Sendable {
             "- \"Morning\" means \(hour(settings.morningHour)), \"afternoon\" \(hour(settings.afternoonHour)) "
                 + "and \"evening\" \(hour(settings.eveningHour)).",
         ]
+        lines.append(place(settings.location, now: now, timeZone: timeZone))
         if let app = frontmost {
             lines.append("- Frontmost app: \(oneLine(app.name).clipped(60))\(app.isFullscreen ? ", full screen" : "").")
         }
@@ -243,6 +244,26 @@ public struct ContextBuilder: Sendable {
             lines.append("- Quiet mode is off.")
         }
         return lines.joined(separator: "\n")
+    }
+
+    /// Where the person is (D48): the town, region and country, never coordinates; the time there when a place they
+    /// chose keeps another clock than the Mac's. Unknown, the model asks rather than guesses.
+    static func place(_ location: LocationSettings, now: Date, timeZone: TimeZone) -> String {
+        guard let place = location.current else {
+            return "- The user's location isn't known. When a request needs a place and they name none, ask which; they can "
+                + "also set it in Settings › Privacy & Permissions › Your location."
+        }
+        let from = location.source == .mac ? "from their Mac's location" : "the place they chose in Settings"
+        var line = "- The user is in \(oneLine(place.fullName).clipped(120)) (\(from)"
+        // A position not heard of for a day may be out of date; a place the person chose is theirs until they change it.
+        if location.source == .mac, now.timeIntervalSince(place.updatedAt) > 86_400 {
+            line += ", as of \(format(place.updatedAt, "d MMMM", timeZone))"
+        }
+        line += ")"
+        if let zone = place.timeZone.flatMap(TimeZone.init(identifier:)), zone.secondsFromGMT(for: now) != timeZone.secondsFromGMT(for: now) {
+            line += "; it is \(format(now, "EEEE HH:mm", zone)) there (\(zone.identifier))"
+        }
+        return line + ". Use it when a request needs a place and they name none (weather, sunrise, \"near me\")."
     }
 
     // MARK: Notebook

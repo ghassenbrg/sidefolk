@@ -3,21 +3,67 @@ import SidefolkCore
 import SwiftUI
 
 /// Settings › Extensions: the extensions that come with Sidefolk, the ones the person added (folders and
-/// MCP servers), drafts Sidefolk's AI wrote for them, and skills.
+/// MCP servers), drafts Sidefolk's AI wrote for them, and skills. Each is one line until clicked, under a search and
+/// an All / On / Off filter (D39): the list is "Installed", so a catalog to browse can sit beside it later.
 struct ExtensionsSettingsView: View {
     var model: SettingsModel
     @State private var addingServer = false
     @State private var uninstalling: ExtensionInfo?
     @State private var deletingSkill: SkillInfo?
     @State private var deletingDraft: ExtensionDraftInfo?
+    @State private var search: String
+    @State private var show: ExtensionListQuery.Show
+    @State private var expanded: Set<String>
+    /// Rows that need the person (changed tools) open by themselves; these are the ones they closed anyway.
+    @State private var closed: Set<String> = []
+    /// Switched on or off while the list was narrowed: they stay in sight until the words or the filter change,
+    /// rather than vanishing under the pointer.
+    @State private var kept: Set<String> = []
+    @FocusState private var focus: ExtensionListFocus?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// False when the snapshots set the filter: it is the person's, only the page changes it.
+    private let remembers: Bool
+
+    /// `query` and `expanded` show the page in a given state (UISnapshots); otherwise it opens on the filter the
+    /// person left it on.
+    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = []) {
+        self.model = model
+        let start = query ?? ExtensionListQuery(show: Self.savedShow)
+        _search = State(initialValue: start.text)
+        _show = State(initialValue: start.show)
+        _expanded = State(initialValue: expanded)
+        remembers = query == nil
+    }
 
     var body: some View {
-        SettingsPage {
-            if !builtIns.isEmpty || !model.unavailable.isEmpty { builtIn }
-            installed
-            if !model.drafts.isEmpty { drafts }
-            skills
+        VStack(spacing: 0) {
+            header
+                .frame(maxWidth: 600, alignment: .leading)
+                .padding(.horizontal, Theme.Space.xl)
+                .padding(.top, Theme.Space.l)
+                .frame(maxWidth: .infinity)
+            SettingsPage {
+                ScrollViewReader { proxy in
+                    VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
+                        .onChange(of: focus) {
+                            guard case .row(let id) = focus else { return }
+                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
+                        }
+                }
+            }
         }
+        .background(Theme.surfaceSunken)
+        // ⌘F, as everywhere on the Mac.
+        .background {
+            Button("Find") { focus = .search }.keyboardShortcut("f", modifiers: .command).opacity(0).frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+        .onChange(of: search) { kept = [] }
+        .onChange(of: show) {
+            kept = []
+            if remembers { Self.savedShow = show }
+        }
+        .onDisappear { kept = [] }
         .sheet(item: Binding(get: { model.installPreview }, set: { model.installPreview = $0 })) { p in
             InstallPreviewSheet(preview: p, model: model)
         }
@@ -48,7 +94,139 @@ struct ExtensionsSettingsView: View {
         }
     }
 
-    private var builtIns: [ExtensionInfo] { model.extensions.filter(\.bundled) }
+    // MARK: What is shown
+
+    private var query: ExtensionListQuery { ExtensionListQuery(text: search, show: show) }
+
+    private func visible(_ items: [ExtensionInfo]) -> [ExtensionInfo] {
+        let query = self.query
+        return items.filter { query.includes($0) || kept.contains($0.id) }
+    }
+
+    private var builtIns: [ExtensionInfo] { visible(model.extensions.filter(\.bundled)) }
+    private var added: [ExtensionInfo] { visible(model.extensions.filter { !$0.bundled }) }
+    private var unavailable: [UnavailableExtension] { query.filter(model.unavailable) }
+    /// Drafts and skills are neither on nor off: they are listed under All only, and searched there.
+    private var drafts: [ExtensionDraftInfo] { show == .all ? model.drafts.filter { query.matches($0.searchTexts) } : [] }
+    private var skills: [SkillInfo] { show == .all ? model.skills.filter { query.matches($0.searchTexts) } : [] }
+    private var counts: ExtensionListQuery.Counts { query.counts(model.extensions) + query.counts(model.unavailable) }
+
+    /// The rows the keyboard moves through, top to bottom.
+    private var rowIds: [String] {
+        builtIns.map(\.id) + added.map(\.id) + drafts.map(DraftRow.rowId) + skills.map(SkillRow.rowId)
+    }
+
+    private var nothingShown: Bool {
+        builtIns.isEmpty && unavailable.isEmpty && added.isEmpty && drafts.isEmpty && skills.isEmpty
+    }
+
+    /// Changed tools wait for the person, so that row starts open.
+    private func isExpanded(_ id: String, needsYou: Bool = false) -> Bool {
+        expanded.contains(id) || (needsYou && !closed.contains(id))
+    }
+
+    private func toggle(_ id: String, needsYou: Bool = false) {
+        let open = !isExpanded(id, needsYou: needsYou)
+        withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
+            if open {
+                expanded.insert(id)
+                closed.remove(id)
+            } else {
+                expanded.remove(id)
+                closed.insert(id)
+            }
+        }
+    }
+
+    private func move(from id: String, by step: Int) {
+        let ids = rowIds
+        guard let index = ids.firstIndex(of: id) else { return }
+        let next = index + step
+        if next < 0 { focus = .search } else if next < ids.count { focus = .row(ids[next]) }
+    }
+
+    private func focusFirstRow() {
+        if let first = rowIds.first { focus = .row(first) }
+    }
+
+    // MARK: Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            HStack(alignment: .center, spacing: Theme.Space.m) {
+                Text("Installed", comment: "Settings › Extensions: the title over the extensions and skills on this Mac")
+                    .font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: Theme.Space.s)
+                Picker("Show", selection: $show) {
+                    Text("All \(counts.all)", comment: "A filter in Settings › Extensions with how many it shows: “All 15”")
+                        .tag(ExtensionListQuery.Show.all)
+                    Text("On \(counts.on)", comment: "A filter in Settings › Extensions: the extensions switched on, “On 9”")
+                        .tag(ExtensionListQuery.Show.on)
+                    Text("Off \(counts.off)", comment: "A filter in Settings › Extensions: the extensions switched off, “Off 6”")
+                        .tag(ExtensionListQuery.Show.off)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+                .help("Show every extension, or only those switched on or off")
+            }
+            SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
+                      submit: focusFirstRow)
+        }
+    }
+
+    // MARK: Groups
+
+    @ViewBuilder private var groups: some View {
+        if query.isNarrowed, nothingShown {
+            noMatch
+        }
+        if !builtIns.isEmpty || !unavailable.isEmpty { builtIn }
+        if !query.isNarrowed || !added.isEmpty { installed }
+        if !drafts.isEmpty { draftGroup }
+        if show == .all, !query.isSearching || !skills.isEmpty { skillGroup }
+    }
+
+    /// Nothing left after the words or the filter, and the way back.
+    private var noMatch: some View {
+        RowsCard {
+            VStack(spacing: Theme.Space.s) {
+                Image(systemName: "magnifyingglass").font(.system(size: 20)).foregroundStyle(Theme.inkFaint)
+                    .accessibilityHidden(true)
+                Text(verbatim: noMatchText).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: Theme.Space.s) {
+                    if query.isSearching { Button("Clear Search") { search = "" }.buttonStyle(.sf(.secondary)) }
+                    if show != .all { Button("Show All") { show = .all }.buttonStyle(.sf(.secondary)) }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.vertical, Theme.Space.xl)
+        }
+    }
+
+    private var noMatchText: String {
+        let words = search.trimmingCharacters(in: .whitespacesAndNewlines)
+        return switch (query.isSearching, show) {
+        case (true, .all): String(localized: "Nothing installed matches “\(words)”.", comment: "Settings › Extensions, a search that found nothing")
+        case (true, .on): String(localized: "No extension that is on matches “\(words)”.", comment: "Settings › Extensions, a search among those switched on")
+        case (true, .off): String(localized: "No extension that is off matches “\(words)”.", comment: "Settings › Extensions, a search among those switched off")
+        case (false, .on): String(localized: "No extension is on.", comment: "Settings › Extensions, the On filter with nothing in it")
+        case (false, _): String(localized: "Every extension is on.", comment: "Settings › Extensions, the Off filter with nothing in it")
+        }
+    }
+
+    private func row(_ ext: ExtensionInfo, uninstall: (() -> Void)?) -> some View {
+        let needsYou = !ext.pendingTools.isEmpty
+        // A row found by something its name and description don't say names what matched.
+        let hit = query.isSearching && !query.matches([ext.name, ext.description]) ? query.hit(in: ext.searchTexts).map(ext.shownHit) : nil
+        return ExtensionRow(ext: ext, model: model, expanded: isExpanded(ext.id, needsYou: needsYou), hit: hit, focus: $focus,
+                            toggle: { toggle(ext.id, needsYou: needsYou) }, move: { move(from: ext.id, by: $0) },
+                            switched: { if query.isNarrowed { kept.insert(ext.id) } }, uninstall: uninstall)
+            .id(ext.id)
+    }
 
     /// Extensions answer requests in your own words, so without an AI they have nothing to answer.
     private var builtInFooter: LocalizedStringKey {
@@ -63,9 +241,9 @@ struct ExtensionsSettingsView: View {
     private var builtIn: some View {
         SettingsGroup(title: "Built in", footer: builtInFooter) {
             ForEach(builtIns) { ext in
-                ExtensionRow(ext: ext, model: model, uninstall: nil)
+                row(ext, uninstall: nil)
             }
-            ForEach(model.unavailable) { item in
+            ForEach(unavailable) { item in
                 UnavailableExtensionRow(item: item) { Task { await model.retryBuiltIns() } }
             }
         }
@@ -73,40 +251,42 @@ struct ExtensionsSettingsView: View {
 
     // MARK: Added by you
 
+    /// While the list is narrowed, only what matches; the ways to add one are under All with nothing searched.
     private var installed: some View {
         SettingsGroup(title: "Added by you",
                       footer: "Extensions run in a sandbox limited to what they asked for at install. MCP servers run with your full permissions.") {
-            let added = model.extensions.filter { !$0.bundled }
             if added.isEmpty {
                 InlineEmpty(text: "Nothing added yet. Install an extension from a folder, add an MCP server, or ask Sidefolk to build one.",
                             systemImage: "puzzlepiece.extension")
             }
             ForEach(added) { ext in
-                ExtensionRow(ext: ext, model: model) { uninstalling = ext }
+                row(ext) { uninstalling = ext }
             }
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                HStack(spacing: Theme.Space.s) {
-                    Button("Install from Folder…", action: chooseFolder).buttonStyle(.sf(.secondary))
-                    Button("Add MCP Server…") { addingServer = true }.buttonStyle(.sf(.secondary))
-                }
-                if !model.samples.isEmpty {
+            if !query.isNarrowed {
+                VStack(alignment: .leading, spacing: Theme.Space.s) {
                     HStack(spacing: Theme.Space.s) {
-                        Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        ForEach(model.samples, id: \.folder) { sample in
-                            Button {
-                                model.clearExtensionError()
-                                Task { model.installPreview = await model.preview(folder: sample.folder) }
-                            } label: {
-                                Text(verbatim: "\(sample.name)…")
+                        Button("Install from Folder…", action: chooseFolder).buttonStyle(.sf(.secondary))
+                        Button("Add MCP Server…") { addingServer = true }.buttonStyle(.sf(.secondary))
+                    }
+                    if !model.samples.isEmpty {
+                        HStack(spacing: Theme.Space.s) {
+                            Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                            ForEach(model.samples, id: \.folder) { sample in
+                                Button {
+                                    model.clearExtensionError()
+                                    Task { model.installPreview = await model.preview(folder: sample.folder) }
+                                } label: {
+                                    Text(verbatim: "\(sample.name)…")
+                                }
+                                .buttonStyle(.sf(.plain))
                             }
-                            .buttonStyle(.sf(.plain))
                         }
                     }
+                    if let error = model.extensionError { InlineError(error: error) }
                 }
-                if let error = model.extensionError { InlineError(error: error) }
+                .padding(.horizontal, Theme.Space.l)
+                .padding(.vertical, Theme.Space.m)
             }
-            .padding(.horizontal, Theme.Space.l)
-            .padding(.vertical, Theme.Space.m)
         }
     }
 
@@ -128,46 +308,45 @@ struct ExtensionsSettingsView: View {
 
     // MARK: Drafts
 
-    private var drafts: some View {
+    private var draftGroup: some View {
         SettingsGroup(title: "Drafts",
                       footer: "Extensions Sidefolk wrote at your request. Nothing in a draft runs until you review it and install it.") {
-            ForEach(model.drafts) { draft in
-                DraftRow(draft: draft, review: {
-                    model.clearExtensionError()
-                    Task { await model.review(folder: draft.folder) }
-                }, reveal: { model.revealDraft(draft) }, delete: { deletingDraft = draft })
+            ForEach(drafts) { draft in
+                let id = DraftRow.rowId(draft)
+                DraftRow(draft: draft, expanded: isExpanded(id), focus: $focus, toggle: { toggle(id) }, move: { move(from: id, by: $0) },
+                         review: {
+                             model.clearExtensionError()
+                             Task { await model.review(folder: draft.folder) }
+                         }, reveal: { model.revealDraft(draft) }, delete: { deletingDraft = draft })
+                    .id(id)
             }
         }
     }
 
     // MARK: Skills
 
-    private var skills: some View {
+    private var skillGroup: some View {
         SettingsGroup(title: "Skills", footer: "Skills are written instructions Sidefolk reads when a request needs them.") {
-            if model.skills.isEmpty {
+            if skills.isEmpty {
                 InlineEmpty(text: "No skills yet. Ask “write a skill for my weekly review” and approve it.", systemImage: "text.book.closed")
             }
-            ForEach(model.skills) { skill in
-                HStack(alignment: .top, spacing: Theme.Space.m) {
-                    IconTile(symbol: "text.book.closed", folk: "seed", size: 26)
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: Theme.Space.s) {
-                            Text(skill.name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                            Chip(skill.bundled ? "Built in" : "Yours", tone: skill.bundled ? .neutral : .accent)
-                        }
-                        Text(skill.description).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: Theme.Space.s)
-                    if !skill.bundled {
-                        Button("Delete") { deletingSkill = skill }.buttonStyle(.sf(.secondary))
-                            .accessibilityLabel("Delete \(skill.name)")
-                    }
-                }
-                .padding(.horizontal, Theme.Space.l)
-                .padding(.vertical, Theme.Space.m)
+            ForEach(skills) { skill in
+                let id = SkillRow.rowId(skill)
+                SkillRow(skill: skill, expanded: isExpanded(id), focus: $focus, toggle: { toggle(id) }, move: { move(from: id, by: $0) },
+                         delete: { deletingSkill = skill })
+                    .id(id)
             }
         }
+    }
+
+    // MARK: Remembered
+
+    private static let showKey = "settings.extensions.show"
+
+    /// The filter the person left the list on: a convenience of theirs, so it lives in their defaults, not the store.
+    private static var savedShow: ExtensionListQuery.Show {
+        get { UserDefaults.standard.string(forKey: showKey).flatMap(ExtensionListQuery.Show.init(rawValue:)) ?? .all }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: showKey) }
     }
 }
 

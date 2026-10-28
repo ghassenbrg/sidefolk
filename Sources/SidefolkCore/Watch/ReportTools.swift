@@ -10,13 +10,17 @@ enum Report {
         return .object(o)
     }
 
-    /// The watcher kind and settings that `source` (metric, weather or web) names, for a report or a reading now.
-    static func source(_ input: JSONValue, context: ToolContext) throws -> (kind: String, config: JSONValue) {
+    /// The watcher kind and settings that `source` (metric, weather or web) names, for a report or a reading now. Nil for
+    /// the weather when no place is named and the person's own isn't known (D48).
+    static func source(_ input: JSONValue, here: KnownPlace?, context: ToolContext) throws -> (kind: String, config: JSONValue)? {
         switch input.string("source") {
         case "metric":
             return (WatchKind.metric, ["metric": input["metric"] ?? .null])
         case "weather":
-            return (WatchKind.weather, ["place": input["place"] ?? .null, "quantity": input["quantity"] ?? "temperature"])
+            guard let weather = WeatherProbe.config(place: input.string("place"), here: here, quantity: input["quantity"] ?? "temperature") else {
+                return nil
+            }
+            return (WatchKind.weather, weather)
         case "web":
             var config: JSONValue = ["url": input["url"] ?? .null]
             for key in ["json_path", "selector", "regex"] { config = config.setting(key, input[key]) }
@@ -109,6 +113,8 @@ enum Report {
 struct WatchReportTool: Tool {
     let engine: WatcherEngine
     var parser: @Sendable () -> WhenParser = { WhenParser() }
+    /// Where the person is, when they share it: the weather's place when none is named (D48).
+    var here: @Sendable () -> KnownPlace? = { nil }
 
     var spec: ToolSpec {
         ToolSpec(
@@ -116,9 +122,10 @@ struct WatchReportTool: Tool {
             description: """
             Tell the user a current value every few seconds or minutes ("every 10 seconds tell me the CPU", "temperature in \
             Fukuoka every minute"). The value updates in place beside the companion; it is not a change alert (that is \
-            watch.create), and a single value asked for now ("what's my CPU usage") is watch.read. source: metric (this Mac's cpu, memory, battery, disk or network), weather (built in, no address \
-            needed: a place's temperature, feels_like, humidity, wind, precipitation or conditions), web (one value on a page \
-            or API, found by json_path, selector or regex). Fastest: metrics every 5 s, weather and web every 60 s; a command's \
+            watch.create), and a single value asked for now ("what's my CPU usage") is watch.read. source: metric (this \
+            Mac's cpu, memory, battery, disk or network), weather (built in, no address needed: a place's temperature, \
+            feels_like, humidity, wind, precipitation or conditions), web (one value on a page or API, found by json_path, \
+            selector or regex). Fastest: metrics every 5 s, weather and web every 60 s; a command's \
             output is watch.command with report=true (every 10 s at the fastest). Pass the interval the user asked for: a faster \
             one is raised to the fastest allowed and the result says so; never refuse a request for being too frequent. It stops \
             on its own after 1 hour when it reads more often than once a minute, otherwise after 1 day, unless the user gave an \
@@ -127,7 +134,7 @@ struct WatchReportTool: Tool {
             inputSchema: Schema.object([
                 "source": Schema.string("What kind of value.", enum: ["metric", "weather", "web"]),
                 "metric": Schema.string("metric: which value of this Mac.", enum: Metric.allCases.map(\.rawValue)),
-                "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\"."),
+                "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\". Leave out for where the user is."),
                 "quantity": Schema.string("weather: what to show (default temperature).", enum: WeatherQuantity.allCases.map(\.rawValue)),
                 "url": Schema.string("web: the page or API address."),
                 "json_path": Schema.string("web: a path into a JSON reply, like current.temperature_2m or data[0].price."),
@@ -146,7 +153,10 @@ struct WatchReportTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         let every = (try? Report.interval(input)).flatMap { $0 > 0 ? WatchWords.every($0) : nil }
-        let what = Self.title(input) ?? String(localized: "a value")
+        // The weather with no place named is the person's own (D48).
+        let named = input.string("source") == "weather" && input.string("place") == nil
+            ? here().map { input.setting("place", .string($0.name)) } ?? input : input
+        let what = Self.title(named) ?? String(localized: "a value")
         return every.map { String(localized: "Show \(what) every \($0)") } ?? String(localized: "Show \(what) regularly")
     }
 
@@ -158,14 +168,15 @@ struct WatchReportTool: Tool {
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let (kind, named) = try Report.source(input, context: context)
-        var config = named
+        guard let source = try Report.source(input, here: here(), context: context) else { return PlaceNeeded.result }
+        let kind = source.kind
+        var config = source.config
         if input["notify"]?.boolValue == true { config = config.setting("notify", true) }
         let end = try Report.end(input, now: context.now, parser: parser())
         if end == nil, input["until_stopped"]?.boolValue == true { config = config.setting("until_stopped", true) }
 
         let requested = try Report.interval(input)
-        let title = input.string("title") ?? Self.title(input) ?? String(localized: "Value")
+        let title = input.string("title") ?? Self.title(input.setting("place", config["place"])) ?? String(localized: "Value")
         let watcher = Watcher(kind: kind, title: title, config: config, intervalS: requested, mode: .report, expiresAt: end,
                               source: WatchSource.string(for: context), now: context.now)
         return try await Report.start(watcher, requested: requested, engine: engine, context: context)

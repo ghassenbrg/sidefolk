@@ -38,6 +38,8 @@ extension WatcherEngine {
 /// usage?" used to make the model start a report and stop it again (D35, amended).
 struct WatchReadTool: Tool {
     let engine: WatcherEngine
+    /// Where the person is, when they share it: the weather's place when none is named (D48).
+    var here: @Sendable () -> KnownPlace? = { nil }
 
     var spec: ToolSpec {
         ToolSpec(
@@ -52,7 +54,7 @@ struct WatchReadTool: Tool {
             inputSchema: Schema.object([
                 "source": Schema.string("What kind of value.", enum: ["metric", "weather", "web"]),
                 "metric": Schema.string("metric: which value of this Mac.", enum: Metric.allCases.map(\.rawValue)),
-                "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\"."),
+                "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\". Leave out for where the user is."),
                 "quantity": Schema.string("weather: what to read (default temperature).", enum: WeatherQuantity.allCases.map(\.rawValue)),
                 "url": Schema.string("web: the page or API address."),
                 "json_path": Schema.string("web: a path into a JSON reply, like current.temperature_2m or data[0].price."),
@@ -64,15 +66,22 @@ struct WatchReadTool: Tool {
     }
 
     func summary(for input: JSONValue) -> String {
-        String(localized: "Read \(WatchReportTool.title(input) ?? String(localized: "a value")) now", comment: "“Read CPU now”")
+        String(localized: "Read \(WatchReportTool.title(placed(input)) ?? String(localized: "a value")) now", comment: "“Read CPU now”")
+    }
+
+    /// The weather with no place named is the person's own (D48).
+    private func placed(_ input: JSONValue) -> JSONValue {
+        guard input.string("source") == "weather", input.string("place") == nil, let here = here() else { return input }
+        return input.setting("place", .string(here.name))
     }
 
     /// A web value fetches an address the model may have built: Guard weighs it like any other link (T1, T2).
     func scope(for input: JSONValue) -> ToolScope { WatchReportTool(engine: engine).scope(for: input) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let (kind, config) = try Report.source(input, context: context)
-        let title = WatchReportTool.title(input) ?? String(localized: "Value")
+        guard let source = try Report.source(input, here: here(), context: context) else { return PlaceNeeded.result }
+        let (kind, config) = (source.kind, source.config)
+        let title = WatchReportTool.title(input.setting("place", config["place"])) ?? String(localized: "Value")
         let watcher = Watcher(kind: kind, title: title, config: config, intervalS: 0, mode: .report,
                               source: WatchSource.string(for: context), now: context.now)
         let found: ProbeResult
@@ -86,7 +95,7 @@ struct WatchReadTool: Tool {
                                                             comment: "A value read now: “CPU: 23 %”, “Temperature in Fukuoka: 18 °C”"),
                               subtitle: place, url: kind == WatchKind.webValue ? config.string("url") : nil)
         let said = place.map { " (\($0))" } ?? ""
-        return ToolResult(text: "\(Self.nameForModel(input)) right now\(said): \(reading.forModel). Nothing keeps running.",
+        return ToolResult(text: "\(Self.nameForModel(input.setting("place", config["place"]))) right now\(said): \(reading.forModel). Nothing keeps running.",
                           card: card, untrusted: reading.fromOutside)
     }
 

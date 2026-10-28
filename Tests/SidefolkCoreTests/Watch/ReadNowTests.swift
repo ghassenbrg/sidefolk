@@ -73,6 +73,23 @@ import Testing
         #expect(failure(await run(["source": "weather", "place": "Atlantis"])) == "I couldn't find a place called “Atlantis”.")
     }
 
+    /// "What's the weather?" with no place: where the person is, by its coordinates, or else a question (D48).
+    @Test func noPlaceNamedReadsWhereThePersonIs() async throws {
+        let here = try WatchEnv()
+        let engine = here.engine(probes: WatchProbes.standard(fetcher: here.fetcher, throttle: here.throttle, settle: 0))
+        here.base.registry.register(WatchTools.make(engine: engine, here: { LocationTests.fukuoka }))
+        here.fetcher.say(ReportTests.forecast(21), headers: ["content-type": "application/json"])
+        let outcome = await here.base.executor.execute(name: "watch.read", input: ["source": "weather"], caller: .agent(runId: "r1"))
+        let result = try ok(outcome)
+        #expect(result.card?.title.hasPrefix("Temperature in Fukuoka, Japan: ") == true, "\(String(describing: result.card))")
+        #expect(here.fetcher.requests.map { $0.url.host } == ["api.open-meteo.com"], "its coordinates: nothing to look up")
+
+        let asked = await run(["source": "weather", "quantity": "humidity"])
+        guard case .ok(let question) = asked.status else { Issue.record("expected the question, got \(asked.status)"); return }
+        #expect(question.isError && question.card?.url == SettingsLink.yourLocation.rawValue)
+        #expect(env.fetcher.requests.isEmpty)
+    }
+
     @Test func aWebValueIsReadLikeAReportsFirstLook() async throws {
         env.fetcher.say(#"{"data":[{"price":42.5}]}"#, headers: ["content-type": "application/json"])
         let result = try ok(await run(["source": "web", "url": "https://api.example.com/price", "json_path": "data[0].price"]))

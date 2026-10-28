@@ -67,7 +67,7 @@ extension IntentParser {
             report.notify = true
             text.replaceSubrange(r, with: " ")
         }
-        guard let source = subject(text, original: command) else { return nil }
+        guard let source = subject(text, original: command) else { return placeNeeded(text) }
         report.source = source
         return ParsedIntent(intent: .report(report), hint: hint(report, ctx))
     }
@@ -92,7 +92,8 @@ extension IntentParser {
         guard !words.isEmpty, !words.contains(where: Self.ongoing.contains), !Self.interval.found(in: " \(lower) ") else { return nil }
         var text = " " + lower + " "
         while let r = Self.asking.firstRange(in: text) { text.replaceSubrange(r, with: " ") }
-        guard let source = subject(text, original: command) else { return nil }
+        // No place named and none known: "Which place?", as for a report.
+        guard let source = subject(text, original: command) else { return placeNeeded(text) }
         let what = switch source {
         case .metric(let m): m.title
         case .weather(let place, let quantity): quantity.title(place)
@@ -125,22 +126,42 @@ extension IntentParser {
             rest.replaceSubrange(r, with: " ")
         }
         var quantity: WeatherQuantity?
+        var named: [String] = []
         for (phrase, q) in Self.weatherWords {
             guard let r = rest.range(of: " \(phrase) ") else { continue }
             if quantity == nil || quantity == .conditions { quantity = q } else if q != .conditions, q != quantity { return nil }
             rest.replaceSubrange(r, with: " ")
+            named.append(phrase)
         }
         if let metric {
             guard quantity == nil, Self.onlyFillers(rest) else { return nil }
             return .metric(metric)
         }
-        guard let quantity, let place = Self.place(in: rest, original: original) else { return nil }
-        return .weather(place: place, quantity: quantity)
+        guard let quantity else { return nil }
+        if let place = Self.place(in: rest, original: original, said: text, quantity: named) { return .weather(place: place, quantity: quantity) }
+        // Nothing but the quantity and "tell me" words: where the person is, when they share it (D48).
+        guard let here, Self.onlyFillers(rest) else { return nil }
+        return .weather(place: here, quantity: quantity)
+    }
+
+    /// "temperature every 10 minutes" with no place named and none known: ask which, rather than leave it to a guess.
+    private func placeNeeded(_ text: String) -> ParsedIntent? {
+        guard here == nil, !Self.metricWords.contains(where: { text.contains(" \($0.phrase) ") }) else { return nil }
+        var rest = text
+        var quantity: WeatherQuantity?
+        for (phrase, q) in Self.weatherWords {
+            guard let r = rest.range(of: " \(phrase) ") else { continue }
+            if quantity == nil || quantity == .conditions { quantity = q } else if q != .conditions, q != quantity { return nil }
+            rest.replaceSubrange(r, with: " ")
+        }
+        guard let quantity, Self.onlyFillers(rest) else { return nil }
+        return ParsedIntent(intent: .needsPlace(quantity), hint: ParsedIntent.hint(String(localized: "Needs a place")))
     }
 
     /// "in Fukuoka", "for paris, france", "at new york": the words after the preposition, as typed, when nothing but
-    /// "tell me" words is left around them. "the Fukuoka temperature" works too (the place before the quantity).
-    private static func place(in rest: String, original: String) -> String? {
+    /// "tell me" words is left around them. "the Fukuoka temperature" works too, the place right before the quantity
+    /// (`said` with the `quantity` words): "a joke about the weather" names no place called Joke.
+    private static func place(in rest: String, original: String, said: String, quantity: [String]) -> String? {
         let words = rest.split(separator: " ").map(String.init)
         var candidate: [String] = []
         var others: [String] = []
@@ -158,7 +179,11 @@ extension IntentParser {
             if !fillers.contains(w) { others.append(w) }
             i += 1
         }
-        if candidate.isEmpty, (1...3).contains(others.count) { candidate = others; others = [] }
+        if candidate.isEmpty, (1...3).contains(others.count),
+           quantity.contains(where: { said.contains(" \(others.joined(separator: " ")) \($0) ") || said.contains(" \(others.joined(separator: " "))'s \($0) ") }) {
+            candidate = others
+            others = []
+        }
         guard !candidate.isEmpty, others.isEmpty else { return nil }
         let typed = candidate.joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,'s"))
         // The person's own capitals: "Fukuoka", "New York".

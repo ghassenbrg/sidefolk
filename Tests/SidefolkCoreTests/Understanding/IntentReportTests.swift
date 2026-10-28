@@ -84,7 +84,7 @@ import Testing
         #expect(parse("every day tell me the weather in Paris") == nil, "a daily brief is a routine, not a live value")
         #expect(parse("every 10 seconds and every minute show the cpu") == nil)
         #expect(parse("show the cpu and the memory every minute") == nil, "one value per report")
-        #expect(parse("every minute tell me the temperature") == nil, "where?")
+        #expect(parse("every minute tell me the temperature")?.intent == .needsPlace(.temperature), "where? (D48)")
         #expect(report("every minute tell me the cpu until I feel better") == nil)
     }
 
@@ -162,5 +162,26 @@ import Testing
         }
         // With an interval it is still a report.
         #expect(report("what's my cpu usage every 10 seconds") == ReportIntent(source: .metric(.cpu), everySeconds: 10))
+    }
+
+    /// "Joke" is no town: a place without "in" must sit right before the quantity ("the Fukuoka temperature").
+    @Test func aTopicIsNotAPlace() {
+        let here = IntentParser(when: TimeTest.parser(), home: "/Users/test", here: "Fukuoka, Japan")
+        for text in ["tell me a joke about the weather every minute", "tell me a joke about the weather",
+                     "every hour write a poem about the temperature"] {
+            #expect(parse(text) == nil, "\(text)")
+            #expect(here.parse(text, now: now) == nil, "\(text), knowing where the person is")
+        }
+        #expect(report("the Fukuoka temperature every minute")?.source == .weather(place: "Fukuoka", quantity: .temperature))
+        #expect(report("Fukuoka's weather every hour")?.source == .weather(place: "Fukuoka", quantity: .conditions))
+        #expect(reading("Tokyo weather") == .weather(place: "Tokyo", quantity: .conditions))
+    }
+
+    /// One reading of the weather with no place named: the person's own (D48), or the question about which.
+    @Test func aReadingWithNoPlaceIsWhereThePersonIs() {
+        let here = IntentParser(when: TimeTest.parser(), home: "/Users/test", here: "Fukuoka, Japan")
+        #expect(here.parse("what's the weather", now: now)?.intent == .read(.weather(place: "Fukuoka, Japan", quantity: .conditions)))
+        #expect(here.parse("what's the weather", now: now)?.hint == "Weather in Fukuoka, Japan now · no AI")
+        #expect(parse("what's the temperature")?.intent == .needsPlace(.temperature))
     }
 }

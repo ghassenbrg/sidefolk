@@ -103,7 +103,8 @@ public final class SidefolkRuntime: Sendable {
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events, scores: KVStore(db)))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
-        registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) }))
+        registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) },
+                                          here: { [settings] in settings.current.location.current }))
         registry.register(AgendaTool(scheduler: scheduler, notebook: notebook, watchers: watchers,
                                      parser: { [settings] in WhenParser(settings: settings.current) }))
         registry.register(AgentFacingTools.make(attention: attention))
@@ -117,7 +118,8 @@ public final class SidefolkRuntime: Sendable {
     /// and the companion's current name ("mochi, remind me…").
     public var intentParser: IntentParser {
         let s = settings.current
-        return IntentParser(when: WhenParser(settings: s), companionNames: ["sidefolk", "pip", s.companionName])
+        return IntentParser(when: WhenParser(settings: s), companionNames: ["sidefolk", "pip", s.companionName],
+                            here: s.location.current?.name)
     }
 
     /// Starts the background engines and the local API other agents connect to.
