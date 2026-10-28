@@ -99,7 +99,11 @@ final class HomeModel {
             pending = []
             // Now shows reminders, watchers, sessions, jobs and attention together; any change can touch it.
             await now.reload()
-            if domains.contains(.notebook) || domains.contains(.memories) { await notebook.reload() }
+            if domains.contains(.notebook) || domains.contains(.memories) {
+                await notebook.reload()
+            } else if domains.contains(.reminders) {
+                await notebook.reloadReminders()
+            }
             if domains.contains(.activity) || domains.contains(.runs) { await activity.reload() }
         }
     }

@@ -9,6 +9,9 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
     nonisolated static var isAvailable: Bool { Bundle.main.bundleIdentifier != nil && Bundle.main.bundlePath.hasSuffix(".app") }
 
     private let attention: AttentionCenter
+    /// A click on a notification itself (not one of its buttons), with its attention item's id: a reminder that belongs to
+    /// a note or task opens it (D49).
+    var opened: (@MainActor (String) -> Void)?
     private var center: UNUserNotificationCenter? { Self.isAvailable ? UNUserNotificationCenter.current() : nil }
     private static let fallbackPrefix = "fallback."
 
@@ -31,8 +34,18 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
             UNNotificationAction(identifier: "done", title: String(localized: "Done")),
             UNNotificationAction(identifier: "stop", title: String(localized: "Stop repeating")),
         ], intentIdentifiers: [])
+        // A reminder that belongs to an open task (D49): its first button finishes the task.
+        let task = UNNotificationCategory(identifier: "reminderTask", actions: [
+            UNNotificationAction(identifier: ReminderScheduler.ActionID.taskDone, title: String(localized: "Mark done")),
+            UNNotificationAction(identifier: "snooze10", title: String(localized: "10 min")),
+            UNNotificationAction(identifier: "tomorrow", title: String(localized: "Tomorrow")),
+        ], intentIdentifiers: [])
+        let taskRepeating = UNNotificationCategory(identifier: "reminderTaskRepeat", actions: [
+            UNNotificationAction(identifier: ReminderScheduler.ActionID.taskDone, title: String(localized: "Mark done")),
+            UNNotificationAction(identifier: "stop", title: String(localized: "Stop repeating")),
+        ], intentIdentifiers: [])
         let generic = UNNotificationCategory(identifier: "generic", actions: [], intentIdentifiers: [])
-        center.setNotificationCategories([reminder, repeating, generic])
+        center.setNotificationCategories([reminder, repeating, task, taskRepeating, generic])
     }
 
     func authorizationStatus() async -> UNAuthorizationStatus {
@@ -52,11 +65,17 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         content.title = item.title
         if let body = item.body { content.body = body }
         content.sound = sound ? .default : nil
-        content.categoryIdentifier = item.refKind != "reminder" ? "generic"
-            : item.actions.contains { $0.id == ReminderScheduler.ActionID.stop } ? "reminderRepeat" : "reminder"
+        content.categoryIdentifier = Self.category(item)
         content.userInfo = ["attentionId": item.id]
         content.threadIdentifier = item.source
         center.add(UNNotificationRequest(identifier: item.id, content: content, trigger: nil))
+    }
+
+    static func category(_ item: AttentionItem) -> String {
+        guard item.refKind == "reminder" else { return "generic" }
+        let repeats = item.actions.contains { $0.id == ReminderScheduler.ActionID.stop }
+        let task = item.actions.contains { $0.id == ReminderScheduler.ActionID.taskDone }
+        return (task ? "reminderTask" : "reminder") + (repeats ? "Repeat" : "")
     }
 
     func withdraw(id: String) {
@@ -116,7 +135,10 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         case UNNotificationDismissActionIdentifier: nil
         default: response.actionIdentifier
         }
-        let attention = await MainActor.run { self.attention }
+        let attention = await MainActor.run {
+            if action == "open" { self.opened?(id) }
+            return self.attention
+        }
         await attention.respond(id: id, actionId: action)
     }
 }

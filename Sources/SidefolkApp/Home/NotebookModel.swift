@@ -59,6 +59,11 @@ final class NotebookModel {
         didSet { if everywhere != oldValue, !query.trimmingCharacters(in: .whitespaces).isEmpty { scheduleItemsReload() } }
     }
 
+    /// Each item's next reminder (D49), for the bell beside it.
+    private(set) var reminders: [String: Reminder] = [:]
+    /// The item whose reminder time is being picked.
+    var pickingTime: NotebookItem?
+
     private(set) var selectedId: String?
     /// The selected item as edited; written back when editing pauses, the selection changes or the window closes.
     var draft: NotebookItem? {
@@ -96,6 +101,11 @@ final class NotebookModel {
         await reloadCollections()
         await reloadItems()
         await reloadTrash()
+        await reloadReminders()
+    }
+
+    func reloadReminders() async {
+        reminders = (try? await runtime.reminderStore.next()) ?? [:]
     }
 
     func reloadCollections() async {
@@ -269,6 +279,59 @@ final class NotebookModel {
         try? await store.purge(itemId: item.id)
         runtime.events.changed(.notebook)
         await reloadTrash()
+    }
+
+    // MARK: Reminders (D49)
+
+    enum RemindPreset: CaseIterable {
+        case inAnHour, thisEvening, tomorrowMorning
+
+        /// In the words the reminder parser reads, so "evening" and "morning" are the person's own hours.
+        var phrase: String {
+            switch self {
+            case .inAnHour: "in 1 hour"
+            case .thisEvening: "this evening"
+            case .tomorrowMorning: "tomorrow morning"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .inAnHour: String(localized: "In an hour")
+            case .thisEvening: String(localized: "This evening")
+            case .tomorrowMorning: String(localized: "Tomorrow morning")
+            }
+        }
+    }
+
+    /// The quick times that still make sense now, and when each would come ("This evening" only before the evening).
+    func remindPresets(now: Date = Date()) -> [(preset: RemindPreset, date: Date)] {
+        let parser = WhenParser(settings: runtime.settings.current)
+        return RemindPreset.allCases.compactMap { preset in
+            guard let found = parser.parse(preset.phrase, now: now), found.confidence != .low, found.date > now else { return nil }
+            if preset == .thisEvening, !parser.calendar.isDate(found.date, inSameDayAs: now) { return nil }
+            return (preset, found.date)
+        }
+    }
+
+    /// A reminder that belongs to `item`, through the reminder tool like any reminder the person sets.
+    func remind(_ item: NotebookItem, at date: Date) async {
+        await flush()
+        let stored = (try? await store.item(id: item.id)) ?? item
+        if let problem = await services.remind(about: stored, when: ISO8601DateFormatter().string(from: date)) {
+            showToast(problem.message)
+        } else {
+            showToast(String(localized: "I'll remind you \(TimeFormat.when(date, now: Date(), calendar: .autoupdatingCurrent)).",
+                             comment: "After setting a reminder for a note or task: “I'll remind you Tomorrow 09:00.”"))
+        }
+        await reloadReminders()
+    }
+
+    /// Cancels the item's next reminder; a later one, if any, shows next.
+    func removeReminder(of item: NotebookItem) async {
+        guard let reminder = reminders[item.id] else { return }
+        await services.cancelReminder(reminder.id)
+        await reloadReminders()
     }
 
     // MARK: Collections

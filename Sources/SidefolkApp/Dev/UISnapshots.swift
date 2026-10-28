@@ -56,6 +56,8 @@ enum UISnapshots {
             try await homeShot("now")
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook")
+            await full.reveal(sample.remindedTask)
+            try await homeShot("notebook-reminder")
             await full.reveal(sample.profileItem)
             try await homeShot("about-you")
             full.selection = .trash

@@ -15,6 +15,12 @@ extension AppCoordinator: AppServices {
         return out.problem
     }
 
+    func remind(about item: NotebookItem, when: String) async -> UserFacingError? {
+        let out = await runtime.executor.execute(name: "reminders.create", input: ["item": .string(item.id), "when": .string(when)],
+                                                 caller: .user)
+        return out.problem
+    }
+
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? {
         var date: Date?
         var recurrence: Recurrence??
