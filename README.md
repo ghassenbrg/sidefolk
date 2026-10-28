@@ -16,9 +16,9 @@ in plain words and it keeps them: notes, ideas, lists, reminders, pages and file
 that works on your Mac without any AI. When you want answers or help with bigger jobs, connect the
 AI you already use: Claude Code, Codex, an API key, or a model running on your own Mac.
 
-> **0.1.0 is the first release.** There is no signed download yet, so for now you
-> [build it from source](#build-from-source). Read [what isn't done yet](#what-isnt-done-yet) before
-> you rely on it.
+> **0.1.0 is the first release, and it isn't out yet.** Signed and notarized test builds ("snapshots") are
+> on [Releases](https://github.com/ghassenbrg/sidefolk/releases), or [build it from source](#build-from-source).
+> Read [what isn't done yet](#what-isnt-done-yet) before you rely on it.
 
 **Contents:** [What it does](#what-it-does) · [Privacy](#privacy) · [Choosing an AI](#choosing-an-ai) ·
 [Install](#install) · [Extensions](#extensions) · [Agents and MCP](#agents-and-mcp) ·
@@ -131,15 +131,17 @@ waits, or stops; your choice) and the step waits on Now with **Run it now**.
 ## Privacy
 
 Sidefolk is local first. Everything it keeps is in one folder on your Mac. There is no account, no
-telemetry, no analytics, no crash reporter and no update check.
+telemetry, no analytics and no crash reporter. It looks for a new version on GitHub once a day (you can
+turn that off), and asks before installing one.
 
 **What leaves your Mac, and when:**
 
 | What | Where it goes | When |
 |---|---|---|
-| Your request and its context: your words, the date and time zone, the name of the app in front, your "About you" notes, notes that match, what's running, and the last few minutes of the conversation | The AI you chose: Anthropic or OpenAI through Claude Code or Codex (your account), an API provider, or nowhere if it's Ollama or LM Studio on your Mac | Only for requests that need AI. **Settings › AI** shows exactly what was last sent. |
+| Your request and its context: your words, the date and time zone, your town if you set your location, the name of the app in front, your "About you" notes, notes that match, what's running, and the last few minutes of the conversation | The AI you chose: Anthropic or OpenAI through Claude Code or Codex (your account), an API provider, or nowhere if it's Ollama or LM Studio on your Mac | Only for requests that need AI. **Settings › AI** shows exactly what was last sent. |
 | A request for the page | That site | When you ask it to read or watch a page or a site, or when its AI wants to read a page to answer you (an address you didn't type asks you first, unless you chose Auto or Full access or allowed that site) |
-| The place you asked about | Open-Meteo (no account, no key) | When you ask for the weather |
+| The place you asked about, or your own town's coordinates (rounded) when you set your location | Open-Meteo (no account, no key) | When you ask for the weather |
+| Sidefolk's version | GitHub (api.github.com) | Once a day while "Check for updates automatically" is on, and when you click Check for Updates |
 | A request for the list of models, or one tiny test prompt | Your AI provider | When you pick a provider in Settings, or click **Test** |
 | The words your companion says aloud | ElevenLabs (api.elevenlabs.io), with your key | Only if you choose an ElevenLabs voice |
 | Whatever that extension sends | The internet | Only extensions you allowed to use the internet. The built-in Git extension clones the repositories you ask for. |
@@ -149,7 +151,8 @@ What stays on your Mac:
 
 - Your data: `~/Library/Application Support/Sidefolk` (readable only by you). Logs:
   `~/Library/Logs/Sidefolk`, kept 7 days, with secrets taken out. API keys: your Keychain.
-- Recent conversation is kept 7 days to answer follow-ups, and never shown as a transcript.
+- Conversations are kept 7 days (you choose how long) to answer follow-ups; Home › Conversations shows
+  them, and you can delete one or all.
 - Voice: speech is recognised on your Mac; the audio is never stored. (macOS may download a language's
   speech model from Apple the first time.)
 - Sidefolk never reads your screen or other apps' windows. It knows the *name* of the app in front.
@@ -281,8 +284,8 @@ language. The translations are new: corrections are welcome.
 
 ## What isn't done yet
 
-- **No signed download yet.** Signing and notarization are ready to run but need a Developer ID. Once
-  installed, Sidefolk looks for new versions on GitHub itself and asks before installing one.
+- **Snapshots only.** 0.1.0 isn't released yet; the signed, notarized snapshots on GitHub are test builds.
+  Once installed, Sidefolk looks for new versions on GitHub itself and asks before installing one.
 - **Apple silicon only**, and most testing so far has been on macOS 27.
 - **Calendar, Mail, Music and Shortcuts** can't be reached yet. Neither can scheduled AI routines
   ("every weekday at 9, give me my open tasks") or a "what was I doing today" timeline.
