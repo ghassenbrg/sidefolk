@@ -176,6 +176,9 @@ enum UISnapshots {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
             try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
+            for (name, caption) in sampleTosses() {
+                try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 280)
+            }
 
             // Sheets.
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
@@ -415,6 +418,27 @@ enum UISnapshots {
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
                                           canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
         return ask
+    }
+
+    /// What the companion flipped, rolled and played (D44, amended): landed, and one coin halfway up.
+    private static func sampleTosses() -> [(String, CaptionModel)] {
+        func caption(_ toss: Toss, landed: Bool = true, text: String? = nil) -> CaptionModel {
+            let model = CaptionModel()
+            model.text = text ?? toss.result
+            model.companionName = "Mochi"
+            model.stage = TossShow(toss: toss, start: Date().addingTimeInterval(landed ? -2 : -0.5), flight: 1.04, still: false, landed: landed)
+            return model
+        }
+        return [
+            ("coin-flying", caption(.coins([false]), landed: false, text: String(localized: "Heads or tails…"))),
+            ("coins", caption(.coins([true, false, true]))),
+            ("dice", caption(.dice(sides: 6, rolls: [5, 3], modifier: 1))),
+            ("d20", caption(.dice(sides: 20, rolls: [17, 4, 20], modifier: 0))),
+            ("many-dice", caption(.dice(sides: 6, rolls: [1, 2, 3, 4, 5, 6, 6], modifier: 0))),
+            ("hands-you-win", caption(.hands(person: .rock, companion: .scissors))),
+            ("hands-i-win", caption(.hands(person: .rock, companion: .paper))),
+            ("hands-draw", caption(.hands(person: .scissors, companion: .scissors))),
+        ]
     }
 
     private static func sampleBubbles() -> [(String, BubbleModel)] {
