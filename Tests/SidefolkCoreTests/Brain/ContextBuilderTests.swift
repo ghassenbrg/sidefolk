@@ -66,6 +66,19 @@ import Testing
         #expect(again.system == ctx.system)
     }
 
+    /// A note or task with a reminder says when, and which reminder, so "move my reminder for the report" needs no search (D49).
+    @Test func aNotebookLineCarriesItsReminder() async throws {
+        let f = try await Fixture()
+        let inbox = try await f.notebook.inbox(now: parisMorning)
+        let task = NotebookItem(collectionId: inbox.id, kind: .task, title: "Prepare the report", source: "user", now: parisMorning)
+        try await f.notebook.add(task)
+        var reminder = Reminder(title: "Prepare the report", fireAt: parisMorning.addingTimeInterval(86_400), source: "user", now: parisMorning)
+        reminder.itemId = task.id
+        try await ReminderStore(f.env.db).save(reminder)
+        let ctx = await f.build("when is the report due?")
+        #expect(ctx.system.contains("- [task, reminder Thu 23 Oct 10:00 (reminder \(reminder.id))] Prepare the report (Inbox, 2025-10-22, id \(task.id))"))
+    }
+
     /// Built-ins that are switched off cost the model one line, not their tools, and it may suggest one.
     @Test func switchedOffBuiltInsAreNamedOnce() async throws {
         var f = try await Fixture()

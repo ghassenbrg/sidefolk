@@ -119,7 +119,9 @@ after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so paralle
 overshoot), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
 web values and no weather, which would reach a server; a fast one stops within the hour) (D42).
 They see descriptions and schemas written for them (`ExternalToolPolicy.externalSpec`): no
-`collection_kind`, no critical level, no command kinds, `source: metric` only.
+`collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
+to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
+result names the item by kind and id only.
 Reading user data (notes, reminders, `agenda.today`) asks every time; an external caller never gets
 "Always". Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,
 settings and extensions are not exposed. There is no per-client key: Connect only adds the MCP entry

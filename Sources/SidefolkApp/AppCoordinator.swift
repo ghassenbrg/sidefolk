@@ -65,6 +65,7 @@ final class AppCoordinator {
         self.runtime = runtime
         notifier = SystemNotifier(attention: runtime.attention)
         monitor = EnvironmentMonitor(attention: runtime.attention)
+        notifier.opened = { [weak self] id in self?.notificationOpened(id) }
     }
 
     func start() async {
@@ -590,7 +591,25 @@ final class AppCoordinator {
         }
         if item.source == Self.ownVoice { return }
         if action == "open", item.source == "summary" { openHome() }
+        if action == ReminderScheduler.ActionID.open, item.refKind == "reminder", let id = item.refId { openReminderItem(id) }
         Task { await runtime.attention.respond(id: item.id, actionId: action) }
+    }
+
+    /// Open on a reminder that belongs to a note or task (D49): that item in the Notebook, or Home if it went to the
+    /// Trash since. A reminder of its own opens nothing.
+    private func openReminderItem(_ reminderId: String) {
+        Task {
+            guard let itemId = try? await runtime.reminderStore.reminder(id: reminderId)?.itemId else { return }
+            if let item = try? await runtime.notebook.item(id: itemId), item.deletedAt == nil { openHome(item: item) } else { openHome() }
+        }
+    }
+
+    /// A click on a notification: a reminder's opens its note or task.
+    private func notificationOpened(_ attentionId: String) {
+        Task {
+            guard let item = try? await AttentionStore(runtime.db).item(id: attentionId), item.refKind == "reminder", let id = item.refId else { return }
+            openReminderItem(id)
+        }
     }
 
     func renderMood() {

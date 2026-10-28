@@ -20,7 +20,7 @@ extension IntentParser {
         }
     }
 
-    private static func label(_ kind: NotebookItem.Kind) -> String {
+    static func label(_ kind: NotebookItem.Kind) -> String {
         switch kind {
         case .note: String(localized: "Note")
         case .idea: String(localized: "Idea")
@@ -144,6 +144,9 @@ extension IntentParser {
            Self.bareKind.match(text) == nil, collection(place, ctx).name.map({ name in ctx.known.contains(name) }) == true {
             return saved(kind: .task, text: text, place: place, ctx)
         }
+        if let c = Self.taskTo.match(t), let text = c["text"], !isKnownCollection(text, ctx) {
+            return saved(kind: .task, text: text, place: nil, ctx)
+        }
         if let c = Self.noteVerb.match(t), let text = c["text"] {
             return saved(kind: .note, text: text, place: nil, ctx)
         }
@@ -181,8 +184,21 @@ extension IntentParser {
         }
         let finalKind = resolved.isTaskList && kind == .note ? .task : kind
         let where_ = resolved.name ?? String(localized: "Inbox")
-        return ParsedIntent(intent: .note(kind: finalKind, text: body, collection: resolved.name, collectionKind: resolved.kind ?? (resolved.name == nil ? nil : listKind)),
+        let collectionKind = resolved.kind ?? (resolved.name == nil ? nil : listKind)
+        // "call mom at 5": a task that ends with a time gets its reminder (D49).
+        if finalKind == .task, let timed = taskTime(body, ctx) {
+            return taskWithReminder(timed.title, at: timed.date, collection: resolved.name, collectionKind: collectionKind, ctx)
+        }
+        return ParsedIntent(intent: .note(kind: finalKind, text: body, collection: resolved.name, collectionKind: collectionKind),
                             hint: ParsedIntent.hint("\(Self.label(finalKind)) → \(where_)"))
+    }
+
+    /// "add a task to Work": the words name a collection, so which task is not said.
+    private func isKnownCollection(_ text: String, _ ctx: Context) -> Bool {
+        var name = text.lowercased()
+        for lead in ["my ", "the ", "our "] where name.hasPrefix(lead) { name = String(name.dropFirst(lead.count)) }
+        return ctx.known.contains { $0.lowercased() == name || $0.lowercased() == Self.strippingListWords(name) }
+            || Self.taskListNames.contains(name) || Self.inboxNames.contains(name)
     }
 
     private func remembered(_ fact: String) -> ParsedIntent? {

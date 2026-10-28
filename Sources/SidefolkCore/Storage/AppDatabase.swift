@@ -239,6 +239,23 @@ public final class AppDatabase: Sendable {
                 t.add(column: "source", .text).notNull().defaults(to: "user")
             }
         }
+        // Reminders that belong to a note or task (D49): why one stopped with its item, so it comes back when the item
+        // does, and the way from an item to its reminders. An item deleted for good leaves its reminders behind
+        // (the foreign key only forgets the link), so the ones still waiting are cancelled first: a reminder about
+        // something that no longer exists is no use.
+        m.registerMigration("v3-reminder-links") { db in
+            try db.alter(table: "reminders") { t in
+                t.add(column: "ended_with_item", .text)
+            }
+            try db.create(index: "reminders_item", on: "reminders", columns: ["item_id"])
+            try db.execute(sql: """
+                CREATE TRIGGER reminders_item_deleted BEFORE DELETE ON items BEGIN
+                    UPDATE reminders SET state = CASE WHEN state IN ('scheduled', 'snoozed') THEN 'cancelled' ELSE state END,
+                                         ended_with_item = NULL
+                    WHERE item_id = OLD.id;
+                END
+                """)
+        }
         return m
     }
 }

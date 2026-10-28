@@ -49,14 +49,16 @@ extension ExternalToolPolicy {
             Save a note, idea, task or link in the user's Sidefolk notebook. The first line of `text` becomes the title, \
             the rest the body. It goes to the Inbox unless `collection` names one of the user's existing projects, topics or \
             lists; other agents can't create collections, so when the name isn't found, save to the Inbox or ask the user to \
-            create it. Use kind task for to-dos and list items. Notes you save are tagged with your name. Never save passwords, \
-            API keys, tokens or other secrets.
+            create it. Use kind task for to-dos and list items. Give `remind` a time when the user wants to be reminded about \
+            it too: the reminder belongs to the note and stops when the task is done. Notes you save are tagged with your \
+            name. Never save passwords, API keys, tokens or other secrets.
             """,
         "reminders.create": """
             Remind the user about something at a time: a bubble on their desktop with Done and Snooze, kept across restarts. \
             `when` takes plain language ("in 20 minutes", "tomorrow at 9", "friday 3pm", "every weekday at 9", "every 30 \
             minutes until 6pm") or ISO 8601. Set one only when the user asked and the time is clear. A reminder repeats at \
-            most once a minute. Keep the id from the result: reminders_cancel takes it.
+            most once a minute. When it is about a note or task you saved, pass its id as `item`. Keep the id from the \
+            result: reminders_cancel takes it.
             """,
         "reminders.cancel": """
             Cancel a reminder you set earlier, by the id reminders_create returned. A repeating reminder stops repeating. \

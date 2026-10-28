@@ -46,6 +46,15 @@ final class FixtureServices: AppServices {
         return nil
     }
 
+    func remind(about item: NotebookItem, when: String) async -> UserFacingError? {
+        guard let date = ISO8601DateFormatter().date(from: when) else { return UserFacingError("I couldn't tell when “\(when)” is.") }
+        var reminder = Reminder(title: item.title, fireAt: date, source: "user")
+        reminder.itemId = item.id
+        try? await runtime.reminderStore.save(reminder)
+        runtime.events.changed(.reminders)
+        return nil
+    }
+
     private func changeReminder(_ id: String, _ change: (inout Reminder) -> Void) async {
         guard var r = try? await runtime.reminderStore.reminder(id: id) else { return }
         change(&r)

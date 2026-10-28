@@ -27,6 +27,7 @@ enum QA {
         case .needsTarget(let kind, let becomes): return "needsTarget \(kind) \(becomes ?? "-")"
         case .needsPlace(let quantity): return "needsPlace \(quantity.rawValue)"
         case .note(let kind, let text, let collection, _): return "note(\(kind)) “\(text)” in \(collection ?? "Inbox")"
+        case .taskWithReminder(let text, let collection, _, let at): return "task “\(text)” in \(collection ?? "Inbox") reminded \(at)"
         case .aboutMe(let fact): return "aboutMe “\(fact)”"
         case .watch(let w): return "watch \(w.kind) \(w.target) contains=\(w.contains ?? "-")"
         case .report(let r): return "report \(r.source) every \(r.everySeconds) s until \(r.until ?? (r.untilStopped ? "stopped" : "-"))"

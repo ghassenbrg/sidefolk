@@ -126,6 +126,21 @@ public struct ReminderStore: Sendable {
                 .order(Column("updated_at").desc).limit(limit).fetchAll(db)
         }
     }
+
+    /// The soonest waiting reminder of each notebook item that has one (D49); `itemIds` nil means every item.
+    public func next(forItems itemIds: [String]? = nil) async throws -> [String: Reminder] {
+        let waiting = try await db.writer.read { db in
+            var request = Reminder.filter(["scheduled", "snoozed"].contains(Column("state"))).filter(Column("item_id") != nil)
+            if let itemIds { request = request.filter(itemIds.contains(Column("item_id"))) }
+            return try request.fetchAll(db)
+        }
+        var soonest: [String: Reminder] = [:]
+        for r in waiting {
+            guard let item = r.itemId, let due = r.nextDue else { continue }
+            if soonest[item].flatMap(\.nextDue).map({ due < $0 }) ?? true { soonest[item] = r }
+        }
+        return soonest
+    }
 }
 
 public struct WatcherStore: Sendable {

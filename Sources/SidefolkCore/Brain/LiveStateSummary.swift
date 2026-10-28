@@ -6,14 +6,17 @@ import Foundation
 public enum LiveStateSummary {
     public static let maxPerLine = 4
 
+    /// - Parameter items: the notes and tasks reminders belong to (D49), by id.
     public static func make(reminders: [Reminder], watchers: [Watcher], jobs: [Job], sessions: [AgentSession], now: Date,
-                            timeZone: TimeZone) -> String {
+                            timeZone: TimeZone, items: [String: NotebookItem] = [:]) -> String {
         var lines: [String] = []
 
         let horizon = now.addingTimeInterval(86_400)
         let due = reminders.compactMap { r in r.nextDue.map { (r, $0) } }.filter { $0.1 <= horizon }.sorted { $0.1 < $1.1 }
         if !due.isEmpty {
-            let shown = due.filter { trusted($0.0.source) }.map { r, at in "“\(title(r.title))” \(when(at, now: now, timeZone: timeZone))" }
+            let shown = due.filter { trusted($0.0.source) }.map { r, at in
+                "“\(title(r.title))” \(when(at, now: now, timeZone: timeZone))" + (r.itemId.flatMap { items[$0] }.map(belongsTo) ?? "")
+            }
             lines.append("- Reminders in the next 24 h: " + list(shown, total: due.count))
         }
 
@@ -64,13 +67,21 @@ public enum LiveStateSummary {
             let watchers = (try? await WatcherStore(db).active()) ?? []
             let jobs = (try? await JobStore(db).running()) ?? []
             let sessions = (try? await SessionStore(db).live()) ?? []
-            return make(reminders: reminders, watchers: watchers, jobs: jobs, sessions: sessions, now: clock.now, timeZone: timeZone)
+            let linked = (try? await NotebookStore(db).items(ids: Array(Set(reminders.compactMap(\.itemId))))) ?? []
+            return make(reminders: reminders, watchers: watchers, jobs: jobs, sessions: sessions, now: clock.now, timeZone: timeZone,
+                        items: Dictionary(linked.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }))
         }
     }
 
     /// Only the user's own words are quoted. Sidefolk's agent records "user:agent" for what it does in
     /// a clean turn; plain "agent" marks something made while untrusted content steered the turn.
     static func trusted(_ source: String) -> Bool { ContextBuilder.isUserSourced(source) }
+
+    /// " (for the task “Send the report”)", or " (for a task)" when someone else wrote its title (T3).
+    static func belongsTo(_ item: NotebookItem) -> String {
+        let named = trusted(item.source) ? title(item.title) : ""
+        return named.isEmpty ? " (for a \(item.kind.rawValue))" : " (for the \(item.kind.rawValue) “\(named)”)"
+    }
 
     static func agentName(_ agent: String) -> String {
         switch agent.lowercased() {

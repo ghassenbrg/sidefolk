@@ -229,6 +229,9 @@ enum NoteText {
         }
     }
 
+    /// On the card of an item that only got a reminder (D49).
+    static var reminded: String { String(localized: "Reminder set") }
+
     static func plural(_ kind: NotebookItem.Kind) -> String {
         switch kind {
         case .note: String(localized: "Notes")
@@ -241,11 +244,13 @@ enum NoteText {
 
 /// Compact one-line renderings of notebook items for the model.
 enum NoteFormat {
-    static func line(_ item: NotebookItem, collections: [String: NotebookCollection], snippet: Bool = true) -> String {
+    /// - Parameter reminder: the item's next reminder (D49), so "move my reminder for the report" has an id to use.
+    static func line(_ item: NotebookItem, collections: [String: NotebookCollection], snippet: Bool = true, reminder: Reminder? = nil) -> String {
         var parts = ["[\(item.kind.rawValue)] \(ToolFormat.oneLine(ExternalText.clean(item.title), 100))"]
         let place = collections[item.collectionId].map { ToolFormat.oneLine(ExternalText.clean($0.name), 60) }
         var meta = [place ?? "?", ToolFormat.day(item.createdAt)]
         if item.status == .done { meta.append("done") }
+        if let reminder, let due = reminder.nextDue { meta.append("reminder \(TimeFormat.full(due, calendar: .current)) (reminder \(reminder.id))") }
         if !item.tagList.isEmpty { meta.append("#" + item.tagList.joined(separator: " #")) }
         if let origin = ItemProvenance.note(for: item.source) { meta.append(origin) }
         parts.append("— " + meta.joined(separator: ", "))
@@ -255,6 +260,11 @@ enum NoteFormat {
             if !body.isEmpty, body != ToolFormat.oneLine(ExternalText.clean(item.title), 110) { text += "\n    " + body }
         }
         return text
+    }
+
+    /// The next reminder of each of these items, for `line`.
+    static func reminders(_ items: [NotebookItem], notebook: NotebookStore) async -> [String: Reminder] {
+        (try? await ReminderStore(notebook.db).next(forItems: items.map(\.id))) ?? [:]
     }
 
     /// True when any item was written by something other than the user or Sidefolk's own agent.

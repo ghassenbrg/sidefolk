@@ -9,6 +9,8 @@ enum SampleData {
         var profile: NotebookCollection
         var selectedItem: NotebookItem
         var profileItem: NotebookItem
+        /// A task with a reminder that belongs to it (D49).
+        var remindedTask: NotebookItem
     }
 
     static func fill(_ rt: SidefolkRuntime, notebook: NotebookModel) async throws -> Created {
@@ -58,7 +60,7 @@ enum SampleData {
         _ = try await item(inbox, .idea, "Folks could have their own sounds", body: "A short chime per folk, so you know who's tapping you without looking.",
                            tags: ["folks", "sound"], source: "external:claude-code", created: ago(35))
         _ = try await item(inbox, .note, "Karim's new address", body: "12 rue Oberkampf, 75011 Paris", created: ago(60 * 26))
-        _ = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50))
+        let passport = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50))
         _ = try await item(inbox, .link, "Swift Testing", url: "https://developer.apple.com/xcode/swift-testing/", created: ago(60 * 70))
 
         let profileItem = try await item(profile, .note, "Prefers short, direct answers", body: "No preamble. Lead with the answer, then one line of why.",
@@ -78,8 +80,8 @@ enum SampleData {
                                       - Cap at three folks on screen, as today.
                                       """,
                                       tags: ["extensions", "folks"], source: "external:claude-code", created: ago(60 * 47), edited: ago(12))
-        _ = try await item(sidefolk, .task, "Write the extension developer guide", body: "Manifest, permissions, the watcher protocol, a sample.",
-                           tags: ["docs"], created: ago(60 * 30))
+        let guide = try await item(sidefolk, .task, "Write the extension developer guide", body: "Manifest, permissions, the watcher protocol, a sample.",
+                                   tags: ["docs"], created: ago(60 * 30))
         _ = try await item(sidefolk, .task, "Record a 30-second demo", tags: ["launch"], created: ago(60 * 80), edited: ago(60 * 20), done: true)
         _ = try await item(sidefolk, .note, "Launch checklist", body: "Notarize, staple, DMG, landing page, Show HN draft.",
                            tags: ["launch"], created: ago(60 * 100))
@@ -99,8 +101,9 @@ enum SampleData {
 
         // Reminders
         func reminder(_ title: String, at: Date, recurrence: Recurrence? = nil, source: String = "user", state: Reminder.State = .scheduled,
-                      snoozedUntil: Date? = nil, updated: Date? = nil) async throws {
+                      snoozedUntil: Date? = nil, updated: Date? = nil, for item: NotebookItem? = nil) async throws {
             var r = Reminder(title: title, fireAt: at, recurrence: recurrence, source: source, now: ago(60 * 24))
+            r.itemId = item?.id
             r.state = state
             r.snoozedUntil = snoozedUntil
             if state == .fired || state == .done { r.lastFiredAt = updated ?? at }
@@ -116,6 +119,9 @@ enum SampleData {
                            recurrence: Recurrence(frequency: .minutely, interval: 30, until: min(max(day(0, 18), ahead(120)), endOfToday.addingTimeInterval(-60))))
         try await reminder("Call mom", at: day(1, 18), source: "external:claude-code")
         try await reminder("Renew the sidefolk.app domain", at: day(4, 10))
+        // Reminders that belong to a task (D49): one with the task's own words, one with words of its own.
+        try await reminder("Write the extension developer guide", at: day(1, 10), for: guide)
+        try await reminder("Book the mairie appointment", at: day(2, 9), for: passport)
         try await reminder("Water the plants", at: day(6, 19), recurrence: Recurrence(frequency: .weekly, weekdays: [7]))
         try await reminder("Pay rent", at: day(9, 9), recurrence: Recurrence(frequency: .monthly))
         try await reminder("Take out the recycling", at: ago(130), state: .done, updated: ago(120))
@@ -275,7 +281,7 @@ enum SampleData {
                                                 callerKind: "agent", now: ago(60 * 5)))
         try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 
-        return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)
+        return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem, remindedTask: guide)
     }
 
     /// A long answer, for Conversations and the Ask panel's Show all.

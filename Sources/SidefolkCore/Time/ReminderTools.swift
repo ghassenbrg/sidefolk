@@ -14,6 +14,11 @@ public enum ReminderTools {
         make(scheduler: scheduler, parser: { WhenParser(calendar: calendar, settings: settings.current) })
     }
 
+    /// What the notebook tools need to give a note or task its reminder (`remind`, D49).
+    public static func shared(scheduler: ReminderScheduler, settings: SettingsStore, calendar: Calendar = .autoupdatingCurrent) -> Shared {
+        Shared(scheduler: scheduler, parser: { WhenParser(calendar: calendar, settings: settings.current) })
+    }
+
     // MARK: Shared pieces
 
     /// Active reminders one external client may keep, and all external clients together (their names
@@ -31,11 +36,16 @@ public enum ReminderTools {
         }
     }
 
-    struct Shared: Sendable {
+    public struct Shared: Sendable {
         let scheduler: ReminderScheduler
         let parser: @Sendable () -> WhenParser
         /// Quota checks and creation run one at a time, so parallel calls can't all see room.
         let quotas = AsyncGate()
+
+        init(scheduler: ReminderScheduler, parser: @escaping @Sendable () -> WhenParser) {
+            self.scheduler = scheduler
+            self.parser = parser
+        }
 
         var calendar: Calendar { parser().calendar }
 
@@ -77,13 +87,63 @@ public enum ReminderTools {
             }
         }
 
-        /// One reminder for the model, in English.
-        func line(_ r: Reminder) -> String {
+        /// One reminder for the model, in English, with the note or task it belongs to. An item's title is quoted only
+        /// when the person wrote it (SECURITY T3).
+        func line(_ r: Reminder, item: NotebookItem? = nil) -> String {
             var s = "\(r.id) · \(r.title)"
             if let due = r.nextDue { s += " · \(TimeFormat.full(due, calendar: calendar))" }
             if let rule = r.recurrence { s += " · \(TimeFormat.recurrenceForModel(rule, calendar: calendar))" }
             if r.state != .scheduled { s += " · \(r.state.rawValue)" }
+            if let item {
+                let title = ContextBuilder.isUserSourced(item.source) ? " “\(ToolFormat.oneLine(ExternalText.clean(item.title), 80))”" : ""
+                s += " · for the \(item.kind.rawValue)\(title) (item \(item.id))"
+            }
             return s
+        }
+
+        /// The notebook items these reminders belong to, by id.
+        func items(for reminders: [Reminder]) async -> [String: NotebookItem] {
+            let ids = Array(Set(reminders.compactMap(\.itemId)))
+            let found = (try? await NotebookStore(scheduler.store.db).items(ids: ids)) ?? []
+            return Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        }
+
+        /// The note or task a reminder may belong to (D49): in the notebook, not a fact in About you, not a task already
+        /// done.
+        func linkable(_ id: String) async throws -> NotebookItem {
+            let notebook = NotebookStore(scheduler.store.db)
+            let wanted = id.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let item = try await notebook.item(id: wanted), item.deletedAt == nil else {
+                throw ToolError.notFound(String(localized: "a note or task with id \(wanted.clipped(40))"))
+            }
+            if try await NotebookCollections.isProfile(collectionId: item.collectionId, notebook: notebook) {
+                throw UserFacingError("That's a fact in “About you”, not something to be reminded about.")
+            }
+            if item.kind == .task, item.status == .done {
+                throw UserFacingError("“\(item.title.clipped(60))” is already done.", recovery: "Mark it open first, or set a reminder without it.")
+            }
+            return item
+        }
+
+        /// A reminder for a note or task just saved or changed (`remind` on notes.save and notes.update), named by the
+        /// item's title. Repeats work as in reminders.create; one finer than a minute becomes every minute.
+        func remind(about item: NotebookItem, when text: String, context: ToolContext) async throws -> Reminder {
+            let parsed = try future(CreateTool.everyFewSeconds.replacing(in: text, with: "every minute"), now: context.now)
+            let source = context.provenanceTag
+            let title = item.title.isEmpty ? String(localized: "Reminder") : item.title
+            let shared = self
+            return try await quotas.run {
+                if case .external = context.caller { try await shared.checkExternalQuota(source: source) }
+                return try await shared.scheduler.create(title: title, at: parsed.date, recurrence: parsed.recurrence, anchor: parsed.anchor,
+                                                         source: source, itemId: item.id)
+            }
+        }
+
+        /// "Reminder: Tomorrow 17:00", on the card of a note that got one.
+        func cardLine(_ r: Reminder, now: Date) -> String {
+            var when = TimeFormat.when(r.nextDue ?? r.fireAt, now: now, calendar: calendar)
+            if let rule = r.recurrence { when += " · " + TimeFormat.recurrence(rule, now: now, calendar: calendar) }
+            return String(localized: "Reminder: \(when)", comment: "On a saved note's card: when its reminder comes")
         }
 
         func card(_ r: Reminder, now: Date, prefix: String? = nil, note: String? = nil) -> ResultCard {
@@ -120,10 +180,13 @@ public enum ReminderTools {
                 "friday at 3pm", "every weekday at 9", "every 30 minutes", "every 2 hours until 6pm") or ISO 8601. Reminders \
                 survive restarts and show a bubble with Done and Snooze. A reminder repeats at most once a minute; a faster \
                 request is set to every minute and the result says so. To show a changing value (CPU, weather) use watch.report. \
-                Only set one when the user actually asked and the time is clear; ask first if it is not.
+                Only set one when the user actually asked and the time is clear; ask first if it is not. When it is about a \
+                note or task in the notebook, pass its id as `item`: the reminder then belongs to it, shows it, and stops when \
+                the task is done or the item trashed.
                 """,
                 inputSchema: Schema.object([
-                    "title": Schema.string("What to remind about, as a short phrase (\"Send the document\")."),
+                    "title": Schema.string("What to remind about, as a short phrase (\"Send the document\"). With `item` it may be left out: the item's title is used."),
+                    "item": Schema.string("The id of the note or task this reminder belongs to (from notes.search, notes.list or agenda.today)."),
                     "when": Schema.string("When: natural language or ISO 8601. May include a repeat such as \"every monday at 10am\", \"every 30 minutes\" or \"every 10 minutes until 6pm\"."),
                     "recurrence": Schema.object([
                         "frequency": Schema.string("How often (minutely = every N minutes, at least one).", enum: Recurrence.Frequency.allCases.map(\.rawValue)),
@@ -134,7 +197,7 @@ public enum ReminderTools {
                     ], required: ["frequency"]),
                     "notes": Schema.string("Optional extra detail shown under the title."),
                     "level": Schema.string("How loudly to interrupt. Default attention.", enum: ["gentle", "attention", "critical"]),
-                ], required: ["title", "when"]),
+                ], required: ["when"]),
                 risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
             )
         }
@@ -149,7 +212,17 @@ public enum ReminderTools {
         static let everyFewSeconds = Scan(#"\bevery\s+(?:\d+\s*|a\s+few\s+|few\s+|other\s+)?(?:seconds?|secs?)\b"#)
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-            guard let title = input.string("title") else { throw ToolError.invalidInput(String(localized: "“title” is required")) }
+            var item: NotebookItem?
+            if let id = input.string("item") { item = try await shared.linkable(id) }
+            // The item's own words become the title only for the person and Sidefolk's agent: another agent names its
+            // reminder itself, so the result never hands it the item's title (T4).
+            let mayQuote = switch context.caller {
+            case .user, .agent: true
+            case .routine, .external, .extension: false
+            }
+            guard let title = input.string("title") ?? (mayQuote ? item?.title : nil), !title.trimmingCharacters(in: .whitespaces).isEmpty else {
+                throw ToolError.invalidInput(String(localized: "“title” is required"))
+            }
             guard var whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
             let raised = Self.everyFewSeconds.found(in: whenText)
             if raised { whenText = Self.everyFewSeconds.replacing(in: whenText, with: "every minute") }
@@ -185,11 +258,11 @@ public enum ReminderTools {
             let source = context.provenanceTag
             let shared = self.shared
             let notes = input.string("notes")
-            let (first, repeating, seriesAnchor) = (date, rule, anchor)
+            let (first, repeating, seriesAnchor, itemId) = (date, rule, anchor, item?.id)
             let reminder = try await shared.quotas.run {
                 if case .external = context.caller { try await shared.checkExternalQuota(source: source) }
                 return try await shared.scheduler.create(title: title, at: first, recurrence: repeating, anchor: seriesAnchor,
-                                                         notes: notes, level: level, source: source)
+                                                         notes: notes, level: level, source: source, itemId: itemId)
             }
             let id = reminder.id
             let scheduler = shared.scheduler
@@ -197,10 +270,15 @@ public enum ReminderTools {
             if let rule { text += ", repeating \(TimeFormat.recurrenceForModel(rule, calendar: calendar))" }
             if reminder.level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(id)"
+            if let item {
+                let words = mayQuote ? " “\(item.title.clipped(80))”" : ""
+                text += ". It belongs to the \(item.kind.rawValue)\(words) (item \(item.id))"
+            }
             if raised { text += ". Reminders repeat at most once a minute, so this one repeats every minute; tell the user." }
+            let cardNotes = [item.flatMap { ReminderScheduler.itemLine($0, reminder: reminder) },
+                         raised ? String(localized: "A reminder repeats at most once a minute.") : nil].compactMap { $0 }
             return ToolResult(
-                text: text, card: raised ? shared.card(reminder, now: now, note: String(localized: "A reminder repeats at most once a minute."))
-                    : shared.card(reminder, now: now),
+                text: text, card: shared.card(reminder, now: now, note: cardNotes.isEmpty ? nil : cardNotes.joined(separator: "\n")),
                 undo: UndoAction(label: String(localized: "Cancel reminder")) { _ = try await scheduler.cancel(id: id) }
             )
         }
@@ -258,13 +336,10 @@ public enum ReminderTools {
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let now = context.now
             let upcoming = await shared.scheduler.upcoming()
-            var lines = upcoming.map { shared.line($0) }
             let includeDone = input["include_done"]?.boolValue ?? false
-            var finished: [Reminder] = []
-            if includeDone {
-                finished = await shared.scheduler.recent(limit: 20)
-                lines += finished.map { shared.line($0) }
-            }
+            let finished = includeDone ? await shared.scheduler.recent(limit: 20) : []
+            let items = await shared.items(for: upcoming + finished)
+            let lines = (upcoming + finished).map { shared.line($0, item: $0.itemId.flatMap { items[$0] }) }
             let count = upcoming.count
             let title = count == 0 ? String(localized: "No upcoming reminders") : String(localized: "\(count) upcoming reminders")
             let body = lines.isEmpty ? "You have no reminders." : lines.joined(separator: "\n")
