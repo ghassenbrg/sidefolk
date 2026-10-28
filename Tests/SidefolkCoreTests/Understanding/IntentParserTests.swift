@@ -404,7 +404,8 @@ import Testing
     // MARK: Things for the AI
 
     @Test func questionsAndRequestsReturnNil() {
-        for text in ["what's the weather?", "summarize this page", "what is the capital of France", "how do I undo a git commit",
+        // "What's the weather?" is a reading now, or the question about where (IntentReportTests).
+        for text in ["summarize this page", "what is the capital of France", "how do I undo a git commit",
                      "write a poem about cats", "translate this to French", "explain closures in Swift", "who won the game",
                      "can you help me with this?", "hello", "thanks", "/note something", "", "   ", "I need coffee",
                      "why is my build slow", "open Safari", "clean up my downloads folder", "tomorrow", "5 minutes"] {

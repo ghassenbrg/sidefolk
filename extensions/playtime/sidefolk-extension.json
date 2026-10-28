@@ -1,9 +1,9 @@
 {
   "id": "dev.sidefolk.playtime",
   "name": "Playtime",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sidefolk": ">=0.1",
-  "description": "A break with your companion: flip a coin, roll dice, let chance pick, play rock, paper, scissors, or a trivia quiz that keeps your score.",
+  "description": "A break with your companion: a trivia quiz that keeps your score, and chance to pick a number or choose from a list.",
   "folk": "play",
   "author": "Sidefolk",
   "icon": "icon.pdf",
@@ -12,20 +12,14 @@
   },
   "permissions": {},
   "tools": {
-    "chance": {
-      "title": "Coin, dice and random picks",
+    "pick": {
+      "title": "Random picks",
       "risk": "low",
       "category": "system",
       "mutates": false
     },
     "trivia": {
       "title": "Trivia quiz",
-      "risk": "low",
-      "category": "system",
-      "mutates": false
-    },
-    "rock_paper_scissors": {
-      "title": "Rock, paper, scissors",
       "risk": "low",
       "category": "system",
       "mutates": false

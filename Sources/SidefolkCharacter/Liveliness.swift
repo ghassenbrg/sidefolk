@@ -41,6 +41,9 @@ public enum CharacterAntic: String, CaseIterable, Sendable {
     case boop, pet, startle, cheer, land, spin, dizzy
     // Tricks the person asks for, and play (D44): tickled, it giggles; one slow breath for the breathing exercise.
     case wave, dance, bow, nod, giggle, breathe
+    // Chance, played for the person (D44, amended): a coin flicked up, dice shaken and thrown, a fist pumped for rock,
+    // paper, scissors.
+    case flick, roll, pump
 
     /// The ones the idle scheduler may pick.
     public static let idle: [CharacterAntic] = [.earTwitch, .stretch, .yawn, .scratch, .hop, .wiggle, .peek, .glance, .sneeze,

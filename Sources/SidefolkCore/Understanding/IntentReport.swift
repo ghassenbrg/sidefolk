@@ -72,6 +72,35 @@ extension IntentParser {
         return ParsedIntent(intent: .report(report), hint: hint(report, ctx))
     }
 
+    // MARK: One reading
+
+    /// Words that ask for a value again and again, or about another time: a sentence with one is no single reading.
+    private static let ongoing: Set<String> = [
+        "watch", "watching", "monitor", "monitoring", "keep", "track", "tracking", "update", "updates", "live", "report", "readout",
+        "every", "each", "once", "until", "till", "notify", "notification", "notifications", "today", "tonight", "tomorrow",
+        "forecast", "week", "weekend", "later",
+    ]
+    /// What a plain question puts around the thing it asks about: "how much memory am I using", "how full is my disk".
+    /// "using" alone stays: "what's using my CPU" asks which app, not how much.
+    private static let asking = Scan(#"\b(?:am\s+i\s+using|i'?m\s+using|do\s+i\s+have|have\s+i\s+got|(?:is\s+)?in\s+use|full|busy)\b"#)
+
+    /// "what's my cpu usage", "cpu?", "how full is my disk", "show me the temperature in Fukuoka": one reading now, with
+    /// no AI and nothing left running (D35, amended). With an interval it is a report; about later, it is the AI's.
+    func reading(_ command: String) -> ParsedIntent? {
+        let lower = command.lowercased().replacingOccurrences(of: "’", with: "'")
+        let words = lower.split(whereSeparator: { !$0.isLetter && !$0.isNumber && $0 != "'" }).map(String.init)
+        guard !words.isEmpty, !words.contains(where: Self.ongoing.contains), !Self.interval.found(in: " \(lower) ") else { return nil }
+        var text = " " + lower + " "
+        while let r = Self.asking.firstRange(in: text) { text.replaceSubrange(r, with: " ") }
+        // No place named and none known: "Which place?", as for a report.
+        guard let source = subject(text, original: command) else { return placeNeeded(text) }
+        let what = switch source {
+        case .metric(let m): m.title
+        case .weather(let place, let quantity): quantity.title(place)
+        }
+        return ParsedIntent(intent: .read(source), hint: ParsedIntent.hint(String(localized: "\(what) now", comment: "A hint: one value read right now, “CPU now”")))
+    }
+
     /// "evey 10s", "evry minute", "ever 5 seconds": a slip in "every" right before how often, the one word every
     /// report has. Anywhere else the word is left as typed.
     static func fixEverySlip(_ text: String) -> String {
@@ -97,17 +126,19 @@ extension IntentParser {
             rest.replaceSubrange(r, with: " ")
         }
         var quantity: WeatherQuantity?
+        var named: [String] = []
         for (phrase, q) in Self.weatherWords {
             guard let r = rest.range(of: " \(phrase) ") else { continue }
             if quantity == nil || quantity == .conditions { quantity = q } else if q != .conditions, q != quantity { return nil }
             rest.replaceSubrange(r, with: " ")
+            named.append(phrase)
         }
         if let metric {
             guard quantity == nil, Self.onlyFillers(rest) else { return nil }
             return .metric(metric)
         }
         guard let quantity else { return nil }
-        if let place = Self.place(in: rest, original: original) { return .weather(place: place, quantity: quantity) }
+        if let place = Self.place(in: rest, original: original, said: text, quantity: named) { return .weather(place: place, quantity: quantity) }
         // Nothing but the quantity and "tell me" words: where the person is, when they share it (D48).
         guard let here, Self.onlyFillers(rest) else { return nil }
         return .weather(place: here, quantity: quantity)
@@ -128,8 +159,9 @@ extension IntentParser {
     }
 
     /// "in Fukuoka", "for paris, france", "at new york": the words after the preposition, as typed, when nothing but
-    /// "tell me" words is left around them. "the Fukuoka temperature" works too (the place before the quantity).
-    private static func place(in rest: String, original: String) -> String? {
+    /// "tell me" words is left around them. "the Fukuoka temperature" works too, the place right before the quantity
+    /// (`said` with the `quantity` words): "a joke about the weather" names no place called Joke.
+    private static func place(in rest: String, original: String, said: String, quantity: [String]) -> String? {
         let words = rest.split(separator: " ").map(String.init)
         var candidate: [String] = []
         var others: [String] = []
@@ -147,7 +179,11 @@ extension IntentParser {
             if !fillers.contains(w) { others.append(w) }
             i += 1
         }
-        if candidate.isEmpty, (1...3).contains(others.count) { candidate = others; others = [] }
+        if candidate.isEmpty, (1...3).contains(others.count),
+           quantity.contains(where: { said.contains(" \(others.joined(separator: " ")) \($0) ") || said.contains(" \(others.joined(separator: " "))'s \($0) ") }) {
+            candidate = others
+            others = []
+        }
         guard !candidate.isEmpty, others.isEmpty else { return nil }
         let typed = candidate.joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,'s"))
         // The person's own capitals: "Fukuoka", "New York".

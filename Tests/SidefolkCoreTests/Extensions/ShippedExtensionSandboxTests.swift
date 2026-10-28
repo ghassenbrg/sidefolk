@@ -85,15 +85,13 @@ struct ShippedExtensionSandboxTests {
         let date = try #require(await h.call("ext.calculator.date_math", ["date": "2026-12-24", "to": "2027-01-04"]).okText)
         #expect(date.contains("11 days"), "\(date)")
 
-        let coin = try #require(await h.call("ext.playtime.chance", ["kind": "coin"]).okText)
-        #expect(coin == "It landed on heads." || coin == "It landed on tails.")
+        let picked = try #require(await h.call("ext.playtime.pick", ["kind": "choice", "choices": ["tea", "coffee"]]).okText)
+        #expect(picked == "Picked: tea." || picked == "Picked: coffee.")
         // The quiz keeps its question and score in its own data folder, between two calls (two processes).
         let question = try #require(await h.call("ext.playtime.trivia", ["category": "space"]).okText)
         #expect(question.hasPrefix("Question (space):") && question.contains("A) ") && question.contains("D) "), "\(question)")
         let graded = try #require(await h.call("ext.playtime.trivia", ["answer": "A"]).okText)
         #expect(graded.contains("Score: ") && graded.contains("of 1") && graded.contains("Question (space):"), "\(graded)")
-        let round = try #require(await h.call("ext.playtime.rock_paper_scissors", ["move": "paper"]).okText)
-        #expect(round.hasPrefix("You played paper"), "\(round)")
 
         #expect(await h.call("ext.dev-toolbox.transform", ["operation": "sha256", "text": "abc"]).okText
             == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")

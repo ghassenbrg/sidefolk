@@ -62,12 +62,10 @@ enum BuiltInToolSummary {
         case ("dev.sidefolk.currency", "convert_currency"):
             guard let amount = number("amount"), let from = text("from"), let to = places("to") else { return nil }
             return String(localized: "Convert \(amount) \(from) to \(to) with the European Central Bank's rates")
-        case ("dev.sidefolk.playtime", "chance"):
+        case ("dev.sidefolk.playtime", "pick"):
             return String(localized: "Leave it to chance")
         case ("dev.sidefolk.playtime", "trivia"):
             return String(localized: "Play a round of trivia")
-        case ("dev.sidefolk.playtime", "rock_paper_scissors"):
-            return String(localized: "Play rock, paper, scissors")
         case ("dev.sidefolk.images", "image_info"), ("dev.sidefolk.pdf", "pdf_info"):
             return folder("path").map { String(localized: "Read the details of \($0)") }
         case ("dev.sidefolk.images", "convert_images"):

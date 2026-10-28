@@ -119,7 +119,13 @@ user folders or agent configs.
   kinds use DispatchSource (vnode/proc). Interval floors, exponential backoff on error, expiry,
   once/repeat/report. Material changes are saved at once, routine checks at most every 5 minutes.
   Reports (D35) publish each value as `AppEvent.watchReading` instead of a notice or a list reload;
-  the app shows it as a pill beside the companion and a live row on Now.
+  the app shows it as a pill beside the companion and a live row on Now. `watch.read` takes one value now
+  (`WatcherEngine.readNow`): the kind's probe looks once at a watcher that is never added, rates over a fresh
+  half second (`WatchContext.isReadingNow`); "what's my CPU usage" reaches it from the parser without AI.
+- `Companion/` — play (D44): `companion.play` publishes `AppEvent.companion` for a trick or a game;
+  `companion.toss` draws coins, dice or a rock-paper-scissors hand with the system's generator (the score in
+  `kv`) and publishes `AppEvent.toss`. The app's `CompanionPlayer` plays both: a moment (`flick`, `roll`,
+  `pump`), then `TossStage` draws the objects in the caption panel above the companion, landing on the result.
 - `Location/` (D48) — where the person is, when they share it: `LocationSettings` (off, the Mac's location,
   a place chosen by name) and `KnownPlace` (town, region, country, time zone, coordinates rounded to 0.01°)
   in `AppSettings`; `PlaceKeeper` (actor) names Location Services positions through a `ReverseGeocoding`

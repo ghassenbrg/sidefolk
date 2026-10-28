@@ -270,6 +270,9 @@ public enum WatchSource {
 /// Test and "check now" hook: a check the user asked for right now skips polite delays.
 public enum WatchContext {
     @TaskLocal public static var isManualCheck = false
+    /// One value asked for now (`watch.read`): a rate (CPU, network) is measured over a fresh moment, not since
+    /// whichever report sampled last, which could be many minutes ago.
+    @TaskLocal public static var isReadingNow = false
 }
 
 // MARK: Small helpers shared by the probes

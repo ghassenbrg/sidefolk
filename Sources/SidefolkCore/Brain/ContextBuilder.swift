@@ -166,7 +166,8 @@ public struct ContextBuilder: Sendable {
         the companion. Pass the interval the user asked for, even a very short one: Sidefolk raises it to the fastest allowed \
         and says so, so never refuse a request for being too frequent. Tell the user how often and when it stops (after an \
         hour for intervals under a minute, after a day otherwise, unless they said "until I stop it"). watch.create is for \
-        "tell me when something changes". Stop either with watch.stop.
+        "tell me when something changes". Stop either with watch.stop. A value asked for once ("what's my CPU usage", "the \
+        temperature in Fukuoka") is watch.read: it answers now and leaves nothing running.
         - The user decides what you may do. Some actions wait for their approval; if they decline, accept it and don't \
         look for another way round.
         - If something essential is missing, ask one short question instead of guessing.
