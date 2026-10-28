@@ -106,21 +106,35 @@ public struct ToolScope: Sendable, Hashable {
     public var extensionId: String?
     /// Text the user must read in full before approving (e.g. a new skill); never grantable "always".
     public var text: String?
+    /// Where this call goes on the network when Sidefolk's own code fixes it, whatever the model writes (D47).
+    /// Nil leaves it to `url` (an address the model may have chosen) and to the tool's capabilities.
+    public var reach: NetworkReach?
 
     public init(readPaths: [String] = [], writePaths: [String] = [], command: String? = nil, url: String? = nil,
-                extensionId: String? = nil, text: String? = nil) {
+                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil) {
         self.readPaths = readPaths
         self.writePaths = writePaths
         self.command = command
         self.url = url
         self.extensionId = extensionId
         self.text = text
+        self.reach = reach
     }
 
     public static let none = ToolScope()
 
     /// The folder a command runs in: tools that take a working folder list it first in `readPaths`.
     public var commandFolder: String? { command == nil ? nil : readPaths.first }
+}
+
+/// Where a call reaches on the network, as Sidefolk's own code knows it (D47). Only Sidefolk's code says so: a
+/// tool's scope, or the list of built-in extensions that talk to one service (`BuiltInServices`).
+public enum NetworkReach: Sendable, Hashable {
+    /// Nothing beyond this Mac, though the tool can reach the network for other inputs (a CPU report).
+    case nowhere
+    /// One public service named in Sidefolk's own code (Open-Meteo, the European Central Bank): the model
+    /// chooses what to ask it, never where the request goes, so what it writes reaches no one else.
+    case service(String)
 }
 
 /// A compact, presentable result shown in the Ask panel and the Activity log.
@@ -183,11 +197,15 @@ public struct ToolContext: Sendable {
     public var tainted: Bool
     /// The folders Guard let this call use: those the person shared, plus any allowed for this call only.
     public var folders: [GrantedFolder]
-    public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = []) {
+    /// The one site this call may reach, when Guard let it through only because the person allowed that site for
+    /// good while outside content was in play (D47): a redirect anywhere else is refused.
+    public var site: String?
+    public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil) {
         self.caller = caller
         self.now = now
         self.tainted = tainted
         self.folders = folders
+        self.site = site
     }
 
     /// Where something a tool writes came from. Sidefolk's own agent acting in a clean turn acts for

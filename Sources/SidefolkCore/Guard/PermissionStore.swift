@@ -16,6 +16,25 @@ public struct PermissionStore: Sendable {
         _ = try await db.writer.write { db in try Grant.deleteOne(db, key: id) }
     }
 
+    /// Allows Sidefolk's own agent to read a site for good, from Settings (D47): "example.com" or a full address.
+    /// It is the grant "Always allow" on a page card makes, so it holds the same way. Returns the site's name.
+    @discardableResult
+    public func allowSite(_ text: String, now: Date = Date()) async throws -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let address = trimmed.contains("://") ? trimmed : "https://" + trimmed
+        guard UserMentions.isWebAddress(address), let url = URL(string: address), let site = UserMentions.host(url), site.contains(".") else {
+            throw UserFacingError("That doesn't look like a site on the internet.", recovery: "Write it like example.com.")
+        }
+        let known = try await grants().contains {
+            $0.tool == Self.siteReadTool && $0.callerKind == "agent" && $0.scope.string("host").flatMap(UserMentions.site) == site
+        }
+        if !known { try await addGrant(Grant(tool: Self.siteReadTool, scope: ["host": .string(site)], callerKind: "agent", now: now)) }
+        return site
+    }
+
+    /// The tool a site grant from Settings covers: reading a page.
+    static let siteReadTool = "web.fetch"
+
     public func touchGrant(id: String, now: Date = Date()) async throws {
         _ = try await db.writer.write { db in
             try Grant.filter(key: id).updateAll(db, Column("last_used_at").set(to: now.timeIntervalSince1970))

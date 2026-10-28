@@ -329,6 +329,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case fullAccess = "full_access"
         /// Nobody answered in time; the step was skipped, or its task stopped (D37).
         case skipped
+        /// Read a page or used a built-in service without asking because the person chose so for the internet (D47).
+        case webSetting = "web_setting"
     }
 
     public var id: Int64?

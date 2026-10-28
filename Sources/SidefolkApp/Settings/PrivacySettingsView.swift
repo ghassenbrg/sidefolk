@@ -150,11 +150,13 @@ struct PrivacySettingsView: View {
     // MARK: Always allowed
 
     private var grants: some View {
-        SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.") {
-            if model.grants.isEmpty {
+        // Sites and built-in services are listed under "Using the internet" (D47).
+        let others = model.grants.filter { !InternetGrants.isInternet($0) }
+        return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.") {
+            if others.isEmpty {
                 InlineEmpty(text: "Nothing yet. When you choose “Always allow”, it's listed here.", systemImage: "checkmark.shield")
             }
-            ForEach(model.grants) { grant in
+            ForEach(others) { grant in
                 HStack(spacing: Theme.Space.m) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.toolTitle(grant.tool)).font(Theme.Font.body).foregroundStyle(Theme.ink)
@@ -195,6 +197,7 @@ struct PrivacySettingsView: View {
     private var guardSettings: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
             ApprovalModeGroup(model: model)
+            InternetGroup(model: model)
             UnansweredGroup(model: model)
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.") {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in

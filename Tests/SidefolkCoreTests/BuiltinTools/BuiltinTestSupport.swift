@@ -38,10 +38,13 @@ final class ScriptedFetcher: WebFetching, Sendable {
         var responses: [String: Result<WebResponse, WebFetchError>] = [:]
         var fallback: Result<WebResponse, WebFetchError>?
         var requested: [URL] = []
+        var sites: [String?] = []
     }
     private let state = Mutex(State())
 
     var requested: [URL] { state.withLock { $0.requested } }
+    /// The site each fetch was held to (`WebFetchOptions.site`), in order.
+    var sites: [String?] { state.withLock { $0.sites } }
 
     func serve(_ url: String, html: String, status: Int = 200, type: String = "text/html; charset=utf-8", finalURL: String? = nil) {
         let u = URL(string: url)!
@@ -59,6 +62,7 @@ final class ScriptedFetcher: WebFetching, Sendable {
     func get(_ url: URL, options: WebFetchOptions) async throws -> WebResponse {
         let result = state.withLock { s -> Result<WebResponse, WebFetchError>? in
             s.requested.append(url)
+            s.sites.append(options.site)
             return s.responses[url.absoluteString] ?? s.fallback
         }
         guard let result else { throw WebFetchError.network("no stub for \(url)") }
