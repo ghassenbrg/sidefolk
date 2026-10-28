@@ -116,14 +116,18 @@ final class UpdateController: UpdateActions {
     /// badge when the companion lives in the menu bar.
     private func bringUp(_ offer: UpdateOffer) async {
         await checker.markAsked(offer)
-        _ = await runtime.attention.post(AttentionRequest(
-            level: .gentle, source: Self.source,
+        _ = await runtime.attention.post(Self.notice(offer))
+    }
+
+    static func notice(_ offer: UpdateOffer) -> AttentionRequest {
+        AttentionRequest(
+            level: .gentle, source: source,
             title: String(localized: "Sidefolk \(offer.version.shown) is ready", comment: "An update: “Sidefolk 0.1.0 snapshot 430 is ready”"),
             body: offer.summary(),
             actions: [AttentionAction(id: "update", title: String(localized: "Update"), isPrimary: true),
                       AttentionAction(id: "later", title: String(localized: "Later")),
                       AttentionAction(id: "skip", title: String(localized: "Skip This Version"))],
-            refKind: Self.source, refId: offer.tag))
+            refKind: source, refId: offer.tag)
     }
 
     private func answer(_ item: AttentionItem, _ action: String) {

@@ -99,6 +99,16 @@ enum UISnapshots {
             try await capture(aboutWindow, size: CGSize(width: 380, height: 470), dark: dark, to: file("window-about"))
             aboutWindow.orderOut(nil)
 
+            // The update window in each state it has words for (D46).
+            for (name, phase, plan) in updatePhases {
+                let model = UpdateModel()
+                (model.running, model.lastCheck, model.phase, model.plan) = ("0.1.0 snapshot 411", Date().addingTimeInterval(-120), phase, plan)
+                let window = SnapshotWindow()
+                UpdateWindowController.configure(window, model: model)
+                try await capture(window, size: CGSize(width: 460, height: 380), dark: dark, to: file("window-update-\(name)"))
+                window.orderOut(nil)
+            }
+
             // Full pages.
             func page(_ name: String, _ view: some View, width: CGFloat) async throws {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
@@ -115,6 +125,10 @@ enum UISnapshots {
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // Settings › General with a version waiting (D46).
+            fixtures.updates.phase = .available(UpdateController.sampleOffer)
+            try await page("page-settings-general-update", SettingsTabContent(tab: .general, model: settings), width: width)
+            fixtures.updates.phase = .upToDate
             // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
             let policy = settings.policy
             await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
@@ -453,6 +467,28 @@ enum UISnapshots {
             ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
                                            body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
             ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),
+            ("update", bubble({
+                let n = UpdateController.notice(UpdateController.sampleOffer)
+                return AttentionItem(level: n.level, source: n.source, title: n.title, body: n.body, actions: n.actions,
+                                     refKind: n.refKind, refId: n.refId)
+            }())),
+        ]
+    }
+
+    /// The update window's states (D46): file name, phase, and how this copy would install it.
+    private static var updatePhases: [(String, UpdateModel.Phase, InstallPlan)] {
+        let offer = UpdateController.sampleOffer
+        return [
+            ("available", .available(offer), .replace),
+            ("available-download", .available(offer), .download(.notWritable)),
+            ("downloading", .downloading(offer, received: 9_400_000, total: offer.image.size), .replace),
+            ("verifying", .verifying(offer), .replace),
+            ("downloaded", .downloaded(offer, URL(fileURLWithPath: "/Users/you/Downloads/Sidefolk-0.1.0-snapshot.430.dmg"), .translocated), .replace),
+            ("up-to-date", .upToDate, .replace),
+            ("failed", .failed(offer, UserFacingError("The download doesn't match the release's checksum, so it wasn't installed.",
+                                                      recovery: "Try again; if it happens again, download it from the release page.")), .replace),
+            ("failed-look", .failed(nil, UserFacingError("Sidefolk couldn't reach GitHub to look for updates.",
+                                                         recovery: "Check the connection and try again.")), .replace),
         ]
     }
 

@@ -117,10 +117,10 @@ import Testing
     @Test func summaryIsPlainSentences() throws {
         let offer = try #require(try ReleaseFeed.offers(from: Self.feed(Self.release("v0.1.0", prerelease: false))).first)
         var long = offer
-        long.notes = "## Highlights\n- **Updates** in [Settings](https://x)\n- `code` too\n\n" + String(repeating: "word ", count: 80)
-        #expect(offer.summary() == "What's new Something")
+        long.notes = "## Highlights\n- **Updates** in [Settings](https://x)\n- `code` too!\n\n" + String(repeating: "word ", count: 80)
+        #expect(offer.summary() == "Something.")
         let summary = try #require(long.summary(limit: 60))
-        #expect(summary.hasPrefix("Highlights Updates in Settings code too"))
+        #expect(summary.hasPrefix("Updates in Settings. code too! word word"))
         #expect(summary.count <= 60 && summary.hasSuffix("…"))
         long.notes = "  \n"
         #expect(long.summary() == nil)

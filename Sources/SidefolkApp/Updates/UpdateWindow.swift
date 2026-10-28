@@ -82,19 +82,10 @@ struct UpdateView: View {
 
     private func notes(_ offer: UpdateOffer) -> some View {
         ScrollView {
-            Text(Self.markdown(offer.notes.isEmpty ? String(localized: "No notes came with this version.") : offer.notes))
-                .font(Theme.Font.body).foregroundStyle(Theme.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
-                .padding(Theme.Space.m)
+            ReleaseNotesView(notes: offer.notes).padding(Theme.Space.m)
         }
         .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
         .frame(maxHeight: 170)
-    }
-
-    /// Release notes are Markdown; lines stay lines.
-    static func markdown(_ text: String) -> AttributedString {
-        (try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(text)
     }
 
     @ViewBuilder private var buttons: some View {
@@ -127,6 +118,43 @@ struct UpdateView: View {
                     .buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
             }
         }
+    }
+}
+
+/// A release's notes as GitHub shows the simple Markdown they're written in: headings, bullet lists and inline
+/// marks (bold, code, links). Anything fancier reads as plain lines.
+private struct ReleaseNotesView: View {
+    var notes: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            let lines = notes.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            if lines.isEmpty {
+                Text("No notes came with this version.").foregroundStyle(Theme.inkMuted)
+            }
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                if line.hasPrefix("#") {
+                    Text(Self.inline(String(line.drop { $0 == "#" }))).font(Theme.Font.bodyStrong)
+                } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
+                    HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
+                        Text(verbatim: "•").foregroundStyle(Theme.inkMuted)
+                        Text(Self.inline(String(line.dropFirst(2)))).fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text(Self.inline(line)).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .font(Theme.Font.body)
+        .foregroundStyle(Theme.ink)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .textSelection(.enabled)
+    }
+
+    static func inline(_ text: String) -> AttributedString {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        return (try? AttributedString(markdown: trimmed, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(trimmed)
     }
 }
 

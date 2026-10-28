@@ -51,14 +51,18 @@ public struct UpdateOffer: Codable, Sendable, Hashable, Identifiable {
         self.checksum = checksum
     }
 
-    /// The first few lines of the notes as plain sentences, for a bubble: no headings, list marks or links.
-    public func summary(limit: Int = 220) -> String? {
-        let lines = notes.split(whereSeparator: \.isNewline).map { line -> String in
+    /// The start of the notes as plain sentences, for a bubble: headings (and lines that are only bold, used as
+    /// headings) left out, list items as sentences, no marks or links.
+    public func summary(limit: Int = 160) -> String? {
+        let lines = notes.split(whereSeparator: \.isNewline).compactMap { line -> String? in
             var s = line.trimmingCharacters(in: .whitespaces)
-            while let first = s.first, "#*->".contains(first) { s = String(s.dropFirst()).trimmingCharacters(in: .whitespaces) }
+            if s.hasPrefix("#") || (s.hasPrefix("**") && s.hasSuffix("**")) { return nil }
+            if s.hasPrefix("- ") || s.hasPrefix("* ") || s.hasPrefix("> ") { s = String(s.dropFirst(2)) }
             s = s.replacingOccurrences(of: #"\[([^\]]*)\]\([^)]*\)"#, with: "$1", options: .regularExpression)
-            return s.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "`", with: "")
-        }.filter { !$0.isEmpty }
+            s = s.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "`", with: "").trimmingCharacters(in: .whitespaces)
+            guard let last = s.last else { return nil }
+            return ".!?…:".contains(last) ? s : s + "."
+        }
         let text = lines.joined(separator: " ")
         guard !text.isEmpty else { return nil }
         return text.count <= limit ? text : String(text.prefix(limit - 1)).trimmingCharacters(in: .whitespaces) + "…"
