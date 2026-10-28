@@ -280,6 +280,7 @@ extension AppCoordinator: AppServices {
             }
         }
         applyCompanionSettings()
+        updater.settingsChanged()
     }
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }

@@ -596,6 +596,36 @@ until then nothing about where they are leaves the Mac, and the AI is only told 
 - *Logs and exports.* The log says that the place changed, never where; diagnostics drop the place. The person's
   own data export keeps it, and Delete all removes it with the settings.
 
+**T31 Updating Sidefolk itself (M/H), D46.** The updater replaces the app with code from the internet, so the
+only thing it believes about a download is its signature:
+- *Where from.* The GitHub Releases of `ghassenbrg/sidefolk` (the API over https, no account or key; the request
+  carries Sidefolk's version in its User-Agent and nothing about the person). Files come only from https on
+  `github.com` or `*.githubusercontent.com`, redirects included, in an ephemeral session (no cookies, cache or
+  credentials); a file larger than the release says is cut off.
+- *What is checked, in order.* Size, and SHA-256 against the release's checksum file and GitHub's own digest,
+  which must agree. The image is mounted read-only and hidden; the one app inside must carry the running app's
+  bundle id and name itself the release it is offered as (`SidefolkRelease`), which must be newer: no downgrade.
+  Its signature must meet a requirement built from the running app's own signature, never from the download:
+  anchored at Apple, a Developer ID Application leaf from the Developer ID intermediate, the same Team ID and
+  identifier, and `notarized`, validated strictly over every architecture and nested program. The same checks
+  run again on the copy staged beside the app, the code that will actually open.
+- *A stolen GitHub account* can publish a release but not one that passes: it would also need the team's
+  Developer ID key and Apple's notarization. A stolen Developer ID key as well is a threat to every Developer ID
+  app; Apple's revocation answers it.
+- *Quarantine.* Removed from the staged copy only after those checks: otherwise Gatekeeper's "downloaded from
+  the internet" question would wait for someone after Sidefolk had quit. A disk image left in Downloads keeps
+  its mark.
+- *The swap.* One same-volume exchange (`renamex_np`, `RENAME_SWAP`) beside the app, so the path always holds a
+  complete signed app; a failure before it leaves the old one, and when reopening can't be arranged the swap is
+  undone. The shell that waits for Sidefolk to quit gets the paths as arguments and removes only a folder
+  named with the staging prefix (`.Sidefolk-update-`); leftovers are cleared at the next launch.
+- *Who doesn't replace itself.* A copy built on the Mac (no `SidefolkRelease`), signed ad hoc or for development,
+  translocated, on a read-only volume, or in a folder the account can't write: it leaves the checked image in
+  Downloads and says why. Sidefolk never asks for admin rights to update.
+*Residual:* a new version that crashes at launch isn't caught before the old one is gone (the person reinstalls
+from the release page); the Developer ID certificate expires on 2027-02-01, and its replacement keeps the team,
+so updates carry on.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
@@ -812,7 +842,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   the person turned on Full access, and then never from a turn that read outside content (D37);
   never "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing
   granted to check it, then only after the person installs it from the install preview (T27).
-- Never hard-deletes, sets exec bits or strips quarantine.
+- Never hard-deletes, sets exec bits or strips quarantine, except from its own code: the built-ins it
+  installs from its bundle (D39) and a new version of itself after the checks of T31.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.
 - Never listens on TCP in release, and never takes commands via URL schemes, AppleScript or

@@ -213,6 +213,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var onboardingDone = false
     /// Talking to the companion and hearing it answer (D34).
     public var voice = VoiceSettings()
+    /// Looking for a newer Sidefolk and asking before installing it (D46).
+    public var updates = UpdateSettings()
     /// Where the person is, when they share it (D48).
     public var location = LocationSettings()
 
@@ -251,6 +253,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.debugLogging, &debugLogging)
         read(.onboardingDone, &onboardingDone)
         read(.voice, &voice)
+        read(.updates, &updates)
         read(.location, &location)
     }
 

@@ -11,6 +11,8 @@
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
+//   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed
+//                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

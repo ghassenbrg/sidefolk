@@ -83,7 +83,7 @@ jobs:
           LABEL: ${{ steps.plan.outputs.label }}
         run: |
           swift test --no-parallel
-          scripts/build-app.sh release
+          SIDEFOLK_RELEASE=1 SIDEFOLK_RELEASE_LABEL="$LABEL" scripts/build-app.sh release
           scripts/package.sh "$LABEL"
 
       - name: Keep the build
@@ -115,11 +115,15 @@ jobs:
           else
             opening="Not notarized: the first time, macOS refuses to open it. Allow it in System Settings › Privacy & Security, or run \`xattr -dr com.apple.quarantine /Applications/Sidefolk.app\`."
           fi
+          # What changed since the previous release or snapshot this commit builds on: the update window shows it (D46).
+          previous="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-creatordate --merged HEAD | grep -vx "$TAG" | head -1 || true)"
+          changes="$(git log --no-merges --pretty='- %s' ${previous:+"$previous"..}HEAD | head -40)"
+          notes="A snapshot of ${GITHUB_SHA::8} for testing, not a release. $opening"
+          [[ -n "$changes" ]] && notes+=$'\n\n'"**Since ${previous:-the start}**"$'\n'"$changes"
           # A snapshot of the same commit replaces the earlier one.
           gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
           gh release create "$TAG" "$DMG" "$DMG.sha256" --target "$GITHUB_SHA" --prerelease \
-            --title "Sidefolk $VERSION snapshot $BUILD" \
-            --notes "A snapshot of ${GITHUB_SHA::8} for testing, not a release. $opening"
+            --title "Sidefolk $VERSION snapshot $BUILD" --notes "$notes"
 
       - name: Keep only the latest snapshots
         if: steps.plan.outputs.channel == 'snapshot'

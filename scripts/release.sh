@@ -7,7 +7,8 @@
 #                            xcrun notarytool store-credentials <profile> --apple-id <id> --team-id <TEAMID>
 # Optional: SIDEFOLK_SKIP_NOTARIZE=1 to stop after signing (for a local smoke test);
 #           SIDEFOLK_UNIVERSAL=1 for one binary that runs on Apple silicon and Intel (see docs/RELEASE.md);
-#           SIDEFOLK_RELEASE_LABEL=snapshot.391 names the image Sidefolk-<version>-<label>.dmg;
+#           SIDEFOLK_RELEASE_LABEL=snapshot.391 names the image Sidefolk-<version>-<label>.dmg and the app's
+#           release (Info.plist SidefolkRelease, which the updater reads: D46);
 #           SIDEFOLK_NOTARY_KEYCHAIN, the keychain holding the profile when it isn't the login one (CI);
 #           SIDEFOLK_NOTARY_MINUTES, how long Apple may take over both submissions (default 180).
 set -euo pipefail
@@ -42,7 +43,7 @@ swift test --no-parallel
 
 APP="build/Sidefolk.app"
 phase "Building and signing $APP"
-SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
+SIDEFOLK_RELEASE=1 SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
 # Re-sign with a secure timestamp (build-app.sh uses --timestamp=none for speed), inside out.
 sign --options runtime "$APP/Contents/Helpers/sidefolk"
 for program in "$APP"/Contents/Resources/Extensions/*/bin/*; do
@@ -55,6 +56,9 @@ if codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q "get-task-all
 
 VERSION="$(defaults read "$PWD/$APP/Contents/Info" CFBundleShortVersionString)"
 BUILD="$(defaults read "$PWD/$APP/Contents/Info" CFBundleVersion)"
+# The release the app says it is must be the one the disk image is named for: the updater checks both (D46).
+RELEASE="$(defaults read "$PWD/$APP/Contents/Info" SidefolkRelease 2>/dev/null || true)"
+[[ "$RELEASE" == "$VERSION${SIDEFOLK_RELEASE_LABEL:+-$SIDEFOLK_RELEASE_LABEL}" ]] || fail "the app calls itself release \"$RELEASE\"."
 
 PROFILE=(--keychain-profile "${SIDEFOLK_NOTARY_PROFILE:-}")
 [[ -n "${SIDEFOLK_NOTARY_KEYCHAIN:-}" ]] && PROFILE+=(--keychain "$SIDEFOLK_NOTARY_KEYCHAIN")

@@ -39,6 +39,8 @@ final class AppCoordinator {
     private(set) lazy var home = HomeWindowController(services: self)
     private(set) lazy var settingsWindow = SettingsWindowController(services: self)
     private lazy var about = AboutWindowController()
+    /// Looking for a newer Sidefolk and installing it when asked (D46).
+    private(set) lazy var updater = UpdateController(runtime: runtime)
     /// Collection names for the intent parser ("ideas for Sidefolk").
     var knownCollections: [String] = []
     /// What is watched or reported, so "stop the Fukuoka temperature" can be understood without AI.
@@ -179,6 +181,7 @@ final class AppCoordinator {
         refreshReadouts()
         locator.resume()
         statusItem.refreshNow()
+        startUpdates()
         Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {
             // A beat after launch, so the companion has landed before it speaks.
@@ -343,6 +346,7 @@ final class AppCoordinator {
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
         if command == "about" { showAbout(); return }
+        if command.hasPrefix("update:") { updater.dev(String(command.dropFirst(7))); return }
         if command.hasPrefix("language:") {
             let code = String(command.dropFirst(9))
             AppLanguage.chosen = code == "system" ? nil : code
