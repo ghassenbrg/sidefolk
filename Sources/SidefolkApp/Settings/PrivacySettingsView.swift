@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 struct PrivacySettingsView: View {
     var model: SettingsModel
     @State private var confirmingDelete = false
+    @State private var confirmingHistory = false
 
     /// The capabilities a person can switch off, in the words the Settings page uses.
     private static let switches: [(Capability, LocalizedStringKey, LocalizedStringKey)] = [
@@ -41,9 +42,10 @@ struct PrivacySettingsView: View {
             guardSettings
             LocationGroup(model: model.location).id(Self.locationAnchor)
             keeps
-            SettingsGroup(title: "History", footer: "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log.") {
-                SettingsRow(title: "Keep recent requests for") {
-                    Picker("Keep recent requests for", selection: Binding(
+            SettingsGroup(title: "History",
+                          footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Home › Conversations. Then they're deleted.") {
+                SettingsRow(title: "Keep conversations for") {
+                    Picker("Keep conversations for", selection: Binding(
                         get: { model.settings.historyDays }, set: { days in model.update { $0.historyDays = days } }
                     )) {
                         ForEach(Array(Set([1, 7, 30, model.settings.historyDays])).sorted(), id: \.self) { days in
@@ -54,6 +56,17 @@ struct PrivacySettingsView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
+                SettingsRow(title: "Conversation history") {
+                    Button("Delete All History…") { confirmingHistory = true }
+                        .buttonStyle(.sf(.secondary))
+                        .disabled(model.storage?.exchanges == 0)
+                }
+            }
+            .alert("Delete all conversation history?", isPresented: $confirmingHistory) {
+                Button("Delete All History", role: .destructive) { Task { await model.deleteConversationHistory() } }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(DeleteHistoryWords.message)
             }
             folders
             grants

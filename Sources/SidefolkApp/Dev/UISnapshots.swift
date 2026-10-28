@@ -60,11 +60,17 @@ enum UISnapshots {
             try await homeShot("about-you")
             full.selection = .trash
             try await homeShot("trash")
+            await full.showConversation("c-plan")
+            try await homeShot("conversations")
+            await full.showConversation("c-rename")
+            try await homeShot("conversations-stopped")
             full.selection = .activity
             try await homeShot("activity")
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             try await homeShot("activity-small", size: small)
+            await full.showConversation("c-plan")
+            try await homeShot("conversations-small", size: small)
             full.selection = .now
             try await homeShot("now-small", size: small)
             await full.reveal(sample.selectedItem)
@@ -82,6 +88,8 @@ enum UISnapshots {
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-notebook-empty"))
             empty.selection = .activity
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-activity-empty"))
+            await empty.showConversation(nil)
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-conversations-empty"))
             blank.orderOut(nil)
 
             // Settings, as a real window, one picture per tab.
@@ -188,7 +196,8 @@ enum UISnapshots {
             let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
             let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
-                          ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
+                          ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
+                          ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-internet", sampleAskInternet()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
@@ -354,9 +363,30 @@ enum UISnapshots {
     /// An answer that ends with a question: Reply, then the input waits for it.
     private static func sampleAskQuestion() -> AskModel {
         let ask = AskModel()
+        let request = "organize my Apple Notes into the notebook"
         ask.add(.answer("I copied 42 notes. Five look like they hold passwords or tokens, so I left them in Notes. Should I copy those too?",
-                        canThinkHarder: false, tainted: true), caption: "organize my Apple Notes into the notebook")
-        ask.reply()
+                        canThinkHarder: false, tainted: true, thread: "sample"), caption: request)
+        ask.thread = "sample"
+        if let answer = ask.entries.last { ask.reply(to: answer.id, thread: "sample", request: request) }
+        return ask
+    }
+
+    /// A long answer opens on its first lines, with Show all; the conversation is open, so New conversation shows (D45).
+    private static func longAnswerAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.answer(SampleData.plan, canThinkHarder: true, tainted: false, thread: "sample"),
+                caption: "Plan my afternoon around the invoices and a run")
+        ask.thread = "sample"
+        return ask
+    }
+
+    /// "new conversation": the notice that the next request starts fresh, above the answer it leaves on screen (D45).
+    private static func freshAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.answer("Light rain is likely tomorrow morning in Fukuoka (70%), clearing after noon.", canThinkHarder: false,
+                        tainted: false, thread: "sample"), caption: "Will it rain in Fukuoka tomorrow?")
+        ask.add(.info(String(localized: "Your next request starts a new conversation. Earlier ones stay in Conversations.")),
+                caption: "new conversation", fades: true)
         return ask
     }
 

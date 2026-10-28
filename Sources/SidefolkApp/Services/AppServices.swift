@@ -203,6 +203,13 @@ protocol AppServices: AnyObject {
     func installCommandLineTool() async -> UserFacingError?
     func removeCommandLineTool() async -> UserFacingError?
 
+    // Conversations with the AI (D45)
+    /// Continues `thread` with the person's words, whenever it was; nil when no AI is chosen.
+    func continueConversation(_ thread: String, text: String) async -> AgentRunHandle?
+    func stopConversation(run runId: String) async
+    func deleteConversation(_ thread: String) async -> UserFacingError?
+    func deleteAllConversations() async -> UserFacingError?
+
     // Privacy and data
     func storageSummary() async -> StorageSummary
     func exportData(to url: URL) async -> UserFacingError?

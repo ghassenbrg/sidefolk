@@ -489,8 +489,10 @@ in grants get an explicit 0644. `PRAGMA secure_delete=ON`. Delete-all also remov
 ExtensionData, the read-only installed extensions (unlocked first), run state and Keychain items:
 provider keys with their host bindings and each MCP server's `mcp.<id>` item, collected before the
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
-not ignored. Retention is applied at launch and then daily while Sidefolk runs: conversation history (7 days by
-default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
+not ignored. Conversation history can also be deleted on its own, one conversation or all of it (Home ›
+Conversations, Settings › Privacy, D45): the thread's runs stop first, then its exchanges go and the "last sent"
+preview with them; Activity keeps its audit record. Retention is applied at launch and then daily while Sidefolk
+runs: conversation history (7 days by default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
 (14), the notebook's Trash (30); log files after 7 days, at most 16 MB a day. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
 extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are

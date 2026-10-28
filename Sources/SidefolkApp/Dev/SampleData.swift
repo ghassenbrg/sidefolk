@@ -230,6 +230,35 @@ enum SampleData {
             try await rt.runs.save(run)
         }
 
+        // Conversations with the AI (D45): a plan with its steps and a follow-up, a spoken question, one that stopped.
+        func said(_ thread: String, _ role: Exchange.Role, _ text: String, _ minutes: Double, run: String? = nil,
+                  spoken: Bool = false) async throws {
+            var meta: [String: JSONValue] = role == .user ? ["tainted": false] : [:]
+            if spoken { meta["spoken"] = true }
+            if let run { meta["runId"] = .string(run) }
+            try await rt.exchanges.append(Exchange(threadId: thread, role: role, content: text, meta: .object(meta), now: ago(minutes)))
+        }
+        func step(_ run: String, _ minutes: Double, _ tool: String, _ summary: String, _ decision: ActivityEntry.Decision = .auto,
+                  error: String? = nil) async throws {
+            try await rt.activity.log(ActivityEntry(at: ago(minutes), caller: "agent", tool: tool, risk: "low", decision: decision,
+                                                    summary: summary, error: error, runId: run))
+        }
+        try await said("c-rename", .user, "Rename the scans on my Desktop by date", 60 * 26)
+        try await step("r-rename", 60 * 26 - 0.5, "files.rename", "Rename 3 files in ~/Desktop", .blocked,
+                       error: "That folder hasn't been shared with Sidefolk.")
+        try await said("c-rename", .event, "Stopped. Nothing was changed.", 60 * 26 - 1, run: "r-rename")
+        try await said("c-rain", .user, "Will it rain in Fukuoka tomorrow?", 60 * 5, spoken: true)
+        try await step("r-rain", 60 * 5 - 0.2, "ext.weather.forecast", "Weather forecast for Fukuoka")
+        try await said("c-rain", .assistant, "Light rain is likely tomorrow morning in Fukuoka (70%), clearing after noon. Highs around 19 °C.",
+                       60 * 5 - 0.4, run: "r-rain")
+        try await said("c-plan", .user, "Plan my afternoon around the invoices and a run", 95)
+        try await step("r-plan", 94.8, "notebook.search", "Search the notebook for “invoices”")
+        try await step("r-plan", 94.7, "reminders.list", "Read your reminders for today")
+        try await said("c-plan", .assistant, SampleData.plan, 94.5, run: "r-plan")
+        try await said("c-plan", .user, "Yes, remind me at 16:30 to go for the run", 93)
+        try await step("r-plan-2", 92.9, "reminders.create", "Remind me today at 16:30 to go for a run")
+        try await said("c-plan", .assistant, "Done: I'll remind you at 16:30 to go for your run.", 92.8, run: "r-plan-2")
+
         // Guard
         try await rt.permissions.grantFolder(home + "/Downloads", access: .readwrite)
         try await rt.permissions.grantFolder(home + "/Documents/Invoices", access: .read)
@@ -248,5 +277,19 @@ enum SampleData {
 
         return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)
     }
+
+    /// A long answer, for Conversations and the Ask panel's Show all.
+    static let plan = """
+        Here's a plan for this afternoon:
+
+        **14:00** Rename and file the April invoices (about 30 minutes).
+        **14:30** Reply to Karim about the new address.
+        **15:00** Deep work on the onboarding copy.
+        **16:30** A 5 km run, before the light goes.
+        **17:30** Stretch, then the 18:00 call with mom.
+        **19:00** Dinner, then nothing with a screen.
+
+        I left the pricing page review for tomorrow morning: it needs a fresh head. Want me to set reminders for these?
+        """
 }
 #endif

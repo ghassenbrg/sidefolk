@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Owns the Home window (Now, Notebook, Activity). Create one and keep it; `show` reuses the window.
+/// Owns the Home window (Now, Conversations, Notebook, Activity). Create one and keep it; `show` reuses the window.
 @MainActor
 final class HomeWindowController: NSObject, NSWindowDelegate {
     enum Section {
@@ -26,6 +26,12 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         case .notebook: Task { await model.showNotebook() }
         case nil: break
         }
+        present()
+    }
+
+    /// Opens Conversations at `thread`, or where it was (D45).
+    func show(conversation thread: String?) {
+        Task { await model.showConversation(thread) }
         present()
     }
 

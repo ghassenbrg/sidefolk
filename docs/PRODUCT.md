@@ -20,7 +20,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 
 1. **Presence over chat.** The body is an interface. State is visible without opening anything.
    Conversations are short exchanges that end in *results* (a saved note, a scheduled reminder),
-   not an endless transcript.
+   not an endless transcript. Home › Conversations is where you come back to one, not where you start.
 2. **It works when you are not looking.** Reminders, watchers and routines are deterministic,
    persistent and survive restarts. AI wakes only when reasoning is needed.
 3. **You stay in control.** A deterministic Guard (never the model) decides what may run. Risky
@@ -101,7 +101,10 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 ### Memory and data
 - P0 Notebook: Inbox, About you (profile), projects/topics/lists with notes, ideas, tasks, links;
   full-text search; Trash with restore (30 days); Undo for recent changes.
-- P0 Short-term exchange history with retention (default 7 days), never shown as a transcript.
+- P0 Short-term exchange history with retention (default 7 days). The Ask panel shows results, not a
+  transcript; Home › Conversations (D45) lists the kept conversations to read again, follow up in (even
+  after the 10-minute window), or delete, one or all. "New conversation" / "start fresh", Clear all and ⌘N
+  in the panel make the next request start fresh; every answer offers Reply and Show all.
 - P0 Activity log (audit) of every tool execution and decision.
 - P1 Export all data (JSON) and delete all data.
 
