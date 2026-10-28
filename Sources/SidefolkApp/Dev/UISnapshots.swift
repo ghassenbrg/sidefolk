@@ -191,7 +191,8 @@ enum UISnapshots {
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
-                          ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk())]
+                          ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
+                          ("desktop-ask-now", sampleAskNow())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
                 try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
@@ -463,6 +464,17 @@ enum UISnapshots {
                                           summary: "Clone https://github.com/octocat/Hello-World into ~/git/Hello-World",
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
                                           canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
+        return ask
+    }
+
+    /// A value read now and a hand played, answered without AI (D35 and D44, amended).
+    private static func sampleAskNow() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .reading, title: "CPU: 23%"), activityId: nil, undo: false), caption: "what's my cpu usage?")
+        ask.add(.result(ResultCard(kind: .reading, title: "Temperature in Fukuoka: 18 °C", subtitle: "Fukuoka, Japan"), activityId: nil, undo: false),
+                caption: "temperature in Fukuoka")
+        ask.add(.result(ResultCard(kind: .chance, title: Toss.hands(person: .rock, companion: .paper).result, subtitle: "You 2 · Me 3 · Draws 1"),
+                        activityId: nil, undo: false), caption: "rock")
         return ask
     }
 

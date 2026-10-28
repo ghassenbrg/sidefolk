@@ -116,7 +116,10 @@ struct TossStage: View {
                 .background { if won { Circle().fill(Theme.folkColor("play").opacity(0.18)).frame(width: 54, height: 54) } }
                 .scaleEffect(won ? 1.12 : 1)
                 .offset(y: -bounce)
+            // On a chip: it floats over whatever the desktop shows.
             Text(verbatim: label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                .padding(.horizontal, 7).padding(.vertical, 1)
+                .background(Capsule().fill(Theme.surface.opacity(0.9)))
         }
         .opacity(lost ? 0.55 : 1)
     }
@@ -124,7 +127,7 @@ struct TossStage: View {
 
 // MARK: The objects
 
-/// A gold coin: a little face on heads, a curled tail on tails.
+/// A gold coin: a little face on heads, a star on tails.
 struct CoinFace: View {
     var heads: Bool
     private static let gold = Color(hex: 0xFFC93C), rim = Color(hex: 0xE0A21E), ink = Color(hex: 0x8A5A00)
@@ -144,11 +147,15 @@ struct CoinFace: View {
                     smile.addArc(center: CGPoint(x: s / 2, y: s * 0.52), radius: s * 0.14, startAngle: .degrees(20), endAngle: .degrees(160), clockwise: false)
                     context.stroke(smile, with: .color(Self.ink), style: StrokeStyle(lineWidth: s * 0.055, lineCap: .round))
                 } else {
-                    var tail = Path()
-                    tail.move(to: CGPoint(x: s * 0.3, y: s * 0.68))
-                    tail.addCurve(to: CGPoint(x: s * 0.62, y: s * 0.3), control1: CGPoint(x: s * 0.62, y: s * 0.72), control2: CGPoint(x: s * 0.74, y: s * 0.42))
-                    tail.addCurve(to: CGPoint(x: s * 0.5, y: s * 0.48), control1: CGPoint(x: s * 0.5, y: s * 0.2), control2: CGPoint(x: s * 0.4, y: s * 0.4))
-                    context.stroke(tail, with: .color(Self.ink), style: StrokeStyle(lineWidth: s * 0.06, lineCap: .round, lineJoin: .round))
+                    // A star: nothing on it reads as a letter or a number.
+                    var star = Path()
+                    for i in 0..<10 {
+                        let a = Double(i) * .pi / 5 - .pi / 2, r = s * (i.isMultiple(of: 2) ? 0.24 : 0.1)
+                        let point = CGPoint(x: s / 2 + r * cos(a), y: s * 0.52 + r * sin(a))
+                        if i == 0 { star.move(to: point) } else { star.addLine(to: point) }
+                    }
+                    star.closeSubpath()
+                    context.fill(star, with: .color(Self.ink))
                 }
             }
         }
