@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Makes a QR code picture of a link or text, and reads the QR code in a picture or a screenshot.",
+  "tagline": "Make and read QR codes",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",

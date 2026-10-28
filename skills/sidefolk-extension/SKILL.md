@@ -146,5 +146,6 @@ job truly needs it.
 - [ ] Failures come back as `isError` results that say what to do.
 - [ ] The requests with a clear shape have commands (with the variants people say), and the validator's
       "Answers without AI" lines read right; tools nobody should reach through the AI say `"ai": false`.
-- [ ] It has an icon, a description of at most 300 characters, and an author.
+- [ ] It has an icon, a description of at most 300 characters, a `tagline` of one line (at most 60 characters,
+  shown under its name in Settings), and an author.
 - [ ] Nothing it sends leaves for an address the person didn't ask about.

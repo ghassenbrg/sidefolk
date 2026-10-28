@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "sidefolk": ">=0.1",
   "description": "Whether a service is up, from its public status page.",
+  "tagline": "Is a service up?",
   "author": "Example Inc.",
   "run": { "command": "node", "args": ["main.mjs"] },
   "permissions": { "network": true },

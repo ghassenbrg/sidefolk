@@ -13,6 +13,8 @@ public enum ExtensionOrigin: String, Codable, Sendable, Hashable {
 public struct ExtensionPin: Codable, Sendable, Hashable {
     public var name: String
     public var description: String?
+    /// The manifest's one line for Settings; pins written before it have none.
+    public var tagline: String?
     public var folk: String?
     public var author: String?
     public var origin: ExtensionOrigin?
@@ -27,11 +29,12 @@ public struct ExtensionPin: Codable, Sendable, Hashable {
     /// Changed or new definitions waiting for the user; those tools can't run (quarantine).
     public var pending: [String: MCPToolDefinition]
 
-    public init(name: String, description: String? = nil, folk: String? = nil, author: String? = nil, origin: ExtensionOrigin? = nil,
+    public init(name: String, description: String? = nil, tagline: String? = nil, folk: String? = nil, author: String? = nil, origin: ExtensionOrigin? = nil,
                 launch: ExtensionLaunch? = nil, permissions: ExtensionPermissions? = nil, files: [ExtensionFilePin] = [],
                 server: MCPServerCommand? = nil, tools: [String: MCPToolDefinition] = [:], pending: [String: MCPToolDefinition] = [:]) {
         self.name = name
         self.description = description
+        self.tagline = tagline
         self.folk = folk
         self.author = author
         self.origin = origin
@@ -87,6 +90,8 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var running: Bool
     public var lastError: String?
     public var description: String?
+    /// One line under its name: the manifest's tagline, or the description's first sentence when it has none.
+    public var tagline: String? = nil
     public var folk: String?
     public var author: String?
     public var origin: ExtensionOrigin?
@@ -135,4 +140,20 @@ public struct MCPServerPreview: Sendable, Hashable {
     public var errors: [String]
 
     public var canAdd: Bool { errors.isEmpty && resolvedCommand != nil }
+}
+
+/// The one line Settings shows under an extension's name (D39, amended 2026-10-28): its tagline, or the first sentence
+/// of its description for one written before taglines, so a long description never runs off the row.
+public enum ExtensionTagline {
+    public static func line(tagline: String?, description: String?) -> String {
+        if let tagline = tagline?.trimmingCharacters(in: .whitespacesAndNewlines), !tagline.isEmpty { return tagline }
+        guard let text = description?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return "" }
+        // The system's sentences, so a number like 3.5 doesn't end one.
+        var first: String?
+        text.enumerateSubstrings(in: text.startIndex..., options: .bySentences) { sentence, _, _, stop in
+            first = sentence?.trimmingCharacters(in: .whitespacesAndNewlines)
+            stop = true
+        }
+        return first.flatMap { $0.isEmpty ? nil : $0 } ?? text
+    }
 }

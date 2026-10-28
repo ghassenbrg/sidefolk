@@ -4,6 +4,7 @@
   "version": "1.2.0",
   "sidefolk": ">=0.1",
   "description": "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.",
+  "tagline": "The time anywhere, and times between places",
   "folk": "tempo",
   "author": "Sidefolk",
   "icon": "icon.pdf",

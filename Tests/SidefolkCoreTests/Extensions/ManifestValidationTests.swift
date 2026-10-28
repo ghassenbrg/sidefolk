@@ -65,6 +65,20 @@ import Testing
         #expect(unknownRisk.errors.first?.field == "tools.echo.risk")
     }
 
+    @Test func aTaglineIsOneShortLine() throws {
+        #expect(try validate(ExtFixtures.manifest(extra: ["tagline": "Zip and unzip files"])).isValid)
+        for (i, bad) in [String(repeating: "a", count: 61), "Two\nlines", ""].enumerated() {
+            #expect(fields(try validate(ExtFixtures.manifest(extra: ["tagline": .string(bad)]), folder: "t\(i)")) == ["tagline"], "\(bad)")
+        }
+    }
+
+    @Test func theLineUnderTheNameIsTheTaglineOrTheFirstSentence() {
+        #expect(ExtensionTagline.line(tagline: "Exact sums", description: "Long. Longer.") == "Exact sums")
+        #expect(ExtensionTagline.line(tagline: nil, description: "Weighs 3.5 kg in a click. And more.") == "Weighs 3.5 kg in a click.")
+        #expect(ExtensionTagline.line(tagline: " ", description: "One sentence only") == "One sentence only")
+        #expect(ExtensionTagline.line(tagline: nil, description: nil) == "")
+    }
+
     @Test func badIdsAreRejected() throws {
         for (i, id) in ["Dev.Test", "devtest", "dev..x", ".dev.x", "dev.x_y", "dev." + String(repeating: "a", count: 61)].enumerated() {
             let r = try validate(ExtFixtures.manifest(id: id), folder: "id\(i)")

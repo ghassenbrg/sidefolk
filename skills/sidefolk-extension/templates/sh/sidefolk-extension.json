@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "sidefolk": ">=0.1",
   "description": "Today's date, spelled out.",
+  "tagline": "Today's date",
   "author": "Example Inc.",
   "run": { "command": "sh", "args": ["main.sh"] },
   "permissions": { "exec": ["/bin/date"] },

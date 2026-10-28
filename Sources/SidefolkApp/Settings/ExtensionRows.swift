@@ -127,8 +127,8 @@ struct ExtensionRow: View {
         } else if let hit, !expanded {
             Label { Text(verbatim: hit) } icon: { Image(systemName: "magnifyingglass") }
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
-        } else if !ext.description.isEmpty {
-            Text(ext.description).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+        } else if !ext.shortLine.isEmpty {
+            Text(ext.shortLine).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 .lineLimit(expanded ? nil : 1)
                 .fixedSize(horizontal: false, vertical: expanded)
         } else if let command = ext.command {
@@ -138,6 +138,11 @@ struct ExtensionRow: View {
     }
 
     @ViewBuilder private var details: some View {
+        // The whole description, when the line above is only its tagline or its first sentence.
+        if !ext.description.isEmpty, ext.description != ext.shortLine {
+            Text(ext.description).font(Theme.Font.caption).foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+        }
         Text(verbatim: origin).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
             .fixedSize(horizontal: false, vertical: true)
         if ext.kind == .mcpServer, let command = ext.command, !ext.description.isEmpty {

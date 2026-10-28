@@ -191,6 +191,9 @@ public struct ManifestValidator: Sendable {
         if let d = m.description, d.count > 300 || ExtensionText.clean(d) != d {
             issues.append(ValidationIssue(field: "description", message: "must be at most 300 characters of plain text."))
         }
+        if let t = m.tagline, t.isEmpty || t.count > 60 || t.contains(where: \.isNewline) || ExtensionText.clean(t) != t {
+            issues.append(ValidationIssue(field: "tagline", message: "must be one line of 1–60 characters of plain text."))
+        }
         if let a = m.author, a.count > 100 || ExtensionText.clean(a) != a {
             issues.append(ValidationIssue(field: "author", message: "must be at most 100 characters of plain text."))
         }

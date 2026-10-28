@@ -4,6 +4,7 @@
   "version": "1.2.0",
   "sidefolk": ">=0.1",
   "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
+  "tagline": "Battery, disk and memory at a glance",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "sidefolk": ">=0.1",
   "description": "A PDF's details and text, several PDFs combined into one, and some of their pages saved as a new PDF. Your originals stay as they are.",
+  "tagline": "Read, combine and split PDFs",
   "folk": "pip",
   "author": "Sidefolk",
   "icon": "icon.pdf",

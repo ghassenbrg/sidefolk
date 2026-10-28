@@ -11,7 +11,10 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var version: String
     /// Sidefolk versions it works with, e.g. ">=0.1".
     public var sidefolk: String?
+    /// What it does, in full: Settings shows it under Details and the install preview shows it whole.
     public var description: String?
+    /// One short line under its name in Settings (at most 60 characters), so a list of many stays readable.
+    public var tagline: String?
     /// The folk that appears when it works.
     public var folk: String?
     public var author: String?
@@ -188,13 +191,14 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     }
 
     public init(id: String, name: String, version: String, sidefolk: String? = nil, description: String? = nil,
-                folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
+                tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:]) {
         self.id = id
         self.name = name
         self.version = version
         self.sidefolk = sidefolk
         self.description = description
+        self.tagline = tagline
         self.folk = folk
         self.author = author
         self.icon = icon
@@ -206,7 +210,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     }
 
     public init(from decoder: Decoder) throws {
-        try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "folk", "author", "icon", "run",
+        try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
                                        "permissions", "tools", "watchers", "words"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
@@ -214,6 +218,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         version = try c.decode(String.self, forKey: "version")
         sidefolk = try c.decodeIfPresent(String.self, forKey: "sidefolk")
         description = try c.decodeIfPresent(String.self, forKey: "description")
+        tagline = try c.decodeIfPresent(String.self, forKey: "tagline")
         folk = try c.decodeIfPresent(String.self, forKey: "folk")
         author = try c.decodeIfPresent(String.self, forKey: "author")
         icon = try c.decodeIfPresent(String.self, forKey: "icon")

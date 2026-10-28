@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Sums, percentages, unit conversions and date maths worked out exactly, so an answer never rests on a guess.",
+  "tagline": "Exact sums, units and dates",
   "folk": "nova",
   "author": "Sidefolk",
   "icon": "icon.pdf",

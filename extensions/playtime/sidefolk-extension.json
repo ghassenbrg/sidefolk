@@ -4,6 +4,7 @@
   "version": "1.2.0",
   "sidefolk": ">=0.1",
   "description": "A break with your companion: a trivia quiz that keeps your score, and chance to pick a number or choose from a list.",
+  "tagline": "Trivia and random picks for a break",
   "folk": "play",
   "author": "Sidefolk",
   "icon": "icon.pdf",

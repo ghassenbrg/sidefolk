@@ -177,7 +177,8 @@ public actor ExtensionHost {
         return ExtensionInfo(id: id, name: (builtIn ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name,
                              version: rt.record.version, kind: rt.record.kind,
                              enabled: rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
-                             description: (builtIn ? BuiltInExtensionWords.description(id) : nil) ?? rt.pin.description, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
+                             description: (builtIn ? BuiltInExtensionWords.description(id) : nil) ?? rt.pin.description,
+                             tagline: (builtIn ? BuiltInExtensionWords.tagline(id) : nil) ?? rt.pin.tagline, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings)
@@ -255,7 +256,7 @@ public actor ExtensionHost {
             record.enabled = true
             record.lastError = nil
             record.manifestHash = ExtensionFiles.aggregateHash(staged.pins)
-            let pin = ExtensionPin(name: manifest.name, description: manifest.description, folk: manifest.folk,
+            let pin = ExtensionPin(name: manifest.name, description: manifest.description, tagline: manifest.tagline, folk: manifest.folk,
                                    author: manifest.author, origin: origin, launch: start, permissions: permissions, files: staged.pins)
             runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath)
             _ = try await launch(id, approveAll: true)

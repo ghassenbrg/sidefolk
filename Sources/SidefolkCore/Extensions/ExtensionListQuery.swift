@@ -105,7 +105,7 @@ public struct ExtensionListQuery: Sendable, Hashable {
     /// its watchers watch, what it may do, who wrote it, its id and, for an MCP server, the command it runs. "No access
     /// to your files or the internet" is left out: a search for "internet" looks for what can reach it.
     public static func texts(for info: ExtensionInfo) -> [String] {
-        [info.name, info.description ?? ""]
+        [info.name, info.tagline ?? "", info.description ?? ""]
             + info.tools.map(\.title) + info.watchers.flatMap { [$0.title, $0.description] }
             + info.summary.lines.filter { $0.kind != .none }.map(\.text)
             + [info.author, info.version, info.id, info.command].compactMap { $0 }

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "sidefolk": ">=0.1",
   "description": "The latest posts of blogs, news sites and podcasts from their RSS or Atom feeds, and a heads-up when a new one appears.",
+  "tagline": "New posts from blogs, news and podcasts",
   "folk": "scout",
   "author": "Sidefolk",
   "icon": "icon.pdf",

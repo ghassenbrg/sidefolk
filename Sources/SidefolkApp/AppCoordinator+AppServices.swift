@@ -302,7 +302,7 @@ extension AppCoordinator: AppServices {
 
     static func info(_ e: SidefolkCore.ExtensionInfo) -> ExtensionInfo {
         ExtensionInfo(
-            id: e.id, name: e.name, version: e.version, description: e.description ?? "",
+            id: e.id, name: e.name, version: e.version, description: e.description ?? "", tagline: e.tagline ?? "",
             kind: e.kind == .mcp ? .mcpServer : .sidefolk, enabled: e.enabled, folk: e.folk,
             toolNames: e.tools.map { $0.title.isEmpty ? $0.name : $0.title }, watcherNames: e.watchers.map(\.title),
             permissionLines: e.summary.lines.map(\.text), warnings: e.summary.warnings + (e.hasPendingToolChanges

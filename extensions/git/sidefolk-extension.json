@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Clone public repositories into a folder you choose, and check, update and read the history of the ones you have.",
+  "tagline": "Clone, update and check your repositories",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",

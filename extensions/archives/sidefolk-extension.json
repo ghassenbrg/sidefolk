@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "sidefolk": ">=0.1",
   "description": "Zips files and folders so you can send them, and opens zip files you receive, with macOS's own tools.",
+  "tagline": "Zip and unzip files",
   "folk": "brew",
   "author": "Sidefolk",
   "icon": "icon.pdf",

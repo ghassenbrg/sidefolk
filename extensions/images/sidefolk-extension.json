@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "sidefolk": ">=0.1",
   "description": "A photo's details, and copies of pictures converted to JPEG, PNG or HEIC, made smaller, or without their location. Your originals stay as they are.",
+  "tagline": "Photo details and converted copies",
   "folk": "melody",
   "author": "Sidefolk",
   "icon": "icon.pdf",

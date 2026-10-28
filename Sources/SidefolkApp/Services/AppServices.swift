@@ -11,6 +11,8 @@ struct ExtensionInfo: Identifiable, Hashable {
     var name: String
     var version: String
     var description: String
+    /// Its manifest's one line for the list; empty for one written before taglines.
+    var tagline = ""
     var kind: Kind
     var enabled: Bool
     var folk: String?
@@ -240,4 +242,9 @@ protocol AppServices: AnyObject {
     /// Opens the Ask panel with the start of a sentence typed in, for the user to finish; with an
     /// empty one, as it was left.
     func openAsk(prefill: String)
+}
+
+extension ExtensionInfo {
+    /// The line under its name: the tagline, or the description's first sentence.
+    var shortLine: String { ExtensionTagline.line(tagline: tagline, description: description) }
 }

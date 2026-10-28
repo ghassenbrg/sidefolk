@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Converts money between the euro and 30 major currencies with the European Central Bank's daily reference rates, and tells you when a rate crosses a line. Nothing about you is sent.",
+  "tagline": "Money in 30 currencies at today's rates",
   "folk": "seed",
   "author": "Sidefolk",
   "icon": "icon.pdf",

@@ -8,7 +8,7 @@ extension ExtensionInfo: ExtensionListEntry {
 
     /// What it may do comes from `hiddenSearchTexts` (core leaves out "No access to…"), not from `permissionLines`.
     var searchTexts: [String] {
-        var texts = [name, description] + toolNames + watcherNames
+        var texts = [name, tagline, description] + toolNames + watcherNames
         if bundled, let example = BuiltInExamples.request(for: id) { texts.append(example) }
         if kind == .mcpServer { texts.append(String(localized: "MCP server")) }
         if fromDraft { texts.append(String(localized: "Written for you")) }

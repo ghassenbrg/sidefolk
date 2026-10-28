@@ -72,7 +72,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
   "name": "System Vitals",
   "version": "1.0.0",
   "sidefolk": ">=0.1",
-  "description": "Battery, disk and memory at a glance.",
+  "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
+  "tagline": "Battery, disk and memory at a glance",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",
@@ -101,7 +102,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `name` | yes | 1–60 characters of plain text, shown everywhere. |
 | `version` | yes | `1.0` or `1.0.0`, optionally with `-beta.1`. |
 | `sidefolk` | no | Minimum Sidefolk version, written `>=0.1`. |
-| `description` | no | At most 300 characters. |
+| `description` | no | At most 300 characters. What it does, in full: Settings shows it under Details, and the install preview shows it whole. |
+| `tagline` | no | One line of at most 60 characters, shown under the name in Settings › Extensions (and later in the library). Without one, the description's first sentence is shown. |
 | `folk` | no | The folk that appears while it works, e.g. `byte`. |
 | `author` | no | At most 100 characters. |
 | `icon` | no | A square PNG (64–1024 px) or one-page square PDF in the folder, at most 256 KiB. See [Icons](#icons). |

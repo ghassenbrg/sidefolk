@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "For developers: format JSON, encode and decode base64, URLs and hex, decode JWTs, convert timestamps, make UUIDs, and check a file's checksum.",
+  "tagline": "JSON, base64, JWTs, UUIDs and more",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",

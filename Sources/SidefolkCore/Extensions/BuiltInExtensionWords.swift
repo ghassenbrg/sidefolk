@@ -24,6 +24,26 @@ enum BuiltInExtensionWords {
         }
     }
 
+    /// One line under the name in Settings; the description is under Details.
+    static func tagline(_ id: String) -> String? {
+        switch id {
+        case "dev.sidefolk.git": String(localized: "Clone, update and check your repositories", comment: "Git: one line under its name")
+        case "dev.sidefolk.world-clock": String(localized: "The time anywhere, and times between places", comment: "World Clock: one line under its name")
+        case "dev.sidefolk.system-vitals": String(localized: "Battery, disk and memory at a glance", comment: "System Vitals: one line under its name")
+        case "dev.sidefolk.weather": String(localized: "Today's weather and the week ahead", comment: "Weather: one line under its name")
+        case "dev.sidefolk.calculator": String(localized: "Exact sums, units and dates", comment: "Calculator: one line under its name")
+        case "dev.sidefolk.currency": String(localized: "Money in 30 currencies at today's rates", comment: "Currency: one line under its name")
+        case "dev.sidefolk.playtime": String(localized: "Trivia and random picks for a break", comment: "Playtime: one line under its name")
+        case "dev.sidefolk.images": String(localized: "Photo details and converted copies", comment: "Images: one line under its name")
+        case "dev.sidefolk.pdf": String(localized: "Read, combine and split PDFs", comment: "PDF Tools: one line under its name")
+        case "dev.sidefolk.qr-codes": String(localized: "Make and read QR codes", comment: "QR Codes: one line under its name")
+        case "dev.sidefolk.archives": String(localized: "Zip and unzip files", comment: "Archives: one line under its name")
+        case "dev.sidefolk.dev-toolbox": String(localized: "JSON, base64, JWTs, UUIDs and more", comment: "Dev Toolbox: one line under its name")
+        case "dev.sidefolk.feeds": String(localized: "New posts from blogs, news and podcasts", comment: "Feeds: one line under its name")
+        default: nil
+        }
+    }
+
     static func description(_ id: String) -> String? {
         switch id {
         case "dev.sidefolk.git":

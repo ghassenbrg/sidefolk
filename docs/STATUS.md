@@ -51,7 +51,8 @@ extension library, both for the founder to review. 1332 core and 34 character te
   or coffee", "new uuid", "about this mac". Core first; two extensions → the AI; a tool that can't answer → the AI.
   Settings › Extensions › Details and the install preview list each one's sentences. *Checked:*
   ExtensionCommandTests (15), ExtensionCommandBuiltInTests (6, with the real programs), the dev app with no AI.
-- **Extensions list (D39 amended):** one line per extension with Details on a click, a search over names, tools
+- **Extensions list (D39 amended):** one line per extension (its new `tagline`, translated for the built-ins; the
+  full description under Details) with Details on a click, a search over names, tools
   and permissions (it names what matched), All / On / Off with counts, remembered; ⌘F, arrows, VoiceOver phrases.
   *Checked:* ExtensionListQueryTests with the 13 shipped built-ins, snapshots in light, dark and Arabic.
 - **For the founder to read:** docs/research/licence.md (recommendation: FSL-1.1-ALv2 for the code, the brand kept

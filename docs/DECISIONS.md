@@ -822,7 +822,9 @@ the request to try, authors, ids and server commands, ignoring case, accents and
 not searched, so "internet" finds what can reach it. When a row's own line doesn't show the match, it names what
 matched. All / On / Off count what matches the typed words and are remembered per person; drafts and skills,
 neither on nor off, are listed under All. The logic is `ExtensionListQuery` in core, tested against the shipped
-built-ins.
+built-ins. Under each name is a `tagline`, a new manifest field of one line (at most 60 characters; the built-ins'
+are translated), and the full description opens with Details; an extension without one shows its description's
+first sentence. *Why:* the founder found every description cut off with "…" in the list.
 
 ### D40 — With no AI chosen, the Ask panel offers the plan this Mac is signed in to (2026-10-27)
 **Decision:** when a request needs AI and the provider is "No AI", the "That needs AI" card probes the

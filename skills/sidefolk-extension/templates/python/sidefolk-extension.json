@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "sidefolk": ">=0.1",
   "description": "Counts the words in the text files of a folder you name, and says hello.",
+  "tagline": "Word counts for a folder, and a hello",
   "author": "Example Inc.",
   "icon": "icon.png",
   "run": { "command": "python3", "args": ["main.py"] },
