@@ -248,8 +248,10 @@ extension AppCoordinator: AskActions {
                     model.phase = String(localized: "Waiting for your OK…")
                 case .toolFinished(let activity, let ok):
                     // Read-only results feed the answer; only changes become cards (DECISIONS D5), and so
-                    // does a way to the System Settings page where macOS needs the person's OK (D38).
-                    if let card = activity.card, ok ? activity.mutates : PrivacyPane.isKnown(card.url) || SettingsLink.isKnown(card.url) {
+                    // does a way to the System Settings page where macOS needs the person's OK (D38). What the
+                    // companion flipped or rolled is shown as it came, whatever the answer makes of it (D44).
+                    if let card = activity.card,
+                       ok ? activity.mutates || card.kind == .chance : PrivacyPane.isKnown(card.url) || SettingsLink.isKnown(card.url) {
                         shownCards.insert(card.title)
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
                         line = SpokenLine.card(card)
