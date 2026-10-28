@@ -48,39 +48,62 @@ public struct PermissionEngine: Sendable {
         // the context (About you, notes, live state) to someone else's server, so fetching or opening
         // it is at least medium (SECURITY T1, T2). Opening a site the user named is fine in a clean
         // turn; while tainted only the exact address counts. External agents have their own context
-        // and their own network, and follow T4 instead.
-        let outward = !spec.capabilities.isDisjoint(with: [.network, .apps])
+        // and their own network, and follow T4 instead. A call Sidefolk's own code keeps off the network (a CPU
+        // report) reaches nothing, whatever its tool could.
+        let opensApps = spec.capabilities.contains(.apps)
+        let usesNetwork = spec.capabilities.contains(.network) && scope.reach != .nowhere
+        let outward = usesNetwork || opensApps
         let typed = scope.url.map { mentions?.contains(url: $0) == true } ?? false
-        let namedSite = !tainted && spec.capabilities.contains(.apps) && scope.url.map { mentions?.containsSite(of: $0) == true } == true
+        let namedSite = !tainted && opensApps && scope.url.map { mentions?.containsSite(of: $0) == true } == true
         let modelBuilt = outward && scope.url.map(UserMentions.isWebAddress) == true && !typed && !namedSite && caller.kind != "external"
         let risk = modelBuilt ? max(spec.risk, .medium) : spec.risk
+
+        // How Sidefolk's own agent uses the internet (D47). A built-in service (Open-Meteo for the weather) hears only
+        // what the model asks it and passes it to no one, so a call to it carries nothing out. Reading a page at an
+        // address the model wrote is a site read: it changes nothing, and Guard can name the site it reaches.
+        let internet = policy.internet(for: caller)
+        let internetCall = internet != nil && usesNetwork && !opensApps && !typed
+        let service: String? = if internetCall, case .service(let name) = scope.reach,
+            spec.capabilities.isSubset(of: [.network, .extensions, .watch]) { name } else { nil }
+        let site = internetCall && scope.reach == nil && !spec.mutates && spec.capabilities == [.network] && modelBuilt
+            ? scope.url.flatMap(URL.init(string:)).flatMap(UserMentions.host) : nil
+        let askEachTime = internetCall && internet == .askEachTime
 
         // While untrusted content is in play, anything that could carry it into memory, the
         // clipboard, a browser or the network waits for the user (SECURITY T2, T12). An address
         // the user typed carries nothing the model added.
-        let outwardUntyped = outward && !typed
+        let outwardUntyped = outward && !typed && service == nil
         let carriesTaint = tainted && (outwardUntyped
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard])))
         let mode = policy.mode(for: caller)
-        let honoursGrants = mode != .askEveryTime
+        let honoursGrants = mode != .askEveryTime && !askEachTime
         let decision: GuardDecision
         switch risk {
-        case .low where !carriesTaint:
+        case .low where !carriesTaint && !askEachTime:
             return .allow(.auto)
         case .low, .medium:
-            let grantable = !(tainted && caller.kind != "user") && scope.text == nil
-            if grantable, honoursGrants, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
+            // Grants hold in a clean turn. After outside content was read they hold only where what the model
+            // writes can reach no one new: a built-in service, or reading a site the person allowed for good (a
+            // site grant never covers a query, F1) (D47). "Always" is offered only where it would hold for good.
+            let clean = !(tainted && caller.kind != "user")
+            let grantable = scope.text == nil && (clean || service != nil || site != nil)
+            let holding = clean ? grants : grants.filter { $0.scope.string(service != nil ? "extension" : "host") != nil }
+            if grantable, honoursGrants, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: holding) != nil {
                 return .allow(.always)
             }
-            // In a turn that read outside content "Always" is never offered. A call that can't carry
-            // anything off the Mac may instead be allowed for the rest of Sidefolk's run (D37): a library
-            // of Apple Notes copied in batches is one card per kind, not one per batch.
+            if internet == .withoutAsking, internetCall, scope.text == nil, service != nil || (site != nil && !tainted) {
+                return .allow(.webSetting)
+            }
+            let offersAlways = scope.text == nil && !askEachTime && (clean || service != nil)
+            // A call that can't carry anything off the Mac may instead be allowed for the rest of Sidefolk's
+            // run (D37): a library of Apple Notes copied in batches is one card per kind, not one per batch.
             let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil
-                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped)
+                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, toService: service != nil)
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
-                details: Self.details(spec: spec, scope: scope), canAlways: grantable, tainted: tainted,
-                effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")), canAllowForRequest: forRequest, extensionId: scope.extensionId
+                details: Self.details(spec: spec, scope: scope), canAlways: offersAlways, tainted: tainted,
+                effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")), canAllowForRequest: forRequest,
+                extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
             ))
         case .high:
             // Only an exact command may be granted "always"; everything else is asked every time.
@@ -95,8 +118,10 @@ public struct PermissionEngine: Sendable {
                 extensionId: scope.extensionId
             ))
         }
-        // Auto and Full access answer, themselves, the questions the person chose not to be asked.
-        if let tag = Self.answeredByMode(mode, risk: risk, spec: spec, scope: scope, tainted: tainted, outwardUntyped: outwardUntyped) {
+        // Auto and Full access answer, themselves, the questions the person chose not to be asked; the internet
+        // asks each time when the person said so, whatever the mode (D47).
+        if !askEachTime, let tag = Self.answeredByMode(mode, risk: risk, spec: spec, scope: scope, tainted: tainted,
+                                                       outwardUntyped: outwardUntyped, toService: service != nil) {
             return .allow(tag)
         }
         return decision
@@ -107,7 +132,7 @@ public struct PermissionEngine: Sendable {
     /// runs) always waits for them. Auto acts on medium risk in a clean turn. Full access acts on
     /// anything, except, in a turn that read outside content, what could carry data out.
     static func answeredByMode(_ mode: GuardMode, risk: Risk, spec: ToolSpec, scope: ToolScope, tainted: Bool,
-                               outwardUntyped: Bool) -> ActivityEntry.Decision? {
+                               outwardUntyped: Bool, toService: Bool = false) -> ActivityEntry.Decision? {
         guard scope.text == nil else { return nil }
         switch mode {
         case .askEveryTime, .askOncePerKind:
@@ -115,7 +140,7 @@ public struct PermissionEngine: Sendable {
         case .auto:
             return !tainted && risk == .medium ? .autoMode : nil
         case .fullAccess:
-            return tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped) ? nil : .fullAccess
+            return tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped, toService: toService) ? nil : .fullAccess
         }
     }
 
@@ -123,9 +148,11 @@ public struct PermissionEngine: Sendable {
     /// in Full access (SECURITY T2, T12, T21): reach a server or another app at an address the person
     /// didn't type, run a program, change files (a shared folder may sync them anywhere), hand input to
     /// an extension or MCP server, or write the clipboard or memory, which carry it into later moments.
-    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool) -> Bool {
+    /// A built-in extension that talks to one named service (`toService`, D47) is Sidefolk's own code passing
+    /// the input to that service alone, not to an extension that could send it anywhere.
+    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool, toService: Bool = false) -> Bool {
         outwardUntyped
-            || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions])
+            || !spec.capabilities.isDisjoint(with: toService ? [.shell, .filesWrite] : [.shell, .filesWrite, .extensions])
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
     }
 
@@ -159,9 +186,10 @@ public struct PermissionEngine: Sendable {
             }
             if let ext = g.scope.string("extension") { return ext == scope.extensionId }
             if let host = g.scope.string("host") {
-                // A query or fragment is where a model-built link carries data; a site grant never covers one.
+                // A query or fragment is where a model-built link carries data; a site grant never covers one (audit
+                // F1). "www." and a final dot name the same site.
                 guard let url = URL(string: scope.url ?? ""), url.query == nil, url.fragment == nil else { return false }
-                return url.host?.lowercased() == host
+                return UserMentions.host(url) != nil && UserMentions.host(url) == UserMentions.site(host)
             }
             return scope.command == nil
         }
@@ -184,8 +212,15 @@ public struct PermissionEngine: Sendable {
         if let first = (scope.writePaths + scope.readPaths).first, let folder = FolderAccess.suggestedFolder(for: first) {
             return ["folder": .string(folder)]
         }
-        if let host = URL(string: scope.url ?? "")?.host?.lowercased() { return ["host": .string(host)] }
+        if let host = siteOfGrant(scope) { return ["host": .string(host)] }
         return .object([:])
+    }
+
+    /// The site an "Always allow" from this call would cover, when it would be a site grant ("example.com").
+    static func siteOfGrant(_ scope: ToolScope) -> String? {
+        guard scope.command == nil, scope.extensionId == nil, scope.readPaths.isEmpty, scope.writePaths.isEmpty,
+              let url = URL(string: scope.url ?? "") else { return nil }
+        return UserMentions.host(url)
     }
 
     static func details(spec: ToolSpec, scope: ToolScope) -> ApprovalRequest.Details {

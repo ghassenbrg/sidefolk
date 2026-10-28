@@ -53,6 +53,8 @@ public struct ExtensionTool: Tool {
 
     public func scope(for input: JSONValue) -> ToolScope {
         var scope = ToolScope(extensionId: extensionId)
+        // Only Sidefolk's own programs are taken at their word about where they go (D47).
+        if firstParty, let service = BuiltInServices.byExtension[extensionId] { scope.reach = .service(service.name) }
         for (param, use) in folderParameters.sorted(by: { $0.key < $1.key }) {
             guard let raw = input.string(param), !raw.isEmpty else { continue }
             let path = (raw as NSString).expandingTildeInPath

@@ -24,6 +24,25 @@ public enum GuardMode: String, Codable, Sendable, CaseIterable {
     static let savedBeforeModes: [String: GuardMode] = ["standard": .askOncePerKind, "cautious": .askEveryTime]
 }
 
+/// How Sidefolk's own agent reads the web and uses online services without the person typing the address (D47).
+/// Like the mode, it changes how often Guard asks, never what may happen at all. After outside content was read
+/// (SECURITY T2), a site the person hasn't allowed for good always asks, whichever is chosen: that is where a
+/// steered model would write their data into an address.
+public enum InternetRule: String, Codable, Sendable, CaseIterable {
+    /// Every page and online service Sidefolk chose itself asks, every time; "Always allow" isn't offered for them.
+    case askEachTime
+    /// "Always allow" remembers a site or a built-in service, and holds even after outside content was read. The default.
+    case oncePerSite
+    /// Pages and built-in services are used without asking; after outside content was read, only the sites the
+    /// person allowed for good go without a card.
+    case withoutAsking
+
+    /// A name saved by another version never loosens Guard: it reads as the default.
+    public init(from decoder: Decoder) throws {
+        self = Self(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .oncePerSite
+    }
+}
+
 /// What happens when Sidefolk's own agent waits on an approval and nobody answers (D37).
 public struct UnansweredRule: Codable, Sendable, Equatable {
     public enum Action: String, Codable, Sendable, CaseIterable {
@@ -66,11 +85,14 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     /// Capabilities the user switched off entirely.
     public var disabled: Set<Capability> = []
     public var unanswered = UnansweredRule()
+    public var internet: InternetRule = .oncePerSite
 
-    public init(mode: GuardMode = .askOncePerKind, disabled: Set<Capability> = [], unanswered: UnansweredRule = UnansweredRule()) {
+    public init(mode: GuardMode = .askOncePerKind, disabled: Set<Capability> = [], unanswered: UnansweredRule = UnansweredRule(),
+                internet: InternetRule = .oncePerSite) {
         self.mode = mode
         self.disabled = disabled
         self.unanswered = unanswered
+        self.internet = internet
     }
 
     /// Every field has a default and is read on its own, so a policy saved before a field existed (or
@@ -81,6 +103,7 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         mode = (try? c.decode(GuardMode.self, forKey: .mode)) ?? .askOncePerKind
         disabled = Set(((try? c.decode([String].self, forKey: .disabled)) ?? []).compactMap(Capability.init(rawValue:)))
         unanswered = (try? c.decode(UnansweredRule.self, forKey: .unanswered)) ?? UnansweredRule()
+        internet = (try? c.decode(InternetRule.self, forKey: .internet)) ?? .oncePerSite
     }
 
     /// The mode Guard applies to `caller`. Only Sidefolk's own agent, which acts on the person's own
@@ -89,5 +112,12 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     public func mode(for caller: Caller) -> GuardMode {
         if case .agent = caller { return mode }
         return mode == .askEveryTime ? .askEveryTime : .askOncePerKind
+    }
+
+    /// The internet rule Guard applies to `caller`, or nil: only Sidefolk's own agent has one (D47). Other
+    /// agents, routines and extensions keep the rules they had (SECURITY T4).
+    public func internet(for caller: Caller) -> InternetRule? {
+        if case .agent = caller { return internet }
+        return nil
     }
 }

@@ -142,6 +142,8 @@ public struct URLPolicy: Sendable {
         case cannotResolve(String)
         case tooManyRedirects
         case insecureRedirect
+        /// A page allowed for its site alone sent Sidefolk to another site (D47).
+        case leftSite(String)
 
         /// Worded for people, in the app's language.
         public var message: String {
@@ -166,6 +168,9 @@ public struct URLPolicy: Sendable {
                 String(localized: "That address sent me around in circles (too many redirects).")
             case .insecureRedirect:
                 String(localized: "That secure (https) address tried to send me to an insecure (http) one, so I stopped.")
+            case .leftSite(let host):
+                String(localized: "That page sent me on to another site, “\(host)”, so I stopped. You can ask me to read it there.",
+                       comment: "Fetching a page from a site the person allowed redirected to a different site")
             }
         }
 

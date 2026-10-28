@@ -161,12 +161,19 @@ public final class ToolExecutor: Sendable {
                                            tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions)
             switch decision {
             case .allow(let tag):
+                // A site allowed for good, used while outside content is in play, is the only site the call may reach:
+                // a redirect from it could carry the address's path anywhere (D47).
+                var site: String?
                 if tag == .always, let g = PermissionEngine.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) {
                     try? await permissions.touchGrant(id: g.id)
                 }
+                if tag == .always, tainted, let g = PermissionEngine.matchingGrant(
+                    spec: spec, scope: scope, caller: caller, grants: grants.filter { $0.scope.string("host") != nil }) {
+                    site = g.scope.string("host").flatMap(UserMentions.site)
+                }
                 if decisionTag == .auto { decisionTag = tag }
                 return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag,
-                                 timeout: spec.timeout ?? timeout, folders: folders)
+                                 timeout: spec.timeout ?? timeout, folders: folders, site: site)
             case .deny(let why):
                 await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
                 act.error = why
@@ -260,11 +267,11 @@ public final class ToolExecutor: Sendable {
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,
-                     decision: ActivityEntry.Decision, timeout: TimeInterval, folders: [GrantedFolder]) async -> ToolOutcome {
+                     decision: ActivityEntry.Decision, timeout: TimeInterval, folders: [GrantedFolder], site: String? = nil) async -> ToolOutcome {
         var act = act
         act.decision = decision
         events.publish(.toolStarted(act))
-        let context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders)
+        let context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
         do {
             let result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
             act.card = result.card

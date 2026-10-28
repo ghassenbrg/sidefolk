@@ -38,6 +38,8 @@ public struct WeatherProbe: WatcherProbe {
 
     static let geocoder = "https://geocoding-api.open-meteo.com/v1/search"
     static let forecast = "https://api.open-meteo.com/v1/forecast"
+    /// The one service these addresses reach, as Guard names it (`NetworkReach.service`, D47).
+    static let service = "Open-Meteo"
 
     let web: ProbeFetching
 
