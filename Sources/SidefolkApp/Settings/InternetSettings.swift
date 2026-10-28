@@ -119,12 +119,14 @@ private struct AllowedSiteRow: View {
     }
 }
 
-/// Which "Always allow" grants the internet group lists instead of "Always allowed": reading a site, and the
-/// built-in services. A site allowed for opening links or watching stays there, since it doesn't hold the same way.
+/// Which "Always allow" grants the internet group lists instead of "Always allowed": Sidefolk reading a site, and
+/// the built-in services. A site allowed for opening links or watching, or for other agents, stays there, since it
+/// doesn't hold the same way.
 enum InternetGrants {
     static let readTool = "web.fetch"
 
     static func isInternet(_ grant: Grant) -> Bool {
+        guard grant.callerKind == "agent" else { return false }
         if grant.scope.string("host") != nil { return grant.tool == readTool }
         return grant.scope.string("extension").map { BuiltInServices.byExtension[$0] != nil } ?? false
     }

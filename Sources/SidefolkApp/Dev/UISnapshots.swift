@@ -165,6 +165,7 @@ enum UISnapshots {
             let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
+                          ("desktop-ask-internet", sampleAskInternet()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
                           ("desktop-ask-drop", dropAsk(actions))]
@@ -414,6 +415,28 @@ enum UISnapshots {
                                           summary: "Clone https://github.com/octocat/Hello-World into ~/git/Hello-World",
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
                                           canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
+        return ask
+    }
+
+    /// Using the internet (D47): a page Sidefolk chose, a built-in service, and a new site after reading a page.
+    private static func sampleAskInternet() -> AskModel {
+        let ask = AskModel()
+        ask.extensionLooks = ["dev.sidefolk.weather": ExtensionLook(name: "Weather", iconPath: FixtureServices.icon("weather"), folk: "scout")]
+        ask.add(.approval(ApprovalRequest(tool: "web.fetch", title: String(localized: "Read a web page"),
+                                          summary: "Read the web page https://forum.example.net/thread/42", risk: .medium,
+                                          caller: .agent(runId: "r"), details: .url("https://forum.example.net/thread/42"), canAlways: false,
+                                          tainted: true, effect: .usesInternet, site: "forum.example.net")),
+                caption: "what do people say about it?")
+        ask.add(.approval(ApprovalRequest(tool: "web.fetch", title: String(localized: "Read a web page"),
+                                          summary: "Read the web page https://docs.swift.org/swift-book/", risk: .medium,
+                                          caller: .agent(runId: "r"), details: .url("https://docs.swift.org/swift-book/"), canAlways: true,
+                                          effect: .usesInternet, site: "docs.swift.org")),
+                caption: "what's new in the Swift book?")
+        ask.add(.approval(ApprovalRequest(tool: "ext.weather.forecast", title: "Forecast",
+                                          summary: "Get the weather forecast for Fukuoka for the next 3 days", risk: .medium,
+                                          caller: .agent(runId: "r"), details: .none, canAlways: true, effect: .usesInternet,
+                                          extensionId: "dev.sidefolk.weather", service: "Open-Meteo")),
+                caption: "and the weather there this weekend?")
         return ask
     }
 

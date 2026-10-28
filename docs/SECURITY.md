@@ -41,7 +41,8 @@ mode (D37); modes loosen Guard only for Sidefolk's own agent and never touch the
 share one pending card: while it waits, their further requests are refused at once (their names
 are self-chosen, so a per-name limit would be none). "Always" grants are never given for high
 risk or to external callers, are scoped by caller kind, revocable, and expire after 90 days
-unused. A site grant never covers a URL with a query or fragment. *Residual:* the user approves
+unused. A site grant never covers a URL with a query or fragment; it names one site (`www.` and a final
+dot don't matter, any other label does). *Residual:* the user approves
 without reading.
 
 **T2 Prompt injection (H/H).** Sources: web pages, watcher payloads, files, clipboard, drops,
@@ -62,7 +63,25 @@ while tainted, and opening a site the user named runs in a clean turn (`UserMent
 `www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
 Mac or the local network get no card: fetching and watching refuse them for everyone but the
 user, and opening one in the browser sends nothing beyond the LAN. External
-agents follow T4 instead (their own context and network are already theirs). Extension and MCP
+agents follow T4 instead (their own context and network are already theirs).
+*Using the internet (D47), for Sidefolk's own agent only.* Two kinds of call keep the person's grant
+after outside content was read, because what a steered model writes into them reaches no one new: reading
+a page (`web.fetch`) on a site the person allowed for good (a site grant: exact site, no query or fragment,
+and the fetch may not be redirected off that site, so an open redirect there can't carry the path
+elsewhere: `ToolContext.site`), and a call whose destination Sidefolk's own code fixes
+(`NetworkReach.service`, an extension or service grant): the weather report (Open-Meteo) and the built-in
+extensions in `BuiltInServices` (Weather → Open-Meteo, Currency → the ECB; only the app's own copies,
+origin `bundled`, and a test checks every address in their programs against the list). Those grants come
+from a clean turn or from Settings: "Always" is still never offered after outside content, and without a
+grant these ask as before, in Full access too. A metric report reaches no network at all
+(`NetworkReach.nowhere`). A new site, a query on any site, a watcher, an open, someone else's network
+extension or MCP server ask as above. The person's internet rule: *Ask each time* (no grants, no "Always",
+and no mode answers for an internet call; even a weather report asks), *Ask once for each site* (the
+default), or *Don't ask before reading* (in a clean turn any public page and the built-in services go
+without a card, logged `web_setting`, as Auto does for medium; after outside content the built-in services
+and the allowed sites do, so a steered place name can reach Open-Meteo, and nothing else changes). Sites can
+also be allowed in Settings.
+Extension and MCP
 tool descriptions never reach the model: it gets a neutral line built from the tool title and
 extension name, and the schema without its free text (descriptions stay on the install sheet). The
 exception is the extensions Sidefolk ships (origin `bundled`, installed only from the app's own signed
@@ -71,7 +90,11 @@ Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), str
 and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
 That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
 host. *Residual:* injection can still steer low-risk actions; extension tool names and titles
-(≤ 60 characters) still reach the model.
+(≤ 60 characters) still reach the model. A site the person allowed for good can receive, in a page's
+path, whatever a steered model puts there: only that site's owner reads it, so the trade rests on the
+person allowing sites they trust (a site where strangers can read who fetched what, a request bin, isn't
+one). `BuiltInServices` is Sidefolk's word for its own code: the sandbox can't hold a program to host
+names (§3), so a change to those programs must keep the address test passing.
 
 **T3 Persistent injection (M/H).** Items, collections, memories, reminders, watchers, skills and
 routines record `source` (`user | user:agent | agent | external:<client> | extension:<id>`;
@@ -487,10 +510,10 @@ paths and queries are dropped, hosts stay.
 | Path | Control |
 |---|---|
 | AI provider | By design; the Privacy page shows the last payload |
-| Fetch or watcher URLs (query, path, DNS label) | Taint rule |
+| Fetch or watcher URLs (query, path, DNS label) | Taint rule; after outside content a fetch goes without a card only to a site allowed for good: exact site, no query or fragment, no redirect off it (D47) |
 | Open URL | Same as T11 |
 | Markdown images | Never loaded |
-| Network extensions | Install warning |
+| Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47) |
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
 | Clipboard | T12 |
@@ -704,7 +727,13 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
    reach file, clipboard or command tools; the extension risk floor holds; an args-hash mismatch
    aborts. Approval modes (D37): every mode × risk × taint × caller, the invariants in every mode
    (switched-off capabilities, protected places, folder cards, other agents' rules), an unknown or
-   old stored mode never loosening Guard, and every wait for an answer ending.
+   old stored mode never loosening Guard, and every wait for an answer ending. Using the internet (D47,
+   `InternetRuleTests`): after outside content a new site, a query or fragment, a look-alike host and a data
+   label in front of an allowed site ask; an allowed site holds only for reading, only with a site grant, and
+   the fetch can't leave it by redirect; a built-in service holds only with the person's grant and is never
+   offered "Always" after outside content; someone else's network extension asks with its grant in every rule;
+   a built-in service claim never covers files; each built-in service program reaches only its listed hosts;
+   "Ask each time" asks in every mode; other callers keep their rules; an unknown stored rule reads as the default.
 4. **Socket:** foreign uid rejected (seam over `LOCAL_PEERCRED`); no token → `.external`; bad,
    expired or reused token → disconnect; oversized line rejected; symlinked, foreign-owned or 0755
    run dir refused; a live socket is never unlinked; mode is 0600; a session event's host pid that

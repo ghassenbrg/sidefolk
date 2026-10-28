@@ -98,16 +98,21 @@ import Testing
         #expect(r?.canAlways == true)
         #expect(r?.service == "Open-Meteo")
         #expect(decide(Self.forecast, scope: Self.weather, grants: [Self.weatherGrant]) == .allow(.always))
-        // After outside content the grant holds, and "Always" is still offered: the model can't choose where it goes.
+        // After outside content the person's grant holds: the model can't choose where it goes.
         #expect(decide(Self.forecast, scope: Self.weather, tainted: true, grants: [Self.weatherGrant]) == .allow(.always))
-        let tainted = card(decide(Self.forecast, scope: Self.weather, tainted: true))
-        #expect(tainted?.canAlways == true)
+        #expect(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .fullAccess, grants: [Self.weatherGrant]) == .allow(.always))
     }
 
-    @Test func fullAccessUsesABuiltInServiceAfterOutsideContent() {
-        #expect(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .fullAccess) == .allow(.fullAccess))
-        // Auto acts only in a clean turn, as for everything else.
+    @Test func afterOutsideContentABuiltInServiceIsNeverAllowedForGood() {
+        // What goes in it may be steered, so the grant must come from a clean turn (or Settings' rule).
+        let r = card(decide(Self.forecast, scope: Self.weather, tainted: true))
+        #expect(r?.canAlways == false)
+        #expect(r?.canAllowForRequest == false)
+        _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .fullAccess))
         _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .auto))
+        // A grant for the tool with no service in it never stands for one.
+        let unscoped = Grant(tool: "ext.weather.forecast", callerKind: "agent")
+        _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, grants: [unscoped]))
     }
 
     @Test func someoneElsesNetworkExtensionKeepsItsRules() {
@@ -133,8 +138,15 @@ import Testing
     }
 
     @Test func reportsOfThisMacReachNothingAndWeatherReportsOnlyOpenMeteo() {
+        let openMeteo = ToolScope(reach: .service("Open-Meteo"))
         #expect(decide(Self.report, scope: ToolScope(reach: .nowhere), tainted: true) == .allow(.auto))
-        #expect(decide(Self.report, scope: ToolScope(reach: .service("Open-Meteo")), tainted: true) == .allow(.auto))
+        #expect(decide(Self.report, scope: openMeteo) == .allow(.auto))
+        // After outside content a steered place name would reach Open-Meteo: it asks, unless the person said so.
+        _ = card(decide(Self.report, scope: openMeteo, tainted: true))
+        let grant = Grant(tool: "watch.report", scope: PermissionEngine.grantScope(for: openMeteo), callerKind: "agent")
+        #expect(grant.scope.string("service") == "Open-Meteo")
+        #expect(decide(Self.report, scope: openMeteo, tainted: true, grants: [grant]) == .allow(.always))
+        #expect(decide(Self.report, scope: openMeteo, tainted: true, rule: .withoutAsking) == .allow(.webSetting))
         // Without a reach, a report could go anywhere: it asks after outside content, as before.
         _ = card(decide(Self.report, scope: .none, tainted: true))
     }

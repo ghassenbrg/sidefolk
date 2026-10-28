@@ -238,6 +238,12 @@ enum SampleData {
         try await rt.permissions.addGrant(move)
         try await rt.permissions.addGrant(Grant(tool: "shell.run", scope: ["command": "npm test"], callerKind: "agent", now: ago(60 * 30)))
         try await rt.permissions.addGrant(Grant(tool: "web.fetch", scope: ["host": "github.com"], callerKind: "external", now: ago(60 * 24)))
+        // Using the internet (D47): a site and a built-in service allowed for good.
+        var docs = Grant(tool: "web.fetch", scope: ["host": "docs.swift.org"], callerKind: "agent", now: ago(60 * 24 * 2))
+        docs.lastUsedAt = ago(20)
+        try await rt.permissions.addGrant(docs)
+        try await rt.permissions.addGrant(Grant(tool: "ext.weather.forecast", scope: ["extension": "dev.sidefolk.weather"],
+                                                callerKind: "agent", now: ago(60 * 5)))
         try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 
         return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)

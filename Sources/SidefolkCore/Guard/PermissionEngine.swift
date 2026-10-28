@@ -59,8 +59,8 @@ public struct PermissionEngine: Sendable {
         let risk = modelBuilt ? max(spec.risk, .medium) : spec.risk
 
         // How Sidefolk's own agent uses the internet (D47). A built-in service (Open-Meteo for the weather) hears only
-        // what the model asks it and passes it to no one, so a call to it carries nothing out. Reading a page at an
-        // address the model wrote is a site read: it changes nothing, and Guard can name the site it reaches.
+        // what the model asks it and passes it to no one else. Reading a page at an address the model wrote is a site
+        // read: it changes nothing, and Guard can name the site it reaches.
         let internet = policy.internet(for: caller)
         let internetCall = internet != nil && usesNetwork && !opensApps && !typed
         let service: String? = if internetCall, case .service(let name) = scope.reach,
@@ -72,7 +72,7 @@ public struct PermissionEngine: Sendable {
         // While untrusted content is in play, anything that could carry it into memory, the
         // clipboard, a browser or the network waits for the user (SECURITY T2, T12). An address
         // the user typed carries nothing the model added.
-        let outwardUntyped = outward && !typed && service == nil
+        let outwardUntyped = outward && !typed
         let carriesTaint = tainted && (outwardUntyped
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard])))
         let mode = policy.mode(for: caller)
@@ -82,26 +82,27 @@ public struct PermissionEngine: Sendable {
         case .low where !carriesTaint && !askEachTime:
             return .allow(.auto)
         case .low, .medium:
-            // Grants hold in a clean turn. After outside content was read they hold only where what the model
-            // writes can reach no one new: a built-in service, or reading a site the person allowed for good (a
-            // site grant never covers a query, F1) (D47). "Always" is offered only where it would hold for good.
+            // Grants hold in a clean turn. After outside content was read, a grant the person gave in a clean turn
+            // still holds where what the model writes can reach no one new: a built-in service, or reading a site
+            // allowed for good (a site grant never covers a query, F1) (D47). "Always" is never offered then.
             let clean = !(tainted && caller.kind != "user")
             let grantable = scope.text == nil && (clean || service != nil || site != nil)
-            let holding = clean ? grants : grants.filter { $0.scope.string(service != nil ? "extension" : "host") != nil }
+            let holding = clean ? grants : grants.filter { g in
+                site != nil ? g.scope.string("host") != nil : g.scope.string("extension") != nil || g.scope.string("service") != nil
+            }
             if grantable, honoursGrants, Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: holding) != nil {
                 return .allow(.always)
             }
             if internet == .withoutAsking, internetCall, scope.text == nil, service != nil || (site != nil && !tainted) {
                 return .allow(.webSetting)
             }
-            let offersAlways = scope.text == nil && !askEachTime && (clean || service != nil)
             // A call that can't carry anything off the Mac may instead be allowed for the rest of Sidefolk's
             // run (D37): a library of Apple Notes copied in batches is one card per kind, not one per batch.
             let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil
-                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, toService: service != nil)
+                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped)
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
-                details: Self.details(spec: spec, scope: scope), canAlways: offersAlways, tainted: tainted,
+                details: Self.details(spec: spec, scope: scope), canAlways: clean && scope.text == nil && !askEachTime, tainted: tainted,
                 effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")), canAllowForRequest: forRequest,
                 extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
             ))
@@ -121,7 +122,7 @@ public struct PermissionEngine: Sendable {
         // Auto and Full access answer, themselves, the questions the person chose not to be asked; the internet
         // asks each time when the person said so, whatever the mode (D47).
         if !askEachTime, let tag = Self.answeredByMode(mode, risk: risk, spec: spec, scope: scope, tainted: tainted,
-                                                       outwardUntyped: outwardUntyped, toService: service != nil) {
+                                                       outwardUntyped: outwardUntyped) {
             return .allow(tag)
         }
         return decision
@@ -132,7 +133,7 @@ public struct PermissionEngine: Sendable {
     /// runs) always waits for them. Auto acts on medium risk in a clean turn. Full access acts on
     /// anything, except, in a turn that read outside content, what could carry data out.
     static func answeredByMode(_ mode: GuardMode, risk: Risk, spec: ToolSpec, scope: ToolScope, tainted: Bool,
-                               outwardUntyped: Bool, toService: Bool = false) -> ActivityEntry.Decision? {
+                               outwardUntyped: Bool) -> ActivityEntry.Decision? {
         guard scope.text == nil else { return nil }
         switch mode {
         case .askEveryTime, .askOncePerKind:
@@ -140,7 +141,7 @@ public struct PermissionEngine: Sendable {
         case .auto:
             return !tainted && risk == .medium ? .autoMode : nil
         case .fullAccess:
-            return tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped, toService: toService) ? nil : .fullAccess
+            return tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped) ? nil : .fullAccess
         }
     }
 
@@ -148,11 +149,9 @@ public struct PermissionEngine: Sendable {
     /// in Full access (SECURITY T2, T12, T21): reach a server or another app at an address the person
     /// didn't type, run a program, change files (a shared folder may sync them anywhere), hand input to
     /// an extension or MCP server, or write the clipboard or memory, which carry it into later moments.
-    /// A built-in extension that talks to one named service (`toService`, D47) is Sidefolk's own code passing
-    /// the input to that service alone, not to an extension that could send it anywhere.
-    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool, toService: Bool = false) -> Bool {
+    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool) -> Bool {
         outwardUntyped
-            || !spec.capabilities.isDisjoint(with: toService ? [.shell, .filesWrite] : [.shell, .filesWrite, .extensions])
+            || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions])
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
     }
 
@@ -185,6 +184,7 @@ public struct PermissionEngine: Sendable {
                 return !paths.isEmpty && paths.allSatisfy { FolderAccess.isInside($0, folder: folder) }
             }
             if let ext = g.scope.string("extension") { return ext == scope.extensionId }
+            if let service = g.scope.string("service") { return scope.reach == .service(service) }
             if let host = g.scope.string("host") {
                 // A query or fragment is where a model-built link carries data; a site grant never covers one (audit
                 // F1). "www." and a final dot name the same site.
@@ -213,6 +213,7 @@ public struct PermissionEngine: Sendable {
             return ["folder": .string(folder)]
         }
         if let host = siteOfGrant(scope) { return ["host": .string(host)] }
+        if case .service(let name) = scope.reach { return ["service": .string(name)] }
         return .object([:])
     }
 
