@@ -211,6 +211,9 @@ struct BuiltInExtensionTests {
         #expect(forecast.hasPrefix("Lyon, Auvergne-Rhône-Alpes, France, now:") && forecast.contains("Tomorrow:"), "\(forecast)")
         let sun = try #require(await h.call("ext.weather.sun_and_moon", ["place": "Lyon"]).okText)
         #expect(sun.contains("sunrise") && sun.contains("The moon is"), "\(sun)")
+        // The person's place, written as the model reads it in its context (D48).
+        let here = try #require(await h.call("ext.weather.forecast", ["place": "Fukuoka, Japan", "days": 1]).okText)
+        #expect(here.hasPrefix("Fukuoka, Fukuoka, Japan, now:"), "\(here)")
         let check = try await h.host.checkWatcher(extensionId: "dev.sidefolk.weather", watcher: "rain_soon", config: ["place": "Lyon"], state: .null)
         #expect(check.summary.contains("Lyon"))
         await h.host.shutdown()

@@ -3,7 +3,7 @@ import SidefolkCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Settings › Privacy & Permissions: how much Sidefolk asks and what it may do, what is stored,
+/// Settings › Privacy & Permissions: how much Sidefolk asks and what it may do, where you are (D48), what is stored,
 /// which folders Sidefolk may use, what is always allowed, and the user's data (export, delete).
 struct PrivacySettingsView: View {
     var model: SettingsModel
@@ -22,8 +22,25 @@ struct PrivacySettingsView: View {
     ]
 
     var body: some View {
+        ScrollViewReader { scroll in
+            page
+                .task(id: model.location.reveal) {
+                    guard model.location.reveal else { return }
+                    // After the first layout, or there is nothing to scroll to yet.
+                    try? await Task.sleep(for: .milliseconds(150))
+                    withAnimation { scroll.scrollTo(Self.locationAnchor, anchor: .top) }
+                    model.location.reveal = false
+                }
+        }
+        .sheet(isPresented: $confirmingDelete) { DeleteAllSheet(model: model) }
+    }
+
+    private static let locationAnchor = "location"
+
+    private var page: some View {
         SettingsPage {
             guardSettings
+            LocationGroup(model: model.location).id(Self.locationAnchor)
             keeps
             SettingsGroup(title: "History",
                           footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Home › Conversations. Then they're deleted.") {
@@ -55,7 +72,6 @@ struct PrivacySettingsView: View {
             grants
             data
         }
-        .sheet(isPresented: $confirmingDelete) { DeleteAllSheet(model: model) }
     }
 
     // MARK: What Sidefolk keeps

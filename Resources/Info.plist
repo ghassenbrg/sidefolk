@@ -63,6 +63,10 @@
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Sidefolk reaches your local network only when you ask it to watch something there, or to use an AI model running on another computer.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>When you choose “Use my Mac's location”, Sidefolk knows which town you're in, for the weather and anything else that needs a place. Only the town's name goes to your AI, never an address or coordinates.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>When you choose “Use my Mac's location”, Sidefolk knows which town you're in, for the weather and anything else that needs a place. Only the town's name goes to your AI, never an address or coordinates.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Sidefolk listens only while you hold the talk shortcut, and understands what you say on this Mac. The recording is never kept.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

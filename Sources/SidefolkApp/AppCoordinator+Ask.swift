@@ -221,6 +221,10 @@ extension AppCoordinator: AskActions {
                 model.add(.info([reason, question].compactMap { $0 }.joined(separator: " ")), caption: caption)
                 say(SpokenLine.line(question))
                 model.focusRequest += 1
+            case .needsPlace(let card):
+                // It stays until the person names a place or opens Settings: no closing on its own (D48).
+                model.add(.result(card, activityId: nil, undo: false), caption: caption)
+                say(SpokenLine.line(card.title))
             case .needsTarget(let kind, let becomes):
                 model.pendingWatch = (kind, becomes)
                 model.add(.info(String(localized: "Which address should I watch? For example localhost:3000 or example.com/status.")), caption: caption)
@@ -276,7 +280,7 @@ extension AppCoordinator: AskActions {
                 case .toolFinished(let activity, let ok):
                     // Read-only results feed the answer; only changes become cards (DECISIONS D5), and so
                     // does a way to the System Settings page where macOS needs the person's OK (D38).
-                    if let card = activity.card, ok ? activity.mutates : PrivacyPane.isKnown(card.url) {
+                    if let card = activity.card, ok ? activity.mutates : PrivacyPane.isKnown(card.url) || SettingsLink.isKnown(card.url) {
                         shownCards.insert(card.title)
                         model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
                         line = SpokenLine.card(card)
@@ -357,6 +361,10 @@ extension AppCoordinator: AskActions {
     }
 
     func open(card: ResultCard) {
+        if let link = card.url.flatMap(SettingsLink.init(rawValue:)) {
+            open(link)
+            return
+        }
         if let url = card.url, let u = URL(string: url), ["http", "https"].contains(u.scheme?.lowercased() ?? "") || PrivacyPane.isKnown(url) {
             NSWorkspace.shared.open(u)
             return

@@ -326,6 +326,8 @@ private struct EntryView: View {
                 }
                 if PrivacyPane.isKnown(card.url) {
                     Button("Open System Settings") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
+                } else if SettingsLink.isKnown(card.url) {
+                    Button("Set Your Location…") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
                 } else if card.kind != .extensionResult, card.refId != nil || card.url != nil {
                     Button("Open") { model.actions?.open(card: card) }.buttonStyle(.sf(.secondary))
                 }

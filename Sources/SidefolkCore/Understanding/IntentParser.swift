@@ -26,11 +26,14 @@ public struct IntentParser: Sendable {
     let home: String
     /// Names the companion answers to, removed when they start a sentence ("hey pip, ...").
     let names: [String]
+    /// Where the person is ("Fukuoka, Japan"), when they share it: the weather's place when none is named (D48).
+    let here: String?
 
-    public init(when: WhenParser, home: String = NSHomeDirectory(), companionNames: [String] = ["sidefolk", "pip"]) {
+    public init(when: WhenParser, home: String = NSHomeDirectory(), companionNames: [String] = ["sidefolk", "pip"], here: String? = nil) {
         self.when = when
         self.home = home
         names = companionNames.map { $0.lowercased() }
+        self.here = here
     }
 
     public init(calendar: Calendar = .autoupdatingCurrent, morningHour: Int = 9, afternoonHour: Int = 14, eveningHour: Int = 18,

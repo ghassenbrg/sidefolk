@@ -107,9 +107,9 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
 - [ ] `SIDEFOLK_SIGN_IDENTITY="Developer ID Application: … (TEAMID)" SIDEFOLK_NOTARY_PROFILE=sidefolk scripts/release.sh`
 - [ ] `codesign -dv --verbose=4 build/Sidefolk.app`: Authority is Developer ID, `flags=0x10000(runtime)`,
       a secure timestamp, TeamIdentifier set; the helper `Contents/Helpers/sidefolk` the same.
-- [ ] `codesign -d --entitlements - build/Sidefolk.app`: only `com.apple.security.automation.apple-events`
-      and `com.apple.security.device.audio-input`. No `get-task-allow`, no library-validation or JIT exceptions
-      (SECURITY T22).
+- [ ] `codesign -d --entitlements - build/Sidefolk.app`: only `com.apple.security.automation.apple-events`,
+      `com.apple.security.device.audio-input` and `com.apple.security.personal-information.location` (D48). No
+      `get-task-allow`, no library-validation or JIT exceptions (SECURITY T22).
 - [ ] `xcrun stapler validate build/Sidefolk.app` and the DMG; `spctl -a -vv -t execute build/Sidefolk.app`
       says "Notarized Developer ID".
 
