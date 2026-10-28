@@ -152,6 +152,17 @@ enum UISnapshots {
                 try await page("page-settings-voice-\(name)", VoiceSettingsView(model: settings), width: width)
             }
             settings.update { $0.voice = VoiceSettings() }
+            // Settings › Privacy › Your location in each state that needs different words (D48).
+            for (name, setUp) in locationStates {
+                setUp(fixtures.location, settings)
+                settings.location.refresh()
+                if settings.settings.location.source == .chosen, settings.settings.location.place == nil {
+                    settings.location.query = "Portland"
+                    await settings.location.search()
+                }
+                try await page("page-settings-location-\(name)", SettingsPage { LocationGroup(model: settings.location) }, width: width)
+            }
+            settings.update { $0.location = LocationSettings() }
 
             // A Mac without git: the built-in Git extension says why it isn't there.
             fixtures.gitMissing = true
@@ -180,7 +191,7 @@ enum UISnapshots {
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
-                          ("desktop-ask-drop", dropAsk(actions))]
+                          ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
                 try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
@@ -267,6 +278,21 @@ enum UISnapshots {
     ]
 
     /// Settings › Voice pages: file name and the fixture state each is shown in.
+    private static let locationStates: [(String, @MainActor (FixtureLocationServices, SettingsModel) -> Void)] = [
+        ("off", { f, s in f.macLocation = .notAsked; s.update { $0.location = LocationSettings() } }),
+        ("mac", { f, s in
+            f.macLocation = .allowed
+            s.update { $0.location = LocationSettings(source: .mac, place: FixtureLocationServices.fukuoka) }
+        }),
+        ("mac-finding", { f, s in f.macLocation = .allowed; s.update { $0.location = LocationSettings(source: .mac) } }),
+        ("mac-denied", { f, s in f.macLocation = .denied; s.update { $0.location = LocationSettings(source: .mac) } }),
+        ("chosen", { f, s in
+            f.macLocation = .notAsked
+            s.update { $0.location = LocationSettings(source: .chosen, place: FixtureLocationServices.fukuoka) }
+        }),
+        ("chosen-search", { _, s in s.update { $0.location = LocationSettings(source: .chosen) } }),
+    ]
+
     private static let voiceStates: [(String, @MainActor (FixtureVoiceServices, SettingsModel) -> Void)] = [
         ("on", { f, s in
             (f.microphone, f.status, f.hasElevenLabsKey) = (.allowed, .ready(.transcriber), false)
@@ -345,6 +371,13 @@ enum UISnapshots {
         ask.add(.needsBrain(NoAIRequest(text: call, guess: guess, request: call, ready: ready)), caption: call)
         let question = "what time is it in Tokyo?"
         ask.add(.needsBrain(NoAIRequest(text: question, request: question, ready: ready)), caption: question)
+        return ask
+    }
+
+    /// The weather with no place named while Sidefolk doesn't know where the person is (D48).
+    private static func whichPlaceAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(PlaceNeeded.card, activityId: nil, undo: false), caption: "every minute tell me the temperature")
         return ask
     }
 

@@ -448,7 +448,7 @@ so none needs Python, Node or anything else installed; Git needs git, which it e
 | Git | On | The internet, `git`, a folder named per call | Clone, status, pull, log |
 | World Clock | On | None | The time anywhere, conversions with daylight saving |
 | System Vitals | On | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers |
-| Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon; a rain watcher |
+| Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
 | Calculator | On | None | Exact sums and percentages, units, date maths |
 | Currency | On | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
 | Playtime | On | None | Coin, dice and random picks, a trivia quiz with a score, rock, paper, scissors |

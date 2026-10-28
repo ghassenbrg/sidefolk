@@ -234,6 +234,8 @@ extension AppCoordinator: AppServices {
             }
             var s = runtime.settings.current
             s.companionName = "(hidden)"
+            // Whether a place is shared helps a bug report; where the person is doesn't (D48).
+            s.location.place = nil
             let c = await DataPorter(runtime: runtime).counts()
             let summary: JSONValue = [
                 "app": .string(SidefolkVersion.current),

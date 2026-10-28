@@ -132,6 +132,8 @@ protocol AppServices: AnyObject {
     var runtime: SidefolkRuntime { get }
     /// Settings › Voice's side: microphone, languages, voices, the ElevenLabs key, the test.
     var voiceServices: any VoiceServices { get }
+    /// Settings › Privacy › Your location's side: Location Services and the place search (D48).
+    var locationServices: any LocationServices { get }
 
     // Reminders
     func completeReminder(_ id: String) async
