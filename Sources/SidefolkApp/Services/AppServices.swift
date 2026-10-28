@@ -215,6 +215,8 @@ protocol AppServices: AnyObject {
     func openSettings(tab: SettingsTab?)
     /// Opens the About window: the logo, the version, the notices.
     func showAbout()
+    /// What the last look for a newer Sidefolk found, and the way to install it (D46).
+    var updates: UpdateModel { get }
     /// Opens the Ask panel with the start of a sentence typed in, for the user to finish; with an
     /// empty one, as it was left.
     func openAsk(prefill: String)

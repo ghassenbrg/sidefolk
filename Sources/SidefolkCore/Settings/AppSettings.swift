@@ -213,6 +213,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var onboardingDone = false
     /// Talking to the companion and hearing it answer (D34).
     public var voice = VoiceSettings()
+    /// Looking for a newer Sidefolk and asking before installing it (D46).
+    public var updates = UpdateSettings()
 
     public init() {}
 
@@ -249,6 +251,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.debugLogging, &debugLogging)
         read(.onboardingDone, &onboardingDone)
         read(.voice, &voice)
+        read(.updates, &updates)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

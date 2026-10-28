@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 
 /// The menu bar icon: Ask, what's live now, how much Sidefolk asks, quiet mode, show/hide, Home,
-/// Settings, About, Quit.
+/// Settings, About, updates, Quit.
 final class StatusItemController: NSObject, NSMenuDelegate {
     struct NowEntry {
         var title: String
@@ -18,6 +18,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onOpenHome: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onAbout: (() -> Void)?
+    /// "Check for Updates…", or "Update to Sidefolk …" while `waitingUpdate` names a version (D46).
+    var onUpdates: (() -> Void)?
+    var waitingUpdate: () -> String? = { nil }
     var onToggleCompanion: (() -> Void)?
     var onQuiet: ((TimeInterval?) -> Void)?
     /// Switches the approval mode; Full access goes through `onFullAccess` (its sheet) instead.
@@ -144,6 +147,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
         let about = menu.addItem(withTitle: String(localized: "About Sidefolk"), action: #selector(showAbout), keyEquivalent: "")
         about.target = self
+        let update = menu.addItem(withTitle: waitingUpdate().map { String(localized: "Update to Sidefolk \($0)…", comment: "Menu bar: a newer version waits") }
+                                      ?? String(localized: "Check for Updates…"),
+                                  action: #selector(updates), keyEquivalent: "")
+        update.target = self
         menu.addItem(withTitle: String(localized: "Quit Sidefolk"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         refreshNow()
     }
@@ -177,6 +184,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     @objc private func openHome() { onOpenHome?() }
     @objc private func openSettings() { onOpenSettings?() }
     @objc private func showAbout() { onAbout?() }
+    @objc private func updates() { onUpdates?() }
     @objc private func toggleCompanion() { onToggleCompanion?() }
     @objc private func quietOff() { onQuiet?(nil) }
     @objc private func quietFor(_ sender: NSMenuItem) {

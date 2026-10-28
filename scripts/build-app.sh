@@ -38,6 +38,12 @@ cp "$BIN/sidefolk" "$STAGE/Contents/Helpers/sidefolk"
 sed -e "s/__BUNDLE_ID__/$BUNDLE_ID/" -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD/" -e "s/__NAME__/$NAME/" \
   Resources/Info.plist > "$STAGE/Contents/Info.plist"
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
+# A published build names the release it is ("0.1.0-snapshot.411"): the updater compares it with GitHub's releases
+# (D46). Only scripts/release.sh and the release workflow set SIDEFOLK_RELEASE; a build made here has no name and
+# never replaces itself.
+if [[ -n "${SIDEFOLK_RELEASE:-}" ]]; then
+  plutil -insert SidefolkRelease -string "$VERSION${SIDEFOLK_RELEASE_LABEL:+-$SIDEFOLK_RELEASE_LABEL}" "$STAGE/Contents/Info.plist"
+fi
 
 [[ -f Resources/Icon/Sidefolk.icns ]] && cp Resources/Icon/Sidefolk.icns "$STAGE/Contents/Resources/Sidefolk.icns"
 [[ -d Resources/Brand/exports ]] && cp -R Resources/Brand/exports "$STAGE/Contents/Resources/Brand"

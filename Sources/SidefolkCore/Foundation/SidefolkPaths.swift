@@ -32,6 +32,8 @@ public struct SidefolkPaths: Sendable {
     public var run: URL { home.appendingPathComponent("run", isDirectory: true) }
     public var socket: URL { run.appendingPathComponent("sidefolk.sock") }
     public var brainWorkdir: URL { home.appendingPathComponent("brain", isDirectory: true) }
+    /// A new version's disk image while it is downloaded and checked (D46); emptied at launch.
+    public var updates: URL { home.appendingPathComponent("Updates", isDirectory: true) }
 
     /// Creates the folders with owner-only permissions.
     public func prepare() throws {

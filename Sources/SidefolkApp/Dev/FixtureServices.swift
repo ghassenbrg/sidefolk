@@ -17,6 +17,15 @@ final class FixtureServices: AppServices {
     var gitMissing = false
     let voice = FixtureVoiceServices()
     var voiceServices: any VoiceServices { voice }
+    /// A published snapshot that looked an hour ago; snapshots set other phases.
+    let updates: UpdateModel = {
+        let model = UpdateModel()
+        model.running = "0.1.0 snapshot 411"
+        model.version = ReleaseVersion("0.1.0-snapshot.411")!
+        model.lastCheck = Date().addingTimeInterval(-3600)
+        model.phase = .upToDate
+        return model
+    }()
 
     init(runtime: SidefolkRuntime, keys: Set<APIKeyTarget> = []) {
         self.runtime = runtime

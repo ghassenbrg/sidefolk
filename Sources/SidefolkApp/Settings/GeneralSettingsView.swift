@@ -3,7 +3,7 @@ import SidefolkCore
 import SwiftUI
 
 /// Settings › General: startup, the Ask shortcut, language, quiet mode, what times of day mean,
-/// notifications and the welcome. The companion's name lives with the companion (Settings › Companion).
+/// notifications, updates and the welcome. The companion's name lives with the companion (Settings › Companion).
 struct GeneralSettingsView: View {
     var model: SettingsModel
 
@@ -55,6 +55,8 @@ struct GeneralSettingsView: View {
                                isOn: Binding(get: { model.settings.useSystemNotificationsWhenHidden },
                                              set: { on in model.update { $0.useSystemNotificationsWhenHidden = on } }))
             }
+
+            UpdatesSettingsGroup(model: model)
 
             SettingsGroup(title: "Welcome") {
                 SettingsRow(title: "Show the welcome again", detail: "Replays the first hello on your desktop. Nothing is reset.") {
