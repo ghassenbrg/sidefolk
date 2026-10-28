@@ -101,10 +101,19 @@ final class MacLocator: NSObject, LocationServices, CLLocationManagerDelegate {
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         MainActor.assumeIsolated {
-            // Also called once when the manager is made; it follows only when that is the person's choice.
-            if runtime.settings.current.location.source == .mac { follow() }
+            // Also called once when the manager is made; it acts only when the Mac's location is the person's choice.
+            if runtime.settings.current.location.source == .mac {
+                if macLocation == .denied { forgetPlace() } else { follow() }
+            }
             onAccessChange?()
         }
+    }
+
+    /// The person took the permission back in System Settings: the place it gave goes too.
+    private func forgetPlace() {
+        stopMacLocation()
+        let settings = runtime.settings
+        Task { await settings.update { if $0.location.source == .mac { $0.location.place = nil } } }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

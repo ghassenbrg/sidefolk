@@ -130,7 +130,10 @@ struct WatchReportTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         let every = (try? Report.interval(input)).flatMap { $0 > 0 ? WatchWords.every($0) : nil }
-        let what = Self.title(input) ?? String(localized: "a value")
+        // The weather with no place named is the person's own (D48).
+        let named = input.string("source") == "weather" && input.string("place") == nil
+            ? here().map { input.setting("place", .string($0.name)) } ?? input : input
+        let what = Self.title(named) ?? String(localized: "a value")
         return every.map { String(localized: "Show \(what) every \($0)") } ?? String(localized: "Show \(what) regularly")
     }
 

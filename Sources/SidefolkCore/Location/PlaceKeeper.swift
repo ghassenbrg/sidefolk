@@ -19,8 +19,8 @@ public protocol ReverseGeocoding: Sendable {
 }
 
 /// Keeps the person's place current while they share their Mac's location (D48). A position is named again only when
-/// it is somewhere else (more than 5 km away) or the name is a day old, and at most once every 10 minutes: Wi-Fi
-/// positions wobble, and the geocoder is Apple's to be polite to. The place is saved in settings, the one place it
+/// it is somewhere else (more than 5 km away) or the name is a day old, and at most once every 10 minutes unless no
+/// place is known: Wi-Fi positions wobble, and the geocoder is Apple's to be polite to. The place is saved in settings, the one place it
 /// lives; the log says that it changed, never where.
 public actor PlaceKeeper {
     static let moved: Double = 5_000
@@ -48,7 +48,8 @@ public actor PlaceKeeper {
            now.timeIntervalSince(known.updatedAt) < Self.stale {
             return false
         }
-        if let lastLookup, now.timeIntervalSince(lastLookup) < Self.spacing { return false }
+        // With no place at all (just chosen again) there is nothing to wobble around: name it now.
+        if location.place != nil, let lastLookup, now.timeIntervalSince(lastLookup) < Self.spacing { return false }
         lastLookup = now
         let named: KnownPlace?
         do {

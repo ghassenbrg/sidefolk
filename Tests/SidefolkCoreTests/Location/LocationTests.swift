@@ -165,6 +165,17 @@ import Testing
         #expect(geocoder.asked.withLock { $0 } == 2)
     }
 
+    @Test func chosenAgainItIsNamedAtOnce() async throws {
+        let (keeper, settings, geocoder, env) = try await makeKeeper(.mac)
+        geocoder.answers.withLock { $0 = [Self.fukuoka, Self.fukuoka] }
+        #expect(await keeper.received(fix(Self.fukuoka)))
+        // Off and on again a minute later: the place was forgotten, so the wait between lookups doesn't apply.
+        await settings.update { $0.location = LocationSettings(source: .mac) }
+        env.clock.advance(60)
+        #expect(await keeper.received(fix(Self.fukuoka)))
+        #expect(settings.current.location.place?.city == "Fukuoka")
+    }
+
     @Test func switchingOffWhileItLooksUpKeepsNothing() async throws {
         let (keeper, settings, geocoder, _) = try await makeKeeper(.mac)
         geocoder.answers.withLock { $0 = [Self.fukuoka] }

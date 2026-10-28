@@ -95,6 +95,8 @@ import Testing
         #expect(asked == ["https://api.open-meteo.com/v1/forecast?latitude=33.5900&longitude=130.4000&current=temperature_2m"])
         let watcher = try #require(await f.engine.list().first)
         #expect(watcher.config["latitude"]?.doubleValue == 33.59)
+        let activity = try #require(try await f.env.base.activity.recent(limit: 1).first)
+        #expect(activity.summary == "Show Temperature in Fukuoka, Japan every 1 min", "Activity names the place too")
         // Named by its city, it is still here.
         f.env.fetcher.reset()
         f.env.fetcher.say(Self.forecast, headers: ["content-type": "application/json"])
