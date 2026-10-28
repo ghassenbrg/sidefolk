@@ -16,12 +16,15 @@ public struct ConversationLine: Sendable, Hashable, Identifiable {
     public var id: String
     public var kind: Kind
     public var text: String
+    /// Why a step wasn't done, in Activity's words.
+    public var detail: String?
     public var at: Date
 
-    public init(id: String, kind: Kind, text: String, at: Date) {
+    public init(id: String, kind: Kind, text: String, detail: String? = nil, at: Date) {
         self.id = id
         self.kind = kind
         self.text = text
+        self.detail = detail
         self.at = at
     }
 }
@@ -67,6 +70,6 @@ public enum ConversationTranscript {
 
     private static func step(_ a: ActivityEntry) -> ConversationLine {
         let done = a.error == nil && ![.denied, .blocked, .failed, .skipped].contains(a.decision)
-        return ConversationLine(id: "step-\(a.id ?? 0)", kind: .step(done: done), text: a.summary, at: a.at)
+        return ConversationLine(id: "step-\(a.id ?? 0)", kind: .step(done: done), text: a.summary, detail: done ? nil : a.error, at: a.at)
     }
 }

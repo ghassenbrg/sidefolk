@@ -9,13 +9,31 @@ struct ConversationsView: View {
     @State private var deleting: ConversationSummary?
 
     var body: some View {
-        HSplitView {
-            ConversationList(model: model, deleteAll: { confirmingDeleteAll = true }, delete: { deleting = $0 })
-                .frame(minWidth: 260, idealWidth: 300, maxWidth: 420)
-            TranscriptPane(model: model, delete: { deleting = $0 })
-                .frame(minWidth: 380, maxWidth: .infinity)
+        Group {
+            if model.loaded, model.conversations.isEmpty, model.query.isEmpty {
+                // Nothing to list or read: one calm page, not two empty columns.
+                VStack(alignment: .leading, spacing: Theme.Space.l) {
+                    PageTitle(title: "Conversations", subtitle: "What you asked the AI, to read again or follow up.")
+                    Spacer()
+                    EmptyState(title: "No conversations yet",
+                               message: "When you ask the AI something, the conversation shows up here to read again or follow up. Reminders and notes made without AI don't start one.",
+                               systemImage: "bubble.left.and.bubble.right", folk: "pip")
+                        .frame(maxWidth: .infinity)
+                    Spacer()
+                }
+                .padding(Theme.Space.xl)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(Theme.surfaceSunken)
+            } else {
+                HSplitView {
+                    ConversationList(model: model, deleteAll: { confirmingDeleteAll = true }, delete: { deleting = $0 })
+                        .frame(minWidth: 260, idealWidth: 300, maxWidth: 420)
+                    TranscriptPane(model: model, delete: { deleting = $0 })
+                        .frame(minWidth: 380, maxWidth: .infinity)
+                }
+                .background(Theme.surface)
+            }
         }
-        .background(Theme.surface)
         .alert("Delete all conversation history?", isPresented: $confirmingDeleteAll) {
             Button("Delete All History", role: .destructive) { Task { await model.deleteAll() } }
             Button("Cancel", role: .cancel) {}
@@ -111,16 +129,11 @@ private struct ConversationList: View {
 
     @ViewBuilder private var list: some View {
         if model.conversations.isEmpty {
+            // With none at all the page shows its own empty state; here only a search can come up empty.
             VStack {
                 Spacer()
-                if model.loaded {
-                    if model.query.isEmpty {
-                        EmptyState(title: "No conversations yet",
-                                   message: "When you ask the AI something, the conversation shows up here to read again or follow up. Reminders and notes made without AI don't start one.",
-                                   systemImage: "bubble.left.and.bubble.right", folk: "pip")
-                    } else {
-                        EmptyState(title: "Nothing matches", message: "Try fewer or different words.", systemImage: "magnifyingglass", folk: "scout")
-                    }
+                if model.loaded, !model.query.isEmpty {
+                    EmptyState(title: "Nothing matches", message: "Try fewer or different words.", systemImage: "magnifyingglass", folk: "scout")
                 }
                 Spacer()
             }
@@ -348,13 +361,19 @@ private struct LineView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         case .step(let done):
             Label {
-                Text(verbatim: line.text).fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(verbatim: line.text).fixedSize(horizontal: false, vertical: true)
+                    if let detail = line.detail {
+                        Text(verbatim: detail).foregroundStyle(Theme.inkFaint).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             } icon: {
                 Image(systemName: done ? "checkmark.circle" : "xmark.circle")
             }
             .font(Theme.Font.caption)
             .foregroundStyle(Theme.inkMuted)
-            .accessibilityLabel(done ? Text("Done: \(line.text)") : Text("Not done: \(line.text)"))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(done ? Text("Done: \(line.text)") : Text("Not done: \(line.text). \(line.detail ?? "")"))
         case .note:
             Label {
                 Text(verbatim: line.text).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)

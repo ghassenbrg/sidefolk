@@ -159,7 +159,8 @@ import Testing
             Exchange(id: "3", threadId: "t", role: .user, content: "Try again", meta: ExchangeMeta.user(attachment: nil, tainted: false), now: t0 + 9),
         ]
         let steps = [
-            ActivityEntry(at: t0 + 2, caller: "agent", tool: "files.rename", risk: "medium", decision: .denied, summary: "Rename 3 files", runId: "r1"),
+            ActivityEntry(at: t0 + 2, caller: "agent", tool: "files.rename", risk: "medium", decision: .denied, summary: "Rename 3 files",
+                          error: "You said not now.", runId: "r1"),
             ActivityEntry(at: t0 + 10, caller: "agent", tool: "files.list", risk: "low", decision: .auto, summary: "List Invoices", runId: "r2"),
         ]
 
@@ -168,6 +169,7 @@ import Testing
         #expect(lines.map(\.text) == ["Rename the invoices", "Rename 3 files", "Stopped. Nothing was changed.", "Try again", "List Invoices"])
         #expect(lines.map(\.kind) == [.request(spoken: false, attachment: "Invoices"), .step(done: false), .note,
                                       .request(spoken: false, attachment: nil), .step(done: true)])
+        #expect(lines.map(\.detail) == [nil, "You said not now.", nil, nil, nil])
     }
 
     @Test(arguments: ["new conversation", "New chat", "start fresh", "let's start over", "start a new conversation", "Forget this conversation",
