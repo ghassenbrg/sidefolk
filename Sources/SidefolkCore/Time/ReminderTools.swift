@@ -214,7 +214,13 @@ public enum ReminderTools {
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             var item: NotebookItem?
             if let id = input.string("item") { item = try await shared.linkable(id) }
-            guard let title = input.string("title") ?? item?.title, !title.trimmingCharacters(in: .whitespaces).isEmpty else {
+            // The item's own words become the title only for the person and Sidefolk's agent: another agent names its
+            // reminder itself, so the result never hands it the item's title (T4).
+            let mayQuote = switch context.caller {
+            case .user, .agent: true
+            case .routine, .external, .extension: false
+            }
+            guard let title = input.string("title") ?? (mayQuote ? item?.title : nil), !title.trimmingCharacters(in: .whitespaces).isEmpty else {
                 throw ToolError.invalidInput(String(localized: "“title” is required"))
             }
             guard var whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
@@ -264,7 +270,10 @@ public enum ReminderTools {
             if let rule { text += ", repeating \(TimeFormat.recurrenceForModel(rule, calendar: calendar))" }
             if reminder.level < asked { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(id)"
-            if let item { text += ". It belongs to the \(item.kind.rawValue) “\(item.title.clipped(80))” (item \(item.id))" }
+            if let item {
+                let words = mayQuote ? " “\(item.title.clipped(80))”" : ""
+                text += ". It belongs to the \(item.kind.rawValue)\(words) (item \(item.id))"
+            }
             if raised { text += ". Reminders repeat at most once a minute, so this one repeats every minute; tell the user." }
             let cardNotes = [item.flatMap { ReminderScheduler.itemLine($0, reminder: reminder) },
                          raised ? String(localized: "A reminder repeats at most once a minute.") : nil].compactMap { $0 }

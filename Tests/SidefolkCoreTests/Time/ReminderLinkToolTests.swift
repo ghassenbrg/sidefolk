@@ -58,6 +58,18 @@ import Testing
         #expect(own.card?.detail == "Task: Prepare the report")
     }
 
+    @Test func anotherAgentLearnsWhichItemNotItsWords() async throws {
+        let task = try await item("Prepare the report")
+        let untitled = await run.execute(name: "reminders.create", input: ["item": .string(task.id), "when": "tomorrow at 9"],
+                                         caller: .external(client: "codex"))
+        #expect(failure(untitled)?.contains("title") == true, "the item's words are not another agent's title")
+        let result = try ok(await run.execute(name: "reminders.create", input: ["title": "Check the build", "item": .string(task.id),
+                                                                                "when": "tomorrow at 9"],
+                                              caller: .external(client: "codex")))
+        #expect(result.text.contains("It belongs to the task (item \(task.id))"))
+        #expect(!result.text.contains("Prepare the report"))
+    }
+
     @Test func onlyAnItemThatIsThereAndOpen() async throws {
         let unknown = await run.execute(name: "reminders.create", input: ["item": "nope", "when": "tomorrow"], caller: .user)
         #expect(failure(unknown) != nil)

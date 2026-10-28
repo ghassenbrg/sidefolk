@@ -99,7 +99,12 @@ user folders or agent configs.
   - `ScriptedModel` (tests only) replays canned turns.
 - `ReminderScheduler` (actor) — one timer for the next due reminder (no polling), re-armed on
   change, wake, clock change; fires to `AttentionCenter`; recurrence; snooze; missed-on-launch
-  summary; computes fallback system notifications when the app quits.
+  summary; computes fallback system notifications when the app quits. A reminder can belong to a
+  notebook item (`item_id`, D49): `ReminderLinks` settles them whenever `.notebook` is announced
+  (a task done or an item trashed ends the waiting ones and records why in `ended_with_item`; the
+  task opened again or the item restored brings back the ones still ahead), `fire` checks the item
+  once more in its transaction, and a renamed item carries reminders with its own title along
+  (`NotebookStore.update`). Its bubble offers Mark done (the task) and Open (the app shows it).
 - `WatcherEngine` (actor) — runs `WatcherProbe`s: polling kinds share one scheduler loop keyed by
   next-check time (a timer with tolerance; checks due within half a second share a wake-up); event
   kinds use DispatchSource (vnode/proc). Interval floors, exponential backoff on error, expiry,
@@ -164,7 +169,8 @@ memories(id TEXT PK, kind[fact|preference|person|project], content, collection_i
 memories_fts(content)
 reminders(id TEXT PK, title, notes, fire_at, timezone, recurrence JSON, state[scheduled|fired|
           snoozed|done|cancelled], snoozed_until, last_fired_at, fired_count, level, action JSON,
-          item_id, source, created_at, updated_at)
+          item_id, ended_with_item[done|trashed], source, created_at, updated_at)
+          -- an item deleted for good cancels its waiting reminders first (trigger, D49)
 watchers(id TEXT PK, kind, title, config JSON, condition JSON, interval_s, state[active|paused|
          triggered|expired|error], mode[once|repeat], level, last_checked_at, next_check_at,
          last_state JSON, last_error, error_count, fire_count, expires_at, source, created_at, updated_at)

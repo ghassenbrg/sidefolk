@@ -109,6 +109,10 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P0 Reminders: natural times, recurrence (every N minutes at the finest, with an optional end: "every 10
   minutes until 6pm"), snooze, done, survive restart, missed ones summarised on return, fallback system
   notifications scheduled when the app quits.
+- P0 Reminders for a note or task (D49): "Remind me" on any item in the Notebook (in an hour, this evening,
+  tomorrow morning, any time), "add a task to call mom at 5", "remind me about the report task tomorrow
+  at 9". The item shows its bell and time; the reminder shows its item and offers Mark done and Open. A
+  task done or an item trashed ends its reminders; opened again or restored, the ones still ahead return.
 - P0 Watchers: web page change/contains (normalised text diff, 1% threshold, before/after),
   site up/down (2 failures in a row), file/folder appears, file changed, process (by name) exits,
   periodic command (confirmed). Floors, backoff, cooldown, expiry, pause/resume.
