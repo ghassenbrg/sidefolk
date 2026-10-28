@@ -95,7 +95,7 @@ final class FixtureServices: AppServices {
         sandboxed: true, lastError: nil, bundled: true, iconPath: icon("git"))
 
     func extensions() async -> [ExtensionInfo] {
-        (gitMissing ? [] : [Self.git]) + [
+        ((gitMissing ? [] : [Self.git]) + [
             ExtensionInfo(id: "dev.sidefolk.world-clock", name: "World Clock", version: "1.0.0",
                           description: "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.",
                           kind: .sidefolk, enabled: true, folk: "tempo", toolNames: ["Convert a time between places", "Time around the world"],
@@ -115,20 +115,29 @@ final class FixtureServices: AppServices {
                           iconPath: Self.icon("weather")),
             ExtensionInfo(id: "local.hacker-news", name: "Hacker News", version: "0.1.0",
                           description: "The top stories on Hacker News, with their scores and links.",
-                          kind: .sidefolk, enabled: true, folk: nil, toolNames: ["Top stories"], watcherNames: [],
-                          permissionLines: ["Can use the internet"], warnings: [], sandboxed: true, lastError: nil, bundled: false,
-                          fromDraft: true),
+                          kind: .sidefolk, enabled: true, folk: nil, toolNames: ["Top stories", "Story comments"], watcherNames: [],
+                          permissionLines: ["Can use the internet"],
+                          warnings: ["Some tools changed since you installed it; they're on hold until you approve the change."],
+                          sandboxed: true, lastError: nil, bundled: false, pendingTools: ["Story comments"], fromDraft: true),
             ExtensionInfo(id: "dev.example.air-quality", name: "Air Quality", version: "0.4.2",
                           description: "Air quality and pollen for any place, from Open-Meteo.",
                           kind: .sidefolk, enabled: false, folk: "seed", toolNames: ["air_quality", "pollen"], watcherNames: [],
                           permissionLines: ["Can use the internet"],
                           warnings: [], sandboxed: true,
                           lastError: "It crashed 3 times in 5 minutes, so I turned it off. Nothing else was affected.", bundled: false),
-            ExtensionInfo(id: "mcp.github", name: "GitHub", version: "",
-                          description: "npx -y @modelcontextprotocol/server-github@2025.4.8",
+            ExtensionInfo(id: "mcp.github", name: "GitHub", version: "", description: "",
                           kind: .mcpServer, enabled: true, folk: "byte", toolNames: ["create_issue", "list_pull_requests", "search_code"],
-                          watcherNames: [], permissionLines: [], warnings: [], sandboxed: false, lastError: nil, bundled: false),
-        ]
+                          watcherNames: [], permissionLines: [], warnings: [], sandboxed: false, lastError: nil, bundled: false,
+                          command: "npx -y @modelcontextprotocol/server-github@2025.4.8"),
+        ]).map(Self.searchable)
+    }
+
+    /// What the host hands a search beyond the row, as `ExtensionListQuery.texts(for:)` would: what each may do,
+    /// without "No access to…".
+    private static func searchable(_ ext: ExtensionInfo) -> ExtensionInfo {
+        var ext = ext
+        ext.hiddenSearchTexts = ext.permissionLines.filter { !$0.hasPrefix("No access") }
+        return ext
     }
 
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {

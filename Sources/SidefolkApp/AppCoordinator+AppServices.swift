@@ -299,7 +299,8 @@ extension AppCoordinator: AppServices {
                 + e.toolWarnings,
             sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
-            iconPath: e.iconPath, fromDraft: e.origin == .draft)
+            iconPath: e.iconPath, fromDraft: e.origin == .draft, command: e.command, author: e.author,
+            hiddenSearchTexts: ExtensionListQuery.texts(for: e))
     }
 
     /// The manifest of an extension folder shipped inside the app, or nil.
