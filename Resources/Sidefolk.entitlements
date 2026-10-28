@@ -8,5 +8,8 @@
 	<!-- The hardened runtime blocks the microphone without it; voice input only opens it while the talk key is held (D34). -->
 	<key>com.apple.security.device.audio-input</key>
 	<true/>
+	<!-- The hardened runtime blocks Location Services without it; used only after the person chooses their Mac's location (D48). -->
+	<key>com.apple.security.personal-information.location</key>
+	<true/>
 </dict>
 </plist>

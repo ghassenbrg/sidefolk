@@ -1,7 +1,7 @@
 {
   "id": "dev.sidefolk.weather",
   "name": "Weather",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "sidefolk": ">=0.1",
   "description": "Today's weather and the week ahead for any place, and a heads-up before rain, from Open-Meteo. Only the place you ask about leaves your Mac.",
   "folk": "scout",

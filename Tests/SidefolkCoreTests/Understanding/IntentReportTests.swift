@@ -84,7 +84,7 @@ import Testing
         #expect(parse("every day tell me the weather in Paris") == nil, "a daily brief is a routine, not a live value")
         #expect(parse("every 10 seconds and every minute show the cpu") == nil)
         #expect(parse("show the cpu and the memory every minute") == nil, "one value per report")
-        #expect(parse("every minute tell me the temperature") == nil, "where?")
+        #expect(parse("every minute tell me the temperature")?.intent == .needsPlace(.temperature), "where? (D48)")
         #expect(report("every minute tell me the cpu until I feel better") == nil)
     }
 

@@ -27,6 +27,11 @@ struct ExtensionInfo: Identifiable, Hashable {
     var iconPath: String?
     /// Sidefolk's AI wrote it for the person, who installed it from the drafts.
     var fromDraft = false
+    /// For an MCP server, the command line as added.
+    var command: String?
+    var author: String?
+    /// What a search reads beyond what the row shows (`ExtensionListQuery.texts(for:)`): tool names, its id…
+    var hiddenSearchTexts: [String] = []
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }
@@ -127,6 +132,8 @@ protocol AppServices: AnyObject {
     var runtime: SidefolkRuntime { get }
     /// Settings › Voice's side: microphone, languages, voices, the ElevenLabs key, the test.
     var voiceServices: any VoiceServices { get }
+    /// Settings › Privacy › Your location's side: Location Services and the place search (D48).
+    var locationServices: any LocationServices { get }
 
     // Reminders
     func completeReminder(_ id: String) async

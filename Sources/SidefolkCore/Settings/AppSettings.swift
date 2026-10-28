@@ -215,6 +215,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var voice = VoiceSettings()
     /// Looking for a newer Sidefolk and asking before installing it (D46).
     public var updates = UpdateSettings()
+    /// Where the person is, when they share it (D48).
+    public var location = LocationSettings()
 
     public init() {}
 
@@ -252,6 +254,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.onboardingDone, &onboardingDone)
         read(.voice, &voice)
         read(.updates, &updates)
+        read(.location, &location)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

@@ -55,6 +55,7 @@ final class SettingsModel {
     @ObservationIgnored private(set) lazy var voice = VoiceSettingsModel(parent: self)
 
     // Privacy & Permissions
+    @ObservationIgnored private(set) lazy var location = LocationSettingsModel(parent: self)
     private(set) var storage: StorageSummary?
     private(set) var folders: [GrantedFolder] = []
     private(set) var grants: [Grant] = []
@@ -127,6 +128,7 @@ final class SettingsModel {
         integration = await services.integrationStatus()
         await ai.refresh()
         await voice.refresh()
+        location.refresh()
     }
 
     func loadPermissions() async {
