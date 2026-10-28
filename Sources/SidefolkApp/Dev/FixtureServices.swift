@@ -17,6 +17,8 @@ final class FixtureServices: AppServices {
     var gitMissing = false
     let voice = FixtureVoiceServices()
     var voiceServices: any VoiceServices { voice }
+    let location = FixtureLocationServices()
+    var locationServices: any LocationServices { location }
 
     init(runtime: SidefolkRuntime, keys: Set<APIKeyTarget> = []) {
         self.runtime = runtime

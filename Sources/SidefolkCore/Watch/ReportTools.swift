@@ -91,6 +91,8 @@ enum Report {
 struct WatchReportTool: Tool {
     let engine: WatcherEngine
     var parser: @Sendable () -> WhenParser = { WhenParser() }
+    /// Where the person is, when they share it: the weather's place when none is named (D48).
+    var here: @Sendable () -> KnownPlace? = { nil }
 
     var spec: ToolSpec {
         ToolSpec(
@@ -109,7 +111,7 @@ struct WatchReportTool: Tool {
             inputSchema: Schema.object([
                 "source": Schema.string("What kind of value.", enum: ["metric", "weather", "web"]),
                 "metric": Schema.string("metric: which value of this Mac.", enum: Metric.allCases.map(\.rawValue)),
-                "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\"."),
+                "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\". Leave out for where the user is."),
                 "quantity": Schema.string("weather: what to show (default temperature).", enum: WeatherQuantity.allCases.map(\.rawValue)),
                 "url": Schema.string("web: the page or API address."),
                 "json_path": Schema.string("web: a path into a JSON reply, like current.temperature_2m or data[0].price."),
@@ -148,7 +150,10 @@ struct WatchReportTool: Tool {
             config = ["metric": input["metric"] ?? .null]
         case "weather":
             kind = WatchKind.weather
-            config = ["place": input["place"] ?? .null, "quantity": input["quantity"] ?? "temperature"]
+            guard let weather = WeatherProbe.config(place: input.string("place"), here: here(), quantity: input["quantity"] ?? "temperature") else {
+                return PlaceNeeded.result
+            }
+            config = weather
         case "web":
             kind = WatchKind.webValue
             config = ["url": input["url"] ?? .null]
@@ -163,7 +168,7 @@ struct WatchReportTool: Tool {
         if end == nil, input["until_stopped"]?.boolValue == true { config = config.setting("until_stopped", true) }
 
         let requested = try Report.interval(input)
-        let title = input.string("title") ?? Self.title(input) ?? String(localized: "Value")
+        let title = input.string("title") ?? Self.title(input.setting("place", config["place"])) ?? String(localized: "Value")
         let watcher = Watcher(kind: kind, title: title, config: config, intervalS: requested, mode: .report, expiresAt: end,
                               source: WatchSource.string(for: context), now: context.now)
         return try await Report.start(watcher, requested: requested, engine: engine, context: context)

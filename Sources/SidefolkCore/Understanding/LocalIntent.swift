@@ -70,6 +70,8 @@ public enum LocalIntent: Sendable, Equatable {
     /// for the address and finish with `IntentParser.watch(address:kind:becomes:)`. `kind` is `site_status` or
     /// `url_change`; for `site_status`, `becomes` is "up" or "down".
     case needsTarget(kind: String, becomes: String?)
+    /// A weather report with no place named, while Sidefolk doesn't know where the person is (D48).
+    case needsPlace(WeatherQuantity)
     /// A trick or a game with the companion (D44).
     case companion(CompanionAct)
 }

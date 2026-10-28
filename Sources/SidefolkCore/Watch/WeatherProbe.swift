@@ -54,7 +54,10 @@ public struct WeatherProbe: WatcherProbe {
         }
         var w = watcher
         w.mode = .report
+        // The person's own place keeps the coordinates it came with (D48).
+        let pin = Self.pinned(watcher.config, place: place)
         w.config = Report.options(of: w.config).setting("place", .string(place)).setting("quantity", .string(quantity.rawValue))
+            .setting("latitude", pin?["lat"]).setting("longitude", pin?["lon"])
         w.condition = .object([:])
         return w
     }
@@ -64,7 +67,9 @@ public struct WeatherProbe: WatcherProbe {
             throw ProbeError.invalid(String(localized: "This report doesn't say where."))
         }
         var state = w.lastState?.setting("reading", nil) ?? .object([:])
-        if state["lat"]?.doubleValue == nil { state = try await locate(place, now: now) }
+        if state["lat"]?.doubleValue == nil {
+            if let pin = Self.pinned(w.config, place: place) { state = pin } else { state = try await locate(place, now: now) }
+        }
         guard let lat = state["lat"]?.doubleValue, let lon = state["lon"]?.doubleValue else {
             throw ProbeError.failed(String(localized: "I couldn't look up that place."))
         }

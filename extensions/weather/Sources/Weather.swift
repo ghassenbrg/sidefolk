@@ -28,14 +28,31 @@ enum Weather {
         var label: String
     }
 
+    /// "Fukuoka, Japan" or "Portland, Oregon": the geocoder only knows names, so the words after the first comma pick
+    /// among the places of that name. The person's own place reaches the model written that way (D48).
     static func locate(_ place: String) async throws -> Place {
-        let found = try await Web.json(Web.url(geocoding, [("name", place), ("count", "1"), ("language", "en"), ("format", "json")]))
-        guard let spot = (found["results"] as? [[String: Any]])?.first, let latitude = spot["latitude"] as? Double,
-              let longitude = spot["longitude"] as? Double else {
+        let parts = place.split(separator: ",", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+        let found = try await Web.json(Web.url(geocoding, [("name", parts.first ?? place), ("count", parts.count > 1 ? "10" : "1"),
+                                                           ("language", "en"), ("format", "json")]))
+        guard let spot = pick(found["results"] as? [[String: Any]] ?? [], within: parts.count > 1 ? parts[1] : nil),
+              let latitude = spot["latitude"] as? Double, let longitude = spot["longitude"] as? Double else {
             throw Problem("I couldn't find a place called “\(place)”. Try the nearest city, or add the country.")
         }
         let label = ["name", "admin1", "country"].compactMap { spot[$0] as? String }.filter { !$0.isEmpty }.joined(separator: ", ")
         return Place(latitude: latitude, longitude: longitude, label: label)
+    }
+
+    /// The first result, or with `region` ("Oregon", "Fukuoka, Japan", "US") the first whose state, country or country
+    /// code starts like one of its parts.
+    nonisolated static func pick(_ results: [[String: Any]], within region: String?) -> [String: Any]? {
+        guard let region else { return results.first }
+        let wanted = region.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }.filter { !$0.isEmpty }
+        return results.first { r in
+            ["admin1", "country", "country_code"].contains { key in
+                guard let value = (r[key] as? String)?.lowercased() else { return false }
+                return wanted.contains { value.hasPrefix($0) }
+            }
+        }
     }
 
     static func forecast(_ place: String, days: Int, imperial: Bool) async throws -> String {
