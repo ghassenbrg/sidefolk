@@ -43,7 +43,7 @@ struct PrivacySettingsView: View {
             LocationGroup(model: model.location).id(Self.locationAnchor)
             keeps
             SettingsGroup(title: "History",
-                          footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Home › Conversations. Then they're deleted.") {
+                          footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Conversations, in Sidefolk's window. Then they're deleted.") {
                 SettingsRow(title: "Keep conversations for") {
                     Picker("Keep conversations for", selection: Binding(
                         get: { model.settings.historyDays }, set: { days in model.update { $0.historyDays = days } }

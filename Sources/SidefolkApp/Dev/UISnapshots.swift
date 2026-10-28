@@ -219,7 +219,8 @@ enum UISnapshots {
                           ("desktop-ask-internet", sampleAskInternet()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
-                          ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk())]
+                          ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
+                          ("desktop-ask-now", sampleAskNow())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
                 try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
@@ -228,6 +229,9 @@ enum UISnapshots {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
             try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
+            for (name, caption) in sampleTosses() {
+                try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 280)
+            }
 
             // Sheets.
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
@@ -510,6 +514,38 @@ enum UISnapshots {
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
                                           canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
         return ask
+    }
+
+    /// A value read now and a hand played, answered without AI (D35 and D44, amended).
+    private static func sampleAskNow() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .reading, title: "CPU: 23%"), activityId: nil, undo: false), caption: "what's my cpu usage?")
+        ask.add(.result(ResultCard(kind: .reading, title: "Temperature in Fukuoka: 18 °C", subtitle: "Fukuoka, Japan"), activityId: nil, undo: false),
+                caption: "temperature in Fukuoka")
+        ask.add(.result(ResultCard(kind: .chance, title: Toss.hands(person: .rock, companion: .paper).result, subtitle: "You 2 · Me 3 · Draws 1"),
+                        activityId: nil, undo: false), caption: "rock")
+        return ask
+    }
+
+    /// What the companion flipped, rolled and played (D44, amended): landed, and one coin halfway up.
+    private static func sampleTosses() -> [(String, CaptionModel)] {
+        func caption(_ toss: Toss, landed: Bool = true, text: String? = nil) -> CaptionModel {
+            let model = CaptionModel()
+            model.text = text ?? toss.result
+            model.companionName = "Mochi"
+            model.stage = TossShow(toss: toss, start: Date().addingTimeInterval(landed ? -2 : -0.5), flight: 1.04, still: false, landed: landed)
+            return model
+        }
+        return [
+            ("coin-flying", caption(.coins([false]), landed: false, text: String(localized: "Heads or tails…"))),
+            ("coins", caption(.coins([true, false, true]))),
+            ("dice", caption(.dice(sides: 6, rolls: [5, 3], modifier: 1))),
+            ("d20", caption(.dice(sides: 20, rolls: [17, 4, 20], modifier: 0))),
+            ("many-dice", caption(.dice(sides: 6, rolls: [1, 2, 3, 4, 5, 6, 6], modifier: 0))),
+            ("hands-you-win", caption(.hands(person: .rock, companion: .scissors))),
+            ("hands-i-win", caption(.hands(person: .rock, companion: .paper))),
+            ("hands-draw", caption(.hands(person: .scissors, companion: .scissors))),
+        ]
     }
 
     /// Using the internet (D47): a page Sidefolk chose, a built-in service, and a new site after reading a page.

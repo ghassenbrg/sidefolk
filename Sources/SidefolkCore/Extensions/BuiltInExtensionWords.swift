@@ -13,7 +13,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.weather": String(localized: "Weather", comment: "A built-in extension: forecasts from Open-Meteo")
         case "dev.sidefolk.calculator": String(localized: "Calculator", comment: "A built-in extension: sums, units and dates")
         case "dev.sidefolk.currency": String(localized: "Currency", comment: "A built-in extension: exchange rates")
-        case "dev.sidefolk.playtime": String(localized: "Playtime", comment: "A built-in extension: dice, coins and a trivia quiz")
+        case "dev.sidefolk.playtime": String(localized: "Playtime", comment: "A built-in extension: a trivia quiz and random picks")
         case "dev.sidefolk.images": String(localized: "Images", comment: "A built-in extension: photo details and converted copies")
         case "dev.sidefolk.pdf": String(localized: "PDF Tools", comment: "A built-in extension")
         case "dev.sidefolk.qr-codes": String(localized: "QR Codes", comment: "A built-in extension")
@@ -39,7 +39,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.currency":
             String(localized: "Converts money between the euro and 30 major currencies with the European Central Bank's daily reference rates, and tells you when a rate crosses a line. Nothing about you is sent.")
         case "dev.sidefolk.playtime":
-            String(localized: "A break with your companion: flip a coin, roll dice, let chance pick, play rock, paper, scissors, or a trivia quiz that keeps your score.")
+            String(localized: "A break with your companion: a trivia quiz that keeps your score, and chance to pick a number or choose from a list.")
         case "dev.sidefolk.images":
             String(localized: "A photo's details, and copies of pictures converted to JPEG, PNG or HEIC, made smaller, or without their location. Your originals stay as they are.")
         case "dev.sidefolk.pdf":
@@ -74,9 +74,8 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.calculator", "convert_units"): String(localized: "Convert units")
         case ("dev.sidefolk.calculator", "date_math"): String(localized: "Date maths")
         case ("dev.sidefolk.currency", "convert_currency"): String(localized: "Convert money")
-        case ("dev.sidefolk.playtime", "chance"): String(localized: "Coin, dice and random picks")
+        case ("dev.sidefolk.playtime", "pick"): String(localized: "Random picks")
         case ("dev.sidefolk.playtime", "trivia"): String(localized: "Trivia quiz")
-        case ("dev.sidefolk.playtime", "rock_paper_scissors"): String(localized: "Rock, paper, scissors")
         case ("dev.sidefolk.images", "image_info"): String(localized: "Picture details")
         case ("dev.sidefolk.images", "convert_images"): String(localized: "Convert pictures")
         case ("dev.sidefolk.pdf", "pdf_info"): String(localized: "PDF details")

@@ -101,7 +101,7 @@ public final class SidefolkRuntime: Sendable {
             tools: gateway, tokens: tokens, sessions: sessionTracker, jobs: jobTracker, status: StatusReader(db: db)))
 
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events,
-                                            reminders: ReminderTools.shared(scheduler: scheduler, settings: settings)))
+                                            reminders: ReminderTools.shared(scheduler: scheduler, settings: settings), scores: KVStore(db)))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
         registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) },

@@ -553,7 +553,7 @@ hash of tidied text would be the wrong answer.
 | Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
 | Calculator | On | None | Exact sums and percentages, units, date maths |
 | Currency | On | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
-| Playtime | On | None | Coin, dice and random picks, a trivia quiz with a score, rock, paper, scissors |
+| Playtime | On | None | A trivia quiz with a score, a random number or pick from a list (coins, dice and rock, paper, scissors are the companion's own `companion.toss`) |
 | Images | On | A folder named per call, `media` | Photo details; copies converted, smaller or without location |
 | PDF Tools | Off | A folder named per call | Details, text, combine, take pages out |
 | QR Codes | Off | A folder named per call, `media` | Make a QR code picture, read one |

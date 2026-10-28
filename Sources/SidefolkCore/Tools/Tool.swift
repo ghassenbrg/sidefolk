@@ -151,7 +151,11 @@ public enum NetworkReach: Sendable, Hashable {
 
 /// A compact, presentable result shown in the Ask panel and the Activity log.
 public struct ResultCard: Codable, Sendable, Hashable {
-    public enum Kind: String, Codable, Sendable { case note, reminder, watcher, memory, file, web, list, info, collection, extensionResult }
+    public enum Kind: String, Codable, Sendable {
+        case note, reminder, watcher, memory, file, web, list, info, collection, extensionResult
+        /// One value read now (`watch.read`), and what came up when the companion flipped, rolled or played a hand.
+        case reading, chance
+    }
     public var kind: Kind
     public var title: String
     public var subtitle: String?

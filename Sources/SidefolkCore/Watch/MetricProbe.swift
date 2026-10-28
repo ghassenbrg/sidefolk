@@ -89,7 +89,8 @@ public struct MetricProbe: WatcherProbe {
     }
 
     /// How far a counter moved since the last sample of the same series, and over how many seconds. The first time
-    /// (or after a long pause, or a counter that went back) it takes a second sample `settle` seconds later.
+    /// (or after a long pause, a counter that went back, or for a reading asked for now) it takes a second sample
+    /// `settle` seconds later; half that when someone waits on the answer, still hundreds of ticks on every core.
     private func change(_ series: String, _ sample: () -> [UInt64]?) async throws -> ([UInt64], TimeInterval) {
         func take() throws -> Samples.Sample {
             guard let values = sample() else { throw ProbeError.failed(String(localized: "I couldn't read that from the Mac.")) }
@@ -97,10 +98,10 @@ public struct MetricProbe: WatcherProbe {
         }
         var current = try take()
         var previous = current
-        if let last = samples.swap(series, current), Samples.usable(last, then: current) {
+        if !WatchContext.isReadingNow, let last = samples.swap(series, current), Samples.usable(last, then: current) {
             previous = last
         } else {
-            try await Task.sleep(for: .seconds(settle))
+            try await Task.sleep(for: .seconds(WatchContext.isReadingNow ? settle / 2 : settle))
             current = try take()
             samples.swap(series, current)
         }

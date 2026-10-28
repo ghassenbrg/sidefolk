@@ -466,6 +466,14 @@ floors of 5 min (pages) and 1 min (commands), and recurrence stopped at hours.
 holding the value (illegible at folk size, and it would animate the rig); only a generic web value for the
 weather (fragile and impossible without AI).
 
+*Amended 2026-10-28 (one reading):* a value asked for once is one reading, not a report. `watch.read` runs the probe
+once on a watcher that is never added: nothing keeps running and nothing is saved; CPU and network are measured
+over a fresh half second. The parser answers plain questions with no interval this way, without AI ("what's my CPU
+usage", "how full is my disk", "temperature in Fukuoka", "what's the weather": the person's place, or the "Which
+place?" card); words about repeats or later leave it alone. A place named without "in" must sit right before the
+weather word, so "a joke about the weather every minute" names no place. *Why:* the founder saw "what's my CPU?"
+start a report and stop it, because no tool read a value once.
+
 ### D36 — Reasoning effort per model slot, only where accepted; services shown by their own logos (2026-10-26)
 **Decision:** each provider's everyday and "Think harder" model has its own reasoning effort, stored
 in `ProviderSettings.effort`/`smartEffort` and remembered per provider with its models. "Default"
@@ -989,6 +997,14 @@ point); games as an extension (sandboxed programs can't move or animate the comp
 only moment over four); `IntentParser.play`; Play submenu; `CompanionPlayer` and its caption panel, which
 never takes a click; dev commands `play:<act>` and `click`.
 
+
+*Amended 2026-10-28 (chance on the desktop):* coins, dice and rock-paper-scissors are the companion's.
+`companion.toss` draws them in core with the system's random generator and tells the model and the person the same
+real result; the app plays a move (`flick`, `roll`, `pump`) and draws the objects in code above the companion,
+landing on the result, with the result as a caption (Reduce Motion shows it at once; VoiceOver hears the result).
+The rock-paper-scissors score is kept in the database. Plain words ("flip a coin", "roll 2d6+1", "rock paper
+scissors", then "rock") and the Play menu reach it without AI. Playtime keeps trivia and random picks only (1.1.0),
+so the model has one way to do each. *Why:* the founder wanted these shown, not written, and instant.
 
 ### D45 — Conversations you can come back to, start fresh, or forget (2026-10-28)
 **Decision:** *amends D5.* The panel stays the quick place: a long answer opens on 8 lines with Show all (measured,

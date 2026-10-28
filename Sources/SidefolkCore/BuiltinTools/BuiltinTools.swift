@@ -6,10 +6,12 @@ import Foundation
 /// Every tool runs through `ToolExecutor`, so Guard sees each call first. Register the result with
 /// `ToolRegistry.register(_:)`.
 public enum BuiltinTools {
-    /// - Parameter reminders: lets notes.save and notes.update give an item its reminder (D49).
+    /// - Parameters:
+    ///   - reminders: lets notes.save and notes.update give an item its reminder (D49).
+    ///   - scores: where rock, paper, scissors keeps its score; nil keeps it for this run only.
     public static func make(
         notebook: NotebookStore, platform: any PlatformBridge, events: EventBus,
-        fetcher: any WebFetching = URLSessionFetcher(), reminders: ReminderTools.Shared? = nil
+        fetcher: any WebFetching = URLSessionFetcher(), reminders: ReminderTools.Shared? = nil, scores: KVStore? = nil
     ) -> [any Tool] {
         [
             // Notebook
@@ -44,6 +46,7 @@ public enum BuiltinTools {
             WebFetchTool(fetcher: fetcher),
             // The companion itself (D44)
             CompanionPlayTool(events: events),
+            CompanionTossTool(events: events, score: HandsScore(kv: scores)),
         ]
     }
 }

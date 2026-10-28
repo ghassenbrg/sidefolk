@@ -10,6 +10,7 @@ public enum WatchTools {
                             here: @escaping @Sendable () -> KnownPlace? = { nil }) -> [any Tool] {
         [
             WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser, here: here),
+            WatchReadTool(engine: engine, here: here),
             WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
         ]
     }

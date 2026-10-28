@@ -102,16 +102,8 @@ public struct LocalIntentRunner: Sendable {
             }
             return await execute("watch.create", .object(input))
         case .report(let r):
-            var input: [String: JSONValue] = ["every_seconds": .number(r.everySeconds)]
-            switch r.source {
-            case .metric(let metric):
-                input["source"] = "metric"
-                input["metric"] = .string(metric.rawValue)
-            case .weather(let place, let quantity):
-                input["source"] = "weather"
-                input["place"] = .string(place)
-                input["quantity"] = .string(quantity.rawValue)
-            }
+            var input = Self.input(for: r.source)
+            input["every_seconds"] = .number(r.everySeconds)
             if let until = r.until { input["until"] = .string(until) }
             if r.untilStopped { input["until_stopped"] = true }
             if r.notify { input["notify"] = true }
@@ -143,6 +135,25 @@ public struct LocalIntentRunner: Sendable {
             return .newConversation
         case .extensionCommand(let call):
             return await command(call)
+        case .read(let source):
+            return await execute("watch.read", .object(Self.input(for: source)))
+        case .chance(let c):
+            var input: [String: JSONValue] = ["kind": .string(c.kind.rawValue), "count": .number(Double(c.count))]
+            if c.kind == .dice { input["sides"] = .number(Double(c.sides)); input["modifier"] = .number(Double(c.modifier)) }
+            if c.kind == .rockPaperScissors {
+                // The companion shows its hand only once the person has chosen theirs: then "rock" alone plays it.
+                guard let hand = c.hand else { return .info(String(localized: "Rock, paper or scissors? Say yours.")) }
+                input["hand"] = .string(hand.rawValue)
+            }
+            return await execute("companion.toss", .object(input))
+        }
+    }
+
+    /// What a report or a reading reads, as `watch.report` and `watch.read` take it.
+    static func input(for source: ReportIntent.Source) -> [String: JSONValue] {
+        switch source {
+        case .metric(let metric): ["source": "metric", "metric": .string(metric.rawValue)]
+        case .weather(let place, let quantity): ["source": "weather", "place": .string(place), "quantity": .string(quantity.rawValue)]
         }
     }
 

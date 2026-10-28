@@ -20,6 +20,7 @@ struct AskView: View {
             input
             if !model.entries.isEmpty || model.busy {
                 Divider().overlay(Theme.line)
+                if clearable { clearAll }
                 results
             }
         }
@@ -59,22 +60,9 @@ struct AskView: View {
             ModeChip(mode: model.mode) { model.actions?.openSettings(tab: .privacy) }
                 .padding(.leading, Theme.Space.xs)
             Spacer(minLength: Theme.Space.xs)
-            // The mode chip needs the room: the shortcut shows while there is nothing to clear.
-            let clearable = model.hasResults && !model.busy
-            if clearable {
-                Button { model.clearResults() } label: {
-                    Text("Clear all").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(Capsule().fill(Theme.line.opacity(0.7)))
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .fixedSize()
-                .help("Remove every result below and start a new conversation")
-                .padding(.trailing, Theme.Space.xs)
-            }
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
             headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
+            // The companion's name and the mode chip need the room: the shortcut shows while there is nothing to clear.
             if !clearable {
                 Text(verbatim: hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                     .fixedSize()
@@ -83,6 +71,27 @@ struct AskView: View {
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.top, Theme.Space.m)
+    }
+
+    private var clearable: Bool { model.hasResults && !model.busy }
+
+    /// Above the results, as Notification Center has it, rather than in the header: there, in German, it left the
+    /// companion's name no room.
+    private var clearAll: some View {
+        HStack {
+            Spacer()
+            Button { model.clearResults() } label: {
+                Text("Clear all").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(Theme.line.opacity(0.7)))
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .help("Remove every result below and start a new conversation")
+        }
+        .padding(.horizontal, Theme.Space.m)
+        .padding(.top, Theme.Space.s)
     }
 
     private func headerButton(_ symbol: String, help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
@@ -488,9 +497,10 @@ struct ResultCardView<Actions: View>: View {
         switch kind {
         case .note, .collection, .memory, .list: Theme.folkColor("pip")
         case .reminder: Theme.folkColor("tempo")
-        case .watcher: Theme.folkColor("scout")
+        case .watcher, .reading: Theme.folkColor("scout")
         case .file, .web, .info: Theme.aqua
         case .extensionResult: Theme.folkColor("byte")
+        case .chance: Theme.folkColor("play")
         }
     }
 
@@ -506,6 +516,8 @@ struct ResultCardView<Actions: View>: View {
         case .web: "globe"
         case .info: "info.circle"
         case .extensionResult: "puzzlepiece.extension"
+        case .reading: "gauge.with.dots.needle.33percent"
+        case .chance: "dice"
         }
     }
 }

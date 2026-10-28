@@ -27,6 +27,8 @@ final class AppCoordinator {
         player.anchorProvider = { [weak self] in self?.anchor() }
         return player
     }()
+    /// A toss brought the hidden companion out for the moment; it goes away again once the result has gone.
+    var tossRevealed = false
     private(set) var onboarding: Onboarding!
     var mood = CompanionMood()
     private var roster = DutyRoster()
@@ -198,6 +200,7 @@ final class AppCoordinator {
         companion.apply(size: s.size, reducedMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
         companion.character.liveliness = CompanionArt.liveliness(s.liveliness)
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
+        player.companionName = s.companionName
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
@@ -362,6 +365,7 @@ final class AppCoordinator {
         if command == "voice:stop" { _ = voice.cancel(); return }
         if command.hasPrefix("play:"), let act = CompanionAct(rawValue: String(command.dropFirst(5))) { runtime.events.publish(.companion(act)); return }
         if command == "click" { companionClicked(); return }
+        if command.hasPrefix("toss:") { devToss(command.dropFirst(5).split(separator: ":").map(String.init)); return }
         if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }
         if command.hasPrefix("voice:volume:"), let volume = Double(command.dropFirst("voice:volume:".count)) {
             // 0 checks spoken replies and the mouth without a sound on the developer's Mac.
@@ -547,8 +551,24 @@ final class AppCoordinator {
             if act.isGame {
                 askPanel.hide()
                 if !companion.isVisible { showCompanion(true) }
+                // A game keeps it out: the toss that brought it out no longer puts it away.
+                tossRevealed = false
             }
             player.play(act)
+        case .toss(let toss):
+            // The result belongs on the desktop: hidden, the companion comes out for the moment and goes again after.
+            if !companion.isVisible {
+                showCompanion(true)
+                tossRevealed = true
+            }
+            player.toss(toss) { [weak self] in
+                guard let self, tossRevealed else { return }
+                tossRevealed = false
+                // Only the companion goes: an answer may still be open in the Ask panel.
+                guard player.game == nil else { return }
+                companion.hide()
+                renderReadouts()
+            }
         case .dataChanged(let domain):
             if domain == .permissions { refreshMode() }
             if [.reminders, .watchers, .runs, .attention, .skipped].contains(domain) { scheduleNowRefresh() }
@@ -691,10 +711,35 @@ extension AppCoordinator: CompanionDelegate {
                     self?.player.play(act)
                 })
             }
+            // Chance, drawn by the same tool the AI and the person's words reach (D44, amended).
+            play.addItem(.separator())
+            play.addItem(ClosureTarget.item(String(localized: "Flip a Coin")) { [weak self] in self?.toss(["kind": "coin"]) })
+            play.addItem(ClosureTarget.item(String(localized: "Roll a Die")) { [weak self] in self?.toss(["kind": "dice"]) })
+            let hands = NSMenu()
+            for hand in Hand.allCases {
+                hands.addItem(ClosureTarget.item(hand.title) { [weak self] in self?.toss(["kind": "rock_paper_scissors", "hand": .string(hand.rawValue)]) })
+            }
+            let rps = NSMenuItem(title: String(localized: "Rock, Paper, Scissors", comment: "A menu: pick your hand"), action: nil, keyEquivalent: "")
+            rps.submenu = hands
+            play.addItem(rps)
         }
         let item = NSMenuItem(title: String(localized: "Play", comment: "The companion's menu: tricks and games"), action: nil, keyEquivalent: "")
         item.submenu = play
         return item
+    }
+
+    /// Flips, rolls or plays a hand through the executor, as the person's own action: the event it sends plays it.
+    func toss(_ input: JSONValue) {
+        Task { _ = await runtime.executor.execute(name: "companion.toss", input: input, caller: .user) }
+    }
+
+    /// `toss:coin[:count]`, `toss:dice[:count[:sides]]`, `toss:rps:<hand>`.
+    func devToss(_ parts: [String]) {
+        var input: [String: JSONValue] = ["kind": .string(parts.first == "rps" ? "rock_paper_scissors" : parts.first ?? "coin")]
+        if parts.first == "rps" { input["hand"] = .string(parts.count > 1 ? parts[1] : "rock") }
+        if parts.first != "rps", parts.count > 1, let count = Double(parts[1]) { input["count"] = .number(count) }
+        if parts.count > 2, let sides = Double(parts[2]) { input["sides"] = .number(sides) }
+        toss(.object(input))
     }
 
     func companionDragChanged(_ dragging: Bool) {

@@ -121,17 +121,16 @@ struct ShippedExtensionLogicTests {
         #expect(try Toolbox.transform("count", "one two\nthree") == "13 characters, 3 words, 2 lines, 13 bytes in UTF-8.")
     }
 
-    @Test func playtimeQuestionsAndDice() throws {
+    @Test func playtimeQuestionsAndPicks() throws {
         #expect(Trivia.bank.count >= 50)
         #expect(Set(Trivia.bank.map(\.text)).count == Trivia.bank.count, "no question twice")
         #expect(Trivia.categories.count >= 8)
         for q in Trivia.bank {
             #expect(q.choices.count == 4 && (0..<4).contains(q.answer) && Set(q.choices).count == 4 && !q.fact.isEmpty, "\(q.text)")
         }
-        let roll = try Chance.dice("3d6+2")
-        let m = try #require(roll.wholeMatch(of: /Rolled 3d6\+2: ([1-6]) \+ ([1-6]) \+ ([1-6]) \+ 2 = (\d+)\./), "\(roll)")
-        #expect(Int(m.1)! + Int(m.2)! + Int(m.3)! + 2 == Int(m.4)!)
-        for bad in ["0d6", "d1", "2x6", "51d6"] { #expect(throws: (any Error).self, "\(bad)") { try Chance.dice(bad) } }
+        let number = try Chance.number(3, 3)
+        #expect(number == "Picked 3 (from 3 to 3).")
+        #expect(throws: (any Error).self) { try Chance.number(5, 1) }
         #expect(try Chance.pick(["tea"], count: 1) == "Picked: tea.")
         #expect(throws: (any Error).self) { try Chance.pick(["tea"], count: 2) }
     }

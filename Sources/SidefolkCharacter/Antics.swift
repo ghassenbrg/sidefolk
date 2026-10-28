@@ -241,6 +241,9 @@ enum Antics {
         case .nod: nod
         case .giggle: giggle
         case .breathe: breathe
+        case .flick: flick
+        case .roll: roll
+        case .pump: pump
         }
     }
 
@@ -468,4 +471,38 @@ enum Antics {
     ] + arms([0, 0.5, 0.5, 0, 0], at: [0, 0.36, 0.45, 0.9, 1])
       + ears([0, -0.18, -0.18, 0.06, 0], at: [0, 0.36, 0.45, 0.9, 1]),
     faces: [(0.04, .bliss), (0.97, nil)])
+
+    // MARK: Chance (D44, amended)
+
+    /// Flicks a coin up with one paw (at 0.2 of the moment), watches it fly, and catches it (at 0.85).
+    static let flick = Antic(duration: 1.6, tracks: [
+        Track(.body, [.rest, .squash(1.05, 0.94), .squash(0.97, 1.03, up: 3), .rest, .rest, .squash(1.03, 0.97), .rest],
+              at: [0, 0.12, 0.22, 0.4, 0.8, 0.88, 1]),
+        Track(.armR, [.rest, .turn(0.3), .turn(1.9), .turn(1.1), .turn(1.0), .turn(1.4), .rest], at: [0, 0.12, 0.22, 0.4, 0.8, 0.88, 1]),
+        Track(.head, [.rest, .nudge(0, 1.5), .nudge(0, 1.5), .rest], at: [0, 0.3, 0.8, 1]),
+    ] + ears([0, 0, -0.16, -0.16, 0.1, 0], at: [0, 0.15, 0.3, 0.8, 0.9, 1]),
+    faces: [(0.18, .curious), (0.86, .joy), (0.97, nil)],
+    looks: [(0.22, CGVector(dx: 0, dy: 1)), (0.7, CGVector(dx: 0, dy: 0.4)), (0.92, nil)], snappy: true)
+
+    /// Shakes the dice between both paws, then throws them up and forward (at 0.6).
+    static let roll: Antic = {
+        let shakes = [0.12, 0.2, 0.28, 0.36, 0.44, 0.52]
+        let times = [0.0] + shakes + [0.6, 0.75, 1]
+        let arms = [0] + shakes.indices.map { $0.isMultiple(of: 2) ? 1.3 : 0.9 } + [1.9, 0.6, 0] as [CGFloat]
+        let body = [Key.rest] + shakes.indices.map { Key(dx: $0.isMultiple(of: 2) ? 1.5 : -1.5) } + [.squash(0.96, 1.04, up: 2), .rest, .rest]
+        return Antic(duration: 1.6, tracks: [Track(.body, body, at: times)] + Self.arms(arms, at: times)
+            + ears([0, 0.1, -0.1, 0.1, -0.1, 0.1, -0.1, -0.2, 0, 0], at: times, swing: true),
+            faces: [(0.08, .squeeze), (0.6, .joy), (0.95, nil)],
+            looks: [(0.6, CGVector(dx: 0, dy: 1)), (0.92, nil)], snappy: true)
+    }()
+
+    /// "Rock, paper, scissors…": one fist pumped three times, the hand shown on the fourth beat (at 0.7).
+    static let pump = Antic(duration: 1.6, tracks: [
+        Track(.armR, [.rest, .turn(1.7), .turn(0.7), .turn(1.7), .turn(0.7), .turn(1.7), .turn(1.0), .turn(1.0), .rest],
+              at: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.88, 1]),
+        Track(.body, [.rest, .rest, .squash(1.03, 0.97), .rest, .squash(1.03, 0.97), .rest, .squash(1.04, 0.96), .rest, .rest],
+              at: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.88, 1]),
+        Track(.head, [.rest, .rest, .nudge(0, -1.5), .rest, .nudge(0, -1.5), .rest, .nudge(0, -2), .rest, .rest],
+              at: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.88, 1]),
+    ], faces: [(0.05, .curious), (0.7, .joy), (0.95, nil)], snappy: true)
 }
