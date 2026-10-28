@@ -213,6 +213,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var onboardingDone = false
     /// Talking to the companion and hearing it answer (D34).
     public var voice = VoiceSettings()
+    /// Where the person is, when they share it (D48).
+    public var location = LocationSettings()
 
     public init() {}
 
@@ -249,6 +251,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.debugLogging, &debugLogging)
         read(.onboardingDone, &onboardingDone)
         read(.voice, &voice)
+        read(.location, &location)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

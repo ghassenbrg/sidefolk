@@ -421,8 +421,17 @@ Before every start Sidefolk checks the files against those hashes. If anything c
 **Update:** install the new version's folder the same way. The sheet shows what changes:
 permissions gained and lost, tools added and removed. The data folder is kept.
 
-**Turn off / on:** the switch in Settings › Extensions. **Uninstall** removes the extension, its
-data folder and its settings.
+**Turn off / on:** the switch in Settings › Extensions. **Uninstall** (under the extension's details)
+removes the extension, its data folder and its settings.
+
+**Finding one:** Settings › Extensions lists what is installed one line each (name, what it does, its
+switch); a click, Space or Return opens the details (where it came from, what it may do, its tools,
+the request to try, Review and Uninstall). One whose tools changed opens by itself. The search reads
+names, descriptions, tool titles and names, what each may do ("internet" finds those that can reach
+it; "No access to…" isn't searched), examples, authors, ids and server commands, ignoring case, accents
+and width, and says under a row what matched when its line doesn't show it. All / On / Off narrow the
+list, with how many each holds for the words typed; the choice is remembered. Drafts and skills,
+neither on nor off, are under All. ⌘F searches; ↑ and ↓ move between rows, → and ← open and close.
 
 **When it runs:** a process starts the first time one of its tools or watchers is used and stops
 after 5 minutes without use. If it stops unexpectedly 3 times within 5 minutes, Sidefolk turns it
@@ -439,7 +448,7 @@ so none needs Python, Node or anything else installed; Git needs git, which it e
 | Git | On | The internet, `git`, a folder named per call | Clone, status, pull, log |
 | World Clock | On | None | The time anywhere, conversions with daylight saving |
 | System Vitals | On | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers |
-| Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon; a rain watcher |
+| Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
 | Calculator | On | None | Exact sums and percentages, units, date maths |
 | Currency | On | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
 | Playtime | On | None | Coin, dice and random picks, a trivia quiz with a score, rock, paper, scissors |

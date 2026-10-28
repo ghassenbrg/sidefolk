@@ -107,6 +107,15 @@ user folders or agent configs.
   once/repeat/report. Material changes are saved at once, routine checks at most every 5 minutes.
   Reports (D35) publish each value as `AppEvent.watchReading` instead of a notice or a list reload;
   the app shows it as a pill beside the companion and a live row on Now.
+- `Location/` (D48) — where the person is, when they share it: `LocationSettings` (off, the Mac's location,
+  a place chosen by name) and `KnownPlace` (town, region, country, time zone, coordinates rounded to 0.01°)
+  in `AppSettings`; `PlaceKeeper` (actor) names Location Services positions through a `ReverseGeocoding`
+  (the app's `AppleGeocoder`) when the person moved more than 5 km or the name is a day old; `PlaceFinder`
+  searches Open-Meteo's geocoder by name. `ContextBuilder` says the town (never coordinates) under "# Now";
+  `IntentParser(here:)` and `watch.report` use it for weather with no place named (with its coordinates, so
+  no lookup by name), and otherwise ask which (`LocalIntent.needsPlace`, `PlaceNeeded`, a `SettingsLink`
+  card the Ask panel opens in Settings). The app's `MacLocator` holds the `CLLocationManager` (made only
+  when needed; at launch it resumes only what macOS already allowed).
 - `AttentionCenter` (actor) — receives `AttentionRequest`s (level, source, title, body, actions),
   applies policy (quiet mode, fullscreen, away, grouping, re-nudge, rate limits) and emits
   presentation directives for the app. Pure policy core (`AttentionPolicy`) is unit tested.

@@ -94,6 +94,9 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
   optional smart model for "Think harder". Connection check. No-AI mode keeps everything local working.
 - P0 Context builder with a budget: persona, rules, time zone, frontmost app, "About you" notes,
   relevant notebook items (FTS), live jobs, recent exchange (10-minute thread window).
+- P1 Where the person is (D48), only when they choose: the Mac's location (a town, from Location Services)
+  or a town they pick. The AI hears the town, never coordinates; weather with no place named is theirs;
+  without one, Sidefolk asks which place instead of guessing.
 
 ### Memory and data
 - P0 Notebook: Inbox, About you (profile), projects/topics/lists with notes, ideas, tasks, links;

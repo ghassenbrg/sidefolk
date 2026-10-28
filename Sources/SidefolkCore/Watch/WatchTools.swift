@@ -3,10 +3,13 @@ import Foundation
 /// The tools that let the user, Sidefolk's agent and other agents set watchers up and manage them.
 /// Every one of them runs through `ToolExecutor`, so Guard and the Activity log see each call.
 public enum WatchTools {
-    /// - Parameter parser: reads a report's end ("until 6pm") with the user's idea of morning and evening.
-    public static func make(engine: WatcherEngine, parser: @escaping @Sendable () -> WhenParser = { WhenParser() }) -> [any Tool] {
+    /// - Parameters:
+    ///   - parser: reads a report's end ("until 6pm") with the user's idea of morning and evening.
+    ///   - here: where the person is, when they share it (D48).
+    public static func make(engine: WatcherEngine, parser: @escaping @Sendable () -> WhenParser = { WhenParser() },
+                            here: @escaping @Sendable () -> KnownPlace? = { nil }) -> [any Tool] {
         [
-            WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser),
+            WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser, here: here),
             WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
         ]
     }
