@@ -1,7 +1,7 @@
 {
   "id": "dev.sidefolk.qr-codes",
   "name": "QR Codes",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Makes a QR code picture of a link or text, and reads the QR code in a picture or a screenshot.",
   "folk": "byte",
@@ -21,7 +21,19 @@
       "mutates": true,
       "paths": {
         "folder": "write"
-      }
+      },
+      "commands": [
+        {
+          "say": [
+            "qr code for {text:text}", "make a qr code for {text:text}", "make a qr code of {text:text}",
+            "qr for {text:text}", "create a qr code for {text:text}"
+          ],
+          "input": {
+            "text": "{text}",
+            "folder": "~/Desktop"
+          }
+        }
+      ]
     },
     "read_qr": {
       "title": "Read a QR code",

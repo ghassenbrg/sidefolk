@@ -62,6 +62,18 @@ Write down, before any code: the tools (verbs), the watchers, and what each need
 - **Risk** per tool: `low` reads, `medium` changes things, `high` is hard to undo. Network, write access or
   a "can run anything" program raises every tool to at least medium. Mark read-only tools `"mutates": false`.
 - **`timeout`** (seconds, up to 300) for a tool that needs more than the default 30.
+- **Instant answers or the AI** (D50), per tool:
+  - *Commands*: `tools.<name>.commands: [{ "say": ["time in {place:place}"], "input": { "places": ["{place}"] } }]`
+    are whole sentences that call the tool at once, with no AI and no wait. Use them when a common request has a
+    clear shape: a sum, a conversion, "uuid", "time in Tokyo". Slots are typed (`text`, `word`, `number`,
+    `integer`, `expression`, `place`, `url`, `date`, `list`, or your own list in `words`); a sentence starts
+    with a word of its own and never with a slot that takes any words. Write the variants people say.
+  - *Commands only*: add `"ai": false` when the AI gains nothing from the tool (a coin flip, a fixed status):
+    the model never sees it, so it costs no tokens on any request.
+  - *AI only* (no commands): when what to do depends on context or free text needs reading.
+  - A command still goes through Guard (a network tool asks once, like it would for the AI). For input you
+    don't understand, return an error: Sidefolk then hands the sentence to the AI. Details:
+    docs/EXTENSIONS.md › Answering without the AI.
 - **Watchers** for "tell me when": checked every 5 minutes at the soonest; trigger on change, not level,
   keeping what you need in `state`.
 
@@ -74,7 +86,7 @@ Copy one of `templates/` into a folder named after your id's last part, then cha
 |---|---|---|
 | `templates/python` | `python3` (Apple's developer tools Python 3.9, standard library) | A folder named per call, a plain tool, a watcher, a PNG icon |
 | `templates/node` | `node` (Homebrew's or `/usr/local/bin`) | The internet, `fetch`, error results |
-| `templates/sh` | `/bin/sh` | Built-ins only, one listed program (`/bin/date`) |
+| `templates/sh` | `/bin/sh` | Built-ins only, one listed program (`/bin/date`), commands that answer without the AI |
 
 A compiled program works too: put it in the folder (`bin/server`) and set `"run": {"command": "bin/server"}`.
 
@@ -132,5 +144,7 @@ job truly needs it.
 - [ ] Permissions are the smallest that work; the sheet's lines and warnings match what you'd tell a user.
 - [ ] Every tool has a clear title and plainly named parameters with limits.
 - [ ] Failures come back as `isError` results that say what to do.
+- [ ] The requests with a clear shape have commands (with the variants people say), and the validator's
+      "Answers without AI" lines read right; tools nobody should reach through the AI say `"ai": false`.
 - [ ] It has an icon, a description of at most 300 characters, and an author.
 - [ ] Nothing it sends leaves for an address the person didn't ask about.

@@ -74,6 +74,10 @@ struct InstallPreviewSheet: View {
                     if !preview.watcherNames.isEmpty {
                         Text(ExtensionWords.watchers(preview.watcherNames)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     }
+                    if !preview.commands.isEmpty {
+                        Text(ExtensionWords.commands(preview.commands)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             Text("It runs in a sandbox limited to the lines above. You can turn it off or uninstall it any time.")

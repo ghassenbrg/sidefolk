@@ -32,7 +32,7 @@ public enum ReminderTools {
     static func canManage(caller: Caller, source: String) -> Bool {
         switch caller {
         case .user, .agent: true
-        case .routine, .external, .extension: ToolContext(caller: caller, now: Date()).provenanceTag == source
+        case .routine, .external, .extension, .command: ToolContext(caller: caller, now: Date()).provenanceTag == source
         }
     }
 
@@ -218,7 +218,7 @@ public enum ReminderTools {
             // reminder itself, so the result never hands it the item's title (T4).
             let mayQuote = switch context.caller {
             case .user, .agent: true
-            case .routine, .external, .extension: false
+            case .routine, .external, .extension, .command: false
             }
             guard let title = input.string("title") ?? (mayQuote ? item?.title : nil), !title.trimmingCharacters(in: .whitespaces).isEmpty else {
                 throw ToolError.invalidInput(String(localized: "“title” is required"))

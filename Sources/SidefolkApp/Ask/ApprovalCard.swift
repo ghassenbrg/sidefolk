@@ -81,7 +81,7 @@ struct ApprovalCard: View {
             .disabled(!armed)
         // Keys approve only your own and Sidefolk's requests (Return, or ⌘⏎ for high risk). Other apps and
         // extensions always need a click: they may ask while you are typing somewhere else.
-        let ours = request.caller.kind == "user" || request.caller.kind == "agent"
+        let ours = ["user", "agent", "command"].contains(request.caller.kind)
         if ours, request.risk == .high {
             button.keyboardShortcut(.return, modifiers: .command)
         } else if ours {
@@ -97,6 +97,7 @@ struct ApprovalCard: View {
         case .external(let client): Text("Asked by another app that says it's \(AgentFacingTools.displayName(client))")
         case .extension(let id): Text("Asked by the extension \(id)")
         case .agent: Text("Asked by Sidefolk")
+        case .command: Text("Asked by what you typed, without AI", comment: "An approval card for an extension's command (D50)")
         case .routine: Text("Asked by a routine")
         case .user: Text("Asked by you")
         }

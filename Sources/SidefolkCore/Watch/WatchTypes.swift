@@ -244,6 +244,7 @@ public enum WatchSource {
         case .routine(let id): "routine:\(id)"
         case .external(let client): "external:\(client)"
         case .extension(let id): "extension:\(id)"
+        case .command(let id): "command:\(id)"
         }
     }
 
@@ -262,7 +263,7 @@ public enum WatchSource {
     public static func canManage(caller: Caller, watcherSource source: String) -> Bool {
         switch caller {
         case .user, .agent: true
-        case .routine, .external, .extension: string(for: caller) == source
+        case .routine, .external, .extension, .command: string(for: caller) == source
         }
     }
 }

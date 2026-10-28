@@ -32,6 +32,8 @@ struct ExtensionInfo: Identifiable, Hashable {
     var author: String?
     /// What a search reads beyond what the row shows (`ExtensionListQuery.texts(for:)`): tool names, its id…
     var hiddenSearchTexts: [String] = []
+    /// Sentences it answers without the AI, as "time in …" (D50).
+    var commands: [String] = []
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }
@@ -47,6 +49,8 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var warnings: [String]
     var toolNames: [String]
     var watcherNames: [String]
+    /// Sentences it will answer without the AI, as "time in …" (D50).
+    var commands: [String] = []
     var isUpdate: Bool
     var folk: String?
     var iconPath: String?

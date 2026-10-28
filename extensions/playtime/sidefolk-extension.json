@@ -1,7 +1,7 @@
 {
   "id": "dev.sidefolk.playtime",
   "name": "Playtime",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "sidefolk": ">=0.1",
   "description": "A break with your companion: a trivia quiz that keeps your score, and chance to pick a number or choose from a list.",
   "folk": "play",
@@ -16,7 +16,41 @@
       "title": "Random picks",
       "risk": "low",
       "category": "system",
-      "mutates": false
+      "mutates": false,
+      "commands": [
+        {
+          "say": [
+            "pick a number between {min:integer} and {max:integer}",
+            "random number between {min:integer} and {max:integer}",
+            "a random number between {min:integer} and {max:integer}",
+            "pick a number from {min:integer} to {max:integer}", "random number from {min:integer} to {max:integer}"
+          ],
+          "input": {
+            "kind": "number",
+            "min": "{min}",
+            "max": "{max}"
+          }
+        },
+        {
+          "say": [
+            "pick a number", "random number", "pick a random number", "give me a random number"
+          ],
+          "input": {
+            "kind": "number"
+          }
+        },
+        {
+          "say": [
+            "pick one: {choices:list}", "pick one of {choices:list}", "choose between {choices:list}",
+            "choose one of {choices:list}", "pick from {choices:list}", "pick between {choices:list}",
+            "help me pick between {choices:list}", "help me choose between {choices:list}"
+          ],
+          "input": {
+            "kind": "choice",
+            "choices": "{choices}"
+          }
+        }
+      ]
     },
     "trivia": {
       "title": "Trivia quiz",

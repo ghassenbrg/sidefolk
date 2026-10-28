@@ -71,6 +71,10 @@ public struct ExtensionToolInfo: Sendable, Hashable {
     public var risk: Risk
     /// Changed or new since the user approved it; it can't run until approved.
     public var quarantined: Bool
+    /// Sentences that call it without the AI, as people see them ("time in …") (D50).
+    public var commands: [String] = []
+    /// Offered to Sidefolk's AI; false when its author left it to its commands.
+    public var forAI = true
 }
 
 /// Everything Settings › Extensions shows for one installed extension or MCP server.

@@ -474,6 +474,36 @@ its logic); a write folder lets an extension plant files there that other progra
 hook in a repository it was asked to update; Git itself runs with `core.hooksPath=/dev/null`). A
 sandbox escape in the trial would run unapproved code; the trial grants nothing and is short.
 
+**T32 An extension's commands: the person's words, the extension's mapping (M/M), D50.** A manifest can
+list sentences ("time in {place:place}") that call one of its tools without the AI, and can keep a tool from the
+model. Two risks: a command that swallows what people say to Sidefolk (or to the AI), and a mapping that turns
+a typed sentence into a call the person didn't mean.
+- *Capture:* a sentence must hold a word of its own (two letters or more), may not start with a slot that takes
+  any words (`text`, `word`, `place`, `list`), and no two such slots may touch; at most three slots, 80
+  characters, twelve sentences a command, eight commands a tool, 64 sentences an extension; replies anyone
+  types ("yes", "thanks", "stop", "help"…) are refused. The one sentence with no word of its own is a lone
+  `{…:expression}`, which takes only digits, operators and a calculator's words. Slots are checked again after
+  matching (an expression that is a date or a phone number, a place of more than six words, a day only the
+  AI can read are no match). `ManifestValidator` refuses the rest with the field and a plain message.
+- *Order:* every core intent first (reminders, notes, watches, quiet, conversations, play); then commands of
+  switched-on extensions only (only their tools are registered), whole sentence after the same clean-up; a
+  sentence two extensions claim goes to the AI. The hint under the field names the extension before Enter.
+  Something dropped on the panel sends the request to the AI instead.
+- *Who calls:* `Caller.command(extensionId:)`. The person typed the words but the extension chose the tool and
+  every constant in its input (a folder, an operation), so Guard treats the call as Sidefolk's agent in a clean
+  turn, never as the user's own click: a tool that only computes runs, a network, folder or risky tool asks
+  (or uses a grant the person gave the AI for that tool; `Caller.grantKind` is "agent" both ways), and the
+  person's approval mode and "Using the internet" rule (D47) apply. Mentions are the typed sentence, so an
+  address the person typed counts as typed (T1). It can't draft extensions, write skills, or manage another
+  caller's reminders or watchers. Activity records `command:<extension id>`.
+- *Results:* shown to the person, never sent to a model. A tool that reports it couldn't answer hands the
+  sentence to the AI (when one is set up), as if the command didn't exist.
+- *The model:* a tool marked `"ai": false` is left out of every run's tool list (`ToolSpec.offeredToModel`), and
+  the agent's toolbox refuses a name it wasn't offered.
+*Residual:* a command sentence can still take words someone meant for the AI ("what time is it in my head"),
+and the extension then reads them; the hint names it first, and the AI gets the sentence when the extension
+can't answer. Command sentences are English, like the core parser (D28).
+
 ### E. Data
 
 **T18 Credentials (M/H).**
@@ -832,6 +862,11 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     policy that can't be read is never replaced by the default; a seeded fuzz of the time and report syntax
     (`NewSyntaxFuzzTests`). End to end (`Tests/SidefolkCoreTests/E2E`): Full access against a page that tries
     every way out, an AI-built extension in a tainted turn, a skipped Notes copy run later from Now.
+17. **Extension commands (T32):** `ExtensionCommandTests`: sentences that could swallow words are refused, slots
+    are checked after matching, core intents win, two extensions claiming one sentence go to the AI, a network
+    tool asks and honours the AI's grant, "Ask each time" holds, a command can't draft extensions, an `"ai":
+    false` tool never reaches the model; `ExtensionCommandBuiltInTests` drives the built-ins' commands through
+    the runner.
 
 ## 5. What Sidefolk never does
 

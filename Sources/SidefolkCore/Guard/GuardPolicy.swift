@@ -107,17 +107,24 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     }
 
     /// The mode Guard applies to `caller`. Only Sidefolk's own agent, which acts on the person's own
-    /// request from the Ask panel, is ever asked less. Asking every time applies to every caller Guard
-    /// asks for; other agents and extensions otherwise keep their own rules (SECURITY T4, D37).
+    /// request from the Ask panel, is ever asked less, and a command the person typed acts as it (D50). Asking
+    /// every time applies to every caller Guard asks for; other agents and extensions otherwise keep their own
+    /// rules (SECURITY T4, D37).
     public func mode(for caller: Caller) -> GuardMode {
-        if case .agent = caller { return mode }
+        if Self.actsForTheAgent(caller) { return mode }
         return mode == .askEveryTime ? .askEveryTime : .askOncePerKind
     }
 
-    /// The internet rule Guard applies to `caller`, or nil: only Sidefolk's own agent has one (D47). Other
-    /// agents, routines and extensions keep the rules they had (SECURITY T4).
+    /// The internet rule Guard applies to `caller`, or nil: only Sidefolk's own agent has one (D47), and the
+    /// commands that act as it (D50). Other agents, routines and extensions keep the rules they had (SECURITY T4).
     public func internet(for caller: Caller) -> InternetRule? {
-        if case .agent = caller { return internet }
-        return nil
+        Self.actsForTheAgent(caller) ? internet : nil
+    }
+
+    private static func actsForTheAgent(_ caller: Caller) -> Bool {
+        switch caller {
+        case .agent, .command: true
+        case .user, .routine, .external, .extension: false
+        }
     }
 }

@@ -102,6 +102,8 @@ public enum LocalIntent: Sendable, Equatable {
     case chance(ChanceIntent)
     /// "new conversation", "start fresh": the next request to the AI starts a new conversation (D45).
     case newConversation
+    /// A sentence one switched-on extension answers without the AI (D50).
+    case extensionCommand(ExtensionCommandCall)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").
@@ -113,6 +115,9 @@ public struct ParsedIntent: Sendable, Equatable {
         self.intent = intent
         self.hint = hint
     }
+
+    /// A sentence an extension's command answers (D50): the app leaves it to the AI when something was dropped too.
+    public var isExtensionCommand: Bool { if case .extensionCommand = intent { true } else { false } }
 
     /// A hint from its parts in the app's language, ending with the promise that no AI is involved.
     static func hint(_ parts: String...) -> String {

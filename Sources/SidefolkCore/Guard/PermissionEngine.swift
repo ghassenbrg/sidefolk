@@ -172,7 +172,7 @@ public struct PermissionEngine: Sendable {
     /// The grant that covers this call, if any. Grants are per tool, narrowed by scope.
     public static func matchingGrant(spec: ToolSpec, scope: ToolScope, caller: Caller, grants: [Grant]) -> Grant? {
         grants.first { g in
-            guard g.tool == spec.name, g.callerKind == "any" || g.callerKind == caller.kind else { return false }
+            guard g.tool == spec.name, g.callerKind == "any" || g.callerKind == caller.grantKind else { return false }
             // A command grant covers that exact command in that exact folder (T9): the same words
             // run somewhere else run a different Makefile. Grants saved without the binding never match.
             if g.scope.string("command") != nil {

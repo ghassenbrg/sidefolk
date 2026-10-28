@@ -31,6 +31,7 @@ public enum AgentFacingTools {
         case .routine(let id): "routine:\(id)"
         case .external(let client): "external:\(client)"
         case .extension(let id): "extension:\(id)"
+        case .command(let id): "command:\(id)"
         }
     }
 }

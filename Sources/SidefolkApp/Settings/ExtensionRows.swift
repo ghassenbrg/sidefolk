@@ -159,6 +159,10 @@ struct ExtensionRow: View {
         if let tools = toolsLine {
             Text(tools).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).fixedSize(horizontal: false, vertical: true)
         }
+        if !ext.commands.isEmpty {
+            Label(ExtensionWords.commands(ext.commands), systemImage: "bolt")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+        }
         // Tools on hold for approval, or a manifest and program that disagree: worth knowing, not errors.
         ForEach(ext.warnings, id: \.self) { warning in
             Label(warning, systemImage: "exclamationmark.triangle")
@@ -324,6 +328,12 @@ struct SkillRow: View {
 /// What an extension adds, as Settings and the install preview list it.
 enum ExtensionWords {
     static func tools(_ names: [String]) -> String { String(localized: "Tools: \(Wording.list(names))") }
+    /// What it answers at once, without the AI (D50): "Answers without AI: “time in …”, “what time is it in …”".
+    static func commands(_ sentences: [String]) -> String {
+        let shown = sentences.prefix(8).map { "“\($0)”" } + (sentences.count > 8 ? ["…"] : [])
+        return String(localized: "Answers without AI: \(shown.joined(separator: ", "))",
+                      comment: "Sentences an extension answers at once, each in quotes, “…” standing for the words the person fills in")
+    }
     static func watchers(_ names: [String]) -> String { String(localized: "Watchers: \(Wording.list(names))") }
 }
 

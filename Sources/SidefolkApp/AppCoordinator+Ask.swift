@@ -99,7 +99,9 @@ extension AppCoordinator: AskActions {
         // with a dropped item are understood too; the item rides along as the note or reminder detail.
         if !thinkHarder,
            let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
-                                                   watching: knownWatches) {
+                                                   watching: knownWatches),
+           // An extension's command takes words only: with something dropped on the panel, the AI looks at both (D50).
+           !(attachment != nil && parsed.isExtensionCommand) {
             runLocal(Self.withAttachment(parsed.intent, attachment), caption: text, into: model, reply: reply)
             return
         }
@@ -211,6 +213,18 @@ extension AppCoordinator: AskActions {
                 if !model.busy, model.text.isEmpty, model.voice == nil, model.pendingQuestion == nil, model.latestCaption == caption {
                     model.onAutoClose?()
                 }
+            case .declined(let error):
+                // The sentence would have gone to the AI without the command; it still does when there is one (D50).
+                if runtime.settings.current.provider.kind != .none, let caption {
+                    runAgent(caption, attachment: nil, thinkHarder: false, into: model, reply: reply)
+                } else {
+                    model.add(.error(error, retryable: false), caption: caption)
+                    say(SpokenLine.line(error.message))
+                }
+            case .answer(let card, let activityId):
+                // An answer is there to be read, so the panel stays until the person closes it (D50).
+                model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: false), caption: caption)
+                say(SpokenLine.line(card.detail ?? card.title))
             case .list(let title, let cards):
                 model.add(.list(title: title, cards: cards), caption: caption)
                 say(SpokenLine.list(title: title, cards: cards))

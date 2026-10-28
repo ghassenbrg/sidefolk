@@ -413,6 +413,10 @@ final class AppCoordinator {
             showAsk()
             ask.text = String(command.dropFirst(4))
             ask.submit()
+        } else if command.hasPrefix("type:") {
+            // Typed but not sent: the hint under the field says what Enter would do.
+            showAsk()
+            ask.text = String(command.dropFirst(5))
         } else if command.hasPrefix("respond:"), let item = bubbles.model.item {
             respond(to: item, action: String(command.dropFirst(8)))
             bubbles.withdraw(id: item.id)
@@ -532,7 +536,7 @@ final class AppCoordinator {
         case .approvalRequested(let request):
             ask.add(.approval(request))
             // Other apps' requests appear without taking the keyboard, so a stray Return can't approve them.
-            let trusted = request.caller.kind == "user" || request.caller.kind == "agent"
+            let trusted = ["user", "agent", "command"].contains(request.caller.kind)
             if !askPanel.isVisible { showAsk(focus: trusted) }
         case .toolFinished(let activity, let ok):
             creditExternal(activity, ok: ok)
