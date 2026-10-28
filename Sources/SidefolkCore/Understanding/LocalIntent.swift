@@ -41,6 +41,26 @@ public struct ReportIntent: Sendable, Equatable {
     }
 }
 
+/// A coin, dice or a hand for the companion to play (D44, amended), for `companion.toss`.
+public struct ChanceIntent: Sendable, Equatable {
+    public enum Kind: String, Sendable { case coin, dice, rockPaperScissors = "rock_paper_scissors" }
+
+    public var kind: Kind
+    public var count = 1
+    public var sides = 6
+    public var modifier = 0
+    /// Rock, paper, scissors: the person's hand; nil when they haven't said it yet.
+    public var hand: Hand?
+
+    public init(_ kind: Kind, count: Int = 1, sides: Int = 6, modifier: Int = 0, hand: Hand? = nil) {
+        self.kind = kind
+        self.count = count
+        self.sides = sides
+        self.modifier = modifier
+        self.hand = hand
+    }
+}
+
 /// What the user meant, worked out without a model.
 public enum LocalIntent: Sendable, Equatable {
     /// `important` reminders are the ones that still interrupt during quiet mode ("urgent: remind me ...").
@@ -55,6 +75,8 @@ public enum LocalIntent: Sendable, Equatable {
     case aboutMe(fact: String)
     case watch(WatchIntent)
     case report(ReportIntent)
+    /// One value now, nothing left running ("what's my CPU usage"), for `watch.read`.
+    case read(ReportIntent.Source)
     /// "stop telling me the CPU": the watchers the words name (none, one or several), and the words themselves.
     case stopWatch(ids: [String], words: String)
     /// Quiet mode until a time; nil means until the user turns it off.
@@ -72,6 +94,8 @@ public enum LocalIntent: Sendable, Equatable {
     case needsTarget(kind: String, becomes: String?)
     /// A trick or a game with the companion (D44).
     case companion(CompanionAct)
+    /// A coin, dice or rock, paper, scissors on the desktop.
+    case chance(ChanceIntent)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

@@ -80,7 +80,7 @@ import Testing
         if case .remind? = parse("remind me every 2 hours to check the battery")?.intent {} else { Issue.record("expected a reminder") }
         #expect(parse("every 10 seconds tell me a joke") == nil)
         #expect(parse("tell me when the battery is below 20% every minute") == nil)
-        #expect(parse("tell me the CPU") == nil, "no interval: a question for the AI")
+        #expect(parse("tell me the CPU")?.intent == .read(.metric(.cpu)), "no interval: one reading now")
         #expect(parse("every day tell me the weather in Paris") == nil, "a daily brief is a routine, not a live value")
         #expect(parse("every 10 seconds and every minute show the cpu") == nil)
         #expect(parse("show the cpu and the memory every minute") == nil, "one value per report")
@@ -129,5 +129,38 @@ import Testing
         let p = parse("stop the temperature", watching: [tokyo, fukuoka])
         #expect(p?.intent == .stopWatch(ids: [tokyo.id, fukuoka.id], words: "the temperature"))
         #expect(p?.hint == "Stop · 2 matches. Which one? · no AI")
+    }
+
+    // MARK: One reading
+
+    func reading(_ text: String) -> ReportIntent.Source? {
+        if case .read(let source)? = parse(text)?.intent { return source }
+        return nil
+    }
+
+    /// The founder asked "what's my CPU usage" and watched a report start and stop: a plain question reads once.
+    @Test func aPlainQuestionReadsOnce() {
+        let cases: [(String, ReportIntent.Source)] = [
+            ("what's my cpu usage?", .metric(.cpu)), ("cpu?", .metric(.cpu)), ("how busy is my processor", .metric(.cpu)),
+            ("how much memory am I using", .metric(.memory)), ("RAM usage", .metric(.memory)), ("battery level", .metric(.battery)),
+            ("how much battery do I have left", .metric(.battery)), ("how full is my disk", .metric(.disk)),
+            ("how much disk space do I have left?", .metric(.disk)), ("what's my network speed", .metric(.network)),
+            ("show me the temperature in Fukuoka", .weather(place: "Fukuoka", quantity: .temperature)),
+            ("what's the weather in Paris, France", .weather(place: "Paris, France", quantity: .conditions)),
+            ("humidity in Lisbon", .weather(place: "Lisbon", quantity: .humidity)),
+        ]
+        for (text, expected) in cases { #expect(reading(text) == expected, "\(text)") }
+        #expect(parse("what's my cpu usage")?.hint == "CPU now · no AI")
+        #expect(parse("temperature in Fukuoka")?.hint == "Temperature in Fukuoka now · no AI")
+    }
+
+    @Test func aQuestionAboutLaterOrAboutWhatIsNotOneReading() {
+        for text in ["what's using my cpu", "watch my cpu", "keep an eye on the battery", "what's the weather in Paris tomorrow",
+                     "temperature in Fukuoka today", "is my cpu temperature high", "what's the weather", "why is my memory full of tabs",
+                     "monitor the memory", "show my tasks", "what do you remember about me"] {
+            #expect(reading(text) == nil, "\(text)")
+        }
+        // With an interval it is still a report.
+        #expect(report("what's my cpu usage every 10 seconds") == ReportIntent(source: .metric(.cpu), everySeconds: 10))
     }
 }

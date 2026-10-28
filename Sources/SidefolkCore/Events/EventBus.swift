@@ -58,6 +58,8 @@ public enum AppEvent: Sendable {
     case reviewExtension(URL)
     /// A trick or a game for the companion (D44), from the person's words or the AI.
     case companion(CompanionAct)
+    /// A coin, dice or a hand the companion just drew (D44, amended), to play on the desktop.
+    case toss(Toss)
 }
 
 /// Broadcasts events to any number of async subscribers. Slow subscribers drop the oldest events.

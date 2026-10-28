@@ -27,6 +27,26 @@ import Testing
         return await runner.run(parsed.intent)
     }
 
+    // MARK: A value now, and chance
+
+    @Test func aPlainQuestionAboutTheMacIsAnsweredOnTheSpot() async throws {
+        let read = try card(try await run("what's my memory usage"))
+        #expect(read.kind == .reading && read.title.hasPrefix("Memory: "), "\(read.title)")
+        #expect(await runtime.watchers.list().isEmpty, "nothing to stop afterwards")
+    }
+
+    @Test func chanceIsPlayedAndRockPaperScissorsWaitsForYourHand() async throws {
+        let coin = try card(try await run("flip a coin"))
+        #expect(coin.kind == .chance && ["Heads!", "Tails!"].contains(coin.title))
+        guard case .info(let ask) = try await run("let's play rock paper scissors") else {
+            Issue.record("the companion shows its hand only after yours")
+            return
+        }
+        #expect(ask == "Rock, paper or scissors? Say yours.")
+        let round = try card(try await run("paper"))
+        #expect(round.kind == .chance && round.subtitle?.hasPrefix("You ") == true, "\(round)")
+    }
+
     // MARK: Lists
 
     @Test func addToAListMakesTheListWithACapitalName() async throws {

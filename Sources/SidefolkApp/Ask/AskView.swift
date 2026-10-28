@@ -441,9 +441,10 @@ struct ResultCardView<Actions: View>: View {
         switch kind {
         case .note, .collection, .memory, .list: Theme.folkColor("pip")
         case .reminder: Theme.folkColor("tempo")
-        case .watcher: Theme.folkColor("scout")
+        case .watcher, .reading: Theme.folkColor("scout")
         case .file, .web, .info: Theme.aqua
         case .extensionResult: Theme.folkColor("byte")
+        case .chance: Theme.folkColor("play")
         }
     }
 
@@ -459,6 +460,8 @@ struct ResultCardView<Actions: View>: View {
         case .web: "globe"
         case .info: "info.circle"
         case .extensionResult: "puzzlepiece.extension"
+        case .reading: "gauge.with.dots.needle.33percent"
+        case .chance: "dice"
         }
     }
 }

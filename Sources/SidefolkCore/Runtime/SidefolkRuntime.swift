@@ -100,7 +100,7 @@ public final class SidefolkRuntime: Sendable {
         server = LocalAPIServer(socket: paths.socket, services: BridgeServices(
             tools: gateway, tokens: tokens, sessions: sessionTracker, jobs: jobTracker, status: StatusReader(db: db)))
 
-        registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events))
+        registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events, scores: KVStore(db)))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
         registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) }))

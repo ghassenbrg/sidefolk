@@ -6,9 +6,10 @@ import Foundation
 /// Every tool runs through `ToolExecutor`, so Guard sees each call first. Register the result with
 /// `ToolRegistry.register(_:)`.
 public enum BuiltinTools {
+    /// - Parameter scores: where rock, paper, scissors keeps its score; nil keeps it for this run only.
     public static func make(
         notebook: NotebookStore, platform: any PlatformBridge, events: EventBus,
-        fetcher: any WebFetching = URLSessionFetcher()
+        fetcher: any WebFetching = URLSessionFetcher(), scores: KVStore? = nil
     ) -> [any Tool] {
         [
             // Notebook
@@ -43,6 +44,7 @@ public enum BuiltinTools {
             WebFetchTool(fetcher: fetcher),
             // The companion itself (D44)
             CompanionPlayTool(events: events),
+            CompanionTossTool(events: events, score: HandsScore(kv: scores)),
         ]
     }
 }

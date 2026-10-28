@@ -10,6 +10,24 @@ enum Report {
         return .object(o)
     }
 
+    /// The watcher kind and settings that `source` (metric, weather or web) names, for a report or a reading now.
+    static func source(_ input: JSONValue, context: ToolContext) throws -> (kind: String, config: JSONValue) {
+        switch input.string("source") {
+        case "metric":
+            return (WatchKind.metric, ["metric": input["metric"] ?? .null])
+        case "weather":
+            return (WatchKind.weather, ["place": input["place"] ?? .null, "quantity": input["quantity"] ?? "temperature"])
+        case "web":
+            var config: JSONValue = ["url": input["url"] ?? .null]
+            for key in ["json_path", "selector", "regex"] { config = config.setting(key, input[key]) }
+            // Only the user's own typed request reaches this Mac or the local network (SECURITY T11).
+            if context.caller == .user, !context.tainted { config = config.setting("allow_local", true) }
+            return (WatchKind.webValue, config)
+        default:
+            throw ToolError.invalidInput(String(localized: "“source” must be metric, weather or web."))
+        }
+    }
+
     static func memory(_ count: Int64) -> String { count.formatted(ByteCountFormatStyle(style: .memory, locale: Wording.locale)) }
 
     /// Reads "every N seconds" from a tool input: `every_seconds`, or `interval_minutes` as the other watch tools take it.
@@ -98,7 +116,7 @@ struct WatchReportTool: Tool {
             description: """
             Tell the user a current value every few seconds or minutes ("every 10 seconds tell me the CPU", "temperature in \
             Fukuoka every minute"). The value updates in place beside the companion; it is not a change alert (that is \
-            watch.create). source: metric (this Mac's cpu, memory, battery, disk or network), weather (built in, no address \
+            watch.create), and a single value asked for now ("what's my CPU usage") is watch.read. source: metric (this Mac's cpu, memory, battery, disk or network), weather (built in, no address \
             needed: a place's temperature, feels_like, humidity, wind, precipitation or conditions), web (one value on a page \
             or API, found by json_path, selector or regex). Fastest: metrics every 5 s, weather and web every 60 s; a command's \
             output is watch.command with report=true (every 10 s at the fastest). Pass the interval the user asked for: a faster \
@@ -140,24 +158,8 @@ struct WatchReportTool: Tool {
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        var config: JSONValue = .object([:])
-        let kind: String
-        switch input.string("source") {
-        case "metric":
-            kind = WatchKind.metric
-            config = ["metric": input["metric"] ?? .null]
-        case "weather":
-            kind = WatchKind.weather
-            config = ["place": input["place"] ?? .null, "quantity": input["quantity"] ?? "temperature"]
-        case "web":
-            kind = WatchKind.webValue
-            config = ["url": input["url"] ?? .null]
-            for key in ["json_path", "selector", "regex"] { config = config.setting(key, input[key]) }
-            // Only the user's own typed request reaches this Mac or the local network (SECURITY T11).
-            if context.caller == .user, !context.tainted { config = config.setting("allow_local", true) }
-        default:
-            throw ToolError.invalidInput(String(localized: "“source” must be metric, weather or web."))
-        }
+        let (kind, named) = try Report.source(input, context: context)
+        var config = named
         if input["notify"]?.boolValue == true { config = config.setting("notify", true) }
         let end = try Report.end(input, now: context.now, parser: parser())
         if end == nil, input["until_stopped"]?.boolValue == true { config = config.setting("until_stopped", true) }

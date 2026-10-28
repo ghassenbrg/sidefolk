@@ -72,6 +72,34 @@ extension IntentParser {
         return ParsedIntent(intent: .report(report), hint: hint(report, ctx))
     }
 
+    // MARK: One reading
+
+    /// Words that ask for a value again and again, or about another time: a sentence with one is no single reading.
+    private static let ongoing: Set<String> = [
+        "watch", "watching", "monitor", "monitoring", "keep", "track", "tracking", "update", "updates", "live", "report", "readout",
+        "every", "each", "once", "until", "till", "notify", "notification", "notifications", "today", "tonight", "tomorrow",
+        "forecast", "week", "weekend", "later",
+    ]
+    /// What a plain question puts around the thing it asks about: "how much memory am I using", "how full is my disk".
+    /// "using" alone stays: "what's using my CPU" asks which app, not how much.
+    private static let asking = Scan(#"\b(?:am\s+i\s+using|i'?m\s+using|do\s+i\s+have|have\s+i\s+got|(?:is\s+)?in\s+use|full|busy)\b"#)
+
+    /// "what's my cpu usage", "cpu?", "how full is my disk", "show me the temperature in Fukuoka": one reading now, with
+    /// no AI and nothing left running (D35, amended). With an interval it is a report; about later, it is the AI's.
+    func reading(_ command: String) -> ParsedIntent? {
+        let lower = command.lowercased().replacingOccurrences(of: "’", with: "'")
+        let words = lower.split(whereSeparator: { !$0.isLetter && !$0.isNumber && $0 != "'" }).map(String.init)
+        guard !words.isEmpty, !words.contains(where: Self.ongoing.contains), !Self.interval.found(in: " \(lower) ") else { return nil }
+        var text = " " + lower + " "
+        while let r = Self.asking.firstRange(in: text) { text.replaceSubrange(r, with: " ") }
+        guard let source = subject(text, original: command) else { return nil }
+        let what = switch source {
+        case .metric(let m): m.title
+        case .weather(let place, let quantity): quantity.title(place)
+        }
+        return ParsedIntent(intent: .read(source), hint: ParsedIntent.hint(String(localized: "\(what) now", comment: "A hint: one value read right now, “CPU now”")))
+    }
+
     /// "evey 10s", "evry minute", "ever 5 seconds": a slip in "every" right before how often, the one word every
     /// report has. Anywhere else the word is left as typed.
     static func fixEverySlip(_ text: String) -> String {

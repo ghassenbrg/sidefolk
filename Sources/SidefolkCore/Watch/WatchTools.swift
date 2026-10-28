@@ -7,6 +7,7 @@ public enum WatchTools {
     public static func make(engine: WatcherEngine, parser: @escaping @Sendable () -> WhenParser = { WhenParser() }) -> [any Tool] {
         [
             WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser),
+            WatchReadTool(engine: engine),
             WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
         ]
     }
