@@ -26,7 +26,9 @@ what to check by hand. Decisions that aren't code (licence, name, website, prici
   with `spctl --assess --type execute`; builds the DMG (app plus an Applications link), signs it, notarizes,
   staples and validates the DMG, checks it with `spctl`, and writes `build/Sidefolk-<version>.dmg.sha256`.
   A rejected submission prints the notary log. `SIDEFOLK_SKIP_NOTARIZE=1` stops after signing.
-  `SIDEFOLK_RELEASE_LABEL` names the image `Sidefolk-<version>-<label>.dmg`; `SIDEFOLK_NOTARY_KEYCHAIN` points
+  `SIDEFOLK_RELEASE_LABEL` names the image `Sidefolk-<version>-<label>.dmg`, and the release the app says it is
+  (`SidefolkRelease` in Info.plist, `<version>-<label>`, stamped by `build-app.sh` when `SIDEFOLK_RELEASE=1`;
+  the script refuses an app whose stamp differs, see "Updates" below); `SIDEFOLK_NOTARY_KEYCHAIN` points
   notarytool at a keychain other than the login one (CI). It prints each phase and each submission ID, and
   gives Apple `SIDEFOLK_NOTARY_MINUTES` (180) across both submissions, asking again after a network blip (each timestamped signature is tried up to five times too): a
   new team's first submissions can wait over an hour. The Release job's 210-minute limit covers that wait.
@@ -88,6 +90,35 @@ at least the macOS 26 SDK (voice uses SpeechAnalyzer). Xcode 26.6 (`macos-26`, S
 debug build and passes the tests since three fixes for it, but its optimizer crashes on the release build
 (in `HostedPanel`'s deinit), a compiler bug; prefer `xcode-27` until Swift 6.3 is no longer worth supporting.
 
+## Updates (D46)
+
+A published Sidefolk looks for a newer one itself and asks before installing it. There is no update server and
+no key to keep: the feed is this repository's GitHub Releases, and trust is the Developer ID signature.
+
+- **What a release must keep doing**, or copies in the field stop updating: tags `v<version>` and
+  `v<version>-snapshot.<build>`; the assets `Sidefolk-<release>.dmg` and `Sidefolk-<release>.dmg.sha256` (as
+  `package.sh` writes them); the app at the top of the image named `*.app`, alone; bundle id
+  `app.sidefolk.Sidefolk`; `SidefolkRelease` equal to the release (`release.sh` checks it); signed with this
+  team's Developer ID (a new certificate of the same team is fine) and notarized. Snapshots are prereleases.
+- **Who gets what.** A copy looks a minute after launch (unless it looked within the hour) and once a day, while
+  Settings › General › Updates › "Check for updates automatically" is on; "Check for Updates…" is in the menu
+  bar. A snapshot looks at releases and snapshots by default, a release at releases only. Versions sort as
+  semver: every snapshot of 0.1.0 comes before 0.1.0, so **raise `Version.swift` right after a production
+  release**, or the next snapshots sort below it and nobody is offered them.
+- **What it does on Update**: downloads the image, checks size and both checksums, mounts it hidden, checks the
+  app inside (bundle id, release, Developer ID of the same team, notarized), copies it beside the running app
+  as `.Sidefolk-update-<release>.app`, checks the copy, removes its download mark, swaps the two in one rename,
+  quits and reopens. A copy that can't replace itself (built locally, not Developer ID, translocated, on the
+  disk image, in a folder the account can't write) gets the checked image in Downloads instead. SECURITY T31.
+- **Release notes** are what the update window shows. Production uses `docs/RELEASE-NOTES.md`; a snapshot's
+  notes list the commit subjects since the previous release or snapshot it builds on.
+- **Proving a release's update path.** The first snapshot carrying the updater must be installed by hand. Then,
+  for each later release: install the previous one in /Applications from its DMG, open it, choose "Check for
+  Updates…", Update and Restart; it reopens as the new version (About shows the build) with no Gatekeeper
+  question, and no `.Sidefolk-update-*` folder is left in /Applications. The log's `"cat":"updates"` lines say
+  what happened. `SIDEFOLK_LIVE_NETWORK=1 swift test --filter livePublishedImageChecksOut` downloads the newest
+  image and runs every check but the swap.
+
 ## Checklist
 
 **Before the build**
@@ -125,6 +156,7 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
       Apple's developer tools: no "install the command line developer tools" dialog appears at launch, every
       built-in but Git works, and Settings › Extensions says Git needs Git and how to get it.
 - [ ] Quit and relaunch: reminders and watchers survive; the fallback notifications fire while it is quit.
+- [ ] The update path from the previous release ("Updates" above): it offers this one, installs it and reopens.
 - [ ] Idle: `top -l 1 -pid $(pgrep -x Sidefolk)` shows ~0 % CPU after the companion settles (see D41 for the
       numbers measured on the dev Mac).
 
@@ -132,6 +164,7 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
 - [ ] Tag `v<version>` on the released commit; upload the DMG and its `.sha256` (GitHub Releases or the site).
 - [ ] Release notes say Apple silicon only unless a universal build was tested on Intel.
 - [ ] Keep the DMG and the notarization submission id with the tag.
+- [ ] After a production release, raise `Version.swift` before the next snapshot (D46).
 
 ## Status for 0.1.0
 
@@ -146,7 +179,7 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
 | Local network usage description | Added to Info.plist (macOS asks before a LAN watcher or a LAN model) |
 | Usage descriptions translated | Not done (English only) |
 | Universal binary | Not decided; `SIDEFOLK_UNIVERSAL=1` exists but is untested on Intel |
-| Updates | None in 0.1 (D15): no Sparkle, no "Check for updates". People download new versions by hand |
+| Updates | Built (D46, replaces D15): GitHub Releases as the feed, Developer ID and notarization as the trust, asks before installing. The swap itself is proven only by the second release that carries it |
 | Crash reporting | None (no telemetry). macOS keeps crash logs in `~/Library/Logs/DiagnosticReports`; ask people to attach the one named Sidefolk with the diagnostics export |
 | DMG background, volume icon, licence in the DMG | Not done (plain DMG) |
 
@@ -154,7 +187,5 @@ debug build and passes the tests since three fixes for it, but its optimizer cra
 
 - **Intel Macs.** macOS 15 still runs on Intel Macs. A universal build doubles the binary size and needs one test
   on Intel (extensions' interpreters, sandbox-exec and the companion's rendering).
-- **Updates.** Sparkle needs an EdDSA key and a hosted appcast; until then the README and the About window
-  should say where new versions are announced.
 - **Crash reports.** If wanted later: opt-in, local first (show the macOS crash log and let the person send it),
   consistent with "no telemetry".

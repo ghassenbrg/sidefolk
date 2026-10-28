@@ -294,6 +294,36 @@ import Testing
     }
 }
 
+/// The real thing, end to end short of the swap: the newest published disk image downloaded from GitHub (through
+/// its redirect), checked against both checksums, mounted, and the app inside held to the requirement its own
+/// signature gives. Opt in: SIDEFOLK_LIVE_NETWORK=1 (about 25 MB).
+@Test(.enabled(if: ProcessInfo.processInfo.environment["SIDEFOLK_LIVE_NETWORK"] == "1"))
+func livePublishedImageChecksOut() async throws {
+    let offer = try #require(try await UpdateChecker(kv: nil).check().first)
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-live-update-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let image = folder.appendingPathComponent(offer.image.name), sums = folder.appendingPathComponent("sums")
+    let checksum = try #require(offer.checksum)
+    try await UpdateDownloader().download(checksum.url, to: sums, expectedBytes: checksum.size) { _ in }
+    try await UpdateDownloader().download(offer.image.url, to: image, expectedBytes: offer.image.size) { _ in }
+    let digest = try FileDigest.sha256(image)
+    #expect(FileDigest.parse(try String(contentsOf: sums, encoding: .utf8), for: offer.image.name) == digest)
+    if let github = offer.image.sha256 { #expect(github == digest) }
+
+    let mount = try await DiskImages().attach(image, under: folder)
+    defer { Task { await DiskImages().detach(mount) } }
+    let app = mount.appendingPathComponent("Sidefolk.app")
+    let facts = try #require(SigningFacts.of(app))
+    #expect(facts.developerID && facts.identifier == "app.sidefolk.Sidefolk")
+    try CodeCheck().check(app, requirement: try #require(facts.replacementRequirement))
+    // Another team's requirement fails.
+    var other = facts
+    other.teamID = "ZZZZZZZZZZ"
+    #expect(throws: UserFacingError.self) { try CodeCheck().check(app, requirement: other.replacementRequirement!) }
+    await DiskImages().detach(mount)
+}
+
 /// Collects what a callback was given, from any thread.
 final class Recorder<T: Sendable>: Sendable {
     private let items = Mutex<[T]>([])

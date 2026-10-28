@@ -158,7 +158,7 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 
 Accounts, sync, mobile, web app, cloud backend, multi-user, purchases/shopping, sending email or
 messages on the user's behalf, reading other apps' window contents or the screen, continuous
-clipboard monitoring, AI-generated executable code, auto-update (no signing identity/feed yet).
+clipboard monitoring, AI-generated executable code. (Sidefolk does update itself, D46: it asks first.)
 
 ## 7. Interaction map
 
@@ -251,5 +251,5 @@ it is disabled with a notice. Detailed diagnostics go to the local log.
 Scheduled prompts and workers, calendar awareness (EventKit), app-usage timeline and "what was I doing" recap, voice wake word,
 Apple on-device model provider, embeddings for semantic recall, an extension directory with signed
 packages (docs/research/extensions-catalog.md; built-in extensions and AI-written ones exist, D39),
-Sparkle auto-update, cross-device sync, community
+delta updates, cross-device sync, community
 characters and personalities, Claude Code/Codex hook-based passive session monitoring.

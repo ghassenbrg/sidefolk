@@ -54,6 +54,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Skill for other agents (D42) | `Sidefolk.app/Contents/Resources/AgentSkills/sidefolk` (repo: `skills/sidefolk`); Connect copies it to `~/.claude/skills/sidefolk`, `~/.codex/skills/sidefolk` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |
 | Brain workdir | `~/Library/Application Support/Sidefolk/brain/` (empty cwd for CLI brains) |
+| Updates (D46) | `~/Library/Application Support/Sidefolk/Updates/` (a disk image while it is checked; emptied at launch); the new version is staged beside the app as `.Sidefolk-update-<release>.app` |
 | Logs | `~/Library/Logs/Sidefolk/sidefolk-YYYY-MM-DD.jsonl` (7 days) |
 | Secrets | Keychain, service `app.sidefolk.secrets` |
 | UI prefs | `UserDefaults` (`app.sidefolk`) |
@@ -245,6 +246,21 @@ core; the app holds the audio and speech frameworks.
   `--voice-say "<answer>" <out.caf>` writes the spoken line to a file through the real queue;
   `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
   plays a file into a running debug app as if the talk key were held.
+
+## Updates (D46)
+
+Core (`Sources/SidefolkCore/Updates/`), no UI: `ReleaseVersion` (semver order: snapshot 9 < snapshot 411 <
+the release), `ReleaseFeed` (GitHub's release list into `UpdateOffer`s; drafts, odd tags and releases without
+their disk image are left out), `UpdateChecker` (the request with an ETag, the last list, when to look and to
+ask again, kept under the database's `updates` key), `UpdateInstaller` (download, checksums, mount, checks,
+stage, swap; every outside step behind a protocol so tests run on folders), `SigningCheck` (`SigningFacts` of
+the running app and the requirement a replacement must meet), `InstallPlan` (replace itself, or leave the
+image in Downloads, and why), `BundleSwap` (staging, quarantine, `renamex_np` swap, the reopening shell).
+`AppSettings.updates` holds the switch, the channel and a skipped version. The app's `UpdateController`
+schedules the looks, brings an offer up as a gentle bubble (`source` "update", which waits through quiet mode),
+keeps `UpdateModel` for Settings › General, the menu bar and the update window, and quits for the swap.
+A published app knows its release from Info.plist's `SidefolkRelease`; without it the app never replaces
+itself. Release side: docs/RELEASE.md › Updates.
 
 ## Extension protocol (summary; full guide in docs/EXTENSIONS.md)
 
