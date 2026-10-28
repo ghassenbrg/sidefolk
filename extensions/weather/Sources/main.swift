@@ -1,7 +1,7 @@
 import SidefolkExtensionKit
 
 // Weather, an extension that ships with Sidefolk: the internet and nothing else (no files, no programs).
-let place = Schema.string("A city or town, like Lyon or Austin, Texas.", maxLength: 80)
+let place = Schema.string("A city or town, like Lyon or Austin, Texas. When the user names none, use where they are (in your context).", maxLength: 80)
 let ext = Extension(name: "weather")
 
 ext.tool("forecast", "Weather forecast",

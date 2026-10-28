@@ -52,6 +52,8 @@ final class AppCoordinator {
     var readoutTask: Task<Void, Never>?
     /// Talking and spoken replies (D34).
     private(set) lazy var voice = VoiceController(host: self, secrets: secrets)
+    /// Where the person is, while they share their Mac's location (D48).
+    private(set) lazy var locator = MacLocator(runtime: runtime)
     /// The Ask shortcut is down and may become a hold to talk.
     var askKeyHold: Task<Void, Never>?
     var askKeyTalking = false
@@ -175,6 +177,7 @@ final class AppCoordinator {
         _ = await notificationsAuthorized()
         refreshRoster()
         refreshReadouts()
+        locator.resume()
         statusItem.refreshNow()
         Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {

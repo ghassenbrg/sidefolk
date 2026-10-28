@@ -10,6 +10,8 @@ public enum LocalOutcome: Sendable {
     /// A watch without an address ("tell me when the server is back up"): ask which address, e.g. "localhost:3000", then
     /// finish with `IntentParser.watch(address:kind:becomes:)`.
     case needsTarget(kind: String, becomes: String?)
+    /// A weather report with no place: the card asks which, with a button to Settings › Privacy › Your location (D48).
+    case needsPlace(ResultCard)
     case info(String)
     case failed(UserFacingError)
 }
@@ -126,6 +128,8 @@ public struct LocalIntentRunner: Sendable {
             return .needsTime(title: title, reason: reason, important: important)
         case .needsTarget(let kind, let becomes):
             return .needsTarget(kind: kind, becomes: becomes)
+        case .needsPlace:
+            return .needsPlace(PlaceNeeded.card)
         case .companion(let act):
             return await execute("companion.play", ["act": .string(act.rawValue)])
         }

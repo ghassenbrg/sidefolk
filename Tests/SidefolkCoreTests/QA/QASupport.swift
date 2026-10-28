@@ -25,6 +25,7 @@ enum QA {
             return "remind “\(title)” at \(TimeTest.show(when))" + (important ? " (important)" : "") + (rec.map { " repeating \($0.frequency) x\($0.interval) \($0.weekdays)" } ?? "")
         case .needsTime(let title, let reason, _): return "needsTime “\(title)” (\(reason ?? "no reason"))"
         case .needsTarget(let kind, let becomes): return "needsTarget \(kind) \(becomes ?? "-")"
+        case .needsPlace(let quantity): return "needsPlace \(quantity.rawValue)"
         case .note(let kind, let text, let collection, _): return "note(\(kind)) “\(text)” in \(collection ?? "Inbox")"
         case .taskWithReminder(let text, let collection, _, let at): return "task “\(text)” in \(collection ?? "Inbox") reminded \(at)"
         case .aboutMe(let fact): return "aboutMe “\(fact)”"
