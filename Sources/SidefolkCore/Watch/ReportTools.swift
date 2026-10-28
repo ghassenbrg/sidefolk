@@ -161,10 +161,17 @@ struct WatchReportTool: Tool {
     }
 
     /// A web value fetches an address the model may have built: Guard weighs it like any other link (T1, T2).
+    /// A metric reaches nothing, and the weather only Open-Meteo, whatever the model writes (D47).
     func scope(for input: JSONValue) -> ToolScope {
-        guard input.string("source") == "web", let url = input.string("url") else { return .none }
-        let text = url.contains("://") ? url : WebTarget.defaultScheme(for: url) + url
-        return ToolScope(url: URL(string: text)?.absoluteString ?? text)
+        switch input.string("source") {
+        case "metric": return ToolScope(reach: .nowhere)
+        case "weather": return ToolScope(reach: .service(WeatherProbe.service))
+        case "web":
+            guard let url = input.string("url") else { return .none }
+            let text = url.contains("://") ? url : WebTarget.defaultScheme(for: url) + url
+            return ToolScope(url: URL(string: text)?.absoluteString ?? text)
+        default: return .none
+        }
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {

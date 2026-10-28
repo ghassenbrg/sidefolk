@@ -140,6 +140,8 @@ struct ActivityView: View {
         case .autoMode: Chip("Auto", tone: .accent, systemImage: "bolt")
         case .fullAccess: Chip("Full access", tone: .warning, systemImage: "bolt.fill")
         case .skipped: Chip("Skipped", tone: .warning, systemImage: "clock.badge.xmark")
+        // Read or used without a card because the person chose not to be asked before reading the web (D47).
+        case .webSetting: Chip("Web setting", tone: .accent, systemImage: "globe")
         }
     }
 

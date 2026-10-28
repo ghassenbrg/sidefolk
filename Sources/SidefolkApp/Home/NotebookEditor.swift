@@ -104,6 +104,7 @@ struct NotebookEditor: View {
                 .padding(.leading, Theme.Space.xs)
             }
             Spacer(minLength: Theme.Space.s)
+            RemindButton(item: item, model: model)
             Button {
                 Task { await model.moveToTrash(item) }
             } label: {
@@ -117,13 +118,22 @@ struct NotebookEditor: View {
         .padding(.vertical, Theme.Space.s + 2)
     }
 
+    /// When it was made and changed, and its reminder (D49), if it has one.
     private func meta(_ item: NotebookItem) -> some View {
+        HStack(spacing: Theme.Space.s) {
+            if let reminder = model.reminders[item.id] { ReminderBadge(reminder: reminder) }
+            Text(verbatim: metaText(item)).foregroundStyle(Theme.inkFaint)
+        }
+        .font(Theme.Font.caption)
+    }
+
+    private func metaText(_ item: NotebookItem) -> String {
         var parts = [String(localized: "Created \(TimeText.short(item.createdAt))")]
         if item.updatedAt.timeIntervalSince(item.createdAt) > 1 {
             parts.append(String(localized: "Edited \(TimeText.relative(item.updatedAt))", comment: "“Edited 5 min ago”"))
         }
         if let who = Describe.source(item.source) { parts.append(String(localized: "Saved by \(who)")) }
-        return Text(verbatim: parts.joined(separator: " · ")).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+        return parts.joined(separator: " · ")
     }
 
     private func linkField(_ item: NotebookItem) -> some View {

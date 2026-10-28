@@ -1,5 +1,6 @@
 // Drives a running debug build (build/Sidefolk-dev.app) without clicks, for agents and tests by hand.
-// Debug builds listen for these distributed notifications; release builds don't (`#if DEBUG`).
+// Debug builds listen for these distributed notifications; release builds don't (`#if DEBUG`). Set SIDEFOLK_HOME to
+// the app's home so only that app acts (otherwise every running debug app does).
 //
 //   swift scripts/dev.swift snap                 PNG of every visible window in $SIDEFOLK_HOME/snapshots
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
@@ -12,16 +13,24 @@
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
 //   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
+//   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed
+//                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {
     print("usage: swift scripts/dev.swift snap | <command>   (see the comment at the top of this file)")
     exit(2)
 }
+// Every debug app hears these notifications. With SIDEFOLK_HOME set, only the app using that home acts on them:
+// with several running side by side, one's `ask:` would otherwise reach the others (and their AI).
+let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"].map {
+    URL(fileURLWithPath: $0).standardizedFileURL.resolvingSymlinksInPath().path
+}
+let target: [AnyHashable: Any]? = home.map { ["home": $0] }
 let center = DistributedNotificationCenter.default()
 if argument == "snap" {
-    center.postNotificationName(.init("app.sidefolk.dev.snapshot"), object: nil, userInfo: nil, deliverImmediately: true)
+    center.postNotificationName(.init("app.sidefolk.dev.snapshot"), object: nil, userInfo: target, deliverImmediately: true)
 } else {
-    center.postNotificationName(.init("app.sidefolk.dev.command"), object: argument, userInfo: nil, deliverImmediately: true)
+    center.postNotificationName(.init("app.sidefolk.dev.command"), object: argument, userInfo: target, deliverImmediately: true)
 }
 RunLoop.current.run(until: Date().addingTimeInterval(0.2))

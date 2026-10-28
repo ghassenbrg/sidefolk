@@ -47,8 +47,10 @@ public struct IntentParser: Sendable {
     public func parse(_ text: String, now: Date, knownCollections: [String] = [], watching: [WatchName] = []) -> ParsedIntent? {
         guard let p = prepare(text) else { return nil }
         let ctx = Context(now: now, known: knownCollections, watching: watching)
-        return quiet(p.command, ctx) ?? play(p.command) ?? chance(p.command) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx)
-            ?? reading(p.command) ?? watch(p.command, ctx) ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
+        // In two parts: one chain of eleven is more than the type checker will take in reasonable time.
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command)
+        return quick ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
+            ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
     }
 
     struct Context {

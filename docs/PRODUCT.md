@@ -20,7 +20,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 
 1. **Presence over chat.** The body is an interface. State is visible without opening anything.
    Conversations are short exchanges that end in *results* (a saved note, a scheduled reminder),
-   not an endless transcript.
+   not an endless transcript. Home › Conversations is where you come back to one, not where you start.
 2. **It works when you are not looking.** Reminders, watchers and routines are deterministic,
    persistent and survive restarts. AI wakes only when reasoning is needed.
 3. **You stay in control.** A deterministic Guard (never the model) decides what may run. Risky
@@ -101,7 +101,10 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 ### Memory and data
 - P0 Notebook: Inbox, About you (profile), projects/topics/lists with notes, ideas, tasks, links;
   full-text search; Trash with restore (30 days); Undo for recent changes.
-- P0 Short-term exchange history with retention (default 7 days), never shown as a transcript.
+- P0 Short-term exchange history with retention (default 7 days). The Ask panel shows results, not a
+  transcript; Home › Conversations (D45) lists the kept conversations to read again, follow up in (even
+  after the 10-minute window), or delete, one or all. "New conversation" / "start fresh", Clear all and ⌘N
+  in the panel make the next request start fresh; every answer offers Reply and Show all.
 - P0 Activity log (audit) of every tool execution and decision.
 - P1 Export all data (JSON) and delete all data.
 
@@ -109,6 +112,10 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P0 Reminders: natural times, recurrence (every N minutes at the finest, with an optional end: "every 10
   minutes until 6pm"), snooze, done, survive restart, missed ones summarised on return, fallback system
   notifications scheduled when the app quits.
+- P0 Reminders for a note or task (D49): "Remind me" on any item in the Notebook (in an hour, this evening,
+  tomorrow morning, any time), "add a task to call mom at 5", "remind me about the report task tomorrow
+  at 9". The item shows its bell and time; the reminder shows its item and offers Mark done and Open. A
+  task done or an item trashed ends its reminders; opened again or restored, the ones still ahead return.
 - P0 Watchers: web page change/contains (normalised text diff, 1% threshold, before/after),
   site up/down (2 failures in a row), file/folder appears, file changed, process (by name) exits,
   periodic command (confirmed). Floors, backoff, cooldown, expiry, pause/resume.
@@ -158,7 +165,7 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 
 Accounts, sync, mobile, web app, cloud backend, multi-user, purchases/shopping, sending email or
 messages on the user's behalf, reading other apps' window contents or the screen, continuous
-clipboard monitoring, AI-generated executable code, auto-update (no signing identity/feed yet).
+clipboard monitoring, AI-generated executable code. (Sidefolk does update itself, D46: it asks first.)
 
 ## 7. Interaction map
 
@@ -251,5 +258,5 @@ it is disabled with a notice. Detailed diagnostics go to the local log.
 Scheduled prompts and workers, calendar awareness (EventKit), app-usage timeline and "what was I doing" recap, voice wake word,
 Apple on-device model provider, embeddings for semantic recall, an extension directory with signed
 packages (docs/research/extensions-catalog.md; built-in extensions and AI-written ones exist, D39),
-Sparkle auto-update, cross-device sync, community
+delta updates, cross-device sync, community
 characters and personalities, Claude Code/Codex hook-based passive session monitoring.

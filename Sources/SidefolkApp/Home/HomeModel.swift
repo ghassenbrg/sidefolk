@@ -4,7 +4,7 @@ import SidefolkCore
 
 /// What the Home sidebar can show.
 enum HomeSelection: Hashable {
-    case now, activity, trash
+    case now, conversations, activity, trash
     case collection(String)
 }
 
@@ -16,6 +16,7 @@ final class HomeModel {
     let now: NowModel
     let notebook: NotebookModel
     let activity: ActivityModel
+    let conversations: ConversationsModel
 
     var selection: HomeSelection? = .now {
         didSet { if selection != oldValue { selectionChanged() } }
@@ -30,6 +31,7 @@ final class HomeModel {
         now = NowModel(services: services)
         notebook = NotebookModel(services: services)
         activity = ActivityModel(services: services)
+        conversations = ConversationsModel(services: services)
     }
 
     var companionName: String { services.runtime.settings.current.companionName }
@@ -63,6 +65,7 @@ final class HomeModel {
         await now.reload()
         await notebook.reload()
         await activity.reload()
+        await conversations.reload()
         if case .collection(let id) = selection, notebook.collectionId == nil { await notebook.show(collectionId: id) }
     }
 
@@ -71,6 +74,13 @@ final class HomeModel {
         selection = .collection(item.collectionId)
         await notebook.show(collectionId: item.collectionId)
         notebook.select(item.id)
+    }
+
+    /// Opens Conversations, at `thread` when given.
+    func showConversation(_ thread: String?) async {
+        if let thread { conversations.selectedId = thread }
+        selection = .conversations
+        await conversations.reload()
     }
 
     /// Picks the Notebook's last collection, or the Inbox.
@@ -85,6 +95,7 @@ final class HomeModel {
         case .collection(let id): Task { await notebook.show(collectionId: id) }
         case .trash: Task { await notebook.reloadTrash() }
         case .activity: Task { await activity.reload() }
+        case .conversations: Task { await conversations.reload() }
         case .now, nil: break
         }
     }
@@ -99,8 +110,13 @@ final class HomeModel {
             pending = []
             // Now shows reminders, watchers, sessions, jobs and attention together; any change can touch it.
             await now.reload()
-            if domains.contains(.notebook) || domains.contains(.memories) { await notebook.reload() }
+            if domains.contains(.notebook) || domains.contains(.memories) {
+                await notebook.reload()
+            } else if domains.contains(.reminders) {
+                await notebook.reloadReminders()
+            }
             if domains.contains(.activity) || domains.contains(.runs) { await activity.reload() }
+            if domains.contains(.conversations) || domains.contains(.settings) { await conversations.reload() }
         }
     }
 }

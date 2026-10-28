@@ -41,6 +41,8 @@ history is kept for follow-ups (10-minute thread window) but not displayed as a 
 "Clear all" empties them, and notices that need nothing ("Undone", a word about talking) fade after
 20 seconds unless the pointer is on the panel. *Why:* the founder lost older results with no way to
 see or clear them, and the per-card X was too small to hit.
+**Amended 2026-10-28 (D45):** an answer can be read in full, followed up in its own conversation and found again
+in Home › Conversations; the panel itself still shows results, not a transcript.
 
 ### D6 — Memories fold into the Notebook as "About you" (2026-10-26)
 **Decision:** no separate memory store. Durable facts/preferences are notes in a pinned profile
@@ -100,6 +102,7 @@ never decide its own permission" taken literally.
 Sparkle needs a signing identity, EdDSA keys and a hosted feed, none of which exist yet. Shipping a
 "Check for updates" that cannot work would be a fake feature. Data migrations are versioned so a
 later update path is safe.
+**Replaced 2026-10-28 by D46:** releases are now signed, notarized and checksummed, which is all an updater needs.
 
 ### D16 — Agent integrations edit the config files directly, with confirmation and backup (2026-10-26)
 **Decision:** connecting Claude Code / Codex edits `~/.claude.json`, `~/.claude/settings.json` and
@@ -803,6 +806,16 @@ download's mark, so Gatekeeper stopped each copied program at launch. A built-in
 files are sealed in the signed, notarized app Gatekeeper already let run, and the install checks the copy
 against them); any other install keeps its original's mark for Gatekeeper to judge.
 
+*Amended 2026-10-28 (Settings › Extensions):* thirteen built-ins with every row open read as a wall of permissions.
+Each extension, server, draft and skill is now one line (name, what it does, its switch), and a click, Space or
+Return opens its details; a row whose tools changed opens by itself. Under "Installed" (so a "Browse" catalog can
+sit beside it later; none is shown), a search reads names, descriptions, tool titles and names, what each may do,
+the request to try, authors, ids and server commands, ignoring case, accents and width. "No access to…" lines are
+not searched, so "internet" finds what can reach it. When a row's own line doesn't show the match, it names what
+matched. All / On / Off count what matches the typed words and are remembered per person; drafts and skills,
+neither on nor off, are listed under All. The logic is `ExtensionListQuery` in core, tested against the shipped
+built-ins.
+
 ### D40 — With no AI chosen, the Ask panel offers the plan this Mac is signed in to (2026-10-27)
 **Decision:** when a request needs AI and the provider is "No AI", the "That needs AI" card probes the
 subscription CLIs the way Settings › AI does (`ClaudeBinary.status`, `CodexBinary.status`: version, help
@@ -976,3 +989,91 @@ point); games as an extension (sandboxed programs can't move or animate the comp
 only moment over four); `IntentParser.play`; Play submenu; `CompanionPlayer` and its caption panel, which
 never takes a click; dev commands `play:<act>` and `click`.
 
+
+### D45 — Conversations you can come back to, start fresh, or forget (2026-10-28)
+**Decision:** *amends D5.* The panel stays the quick place: a long answer opens on 8 lines with Show all (measured,
+so nothing hides); every answer offers Reply (the main button when it asks something), Save, Think harder, Copy
+and Open in Conversations; Reply continues that answer's own conversation however long ago, and a chip above the
+input says which. *Starting fresh:* plain words without AI ("new conversation", "start fresh", "start over", "new
+chat", "new topic", "forget this conversation", "change the subject"), ⌘N, and "New conversation" in the hint row
+while one is open; the panel keeps what it shows. Clear all also starts fresh. *Home › Conversations:* each
+conversation is named by its first request and searchable; the transcript shows the person's words, the replies
+as the panel renders them, each run's Activity steps as quiet lines (with why one wasn't done) and failures as
+notes; a reply field continues it even after the 10-minute window; delete one or all, each confirmed (delete all is
+also in Settings › Privacy); continuing one makes it current for the panel too. *Runtime:* a request naming a
+thread continues it while its history is kept; otherwise the 10-minute window applies. Deleting stops the thread's
+runs, then removes its history and the "last sent" preview; Activity and run records stay as the audit trail.
+**Why:** the founder wanted to clear history or start fresh, read a long reply in full, reply to it and switch
+conversations, without Sidefolk turning into a chat app. Clear all starts fresh because a follow-up shouldn't lean
+on answers the person just cleared; "New conversation" keeps the screen because it is about what the AI remembers.
+**Alternatives:** a chat window as the main surface (D5's "chat app with a mascot"); deleting history from words
+(too easy to say by accident: nothing is deleted from words).
+
+### D46 — Sidefolk updates itself from GitHub Releases, asking first (2026-10-28)
+**Decision:** *replaces D15.* A published copy (Info.plist `SidefolkRelease`, stamped by release.sh) reads this
+repository's GitHub Releases a minute after launch (unless it looked within the hour) and once a day while "Check
+for updates automatically" is on (default), plus "Check for Updates…" in the menu bar and Settings › General ›
+Updates. Snapshots look at releases and snapshots by default, releases at releases only; versions sort as semver.
+A version found by itself comes up once in three days as a gentle bubble (Update / Later / Skip This Version),
+which waits through quiet mode. Update downloads `Sidefolk-<release>.dmg`, checks its size and SHA-256 against the
+release's `.sha256` and GitHub's digest, mounts it hidden, checks the app inside (bundle id, the release it names,
+newer, signed with the running app's own Developer ID team and identifier, notarized), stages it beside the app,
+checks the copy again, removes its download mark, swaps the two in one rename, quits and reopens. A copy that can't
+replace itself (built locally, not Developer ID, translocated, read-only, folder not writable) gets the checked
+image in Downloads; Sidefolk never asks for admin rights. The request carries only Sidefolk's version.
+**Why:** the founder asked for update checks that ask first. Sparkle needs an EdDSA private key in CI secrets and
+a framework; releases already carry what trust needs (Developer ID, notarization, checksums), and a stolen GitHub
+account alone can't ship code (SECURITY T31).
+**Implications:** release.sh stamps the release and refuses an app whose stamp doesn't match the DMG; snapshot
+notes list commit subjects since the previous release; RELEASE.md › Updates says how to prove the swap (it needs
+the second release that carries the updater) and that `Version.swift` must be raised after a production release.
+
+### D47 — Using the internet without a card every time (2026-10-28)
+**Decision:** Settings › Privacy & Permissions › "Using the internet", for Sidefolk's own agent only: **Ask each
+time** (no grants, no "Always", and Auto or Full access never answer for it), **Ask once for each site** (default),
+**Don't ask before reading** (before outside content, any public page and the built-in services go without a card,
+logged as "Web setting"; after it, the built-in services and the sites you allowed do). After outside content was
+read, a grant from a clean turn or from Settings still holds where nothing the model writes reaches anyone new:
+reading a page on a site allowed for good (the exact site, `www.` aside, never with a `?` or `#` part (audit F1),
+never redirected off the site), and a call whose destination Sidefolk's code fixes (the weather report to
+Open-Meteo; Weather and Currency, only the app's own copies, their programs' addresses checked by a test).
+"Always" is still never offered after outside content; new sites, `?` addresses, watchers, opening links, and
+other people's network extensions and MCP servers keep their rules. A CPU or memory report never counts as
+network. Sites are added and removed in Settings, and the card names the site "Always" covers.
+**Why:** the founder found every web use asked, every time: once a run read outside content (a page, any extension
+result, a follow-up in a conversation that read one), Guard ignored every grant, even in Full access.
+**Alternatives:** honouring any grant after outside content (reopens exfiltration through a model-written URL);
+trusting a manifest's word about its hosts (the sandbox can't hold a program to them). *Residual:* a site you
+allowed can receive what a steered model puts in a page's path; with "Don't ask before reading" a steered place
+name can reach Open-Meteo. Feeds and Git still ask after outside content.
+
+### D48 — Sidefolk knows where the person is, when they choose (2026-10-28)
+**Decision:** Settings › Privacy › Your location: **Off** (default) / **Use my Mac's location** (Location Services
+at a city's accuracy, significant changes, named by Apple's geocoder; macOS asks once, only from that choice) /
+**A place I choose** (Open-Meteo geocoding by name). The AI's "# Now" gets one line: town, region and country (and
+the time there when a chosen place keeps another clock), never coordinates; with none known it is told to ask.
+Weather with no place named is the person's own, sent to Open-Meteo by its coordinates (rounded to 0.01°, kept
+only for that); with none known, the parser and `watch.report` ask "Which place?" with a button to the setting
+rather than guess. A position is named again only after a move of 5 km or a day, at most every 10 minutes;
+switching source clears the place, revoking the permission forgets it, logs never say where, diagnostics drop it.
+No announcement when the place changes. A report keeps the place it was made with.
+**Why:** the founder: "be aware of the location and where we are, what time, so things are easier". Nothing about
+where the person is leaves the Mac until they choose.
+**Implications:** `com.apple.security.personal-information.location` (hardened runtime) and usage strings in
+Info.plist; the Weather extension reads "Town, Country" places (1.2.0); SECURITY T30.
+
+### D49 — A reminder can belong to a note or task (2026-10-28)
+**Decision:** `reminders.item_id` (already in v1) is now real: "Remind me" on any Notebook item (in an hour, this
+evening, tomorrow morning, pick a time), `reminders.create(item:)`, `notes.save` / `notes.update(remind:)`, "add a
+task to call mom at 5", and "remind me about the report task…" when exactly one task fits. The reminder follows its
+item: a task done or an item trashed ends the waiting reminders (a one-off becomes done, a series stops) and
+records why (`ended_with_item`); opening the task again or restoring the item brings back the ones still ahead; the
+person's own cancel is final; deleting an item for good cancels its reminders (a trigger, migration
+`v3-reminder-links`); a rename carries reminders that share the item's title. The scheduler settles links on every
+`.notebook` event and checks the item again inside `fire`, so no reminder fires for a task done a moment ago. The
+bubble offers Mark done (the task), 10 min and Open; notifications get a matching category.
+**Why:** the founder asked whether a reminder can be linked to a task or note.
+**Alternatives:** hooks in every write path (the Notebook, the tools, Undo and other agents change items
+differently; settling on `.notebook` events catches them all). A task with a repeat stays a plain task, since one
+"done" would end the whole series. Another agent's linked reminder needs its own title and learns the item only by
+kind and id (T4).

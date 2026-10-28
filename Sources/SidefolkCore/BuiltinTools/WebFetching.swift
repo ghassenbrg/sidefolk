@@ -7,6 +7,9 @@ public struct WebFetchOptions: Sendable {
     public var maxRedirects = 5
     /// Refuse anything that isn't text, HTML, JSON or XML.
     public var textOnly = true
+    /// The only site a redirect may lead to ("example.com", "www." included), when Guard allowed the fetch for that
+    /// site alone (`ToolContext.site`, D47); nil follows redirects anywhere `URLPolicy` allows.
+    public var site: String?
     public init() {}
 }
 
@@ -164,6 +167,9 @@ private final class FetchOperation: NSObject, URLSessionDataDelegate, @unchecked
         }
         if count > options.maxRedirects { return refuse(.blocked(.tooManyRedirects)) }
         if response.url?.scheme?.lowercased() == "https", target.scheme?.lowercased() == "http" { return refuse(.blocked(.insecureRedirect)) }
+        if let site = options.site, UserMentions.host(target) != site {
+            return refuse(.blocked(.leftSite(target.host ?? target.absoluteString)))
+        }
         do { try await policy.validate(target) } catch let v as URLPolicy.Violation {
             return refuse(.blocked(v))
         } catch {

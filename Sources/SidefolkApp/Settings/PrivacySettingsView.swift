@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 struct PrivacySettingsView: View {
     var model: SettingsModel
     @State private var confirmingDelete = false
+    @State private var confirmingHistory = false
 
     /// The capabilities a person can switch off, in the words the Settings page uses.
     private static let switches: [(Capability, LocalizedStringKey, LocalizedStringKey)] = [
@@ -41,9 +42,10 @@ struct PrivacySettingsView: View {
             guardSettings
             LocationGroup(model: model.location).id(Self.locationAnchor)
             keeps
-            SettingsGroup(title: "History", footer: "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log.") {
-                SettingsRow(title: "Keep recent requests for") {
-                    Picker("Keep recent requests for", selection: Binding(
+            SettingsGroup(title: "History",
+                          footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Home › Conversations. Then they're deleted.") {
+                SettingsRow(title: "Keep conversations for") {
+                    Picker("Keep conversations for", selection: Binding(
                         get: { model.settings.historyDays }, set: { days in model.update { $0.historyDays = days } }
                     )) {
                         ForEach(Array(Set([1, 7, 30, model.settings.historyDays])).sorted(), id: \.self) { days in
@@ -54,6 +56,17 @@ struct PrivacySettingsView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
+                SettingsRow(title: "Conversation history") {
+                    Button("Delete All History…") { confirmingHistory = true }
+                        .buttonStyle(.sf(.secondary))
+                        .disabled(model.storage?.exchanges == 0)
+                }
+            }
+            .alert("Delete all conversation history?", isPresented: $confirmingHistory) {
+                Button("Delete All History", role: .destructive) { Task { await model.deleteConversationHistory() } }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(DeleteHistoryWords.message)
             }
             folders
             grants
@@ -150,11 +163,13 @@ struct PrivacySettingsView: View {
     // MARK: Always allowed
 
     private var grants: some View {
-        SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.") {
-            if model.grants.isEmpty {
+        // Sites and built-in services are listed under "Using the internet" (D47).
+        let others = model.grants.filter { !InternetGrants.isInternet($0) }
+        return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.") {
+            if others.isEmpty {
                 InlineEmpty(text: "Nothing yet. When you choose “Always allow”, it's listed here.", systemImage: "checkmark.shield")
             }
-            ForEach(model.grants) { grant in
+            ForEach(others) { grant in
                 HStack(spacing: Theme.Space.m) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.toolTitle(grant.tool)).font(Theme.Font.body).foregroundStyle(Theme.ink)
@@ -195,6 +210,7 @@ struct PrivacySettingsView: View {
     private var guardSettings: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
             ApprovalModeGroup(model: model)
+            InternetGroup(model: model)
             UnansweredGroup(model: model)
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.") {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in

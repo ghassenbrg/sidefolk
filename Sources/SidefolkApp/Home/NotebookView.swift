@@ -15,6 +15,7 @@ struct NotebookView: View {
                 .frame(minWidth: 340, maxWidth: .infinity)
         }
         .background(Theme.surface)
+        .sheet(item: $model.pickingTime) { item in PickReminderTimeSheet(item: item, model: model) }
     }
 }
 
@@ -297,6 +298,7 @@ private struct ItemRow: View {
                         .truncationMode(item.kind == .link ? .middle : .tail)
                 }
                 HStack(spacing: 6) {
+                    if let reminder = model.reminders[item.id] { ReminderBadge(reminder: reminder) }
                     Text(TimeText.short(item.updatedAt))
                     if let place = elsewhere { Text("in \(place)") }
                     ForEach(item.tagList.prefix(3), id: \.self) { Text("#" + $0) }
@@ -319,6 +321,9 @@ private struct ItemRow: View {
         .contextMenu {
             if item.kind == .task {
                 Button(item.status == .done ? "Mark not done" : "Mark done") { Task { await model.toggleDone(item) } }
+            }
+            if RemindMenuItems.offered(for: item) {
+                Menu("Remind me") { RemindMenuItems(item: item, model: model) }
             }
             Button("Move to Trash") { Task { await model.moveToTrash(item) } }
         }

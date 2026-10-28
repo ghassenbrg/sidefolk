@@ -31,6 +31,16 @@ struct AskView: View {
         .onAppear { inputFocused = true }
         .onChange(of: model.focusRequest) { inputFocused = true }
         .onHover { model.hovering = $0 }
+        // ⌘N, as for a new note: the next request starts a new conversation (D45).
+        .background {
+            Button("New conversation") { startFresh() }.keyboardShortcut("n", modifiers: .command)
+                .opacity(0).frame(width: 0, height: 0).accessibilityHidden(true)
+        }
+    }
+
+    private func startFresh() {
+        guard !model.busy else { return }
+        model.actions?.startFresh(in: model, announce: true)
     }
 
     private var header: some View {
@@ -60,7 +70,7 @@ struct AskView: View {
                 }
                 .buttonStyle(.plain)
                 .fixedSize()
-                .help("Remove every result below")
+                .help("Remove every result below and start a new conversation")
                 .padding(.trailing, Theme.Space.xs)
             }
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
@@ -126,20 +136,40 @@ struct AskView: View {
                     }
                 }
             }
+            if let target = model.replyingTo {
+                HStack(spacing: 6) {
+                    Chip(verbatim: replyLabel(target), tone: .accent, systemImage: "arrowshape.turn.up.left")
+                    Button { model.replyingTo = nil } label: { Image(systemName: "xmark.circle.fill") }
+                        .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
+                        .help("Don't reply")
+                        .accessibilityLabel("Don't reply")
+                }
+            }
             if model.pendingReminderTitle != nil, !model.busy, let actions = model.actions {
                 // Typing a time works in English; tapping works in every language.
                 WhenChips(times: actions.reminderTimes()) { date in actions.remindPending(at: date, in: model) }
             }
-            HStack(spacing: 4) {
-                Image(systemName: model.voice == nil ? "return" : "mic").imageScale(.small)
-                // Two lines at most: the hint stays short in English, and other languages run longer.
-                Text(verbatim: hintLine)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                HStack(spacing: 4) {
+                    Image(systemName: model.voice == nil ? "return" : "mic").imageScale(.small)
+                    // Two lines at most: the hint stays short in English, and other languages run longer.
+                    Text(verbatim: hintLine)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(model.hint == nil && !model.busy ? Theme.inkFaint : Theme.inkMuted)
+                .accessibilityElement(children: .combine)
+                if offersFresh {
+                    Spacer(minLength: Theme.Space.s)
+                    // Here rather than in the header: it says what continues, and the header has no room in longer languages.
+                    Button(action: startFresh) { Label("New conversation", systemImage: "square.and.pencil") }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.accent)
+                        .fixedSize()
+                        .help(Text("\(String(localized: "New conversation")) (⌘N)", comment: "A button's name, then its shortcut"))
+                }
             }
             .font(Theme.Font.hint)
-            .foregroundStyle(model.hint == nil && !model.busy ? Theme.inkFaint : Theme.inkMuted)
-            .accessibilityElement(children: .combine)
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m)
@@ -180,7 +210,13 @@ struct AskView: View {
     private var placeholder: LocalizedStringKey {
         if model.voice != nil { return "Listening…" }
         if model.pendingQuestion != nil { return "Type your answer…" }
-        return model.replying ? "Type your reply…" : "Ask, remind, note, watch…"
+        return model.replyingTo != nil ? "Type your reply…" : "Ask, remind, note, watch…"
+    }
+
+    /// Which answer the reply follows up, by the words it answered.
+    private func replyLabel(_ target: ReplyTarget) -> String {
+        guard let request = target.request else { return String(localized: "Reply to the answer") }
+        return String(localized: "Reply about “\(request.clipped(36))”", comment: "Shown while typing a follow-up to an answer; the words are the request it answered")
     }
 
     private var isListening: Bool {
@@ -207,15 +243,22 @@ struct AskView: View {
         }
     }
 
+    /// A conversation with the AI is open and the input is free: the next request would continue it.
+    private var offersFresh: Bool {
+        model.thread != nil && !model.busy && model.voice == nil && model.text.isEmpty && model.replyingTo == nil
+            && model.pendingQuestion == nil && model.pendingReminderTitle == nil && model.pendingWatch == nil && model.attachment == nil
+    }
+
     private var hintLine: String {
         if let voice = model.voice { return voiceHint(voice) }
         if let question = model.pendingQuestion { return String(localized: "Your answer goes to: \(question.title)") }
         if model.busy { return model.phase ?? String(localized: "Working…") }
         if let hint = model.hint { return hint }
-        if model.replying { return String(localized: "Your reply follows up on the answer below") }
+        if model.replyingTo != nil { return String(localized: "Your reply continues that conversation") }
         if model.pendingReminderTitle != nil { return String(localized: "When? Try “tomorrow 9am” or “in 2 hours”") }
         if model.pendingWatch != nil { return String(localized: "Which address? e.g. localhost:3000 or example.com/status") }
         if model.attachment != nil { return String(localized: "Pick what to do, or type what you want") }
+        if offersFresh { return String(localized: "Your next request continues this conversation") }
         return String(localized: "Type something, or drop a file or link on me")
     }
 
@@ -261,7 +304,7 @@ private struct RequestView: View {
             }
             .frame(minHeight: 22)
             ForEach(request.entries) { entry in
-                EntryView(entry: entry, model: model, retry: request.caption == nil ? nil : { model.retry(request) })
+                EntryView(entry: entry, model: model, request: request.caption, retry: request.caption == nil ? nil : { model.retry(request) })
             }
         }
         .contentShape(Rectangle())
@@ -280,6 +323,8 @@ private struct RequestView: View {
 private struct EntryView: View {
     var entry: AskEntry
     var model: AskModel
+    /// The words of the request this came from, if any.
+    var request: String? = nil
     /// Sends the request again, replacing these cards (failed requests only).
     var retry: (() -> Void)? = nil
 
@@ -318,8 +363,8 @@ private struct EntryView: View {
                     }
                 }
             }
-        case .answer(let text, let canThinkHarder, let tainted):
-            AnswerCard(text: text, canThinkHarder: canThinkHarder, tainted: tainted, model: model)
+        case .answer(let text, let canThinkHarder, let tainted, let thread):
+            AnswerCard(entry: entry.id, text: text, canThinkHarder: canThinkHarder, tainted: tainted, thread: thread, request: request, model: model)
         case .approval(let request):
             ApprovalCard(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }) { decision in
                 model.actions?.answer(approval: request, decision: decision)
@@ -468,53 +513,76 @@ struct ResultCardView<Actions: View>: View {
     }
 }
 
+/// An AI answer. A long one opens on its first lines and unfolds in place; every answer can be replied to, in its
+/// own conversation, and opened in Conversations (D45).
 private struct AnswerCard: View {
+    var entry: AskEntry.ID
     var text: String
     var canThinkHarder: Bool
     var tainted: Bool
+    var thread: String?
+    var request: String?
     var model: AskModel
     @State private var expanded = false
+    @State private var shownHeight: CGFloat = 0
+    @State private var fullHeight: CGFloat = 0
+
+    static let collapsedLines = 8
 
     var body: some View {
         SFCard(accent: Theme.aqua) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Text(markdown).font(Theme.Font.body).foregroundStyle(Theme.ink)
-                    .lineLimit(expanded ? nil : 8).textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                    // Links in answers open only as web pages; anything else (file:, app schemes) is ignored.
-                    .environment(\.openURL, OpenURLAction { url in
-                        guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.user == nil else { return .discarded }
-                        return .systemAction
-                    })
-                ButtonRow {
-                    if asks {
-                        Button("Reply") { model.reply() }.buttonStyle(.sf(.primary))
+                AnswerText(text: text)
+                    .lineLimit(expanded ? nil : Self.collapsedLines)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { shownHeight = $0 }
+                    .background(alignment: .top) {
+                        // The whole answer, unseen, so the card knows whether its first lines cut it short.
+                        if !expanded {
+                            AnswerText(text: text).lineLimit(nil).hidden()
+                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
+                                .accessibilityHidden(true)
+                        }
                     }
-                    if text.count > 400 {
-                        Button(expanded ? "Less" : "More") { expanded.toggle() }.buttonStyle(.sf(.secondary))
+                if expanded || fullHeight > shownHeight + 1 {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) { expanded.toggle() }
+                    } label: {
+                        Label(expanded ? "Show less" : "Show all", systemImage: expanded ? "chevron.up" : "chevron.down")
+                            .font(Theme.Font.caption)
                     }
-                    Button("Save") { model.actions?.saveAnswer(text, tainted: tainted, in: model) }.buttonStyle(.sf(.secondary))
-                    Button("Copy") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(text, forType: .string)
-                    }.buttonStyle(.sf(.secondary))
-                    if canThinkHarder {
-                        Button("Think harder") { model.submitThinkHarder(about: text) }.buttonStyle(.sf(.secondary))
+                    .buttonStyle(.sf(.plain))
+                }
+                HStack(alignment: .top, spacing: Theme.Space.xs) {
+                    ButtonRow {
+                        Button("Reply") { model.reply(to: entry, thread: thread, request: request) }
+                            .buttonStyle(.sf(asks || replying ? .primary : .secondary))
+                            .accessibilityAddTraits(replying ? .isSelected : [])
+                        Button("Save") { model.actions?.saveAnswer(text, tainted: tainted, in: model) }.buttonStyle(.sf(.secondary))
+                        if canThinkHarder {
+                            Button("Think harder") { model.submitThinkHarder(about: text) }.buttonStyle(.sf(.secondary))
+                        }
+                    }
+                    Spacer(minLength: 0)
+                    CopyButton(text: text)
+                    if let thread {
+                        Button { model.actions?.openConversation(thread) } label: {
+                            Image(systemName: "bubble.left.and.text.bubble.right").imageScale(.small)
+                        }
+                        .buttonStyle(.sf(.plain))
+                        .help("Open in Conversations")
+                        .accessibilityLabel("Open in Conversations")
                     }
                 }
             }
         }
     }
 
+    private var replying: Bool { model.replyingTo?.entry == entry }
+
     /// The answer ends with a question (in any script), so the next thing to do is answer it.
     private var asks: Bool {
         guard let last = text.trimmingCharacters(in: .whitespacesAndNewlines).last else { return false }
         return "?？؟".contains(last)
-    }
-
-    /// Inline markdown only; links are shown, remote images are never loaded.
-    private var markdown: AttributedString {
-        (try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(text)
     }
 }
 

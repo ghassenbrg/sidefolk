@@ -109,6 +109,30 @@ private func page(_ text: String, type: String? = "text/html; charset=utf-8") ->
         #expect(StubNetworkProtocol.requests(for: "http://f.test").isEmpty)
     }
 
+    /// A fetch held to one site (D47) never follows a redirect off it: an open redirect on an allowed site would
+    /// carry the address's path to whoever is on the other end.
+    @Test func aFetchHeldToASiteStaysOnIt() async throws {
+        StubNetworkProtocol.set("https://h.test/out/c2VjcmV0", .redirect(to: "https://i.test/c2VjcmV0"))
+        StubNetworkProtocol.set("https://i.test/c2VjcmV0", page("collected"))
+        var held = WebFetchOptions()
+        held.site = "h.test"
+        do {
+            _ = try await fetcher().get(URL(string: "https://h.test/out/c2VjcmV0")!, options: held)
+            Issue.record("expected a refusal")
+        } catch let error as WebFetchError {
+            #expect(error == .blocked(.leftSite("i.test")))
+        }
+        #expect(StubNetworkProtocol.requests(for: "https://i.test").isEmpty)
+
+        // "www." is the same site.
+        StubNetworkProtocol.set("https://j.test/a", .redirect(to: "https://www.j.test/b"))
+        StubNetworkProtocol.set("https://www.j.test/b", page("same site"))
+        held.site = "j.test"
+        let response = try await fetcher(["www.j.test": [IPAddress.parse("93.184.216.34")!]])
+            .get(URL(string: "https://j.test/a")!, options: held)
+        #expect(String(decoding: response.body, as: UTF8.self) == "same site")
+    }
+
     @Test func redirectLoopsStopAtFive() async throws {
         for i in 0..<8 { StubNetworkProtocol.set("https://g.test/\(i)", .redirect(to: "https://g.test/\(i + 1)")) }
         do {

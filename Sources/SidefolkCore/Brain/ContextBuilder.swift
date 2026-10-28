@@ -291,10 +291,15 @@ public struct ContextBuilder: Sendable {
     private func relevant(to text: String, excluding profiles: Set<String>, names: [String: String]) async -> [String] {
         let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty, let hits = try? await notebook.search(query, limit: relevantLimit * 3) else { return [] }
-        return hits.filter { Self.isUserSourced($0.source) && !profiles.contains($0.collectionId) }
-            .prefix(relevantLimit)
+        let shown = hits.filter { Self.isUserSourced($0.source) && !profiles.contains($0.collectionId) }.prefix(relevantLimit)
+        // Its next reminder (D49), so "move my reminder for the report" finds one without a search.
+        let reminders = (try? await ReminderStore(notebook.db).next(forItems: shown.map(\.id))) ?? [:]
+        return shown
             .map { item in
-                let kind = item.kind.rawValue + (item.status == .done ? ", done" : "")
+                var kind = item.kind.rawValue + (item.status == .done ? ", done" : "")
+                if let r = reminders[item.id], let due = r.nextDue {
+                    kind += ", reminder \(Self.format(due, "EEE d MMM HH:mm", timeZone)) (reminder \(r.id))"
+                }
                 let body = Self.oneLine(item.body)
                 var line = "- [\(kind)] \(Self.oneLine(item.title).clipped(120))"
                 if !body.isEmpty { line += ": \(body.clipped(160))" }

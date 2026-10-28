@@ -120,16 +120,13 @@ import Testing
         h.env.clock.advance(5 * 60)
         let (second, _) = await h.run(AgentRequest(text: "Second"))
         h.env.clock.advance(11 * 60)
-        let (third, _) = await h.run(AgentRequest(text: "Third", threadId: second.threadId))
+        let (third, _) = await h.run(AgentRequest(text: "Third"))
 
         #expect(second.threadId == first.threadId)
         #expect(third.threadId != first.threadId)
         #expect(model.requests[1].messages.count == 3)
         #expect(model.requests[2].messages.count == 1)
         #expect(await h.runtime.activeThreadId == third.threadId)
-        await h.runtime.endThread()
-        let (fourth, _) = await h.run(AgentRequest(text: "Fourth"))
-        #expect(fourth.threadId != third.threadId)
     }
 
     @Test func requestsOnOneThreadRunInOrder() async throws {

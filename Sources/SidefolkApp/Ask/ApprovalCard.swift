@@ -32,9 +32,19 @@ struct ApprovalCard: View {
                 Text(request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 details
+                if let service = request.service {
+                    Label("It goes only to \(service).", systemImage: "globe")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                }
+                if request.canAlways, let site = request.site, carriesDetails {
+                    Text("“Always allow” covers addresses on \(site) with nothing after “?”.")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if request.tainted {
-                    Label("This came up while reading outside content. Check it carefully.", systemImage: "exclamationmark.triangle")
+                    Label(taintedWarning, systemImage: "exclamationmark.triangle")
                         .font(Theme.Font.caption).foregroundStyle(Theme.danger)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if request.caller != .user {
                     asker.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
@@ -44,7 +54,7 @@ struct ApprovalCard: View {
                         .buttonStyle(.sf(.secondary))
                         .keyboardShortcut(.cancelAction)
                     if request.canAlways {
-                        Button("Always allow") { decide(.allowAlways) }
+                        Button(alwaysTitle) { decide(.allowAlways) }
                             .buttonStyle(.sf(.secondary))
                             .disabled(!armed)
                     } else if request.canAllowForRequest {
@@ -93,6 +103,29 @@ struct ApprovalCard: View {
     }
 
     private var details: some View { ApprovalDetails(details: request.details) }
+
+    /// Names the site "Always allow" covers, so the choice is plain (D47).
+    private var alwaysTitle: LocalizedStringKey {
+        if let site = request.site { return "Always allow \(site)" }
+        return "Always allow"
+    }
+
+    /// Why a page Sidefolk wrote the address of asks after outside content (D47): only a site the person allowed
+    /// goes without a card then, and not with anything after "?".
+    private var taintedWarning: LocalizedStringKey {
+        guard request.site != nil, request.effect == .usesInternet else {
+            return "This came up while reading outside content. Check it carefully."
+        }
+        return carriesDetails
+            ? "This came up while reading outside content, so an address with details after “?” asks, even on a site you allowed. Check it carefully."
+            : "This came up while reading outside content, so a site you haven't allowed asks each time. Check the address carefully."
+    }
+
+    /// The address has a query or fragment, which a site allowed for good never covers (audit F1).
+    private var carriesDetails: Bool {
+        guard case .url(let address) = request.details, let url = URL(string: address) else { return false }
+        return url.query != nil || url.fragment != nil
+    }
 
     private var allowTitle: LocalizedStringKey {
         if case .folderAccess = request.details { return "Allow once" }

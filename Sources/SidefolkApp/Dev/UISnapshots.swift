@@ -56,15 +56,23 @@ enum UISnapshots {
             try await homeShot("now")
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook")
+            await full.reveal(sample.remindedTask)
+            try await homeShot("notebook-reminder")
             await full.reveal(sample.profileItem)
             try await homeShot("about-you")
             full.selection = .trash
             try await homeShot("trash")
+            await full.showConversation("c-plan")
+            try await homeShot("conversations")
+            await full.showConversation("c-rename")
+            try await homeShot("conversations-stopped")
             full.selection = .activity
             try await homeShot("activity")
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             try await homeShot("activity-small", size: small)
+            await full.showConversation("c-plan")
+            try await homeShot("conversations-small", size: small)
             full.selection = .now
             try await homeShot("now-small", size: small)
             await full.reveal(sample.selectedItem)
@@ -82,6 +90,8 @@ enum UISnapshots {
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-notebook-empty"))
             empty.selection = .activity
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-activity-empty"))
+            await empty.showConversation(nil)
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-conversations-empty"))
             blank.orderOut(nil)
 
             // Settings, as a real window, one picture per tab.
@@ -99,6 +109,16 @@ enum UISnapshots {
             try await capture(aboutWindow, size: CGSize(width: 380, height: 470), dark: dark, to: file("window-about"))
             aboutWindow.orderOut(nil)
 
+            // The update window in each state it has words for (D46).
+            for (name, phase, plan) in updatePhases {
+                let model = UpdateModel()
+                (model.running, model.lastCheck, model.phase, model.plan) = ("0.1.0 snapshot 411", Date().addingTimeInterval(-120), phase, plan)
+                let window = SnapshotWindow()
+                UpdateWindowController.configure(window, model: model)
+                try await capture(window, size: CGSize(width: 460, height: 380), dark: dark, to: file("window-update-\(name)"))
+                window.orderOut(nil)
+            }
+
             // Full pages.
             func page(_ name: String, _ view: some View, width: CGFloat) async throws {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
@@ -115,6 +135,10 @@ enum UISnapshots {
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // Settings › General with a version waiting (D46).
+            fixtures.updates.phase = .available(UpdateController.sampleOffer)
+            try await page("page-settings-general-update", SettingsTabContent(tab: .general, model: settings), width: width)
+            fixtures.updates.phase = .upToDate
             // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
             let policy = settings.policy
             await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
@@ -188,7 +212,9 @@ enum UISnapshots {
             let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
             let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
-                          ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-extensions", sampleAskExtensions()),
+                          ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
+                          ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
+                          ("desktop-ask-internet", sampleAskInternet()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
                           ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
@@ -357,9 +383,30 @@ enum UISnapshots {
     /// An answer that ends with a question: Reply, then the input waits for it.
     private static func sampleAskQuestion() -> AskModel {
         let ask = AskModel()
+        let request = "organize my Apple Notes into the notebook"
         ask.add(.answer("I copied 42 notes. Five look like they hold passwords or tokens, so I left them in Notes. Should I copy those too?",
-                        canThinkHarder: false, tainted: true), caption: "organize my Apple Notes into the notebook")
-        ask.reply()
+                        canThinkHarder: false, tainted: true, thread: "sample"), caption: request)
+        ask.thread = "sample"
+        if let answer = ask.entries.last { ask.reply(to: answer.id, thread: "sample", request: request) }
+        return ask
+    }
+
+    /// A long answer opens on its first lines, with Show all; the conversation is open, so New conversation shows (D45).
+    private static func longAnswerAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.answer(SampleData.plan, canThinkHarder: true, tainted: false, thread: "sample"),
+                caption: "Plan my afternoon around the invoices and a run")
+        ask.thread = "sample"
+        return ask
+    }
+
+    /// "new conversation": the notice that the next request starts fresh, above the answer it leaves on screen (D45).
+    private static func freshAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.answer("Light rain is likely tomorrow morning in Fukuoka (70%), clearing after noon.", canThinkHarder: false,
+                        tainted: false, thread: "sample"), caption: "Will it rain in Fukuoka tomorrow?")
+        ask.add(.info(String(localized: "Your next request starts a new conversation. Earlier ones stay in Conversations.")),
+                caption: "new conversation", fades: true)
         return ask
     }
 
@@ -499,6 +546,28 @@ enum UISnapshots {
         ]
     }
 
+    /// Using the internet (D47): a page Sidefolk chose, a built-in service, and a new site after reading a page.
+    private static func sampleAskInternet() -> AskModel {
+        let ask = AskModel()
+        ask.extensionLooks = ["dev.sidefolk.weather": ExtensionLook(name: "Weather", iconPath: FixtureServices.icon("weather"), folk: "scout")]
+        ask.add(.approval(ApprovalRequest(tool: "web.fetch", title: String(localized: "Read a web page"),
+                                          summary: "Read the web page https://forum.example.net/thread/42", risk: .medium,
+                                          caller: .agent(runId: "r"), details: .url("https://forum.example.net/thread/42"), canAlways: false,
+                                          tainted: true, effect: .usesInternet, site: "forum.example.net")),
+                caption: "what do people say about it?")
+        ask.add(.approval(ApprovalRequest(tool: "web.fetch", title: String(localized: "Read a web page"),
+                                          summary: "Read the web page https://docs.swift.org/swift-book/", risk: .medium,
+                                          caller: .agent(runId: "r"), details: .url("https://docs.swift.org/swift-book/"), canAlways: true,
+                                          effect: .usesInternet, site: "docs.swift.org")),
+                caption: "what's new in the Swift book?")
+        ask.add(.approval(ApprovalRequest(tool: "ext.weather.forecast", title: "Forecast",
+                                          summary: "Get the weather forecast for Fukuoka for the next 3 days", risk: .medium,
+                                          caller: .agent(runId: "r"), details: .none, canAlways: true, effect: .usesInternet,
+                                          extensionId: "dev.sidefolk.weather", service: "Open-Meteo")),
+                caption: "and the weather there this weekend?")
+        return ask
+    }
+
     private static func sampleBubbles() -> [(String, BubbleModel)] {
         func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
             let model = BubbleModel()
@@ -535,6 +604,28 @@ enum UISnapshots {
             ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
                                            body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
             ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),
+            ("update", bubble({
+                let n = UpdateController.notice(UpdateController.sampleOffer)
+                return AttentionItem(level: n.level, source: n.source, title: n.title, body: n.body, actions: n.actions,
+                                     refKind: n.refKind, refId: n.refId)
+            }())),
+        ]
+    }
+
+    /// The update window's states (D46): file name, phase, and how this copy would install it.
+    private static var updatePhases: [(String, UpdateModel.Phase, InstallPlan)] {
+        let offer = UpdateController.sampleOffer
+        return [
+            ("available", .available(offer), .replace),
+            ("available-download", .available(offer), .download(.notWritable)),
+            ("downloading", .downloading(offer, received: 9_400_000, total: offer.image.size), .replace),
+            ("verifying", .verifying(offer), .replace),
+            ("downloaded", .downloaded(offer, URL(fileURLWithPath: "/Users/you/Downloads/Sidefolk-0.1.0-snapshot.430.dmg"), .translocated), .replace),
+            ("up-to-date", .upToDate, .replace),
+            ("failed", .failed(offer, UserFacingError("The download doesn't match the release's checksum, so it wasn't installed.",
+                                                      recovery: "Try again; if it happens again, download it from the release page.")), .replace),
+            ("failed-look", .failed(nil, UserFacingError("Sidefolk couldn't reach GitHub to look for updates.",
+                                                         recovery: "Check the connection and try again.")), .replace),
         ]
     }
 

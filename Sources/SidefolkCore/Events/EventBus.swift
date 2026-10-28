@@ -6,6 +6,8 @@ public enum DataDomain: String, Sendable, CaseIterable {
     case notebook, memories, reminders, watchers, activity, extensions, skills, settings, attention, permissions, runs
     /// Steps skipped because nobody answered in time (D37).
     case skipped
+    /// The AI conversations' history: a request, its reply, a deletion (D45).
+    case conversations
 }
 
 /// A tool call as the companion and the Activity view see it.

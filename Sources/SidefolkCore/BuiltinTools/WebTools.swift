@@ -28,8 +28,10 @@ struct WebFetchTool: Tool {
             try URLPolicy.checkHost(url)
         } catch let v as URLPolicy.Violation { throw v.userFacing }
 
+        var options = WebFetchOptions()
+        options.site = context.site
         let response: WebResponse
-        do { response = try await fetcher.get(url, options: WebFetchOptions()) } catch let e as WebFetchError { throw e.userFacing }
+        do { response = try await fetcher.get(url, options: options) } catch let e as WebFetchError { throw e.userFacing }
 
         guard (200..<300).contains(response.statusCode) else {
             let reason = HTTPURLResponse.localizedString(forStatusCode: response.statusCode)

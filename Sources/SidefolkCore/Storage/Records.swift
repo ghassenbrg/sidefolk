@@ -199,6 +199,9 @@ public struct ReminderAction: Codable, Sendable, Hashable {
 public struct Reminder: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "reminders"
     public enum State: String, Codable, Sendable { case scheduled, fired, snoozed, done, cancelled }
+    /// Why a reminder that belongs to a notebook item stopped with it (D49): its task was done, or the item went to
+    /// the Trash. It comes back when the item does, if its time is still ahead.
+    public enum EndedWithItem: String, Codable, Sendable { case done, trashed }
 
     public var id: String
     public var title: String
@@ -212,7 +215,9 @@ public struct Reminder: SidefolkRecord, Identifiable, Hashable {
     public var firedCount: Int
     public var level: AttentionLevel
     public var action: ReminderAction?
+    /// The note or task this reminder belongs to (D49).
     public var itemId: String?
+    public var endedWithItem: EndedWithItem?
     public var source: String
     public var createdAt: Date
     public var updatedAt: Date
@@ -329,6 +334,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case fullAccess = "full_access"
         /// Nobody answered in time; the step was skipped, or its task stopped (D37).
         case skipped
+        /// Read a page or used a built-in service without asking because the person chose so for the internet (D47).
+        case webSetting = "web_setting"
     }
 
     public var id: Int64?

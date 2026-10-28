@@ -43,6 +43,8 @@ final class NowModel {
     private(set) var mode: GuardMode = .askOncePerKind
     private(set) var sessionsNeedingYou: [AgentSession] = []
     private(set) var reminders: [Reminder] = []
+    /// The notes and tasks reminders belong to (D49), by id.
+    private(set) var linked: [String: NotebookItem] = [:]
     private(set) var watchers: [Watcher] = []
     /// Reports: values told every few seconds or minutes, with their latest readings.
     private(set) var reports: [Watcher] = []
@@ -79,6 +81,8 @@ final class NowModel {
         sessionsNeedingYou = needing
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
+        let items = (try? await rt.notebook.items(ids: Array(Set(reminders.compactMap(\.itemId))))) ?? []
+        linked = Dictionary(items.filter { $0.deletedAt == nil }.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         // From the engine, not the database: routine check times are only saved every few minutes.
         let watching = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
         watchers = watching.filter { $0.mode != .report }
@@ -175,6 +179,11 @@ final class NowModel {
     }
 
     func openSession(_ session: AgentSession) { services.openSession(session) }
+
+    /// The note or task a reminder belongs to, while it is in the notebook.
+    func item(of r: Reminder) -> NotebookItem? { r.itemId.flatMap { linked[$0] } }
+
+    func open(_ item: NotebookItem) { services.open(item: item) }
 
     func complete(_ r: Reminder) async {
         await services.completeReminder(r.id)

@@ -49,11 +49,15 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var canAllowForRequest: Bool
     /// The extension whose tool this is, so the card can show its icon and name.
     public var extensionId: String?
+    /// The site an address Sidefolk wrote itself reaches ("example.com"), which "Always allow" would cover (D47).
+    public var site: String?
+    /// The one service a built-in reaches whatever the model writes ("Open-Meteo"), so the card can say so (D47).
+    public var service: String?
     public var createdAt: Date
 
     public init(id: String = Identifier.make(), tool: String, title: String, summary: String, risk: Risk, caller: Caller,
                 details: Details, canAlways: Bool, tainted: Bool = false, effect: Effect = .changesThings, canAllowForRequest: Bool = false,
-                extensionId: String? = nil, createdAt: Date = Date()) {
+                extensionId: String? = nil, site: String? = nil, service: String? = nil, createdAt: Date = Date()) {
         self.id = id
         self.tool = tool
         self.title = title
@@ -66,6 +70,8 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         self.effect = effect
         self.canAllowForRequest = canAllowForRequest
         self.extensionId = extensionId
+        self.site = site
+        self.service = service
         self.createdAt = createdAt
     }
 

@@ -41,6 +41,8 @@ final class AppCoordinator {
     private(set) lazy var home = HomeWindowController(services: self)
     private(set) lazy var settingsWindow = SettingsWindowController(services: self)
     private lazy var about = AboutWindowController()
+    /// Looking for a newer Sidefolk and installing it when asked (D46).
+    private(set) lazy var updater = UpdateController(runtime: runtime)
     /// Collection names for the intent parser ("ideas for Sidefolk").
     var knownCollections: [String] = []
     /// What is watched or reported, so "stop the Fukuoka temperature" can be understood without AI.
@@ -67,6 +69,7 @@ final class AppCoordinator {
         self.runtime = runtime
         notifier = SystemNotifier(attention: runtime.attention)
         monitor = EnvironmentMonitor(attention: runtime.attention)
+        notifier.opened = { [weak self] id in self?.notificationOpened(id) }
     }
 
     func start() async {
@@ -180,6 +183,7 @@ final class AppCoordinator {
         refreshReadouts()
         locator.resume()
         statusItem.refreshNow()
+        startUpdates()
         Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {
             // A beat after launch, so the companion has landed before it speaks.
@@ -345,6 +349,7 @@ final class AppCoordinator {
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
         if command == "about" { showAbout(); return }
+        if command.hasPrefix("update:") { updater.dev(String(command.dropFirst(7))); return }
         if command.hasPrefix("language:") {
             let code = String(command.dropFirst(9))
             AppLanguage.chosen = code == "system" ? nil : code
@@ -610,7 +615,25 @@ final class AppCoordinator {
         }
         if item.source == Self.ownVoice { return }
         if action == "open", item.source == "summary" { openHome() }
+        if action == ReminderScheduler.ActionID.open, item.refKind == "reminder", let id = item.refId { openReminderItem(id) }
         Task { await runtime.attention.respond(id: item.id, actionId: action) }
+    }
+
+    /// Open on a reminder that belongs to a note or task (D49): that item in the Notebook, or Home if it went to the
+    /// Trash since. A reminder of its own opens nothing.
+    private func openReminderItem(_ reminderId: String) {
+        Task {
+            guard let itemId = try? await runtime.reminderStore.reminder(id: reminderId)?.itemId else { return }
+            if let item = try? await runtime.notebook.item(id: itemId), item.deletedAt == nil { openHome(item: item) } else { openHome() }
+        }
+    }
+
+    /// A click on a notification: a reminder's opens its note or task.
+    private func notificationOpened(_ attentionId: String) {
+        Task {
+            guard let item = try? await AttentionStore(runtime.db).item(id: attentionId), item.refKind == "reminder", let id = item.refId else { return }
+            openReminderItem(id)
+        }
     }
 
     func renderMood() {

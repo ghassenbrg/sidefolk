@@ -82,7 +82,8 @@ recognised on the Mac, and the audio is never stored.
 
 ## Known limits in 0.1.0
 
-- No notarized download and no automatic updates yet.
+- No notarized release yet (snapshots are signed and notarized). From the snapshot that has it on, Sidefolk looks for new
+  versions on GitHub and asks before installing one.
 - Apple silicon only; most testing has been on macOS 27.
 - Typing commands without AI understands English only.
 - No calendar, Mail, Music or Shortcuts; no scheduled AI routines.

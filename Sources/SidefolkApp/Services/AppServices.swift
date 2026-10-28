@@ -140,6 +140,8 @@ protocol AppServices: AnyObject {
     func snoozeReminder(_ id: String, until: Date) async
     func cancelReminder(_ id: String) async
     func createReminder(title: String, when: String) async -> UserFacingError?
+    /// A reminder that belongs to a note or task (D49); `when` is natural language or ISO 8601.
+    func remind(about item: NotebookItem, when: String) async -> UserFacingError?
     /// Renames and/or re-times a reminder; `when` is natural language ("tomorrow 9am"), empty keeps the time.
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError?
 
@@ -203,6 +205,13 @@ protocol AppServices: AnyObject {
     func installCommandLineTool() async -> UserFacingError?
     func removeCommandLineTool() async -> UserFacingError?
 
+    // Conversations with the AI (D45)
+    /// Continues `thread` with the person's words, whenever it was; nil when no AI is chosen.
+    func continueConversation(_ thread: String, text: String) async -> AgentRunHandle?
+    func stopConversation(run runId: String) async
+    func deleteConversation(_ thread: String) async -> UserFacingError?
+    func deleteAllConversations() async -> UserFacingError?
+
     // Privacy and data
     func storageSummary() async -> StorageSummary
     func exportData(to url: URL) async -> UserFacingError?
@@ -222,6 +231,8 @@ protocol AppServices: AnyObject {
     func openSettings(tab: SettingsTab?)
     /// Opens the About window: the logo, the version, the notices.
     func showAbout()
+    /// What the last look for a newer Sidefolk found, and the way to install it (D46).
+    var updates: UpdateModel { get }
     /// Opens the Ask panel with the start of a sentence typed in, for the user to finish; with an
     /// empty one, as it was left.
     func openAsk(prefill: String)

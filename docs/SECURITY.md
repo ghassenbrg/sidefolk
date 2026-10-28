@@ -41,7 +41,8 @@ mode (D37); modes loosen Guard only for Sidefolk's own agent and never touch the
 share one pending card: while it waits, their further requests are refused at once (their names
 are self-chosen, so a per-name limit would be none). "Always" grants are never given for high
 risk or to external callers, are scoped by caller kind, revocable, and expire after 90 days
-unused. A site grant never covers a URL with a query or fragment. *Residual:* the user approves
+unused. A site grant never covers a URL with a query or fragment; it names one site (`www.` and a final
+dot don't matter, any other label does). *Residual:* the user approves
 without reading.
 
 **T2 Prompt injection (H/H).** Sources: web pages, watcher payloads, files, clipboard, drops,
@@ -62,7 +63,25 @@ while tainted, and opening a site the user named runs in a clean turn (`UserMent
 `www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
 Mac or the local network get no card: fetching and watching refuse them for everyone but the
 user, and opening one in the browser sends nothing beyond the LAN. External
-agents follow T4 instead (their own context and network are already theirs). Extension and MCP
+agents follow T4 instead (their own context and network are already theirs).
+*Using the internet (D47), for Sidefolk's own agent only.* Two kinds of call keep the person's grant
+after outside content was read, because what a steered model writes into them reaches no one new: reading
+a page (`web.fetch`) on a site the person allowed for good (a site grant: exact site, no query or fragment,
+and the fetch may not be redirected off that site, so an open redirect there can't carry the path
+elsewhere: `ToolContext.site`), and a call whose destination Sidefolk's own code fixes
+(`NetworkReach.service`, an extension or service grant): the weather report (Open-Meteo) and the built-in
+extensions in `BuiltInServices` (Weather → Open-Meteo, Currency → the ECB; only the app's own copies,
+origin `bundled`, and a test checks every address in their programs against the list). Those grants come
+from a clean turn or from Settings: "Always" is still never offered after outside content, and without a
+grant these ask as before, in Full access too. A metric report reaches no network at all
+(`NetworkReach.nowhere`). A new site, a query on any site, a watcher, an open, someone else's network
+extension or MCP server ask as above. The person's internet rule: *Ask each time* (no grants, no "Always",
+and no mode answers for an internet call; even a weather report asks), *Ask once for each site* (the
+default), or *Don't ask before reading* (in a clean turn any public page and the built-in services go
+without a card, logged `web_setting`, as Auto does for medium; after outside content the built-in services
+and the allowed sites do, so a steered place name can reach Open-Meteo, and nothing else changes). Sites can
+also be allowed in Settings.
+Extension and MCP
 tool descriptions never reach the model: it gets a neutral line built from the tool title and
 extension name, and the schema without its free text (descriptions stay on the install sheet). The
 exception is the extensions Sidefolk ships (origin `bundled`, installed only from the app's own signed
@@ -71,7 +90,11 @@ Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), str
 and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
 That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
 host. *Residual:* injection can still steer low-risk actions; extension tool names and titles
-(≤ 60 characters) still reach the model.
+(≤ 60 characters) still reach the model. A site the person allowed for good can receive, in a page's
+path, whatever a steered model puts there: only that site's owner reads it, so the trade rests on the
+person allowing sites they trust (a site where strangers can read who fetched what, a request bin, isn't
+one). `BuiltInServices` is Sidefolk's word for its own code: the sandbox can't hold a program to host
+names (§3), so a change to those programs must keep the address test passing.
 
 **T3 Persistent injection (M/H).** Items, collections, memories, reminders, watchers, skills and
 routines record `source` (`user | user:agent | agent | external:<client> | extension:<id>`;
@@ -96,7 +119,9 @@ after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so paralle
 overshoot), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
 web values and no weather, which would reach a server; a fast one stops within the hour) (D42).
 They see descriptions and schemas written for them (`ExternalToolPolicy.externalSpec`): no
-`collection_kind`, no critical level, no command kinds, `source: metric` only.
+`collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
+to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
+result names the item by kind and id only.
 Reading user data (notes, reminders, `agenda.today`) asks every time; an external caller never gets
 "Always". Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,
 settings and extensions are not exposed. There is no per-client key: Connect only adds the MCP entry
@@ -466,8 +491,10 @@ in grants get an explicit 0644. `PRAGMA secure_delete=ON`. Delete-all also remov
 ExtensionData, the read-only installed extensions (unlocked first), run state and Keychain items:
 provider keys with their host bindings and each MCP server's `mcp.<id>` item, collected before the
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
-not ignored. Retention is applied at launch and then daily while Sidefolk runs: conversation history (7 days by
-default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
+not ignored. Conversation history can also be deleted on its own, one conversation or all of it (Home ›
+Conversations, Settings › Privacy, D45): the thread's runs stop first, then its exchanges go and the "last sent"
+preview with them; Activity keeps its audit record. Retention is applied at launch and then daily while Sidefolk
+runs: conversation history (7 days by default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
 (14), the notebook's Trash (30); log files after 7 days, at most 16 MB a day. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,
 extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are
@@ -487,10 +514,10 @@ paths and queries are dropped, hosts stay.
 | Path | Control |
 |---|---|
 | AI provider | By design; the Privacy page shows the last payload |
-| Fetch or watcher URLs (query, path, DNS label) | Taint rule |
+| Fetch or watcher URLs (query, path, DNS label) | Taint rule; after outside content a fetch goes without a card only to a site allowed for good: exact site, no query or fragment, no redirect off it (D47) |
 | Open URL | Same as T11 |
 | Markdown images | Never loaded |
-| Network extensions | Install warning |
+| Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47) |
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
 | Clipboard | T12 |
@@ -568,6 +595,36 @@ until then nothing about where they are leaves the Mac, and the AI is only told 
   Mac's metrics only, T4); extensions see only what a model passes them, like any argument.
 - *Logs and exports.* The log says that the place changed, never where; diagnostics drop the place. The person's
   own data export keeps it, and Delete all removes it with the settings.
+
+**T31 Updating Sidefolk itself (M/H), D46.** The updater replaces the app with code from the internet, so the
+only thing it believes about a download is its signature:
+- *Where from.* The GitHub Releases of `ghassenbrg/sidefolk` (the API over https, no account or key; the request
+  carries Sidefolk's version in its User-Agent and nothing about the person). Files come only from https on
+  `github.com` or `*.githubusercontent.com`, redirects included, in an ephemeral session (no cookies, cache or
+  credentials); a file larger than the release says is cut off.
+- *What is checked, in order.* Size, and SHA-256 against the release's checksum file and GitHub's own digest,
+  which must agree. The image is mounted read-only and hidden; the one app inside must carry the running app's
+  bundle id and name itself the release it is offered as (`SidefolkRelease`), which must be newer: no downgrade.
+  Its signature must meet a requirement built from the running app's own signature, never from the download:
+  anchored at Apple, a Developer ID Application leaf from the Developer ID intermediate, the same Team ID and
+  identifier, and `notarized`, validated strictly over every architecture and nested program. The same checks
+  run again on the copy staged beside the app, the code that will actually open.
+- *A stolen GitHub account* can publish a release but not one that passes: it would also need the team's
+  Developer ID key and Apple's notarization. A stolen Developer ID key as well is a threat to every Developer ID
+  app; Apple's revocation answers it.
+- *Quarantine.* Removed from the staged copy only after those checks: otherwise Gatekeeper's "downloaded from
+  the internet" question would wait for someone after Sidefolk had quit. A disk image left in Downloads keeps
+  its mark.
+- *The swap.* One same-volume exchange (`renamex_np`, `RENAME_SWAP`) beside the app, so the path always holds a
+  complete signed app; a failure before it leaves the old one, and when reopening can't be arranged the swap is
+  undone. The shell that waits for Sidefolk to quit gets the paths as arguments and removes only a folder
+  named with the staging prefix (`.Sidefolk-update-`); leftovers are cleared at the next launch.
+- *Who doesn't replace itself.* A copy built on the Mac (no `SidefolkRelease`), signed ad hoc or for development,
+  translocated, on a read-only volume, or in a folder the account can't write: it leaves the checked image in
+  Downloads and says why. Sidefolk never asks for admin rights to update.
+*Residual:* a new version that crashes at launch isn't caught before the old one is gone (the person reinstalls
+from the release page); the Developer ID certificate expires on 2027-02-01, and its replacement keeps the team,
+so updates carry on.
 
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
@@ -724,7 +781,13 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
    reach file, clipboard or command tools; the extension risk floor holds; an args-hash mismatch
    aborts. Approval modes (D37): every mode × risk × taint × caller, the invariants in every mode
    (switched-off capabilities, protected places, folder cards, other agents' rules), an unknown or
-   old stored mode never loosening Guard, and every wait for an answer ending.
+   old stored mode never loosening Guard, and every wait for an answer ending. Using the internet (D47,
+   `InternetRuleTests`): after outside content a new site, a query or fragment, a look-alike host and a data
+   label in front of an allowed site ask; an allowed site holds only for reading, only with a site grant, and
+   the fetch can't leave it by redirect; a built-in service holds only with the person's grant and is never
+   offered "Always" after outside content; someone else's network extension asks with its grant in every rule;
+   a built-in service claim never covers files; each built-in service program reaches only its listed hosts;
+   "Ask each time" asks in every mode; other callers keep their rules; an unknown stored rule reads as the default.
 4. **Socket:** foreign uid rejected (seam over `LOCAL_PEERCRED`); no token → `.external`; bad,
    expired or reused token → disconnect; oversized line rejected; symlinked, foreign-owned or 0755
    run dir refused; a live socket is never unlinked; mode is 0600; a session event's host pid that
@@ -779,7 +842,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   the person turned on Full access, and then never from a turn that read outside content (D37);
   never "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing
   granted to check it, then only after the person installs it from the install preview (T27).
-- Never hard-deletes, sets exec bits or strips quarantine.
+- Never hard-deletes, sets exec bits or strips quarantine, except from its own code: the built-ins it
+  installs from its bundle (D39) and a new version of itself after the checks of T31.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.
 - Never listens on TCP in release, and never takes commands via URL schemes, AppleScript or

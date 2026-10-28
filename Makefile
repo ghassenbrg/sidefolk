@@ -9,9 +9,10 @@ test:
 # Debug app with its own data folder (never your real Sidefolk data).
 dev:
 	scripts/build-app.sh debug
-	pkill -f "Sidefolk-dev.app/Contents/MacOS/Sidefolk" || true
+	# Only this checkout's debug app: one running from another worktree stays up.
+	pkill -f "$(CURDIR)/build/Sidefolk-dev.app/Contents/MacOS/Sidefolk" || true
 	mkdir -p build/dev-home
-	SIDEFOLK_HOME="$(CURDIR)/build/dev-home" build/Sidefolk-dev.app/Contents/MacOS/Sidefolk > build/dev.log 2>&1 &
+	SIDEFOLK_HOME="$(CURDIR)/build/dev-home" "$(CURDIR)/build/Sidefolk-dev.app/Contents/MacOS/Sidefolk" > build/dev.log 2>&1 &
 	@echo "Running build/Sidefolk-dev.app (log: build/dev.log, data: build/dev-home)"
 
 app:

@@ -38,7 +38,8 @@ struct NoAIRequest: Equatable {
 struct AskEntry: Identifiable, Equatable {
     enum Content: Equatable {
         case result(ResultCard, activityId: String?, undo: Bool)
-        case answer(String, canThinkHarder: Bool, tainted: Bool)
+        /// `thread`: the AI conversation it belongs to, which Reply continues and Conversations opens (D45).
+        case answer(String, canThinkHarder: Bool, tainted: Bool, thread: String? = nil)
         case list(title: String, cards: [ResultCard])
         case approval(ApprovalRequest)
         case error(UserFacingError, retryable: Bool)
@@ -77,9 +78,14 @@ struct AskEntry: Identifiable, Equatable {
 @MainActor
 protocol AskActions: AnyObject {
     func hint(for text: String) -> String?
-    /// `spoken`: the words came from the talk key, so the reply may be said aloud (D34).
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, into model: AskModel)
+    /// `spoken`: the words came from the talk key, so the reply may be said aloud (D34). `followUp`: the conversation
+    /// the person chose to reply in, which continues however long ago it was (D45).
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, followUp: String?, into model: AskModel)
     func stop()
+    /// The next request starts a new conversation with the AI; `announce` says so in the panel (D45).
+    func startFresh(in model: AskModel, announce: Bool)
+    /// Home › Conversations, at `thread` when given.
+    func openConversation(_ thread: String?)
     func undo(activityId: String, in model: AskModel)
     func answer(approval: ApprovalRequest, decision: ApprovalDecision)
     func open(card: ResultCard)
@@ -102,6 +108,13 @@ protocol AskActions: AnyObject {
     func openHome()
     /// Home › Now, where skipped steps wait (D37).
     func openNow()
+}
+
+/// The answer a reply follows up: its card, its conversation, and the words it answered.
+struct ReplyTarget: Equatable {
+    var entry: AskEntry.ID
+    var thread: String?
+    var request: String?
 }
 
 /// Talking instead of typing (D34): what the panel shows while the talk key is held and just after.
@@ -127,8 +140,12 @@ final class AskModel {
     var voice: VoiceInput?
     /// Increments to ask the view to focus the input.
     var focusRequest = 0
-    /// The person chose to answer a question an answer ended with; the input says so until they send.
-    var replying = false
+    /// The answer the person chose to reply to; the input says so until they send (D45).
+    var replyingTo: ReplyTarget?
+    /// The AI conversation the newest answer belongs to, while one is open; "New conversation" ends it (D45).
+    var thread: String?
+    /// The person started fresh: the next request to the AI begins a new conversation.
+    var startsFresh = false
     /// A reminder waiting for its time ("When should I remind you?").
     var pendingReminderTitle: String?
     var pendingReminderImportant = false
@@ -190,6 +207,7 @@ final class AskModel {
         let gone = Set(request.entries.map(\.id))
         entries.removeAll { gone.contains($0.id) }
         if swipe.map({ gone.contains($0.id) }) == true { swipe = nil }
+        if replyingTo.map({ gone.contains($0.entry) }) == true { replyingTo = nil }
     }
 
     /// Swiped or clicked away: the card slides off the way it was going, then goes.
@@ -202,9 +220,12 @@ final class AskModel {
         }
     }
 
-    /// Everything but the questions and approvals still waiting for an answer.
+    /// Everything but the questions and approvals still waiting for an answer. The conversation ends with them:
+    /// a follow-up shouldn't lean on answers the person just cleared away (D45).
     func clearResults() {
         entries.removeAll { !$0.isPinned }
+        replyingTo = nil
+        actions?.startFresh(in: self, announce: false)
     }
 
     /// Sends a failed request again in place of its old cards, so retries don't pile up.
@@ -224,10 +245,14 @@ final class AskModel {
         entries.removeAll { if case .question(let q) = $0.content { return q.id == id } else { return false } }
     }
 
-    /// An answer asked something. Replying is typing a follow-up (the recent requests go with it), but
-    /// nothing said so, so the card offers Reply and the input becomes the place for it.
-    func reply() {
-        replying = true
+    /// Replying is typing a follow-up in that answer's conversation, however long ago it was; nothing said so, so
+    /// every answer offers Reply and the input becomes the place for it. Again on the same answer: not replying.
+    func reply(to entry: AskEntry.ID, thread: String?, request: String?) {
+        guard replyingTo?.entry != entry else {
+            replyingTo = nil
+            return
+        }
+        replyingTo = ReplyTarget(entry: entry, thread: thread, request: request)
         focusRequest += 1
     }
 
@@ -240,13 +265,14 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
-        replying = false
+        let followUp = replyingTo?.thread
+        replyingTo = nil
         // Shown as the request's caption and sent with the item; the model answers in any language.
         let request = trimmed.isEmpty ? String(localized: "What should I do with this?") : trimmed
         text = ""
         let sent = attachment
         attachment = nil
-        actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, spoken: spoken, into: self)
+        actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, spoken: spoken, followUp: followUp, into: self)
     }
 
     /// The words of the newest request, to tell whether a newer one came in since.
@@ -302,5 +328,8 @@ final class AskModel {
     func freshenIfStale(after seconds: TimeInterval = 600) {
         guard !busy, let last = entries.last, Date().timeIntervalSince(last.createdAt) > seconds else { return }
         entries.removeAll()
+        // The runtime's conversation went quiet as long ago; nothing is left to follow up.
+        thread = nil
+        replyingTo = nil
     }
 }

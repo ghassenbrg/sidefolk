@@ -281,8 +281,8 @@ language. The translations are new: corrections are welcome.
 
 ## What isn't done yet
 
-- **No signed download and no automatic updates.** Signing and notarization are ready to run but need
-  a Developer ID; updates will come with a proper update feed.
+- **No signed download yet.** Signing and notarization are ready to run but need a Developer ID. Once
+  installed, Sidefolk looks for new versions on GitHub itself and asks before installing one.
 - **Apple silicon only**, and most testing so far has been on macOS 27.
 - **Calendar, Mail, Music and Shortcuts** can't be reached yet. Neither can scheduled AI routines
   ("every weekday at 9, give me my open tasks") or a "what was I doing today" timeline.

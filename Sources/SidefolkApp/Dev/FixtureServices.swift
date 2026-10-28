@@ -17,6 +17,15 @@ final class FixtureServices: AppServices {
     var gitMissing = false
     let voice = FixtureVoiceServices()
     var voiceServices: any VoiceServices { voice }
+    /// A published snapshot that looked an hour ago; snapshots set other phases.
+    let updates: UpdateModel = {
+        let model = UpdateModel()
+        model.running = "0.1.0 snapshot 411"
+        model.version = ReleaseVersion("0.1.0-snapshot.411")!
+        model.lastCheck = Date().addingTimeInterval(-3600)
+        model.phase = .upToDate
+        return model
+    }()
     let location = FixtureLocationServices()
     var locationServices: any LocationServices { location }
 
@@ -42,6 +51,15 @@ final class FixtureServices: AppServices {
             return UserFacingError("I couldn't tell when “\(when)” is. Nothing was saved.", recovery: "Try “in 20 min” or “tomorrow 9:00”.")
         }
         try? await runtime.reminderStore.save(Reminder(title: title, fireAt: Date().addingTimeInterval(Double(minutes) * 60), source: "user"))
+        runtime.events.changed(.reminders)
+        return nil
+    }
+
+    func remind(about item: NotebookItem, when: String) async -> UserFacingError? {
+        guard let date = ISO8601DateFormatter().date(from: when) else { return UserFacingError("I couldn't tell when “\(when)” is.") }
+        var reminder = Reminder(title: item.title, fireAt: date, source: "user")
+        reminder.itemId = item.id
+        try? await runtime.reminderStore.save(reminder)
         runtime.events.changed(.reminders)
         return nil
     }
@@ -273,6 +291,20 @@ final class FixtureServices: AppServices {
     func connectCodex(hooks: Bool) async -> UserFacingError? { nil }
     func disconnectCodex() async -> UserFacingError? { nil }
     func copySetupInstructions() {}
+
+    // MARK: Conversations
+
+    /// Snapshots never reach a model: the page shows how it looks without one.
+    func continueConversation(_ thread: String, text: String) async -> AgentRunHandle? { nil }
+    func stopConversation(run runId: String) async {}
+    func deleteConversation(_ thread: String) async -> UserFacingError? {
+        _ = try? await runtime.exchanges.delete(threadId: thread)
+        return nil
+    }
+    func deleteAllConversations() async -> UserFacingError? {
+        try? await runtime.exchanges.deleteAll()
+        return nil
+    }
 
     // MARK: Privacy and data
 

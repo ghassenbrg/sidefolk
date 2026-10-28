@@ -9,6 +9,8 @@ enum SampleData {
         var profile: NotebookCollection
         var selectedItem: NotebookItem
         var profileItem: NotebookItem
+        /// A task with a reminder that belongs to it (D49).
+        var remindedTask: NotebookItem
     }
 
     static func fill(_ rt: SidefolkRuntime, notebook: NotebookModel) async throws -> Created {
@@ -58,7 +60,7 @@ enum SampleData {
         _ = try await item(inbox, .idea, "Folks could have their own sounds", body: "A short chime per folk, so you know who's tapping you without looking.",
                            tags: ["folks", "sound"], source: "external:claude-code", created: ago(35))
         _ = try await item(inbox, .note, "Karim's new address", body: "12 rue Oberkampf, 75011 Paris", created: ago(60 * 26))
-        _ = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50))
+        let passport = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50))
         _ = try await item(inbox, .link, "Swift Testing", url: "https://developer.apple.com/xcode/swift-testing/", created: ago(60 * 70))
 
         let profileItem = try await item(profile, .note, "Prefers short, direct answers", body: "No preamble. Lead with the answer, then one line of why.",
@@ -78,8 +80,8 @@ enum SampleData {
                                       - Cap at three folks on screen, as today.
                                       """,
                                       tags: ["extensions", "folks"], source: "external:claude-code", created: ago(60 * 47), edited: ago(12))
-        _ = try await item(sidefolk, .task, "Write the extension developer guide", body: "Manifest, permissions, the watcher protocol, a sample.",
-                           tags: ["docs"], created: ago(60 * 30))
+        let guide = try await item(sidefolk, .task, "Write the extension developer guide", body: "Manifest, permissions, the watcher protocol, a sample.",
+                                   tags: ["docs"], created: ago(60 * 30))
         _ = try await item(sidefolk, .task, "Record a 30-second demo", tags: ["launch"], created: ago(60 * 80), edited: ago(60 * 20), done: true)
         _ = try await item(sidefolk, .note, "Launch checklist", body: "Notarize, staple, DMG, landing page, Show HN draft.",
                            tags: ["launch"], created: ago(60 * 100))
@@ -99,8 +101,9 @@ enum SampleData {
 
         // Reminders
         func reminder(_ title: String, at: Date, recurrence: Recurrence? = nil, source: String = "user", state: Reminder.State = .scheduled,
-                      snoozedUntil: Date? = nil, updated: Date? = nil) async throws {
+                      snoozedUntil: Date? = nil, updated: Date? = nil, for item: NotebookItem? = nil) async throws {
             var r = Reminder(title: title, fireAt: at, recurrence: recurrence, source: source, now: ago(60 * 24))
+            r.itemId = item?.id
             r.state = state
             r.snoozedUntil = snoozedUntil
             if state == .fired || state == .done { r.lastFiredAt = updated ?? at }
@@ -116,6 +119,9 @@ enum SampleData {
                            recurrence: Recurrence(frequency: .minutely, interval: 30, until: min(max(day(0, 18), ahead(120)), endOfToday.addingTimeInterval(-60))))
         try await reminder("Call mom", at: day(1, 18), source: "external:claude-code")
         try await reminder("Renew the sidefolk.app domain", at: day(4, 10))
+        // Reminders that belong to a task (D49): one with the task's own words, one with words of its own.
+        try await reminder("Write the extension developer guide", at: day(1, 10), for: guide)
+        try await reminder("Book the mairie appointment", at: day(2, 9), for: passport)
         try await reminder("Water the plants", at: day(6, 19), recurrence: Recurrence(frequency: .weekly, weekdays: [7]))
         try await reminder("Pay rent", at: day(9, 9), recurrence: Recurrence(frequency: .monthly))
         try await reminder("Take out the recycling", at: ago(130), state: .done, updated: ago(120))
@@ -230,6 +236,35 @@ enum SampleData {
             try await rt.runs.save(run)
         }
 
+        // Conversations with the AI (D45): a plan with its steps and a follow-up, a spoken question, one that stopped.
+        func said(_ thread: String, _ role: Exchange.Role, _ text: String, _ minutes: Double, run: String? = nil,
+                  spoken: Bool = false) async throws {
+            var meta: [String: JSONValue] = role == .user ? ["tainted": false] : [:]
+            if spoken { meta["spoken"] = true }
+            if let run { meta["runId"] = .string(run) }
+            try await rt.exchanges.append(Exchange(threadId: thread, role: role, content: text, meta: .object(meta), now: ago(minutes)))
+        }
+        func step(_ run: String, _ minutes: Double, _ tool: String, _ summary: String, _ decision: ActivityEntry.Decision = .auto,
+                  error: String? = nil) async throws {
+            try await rt.activity.log(ActivityEntry(at: ago(minutes), caller: "agent", tool: tool, risk: "low", decision: decision,
+                                                    summary: summary, error: error, runId: run))
+        }
+        try await said("c-rename", .user, "Rename the scans on my Desktop by date", 60 * 26)
+        try await step("r-rename", 60 * 26 - 0.5, "files.rename", "Rename 3 files in ~/Desktop", .blocked,
+                       error: "That folder hasn't been shared with Sidefolk.")
+        try await said("c-rename", .event, "Stopped. Nothing was changed.", 60 * 26 - 1, run: "r-rename")
+        try await said("c-rain", .user, "Will it rain in Fukuoka tomorrow?", 60 * 5, spoken: true)
+        try await step("r-rain", 60 * 5 - 0.2, "ext.weather.forecast", "Weather forecast for Fukuoka")
+        try await said("c-rain", .assistant, "Light rain is likely tomorrow morning in Fukuoka (70%), clearing after noon. Highs around 19 °C.",
+                       60 * 5 - 0.4, run: "r-rain")
+        try await said("c-plan", .user, "Plan my afternoon around the invoices and a run", 95)
+        try await step("r-plan", 94.8, "notebook.search", "Search the notebook for “invoices”")
+        try await step("r-plan", 94.7, "reminders.list", "Read your reminders for today")
+        try await said("c-plan", .assistant, SampleData.plan, 94.5, run: "r-plan")
+        try await said("c-plan", .user, "Yes, remind me at 16:30 to go for the run", 93)
+        try await step("r-plan-2", 92.9, "reminders.create", "Remind me today at 16:30 to go for a run")
+        try await said("c-plan", .assistant, "Done: I'll remind you at 16:30 to go for your run.", 92.8, run: "r-plan-2")
+
         // Guard
         try await rt.permissions.grantFolder(home + "/Downloads", access: .readwrite)
         try await rt.permissions.grantFolder(home + "/Documents/Invoices", access: .read)
@@ -238,9 +273,29 @@ enum SampleData {
         try await rt.permissions.addGrant(move)
         try await rt.permissions.addGrant(Grant(tool: "shell.run", scope: ["command": "npm test"], callerKind: "agent", now: ago(60 * 30)))
         try await rt.permissions.addGrant(Grant(tool: "web.fetch", scope: ["host": "github.com"], callerKind: "external", now: ago(60 * 24)))
+        // Using the internet (D47): a site and a built-in service allowed for good.
+        var docs = Grant(tool: "web.fetch", scope: ["host": "docs.swift.org"], callerKind: "agent", now: ago(60 * 24 * 2))
+        docs.lastUsedAt = ago(20)
+        try await rt.permissions.addGrant(docs)
+        try await rt.permissions.addGrant(Grant(tool: "ext.weather.forecast", scope: ["extension": "dev.sidefolk.weather"],
+                                                callerKind: "agent", now: ago(60 * 5)))
         try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 
-        return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem)
+        return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem, remindedTask: guide)
     }
+
+    /// A long answer, for Conversations and the Ask panel's Show all.
+    static let plan = """
+        Here's a plan for this afternoon:
+
+        **14:00** Rename and file the April invoices (about 30 minutes).
+        **14:30** Reply to Karim about the new address.
+        **15:00** Deep work on the onboarding copy.
+        **16:30** A 5 km run, before the light goes.
+        **17:30** Stretch, then the 18:00 call with mom.
+        **19:00** Dinner, then nothing with a screen.
+
+        I left the pricing page review for tomorrow morning: it needs a fresh head. Want me to set reminders for these?
+        """
 }
 #endif

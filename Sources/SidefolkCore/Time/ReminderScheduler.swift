@@ -25,6 +25,10 @@ public actor ReminderScheduler {
         public static let tomorrow = "tomorrow"
         /// Ends a series (offered on reminders that repeat within the hour).
         public static let stop = "stop"
+        /// A reminder that belongs to a task: marks the task done, which ends its reminders (D49).
+        public static let taskDone = "taskDone"
+        /// A reminder that belongs to a note or task: the app opens it in the Notebook.
+        public static let open = "open"
     }
 
     /// Later than this after its time, a reminder is reported as missed.
@@ -32,13 +36,13 @@ public actor ReminderScheduler {
     /// Longest single sleep; a guard in case the clock changed without the app telling us.
     static let longestSleep: TimeInterval = 6 * 3600
 
-    private let store: ReminderStore
+    let store: ReminderStore
     private let kv: KVStore
-    private let attention: AttentionCenter
-    private let events: EventBus
+    let attention: AttentionCenter
+    let events: EventBus
     private let settings: SettingsStore
-    private let clock: any Clock
-    private let calendar: Calendar
+    let clock: any Clock
+    let calendar: Calendar
     private let runPrompt: PromptRunner?
     private let brief: MorningBrief?
 
@@ -47,6 +51,8 @@ public actor ReminderScheduler {
     private var generation = 0
     private var ticking = false
     private var tickRequested = false
+    /// Settles reminders that belong to notebook items whenever the notebook changes (ReminderLinks).
+    private var links: Task<Void, Never>?
 
     public init(
         store: ReminderStore, attention: AttentionCenter, events: EventBus, settings: SettingsStore,
@@ -73,6 +79,13 @@ public actor ReminderScheduler {
         await attention.onAction(kind: "reminder") { [weak self] item, actionId in
             await self?.answer(item: item, actionId: actionId)
         }
+        let stream = events.stream()
+        links = Task { [weak self] in
+            for await event in stream {
+                if case .dataChanged(.notebook) = event { await self?.settleLinks() }
+            }
+        }
+        await settleLinks()
         await tick()
     }
 
@@ -80,6 +93,8 @@ public actor ReminderScheduler {
         started = false
         timer?.cancel()
         timer = nil
+        links?.cancel()
+        links = nil
         generation += 1
     }
 
@@ -124,6 +139,7 @@ public actor ReminderScheduler {
     /// (WhenResult.anchor), which keeps "the 31st" on the 31st in short months.
     /// Only the user's own reminders ("user", or "user:agent" from a clean agent turn) may be critical:
     /// anyone else's is stored as an ordinary alert, whatever the caller asked (SECURITY T24).
+    /// `itemId` is the note or task it belongs to (D49); the caller checks the item is there and still open.
     @discardableResult
     public func create(
         title: String, at date: Date, recurrence: Recurrence? = nil, anchor: Date? = nil, notes: String? = nil,
@@ -151,9 +167,11 @@ public actor ReminderScheduler {
     @discardableResult
     public func cancel(id: String) async throws -> Reminder? {
         let changed = try await update(id) { r in
-            guard r.state != .cancelled else { return false }
+            guard r.state != .cancelled || r.endedWithItem != nil else { return false }
             r.state = .cancelled
             r.snoozedUntil = nil
+            // The person's own word: it no longer comes back with its item.
+            r.endedWithItem = nil
             return true
         }
         // The series anchor stays, as the row does: Undo (`restore`) must bring a monthly reminder back
@@ -175,6 +193,7 @@ public actor ReminderScheduler {
                 r.state = .done
             }
             r.snoozedUntil = nil
+            r.endedWithItem = nil
             return true
         }
         await finishChange()
@@ -285,6 +304,13 @@ public actor ReminderScheduler {
         let outcome = try await store.db.writer.write { db -> Firing? in
             guard var r = try Reminder.fetchOne(db, key: id), r.state == .scheduled || r.state == .snoozed,
                   let due = r.nextDue, due <= now else { return nil }
+            // Its task was done or its item trashed a moment ago, and the notebook's word hasn't been settled yet.
+            if let itemId = r.itemId, let reason = Self.endReason(try NotebookItem.fetchOne(db, key: itemId)) {
+                Self.end(&r, with: reason)
+                r.updatedAt = now
+                try r.update(db)
+                return nil
+            }
             if let rule = r.recurrence {
                 // A snoozed occurrence keeps the series' next time; otherwise move to the first time after now
                 // (a series that was missed several times fires once).
@@ -316,8 +342,10 @@ public actor ReminderScheduler {
         let r = firing.reminder
         if r.action?.kind == .prompt, runPrompt != nil { return r }
         let own = Self.isUsersOwn(r.source)
+        let item = await linkedItem(r)
         var lines: [String] = []
         if firing.missed { lines.append(missedText(firing.dueAt)) }
+        if let item, let line = Self.itemLine(item, reminder: r) { lines.append(line) }
         if let notes = r.notes, !notes.isEmpty { lines.append(notes) }
         // "You asked yesterday 18:20." — context for one-off reminders set a while ago.
         if r.recurrence == nil, !firing.missed, firing.dueAt.timeIntervalSince(r.createdAt) > 120 {
@@ -331,25 +359,31 @@ public actor ReminderScheduler {
         }
         await attention.post(AttentionRequest(
             level: r.level, source: Self.attentionSource(r.source), title: r.title, body: lines.isEmpty ? nil : lines.joined(separator: "\n"),
-            actions: Self.actions(for: r), refKind: "reminder", refId: r.id
+            actions: Self.actions(for: r, item: item), refKind: "reminder", refId: r.id
         ))
         return nil
     }
 
     /// Done, 10 min, Tomorrow; a reminder that comes back within the hour offers Stop instead of Tomorrow, and drops
-    /// "10 min" when it repeats that often anyway.
-    static func actions(for r: Reminder) -> [AttentionAction] {
+    /// "10 min" when it repeats that often anyway. One that belongs to a note or task (D49) offers Open as its third
+    /// button (a bubble shows three), and for an open task its first button marks the task done.
+    static func actions(for r: Reminder, item: NotebookItem? = nil) -> [AttentionAction] {
         var actions = [AttentionAction(id: ActionID.done, title: String(localized: "Done"), isPrimary: true)]
-        guard let rule = r.recurrence, rule.frequency.isElapsed else {
+        if let rule = r.recurrence, rule.frequency.isElapsed {
+            if rule.frequency == .hourly || rule.interval > 10 {
+                actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
+            }
+            actions.append(AttentionAction(id: ActionID.stop, title: String(localized: "Stop repeating")))
+        } else {
             actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
             actions.append(AttentionAction(id: ActionID.tomorrow, title: String(localized: "Tomorrow")))
-            return actions
         }
-        if rule.frequency == .hourly || rule.interval > 10 {
-            actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
+        guard let item else { return actions }
+        if item.kind == .task, item.status == .open {
+            actions[0] = AttentionAction(id: ActionID.taskDone, title: String(localized: "Mark done"), isPrimary: true)
         }
-        actions.append(AttentionAction(id: ActionID.stop, title: String(localized: "Stop repeating")))
-        return actions
+        let second = actions.first { $0.id == ActionID.stop } ?? actions[1]
+        return [actions[0], second, AttentionAction(id: ActionID.open, title: String(localized: "Open"))]
     }
 
     private func missedText(_ due: Date) -> String {
@@ -392,6 +426,7 @@ public actor ReminderScheduler {
             case ActionID.snooze10: try await snooze(id: id, until: clock.now.addingTimeInterval(600))
             case ActionID.tomorrow: try await snooze(id: id, until: tomorrowMorning())
             case ActionID.stop: try await cancel(id: id)
+            case ActionID.taskDone: try await finishTask(reminderId: id)
             default: break
             }
         } catch {
@@ -456,7 +491,7 @@ public actor ReminderScheduler {
     }
 
     /// The series anchor as wall-clock time in the current time zone (see `RecurrenceMath.floating`).
-    private func seriesAnchor(for r: Reminder) async -> Date {
+    func seriesAnchor(for r: Reminder) async -> Date {
         let stored = await storedAnchor(for: r)
         guard r.recurrence?.frequency.isElapsed != true, let zone = TimeZone(identifier: r.timezone) else { return stored }
         return RecurrenceMath.floating(stored, from: zone, to: calendar)
@@ -481,7 +516,7 @@ public actor ReminderScheduler {
     }
 
     /// Reads, changes and writes a reminder in one transaction. `before` is nil when nothing existed.
-    private func update(_ id: String, _ change: @escaping @Sendable (inout Reminder) -> Bool) async throws -> (before: Reminder, after: Reminder)? {
+    func update(_ id: String, _ change: @escaping @Sendable (inout Reminder) -> Bool) async throws -> (before: Reminder, after: Reminder)? {
         let now = clock.now
         return try await store.db.writer.write { db -> (before: Reminder, after: Reminder)? in
             guard var r = try Reminder.fetchOne(db, key: id) else { return nil }
@@ -494,7 +529,7 @@ public actor ReminderScheduler {
         }
     }
 
-    private func finishChange() async {
+    func finishChange() async {
         events.changed(.reminders)
         await reschedule()
     }

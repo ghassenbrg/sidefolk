@@ -42,9 +42,11 @@ struct AgendaTool: Tool {
 
         var lines = ["Today, \(TimeFormat.full(context.now, calendar: calendar)):"]
         lines.append(today.isEmpty ? "No reminders today." : "Reminders today (\(today.count)):")
-        lines += today.map { "- " + reminders.line($0) }
+        let items = await reminders.items(for: today)
+        lines += today.map { "- " + reminders.line($0, item: $0.itemId.flatMap { items[$0] }) }
         lines.append(tasks.isEmpty ? "No open tasks." : "Open tasks, newest first (\(found.count > tasks.count ? "\(tasks.count)+" : "\(tasks.count)")):")
-        lines += tasks.map { "- " + NoteFormat.line($0, collections: collections, snippet: false) }
+        let next = await NoteFormat.reminders(tasks, notebook: notebook)
+        lines += tasks.map { "- " + NoteFormat.line($0, collections: collections, snippet: false, reminder: next[$0.id]) }
         lines.append("Watching \(ToolFormat.count(watching, "thing")).")
 
         let subtitle = [String(localized: "\(today.count) reminders today"), String(localized: "\(tasks.count) open tasks")].joined(separator: " · ")

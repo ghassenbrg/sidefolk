@@ -217,6 +217,18 @@ final class SettingsModel {
         await loadPermissions()
     }
 
+    /// Lets Sidefolk read a site without asking from now on (D47); the problem to show, if any.
+    func allowSite(_ text: String) async -> UserFacingError? {
+        do {
+            try await runtime.permissions.allowSite(text)
+        } catch {
+            return error as? UserFacingError ?? UserFacingError("Sidefolk couldn't save that site.", detail: String(describing: error))
+        }
+        runtime.events.changed(.permissions)
+        await loadPermissions()
+        return nil
+    }
+
     /// Changes the stored policy, not this window's copy of it: a copy that failed to load is the default, and
     /// saving it would switch back on what the person turned off.
     func setPolicy(_ change: @escaping @Sendable (inout GuardPolicy) -> Void) async {
@@ -255,6 +267,16 @@ final class SettingsModel {
         let error = await services.deleteAllData()
         if error == nil { await refresh() }
         return error
+    }
+
+    /// Every conversation with the AI, and nothing else (D45).
+    func deleteConversationHistory() async {
+        if let error = await services.deleteAllConversations() {
+            dataMessage = .failure(error)
+        } else {
+            dataMessage = .success(String(localized: "Conversation history deleted."))
+        }
+        storage = await services.storageSummary()
     }
 
     // MARK: Extensions

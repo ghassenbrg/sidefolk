@@ -54,6 +54,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Skill for other agents (D42) | `Sidefolk.app/Contents/Resources/AgentSkills/sidefolk` (repo: `skills/sidefolk`); Connect copies it to `~/.claude/skills/sidefolk`, `~/.codex/skills/sidefolk` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |
 | Brain workdir | `~/Library/Application Support/Sidefolk/brain/` (empty cwd for CLI brains) |
+| Updates (D46) | `~/Library/Application Support/Sidefolk/Updates/` (a disk image while it is checked; emptied at launch); the new version is staged beside the app as `.Sidefolk-update-<release>.app` |
 | Logs | `~/Library/Logs/Sidefolk/sidefolk-YYYY-MM-DD.jsonl` (7 days) |
 | Secrets | Keychain, service `app.sidefolk.secrets` |
 | UI prefs | `UserDefaults` (`app.sidefolk`) |
@@ -72,7 +73,8 @@ user folders or agent configs.
 - `ToolRegistry` — built-in tools + tools contributed by extensions/MCP servers; namespaced
   (`notes.create`, `ext.system-vitals.battery`). Model-facing names replace `.` with `_`.
 - `Guard` — `PermissionEngine.evaluate(call, spec, caller, tainted) -> .allow | .ask(req) | .deny`;
-  `GuardPolicy` holds the approval mode and "If I don't answer" (D37);
+  `GuardPolicy` holds the approval mode and "If I don't answer" (D37), and how the agent uses the internet
+  (`InternetRule`, D47: a tool's `ToolScope.reach` says when Sidefolk's own code fixes where a call goes);
   `ApprovalBroker` (actor) parks requests until the UI answers or the wait ends (a no; for
   Sidefolk's own agent, a skipped step kept in `SkippedSteps` for "Run it now", or a stopped task);
   `GrantStore` persists "always allow" grants with scope (tool, folder, exact command, extension).
@@ -81,6 +83,13 @@ user folders or agent configs.
   command, routine) goes through it.
 - `AgentRuntime` — handles a user turn: builds context (`ContextBuilder`, token budget), picks a
   model (`ModelRouter`), runs a backend, streams `AgentEvent`s, records an `AgentRun`.
+  - Conversations (D45): a request with no thread continues the current one while it was active in the
+    last 10 minutes; one that names a thread (an answer's Reply, Home › Conversations) continues it for as
+    long as its exchanges are kept (`historyDays`). `endThread()` starts fresh ("new conversation", Clear all,
+    ⌘N); `deleteConversation`/`deleteAllConversations` stop the thread's runs first, then delete its
+    exchanges and publish `.dataChanged(.conversations)`. `ExchangeStore.conversations(matching:)` lists them
+    (title = first request); `ConversationTranscript` rebuilds one from exchanges plus each run's Activity
+    steps (by `run_id`). Activity and `agent_runs` keep their own records.
   - `LoopBackend` drives `TurnModel` providers (`AnthropicModel`, `OpenAICompatibleModel`):
     request → tool calls → executor → results → repeat, max 10 steps / 120 s by default. A reply
     that claims an action from a run that called no tool (`UnbackedClaim`, English) gets one more
@@ -99,7 +108,12 @@ user folders or agent configs.
   - `ScriptedModel` (tests only) replays canned turns.
 - `ReminderScheduler` (actor) — one timer for the next due reminder (no polling), re-armed on
   change, wake, clock change; fires to `AttentionCenter`; recurrence; snooze; missed-on-launch
-  summary; computes fallback system notifications when the app quits.
+  summary; computes fallback system notifications when the app quits. A reminder can belong to a
+  notebook item (`item_id`, D49): `ReminderLinks` settles them whenever `.notebook` is announced
+  (a task done or an item trashed ends the waiting ones and records why in `ended_with_item`; the
+  task opened again or the item restored brings back the ones still ahead), `fire` checks the item
+  once more in its transaction, and a renamed item carries reminders with its own title along
+  (`NotebookStore.update`). Its bubble offers Mark done (the task) and Open (the app shows it).
 - `WatcherEngine` (actor) — runs `WatcherProbe`s: polling kinds share one scheduler loop keyed by
   next-check time (a timer with tolerance; checks due within half a second share a wake-up); event
   kinds use DispatchSource (vnode/proc). Interval floors, exponential backoff on error, expiry,
@@ -170,7 +184,8 @@ memories(id TEXT PK, kind[fact|preference|person|project], content, collection_i
 memories_fts(content)
 reminders(id TEXT PK, title, notes, fire_at, timezone, recurrence JSON, state[scheduled|fired|
           snoozed|done|cancelled], snoozed_until, last_fired_at, fired_count, level, action JSON,
-          item_id, source, created_at, updated_at)
+          item_id, ended_with_item[done|trashed], source, created_at, updated_at)
+          -- an item deleted for good cancels its waiting reminders first (trigger, D49)
 watchers(id TEXT PK, kind, title, config JSON, condition JSON, interval_s, state[active|paused|
          triggered|expired|error], mode[once|repeat], level, last_checked_at, next_check_at,
          last_state JSON, last_error, error_count, fire_count, expires_at, source, created_at, updated_at)
@@ -251,6 +266,21 @@ core; the app holds the audio and speech frameworks.
   `--voice-say "<answer>" <out.caf>` writes the spoken line to a file through the real queue;
   `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
   plays a file into a running debug app as if the talk key were held.
+
+## Updates (D46)
+
+Core (`Sources/SidefolkCore/Updates/`), no UI: `ReleaseVersion` (semver order: snapshot 9 < snapshot 411 <
+the release), `ReleaseFeed` (GitHub's release list into `UpdateOffer`s; drafts, odd tags and releases without
+their disk image are left out), `UpdateChecker` (the request with an ETag, the last list, when to look and to
+ask again, kept under the database's `updates` key), `UpdateInstaller` (download, checksums, mount, checks,
+stage, swap; every outside step behind a protocol so tests run on folders), `SigningCheck` (`SigningFacts` of
+the running app and the requirement a replacement must meet), `InstallPlan` (replace itself, or leave the
+image in Downloads, and why), `BundleSwap` (staging, quarantine, `renamex_np` swap, the reopening shell).
+`AppSettings.updates` holds the switch, the channel and a skipped version. The app's `UpdateController`
+schedules the looks, brings an offer up as a gentle bubble (`source` "update", which waits through quiet mode),
+keeps `UpdateModel` for Settings › General, the menu bar and the update window, and quits for the swap.
+A published app knows its release from Info.plist's `SidefolkRelease`; without it the app never replaces
+itself. Release side: docs/RELEASE.md › Updates.
 
 ## Extension protocol (summary; full guide in docs/EXTENSIONS.md)
 

@@ -63,7 +63,12 @@ public struct UserMentions: Sendable, Hashable {
     }
 
     static func host(_ url: URL) -> String? {
-        guard var host = url.host?.lowercased(), !host.isEmpty else { return nil }
+        url.host.flatMap(site)
+    }
+
+    /// A host name as a site: lower case, without "www." or a final dot, which name the same site.
+    static func site(_ host: String) -> String? {
+        var host = host.lowercased()
         while host.hasSuffix(".") { host.removeLast() }
         if host.hasPrefix("www.") { host.removeFirst(4) }
         return host.isEmpty ? nil : host

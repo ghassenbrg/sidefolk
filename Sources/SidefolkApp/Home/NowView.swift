@@ -296,6 +296,7 @@ private struct ReminderRow: View {
             CheckCircle(checked: false, label: Text("Mark “\(reminder.title)” done")) { Task { await model.complete(reminder) } }
             VStack(alignment: .leading, spacing: 2) {
                 Text(reminder.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2)
+                if let item = model.item(of: reminder) { ItemLink(item: item, reminder: reminder) { model.open(item) } }
                 HStack(spacing: Theme.Space.s) {
                     Text(when).foregroundStyle(overdue ? Theme.danger : Theme.inkMuted)
                     if let rule = reminder.recurrence {
@@ -327,6 +328,7 @@ private struct ReminderRow: View {
         .onTapGesture(count: 2) { editing = true }
         .contextMenu {
             Button("Mark done") { Task { await model.complete(reminder) } }
+            if let item = model.item(of: reminder) { Button(ItemLink.openTitle(item.kind)) { model.open(item) } }
             Button("Edit…") { editing = true }
             snoozeItems(prefixed: true)
             Divider()
@@ -361,6 +363,44 @@ private struct ReminderRow: View {
         if overdue { return String(localized: "Overdue since \(TimeText.short(due))") }
         if reminder.state == .snoozed { return String(localized: "Snoozed until \(time)") }
         return time
+    }
+}
+
+/// The note or task a reminder belongs to (D49), a click away in the Notebook: its title when the reminder has words of
+/// its own, else just what kind of thing it is.
+private struct ItemLink: View {
+    var item: NotebookItem
+    var reminder: Reminder
+    var open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            Label {
+                if item.title.lowercased() == reminder.title.lowercased() {
+                    Text(Self.openTitle(item.kind))
+                } else {
+                    Text(verbatim: item.title)
+                }
+            } icon: {
+                Image(systemName: ItemKindStyle.symbol(item.kind))
+            }
+            .labelStyle(.titleAndIcon)
+            .font(Theme.Font.caption)
+            .lineLimit(1)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Theme.accent)
+        .help(Text("Open “\(item.title.clipped(60))” in the Notebook"))
+        .accessibilityLabel(Text("Open “\(item.title.clipped(60))” in the Notebook"))
+    }
+
+    static func openTitle(_ kind: NotebookItem.Kind) -> LocalizedStringResource {
+        switch kind {
+        case .note: "Open note"
+        case .idea: "Open idea"
+        case .task: "Open task"
+        case .link: "Open link"
+        }
     }
 }
 
