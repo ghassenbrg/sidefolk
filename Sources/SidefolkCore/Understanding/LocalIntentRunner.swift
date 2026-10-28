@@ -162,8 +162,10 @@ public struct LocalIntentRunner: Sendable {
             return .declined(UserFacingError(verbatim: String(localized: "\(name) couldn't answer that: \(text.clipped(300))",
                                                               comment: "An extension's own explanation after its name")))
         }
-        // The whole answer, not the first lines a card keeps for the AI's runs.
-        let card = ResultCard(kind: .extensionResult, title: tool.spec.title, subtitle: name, detail: text.clipped(2_000), refId: tool.extensionId)
+        // A one-line answer is the card's title ("15% of 80 = 12"); a longer one is all there, under the tool's name.
+        let short = !text.contains("\n") && text.count <= 100
+        let card = ResultCard(kind: .extensionResult, title: short ? text : tool.spec.title, subtitle: name,
+                              detail: short ? nil : text.clipped(2_000), refId: tool.extensionId)
         return .answer(card, activityId: out.activity.id)
     }
 

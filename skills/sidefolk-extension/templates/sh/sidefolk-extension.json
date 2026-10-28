@@ -8,6 +8,9 @@
   "run": { "command": "sh", "args": ["main.sh"] },
   "permissions": { "exec": ["/bin/date"] },
   "tools": {
-    "today": { "title": "Today's date", "risk": "low", "category": "time", "mutates": false }
+    "today": {
+      "title": "Today's date", "risk": "low", "category": "time", "mutates": false,
+      "commands": [ { "say": ["today's date", "what's the date", "what is the date", "what's today's date"] } ]
+    }
   }
 }

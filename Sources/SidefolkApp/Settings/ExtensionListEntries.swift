@@ -13,7 +13,7 @@ extension ExtensionInfo: ExtensionListEntry {
         if kind == .mcpServer { texts.append(String(localized: "MCP server")) }
         if fromDraft { texts.append(String(localized: "Written for you")) }
         if !pendingTools.isEmpty { texts.append(String(localized: "Needs review")) }
-        return texts + hiddenSearchTexts + [command].compactMap { $0 }
+        return texts + commands + hiddenSearchTexts + [command].compactMap { $0 }
     }
 
     /// The row in one phrase for VoiceOver: its name, what it does, and anything waiting on the person.
@@ -29,6 +29,7 @@ extension ExtensionInfo: ExtensionListEntry {
     func shownHit(_ hit: String) -> String {
         if toolNames.contains(hit) { return ExtensionWords.tools([hit]) }
         if watcherNames.contains(hit) { return ExtensionWords.watchers([hit]) }
+        if commands.contains(hit) { return ExtensionWords.commands([hit]) }
         return hit
     }
 }

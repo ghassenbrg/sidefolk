@@ -65,7 +65,8 @@ user folders or agent configs.
 ## Core concepts and types (SidefolkCore)
 
 - `JSONValue` — dynamic JSON (tool inputs, schemas, configs).
-- `Caller` — `.user`, `.agent(runID)`, `.routine(id)`, `.external(client)`, `.extension(id)`.
+- `Caller` — `.user`, `.agent(runID)`, `.routine(id)`, `.external(client)`, `.extension(id)`, `.command(extensionId)`
+  (an extension's command the person typed, D50: Guard treats it as the agent in a clean turn).
 - `ToolSpec` — name, title, description, input schema, `risk`, `capabilities`, `category`,
   `mutates`. `Tool` — `spec`, `summary(input)` (plain language for approvals and Activity),
   `run(input, context) async throws -> ToolResult` (content for the model, optional result card,
@@ -287,7 +288,11 @@ Folder with `sidefolk-extension.json`:
   "tools": { "battery": { "risk": "low", "category": "system" } },
   "watchers": { "battery_low": { "title": "Battery low", "config": { ... } } } }
 ```
-Also `icon`, and per tool `paths` (folders named per call) and `timeout` (D39).
+Also `icon`, and per tool `paths` (folders named per call) and `timeout` (D39); per tool `commands` (whole sentences
+with typed slots that call it without the AI) and `ai: false` (kept from the model), with word lists in `words` (D50).
+`ExtensionHost.makeTool` compiles the commands (`ToolCommands`, `CommandSentence`) onto the registered `ExtensionTool`;
+`SidefolkRuntime.intentParser` hands the registered ones to `IntentParser`, which tries them after every core intent
+(`extensionCommand`), and `LocalIntentRunner` runs the match through the executor as `Caller.command`.
 The process speaks MCP over stdio. Tool metadata (risk/category) comes from the manifest; tools
 not described there default to `medium`. Watchers are checked with `sidefolk/watch.check`
 `{watcher, config, state}` → `{triggered, state, summary}`. The host runs the process under

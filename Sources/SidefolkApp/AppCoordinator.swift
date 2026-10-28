@@ -409,6 +409,10 @@ final class AppCoordinator {
             showAsk()
             ask.text = String(command.dropFirst(4))
             ask.submit()
+        } else if command.hasPrefix("type:") {
+            // Typed but not sent: the hint under the field says what Enter would do.
+            showAsk()
+            ask.text = String(command.dropFirst(5))
         } else if command.hasPrefix("respond:"), let item = bubbles.model.item {
             respond(to: item, action: String(command.dropFirst(8)))
             bubbles.withdraw(id: item.id)

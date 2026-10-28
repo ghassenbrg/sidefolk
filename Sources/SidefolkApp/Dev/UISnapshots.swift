@@ -202,6 +202,8 @@ enum UISnapshots {
                 ("search", ExtensionListQuery(text: "internet"), []),
                 ("search-tool", ExtensionListQuery(text: "pull"), []),
                 ("no-match", ExtensionListQuery(text: "spreadsheet", show: .on), []),
+                // The sentences an extension answers without the AI (D50).
+                ("commands", ExtensionListQuery(text: "what time"), ["dev.sidefolk.world-clock"]),
             ]
             for (name, query, open) in listStates {
                 try await page("page-settings-extensions-\(name)", ExtensionsSettingsView(model: settings, query: query, expanded: open),

@@ -31,14 +31,15 @@ Claude Code or Codex. You can also add any existing MCP server (see
 4. [Permissions and the sandbox](#permissions-and-the-sandbox)
 5. [The protocol](#the-protocol)
 6. [Tools, risk and approvals](#tools-risk-and-approvals)
-7. [Watchers](#watchers)
-8. [Testing locally](#testing-locally)
-9. [Installing, updating, removing](#installing-updating-removing)
-10. [Built-in extensions](#built-in-extensions)
-11. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
-12. [Plain MCP servers](#plain-mcp-servers)
-13. [Troubleshooting](#troubleshooting)
-14. [Limits](#limits)
+7. [Answering without the AI: commands](#answering-without-the-ai-commands)
+8. [Watchers](#watchers)
+9. [Testing locally](#testing-locally)
+10. [Installing, updating, removing](#installing-updating-removing)
+11. [Built-in extensions](#built-in-extensions)
+12. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+13. [Plain MCP servers](#plain-mcp-servers)
+14. [Troubleshooting](#troubleshooting)
+15. [Limits](#limits)
 
 ## Quick start
 
@@ -114,6 +115,9 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `tools.<name>` | no | Sidefolk's metadata for a tool your program lists: `title`, `risk` (`low`, `medium`, `high`), `category` (`notes`, `memory`, `time`, `watch`, `files`, `web`, `system`, `agents`, `extensions`) and `mutates` (`false` if it only reads). Tool names: `^[a-z0-9_]{1,64}$`. |
 | `tools.<name>.paths` | no | Parameters that name a folder or file the person chooses, each `"read"` or `"write"` (at most 4). See [Folders named per call](#folders-named-per-call). |
 | `tools.<name>.timeout` | no | Seconds one call may take, 1–300; 30 if missing. For slow work like cloning. |
+| `tools.<name>.commands` | no | Sentences that call the tool at once, without the AI: `[{ "say": [...], "input": {...} }]`. See [Answering without the AI](#answering-without-the-ai-commands). |
+| `tools.<name>.ai` | no | `false` keeps the tool from Sidefolk's AI: only its commands reach it, and it costs no tokens. Missing means `true`. |
+| `words.<list>` | no | Word lists a command's slots can take (`"unit": ["km", "miles", "°F"]`), at most 16 lists and 2,000 words. |
 | `watchers.<name>` | no | A watcher kind: `title` (≤ 60), `description` (≤ 300) and `config`, its settings. |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 
@@ -355,6 +359,96 @@ and schema. If a later run reports something different (or a new tool), that too
 until you approve the change in Settings › Extensions. This stops an extension from changing what
 a tool claims to do after you installed it.
 
+## Answering without the AI: commands
+
+Some requests need no thinking: "what's 12*7", "time in Tokyo", "new uuid". Waiting seconds for an AI to
+decide to call your tool is slower and costs the person's quota. A tool can list **commands**: whole
+sentences that call it at once, with no AI, and you decide per tool who may reach it:
+
+| You write | Who reaches the tool |
+|---|---|
+| nothing | The AI only (the default). |
+| `commands` | Both: the sentences you listed run at once, and the AI calls it for everything else. |
+| `commands` and `"ai": false` | Only your sentences. The model never sees the tool, so it costs no tokens. |
+
+```json
+"tools": {
+  "current_time": {
+    "title": "Time around the world",
+    "commands": [
+      {
+        "say": ["time in {place:place}", "what time is it in {place:place}"],
+        "input": { "places": ["{place}"] }
+      }
+    ]
+  },
+  "flip": {
+    "title": "Flip a coin", "ai": false,
+    "commands": [ { "say": ["flip a coin", "heads or tails"] } ]
+  }
+}
+```
+
+**Sentences.** Each `say` sentence matches a whole request, in any case, after Sidefolk drops polite words
+("please", "hey Mochi,", "thanks") and the final punctuation. Write the variants people say ("what's",
+"whats", "what is"). Sentences are English, like the rest of Sidefolk's own understanding.
+
+**Slots.** `{name}` takes any words; `{name:kind}` takes one kind. The tool gets the value typed:
+
+| Kind | Matches | The tool gets |
+|---|---|---|
+| `text` (or no kind) | Any words, up to 200 characters | a string |
+| `word` | One word or code: `usd`, `km/h` | a string |
+| `number` / `integer` | `12`, `-3.5`, `1,000` / `42` | a number |
+| `expression` | Arithmetic: digits, `+ - * / ^ % × ÷`, parentheses, `of`, `sqrt`, `round`, `pi`… (not a date or a phone number) | a string |
+| `place` | A town, country or time zone: up to six words of letters | a string |
+| `url` | A web address, with or without `https://` | a string with `https://` |
+| `date` | `today`, `tomorrow`, `2026-12-25`, `25 December 2026`, `December 25` | a string as typed |
+| `list` | Two to twenty things: `tea, coffee or juice` | an array of strings |
+| a list in `words` | Exactly one of your words (`{from:unit}` with `"words": { "unit": [...] }`) | the word as typed |
+
+Your own word lists are the way to keep two extensions apart: Calculator's `{from:unit}` and Currency's
+`{from:currency}` make "5 pounds in kg" a unit conversion and "5 pounds in euros" money.
+
+**Input.** Without `input`, each slot fills the argument of the same name. With it, write the arguments: a
+value `"{slot}"` is replaced by the slot's value (a `list` slot inside an array joins it), and anything else
+is passed as written (`"kind": "uuid"`, `"folder": "~/Desktop"`). Every slot must be used, and every sentence
+of one command must have the same slots. If the slot's type doesn't fit your schema (a number where you want
+a string), Sidefolk converts it.
+
+**What Sidefolk refuses** (`sidefolk ext validate` says which field and why), so no command can swallow what
+people say:
+- a sentence without a word of its own (two letters or more). The one exception is a lone
+  `{…:expression}`, so "12*7" can be a sum;
+- a sentence that starts with a slot taking any words (`text`, `word`, `place`, `list`), or two of them with
+  nothing but a space between;
+- replies anyone types: "yes", "no", "ok", "thanks", "stop", "cancel", "help", "undo", "hello"…;
+- more than 3 slots or 80 characters a sentence, 12 sentences a command, 8 commands a tool, 64 sentences an
+  extension; a sentence that says the same as another; `"ai": false` on a tool without commands.
+
+**When a sentence is yours.** Sidefolk's own understanding goes first (reminders, notes, watches, quiet,
+"new conversation"…): a command never replaces them. Then the commands of switched-on extensions. If two
+extensions both claim a sentence, the AI gets it. While the person types, the line under the field says
+which extension answers ("World Clock · The time in Tokyo · no AI"). The answer appears in the Ask panel as a
+card and is read aloud for a spoken request.
+
+**Guard still decides.** A command is the person's words, but your manifest chose the tool and its input, so
+the call goes through Guard as Sidefolk's agent in a clean turn would: a tool that only computes runs; one
+that uses the internet, a folder or anything risky asks first (and "Always allow" given to the AI for that
+tool covers commands too). An address the person typed counts as typed.
+
+**When the tool can't answer.** Return an error (`isError`, or `Problem` in the Kit) for input you don't
+understand ("I don't know the place “my head”"). Sidefolk then hands the sentence to the AI, as if your
+command didn't exist; without an AI the person sees your message.
+
+**Commands, the AI, or both?**
+- *Commands only* (`"ai": false`): the answer never needs judgement, and the AI gains nothing from the tool
+  (a coin flip, a UUID, a fixed status). It costs no tokens on any request.
+- *Both*: the common requests have a clear shape ("100 usd in eur") but people also ask in ways no list of
+  sentences covers ("is it a good time to call my sister in Tokyo?").
+- *AI only*: what to do depends on context, or the inputs are free text that needs reading (summaries,
+  searches, anything that writes).
+
 ## Watchers
 
 A watcher kind turns settings and the previous state into "did something happen?". Sidefolk's
@@ -442,6 +536,14 @@ off and tells you.
 These ship with Sidefolk (`extensions/catalog.json`). Each is a small Swift program built with the app on
 [`extensions/Kit`](../extensions/Kit) and signed inside it (`Contents/Resources/Extensions/<folder>/bin/`),
 so none needs Python, Node or anything else installed; Git needs git, which it exists to use.
+
+Several answer common sentences at once, without the AI (D50): Calculator ("what's 12*7", "15% of 80", "convert
+5 km to miles", "days until 25 December"), World Clock ("time in Tokyo"), Currency ("100 usd in eur", "usd to
+eur"), Playtime ("pick a number between 1 and 6", "pick one: tea, coffee or juice"), Dev Toolbox ("new uuid",
+"3 uuids", "timestamp 1730000000"), QR Codes ("qr code for example.com", saved on the Desktop) and System
+Vitals ("about this mac"). Settings › Extensions lists each one's sentences under Details. Text transforms and
+checksums have none on purpose: Sidefolk tidies a typed sentence (quotes, final punctuation, spaces), and a
+hash of tidied text would be the wrong answer.
 
 | Extension | Starts | Permissions | What it does |
 |---|---|---|---|

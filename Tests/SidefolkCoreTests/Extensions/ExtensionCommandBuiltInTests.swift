@@ -31,7 +31,7 @@ import Testing
             Issue.record("“\(text)” gave \(outcome)", sourceLocation: sourceLocation)
             return nil
         }
-        return card.detail
+        return card.detail ?? card.title
     }
 
     @Test func calculatorAnswersSumsUnitsAndDays() async throws {
