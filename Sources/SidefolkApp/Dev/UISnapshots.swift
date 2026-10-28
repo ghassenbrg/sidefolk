@@ -159,6 +159,19 @@ enum UISnapshots {
             try await page("page-settings-extensions-no-git", ExtensionsSettingsView(model: settings), width: width)
             fixtures.gitMissing = false
             await settings.loadExtensions()
+            // The list kept short (D39): one row open, only those switched off, a search that finds rows by their
+            // permissions and tools, and one that finds nothing switched on.
+            let listStates: [(String, ExtensionListQuery, Set<String>)] = [
+                ("expanded", ExtensionListQuery(), ["dev.sidefolk.git", "mcp.github"]),
+                ("off", ExtensionListQuery(show: .off), []),
+                ("search", ExtensionListQuery(text: "internet"), []),
+                ("search-tool", ExtensionListQuery(text: "pull"), []),
+                ("no-match", ExtensionListQuery(text: "spreadsheet", show: .on), []),
+            ]
+            for (name, query, open) in listStates {
+                try await page("page-settings-extensions-\(name)", ExtensionsSettingsView(model: settings, query: query, expanded: open),
+                               width: width)
+            }
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
             let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
