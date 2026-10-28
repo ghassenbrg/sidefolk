@@ -205,7 +205,7 @@ extension AppCoordinator: AskActions {
             }
             switch outcome {
             case .card(let card, let activityId, let undo):
-                model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), caption: caption)
+                addResult(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), card: card, to: model, caption: caption)
                 say(SpokenLine.card(card))
                 // Quick intents close the panel a moment after their card appears, once their words are said.
                 try? await Task.sleep(for: .seconds(undo ? 2.5 : 1.2))
@@ -298,7 +298,7 @@ extension AppCoordinator: AskActions {
                     if let card = activity.card,
                        ok ? activity.mutates || card.kind == .chance : PrivacyPane.isKnown(card.url) || SettingsLink.isKnown(card.url) {
                         shownCards.insert(card.title)
-                        model.add(.result(card, activityId: activity.id, undo: activity.undoAvailable), caption: caption())
+                        addResult(.result(card, activityId: activity.id, undo: activity.undoAvailable), card: card, to: model, caption: caption())
                         line = SpokenLine.card(card)
                     }
                     // What the mode answered for the person, and what nobody answered, always show (D37).
@@ -487,6 +487,16 @@ extension AppCoordinator: AskActions {
             model.attachment = attachment
             model.add(.info(String(localized: "What should I do with \(attachment.label)? Type it below.")))
             model.focusRequest += 1
+        }
+    }
+
+    /// A result card for the panel. What the companion flipped or rolled waits until it lands on the desktop (D44).
+    func addResult(_ entry: AskEntry.Content, card: ResultCard, to model: AskModel, caption: String?) {
+        let wait = card.kind == .chance ? player.untilLanded() : 0
+        guard wait > 0 else { return model.add(entry, caption: caption) }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(wait))
+            model.add(entry, caption: caption)
         }
     }
 }

@@ -62,6 +62,19 @@ final class CompanionPlayer {
     /// The companion name under its hand in rock, paper, scissors.
     var companionName = ""
 
+    /// When the toss being played lands.
+    private var landsAt: Date?
+    /// The longest a toss is in the air (dice: thrown at 0.96 s, 0.9 s of flight).
+    static let longestToss: TimeInterval = 1.86
+
+    /// How long a coin's or a die's card should wait, so the Ask panel doesn't say "Heads!" while the coin still spins.
+    /// The tool's card can come before its event reaches the player; then it waits for the longest toss.
+    func untilLanded(now: Date = Date()) -> TimeInterval {
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return 0 }
+        guard let landsAt, landsAt > now else { return Self.longestToss }
+        return landsAt.timeIntervalSince(now)
+    }
+
     /// Plays what core drew: the companion flicks the coin, throws the dice or pumps its fist, the objects fly above it
     /// and land on the result, then the result is said and stays a few seconds. `done` runs once it has gone.
     func toss(_ toss: Toss, done: @escaping @MainActor () -> Void = {}) {
@@ -74,6 +87,7 @@ final class CompanionPlayer {
         case .hands: (.pump, 0, 1.12, String(localized: "Rock… paper… scissors…", comment: "Said while the companion pumps its fist"))
         }
         companion.character.perform(antic)
+        landsAt = Date().addingTimeInterval(still ? 0 : launch + flight)
         var show = TossShow(toss: toss, start: Date().addingTimeInterval(launch), flight: flight, still: still)
         caption.show(still ? toss.result : waiting, stage: show, announce: still, companionName: companionName)
         run = Task { [weak self] in
