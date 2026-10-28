@@ -7,7 +7,8 @@ sites and services that keep working after a page was read (D47); your town when
 that belong to a note or task (D49); "what's my CPU?" answered with one reading, and coins, dice and
 rock-paper-scissors the companion plays on the desktop (D35, D44 amended); a searchable extensions list (D39
 amended); extensions that answer simple sentences instantly, without the AI, as their author decides (D50). Also: the licence options (docs/research/licence.md), seventy extension ideas and a plan for an
-extension library, both for the founder to review. 1332 core and 34 character tests pass; CI green.
+extension library, both for the founder to review. 1355 core and 34 character tests pass; CI green; snapshot 466
+is published, signed and notarized.
 
 ## Done and verified
 - **Conversations (D45):** every Ask answer opens on 8 lines with Show all and offers Reply in its own
@@ -448,15 +449,15 @@ then run the signed, notarized release and test the downloaded DMG on a clean Ma
   identity or ad hoc. Apple took 29 minutes over the first accepted app; later ones should be quicker.
 
 ## Next
-1. The founder: try snapshot 411 (signed and notarized by run 40544541115; checked: checksum, Developer ID
-   and timestamps on the DMG, the app, its helper and all thirteen extension programs, stapled tickets,
-   Gatekeeper "Notarized Developer ID"; run 40541043721 before it stopped on a timestamp-server blip, now
-   retried): hold to talk
-   (if it still hears nothing, the log's `"cat":"voice"` lines now say whether the microphone opened and
-   when sound came), the built-ins on a clean Mac, Play; ask Anthropic about its marks; then production
-   v0.1.0 (Actions › Release › production, or push the tag).
-2. Next iteration: secrets for extensions (then GitHub and connectors), calendar through EventKit, a
-   "Today" timeline with an end-of-day recap.
+1. The founder: try snapshot 466 (signed and notarized by run 40681936191; checked on the downloaded DMG:
+   checksum, Developer ID and timestamps on the DMG, the app, its helper and all thirteen extension programs,
+   hardened runtime, the location and microphone entitlements, the `SidefolkRelease` stamp, stapled tickets,
+   Gatekeeper "Notarized Developer ID"). Install it by hand (411 has no updater); the next snapshot then proves
+   the in-place update (RELEASE.md › Updates). Still waiting from 411: hold to talk with the real microphone.
+2. The founder's decisions: the licence (docs/research/licence.md); which of the 70 extension ideas to build
+   (docs/research/extension-ideas.md); the library plan's nine decisions (docs/research/extension-library-plan.md).
+3. Then: build the approved extensions with instant commands where they fit; the library's phase 1; production
+   v0.1.0 with curated release notes (snapshot notes are commit subjects, and the update window shows them).
 
 ## Design next (from the 2026-10-26 pass)
 1. A hand-drawn Mochi pose for the About window and onboarding (Mochi waving with the folks around,

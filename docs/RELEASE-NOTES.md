@@ -20,6 +20,9 @@ reminds and keeps watch, and your AI agents can talk to it.
 - Play with it (D44): say "dance!", "take a bow", "do a trick" or choose Play in its menu; stroke it again
   and it giggles; "let's play catch" (boop it as it hops about for 20 seconds, best score kept) or "help me
   relax" (one minute of slow breathing together). The AI can cheer with you too.
+- Chance on the desktop: "flip a coin", "roll 2 dice", "roll a d20" or "rock paper scissors", and the
+  companion flips, throws or plays its hand above itself, landing on a result drawn for real (the score is
+  kept).
 - Your own companions: a folder with `species.json` and SVG shapes, read strictly as data, listed
   under "Made by you" (`companions/template/`, and Miso as an example).
 - Folks on duty beside it: Tempo while a reminder is close, Scout while something is watched, Byte
@@ -32,8 +35,11 @@ reminds and keeps watch, and your AI agents can talk to it.
   do and whether it uses AI.
 - Without AI, in English: reminders with natural times and repeats, notes, ideas, tasks, list items,
   "About you" facts, watches, live values, quiet mode, search and stop (D4).
-- Every request ends in a card, not a transcript. Cards for saved things offer Undo; an answer that
-  ends with a question offers Reply.
+- Every request ends in a card, not a transcript. Cards for saved things offer Undo; a long answer opens
+  with Show all, and every answer offers Reply in its own conversation, Copy and Open in Conversations (D45).
+- "What's my CPU?", "how full is my disk", "temperature in Fukuoka": one reading, answered at once (D35).
+- Start fresh with "new conversation", ⌘N or Clear all. Conversations are kept for the days you choose,
+  can be read again, continued, searched and deleted in Sidefolk's window › Conversations (D45).
 - The cards behave like notifications: newest first, older ones a scroll away, two fingers sideways to
   slide one off, "Clear all", and notices that need nothing fade on their own (D5).
 
@@ -43,7 +49,9 @@ reminds and keeps watch, and your AI agents can talk to it.
 
 ### Time
 - Reminders that survive restarts, with snooze, done, repeats from every minute to every month (with
-  an end, such as "until 6pm"), a summary of missed ones and a morning brief. macOS notifications are
+  an end, such as "until 6pm"), a summary of missed ones and a morning brief.
+- A reminder can belong to a task or note ("add a task to call mom at 5", or Remind me on any item): done
+  or trashed, its reminders end; the bubble offers Mark done and Open (D49). macOS notifications are
   scheduled as a fallback when Sidefolk quits.
 
 ### Watching and live values
@@ -90,9 +98,12 @@ reminds and keeps watch, and your AI agents can talk to it.
   (Git needs git). On from the start, each switchable off: Git (clone public https repositories into a folder
   you name, status, pull, log), World Clock, System Vitals, Weather (forecasts, sunrise, sunset and the moon,
   a rain watcher), Calculator (exact sums, units, date maths), Currency (the ECB's daily rates, a rate
-  watcher), Playtime (coin, dice, random picks, rock, paper, scissors, a trivia quiz that keeps your score)
-  and Images (photo details; copies converted, smaller or without location). Ready to switch on: PDF Tools,
-  QR Codes, Archives, Dev Toolbox and Feeds (D39).
+  watcher), Playtime (random picks and a trivia quiz that keeps your score) and Images (photo details; copies
+  converted, smaller or without location). Ready to switch on: PDF Tools, QR Codes, Archives, Dev Toolbox and
+  Feeds (D39).
+- Instant answers (D50): an extension can answer simple sentences without the AI ("15% of 80", "time in
+  Tokyo", "100 usd in eur", "new uuid"); its author decides which tools the AI sees at all.
+- Settings › Extensions: one line per extension, details on a click, search and an All / On / Off filter.
 - Sidefolk can write an extension for you: it proposes it, writes a text-only draft, tries it with no
   permissions, and shows the normal install sheet. Only your click installs it (D39).
 - Plain MCP servers can be added; they run unsandboxed and are labelled so.
@@ -104,6 +115,12 @@ reminds and keeps watch, and your AI agents can talk to it.
   from anything read from outside, exact-command grants (D14).
 - Approval modes: Ask every time, Ask once per kind (default), Auto, Full access; and what to do when
   you don't answer: keep waiting, skip the step (default, after 10 minutes) or stop the task (D37).
+- Using the internet (D47): ask each time, once for each site (default), or not before reading; a site or
+  built-in service you allowed keeps working after Sidefolk has read a page.
+- Your location, only if you choose it (D48): your Mac's location or a town you pick. The AI hears the town,
+  never coordinates; the weather uses it when you name no place.
+- Updates (D46): Sidefolk looks for a new version on GitHub once a day, asks before installing, checks the
+  download's checksum and signature, and swaps itself in.
 - Activity lists every action with who asked, risk, decision and outcome, with Undo for 15 minutes.
 - Export everything (JSON) or delete everything, Keychain items included. Diagnostics export without
   your content.
@@ -121,8 +138,8 @@ reminds and keeps watch, and your AI agents can talk to it.
 - To build: Xcode 26 or later (Swift 6.2).
 
 ## Known limits
-- **Distribution:** no Developer ID signature or notarization yet (`scripts/release.sh` is ready and
-  needs the credentials), so 0.1.0 is built from source. No automatic updates (D15).
+- **Distribution:** signed with Developer ID and notarized; snapshots so far. The updater's swap is proven
+  only by the second release that carries it (RELEASE.md › Updates).
 - **Platforms:** Apple silicon only. Development and most testing were on macOS 27.0.1; macOS 15 and 26
   are supported by the code but haven't been checked by hand.
 - **Understanding without AI is English only.** With AI, any language works; the drop buttons work in
