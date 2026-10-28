@@ -1,5 +1,6 @@
 // Drives a running debug build (build/Sidefolk-dev.app) without clicks, for agents and tests by hand.
-// Debug builds listen for these distributed notifications; release builds don't (`#if DEBUG`).
+// Debug builds listen for these distributed notifications; release builds don't (`#if DEBUG`). Set SIDEFOLK_HOME to
+// the app's home so only that app acts (otherwise every running debug app does).
 //
 //   swift scripts/dev.swift snap                 PNG of every visible window in $SIDEFOLK_HOME/snapshots
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
@@ -19,10 +20,16 @@ guard let argument = CommandLine.arguments.dropFirst().first else {
     print("usage: swift scripts/dev.swift snap | <command>   (see the comment at the top of this file)")
     exit(2)
 }
+// Every debug app hears these notifications. With SIDEFOLK_HOME set, only the app using that home acts on them:
+// with several running side by side, one's `ask:` would otherwise reach the others (and their AI).
+let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"].map {
+    URL(fileURLWithPath: $0).standardizedFileURL.resolvingSymlinksInPath().path
+}
+let target: [AnyHashable: Any]? = home.map { ["home": $0] }
 let center = DistributedNotificationCenter.default()
 if argument == "snap" {
-    center.postNotificationName(.init("app.sidefolk.dev.snapshot"), object: nil, userInfo: nil, deliverImmediately: true)
+    center.postNotificationName(.init("app.sidefolk.dev.snapshot"), object: nil, userInfo: target, deliverImmediately: true)
 } else {
-    center.postNotificationName(.init("app.sidefolk.dev.command"), object: argument, userInfo: nil, deliverImmediately: true)
+    center.postNotificationName(.init("app.sidefolk.dev.command"), object: argument, userInfo: target, deliverImmediately: true)
 }
 RunLoop.current.run(until: Date().addingTimeInterval(0.2))

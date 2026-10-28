@@ -14,10 +14,15 @@ enum DebugSnapshots {
 
     static func install(home: URL) {
         let dnc = DistributedNotificationCenter.default()
-        observers.append(dnc.addObserver(forName: notification, object: nil, queue: .main) { _ in
+        let mine = home.standardizedFileURL.resolvingSymlinksInPath().path
+        // A note naming another home is for another debug app running beside this one (scripts/dev.swift).
+        let forMe = { (note: Notification) in (note.userInfo?["home"] as? String).map { $0 == mine } ?? true }
+        observers.append(dnc.addObserver(forName: notification, object: nil, queue: .main) { note in
+            guard forMe(note) else { return }
             MainActor.assumeIsolated { capture(into: home.appendingPathComponent("snapshots", isDirectory: true)) }
         })
         observers.append(dnc.addObserver(forName: command, object: nil, queue: .main) { note in
+            guard forMe(note) else { return }
             let text = note.object as? String ?? ""
             MainActor.assumeIsolated {
                 Log.shared.info("dev", "command", ["command": text])
