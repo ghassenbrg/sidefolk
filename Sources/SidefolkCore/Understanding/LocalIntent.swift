@@ -72,6 +72,8 @@ public enum LocalIntent: Sendable, Equatable {
     case needsTarget(kind: String, becomes: String?)
     /// A trick or a game with the companion (D44).
     case companion(CompanionAct)
+    /// "new conversation", "start fresh": the next request to the AI starts a new conversation (D45).
+    case newConversation
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

@@ -255,6 +255,16 @@ final class SettingsModel {
         return error
     }
 
+    /// Every conversation with the AI, and nothing else (D45).
+    func deleteConversationHistory() async {
+        if let error = await services.deleteAllConversations() {
+            dataMessage = .failure(error)
+        } else {
+            dataMessage = .success(String(localized: "Conversation history deleted."))
+        }
+        storage = await services.storageSummary()
+    }
+
     // MARK: Extensions
 
     func loadExtensions() async {

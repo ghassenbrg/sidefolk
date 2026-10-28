@@ -34,6 +34,7 @@ enum QA {
         case .quietOff: return "quietOff"
         case .find(let q, let kind, let collection): return "find “\(q)” kind=\(kind.map { "\($0)" } ?? "-") in \(collection ?? "-")"
         case .companion(let act): return "companion \(act.rawValue)"
+        case .newConversation: return "newConversation"
         }
     }
 

@@ -12,6 +12,8 @@ public enum LocalOutcome: Sendable {
     case needsTarget(kind: String, becomes: String?)
     case info(String)
     case failed(UserFacingError)
+    /// The app ends the AI conversation: the agent runtime is the app's, not the core's (D45).
+    case newConversation
 }
 
 /// Carries out what `IntentParser` understood, without any model: every change goes through
@@ -117,6 +119,8 @@ public struct LocalIntentRunner: Sendable {
             return .needsTarget(kind: kind, becomes: becomes)
         case .companion(let act):
             return await execute("companion.play", ["act": .string(act.rawValue)])
+        case .newConversation:
+            return .newConversation
         }
     }
 

@@ -63,7 +63,7 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, into model: AskModel) {
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, followUp: String?, into model: AskModel) {
         // The reply may be said aloud (D34); an interruption before it arrives keeps it silent.
         let reply = voice.context(spoken: spoken)
         // A reminder that was waiting for its time: only a time (or "cancel") answers it; anything
@@ -111,7 +111,30 @@ extension AppCoordinator: AskActions {
             if let entry = model.entries.last?.id { offerReadyPlans(request, entry: entry, in: model) }
             return
         }
-        runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model, reply: reply)
+        runAgent(text, attachment: attachment, thinkHarder: thinkHarder, into: model, reply: reply, followUp: followUp)
+    }
+
+    /// The next request to the AI starts a new conversation; the ones before stay in Conversations (D45). The panel
+    /// keeps what it shows: starting fresh is about what the AI remembers, Clear all about what is on screen.
+    func startFresh(in model: AskModel, announce: Bool) {
+        model.thread = nil
+        model.replyingTo = nil
+        // The next request carries it too, so it can't overtake the runtime's own fresh start.
+        model.startsFresh = true
+        let agent = self.agent!
+        Task { await agent.endThread() }
+        if announce { announceFresh(caption: String(localized: "New conversation"), in: model) }
+    }
+
+    private func announceFresh(caption: String, in model: AskModel) {
+        model.removeNotices(caption: caption)
+        model.add(.info(String(localized: "Your next request starts a new conversation. Earlier ones stay in Conversations.")),
+                  caption: caption, fades: true)
+    }
+
+    func openConversation(_ thread: String?) {
+        askPanel.hide()
+        home.show(conversation: thread)
     }
 
     /// Adds the plans this Mac is signed in to onto a "needs AI" card, once they are found. The
@@ -209,23 +232,31 @@ extension AppCoordinator: AskActions {
             case .failed(let error):
                 model.add(.error(error, retryable: false), caption: caption)
                 say(SpokenLine.line(error.message))
+            case .newConversation:
+                startFresh(in: model, announce: false)
+                announceFresh(caption: caption ?? String(localized: "New conversation"), in: model)
+                say(String(localized: "Starting fresh."))
             }
         }
     }
 
     /// - Parameter continuing: the request's words are already on screen, so the cards join them.
+    /// - Parameter followUp: the conversation the person chose to reply in (D45); otherwise the current one, if still open.
     func runAgent(_ text: String, attachment: Attachment?, thinkHarder: Bool, into model: AskModel, reply spoken: ReplyContext? = nil,
-                  continuing: Bool = false) {
+                  continuing: Bool = false, followUp: String? = nil) {
         model.busy = true
         model.phase = Self.thinkingLine(harder: thinkHarder)
         let agentAttachment = attachment.map { a -> AgentAttachment in
             AgentAttachment(text: a.text ?? a.label, source: a.label, untrusted: true)
         }
-        let request = AgentRequest(text: text, attachment: agentAttachment, thinkHarder: thinkHarder, spoken: spoken?.spoken ?? false)
+        let request = AgentRequest(text: text, attachment: agentAttachment, threadId: followUp, thinkHarder: thinkHarder,
+                                   newThread: followUp == nil && model.startsFresh, spoken: spoken?.spoken ?? false)
+        model.startsFresh = false
         let agent = self.agent!
         Task {
             let handle = await agent.submit(request)
             currentRun = handle.runId
+            model.thread = handle.threadId
             var captioned = continuing
             var shownCards = Set<String>()
             // What may be said aloud once the run ends: the answer, else the last change, else the failure.
@@ -261,7 +292,7 @@ extension AppCoordinator: AskActions {
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !answer.isEmpty {
                         model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != "",
-                                          tainted: reply.tainted),
+                                          tainted: reply.tainted, thread: handle.threadId),
                                   caption: caption())
                         line = SpokenLine.answer(answer)
                     }

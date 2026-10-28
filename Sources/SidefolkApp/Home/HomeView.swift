@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Home window: a sidebar (Now, Activity, the Notebook's collections, Trash) and the selected page.
+/// The Home window: a sidebar (Now, Conversations, the Notebook's collections, Trash, Activity) and the selected page.
 struct HomeView: View {
     @Bindable var model: HomeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -32,6 +32,8 @@ struct HomeView: View {
         switch model.selection ?? .now {
         case .now:
             NowView(model: model.now)
+        case .conversations:
+            ConversationsView(model: model.conversations)
         case .activity:
             ActivityView(model: model.activity)
         case .trash:
@@ -69,6 +71,8 @@ private struct HomeSidebar: View {
                 Label { Text("Now") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
                     .tag(HomeSelection.now)
+                Label { Text("Conversations") } icon: { icon("bubble.left.and.bubble.right.fill", Theme.aqua) }
+                    .tag(HomeSelection.conversations)
             }
             Section("Notebook") {
                 ForEach(notebook.collections) { c in collectionRow(c) }

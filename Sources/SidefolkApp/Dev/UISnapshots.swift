@@ -314,9 +314,11 @@ enum UISnapshots {
     /// An answer that ends with a question: Reply, then the input waits for it.
     private static func sampleAskQuestion() -> AskModel {
         let ask = AskModel()
+        let request = "organize my Apple Notes into the notebook"
         ask.add(.answer("I copied 42 notes. Five look like they hold passwords or tokens, so I left them in Notes. Should I copy those too?",
-                        canThinkHarder: false, tainted: true), caption: "organize my Apple Notes into the notebook")
-        ask.reply()
+                        canThinkHarder: false, tainted: true, thread: "sample"), caption: request)
+        ask.thread = "sample"
+        if let answer = ask.entries.last { ask.reply(to: answer.id, thread: "sample", request: request) }
         return ask
     }
 

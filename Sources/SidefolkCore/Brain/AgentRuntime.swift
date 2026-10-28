@@ -3,8 +3,9 @@ import Foundation
 public struct AgentRequest: Sendable {
     public var text: String
     public var attachment: AgentAttachment?
-    /// The conversation to continue. It is used while it was active in the last 10 minutes;
-    /// nil continues the current conversation under the same rule.
+    /// The conversation to continue: one named here (an answer's Reply, Home › Conversations) continues
+    /// for as long as its history is kept (D45); nil continues the current conversation while it was
+    /// active in the last 10 minutes.
     public var threadId: String?
     public var thinkHarder: Bool
     /// Start a fresh conversation even if one is open.
@@ -79,8 +80,11 @@ public actor AgentRuntime {
     private var threadActivity: [String: Date] = [:]
     private var currentThread: String?
     private var running: [String: Task<Void, Never>] = [:]
+    /// The conversation of each run in flight, so deleting a conversation can stop its runs first.
+    private var runThreads: [String: String] = [:]
     private var tails: [String: Task<Void, Never>] = [:]
     private var lastPreview: ContextPreview?
+    private var lastPreviewThread: String?
 
     /// - Parameter excludedTools: registry tools the agent is never offered. None are excluded today:
     ///   every tool already passes Guard as `Caller.agent`, which is what keeps it in bounds.
@@ -99,11 +103,12 @@ public actor AgentRuntime {
         self.excludedTools = excludedTools
     }
 
-    public func handle(_ request: AgentRequest) -> AsyncStream<AgentEvent> { submit(request).events }
+    public func handle(_ request: AgentRequest) async -> AsyncStream<AgentEvent> { await submit(request).events }
 
-    public func submit(_ request: AgentRequest) -> AgentRunHandle {
+    public func submit(_ request: AgentRequest) async -> AgentRunHandle {
+        let kept = await isKept(request)
         let now = clock.now
-        let threadId = resolveThread(request, now: now)
+        let threadId = resolveThread(request, now: now, kept: kept)
         let runId = Identifier.make(now: now)
         let (stream, continuation) = AsyncStream.makeStream(of: AgentEvent.self, bufferingPolicy: .unbounded)
         let previous = tails[threadId]
@@ -111,6 +116,7 @@ public actor AgentRuntime {
             await self.execute(runId: runId, threadId: threadId, request: request, after: previous, continuation: continuation)
         }
         running[runId] = task
+        runThreads[runId] = threadId
         tails[threadId] = task
         return AgentRunHandle(runId: runId, threadId: threadId, events: stream)
     }
@@ -126,8 +132,32 @@ public actor AgentRuntime {
         return id
     }
 
-    /// The next request starts a fresh conversation.
+    /// The next request starts a fresh conversation; earlier ones stay in the history (D45).
     public func endThread() { currentThread = nil }
+
+    /// Forgets one conversation: its runs stop, its exchanges are deleted, and it is never continued.
+    /// Activity keeps its own record of what was done, as it does for everything (D45).
+    public func deleteConversation(_ threadId: String) async throws {
+        for (run, thread) in runThreads where thread == threadId { running[run]?.cancel() }
+        // A stopped run still writes its last note; the deletion comes after it.
+        await tails[threadId]?.value
+        if currentThread == threadId { currentThread = nil }
+        threadActivity[threadId] = nil
+        if lastPreviewThread == threadId { lastPreview = nil }
+        try await exchanges.delete(threadId: threadId)
+        events.changed(.conversations)
+    }
+
+    /// Forgets every conversation, including the one in progress.
+    public func deleteAllConversations() async throws {
+        cancelAll()
+        for tail in Array(tails.values) { await tail.value }
+        currentThread = nil
+        threadActivity = [:]
+        lastPreview = nil
+        try await exchanges.deleteAll()
+        events.changed(.conversations)
+    }
 
     public func lastSent() -> ContextPreview? { lastPreview }
 
@@ -135,7 +165,15 @@ public actor AgentRuntime {
     public func preview(_ request: AgentRequest) async -> ContextPreview {
         let current = settings()
         let choice = try? factory.make(current.provider, thinkHarder: request.thinkHarder)
-        let threadId = request.newThread ? nil : (request.threadId ?? currentThread).flatMap { isActive($0, now: clock.now) ? $0 : nil }
+        let kept = await isKept(request)
+        let now = clock.now
+        let threadId: String? = if request.newThread {
+            nil
+        } else if let wanted = request.threadId {
+            kept || isActive(wanted, now: now) ? wanted : nil
+        } else {
+            currentThread.flatMap { isActive($0, now: now) ? $0 : nil }
+        }
         let built = await context.build(text: request.text, attachment: request.attachment, threadId: threadId,
                                         thinkHarder: request.thinkHarder, spoken: request.spoken, settings: current, tools: offeredTools())
         return ContextPreview(provider: choice?.backend.providerName ?? current.provider.kind.displayName,
@@ -202,7 +240,9 @@ public actor AgentRuntime {
             emit(.finished(runId: runId))
             continuation.finish()
             if let mine = running.removeValue(forKey: runId), tails[threadId] == mine { tails[threadId] = nil }
+            runThreads[runId] = nil
             threadActivity[threadId] = clock.now
+            events.changed(.conversations)
         }
 
         await previous?.value
@@ -233,6 +273,7 @@ public actor AgentRuntime {
         let start = clock.now
         lastPreview = ContextPreview(provider: provider, model: model, system: built.system, messages: built.messages,
                                      tools: specs.map(\.modelName), tainted: built.tainted, at: start)
+        lastPreviewThread = threadId
 
         let exchanges = self.exchanges, runs = self.runs
         var record = AgentRun(id: runId, threadId: threadId, provider: provider, model: model, now: start)
@@ -242,6 +283,7 @@ public actor AgentRuntime {
         let asked = Exchange(threadId: threadId, role: .user, content: request.text.trimmingCharacters(in: .whitespacesAndNewlines),
                              meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted, spoken: request.spoken), now: start)
         await persist { try await exchanges.append(asked) }
+        events.changed(.conversations)
 
         let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted,
                                    mentions: Self.mentions(in: request), emit: emit)
@@ -306,13 +348,21 @@ public actor AgentRuntime {
         executor.registry.specs.filter { !excludedTools.contains($0.name) }
     }
 
-    private func resolveThread(_ request: AgentRequest, now: Date) -> String {
+    /// A conversation the request names that is quiet now but whose history is still kept: it continues (D45).
+    private func isKept(_ request: AgentRequest) async -> Bool {
+        guard !request.newThread, let wanted = request.threadId, !isActive(wanted, now: clock.now) else { return false }
+        return (try? await exchanges.contains(threadId: wanted)) ?? false
+    }
+
+    private func resolveThread(_ request: AgentRequest, now: Date, kept: Bool) -> String {
         threadActivity = threadActivity.filter { now.timeIntervalSince($0.value) < limits.threadWindow || tails[$0.key] != nil }
         let id: String
         if request.newThread {
             id = Identifier.make(now: now)
-        } else if let wanted = request.threadId ?? currentThread, isActive(wanted, now: now) {
+        } else if let wanted = request.threadId, kept || isActive(wanted, now: now) {
             id = wanted
+        } else if request.threadId == nil, let current = currentThread, isActive(current, now: now) {
+            id = current
         } else {
             id = Identifier.make(now: now)
         }

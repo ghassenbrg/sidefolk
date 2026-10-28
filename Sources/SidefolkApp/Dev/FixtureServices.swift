@@ -263,6 +263,20 @@ final class FixtureServices: AppServices {
     func disconnectCodex() async -> UserFacingError? { nil }
     func copySetupInstructions() {}
 
+    // MARK: Conversations
+
+    /// Snapshots never reach a model: the page shows how it looks without one.
+    func continueConversation(_ thread: String, text: String) async -> AgentRunHandle? { nil }
+    func stopConversation(run runId: String) async {}
+    func deleteConversation(_ thread: String) async -> UserFacingError? {
+        _ = try? await runtime.exchanges.delete(threadId: thread)
+        return nil
+    }
+    func deleteAllConversations() async -> UserFacingError? {
+        try? await runtime.exchanges.deleteAll()
+        return nil
+    }
+
     // MARK: Privacy and data
 
     func storageSummary() async -> StorageSummary {
