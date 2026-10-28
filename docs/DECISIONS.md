@@ -1093,3 +1093,27 @@ bubble offers Mark done (the task), 10 min and Open; notifications get a matchin
 differently; settling on `.notebook` events catches them all). A task with a repeat stays a plain task, since one
 "done" would end the whole series. Another agent's linked reminder needs its own title and learns the item only by
 kind and id (T4).
+
+### D50 — Extensions answer what needs no thinking, without the AI (2026-10-28)
+**Decision:** a tool's manifest may list `commands`: whole sentences (`say`) with typed slots (text, word, number,
+integer, expression, place, url, date, list, or the extension's own `words` lists) and the `input` they fill;
+`"ai": false` keeps a tool from the model altogether (no tokens). The local parser tries the commands of switched-on
+extensions after every core intent; a sentence two extensions claim goes to the AI; the hint names the extension
+("World Clock · Look up the time in Tokyo · no AI"). A command runs through Guard as `Caller.command`, treated as
+Sidefolk's agent in a clean turn: it computes without a card, but a network, folder or risky tool asks (an "Always
+allow" counts for the AI and commands alike), the approval mode and "Using the internet" apply, and an address the
+person typed counts as typed. A one-line answer is the card's title and the panel stays open. A tool that reports it
+can't answer hands the sentence to the AI; with something dropped on the panel, the AI gets it. The built-ins answer
+sums, units, currencies, days until a date, the time somewhere, numbers and picks, UUIDs and timestamps, QR codes and
+About this Mac.
+**Why:** the founder: a coin flip or a small sum shouldn't wait seconds for an AI, and authors should decide what is
+automatic and what is smart, for an ecosystem others build on.
+**Rules:** a sentence needs a word of its own (a lone expression aside), never starts with a slot that takes any
+words, never has two touching; at most 3 slots and 80 characters a sentence, 12 sentences a command, 8 commands a
+tool, 64 an extension; no common replies ("yes", "thanks", "stop"…); slots are checked again after matching;
+`ManifestValidator` names each mistake. SECURITY T32. Not given commands: text transforms and checksums (the parser
+tidies what is typed, so a hash would be of the wrong text) and trivia (its answers need the question in the AI's
+conversation). Command sentences are English, like the core parser.
+**Alternatives:** routing everything through the AI (slow, costs quota); letting an extension see every sentence and
+decide (it would read everything people type); a regular expression in the manifest (too easy to write one that
+captures anything).

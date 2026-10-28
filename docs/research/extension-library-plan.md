@@ -210,10 +210,10 @@ One file lists the whole library: `index.json`, with its signature in `index.jso
       "permissions": { "network": false, "files": { "read": [], "write": [] }, "exec": [], "media": false },
       "tools": [
         { "name": "watered", "title": "Mark a plant watered", "risk": "low", "hash": "…",
-          "model": false, "commands": ["I watered the {plant}", "watered the {plant}"] },
+          "ai": false, "commands": ["I watered the {plant:text}", "watered the {plant:text}"] },
         { "name": "thirsty_today", "title": "Plants that need water", "risk": "low", "hash": "…",
-          "model": true, "commands": ["who needs water today", "which plants are thirsty"] },
-        { "name": "add_plant", "title": "Add a plant", "risk": "low", "hash": "…", "model": true, "commands": [] }
+          "ai": true, "commands": ["who needs water today", "which plants are thirsty"] },
+        { "name": "add_plant", "title": "Add a plant", "risk": "low", "hash": "…", "ai": true, "commands": [] }
       ],
       "works": "both",
       "model_tokens": 190,
@@ -225,8 +225,9 @@ One file lists the whole library: `index.json`, with its signature in `index.jso
 ```
 
 - **Instant or AI, per tool.**
-  - `model` says whether the model sees the tool.
-  - `commands` lists its instant sentences, as the manifest gives them; the reviewer sees exactly these.
+  - `ai` says whether the model sees the tool (the manifest's `tools.<t>.ai`, D50).
+  - `commands` lists its instant sentences, as the manifest's `tools.<t>.commands[].say` gives them (slots typed as
+    `{name:kind}`); the reviewer sees exactly these.
   - `works` sums the extension up as `instant` (every tool is command-only), `both` or `ai`, for the badge and
     the filter.
   - `model_tokens` is CI's measure of what switching it on adds to every request (zero for `instant`), so the
@@ -405,7 +406,7 @@ So the rule becomes: on by default when the extension is everyday, its model-vis
 - Little Log and Holidays cost one or two tools each.
 
 It also suggests trimming today's: Calculator, Currency, World Clock and Playtime could answer their everyday
-sentences instantly and show the model fewer tools, once D50 lands.
+sentences instantly and show the model fewer tools (D50 is built: `"ai": false` and `commands` in the manifest).
 
 **Recommendation:**
 

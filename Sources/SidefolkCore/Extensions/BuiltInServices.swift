@@ -7,7 +7,8 @@ import Foundation
 /// test checks every address in each program against the hosts listed here.
 public enum BuiltInServices {
     public struct Service: Sendable {
-        /// The service's own name, as the approval card says it.
+        /// The service's name as the approval card says it, inside a translated sentence: a brand or a site, never a
+        /// phrase that needs an article ("It goes only to ecb.europa.eu").
         public let name: String
         /// Every host the program's code may reach.
         public let hosts: [String]
@@ -16,6 +17,6 @@ public enum BuiltInServices {
     /// By extension id.
     public static let byExtension: [String: Service] = [
         "dev.sidefolk.weather": Service(name: WeatherProbe.service, hosts: ["api.open-meteo.com", "geocoding-api.open-meteo.com"]),
-        "dev.sidefolk.currency": Service(name: "European Central Bank", hosts: ["www.ecb.europa.eu"]),
+        "dev.sidefolk.currency": Service(name: "ecb.europa.eu", hosts: ["www.ecb.europa.eu"]),
     ]
 }

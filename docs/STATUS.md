@@ -6,7 +6,7 @@ Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for 
 sites and services that keep working after a page was read (D47); your town when you choose it (D48); reminders
 that belong to a note or task (D49); "what's my CPU?" answered with one reading, and coins, dice and
 rock-paper-scissors the companion plays on the desktop (D35, D44 amended); a searchable extensions list (D39
-amended). Also: the licence options (docs/research/licence.md), seventy extension ideas and a plan for an
+amended); extensions that answer simple sentences instantly, without the AI, as their author decides (D50). Also: the licence options (docs/research/licence.md), seventy extension ideas and a plan for an
 extension library, both for the founder to review. 1332 core and 34 character tests pass; CI green.
 
 ## Done and verified
@@ -45,6 +45,12 @@ extension library, both for the founder to review. 1332 core and 34 character te
   the result, from words, the Play menu or the AI; Playtime keeps trivia and picks (1.1.0). "A joke about the
   weather every minute" no longer names a place called Joke. *Checked:* tests, the dev app (coin, 3 coins, 2 and
   7 dice, rock-paper-scissors), snapshots, the new moves for Mochi and Scout.
+- **Instant answers from extensions (D50):** an author lists sentences ("time in {place:place}") that run a tool at
+  once, without the AI, and can keep a tool from the model (`"ai": false`). Built-ins answer "what's 12*7", "15% of
+  80", "convert 5 km to miles", "100 usd in eur" (asks once: it uses the internet), "time in Tokyo", "pick one: tea
+  or coffee", "new uuid", "about this mac". Core first; two extensions → the AI; a tool that can't answer → the AI.
+  Settings › Extensions › Details and the install preview list each one's sentences. *Checked:*
+  ExtensionCommandTests (15), ExtensionCommandBuiltInTests (6, with the real programs), the dev app with no AI.
 - **Extensions list (D39 amended):** one line per extension with Details on a click, a search over names, tools
   and permissions (it names what matched), All / On / Off with counts, remembered; ⌘F, arrows, VoiceOver phrases.
   *Checked:* ExtensionListQueryTests with the 13 shipped built-ins, snapshots in light, dark and Arabic.
