@@ -65,7 +65,7 @@ struct UpdateView: View {
         case .available(let offer):
             notes(offer)
             if case .download(let reason) = model.plan {
-                Label { Text(verbatim: reason.explanation + " " + String(localized: "Its disk image goes to your Downloads folder.")) }
+                Label { Text(verbatim: Wording.sentences([reason.explanation, String(localized: "Its disk image goes to your Downloads folder.")])) }
                     icon: { Image(systemName: "arrow.down.circle") }
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
