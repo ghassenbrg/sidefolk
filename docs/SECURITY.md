@@ -549,6 +549,26 @@ titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Voice,
 key lives in the Keychain bound to that host (as T18), requests are never redirected, and the key is
 removed with everything else. Replies stay silent while another app records and in quiet mode.
 
+**T30 Where the person is (M/M), D48.** Off until the person chooses in Settings › Privacy › Your location;
+until then nothing about where they are leaves the Mac, and the AI is only told the place isn't known.
+- *The Mac's location.* Location Services at a city's accuracy (3 km), significant changes only. macOS asks
+  once, when the person picks it (`NSLocationUsageDescription`, and the hardened runtime's
+  `com.apple.security.personal-information.location`); at launch Sidefolk resumes only what macOS already
+  allowed, and reading the state never asks. A new position is named only when it is more than 5 km from the
+  last or the name is a day old, at most every 10 minutes, by Apple's geocoder (MapKit, Core Location before
+  macOS 26), which receives the position as any Mac app's lookup does.
+- *A place chosen by name.* The typed words go to Open-Meteo's geocoder, the host the weather already uses.
+- *What is kept.* The town, region, country, time zone and coordinates rounded to 0.01° (about a kilometre), in
+  settings. Changing the choice clears the place; Off forgets it. The coordinates are used for one thing: asking
+  Open-Meteo about the weather there, as for any place.
+- *What the AI hears.* One line: town, region and country (and the time there when a chosen place keeps another
+  clock), never coordinates. Every name, from Apple or Open-Meteo, is held to the place-name rule
+  (`WeatherProbe.cleanPlace`: letters, spaces and a little punctuation, 60 characters), so a geocoder's answer
+  can't carry instructions into the context. Other agents get no tool that reads it (their reports are this
+  Mac's metrics only, T4); extensions see only what a model passes them, like any argument.
+- *Logs and exports.* The log says that the place changed, never where; diagnostics drop the place. The person's
+  own data export keeps it, and Delete all removes it with the settings.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
@@ -767,7 +787,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - Never fetches non-http(s) URLs, or private addresses from model-built URLs; never loads remote
   images.
 - Never asks for admin rights, Full Disk Access, Accessibility or Screen Recording; Automation only
-  for Notes and Reminders, driven by fixed scripts (T25).
+  for Notes and Reminders, driven by fixed scripts (T25). Location Services only once the person chose
+  their Mac's location, and never coordinates to an AI (T30).
 - Never removes anything from another app unless its whole copy is in the notebook and the person
   approved that removal (T25).
 - Never offers MCP sampling, roots or elicitation to extensions; never downloads or auto-updates

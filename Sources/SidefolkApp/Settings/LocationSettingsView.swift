@@ -85,11 +85,12 @@ private struct ChosenPlaceRows: View {
                         Image(systemName: "mappin").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)
                         Text(verbatim: place.fullName).font(Theme.Font.body).foregroundStyle(Theme.ink)
                         Spacer(minLength: 0)
+                        Text("Use", comment: "Picks this town as the person's place").font(Theme.Font.captionStrong).foregroundStyle(Theme.accent)
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityHint(Text("Uses this place"))
+                .accessibilityLabel(Text("Use \(place.fullName)", comment: "A button: “Use Portland, Oregon, United States”"))
             }
         }
         .padding(.horizontal, Theme.Space.l)

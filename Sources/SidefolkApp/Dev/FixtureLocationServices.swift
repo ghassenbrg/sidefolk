@@ -17,9 +17,9 @@ final class FixtureLocationServices: LocationServices {
 
     func openLocationSettings() {}
 
-    static let fukuoka = KnownPlace(city: "Fukuoka", region: "Fukuoka", country: "Japan", countryCode: "JP", latitude: 33.6,
-                                    longitude: 130.42, timeZone: "Asia/Tokyo", updatedAt: Date().addingTimeInterval(-3600))!
-    static let samples = [
+    nonisolated static let fukuoka = KnownPlace(city: "Fukuoka", region: "Fukuoka", country: "Japan", countryCode: "JP", latitude: 33.6,
+                                                longitude: 130.42, timeZone: "Asia/Tokyo", updatedAt: Date().addingTimeInterval(-3600))!
+    nonisolated static let samples = [
         fukuoka,
         KnownPlace(city: "Portland", region: "Oregon", country: "United States", countryCode: "US", latitude: 45.52,
                    longitude: -122.68, timeZone: "America/Los_Angeles", updatedAt: Date())!,
