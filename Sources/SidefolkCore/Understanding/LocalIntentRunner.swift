@@ -53,6 +53,11 @@ public struct LocalIntentRunner: Sendable {
         switch intent {
         case .remind(let title, let when, let recurrence, let important, let anchor):
             var input: [String: JSONValue] = ["title": .string(title), "when": .string(ISO8601DateFormatter().string(from: when))]
+            // "remind me about the report task …": the reminder belongs to that task when exactly one fits (D49).
+            if let item = await referencedItem(title) {
+                input["item"] = .string(item.id)
+                input["title"] = .string(item.title)
+            }
             // Only the user's own calls may carry it; it isn't in the schema models see.
             if let anchor, recurrence != nil { input["anchor"] = .string(ISO8601DateFormatter().string(from: anchor)) }
             // Only important reminders interrupt during quiet mode.
@@ -68,6 +73,12 @@ public struct LocalIntentRunner: Sendable {
         case .note(let kind, let text, let collection, let collectionKind):
             // The words are kept as typed; the title gets its capital letter here, like a reminder's.
             var input: [String: JSONValue] = ["text": .string(IntentParser.capitalizedNote(text)), "kind": .string(kind.rawValue)]
+            if let collection { input["collection"] = .string(collection) }
+            if collection != nil, let collectionKind { input["collection_kind"] = .string(collectionKind.rawValue) }
+            return await execute("notes.save", .object(input))
+        case .taskWithReminder(let text, let collection, let collectionKind, let remindAt):
+            var input: [String: JSONValue] = ["text": .string(IntentParser.capitalizedNote(text)), "kind": "task",
+                                              "remind": .string(ISO8601DateFormatter().string(from: remindAt))]
             if let collection { input["collection"] = .string(collection) }
             if collection != nil, let collectionKind { input["collection_kind"] = .string(collectionKind.rawValue) }
             return await execute("notes.save", .object(input))
@@ -118,6 +129,15 @@ public struct LocalIntentRunner: Sendable {
         case .companion(let act):
             return await execute("companion.play", ["act": .string(act.rawValue)])
         }
+    }
+
+    /// The note or task a reminder's title names ("the report task"), when exactly one in the notebook fits.
+    private func referencedItem(_ title: String) async -> NotebookItem? {
+        guard let reference = IntentParser.itemReference(in: title) else { return nil }
+        // Facts in About you are no reminder's business.
+        let profile = try? await NotebookCollections.profile(runtime.notebook, create: false)
+        let candidates = ((try? await runtime.notebook.items(kinds: [reference.kind], limit: 1000)) ?? []).filter { $0.collectionId != profile?.id }
+        return IntentParser.referencedItem(reference.name, among: candidates)
     }
 
     /// Stops what the words named, through `watch.stop` like any other stop. Several matches are named back

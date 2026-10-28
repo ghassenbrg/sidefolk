@@ -31,7 +31,7 @@ import Testing
         #expect(specs["reminders.create"]?.external == true)
         #expect(specs["reminders.list"]?.mutates == false)
         #expect(specs["reminders.list"]?.external == true)
-        #expect(specs["reminders.create"]?.inputSchema["required"] == ["title", "when"])
+        #expect(specs["reminders.create"]?.inputSchema["required"] == ["when"], "a reminder for a notebook item takes its title (D49)")
     }
 
     @Test func createsFromAPhrase() async throws {

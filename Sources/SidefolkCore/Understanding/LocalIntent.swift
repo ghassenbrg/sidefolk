@@ -51,6 +51,8 @@ public enum LocalIntent: Sendable, Equatable {
     /// `collectionKind` is what to make the collection if it does not exist yet ("add milk to my groceries list" makes a
     /// list); nil leaves that to the tool's default.
     case note(kind: NotebookItem.Kind, text: String, collection: String?, collectionKind: NotebookCollection.Kind? = nil)
+    /// A task with a time at its end ("add a task to call mom at 5"): saved with a reminder that belongs to it (D49).
+    case taskWithReminder(text: String, collection: String?, collectionKind: NotebookCollection.Kind?, remindAt: Date)
     /// A durable fact about the user ("I prefer pnpm"), kept in About you.
     case aboutMe(fact: String)
     case watch(WatchIntent)

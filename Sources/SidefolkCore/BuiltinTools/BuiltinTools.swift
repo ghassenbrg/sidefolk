@@ -6,16 +6,17 @@ import Foundation
 /// Every tool runs through `ToolExecutor`, so Guard sees each call first. Register the result with
 /// `ToolRegistry.register(_:)`.
 public enum BuiltinTools {
+    /// - Parameter reminders: lets notes.save and notes.update give an item its reminder (D49).
     public static func make(
         notebook: NotebookStore, platform: any PlatformBridge, events: EventBus,
-        fetcher: any WebFetching = URLSessionFetcher()
+        fetcher: any WebFetching = URLSessionFetcher(), reminders: ReminderTools.Shared? = nil
     ) -> [any Tool] {
         [
             // Notebook
-            NotesSaveTool(notebook: notebook, events: events),
+            NotesSaveTool(notebook: notebook, events: events, reminders: reminders),
             NotesSearchTool(notebook: notebook),
             NotesListTool(notebook: notebook),
-            NotesUpdateTool(notebook: notebook, events: events),
+            NotesUpdateTool(notebook: notebook, events: events, reminders: reminders),
             NotesTrashTool(notebook: notebook, events: events),
             CollectionsListTool(notebook: notebook),
             CollectionsCreateTool(notebook: notebook, events: events),
