@@ -1,12 +1,61 @@
 # Status
 
-Updated: 2026-10-28. Version 0.1.0. Latest: the founder's feedback on snapshot 404, fixed: voice opens
-the default input (build 404 got no audio at all), "evey 10s" and an AI that promised without acting,
-the Ask panel's results as notifications (D5 amended), thirteen built-in extensions as programs of
-their own so none needs Python (D39 amended), and play with the companion (D44). 1221 tests pass; all
-ten languages complete (2244 strings each); a release build with every extension program verified.
+Updated: 2026-10-28 (evening). Version 0.1.0. Latest: the founder's list after snapshot 411, built by a team
+of parallel agents and merged: conversations you can start fresh, read in full, follow up and delete (D45);
+Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for using the internet, with allowed
+sites and services that keep working after a page was read (D47); your town when you choose it (D48); reminders
+that belong to a note or task (D49); "what's my CPU?" answered with one reading, and coins, dice and
+rock-paper-scissors the companion plays on the desktop (D35, D44 amended); a searchable extensions list (D39
+amended). Also: the licence options (docs/research/licence.md), seventy extension ideas and a plan for an
+extension library, both for the founder to review. 1332 core and 34 character tests pass; CI green.
 
 ## Done and verified
+- **Conversations (D45):** every Ask answer opens on 8 lines with Show all and offers Reply in its own
+  conversation, Copy and Open in Conversations; "new conversation", "start fresh", ⌘N and Clear all start fresh;
+  Sidefolk's window › Conversations lists kept conversations with search and a transcript (steps included),
+  replies after the 10-minute window, deletes one or all (also Settings › Privacy). Clear all now sits above the
+  results (in German the header left the companion's name no room). *Checked:* ConversationsTests, UI snapshots
+  in light, dark and German. *Not by hand:* ⌘N, the reply chip, a reply from the window with Stop.
+- **Updates (D46):** a published copy looks for a newer release or snapshot on GitHub a minute after launch and
+  daily, asks in a gentle bubble, the menu bar or Settings › General › Updates, and on Update checks the download
+  (size, SHA-256, the running app's own Developer ID team and identifier, notarized), swaps itself in and reopens;
+  a copy that can't replace itself gets the checked image in Downloads. release.sh stamps `SidefolkRelease`.
+  *Checked:* tests with fake bundles, a real hdiutil image and a real ad hoc signature refused; live, the release
+  list and the published 411 image (both checksums, mounted, requirement met, another team's refused); a dev app
+  stamped as 404 found 411 by itself after 61 s. *Not yet:* a real swap, which needs the second release that
+  carries the updater (RELEASE.md › Updates).
+- **Using the internet (D47):** Settings › Privacy & Permissions: Ask each time / Ask once for each site
+  (default) / Don't ask before reading, and the sites and services you allowed (Remove, Add). A site or built-in
+  service allowed for good keeps working after Sidefolk read a page (before, every web use asked, every time); a
+  read held to its site can't be redirected off it; a CPU or memory report never counts as network. *Checked:*
+  InternetRuleTests (17), the redirect test, the Full-access exfiltration test unchanged, snapshots. *Not by hand.*
+- **Your location (D48):** Settings › Privacy › Your location: off (default), the Mac's location (a town, from
+  Location Services) or a town chosen by name. The AI hears the town, never coordinates; weather and reports with
+  no place named use it; with none known Sidefolk asks which, with a button to the setting. New entitlement
+  `com.apple.security.personal-information.location`. *Checked:* tests with a fake locator and geocoder, live
+  Open-Meteo search, UI snapshots of six states. *Not yet:* the real Location Services prompt.
+- **Reminders for a note or task (D49):** "Remind me" in the Notebook (an hour, this evening, tomorrow morning, any
+  time), "add a task to call mom at 5", "remind me about the report task tomorrow at 9"; a bell and time on the
+  item, the item on the reminder, Mark done and Open on the bubble; a task done or trashed ends its reminders,
+  reopened or restored brings back the ones ahead. Migration `v3-reminder-links`. *Checked:* about 40 tests, the
+  Notebook snapshot, a real dev app over its own socket (linked save, firing, Mark done).
+- **One reading and chance on the desktop (D35, D44 amended):** "what's my CPU usage", "how full is my disk",
+  "temperature in Fukuoka" answer once with no AI and nothing left running (`watch.read`); coins, dice and
+  rock-paper-scissors are drawn in core (`companion.toss`) and played by the companion above itself, landing on
+  the result, from words, the Play menu or the AI; Playtime keeps trivia and picks (1.1.0). "A joke about the
+  weather every minute" no longer names a place called Joke. *Checked:* tests, the dev app (coin, 3 coins, 2 and
+  7 dice, rock-paper-scissors), snapshots, the new moves for Mochi and Scout.
+- **Extensions list (D39 amended):** one line per extension with Details on a click, a search over names, tools
+  and permissions (it names what matched), All / On / Off with counts, remembered; ⌘F, arrows, VoiceOver phrases.
+  *Checked:* ExtensionListQueryTests with the 13 shipped built-ins, snapshots in light, dark and Arabic.
+- **For the founder to read:** docs/research/licence.md (recommendation: FSL-1.1-ALv2 for the code, the brand kept
+  apart, a CLA), docs/research/extension-ideas.md (70 ideas with tiers, sources and a top 15) and
+  docs/research/extension-library-plan.md (a separate `sidefolk-extensions` repository, signed downloads, a
+  signed index, Browse beside Installed; nine decisions at the top).
+- **Dev tooling:** `scripts/dev.swift` commands reach only the debug app with the same `SIDEFOLK_HOME` (several
+  ran side by side and answered each other's commands; one teammate's `ask:flip coin` reached an app without the
+  local coin and cost one tiny Codex reply); `make dev` stops only its own checkout's app. *Checked:* a command for
+  another home was ignored, one for its own home ran.
 - **Version 0.1.0** (`SidefolkVersion.current`); bundled extensions and the docs ask for `sidefolk >=0.1`.
 - **Ten languages, translated (D28):** fr, es, de, it, pt-BR, ja, ko, zh-Hans and ar each have all
   2008 strings, plural forms included (Arabic's six). `scripts/translations.py` exports what a
@@ -348,6 +397,13 @@ the publisher and licence, sets up Developer ID, and agrees on the download and 
 then run the signed, notarized release and test the downloaded DMG on a clean Mac.
 
 ## Known issues / not yet verified
+- **New this round, not yet tried by hand:** the Location Services prompt and Apple naming the town; an update's
+  swap and reopen (needs the second release carrying the updater); ⌘N and the reply chip; the Conversations
+  window's reply with Stop; the companion coming out of hiding for a coin and Reduce Motion in the running app;
+  the Now page's reminder rows showing their item (built, below the fold in every snapshot).
+- **Using the internet (D47):** Feeds and Git still ask after outside content (Guard would need their address
+  parameters); "Always" is never offered after outside content, so a built-in service is allowed from a clean
+  turn's card or in Settings. A site you allowed can receive what a steered model puts in a page's path.
 - **Not yet tried by hand with the real thing:** the microphone (its permission prompt, hold to talk,
   AirPods), Apple Notes on a real library after the -1728 fix, "clone … under ~/git" with a real AI,
   the menu bar's Approvals submenu and orange Full access icon, a live ElevenLabs voice, "Answer with
