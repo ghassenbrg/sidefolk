@@ -81,6 +81,13 @@ user folders or agent configs.
   command, routine) goes through it.
 - `AgentRuntime` — handles a user turn: builds context (`ContextBuilder`, token budget), picks a
   model (`ModelRouter`), runs a backend, streams `AgentEvent`s, records an `AgentRun`.
+  - Conversations (D45): a request with no thread continues the current one while it was active in the
+    last 10 minutes; one that names a thread (an answer's Reply, Home › Conversations) continues it for as
+    long as its exchanges are kept (`historyDays`). `endThread()` starts fresh ("new conversation", Clear all,
+    ⌘N); `deleteConversation`/`deleteAllConversations` stop the thread's runs first, then delete its
+    exchanges and publish `.dataChanged(.conversations)`. `ExchangeStore.conversations(matching:)` lists them
+    (title = first request); `ConversationTranscript` rebuilds one from exchanges plus each run's Activity
+    steps (by `run_id`). Activity and `agent_runs` keep their own records.
   - `LoopBackend` drives `TurnModel` providers (`AnthropicModel`, `OpenAICompatibleModel`):
     request → tool calls → executor → results → repeat, max 10 steps / 120 s by default. A reply
     that claims an action from a run that called no tool (`UnbackedClaim`, English) gets one more

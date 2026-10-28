@@ -73,13 +73,6 @@ struct AskView: View {
                 .help("Remove every result below and start a new conversation")
                 .padding(.trailing, Theme.Space.xs)
             }
-            // While a conversation with the AI is open: leave it, keeping what's on screen.
-            if model.thread != nil, !model.busy {
-                Button(action: startFresh) { Image(systemName: "square.and.pencil").imageScale(.small) }
-                    .buttonStyle(.sf(.plain))
-                    .help(Text("\(String(localized: "New conversation")) (⌘N)", comment: "A button's name, then its shortcut"))
-                    .accessibilityLabel("New conversation")
-            }
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
             headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
             if !clearable {
@@ -156,16 +149,27 @@ struct AskView: View {
                 // Typing a time works in English; tapping works in every language.
                 WhenChips(times: actions.reminderTimes()) { date in actions.remindPending(at: date, in: model) }
             }
-            HStack(spacing: 4) {
-                Image(systemName: model.voice == nil ? "return" : "mic").imageScale(.small)
-                // Two lines at most: the hint stays short in English, and other languages run longer.
-                Text(verbatim: hintLine)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                HStack(spacing: 4) {
+                    Image(systemName: model.voice == nil ? "return" : "mic").imageScale(.small)
+                    // Two lines at most: the hint stays short in English, and other languages run longer.
+                    Text(verbatim: hintLine)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(model.hint == nil && !model.busy ? Theme.inkFaint : Theme.inkMuted)
+                .accessibilityElement(children: .combine)
+                if offersFresh {
+                    Spacer(minLength: Theme.Space.s)
+                    // Here rather than in the header: it says what continues, and the header has no room in longer languages.
+                    Button(action: startFresh) { Label("New conversation", systemImage: "square.and.pencil") }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.accent)
+                        .fixedSize()
+                        .help(Text("\(String(localized: "New conversation")) (⌘N)", comment: "A button's name, then its shortcut"))
+                }
             }
             .font(Theme.Font.hint)
-            .foregroundStyle(model.hint == nil && !model.busy ? Theme.inkFaint : Theme.inkMuted)
-            .accessibilityElement(children: .combine)
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m)
@@ -239,6 +243,12 @@ struct AskView: View {
         }
     }
 
+    /// A conversation with the AI is open and the input is free: the next request would continue it.
+    private var offersFresh: Bool {
+        model.thread != nil && !model.busy && model.voice == nil && model.text.isEmpty && model.replyingTo == nil
+            && model.pendingQuestion == nil && model.pendingReminderTitle == nil && model.pendingWatch == nil && model.attachment == nil
+    }
+
     private var hintLine: String {
         if let voice = model.voice { return voiceHint(voice) }
         if let question = model.pendingQuestion { return String(localized: "Your answer goes to: \(question.title)") }
@@ -248,6 +258,7 @@ struct AskView: View {
         if model.pendingReminderTitle != nil { return String(localized: "When? Try “tomorrow 9am” or “in 2 hours”") }
         if model.pendingWatch != nil { return String(localized: "Which address? e.g. localhost:3000 or example.com/status") }
         if model.attachment != nil { return String(localized: "Pick what to do, or type what you want") }
+        if offersFresh { return String(localized: "Your next request continues this conversation") }
         return String(localized: "Type something, or drop a file or link on me")
     }
 
