@@ -3,6 +3,11 @@ import Foundation
 /// What carrying out a local intent produced, for the Ask panel.
 public enum LocalOutcome: Sendable {
     case card(ResultCard, activityId: String, undo: Bool)
+    /// What an extension's command answered (D50): the person reads it, so the panel doesn't close on its own.
+    case answer(ResultCard, activityId: String)
+    /// The extension's tool said it couldn't answer this sentence ("I don't know the place “my head”"): the AI takes it
+    /// when one is set up, as it would have without the command (D50). The error is what to show otherwise.
+    case declined(UserFacingError)
     case list(title: String, cards: [ResultCard])
     /// A reminder without a usable time: ask the user when. `reason` says why the words given were no use (it is nil when
     /// there were none) and `important` must be carried into the reminder made from the answer.
@@ -136,7 +141,30 @@ public struct LocalIntentRunner: Sendable {
             return await execute("companion.play", ["act": .string(act.rawValue)])
         case .newConversation:
             return .newConversation
+        case .extensionCommand(let call):
+            return await command(call)
         }
+    }
+
+    /// Runs an extension's command as the person's own words, through Guard as Sidefolk's agent in a clean turn:
+    /// the extension chose the tool and its arguments, so a call that reaches the internet, a folder or anything
+    /// risky asks as it would for the AI, and an address the person typed counts as typed (D50, SECURITY T1).
+    private func command(_ call: ExtensionCommandCall) async -> LocalOutcome {
+        guard let tool = runtime.registry.tool(named: call.tool) as? ExtensionTool, tool.extensionId == call.extensionId else {
+            return .failed(UserFacingError("That extension is turned off now, so nothing ran.", changedNothing: true))
+        }
+        let out = await runtime.executor.execute(name: call.tool, input: call.input, caller: .command(extensionId: call.extensionId),
+                                                 mentions: UserMentions(text: call.said))
+        guard case .ok(let result) = out.status else { return .failed(out.problem!) }
+        let name = (tool.firstParty ? BuiltInExtensionWords.name(tool.extensionId) : nil) ?? tool.extensionName
+        let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !result.isError else {
+            return .declined(UserFacingError(verbatim: String(localized: "\(name) couldn't answer that: \(text.clipped(300))",
+                                                              comment: "An extension's own explanation after its name")))
+        }
+        // The whole answer, not the first lines a card keeps for the AI's runs.
+        let card = ResultCard(kind: .extensionResult, title: tool.spec.title, subtitle: name, detail: text.clipped(2_000), refId: tool.extensionId)
+        return .answer(card, activityId: out.activity.id)
     }
 
     /// The note or task a reminder's title names ("the report task"), when exactly one in the notebook fits.

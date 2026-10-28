@@ -37,6 +37,7 @@ enum QA {
         case .find(let q, let kind, let collection): return "find “\(q)” kind=\(kind.map { "\($0)" } ?? "-") in \(collection ?? "-")"
         case .companion(let act): return "companion \(act.rawValue)"
         case .newConversation: return "newConversation"
+        case .extensionCommand(let call): return "command \(call.tool) \(call.input.jsonString)"
         }
     }
 

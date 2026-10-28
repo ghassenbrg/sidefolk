@@ -528,7 +528,7 @@ final class AppCoordinator {
         case .approvalRequested(let request):
             ask.add(.approval(request))
             // Other apps' requests appear without taking the keyboard, so a stray Return can't approve them.
-            let trusted = request.caller.kind == "user" || request.caller.kind == "agent"
+            let trusted = ["user", "agent", "command"].contains(request.caller.kind)
             if !askPanel.isVisible { showAsk(focus: trusted) }
         case .toolFinished(let activity, let ok):
             creditExternal(activity, ok: ok)

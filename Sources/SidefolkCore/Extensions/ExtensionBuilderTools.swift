@@ -16,7 +16,7 @@ public enum ExtensionBuilderTools {
     static func refusal(_ context: ToolContext) -> String? {
         switch context.caller {
         case .user, .agent: break
-        case .routine, .external, .extension: return "Only Sidefolk itself, answering the person, can build extensions."
+        case .routine, .external, .extension, .command: return "Only Sidefolk itself, answering the person, can build extensions."
         }
         guard !context.tainted else {
             return "This request read outside content (a web page, a file, another app), so I won't write code in it. "

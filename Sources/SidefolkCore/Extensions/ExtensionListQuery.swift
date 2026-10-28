@@ -109,7 +109,7 @@ public struct ExtensionListQuery: Sendable, Hashable {
             + info.tools.map(\.title) + info.watchers.flatMap { [$0.title, $0.description] }
             + info.summary.lines.filter { $0.kind != .none }.map(\.text)
             + [info.author, info.version, info.id, info.command].compactMap { $0 }
-            + info.tools.map(\.name)
+            + info.tools.map(\.name) + info.tools.flatMap(\.commands)
     }
 
     /// Case, accents and full-width letters don't matter; with no locale, so the same words match in every language.

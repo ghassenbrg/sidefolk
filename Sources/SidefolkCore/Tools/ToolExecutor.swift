@@ -224,7 +224,7 @@ public final class ToolExecutor: Sendable {
                     continue
                 }
                 if answer == .allowAlways {
-                    try? await permissions.addGrant(Grant(tool: spec.name, scope: PermissionEngine.grantScope(for: scope), callerKind: caller.kind))
+                    try? await permissions.addGrant(Grant(tool: spec.name, scope: PermissionEngine.grantScope(for: scope), callerKind: caller.grantKind))
                     events.changed(.permissions)
                 }
                 return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag,

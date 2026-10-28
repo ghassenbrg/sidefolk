@@ -13,13 +13,15 @@ public struct ExtensionTool: Tool {
     public let folderParameters: [String: ExtensionManifest.FolderUse]
     /// One of Sidefolk's own extensions (D39): its approval cards may say what a call does in a sentence.
     public let firstParty: Bool
+    /// Sentences its manifest says call it without the AI (D50); nil when there are none.
+    public let commands: ToolCommands?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
 
     /// Seconds a manifest may give one call (`tools.<name>.timeout`).
     public static let timeouts = 1...300
 
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
-         folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false,
+         folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
         self.extensionId = extensionId
@@ -27,6 +29,7 @@ public struct ExtensionTool: Tool {
         self.remoteName = remoteName
         self.folderParameters = folderParameters
         self.firstParty = firstParty
+        self.commands = commands
         self.invoke = invoke
     }
 

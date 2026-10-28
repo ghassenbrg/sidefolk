@@ -344,8 +344,9 @@ public actor AgentRuntime {
         return UserMentions(text: typed)
     }
 
+    /// Tools an extension's author left to commands (D50) never reach the model.
     private func offeredTools() -> [ToolSpec] {
-        executor.registry.specs.filter { !excludedTools.contains($0.name) }
+        executor.registry.specs.filter { $0.offeredToModel && !excludedTools.contains($0.name) }
     }
 
     /// A conversation the request names that is quiet now but whose history is still kept: it continues (D45).

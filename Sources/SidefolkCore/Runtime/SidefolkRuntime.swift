@@ -119,8 +119,10 @@ public final class SidefolkRuntime: Sendable {
     /// and the companion's current name ("mochi, remind me…").
     public var intentParser: IntentParser {
         let s = settings.current
+        // Only switched-on extensions register tools, so their commands are the ones that count (D50).
+        let commandTools = registry.all.compactMap { $0 as? ExtensionTool }.filter { $0.commands != nil }
         return IntentParser(when: WhenParser(settings: s), companionNames: ["sidefolk", "pip", s.companionName],
-                            here: s.location.current?.name)
+                            here: s.location.current?.name, commandTools: commandTools)
     }
 
     /// Starts the background engines and the local API other agents connect to.

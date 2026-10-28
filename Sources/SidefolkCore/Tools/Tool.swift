@@ -39,11 +39,13 @@ public struct ToolSpec: Sendable, Hashable {
     public var external: Bool
     /// How long one call may run when it needs longer than the caller's usual limit (cloning a repository).
     public var timeout: TimeInterval?
+    /// Offered to Sidefolk's AI. An extension's tool its author left to commands only (D50) costs the model nothing.
+    public var offeredToModel: Bool
 
     public init(
         name: String, title: String, description: String, inputSchema: JSONValue, risk: Risk,
         capabilities: Set<Capability>, category: ToolCategory, mutates: Bool, external: Bool = false,
-        timeout: TimeInterval? = nil
+        timeout: TimeInterval? = nil, offeredToModel: Bool = true
     ) {
         self.name = name
         self.title = title
@@ -55,6 +57,7 @@ public struct ToolSpec: Sendable, Hashable {
         self.mutates = mutates
         self.external = external
         self.timeout = timeout
+        self.offeredToModel = offeredToModel
     }
 
     /// Name safe for model APIs (letters, digits, underscore, dash).
@@ -73,6 +76,9 @@ public enum Caller: Sendable, Hashable, CustomStringConvertible {
     case external(client: String)
     /// An extension (e.g. its watcher asking to notify).
     case `extension`(id: String)
+    /// A sentence the person typed or said that matched an extension's command (D50): their own words, but the
+    /// extension chose which of its tools they run and with what. Guard treats it as Sidefolk's agent in a clean turn.
+    case command(extensionId: String)
 
     public var kind: String {
         switch self {
@@ -81,6 +87,7 @@ public enum Caller: Sendable, Hashable, CustomStringConvertible {
         case .routine: "routine"
         case .external: "external"
         case .extension: "extension"
+        case .command: "command"
         }
     }
 
@@ -91,10 +98,15 @@ public enum Caller: Sendable, Hashable, CustomStringConvertible {
         case .routine: "a routine"
         case .external(let client): client
         case .extension(let id): id
+        case .command(let id): id
         }
     }
 
     public var runId: String? { if case .agent(let id) = self { return id } else { return nil } }
+
+    /// Whose "Always allow" this caller uses and leaves: a command acts for Sidefolk's own agent (D50), so allowing
+    /// Currency once covers the AI and the typed command alike.
+    public var grantKind: String { if case .command = self { return "agent" } else { return kind } }
 }
 
 /// What a call would touch, so Guard can check boundaries and scope "always allow" grants.
@@ -218,6 +230,7 @@ public struct ToolContext: Sendable {
         case .routine: "routine"
         case .external(let client): "external:\(client)"
         case .extension(let id): "extension:\(id)"
+        case .command(let id): "command:\(id)"
         }
     }
 }

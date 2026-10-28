@@ -1,7 +1,7 @@
 {
   "id": "dev.sidefolk.calculator",
   "name": "Calculator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sidefolk": ">=0.1",
   "description": "Sums, percentages, unit conversions and date maths worked out exactly, so an answer never rests on a guess.",
   "folk": "nova",
@@ -16,19 +16,83 @@
       "title": "Calculate",
       "risk": "low",
       "category": "system",
-      "mutates": false
+      "mutates": false,
+      "commands": [
+        {
+          "say": [
+            "{expression:expression}", "what is {expression:expression}", "what's {expression:expression}",
+            "whats {expression:expression}", "calculate {expression:expression}", "compute {expression:expression}",
+            "how much is {expression:expression}", "solve {expression:expression}"
+          ]
+        }
+      ]
     },
     "convert_units": {
       "title": "Convert units",
       "risk": "low",
       "category": "system",
-      "mutates": false
+      "mutates": false,
+      "commands": [
+        {
+          "say": [
+            "convert {value:number} {from:unit} to {to:unit}", "convert {value:number} {from:unit} into {to:unit}",
+            "convert {value:number}{from:unit} to {to:unit}", "{value:number} {from:unit} in {to:unit}",
+            "{value:number} {from:unit} to {to:unit}", "{value:number}{from:unit} in {to:unit}",
+            "{value:number}{from:unit} to {to:unit}", "how many {to:unit} in {value:number} {from:unit}",
+            "how many {to:unit} are in {value:number} {from:unit}", "how many {to:unit} is {value:number} {from:unit}"
+          ]
+        }
+      ]
     },
     "date_math": {
       "title": "Date maths",
       "risk": "low",
       "category": "time",
-      "mutates": false
+      "mutates": false,
+      "commands": [
+        {
+          "say": [
+            "days until {to:date}", "how many days until {to:date}", "how long until {to:date}",
+            "how many days to {to:date}"
+          ]
+        },
+        {
+          "say": [
+            "what day is {date:date}", "what day of the week is {date:date}", "which day is {date:date}"
+          ]
+        }
+      ]
     }
+  },
+  "words": {
+    "unit": [
+      "m", "meter", "meters", "metre", "metres", "km", "kilometer", "kilometers", "kilometre", "kilometres", "cm",
+      "centimeter", "centimeters", "centimetre", "centimetres", "mm", "millimeter", "millimeters", "millimetre",
+      "millimetres", "mi", "mile", "miles", "yd", "yard", "yards", "ft", "foot", "feet", "in", "inch", "inches", "nmi",
+      "nautical mile", "nautical miles", "kg", "kilogram", "kilograms", "kilo", "kilos", "g", "gram", "grams", "mg",
+      "milligram", "milligrams", "t", "tonne", "tonnes", "metric ton", "metric tons", "lb", "lbs", "pound", "pounds",
+      "oz", "ounce", "ounces", "st", "stone", "stones", "short ton", "short tons", "us ton", "l", "L", "liter",
+      "liters", "litre", "litres", "ml", "mL", "milliliter", "milliliters", "millilitre", "millilitres", "cl",
+      "centiliter", "centilitre", "dl", "deciliter", "decilitre", "m3", "cubic meter", "cubic meters", "cubic metre",
+      "gal", "gallon", "gallons", "us gallon", "us gallons", "imperial gallon", "imperial gallons", "uk gallon",
+      "uk gallons", "qt", "quart", "quarts", "pt", "pint", "pints", "cup", "cups", "fl oz", "floz", "fluid ounce",
+      "fluid ounces", "tbsp", "tablespoon", "tablespoons", "tsp", "teaspoon", "teaspoons", "m2", "m²", "sq m",
+      "square meter", "square meters", "square metre", "square metres", "km2", "km²", "sq km", "square kilometer",
+      "square kilometers", "square kilometre", "cm2", "cm²", "square centimeter", "ha", "hectare", "hectares", "acre",
+      "acres", "ac", "ft2", "ft²", "sq ft", "square foot", "square feet", "mi2", "mi²", "sq mi", "square mile",
+      "square miles", "yd2", "sq yd", "square yard", "square yards", "in2", "sq in", "square inch", "square inches",
+      "m/s", "mps", "meters per second", "km/h", "kmh", "kph", "kilometers per hour", "kilometres per hour", "mph",
+      "miles per hour", "knot", "knots", "kn", "kt", "ft/s", "feet per second", "s", "sec", "secs", "second", "seconds",
+      "ms", "millisecond", "milliseconds", "min", "mins", "minute", "minutes", "h", "hr", "hrs", "hour", "hours", "d",
+      "day", "days", "wk", "week", "weeks", "month", "months", "yr", "year", "years", "B", "byte", "bytes", "bit",
+      "bits", "KB", "kB", "kilobyte", "kilobytes", "MB", "megabyte", "megabytes", "GB", "gigabyte", "gigabytes", "TB",
+      "terabyte", "terabytes", "KiB", "kibibyte", "MiB", "mebibyte", "GiB", "gibibyte", "TiB", "tebibyte", "kb", "Kb",
+      "kbit", "kilobit", "kilobits", "Mb", "Mbit", "megabit", "megabits", "Gb", "Gbit", "gigabit", "gigabits", "J",
+      "joule", "joules", "kJ", "kilojoule", "kilojoules", "cal", "calorie", "calories", "kcal", "Cal", "kilocalorie",
+      "kilocalories", "Wh", "watt hour", "watt hours", "kWh", "kilowatt hour", "kilowatt hours", "BTU", "btu", "Pa",
+      "pascal", "pascals", "kPa", "kilopascal", "hPa", "mbar", "millibar", "bar", "psi", "atm", "atmosphere",
+      "atmospheres", "mmHg", "deg", "degree", "degrees", "°", "rad", "radian", "radians", "turn", "turns", "°C", "C",
+      "celsius", "centigrade", "°F", "F", "fahrenheit", "K", "kelvin"
+    ]
   }
 }

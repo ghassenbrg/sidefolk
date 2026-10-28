@@ -97,7 +97,9 @@ extension AppCoordinator: AppServices {
             sourceFolder: folder, permissionLines: summary?.lines.map(\.text) ?? [], warnings: warnings,
             // Titles, as the person will see the tools everywhere else.
             toolNames: manifest.tools.keys.sorted().map { manifest.tools[$0]?.title ?? $0 },
-            watcherNames: manifest.watchers.keys.sorted().map { manifest.watchers[$0]?.title ?? $0 }, isUpdate: preview.update != nil,
+            watcherNames: manifest.watchers.keys.sorted().map { manifest.watchers[$0]?.title ?? $0 },
+            commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
+            isUpdate: preview.update != nil,
             folk: manifest.folk, iconPath: preview.report.iconPath,
             fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/")))
     }
@@ -309,7 +311,7 @@ extension AppCoordinator: AppServices {
             sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
             iconPath: e.iconPath, fromDraft: e.origin == .draft, command: e.command, author: e.author,
-            hiddenSearchTexts: ExtensionListQuery.texts(for: e))
+            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands))
     }
 
     /// The manifest of an extension folder shipped inside the app, or nil.

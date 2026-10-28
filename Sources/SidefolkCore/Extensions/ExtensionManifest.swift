@@ -21,6 +21,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var permissions: Permissions
     public var tools: [String: ToolMeta]
     public var watchers: [String: WatcherMeta]
+    /// Word lists its commands' slots can take (`{from:unit}` with `"unit": ["km", "miles", …]`) (D50).
+    public var words: [String: [String]]
 
     public struct Run: Sendable, Hashable, Decodable {
         /// `python3`, `node`, `sh`, or a program inside the folder (`bin/server`).
@@ -95,19 +97,29 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var paths: [String: FolderUse]
         /// Seconds one call may take, for slow work such as cloning; missing means 30.
         public var timeout: Int?
+        /// Whether Sidefolk's AI may use it; missing means yes. False leaves it to its `commands` (D50), and the
+        /// model never sees it, so it costs no tokens.
+        public var ai: Bool?
+        /// Whole sentences that call it at once, without the AI (D50).
+        public var commands: [Command]
 
         public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
-                    paths: [String: FolderUse] = [:], timeout: Int? = nil) {
+                    paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = []) {
             self.title = title
             self.risk = risk
             self.category = category
             self.mutates = mutates
             self.paths = paths
             self.timeout = timeout
+            self.ai = ai
+            self.commands = commands
         }
 
+        /// What the AI is offered: everything, unless the author said only commands reach it.
+        public var offeredToModel: Bool { ai ?? true }
+
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
@@ -115,6 +127,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             mutates = try c.decodeIfPresent(Bool.self, forKey: "mutates")
             paths = try c.decodeIfPresent([String: FolderUse].self, forKey: "paths") ?? [:]
             timeout = try c.decodeIfPresent(Int.self, forKey: "timeout")
+            ai = try c.decodeIfPresent(Bool.self, forKey: "ai")
+            commands = try c.decodeIfPresent([Command].self, forKey: "commands") ?? []
         }
     }
 
@@ -175,7 +189,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
 
     public init(id: String, name: String, version: String, sidefolk: String? = nil, description: String? = nil,
                 folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
-                tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:]) {
+                tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:]) {
         self.id = id
         self.name = name
         self.version = version
@@ -188,11 +202,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.permissions = permissions
         self.tools = tools
         self.watchers = watchers
+        self.words = words
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers"])
+                                       "permissions", "tools", "watchers", "words"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -206,6 +221,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         permissions = try c.decodeIfPresent(Permissions.self, forKey: "permissions") ?? Permissions()
         tools = try c.decodeIfPresent([String: ToolMeta].self, forKey: "tools") ?? [:]
         watchers = try c.decodeIfPresent([String: WatcherMeta].self, forKey: "watchers") ?? [:]
+        words = try c.decodeIfPresent([String: [String]].self, forKey: "words") ?? [:]
     }
 
     /// The last part of the id (`dev.sidefolk.system-vitals` → `system-vitals`), used in tool names.

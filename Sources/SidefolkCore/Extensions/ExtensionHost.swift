@@ -166,9 +166,12 @@ public actor ExtensionHost {
         var tools: [ExtensionToolInfo] = []
         for name in Set(rt.pin.tools.keys).union(rt.pin.pending.keys).sorted() {
             guard let def = rt.pin.tools[name] ?? rt.pin.pending[name], let local = localName(rt, def.name) else { continue }
+            let meta = rt.manifest?.tools[def.name]
             tools.append(ExtensionToolInfo(name: ExtensionTool.registryName(short: shortName(rt), tool: local),
                                            title: title(rt, def), risk: risk(rt, def.name),
-                                           quarantined: rt.pin.pending[name] != nil))
+                                           quarantined: rt.pin.pending[name] != nil,
+                                           commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) }?.shown ?? [],
+                                           forAI: meta?.offeredToModel ?? true))
         }
         let builtIn = rt.pin.origin == .bundled
         return ExtensionInfo(id: id, name: (builtIn ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name,
@@ -955,11 +958,14 @@ public actor ExtensionHost {
                             risk: risk(rt, def.name), capabilities: capabilities, category: meta?.category ?? .extensions,
                             mutates: meta?.mutates ?? true, external: false,
                             // A little longer than the call itself, so the extension's own timeout is what reports it.
-                            timeout: timeout.map { $0 + 5 })
+                            timeout: timeout.map { $0 + 5 },
+                            // The author may keep a tool to its commands; then the model never sees it (D50).
+                            offeredToModel: meta?.offeredToModel ?? true)
         let id = rt.record.id
         let remote = def.name
         return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote,
-                             folderParameters: meta?.paths ?? [:], firstParty: firstParty) { [weak self] input, folders in
+                             folderParameters: meta?.paths ?? [:], firstParty: firstParty,
+                             commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)
         }

@@ -38,6 +38,17 @@ public struct ValidationReport: Sendable {
         }
     }
 
+    /// Each tool's commands, as "tool: “time in …”, “what time is it in …”", with "(not for the AI)" when the AI
+    /// never sees the tool.
+    public var commandLines: [String] {
+        guard let manifest else { return [] }
+        return manifest.tools.keys.sorted().compactMap { name in
+            guard let meta = manifest.tools[name], let commands = ToolCommands(meta.commands, words: manifest.words) else { return nil }
+            let said = commands.shown.map { "“\($0)”" }.joined(separator: ", ")
+            return "\(name): \(said)" + (meta.offeredToModel ? "" : " (not for the AI)")
+        }
+    }
+
     /// A readable report for the command line.
     public var text: String {
         var out: [String] = []
@@ -58,6 +69,11 @@ public struct ValidationReport: Sendable {
         let risks = toolRisks
         if !risks.isEmpty { out.append("Tools: " + risks.map { "\($0.name) (\($0.risk.rawValue))" }.joined(separator: ", ")) }
         if let m = manifest, !m.watchers.isEmpty { out.append("Watchers: " + m.watchers.keys.sorted().joined(separator: ", ")) }
+        let commands = commandLines
+        if !commands.isEmpty {
+            out.append("Answers without AI (D50):")
+            out += commands.map { "  - \($0)" }
+        }
         let cautions = warnings + (summary?.warnings ?? [])
         if !cautions.isEmpty {
             out.append("Warnings:")
@@ -140,6 +156,7 @@ public struct ManifestValidator: Sendable {
         report.iconPath = checkIcon(manifest.icon, folder: dir, issues: &issues)
         var permissions = checkPermissions(manifest.permissions, folder: dir, issues: &issues, warnings: &report.warnings)
         permissions.folders = checkTools(manifest, issues: &issues)
+        issues += ExtensionCommandRules.check(manifest)
         report.permissions = permissions
         checkWatchers(manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)

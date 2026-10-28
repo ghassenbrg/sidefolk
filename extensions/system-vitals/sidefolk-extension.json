@@ -1,7 +1,7 @@
 {
   "id": "dev.sidefolk.system-vitals",
   "name": "System Vitals",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "sidefolk": ">=0.1",
   "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
   "folk": "byte",
@@ -17,7 +17,13 @@
     "battery": { "title": "Battery status", "risk": "low", "category": "system", "mutates": false },
     "disk": { "title": "Disk space", "risk": "low", "category": "system", "mutates": false },
     "memory": { "title": "Memory use", "risk": "low", "category": "system", "mutates": false },
-    "about": { "title": "About this Mac", "risk": "low", "category": "system", "mutates": false }
+    "about": {
+      "title": "About this Mac", "risk": "low", "category": "system", "mutates": false,
+      "commands": [
+        { "say": ["about this mac", "about my mac", "what mac is this", "what mac do i have", "which mac do i have", "mac info",
+                  "system info", "how long has my mac been on", "uptime"] }
+      ]
+    }
   },
   "watchers": {
     "battery_low": {

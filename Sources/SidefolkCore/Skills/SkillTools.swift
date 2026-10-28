@@ -15,6 +15,7 @@ public enum SkillTools {
         case .routine(let id): "routine:\(id)"
         case .external(let client): "external:\(client)"
         case .extension(let id): "extension:\(id)"
+        case .command(let id): "command:\(id)"
         }
     }
 }
@@ -83,7 +84,7 @@ struct CreateSkillTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         switch context.caller {
-        case .external, .extension:
+        case .external, .extension, .command:
             throw UserFacingError("Only you or Sidefolk itself can create skills.")
         case .user, .agent, .routine:
             break
@@ -110,7 +111,7 @@ struct DeleteSkillTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         switch context.caller {
-        case .external, .extension:
+        case .external, .extension, .command:
             throw UserFacingError("Only you or Sidefolk itself can delete skills.")
         case .user, .agent, .routine:
             break
