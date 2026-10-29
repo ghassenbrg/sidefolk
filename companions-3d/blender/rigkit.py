@@ -9,7 +9,7 @@
 #   export()    GLB with skin and AO;  shots() renders posed test images
 import bpy, os, math
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 
 def ss(a, b, v):
@@ -24,7 +24,7 @@ def seg_param(p, a, b):
     return t, d
 
 
-def prepare(src, name, ratio=0.42, shift=(0, 0, 0)):
+def prepare(src, name, ratio=0.42, shift=(0, 0, 0), turn=0):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=src)
     mesh = [o for o in bpy.context.scene.objects if o.type == "MESH"][0]
@@ -34,6 +34,8 @@ def prepare(src, name, ratio=0.42, shift=(0, 0, 0)):
     # Meshy centres the bounding box; a big tail pushes the body off centre, so it is moved back.
     mesh.location = Vector(shift)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # Meshy sometimes faces a flat character backwards: `turn` degrees about Z put its face to -Y.
+    if turn: mesh.data.transform(Matrix.Rotation(math.radians(turn), 4, "Z"))
     # glTF import splits vertices along UV seams; weight smoothing would then pull the two sides
     # of a seam apart into cracks. UVs live on loops, so merging keeps them.
     bpy.ops.object.mode_set(mode="EDIT")

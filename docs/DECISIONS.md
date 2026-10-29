@@ -1127,14 +1127,14 @@ conversation). Command sentences are English, like the core parser.
 decide (it would read everything people type); a regular expression in the manifest (too easy to write one that
 captures anything).
 
-### D51 — Companions in 3D: Mochi and Spark either way; Ember, Kiko and Nimbo in 3D (2026-10-30)
+### D51 — Companions in 3D: Mochi and Spark either way; Ember, Kiko, Nimbo and Folio in 3D (2026-10-30)
 **Decision:** Settings › Companion › Look offers **3D** or **2D** for Mochi and Spark (3D is how they
-come); **Ember** (a red fox), **Kiko** (a kid astronaut) and **Nimbo** (a floating cloud) join the gallery
-in 3D only; the robot and the Folks stay 2D. A 3D companion is a three.js page (r180, vendored, offline)
+come); **Ember** (a red fox), **Kiko** (a kid astronaut), **Nimbo** (a floating cloud) and **Folio** (a
+folded-paper wish, added the same day after the founder's sheet) join the gallery in 3D only; the robot and the Folks stay 2D. A 3D companion is a three.js page (r180, vendored, offline)
 in a transparent `WKWebView` served from `Resources/Companions3D` over a private `companion3d://` scheme,
 laid over the companion's soft rig, which still runs undrawn: the `Director`, Life, states, gestures,
 postures, antics, petting, dragging, hit testing and bubble anchors are unchanged, and every cue
-(`CharacterView.onCue`) is replayed in 3D. Ember, Kiko and Nimbo run on stand-in rigs shaped like their
+(`CharacterView.onCue`) is replayed in 3D. The 3D-only companions run on stand-in rigs shaped like their
 3D silhouettes. The 3D characters are Meshy models (from sheets drawn with Codex image gen where there
 were none) rigged in Blender, with an engine of their own: layered poses, springs for ears, antennae,
 tails and follow-through, 3D eyes with shader lids and a painted face decal (light on Spark's visor).
@@ -1151,7 +1151,7 @@ window is hidden. That is why 2D stays one click away. 23 MB of models and runti
 **Alternatives:** SceneKit/RealityKit (D43's spike: another modelling pipeline, and the same GPU frames);
 pre-rendered sprite sheets (no live gaze, speech or follow-through, and very large); Meshy's mocap
 presets (a humanoid rig without ears, tails, antennae or a face, fighting the chibi proportions).
-**Implications:** `CompanionChoice.ember/kiko/nimbo`, `CompanionDimension`, `AppSettings.dimensions`
+**Implications:** `CompanionChoice.ember/kiko/nimbo/folio`, `CompanionDimension`, `AppSettings.dimensions`
 (`dimension(for:)`); `CharacterLook.threeD`, `CharacterSpecies.has3D/only3D`, stand-in species;
 `Companion3DStage`; `companion:<id>:2d|3d` in scripts/dev.swift; sources and pipeline in `companions-3d/`.
 Not shown in 3D yet: working props (laptop, notepad…) and badges; a 3D companion's still is one pose.

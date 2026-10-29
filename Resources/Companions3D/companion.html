@@ -18,11 +18,11 @@
 <script type="module">
 // A 3D companion inside Sidefolk's companion window (D51). Sidefolk keeps its own state machine,
 // idle scheduler, hit testing and bubbles (on an invisible 2D rig); this page only shows the 3D
-// character (`?c=mochi|spark|ember|kiko|nimbo`) and plays what Sidefolk tells it, sent as
+// character (`?c=mochi|spark|ember|kiko|nimbo|folio`) and plays what Sidefolk tells it, sent as
 // `sidefolk.handle({...})` from Swift (Companion3DStage).
 import { Companion } from './engine/engine.js';
 
-const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo'];
+const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo', 'folio'];
 const id = new URLSearchParams(location.search).get('c');
 const post = (msg) => window.webkit?.messageHandlers?.companion?.postMessage(msg);
 const character = (await import(`./characters/${CHARACTERS.includes(id) ? id : 'mochi'}.js`)).default;

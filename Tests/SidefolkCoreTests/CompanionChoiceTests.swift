@@ -143,5 +143,7 @@ import Testing
         #expect(s.companionName == "Ember")
         s.choose(.nimbo)
         #expect(s.companionName == "Nimbo")
+        s.choose(.folio)
+        #expect(s.companionName == "Folio" && s.dimension(for: .folio) == .threeD)
     }
 }

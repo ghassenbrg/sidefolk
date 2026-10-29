@@ -1,6 +1,6 @@
 import QuartzCore
 
-/// Ember, Kiko and Nimbo exist only in 3D (D51): the app draws them in a web view over a soft rig
+/// Ember, Kiko, Nimbo and Folio exist only in 3D (D51): the app draws them in a web view over a soft rig
 /// that is never shown. That rig still runs the states, idle life, petting and dragging, and its
 /// outline is what takes clicks and where bubbles attach, so each stand-in is shaped like the 3D
 /// character as the app frames it: 2.3 model units fill the view's height with the floor at 10%,
@@ -29,15 +29,23 @@ extension Species {
             s.shoulders = (pt(79, 96), pt(121, 96))
             s.restingFrame = CGRect(x: 60, y: 20, width: 80, height: 165)
         case .nimbo:
-            // One wide cloud floating above the floor, its puffs at the lower corners; no feet.
+            // One wide cloud floating above the floor, its puffs at its lower front corners; no feet.
             s.head = nil
-            s.torso = Shapes.roundish(center: pt(100, 104), width: 150, height: 144)
-                .union(Paths.ellipse(pt(36, 50), 17, 17)).union(Paths.ellipse(pt(164, 50), 17, 17))
-            s.neck = pt(100, 110)
+            s.torso = Shapes.roundish(center: pt(100, 90), width: 160, height: 112)
+            s.neck = pt(100, 100)
             s.feet = []
-            s.shoulders = (pt(57, 60), pt(143, 60))
+            s.shoulders = (pt(65, 70), pt(135, 70))
             // Anchored at the floor like every companion: its shadow is where it stands.
-            s.restingFrame = CGRect(x: 25, y: 20, width: 150, height: 157)
+            s.restingFrame = CGRect(x: 20, y: 20, width: 160, height: 126)
+        case .folio:
+            // A folded-paper house shape on two little feet, a paper fin at each side.
+            s.head = nil
+            s.torso = Shapes.roundish(center: pt(100, 103), width: 122, height: 127)
+                .union(Paths.ellipse(pt(28, 63), 12, 16)).union(Paths.ellipse(pt(172, 63), 12, 16))
+            s.neck = pt(100, 120)
+            s.feet = [pt(71, 26), pt(129, 26)]
+            s.shoulders = (pt(42, 75), pt(158, 75))
+            s.restingFrame = CGRect(x: 39, y: 20, width: 122, height: 147)
         default:
             break
         }

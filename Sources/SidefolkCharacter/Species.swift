@@ -44,7 +44,7 @@ struct Species {
         case .sidefolk: RobotRig()
         case .mochi: SoftRig(mochi)
         case .spark: SoftRig(spark)
-        case .ember, .kiko, .nimbo: SoftRig(standIn(for: look.species))
+        case .ember, .kiko, .nimbo, .folio: SoftRig(standIn(for: look.species))
         default: SoftRig(folk(look.species.folk!))
         }
     }

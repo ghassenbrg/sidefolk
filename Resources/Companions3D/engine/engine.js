@@ -446,6 +446,9 @@ export class Companion {
     this.lookStep(dt, P);
 
     // ── apply bones ──
+    // Limbs that are part of the body (Nimbo's puffs) move less, so they never tear away from it.
+    const ls = this.C.limbScale;
+    if (ls) for (const n of ['armL', 'armR', 'handL', 'handR']) if (P.b[n]) P.b[n] = P.b[n].map((v) => v * ls);
     this.dynamics(dt, P, lying);
     this.followThrough(dt, P);
     for (const [n, r] of Object.entries(this.rest)) {

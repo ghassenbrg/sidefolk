@@ -65,6 +65,7 @@ enum CompanionArt {
         case .ember: String(localized: "A curious little fox")
         case .kiko: String(localized: "A young space explorer")
         case .nimbo: String(localized: "A dreamy little cloud")
+        case .folio: String(localized: "A folded little wish")
         default: species(choice).folk?.role ?? ""
         }
     }

@@ -41,8 +41,20 @@
         "image_to_3d": "01a1885f-67e1-7259-a764-08d86929958c"
       },
       "nimbo": {
-        "front_image": "01a1885a-e8b9-7137-a4c5-ec9bdc0502ee",
-        "image_to_3d": "01a1885f-777a-7543-8995-61528c9bdf63"
+        "front_image": "01a189a1-c6b9-730a-9e16-f48c43c38204",
+        "image_to_3d": "01a189a2-6a95-73d6-ba76-630a4750fcfc",
+        "reference": "nimbo-sheet-v2.webp (the founder's sheet)",
+        "first_attempt": {
+          "front_image": "01a1885a-e8b9-7137-a4c5-ec9bdc0502ee",
+          "image_to_3d": "01a1885f-777a-7543-8995-61528c9bdf63",
+          "note": "a round puffball, not the wide cloud the founder wanted"
+        }
+      },
+      "folio": {
+        "front_image": "01a189a2-ea12-70db-a37c-cabdbc9651e9",
+        "image_to_3d": "01a189a3-a501-7076-af80-914e944a5d3d",
+        "reference": "folio-sheet.png (the founder's sheet)",
+        "note": "Meshy faced it backwards; rig_folio.py turns it 180°"
       }
     },
     "calls": [
@@ -165,6 +177,24 @@
         "texture_prompt": "Soft velvety lavender cotton-candy cloud made of round puffs, a warm cream-peach glow in the middle of the blank smooth face with no eyes or mouth, a small glossy golden star on the top right, two small separate lavender cloud puffs at the lower sides",
         "multi_view_thumbnails": true,
         "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "aspect_ratio": "4:3",
+        "references": [
+          "nimbo-sheet-v2.webp crops: front, hero, side, back"
+        ],
+        "prompt": "Front view of this exact cute cloud character \"Nimbo\", for 3D modeling. Keep the reference's shape exactly: a classic cartoon cloud that is clearly WIDER than tall (about 1.5 times as wide as high), with a smooth softly flattened rounded bottom, one big round dome on top slightly left of center, a smaller round bump on the upper right, and rounded lobes on the left and right sides. A smooth, soft, velvety matte lavender surface with very fine fuzz, NOT lumpy, NOT cauliflower-like, no small bumps. A warm cream-peach glow in the middle of the face area, fading to lavender at the edges. A small glossy golden five-point star sitting on the upper right of the cloud like a hair clip. Two small round cloud puffs as hands, at the lower left and lower right in front of the body, touching it. IMPORTANT: the face is completely BLANK (...). Symmetric, centered, front view, floating. Even soft studio lighting, plain flat light grey background (#E6E9EE), no shadow, no text."
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "aspect_ratio": "3:4",
+        "references": [
+          "folio-sheet.png crops: front, hero, side, back"
+        ],
+        "prompt": "Front view, full body, of this exact cute origami paper character \"Folio\", for 3D modeling. Keep the reference's shape exactly: a chunky folded-paper body shaped like a rounded house or pentagon (pointed roof top, slightly wider than its base), made of thick soft coral paper (#E8826E) with fine paper fibre texture and crisp folds; a cream-beige paper corner flap folded down over the top right of the roof; deep crimson-red inner folds (#B8344A) showing at both sides of the body; two small flat rounded paper-fin arms sticking out from the sides; two short folded paper feet, coral with crimson sides. IMPORTANT: the face is completely BLANK (...). Neutral symmetric pose (...). Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text."
       }
     ]
   },

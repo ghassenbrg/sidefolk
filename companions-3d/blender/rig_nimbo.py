@@ -3,53 +3,50 @@
 # inside the body, so a wave lifts a puff up beside the face.
 # blender -b -P rig_nimbo.py -- <in.glb> <out.glb> <test dir>
 #   root › hips › spine › chest › head;  chest › arm.{L,R} › hand.{L,R}
-# Numbers from measure.py / probe.py: the cloud spans z -0.83…0.83, its face looks out at y -0.67;
-# the puffs sit around (±0.74, -0.45, -0.63), radius about 0.2.
+# Numbers from measure.py / probe.py on the second model (after the founder's sheet, 2026-10-30):
+# a wide cloud, x ±0.95, z ±0.67, y ±0.43, its face flat-ish at y -0.39; the puffs bulge out of the
+# body's lower front corners around (±0.63, -0.33, -0.36), radius about 0.17 (one piece with it).
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np
-from rigkit import ss, prepare, armature, coords, islands, skin, bake_ao, export, shots
+from rigkit import ss, prepare, armature, coords, skin, bake_ao, export, shots
 
 src, dst, tests = sys.argv[sys.argv.index("--") + 1:][:3]
 mesh = prepare(src, "Nimbo", ratio=0.55)
 
-B = [("root", (0, 0, -0.831), (0, 0, -0.75), None, {"deform": False}),
-     ("hips", (0, 0, -0.62), (0, 0, -0.32), "root"),
-     ("spine", (0, 0, -0.32), (0, 0, -0.06), "hips", {"connect": True}),
-     ("chest", (0, 0, -0.06), (0, 0, 0.14), "spine", {"connect": True}),
-     ("head", (0, 0, 0.14), (0, 0, 0.83), "chest", {"connect": True}),
-     ("face", (0, -0.7, 0.05), (0, -0.8, 0.05), "head", {"deform": False})]
+B = [("root", (0, 0, -0.671), (0, 0, -0.6), None, {"deform": False}),
+     ("hips", (0, 0, -0.55), (0, 0, -0.3), "root"),
+     ("spine", (0, 0, -0.3), (0, 0, -0.1), "hips", {"connect": True}),
+     ("chest", (0, 0, -0.1), (0, 0, 0.05), "spine", {"connect": True}),
+     ("head", (0, 0, 0.05), (0, 0, 0.67), "chest", {"connect": True}),
+     ("face", (0, -0.45, -0.1), (0, -0.55, -0.1), "head", {"deform": False})]
 PUFF = {}
 for s, sx in (("L", 1), ("R", -1)):
-    PUFF[s] = np.array((0.74 * sx, -0.45, -0.63))
-    B += [(f"arm.{s}", (0.42 * sx, -0.25, -0.42), tuple(PUFF[s]), "chest"),
-          (f"hand.{s}", tuple(PUFF[s]), (0.86 * sx, -0.5, -0.72), f"arm.{s}", {"connect": True})]
+    PUFF[s] = np.array((0.63 * sx, -0.33, -0.36))
+    B += [(f"arm.{s}", (0.4 * sx, -0.15, -0.25), tuple(PUFF[s]), "chest"),
+          (f"hand.{s}", tuple(PUFF[s]), (0.72 * sx, -0.4, -0.45), f"arm.{s}", {"connect": True})]
 rig = armature("NimboRig", B)
 
 co = coords(mesh); x, y, z = co.T
 W = {}
 def add(n, w): W[n] = W.get(n, 0) + w
 
-# The puffs are modelled apart from the body: each is whole pieces near its corner, moving
-# rigidly (a puff half on the body smeared when raised).
-part = islands(mesh)
+# The puffs are one piece with the body: the front of each bulge is its hand, fading into the
+# cloud behind it, so a lifted puff stretches out of the cloud like soft jelly (the character
+# file keeps those moves small).
 puff = {}
 for s, sx in (("L", 1), ("R", -1)):
-    near = np.zeros(len(co), bool)
-    for k in np.unique(part[np.linalg.norm(co - PUFF[s], axis=1) < 0.2]):
-        if k == 0: continue
-        near |= part == k
-    print("puff", s, "pieces", np.unique(part[near]), "verts", int(near.sum()))
-    puff[s] = near.astype(float)
+    d = np.linalg.norm((co - PUFF[s]) * np.array((1, 0.8, 1)), axis=1)
+    puff[s] = ss(0.22, 0.15, d) * ss(-0.18, -0.3, y) * (np.sign(x) == sx)
 core = 1 - puff["L"] - puff["R"]
 # Soft, overlapping bands: the cloud squashes and sways as one.
-head = ss(-0.02, 0.3, z)
-chest = ss(-0.3, -0.04, z) * (1 - head)
-spine = ss(-0.58, -0.3, z) * (1 - head - chest)
+head = ss(-0.12, 0.15, z)
+chest = ss(-0.35, -0.12, z) * (1 - head)
+spine = ss(-0.55, -0.35, z) * (1 - head - chest)
 add("head", core * head); add("chest", core * chest); add("spine", core * spine)
 add("hips", core * (1 - head - chest - spine))
 for s in ("L", "R"): add(f"hand.{s}", puff[s])
-skin(mesh, rig, W, smooth=(0.5, 0))
+skin(mesh, rig, W, smooth=(0.5, 1))
 bake_ao(mesh)
 export(dst)
 shots(rig, tests, [

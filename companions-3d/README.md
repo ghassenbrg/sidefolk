@@ -1,7 +1,7 @@
 # 3D companions (D51)
 
-Mochi, Spark, Ember, Kiko and Nimbo as animated 3D characters. Mochi and Spark can be shown in 2D
-or 3D (Settings › Companion › Look); Ember, Kiko and Nimbo exist only in 3D. The app shows them in
+Mochi, Spark, Ember, Kiko, Nimbo and Folio as animated 3D characters. Mochi and Spark can be shown
+in 2D or 3D (Settings › Companion › Look); Ember, Kiko, Nimbo and Folio exist only in 3D. The app shows them in
 a transparent web view over the companion's 2D rig, which still runs undrawn: it keeps the states,
 idle life, clicks, petting and bubble anchors, and every cue it gets is replayed in 3D
 (`Companion3DStage`).
@@ -9,7 +9,7 @@ idle life, clicks, petting and bubble anchors, and every cue it gets is replayed
 | What | Where |
 |---|---|
 | Runtime the app ships: page, engine, characters, three.js r180, rigged models, detail maps, portraits | [`Resources/Companions3D`](../Resources/Companions3D) |
-| Character sheets: supplied (lineup, Spark, Mochi) and generated with Codex image gen (Ember, Kiko, Nimbo) | `references/` |
+| Character sheets: supplied (lineup, Spark, Mochi, Nimbo v2, Folio) and generated with Codex image gen (Ember, Kiko, Nimbo v1) | `references/` |
 | Every prompt, its references and the Meshy task ids | `references/prompts.json` |
 | Meshy front design images (blank faces, A-pose) | `meshy/` |
 | Rigs (Blender, headless) | `blender/rig_<name>.py` on the shared `blender/rigkit.py` |
@@ -38,7 +38,8 @@ idle life, clicks, petting and bubble anchors, and every cue it gets is replayed
    classified from Meshy's texture in GLSL, relief, sheen, inner light, glow), the face (ink: glossy
    3D eyes with shader lids and a painted decal cut from the head; screen: light on Spark's visor),
    springy chains (ears, antenna, tail), its stand pose, and postures for bodies that need their own
-   (Nimbo floats).
+   (Nimbo floats; Folio, a flat card, rests sitting). `limbScale` keeps limbs that are one piece with
+   the body (Nimbo's puffs) from tearing away from it.
 6. **Portrait.** In the playground, `(await import('./sheet.js')).portrait(companion)` saves the
    still Settings shows; copy it to `Resources/Companions3D/portraits/<name>.png`.
 
@@ -55,7 +56,7 @@ the window is hidden: about 18% of a core (D51), against 0.2% for a 2D companion
 ## Playground
 
 ```sh
-python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (mochi, spark, ember, kiko, nimbo)
+python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (mochi, spark, ember, kiko, nimbo, folio)
 ```
 
 `?bare&frame=tight` for clean captures; in the console `(await import('./sheet.js')).sheet(companion)`

@@ -51,7 +51,7 @@
 import { Companion } from './engine/engine.js';
 import { MOODS } from './engine/moods.js';
 
-const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo'];
+const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo', 'folio'];
 const q = new URLSearchParams(location.search);
 const id = CHARACTERS.includes(q.get('c')) ? q.get('c') : 'mochi';
 if (q.has('bare')) document.body.classList.add('bare');

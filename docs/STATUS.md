@@ -1,7 +1,7 @@
 # Status
 
 Updated: 2026-10-30. Version 0.1.0. Latest: 3D companions (D51): Mochi and Spark in 3D or 2D, and Ember,
-Kiko and Nimbo, in 3D only. Before that: the approved 3D Mochi app icon, exported and built locally.
+Kiko, Nimbo and Folio in 3D only; Nimbo remodelled after the founder's sheet. Before that: the approved 3D Mochi app icon, exported and built locally.
 Previous update: the founder's list after snapshot 411, built by a team
 of parallel agents and merged: conversations you can start fresh, read in full, follow up and delete (D45);
 Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for using the internet, with allowed
@@ -14,7 +14,8 @@ is published, signed and notarized.
 
 ## Done and verified
 - **3D companions (D51):** Settings › Companion › Look chooses 3D (how Mochi and Spark now come) or 2D;
-  Ember (a red fox), Kiko (a kid astronaut) and Nimbo (a floating cloud) join the gallery in 3D only. A
+  Ember (a red fox), Kiko (a kid astronaut), Nimbo (a floating cloud) and Folio (folded paper) join the
+  gallery in 3D only; Nimbo was remodelled as the wide cloud of the founder's sheet. A
   three.js page in a transparent web view (`Companion3DStage`, `Resources/Companions3D`) plays every cue
   of the undrawn 2D rig (stand-in rigs for the three new ones), so states, idle life, clicks, petting,
   dragging and bubbles work as before; Settings shows the 3D companion live and renders its still. Models

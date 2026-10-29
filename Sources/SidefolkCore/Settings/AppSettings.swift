@@ -29,19 +29,19 @@ public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
 }
 
 /// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, one of the
-/// Folk Family (D30), or Ember, Kiko and Nimbo, who exist only in 3D (D51). The app offers the
+/// Folk Family (D30), or Ember, Kiko, Nimbo and Folio, who exist only in 3D (D51). The app offers the
 /// ones whose rigs are finished.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
-    case ember, kiko, nimbo
+    case ember, kiko, nimbo, folio
 
-    /// How it can be drawn (D51): Mochi and Spark either way, Ember, Kiko and Nimbo in 3D only,
+    /// How it can be drawn (D51): Mochi and Spark either way, Ember, Kiko, Nimbo and Folio in 3D only,
     /// the robot and the Folks in 2D only. The first is how it comes.
     public var dimensions: [CompanionDimension] {
         switch self {
         case .mochi, .spark: [.threeD, .twoD]
-        case .ember, .kiko, .nimbo: [.threeD]
+        case .ember, .kiko, .nimbo, .folio: [.threeD]
         default: [.twoD]
         }
     }
