@@ -18,3 +18,6 @@ DerivedData/
 # Research workspace (reports worth keeping are copied into docs/)
 research_notes/
 reports/
+
+# Python bytecode from the Blender rig scripts
+__pycache__/
