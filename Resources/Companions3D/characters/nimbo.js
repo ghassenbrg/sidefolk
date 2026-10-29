@@ -59,7 +59,8 @@ export default {
   actions: {
     barrelRoll: {
       dur: 2.8,
-      fn(t, P) {
+      fn(t, P, fx) {
+        fx.at(0.8, 'sparkle');
         const roll = 360 * smooth((t - 0.5) / 1.5);
         P.root.rz -= roll;
         P.root.py += 0.18 * win(t, 0.2, 0.7, 1.9, 2.5);

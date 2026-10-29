@@ -50,6 +50,32 @@ public final class CharacterView: NSView {
         case liveliness(String)
     }
 
+    /// An effect the app can flash around the companion for a moment (D51: a 3D companion's moves
+    /// ask for them, as its 2D rig's states show them).
+    public enum Flash: String, CaseIterable, Sendable {
+        case zzz, dots, exclaim, question, sparkles, sweat, confetti, hearts, notes
+
+        var effect: Effect {
+            switch self {
+            case .zzz: .zzz
+            case .dots: .dots
+            case .exclaim: .exclaim
+            case .question: .question
+            case .sparkles: .sparkles
+            case .sweat: .sweat
+            case .confetti: .confetti
+            case .hearts: .hearts
+            case .notes: .notes
+            }
+        }
+    }
+
+    /// Shows `effect` for `seconds` on top of what the state shows (nothing under Reduce Motion but
+    /// the still frame, as for every effect).
+    public func flash(_ effect: Flash, for seconds: TimeInterval = 1.8) {
+        director.flash(effect.effect, for: seconds)
+    }
+
     /// The `.liveliness` cue's level now.
     public var motionLevel: String { reducedMotion ? "still" : liveliness.rawValue }
 

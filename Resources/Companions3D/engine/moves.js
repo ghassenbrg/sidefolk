@@ -417,7 +417,8 @@ export const ACTIONS = {
 
   turnAround: {
     dur: 4.2,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(1.2, 'question');
       // "What's behind me?" Turns its back to look, glances over its shoulder at you, turns back
       // with a little hop of "nothing there".
       const turn = curve([[0, 0], [0.3, -12], [1.1, 170], [1.3, 180], [2.8, 180], [3.5, 8], [3.7, -4], [4.2, 0]], t);
@@ -435,7 +436,8 @@ export const ACTIONS = {
 
   twirl: {
     dur: 2.2,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(0.9, 'sparkle');
       // A happy spin on the spot, arms out, a hop to finish.
       const spin = 360 * smooth((t - 0.35) / 1.2);
       P.root.ry += spin;
@@ -452,7 +454,8 @@ export const ACTIONS = {
 
   peekBehind: {
     dur: 3.0,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(0.6, 'question');
       // Looks back over its shoulder, as if someone called; then back to you.
       const side = 1;
       const on = win(t, 0, 0.5, 2.2, 2.9);
@@ -468,7 +471,8 @@ export const ACTIONS = {
 
   shuffle: {
     dur: 3.2,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(0.3, 'note');
       // A few happy side steps there and back, feet lifting in turn.
       const x = curve([[0, 0], [0.8, 0.14], [1.6, 0.14], [2.6, -0.04], [3.2, 0]], t);
       P.root.px += x;
@@ -484,7 +488,8 @@ export const ACTIONS = {
 
   lookUp: {
     dur: 3.4,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(0.9, 'sparkle');
       // Gazes up at something drifting by, follows it across, wonders.
       const on = win(t, 0, 0.6, 2.6, 3.4);
       const follow = curve([[0, -20], [1.2, -10], [2.4, 25], [3.4, 25]], t);
@@ -498,7 +503,8 @@ export const ACTIONS = {
 
   sway: {
     dur: 4.0,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(0.4, 'note'); fx.at(2.4, 'note');
       // Humming to itself: eyes closed, a slow sway side to side.
       const on = win(t, 0, 0.6, 3.3, 4.0);
       const sw = Math.sin(t * Math.PI * 2 * 0.6) * on;
@@ -515,7 +521,8 @@ export const ACTIONS = {
 Object.assign(ACTIONS, {
   attention: {
     dur: 2.4,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(0.1, 'bang');
       // "Hey, look!" A bounce on the spot, both paws up and waving, eyes wide: a reminder, news.
       P.root.py += hopY(t, 0.15, 0.55, 0.12) + hopY(t, 1.2, 1.55, 0.07);
       const up = win(t, 0.1, 0.35, 1.9, 2.3);
@@ -531,7 +538,8 @@ Object.assign(ACTIONS, {
 
   thanks: {
     dur: 2.4,
-    fn(t, P) {
+    fn(t, P, fx) {
+      fx.at(1.4, 'heart');
       // After a long stroke: a happy little bow of thanks and a hop.
       const bow = curve([[0, 0], [0.4, 22], [0.9, 24], [1.3, 0], [2.4, 0]], t);
       lean(P, bow * 0.7); add(P, 'head', bow * 0.4);

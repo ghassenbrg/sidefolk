@@ -495,6 +495,7 @@ export class Companion {
           add(L, 'arm' + s, 0, (s === 'L' ? -1 : 1) * 20 * deep, (s === 'L' ? -1 : 1) * -8 * deep);   // paws curl in
         }
         L.squash = 1 - 0.02 - 0.07 * deep;
+        if (deep > 0.9 && pet.active && (pet.hearts ?? 0) < this.time) { pet.hearts = this.time + 2.6; this.markAtHead('heart'); }
         L.face = deep < 0.35 ? { mood: 'smile', blush: 1.2 } : deep < 0.95 ? { mood: 'content', blush: 1.5 } : { mood: 'love', blush: 1.7, shy: 0.6 };
         this.mix(P, L, w);
         faceLayers.push([L.face, w]);
@@ -605,8 +606,8 @@ export class Companion {
   }
 
   markAtHead(kind) {
-    // In Sidefolk the 2D view's effects draw over the 3D character: no second set of marks.
-    if (this.opts.marks === false) return;
+    // In Sidefolk the 2D view draws the effects over the 3D character: ask it ('mark' event).
+    if (this.opts.marks === false) { this.emit('mark', kind); return; }
     const p = new THREE.Vector3();
     this.bones.head.getWorldPosition(p);
     const side = kind === 'sweat' ? -1 : 1;

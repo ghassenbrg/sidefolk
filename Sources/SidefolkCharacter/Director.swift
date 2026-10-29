@@ -79,6 +79,24 @@ final class Director {
 
     var blinks: Bool { look.blinks }
 
+    /// Effects shown for a moment on top of the state's own (a 3D companion's moves ask for them).
+    private var flashing: Set<Effect> = []
+    private var flashEnds: [Effect: Date] = [:]
+
+    func flash(_ effect: Effect, for seconds: TimeInterval) {
+        let end = Date().addingTimeInterval(seconds)
+        flashEnds[effect] = max(flashEnds[effect] ?? end, end)
+        if flashing.insert(effect).inserted { effects.show(look.effects.union(flashing), animated: live, moving: moving) }
+        Timer.scheduledTimer(withTimeInterval: seconds + 0.05, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let end = self.flashEnds[effect], end <= Date() else { return }
+                self.flashEnds[effect] = nil
+                self.flashing.remove(effect)
+                self.effects.show(self.look.effects.union(self.flashing), animated: self.live, moving: self.moving)
+            }
+        }
+    }
+
     /// Whether the body is drawn; its effects and badges always are (see `CharacterView.drawsRig`).
     var showsBody = true {
         didSet { if showsBody != oldValue { rig.showBody(showsBody) } }
@@ -101,7 +119,7 @@ final class Director {
         stopLoops(smooth: animate && !reducedMotion)
         setProp(look.prop, animated: animate)
         rig.apply(restPose, transit)
-        effects.show(look.effects, animated: animate, moving: moving)
+        effects.show(look.effects.union(flashing), animated: animate, moving: moving)
         startLoops()
         sharpen()
         if animate, previous != next, let flourish = Choreography.entrance(for: next) { play(flourish) }
@@ -301,7 +319,7 @@ final class Director {
     private func refreshMotion() {
         stopLoops(smooth: false)
         effects.show([], animated: false, moving: false)
-        effects.show(look.effects, animated: false, moving: moving)
+        effects.show(look.effects.union(flashing), animated: false, moving: moving)
         setBadges(badges, animated: false)
         let kind = look.prop
         setProp(.none, animated: false)

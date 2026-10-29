@@ -58,7 +58,8 @@ export default {
   actions: {
     scan: {
       dur: 3.6,
-      fn(t, P) {
+      fn(t, P, fx) {
+        fx.at(0.3, 'dots');
         const on = win(t, 0, 0.4, 3.0, 3.6);
         const sweep = curve([[0, 0], [0.8, -45], [1.8, 45], [2.8, 0], [3.6, 0]], t);
         add(P, 'head', -4 * on, sweep * on, 0); add(P, 'chest', 0, sweep * 0.25 * on, 0);

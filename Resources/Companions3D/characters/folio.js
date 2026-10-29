@@ -56,7 +56,8 @@ export default {
   actions: {
     flutter: {
       dur: 3.0,
-      fn(t, P) {
+      fn(t, P, fx) {
+        fx.at(0.6, 'sparkle');
         const on = win(t, 0.1, 0.4, 2.2, 2.7);
         const flap = Math.sin(t * Math.PI * 2 * 3.2) * on;
         for (const s of ['L', 'R']) raise(P, s, 30 * on + 35 * flap);

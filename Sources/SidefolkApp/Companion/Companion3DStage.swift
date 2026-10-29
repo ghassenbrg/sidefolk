@@ -17,6 +17,9 @@ final class Companion3DStage: NSView {
     var onReady: (() -> Void)?
     /// Called when the page never answered (three tries): show the 2D rig instead.
     var onFailed: (() -> Void)?
+    /// The page asks for an effect (zZz, hearts, notes…) around the companion for a few seconds:
+    /// the 2D view draws them over the 3D character.
+    var onEffect: ((CharacterView.Flash, TimeInterval) -> Void)?
 
     /// `Resources/Companions3D`, bundled by scripts/build-app.sh.
     static var folder: URL? {
@@ -123,7 +126,16 @@ final class Companion3DStage: NSView {
     private final class Bridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         weak var stage: Companion3DStage?
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            if (message.body as? [String: Any])?["kind"] as? String == "ready" { stage?.pageReady() }
+            guard let body = message.body as? [String: Any] else { return }
+            switch body["kind"] as? String {
+            case "ready": stage?.pageReady()
+            case "effect":
+                // Only names and a duration cross over, bounded: the page can't draw anything else.
+                guard let name = body["name"] as? String, let effect = CharacterView.Flash(rawValue: name) else { return }
+                let seconds = min(6, max(0.5, (body["seconds"] as? Double) ?? 1.8))
+                stage?.onEffect?(effect, seconds)
+            default: break
+            }
         }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { NSLog("companion3d: page loaded") }
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {

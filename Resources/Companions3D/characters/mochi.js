@@ -63,7 +63,8 @@ export default {
   actions: {
     bunnyHops: {
       dur: 2.6,
-      fn(t, P) {
+      fn(t, P, fx) {
+        fx.at(0.3, 'sparkle');
         let lift = 0;
         for (const t0 of [0.25, 0.95, 1.65]) lift += hopY(t, t0, t0 + 0.5, 0.14);
         P.root.py += lift;

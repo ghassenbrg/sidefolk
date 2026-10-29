@@ -3,6 +3,8 @@ import QuartzCore
 /// Little cartoon marks around the character.
 enum Effect: Hashable {
     case zzz, dots, exclaim, question, sparkles, sweat, waves, confetti, ticks
+    /// Hearts floating up (petting, love) and music notes (dancing, humming): flashed by moments.
+    case hearts, notes
 
     /// Marks that sit on the head move with the body; the rest float on the stage.
     var ridesBody: Bool { self == .sweat || self == .waves }
@@ -138,6 +140,8 @@ final class Effects {
         case .waves: waves(light)
         case .confetti: confetti()
         case .ticks: ticks(light)
+        case .hearts: hearts()
+        case .notes: notes(light)
         }
     }
 
@@ -308,6 +312,59 @@ final class Effects {
             ], duration: duration, phase: Double(i) * 0.31)
             let fade = Motion.cycle("opacity", [0, 1, 1, 0], duration: duration, times: [0, 0.15, 0.75, 1], phase: Double(i) * 0.31)
             loops += [Loop(layer: bit, key: "fall", animation: fall), Loop(layer: bit, key: "fade", animation: fade)]
+        }
+        return EffectRig(layer: root, loops: loops)
+    }
+
+    private static func hearts() -> EffectRig {
+        let root = Layers.canvas()
+        var loops: [Loop] = []
+        let spots: [(CGPoint, CGFloat, RGB)] = [(pt(150, 150), 7.5, Palette.blush), (pt(168, 172), 5.5, Palette.coral),
+                                                (pt(134, 176), 4.5, Palette.blush.lighter(0.25))]
+        for (i, (c, r, color)) in spots.enumerated() {
+            let heart = holder(c)
+            let path = CGMutablePath()
+            path.move(to: c + pt(0, -r))
+            path.addCurve(to: c + pt(-r, r * 0.45), control1: c + pt(-r * 0.25, -r * 0.55), control2: c + pt(-r, -r * 0.1))
+            path.addCurve(to: c + pt(0, r * 0.55), control1: c + pt(-r, r * 1.1), control2: c + pt(-r * 0.15, r * 1.05))
+            path.addCurve(to: c + pt(r, r * 0.45), control1: c + pt(r * 0.15, r * 1.05), control2: c + pt(r, r * 1.1))
+            path.addCurve(to: c + pt(0, -r), control1: c + pt(r, -r * 0.1), control2: c + pt(r * 0.25, -r * 0.55))
+            let shape = Layers.shape(path, fill: color.cg())
+            Layers.glow(shape, color, radius: 2, opacity: 0.45)
+            heart.addSublayer(shape)
+            heart.addSublayer(Layers.shape(Paths.ellipse(c + pt(-r * 0.45, r * 0.45), r * 0.22, r * 0.14), fill: RGB.white.cg(0.7)))
+            root.addSublayer(heart)
+            let duration = 1.6 + Double(i) * 0.25
+            let rise = Motion.cycle("transform", [
+                Motion.transform(CGAffineTransform(scaleX: 0.5, y: 0.5)),
+                Motion.transform(CGAffineTransform(translationX: CGFloat(i % 2 == 0 ? -3 : 3), y: 8)),
+                Motion.transform(CGAffineTransform(translationX: 0, y: 18).scaledBy(x: 0.9, y: 0.9)),
+            ], duration: duration, phase: Double(i) * 0.45)
+            let fade = Motion.cycle("opacity", [0, 1, 1, 0], duration: duration, times: [0, 0.15, 0.7, 1], phase: Double(i) * 0.45)
+            loops += [Loop(layer: heart, key: "rise", animation: rise), Loop(layer: heart, key: "fade", animation: fade)]
+        }
+        return EffectRig(layer: root, loops: loops)
+    }
+
+    private static func notes(_ light: Light) -> EffectRig {
+        let root = Layers.canvas()
+        var loops: [Loop] = []
+        for (i, (c, s)) in [(pt(40, 150), CGFloat(1)), (pt(60, 174), 0.8), (pt(160, 168), 0.9)].enumerated() {
+            let note = holder(c)
+            let head = Layers.shape(Paths.ellipse(c, 4.6 * s, 3.4 * s), fill: light.line.cg())
+            head.setAffineTransform(CGAffineTransform(rotationAngle: -0.4))
+            let stem = Layers.shape(Paths.polyline([c + pt(4 * s, 1 * s), c + pt(4 * s, 17 * s), c + pt(10 * s, 12 * s)]),
+                                    stroke: light.line.cg(), lineWidth: 2.4 * s)
+            [head, stem].forEach { Layers.glow($0, light.glow, radius: 2, opacity: 0.6); note.addSublayer($0) }
+            root.addSublayer(note)
+            let duration = 1.8 + Double(i) * 0.3
+            let bob = Motion.cycle("transform", [
+                Motion.transform(CGAffineTransform(rotationAngle: -0.2)),
+                Motion.transform(CGAffineTransform(translationX: 0, y: 7).rotated(by: 0.2)),
+                Motion.transform(CGAffineTransform(translationX: 0, y: 14).rotated(by: -0.2)),
+            ], duration: duration, phase: Double(i) * 0.5)
+            let fade = Motion.cycle("opacity", [0, 1, 1, 0], duration: duration, times: [0, 0.2, 0.75, 1], phase: Double(i) * 0.5)
+            loops += [Loop(layer: note, key: "bob", animation: bob), Loop(layer: note, key: "fade", animation: fade)]
         }
         return EffectRig(layer: root, loops: loops)
     }

@@ -56,7 +56,8 @@ export default {
   actions: {
     tailChase: {
       dur: 3.4,
-      fn(t, P) {
+      fn(t, P, fx) {
+        fx.at(2.6, 'sweat');
         P.root.ry -= 720 * smooth((t - 0.3) / 2.2);
         const on = win(t, 0.2, 0.5, 2.3, 2.8);
         add(P, 'head', 8 * on, -55 * on, 0); add(P, 'chest', 6 * on, -20 * on, 0);

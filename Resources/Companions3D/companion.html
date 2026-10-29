@@ -50,8 +50,23 @@ function show(id) {
       c.dispose();
     }
     c = window.companion = next;
+    c.on('mark', effect);
     post({ kind: 'ready' });
   });
+}
+
+// The engine's marks as Sidefolk's 2D effects (CharacterView.Flash), drawn over the 3D character,
+// with how long each stays.
+const EFFECTS = {
+  z: ['zzz', 3], zzz: ['zzz', 3], question: ['question', 1.6], bang: ['exclaim', 1.4], dots: ['dots', 2],
+  heart: ['hearts', 2.4], note: ['notes', 2.4], sparkle: ['sparkles', 1.8], star: ['sparkles', 1.8], sweat: ['sweat', 1.8],
+};
+const lastEffect = {};
+function effect(kind) {
+  const [name, seconds] = EFFECTS[kind] || [];
+  if (!name || performance.now() - (lastEffect[name] ?? -1e9) < 800) return;
+  lastEffect[name] = performance.now();
+  post({ kind: 'effect', name, seconds });
 }
 
 // Sidefolk's antics (CharacterAntic) and gestures (CharacterGesture) as 3D moves.

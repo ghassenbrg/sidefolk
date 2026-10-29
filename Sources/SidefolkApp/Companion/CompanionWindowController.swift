@@ -151,6 +151,7 @@ final class CompanionWindowController {
             stage.handle(.posture(self.character.posture))
             stage.setVisible(self.panel.occlusionState.contains(.visible))
         }
+        stage.onEffect = { [weak self] effect, seconds in self?.character.flash(effect, for: seconds) }
         stage.onFailed = { [weak self] in
             guard let self else { return }
             self.removeStage3D()

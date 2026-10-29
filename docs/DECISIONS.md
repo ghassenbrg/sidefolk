@@ -1154,7 +1154,9 @@ presets (a humanoid rig without ears, tails, antennae or a face, fighting the ch
 **Implications:** `CompanionChoice.ember/kiko/nimbo/folio`, `CompanionDimension`, `AppSettings.dimensions`
 (`dimension(for:)`); `CharacterLook.threeD`, `CharacterSpecies.has3D/only3D`, stand-in species;
 `Companion3DStage`; `companion:<id>:2d|3d` in scripts/dev.swift; sources and pipeline in `companions-3d/`.
-The 2D view's effects and badges stay drawn over the 3D character (only the 2D body hides).
+The 2D view's effects and badges stay drawn over the 3D character (only the 2D body hides), and
+the 3D moves ask it for more (`CharacterView.flash`: zZz while asleep, hearts while petted, notes
+when dancing or humming, sparkles, "?", "!"); hearts and notes are new effects.
 Liveliness reaches the page: Balanced and Lively add moments only a 3D body can have (turning
 round, twirls, each character's trick), and one table (`REACTIONS` in the engine) sizes the
 reactions to news, work done, errors and petting by level; every move is announced as the hook

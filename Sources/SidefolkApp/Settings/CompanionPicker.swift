@@ -272,6 +272,7 @@ private struct CompanionStage: NSViewRepresentable {
                 next.handle(.state(self.character.state))
                 self.syncVisible()
             }
+            next.onEffect = { [weak self] effect, seconds in self?.character.flash(effect, for: seconds) }
             next.onFailed = { [weak self] in self?.removeStage() }
             character.onCue = { [weak next] in next?.handle($0) }
         }

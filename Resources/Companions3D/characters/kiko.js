@@ -59,7 +59,8 @@ export default {
   actions: {
     moonJump: {
       dur: 3.0,
-      fn(t, P) {
+      fn(t, P, fx) {
+        fx.at(0.9, 'star');
         const crouch = win(t, 0, 0.3, 0.4, 0.55) + win(t, 2.35, 2.45, 2.55, 2.8);
         P.squash *= 1 - 0.08 * crouch;
         P.root.py += hopY(t, 0.5, 2.45, 0.45) - 0.03 * crouch;
