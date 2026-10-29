@@ -18,6 +18,9 @@ idle life, clicks, petting and bubble anchors, and every cue it gets is replayed
 
 ## How a character is made
 
+The `sidefolk-3d-character` skill (`.claude/skills/sidefolk-3d-character/`) walks an agent through
+all of this, from a sheet or just an idea, with templates for the rig and the character file.
+
 1. **Sheet.** A turnaround and expression sheet, generated with Codex image gen when there is none
    (`references/prompts.json`).
 2. **Design image (Meshy, nano-banana-pro).** A front view in A-pose with the sheet's proportions and
