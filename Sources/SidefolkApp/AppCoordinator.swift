@@ -393,14 +393,17 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("companion:") {
-            // companion:<id>[:<colour>[:<accessory>]], the same changes the Settings chooser makes.
-            let parts = command.split(separator: ":").dropFirst().map(String.init)
+            // companion:<id>[:2d|3d][:<colour>[:<accessory>]], the same changes the Settings chooser makes.
+            var parts = command.split(separator: ":").dropFirst().map(String.init)
             guard let choice = parts.first.flatMap(CompanionChoice.init(rawValue:)) else { return }
+            let dimension = parts.dropFirst().first.flatMap(CompanionDimension.init(rawValue:))
+            if dimension != nil { parts.remove(at: 1) }
             let color = parts.dropFirst().first.flatMap(CompanionAccent.init(rawValue:))
             let accessory = parts.dropFirst(2).first.flatMap(CompanionAccessory.init(rawValue:))
             Task {
                 await runtime.settings.update { s in
                     s.choose(choice)
+                    if let dimension { s.setDimension(dimension, for: choice) }
                     var style = s.style(for: choice)
                     if let color { style.color = color }
                     if let accessory { style.accessory = accessory }

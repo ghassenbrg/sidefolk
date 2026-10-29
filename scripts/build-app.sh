@@ -51,6 +51,8 @@ fi
 # Provider logos (D36): the PDFs only; their SVG sources and credits stay in the repository.
 [[ -d Resources/Brand/third-party/logos ]] && cp -R Resources/Brand/third-party/logos "$STAGE/Contents/Resources/ProviderLogos"
 [[ -d Resources/Skills ]] && cp -R Resources/Skills "$STAGE/Contents/Resources/Skills"
+# The 3D companions (D51): page, engine, three.js, rigged models (from sandbox-claude/companions-3d).
+[[ -f Resources/Companions3D/companion.html ]] && cp -R Resources/Companions3D "$STAGE/Contents/Resources/Companions3D"
 # The skill Connect installs into Claude Code and Codex (D42): apart from Skills, which Sidefolk's own AI reads.
 [[ -f skills/sidefolk/SKILL.md ]] && mkdir -p "$STAGE/Contents/Resources/AgentSkills" && \
   cp -R skills/sidefolk "$STAGE/Contents/Resources/AgentSkills/sidefolk"

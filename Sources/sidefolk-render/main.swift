@@ -69,7 +69,7 @@ MainActor.assumeIsolated {
         guard let options = LiveOptions(Array(args.dropFirst(hasId ? 4 : 3))) else { print(usage); exit(2) }
         Live.run(state: args[1], seconds: Double(args[2]) ?? 10, look: who.look, options: options)
     case "--antics" where args.count == 2 || (args.count == 4 && args[2] == "--only"):
-        let who = args.count == 4 ? [Companion.named(args[3])] : CharacterSpecies.allCases.map(Companion.init)
+        let who = args.count == 4 ? [Companion.named(args[3])] : CharacterSpecies.drawn2D.map(Companion.init)
         AnticSheets.write(to: URL(fileURLWithPath: args[1]), looks: who.map { ($0.id, $0.name, $0.look) })
     case "--check-companion" where args.count == 2:
         let report = CustomCompanions.load(folder: URL(fileURLWithPath: args[1]))
@@ -121,7 +121,7 @@ enum Sheets {
         save(sheet(title: "Hit shapes (characterPath) over the art", columns: 10, cell: CGSize(width: 116, height: 132),
                    items: states.map { s in (s.name, { hitImage(s) }) }), dir.appendingPathComponent("hit.png"))
         save(sheet(title: "Every companion at rest (★ offered in Settings)", columns: 7, cell: CGSize(width: 160, height: 176),
-                   items: CharacterSpecies.allCases.map { s in
+                   items: CharacterSpecies.drawn2D.map { s in
                        ("\(CharacterSpecies.available.contains(s) ? "★ " : "")\(s.displayName)", {
                            CharacterRenderer.image(state: .idle, size: CGSize(width: 150, height: 150), scale: scale, look: CharacterLook(s))
                        })
@@ -129,7 +129,7 @@ enum Sheets {
         save(menubarSheet(), dir.appendingPathComponent("menubar.png"))
         save(Icons.image(size: 1024), dir.appendingPathComponent("icon-1024.png"))
         save(iconSizes(), dir.appendingPathComponent("icon-sizes.png"))
-        CharacterSpecies.allCases.forEach { writeCompanion(Companion($0), to: dir) }
+        CharacterSpecies.drawn2D.forEach { writeCompanion(Companion($0), to: dir) }
         print("wrote contact sheets to \(dir.path)")
     }
 

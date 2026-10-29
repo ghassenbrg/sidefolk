@@ -1,0 +1,172 @@
+{
+  "codex_imagegen (gpt-6-luna, xhigh)": {
+    "ember-sheet.png": {
+      "refs": [
+        "lineup.webp (Ember crop)",
+        "spark-sheet.webp"
+      ],
+      "brief": "Character reference sheet for EMBER, a chibi baby red fox companion: big round head, huge glossy amber-brown eyes, small dark nose and tiny smile, dark brown eyebrow tufts, big upright ears with dark brown tips and pink inner ear, rich orange fur with cream muzzle, cheeks and chest, dark brown paws and feet, a very large fluffy tail with a cream tip, soft realistic fluffy fur. Premium 3D animated-feature character reference sheet, soft bright studio light, pale cool-white background, rounded panels. Layout like the second reference image (the Spark sheet): a large hero pose on the left; on the top right a turnaround row of four full-body views (front, three-quarter, side, back) in a neutral relaxed standing pose; on the bottom right a grid of eight head close-ups with expressions (neutral, talking, blink, happy, concerned, thinking, listening, sleep). Keep the character identical in every view: same proportions, colours, materials and details as the first reference image. Absolutely no text, no labels, no captions, no letters, no watermark, no logo."
+    },
+    "kiko-sheet.png": {
+      "refs": [
+        "lineup.webp (Kiko crop)",
+        "spark-sheet.webp"
+      ],
+      "brief": "Character reference sheet for KIKO, a chibi little kid astronaut companion: big head, warm brown skin, big brown glossy eyes, fluffy dark brown wavy hair, small friendly smile, mustard-yellow soft padded spacesuit with plum-purple gloves, knee pads, boots and backpack, copper neck ring, a small round navy patch with a cream star on the chest. Stylized animated-feature child, wholesome. Premium 3D animated-feature character reference sheet, soft bright studio light, pale cool-white background, rounded panels. Layout like the second reference image (the Spark sheet): a large hero pose on the left; on the top right a turnaround row of four full-body views (front, three-quarter, side, back) in a neutral relaxed standing pose; on the bottom right a grid of eight head close-ups with expressions (neutral, talking, blink, happy, concerned, thinking, listening, sleep). Keep the character identical in every view: same proportions, colours, materials and details as the first reference image. Absolutely no text, no labels, no captions, no letters, no watermark, no logo."
+    },
+    "nimbo-sheet.png": {
+      "refs": [
+        "lineup.webp (Nimbo crop)",
+        "spark-sheet.webp"
+      ],
+      "brief": "Character reference sheet for NIMBO, a cute floating cloud companion: one plump lavender cloud body made of soft round puffs, a warm cream-peach glow in the middle of the face, big glossy dark purple eyes with white highlights, small thin eyebrows, a small open smile, rosy blush, a small golden star sitting on the top right like a hair clip, two small detached cloud puffs at the sides that act as little hands, fine velvety cotton-candy surface, no legs, floating with a soft shadow below. For the turnaround show front, three-quarter, side and back of the floating cloud. Premium 3D animated-feature character reference sheet, soft bright studio light, pale cool-white background, rounded panels. Layout like the second reference image (the Spark sheet): a large hero pose on the left; on the top right a turnaround row of four full-body views (front, three-quarter, side, back) in a neutral relaxed standing pose; on the bottom right a grid of eight head close-ups with expressions (neutral, talking, blink, happy, concerned, thinking, listening, sleep). Keep the character identical in every view: same proportions, colours, materials and details as the first reference image. Absolutely no text, no labels, no captions, no letters, no watermark, no logo."
+    }
+  },
+  "meshy": {
+    "tasks": {
+      "mochi": {
+        "front_image": "01a18814-413b-71c4-ab5b-bfe7b9263766",
+        "image_to_3d": "01a18815-a97c-74a0-b8b4-48243a65db79"
+      },
+      "spark": {
+        "front_image": "01a18853-44dd-70b1-9a24-a8f8beb39e04",
+        "image_to_3d": "01a18853-ce0a-744e-8045-f61a797b9728"
+      },
+      "ember": {
+        "front_image": "01a1885a-df36-7552-96fc-96c35e13291a",
+        "image_to_3d": "01a1885f-5de8-733e-aea7-608c9724f11f"
+      },
+      "kiko": {
+        "front_image": "01a1885a-e450-732a-a3ce-03bdcd1846aa",
+        "image_to_3d": "01a1885f-67e1-7259-a764-08d86929958c"
+      },
+      "nimbo": {
+        "front_image": "01a1885a-e8b9-7137-a4c5-ec9bdc0502ee",
+        "image_to_3d": "01a1885f-777a-7543-8995-61528c9bdf63"
+      }
+    },
+    "calls": [
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi plush bunny mascot, for 3D modeling. Keep the reference's chibi proportions exactly: total height is about 3.2 head-heights INCLUDING the ears; the round head is very large, wider than the body, as wide as it is tall; the body is short, chubby and pear-shaped, slightly shorter than the head; very short stubby round legs and feet; short stubby rounded arms. Two LONG, wide, upright, slightly outward-tilted ears, each as tall as the head, rounded tips with deep navy blue (#1E3A8A) covering the top 40% of the ear, soft pink (#FFD6DC) inner ear. Turquoise (#2ED4D9) chunky knitted scarf wrapped snugly around the neck with one short square tail hanging on the chest showing a small white bunny-head emblem. Pure white soft velvety plush/vinyl material with gentle subsurface glow like the reference. IMPORTANT: the face is completely BLANK and smooth — no eyes, no nose, no mouth, no cheeks or blush, no markings (face parts will be added later). Neutral symmetric A-pose: standing straight, arms held away from the body angled down 35 degrees so there is clear space between arms and body, feet slightly apart, ears straight up. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-front.png",
+          "crop2-front.png",
+          "crop-hero.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a18814-413b-71c4-ab5b-bfe7b9263766",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "remove_lighting": true,
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Pure white soft velvety plush body, blank smooth face with no facial features, deep navy blue ear tips, soft pink inner ears, turquoise chunky knitted scarf with a small white bunny emblem on the hanging tag, white fluffy pompom tail on the back",
+        "multi_view_thumbnails": true,
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi robot companion \"Spark\", for 3D modeling. Keep the reference proportions exactly: a very large rounded-square ivory (#F8F6F1) helmet head, wider than the body; a big glossy deep navy (#1E2D5B) visor screen covering most of the face; round aqua (#39E6E0) headphone ear pads on both sides of the head with ivory centers; a short curved navy antenna on top ending in a glossy aqua ball; small ivory torso with a small aqua shield badge on the chest; navy neck ring and navy shoulder/elbow joints; short ivory arms ending in round navy mitten hands; short ivory legs with navy knee joints and rounded navy feet. Smooth glossy soft-touch plastic and ceramic materials. IMPORTANT: the visor screen is completely BLANK, dark and glossy, with NO eyes, NO mouth, no glow, no markings (the face will be added later as separate glowing parts). Neutral symmetric A-pose: standing straight, arms held away from the body angled down 35 degrees with clear space between arms and body, feet slightly apart, antenna straight up. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-front.png",
+          "crop-hero.png",
+          "crop-side.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a18853-44dd-70b1-9a24-a8f8beb39e04",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Smooth glossy ivory white soft-touch plastic body and helmet, a large blank glossy deep navy visor screen with no face, aqua turquoise headphone rings, navy neck ring, navy shoulder, elbow and knee joints, navy round mitten hands and rounded navy feet, curved navy antenna with a glossy aqua ball on top, small aqua shield badge on the chest",
+        "multi_view_thumbnails": true,
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi baby red fox companion \"Ember\", standing upright on two hind legs like a little cartoon character, for 3D modeling. Chibi proportions: a very large round head (about as wide as the whole body), big upright pointed ears with dark brown tips and pale pink inner ear, rich orange fluffy fur, cream muzzle area, cream cheeks and cream chest and belly, short chubby body, short arms ending in dark brown paws, short legs with dark brown feet, and a very large fluffy orange tail with a cream tip curving out to one side behind the body (visible beside the legs). Soft, dense, short plush fur with a smooth silhouette (no long stray hairs). IMPORTANT: the face is completely BLANK and smooth fur: NO eyes, NO eyebrows, NO nose, NO mouth, no markings (the face will be added later as separate parts); keep the cream muzzle colour area. Neutral symmetric A-pose: standing straight, arms held away from the body angled down 35 degrees with clear space between arms and body, feet slightly apart, ears straight up. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "lineup-crop.png",
+          "crop-front.png",
+          "crop-hero.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi little kid astronaut companion \"Kiko\", for 3D modeling. Chibi proportions: a very large head (about 40% of total height), warm brown skin, big soft volume of dark brown wavy hair, rounded ears; a soft padded mustard-yellow spacesuit with subtle quilted seams, a polished copper neck ring, a small round navy patch with a cream star on the chest, plum-purple gloves with copper cuff rings, plum-purple knee pads, chunky plum-purple boots with copper rivets, and a small plum-purple backpack with shoulder straps. Stylized animated-feature look. IMPORTANT: the face is completely BLANK smooth skin: NO eyes, NO eyebrows, NO nose, NO mouth, no markings (the face will be added later as separate parts). Neutral symmetric A-pose: standing straight, arms held away from the body angled down 35 degrees with clear space between arms and body, hands open relaxed, feet slightly apart. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "lineup-crop.png",
+          "crop-front.png",
+          "crop-hero.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view of this exact cute floating cloud companion \"Nimbo\", for 3D modeling. One plump rounded lavender cloud body built from soft overlapping round puffs (slightly wider than tall), with a warm cream-peach glowing area in the middle of the face; a small glossy golden star sitting on the top right of the cloud like a hair clip; two small separate round cloud puffs floating at the lower left and lower right sides as little hands, with a small clear gap between each puff and the body. Fine velvety cotton-candy matte surface. IMPORTANT: the face is completely BLANK: NO eyes, NO eyebrows, NO mouth, NO blush, no markings (the face will be added later as separate parts); keep the soft cream-peach glow area. Symmetric, centered, no legs. Even soft studio lighting, plain flat light grey background (#E6E9EE), no shadow, no text.",
+        "aspect_ratio": "4:3",
+        "references": [
+          "lineup-crop.png",
+          "crop-front.png",
+          "crop-hero.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a1885a-df36-7552-96fc-96c35e13291a",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Soft dense short plush fur, rich warm orange, cream muzzle, cheeks, chest and belly, blank smooth face with no eyes, nose or mouth, upright ears with dark brown tips and pale pink inner ears, dark brown paws and feet, large fluffy orange tail with a cream tip",
+        "multi_view_thumbnails": true,
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a1885a-e450-732a-a3ce-03bdcd1846aa",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Chibi child with warm brown skin and a blank smooth face with no eyes, nose or mouth, soft dark brown wavy hair, padded mustard yellow quilted spacesuit fabric, polished copper neck ring and cuff rings, small navy round chest patch with a cream star, plum purple gloves, knee pads, boots and backpack, copper rivets on the boots",
+        "multi_view_thumbnails": true,
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a1885a-e8b9-7137-a4c5-ec9bdc0502ee",
+        "ai_model": "meshy-7.1",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Soft velvety lavender cotton-candy cloud made of round puffs, a warm cream-peach glow in the middle of the blank smooth face with no eyes or mouth, a small glossy golden star on the top right, two small separate lavender cloud puffs at the lower sides",
+        "multi_view_thumbnails": true,
+        "references": []
+      }
+    ]
+  },
+  "textures (codex_imagegen)": "plush-velvet-src.png and knit-src.png: seamless close-up photos of white velvet plush pile and turquoise stockinette knit; textures/make_detail.py turns them into the height maps in Resources/Companions3D/assets."
+}

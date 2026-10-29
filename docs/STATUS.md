@@ -1,6 +1,7 @@
 # Status
 
-Updated: 2026-10-29. Version 0.1.0. Latest: the approved 3D Mochi app icon, exported and built locally.
+Updated: 2026-10-30. Version 0.1.0. Latest: 3D companions (D51): Mochi and Spark in 3D or 2D, and Ember,
+Kiko and Nimbo, in 3D only. Before that: the approved 3D Mochi app icon, exported and built locally.
 Previous update: the founder's list after snapshot 411, built by a team
 of parallel agents and merged: conversations you can start fresh, read in full, follow up and delete (D45);
 Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for using the internet, with allowed
@@ -8,10 +9,22 @@ sites and services that keep working after a page was read (D47); your town when
 that belong to a note or task (D49); "what's my CPU?" answered with one reading, and coins, dice and
 rock-paper-scissors the companion plays on the desktop (D35, D44 amended); a searchable extensions list (D39
 amended); extensions that answer simple sentences instantly, without the AI, as their author decides (D50). Also: the licence options (docs/research/licence.md), seventy extension ideas and a plan for an
-extension library, both for the founder to review. 1355 core and 34 character tests pass; CI green; snapshot 466
+extension library, both for the founder to review. 1357 core and 34 character tests pass; CI green; snapshot 466
 is published, signed and notarized.
 
 ## Done and verified
+- **3D companions (D51):** Settings › Companion › Look chooses 3D (how Mochi and Spark now come) or 2D;
+  Ember (a red fox), Kiko (a kid astronaut) and Nimbo (a floating cloud) join the gallery in 3D only. A
+  three.js page in a transparent web view (`Companion3DStage`, `Resources/Companions3D`) plays every cue
+  of the undrawn 2D rig (stand-in rigs for the three new ones), so states, idle life, clicks, petting,
+  dragging and bubbles work as before; Settings shows the 3D companion live and renders its still. Models
+  from Meshy (sheets for Ember, Kiko and Nimbo drawn with Codex image gen), rigged in Blender; sources,
+  prompts, task ids and rig scripts in `companions-3d/`. *Checked:* settings tests (2D/3D per companion,
+  odd stored values), all tests; every companion in the browser playground (16 feelings, moves and
+  postures each); the dev app: each of the five on the desktop, Mochi 3D↔2D, a wave, Settings › Companion
+  with the Look control and the live preview; cost at rest about 8% of a core (2D: 0.2%). *Not yet:*
+  working props and badges in 3D, VoiceOver and several screens with a 3D companion, a signed release
+  build. *Next:* the founder reviews the five on the desktop; props in 3D if they stay.
 - **Approved 3D Mochi app icon (D29 amended):** the smiling white rabbit with navy ear tips and a
   turquoise scarf on midnight blue now supplies the ICNS and Xcode AppIcon. The committed master is an
   opaque, full-bleed square, prepared with the built-in image tool from the approved preview; only the

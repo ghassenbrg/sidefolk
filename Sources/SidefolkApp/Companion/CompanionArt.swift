@@ -6,21 +6,28 @@ import SidefolkCore
 enum CompanionArt {
     private static var previews: [String: NSImage] = [:]
 
-    /// The companions Settings offers: only those whose rigs are finished.
+    /// The companions Settings offers: only those whose rigs are finished, and the 3D-only ones
+    /// when this copy of the app carries the 3D characters.
     static var offered: [CompanionChoice] {
-        CharacterSpecies.available.compactMap { CompanionChoice(rawValue: $0.rawValue) }
+        CharacterSpecies.available.filter { !$0.only3D || Companion3DStage.folder != nil }
+            .compactMap { CompanionChoice(rawValue: $0.rawValue) }
     }
 
-    static func look(_ choice: CompanionChoice, style: CompanionStyle) -> CharacterLook {
+    /// Whether `choice` is shown in 3D: as the settings say, when this copy can draw it so (D51).
+    static func threeD(_ choice: CompanionChoice, in settings: AppSettings) -> Bool {
+        settings.dimension(for: choice) == .threeD && Companion3DStage.folder != nil
+    }
+
+    static func look(_ choice: CompanionChoice, style: CompanionStyle, threeD: Bool = false) -> CharacterLook {
         CharacterLook(species(choice), style: CharacterStyle(color: CharacterAccent(style.color),
-                                                             accessory: CharacterAccessory(style.accessory)))
+                                                             accessory: CharacterAccessory(style.accessory)), threeD: threeD)
     }
 
     /// What the settings say; a companion that isn't offered (yet) shows as Mochi. A custom one
     /// that loads is worn in the chosen companion's style.
     static func look(for settings: AppSettings) -> CharacterLook {
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
-        let built = look(choice, style: settings.style(for: choice))
+        let built = look(choice, style: settings.style(for: choice), threeD: threeD(choice, in: settings))
         guard let custom = custom(settings.customCompanion) else { return built }
         return CharacterLook(custom: custom, style: built.style)
     }
@@ -55,13 +62,17 @@ enum CompanionArt {
         case .mochi: String(localized: "Your AI companion")
         case .sidefolk: String(localized: "The original robot")
         case .spark: String(localized: "A little robot helper")
+        case .ember: String(localized: "A curious little fox")
+        case .kiko: String(localized: "A young space explorer")
+        case .nimbo: String(localized: "A dreamy little cloud")
         default: species(choice).folk?.role ?? ""
         }
     }
 
-    /// The companion standing idle in its style, as the Settings gallery shows it.
-    static func preview(_ choice: CompanionChoice, style: CompanionStyle, side: CGFloat) -> NSImage {
-        picture(choice, style: style, state: .idle, side: side)
+    /// The companion standing idle in its style, as the Settings gallery shows it (in 3D when
+    /// that is how it would come or has been chosen).
+    static func preview(_ choice: CompanionChoice, style: CompanionStyle, threeD: Bool = false, side: CGFloat) -> NSImage {
+        picture(choice, style: style, state: .idle, threeD: threeD, side: side)
     }
 
     /// The companion the settings choose, still in `state`, as Home and the Ask panel show it.
@@ -75,13 +86,20 @@ enum CompanionArt {
             previews[key] = image
             return image
         }
-        return picture(choice, style: settings.style(for: choice), state: state, side: side)
+        return picture(choice, style: settings.style(for: choice), state: state, threeD: threeD(choice, in: settings), side: side)
     }
 
-    private static func picture(_ choice: CompanionChoice, style: CompanionStyle, state: CharacterState, side: CGFloat) -> NSImage {
-        let key = "\(choice.rawValue).\(style.color.rawValue).\(style.accessory.rawValue).\(state.name).\(side)"
+    private static func picture(_ choice: CompanionChoice, style: CompanionStyle, state: CharacterState, threeD: Bool,
+                                side: CGFloat) -> NSImage {
+        let key = "\(choice.rawValue).\(style.color.rawValue).\(style.accessory.rawValue).\(state.name).\(threeD).\(side)"
         if let cached = previews[key] { return cached }
         let size = CGSize(width: side, height: side)
+        // A 3D companion's still is a render of it (one pose: the 3D one has no 2D states to draw).
+        if threeD || species(choice).only3D, let still = Companion3DStage.portrait(species(choice)) {
+            still.size = size
+            previews[key] = still
+            return still
+        }
         let image = NSImage(cgImage: CharacterRenderer.image(state: state, size: size, scale: 2, look: look(choice, style: style)),
                             size: size)
         previews[key] = image

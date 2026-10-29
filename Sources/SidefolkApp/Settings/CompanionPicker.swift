@@ -14,6 +14,9 @@ struct CompanionPicker: View {
     /// A companion from "Made by you" in use: the stage and the title show it, and no built-in card is picked.
     private var custom: CustomCompanion? { CompanionArt.custom(settings.customCompanion) }
     private var style: CompanionStyle { settings.style(for: chosen) }
+    /// Shown in 3D (D51): its 3D character is fixed as designed, so colour and what it wears are
+    /// for the 2D rig only.
+    private var threeD: Bool { custom == nil && CompanionArt.threeD(chosen, in: settings) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -80,25 +83,49 @@ struct CompanionPicker: View {
                     model.update { $0.companionName = clean }
                 }
             }
-            labelled("Wears") {
-                Picker("Wears", selection: Binding(get: { style.accessory }, set: { wear in restyle { $0.accessory = wear } })) {
-                    ForEach(CompanionAccessory.allCases, id: \.self) { Text(Self.title($0)).tag($0) }
+            if custom == nil, chosen.dimensions.count > 1, Companion3DStage.folder != nil {
+                labelled("Look") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Picker("Look", selection: Binding(get: { settings.dimension(for: chosen) }, set: { next in
+                            let choice = chosen
+                            model.update { $0.setDimension(next, for: choice) }
+                        })) {
+                            Text(verbatim: "3D").tag(CompanionDimension.threeD)
+                            Text(verbatim: "2D").tag(CompanionDimension.twoD)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
+                        Text(threeD ? "Livelier, and uses a little more of your Mac." : "Lightest on your Mac, with a color and a scarf to choose.")
+                            .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
             }
-            labelled("Color") {
-                VStack(alignment: .leading, spacing: 4) {
-                    AccentSwatches(selected: style.color) { color in restyle { $0.color = color } }
-                        .disabled(!colours)
-                        .opacity(colours ? 1 : 0.4)
-                    Text(colourDetail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+            if !threeD { wardrobe }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Colour and what it wears, for a companion drawn in 2D.
+    @ViewBuilder private var wardrobe: some View {
+        labelled("Wears") {
+            Picker("Wears", selection: Binding(get: { style.accessory }, set: { wear in restyle { $0.accessory = wear } })) {
+                ForEach(CompanionAccessory.allCases, id: \.self) { Text(Self.title($0)).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+        }
+        labelled("Color") {
+            VStack(alignment: .leading, spacing: 4) {
+                AccentSwatches(selected: style.color) { color in restyle { $0.color = color } }
+                    .disabled(!colours)
+                    .opacity(colours ? 1 : 0.4)
+                Text(colourDetail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     private func labelled(_ title: LocalizedStringKey, @ViewBuilder _ control: () -> some View) -> some View {
@@ -136,7 +163,8 @@ struct CompanionPicker: View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
             ForEach(CompanionArt.offered, id: \.self) { choice in
                 CompanionCard(choice: choice,
-                              image: CompanionArt.preview(choice, style: settings.style(for: choice), side: 84),
+                              image: CompanionArt.preview(choice, style: settings.style(for: choice),
+                                                          threeD: CompanionArt.threeD(choice, in: settings), side: 84),
                               selected: custom == nil && choice == chosen) {
                     model.update { $0.choose(choice) }
                 }
@@ -175,24 +203,78 @@ struct CompanionPicker: View {
     }
 }
 
-/// The chosen companion, alive: the same view the desktop uses, in the state being tried.
+/// The chosen companion, alive: the same view the desktop uses, in the state being tried, and its
+/// 3D character over it when it is shown in 3D.
 private struct CompanionStage: NSViewRepresentable {
     var look: CharacterLook
     var name: String
     var state: CharacterState
 
-    func makeNSView(context: Context) -> CharacterView {
-        let view = CharacterView(frame: NSRect(x: 0, y: 0, width: 176, height: 176))
+    func makeNSView(context: Context) -> LiveCompanion {
+        let view = LiveCompanion(frame: NSRect(x: 0, y: 0, width: 176, height: 176))
         update(view)
         return view
     }
 
-    func updateNSView(_ view: CharacterView, context: Context) { update(view) }
+    func updateNSView(_ view: LiveCompanion, context: Context) { update(view) }
 
-    private func update(_ view: CharacterView) {
-        view.look = look
-        view.displayName = name
-        view.state = state
+    private func update(_ view: LiveCompanion) {
+        view.character.look = look
+        view.character.displayName = name
+        view.character.state = state
+        view.show3D(look.custom == nil && look.threeD ? look.species : nil)
+    }
+
+    final class LiveCompanion: NSView {
+        let character: CharacterView
+        private var stage: Companion3DStage?
+        private var occlusion: NSObjectProtocol?
+
+        override init(frame: NSRect) {
+            character = CharacterView(frame: NSRect(origin: .zero, size: frame.size))
+            character.autoresizingMask = [.width, .height]
+            super.init(frame: frame)
+            addSubview(character)
+        }
+
+        @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }
+
+        // WebGL keeps drawing in a closed or covered Settings window unless told to stop.
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            occlusion.map(NotificationCenter.default.removeObserver)
+            occlusion = nil
+            guard let window else { stage?.setVisible(false); return }
+            occlusion = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
+                                                               object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.syncVisible() }
+            }
+            syncVisible()
+        }
+
+        private func syncVisible() {
+            stage?.setVisible(window?.occlusionState.contains(.visible) ?? false)
+        }
+
+        func show3D(_ species: CharacterSpecies?) {
+            guard species != stage?.species else { return }
+            stage?.removeFromSuperview()
+            stage = nil
+            character.onCue = nil
+            character.drawsRig = !(species?.only3D ?? false)
+            guard let species, let next = Companion3DStage(species) else { character.drawsRig = true; return }
+            next.frame = bounds
+            next.autoresizingMask = [.width, .height]
+            addSubview(next, positioned: .above, relativeTo: character)
+            stage = next
+            next.onReady = { [weak self, weak next] in
+                guard let self, let next else { return }
+                self.character.drawsRig = false
+                next.handle(.state(self.character.state))
+                self.syncVisible()
+            }
+            character.onCue = { [weak next] in next?.handle($0) }
+        }
     }
 }
 

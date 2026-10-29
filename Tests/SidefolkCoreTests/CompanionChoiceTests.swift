@@ -116,4 +116,32 @@ import Testing
         s.choose(.spark)
         #expect(s.companionName == "Bun")
     }
+
+    /// D51: Mochi and Spark come in 3D and can be 2D; Ember, Kiko and Nimbo are 3D only; the robot
+    /// and the Folks are 2D only, whatever the stored settings say.
+    @Test func eachCompanionIsDrawnTheWaysItCanBe() throws {
+        var s = AppSettings()
+        #expect(s.dimension(for: .mochi) == .threeD && s.dimension(for: .ember) == .threeD)
+        #expect(s.dimension(for: .sidefolk) == .twoD && s.dimension(for: .pip) == .twoD)
+        s.setDimension(.twoD, for: .mochi)
+        s.setDimension(.twoD, for: .kiko)
+        s.setDimension(.threeD, for: .scout)
+        #expect(s.dimension(for: .mochi) == .twoD)
+        #expect(s.dimension(for: .kiko) == .threeD && s.dimension(for: .scout) == .twoD)
+        #expect(s.dimension(for: .spark) == .threeD)
+        let back = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
+        #expect(back.dimension(for: .mochi) == .twoD)
+        // Hand-edited or older settings can't put a 2D-only companion in 3D.
+        let odd = try decode(#"{"companion": "nimbo", "dimensions": {"nimbo": "2d", "pip": "3d", "spark": "4d"}}"#)
+        #expect(odd.companion == .nimbo && odd.companionName == "Mochi")
+        #expect(odd.dimension(for: .nimbo) == .threeD && odd.dimension(for: .pip) == .twoD)
+    }
+
+    @Test func theThreeDOnlyCompanionsAnswerToTheirNames() {
+        var s = AppSettings()
+        s.choose(.ember)
+        #expect(s.companionName == "Ember")
+        s.choose(.nimbo)
+        #expect(s.companionName == "Nimbo")
+    }
 }

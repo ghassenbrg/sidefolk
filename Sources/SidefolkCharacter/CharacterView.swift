@@ -40,6 +40,21 @@ public final class CharacterView: NSView {
     /// What VoiceOver calls the companion ("Mochi is listening").
     public var displayName = "Sidefolk"
 
+    /// What the companion is told, as it is told, for a renderer drawn outside this view (the app's
+    /// 3D companions, D51). The 2D rig hears everything first.
+    public enum Cue: Sendable {
+        case state(CharacterState), gesture(CharacterGesture), speak(Double?), gaze(CGVector?)
+        case posture(CharacterPosture), antic(CharacterAntic)
+    }
+
+    public var onCue: ((Cue) -> Void)?
+
+    /// Whether the 2D rig is drawn. Off when another renderer shows the companion: the rig still
+    /// runs underneath, so states, idle life, clicks, petting and bubble anchors work unchanged.
+    public var drawsRig = true {
+        didSet { layer?.opacity = drawsRig ? 1 : 0 }
+    }
+
     /// Setting this animates to the new state.
     public var state: CharacterState {
         get { director.state }
@@ -51,6 +66,7 @@ public final class CharacterView: NSView {
     public func setState(_ state: CharacterState, animated: Bool) {
         guard state != director.state else { return }
         director.show(state, animated: animated && window != nil)
+        onCue?(.state(state))
         scheduleBlink()
         life?.noteInteraction()
         life?.refresh()
@@ -59,6 +75,7 @@ public final class CharacterView: NSView {
     public func play(_ gesture: CharacterGesture) {
         director.wake()
         director.play(gesture)
+        onCue?(.gesture(gesture))
         life?.noteInteraction()
     }
 
@@ -69,6 +86,7 @@ public final class CharacterView: NSView {
     /// it. Driven by the audio, so it moves only while sound comes out.
     public func speak(_ level: Double?) {
         director.speak(level.map { CGFloat($0) })
+        onCue?(.speak(level))
     }
 
     /// Look direction, each axis -1...1 (x right, y up); nil looks straight ahead.
@@ -84,6 +102,7 @@ public final class CharacterView: NSView {
         gaze = next
         if next != nil, wakes { director.wake() }
         director.setGaze(next)
+        onCue?(.gaze(next))
     }
 
     /// No bobbing, hopping or sways; state changes crossfade; blinks become a quick fade; moments
@@ -110,6 +129,7 @@ public final class CharacterView: NSView {
 
     public func setPosture(_ posture: CharacterPosture, animated: Bool) {
         director.setPosture(posture, animated: animated && window != nil)
+        onCue?(.posture(posture))
     }
 
     /// The moment playing now, if any.
@@ -128,6 +148,7 @@ public final class CharacterView: NSView {
         guard director.posture != .stand, state == .idle else { return }
         let wasLying = director.posture == .lie
         director.setPosture(.stand, animated: window != nil)
+        onCue?(.posture(.stand))
         if wasLying { perform(.stretch, toward: nil, byItself: true) }
     }
 
@@ -146,11 +167,13 @@ public final class CharacterView: NSView {
         if now - lastPet < 3.5 {
             lastPet = 0
             director.perform(Antics.giggle, name: .giggle)
+            onCue?(.antic(.giggle))
             return
         }
         lastPet = now
         let moment = Antics.pet
         director.perform(local.x > characterFrame.midX ? moment.flipped : moment, name: .pet)
+        onCue?(.antic(.pet))
     }
 
     /// Runs the idle scheduler's clock this many times faster: demos and the render tool only.
@@ -183,6 +206,7 @@ public final class CharacterView: NSView {
             moment = moment.flipped
         }
         director.perform(moment, name: antic)
+        onCue?(.antic(antic))
     }
 
     /// The look direction (-1...1) from the companion toward a screen point.

@@ -14,6 +14,7 @@ sets; reference sheets and archived generations stay in the repository.
 | Menu bar icons | [MenuBar](MenuBar/) | Shared rabbit design in vector PDF/SVG and 1x/2x/3x PNGs. |
 | AI service logos (third party) | [Brand/third-party](Brand/third-party/README.md) | LobeHub Icons SVGs as downloaded, their vector PDF exports, source, version, licence and trademark notes. Not Sidefolk's brand. |
 | Animated companion poses | [Companions](Companions/README.md) | Named Mochi/Spark pose folders; `masters/mochi-legacy/` preserves all 16 original Mochi poses before palette grading. |
+| 3D companions (D51) | [companions-3d](../companions-3d/README.md), runtime in [Companions3D](Companions3D/) | Supplied and generated character sheets, Meshy front designs, every prompt and Meshy task id, Blender rig scripts, fabric photos; the app's rigged models (Meshy 7.1), relief maps and rendered portraits. |
 | Character review sheets | [Character](Character/) | Mochi poses, character states, icon sizes and menu-bar review images. |
 
 [Generated-image inventory](Brand/generated-image-index.json) records all 22 imagegen originals

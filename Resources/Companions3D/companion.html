@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidefolk 3D Companion</title>
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<script type="module">
+// A 3D companion inside Sidefolk's companion window (D51). Sidefolk keeps its own state machine,
+// idle scheduler, hit testing and bubbles (on an invisible 2D rig); this page only shows the 3D
+// character (`?c=mochi|spark|ember|kiko|nimbo`) and plays what Sidefolk tells it, sent as
+// `sidefolk.handle({...})` from Swift (Companion3DStage).
+import { Companion } from './engine/engine.js';
+
+const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo'];
+const id = new URLSearchParams(location.search).get('c');
+const post = (msg) => window.webkit?.messageHandlers?.companion?.postMessage(msg);
+const character = (await import(`./characters/${CHARACTERS.includes(id) ? id : 'mochi'}.js`)).default;
+const c = new Companion(document.getElementById('stage'), character, {
+  // 30 fps while moving, 15 while it only breathes, 1.5× pixels: smooth for a small desktop
+  // character at a fraction of the cost of 60. No shadow map (a second pass every frame): the
+  // soft contact shadow under it is enough at this size.
+  interactive: false, frame: 'sidefolk', liveliness: 'minimal', maxFps: 30, idleFps: 15, maxPixelRatio: 1.5, hopScale: 0.4,
+  shadow: false,
+});
+window.companion = c;
+
+// Sidefolk's antics (CharacterAntic) and gestures (CharacterGesture) as 3D moves.
+const ANTICS = {
+  earTwitch: () => c.fidget('earTwitch'), blink: () => c.forceBlink(),
+  stretch: 'stretch', yawn: 'yawn', scratch: 'scratch', hop: 'hop', wiggle: 'giggle', peek: 'peek',
+  glance: 'lookAround', lookAround: 'lookAround', sneeze: 'sneeze', doubleTake: 'surprised',
+  boop: 'boop', startle: 'surprised', cheer: 'cheer', land: 'boop', spin: 'celebrate', dizzy: 'dizzy',
+  wave: 'wave', dance: 'dance', bow: 'bow', nod: 'nod', shake: 'shake', giggle: 'giggle', breathe: 'breathe',
+  flick: 'hop', roll: 'cheer', pump: 'cheer',
+  pet: () => { c.pet.active = true; clearTimeout(window.petT); window.petT = setTimeout(() => { c.pet.active = false; }, 2600); },
+};
+const MOODS = { joy: 'happy', bliss: 'content', squeeze: 'giggle', drowsy: 'sleepy', wince: 'wince', curious: 'curious', surprised: 'surprised' };
+
+window.sidefolk = {
+  handle(e) {
+    switch (e.kind) {
+      case 'state': c.setState(e.name); break;
+      case 'posture': c.setPosture(e.name); break;
+      case 'antic': case 'gesture': {
+        const a = ANTICS[e.name];
+        // A move this body can't do (a robot's sniff) falls back to a small hop of joy.
+        if (typeof a === 'function') a(); else if (a && !c.play(a)) c.play('hop');
+        break;
+      }
+      case 'mood': c.setMood(MOODS[e.name] || e.name); break;
+      case 'speak': c.talk(e.level ?? 0); break;
+      case 'gaze': e.x == null ? c.lookAt(null) : c.lookAt(e.x * 1.6, e.y * 1.4); break;
+      case 'say': c.say(e.text || ''); break;
+      case 'visible': c.pause(!e.on); break;
+    }
+  },
+};
+
+await c.load();
+post({ kind: 'ready' });
+</script>
+</body>
+</html>

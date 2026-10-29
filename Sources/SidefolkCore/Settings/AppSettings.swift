@@ -28,11 +28,23 @@ public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
     case minimal, balanced, lively
 }
 
-/// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, or one of the
-/// Folk Family (D30). The app offers the ones whose rigs are finished.
+/// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, one of the
+/// Folk Family (D30), or Ember, Kiko and Nimbo, who exist only in 3D (D51). The app offers the
+/// ones whose rigs are finished.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
+    case ember, kiko, nimbo
+
+    /// How it can be drawn (D51): Mochi and Spark either way, Ember, Kiko and Nimbo in 3D only,
+    /// the robot and the Folks in 2D only. The first is how it comes.
+    public var dimensions: [CompanionDimension] {
+        switch self {
+        case .mochi, .spark: [.threeD, .twoD]
+        case .ember, .kiko, .nimbo: [.threeD]
+        default: [.twoD]
+        }
+    }
 
     /// The name it goes by until the user gives it another.
     public var defaultName: String {
@@ -46,6 +58,12 @@ public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     public var standardStyle: CompanionStyle {
         CompanionStyle(color: .aqua, accessory: self == .mochi ? .scarf : .none)
     }
+}
+
+/// Drawn as a flat vector rig (light on the Mac, every style and prop) or as a 3D character
+/// (livelier, about 5% of a core while shown; D51).
+public enum CompanionDimension: String, Codable, Sendable, CaseIterable {
+    case twoD = "2d", threeD = "3d"
 }
 
 /// A brand colour (D29 palette) for a companion's accents: the robot's light, Spark's headphones,
@@ -184,6 +202,9 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// Each companion keeps its own colour and accessory, so switching back finds it as it was.
     /// Keyed by `CompanionChoice.rawValue`; read them with `style(for:)`.
     public var styles: [String: CompanionStyle] = [:]
+    /// 2D or 3D for a companion that can be either, keyed by `CompanionChoice.rawValue`; read
+    /// them with `dimension(for:)`.
+    public var dimensions: [String: CompanionDimension] = [:]
     /// A companion made from data in `<home>/companions/<id>/`, worn instead of `companion` while
     /// it loads (its style still comes from `companion`'s).
     public var customCompanion: String?
@@ -227,6 +248,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.companionName, &companionName)
         read(.companion, &companion)
         read(.styles, &styles)
+        read(.dimensions, &dimensions)
         // Before D30 the robot's light colour was the only style ("accent"); keep it.
         let legacy = try decoder.container(keyedBy: LegacyKeys.self)
         if styles[CompanionChoice.sidefolk.rawValue] == nil, let accent = try? legacy.decode(CompanionAccent.self, forKey: .accent) {
@@ -284,6 +306,16 @@ public struct AppSettings: Codable, Sendable, Equatable {
 
     public mutating func setStyle(_ style: CompanionStyle, for companion: CompanionChoice) {
         styles[companion.rawValue] = style
+    }
+
+    /// How `companion` is drawn: what the user chose, if it can be drawn that way, or how it comes.
+    public func dimension(for companion: CompanionChoice) -> CompanionDimension {
+        dimensions[companion.rawValue].flatMap { companion.dimensions.contains($0) ? $0 : nil } ?? companion.dimensions[0]
+    }
+
+    public mutating func setDimension(_ dimension: CompanionDimension, for companion: CompanionChoice) {
+        guard companion.dimensions.contains(dimension) else { return }
+        dimensions[companion.rawValue] = dimension
     }
 
     /// Whether the user named the companion themselves (anything but a built-in default).

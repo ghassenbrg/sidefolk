@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidefolk 3D Companions</title>
+<style>
+  :root { --bg1: #eef3fb; --bg2: #dfe8f6; --ink: #1e3a8a; --panel: rgba(255,255,255,.78); --chip: #fff; --chipOn: #2ed4d9; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg1: #1a2236; --bg2: #0f1524; --ink: #cfe0ff; --panel: rgba(25,32,52,.82); --chip: #24304d; } }
+  :root[data-theme="dark"] { --bg1: #1a2236; --bg2: #0f1524; --ink: #cfe0ff; --panel: rgba(25,32,52,.82); --chip: #24304d; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font: 13px/1.3 ui-rounded, "SF Pro Rounded", system-ui, sans-serif; color: var(--ink); }
+  body { background: radial-gradient(120% 90% at 50% 30%, var(--bg1), var(--bg2)); }
+  body.bare { background: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #panel { position: fixed; right: 12px; top: 12px; bottom: 12px; width: 300px; overflow: auto; background: var(--panel);
+    backdrop-filter: blur(14px); border-radius: 16px; padding: 12px 14px; box-shadow: 0 8px 30px rgba(20,40,90,.12); }
+  body.bare #panel, body.bare #bubble { display: none; }
+  h1 { font-size: 16px; margin: 0 0 2px; } h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin: 14px 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { border: 0; background: var(--chip); color: var(--ink); border-radius: 999px; padding: 6px 10px; font: inherit; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(20,40,90,.12); }
+  button:hover { filter: brightness(.96); } button.on { background: var(--chipOn); color: #06343a; }
+  #say { display: flex; gap: 6px; } #say input { flex: 1; min-width: 0; border-radius: 10px; border: 1px solid rgba(30,58,138,.2); padding: 7px 9px; font: inherit; background: var(--chip); color: var(--ink); }
+  #bubble { position: fixed; left: 50%; top: 9%; transform: translateX(-60%); max-width: 280px; background: #fff; color: #1e3a8a; padding: 10px 14px;
+    border-radius: 18px; box-shadow: 0 6px 22px rgba(20,40,90,.15); opacity: 0; transition: opacity .25s; pointer-events: none; font-size: 15px; }
+  #bubble.show { opacity: 1; }
+  #hint { position: fixed; left: 16px; bottom: 14px; opacity: .55; font-size: 12px; }
+  body.bare #hint { display: none; }
+  @media (max-width: 720px) { #panel { top: auto; height: 40%; left: 12px; width: auto; } }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="bubble"></div>
+<div id="hint">Move the pointer: it watches you · click to boop · drag on its head to pet · double-click to hop</div>
+<aside id="panel">
+  <h1 id="title">3D companions</h1>
+  <div class="row" id="chars"></div>
+  <h2>Say something</h2>
+  <form id="say"><input id="sayText" value="Hi! I'm Mochi. Want me to remind you of something?"><button>Say</button></form>
+  <h2>Moves</h2><div class="row" id="moves"></div>
+  <h2>Feelings</h2><div class="row" id="moods"></div>
+  <h2>Sidefolk states</h2><div class="row" id="states"></div>
+  <h2>Posture</h2><div class="row" id="postures"></div>
+  <h2>Liveliness</h2><div class="row" id="live"></div>
+</aside>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<script type="module">
+import { Companion } from './engine/engine.js';
+import { MOODS } from './engine/moods.js';
+
+const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo'];
+const q = new URLSearchParams(location.search);
+const id = CHARACTERS.includes(q.get('c')) ? q.get('c') : 'mochi';
+if (q.has('bare')) document.body.classList.add('bare');
+const character = (await import(`./characters/${id}.js`)).default;
+document.getElementById('title').textContent = `${character.name} 3D`;
+document.getElementById('sayText').value = `Hi! I'm ${character.name}. Want me to remind you of something?`;
+const companion = new Companion(document.getElementById('stage'), character, { frame: q.get('frame') || 'full', liveliness: q.get('live') || 'balanced', capture: q.has('record') || q.has('capture') });
+window.companion = companion;
+await companion.load();
+if (q.has('record')) {
+  document.body.classList.add('bare');
+  const { record } = await import('./record.js');
+  record(companion, q.get('record'), undefined, +(q.get('size') || 900));
+}
+
+const chips = (id, items, fn, sel) => {
+  const el = document.getElementById(id);
+  for (const it of items) {
+    const b = document.createElement('button'); b.textContent = it; b.dataset.v = it;
+    b.onclick = () => { fn(it); if (sel) { el.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); } };
+    if (sel && sel() === it) b.classList.add('on');
+    el.append(b);
+  }
+};
+chips('chars', CHARACTERS, (n) => { q.set('c', n); location.search = q; }, () => id);
+chips('moves', companion.moves, (n) => companion.play(n));
+chips('moods', Object.keys(MOODS), (n) => companion.setMood(n), () => companion.mood);
+chips('states', ['idle', 'listening', 'hearing', 'thinking', 'working', 'waiting', 'success', 'error', 'alert', 'dragging', 'celebrating', 'sleeping'], (n) => companion.setState(n), () => companion.state);
+chips('postures', ['stand', 'sit', 'lie', 'sleep'], (n) => companion.setPosture(n), () => companion.posture);
+chips('live', ['minimal', 'balanced', 'lively'], (n) => { companion.opts.liveliness = n; }, () => companion.opts.liveliness);
+
+const bubble = document.getElementById('bubble');
+document.getElementById('say').onsubmit = (e) => {
+  e.preventDefault();
+  const text = document.getElementById('sayText').value.trim();
+  if (!text) return;
+  bubble.textContent = text; bubble.classList.add('show');
+  const d = companion.say(text);
+  clearTimeout(bubble.t); bubble.t = setTimeout(() => bubble.classList.remove('show'), d * 1000 + 900);
+};
+</script>
+</body>
+</html>

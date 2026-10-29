@@ -72,7 +72,12 @@ final class CompanionWindowController {
     // MARK: Layout
 
     /// The rig's square view: the body is ~62% of it; the margins hold props, effects and badges.
-    private var characterBox: NSSize { NSSize(width: (size / 0.62).rounded(), height: (size / 0.62).rounded()) }
+    /// A 3D companion gets a larger box (round heads and long ears read smaller than the 2D rig's
+    /// at the same size); the undrawn 2D rig scales with it, so clicks still land on the body.
+    private var characterBox: NSSize {
+        let side = (size / 0.62 * (stage3D != nil ? 1.3 : 1)).rounded()
+        return NSSize(width: side, height: side)
+    }
     /// The feet stand 10% above the view's bottom edge.
     private var feetInset: CGFloat { characterBox.height * 0.1 }
     private var folkSize: CGFloat { (size * 0.62).rounded() }
@@ -102,7 +107,53 @@ final class CompanionWindowController {
         character.displayName = name
         container.setAccessibilityLabel(name)
         container.setAccessibilityHelp(String(localized: "Press to talk to \(name)."))
+        let before = windowSize
+        show3D(look.custom == nil && look.threeD ? look.species : nil)
+        if windowSize != before {
+            // Grow or shrink about the feet: the companion stays standing where it was.
+            let frame = panel.frame
+            let x = folksGoLeft ? frame.maxX - windowSize.width : frame.minX
+            panel.setFrame(NSRect(x: x, y: frame.minY, width: windowSize.width, height: windowSize.height), display: true)
+        }
         layoutContent()
+    }
+
+    // MARK: 3D (D51)
+
+    /// The 3D character over the undrawn 2D rig, while a companion is shown in 3D.
+    private var stage3D: Companion3DStage?
+    private var occlusion3D: NSObjectProtocol?
+
+    /// Shows `species` in 3D, or the 2D rig itself when nil.
+    private func show3D(_ species: CharacterSpecies?) {
+        guard species != stage3D?.species else { return }
+        stage3D?.removeFromSuperview()
+        stage3D = nil
+        occlusion3D.map(NotificationCenter.default.removeObserver)
+        occlusion3D = nil
+        character.onCue = nil
+        // A 3D-only companion's rig is a stand-in: never drawn, even before the 3D one loads.
+        character.drawsRig = !(species?.only3D ?? false)
+        guard let species, let stage = Companion3DStage(species) else { character.drawsRig = true; return }
+        // Like the 2D rig: nothing is drawn while the companion can't be seen.
+        occlusion3D = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
+                                                             object: panel, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.stage3D?.setVisible(self.panel.occlusionState.contains(.visible))
+            }
+        }
+        stage.frame = character.frame
+        container.addSubview(stage, positioned: .above, relativeTo: character)
+        stage3D = stage
+        // Keep a 2D rig drawn until the 3D one has loaded: never an empty window for Mochi or Spark.
+        stage.onReady = { [weak self, weak stage] in
+            guard let self, let stage else { return }
+            self.character.drawsRig = false
+            stage.handle(.state(self.character.state))
+            stage.handle(.posture(self.character.posture))
+        }
+        character.onCue = { [weak stage] in stage?.handle($0) }
     }
 
     private func layoutContent() {
@@ -110,6 +161,7 @@ final class CompanionWindowController {
         let folksOnLeft = folksGoLeft
         let charX = folksOnLeft ? windowSize.width - box.width : 0
         character.frame = NSRect(x: charX, y: 0, width: box.width, height: box.height)
+        stage3D?.frame = character.frame
         // Folks stand beside the body, not the square view: a slim companion keeps them close.
         // `reach` is how far the robot's body frame sits inside its view, where folks always stood.
         let body = character.characterFrame.offsetBy(dx: charX, dy: 0)

@@ -4,30 +4,48 @@ public struct CharacterLook: Equatable, Sendable {
     public var style: CharacterStyle
     /// A companion made from data (`CustomCompanion`), drawn on a soft rig instead of `species`.
     public var custom: CustomCompanion?
+    /// Shown in 3D by the app (D51): this module's rig still runs, undrawn, and the app draws the
+    /// species' 3D character over it. Ember, Kiko and Nimbo are always 3D.
+    public var threeD = false
 
     /// Who is drawn, whatever it wears: another identity means another body.
     var identity: String { custom.map { "custom:\($0.id)" } ?? species.rawValue }
 
-    public init(_ species: CharacterSpecies, style: CharacterStyle? = nil) {
+    public init(_ species: CharacterSpecies, style: CharacterStyle? = nil, threeD: Bool = false) {
         self.species = species
         self.style = style ?? species.standardStyle
+        self.threeD = threeD || species.only3D
     }
 }
 
 /// Every companion that can live on the desktop. The robot is its own vector rig (D2); the others
-/// are soft rigs built from a `Species`.
+/// are soft rigs built from a `Species`; Ember, Kiko and Nimbo are 3D characters drawn by the app
+/// over a stand-in rig (D51).
 public enum CharacterSpecies: String, CaseIterable, Sendable {
     case mochi, sidefolk, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
+    case ember, kiko, nimbo
 
     /// Companions finished to the full bar (every state, gesture, prop): only these are offered.
     public static let available: [CharacterSpecies] = allCases
+
+    /// Has a 3D character the app can draw (D51).
+    public var has3D: Bool { [.mochi, .spark, .ember, .kiko, .nimbo].contains(self) }
+
+    /// Has only a 3D character: its rig here is a stand-in that is never drawn.
+    public var only3D: Bool { [.ember, .kiko, .nimbo].contains(self) }
+
+    /// The companions this module draws itself (contact sheets leave out the 3D-only stand-ins).
+    public static var drawn2D: [CharacterSpecies] { allCases.filter { !$0.only3D } }
 
     public var displayName: String {
         switch self {
         case .mochi: "Mochi"
         case .sidefolk: "Sidefolk"
         case .spark: "Spark"
+        case .ember: "Ember"
+        case .kiko: "Kiko"
+        case .nimbo: "Nimbo"
         default: folk!.displayName
         }
     }
