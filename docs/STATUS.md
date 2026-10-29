@@ -22,7 +22,7 @@ is published, signed and notarized.
   prompts, task ids and rig scripts in `companions-3d/`. *Checked:* settings tests (2D/3D per companion,
   odd stored values), all tests; every companion in the browser playground (16 feelings, moves and
   postures each); the dev app: each of the five on the desktop, Mochi 3D↔2D, a wave, Settings › Companion
-  with the Look control and the live preview; cost at rest about 8% of a core (2D: 0.2%). *Not yet:*
+  with the Look control and the live preview; a 3D companion costs about 18% of a core (2D: 0.2%). *Not yet:*
   working props and badges in 3D, VoiceOver and several screens with a 3D companion, a signed release
   build. *Next:* the founder reviews the five on the desktop; props in 3D if they stay.
 - **Approved 3D Mochi app icon (D29 amended):** the smiling white rabbit with navy ear tips and a

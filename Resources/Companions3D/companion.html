@@ -28,10 +28,9 @@ const post = (msg) => window.webkit?.messageHandlers?.companion?.postMessage(msg
 const character = (await import(`./characters/${CHARACTERS.includes(id) ? id : 'mochi'}.js`)).default;
 const c = new Companion(document.getElementById('stage'), character, {
   // 30 fps while moving, 15 while it only breathes, 1.5× pixels: smooth for a small desktop
-  // character at a fraction of the cost of 60. No shadow map (a second pass every frame): the
-  // soft contact shadow under it is enough at this size.
+  // character at a fraction of the cost of 60. A small shadow map, redrawn every other frame.
   interactive: false, frame: 'sidefolk', liveliness: 'minimal', maxFps: 30, idleFps: 15, maxPixelRatio: 1.5, hopScale: 0.4,
-  shadow: false,
+  shadowSize: 512, shadowEvery: 2,
 });
 window.companion = c;
 

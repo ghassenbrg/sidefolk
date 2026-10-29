@@ -75,7 +75,7 @@ export class Companion {
     const key = new THREE.DirectionalLight(0xfff2e6, this.C.light?.key ?? 1.75);
     key.position.set(-0.9, 4.2, 2.6);
     key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.mapSize.setScalar(this.opts.shadowSize || 1024);
     Object.assign(key.shadow.camera, { left: -1.6, right: 1.6, top: 2.4, bottom: -0.6, near: 0.5, far: 10 });
     key.shadow.bias = -0.0004; key.shadow.normalBias = 0.025; key.shadow.radius = 5;
     scene.add(key);
@@ -332,13 +332,20 @@ export class Companion {
     if (this.paused) return;
     requestAnimationFrame(() => this.loop());
     const now = performance.now();
-    const dt = Math.min(0.05, (now - this.last) / 1000);
-    if (dt < 1e-4) return;          // two frames at one timestamp: nothing to integrate
-    this.last = now;
+    const elapsed = (now - this.last) / 1000;
+    if (elapsed < 1e-4) return;     // two frames at one timestamp: nothing to integrate
     // Only breathing and blinking: fewer frames do (`idleFps`); anything moving gets `maxFps`.
+    // Compared before the step is clamped: a clamped step can never reach a slow frame's time.
     const cap = this.calm && this.opts.idleFps ? this.opts.idleFps : this.opts.maxFps;
-    if (cap && dt < 1 / cap - 0.002) { this.last -= dt * 1000; return; }
+    if (cap && elapsed < 1 / cap - 0.002) return;
+    this.last = now;
+    const dt = Math.min(0.05, elapsed);
     this.update(dt);
+    // The shadow is a second pass: every other frame is enough to follow the body.
+    if (this.opts.shadowEvery) {
+      this.renderer.shadowMap.autoUpdate = false;
+      this.renderer.shadowMap.needsUpdate = (this.frameNo = (this.frameNo || 0) + 1) % this.opts.shadowEvery === 1;
+    }
     this.renderer.render(this.scene, this.camera);
   }
 

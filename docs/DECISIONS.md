@@ -1143,11 +1143,11 @@ as designed, so those controls show only in 2D; Settings shows a 3D companion li
 render.
 **Why:** the founder wants movie-like companions that really sit, lie, sleep, bow and wave, which a
 flat vector rig can't do; and asked for the 2D Mochi to stay as the lighter choice.
-**Cost:** measured with `top` on the debug app, a 3D companion at rest costs about 8% of a core (5% in
-Sidefolk hosting the web view, 3% across WebKit's page and GPU processes) plus WindowServer compositing;
-the same Mochi in 2D, 0.2%. It draws 15 frames a second while it only breathes and glances, 30 while it
-moves, at 1.5× pixels, with no shadow map; nothing while the window is hidden. That is why 2D stays one
-click away. 23 MB of models and runtime in the app.
+**Cost:** measured with `top` on the debug app, a 3D companion costs about 18% of a core while shown
+(about 4% in Sidefolk hosting the web view, 14% across WebKit's page and GPU processes) plus WindowServer
+compositing; the same Mochi in 2D, 0.2%. It draws 15 frames a second while it only breathes and glances,
+30 while it moves, at 1.5× pixels, with a 512 px shadow map redrawn every other frame; nothing while the
+window is hidden. That is why 2D stays one click away. 23 MB of models and runtime in the app.
 **Alternatives:** SceneKit/RealityKit (D43's spike: another modelling pipeline, and the same GPU frames);
 pre-rendered sprite sheets (no live gaze, speech or follow-through, and very large); Meshy's mocap
 presets (a humanoid rig without ears, tails, antennae or a face, fighting the chibi proportions).

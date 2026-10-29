@@ -49,8 +49,8 @@ layers (posture, idle life, Sidefolk's state loop, one-shot moves, look-at with 
 then springs finish it: chains, the scarf tag, squash and stretch, and follow-through on the core,
 head and limbs. 28 moves, 29 feelings, 12 states and 4 postures; Mochi's nose and mouth always
 keep a clear gap. In the app it draws 15 frames a second while it only breathes and glances, 30
-while it moves, at 1.5× pixels, without a shadow map, and nothing while the window is hidden: about
-8% of a core at rest (D51), against 0.2% for a 2D companion.
+while it moves, at 1.5× pixels, with a small shadow map redrawn every other frame, and nothing while
+the window is hidden: about 18% of a core (D51), against 0.2% for a 2D companion.
 
 ## Playground
 
