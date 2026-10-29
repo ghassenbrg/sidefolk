@@ -1,6 +1,7 @@
 # Status
 
-Updated: 2026-10-28 (evening). Version 0.1.0. Latest: the founder's list after snapshot 411, built by a team
+Updated: 2026-10-29. Version 0.1.0. Latest: the approved 3D Mochi app icon, exported and built locally.
+Previous update: the founder's list after snapshot 411, built by a team
 of parallel agents and merged: conversations you can start fresh, read in full, follow up and delete (D45);
 Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for using the internet, with allowed
 sites and services that keep working after a page was read (D47); your town when you choose it (D48); reminders
@@ -11,6 +12,17 @@ extension library, both for the founder to review. 1355 core and 34 character te
 is published, signed and notarized.
 
 ## Done and verified
+- **Approved 3D Mochi app icon (D29 amended):** the smiling white rabbit with navy ear tips and a
+  turquoise scarf on midnight blue now supplies the ICNS and Xcode AppIcon. The committed master is an
+  opaque, full-bleed square, prepared with the built-in image tool from the approved preview; only the
+  macOS exports get the platform inset and rounded mask. `brand-assets.swift` rebuilds from that master,
+  and the brand preview and asset guide are updated. *Checked:* exporter; opaque 2048/1024 sources;
+  all ten icon dimensions, transparent corners, matching catalog exports and decoded ICNS representations;
+  actual ICNS sizes at 16–256 px on light/dark backgrounds (`build/icon-qa/sizes.png`); release app built
+  and signed with Apple Development, deep/strict signature verification passed, bundled ICNS matches the
+  source and Info.plist names it. No runtime changes or live AI calls in verification. Nothing half done.
+  *Next:* the next signed release/snapshot carries the icon to installed copies; this change has not been
+  published. Local app: `build/Sidefolk.app`.
 - **Conversations (D45):** every Ask answer opens on 8 lines with Show all and offers Reply in its own
   conversation, Copy and Open in Conversations; "new conversation", "start fresh", ⌘N and Clear all start fresh;
   Sidefolk's window › Conversations lists kept conversations with search and a transcript (steps included),

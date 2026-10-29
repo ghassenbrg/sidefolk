@@ -274,6 +274,13 @@ vector geometry matching the close-up’s ears, paw, rays and separated scarf. R
 have a simple blue-gradient square or transparent background; only separate macOS exports get a
 geometric mask.
 
+*Amended 2026-10-29 (approved 3D app icon):* the founder approved the smiling Mochi portrait
+with navy ear tips and a turquoise scarf on midnight blue. `masters/mochi-app-icon.png` is its
+opaque, full-bleed square master, prepared from the approved preview with the built-in image tool
+to remove the white surround and rounded tile. `brand-assets.swift` derives the square sources
+and the legacy macOS mask/iconset/ICNS from it; the transparent logo mark remains a separate asset.
+The icon's 3D character lighting is intentional; no tile rim, bevel or shadow is baked into the source.
+
 ### D30 — Every companion is a live rig on one engine; thirteen to choose from; one style for all (2026-10-26)
 **Decision:** Mochi, Spark and the ten folks are vector rigs on the robot's engine: `Director` drives
 a `Figure` (the robot's own `RobotRig`, or a `SoftRig` built from a `Species` description), so every

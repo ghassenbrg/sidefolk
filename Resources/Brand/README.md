@@ -8,16 +8,18 @@ Sidefolk robot remains a selectable, customizable companion in the app. Its earl
 masters are retained in `archive/robot/`.
 
 See [the asset-set index](../ASSETS.md) for every character, source, reference and archive folder.
-[generated-image-index.json](generated-image-index.json) inventories all 22 generated originals,
-including the superseded robot studies, with repository paths and SHA-256 hashes.
+[generated-image-index.json](generated-image-index.json) inventories the earlier 22 generated originals,
+including the superseded robot studies, with repository paths and SHA-256 hashes. The approved 3D
+app icon and its preparation prompt are listed below.
 
 ## Files and native use
 
 | Asset | Location | Usage |
 |---|---|---|
 | App icon | `../Icon/Sidefolk.icns` | Bundled as `Sidefolk.icns`; Info.plist already names it. |
-| Raw square icon sources | `../Icon/icon-source-2048.png`, `../Icon/icon-1024.png` | Opaque, full-bleed blue-gradient square with the rabbit portrait; no rounded corners, bevel, shadow, rim or tile lighting. |
-| Raw icon artwork | `../Icon/icon-artwork.png` | Transparent rabbit portrait with ears and scarf, no background tile. |
+| App icon master | `masters/mochi-app-icon.png` | Approved 3D Mochi portrait on midnight blue, prepared with the built-in image tool. Opaque square, no mockup surround or rounded tile. Native resolution is retained; 2048 px exports are resized from it. |
+| Raw square icon sources | `../Icon/icon-source-2048.png`, `../Icon/icon-1024.png` | Opaque, full-bleed exports of the app icon master; no rounded corners, bevel, external shadow, rim or tile lighting. |
+| Transparent logo artwork | `../Icon/icon-artwork.png` | Separate rabbit logo portrait with ears and scarf, no background tile; not the 3D app icon source. |
 | Derived macOS icon | `../Icon/icon-macos-1024.png`, `../Icon/Sidefolk.iconset/` | Flat macOS outline/inset only. PNGs: 16/32/128/256/512 pt at 1x and 2x. No rendered edge effects. |
 | Xcode asset catalog | `../Icon/Sidefolk.xcassets/` | Drop into an Xcode project. `AppIcon` contains macOS representations; `AppIconSource` and `IconArtwork` are reusable image sets. |
 | Menu bar template | `../MenuBar/SidefolkMenuBar.pdf` | True vector alpha template; `NSImage.isTemplate = true`, size 18 × 18 pt. |
@@ -67,7 +69,9 @@ M/L/C/Z paths directly for PNG and PDF, so the logo variants share the exact sam
 wordmarks are 4096 px wide.
 
 `masters/rabbit-family.png` supplies the full-color logo composition; `rabbit-portrait.png` supplies
-the icon portrait. Their original imagegen outputs and exact prompts are retained alongside them. The current portrait comes from `rabbit-portrait-source-v2.png`, following `rabbit-icon-refinement-prompt.json`; it matches the detail crop’s tilted face and asymmetric ears.
+the transparent logo portrait. Their original imagegen outputs and exact prompts are retained alongside them. The logo portrait comes from `rabbit-portrait-source-v2.png`, following `rabbit-icon-refinement-prompt.json`; it matches the detail crop’s tilted face and asymmetric ears.
+The app icon instead uses `masters/mochi-app-icon.png` (approved 2026-10-29); its preparation prompt
+is retained in `masters/mochi-app-icon-prompt.json`. Rebuilding uses this committed image without a model call.
 `scripts/clean-image-alpha.swift` prepares their transparent mattes. The monochrome mascot comes
 from `RabbitBrandMark` in the native character target, using the monochrome close-up’s ear angles, side paw, two rays, and separated scarf tail. It is authored geometry, not a raster trace. Source masters and references
 are not bundled.

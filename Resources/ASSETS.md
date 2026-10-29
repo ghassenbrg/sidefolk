@@ -10,7 +10,7 @@ sets; reference sheets and archived generations stay in the repository.
 | Current Mochi brand | [Brand](Brand/README.md) | `masters/` holds the original family/portrait generations, refined portrait, clean artwork, vector wordmark and prompts. `exports/` holds individual logo and mascot variants. |
 | Supplied brand references | [Brand/reference](Brand/reference/) | Original robot and rabbit guides, the rabbit app-icon and monochrome close-ups, and `quality-feedback/` for the rejected text/edge examples. |
 | Original robot brand history | [Brand/archive/robot](Brand/archive/robot/) | Earlier clean brand masters plus `early-generations/` with the original glow/text and raised-icon attempts. |
-| App icons | [Icon](Icon/) | Raw square sources, transparent portrait, macOS PNG sizes, `.iconset`, `.icns` and Xcode asset catalog. |
+| App icons | [Icon](Icon/) | Full-bleed 3D Mochi sources from [the approved master](Brand/masters/mochi-app-icon.png), macOS PNG sizes, `.iconset`, `.icns` and Xcode asset catalog; the transparent logo portrait stays separate. |
 | Menu bar icons | [MenuBar](MenuBar/) | Shared rabbit design in vector PDF/SVG and 1x/2x/3x PNGs. |
 | AI service logos (third party) | [Brand/third-party](Brand/third-party/README.md) | LobeHub Icons SVGs as downloaded, their vector PDF exports, source, version, licence and trademark notes. Not Sidefolk's brand. |
 | Animated companion poses | [Companions](Companions/README.md) | Named Mochi/Spark pose folders; `masters/mochi-legacy/` preserves all 16 original Mochi poses before palette grading. |

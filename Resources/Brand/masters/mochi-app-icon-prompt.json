@@ -1,0 +1,7 @@
+{
+  "approved": "2026-10-29",
+  "tool": "Built-in image_gen",
+  "output": "mochi-app-icon.png",
+  "input": "User-approved Mochi app icon preview from this chat",
+  "prompt": "Use case: precise-object-edit. Make a production full-bleed square app-icon SOURCE from this APPROVED Sidefolk Mochi icon. Change ONLY the presentation perimeter. Remove the white outside margin and remove the rounded-square tile outline/bevel/rim lighting. Expand the existing midnight navy blue background naturally to all four straight canvas edges and all four square corners. Crop the tiny white external margin so the existing navy tile area becomes the full square canvas, filling missing corner areas with matching navy blue background. Absolutely preserve the approved Mochi character and composition: exact face, expression, eyes, nose, mouth, pink cheeks, ear shape and navy tips, white sculpted material, turquoise scarf, head tilt, lighting, and portrait framing. Both complete ears must remain visible with some breathing room. Shoulders and scarf continue naturally off bottom edge. The result must be ONE opaque square artwork image, edge-to-edge dark blue background, NO white frame, NO rounded corners, NO baked-in app tile, NO external shadow, NO mockup, NO UI, NO text. This source will later be masked deterministically by the existing macOS icon export pipeline. Keep the approved design unchanged apart from making the outside background full bleed."
+}

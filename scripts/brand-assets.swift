@@ -174,27 +174,18 @@ for horizontal in [false, true] {
     try save(lockup(horizontal: horizontal, mark: mono, word: tint(wordmark, navy)), exports.appendingPathComponent("\(name)-navy.png"))
     try save(lockup(horizontal: horizontal, mark: tint(mono, (1,1,1)), word: tint(wordmark, (1,1,1))), exports.appendingPathComponent("\(name)-white.png"))
 }
-// The reusable source is raw artwork on an edge-to-edge square. Platform padding and
-// masks belong only in derived exports, never in the source. No rendered tile, bevel or shadow.
+// The approved 3D Mochi portrait is independent of the transparent logo mark. Keep its
+// full-bleed master committed so rebuilding the brand never restores the earlier icon.
+// Platform padding and masks belong only in derived exports, never in the source.
 try save(mark, icon.appendingPathComponent("icon-artwork.png"))
-let raw = context(2048, 2048)
-// A simple blue gradient matches the supplied icon art. It is background color, not tile lighting.
-let blueGradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!, colors: [
-    CGColor(srgbRed: 91/255, green: 164/255, blue: 250/255, alpha: 1),
-    CGColor(srgbRed: 144/255, green: 228/255, blue: 242/255, alpha: 1)
-] as CFArray, locations: [0, 1])!
-raw.drawLinearGradient(blueGradient, start: CGPoint(x: 1024, y: 0),
-                       end: CGPoint(x: 1024, y: 2048), options: [])
-raw.interpolationQuality = .high
-let artworkHeight = 1950.0, artworkWidth = artworkHeight * Double(mark.width)/Double(mark.height)
-raw.draw(mark, in: CGRect(x: (2048-artworkWidth)/2, y: -20,
-                         width: artworkWidth, height: artworkHeight))
-let rawSource = raw.makeImage()!
+let iconMaster = read("Resources/Brand/masters/mochi-app-icon.png")
+precondition(iconMaster.width == iconMaster.height, "App icon master must be square")
+let rawSource = scaled(iconMaster, 2048, 2048)
 try save(rawSource, icon.appendingPathComponent("icon-source-2048.png"))
 try save(scaled(rawSource, 1024, 1024), icon.appendingPathComponent("icon-1024.png"))
 
 // Legacy ICNS gets only the native macOS outline/inset as a deterministic 2D mask. Its tile
-// has no lighting, rim, extruded edge or shadow. The artwork retains its simple blue gradient.
+// has no lighting, rim, extruded edge or shadow. The portrait retains its own studio lighting.
 let ac = context(1024, 1024)
 ac.addPath(CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824),
                  cornerWidth: 185, cornerHeight: 185, transform: nil))
