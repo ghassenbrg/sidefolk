@@ -51,8 +51,14 @@ public final class CharacterView: NSView {
 
     /// Whether the 2D rig is drawn. Off when another renderer shows the companion: the rig still
     /// runs underneath, so states, idle life, clicks, petting and bubble anchors work unchanged.
+    /// Switched without a fade: the other form must not show, even for a moment.
     public var drawsRig = true {
-        didSet { layer?.opacity = drawsRig ? 1 : 0 }
+        didSet {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            layer?.opacity = drawsRig ? 1 : 0
+            CATransaction.commit()
+        }
     }
 
     /// Setting this animates to the new state.

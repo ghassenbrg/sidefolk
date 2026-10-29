@@ -256,24 +256,30 @@ private struct CompanionStage: NSViewRepresentable {
             stage?.setVisible(window?.occlusionState.contains(.visible) ?? false)
         }
 
+        /// The chosen form at once, as on the desktop (`CompanionWindowController.show3D`).
         func show3D(_ species: CharacterSpecies?) {
-            guard species != stage?.species else { return }
-            stage?.removeFromSuperview()
-            stage = nil
-            character.onCue = nil
-            character.drawsRig = !(species?.only3D ?? false)
-            guard let species, let next = Companion3DStage(species) else { character.drawsRig = true; return }
+            guard let species else { removeStage(); return }
+            character.drawsRig = false
+            if let stage { stage.show(species); return }
+            guard let next = Companion3DStage(species) else { character.drawsRig = true; return }
             next.frame = bounds
             next.autoresizingMask = [.width, .height]
             addSubview(next, positioned: .above, relativeTo: character)
             stage = next
             next.onReady = { [weak self, weak next] in
                 guard let self, let next else { return }
-                self.character.drawsRig = false
                 next.handle(.state(self.character.state))
                 self.syncVisible()
             }
+            next.onFailed = { [weak self] in self?.removeStage() }
             character.onCue = { [weak next] in next?.handle($0) }
+        }
+
+        private func removeStage() {
+            stage?.removeFromSuperview()
+            stage = nil
+            character.onCue = nil
+            character.drawsRig = true
         }
     }
 }

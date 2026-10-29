@@ -124,17 +124,14 @@ final class CompanionWindowController {
     private var stage3D: Companion3DStage?
     private var occlusion3D: NSObjectProtocol?
 
-    /// Shows `species` in 3D, or the 2D rig itself when nil.
+    /// Shows `species` in 3D, or the 2D rig itself when nil. The chosen form shows at once: in 3D
+    /// the 2D rig is never drawn (only if the page can't load), and switching between 3D companions
+    /// swaps the character inside the page already running.
     private func show3D(_ species: CharacterSpecies?) {
-        guard species != stage3D?.species else { return }
-        stage3D?.removeFromSuperview()
-        stage3D = nil
-        occlusion3D.map(NotificationCenter.default.removeObserver)
-        occlusion3D = nil
-        character.onCue = nil
-        // A 3D-only companion's rig is a stand-in: never drawn, even before the 3D one loads.
-        character.drawsRig = !(species?.only3D ?? false)
-        guard let species, let stage = Companion3DStage(species) else { character.drawsRig = true; return }
+        guard let species else { removeStage3D(); return }
+        character.drawsRig = false
+        if let stage = stage3D { stage.show(species); return }
+        guard let stage = Companion3DStage(species) else { character.drawsRig = true; return }
         // Like the 2D rig: nothing is drawn while the companion can't be seen.
         occlusion3D = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
                                                              object: panel, queue: .main) { [weak self] _ in
@@ -146,14 +143,27 @@ final class CompanionWindowController {
         stage.frame = character.frame
         container.addSubview(stage, positioned: .above, relativeTo: character)
         stage3D = stage
-        // Keep a 2D rig drawn until the 3D one has loaded: never an empty window for Mochi or Spark.
         stage.onReady = { [weak self, weak stage] in
             guard let self, let stage else { return }
-            self.character.drawsRig = false
             stage.handle(.state(self.character.state))
             stage.handle(.posture(self.character.posture))
+            stage.setVisible(self.panel.occlusionState.contains(.visible))
+        }
+        stage.onFailed = { [weak self] in
+            guard let self else { return }
+            self.removeStage3D()
+            self.layoutContent()
         }
         character.onCue = { [weak stage] in stage?.handle($0) }
+    }
+
+    private func removeStage3D() {
+        stage3D?.removeFromSuperview()
+        stage3D = nil
+        occlusion3D.map(NotificationCenter.default.removeObserver)
+        occlusion3D = nil
+        character.onCue = nil
+        character.drawsRig = true
     }
 
     private func layoutContent() {

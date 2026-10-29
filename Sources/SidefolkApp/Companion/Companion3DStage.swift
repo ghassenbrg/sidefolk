@@ -11,9 +11,12 @@ final class Companion3DStage: NSView {
     private var ready = false
     private var pending: [String] = []
     /// Which character the page shows (its file in `characters/`).
-    let species: CharacterSpecies
-    /// Called once the page has loaded the model and can take cues.
+    private(set) var species: CharacterSpecies
+    /// Called each time the page has a character loaded and can take cues: at first, and after
+    /// `show(_:)` swaps in another.
     var onReady: (() -> Void)?
+    /// Called when the page never answered (three tries): show the 2D rig instead.
+    var onFailed: (() -> Void)?
 
     /// `Resources/Companions3D`, bundled by scripts/build-app.sh.
     static var folder: URL? {
@@ -52,17 +55,29 @@ final class Companion3DStage: NSView {
     private var attempts = 0
 
     /// Loads the page, and again if it hasn't said it is ready in 8 s (seen once at launch: the
-    /// page never answered). Three tries; until then the 2D rig stays drawn (nothing, for a
-    /// 3D-only companion).
+    /// page never answered). After three tries it gives up (`onFailed`).
     private func loadPage() {
         attempts += 1
         web.load(URLRequest(url: URL(string: "companion3d://app/companion.html?c=\(species.rawValue)")!))
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(8))
-            guard let self, !self.ready, self.attempts < 3 else { return }
-            NSLog("companion3d: no answer from the page; loading it again")
-            self.loadPage()
+            guard let self, !self.ready else { return }
+            if self.attempts < 3 {
+                NSLog("companion3d: no answer from the page; loading it again")
+                self.loadPage()
+            } else {
+                NSLog("companion3d: the page never answered")
+                self.onFailed?()
+            }
         }
+    }
+
+    /// Swaps the character inside the running page: the one shown stays until the next one has
+    /// drawn, so switching between 3D companions never shows an empty or 2D window.
+    func show(_ next: CharacterSpecies) {
+        guard next != species, next.has3D else { return }
+        species = next
+        send(["kind": "character", "id": next.rawValue])
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }

@@ -30,8 +30,10 @@ export default {
       c = mix(c, vec3(0.022, 0.035, 0.11), dark);
       c = mix(c, vec3(0.008, 0.012, 0.035), visor);
       rough = mix(mix(0.4, 0.3, aqua), 0.5, dark * (1.0 - visor));
-      rough = mix(rough, 0.06, visor);
-      clear = mix(0.6, 1.0, visor + aqua);
+      // Dark smoked glass: a soft, dim sheen of the room, not a mirror with a lamp in it.
+      rough = mix(rough, 0.32, visor);
+      clear = mix(0.6, 1.0, aqua) * (1.0 - 0.6 * visor);
+      spec = 1.0 - 0.75 * visor;
       // A faint grain on the plastic so it isn't a CG-perfect surface.
       bumpH = tri(uPlush, p, nR, 9.0) * 0.0012 * (1.0 - visor);
       inner = 0.55 * (1.0 - dark);

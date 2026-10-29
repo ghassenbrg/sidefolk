@@ -175,28 +175,60 @@ export class Companion {
     this.eyes = [];
     if (F.kind === 'screen') { this.faceKey = ''; return; }
 
-    // Eyes: found on the head's surface by ray, then carried by the head bone.
-    const probe = new THREE.Mesh(this.body.geometry);
-    probe.matrixWorld.copy(this.body.matrixWorld);
+    // Eyes: found on the head's surface by ray, then carried by the surface itself: three skinned
+    // vertices around each eye give its place and turn every frame. (Carried by the head bone, an
+    // eye slid behind a face that mostly follows the body, as Nimbo's and Folio's do.)
+    const body = this.body, pos = body.geometry.attributes.position;
+    const probe = new THREE.Mesh(body.geometry);
+    probe.matrixWorld.copy(body.matrixWorld);
     const ray = new THREE.Raycaster();
-    const head = this.bones.head;
-    const headWQ = head.getWorldQuaternion(new THREE.Quaternion());
+    const bodyWQ = body.getWorldQuaternion(new THREE.Quaternion());
+    const nearest = (p) => {
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < pos.count; i++) {
+        const dx = pos.getX(i) - p.x, dy = pos.getY(i) - p.y, dz = pos.getZ(i) - p.z, d = dx * dx + dy * dy + dz * dz;
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    };
     const E = F.layout.eye;
     for (const side of [1, -1]) {
       ray.set(new THREE.Vector3(side * E.x, E.y, 3), new THREE.Vector3(0, 0, -1));
       const hit = ray.intersectObject(probe)[0];
-      const n = hit.face.normal.clone().transformDirection(this.body.matrixWorld);
+      const n = hit.face.normal.clone().transformDirection(body.matrixWorld);
       n.add(new THREE.Vector3(0, 0, F.eyeForward ?? 0.9)).normalize();           // keep them looking ahead
       const zx = n, xx = new THREE.Vector3(0, 1, 0).cross(zx).normalize(), yx = zx.clone().cross(xx);
       const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xx, yx, zx));
       const eye = buildEye(side, E, F.iris);
-      const pos = hit.point.clone().addScaledVector(n, -E.depth * (E.sink ?? 0.42));
-      head.add(eye.group);
-      eye.group.position.copy(head.worldToLocal(pos));
-      eye.group.quaternion.copy(headWQ.clone().invert().multiply(q));
+      body.add(eye.group);
+      const at = body.worldToLocal(hit.point.clone().addScaledVector(n, -E.depth * (E.sink ?? 0.42)));
+      const surface = body.worldToLocal(hit.point.clone());
+      const anchor = [surface, surface.clone().add(new THREE.Vector3(0.06, 0, 0)), surface.clone().add(new THREE.Vector3(0, 0.06, 0))].map(nearest);
+      const rest = this.anchorFrame(anchor);
+      eye.anchor = {
+        verts: anchor,
+        offset: at.sub(rest.p).applyQuaternion(rest.q.clone().invert()),
+        turn: rest.q.clone().invert().multiply(bodyWQ.clone().invert().multiply(q)),
+      };
       this.eyes.push(eye);
     }
+    this.placeEyes();
     this.faceKey = '';
+  }
+
+  /** Where three skinned vertices are now, as a point and a turn (body space). */
+  anchorFrame(verts) {
+    const [p0, p1, p2] = verts.map((i) => this.body.getVertexPosition(i, new THREE.Vector3()));
+    const x = p1.sub(p0).normalize(), z = x.clone().cross(p2.sub(p0)).normalize(), y = z.clone().cross(x);
+    return { p: p0, q: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)) };
+  }
+
+  placeEyes() {
+    for (const e of this.eyes) {
+      const { p, q } = this.anchorFrame(e.anchor.verts);
+      e.group.position.copy(e.anchor.offset).applyQuaternion(q).add(p);
+      e.group.quaternion.copy(q).multiply(e.anchor.turn);
+    }
   }
 
   buildPicking() {
@@ -314,6 +346,14 @@ export class Companion {
     const t = (1.4 - this.camera.position.z) / dir.z;
     this.look.target = this.camera.position.clone().addScaledVector(dir, t);
     this.look.lastSeen = this.time;
+  }
+
+  /** Stops for good and frees the GPU: the page swaps in another character. */
+  dispose() {
+    this.paused = true;
+    this.renderer.dispose();
+    this.renderer.forceContextLoss();
+    this.canvas.remove();
   }
 
   pause(p = true) { const was = this.paused; this.paused = p; if (was && !p) { this.last = performance.now(); this.loop(); } }
@@ -472,6 +512,7 @@ export class Companion {
     this.blob.material.opacity = 1 - 0.7 * air;
 
     this.root.updateMatrixWorld(true);
+    this.placeEyes();
     this.measureHead(dt);
     // Calm: only breathing, blinking and slow glances, which read fine at the idle frame rate.
     this.calm = !busy && !this.speech && this.voice < 0.01 && this.loopName === 'idle' && this.pet.w.x < 0.01

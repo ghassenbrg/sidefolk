@@ -11,7 +11,6 @@
 </style>
 </head>
 <body>
-<canvas id="stage"></canvas>
 <script type="importmap">
 { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
 </script>
@@ -23,16 +22,35 @@
 import { Companion } from './engine/engine.js';
 
 const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo', 'folio'];
-const id = new URLSearchParams(location.search).get('c');
 const post = (msg) => window.webkit?.messageHandlers?.companion?.postMessage(msg);
-const character = (await import(`./characters/${CHARACTERS.includes(id) ? id : 'mochi'}.js`)).default;
-const c = new Companion(document.getElementById('stage'), character, {
+const OPTIONS = {
   // 30 fps while moving, 15 while it only breathes, 1.5× pixels: smooth for a small desktop
   // character at a fraction of the cost of 60. A small shadow map, redrawn every other frame.
   interactive: false, frame: 'sidefolk', liveliness: 'minimal', maxFps: 30, idleFps: 15, maxPixelRatio: 1.5, hopScale: 0.4,
   shadowSize: 512, shadowEvery: 2,
-});
-window.companion = c;
+};
+let c = null;
+let loading = Promise.resolve();
+
+/** Shows character `id`. A swap keeps the one shown until the next has drawn its first frame,
+ *  on a canvas of its own above it, then frees the old one. */
+function show(id) {
+  loading = loading.then(async () => {
+    const character = (await import(`./characters/${CHARACTERS.includes(id) ? id : 'mochi'}.js`)).default;
+    const canvas = document.createElement('canvas');
+    document.body.append(canvas);
+    const next = new Companion(canvas, character, OPTIONS);
+    // A hidden window stays hidden: the newcomer draws its first frame and waits.
+    if (c) next.paused = c.paused;
+    await next.load();
+    if (c) {
+      next.setState(c.state); next.setPosture(c.posture);
+      c.dispose();
+    }
+    c = window.companion = next;
+    post({ kind: 'ready' });
+  });
+}
 
 // Sidefolk's antics (CharacterAntic) and gestures (CharacterGesture) as 3D moves.
 const ANTICS = {
@@ -48,6 +66,7 @@ const MOODS = { joy: 'happy', bliss: 'content', squeeze: 'giggle', drowsy: 'slee
 
 window.sidefolk = {
   handle(e) {
+    if (!c) return;
     switch (e.kind) {
       case 'state': c.setState(e.name); break;
       case 'posture': c.setPosture(e.name); break;
@@ -62,12 +81,12 @@ window.sidefolk = {
       case 'gaze': e.x == null ? c.lookAt(null) : c.lookAt(e.x * 1.6, e.y * 1.4); break;
       case 'say': c.say(e.text || ''); break;
       case 'visible': c.pause(!e.on); break;
+      case 'character': show(e.id); break;
     }
   },
 };
 
-await c.load();
-post({ kind: 'ready' });
+show(new URLSearchParams(location.search).get('c'));
 </script>
 </body>
 </html>

@@ -14,7 +14,8 @@ let shared;
  * `surface` is GLSL run per pixel. It reads `tex` (texture colour, linear), `s` (the same in sRGB),
  * `p` and `nR` (rest-pose position and normal, model space) and may call `tri(map, p, n, scale)`
  * on `uPlush` or `uKnit`. It sets any of: `c` (colour), `rough`, `bumpH` (relief height),
- * `glow` (emitted light), `sheenTint`, `clear` (clearcoat amount), `inner` (inner light, 0…1).
+ * `glow` (emitted light), `sheenTint`, `clear` (clearcoat amount), `inner` (inner light, 0…1),
+ * `spec` (how much it reflects, 0…1: dark glass that mirrors the room looks lit from the front).
  */
 export function bodyMaterial(body, { params = {}, surface = '', ao = [0.42, 0.3, 0.78], bump = 1, uniforms: own = {} } = {}) {
   shared ||= { uPlush: { value: detail('plush-height.png') }, uKnit: { value: detail('knit-height.png') } };
@@ -58,7 +59,7 @@ export function bodyMaterial(body, { params = {}, surface = '', ao = [0.42, 0.3,
         vec3 s = pow(max(tex, vec3(0.0)), vec3(1.0 / 2.2));
         vec3 p = vRest; vec3 nR = normalize(vRestN);
         vec3 c = tex; float rough = ${(params.roughness ?? 0.78).toFixed(3)}; float bumpH = 0.0;
-        vec3 glow = vec3(0.0); vec3 sheenTint = vec3(1.0); float clear = 1.0; float inner = 1.0;
+        vec3 glow = vec3(0.0); vec3 sheenTint = vec3(1.0); float clear = 1.0; float inner = 1.0; float spec = 1.0;
         ${surface}
         diffuseColor.rgb = c;`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = rough;')
@@ -72,6 +73,13 @@ export function bodyMaterial(body, { params = {}, surface = '', ao = [0.42, 0.3,
         reflectedLight.indirectDiffuse *= mix(${ao[0]}, 1.0, bakedAO);
         reflectedLight.indirectSpecular *= mix(${ao[1]}, 1.0, bakedAO);
         reflectedLight.directDiffuse *= mix(${ao[2]}, 1.0, bakedAO);` : '#include <aomap_fragment>')
+      .replace('#include <aomap_fragment>', `#include <aomap_fragment>
+        reflectedLight.directSpecular *= spec;
+        reflectedLight.indirectSpecular *= spec;
+        #ifdef USE_CLEARCOAT
+          clearcoatSpecularDirect *= spec;
+          clearcoatSpecularIndirect *= spec;
+        #endif`)
       .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
         #ifdef USE_SHEEN
           material.sheenColor *= sheenTint;
