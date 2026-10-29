@@ -51,7 +51,11 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
 One engine (`Resources/Companions3D/engine/`) for every character. Each frame builds a pose from
 layers (posture, idle life, Sidefolk's state loop, one-shot moves, look-at with the eyes leading),
 then springs finish it: chains, the scarf tag, squash and stretch, and follow-through on the core,
-head and limbs. 28 moves, 29 feelings, 12 states and 4 postures; Mochi's nose and mouth always
+head and limbs. Moves, feelings, states and postures are shared, and each character adds its own
+trick (`actions`, `moments`). Liveliness decides what it starts on its own and how big its
+reactions are (`REACTIONS` in `engine.js`, one table to tune); every move emits `'move'`, the hook
+for sound effects later. In the app, the 2D view's effects and badges draw over it. Mochi's nose
+and mouth always
 keep a clear gap. In the app it draws 15 frames a second while it only breathes and glances, 30
 while it moves, at 1.5× pixels, with a small shadow map redrawn every other frame, and nothing while
 the window is hidden: about 18% of a core (D51), against 0.2% for a 2D companion.
