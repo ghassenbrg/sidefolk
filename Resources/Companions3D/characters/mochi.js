@@ -1,8 +1,8 @@
 // Mochi: a white plush bunny, navy ear tips, pink inner ears, a turquoise knitted scarf with a
 // hanging tag, a pompom tail. Rig: mochi-3d/blender/rig.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { Spring } from '../engine/motion.js';
-import { add } from '../engine/moves.js';
+import { Spring, win } from '../engine/motion.js';
+import { add, raise, ears, face, hopY } from '../engine/moves.js';
 
 const ear = (s, side) => ({ bones: [`ear${s}1`, `ear${s}2`, `ear${s}3`], side, twitch: true });
 
@@ -58,6 +58,24 @@ export default {
       blush: { x: 0.3, y: -0.142, w: 0.105, h: 0.062 },
     },
   },
+
+  // Its own moment (Balanced and Lively): three bunny hops in a row, ears flopping.
+  actions: {
+    bunnyHops: {
+      dur: 2.6,
+      fn(t, P) {
+        let lift = 0;
+        for (const t0 of [0.25, 0.95, 1.65]) lift += hopY(t, t0, t0 + 0.5, 0.14);
+        P.root.py += lift;
+        const crouch = [0.2, 0.9, 1.6, 2.2].reduce((m, t0) => Math.max(m, win(t, t0 - 0.08, t0, t0 + 0.02, t0 + 0.1)), 0);
+        P.squash *= 1 - 0.08 * crouch;
+        ears(P, 24 * Math.sin(t * 9) * win(t, 0.2, 0.4, 2.0, 2.4), 10);
+        for (const s of ['L', 'R']) raise(P, s, 20 * win(t, 0.2, 0.4, 2.0, 2.4));
+        face(P, { mood: 'excited' });
+      },
+    },
+  },
+  moments: ['bunnyHops'],
 
   chains: [ear('L', 1), ear('R', -1)],
   pick: { head: { r: 0.43, at: [0, -0.04, 0] }, body: { r: 0.31, at: [0, -0.62, 0] }, tips: ['earL2', 'earR2'] },

@@ -93,6 +93,7 @@ final class Companion3DStage: NSView {
         case .gaze(let v): send(v.map { ["kind": "gaze", "x": $0.dx, "y": $0.dy] } ?? ["kind": "gaze"])
         case .posture(let posture): send(["kind": "posture", "name": posture.rawValue])
         case .antic(let antic): send(["kind": "antic", "name": antic.rawValue])
+        case .liveliness(let level): send(["kind": "liveliness", "level": level])
         }
     }
 

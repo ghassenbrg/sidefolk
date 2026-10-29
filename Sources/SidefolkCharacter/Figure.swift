@@ -28,6 +28,9 @@ protocol Figure: AnyObject {
 
     /// The body at rest, in canvas units: what bubbles and panels attach to.
     var restingFrame: CGRect { get }
+    /// Shows or hides the body, its props and floor shadow; effects and badges stay (a 3D
+    /// companion is drawn under them, D51).
+    func showBody(_ on: Bool)
     /// Layers that pulse while listening (the robot's ear lights, Spark's headphones).
     var listeningLights: [CALayer] { get }
     /// The colour marks are drawn in (zZz, waves, thought dots).

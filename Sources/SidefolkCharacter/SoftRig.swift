@@ -172,6 +172,11 @@ final class SoftRig: Figure {
         stage.addSublayer(badges)
     }
 
+    func showBody(_ on: Bool) {
+        breath.sublayers?.forEach { if $0 !== bodyFX { $0.isHidden = !on } }
+        ground.isHidden = !on
+    }
+
     /// A body part in the species' shading, with its soft drop shadow and edge.
     private func soft(_ path: CGPath, shadow: CGFloat) -> CALayer {
         let shape = SoftShape(path, shading: species.shading)

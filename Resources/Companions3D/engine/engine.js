@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Spring, damp, clamp, lerp, smooth, noise, rand, pick } from './motion.js';
-import { ACTIONS, LOOPS, POSTURES, add } from './moves.js';
+import { ACTIONS, LOOPS, POSTURES, MOMENTS_3D, add } from './moves.js';
 import { moodFace } from './moods.js';
 import { Face, buildEye } from './face.js';
 import { Marks } from './marks.js';
@@ -26,9 +26,22 @@ const FOLLOW = { hips: [320, 30], spine: [260, 25], chest: [220, 21], head: [165
 const STATES = {
   idle: { loop: 'idle' }, listening: { loop: 'listening' }, hearing: { loop: 'hearing' },
   thinking: { loop: 'thinking' }, working: { loop: 'working' }, waiting: { loop: 'waiting' },
-  success: { loop: 'success', enter: 'hop', mood: 'happy' }, error: { loop: 'error' },
-  alert: { loop: 'alert', enter: 'surprised' }, dragging: { loop: 'dragging' },
+  success: { loop: 'success', mood: 'happy' }, error: { loop: 'error' },
+  alert: { loop: 'alert' }, dragging: { loop: 'dragging' },
   celebrating: { loop: 'celebrating' }, sleeping: { loop: 'idle', posture: 'sleep' },
+};
+
+/**
+ * How big a reaction is, by liveliness: Minimal (the economical setting) keeps only what tells
+ * you something; Balanced adds a little joy; Lively plays the whole scene. One place to tune.
+ * Each entry is a move, or moves played one after another. Every move starting is also announced
+ * (`'move'` event), the hook for sound effects later.
+ */
+const REACTIONS = {
+  success: { minimal: 'nod', balanced: 'hop', lively: ['cheer', 'twirl'] },          // something finished
+  alert: { minimal: 'surprised', balanced: 'attention', lively: ['surprised', 'attention'] }, // a reminder, news
+  error: { minimal: null, balanced: 'scratch', lively: ['wince', 'scratch'] },
+  petted: { minimal: null, balanced: 'giggle', lively: 'thanks' },                     // after a long stroke
 };
 
 export class Companion {
@@ -277,8 +290,8 @@ export class Companion {
 
   setMood(name) { this.mood = name; this.moodFace = moodFace(name); }
 
-  /** The one-shot moves this character has (the shared set, minus what its body can't do). */
-  get moves() { return Object.keys(ACTIONS).filter((n) => !(this.C.skip || []).includes(n)); }
+  /** The one-shot moves this character has (the shared set and its own, minus what its body can't do). */
+  get moves() { return [...Object.keys(ACTIONS), ...Object.keys(this.C.actions || {})].filter((n) => !(this.C.skip || []).includes(n)); }
 
   /** A one-shot move by name (wave, bow, hop, jump, cheer, dance, nod, shake, giggle, flip…). */
   play(name) {
@@ -286,9 +299,31 @@ export class Companion {
     if (!clip || (this.C.skip || []).includes(name)) return false;
     for (const a of this.actions) a.fading ??= a.t;
     this.actions.push({ name, clip, t: 0 });
+    this.queue = [];
     this.nextFidget = this.time + rand(8, 14);
     if (name === 'flip' || name === 'jump' || name === 'surprised') this.forceBlink();
+    this.emit('move', name);
     return true;
+  }
+
+  /** Plays moves one after another, each starting as the last one settles. */
+  playSequence(names) {
+    const [first, ...rest] = names.filter((n) => this.C.actions?.[n] || ACTIONS[n]);
+    if (!first) return false;
+    this.play(first);
+    this.queue = rest;
+    return true;
+  }
+
+  /** The reaction to `event` (REACTIONS) at the current liveliness. */
+  react(event) {
+    // One event, one reaction: Sidefolk may report it twice (a state and a cue).
+    if (this.reacted?.event === event && this.time - this.reacted.at < 1.5) return false;
+    this.reacted = { event, at: this.time };
+    const level = this.opts.liveliness === 'still' ? 'minimal' : this.opts.liveliness;
+    const r = REACTIONS[event]?.[level] ?? REACTIONS[event]?.balanced;
+    if (!r) return false;
+    return this.playSequence(Array.isArray(r) ? r : [r]);
   }
 
   /** Sidefolk's states (idle, listening, hearing, thinking, working, waiting, success, error,
@@ -299,7 +334,7 @@ export class Companion {
     this.setLoop(s.loop);
     if (s.mood) this.setMood(s.mood); else if (['happy', 'asleep'].includes(this.mood)) this.setMood('neutral');
     this.setPosture(s.posture || (this.posture === 'sleep' ? 'stand' : this.posture));
-    if (s.enter) this.play(s.enter);
+    if (REACTIONS[name]) this.react(name);
   }
 
   setLoop(name) {
@@ -439,18 +474,36 @@ export class Companion {
       if (L.gaze) P.gaze = L.gaze;
     }
 
-    // Petting: lean into the hand, eyes shut in bliss, ears smoothed back.
+    // Petting: a bliss that deepens the longer it lasts. First a smile and a lean into the hand;
+    // then eyes shut, ears smoothed back, the body melting and swaying, a happy wag; at the end
+    // a sigh, and (Balanced, Lively) a thank-you.
     {
-      const w = this.pet.w.step(this.pet.active ? 1 : 0, dt);
+      const pet = this.pet;
+      if (pet.active) pet.t = (pet.t || 0) + dt;
+      const w = pet.w.step(pet.active ? 1 : 0, dt);
       if (w > 0.002) {
+        const deep = smooth((pet.t || 0) / 1.6);
+        const sway = Math.sin(t * 2.2) * (2 + 6 * deep);
         const L = this.layer();
-        add(L, 'head', 8, this.pet.x * 10, -this.pet.x * 14 + Math.sin(t * 3) * 3);
-        add(L, 'chest', 3, 0, -this.pet.x * 4);
-        for (const s of ['L', 'R']) { add(L, `ear${s}1`, -14); add(L, `ear${s}2`, -12); add(L, `ear${s}3`, -8); }
-        L.squash = 0.97;
-        L.face = { mood: 'content', blush: 1.3 };
+        // Leaning into the hand: toward the stroke, or to one side when Sidefolk doesn't say.
+        const side = pet.x || 0.8;
+        add(L, 'head', 6 + 6 * deep, side * 12, -side * (12 + 16 * deep) + sway);
+        add(L, 'chest', 3 + 3 * deep, 0, -side * (4 + 6 * deep) + sway * 0.4);
+        L.root.rz -= side * 4 * deep;
+        for (const s of ['L', 'R']) {
+          add(L, `ear${s}1`, -14 - 10 * deep); add(L, `ear${s}2`, -12 - 8 * deep); add(L, `ear${s}3`, -8 - 6 * deep);
+          add(L, 'arm' + s, 0, (s === 'L' ? -1 : 1) * 20 * deep, (s === 'L' ? -1 : 1) * -8 * deep);   // paws curl in
+        }
+        L.squash = 1 - 0.02 - 0.07 * deep;
+        L.face = deep < 0.35 ? { mood: 'smile', blush: 1.2 } : deep < 0.95 ? { mood: 'content', blush: 1.5 } : { mood: 'love', blush: 1.7, shy: 0.6 };
         this.mix(P, L, w);
         faceLayers.push([L.face, w]);
+      }
+      if (!pet.active && pet.t) {
+        // Let go: a contented sigh, then a thank-you after a real stroke.
+        if (pet.t > 1.2) this.react('petted');
+        else this.flash = { mood: 'happy', until: this.time + 1.4 };
+        pet.t = 0;
       }
     }
 
@@ -469,16 +522,29 @@ export class Companion {
       a.w = w;
     }
     this.actions = this.actions.filter((a) => a.t < a.clip.dur && !(a.fading != null && a.t - a.fading > 0.25));
+    // A sequence's next move starts as the last one settles, so they flow into each other.
+    if (this.queue?.length && this.actions.every((a) => a.t > a.clip.dur - 0.35)) {
+      const [next, ...rest] = this.queue;
+      this.play(next);
+      this.queue = rest;
+    }
     const busy = this.actions.length > 0;
 
     // Speech: head beats on stressed syllables, ears perk, brows rise on questions.
     const speechOpen = this.speechStep(dt, P);
 
-    // Idle fidgets: small things done on its own when nothing else is happening.
-    if (!busy && this.loopName === 'idle' && this.posture === 'stand' && !this.speech && !this.pet.active && t > this.nextFidget) {
-      const gap = { minimal: [20, 40], balanced: [7, 15], lively: [4, 9] }[this.opts.liveliness] || [7, 15];
+    // Things it does on its own when nothing else is happening: small fidgets, and in Balanced
+    // and Lively the moments only a 3D body can have (turning round, twirling, its own tricks).
+    // 'still' (Reduce Motion) starts nothing.
+    const live = this.opts.liveliness;
+    if (live !== 'still' && !busy && this.loopName === 'idle' && this.posture === 'stand' && !this.speech && !this.pet.active && t > this.nextFidget) {
+      const gap = { minimal: [20, 40], balanced: [9, 18], lively: [4, 9] }[live] || [9, 18];
       this.nextFidget = t + rand(...gap);
-      this.fidget(pick(this.C.fidgets || ['lookAround', 'earTwitch', 'earTwitch', 'tilt', 'sniff', 'smile', 'stretch', 'hop', 'blinkDouble', 'giggle']));
+      const moment = { balanced: 0.3, lively: 0.5 }[live] || 0;
+      const pool = Math.random() < moment
+        ? [...MOMENTS_3D, ...(this.C.moments || []), ...(this.C.moments || [])].filter((n) => !(this.C.skip || []).includes(n))
+        : this.C.fidgets || ['lookAround', 'earTwitch', 'earTwitch', 'tilt', 'sniff', 'smile', 'stretch', 'hop', 'blinkDouble', 'giggle'];
+      this.fidget(pick(pool));
     }
     if (sleeping > 0.8 && (t % 3.2) < dt) this.markAtHead('zzz');
 
@@ -539,6 +605,8 @@ export class Companion {
   }
 
   markAtHead(kind) {
+    // In Sidefolk the 2D view's effects draw over the 3D character: no second set of marks.
+    if (this.opts.marks === false) return;
     const p = new THREE.Vector3();
     this.bones.head.getWorldPosition(p);
     const side = kind === 'sweat' ? -1 : 1;
@@ -620,7 +688,7 @@ export class Companion {
   /** Secondary motion: chains, scarf tag, tail and squash follow what the body really did. */
   dynamics(dt, P, lying) {
     const a = this.angAcc, lin = this.headA;
-    const happy = ['happy', 'excited', 'laugh', 'giggle', 'love'].includes(this.face.curMood) ? 1 : 0;
+    const happy = ['happy', 'excited', 'laugh', 'giggle', 'love', 'content'].includes(this.face.curMood) ? 1 : 0;
     for (const c of this.chains) {
       const sx = c.side ?? 1, n = c.segs.length;
       const gain = c.gain ?? 1, breeze = c.breeze ?? 1;
@@ -804,7 +872,7 @@ export class Companion {
       if (!down) return;
       const petted = this.pet.active;
       this.pet.active = false;
-      if (petted) { this.flash = { mood: 'happy', until: this.time + 1.5 }; this.emit('petted'); }
+      if (petted) this.emit('petted');
       else {
         clicks = clicks.filter((c) => this.time - c < 2).concat(this.time);
         if (clicks.length >= 5) { clicks = []; this.play('dizzy'); }

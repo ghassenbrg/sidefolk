@@ -4,7 +4,8 @@
 // founder's sheet (companions-3d/references/nimbo-sheet-v2.webp): a wide cloud, the face low in it.
 // Rig: rig_nimbo.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { add } from '../engine/moves.js';
+import { add, face } from '../engine/moves.js';
+import { win, smooth } from '../engine/motion.js';
 
 export default {
   id: 'nimbo',
@@ -53,6 +54,21 @@ export default {
       blush: { x: 0.38, y: -0.25, w: 0.11, h: 0.065, alpha: 0.45 },
     },
   },
+
+  // Its own moment: a barrel roll in the air, a puff of joy.
+  actions: {
+    barrelRoll: {
+      dur: 2.8,
+      fn(t, P) {
+        const roll = 360 * smooth((t - 0.5) / 1.5);
+        P.root.rz -= roll;
+        P.root.py += 0.18 * win(t, 0.2, 0.7, 1.9, 2.5);
+        P.squash *= 1 + 0.05 * Math.sin(t * 6) * win(t, 0.3, 0.5, 2.1, 2.4);
+        face(P, { mood: t > 0.6 && t < 2.0 ? 'laugh' : 'happy' });
+      },
+    },
+  },
+  moments: ['barrelRoll'],
 
   chains: [],
   pick: { head: { r: 0.62, at: [0, 0, 0] }, body: { r: 0.45, at: [0, -0.35, 0], bone: 'spine' }, tips: ['handL', 'handR'], tipR: 0.17 },

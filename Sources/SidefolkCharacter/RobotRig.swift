@@ -162,6 +162,11 @@ final class RobotRig: Figure {
         stage.addSublayer(badges)
     }
 
+    func showBody(_ on: Bool) {
+        breath.sublayers?.forEach { if $0 !== bodyFX { $0.isHidden = !on } }
+        ground.isHidden = !on
+    }
+
     /// Soft secondary lights that sell the "glossy toy" look: a bounce glow along the lower
     /// edge and a broad sheen on the dome.
     private func addShellLights(to parent: CALayer) {

@@ -141,10 +141,12 @@ final class CompanionWindowController {
             }
         }
         stage.frame = character.frame
-        container.addSubview(stage, positioned: .above, relativeTo: character)
+        // Under the 2D view: its effects and badges show in front of the 3D character.
+        container.addSubview(stage, positioned: .below, relativeTo: character)
         stage3D = stage
         stage.onReady = { [weak self, weak stage] in
             guard let self, let stage else { return }
+            stage.handle(.liveliness(self.character.motionLevel))
             stage.handle(.state(self.character.state))
             stage.handle(.posture(self.character.posture))
             stage.setVisible(self.panel.occlusionState.contains(.visible))

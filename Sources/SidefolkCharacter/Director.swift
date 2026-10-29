@@ -79,6 +79,11 @@ final class Director {
 
     var blinks: Bool { look.blinks }
 
+    /// Whether the body is drawn; its effects and badges always are (see `CharacterView.drawsRig`).
+    var showsBody = true {
+        didSet { if showsBody != oldValue { rig.showBody(showsBody) } }
+    }
+
     func show(_ next: CharacterState, animated: Bool) {
         let previous = state
         state = next

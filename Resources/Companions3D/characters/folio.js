@@ -3,7 +3,8 @@
 // Its body is card: it bends a little, as a whole. Sheet: companions-3d/references/folio-sheet.png.
 // Rig: rig_folio.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { add, POSTURES } from '../engine/moves.js';
+import { add, POSTURES, raise, face } from '../engine/moves.js';
+import { win } from '../engine/motion.js';
 
 export default {
   id: 'folio',
@@ -50,6 +51,23 @@ export default {
       blush: { x: 0.44, y: -0.15, w: 0.12, h: 0.07, alpha: 0.35 },
     },
   },
+
+  // Its own moment: flaps its paper fins and floats up like a sheet in a draught, then lands.
+  actions: {
+    flutter: {
+      dur: 3.0,
+      fn(t, P) {
+        const on = win(t, 0.1, 0.4, 2.2, 2.7);
+        const flap = Math.sin(t * Math.PI * 2 * 3.2) * on;
+        for (const s of ['L', 'R']) raise(P, s, 30 * on + 35 * flap);
+        P.root.py += 0.2 * win(t, 0.3, 1.0, 1.8, 2.6);
+        P.root.rz += 8 * Math.sin(t * 2.4) * on; P.root.rx -= 6 * on;
+        P.squash *= 1 - 0.07 * win(t, 2.5, 2.6, 2.65, 2.85);
+        face(P, { mood: 'excited' });
+      },
+    },
+  },
+  moments: ['flutter'],
 
   chains: [],
   pick: { head: { r: 0.5, at: [0, 0.25, 0] }, body: { r: 0.45, at: [0, -0.3, 0], bone: 'spine' } },

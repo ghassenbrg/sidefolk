@@ -264,10 +264,11 @@ private struct CompanionStage: NSViewRepresentable {
             guard let next = Companion3DStage(species) else { character.drawsRig = true; return }
             next.frame = bounds
             next.autoresizingMask = [.width, .height]
-            addSubview(next, positioned: .above, relativeTo: character)
+            addSubview(next, positioned: .below, relativeTo: character)
             stage = next
             next.onReady = { [weak self, weak next] in
                 guard let self, let next else { return }
+                next.handle(.liveliness(self.character.motionLevel))
                 next.handle(.state(self.character.state))
                 self.syncVisible()
             }

@@ -45,18 +45,25 @@ public final class CharacterView: NSView {
     public enum Cue: Sendable {
         case state(CharacterState), gesture(CharacterGesture), speak(Double?), gaze(CGVector?)
         case posture(CharacterPosture), antic(CharacterAntic)
+        /// How much it may do on its own and how big its reactions are: `liveliness`, or "still"
+        /// under Reduce Motion.
+        case liveliness(String)
     }
+
+    /// The `.liveliness` cue's level now.
+    public var motionLevel: String { reducedMotion ? "still" : liveliness.rawValue }
 
     public var onCue: ((Cue) -> Void)?
 
-    /// Whether the 2D rig is drawn. Off when another renderer shows the companion: the rig still
-    /// runs underneath, so states, idle life, clicks, petting and bubble anchors work unchanged.
+    /// Whether the 2D body is drawn. Off when another renderer shows the companion (laid under
+    /// this view): the rig still runs, so states, idle life, clicks, petting and bubble anchors work
+    /// unchanged, and its effects and badges (!, ?, zZz, counts, motion lines) still show around it.
     /// Switched without a fade: the other form must not show, even for a moment.
     public var drawsRig = true {
         didSet {
             CATransaction.begin()
             CATransaction.setDisableActions(true)
-            layer?.opacity = drawsRig ? 1 : 0
+            director.showsBody = drawsRig
             CATransaction.commit()
         }
     }
@@ -117,6 +124,7 @@ public final class CharacterView: NSView {
         didSet {
             director.reducedMotion = reducedMotion
             life?.refresh()
+            if reducedMotion != oldValue { onCue?(.liveliness(motionLevel)) }
         }
     }
 
@@ -124,7 +132,11 @@ public final class CharacterView: NSView {
 
     /// How much it does on its own. `.minimal` is the companion of D20; see `Liveliness`.
     public var liveliness: Liveliness = .minimal {
-        didSet { if liveliness != oldValue { applyLiveliness() } }
+        didSet {
+            guard liveliness != oldValue else { return }
+            applyLiveliness()
+            onCue?(.liveliness(motionLevel))
+        }
     }
 
     /// Whether a notification startles it and finished work makes it cheer (the host asks).
@@ -279,6 +291,7 @@ public final class CharacterView: NSView {
         let old = director
         let next = Director(look, live: true)
         next.reducedMotion = reducedMotion
+        next.showsBody = drawsRig
         next.show(old.state, animated: false)
         next.setBadges(badges, animated: false)
         next.setGaze(gaze)

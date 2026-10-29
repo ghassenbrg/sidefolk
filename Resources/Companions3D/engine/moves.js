@@ -10,18 +10,18 @@ export const add = (P, bone, x = 0, y = 0, z = 0) => {
   const b = P.b[bone] || (P.b[bone] = [0, 0, 0]);
   b[0] += x; b[1] += y; b[2] += z;
 };
-const raise = (P, s, deg) => add(P, 'arm' + s, 0, 0, S[s] * deg);
-const fwd = (P, s, deg) => add(P, 'arm' + s, 0, -S[s] * deg, 0);
-const handBend = (P, s, deg) => add(P, 'hand' + s, 0, 0, S[s] * deg);
-const ear = (P, s, pitch, splay = 0) => { // splay + leans the ear outward
+export const raise = (P, s, deg) => add(P, 'arm' + s, 0, 0, S[s] * deg);
+export const fwd = (P, s, deg) => add(P, 'arm' + s, 0, -S[s] * deg, 0);
+export const handBend = (P, s, deg) => add(P, 'hand' + s, 0, 0, S[s] * deg);
+export const ear = (P, s, pitch, splay = 0) => { // splay + leans the ear outward
   add(P, `ear${s}1`, pitch * 0.35, 0, -S[s] * splay * 0.5);
   add(P, `ear${s}2`, pitch * 0.35, 0, -S[s] * splay * 0.3);
   add(P, `ear${s}3`, pitch * 0.3, 0, -S[s] * splay * 0.2);
 };
-const ears = (P, pitch, splay = 0) => { ear(P, 'L', pitch, splay); ear(P, 'R', pitch, splay); };
-const lean = (P, pitch, roll = 0) => { add(P, 'hips', pitch * 0.3, 0, roll * 0.3); add(P, 'spine', pitch * 0.35, 0, roll * 0.35); add(P, 'chest', pitch * 0.35, 0, roll * 0.35); };
-const face = (P, f) => Object.assign(P.face, f);
-const hopY = (t, t0, t1, h) => (t > t0 && t < t1) ? 4 * h * ((t - t0) / (t1 - t0)) * (1 - (t - t0) / (t1 - t0)) : 0;
+export const ears = (P, pitch, splay = 0) => { ear(P, 'L', pitch, splay); ear(P, 'R', pitch, splay); };
+export const lean = (P, pitch, roll = 0) => { add(P, 'hips', pitch * 0.3, 0, roll * 0.3); add(P, 'spine', pitch * 0.35, 0, roll * 0.35); add(P, 'chest', pitch * 0.35, 0, roll * 0.35); };
+export const face = (P, f) => Object.assign(P.face, f);
+export const hopY = (t, t0, t1, h) => (t > t0 && t < t1) ? 4 * h * ((t - t0) / (t1 - t0)) * (1 - (t - t0) / (t1 - t0)) : 0;
 
 const HAPPY = { mood: 'happy' };
 
@@ -412,7 +412,140 @@ export const ACTIONS = {
       face(P, { mood: 'curious' });
     },
   },
+
+  // ── Moments a 3D body can have: turning, spinning, stepping (Balanced and Lively, D51) ──
+
+  turnAround: {
+    dur: 4.2,
+    fn(t, P) {
+      // "What's behind me?" Turns its back to look, glances over its shoulder at you, turns back
+      // with a little hop of "nothing there".
+      const turn = curve([[0, 0], [0.3, -12], [1.1, 170], [1.3, 180], [2.8, 180], [3.5, 8], [3.7, -4], [4.2, 0]], t);
+      P.root.ry += turn;
+      const glance = win(t, 1.6, 1.9, 2.5, 2.8);
+      add(P, 'head', -4 * glance, -70 * glance, 8 * glance); add(P, 'chest', 0, -25 * glance, 0);
+      P.root.py += hopY(t, 3.45, 3.85, 0.08);
+      P.squash *= 1 - 0.05 * win(t, 3.3, 3.45, 3.5, 3.6);
+      for (const s of ['L', 'R']) raise(P, s, 10 * win(t, 0.4, 1.0, 2.9, 3.5));
+      ears(P, -10 * win(t, 0.3, 0.8, 3.0, 3.6), 6);
+      P.look *= 1 - win(t, 0.2, 0.6, 3.3, 3.9);
+      face(P, { mood: t < 2.9 ? 'curious' : 'smile' });
+    },
+  },
+
+  twirl: {
+    dur: 2.2,
+    fn(t, P) {
+      // A happy spin on the spot, arms out, a hop to finish.
+      const spin = 360 * smooth((t - 0.35) / 1.2);
+      P.root.ry += spin;
+      P.root.py += hopY(t, 0.35, 1.6, 0.1) + hopY(t, 1.6, 1.95, 0.05);
+      const out = win(t, 0.25, 0.5, 1.5, 1.9);
+      for (const s of ['L', 'R']) { raise(P, s, 60 * out); handBend(P, s, 20 * out); }
+      lean(P, -4 * out);
+      ears(P, 18 * out, 14 * out);
+      P.squash *= 1 - 0.06 * win(t, 0.15, 0.3, 0.32, 0.4) - 0.05 * win(t, 1.85, 1.95, 2.0, 2.1);
+      P.look *= 1 - out;
+      face(P, { mood: 'laugh' });
+    },
+  },
+
+  peekBehind: {
+    dur: 3.0,
+    fn(t, P) {
+      // Looks back over its shoulder, as if someone called; then back to you.
+      const side = 1;
+      const on = win(t, 0, 0.5, 2.2, 2.9);
+      P.root.ry += 35 * side * on;
+      add(P, 'chest', 0, 35 * side * on, 0); add(P, 'head', -6 * on, 60 * side * on, -6 * side * on);
+      raise(P, 'L', 12 * on); fwd(P, 'R', 20 * on);
+      ear(P, 'L', -12 * on, 6 * on);
+      P.look *= 1 - on;
+      P.gaze = [0.9 * side, 0.1];
+      face(P, { mood: 'attentive' });
+    },
+  },
+
+  shuffle: {
+    dur: 3.2,
+    fn(t, P) {
+      // A few happy side steps there and back, feet lifting in turn.
+      const x = curve([[0, 0], [0.8, 0.14], [1.6, 0.14], [2.6, -0.04], [3.2, 0]], t);
+      P.root.px += x;
+      const step = Math.sin(t * Math.PI * 2 * 2.2) * win(t, 0.1, 0.3, 2.8, 3.1);
+      add(P, 'thighL', -18 * Math.max(0, step)); add(P, 'thighR', -18 * Math.max(0, -step));
+      P.root.py += 0.025 * Math.abs(step);
+      P.root.rz += 5 * step;
+      for (const s of ['L', 'R']) raise(P, s, 14 + 8 * step * (s === 'L' ? 1 : -1));
+      add(P, 'head', 0, 0, -6 * step);
+      face(P, { mood: 'happy' });
+    },
+  },
+
+  lookUp: {
+    dur: 3.4,
+    fn(t, P) {
+      // Gazes up at something drifting by, follows it across, wonders.
+      const on = win(t, 0, 0.6, 2.6, 3.4);
+      const follow = curve([[0, -20], [1.2, -10], [2.4, 25], [3.4, 25]], t);
+      add(P, 'head', -26 * on, follow * on, 0); lean(P, -6 * on);
+      ears(P, -12 * on, 8 * on);
+      P.look *= 1 - on;
+      P.gaze = [follow / 40, 0.8];
+      face(P, { mood: 'curious', sparkle: 1 });
+    },
+  },
+
+  sway: {
+    dur: 4.0,
+    fn(t, P) {
+      // Humming to itself: eyes closed, a slow sway side to side.
+      const on = win(t, 0, 0.6, 3.3, 4.0);
+      const sw = Math.sin(t * Math.PI * 2 * 0.6) * on;
+      lean(P, 0, 9 * sw); add(P, 'head', 0, 0, 10 * sw);
+      for (const s of ['L', 'R']) { fwd(P, s, 25 * on); raise(P, s, -10 * on); }
+      ears(P, 6 * sw, 4);
+      P.look *= 1 - on;
+      face(P, { mood: 'content' });
+    },
+  },
 };
+
+/** Reactions (engine REACTIONS) that need a move of their own. */
+Object.assign(ACTIONS, {
+  attention: {
+    dur: 2.4,
+    fn(t, P) {
+      // "Hey, look!" A bounce on the spot, both paws up and waving, eyes wide: a reminder, news.
+      P.root.py += hopY(t, 0.15, 0.55, 0.12) + hopY(t, 1.2, 1.55, 0.07);
+      const up = win(t, 0.1, 0.35, 1.9, 2.3);
+      const wave = Math.sin(t * Math.PI * 2 * 2.4) * up;
+      for (const s of ['L', 'R']) { fwd(P, s, 40 * up); raise(P, s, 95 * up + 14 * wave * (s === 'L' ? 1 : -1)); handBend(P, s, 22 * wave); }
+      lean(P, -5 * up);
+      ears(P, -18 * up, -6);
+      P.squash *= 1 - 0.06 * win(t, 0.05, 0.13, 0.15, 0.22);
+      P.look *= 1 - 0.7 * up;
+      face(P, { mood: t < 0.6 ? 'surprised' : 'excited' });
+    },
+  },
+
+  thanks: {
+    dur: 2.4,
+    fn(t, P) {
+      // After a long stroke: a happy little bow of thanks and a hop.
+      const bow = curve([[0, 0], [0.4, 22], [0.9, 24], [1.3, 0], [2.4, 0]], t);
+      lean(P, bow * 0.7); add(P, 'head', bow * 0.4);
+      for (const s of ['L', 'R']) { fwd(P, s, 45 * win(t, 0, 0.3, 1.0, 1.4)); raise(P, s, -10 * win(t, 0, 0.3, 1.0, 1.4)); }
+      P.root.py += hopY(t, 1.45, 1.9, 0.08);
+      for (const s of ['L', 'R']) raise(P, s, 40 * win(t, 1.35, 1.5, 1.85, 2.1));
+      ears(P, 14 * win(t, 0.2, 0.5, 1.0, 1.3), 6);
+      face(P, { mood: t < 1.3 ? 'content' : 'laugh', blush: 1.3 });
+    },
+  },
+});
+
+/** The 3D-only moments a companion may start on its own in Balanced and Lively. */
+export const MOMENTS_3D = ['turnAround', 'twirl', 'peekBehind', 'shuffle', 'lookUp', 'sway'];
 
 /** Repeating activities for Sidefolk's states (on top of a posture and idle life). */
 export const LOOPS = {

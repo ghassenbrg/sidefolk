@@ -1,7 +1,8 @@
 // Kiko: a chibi kid astronaut: warm brown skin, fluffy dark curls, a padded mustard spacesuit with
 // a copper neck ring, plum gloves, knee pads, boots and backpack. Rig: blender/rig_kiko.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { add } from '../engine/moves.js';
+import { add, raise, face, hopY } from '../engine/moves.js';
+import { win } from '../engine/motion.js';
 
 export default {
   id: 'kiko',
@@ -53,6 +54,25 @@ export default {
       blush: { x: 0.215, y: 0.245, w: 0.08, h: 0.05, alpha: 0.34 },
     },
   },
+
+  // Its own moment: a slow moon jump, arms up, as if gravity were low.
+  actions: {
+    moonJump: {
+      dur: 3.0,
+      fn(t, P) {
+        const crouch = win(t, 0, 0.3, 0.4, 0.55) + win(t, 2.35, 2.45, 2.55, 2.8);
+        P.squash *= 1 - 0.08 * crouch;
+        P.root.py += hopY(t, 0.5, 2.45, 0.45) - 0.03 * crouch;
+        const up = win(t, 0.4, 0.8, 2.0, 2.5);
+        for (const s of ['L', 'R']) raise(P, s, 120 * up);
+        add(P, 'thighL', -30 * up); add(P, 'thighR', -20 * up); add(P, 'footL', 30 * up); add(P, 'footR', 20 * up);
+        add(P, 'head', -10 * up);
+        P.root.rx += 6 * Math.sin(t * 2) * up;
+        face(P, { mood: up > 0.3 ? 'excited' : 'happy' });
+      },
+    },
+  },
+  moments: ['moonJump'],
 
   chains: [],
   pick: { head: { r: 0.45, at: [0, 0.48, 0] }, body: { r: 0.3, at: [0, -0.4, 0] } },

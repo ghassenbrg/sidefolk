@@ -1,8 +1,8 @@
 // Spark: a little ivory robot with a dark glass visor (its face is light on the glass), aqua
 // headphones and a springy antenna with an aqua ball. Rig: blender/rig_spark.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { damp } from '../engine/motion.js';
-import { add } from '../engine/moves.js';
+import { damp, curve, win } from '../engine/motion.js';
+import { add, face } from '../engine/moves.js';
 
 export default {
   id: 'spark',
@@ -53,6 +53,24 @@ export default {
       mouth: { y: 0.06 },
     },
   },
+
+  // Its own moment: a slow scan of the room, antenna boinging, headphones bright.
+  actions: {
+    scan: {
+      dur: 3.6,
+      fn(t, P) {
+        const on = win(t, 0, 0.4, 3.0, 3.6);
+        const sweep = curve([[0, 0], [0.8, -45], [1.8, 45], [2.8, 0], [3.6, 0]], t);
+        add(P, 'head', -4 * on, sweep * on, 0); add(P, 'chest', 0, sweep * 0.25 * on, 0);
+        const boing = Math.sin(t * 16) * Math.exp(-t * 1.1) * 26;
+        add(P, 'antenna1', boing * 0.4, 0, boing * 0.3); add(P, 'antenna2', boing, 0, boing * 0.6);
+        P.look *= 1 - on;
+        P.gaze = [sweep / 50, 0];
+        face(P, { mood: 'attentive' });
+      },
+    },
+  },
+  moments: ['scan'],
 
   chains: [{ bones: ['antenna1', 'antenna2'], side: 1, k: [130, 95], d: [6.5, 4.6], gain: 1.5, breeze: 0.5, twitch: true, limit: [40, 40] }],
   pick: { head: { r: 0.5, at: [0, 0.17, 0] }, body: { r: 0.27, at: [0, -0.46, 0] }, tips: ['antenna2'], tipR: 0.12 },

@@ -1,7 +1,8 @@
 // Ember: a chibi red fox on its hind legs: orange fur, cream muzzle and chest, dark brown paws,
 // ear tips and brows, big amber eyes and a big fluffy tail. Rig: blender/rig_ember.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { add } from '../engine/moves.js';
+import { add, raise, lean, face } from '../engine/moves.js';
+import { win, smooth } from '../engine/motion.js';
 
 const ear = (s, side) => ({ bones: [`ear${s}1`, `ear${s}2`], side, twitch: true, k: [190, 135], d: [11, 7.5], limit: [40, 35] });
 
@@ -50,6 +51,24 @@ export default {
       blush: { x: 0.29, y: 0.14, w: 0.09, h: 0.055, alpha: 0.32 },
     },
   },
+
+  // Its own moment: chasing its own tail round and round, a little dizzy after.
+  actions: {
+    tailChase: {
+      dur: 3.4,
+      fn(t, P) {
+        P.root.ry -= 720 * smooth((t - 0.3) / 2.2);
+        const on = win(t, 0.2, 0.5, 2.3, 2.8);
+        add(P, 'head', 8 * on, -55 * on, 0); add(P, 'chest', 6 * on, -20 * on, 0);
+        P.root.py += 0.03 * Math.abs(Math.sin(t * 9)) * on;
+        lean(P, 8 * on);
+        for (const s of ['L', 'R']) raise(P, s, 25 * on);
+        P.look *= 1 - on;
+        face(P, { mood: t < 2.6 ? 'excited' : t < 3.1 ? 'dizzy' : 'giggle' });
+      },
+    },
+  },
+  moments: ['tailChase'],
 
   chains: [
     ear('L', 1), ear('R', -1),
