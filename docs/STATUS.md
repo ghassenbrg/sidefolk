@@ -1,7 +1,8 @@
 # Status
 
 Updated: 2026-10-30. Version 0.1.0. Latest: 3D companions (D51): Mochi and Spark in 3D or 2D, and Ember,
-Kiko, Nimbo and Folio in 3D only; Nimbo remodelled after the founder's sheet. Before that: the approved 3D Mochi app icon, exported and built locally.
+Kiko, Nimbo and Folio in 3D only, with the 2D effects over them and more life in Balanced and Lively.
+Before that: the approved 3D Mochi app icon, exported and built locally.
 Previous update: the founder's list after snapshot 411, built by a team
 of parallel agents and merged: conversations you can start fresh, read in full, follow up and delete (D45);
 Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for using the internet, with allowed
@@ -14,18 +15,23 @@ is published, signed and notarized.
 
 ## Done and verified
 - **3D companions (D51):** Settings › Companion › Look chooses 3D (how Mochi and Spark now come) or 2D;
-  Ember (a red fox), Kiko (a kid astronaut), Nimbo (a floating cloud) and Folio (folded paper) join the
-  gallery in 3D only; Nimbo was remodelled as the wide cloud of the founder's sheet. A
-  three.js page in a transparent web view (`Companion3DStage`, `Resources/Companions3D`) plays every cue
-  of the undrawn 2D rig (stand-in rigs for the three new ones), so states, idle life, clicks, petting,
-  dragging and bubbles work as before; Settings shows the 3D companion live and renders its still. Models
-  from Meshy (sheets for Ember, Kiko and Nimbo drawn with Codex image gen), rigged in Blender; sources,
-  prompts, task ids and rig scripts in `companions-3d/`. *Checked:* settings tests (2D/3D per companion,
-  odd stored values), all tests; every companion in the browser playground (16 feelings, moves and
-  postures each); the dev app: each of the five on the desktop, Mochi 3D↔2D, a wave, Settings › Companion
-  with the Look control and the live preview; a 3D companion costs about 18% of a core (2D: 0.2%). *Not yet:*
-  working props and badges in 3D, VoiceOver and several screens with a 3D companion, a signed release
-  build. *Next:* the founder reviews the five on the desktop; props in 3D if they stay.
+  Ember (a red fox), Kiko (a kid astronaut), Nimbo (a floating cloud, remodelled after the founder's sheet)
+  and Folio (folded paper) join the gallery in 3D only. A three.js page in a transparent web view
+  (`Companion3DStage`, `Resources/Companions3D`) under the 2D view plays every cue of the undrawn 2D rig
+  (stand-in rigs for the 3D-only four), so states, idle life, clicks, petting, dragging and bubbles work as
+  before, and the 2D effects and badges draw over it; its moves ask for more (zZz, hearts, notes, sparkles,
+  "?", "!"). The chosen form shows at once (no 2D flash; 3D to 3D swaps inside the running page). Balanced and
+  Lively add 3D moments (turning round, twirls, each one's trick); petting deepens into bliss; reactions to
+  news, work done and errors come from one table by liveliness, and every move is announced (the hook for
+  sounds later). Eyes ride the face surface; Spark's visor is smoked glass. Models from Meshy (sheets drawn
+  with Codex image gen where there were none), rigged in Blender; sources, prompts, task ids and rig scripts
+  in `companions-3d/`, and a skill to make more (`.claude/skills/sidefolk-3d-character`). *Checked:* all
+  tests (incl. 2D/3D settings); every companion in the browser playground (feelings, moves, postures, tricks,
+  petting, reactions); the dev app: each one on the desktop and animating, switches between forms and
+  companions, a dance with notes, a reminder's "!" and count over the 3D Mochi, Settings' Look control and
+  live preview. A 3D companion costs about 18% of a core (2D: 0.2%). *Not yet:* working props (laptop,
+  notepad…) in 3D, VoiceOver and several screens with a 3D companion, a signed release. *Next:* the founder
+  reviews the six on the desktop.
 - **Approved 3D Mochi app icon (D29 amended):** the smiling white rabbit with navy ear tips and a
   turquoise scarf on midnight blue now supplies the ICNS and Xcode AppIcon. The committed master is an
   opaque, full-bleed square, prepared with the built-in image tool from the approved preview; only the
