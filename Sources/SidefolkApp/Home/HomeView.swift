@@ -5,13 +5,28 @@ import SwiftUI
 struct HomeView: View {
     @Bindable var model: HomeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @FocusState private var searching: Bool
 
     var body: some View {
         NavigationSplitView {
             HomeSidebar(model: model)
                 .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
         } detail: {
-            detail
+            if model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                detail
+            } else {
+                SearchPage(find: model.find, services: model.services) { model.send($0) }
+            }
+        }
+        // The one bar (D58): search everything, or type what to do. Return does it, as in the Ask panel.
+        .searchable(text: Bindable(model.find).query, placement: .toolbar, prompt: Text("Search, or say what to do"))
+        .searchFocused($searching)
+        .onSubmit(of: .search) { model.send(.auto) }
+        .background {
+            Button("Search") { searching = true }
+                .keyboardShortcut("k", modifiers: .command)
+                .opacity(0)
+                .accessibilityHidden(true)
         }
         .frame(minWidth: 860, minHeight: 560)
         .overlay(alignment: .bottom) {

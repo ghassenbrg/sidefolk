@@ -41,21 +41,21 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   (animating, a wave, Mochi's page still loading under the new policy), in Made by you and in the Ask panel's
   header. *Not yet:* a UI snapshot of Made by you with a local companion; the two avatars in that list aren't
   aligned (Use is wider than the check mark).
-- **Themes, steps 1–4 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
+- **Themes, steps 1–5 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
   build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. Built in:
-  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–3:
-  theme tokens behind every `Theme` name; Activity rows that open in place; links to conversations ("Asked in",
-  "Saved in", "Changed in"). Step 4: Now is Today (sidebar, menu bar, the Ask panel's button; the glossary says so).
-  Its top is one header line (greeting, what needs you, reminders left today, "Ask …", the companion). Guard's
-  waiting questions are in Today's queue, soonest deadline first, each saying "Waits for your answer until …"
-  (`ApprovalRequest.expiresAt`, set by the broker); answering there answers the Ask panel too. The row with the
-  keyboard takes ↑↓, ⏎, ⌘⏎ for high risk, ⌫ and S; another app's request is only ever approved with a click
-  (`ApprovalRequest.mayApproveFromKeys`, shared with the Ask panel's card). *Checked:* ApprovalBrokerTests (the
-  deadline in the event and the list; the key rule's matrix), the full suite in a clean worktree, UI snapshots
-  before and after compared on every channel (the sidebar label and badge, the Ask panel's button, the new queue
-  with two waiting questions; the rest relative times). *Not by hand:* the keys in the window (agents can't type
-  into it); the rule they follow is tested in Core. *Next:* plan step 5: the one bar (B4), in Home's toolbar and as
-  the Ask panel.
+  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–4:
+  theme tokens behind every `Theme` name; Activity rows that open in place; links to conversations; Today with
+  Guard's questions in its queue and per-row keys. Step 5, the one bar: `SidefolkRuntime.find` (notes,
+  conversations, reminders to come, watches, Activity; every word, case and accents ignored, a few of each). Home's
+  toolbar has a search field (⌘K); while it has words, a page says what Return will do and offers "Do it" / "Ask …
+  instead" (⌘⏎) or "Ask …", and "Save as a note" (⌥⏎), above what was found, each opening where it lives. The Ask
+  panel shows the same results under its hint and takes ⌘⏎ and ⌥⏎. Everything sent goes through the Ask panel
+  (`AppServices.ask`). The dev channel's `find:` now drives this search. *Checked:* SearchTests; the full suite in a
+  clean worktree; UI snapshots before and after (every Home window: the toolbar field; new `window-home-search`,
+  `-search-command`, `desktop-ask-found`); the debug app with a fresh home: a note saved by an agent over MCP
+  (`sidefolk mcp`, `notes_save`) found by `find:tea`, captured with its toolbar field. *Not by hand:* typing in the
+  field and the ⌘⏎/⌥⏎ keys (agents can't type into the window). *Next:* plan step 6: the day line (B3) and the
+  calendar (D57).
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with

@@ -305,6 +305,41 @@ extension AppCoordinator: AppServices {
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }
 
+    func understands(_ text: String) -> Bool {
+        runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
+                                   watching: knownWatches) != nil
+    }
+
+    func ask(_ text: String, how: AskHow) {
+        showAsk()
+        switch how {
+        case .auto, .ai:
+            ask.text = text
+            ask.submit(askAI: how == .ai)
+        case .note:
+            saveAsNote(text, in: ask)
+        }
+    }
+
+    func open(_ found: Found) {
+        askPanel.hide()
+        switch found {
+        case .note(let item): openHome(item: item)
+        case .conversation(let conversation): openConversation(conversation.id)
+        case .reminder(let reminder):
+            // A reminder about a note opens the note; the others are on Today.
+            Task {
+                if let id = reminder.itemId, let item = try? await runtime.notebook.item(id: id), item.deletedAt == nil {
+                    openHome(item: item)
+                } else {
+                    openNow()
+                }
+            }
+        case .watch: openNow()
+        case .activity(let entry): home.show(activityRow: entry.id)
+        }
+    }
+
     func replayOnboarding() {
         Task { await runtime.settings.update { $0.onboardingDone = false } }
         onboarding.start()

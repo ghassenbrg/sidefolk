@@ -43,15 +43,18 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
 
     func close() { window?.performClose(nil) }
 
+    /// Activity, with this row's details open.
+    func show(activityRow id: Int64?) {
+        model.selection = .activity
+        model.activity.openId = id
+        present()
+    }
+
     #if DEBUG
-    /// Dev channel: the Notebook with a search across every collection.
+    /// Dev channel: the one bar's search (D58).
     func showSearch(_ query: String) {
-        Task {
-            await model.showNotebook()
-            try? await Task.sleep(for: .milliseconds(300)) // after the page has opened (opening clears the search)
-            model.notebook.everywhere = true
-            model.notebook.query = query
-        }
+        model.find.query = query
+        Task { await model.find.searchNow() }
         present()
     }
     #endif

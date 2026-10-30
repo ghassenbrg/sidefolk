@@ -169,6 +169,16 @@ protocol AppServices: AnyObject {
     /// Home › Conversations at `thread` (the list when nil).
     func openConversation(_ thread: String?)
 
+    // The one bar (D58)
+    /// What Return does with these words, as the Ask panel's hint line says it.
+    func hint(for text: String) -> String?
+    /// Whether Sidefolk does these words without AI, as Return in the Ask panel would.
+    func understands(_ text: String) -> Bool
+    /// Sends typed words on through the Ask panel, which shows what came of them.
+    func ask(_ text: String, how: AskHow)
+    /// Opens something a search found where it lives.
+    func open(_ found: Found)
+
     // Extensions and skills
     func extensions() async -> [ExtensionInfo]
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError>

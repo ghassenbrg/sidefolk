@@ -54,6 +54,15 @@ enum UISnapshots {
             }
             full.selection = .now
             try await homeShot("now")
+            // The one bar with words in it: what Return does, and what they match (D58).
+            full.find.query = "invoice"
+            await full.find.searchNow()
+            try await homeShot("search")
+            // Words Sidefolk does without AI: Return does them, ⌘Return asks instead.
+            full.find.query = "remind me at 5 to stretch"
+            await full.find.searchNow()
+            try await homeShot("search-command")
+            full.find.query = ""
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook")
             await full.reveal(sample.remindedTask)
@@ -214,7 +223,13 @@ enum UISnapshots {
             // Desktop surfaces: the Ask panel and the kinds of bubble.
             let portrait = CompanionArt.avatar(for: AppSettings(), side: 26)
             let actions = FixtureAskActions()
-            let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
+            // The words typed so far, and what they match across Sidefolk (D58).
+            let finding = AskModel()
+            finding.actions = actions
+            finding.found.find = { query in (try? await full.services.runtime.find(query)) ?? SearchResults() }
+            finding.text = "invoice"
+            await finding.found.searchNow()
+            let panels = [("desktop-ask-found", finding), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
                           ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-internet", sampleAskInternet()),

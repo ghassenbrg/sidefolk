@@ -115,6 +115,21 @@ struct AskView: View {
                     .lineLimit(1...5)
                     .focused($inputFocused)
                     .onSubmit { model.submit() }
+                    // ⌘Return asks the AI even what Sidefolk understands alone; ⌥Return keeps the words as a note (D58).
+                    // Only with words typed, so an approval card's ⌘Return still reaches the card.
+                    .onKeyPress(.return, phases: .down) { press in
+                        let words = model.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !words.isEmpty, model.pendingQuestion == nil, model.voice == nil else { return .ignored }
+                        if press.modifiers.contains(.command) {
+                            model.submit(askAI: true)
+                        } else if press.modifiers.contains(.option) {
+                            model.text = ""
+                            model.actions?.saveAsNote(words, in: model)
+                        } else {
+                            return .ignored
+                        }
+                        return .handled
+                    }
                     .disabled((model.busy && model.pendingQuestion == nil) || model.voice != nil)
                     .accessibilityLabel("Ask \(companionName)")
                 if model.busy {
@@ -176,6 +191,10 @@ struct AskView: View {
                 }
             }
             .font(Theme.Font.hint)
+            if model.voice == nil, model.pendingQuestion == nil, !model.found.results.isEmpty {
+                FoundList(results: model.found.results, each: 2) { model.actions?.open($0) }
+                    .padding(.top, Theme.Space.xs)
+            }
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m)

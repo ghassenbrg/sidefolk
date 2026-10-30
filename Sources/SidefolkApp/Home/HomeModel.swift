@@ -17,6 +17,8 @@ final class HomeModel {
     let notebook: NotebookModel
     let activity: ActivityModel
     let conversations: ConversationsModel
+    /// The one bar's search (D58); while it has words, Home shows what it found.
+    let find: FindModel
 
     var selection: HomeSelection? = .now {
         didSet { if selection != oldValue { selectionChanged() } }
@@ -32,6 +34,15 @@ final class HomeModel {
         notebook = NotebookModel(services: services)
         activity = ActivityModel(services: services)
         conversations = ConversationsModel(services: services)
+        find = FindModel { query in (try? await services.runtime.find(query)) ?? SearchResults() }
+    }
+
+    /// Sends the one bar's words on, and empties it.
+    func send(_ how: AskHow) {
+        let text = find.query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        find.query = ""
+        services.ask(text, how: how)
     }
 
     var companionName: String { services.runtime.settings.current.companionName }

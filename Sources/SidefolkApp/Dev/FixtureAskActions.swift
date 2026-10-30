@@ -9,7 +9,10 @@ final class FixtureAskActions: AskActions {
         IntentParser().parse(text, now: Date(), knownCollections: [])?.hint ?? String(localized: "Ask \("Claude")")
     }
 
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, followUp: String?, into model: AskModel) {}
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, askAI: Bool, spoken: Bool, followUp: String?, into model: AskModel) {}
+    func find(_ query: String) async -> SearchResults { SearchResults() }
+    func open(_ found: Found) {}
+    func saveAsNote(_ text: String, in model: AskModel) {}
     func stop() {}
     func startFresh(in model: AskModel, announce: Bool) {}
     func openConversation(_ thread: String?) {}

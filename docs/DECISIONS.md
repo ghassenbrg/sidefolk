@@ -1353,6 +1353,10 @@ waiting questions join Today's queue, soonest deadline first, with `ApprovalRequ
 Keys answer only the queue row that has the keyboard, never a window-wide Return, and
 `ApprovalRequest.mayApproveFromKeys` (Core) is the one rule for the queue and the Ask panel's card.
 
+Step 5's one bar searches with `SidefolkRuntime.find` and sends words only through the Ask panel's path
+(`AppServices.ask`: Return as today, ⌘Return asks the AI even what is understood without it, ⌥Return saves a note),
+so nothing new can run a tool. The Ask panel keeps its own input (voice, drops, replies) and gains the same results.
+
 ### D60 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
 **Decision:**
 - **Adding one.** A 3D companion made the gallery's way (`companions-3d/`) can be added without being published:

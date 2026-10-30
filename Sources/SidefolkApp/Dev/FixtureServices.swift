@@ -94,6 +94,12 @@ final class FixtureServices: AppServices {
     func openSession(_ session: AgentSession) {}
     func open(item: NotebookItem) {}
     func openConversation(_ thread: String?) {}
+    func hint(for text: String) -> String? {
+        IntentParser().parse(text, now: Date(), knownCollections: [])?.hint ?? String(localized: "Ask \("Claude")")
+    }
+    func understands(_ text: String) -> Bool { IntentParser().parse(text, now: Date(), knownCollections: []) != nil }
+    func ask(_ text: String, how: AskHow) {}
+    func open(_ found: Found) {}
 
     // MARK: Extensions and skills
 

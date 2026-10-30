@@ -80,7 +80,14 @@ protocol AskActions: AnyObject {
     func hint(for text: String) -> String?
     /// `spoken`: the words came from the talk key, so the reply may be said aloud (D34). `followUp`: the conversation
     /// the person chose to reply in, which continues however long ago it was (D45).
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, followUp: String?, into model: AskModel)
+    /// - Parameter askAI: the AI answers even words Sidefolk understands without it (⌘Return, D58).
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, askAI: Bool, spoken: Bool, followUp: String?, into model: AskModel)
+    /// Everything that matches the words typed so far (D58).
+    func find(_ query: String) async -> SearchResults
+    /// Opens something a search found where it lives.
+    func open(_ found: Found)
+    /// Keeps the words as a note in Inbox (⌥Return).
+    func saveAsNote(_ text: String, in model: AskModel)
     func stop()
     /// The next request starts a new conversation with the AI; `announce` says so in the panel (D45).
     func startFresh(in model: AskModel, announce: Bool)
@@ -131,7 +138,11 @@ enum VoiceInput: Equatable {
 
 @MainActor @Observable
 final class AskModel {
-    var text = ""
+    var text = "" {
+        didSet { if text != oldValue { found.query = text } }
+    }
+    /// What the words typed so far match across Sidefolk, under the hint line (D58).
+    let found = FindModel()
     var attachment: Attachment?
     var entries: [AskEntry] = []
     var busy = false
@@ -153,7 +164,9 @@ final class AskModel {
     var pendingWatch: (kind: String, becomes: String?)?
     /// How much Sidefolk asks (D37), shown in the header.
     var mode: GuardMode = .askOncePerKind
-    weak var actions: AskActions?
+    weak var actions: AskActions? {
+        didSet { found.find = { [weak self] query in await self?.actions?.find(query) ?? SearchResults() } }
+    }
     /// Extensions by id, so their approval and result cards show their icon and name.
     var extensionLooks: [String: ExtensionLook] = [:]
     /// Called when a quick intent finished and the panel can close.
@@ -256,7 +269,7 @@ final class AskModel {
         focusRequest += 1
     }
 
-    func submit(thinkHarder: Bool = false, spoken: Bool = false) {
+    func submit(thinkHarder: Bool = false, askAI: Bool = false, spoken: Bool = false) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         // While the agent waits for an answer, what the user types is that answer.
         if let question = pendingQuestion, !trimmed.isEmpty {
@@ -272,7 +285,7 @@ final class AskModel {
         text = ""
         let sent = attachment
         attachment = nil
-        actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, spoken: spoken, followUp: followUp, into: self)
+        actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, askAI: askAI, spoken: spoken, followUp: followUp, into: self)
     }
 
     /// The words of the newest request, to tell whether a newer one came in since.

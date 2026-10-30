@@ -64,7 +64,7 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, spoken: Bool, followUp: String?, into model: AskModel) {
+    func submit(_ text: String, attachment: Attachment?, thinkHarder: Bool, askAI: Bool, spoken: Bool, followUp: String?, into model: AskModel) {
         // The reply may be said aloud (D34); an interruption before it arrives keeps it silent.
         let reply = voice.context(spoken: spoken)
         // A reminder that was waiting for its time: only a time (or "cancel") answers it; anything
@@ -98,7 +98,7 @@ extension AppCoordinator: AskActions {
         }
         // Plain-language intents complete locally, instantly, without AI (DECISIONS D4). Words typed
         // with a dropped item are understood too; the item rides along as the note or reminder detail.
-        if !thinkHarder,
+        if !thinkHarder, !askAI,
            let parsed = runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
                                                    watching: knownWatches),
            // An extension's command takes words only: with something dropped on the panel, the AI looks at both (D50).
@@ -409,6 +409,14 @@ extension AppCoordinator: AskActions {
 
     func saveAsTask(_ text: String, in model: AskModel) {
         runLocal(.note(kind: .task, text: text, collection: nil), caption: nil, into: model)
+    }
+
+    func saveAsNote(_ text: String, in model: AskModel) {
+        runLocal(.note(kind: .note, text: text, collection: nil), caption: text, into: model)
+    }
+
+    func find(_ query: String) async -> SearchResults {
+        (try? await runtime.find(query)) ?? SearchResults()
     }
 
     func remind(_ guess: ReminderGuess, in model: AskModel) {
