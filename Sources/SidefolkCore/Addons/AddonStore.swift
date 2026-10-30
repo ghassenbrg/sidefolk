@@ -9,6 +9,25 @@ public struct InstalledCompanion: Codable, Sendable, Hashable {
     public var companion: String
     public var version: String
     public var author: String
+    /// One line about who it is (a companion added from a folder brings its own; D59).
+    public var tagline: String?
+    /// The shape of the undrawn rig under it (one added from a folder; D59).
+    public var body: CompanionBody?
+    /// Added from a folder on this Mac (D59), not from the gallery: unsigned, shown under "Made by you".
+    public var fromFolder: Bool?
+
+    public var addedFromFolder: Bool { fromFolder == true }
+}
+
+/// The body under a 3D companion added from a folder (D59): the 2D rig that runs undrawn beneath it, for its
+/// outline, bubble anchors and moves, borrowed from a gallery companion of the same build.
+public enum CompanionBody: String, Codable, Sendable, CaseIterable {
+    /// Head, arms and legs, standing (Kiko's).
+    case biped
+    /// No legs, floating (Nimbo's).
+    case floating
+    /// Flat and upright (Folio's).
+    case card
 }
 
 /// The add-on gallery (D55): reads the signed catalog, downloads a pack, checks it, and installs or removes
@@ -208,10 +227,13 @@ public actor AddonStore {
         }
     }
 
-    public func installedCompanions() -> [InstalledCompanion] {
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: companionsFolder.path)) ?? []
+    public func installedCompanions() -> [InstalledCompanion] { Self.installedCompanions(in: companionsFolder) }
+
+    /// The companions in `folder` (`<home>/Addons/Companions`), as their `addon.json` describe them.
+    public nonisolated static func installedCompanions(in folder: URL) -> [InstalledCompanion] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
         return names.sorted().compactMap { name in
-            let file = companionsFolder.appendingPathComponent(name).appendingPathComponent("addon.json")
+            let file = folder.appendingPathComponent(name).appendingPathComponent("addon.json")
             guard let data = FileManager.default.contents(atPath: file.path),
                   let c = try? JSONDecoder().decode(InstalledCompanion.self, from: data), c.companion == name else { return nil }
             return c
@@ -236,7 +258,7 @@ public actor AddonStore {
     }
 
     /// Puts `staged` where `target` is, in one rename when there was nothing, or a swap then a removal.
-    private func replace(_ target: URL, with staged: URL) throws {
+    func replace(_ target: URL, with staged: URL) throws {
         let fm = FileManager.default
         if fm.fileExists(atPath: target.path) {
             try BundleSwap.swap(target, staged)

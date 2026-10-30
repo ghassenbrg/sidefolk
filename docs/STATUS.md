@@ -12,6 +12,16 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **3D companions added from a folder; likeness faces (D59):** Settings › Companion › Made by you › Add from
+  Folder… checks a companion's folder (addon.json and exactly its four files, sizes and kinds), warns that its
+  character file runs as code, installs it beside the gallery's companions and wears it
+  (`AppSettings.localCompanion`, over a borrowed stand-in rig). The 3D page now has a Content Security Policy: only
+  `companion3d:` files. The ink face gained `layout.lids`, `layout.mouth.lips` and `layout.brow: false` for faces
+  that live in the texture. The founder's own two (themselves and Kana) are in `~/git/sidefolk-private/`, outside
+  every repository (README there; 165 Meshy credits). The playground's `?c=` takes any companion the server finds.
+  *Checked:* LocalCompanionsTests (6) and the full suite; both companions' review sheets and face close-ups in the
+  playground; Mochi and Spark unchanged; see the next entry for the running app. *Not yet:* a UI snapshot of Made
+  by you with a local companion.
 - **Themes, step 1 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
   build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. The founder
   chose: built in Harbor (default), Night Shift, Marshmallow, Field Notes; gallery Daylight, Night Studio, Paper

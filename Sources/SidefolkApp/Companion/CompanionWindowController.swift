@@ -108,7 +108,7 @@ final class CompanionWindowController {
         container.setAccessibilityLabel(name)
         container.setAccessibilityHelp(String(localized: "Press to talk to \(name)."))
         let before = windowSize
-        show3D(look.custom == nil && look.threeD ? look.species : nil)
+        show3D(look.custom == nil && look.threeD ? look.character3D ?? look.species.rawValue : nil)
         if windowSize != before {
             // Grow or shrink about the feet: the companion stays standing where it was.
             let frame = panel.frame
@@ -124,14 +124,14 @@ final class CompanionWindowController {
     private var stage3D: Companion3DStage?
     private var occlusion3D: NSObjectProtocol?
 
-    /// Shows `species` in 3D, or the 2D rig itself when nil. The chosen form shows at once: in 3D
+    /// Shows the 3D character `name`, or the 2D rig itself when nil. The chosen form shows at once: in 3D
     /// the 2D rig is never drawn (only if the page can't load), and switching between 3D companions
     /// swaps the character inside the page already running.
-    private func show3D(_ species: CharacterSpecies?) {
-        guard let species else { removeStage3D(); return }
+    private func show3D(_ name: String?) {
+        guard let name else { removeStage3D(); return }
         character.drawsRig = false
-        if let stage = stage3D { stage.show(species); return }
-        guard let stage = Companion3DStage(species) else { character.drawsRig = true; return }
+        if let stage = stage3D { stage.show(name); return }
+        guard let stage = Companion3DStage(name) else { character.drawsRig = true; return }
         // Like the 2D rig: nothing is drawn while the companion can't be seen.
         occlusion3D = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
                                                              object: panel, queue: .main) { [weak self] _ in

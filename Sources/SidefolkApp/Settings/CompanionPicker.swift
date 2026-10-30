@@ -13,10 +13,12 @@ struct CompanionPicker: View {
     private var chosen: CompanionChoice { CompanionArt.offered.contains(settings.companion) ? settings.companion : .mochi }
     /// A companion from "Made by you" in use: the stage and the title show it, and no built-in card is picked.
     private var custom: CustomCompanion? { CompanionArt.custom(settings.customCompanion) }
+    /// A 3D companion added from a folder in use (D59): likewise.
+    private var local: InstalledCompanion? { CompanionArt.local(settings.localCompanion) }
     private var style: CompanionStyle { settings.style(for: chosen) }
     /// Shown in 3D (D51): its 3D character is fixed as designed, so colour and what it wears are
     /// for the 2D rig only.
-    private var threeD: Bool { custom == nil && CompanionArt.threeD(chosen, in: settings) }
+    private var threeD: Bool { local != nil || custom == nil && CompanionArt.threeD(chosen, in: settings) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -74,16 +76,18 @@ struct CompanionPicker: View {
     private var details: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: custom?.name ?? chosen.defaultName).font(Theme.Font.title).foregroundStyle(Theme.ink)
-                Text(verbatim: custom.map { $0.summary ?? "" } ?? CompanionArt.role(chosen)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                Text(verbatim: local?.name ?? custom?.name ?? chosen.defaultName).font(Theme.Font.title).foregroundStyle(Theme.ink)
+                Text(verbatim: local.map { $0.tagline ?? "" } ?? custom.map { $0.summary ?? "" } ?? CompanionArt.role(chosen))
+                    .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             }
             labelled("Name") {
-                CommitField(label: "Companion name", prompt: Text(verbatim: chosen.defaultName), value: settings.companionName, width: 200) { name in
-                    let clean = name.isEmpty ? chosen.defaultName : String(name.prefix(30))
+                let standard = local?.name ?? chosen.defaultName
+                CommitField(label: "Companion name", prompt: Text(verbatim: standard), value: settings.companionName, width: 200) { name in
+                    let clean = name.isEmpty ? standard : String(name.prefix(30))
                     model.update { $0.companionName = clean }
                 }
             }
-            if custom == nil, chosen.dimensions.count > 1, Companion3DStage.folder != nil {
+            if custom == nil, local == nil, chosen.dimensions.count > 1, Companion3DStage.folder != nil {
                 labelled("Look") {
                     VStack(alignment: .leading, spacing: 4) {
                         Picker("Look", selection: Binding(get: { settings.dimension(for: chosen) }, set: { next in
@@ -171,7 +175,7 @@ struct CompanionPicker: View {
                     CompanionCard(choice: choice,
                                   image: CompanionArt.preview(choice, style: settings.style(for: choice),
                                                               threeD: CompanionArt.threeD(choice, in: settings), side: 84),
-                                  selected: custom == nil && choice == chosen) {
+                                  selected: custom == nil && local == nil && choice == chosen) {
                         model.update { $0.choose(choice) }
                     }
                     .contextMenu {
@@ -243,7 +247,7 @@ private struct CompanionStage: NSViewRepresentable {
         view.character.look = look
         view.character.displayName = name
         view.character.state = state
-        view.show3D(look.custom == nil && look.threeD ? look.species : nil)
+        view.show3D(look.custom == nil && look.threeD ? look.character3D ?? look.species.rawValue : nil)
     }
 
     final class LiveCompanion: NSView {
@@ -278,11 +282,11 @@ private struct CompanionStage: NSViewRepresentable {
         }
 
         /// The chosen form at once, as on the desktop (`CompanionWindowController.show3D`).
-        func show3D(_ species: CharacterSpecies?) {
-            guard let species else { removeStage(); return }
+        func show3D(_ name: String?) {
+            guard let name else { removeStage(); return }
             character.drawsRig = false
-            if let stage { stage.show(species); return }
-            guard let next = Companion3DStage(species) else { character.drawsRig = true; return }
+            if let stage { stage.show(name); return }
+            guard let next = Companion3DStage(name) else { character.drawsRig = true; return }
             next.frame = bounds
             next.autoresizingMask = [.width, .height]
             addSubview(next, positioned: .below, relativeTo: character)

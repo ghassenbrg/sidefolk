@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import SidefolkCore
 
 /// The add-on gallery as Settings shows it (D55): the signed catalog, what of it is on this Mac, and the downloads
@@ -17,6 +17,11 @@ final class AddonGalleryModel {
     private(set) var progress: [String: Double] = [:]
     /// The last failure of each add-on, said under it until the next try.
     private(set) var failures: [String: UserFacingError] = [:]
+    /// Why the last companion added from a folder (D59) wasn't, said under "Made by you" until the next try.
+    private(set) var localError: UserFacingError?
+
+    /// 3D companions added from a folder (D59).
+    var locals: [InstalledCompanion] { companions.filter(\.addedFromFolder) }
 
     init(parent: SettingsModel) { self.parent = parent }
 
@@ -100,6 +105,48 @@ final class AddonGalleryModel {
             }
         }
         companions = await store.installedCompanions()
+        CompanionArt.forgetPictures()
+        parent.services.settingsChanged()
+    }
+
+    // MARK: Added from a folder (D59)
+
+    /// Adds the 3D companion in `folder` once the person agrees (its character file is code the 3D page runs), then
+    /// makes it the companion.
+    func add(companionFolder folder: URL) async {
+        localError = nil
+        do {
+            let companion = try AddonStore.readLocalCompanion(folder)
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Add “\(companion.name)” as your companion?")
+            alert.informativeText = String(localized: """
+                A companion's character file runs as code in Sidefolk's 3D view, and this one isn't from the add-on \
+                gallery. Add only a companion you made yourself or got from someone you trust.
+                """)
+            alert.addButton(withTitle: String(localized: "Add Companion"))
+            alert.addButton(withTitle: String(localized: "Cancel"))
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+            let added = try await store.install(companionFolder: folder)
+            companions = await store.installedCompanions()
+            CompanionArt.reloadMade()
+            CompanionArt.forgetPictures()
+            parent.update { $0.choose(local: added.companion, name: added.name) }
+        } catch {
+            localError = error as? UserFacingError ?? UserFacingError("That companion couldn't be added.", detail: String(describing: error))
+        }
+    }
+
+    /// Removes a companion added from a folder; the one in use gives way to the companion chosen before it.
+    func remove(local name: String) async {
+        localError = nil
+        if parent.settings.localCompanion == name { parent.update { $0.choose($0.companion) } }
+        do {
+            try await store.remove(companion: name)
+        } catch {
+            localError = UserFacingError("It couldn't be removed.", detail: String(describing: error))
+        }
+        companions = await store.installedCompanions()
+        CompanionArt.reloadMade()
         CompanionArt.forgetPictures()
         parent.services.settingsChanged()
     }

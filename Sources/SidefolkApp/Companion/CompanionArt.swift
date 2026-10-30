@@ -24,8 +24,13 @@ enum CompanionArt {
     }
 
     /// What the settings say; a companion that isn't offered (yet) shows as Mochi. A custom one
-    /// that loads is worn in the chosen companion's style.
+    /// that loads is worn in the chosen companion's style; one added from a folder stands on the rig its body borrows.
     static func look(for settings: AppSettings) -> CharacterLook {
+        if let local = local(settings.localCompanion) {
+            var look = CharacterLook(standIn(local.body), threeD: true)
+            look.character3D = local.companion
+            return look
+        }
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
         let built = look(choice, style: settings.style(for: choice), threeD: threeD(choice, in: settings))
         guard let custom = custom(settings.customCompanion) else { return built }
@@ -47,12 +52,34 @@ enum CompanionArt {
     /// Reads them again (at launch and when Settings › Companion opens): data only, never run.
     static func reloadMade() {
         made = CustomCompanions.loadAll(home: SidefolkPaths.standard().home)
+        locals = loadLocals()
         previews = previews.filter { !$0.key.hasPrefix("custom:") }
     }
 
     static func custom(_ id: String?) -> CustomCompanion? {
         guard let id else { return nil }
         return made.lazy.compactMap(\.companion).first { $0.id == id }
+    }
+
+    /// 3D companions added from a folder (D59), as last read: those whose files are all here.
+    private(set) static var locals: [InstalledCompanion] = loadLocals()
+
+    private static func loadLocals() -> [InstalledCompanion] {
+        AddonStore.installedCompanions(in: CompanionAddons.folder).filter { $0.addedFromFolder && Companion3DStage.has($0.companion) }
+    }
+
+    static func local(_ name: String?) -> InstalledCompanion? {
+        guard let name else { return nil }
+        return locals.first { $0.companion == name }
+    }
+
+    /// The rig a companion added from a folder stands on, undrawn: a gallery companion's of the same build.
+    static func standIn(_ body: CompanionBody?) -> CharacterSpecies {
+        switch body ?? .biped {
+        case .biped: .kiko
+        case .floating: .nimbo
+        case .card: .folio
+        }
     }
 
     static func species(_ choice: CompanionChoice) -> CharacterSpecies {
@@ -80,6 +107,7 @@ enum CompanionArt {
 
     /// The companion the settings choose, still in `state`, as Home and the Ask panel show it.
     static func portrait(for settings: AppSettings, state: CharacterState = .idle, side: CGFloat) -> NSImage {
+        if let local = local(settings.localCompanion), let still = localPicture(local, side: side) { return still }
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
         if let custom = custom(settings.customCompanion) {
             let look = look(for: settings), size = CGSize(width: side, height: side)
@@ -96,10 +124,12 @@ enum CompanionArt {
     /// the drawn companion's face on a soft disc (its canvas has room around the body, so the middle is cut out).
     static func avatar(for settings: AppSettings, side: CGFloat) -> NSImage {
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
-        if settings.customCompanion == nil, threeD(choice, in: settings) || species(choice).only3D {
-            let key = "avatar.\(choice.rawValue).\(side)"
+        let local = local(settings.localCompanion)
+        if settings.customCompanion == nil, local != nil || threeD(choice, in: settings) || species(choice).only3D {
+            let name = local?.companion ?? choice.rawValue
+            let key = "avatar.\(name).\(side)"
             if let cached = previews[key] { return cached }
-            if let image = Companion3DStage.avatar(species(choice)) {
+            if let image = Companion3DStage.avatar(name) {
                 image.size = CGSize(width: side, height: side)
                 previews[key] = image
                 return image
@@ -117,13 +147,23 @@ enum CompanionArt {
         }
     }
 
+    /// A companion added from a folder as it stands at rest: its own still, `side` across.
+    static func localPicture(_ local: InstalledCompanion, side: CGFloat) -> NSImage? {
+        let key = "local.\(local.companion).\(side)"
+        if let cached = previews[key] { return cached }
+        guard let still = Companion3DStage.portrait(local.companion) else { return nil }
+        still.size = CGSize(width: side, height: side)
+        previews[key] = still
+        return still
+    }
+
     private static func picture(_ choice: CompanionChoice, style: CompanionStyle, state: CharacterState, threeD: Bool,
                                 side: CGFloat) -> NSImage {
         let key = "\(choice.rawValue).\(style.color.rawValue).\(style.accessory.rawValue).\(state.name).\(threeD).\(side)"
         if let cached = previews[key] { return cached }
         let size = CGSize(width: side, height: side)
         // A 3D companion's still is a render of it (one pose: the 3D one has no 2D states to draw).
-        if threeD || species(choice).only3D, let still = Companion3DStage.portrait(species(choice)) {
+        if threeD || species(choice).only3D, let still = Companion3DStage.portrait(choice.rawValue) {
             still.size = size
             previews[key] = still
             return still

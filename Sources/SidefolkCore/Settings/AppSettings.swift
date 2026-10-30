@@ -225,7 +225,10 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// A companion made from data in `<home>/companions/<id>/`, worn instead of `companion` while
     /// it loads (its style still comes from `companion`'s).
     public var customCompanion: String?
-    /// The name the custom companion came with, while it is worn: like a built-in's default name,
+    /// A 3D companion added from a folder (D59), worn instead of `companion` while it is installed: its folder's
+    /// name in `<home>/Addons/Companions/`.
+    public var localCompanion: String?
+    /// The name the custom or local companion came with, while it is worn: like a built-in's default name,
     /// it gives way when another companion is chosen, unless the person named it themselves.
     public var customCompanionName: String?
     public var liveliness: CompanionLiveliness = .balanced
@@ -279,6 +282,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.styles, &styles)
         read(.dimensions, &dimensions)
         customCompanion = try? c.decodeIfPresent(String.self, forKey: .customCompanion)
+        localCompanion = try? c.decodeIfPresent(String.self, forKey: .localCompanion)
         customCompanionName = try? c.decodeIfPresent(String.self, forKey: .customCompanionName)
         read(.liveliness, &liveliness)
         read(.appearance, &appearance)
@@ -314,6 +318,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         if !hasCustomName { companionName = next.defaultName }
         companion = next
         customCompanion = nil
+        localCompanion = nil
         customCompanionName = nil
     }
 
@@ -321,6 +326,15 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public mutating func choose(custom id: String, name: String) {
         if !hasCustomName { companionName = name }
         customCompanion = id
+        localCompanion = nil
+        customCompanionName = name
+    }
+
+    /// Wears a 3D companion added from a folder (D59), called by its own name unless the person chose one.
+    public mutating func choose(local folder: String, name: String) {
+        if !hasCustomName { companionName = name }
+        localCompanion = folder
+        customCompanion = nil
         customCompanionName = name
     }
 

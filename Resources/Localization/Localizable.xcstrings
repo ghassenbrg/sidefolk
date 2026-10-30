@@ -5576,6 +5576,64 @@
         }
       }
     },
+    "%@ is too large for a companion." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‏%@ أكبر من أن يكون لرفيق."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist zu groß für einen Begleiter."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ es demasiado grande para un compañero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est trop volumineux pour un compagnon."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ è troppo grande per un compagno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ はコンパニオンには大きすぎます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 컴패니언에 비해 너무 큽니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ é grande demais para um companheiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 对伙伴来说太大了。"
+          }
+        }
+      }
+    },
     "%@ is too long (at most %lld characters)." : {
       "localizations" : {
         "ar" : {
@@ -6390,6 +6448,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 没有为此共享给 Sidefolk。"
+          }
+        }
+      }
+    },
+    "%@ isn't the kind of file its name says." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‏%@ ليس من نوع الملف الذي يدل عليه اسمه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist nicht die Art Datei, die ihr Name angibt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no es el tipo de archivo que indica su nombre."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n'est pas le type de fichier qu'indique son nom."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non è il tipo di file indicato dal suo nome."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ は名前が示す種類のファイルではありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 이름이 말하는 종류의 파일이 아닙니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não é o tipo de arquivo que seu nome indica."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 不是其名称所示的文件类型。"
           }
         }
       }
@@ -8578,6 +8694,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 已删除"
+          }
+        }
+      }
+    },
+    "%@ was made for a newer Sidefolk." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‏%@ مصنوع لإصدار أحدث من Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wurde für ein neueres Sidefolk gemacht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se hizo para una versión más reciente de Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a été créé pour une version plus récente de Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ è stato creato per una versione più recente di Sidefolk."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ は新しいバージョンの Sidefolk 用に作られています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 더 새로운 Sidefolk용으로 만들어졌습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ foi feito para uma versão mais nova do Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 是为较新版本的 Sidefolk 制作的。"
           }
         }
       }
@@ -14600,6 +14774,64 @@
         }
       }
     },
+    "A companion's character file runs as code in Sidefolk's 3D view, and this one isn't from the add-on gallery. Add only a companion you made yourself or got from someone you trust." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعمل ملف شخصية الرفيق كشيفرة داخل عرض Sidefolk ثلاثي الأبعاد، وهذا الرفيق ليس من معرض الإضافات. لا تُضف إلا رفيقًا صنعته بنفسك أو حصلت عليه من شخص تثق به."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Figurdatei eines Begleiters läuft als Code in der 3D-Ansicht von Sidefolk, und dieser stammt nicht aus der Add-on-Galerie. Füge nur einen Begleiter hinzu, den du selbst gemacht oder von jemandem bekommen hast, dem du vertraust."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo de personaje de un compañero se ejecuta como código en la vista 3D de Sidefolk, y este no viene de la galería de complementos. Añade solo un compañero que hayas hecho tú o que te haya dado alguien de confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier de personnage d'un compagnon s'exécute comme du code dans la vue 3D de Sidefolk, et celui-ci ne vient pas de la galerie de modules. N'ajoutez qu'un compagnon que vous avez créé vous-même ou reçu d'une personne de confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il file del personaggio di un compagno viene eseguito come codice nella vista 3D di Sidefolk, e questo non proviene dalla galleria dei componenti aggiuntivi. Aggiungi solo un compagno che hai creato tu o che hai ricevuto da qualcuno di cui ti fidi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンのキャラクターファイルは Sidefolk の 3D 表示の中でコードとして実行されます。このコンパニオンはアドオンギャラリーのものではありません。自分で作ったものか、信頼できる人からもらったものだけを追加してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언의 캐릭터 파일은 Sidefolk의 3D 보기에서 코드로 실행되며, 이 컴패니언은 애드온 갤러리에서 온 것이 아닙니다. 직접 만들었거나 믿을 수 있는 사람에게서 받은 컴패니언만 추가하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo de personagem de um companheiro roda como código na visualização 3D do Sidefolk, e este não vem da galeria de complementos. Adicione só um companheiro que você mesmo fez ou recebeu de alguém de confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的角色文件会在 Sidefolk 的 3D 视图中作为代码运行，而这个伙伴并非来自附加组件画廊。请只添加你自己制作或从信任的人那里得到的伙伴。"
+          }
+        }
+      }
+    },
     "A curious little fox" : {
       "localizations" : {
         "ar" : {
@@ -15061,6 +15293,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文件夹"
+          }
+        }
+      }
+    },
+    "A folder with its addon.json, character, model and pictures, made like the gallery's." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجلد فيه addon.json والشخصية والنموذج والصور، مصنوع مثل رفاق المعرض."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Ordner mit seiner addon.json, Figur, Modell und Bildern, gemacht wie die aus der Galerie."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una carpeta con su addon.json, su personaje, su modelo y sus imágenes, hecha como los de la galería."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un dossier avec son addon.json, son personnage, son modèle et ses images, fait comme ceux de la galerie."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una cartella con il suo addon.json, il personaggio, il modello e le immagini, fatta come quelli della galleria."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "addon.json、キャラクター、モデル、画像が入ったフォルダ。ギャラリーのものと同じように作ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "addon.json, 캐릭터, 모델, 그림이 들어 있는 폴더로, 갤러리의 것과 같은 방식으로 만듭니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma pasta com o addon.json, o personagem, o modelo e as imagens, feita como as da galeria."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个包含 addon.json、角色、模型和图片的文件夹，制作方式与画廊中的相同。"
           }
         }
       }
@@ -17407,6 +17697,64 @@
         }
       }
     },
+    "Add Companion" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة الرفيق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begleiter hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir compañero"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter le compagnon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi compagno"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンを追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 추가"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar Companheiro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加伙伴"
+          }
+        }
+      }
+    },
     "Add Folder…" : {
       "localizations" : {
         "ar" : {
@@ -17639,6 +17987,64 @@
         }
       }
     },
+    "Add a 3D companion" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة رفيق ثلاثي الأبعاد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D-Begleiter hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir un compañero 3D"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un compagnon 3D"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi un compagno 3D"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D コンパニオンを追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D 컴패니언 추가"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar um companheiro 3D"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加 3D 伙伴"
+          }
+        }
+      }
+    },
     "Add an MCP server" : {
       "localizations" : {
         "ar" : {
@@ -17809,6 +18215,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请在 elevenlabs.io 上增加字符额度，或在设置 › 语音中选择 Apple 语音。"
+          }
+        }
+      }
+    },
+    "Add from Folder…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإضافة من مجلد…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Ordner hinzufügen …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir desde carpeta…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter depuis un dossier…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi da cartella…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダから追加…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더에서 추가…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar de uma Pasta…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从文件夹添加…"
           }
         }
       }
@@ -18273,6 +18737,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请先添加你的 ElevenLabs 密钥。"
+          }
+        }
+      }
+    },
+    "Add “%@” as your companion?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تريد إضافة «%@» رفيقًا لك؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ als Begleiter hinzufügen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Añadir «%@» como tu compañero?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter « %@ » comme compagnon ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungere «%@» come compagno?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」をコンパニオンとして追加しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”을(를) 컴패니언으로 추가할까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar “%@” como seu companheiro?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将“%@”添加为你的伙伴？"
           }
         }
       }
@@ -30613,6 +31135,122 @@
         }
       }
     },
+    "Choose Companion" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختيار الرفيق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begleiter wählen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir compañero"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir le compagnon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli compagno"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンを選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 선택"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher Companheiro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择伙伴"
+          }
+        }
+      }
+    },
+    "Choose a 3D companion's folder: its addon.json, character, model and pictures." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر مجلد رفيق ثلاثي الأبعاد: فيه addon.json والشخصية والنموذج والصور."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle den Ordner eines 3D-Begleiters: seine addon.json, Figur, Modell und Bilder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige la carpeta de un compañero 3D: su addon.json, su personaje, su modelo y sus imágenes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez le dossier d'un compagnon 3D : son addon.json, son personnage, son modèle et ses images."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli la cartella di un compagno 3D: il suo addon.json, il personaggio, il modello e le immagini."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D コンパニオンのフォルダを選んでください：addon.json、キャラクター、モデル、画像。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D 컴패니언의 폴더를 선택하세요: addon.json, 캐릭터, 모델, 그림."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha a pasta de um companheiro 3D: o addon.json, o personagem, o modelo e as imagens."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个 3D 伙伴的文件夹：其中有 addon.json、角色、模型和图片。"
+          }
+        }
+      }
+    },
     "Choose a folder Sidefolk may read and organize." : {
       "localizations" : {
         "ar" : {
@@ -34979,6 +35617,7 @@
       }
     },
     "Companions made from data in Sidefolk's companions folder. They wear the color and scarf chosen above." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -51234,6 +51873,64 @@
         }
       }
     },
+    "Give yours another id in its addon.json." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "امنحه معرّفًا آخر في ملف addon.json الخاص به."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib deinem in seiner addon.json eine andere ID."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dale otro identificador en su addon.json."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donnez-lui un autre identifiant dans son addon.json."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dagli un altro identificativo nel suo addon.json."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "addon.json で別の ID を付けてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "addon.json에서 다른 ID를 지정하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dê outro identificador ao seu no addon.json."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在它的 addon.json 中换一个 ID。"
+          }
+        }
+      }
+    },
     "Go!" : {
       "localizations" : {
         "ar" : {
@@ -66248,6 +66945,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续显示"
+          }
+        }
+      }
+    },
+    "Keep only addon.json and the four files it needs." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبقِ فقط addon.json والملفات الأربعة التي يحتاجها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behalte nur addon.json und die vier Dateien, die er braucht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deja solo addon.json y los cuatro archivos que necesita."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne gardez que addon.json et les quatre fichiers nécessaires."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia solo addon.json e i quattro file che servono."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "addon.json と必要な 4 つのファイルだけを残してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "addon.json과 필요한 파일 네 개만 남기세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe só o addon.json e os quatro arquivos de que ele precisa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只保留 addon.json 和所需的四个文件。"
           }
         }
       }
@@ -119327,6 +120082,64 @@
         }
       }
     },
+    "That companion couldn't be added." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت إضافة هذا الرفيق."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Begleiter konnte nicht hinzugefügt werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo añadir ese compañero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce compagnon n'a pas pu être ajouté."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile aggiungere il compagno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのコンパニオンを追加できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 컴패니언을 추가할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível adicionar esse companheiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法添加该伙伴。"
+          }
+        }
+      }
+    },
     "That companion is missing files or carries others." : {
       "localizations" : {
         "ar" : {
@@ -120135,6 +120948,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那个文件夹不是 Sidefolk 扩展。"
+          }
+        }
+      }
+    },
+    "That folder isn't a companion: it has no addon.json." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا المجلد ليس رفيقًا: لا يحتوي على addon.json."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Ordner ist kein Begleiter: Er hat keine addon.json."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esa carpeta no es un compañero: no tiene addon.json."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce dossier n'est pas un compagnon : il n'a pas de fichier addon.json."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa cartella non è un compagno: non contiene addon.json."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのフォルダはコンパニオンではありません：addon.json がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 폴더는 컴패니언이 아닙니다: addon.json이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essa pasta não é um companheiro: ela não tem addon.json."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该文件夹不是伙伴：其中没有 addon.json。"
           }
         }
       }
@@ -123752,6 +124623,122 @@
         }
       }
     },
+    "The companion is missing %@." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينقص الرفيقَ %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dem Begleiter fehlt %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al compañero le falta %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il manque au compagnon : %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al compagno manca %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンに %@ がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언에 %@이(가) 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta %@ no companheiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴缺少 %@。"
+          }
+        }
+      }
+    },
+    "The companion needs a name of up to 40 characters." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج الرفيق إلى اسم لا يتجاوز 40 حرفًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Begleiter braucht einen Namen mit höchstens 40 Zeichen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El compañero necesita un nombre de hasta 40 caracteres."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le compagnon a besoin d'un nom de 40 caractères au plus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il compagno ha bisogno di un nome di massimo 40 caratteri."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンには 40 文字以内の名前が必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 이름은 40자 이내여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O companheiro precisa de um nome com até 40 caracteres."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴需要一个不超过 40 个字符的名称。"
+          }
+        }
+      }
+    },
     "The companion stays on your desktop, beside your work." : {
       "localizations" : {
         "ar" : {
@@ -123806,6 +124793,238 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "伙伴会待在你的桌面上，陪在你工作的旁边。"
+          }
+        }
+      }
+    },
+    "The companion's addon.json can't be read." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تتعذّر قراءة ملف addon.json الخاص بالرفيق."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die addon.json des Begleiters kann nicht gelesen werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede leer el addon.json del compañero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier addon.json du compagnon est illisible."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile leggere l'addon.json del compagno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンの addon.json を読み込めません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언의 addon.json을 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível ler o addon.json do companheiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取伙伴的 addon.json。"
+          }
+        }
+      }
+    },
+    "The companion's body must be biped, floating or card." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن يكون body الرفيق biped أو floating أو card."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Körper des Begleiters muss biped, floating oder card sein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El cuerpo del compañero debe ser biped, floating o card."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le corps du compagnon doit être biped, floating ou card."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il corpo del compagno deve essere biped, floating o card."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンの body は biped、floating、card のいずれかにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언의 body는 biped, floating, card 중 하나여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O corpo do companheiro deve ser biped, floating ou card."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的 body 必须是 biped、floating 或 card。"
+          }
+        }
+      }
+    },
+    "The companion's folder holds more than it should: %@." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتوي مجلد الرفيق على أكثر مما ينبغي: %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ordner des Begleiters enthält mehr als nötig: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carpeta del compañero contiene más de lo que debe: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier du compagnon contient plus que nécessaire : %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cartella del compagno contiene più del necessario: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンのフォルダに余分なものがあります：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 폴더에 필요 이상의 항목이 있습니다: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pasta do companheiro tem mais do que deveria: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的文件夹中有多余的内容：%@。"
+          }
+        }
+      }
+    },
+    "The companion's id must be lowercase letters, digits and dashes." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن يتكون معرّف الرفيق من أحرف صغيرة وأرقام وشرطات فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ID des Begleiters darf nur Kleinbuchstaben, Ziffern und Bindestriche enthalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El identificador del compañero solo puede tener minúsculas, números y guiones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'identifiant du compagnon ne peut contenir que des minuscules, des chiffres et des tirets."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'identificativo del compagno può contenere solo lettere minuscole, cifre e trattini."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンの ID には小文字、数字、ハイフンだけを使ってください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 ID에는 소문자, 숫자, 하이픈만 쓸 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O identificador do companheiro só pode ter letras minúsculas, números e hifens."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的 ID 只能包含小写字母、数字和连字符。"
           }
         }
       }
@@ -137205,6 +138424,64 @@
         }
       }
     },
+    "Update Sidefolk, then add it again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدّث Sidefolk، ثم أضفه مرة أخرى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualisiere Sidefolk und füge ihn dann erneut hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualiza Sidefolk y vuelve a añadirlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettez Sidefolk à jour, puis ajoutez-le de nouveau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna Sidefolk, poi aggiungilo di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk をアップデートしてから、もう一度追加してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk를 업데이트한 다음 다시 추가하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualize o Sidefolk e adicione-o de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请更新 Sidefolk，然后再添加一次。"
+          }
+        }
+      }
+    },
     "Update Sidefolk, then try again." : {
       "localizations" : {
         "ar" : {
@@ -147746,6 +149023,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的其他钩子会保持不变。"
+          }
+        }
+      }
+    },
+    "Your own companions: drawn from data in Sidefolk's companions folder, or 3D ones added from a folder. To remove a 3D one, Control-click it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رفاقك أنت: مرسومون من بيانات في مجلد رفاق Sidefolk، أو رفاق ثلاثيو الأبعاد أُضيفوا من مجلد. لإزالة رفيق ثلاثي الأبعاد، انقر عليه مع الضغط على Control."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine eigenen Begleiter: aus Daten im Begleiter-Ordner von Sidefolk gezeichnet oder als 3D-Begleiter aus einem Ordner hinzugefügt. Zum Entfernen eines 3D-Begleiters bei gedrückter Ctrl-Taste darauf klicken."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus propios compañeros: dibujados a partir de datos en la carpeta de compañeros de Sidefolk, o compañeros 3D añadidos desde una carpeta. Para quitar uno 3D, haz clic con Control en él."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos propres compagnons : dessinés à partir des données du dossier des compagnons de Sidefolk, ou compagnons 3D ajoutés depuis un dossier. Pour retirer un compagnon 3D, faites Contrôle-clic dessus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I tuoi compagni: disegnati dai dati nella cartella dei compagni di Sidefolk, o compagni 3D aggiunti da una cartella. Per rimuoverne uno 3D, fai Ctrl-clic su di esso."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分のコンパニオン：Sidefolk のコンパニオンフォルダのデータから描かれたもの、またはフォルダから追加した 3D のもの。3D のものを削除するには、Control キーを押しながらクリックします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 만든 컴패니언: Sidefolk 컴패니언 폴더의 데이터로 그린 것이나 폴더에서 추가한 3D 컴패니언입니다. 3D 컴패니언을 제거하려면 Control 키를 누른 채 클릭하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seus próprios companheiros: desenhados a partir de dados na pasta de companheiros do Sidefolk, ou companheiros 3D adicionados de uma pasta. Para remover um 3D, clique nele com Control."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你自己的伙伴：根据 Sidefolk 伙伴文件夹中的数据绘制的，或从文件夹添加的 3D 伙伴。要移除 3D 伙伴，请按住 Control 键点按它。"
           }
         }
       }
@@ -161847,6 +163182,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”已经完成了。"
+          }
+        }
+      }
+    },
+    "“%@” is already one of Sidefolk's companions." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» هو بالفعل أحد رفاق Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ist schon einer der Begleiter von Sidefolk."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» ya es uno de los compañeros de Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » est déjà un des compagnons de Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» è già uno dei compagni di Sidefolk."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」はすでに Sidefolk のコンパニオンです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”은(는) 이미 Sidefolk의 컴패니언입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” já é um dos companheiros do Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”已经是 Sidefolk 的伙伴之一。"
           }
         }
       }

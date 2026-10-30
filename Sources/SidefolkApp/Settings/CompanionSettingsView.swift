@@ -37,13 +37,18 @@ struct CompanionSettingsView: View {
                                isOn: setting(\.showFolks))
             }
 
-            if !CompanionArt.made.isEmpty {
-                SettingsGroup(title: "Made by you",
-                              footer: "Companions made from data in Sidefolk's companions folder. They wear the color and scarf chosen above.") {
-                    ForEach(CompanionArt.made, id: \.folder) { report in
-                        madeRow(report)
-                    }
+            SettingsGroup(title: "Made by you",
+                          footer: "Your own companions: drawn from data in Sidefolk's companions folder, or 3D ones added from a folder. To remove a 3D one, Control-click it.") {
+                ForEach(CompanionArt.made, id: \.folder) { report in
+                    madeRow(report)
                 }
+                ForEach(model.gallery.locals, id: \.companion) { local in
+                    localRow(local)
+                }
+                SettingsRow(title: "Add a 3D companion", detail: "A folder with its addon.json, character, model and pictures, made like the gallery's.") {
+                    Button("Add from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary))
+                }
+                if let error = model.gallery.localError { InlineError(error: error) }
             }
 
             SettingsGroup(title: "Behavior") {
@@ -89,6 +94,42 @@ struct CompanionSettingsView: View {
             } else {
                 Image(systemName: "exclamationmark.triangle").foregroundStyle(.secondary)
             }
+        }
+    }
+
+    /// A 3D companion added from a folder (D59): its picture, name and what it is.
+    private func localRow(_ local: InstalledCompanion) -> some View {
+        SettingsRow(title: Text(verbatim: local.name), detail: Text(verbatim: local.tagline ?? "")) {
+            HStack(spacing: Theme.Space.s) {
+                if let avatar = Companion3DStage.avatar(local.companion) {
+                    Image(nsImage: avatar).resizable().scaledToFit().frame(width: 28, height: 28).clipShape(Circle())
+                        .accessibilityHidden(true)
+                }
+                if model.settings.localCompanion == local.companion {
+                    Image(systemName: "checkmark").foregroundStyle(.secondary)
+                } else {
+                    Button("Use") { model.update { $0.choose(local: local.companion, name: local.name) } }
+                }
+            }
+        }
+        .contextMenu {
+            Button("Remove \(local.name)") { Task { await model.gallery.remove(local: local.companion) } }
+        }
+    }
+
+    /// The folder of a 3D companion to add: it is checked, and added only once the person agrees.
+    private func chooseFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = String(localized: "Choose Companion")
+        panel.message = String(localized: "Choose a 3D companion's folder: its addon.json, character, model and pictures.")
+        Task {
+            let response: NSApplication.ModalResponse
+            if let window = NSApp.keyWindow { response = await panel.beginSheetModal(for: window) } else { response = panel.runModal() }
+            guard response == .OK, let url = panel.url else { return }
+            await model.gallery.add(companionFolder: url)
         }
     }
 

@@ -201,7 +201,7 @@ final class AppCoordinator {
     private func restoreCompanionAddon() {
         let s = runtime.settings.current
         let species = CompanionArt.species(s.companion)
-        guard s.customCompanion == nil, species.only3D, !Companion3DStage.has(species) else { return }
+        guard s.customCompanion == nil, s.localCompanion == nil, species.only3D, !Companion3DStage.has(species) else { return }
         let addons = runtime.addons, name = s.companion.rawValue
         Task {
             do {
@@ -411,6 +411,32 @@ final class AppCoordinator {
             // The same tool Sidefolk's AI calls when a draft is ready: the install preview opens over Settings.
             let name = String(command.dropFirst("review:".count))
             Task { _ = await runtime.executor.execute(name: "extensions.review", input: ["name": .string(name)], caller: .user) }
+            return
+        }
+        if command.hasPrefix("addCompanion:") {
+            // addCompanion:<folder>: adds a 3D companion from a folder and wears it, as Settings does once the
+            // person agrees (D59).
+            let folder = URL(fileURLWithPath: String(command.dropFirst("addCompanion:".count)))
+            Task {
+                do {
+                    let added = try await runtime.addons.install(companionFolder: folder)
+                    CompanionArt.reloadMade()
+                    CompanionArt.forgetPictures()
+                    await runtime.settings.update { $0.choose(local: added.companion, name: added.name) }
+                    settingsChanged()
+                } catch {
+                    NSLog("addCompanion: \(error)")
+                }
+            }
+            return
+        }
+        if command.hasPrefix("companion:local:") {
+            // companion:local:<name>: wears a companion added from a folder (D59).
+            guard let local = CompanionArt.local(String(command.dropFirst("companion:local:".count))) else { return }
+            Task {
+                await runtime.settings.update { $0.choose(local: local.companion, name: local.name) }
+                settingsChanged()
+            }
             return
         }
         if command.hasPrefix("companion:") {

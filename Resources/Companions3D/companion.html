@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Only the app's own files: a character added from a folder (D59) is code nobody vetted, and has no way out. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src companion3d: 'unsafe-inline'; style-src 'unsafe-inline'; img-src companion3d: blob: data:; connect-src companion3d: blob: data:">
 <title>Sidefolk 3D Companion</title>
 <style>
   :root { color-scheme: light dark; }
@@ -17,11 +19,12 @@
 <script type="module">
 // A 3D companion inside Sidefolk's companion window (D51). Sidefolk keeps its own state machine,
 // idle scheduler, hit testing and bubbles (on an invisible 2D rig); this page only shows the 3D
-// character (`?c=mochi`, `spark`, or one from the add-on gallery) and plays what Sidefolk tells it, sent as
+// character (`?c=mochi`, `spark`, one from the add-on gallery or added from a folder) and plays what Sidefolk tells it, sent as
 // `sidefolk.handle({...})` from Swift (Companion3DStage).
 import { Companion } from './engine/engine.js';
 
-// The app's own (mochi, spark) and those installed from the add-on gallery (ember, kiko…): names only.
+// The app's own (mochi, spark), those installed from the add-on gallery (ember, kiko…) and those added from a
+// folder: names only.
 const NAME = /^[a-z][a-z0-9-]{0,30}$/;
 const post = (msg) => window.webkit?.messageHandlers?.companion?.postMessage(msg);
 const OPTIONS = {

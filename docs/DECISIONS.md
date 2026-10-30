@@ -1339,3 +1339,37 @@ docs/research/themes-plan.md; the boards are local in `sandbox/theme-sandbox/`. 
 - All 232 UI snapshots are pixel-identical before and after.
 
 The rest follows the plan's order.
+
+### D59 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
+**Decision:**
+- **Adding one.** A 3D companion made the gallery's way (`companions-3d/`) can be added without being published:
+  Settings › Companion › Made by you › Add from Folder…. The folder must hold an `addon.json` (as the gallery's
+  add-ons write it: `name`, `companion`, optionally `tagline`, `author`, `version`, `engine`, `body`) and exactly
+  `characters/<id>.js`, `assets/<id>.glb`, `portraits/<id>.png` and `avatars/<id>.png`: no links, nothing else,
+  each under a size limit and of its kind (glTF binary, PNG). An id that is one of Sidefolk's companions, or one
+  the gallery installed here, is refused. Before anything is copied an alert says the character file runs as code
+  in the 3D view and isn't from the gallery; once the person agrees it lands in `<home>/Addons/Companions/<id>/`
+  beside the gallery's, its `addon.json` marked `fromFolder`, and it becomes the companion.
+- **Wearing one.** `AppSettings.localCompanion` names it, worn instead of `companion` like a custom companion
+  (D43); choosing any other companion clears it, and its name gives way like a built-in's. Under it runs the
+  undrawn stand-in rig of a gallery companion of the same build (`body`: biped Kiko's, floating Nimbo's, card
+  Folio's). Control-click removes one; the one in use gives way to the companion chosen before it.
+- **The 3D page** takes only its own files: a Content Security Policy allows scripts, images and fetches from the
+  `companion3d:` scheme alone, so a character file can't reach the network.
+- **Likeness faces.** A face that is a person's, in the model's own texture, isn't drawn by the engine: the ink
+  face gained `layout.lids` (painted lids close over the model's own eyes for blinks, squints and sleep),
+  `layout.mouth.lips` (an opening mouth parts the model's own lips, with `colors.teeth`) and `layout.brow: false`;
+  without `layout.eye` no 3D eyes are built.
+
+**Why:** the founder made companions of themselves and Kana from their own sheets and wants them only on their
+Mac, never in a repository or the gallery, yet working like the others; and asked that the faces look exactly
+like the sheets, which drawn cartoon eyes and mouths can't.
+
+**Alternatives:**
+- A `CompanionChoice` case each (private names in the app's code, and a release for every new one).
+- Unsigned packs through the gallery's install (the gallery's guarantee is its signature).
+- 3D companions as data only (the character file holds shaders, moves and poses).
+
+**Implications:** `InstalledCompanion.tagline/body/fromFolder`, `CompanionBody`, `AddonStore.readLocalCompanion`
+and `install(companionFolder:)`; `CharacterLook.character3D`; `Companion3DStage` keyed by a character's name;
+`CompanionArt.locals`. Debug: `swift scripts/dev.swift addCompanion:<folder>` and `companion:local:<id>`.

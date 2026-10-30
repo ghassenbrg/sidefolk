@@ -6,13 +6,14 @@ import WebKit
 /// runs, undrawn, underneath. The rig keeps Sidefolk's states, idle life, clicks, petting and
 /// bubble anchors; every cue it hears (`CharacterView.onCue`) is replayed here, where the 3D
 /// character acts it out. The page and models live in `Resources/Companions3D`; companions from the add-on
-/// gallery (D55) bring their own character, model and pictures, served beside them.
+/// gallery (D55) or added from a folder (D59) bring their own character, model and pictures, served beside them.
 final class Companion3DStage: NSView {
     private let web: WKWebView
     private var ready = false
     private var pending: [String] = []
-    /// Which character the page shows (its file in `characters/`).
-    private(set) var species: CharacterSpecies
+    /// Which character the page shows (its file in `characters/`): a species' name, or a companion's added from a
+    /// folder.
+    private(set) var character: String
     /// Called each time the page has a character loaded and can take cues: at first, and after
     /// `show(_:)` swaps in another.
     var onReady: (() -> Void)?
@@ -30,18 +31,21 @@ final class Companion3DStage: NSView {
     }
 
     /// The still Settings shows for a companion drawn in 3D.
-    static func portrait(_ species: CharacterSpecies) -> NSImage? {
-        file("portraits/\(species.rawValue).png").flatMap(NSImage.init(contentsOf:))
+    static func portrait(_ character: String) -> NSImage? {
+        file("portraits/\(character).png").flatMap(NSImage.init(contentsOf:))
     }
 
     /// Its profile picture: head and shoulders on its own colour, round (companions-3d/references/avatars).
-    static func avatar(_ species: CharacterSpecies) -> NSImage? {
-        file("avatars/\(species.rawValue).png").flatMap(NSImage.init(contentsOf:))
+    static func avatar(_ character: String) -> NSImage? {
+        file("avatars/\(character).png").flatMap(NSImage.init(contentsOf:))
     }
 
     /// Whether this Mac has `species`' 3D character: in the app, or installed from the gallery.
-    static func has(_ species: CharacterSpecies) -> Bool {
-        species.has3D && folder != nil && file("characters/\(species.rawValue).js") != nil
+    static func has(_ species: CharacterSpecies) -> Bool { species.has3D && has(species.rawValue) }
+
+    /// Whether this Mac has the 3D character `character`: in the app, or installed beside it.
+    static func has(_ character: String) -> Bool {
+        folder != nil && file("characters/\(character).js") != nil
     }
 
     /// One of the page's files: the app's own, else an installed companion's (`characters/<name>.js`…).
@@ -53,10 +57,10 @@ final class Companion3DStage: NSView {
         return CompanionAddons.file(path)
     }
 
-    /// Nil when the app has no 3D resources or this Mac doesn't have the species' 3D character.
-    init?(_ species: CharacterSpecies, folder: URL? = Companion3DStage.folder) {
-        guard let folder, species.has3D, Self.file("characters/\(species.rawValue).js", root: folder) != nil else { return nil }
-        self.species = species
+    /// Nil when the app has no 3D resources or this Mac doesn't have that 3D character.
+    init?(_ character: String, folder: URL? = Companion3DStage.folder) {
+        guard let folder, Self.file("characters/\(character).js", root: folder) != nil else { return nil }
+        self.character = character
         let frame = NSRect(x: 0, y: 0, width: 100, height: 100)
         let config = WKWebViewConfiguration()
         // Served from a private scheme: one origin for the page, its modules and the model, and no
@@ -81,7 +85,7 @@ final class Companion3DStage: NSView {
     /// page never answered). After three tries it gives up (`onFailed`).
     private func loadPage() {
         attempts += 1
-        web.load(URLRequest(url: URL(string: "companion3d://app/companion.html?c=\(species.rawValue)")!))
+        web.load(URLRequest(url: URL(string: "companion3d://app/companion.html?c=\(character)")!))
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(8))
             guard let self, !self.ready else { return }
@@ -97,10 +101,10 @@ final class Companion3DStage: NSView {
 
     /// Swaps the character inside the running page: the one shown stays until the next one has
     /// drawn, so switching between 3D companions never shows an empty or 2D window.
-    func show(_ next: CharacterSpecies) {
-        guard next != species, Self.has(next) else { return }
-        species = next
-        send(["kind": "character", "id": next.rawValue])
+    func show(_ next: String) {
+        guard next != character, Self.has(next) else { return }
+        character = next
+        send(["kind": "character", "id": next])
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }
