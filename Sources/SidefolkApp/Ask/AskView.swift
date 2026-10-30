@@ -47,11 +47,8 @@ struct AskView: View {
     private var header: some View {
         HStack(spacing: Theme.Space.xs) {
             if let portrait {
-                // The face in a soft disc: the rig's canvas has room around the body.
-                Image(nsImage: portrait).resizable().frame(width: 52, height: 52).offset(y: -1)
-                    .frame(width: 26, height: 26)
-                    .background(Theme.accentSoft)
-                    .clipShape(Circle())
+                // Already round: a profile picture, or the drawn face on its disc (CompanionArt.avatar).
+                Image(nsImage: portrait).resizable().frame(width: 26, height: 26)
                     .accessibilityHidden(true)
                     .padding(.trailing, Theme.Space.xs)
             }

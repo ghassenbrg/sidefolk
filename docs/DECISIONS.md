@@ -1205,3 +1205,16 @@ the Markdown as typed* (what people asked to get away from).
 Inbox's and About you's unused emoji cleared); `NotebookStore.setLook`, `setPinned`; items list pinned first;
 `NoteBodyEditor` (TextKit 1: hidden marks are null glyphs, boxes and bullets drawn by the layout manager);
 `CollectionLook`; the UI snapshots show a formatted, pinned note and the Edit collection sheet.
+
+### D54 — Companions have profile pictures; folks are helpers only (2026-10-30)
+**Decision:** each 3D companion has a profile picture: head and shoulders on its own colour, round, drawn with Codex
+image gen from its 3D render and sheet (prompts in `companions-3d/references/prompts.json`, sources in
+`references/avatars/`, the app's 256 px crops in `Resources/Companions3D/avatars/`). The Ask panel's header and
+Home › Conversations (beside each reply, with the companion's name) show it; a 2D or custom companion shows its
+drawn face on a disc instead (`CompanionArt.avatar`). Settings' gallery and Home's Now keep the full-body stills.
+The Folk Family are no longer offered as the companion: they stay the helpers beside it; settings that chose one
+move to Mochi, keeping a name the person gave it.
+**Why:** the founder found the full-body renders unreadable at avatar size and wanted a real profile picture in
+conversations; and saw no need for folks as companions now that there are six designed ones.
+**Implications:** `CompanionChoice.isFolk`, `AppSettings.choose` ignores folks; `CompanionArt.offered` leaves them
+out. Supersedes the part of D30 that offered folks as companions.

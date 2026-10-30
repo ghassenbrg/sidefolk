@@ -75,7 +75,7 @@ final class AppCoordinator {
     func start() async {
         CompanionArt.reloadMade()
         let s = runtime.settings.current
-        askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44),
+        askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.avatar(for: s, side: 26),
                                       hotkey: hotkeyLabel)
         ask.actions = self
         // Esc silences the companion or drops what is being said before it closes anything.
@@ -206,7 +206,7 @@ final class AppCoordinator {
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
         companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
-        askPanel?.update(companionName: s.companionName, portrait: CompanionArt.portrait(for: s, side: 44), hotkey: hotkeyLabel)
+        askPanel?.update(companionName: s.companionName, portrait: CompanionArt.avatar(for: s, side: 26), hotkey: hotkeyLabel)
         applyVoiceKeys()
         renderMood()
         renderReadouts()
@@ -410,6 +410,8 @@ final class AppCoordinator {
                     if let accessory { style.accessory = accessory }
                     s.setStyle(style, for: choice)
                 }
+                // As the Settings chooser does: the companion, the Ask panel's header and the rest follow.
+                settingsChanged()
             }
             return
         }

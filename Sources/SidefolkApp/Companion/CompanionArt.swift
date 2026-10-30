@@ -10,7 +10,7 @@ enum CompanionArt {
     /// when this copy of the app carries the 3D characters.
     static var offered: [CompanionChoice] {
         CharacterSpecies.available.filter { !$0.only3D || Companion3DStage.folder != nil }
-            .compactMap { CompanionChoice(rawValue: $0.rawValue) }
+            .compactMap { CompanionChoice(rawValue: $0.rawValue) }.filter { !$0.isFolk }
     }
 
     /// Whether `choice` is shown in 3D: as the settings say, when this copy can draw it so (D51).
@@ -66,7 +66,7 @@ enum CompanionArt {
         case .kiko: String(localized: "A young space explorer")
         case .nimbo: String(localized: "A dreamy little cloud")
         case .folio: String(localized: "A folded little wish")
-        default: species(choice).folk?.role ?? ""
+        default: ""   // folks aren't offered (D54)
         }
     }
 
@@ -88,6 +88,31 @@ enum CompanionArt {
             return image
         }
         return picture(choice, style: settings.style(for: choice), state: state, threeD: threeD(choice, in: settings), side: side)
+    }
+
+    /// Who is talking, as a round picture `side` across (the Ask panel): a 3D companion's profile picture, or else
+    /// the drawn companion's face on a soft disc (its canvas has room around the body, so the middle is cut out).
+    static func avatar(for settings: AppSettings, side: CGFloat) -> NSImage {
+        let choice = offered.contains(settings.companion) ? settings.companion : .mochi
+        if settings.customCompanion == nil, threeD(choice, in: settings) || species(choice).only3D {
+            let key = "avatar.\(choice.rawValue).\(side)"
+            if let cached = previews[key] { return cached }
+            if let image = Companion3DStage.avatar(species(choice)) {
+                image.size = CGSize(width: side, height: side)
+                previews[key] = image
+                return image
+            }
+        }
+        let drawn = portrait(for: settings, side: side * 2)
+        let disc = NSColor(Theme.accentSoft)
+        // Drawn when shown, so the disc follows light and dark.
+        return NSImage(size: CGSize(width: side, height: side), flipped: false) { rect in
+            NSBezierPath(ovalIn: rect).addClip()
+            disc.setFill()
+            rect.fill()
+            drawn.draw(in: NSRect(x: -side / 2, y: -side / 2 + 1, width: side * 2, height: side * 2))
+            return true
+        }
     }
 
     private static func picture(_ choice: CompanionChoice, style: CompanionStyle, state: CharacterState, threeD: Bool,

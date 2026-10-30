@@ -9,6 +9,11 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Profile pictures; folks are helpers only (D54):** six profile pictures (Codex image gen from each 3D render
+  and sheet) in the Ask panel's header and beside each reply in Home › Conversations; 2D and custom companions
+  show their drawn face on a disc. Folks are no longer in the companion gallery; a saved folk becomes Mochi.
+  *Checked:* the Ask panel in the dev app (Ember, Nimbo, 2D Mochi), UI snapshots of Conversations and Settings ›
+  Companion, CompanionChoiceTests.
 - **Other agents change and delete notes; settings (D52):** `notes.update` and `notes.trash` reach Claude Code,
   Codex and other MCP clients (to the Trash only; only the person empties it). Settings › Privacy › Other agents:
   saving, changing and reading each Allow / Ask each time / Off (defaults Allow, Allow, Ask); Off hides the tools

@@ -33,6 +33,11 @@ final class Companion3DStage: NSView {
         folder.flatMap { NSImage(contentsOf: $0.appendingPathComponent("portraits/\(species.rawValue).png")) }
     }
 
+    /// Its profile picture: head and shoulders on its own colour, round (companions-3d/references/avatars).
+    static func avatar(_ species: CharacterSpecies) -> NSImage? {
+        folder.flatMap { NSImage(contentsOf: $0.appendingPathComponent("avatars/\(species.rawValue).png")) }
+    }
+
     /// Nil when the app has no 3D resources or the species has no 3D character.
     init?(_ species: CharacterSpecies, folder: URL? = Companion3DStage.folder) {
         guard let folder, species.has3D else { return nil }

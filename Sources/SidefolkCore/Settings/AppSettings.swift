@@ -33,13 +33,21 @@ public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
     case minimal, balanced, lively
 }
 
-/// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, one of the
-/// Folk Family (D30), or Ember, Kiko, Nimbo and Folio, who exist only in 3D (D51). The app offers the
-/// ones whose rigs are finished.
+/// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, or Ember, Kiko, Nimbo and
+/// Folio, who exist only in 3D (D51). The Folk Family (D30) are helpers beside the companion, never the
+/// companion itself (D54); their cases stay so older settings still read.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
     case ember, kiko, nimbo, folio
+
+    /// One of the Folk Family: a helper, not offered as the companion (D54).
+    public var isFolk: Bool {
+        switch self {
+        case .pip, .byte, .seed, .melody, .scout, .tempo, .play, .guard_, .nova, .brew: true
+        default: false
+        }
+    }
 
     /// How it can be drawn (D51): Mochi and Spark either way, Ember, Kiko, Nimbo and Folio in 3D only,
     /// the robot and the Folks in 2D only. The first is how it comes.
@@ -255,6 +263,11 @@ public struct AppSettings: Codable, Sendable, Equatable {
         func read<T: Decodable>(_ key: CodingKeys, _ into: inout T) { if let v = try? c.decode(T.self, forKey: key) { into = v } }
         read(.companionName, &companionName)
         read(.companion, &companion)
+        // A folk chosen before D54 hands over to Mochi; a name the person gave it stays.
+        if companion.isFolk {
+            companion = .mochi
+            if !hasCustomName { companionName = CompanionChoice.mochi.defaultName }
+        }
         read(.styles, &styles)
         read(.dimensions, &dimensions)
         // Before D30 the robot's light colour was the only style ("accent"); keep it.
@@ -294,6 +307,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// Switches companion. A name that is still one of the built-in defaults follows the new
     /// companion ("Sidefolk" becomes "Mochi"); a name the user chose stays.
     public mutating func choose(_ next: CompanionChoice) {
+        guard !next.isFolk else { return }
         if !hasCustomName { companionName = next.defaultName }
         companion = next
         customCompanion = nil

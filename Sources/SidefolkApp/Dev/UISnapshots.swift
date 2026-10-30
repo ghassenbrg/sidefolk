@@ -211,7 +211,7 @@ enum UISnapshots {
             }
 
             // Desktop surfaces: the Ask panel and the kinds of bubble.
-            let portrait = CompanionArt.portrait(for: AppSettings(), side: 44)
+            let portrait = CompanionArt.avatar(for: AppSettings(), side: 26)
             let actions = FixtureAskActions()
             let panels = [("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),

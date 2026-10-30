@@ -252,13 +252,14 @@ private struct TranscriptPane: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Theme.Space.m) {
                     ForEach(model.lines) { line in
-                        LineView(line: line).id(line.id)
+                        LineView(line: line, avatar: model.companionAvatar, name: model.companionName).id(line.id)
                     }
                     if let sending = model.sending, model.lines.last(where: \.isRequest)?.text != sending {
                         LineView(line: ConversationLine(id: "sending", kind: .request(spoken: false, attachment: nil), text: sending, at: Date()))
                     }
                     if let phase = model.phase {
                         HStack(spacing: 6) {
+                            ReplyAvatar(image: model.companionAvatar)
                             ProgressView().controlSize(.small)
                             Text(verbatim: phase)
                         }
@@ -328,6 +329,8 @@ private struct TranscriptPane: View {
 /// between as quiet lines.
 private struct LineView: View {
     var line: ConversationLine
+    var avatar: NSImage? = nil
+    var name = ""
 
     var body: some View {
         switch line.kind {
@@ -351,11 +354,15 @@ private struct LineView: View {
             }
             .accessibilityElement(children: .combine)
         case .reply:
-            VStack(alignment: .leading, spacing: 4) {
-                AnswerText(text: line.text)
-                HStack(spacing: 4) {
-                    Text(TimeText.short(line.at)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                    CopyButton(text: line.text)
+            HStack(alignment: .top, spacing: Theme.Space.s + 2) {
+                ReplyAvatar(image: avatar)
+                VStack(alignment: .leading, spacing: 4) {
+                    if !name.isEmpty { Text(verbatim: name).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted) }
+                    AnswerText(text: line.text)
+                    HStack(spacing: 4) {
+                        Text(TimeText.short(line.at)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                        CopyButton(text: line.text)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -381,6 +388,17 @@ private struct LineView: View {
                 Image(systemName: "exclamationmark.circle").foregroundStyle(Theme.coral)
             }
             .font(Theme.Font.caption)
+        }
+    }
+}
+
+/// The companion's round profile picture beside what it said (CompanionArt.avatar).
+private struct ReplyAvatar: View {
+    var image: NSImage?
+
+    var body: some View {
+        if let image {
+            Image(nsImage: image).resizable().frame(width: 30, height: 30).accessibilityHidden(true)
         }
     }
 }

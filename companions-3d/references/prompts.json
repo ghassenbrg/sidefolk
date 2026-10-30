@@ -198,5 +198,18 @@
       }
     ]
   },
-  "textures (codex_imagegen)": "plush-velvet-src.png and knit-src.png: seamless close-up photos of white velvet plush pile and turquoise stockinette knit; textures/make_detail.py turns them into the height maps in Resources/Companions3D/assets."
+  "textures (codex_imagegen)": "plush-velvet-src.png and knit-src.png: seamless close-up photos of white velvet plush pile and turquoise stockinette knit; textures/make_detail.py turns them into the height maps in Resources/Companions3D/assets.",
+  "avatars (codex_imagegen, gpt-6-luna, xhigh)": {
+    "style": "Premium 3D animated-feature character avatar for a chat app's profile picture. Square image. The character's head and shoulders, centred, filling about 80% of the frame, so the face reads clearly even at 40 pixels: facing the viewer with a slight three-quarter turn, a warm friendly smile, bright eyes looking straight at the viewer. Soft studio key light, gentle rim light, shallow depth. A smooth soft-gradient backdrop that fills the whole square. Keep the character exactly as in the reference images: same shapes, proportions, colours, materials and face. No props unless part of the character, no text, no letters, no watermark, no logo.",
+    "refs": "Resources/Companions3D/portraits/<id>.png, the character's sheet, and (after Mochi) avatars/mochi-avatar.webp for framing and finish only",
+    "backdrops": {
+      "mochi": "soft pale periwinkle blue to light sky blue",
+      "spark": "soft pale mint to light aqua",
+      "ember": "soft warm peach to pale apricot",
+      "kiko": "soft pale sky blue to light lavender",
+      "nimbo": "soft dawn pink to pale lilac",
+      "folio": "soft warm butter cream to pale yellow"
+    },
+    "output": "references/avatars/<id>-avatar.webp (1254 px); the app's Resources/Companions3D/avatars/<id>.png is a round 256 px crop on the face"
+  }
 }

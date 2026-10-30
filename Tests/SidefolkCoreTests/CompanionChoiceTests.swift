@@ -35,21 +35,25 @@ import Testing
     @Test func eachCompanionKeepsItsOwnStyle() {
         var s = AppSettings()
         s.setStyle(CompanionStyle(color: .mint, accessory: .none), for: .mochi)
-        s.choose(.pip)
-        s.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .pip)
+        s.choose(.spark)
+        s.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .spark)
         s.choose(.mochi)
         #expect(s.style(for: .mochi) == CompanionStyle(color: .mint, accessory: .none))
-        #expect(s.style(for: .pip) == CompanionStyle(color: .coral, accessory: .scarf))
-        #expect(s.style(for: .scout) == CompanionStyle(color: .aqua, accessory: .none))
+        #expect(s.style(for: .spark) == CompanionStyle(color: .coral, accessory: .scarf))
+        #expect(s.style(for: .sidefolk) == CompanionStyle(color: .aqua, accessory: .none))
     }
 
-    @Test func folksAnswerToTheirOwnNames() {
+    /// Folks are helpers, never the companion (D54): choosing one changes nothing, and one chosen before hands
+    /// over to Mochi, keeping a name the person gave it.
+    @Test func folksAreNotCompanions() throws {
         var s = AppSettings()
-        s.choose(.guard_)
-        #expect(s.companionName == "Guard")
         s.choose(.scout)
-        #expect(s.companionName == "Scout")
+        #expect(s.companion == .mochi && s.companionName == "Mochi")
         #expect(CompanionChoice(rawValue: "guard") == .guard_)
+        let folk = try decode(#"{"companion":"scout","companionName":"Scout"}"#)
+        #expect(folk.companion == .mochi && folk.companionName == "Mochi")
+        let named = try decode(#"{"companion":"guard","companionName":"Bodyguard"}"#)
+        #expect(named.companion == .mochi && named.companionName == "Bodyguard")
     }
 
     @Test func aNewSetupStartsWithMochi() {

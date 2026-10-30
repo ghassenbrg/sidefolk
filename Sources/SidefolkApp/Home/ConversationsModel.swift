@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Observation
 import SidefolkCore
 
@@ -41,6 +41,9 @@ final class ConversationsModel {
     var selected: ConversationSummary? { conversations.first { $0.id == selectedId } }
     var hasAI: Bool { runtime.settings.current.provider.kind != .none }
     var keptDays: Int { runtime.settings.current.historyDays }
+    /// Who answers, beside each reply: the companion's profile picture and name as they are now.
+    var companionAvatar: NSImage { CompanionArt.avatar(for: runtime.settings.current, side: 30) }
+    var companionName: String { runtime.settings.current.companionName }
     var busy: Bool { runId != nil || sending != nil }
 
     func reload() async {
