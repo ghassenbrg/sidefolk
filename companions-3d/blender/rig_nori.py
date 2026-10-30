@@ -11,7 +11,7 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np
-from rigkit import ss, seg_param, limb, prepare, regutter, armature, coords, colours, skin, bake_ao, mark, grow, export, shots
+from rigkit import ss, seg_param, seg_dist, limb, prepare, regutter, armature, coords, colours, skin, bake_ao, mark, grow, export, shots
 
 src, dst, tests = sys.argv[sys.argv.index("--") + 1:][:3]
 mesh = prepare(src, "Nori", ratio=0.3)
@@ -46,8 +46,11 @@ W = {}
 def add(n, w): W[n] = W.get(n, 0) + w
 
 # Each part takes its share of what is left, so the shares always sum to one.
-d = np.stack([seg_param(co, TAIL[i], TAIL[i + 1])[1] for i in range(3)])
-tail = ss(0.27, 0.18, d.min(0)) * ss(0.2, 0.3, x) * ss(0.05, 0.15, y)
+# The tail lies along the floor behind the body (whose back is at y 0.34) and curls up its left side
+# to z -0.48: near its segments (not their lines, which run on up through the head), behind the
+# back and below z -0.4. Its root blends into the hips.
+d = np.stack([seg_dist(co, TAIL[i], TAIL[i + 1]) for i in range(3)])
+tail = ss(0.25, 0.17, d.min(0)) * ss(0.2, 0.32, x) * ss(0.3, 0.4, y) * (1 - ss(-0.44, -0.38, z))
 head = ss(NECK - 0.05, NECK + 0.03, z) * (1 - tail)
 ear = ss(0.58, 0.68, z) * ss(0.12, 0.22, ax) * head
 arm = np.zeros(len(co)); arm_t = np.zeros(len(co))
@@ -56,7 +59,9 @@ for s, sx in (("L", 1), ("R", -1)):
     on = np.sign(x) == sx
     arm = np.where(on, w * ss(0.33, 0.42, ax), arm); arm_t = np.where(on, t, arm_t)
 arm *= 1 - head - tail
-leg = (1 - ss(-0.72, -0.64, z)) * (1 - head - arm - tail)
+# The legs are columns in front of the back (y < 0.25): behind them the tail's root lies on the
+# floor, which tucked feet would otherwise drag into a sheet.
+leg = (1 - ss(-0.72, -0.64, z)) * (1 - ss(0.2, 0.28, y)) * (1 - head - arm - tail)
 foot = 1 - ss(-0.9, -0.84, z)
 core = 1 - head - arm - tail - leg
 chest = ss(-0.46, -0.36, z)
@@ -86,7 +91,8 @@ bake_ao(mesh)
 # face (fronts at y -0.54, the face at -0.45), then grown back along the rims.
 lum = col @ np.array([0.3, 0.55, 0.15])
 box = (ax < 0.5) & (z > 0.04) & (z < 0.4) & (y < -0.36)
-glasses = grow(mesh, box & (y < -0.475) & (lum < 0.34), box & (lum < 0.36), 6)
+# (Meshy also painted the frames' shadow onto the face beside the rims: the mask takes those in.)
+glasses = grow(mesh, box & (y < -0.475) & (lum < 0.34), box & (lum < 0.42), 10)
 print("glasses vertices", int(glasses.sum()))
 mark(mesh, glasses.astype(float))
 export(dst)
@@ -94,5 +100,7 @@ shots(rig, tests, [
     ("rest_front.png", 0, {}),
     ("wave_front.png", 0, {"arm.R": (0, 0, -60), "hand.R": (0, 0, -30), "ear.L.1": (0, -20, 0), "tail.2": (0, 0, 30), "tail.3": (0, 0, 30)}),
     ("back.png", 180, {"tail.1": (0, 0, 20), "tail.2": (0, 0, 25)}),
+    # A tail flung hard (a flip, a jump): nothing of the body may come with it.
+    ("tail_flung.png", 135, {"tail.1": (40, 0, 40), "tail.2": (30, 0, 40), "tail.3": (20, 0, 30)}),
     ("sit_side.png", 90, {"thigh.L": (80, 0, 0), "thigh.R": (80, 0, 0), "foot.L": (-75, 0, 0), "foot.R": (-75, 0, 0)}),
 ])

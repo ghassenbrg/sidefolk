@@ -23,6 +23,10 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   role lines, strings, tests) is in the working tree, interleaved with the 2D work (D59), and goes in with it. *Next:*
   the founder reviews, then
   `scripts/publish.sh` in sidefolk-addons; the app offers them once a release knows their cases.
+  *Review round (the founder on Nori):* fixed the tail tearing a sheet off the head in a flip, the feet dragging the
+  tail, the cream nape and torn paw and tail-tip edges, grey brows, bright eyes and a wide mouth (now a ω); Purl got a
+  linen weave, Rune granite speckle and an amber gem with depth, Iris one dark brow arc and a dark mouth. *Checked:*
+  every move filmed front and side, close-ups of all four, the 8-mood sheet of Iris, the dev app (`build/review4`).
 - **3D companions added from a folder; likeness faces (D60):** Settings › Companion › Made by you › Add from
   Folder… checks a companion's folder (addon.json and exactly its four files, sizes and kinds), warns that its
   character file runs as code, installs it beside the gallery's companions and wears it

@@ -77,7 +77,10 @@ python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (moch
 
 `?bare&frame=tight` for clean captures; in the console `(await import('./sheet.js')).sheet(companion)`
 lays 16 feelings, moves and postures out in one grid, and `turnaround(companion)` saves front, ¾,
-side and back views to compare with the sheet's turnaround. `?record=<name>&frame=tight` records the
+side and back views to compare with the sheet's turnaround. Stills hide what motion shows:
+`filmstrip(companion, 'flip', { yaw: 120 })` lays one move out frame by frame from any side, and
+`closeups(companion, name, [[yaw, height, size], …])` renders the surface close up. Probes in Blender read
+colours one gamma too bright (a `lum` of 0.46 there is 0.18 in the material). `?record=<name>&frame=tight` records the
 showreel frame by frame into `build/companions-3d/<name>/`.
 
 ## Rebuild the app's copy

@@ -1403,3 +1403,15 @@ sheet.
 **Implications:** Iris's eye ignores the lower lid (`uLid.z`), so smiles don't cover the lens; Purl's arm weights
 are everything past the body's sides, as the mitten tips curl off the arm's line. Raw models stay on Meshy (task
 ids in `prompts.json`).
+
+**Review, after the founder saw Nori move (2026-10-30):** stills are not enough; every move is now filmed from the
+front and the side (`sheet.js filmstrip()`) and the surface checked close up (`closeups()`). That found a tail
+weighted by distance to its bones' endless lines, which ran on through the back of the head (a flip pulled a
+sheet of skin from behind an ear: `rigkit.seg_dist()` measures to the segment), feet that dragged the tail's root
+along the floor, and colours Meshy put where the sheet has none (cream round the nape, torn paw and tail-tip edges),
+which the material now paints by place. The texture probes read colour one gamma too bright (`lum` 0.46 there is
+0.18 in the material): the materials' shading is normalised to the material's own values, so Purl's weave and
+Rune's mottling are no longer flattened by their clamps. Faces: painted layers can be matte (`paintRoughness`;
+glossier paint turns dark strokes grey on felt), a cat's mouth is a ω (`mouth.cat`), and `twinkle: false` drops the
+idle twinkle cross the sheets don't have. Purl's linen is a procedural plain weave that fades below a pixel;
+Rune's granite has a speckle from a high pass of the pile map.

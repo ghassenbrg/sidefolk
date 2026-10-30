@@ -60,6 +60,49 @@ export async function turnaround(m, { w = 640, h = 760, yaws = [0, 35, 90, 180] 
   return blob.size;
 }
 
+/** One move frame by frame (`frames` across its length), seen from `yaw` degrees: tears and stray
+ *  parts show in motion that stills miss. Saved as build/companions-3d/film-<id>-<move>[-<yaw>]/00001.jpg. */
+export async function filmstrip(m, move, { frames = 12, yaw = 0, size = 300, cols = 6 } = {}) {
+  m.pause(); m.nextFidget = 1e9;
+  m.actions = []; m.setState('idle'); m.setMood('neutral'); m.setPosture('stand'); m.speech = null;
+  m.look.target = null; m.lookAt(0, 0.1); m.step(2.5);
+  m.root.rotation.y = -yaw * Math.PI / 180;
+  if (!m.play(move)) return 0;
+  const dur = m.actions.at(-1).clip.dur, canvas = m.renderer.domElement, s = Math.min(canvas.width, canvas.height);
+  const out = document.createElement('canvas'); out.width = cols * size; out.height = Math.ceil(frames / cols) * size;
+  const g = out.getContext('2d'); g.fillStyle = '#eef1f6'; g.fillRect(0, 0, out.width, out.height);
+  for (let i = 0; i < frames; i++) {
+    m.step(dur / frames);
+    g.drawImage(canvas, (canvas.width - s) / 2, (canvas.height - s) / 2, s, s, (i % cols) * size, Math.floor(i / cols) * size, size, size);
+  }
+  m.root.rotation.y = 0;
+  const blob = await new Promise((res) => out.toBlob(res, 'image/jpeg', 0.9));
+  await fetch(`/frame/film-${m.C.id}-${move.toLowerCase()}${yaw ? `-${yaw}` : ''}/1.jpg`, { method: 'POST', body: blob });
+  return blob.size;
+}
+
+/** Close-ups to judge the surface (fur, seams, colour borders) beside a sheet: `shots` are
+ *  [yaw degrees, centre height, view height] in world units, each a 900 px square, side by side.
+ *  Saved as build/companions-3d/close-<name>/00001.jpg. */
+export async function closeups(m, name, shots, size = 900) {
+  m.pause(); m.nextFidget = 1e9;
+  m.canvas.style.cssText = `position:fixed;left:0;top:0;width:${size}px;height:${size}px`;
+  m.renderer.setPixelRatio(1); m.resize();
+  m.actions = []; m.setState('idle'); m.setMood('smile'); m.blink.next = 1e9; m.lookAt(0, 0.1); m.step(2.5);
+  const out = document.createElement('canvas'); out.width = size * shots.length; out.height = size;
+  const g = out.getContext('2d'); g.fillStyle = '#eef1f6'; g.fillRect(0, 0, out.width, size);
+  const c = m.camera, D2R = Math.PI / 180;
+  shots.forEach(([yaw, cy, h], i) => {
+    const dist = h / (2 * Math.tan(c.fov * D2R / 2));
+    c.position.set(0, cy, dist); c.lookAt(0, cy, 0);
+    m.root.rotation.y = -yaw * D2R; m.step(0.02); g.drawImage(m.canvas, i * size, 0);
+  });
+  m.root.rotation.y = 0; m.frame('tight');
+  const blob = await new Promise((res) => out.toBlob(res, 'image/jpeg', 0.92));
+  await fetch(`/frame/close-${name}/1.jpg`, { method: 'POST', body: blob });
+  return blob.size;
+}
+
 /** The still Settings shows: idle and smiling, transparent, square; saved through serve.py. */
 export async function portrait(m, size = 512) {
   m.pause(); m.nextFidget = 1e9;

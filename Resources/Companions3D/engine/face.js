@@ -3,7 +3,9 @@
 //    closed-eye arcs, tears) on a decal cut from the head itself, so it bends with it. A face that is
 //    a likeness in the model's own texture (a person's) keeps its eyes, brows and lips: `layout.lids`
 //    paints only lids over its eyes, `layout.mouth.lips` paints a mouth only while it is open, and
-//    `layout.brow: false` paints no brows.
+//    `layout.brow: false` paints no brows. `paintRoughness` makes the painted layer matte (felt, linen,
+//    stone), `layout.mouth.cat` a cat's ω whenever it smiles closed, and `twinkle: false` drops the idle
+//    twinkle cross (engine.js) where only round highlights belong.
 //  - screen: everything glows on a dark visor (Spark): eyes, lids and mouth are light, painted.
 // Model units, three.js axes: x = the character's left, y up, z toward the viewer.
 import * as THREE from 'three';
@@ -81,7 +83,8 @@ export class Face {
     const mat = screen
       ? new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending,
         polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
-      : new THREE.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, roughness: 0.55,
+      // (`paintRoughness`: matte ink on felt, or dark strokes catch the light and read grey.)
+      : new THREE.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, roughness: this.cfg.paintRoughness ?? 0.55,
         polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     const decal = new THREE.SkinnedMesh(dg, mat);
     decal.name = 'FaceDecal';
@@ -315,7 +318,8 @@ export class Face {
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const line = (M.line ?? 10) * Math.sqrt(scale);
 
-    if (f.cat > 0.5 && open < 0.1) {   // a little ω mouth
+    // A little ω mouth: for a focused look, or a cat's (`mouth.cat`) whenever it smiles closed.
+    if ((f.cat > 0.5 || (M.cat && smile > 0.2)) && open < 0.1) {
       ctx.strokeStyle = C.ink; ctx.lineWidth = line;
       ctx.beginPath();
       ctx.moveTo(cx - w * 0.6, cy - 4); ctx.quadraticCurveTo(cx - w * 0.3, cy + 16 * scale, cx, cy);

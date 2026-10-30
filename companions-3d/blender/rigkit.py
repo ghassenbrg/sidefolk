@@ -24,6 +24,14 @@ def seg_param(p, a, b):
     return t, d
 
 
+def seg_dist(p, a, b):
+    """Distance from the segment a→b itself (seg_param's is from its endless line, which runs on
+    through whatever lies beyond the segment's ends: a tail's line through the back of the head)."""
+    a, b = np.array(a, float), np.array(b, float); ab = b - a
+    t = np.clip(((p - a) @ ab) / (ab @ ab), 0, 1)
+    return np.linalg.norm(p - (a + np.outer(t, ab)), axis=1)
+
+
 def prepare(src, name, ratio=0.42, shift=(0, 0, 0), turn=0):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=src)

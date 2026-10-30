@@ -823,7 +823,8 @@ export class Companion {
       const lid = e.side > 0 ? f.lidL : f.lidR;
       e.uniforms.uLid.value.set(lid, f.lidSlant, f.lidBottom, f.lidBottomSlant);
       e.uniforms.uGaze.value.set(this.gaze.x, this.gaze.y);
-      e.uniforms.uSparkle.value = clamp(f.sparkle);
+      // `face.twinkle: false`: no idle twinkle (a thin cross over a dark iris or a lens), only real sparkles.
+      e.uniforms.uSparkle.value = this.C.face.twinkle === false && f.sparkle < 0.5 ? 0 : clamp(f.sparkle);
       const open = f.eyeOpen;
       e.mesh.scale.set(1 + (open - 1) * 0.55, open, 1);
       e.mesh.position.set(this.gaze.x * 0.012, this.gaze.y * 0.008, 0);
