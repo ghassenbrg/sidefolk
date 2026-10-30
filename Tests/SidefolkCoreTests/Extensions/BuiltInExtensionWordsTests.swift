@@ -26,6 +26,10 @@ struct BuiltInExtensionWordsTests {
             for (page, meta) in manifest.pages {
                 #expect(BuiltInExtensionWords.page(manifest.id, page) == meta.title, "\(folder) \(page)")
             }
+            for (palette, meta) in manifest.palettes {
+                #expect(BuiltInExtensionWords.palette(manifest.id, palette) == meta.title, "\(folder) \(palette)")
+                #expect(BuiltInExtensionWords.placeholder(manifest.id, palette) == meta.placeholder, "\(folder) \(palette)")
+            }
         }
     }
 }

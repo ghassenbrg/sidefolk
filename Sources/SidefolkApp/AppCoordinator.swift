@@ -18,6 +18,8 @@ final class AppCoordinator {
     private(set) var askPanel: AskPanelController!
     let bubbles = BubbleController()
     let statusItem = StatusItemController()
+    /// Extensions' palettes on their shortcuts (D63).
+    private(set) lazy var palettes = PaletteController(host: runtime.extensions)
     let notifier: SystemNotifier
     let monitor: EnvironmentMonitor
     let companion = CompanionWindowController()
@@ -184,6 +186,7 @@ final class AppCoordinator {
         installHelperLink()
         // Extension pages' charts reach back a day, and Today's tiles stay current (D62).
         await runtime.extensions.startPageSampling()
+        await palettes.refresh()
         await refreshCollections()
         await refreshExtensionLooks()
         _ = await notificationsAuthorized()
@@ -437,6 +440,11 @@ final class AppCoordinator {
             home.show(page: String(command.dropFirst(5)))
             return
         }
+        if command.hasPrefix("palette:") {
+            // palette:<extension id>/<palette>: as if its shortcut were pressed (D63).
+            Task { await palettes.toggle(String(command.dropFirst(8))) }
+            return
+        }
         if command.hasPrefix("installFolder:") {
             // installFolder:<folder>: installs an extension as Settings does once the person approved its preview.
             let folder = URL(fileURLWithPath: String(command.dropFirst("installFolder:".count)))
@@ -628,6 +636,8 @@ final class AppCoordinator {
         mood.apply(event, now: Date())
         renderMood()
         switch event {
+        case .nudge:
+            PaletteController.nudge()
         case .attention(.present(let item, let presentation)):
             present(item, presentation)
         case .attention(.withdraw(let id)):
@@ -686,7 +696,12 @@ final class AppCoordinator {
                 Task { await runtime.rearm() }
             }
             if domain == .notebook { Task { await refreshCollections() } }
-            if domain == .extensions { Task { await refreshExtensionLooks() } }
+            if domain == .extensions {
+                Task {
+                    await refreshExtensionLooks()
+                    await palettes.refresh()
+                }
+            }
         default:
             break
         }

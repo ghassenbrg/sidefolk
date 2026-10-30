@@ -243,10 +243,60 @@ func feeds(_ c: CGContext) {
     }
 }
 
+/// Clipboard: a board with its clip and three lines of text, a copy stacked behind (Pip's mint into teal).
+func clipboard(_ c: CGContext) {
+    background(c, top: 0x7FE0C0, bottom: 0x1E9C9A)
+    let back = CGPath(roundedRect: CGRect(x: 176, y: 86, width: 232, height: 290), cornerWidth: 34, cornerHeight: 34, transform: nil)
+    c.addPath(back)
+    c.setFillColor(rgb(0xFFFFFF, 0.45))
+    c.fillPath()
+    let board = CGPath(roundedRect: CGRect(x: 112, y: 118, width: 248, height: 306), cornerWidth: 38, cornerHeight: 38, transform: nil)
+    c.addPath(board)
+    c.setFillColor(white)
+    c.fillPath()
+    let clip = CGPath(roundedRect: CGRect(x: 180, y: 392, width: 112, height: 58), cornerWidth: 22, cornerHeight: 22, transform: nil)
+    c.addPath(clip)
+    c.setFillColor(rgb(0x0F6E73))
+    c.fillPath()
+    stroke(c, rgb(0x1E9C9A), width: 26) { p in
+        for (y, end) in [(330.0, 300.0), (270.0, 300.0), (210.0, 250.0)] {
+            p.move(to: CGPoint(x: 162, y: y))
+            p.addLine(to: CGPoint(x: end, y: y))
+        }
+    }
+}
+
+/// Keep Awake: a cup with steam rising (Tempo's sun into a coffee brown).
+func keepAwake(_ c: CGContext) {
+    background(c, top: 0xFFC97A, bottom: 0xC0703A)
+    let cup = CGMutablePath()
+    cup.move(to: CGPoint(x: 112, y: 280))
+    cup.addLine(to: CGPoint(x: 352, y: 280))
+    cup.addCurve(to: CGPoint(x: 232, y: 110), control1: CGPoint(x: 352, y: 170), control2: CGPoint(x: 310, y: 110))
+    cup.addCurve(to: CGPoint(x: 112, y: 280), control1: CGPoint(x: 154, y: 110), control2: CGPoint(x: 112, y: 170))
+    cup.closeSubpath()
+    c.addPath(cup)
+    c.setFillColor(white)
+    c.fillPath()
+    stroke(c, white, width: 30) { p in
+        p.addArc(center: CGPoint(x: 352, y: 222), radius: 44, startAngle: .pi / 2, endAngle: -.pi / 2, clockwise: true)
+    }
+    stroke(c, white, width: 24) { p in
+        p.move(to: CGPoint(x: 112, y: 86))
+        p.addLine(to: CGPoint(x: 352, y: 86))
+    }
+    stroke(c, rgb(0xFFFFFF, 0.85), width: 22) { p in
+        for x in [176.0, 248.0] {
+            p.move(to: CGPoint(x: x, y: 318))
+            p.addCurve(to: CGPoint(x: x, y: 430), control1: CGPoint(x: x + 34, y: 350), control2: CGPoint(x: x - 34, y: 398))
+        }
+    }
+}
+
 let icons: [(folder: String, draw: (CGContext) -> Void)] = [
     ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk), ("weather", weather),
     ("calculator", calculator), ("currency", currency), ("playtime", playtime), ("images", images), ("pdf", pdf), ("qr-codes", qrCodes),
-    ("archives", archives), ("dev-toolbox", devToolbox), ("feeds", feeds),
+    ("archives", archives), ("dev-toolbox", devToolbox), ("feeds", feeds), ("clipboard", clipboard), ("keep-awake", keepAwake),
 ]
 
 let arguments = Array(CommandLine.arguments.dropFirst())

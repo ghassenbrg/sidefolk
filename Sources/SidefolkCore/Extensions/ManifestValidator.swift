@@ -70,6 +70,11 @@ public struct ValidationReport: Sendable {
         if !risks.isEmpty { out.append("Tools: " + risks.map { "\($0.name) (\($0.risk.rawValue))" }.joined(separator: ", ")) }
         if let m = manifest, !m.watchers.isEmpty { out.append("Watchers: " + m.watchers.keys.sorted().joined(separator: ", ")) }
         if let m = manifest, !m.pages.isEmpty { out.append("Pages: " + m.pages.keys.sorted().compactMap { m.pages[$0]?.title }.joined(separator: ", ")) }
+        if let m = manifest, !m.palettes.isEmpty {
+            out.append("Palettes: " + m.palettes.keys.sorted().compactMap { k in m.palettes[k].map { "\($0.title)\($0.hotkey.map { " (\($0))" } ?? "")" } }
+                .joined(separator: ", "))
+        }
+        if manifest?.background == true { out.append("Keeps running while it's on") }
         let commands = commandLines
         if !commands.isEmpty {
             out.append("Answers without AI (D50):")
@@ -161,6 +166,7 @@ public struct ManifestValidator: Sendable {
         report.permissions = permissions
         checkWatchers(manifest, issues: &issues)
         checkPages(manifest, issues: &issues)
+        checkPalettes(manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report
@@ -333,7 +339,7 @@ public struct ManifestValidator: Sendable {
 
     func checkPermissions(_ p: ExtensionManifest.Permissions, folder: String, issues: inout [ValidationIssue],
                           warnings: inout [String]) -> ExtensionPermissions {
-        var result = ExtensionPermissions(network: p.network, media: p.media)
+        var result = ExtensionPermissions(network: p.network, media: p.media, clipboard: p.clipboard, power: p.power)
         for (field, list) in [("read", p.files.read), ("write", p.files.write), ("exec", p.exec)] where list.count > 32 {
             issues.append(ValidationIssue(field: "permissions.\(field)", message: "can list at most 32 entries."))
         }
@@ -489,6 +495,28 @@ public struct ManifestValidator: Sendable {
 
 extension ManifestValidator {
     static let symbolPattern = #"^[a-z0-9]+(\.[a-z0-9]+)*$"#
+    /// `shift+cmd+v`: at least one of cmd, ctrl or option, then one key.
+    static let hotkeyPattern = #"^((cmd|ctrl|option|shift)\+)*(cmd|ctrl|option)\+((cmd|ctrl|option|shift)\+)*([a-z0-9]|space|f[1-9]|f1[0-2])$"#
+
+    func checkPalettes(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
+        if m.palettes.count > 2 { issues.append(ValidationIssue(field: "palettes", message: "can declare at most 2 palettes.")) }
+        for name in m.palettes.keys.sorted() {
+            let field = "palettes.\(name)"
+            guard let p = m.palettes[name] else { continue }
+            if name.range(of: Self.namePattern, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: field, message: "isn't a valid palette name (lowercase letters, digits and _)."))
+            }
+            if p.title.isEmpty || p.title.count > 40 || ExtensionText.clean(p.title) != p.title {
+                issues.append(ValidationIssue(field: "\(field).title", message: "must be 1–40 characters of plain text."))
+            }
+            if let h = p.hotkey, h.range(of: Self.hotkeyPattern, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: "\(field).hotkey", message: "must look like shift+cmd+v (cmd, ctrl or option, then one key)."))
+            }
+            if let ph = p.placeholder, ph.count > 60 || ExtensionText.clean(ph) != ph {
+                issues.append(ValidationIssue(field: "\(field).placeholder", message: "must be at most 60 characters of plain text."))
+            }
+        }
+    }
 
     func checkPages(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
         if m.pages.count > 4 { issues.append(ValidationIssue(field: "pages", message: "can declare at most 4 pages.")) }

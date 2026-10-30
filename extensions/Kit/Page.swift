@@ -106,6 +106,10 @@ public enum Block {
     case note(_ text: String, tone: Tone = .neutral)
     /// A button that asks Sidefolk this, as if typed in Ask.
     case ask(_ label: String, _ ask: String)
+    /// A switch that runs one of this extension's tools with `on` (the new state) merged into `input`.
+    case toggle(_ label: String, detail: String? = nil, on: Bool, tool: String, input: [String: Any] = [:])
+    /// A button that runs one of this extension's tools with `input`.
+    case button(_ label: String, tool: String, input: [String: Any] = [:], style: ButtonStyle = .secondary, symbol: String? = nil)
 
     var json: [String: Any] {
         switch self {
@@ -125,8 +129,78 @@ public enum Block {
             return ["type": "note", "text": text, "tone": tone.rawValue]
         case .ask(let label, let ask):
             return ["type": "ask", "label": label, "ask": ask]
+        case .toggle(let label, let detail, let on, let tool, let input):
+            return Self.dropNil(["type": "switch", "label": label, "detail": detail, "on": on, "tool": tool, "input": input])
+        case .button(let label, let tool, let input, let style, let symbol):
+            return Self.dropNil(["type": "button", "label": label, "tool": tool, "input": input, "style": style.rawValue, "symbol": symbol])
         }
     }
 
     private static func dropNil(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
+}
+
+public enum ButtonStyle: String {
+    case primary, secondary, destructive
+}
+
+/// What a palette lists. `items` in order; `note` is one line under them ("312 copies kept").
+public struct PaletteList {
+    public var items: [PaletteItem]
+    public var note: String?
+
+    public init(_ items: [PaletteItem], note: String? = nil) {
+        self.items = items
+        self.note = note
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["items": items.map(\.json)]
+        if let note { out["note"] = note }
+        return out
+    }
+}
+
+public struct PaletteItem {
+    public enum Kind: String { case text, link, image, file, color, code }
+    public var id: String
+    public var title: String
+    public var detail: String?
+    public var kind: Kind
+    public var pinned: Bool
+    /// Besides choosing it: `plain`, `pin`, `delete`.
+    public var actions: [String]
+
+    public init(id: String, title: String, detail: String? = nil, kind: Kind = .text, pinned: Bool = false, actions: [String] = []) {
+        self.id = id
+        self.title = title
+        self.detail = detail
+        self.kind = kind
+        self.pinned = pinned
+        self.actions = actions
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["id": id, "title": title, "kind": kind.rawValue, "pinned": pinned, "actions": actions]
+        if let detail { out["detail"] = detail }
+        return out
+    }
+}
+
+/// What choosing an item did: close the palette, paste into the app in front (after putting it on the clipboard).
+public struct PaletteChoice {
+    public var close: Bool
+    public var paste: Bool
+    public var message: String?
+
+    public init(close: Bool = false, paste: Bool = false, message: String? = nil) {
+        self.close = close
+        self.paste = paste
+        self.message = message
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["close": close, "paste": paste]
+        if let message { out["message"] = message }
+        return out
+    }
 }

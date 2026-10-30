@@ -1,4 +1,6 @@
+import ApplicationServices
 import Charts
+import KeyboardShortcuts
 import SidefolkCore
 import SwiftUI
 
@@ -12,6 +14,7 @@ struct ExtensionPageView: View {
             header
             if let page = model.page {
                 if let summary = page.summary { SummaryBanner(summary: summary) }
+                if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
                 ForEach(Array(page.sections.enumerated()), id: \.offset) { _, section in
                     SectionView(section: section, model: model)
                 }
@@ -128,12 +131,15 @@ private struct SectionView: View {
 
     private enum Group: Identifiable {
         case metrics([ExtensionPage.Block]), cards([ExtensionPage.Block]), notes([ExtensionPage.Note]), asks([ExtensionPage.Ask])
+        case switches([ExtensionPage.Control]), buttons([ExtensionPage.Control])
         var id: String {
             switch self {
             case .metrics(let b): "m\(b.count)\(b.hashValue)"
             case .cards(let b): "c\(b.count)\(b.hashValue)"
             case .notes(let n): "n\(n.count)\(n.hashValue)"
             case .asks(let a): "a\(a.count)\(a.hashValue)"
+            case .switches(let c): "s\(c.count)\(c.hashValue)"
+            case .buttons(let c): "b\(c.count)\(c.hashValue)"
             }
         }
     }
@@ -161,6 +167,14 @@ private struct SectionView: View {
                     }
                 case .notes(let notes):
                     VStack(alignment: .leading, spacing: Theme.Space.s) { ForEach(Array(notes.enumerated()), id: \.offset) { _, n in NoteView(note: n) } }
+                case .switches(let controls):
+                    RowsCard {
+                        ForEach(Array(controls.enumerated()), id: \.offset) { _, c in SwitchRow(control: c, model: model) }
+                    }
+                case .buttons(let controls):
+                    FlowRow(spacing: Theme.Space.s) {
+                        ForEach(Array(controls.enumerated()), id: \.offset) { _, c in ControlButton(control: c, model: model) }
+                    }
                 case .asks(let asks):
                     FlowRow(spacing: Theme.Space.s) {
                         ForEach(Array(asks.enumerated()), id: \.offset) { _, a in
@@ -200,6 +214,14 @@ private struct SectionView: View {
                 if case .notes(let ns) = out.last { out[out.count - 1] = .notes(ns + [n]) } else { out.append(.notes([n])) }
             case .ask(let a):
                 if case .asks(let as_) = out.last { out[out.count - 1] = .asks(as_ + [a]) } else { out.append(.asks([a])) }
+            case .control(let c):
+                if case .toggle = c.kind {
+                    if case .switches(let cs) = out.last { out[out.count - 1] = .switches(cs + [c]) } else { out.append(.switches([c])) }
+                } else if case .buttons(let cs) = out.last {
+                    out[out.count - 1] = .buttons(cs + [c])
+                } else {
+                    out.append(.buttons([c]))
+                }
             }
         }
         return out
@@ -218,7 +240,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask: EmptyView()
+        case .ask, .control: EmptyView()
         }
     }
 }
@@ -452,6 +474,137 @@ private struct FactsCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Space.m)
         .cardSurface()
+    }
+}
+
+// MARK: Switches and buttons
+
+/// A switch that runs the extension's tool as the person; it shows the new state at once and the page's next read
+/// confirms it.
+private struct SwitchRow: View {
+    var control: ExtensionPage.Control
+    var model: ExtensionPageModel
+    @State private var pending: Bool?
+
+    var body: some View {
+        HStack(spacing: Theme.Space.m) {
+            if let symbol = control.symbol { Image(systemName: symbol).foregroundStyle(Theme.inkMuted).frame(width: 20) }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: control.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                if let detail = control.detail {
+                    Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: Theme.Space.m)
+            Toggle(isOn: Binding(get: { pending ?? isOn }, set: { on in
+                pending = on
+                Task {
+                    await model.run(control, on: on)
+                    pending = nil
+                }
+            })) { Text(verbatim: control.label) }
+                .toggleStyle(.switch).labelsHidden()
+                .disabled(pending != nil)
+        }
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.vertical, Theme.Space.s + 2)
+    }
+
+    private var isOn: Bool { if case .toggle(let on) = control.kind { on } else { false } }
+}
+
+private struct ControlButton: View {
+    var control: ExtensionPage.Control
+    var model: ExtensionPageModel
+    @State private var running = false
+
+    var body: some View {
+        Button {
+            running = true
+            Task {
+                await model.run(control, on: nil)
+                running = false
+            }
+        } label: {
+            if let symbol = control.symbol {
+                Label { Text(verbatim: control.label) } icon: { Image(systemName: symbol) }
+            } else {
+                Text(verbatim: control.label)
+            }
+        }
+        .buttonStyle(.sf(style))
+        .disabled(running)
+        .help(control.detail.map { Text(verbatim: $0) } ?? Text(verbatim: control.label))
+    }
+
+    private var style: SFButtonStyle.Kind {
+        guard case .button(let s) = control.kind else { return .secondary }
+        return switch s {
+        case .primary: .primary
+        case .secondary: .secondary
+        case .destructive: .destructive
+        }
+    }
+}
+
+// MARK: What Sidefolk does for it
+
+/// The palette's shortcut, changeable here, and Accessibility when the extension pastes or keeps the person active:
+/// Sidefolk's own part of the page, not the extension's (D63).
+private struct HostControls: View {
+    var model: ExtensionPageModel
+    @State private var trusted = AXIsProcessTrusted()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            if !model.palettes.isEmpty {
+                RowsCard {
+                    ForEach(model.palettes) { p in
+                        HStack(spacing: Theme.Space.m) {
+                            Image(systemName: "keyboard").foregroundStyle(Theme.inkMuted)
+                            Text("Open \(p.title) from any app", comment: "An extension's palette and its keyboard shortcut")
+                                .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                            Spacer(minLength: Theme.Space.m)
+                            KeyboardShortcuts.Recorder(for: PaletteController.shortcutName(p))
+                        }
+                        .padding(.horizontal, Theme.Space.l)
+                        .padding(.vertical, Theme.Space.s + 2)
+                    }
+                }
+            }
+            if model.info.needsAccessibility, !trusted {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
+                    Image(systemName: "hand.raised.fill").foregroundStyle(Theme.sun)
+                    Group {
+                        if model.palettes.isEmpty {
+                            Text("To keep you active in other apps, Sidefolk needs Accessibility.", comment: "On an extension page that keeps the person active")
+                        } else {
+                            Text("To paste for you, Sidefolk needs Accessibility. Until then, what you choose is copied and you paste it yourself.",
+                                 comment: "On an extension page whose palette pastes")
+                        }
+                    }
+                        .font(Theme.Font.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: Theme.Space.s)
+                    Button("Allow…") {
+                        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.sf(.secondary))
+                }
+                .padding(.horizontal, Theme.Space.m)
+                .padding(.vertical, Theme.Space.s + 2)
+                .background(Theme.sun.opacity(0.18), in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+                .task {
+                    // Picks up the switch in System Settings without reopening the page.
+                    while !Task.isCancelled, !trusted {
+                        try? await Task.sleep(for: .seconds(2))
+                        trusted = AXIsProcessTrusted()
+                    }
+                }
+            }
+        }
     }
 }
 

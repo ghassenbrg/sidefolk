@@ -36,6 +36,10 @@ enum BuiltInExamples {
             String(localized: "what's new on the swift.org blog?", comment: "A request to try with the Feeds extension; keep the address")
         case "dev.sidefolk.system-vitals-plus":
             String(localized: "what's slowing my Mac?", comment: "A request to try with the System Vitals+ extension")
+        case "dev.sidefolk.clipboard":
+            String(localized: "what did I copy?", comment: "A request to try with the Clipboard extension")
+        case "dev.sidefolk.keep-awake":
+            String(localized: "keep my Mac awake for 2 hours", comment: "A request to try with the Keep Awake extension")
         default:
             nil
         }

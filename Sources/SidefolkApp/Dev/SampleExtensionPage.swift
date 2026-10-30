@@ -77,6 +77,42 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: info, page: page, history: history, alerts: alerts, updated: now)
     }
 
+    /// Keep Awake holding for an hour, with its switches (D63).
+    @MainActor static func keepAwake(now: Date = Date()) -> ExtensionPageModel {
+        let json = #"""
+        {"summary": {"title": "Awake until 18:00", "detail": "Screen on · showing you active (12× so far)", "tone": "good", "symbol": "cup.and.saucer.fill"},
+         "sections": [
+          {"blocks": [{"type": "button", "label": "30 min more", "tool": "extend", "input": {"minutes": 30}, "symbol": "plus"},
+                      {"type": "button", "label": "Stop", "tool": "stop_keeping_awake", "style": "destructive", "symbol": "stop.fill"}]},
+          {"title": "How", "blocks": [
+            {"type": "switch", "label": "Keep the screen on", "detail": "Off: the Mac stays awake (downloads, builds) and the screen may sleep.", "on": true, "tool": "set_option"},
+            {"type": "switch", "label": "Keep me active in chat apps", "detail": "While you're away, Sidefolk moves the pointer by nothing about once a minute.", "on": true, "tool": "set_option"},
+            {"type": "switch", "label": "Only while plugged in", "detail": "On battery it waits, and holds again when you plug in.", "on": false, "tool": "set_option"}]},
+          {"title": "Ask for more", "blocks": [{"type": "ask", "label": "While Zoom is open", "ask": "Keep my Mac awake while Zoom is open"}]}
+         ]}
+        """#
+        let page = (try? JSONDecoder().decode(JSONValue.self, from: Data(json.utf8))).flatMap { try? ExtensionPage.parse($0) } ?? ExtensionPage()
+        let info = ExtensionPageInfo(extensionId: "dev.sidefolk.keep-awake", extensionName: "Keep Awake", page: "awake", title: "Keep Awake",
+                                     symbol: "cup.and.saucer", refresh: 5, widget: true, needsAccessibility: true)
+        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now)
+    }
+
+    /// Clipboard's palette with a few copies (D63).
+    @MainActor static func palette(host: ExtensionHost) -> PaletteModel {
+        let info = ExtensionPaletteInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", palette: "history", title: "Clipboard",
+                                        hotkey: "shift+cmd+c", placeholder: "Search what you copied")
+        let items: [ExtensionPaletteList.Item] = [
+            .init(id: "1", title: "Meeting notes: ship System Vitals+ on Friday", detail: "just now", kind: .text, pinned: false),
+            .init(id: "2", title: "https://github.com/ghassenbrg/sidefolk/pull/2", detail: "3 min ago · copied 2×", kind: .link, pinned: true),
+            .init(id: "3", title: "func hello() {", detail: "Xcode · 12 min ago · 3 lines", kind: .code),
+            .init(id: "4", title: "•••••••• (looks like a password or key)", detail: "just now · forgotten in 2 min", kind: .text),
+            .init(id: "5", title: "#2ED4D9", detail: "1 h ago", kind: .color),
+            .init(id: "6", title: "Picture 1440 × 900", detail: "yesterday", kind: .image),
+            .init(id: "7", title: "report.pdf, budget.xlsx", detail: "2 days ago", kind: .file),
+        ]
+        return PaletteModel(info: info, host: host, items: items, note: "312 copies kept")
+    }
+
     static func widget() -> ExtensionWidget {
         ExtensionWidget(info: info, summary: ExtensionPage.Summary(title: "Your Mac is doing fine", detail: "CPU 18% · Memory 62% · 214 GB free · Battery 84%",
                                                                     tone: .good, symbol: "checkmark.seal.fill"), at: Date())

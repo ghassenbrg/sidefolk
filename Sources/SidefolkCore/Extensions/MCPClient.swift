@@ -51,6 +51,8 @@ public enum MCPClientEvent: Sendable {
     case exited(ExtensionProcessExit)
     case protocolViolation(String)
     case rejectedServerRequest(String)
+    /// `sidefolk/nudge` (D63); the host decides whether the extension may.
+    case nudge
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -283,6 +285,8 @@ public final class MCPClient: Sendable {
                 answerServerRequest(id: id, method: method)
             } else if method == "notifications/tools/list_changed" {
                 onEvent(.toolsChanged)
+            } else if method == "sidefolk/nudge" {
+                onEvent(.nudge)
             }
             return
         }

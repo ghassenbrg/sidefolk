@@ -28000,6 +28000,238 @@
         }
       }
     },
+    "Can keep your Mac awake and tell macOS you're active" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه إبقاء جهاز Mac مستيقظًا وإخبار macOS بأنك نشط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann deinen Mac wach halten und macOS melden, dass du aktiv bist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede mantener tu Mac despierto e indicar a macOS que estás activo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut garder votre Mac éveillé et signaler à macOS que vous êtes actif"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può tenere sveglio il tuo Mac e dire a macOS che sei attivo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macをスリープさせず、操作中であることをmacOSに伝えられます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac을 깨어 있게 하고 사용 중이라고 macOS에 알릴 수 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode manter seu Mac acordado e dizer ao macOS que você está ativo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可让你的 Mac 保持唤醒，并告诉 macOS 你处于活跃状态"
+          }
+        }
+      }
+    },
+    "Can read and change what you copy (the clipboard)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه قراءة ما تنسخه وتغييره (الحافظة)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann lesen und ändern, was du kopierst (die Zwischenablage)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede leer y cambiar lo que copias (el portapapeles)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut lire et modifier ce que vous copiez (le presse-papiers)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può leggere e modificare ciò che copi (gli appunti)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーした内容（クリップボード）を読み取り、変更できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사한 내용(클립보드)을 읽고 바꿀 수 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode ler e alterar o que você copia (a área de transferência)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可读取并更改你复制的内容（剪贴板）"
+          }
+        }
+      }
+    },
+    "Clear the history" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسح السجل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf löschen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar el historial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancella la cronologia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "履歴を消去"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 지우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar o histórico"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除历史"
+          }
+        }
+      }
+    },
+    "Clipboard setting" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعداد الحافظة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellung der Zwischenablage"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste del portapapeles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage du presse-papiers"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazione degli appunti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリップボードの設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클립보드 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste da área de transferência"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剪贴板设置"
+          }
+        }
+      }
+    },
     "Collecting…" : {
       "comment" : "A chart that has too few readings yet",
       "localizations" : {
@@ -28055,6 +28287,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在收集…"
+          }
+        }
+      }
+    },
+    "Copy again" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انسخ مجددًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut kopieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar de nuevo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier à nouveau"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia di nuovo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう一度コピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 복사"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar de novo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再次复制"
           }
         }
       }
@@ -46591,6 +46881,123 @@
         }
       }
     },
+    "Everything you copy, a shortcut away" : {
+      "comment" : "Clipboard: one line under its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل ما تنسخه على بُعد اختصار"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles, was du kopierst, nur ein Kurzbefehl entfernt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo lo que copias, a un atajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que vous copiez, à un raccourci"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutto ciò che copi, a portata di scorciatoia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーしたものすべてを、ショートカットひとつで"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사한 모든 것을 단축키 하나로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo o que você copia, a um atalho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制过的一切，一个快捷键就能找到"
+          }
+        }
+      }
+    },
+    "Everything you copy, a shortcut away from any app: text with its formatting, links, pictures, files and code, searchable and pinnable. Copies from password managers are never kept; keys and card numbers are hidden and forgotten in two minutes. Nothing leaves your Mac." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل ما تنسخه على بُعد اختصار من أي تطبيق: نص بتنسيقه وروابط وصور وملفات وشيفرة، قابلة للبحث والتثبيت. لا يُحفظ ما يُنسخ من مديري كلمات المرور أبدًا، وتُخفى المفاتيح وأرقام البطاقات وتُنسى بعد دقيقتين. لا شيء يغادر جهاز Mac الخاص بك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles, was du kopierst, per Kurzbefehl aus jeder App: Text mit Formatierung, Links, Bilder, Dateien und Code, durchsuchbar und anheftbar. Kopien aus Passwortmanagern werden nie behalten; Schlüssel und Kartennummern werden verborgen und nach zwei Minuten vergessen. Nichts verlässt deinen Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo lo que copias, a un atajo desde cualquier app: texto con su formato, enlaces, imágenes, archivos y código, con búsqueda y para fijar. Lo copiado desde gestores de contraseñas nunca se guarda; las claves y números de tarjeta se ocultan y se olvidan en dos minutos. Nada sale de tu Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que vous copiez, à un raccourci de n’importe quelle app : texte avec sa mise en forme, liens, images, fichiers et code, à rechercher et à épingler. Les copies des gestionnaires de mots de passe ne sont jamais gardées ; les clés et numéros de carte sont masqués et oubliés au bout de deux minutes. Rien ne quitte votre Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutto ciò che copi, a una scorciatoia da qualsiasi app: testo con la sua formattazione, link, immagini, file e codice, da cercare e fissare. Le copie dai gestori di password non vengono mai conservate; chiavi e numeri di carta vengono nascosti e dimenticati dopo due minuti. Niente lascia il tuo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーしたものを、どのアプリからでもショートカットひとつで：書式付きテキスト、リンク、画像、ファイル、コードを検索・ピン留めできます。パスワード管理アプリからのコピーは保存せず、キーやカード番号は伏せて2分で消去します。データがMacの外に出ることはありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사한 모든 것을 어느 앱에서든 단축키 하나로: 서식이 있는 텍스트, 링크, 사진, 파일, 코드를 검색하고 고정할 수 있어요. 암호 관리자에서 복사한 것은 저장하지 않고, 키와 카드 번호는 가려 두었다가 2분 뒤 지워요. 아무것도 Mac 밖으로 나가지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo o que você copia, a um atalho de qualquer app: texto com formatação, links, imagens, arquivos e código, com busca e para fixar. Cópias de gerenciadores de senhas nunca são guardadas; chaves e números de cartão ficam ocultos e são esquecidos em dois minutos. Nada sai do seu Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制过的一切，在任何应用中一个快捷键就能找到：带格式的文本、链接、图片、文件和代码，可搜索、可固定。密码管理器复制的内容从不保留；密钥和卡号会被隐藏，两分钟后忘记。所有数据都不会离开你的 Mac。"
+          }
+        }
+      }
+    },
     "Everywhere" : {
       "localizations" : {
         "ar" : {
@@ -64628,6 +65035,64 @@
         }
       }
     },
+    "It can read what you copy and use the internet, so it could send what you copy elsewhere." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه قراءة ما تنسخه واستخدام الإنترنت، لذا قد يرسل ما تنسخه إلى مكان آخر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie kann lesen, was du kopierst, und das Internet nutzen, also könnte sie Kopiertes woandershin senden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede leer lo que copias y usar internet, así que podría enviar lo que copias a otro sitio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle peut lire ce que vous copiez et utiliser Internet, donc envoyer ce que vous copiez ailleurs."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può leggere ciò che copi e usare internet, quindi potrebbe inviarlo altrove."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーした内容を読み取り、インターネットも使えるため、それを外部に送れてしまいます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사한 내용을 읽고 인터넷도 쓸 수 있어서, 복사한 내용을 다른 곳으로 보낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela pode ler o que você copia e usar a internet, então poderia enviar o que você copia para outro lugar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它能读取你复制的内容并使用互联网，因此可能把复制的内容发送到别处。"
+          }
+        }
+      }
+    },
     "It can run %@, which can run any code its sandbox allows." : {
       "localizations" : {
         "ar" : {
@@ -67771,6 +68236,297 @@
         }
       }
     },
+    "Keep Awake" : {
+      "comment" : "A built-in extension: keeps the Mac awake\nKeep Awake: its page in Home's sidebar",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إبقاء مستيقظًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wach halten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener despierto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rester éveillé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni sveglio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スリープさせない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "깨어 있기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter acordado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持唤醒"
+          }
+        }
+      }
+    },
+    "Keep Awake ended" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهى الإبقاء مستيقظًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wach halten beendet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener despierto terminó"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin du maintien éveillé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni sveglio è terminato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スリープ防止が終了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "깨어 있기 종료"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter acordado terminou"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持唤醒已结束"
+          }
+        }
+      }
+    },
+    "Keep awake longer" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إبقاؤه مستيقظًا لمدة أطول"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Länger wach halten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener despierto más tiempo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rester éveillé plus longtemps"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni sveglio più a lungo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スリープ防止を延長"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "더 오래 깨어 있기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter acordado por mais tempo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "延长保持唤醒"
+          }
+        }
+      }
+    },
+    "Keep Awake setting" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعداد الإبقاء مستيقظًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellung von Wach halten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste de Mantener despierto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage de Rester éveillé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazione di Tieni sveglio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スリープ防止の設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "깨어 있기 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste de Manter acordado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持唤醒设置"
+          }
+        }
+      }
+    },
+    "Keep Awake status" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حالة الإبقاء مستيقظًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status von Wach halten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado de Mantener despierto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "État de Rester éveillé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stato di Tieni sveglio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スリープ防止の状態"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "깨어 있기 상태"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status de Manter acordado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持唤醒状态"
+          }
+        }
+      }
+    },
     "Keep conversations for" : {
       "localizations" : {
         "ar" : {
@@ -67883,6 +68639,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续显示"
+          }
+        }
+      }
+    },
+    "keep my Mac awake for 2 hours" : {
+      "comment" : "A request to try with the Keep Awake extension",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبقِ جهاز Mac مستيقظًا لمدة ساعتين"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "halte meinen Mac 2 Stunden wach"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mantén mi Mac despierto 2 horas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "garde mon Mac éveillé pendant 2 heures"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tieni sveglio il mio Mac per 2 ore"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macを2時間スリープさせないで"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac을 2시간 동안 깨어 있게 해 줘"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mantenha meu Mac acordado por 2 horas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让我的 Mac 保持唤醒 2 小时"
           }
         }
       }
@@ -68000,6 +68815,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近的请求保留"
+          }
+        }
+      }
+    },
+    "Keep the Mac awake" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إبقاء الـ Mac مستيقظًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Mac wach halten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener el Mac despierto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder le Mac éveillé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni sveglio il Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macをスリープさせない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac 깨어 있게 하기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter o Mac acordado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 Mac 保持唤醒"
           }
         }
       }
@@ -68174,6 +69047,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会一直进行，直到你停止"
+          }
+        }
+      }
+    },
+    "Keeps your Mac awake, and chat apps from marking you away, for as long as you say, until a time, while an app like Zoom is open, or until you stop it. Nothing moves on screen, and it lets go on battery or when the battery runs low." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبقي جهاز Mac مستيقظًا ويمنع تطبيقات الدردشة من وضعك في حالة غياب، للمدة التي تحددها أو حتى وقت معيّن أو ما دام تطبيق مثل Zoom مفتوحًا أو حتى توقفه. لا شيء يتحرك على الشاشة، ويتوقف عند العمل على البطارية أو حين تنخفض."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hält deinen Mac wach und verhindert, dass Chat-Apps dich als abwesend markieren: so lange du willst, bis zu einer Uhrzeit, solange eine App wie Zoom offen ist, oder bis du es beendest. Auf dem Bildschirm bewegt sich nichts, und im Akkubetrieb oder bei niedrigem Akku lässt es los."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantiene tu Mac despierto, y evita que las apps de chat te marquen como ausente, el tiempo que digas, hasta una hora, mientras una app como Zoom esté abierta o hasta que lo detengas. Nada se mueve en pantalla, y se detiene con batería o cuando la batería baja."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garde votre Mac éveillé, et empêche les apps de discussion de vous marquer absent, aussi longtemps que vous le dites, jusqu’à une heure, tant qu’une app comme Zoom est ouverte, ou jusqu’à ce que vous l’arrêtiez. Rien ne bouge à l’écran, et il lâche prise sur batterie ou quand la batterie faiblit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiene sveglio il tuo Mac, ed evita che le app di chat ti segnino assente, per quanto vuoi, fino a un'ora, finché un'app come Zoom è aperta, o finché non lo fermi. Sullo schermo non si muove nulla, e si ferma a batteria o quando la batteria è scarica."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macをスリープさせず、チャットアプリで退席中にならないようにします。時間を決めて、指定の時刻まで、Zoomなどのアプリが開いている間、または止めるまで。画面上で何も動かず、バッテリー駆動時や残量が少ないときは自動で解除します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원하는 만큼, 정한 시각까지, Zoom 같은 앱이 열려 있는 동안, 또는 멈출 때까지 Mac을 깨어 있게 하고 채팅 앱에서 자리 비움이 되지 않게 해요. 화면에서는 아무것도 움직이지 않고, 배터리 사용 중이거나 배터리가 부족하면 스스로 멈춰요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantém seu Mac acordado, e evita que apps de chat marquem você como ausente, pelo tempo que você disser, até um horário, enquanto um app como o Zoom estiver aberto, ou até você parar. Nada se mexe na tela, e ele para na bateria ou quando a bateria fica baixa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 Mac 保持唤醒，并防止聊天应用把你标为离开：按你说的时长、到某个时间、在 Zoom 等应用打开期间，或直到你停止。屏幕上什么都不会动，使用电池或电量不足时会自动放开。"
           }
         }
       }
@@ -69295,6 +70226,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要让 Sidefolk 在 %@ 中工作吗？"
+          }
+        }
+      }
+    },
+    "Let the Mac sleep" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دع الـ Mac ينام"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Mac schlafen lassen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar que el Mac duerma"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laisser le Mac se mettre en veille"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia dormire il Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macをスリープさせる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac 잠자게 두기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar o Mac dormir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 Mac 睡眠"
           }
         }
       }
@@ -83545,6 +84534,64 @@
         }
       }
     },
+    "Nothing here yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء هنا بعد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts da."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien pour l’instant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancora niente."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ何もありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 아무것도 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada aqui ainda."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里还没有内容。"
+          }
+        }
+      }
+    },
     "Nothing in the gallery matches “%@”." : {
       "localizations" : {
         "ar" : {
@@ -83774,6 +84821,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有匹配项"
+          }
+        }
+      }
+    },
+    "Nothing matches." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء يطابق."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Treffer."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay coincidencias."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun résultat."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun risultato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一致するものはありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일치하는 항목이 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum resultado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有匹配的内容。"
           }
         }
       }
@@ -86567,6 +87672,65 @@
         }
       }
     },
+    "Open %@ from any app" : {
+      "comment" : "An extension's palette and its keyboard shortcut",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح %@ من أي تطبيق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ aus jeder App öffnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir %@ desde cualquier app"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir %@ depuis n’importe quelle app"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri %@ da qualsiasi app"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どのアプリからでも%@を開く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어느 앱에서든 %@ 열기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir %@ de qualquer app"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在任何应用中打开 %@"
+          }
+        }
+      }
+    },
     "Open %@ in your browser" : {
       "localizations" : {
         "ar" : {
@@ -89323,6 +90487,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主页中的页面：%@，每分钟在后台读取一次，用于图表和“今天”的磁贴"
+          }
+        }
+      }
+    },
+    "Pause the history" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف السجل مؤقتًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf pausieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar el historial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre l’historique en pause"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metti in pausa la cronologia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "履歴を一時停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 일시 중지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar o histórico"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停历史"
           }
         }
       }
@@ -97168,6 +98390,64 @@
         }
       }
     },
+    "Recent copies" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النسخ الأخيرة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Kopien"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copias recientes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copies récentes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copie recenti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近のコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최근 복사"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cópias recentes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近复制"
+          }
+        }
+      }
+    },
     "Recent requests let you follow up (“and tomorrow too”). They're never shown as a chat log." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -102543,6 +103823,64 @@
         }
       }
     },
+    "Resume the history" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استئناف السجل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf fortsetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar el historial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre l’historique"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprendi la cronologia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "履歴を再開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 다시 시작"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar o histórico"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复历史"
+          }
+        }
+      }
+    },
     "Resume “%@”" : {
       "localizations" : {
         "ar" : {
@@ -105652,6 +106990,123 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以你的全部权限运行：它可以读取和更改你的文件、访问互联网以及运行程序"
+          }
+        }
+      }
+    },
+    "Search copies" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البحث في النسخ"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopien durchsuchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar en las copias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans les copies"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca nelle copie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーを検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사 검색"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar nas cópias"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索复制内容"
+          }
+        }
+      }
+    },
+    "Search what you copied" : {
+      "comment" : "Clipboard: the search field's hint",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابحث فيما نسخته"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchsuche, was du kopiert hast"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca en lo que copiaste"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans ce que vous avez copié"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca tra ciò che hai copiato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーした内容を検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사한 내용 검색"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busque no que você copiou"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索你复制过的内容"
           }
         }
       }
@@ -121880,6 +123335,64 @@
         }
       }
     },
+    "That didn't work." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم ينجح ذلك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das hat nicht geklappt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No funcionó."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ça n’a pas marché."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ha funzionato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "うまくいきませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잘 안 됐어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não funcionou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有成功。"
+          }
+        }
+      }
+    },
     "That isn't a page." : {
       "localizations" : {
         "ar" : {
@@ -121934,6 +123447,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那不是一个页面。"
+          }
+        }
+      }
+    },
+    "That isn't an action." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا ليس إجراءً."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ist keine Aktion."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eso no es una acción."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n’est pas une action."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quella non è un'azione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "それは操作ではありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동작이 아니에요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isso não é uma ação."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "那不是一个操作。"
           }
         }
       }
@@ -126185,6 +127756,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "API 的基础地址。"
+          }
+        }
+      }
+    },
+    "The list couldn't be read." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت قراءة القائمة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Liste konnte nicht gelesen werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer la lista."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste n’a pas pu être lue."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile leggere l'elenco."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リストを読み込めませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록을 읽지 못했어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler a lista."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取列表。"
           }
         }
       }
@@ -136810,6 +138439,124 @@
         }
       }
     },
+    "To keep you active in other apps, Sidefolk needs Accessibility." : {
+      "comment" : "On an extension page that keeps the person active",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لإبقائك نشطًا في التطبيقات الأخرى، يحتاج Sidefolk إلى إذن تسهيلات الاستخدام."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Damit du in anderen Apps aktiv bleibst, braucht Sidefolk Bedienungshilfen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para mantenerte activo en otras apps, Sidefolk necesita Accesibilidad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour vous garder actif dans d’autres apps, Sidefolk a besoin de l’accessibilité."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per tenerti attivo nelle altre app, Sidefolk ha bisogno di Accessibilità."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのアプリで操作中のままにするには、Sidefolkにアクセシビリティの許可が必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱에서 활동 중으로 보이게 하려면 Sidefolk에 손쉬운 사용 권한이 필요해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para manter você ativo em outros apps, o Sidefolk precisa de Acessibilidade."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要让你在其他应用中保持活跃，Sidefolk 需要辅助功能权限。"
+          }
+        }
+      }
+    },
+    "To paste for you, Sidefolk needs Accessibility. Until then, what you choose is copied and you paste it yourself." : {
+      "comment" : "On an extension page whose palette pastes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليلصق Sidefolk نيابةً عنك، يحتاج إلى إذن تسهيلات الاستخدام. حتى ذلك الحين، يُنسخ ما تختاره وتلصقه بنفسك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Damit Sidefolk für dich einsetzen kann, braucht es Bedienungshilfen. Bis dahin wird deine Auswahl kopiert und du fügst sie selbst ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para pegar por ti, Sidefolk necesita Accesibilidad. Mientras tanto, lo que elijas se copia y lo pegas tú."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour coller à votre place, Sidefolk a besoin de l’accessibilité. D’ici là, ce que vous choisissez est copié et vous le collez vous-même."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per incollare al posto tuo, Sidefolk ha bisogno di Accessibilità. Fino ad allora, ciò che scegli viene copiato e lo incolli tu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代わりにペーストするには、Sidefolkにアクセシビリティの許可が必要です。それまでは選んだものがコピーされるので、ご自身でペーストしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대신 붙여 넣으려면 Sidefolk에 손쉬운 사용 권한이 필요해요. 그전까지는 고른 것이 복사되니 직접 붙여 넣어 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para colar por você, o Sidefolk precisa de Acessibilidade. Até lá, o que você escolher é copiado e você cola."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要替你粘贴，Sidefolk 需要辅助功能权限。在此之前，你选的内容会被复制，由你自己粘贴。"
+          }
+        }
+      }
+    },
     "Today" : {
       "localizations" : {
         "ar" : {
@@ -147214,6 +148961,65 @@
         }
       }
     },
+    "what did I copy?" : {
+      "comment" : "A request to try with the Clipboard extension",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ماذا نسخت؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "was habe ich kopiert?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿qué he copiado?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "qu’est-ce que j’ai copié ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cosa ho copiato?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何をコピーした？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내가 뭘 복사했지?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o que eu copiei?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我复制了什么？"
+          }
+        }
+      }
+    },
     "What I know about you" : {
       "localizations" : {
         "ar" : {
@@ -152296,6 +154102,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的 Mac"
+          }
+        }
+      }
+    },
+    "Your Mac awake and you active, for as long as you say" : {
+      "comment" : "Keep Awake: one line under its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جهازك مستيقظ وأنت نشط، للمدة التي تريدها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Mac wach und du aktiv, so lange du willst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu Mac despierto y tú activo, el tiempo que digas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre Mac éveillé et vous actif, le temps qu’il faut"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo Mac sveglio e tu attivo, per quanto vuoi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macを起こしたまま、あなたを操作中のままに、好きなだけ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원하는 만큼 Mac은 깨어 있고 당신은 활동 중으로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu Mac acordado e você ativo, pelo tempo que quiser"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按你说的时长，让 Mac 保持唤醒、你保持活跃"
           }
         }
       }
@@ -173585,6 +175450,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "接下来：%2$@ %1$@"
+          }
+        }
+      }
+    },
+    "↩ Paste  ⇧↩ Plain text  ⌘P Pin  ⌘⌫ Delete" : {
+      "comment" : "Keys in an extension's palette",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ لصق  ⇧↩ نص عادي  ⌘P تثبيت  ⌘⌫ حذف"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ Einsetzen  ⇧↩ Reiner Text  ⌘P Anheften  ⌘⌫ Löschen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ Pegar  ⇧↩ Texto sin formato  ⌘P Fijar  ⌘⌫ Eliminar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ Coller  ⇧↩ Texte brut  ⌘P Épingler  ⌘⌫ Supprimer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ Incolla  ⇧↩ Testo semplice  ⌘P Fissa  ⌘⌫ Elimina"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ ペースト  ⇧↩ プレーンテキスト  ⌘P ピン留め  ⌘⌫ 削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ 붙여넣기  ⇧↩ 일반 텍스트  ⌘P 고정  ⌘⌫ 삭제"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ Colar  ⇧↩ Texto simples  ⌘P Fixar  ⌘⌫ Apagar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↩ 粘贴  ⇧↩ 纯文本  ⌘P 固定  ⌘⌫ 删除"
           }
         }
       }

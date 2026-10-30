@@ -150,6 +150,9 @@ enum UISnapshots {
             try await page("page-now", NowView(model: full.now), width: 870)
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
+            // Switches and buttons on a page, and a palette (D63).
+            try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
+            try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 600)
             full.now.widgets = [SampleExtensionPage.widget()]
             try await page("page-now-extension-tile", NowView(model: full.now), width: 870)
             full.now.widgets = []

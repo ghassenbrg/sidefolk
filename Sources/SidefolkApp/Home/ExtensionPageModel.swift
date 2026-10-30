@@ -50,11 +50,13 @@ final class ExtensionPageModel {
     let info: ExtensionPageInfo
     private let services: AppServices?
     private(set) var page: ExtensionPage?
-    private(set) var problem: String?
+    var problem: String?
     private(set) var updated: Date?
     private(set) var history: [String: [ExtensionPageHistory.Point]] = [:]
     private(set) var alerts: [Alert] = []
     private(set) var alertProblem: String?
+    /// The extension's palettes, with their shortcuts (D63).
+    private(set) var palettes: [ExtensionPaletteInfo] = []
     var window: Window = .tenMinutes {
         didSet { if window != oldValue { Task { await loadHistory() } } }
     }
@@ -76,7 +78,8 @@ final class ExtensionPageModel {
 
     /// Refreshes while the page is shown: the view runs it in its `.task`, which ends it when the page goes away.
     func run() async {
-        guard services != nil else { return }
+        guard let services else { return }
+        palettes = await services.runtime.extensions.palettes().filter { $0.extensionId == info.extensionId }
         await loadAlerts()
         while !Task.isCancelled {
             await refresh()
@@ -137,6 +140,17 @@ final class ExtensionPageModel {
     }
 
     func ask(_ text: String) { services?.ask(text, how: .auto) }
+
+    /// A switch or button: the extension's own tool, run as the person through Guard (D63), then the page again.
+    func run(_ control: ExtensionPage.Control, on: Bool?) async {
+        guard let services else { return }
+        let short = String(info.extensionId.split(separator: ".").last ?? "")
+        let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: control.tool),
+                                                              input: control.input(switchedTo: on), caller: .user)
+        await refresh()
+        // After the read, which clears any earlier problem: what went wrong with this click stays in sight.
+        if let why = outcome.problem?.message { problem = why }
+    }
 
     static var language: String { Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en" }
 }

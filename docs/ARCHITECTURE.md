@@ -313,6 +313,15 @@ pages with `history` or `widget` once a minute, and `latestPage` feeds Today's t
 `ExtensionPagesModel` lists them in Home's sidebar (`HomeSelection.page`), `ExtensionPageView` draws them (Swift
 Charts), and heads-ups start the extension's watchers through `watch.extension` as `Caller.user`.
 
+Services (D63): `background` extensions are started by `ExtensionHost.keepRunning` at load, install and enable, are
+skipped by the idle stop (`touch`), and are restarted after a crash. `permissions.clipboard` and `permissions.power`
+add one Mach service each to the sandbox (`com.apple.pasteboard.1`, `com.apple.PowerManagement.control`). Palettes:
+`ExtensionHost.palettes/queryPalette/choosePalette` over `sidefolk/palette.query|choose`; the app's
+`PaletteController` registers each shortcut (KeyboardShortcuts, `palette.<id>`), shows `PaletteView` in a
+non-activating `FloatingPanel`, and posts ⌘V when told to paste. A `sidefolk/nudge` notification becomes
+`MCPClientEvent.nudge`, then `AppEvent.nudge` if the extension has power (20 s apart), and the app posts a zero-move
+mouse event. Page `switch`/`button` parts run `ext.<short>.<tool>` through the executor as `Caller.user`.
+
 ## Build and release
 
 - `make dev` / `scripts/run.sh` — debug build, assemble `build/Sidefolk-dev.app`, launch with

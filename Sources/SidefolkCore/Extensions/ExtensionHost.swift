@@ -37,6 +37,7 @@ public actor ExtensionHost {
         var toolWarnings: [String] = []
         /// The installed copy's icon, when it passed the checks.
         var iconPath: String?
+        var lastNudge = Date.distantPast
         /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
         var oneShots: [ObjectIdentifier: MCPClient] = [:]
     }
@@ -132,7 +133,21 @@ public actor ExtensionHost {
             }
         }
         runtimes[record.id] = rt
-        if rt.record.enabled { registerTools(record.id) }
+        if rt.record.enabled {
+            registerTools(record.id)
+            keepRunning(record.id)
+        }
+    }
+
+    /// A `background` extension (D63) starts now and runs while it is on: no idle stop, and back after a crash
+    /// until the crash limit turns it off.
+    private func keepRunning(_ id: String) {
+        guard let rt = runtimes[id], rt.record.enabled, rt.manifest?.background == true, rt.client == nil else { return }
+        Task { [weak self] in
+            do { _ = try await self?.ensureRunning(id) } catch {
+                Log.shared.warning("extensions", "background extension didn't start", ["id": id, "error": String(describing: error)])
+            }
+        }
     }
 
     /// An update interrupted between moving the old version aside and saving the new one leaves the
@@ -339,6 +354,7 @@ public actor ExtensionHost {
             runtimes[id] = rt
             try await store.save(rt.record)
             registerTools(id)
+            keepRunning(id)
         } else {
             await stop(id)
             rt = runtimes[id] ?? rt
@@ -498,7 +514,8 @@ public actor ExtensionHost {
                 let words = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.page(id, name) : nil
                 return ExtensionPageInfo(extensionId: id, extensionName: rt.pin.name, page: name, title: words ?? p.title,
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
-                                         history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath)
+                                         history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
+                                         needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true)
             }
         }
     }
@@ -539,6 +556,60 @@ public actor ExtensionHost {
                 try? await Task.sleep(for: .seconds(interval), tolerance: .seconds(interval / 10))
             }
         }
+    }
+
+    // MARK: Palettes (D63)
+
+    /// The palettes of every enabled extension, for their keyboard shortcuts.
+    public func palettes() -> [ExtensionPaletteInfo] {
+        runtimes.keys.sorted().flatMap { id -> [ExtensionPaletteInfo] in
+            guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
+            return m.palettes.keys.sorted().compactMap { name -> ExtensionPaletteInfo? in
+                guard let p = m.palettes[name] else { return nil }
+                let firstParty = rt.pin.origin?.firstParty == true
+                return ExtensionPaletteInfo(extensionId: id, extensionName: rt.pin.name, palette: name,
+                                            title: (firstParty ? BuiltInExtensionWords.palette(id, name) : nil) ?? p.title, hotkey: p.hotkey,
+                                            placeholder: (firstParty ? BuiltInExtensionWords.placeholder(id, name) : nil) ?? p.placeholder,
+                                            iconPath: rt.iconPath)
+            }
+        }
+    }
+
+    /// What the palette lists for what the person typed.
+    public func queryPalette(extensionId id: String, palette: String, query: String) async throws -> ExtensionPaletteList {
+        let (client, name) = try await paletteClient(id, palette)
+        begin(id)
+        defer { end(id) }
+        do {
+            let r = try await client.request("sidefolk/palette.query", params: ["palette": .string(palette), "query": .string(String(query.prefix(200)))],
+                                             timeout: 10)
+            return ExtensionPaletteList.parse(r)
+        } catch let error as MCPError {
+            throw userFacing(error, action: String(localized: "showing “\(name)”"), name: runtimes[id]?.pin.name ?? id)
+        }
+    }
+
+    /// The person chose `item` with `action` (`choose`, `plain`, `pin`, `delete`): the extension does it, and says
+    /// whether to close the palette and paste into the app that was in front.
+    public func choosePalette(extensionId id: String, palette: String, item: String, action: String) async throws -> ExtensionPaletteChoice {
+        guard action.range(of: #"^[a-z_]{1,20}$"#, options: .regularExpression) != nil else { throw UserFacingError("That isn't an action.") }
+        let (client, name) = try await paletteClient(id, palette)
+        begin(id)
+        defer { end(id) }
+        do {
+            let r = try await client.request("sidefolk/palette.choose", params: ["palette": .string(palette), "item": .string(String(item.prefix(200))),
+                                                                                  "action": .string(action)], timeout: 10)
+            return ExtensionPaletteChoice(close: r["close"]?.boolValue ?? false, paste: r["paste"]?.boolValue ?? false,
+                                          message: r["message"]?.stringValue.map { ExtensionText.line($0, characters: 120) })
+        } catch let error as MCPError {
+            throw userFacing(error, action: String(localized: "showing “\(name)”"), name: runtimes[id]?.pin.name ?? id)
+        }
+    }
+
+    private func paletteClient(_ id: String, _ palette: String) async throws -> (MCPClient, String) {
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
+        guard let meta = rt.manifest?.palettes[palette] else { throw ToolError.notFound(String(localized: "the page \(palette) in \(rt.pin.name)")) }
+        return (try await ensureRunning(id), meta.title)
     }
 
     // MARK: Tool calls
@@ -914,6 +985,10 @@ public actor ExtensionHost {
                 let tail = ExtensionText.untrusted(stderr, bytes: 2000)
                 Log.shared.warning("extensions", "stopped unexpectedly", ["id": id, "exit": exit.watchdog ?? exit.description, "stderr": tail])
                 await recordCrash(id, reason: exit.watchdog)
+                if runtimes[id]?.manifest?.background == true {
+                    try? await Task.sleep(for: .seconds(2))
+                    keepRunning(id)
+                }
             }
         case .protocolViolation(let why):
             Log.shared.warning("extensions", "broke the protocol", ["id": id, "why": why])
@@ -922,6 +997,11 @@ public actor ExtensionHost {
                 await recordCrash(id, reason: nil)
                 await client.shutdown()
             }
+        case .nudge:
+            // Only with the power permission the person saw at install, and at most every 20 seconds whatever it sends.
+            guard rt.pin.permissions?.power == true, Date().timeIntervalSince(rt.lastNudge) >= 20 else { return }
+            runtimes[id]?.lastNudge = Date()
+            events.publish(.nudge)
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:
@@ -974,10 +1054,11 @@ public actor ExtensionHost {
         await client.shutdown()
     }
 
-    /// Marks the extension used now and (re)arms its idle stop.
+    /// Marks the extension used now and (re)arms its idle stop; a `background` one never stops for being idle.
     private func touch(_ id: String) {
         guard runtimes[id] != nil else { return }
         runtimes[id]?.lastUsed = Date()
+        guard runtimes[id]?.manifest?.background != true else { return }
         runtimes[id]?.idleTask?.cancel()
         let idle = config.idleTimeout
         runtimes[id]?.idleTask = Task { [weak self] in

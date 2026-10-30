@@ -78,11 +78,13 @@ public struct ExtensionPageInfo: Sendable, Hashable, Identifiable {
     /// Its summary is a tile on Today.
     public var widget: Bool
     public var iconPath: String?
+    /// Its extension pastes or keeps the person active, which needs Accessibility for Sidefolk (D63).
+    public var needsAccessibility: Bool
 
     public var id: String { "\(extensionId)/\(page)" }
 
     public init(extensionId: String, extensionName: String, page: String, title: String, symbol: String? = nil, refresh: Int = 5,
-                history: Bool = false, widget: Bool = false, iconPath: String? = nil) {
+                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false) {
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.page = page
@@ -92,6 +94,90 @@ public struct ExtensionPageInfo: Sendable, Hashable, Identifiable {
         self.history = history
         self.widget = widget
         self.iconPath = iconPath
+        self.needsAccessibility = needsAccessibility
+    }
+}
+
+/// A palette an enabled extension offers on a keyboard shortcut (D63).
+public struct ExtensionPaletteInfo: Sendable, Hashable, Identifiable {
+    public var extensionId: String
+    public var extensionName: String
+    public var palette: String
+    public var title: String
+    public var hotkey: String?
+    public var placeholder: String?
+    public var iconPath: String?
+    public var id: String { "\(extensionId)/\(palette)" }
+
+    public init(extensionId: String, extensionName: String, palette: String, title: String, hotkey: String? = nil, placeholder: String? = nil,
+                iconPath: String? = nil) {
+        self.extensionId = extensionId
+        self.extensionName = extensionName
+        self.palette = palette
+        self.title = title
+        self.hotkey = hotkey
+        self.placeholder = placeholder
+        self.iconPath = iconPath
+    }
+}
+
+/// What a palette lists: `{items: [{id, title, detail, kind, pinned, actions}], note}`. Every text is the extension's,
+/// cleaned and clipped; at most 200 items.
+public struct ExtensionPaletteList: Sendable, Hashable {
+    public struct Item: Sendable, Hashable, Identifiable {
+        public enum Kind: String, Sendable, Hashable { case text, link, image, file, color, code }
+        public var id: String
+        public var title: String
+        public var detail: String?
+        public var kind: Kind
+        public var pinned: Bool
+        /// Besides choosing it: `plain`, `pin`, `delete`.
+        public var actions: [String]
+
+        public init(id: String, title: String, detail: String? = nil, kind: Kind = .text, pinned: Bool = false, actions: [String] = []) {
+            self.id = id
+            self.title = title
+            self.detail = detail
+            self.kind = kind
+            self.pinned = pinned
+            self.actions = actions
+        }
+    }
+
+    public var items: [Item]
+    /// One line under the list, like "Paused" or "312 items".
+    public var note: String?
+
+    public init(items: [Item], note: String? = nil) {
+        self.items = items
+        self.note = note
+    }
+
+    public static func parse(_ j: JSONValue) -> ExtensionPaletteList {
+        let items = (j["items"]?.arrayValue ?? []).prefix(200).compactMap { i -> Item? in
+            guard let id = i["id"]?.stringValue, !id.isEmpty, id.count <= 128,
+                  let raw = i["title"]?.stringValue else { return nil }
+            let title = ExtensionText.line(raw, characters: 300).trimmingCharacters(in: .whitespaces)
+            guard !title.isEmpty else { return nil }
+            let actions = (i["actions"]?.arrayValue ?? []).compactMap(\.stringValue).filter { ["plain", "pin", "delete"].contains($0) }
+            return Item(id: id, title: title, detail: i["detail"]?.stringValue.map { ExtensionText.line($0, characters: 120) },
+                        kind: i["kind"]?.stringValue.flatMap(Item.Kind.init(rawValue:)) ?? .text, pinned: i["pinned"]?.boolValue ?? false,
+                        actions: actions)
+        }
+        return ExtensionPaletteList(items: Array(items), note: j["note"]?.stringValue.map { ExtensionText.line($0, characters: 120) })
+    }
+}
+
+/// What choosing a palette item did: close the palette, and paste into the app that was in front.
+public struct ExtensionPaletteChoice: Sendable, Hashable {
+    public var close: Bool
+    public var paste: Bool
+    public var message: String?
+
+    public init(close: Bool, paste: Bool, message: String? = nil) {
+        self.close = close
+        self.paste = paste
+        self.message = message
     }
 }
 

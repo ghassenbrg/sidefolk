@@ -26,6 +26,9 @@ public final class Extension {
     private var tools: [Tool] = []
     private var watchers: [String: @MainActor (Arguments, [String: Any]) async throws -> Check] = [:]
     private var pages: [String: @MainActor (Arguments) async throws -> Page] = [:]
+    private var palettes: [String: (query: @MainActor (String) async throws -> PaletteList,
+                                    choose: @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice)] = [:]
+    private var backgroundWork: (@MainActor () async -> Void)?
 
     public init(name: String, version: String = "1.0.0") {
         self.name = name
@@ -51,9 +54,25 @@ public final class Extension {
         pages[name] = render
     }
 
+    /// A palette the manifest declares (`palettes.<name>`): what it lists for what the person typed, and what
+    /// choosing an item does. `action` is `choose` (Return), `plain` (Shift-Return), `pin` or `delete`.
+    public func palette(_ name: String, query: @escaping @MainActor (String) async throws -> PaletteList,
+                        choose: @escaping @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice) {
+        palettes[name] = (query, choose)
+    }
+
+    /// Work that runs alongside requests for as long as the program runs: with `"background": true` in the manifest,
+    /// that is as long as the extension is on (watching the clipboard, holding the Mac awake). It shares the main
+    /// actor with requests, so it must await (sleep, I/O) rather than spin.
+    public func background(_ work: @escaping @MainActor () async -> Void) {
+        backgroundWork = work
+    }
+
     /// Answers every message that has an id until Sidefolk closes stdin. Nothing else may reach stdout.
     public func serve() async {
-        while let line = readLine(strippingNewline: true) {
+        if let work = backgroundWork { Task { await work() } }
+        // Read without blocking the main actor, so background work runs between requests.
+        for await line in Self.lines() {
             guard let message = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
                   let id = message["id"], let method = message["method"] as? String else { continue }
             var reply: [String: Any] = ["jsonrpc": "2.0", "id": id]
@@ -66,6 +85,16 @@ public final class Extension {
                 reply["error"] = ["code": -32603, "message": "\(error)"]
             }
             Self.write(reply)
+        }
+    }
+
+    /// stdin's lines until Sidefolk closes it.
+    private static func lines() -> AsyncStream<String> {
+        AsyncStream { continuation in
+            Thread.detachNewThread {
+                while let line = readLine(strippingNewline: true) { continuation.yield(line) }
+                continuation.finish()
+            }
         }
     }
 
@@ -99,9 +128,23 @@ public final class Extension {
             let page = params["page"] as? String ?? ""
             guard let render = pages[page] else { throw Unknown(what: "Unknown page: \(page)") }
             return ["page": try await render(Arguments(params)).json]
+        case "sidefolk/palette.query":
+            let name = params["palette"] as? String ?? ""
+            guard let palette = palettes[name] else { throw Unknown(what: "Unknown palette: \(name)") }
+            return try await palette.query(params["query"] as? String ?? "").json
+        case "sidefolk/palette.choose":
+            let name = params["palette"] as? String ?? ""
+            guard let palette = palettes[name] else { throw Unknown(what: "Unknown palette: \(name)") }
+            return try await palette.choose(params["item"] as? String ?? "", params["action"] as? String ?? "choose").json
         default:
             throw Unknown(what: "Method not found: \(method)")
         }
+    }
+
+    /// A message to Sidefolk that needs no answer. The only one it acts on is `sidefolk/nudge` (with the power
+    /// permission): it moves the pointer by nothing, so apps that watch for activity see some (D63).
+    public func send(_ method: String, _ params: [String: Any] = [:]) {
+        Self.write(["jsonrpc": "2.0", "method": method, "params": params])
     }
 
     private static func text(_ text: String, error: Bool) -> [String: Any] {

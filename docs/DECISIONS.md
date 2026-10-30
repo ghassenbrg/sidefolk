@@ -1524,3 +1524,39 @@ it. System Vitals+ uses exactly that, so the install preview says nothing about 
 a permission of its own before third-party extensions are common. Page text is English only for now (`language` is
 passed for extensions that want it); a Mac's fan speeds and temperatures need the SMC, which the sandbox closes, so
 heat is macOS's own thermal state.
+
+### D63 — Extensions that keep running and act: background, palettes, clipboard and power, switches; Clipboard and Keep Awake (2026-10-31)
+**Decision:** extensions can now be features that run all the time and act for the person, with each new reach
+named at install:
+- **`background: true`**: the program runs while the extension is on (no idle stop, back after a crash, the crash
+  limit still turns it off). The Kit reads stdin off the main actor so `ext.background { }` runs between requests.
+- **`permissions.clipboard`** opens `com.apple.pasteboard.1`; **`permissions.power`** opens
+  `com.apple.PowerManagement.control`. One Mach service each, nothing else. Clipboard tools are medium risk at least.
+- **Palettes**: a list on a keyboard shortcut in a non-activating panel (the app in front keeps focus), filled by
+  `sidefolk/palette.query`, acted on by `sidefolk/palette.choose` (`choose`, `plain`, `pin`, `delete`). When the
+  extension says `paste`, Sidefolk presses ⌘V. The shortcut is changed on the extension's page.
+- **Switches and buttons** on pages run the extension's own tools as the person, through Guard.
+- **Nudges**: `sidefolk/nudge`, honoured only for `permissions.power` and at most every 20 seconds: Sidefolk posts a
+  pointer move of nothing. Pasting and nudging need Accessibility for Sidefolk; the page asks for it.
+- **Clipboard** (gallery): history of text with formatting, links, pictures, files, code and colours, ⇧⌘C (Maccy's
+  shortcut, so muscle memory carries over), pins, plain-text paste, search, answers ("what did I copy"), pause and
+  clear. Better than its model: copies marked concealed or transient (password managers) are never kept; anything
+  that looks like a key, token or card number is masked, kept only in memory and forgotten after two minutes; Ask
+  can find "the address I copied yesterday" and save it to notes.
+- **Keep Awake** (gallery): a macOS power assertion (what `caffeinate` uses) for minutes, hours, until a time, while
+  an app is open, or until stopped; the screen kept on or not; "keep me active" for chat apps by nudges, only while
+  the person is idle 45 s, about once a minute with jitter; lets go on battery or under 15%; tells when it ends by
+  itself. Better than a mouse jiggler: nothing moves on screen, it never fights the person's own pointer, and it ends.
+
+**Why:** the founder wanted to drop Maccy and Mouse Jiggler for Sidefolk extensions that do more.
+
+**Found while building it:** `IOPMAssertionDeclareUserActivity` doesn't reset the idle time apps read
+(`HIDIdleTime`, `CGEventSource`), measured on macOS 27; a zero-distance mouse event does, but only from a process
+with Accessibility, so Sidefolk posts it, not the sandboxed extension. Launch Services (`com.apple.coreservices.
+launchservicesd`) would tell an extension which app is in front, but also lets it open apps and links (a way out of
+the sandbox for what it read), so it stays closed: Clipboard knows a copy's app only when the app names itself on
+the clipboard, and Keep Awake finds open apps from the process list.
+
+**Alternatives:** Sidefolk building these in (they are what extensions are for, and others can now build the
+like); a jiggler that really moves the pointer (visible, fights the person); palette results through tool calls
+(an audit row per keystroke); keeping secrets on disk briefly (a crash would leave them).

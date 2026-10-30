@@ -58,6 +58,32 @@ public struct ExtensionPage: Sendable, Hashable {
         /// A button that asks Sidefolk a question, as if typed in Ask: the answer goes through commands or the AI,
         /// and through Guard like anything typed there.
         case ask(Ask)
+        /// A switch or a button that runs one of the extension's own tools as the person, through Guard (D63).
+        case control(Control)
+    }
+
+    /// `switch`: on or off, and the tool gets `on` with the new state merged into `input`. `button`: the tool with `input`.
+    public struct Control: Sendable, Hashable {
+        public enum Kind: Sendable, Hashable {
+            case toggle(on: Bool)
+            case button(Style)
+        }
+
+        public enum Style: String, Sendable, Hashable { case primary, secondary, destructive }
+
+        public var kind: Kind
+        public var label: String
+        public var detail: String?
+        /// The tool's name in the extension (`keep_awake`), never another extension's.
+        public var tool: String
+        public var input: JSONValue
+        public var symbol: String?
+
+        /// What runs when it is clicked, or switched to `on`.
+        public func input(switchedTo on: Bool? = nil) -> JSONValue {
+            guard let on else { return input }
+            return input.setting("on", .bool(on))
+        }
     }
 
     public struct Gauge: Sendable, Hashable {
@@ -190,6 +216,14 @@ public struct ExtensionPage: Sendable, Hashable {
         case "ask":
             guard let label = text(j["label"], 40), let ask = text(j["ask"], 200) else { return nil }
             return .ask(Ask(label: label, ask: ask))
+        case "switch", "button":
+            guard let label = text(j["label"], 60), let tool = j["tool"]?.stringValue,
+                  tool.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil else { return nil }
+            let input = j["input"]?.objectValue.map(JSONValue.object) ?? .object([:])
+            guard input.jsonString.utf8.count <= 4096 else { return nil }
+            let kind: Control.Kind = j["type"]?.stringValue == "switch" ? .toggle(on: j["on"]?.boolValue ?? false)
+                : .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary)
+            return .control(Control(kind: kind, label: label, detail: text(j["detail"], 160), tool: tool, input: input, symbol: symbol(j["symbol"])))
         default:
             return nil
         }

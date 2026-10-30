@@ -28,6 +28,10 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var words: [String: [String]]
     /// Pages it adds to Home, drawn by Sidefolk from what `sidefolk/page.render` returns (D62).
     public var pages: [String: PageMeta]
+    /// Keeps running while it is on, instead of starting for each request and stopping when idle (D63).
+    public var background: Bool
+    /// Pop-up lists on a keyboard shortcut, filled by `sidefolk/palette.query` (D63).
+    public var palettes: [String: PaletteMeta]
 
     public struct Run: Sendable, Hashable, Decodable {
         /// `python3`, `node`, `sh`, or a program inside the folder (`bin/server`).
@@ -55,21 +59,30 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         /// The Mac's graphics hardware and media decoders, which modern image code needs (resizing a photo,
         /// rendering a QR code). No files or network come with it.
         public var media: Bool
+        /// What the person copies: reading and changing the clipboard (D63).
+        public var clipboard: Bool
+        /// Keeping the Mac awake and telling macOS the person is active (D63).
+        public var power: Bool
 
-        public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false) {
+        public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
+                    power: Bool = false) {
             self.network = network
             self.files = files
             self.exec = exec
             self.media = media
+            self.clipboard = clipboard
+            self.power = power
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
             exec = try c.decodeIfPresent([String].self, forKey: "exec") ?? []
             media = try c.decodeIfPresent(Bool.self, forKey: "media") ?? false
+            clipboard = try c.decodeIfPresent(Bool.self, forKey: "clipboard") ?? false
+            power = try c.decodeIfPresent(Bool.self, forKey: "power") ?? false
         }
     }
 
@@ -195,6 +208,30 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
     }
 
+    /// A list that pops up over any app on a keyboard shortcut (D63): the extension fills it as the person types,
+    /// and says what choosing an item does (paste it, copy it).
+    public struct PaletteMeta: Sendable, Hashable, Decodable {
+        public var title: String
+        /// The shortcut it starts with, like `shift+cmd+v`; the person can change it.
+        public var hotkey: String?
+        /// The search field's hint.
+        public var placeholder: String?
+
+        public init(title: String, hotkey: String? = nil, placeholder: String? = nil) {
+            self.title = title
+            self.hotkey = hotkey
+            self.placeholder = placeholder
+        }
+
+        public init(from decoder: Decoder) throws {
+            try decoder.rejectUnknownKeys(["title", "hotkey", "placeholder"])
+            let c = try decoder.container(keyedBy: AnyKey.self)
+            title = try c.decode(String.self, forKey: "title")
+            hotkey = try c.decodeIfPresent(String.self, forKey: "hotkey")
+            placeholder = try c.decodeIfPresent(String.self, forKey: "placeholder")
+        }
+    }
+
     /// One setting of a watcher, filled in by whoever creates the watcher.
     public struct ConfigField: Sendable, Hashable, Codable {
         public enum FieldType: String, Sendable, Hashable, Codable { case integer, number, string, boolean }
@@ -230,7 +267,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public init(id: String, name: String, version: String, sidefolk: String? = nil, description: String? = nil,
                 tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
-                pages: [String: PageMeta] = [:]) {
+                pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:]) {
         self.id = id
         self.name = name
         self.version = version
@@ -246,11 +283,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.watchers = watchers
         self.words = words
         self.pages = pages
+        self.background = background
+        self.palettes = palettes
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers", "words", "pages"])
+                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -267,6 +306,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         watchers = try c.decodeIfPresent([String: WatcherMeta].self, forKey: "watchers") ?? [:]
         words = try c.decodeIfPresent([String: [String]].self, forKey: "words") ?? [:]
         pages = try c.decodeIfPresent([String: PageMeta].self, forKey: "pages") ?? [:]
+        background = try c.decodeIfPresent(Bool.self, forKey: "background") ?? false
+        palettes = try c.decodeIfPresent([String: PaletteMeta].self, forKey: "palettes") ?? [:]
     }
 
     /// The last part of the id (`dev.sidefolk.system-vitals` → `system-vitals`), used in tool names.

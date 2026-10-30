@@ -21,6 +21,8 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.dev-toolbox": String(localized: "Dev Toolbox", comment: "A built-in extension for software developers")
         case "dev.sidefolk.feeds": String(localized: "Feeds", comment: "A built-in extension: RSS and Atom feeds")
         case "dev.sidefolk.system-vitals-plus": String(localized: "System Vitals+", comment: "A built-in extension: the whole Mac with live charts")
+        case "dev.sidefolk.clipboard": String(localized: "Clipboard", comment: "A built-in extension: everything you copy")
+        case "dev.sidefolk.keep-awake": String(localized: "Keep Awake", comment: "A built-in extension: keeps the Mac awake")
         default: nil
         }
     }
@@ -42,6 +44,8 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.dev-toolbox": String(localized: "JSON, base64, JWTs, UUIDs and more", comment: "Dev Toolbox: one line under its name")
         case "dev.sidefolk.feeds": String(localized: "New posts from blogs, news and podcasts", comment: "Feeds: one line under its name")
         case "dev.sidefolk.system-vitals-plus": String(localized: "Your whole Mac at a glance, with live charts", comment: "System Vitals+: one line under its name")
+        case "dev.sidefolk.clipboard": String(localized: "Everything you copy, a shortcut away", comment: "Clipboard: one line under its name")
+        case "dev.sidefolk.keep-awake": String(localized: "Your Mac awake and you active, for as long as you say", comment: "Keep Awake: one line under its name")
         default: nil
         }
     }
@@ -74,6 +78,10 @@ enum BuiltInExtensionWords {
             String(localized: "For developers: format JSON, encode and decode base64, URLs and hex, decode JWTs, convert timestamps, make UUIDs, and check a file's checksum.")
         case "dev.sidefolk.system-vitals-plus":
             String(localized: "The whole Mac in plain words: processor, graphics, memory, apps, disks, battery health, heat and network, as a page with live charts, a tile on Today, instant answers and a heads-up when something needs you. Nothing leaves your Mac.")
+        case "dev.sidefolk.clipboard":
+            String(localized: "Everything you copy, a shortcut away from any app: text with its formatting, links, pictures, files and code, searchable and pinnable. Copies from password managers are never kept; keys and card numbers are hidden and forgotten in two minutes. Nothing leaves your Mac.")
+        case "dev.sidefolk.keep-awake":
+            String(localized: "Keeps your Mac awake, and chat apps from marking you away, for as long as you say, until a time, while an app like Zoom is open, or until you stop it. Nothing moves on screen, and it lets go on battery or when the battery runs low.")
         case "dev.sidefolk.feeds":
             String(localized: "The latest posts of blogs, news sites and podcasts from their RSS or Atom feeds, and a heads-up when a new one appears.")
         default: nil
@@ -123,6 +131,18 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.system-vitals-plus", "network"): String(localized: "Network activity")
         case ("dev.sidefolk.system-vitals-plus", "top_apps"): String(localized: "What's using the Mac")
         case ("dev.sidefolk.system-vitals-plus", "specs"): String(localized: "This Mac's specs")
+        case ("dev.sidefolk.clipboard", "recent_copies"): String(localized: "Recent copies")
+        case ("dev.sidefolk.clipboard", "search_copies"): String(localized: "Search copies")
+        case ("dev.sidefolk.clipboard", "copy_again"): String(localized: "Copy again")
+        case ("dev.sidefolk.clipboard", "pause"): String(localized: "Pause the history")
+        case ("dev.sidefolk.clipboard", "resume"): String(localized: "Resume the history")
+        case ("dev.sidefolk.clipboard", "clear_history"): String(localized: "Clear the history")
+        case ("dev.sidefolk.clipboard", "set_option"): String(localized: "Clipboard setting")
+        case ("dev.sidefolk.keep-awake", "keep_awake"): String(localized: "Keep the Mac awake")
+        case ("dev.sidefolk.keep-awake", "stop_keeping_awake"): String(localized: "Let the Mac sleep")
+        case ("dev.sidefolk.keep-awake", "awake_status"): String(localized: "Keep Awake status")
+        case ("dev.sidefolk.keep-awake", "extend"): String(localized: "Keep awake longer")
+        case ("dev.sidefolk.keep-awake", "set_option"): String(localized: "Keep Awake setting")
         default: nil
         }
     }
@@ -141,6 +161,7 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.system-vitals-plus", "disk_low"): String(localized: "Disk space low")
         case ("dev.sidefolk.system-vitals-plus", "battery_low"): String(localized: "Battery low")
         case ("dev.sidefolk.system-vitals-plus", "battery_health"): String(localized: "Battery worn")
+        case ("dev.sidefolk.keep-awake", "ended"): String(localized: "Keep Awake ended")
         default: nil
         }
     }
@@ -149,6 +170,23 @@ enum BuiltInExtensionWords {
     static func page(_ id: String, _ page: String) -> String? {
         switch (id, page) {
         case ("dev.sidefolk.system-vitals-plus", "mac"): String(localized: "Your Mac", comment: "System Vitals+: its page in Home's sidebar")
+        case ("dev.sidefolk.clipboard", "clipboard"): String(localized: "Clipboard", comment: "Clipboard: its page in Home's sidebar")
+        case ("dev.sidefolk.keep-awake", "awake"): String(localized: "Keep Awake", comment: "Keep Awake: its page in Home's sidebar")
+        default: nil
+        }
+    }
+
+    /// A palette's title (D63).
+    static func palette(_ id: String, _ palette: String) -> String? {
+        switch (id, palette) {
+        case ("dev.sidefolk.clipboard", "history"): String(localized: "Clipboard", comment: "Clipboard: the title of its pop-up list")
+        default: nil
+        }
+    }
+
+    static func placeholder(_ id: String, _ palette: String) -> String? {
+        switch (id, palette) {
+        case ("dev.sidefolk.clipboard", "history"): String(localized: "Search what you copied", comment: "Clipboard: the search field's hint")
         default: nil
         }
     }

@@ -12,6 +12,15 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Extensions that keep running and act; Clipboard and Keep Awake (D63):** `background` extensions, clipboard and
+  power permissions, palettes on a shortcut that paste, page switches and buttons, nudges. Clipboard (⇧⌘C, Maccy's
+  replacement with secrets masked and forgotten) and Keep Awake (Mouse Jiggler's, with nothing moving) are in
+  sidefolk-addons, minimum 0.2.0. *Checked:* ExtensionServiceTests (manifest, sandbox lines, palettes and nudges with a
+  fixture, Keep Awake for real), the add-ons' ClipboardKeepAwakeTests, UI snapshots (`panel-extension-palette`,
+  `page-extension-awake`), and the debug app: five copies captured and classified, the palette listing them, "keep my
+  Mac awake for 30 minutes" holding `PreventUserIdleDisplaySleep` and "let my mac sleep" releasing it. *Not yet by
+  hand:* Return pasting into another app and the nudge (both need Accessibility granted to the debug build); pictures
+  in the palette show no thumbnail.
 - **Extensions add pages; System Vitals+ (D62, Sidefolk 0.2.0):** `pages.<name>` in a manifest puts a page in Home's
   sidebar (Extensions) and, with `widget`, a tile on Today; the extension answers `sidefolk/page.render` with
   parts Sidefolk draws itself (gauge, stat, chart, bars, facts, note, ask) and its watchers are switches under the

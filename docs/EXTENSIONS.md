@@ -114,6 +114,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `permissions.files.read` | no | Folders it may read, absolute or starting with `~/`. |
 | `permissions.files.write` | no | Folders it may read and change. |
 | `permissions.exec` | no | Absolute paths of programs it may run, like `/usr/bin/pmset`, or `git` by name ([Programs by name](#programs-by-name)). |
+| `permissions.clipboard` | no | `true` lets it read and change the clipboard (D63). Its tools can't be below medium risk: what someone copies is theirs. |
+| `permissions.power` | no | `true` lets it keep the Mac awake (macOS power assertions) and ask Sidefolk to keep the person active (`sidefolk/nudge`, D63). |
 | `permissions.media` | no | `true` opens the Mac's graphics hardware and media decoders, which image code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo). No files or network come with it. |
 | `tools.<name>` | no | Sidefolk's metadata for a tool your program lists: `title`, `risk` (`low`, `medium`, `high`), `category` (`notes`, `memory`, `time`, `watch`, `files`, `web`, `system`, `agents`, `extensions`) and `mutates` (`false` if it only reads). Tool names: `^[a-z0-9_]{1,64}$`. |
 | `tools.<name>.paths` | no | Parameters that name a folder or file the person chooses, each `"read"` or `"write"` (at most 4). See [Folders named per call](#folders-named-per-call). |
@@ -123,6 +125,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `words.<list>` | no | Word lists a command's slots can take (`"unit": ["km", "miles", "°F"]`), at most 16 lists and 2,000 words. |
 | `watchers.<name>` | no | A watcher kind: `title` (≤ 60), `description` (≤ 300) and `config`, its settings. |
 | `pages.<name>` | no | A page in Home (D62): `title` (≤ 40), `symbol` (an SF Symbol), `refresh` (seconds while it is open, 2–3600, 5 if missing), `history` (also read once a minute in the background so its charts reach back a day) and `widget` (its summary is a tile on Today). At most 4. See [Pages](#pages). |
+| `background` | no | `true` keeps it running while it is on: it starts with Sidefolk, never stops for being idle, and comes back after a crash (up to the crash limit). For work that must watch all the time (the clipboard, a power assertion). The install preview says so. |
+| `palettes.<name>` | no | A pop-up list on a keyboard shortcut (D63): `title` (≤ 40), `hotkey` (`shift+cmd+c`: cmd, ctrl or option, then one key; the person can change it) and `placeholder`. At most 2. See [Palettes](#palettes). |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 
 **Folder name.** When you validate a folder, its name should be the id or the id's last part
@@ -510,6 +514,10 @@ ext.page("mac") { args in
   hour or a day. Keep a chart's `id` and its series' `key`s stable, or its past is lost.
 - **When it runs.** While the page is open, every `refresh` seconds. With `history` or `widget`, also once a minute
   while Sidefolk runs, and the install preview says so. Keep a render quick: it is a 30-second call like any other.
+- **Switches and buttons** (D63): `switch` (`label`, `detail`, `on`, `tool`, `input`) and `button` (`label`, `tool`,
+  `input`, `style`: `primary`, `secondary` or `destructive`, `symbol`) run one of your own tools as the person, through
+  Guard, then read the page again. A switch adds `on` (its new state) to `input`. `tool` is your tool's own name
+  (`set_option`), never another extension's. A tool only switches and buttons use can be `"ai": false`.
 - **Heads-ups.** Under the page, each of your watchers is a switch: on, it checks every five minutes in `repeat`
   mode and the companion tells the person when it triggers. So a watcher should trigger on change (see Watchers).
 - **What Sidefolk refuses or drops.** A page over 128 KB, or one without `sections` or `summary`, fails. Within it, a
@@ -517,6 +525,31 @@ ext.page("mac") { args in
   missing what it needs; at most 16 sections, 24 parts a section, 24 items a list. Every text is cleaned of hidden
   characters and clipped. A page is your text: it is never shown to a model.
 - A page needs Sidefolk 0.2: write `"sidefolk": ">=0.2"` in the manifest.
+
+## Running in the background, palettes and nudges
+
+Some features can't wait to be asked: a clipboard history has to see every copy, keeping a Mac awake has to hold
+for hours. With `"background": true` your program runs while the extension is on. In the Kit, `ext.background { … }`
+runs beside requests (it shares the main actor, so it must `await`, never spin); stdin is read off the main actor.
+
+**Palettes** pop up over any app on their shortcut, like Spotlight, without taking focus from the app in front. As
+the person types, Sidefolk asks `sidefolk/palette.query {palette, query}` → `{items: [{id, title, detail, kind,
+pinned, actions}], note}` (`kind`: `text`, `link`, `image`, `file`, `color`, `code`; at most 200 items). Return,
+Shift-Return, ⌘P and ⌘⌫ send `sidefolk/palette.choose {palette, item, action}` with `choose`, `plain`, `pin` or
+`delete` (the last three only when the item lists them in `actions`) → `{close, paste, message}`. With `paste`,
+Sidefolk closes the palette and presses ⌘V in the app in front: put what to paste on the clipboard first (that needs
+`permissions.clipboard`). Pasting needs Accessibility for Sidefolk; until the person allows it, what they chose is on
+the clipboard. Your page shows the shortcut, and the person can change it there.
+
+```swift
+ext.palette("history", query: { query in PaletteList(items(matching: query)) },
+            choose: { id, action in copy(id); return PaletteChoice(close: true, paste: true) })
+```
+
+**Nudges.** `ext.send("sidefolk/nudge")` asks Sidefolk to keep the person active: it moves the pointer by nothing
+where it is, which resets macOS's idle time (what chat and meeting apps watch) without anything moving on screen.
+Only with `permissions.power`, at most one every 20 seconds whatever you send, and only once the person allowed
+Accessibility. (macOS's own "user is active" call doesn't reset the idle time those apps read.)
 
 ## Testing locally
 
@@ -692,6 +725,8 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Tool result shown to the model | 20 KB (an `isError` explanation: 4 KB) |
 | Processes running at once | 32, the program included |
 | Watcher interval | at least 5 minutes, 15 by default |
+| Palettes | 2 per extension; 200 items a list; 10 s per query or choice |
+| Nudges | one every 20 seconds, with `permissions.power` |
 | Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart |
 | Watcher summary / state | 200 characters / 64 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |
