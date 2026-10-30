@@ -1,34 +1,53 @@
 import SidefolkCore
 import SwiftUI
 
-/// The top of Today (D58): the day, a greeting and what's left in one line, beside your companion and the way to ask
-/// it something. One line instead of a large card, so the queue under it is in view when the window opens.
+/// The top of Today (D58): a greeting, then the day and what's left in counts on one line, so the queue under it is
+/// in view when the window opens. The one bar in the toolbar is where you ask.
 struct TodayHeader: View {
     var greeting: Text
-    var status: Text
-    var settings: AppSettings
-    var ask: () -> Void
+    var line: [String]
+    /// The Board's: a larger greeting with the counts under it.
+    var large = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: Theme.Space.l) {
+        let rest = ([Date().formatted(.dateTime.weekday(.wide).month(.wide).day())] + line).joined(separator: " · ")
+        if large {
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                greeting.font(Theme.Font.hero).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                Text(verbatim: line.joined(separator: " · ")).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+            }
+            .accessibilityElement(children: .combine)
+        } else {
+            lineHeader(rest)
+        }
+    }
+
+    private func lineHeader(_ rest: String) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.m) {
+                title
+                Text(verbatim: rest).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            }
             VStack(alignment: .leading, spacing: Theme.Space.xxs) {
-                Eyebrow(Text(verbatim: Date().formatted(.dateTime.weekday(.wide).day().month(.wide))))
-                greeting.font(Theme.Font.title).foregroundStyle(Theme.ink)
-                    .accessibilityAddTraits(.isHeader)
-                status.font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                title
+                Text(verbatim: rest).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: Theme.Space.s)
-            Button(action: ask) {
-                Label("Ask \(settings.companionName)…", systemImage: "bubble.left.fill")
-            }
-            .buttonStyle(.sf(.secondary))
-            .fixedSize()
-            CompanionPortrait(settings: settings, side: 64)
-                .accessibilityHidden(true)
         }
         .padding(.bottom, Theme.Space.xs)
-        .accessibilityElement(children: .contain)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var title: some View {
+        greeting.font(Theme.Font.title).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+    }
+
+    static func greeting(at date: Date = Date()) -> Text {
+        switch Calendar.current.component(.hour, from: date) {
+        case 5..<12: Text("Good morning")
+        case 12..<18: Text("Good afternoon")
+        default: Text("Good evening")
+        }
     }
 }
 
@@ -91,5 +110,34 @@ struct CompanionNook: View {
             .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
             .rotationEffect(.degrees(-1.5))
         }
+    }
+}
+
+/// The companion at the foot of the sidebar (D62): its face, and a speech bubble with a hello and what it's on.
+struct NookBubble: View {
+    var settings: AppSettings
+    var greeting: String
+    var line: String
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: Theme.Space.xs) {
+            CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: 44)
+                .padding(4)
+                .background(Theme.surfaceRaised, in: Circle())
+                .overlay(Circle().strokeBorder(Theme.line))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: greeting).font(Theme.Font.caption).foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: line).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(Theme.Space.s)
+            .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous).strokeBorder(Theme.line))
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text("Opens Today"))
     }
 }

@@ -156,6 +156,8 @@ Rules that hold throughout:
 
 ## C. Recipes
 
+**Superseded by D62:** the recipes below became presets of a block layout a theme arranges freely.
+
 Every recipe reads the same models from B. They differ only in arrangement and decoration.
 
 | Surface | Recipes |
@@ -205,8 +207,8 @@ Community themes:
 | 6 ✅ | B3 day line, B8 calendar (D57) | **Done 2026-10-30:** "Your day" on Today: a rail of the hours around now with the calendar's events and the reminders (drag a reminder, or ← → on it, a quarter hour at a time; ⌘Z undoes; a repeating one moves only this time; double-click an empty time to add one), then each day's events and reminders in time order. The calendar is read-only, off until chosen (Settings › Privacy › Your calendar, or "Show my calendar" on Today), in the morning brief, and offered to the AI as `calendar.today` only while shown. |
 | 7 ✅ | B5 tiles, B6 agents, B7 nook, B10 Glance | **Done 2026-10-30:** watches as tiles with their last change (`PageChange`, kept in a page watch's state, 2 KB), "See the change" in a popover, a tile outlined while its notice waits (looking counts as seen); Agents at work: your companion's own run, working sessions with the last thing each asked of Sidefolk, commands, sessions finished in the last hour; the companion's nook in Home's sidebar (its line, asleep in quiet mode, a click goes to Today); Glance in the Ask panel. Desk is complete. |
 | 8 ✅ | A3–A13 and B13: the rest of the foundation, snapshots with the compiled catalog, Settings picker, CLI, live reload | **Done 2026-10-30:** `ThemeFile` (format 1), `ThemeCheck` (every problem in words, the contrast table), `ThemeLibrary` (built-ins, install with images re-encoded, `start`); the app applies type, scale, density, radii, motion, a translucent sidebar, grain, the nook's style and backdrop, and empty-page art; a `link` role for the accent as text. Harbor now reads at 4.5:1 everywhere: faint ink, link text and the danger red were deepened. Settings › General › Theme, `sidefolk theme new/check`, a folder followed live, snapshots in compiled English and `--theme <folder>`. What changed from the list above is under A. |
-| 9 | C recipes, then each theme's manifest and art | Board first (three themes use it), then Console, Stage, Planner. **Fidelity rule (founder, 2026-10-30):** each theme must match its board in `sandbox/theme-sandbox/`, content and components included, not only colours. Start by listing every element on each board against the app; whatever the board shows and the app lacks is built (new components, new content, new features), through the same models and `ToolExecutor`. A theme is done when its snapshots and its board read as the same product. Art is made by image generation. |
-| 10 | Gallery shelf for themes, community install | Reuses D55. |
+| 9 ✅ | C recipes, then each theme's manifest and art | **Done 2026-10-31, as blocks (D62):** recipes became a layout of blocks in rows and columns that any theme arranges; presets desk, board, console, stage and planner; rail, pills and ribbons navigation with a status bar; Activity as a log or a diary; a Markdown editor with tabs and an outline; the one bar's Will do panel. Six themes as data with their art (washes, stages and tiles by image generation, grain drawn in code), each checked against its board (`themes-fidelity.md`). |
+| 10 ✅ | Gallery shelf for themes, community install | **Done 2026-10-31:** the gallery's `theme` kind, `AddonStore.install(theme:)` through the theme check, updates, and a "From the gallery" shelf in Settings › General › Theme. Daylight, Night Studio and Paper Garden are packed in sidefolk-addons (`themes/`); publishing them is the founder's step. Community themes install from a folder (step 8) and can't take Sidefolk's ids. |
 
 **Done means**, at every step:
 - `make test` passes.

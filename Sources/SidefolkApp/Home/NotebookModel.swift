@@ -175,12 +175,24 @@ final class NotebookModel {
         await reloadItems()
     }
 
+    /// Notes opened in the Markdown editor's tabs (D62), most recently opened last; at most eight.
+    private(set) var tabs: [NotebookItem] = []
+
+    func closeTab(_ id: String) {
+        tabs.removeAll { $0.id == id }
+        if selectedId == id { select(tabs.last.map(\.id)) }
+    }
+
     func select(_ id: String?) {
         guard id != selectedId else { return }
         let leaving = draft
         saveTask?.cancel()
         selectedId = id
         draft = items.first { $0.id == id }
+        if let draft {
+            if let i = tabs.firstIndex(where: { $0.id == draft.id }) { tabs[i] = draft } else { tabs.append(draft) }
+            if tabs.count > 8 { tabs.removeFirst(tabs.count - 8) }
+        }
         if let leaving { Task { await write(leaving) } }
         loadConversations()
     }

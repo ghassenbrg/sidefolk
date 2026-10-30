@@ -170,6 +170,8 @@ protocol AppServices: AnyObject {
     func open(item: NotebookItem)
     /// Home › Conversations at `thread` (the list when nil).
     func openConversation(_ thread: String?)
+    /// Home › Activity.
+    func openActivity()
 
     // Your calendar (D57)
     var calendarAccess: CalendarAccess { get }
@@ -183,6 +185,8 @@ protocol AppServices: AnyObject {
     func hint(for text: String) -> String?
     /// Whether Sidefolk does these words without AI, as Return in the Ask panel would.
     func understands(_ text: String) -> Bool
+    /// What Return would do, in parts (D62), when the words are understood on the Mac.
+    func plan(for text: String) -> IntentPlan?
     /// Sends typed words on through the Ask panel, which shows what came of them.
     func ask(_ text: String, how: AskHow)
     /// Opens something a search found where it lives.

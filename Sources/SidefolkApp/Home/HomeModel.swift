@@ -1,11 +1,41 @@
 import Foundation
 import Observation
 import SidefolkCore
+import SwiftUI
 
 /// What the Home sidebar can show.
 enum HomeSelection: Hashable {
     case now, conversations, activity, trash
     case collection(String)
+
+    /// The four places every navigation offers, in ⌘1–4 order; `.collection("")` stands for the Notebook.
+    static let places: [HomeSelection] = [.now, .collection(""), .conversations, .activity]
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .now: "Today"
+        case .collection, .trash: "Notebook"
+        case .conversations: "Conversations"
+        case .activity: "Activity"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .now: "sun.max"
+        case .collection, .trash: "book.closed"
+        case .conversations: "bubble.left.and.bubble.right"
+        case .activity: "list.bullet.rectangle"
+        }
+    }
+
+    /// The same place, whichever collection is open.
+    func isPlace(_ place: HomeSelection) -> Bool {
+        switch (self, place) {
+        case (.collection, .collection), (.trash, .collection): true
+        default: self == place
+        }
+    }
 }
 
 /// State behind the Home window. Follows `.dataChanged` events while the window is open, so what
@@ -23,6 +53,9 @@ final class HomeModel {
     var selection: HomeSelection? = .now {
         didSet { if selection != oldValue { selectionChanged() } }
     }
+
+    /// The new or edited collection's sheet, opened from the sidebar or the toolbar's New menu.
+    var collectionSheet: CollectionSheet.Mode?
 
     private var eventTask: Task<Void, Never>?
     private var reloadTask: Task<Void, Never>?
@@ -95,6 +128,17 @@ final class HomeModel {
     }
 
     /// Picks the Notebook's last collection, or the Inbox.
+    /// Goes to one of the four places; the Notebook opens where it was.
+    func go(to place: HomeSelection) {
+        if case .collection = place { Task { await showNotebook() } } else { selection = place }
+    }
+
+    /// A new note in the collection on screen, or the Inbox.
+    func newNote() async {
+        await showNotebook()
+        await notebook.newItem()
+    }
+
     func showNotebook() async {
         if case .collection = selection { return }
         if notebook.collections.isEmpty { await notebook.reloadCollections() }

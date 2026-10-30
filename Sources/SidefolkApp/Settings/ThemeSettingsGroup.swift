@@ -10,7 +10,7 @@ struct ThemeSettingsGroup: View {
     @State private var removing: InstalledTheme?
     @State private var error: UserFacingError?
 
-    private var library: ThemeLibrary { ThemeLibrary(paths: model.runtime.paths) }
+    private var library: ThemeLibrary { .app(model.runtime.paths) }
     private var shown: ThemeTokens { ThemeStore.shared.style.tokens }
 
     var body: some View {
@@ -27,6 +27,7 @@ struct ThemeSettingsGroup: View {
             }
             .padding(.horizontal, Theme.Space.l)
             .padding(.vertical, Theme.Space.m)
+            gallery
             suggestion
             following
             SettingsRow(title: "Make your own",
@@ -40,6 +41,8 @@ struct ThemeSettingsGroup: View {
             if let error { InlineError(error: error).padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s) }
         }
         .onAppear(perform: reload)
+        .task { if model.gallery.available { await model.gallery.load() } }
+        .onChange(of: model.gallery.progress.isEmpty) { reload() }
         .onChange(of: shown.id) { reload() }
         .confirmationDialog(Text("Remove “\(removing?.tokens.name ?? "")”?"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
             Button("Remove", role: .destructive) { if let removing { remove(removing) } }
@@ -49,6 +52,24 @@ struct ThemeSettingsGroup: View {
     }
 
     // MARK: Parts
+
+    /// Themes in the add-on gallery not on this Mac yet, or with a newer version (D55): a click gets one and wears it.
+    @ViewBuilder private var gallery: some View {
+        let offered = model.gallery.entries(.theme).filter { entry in
+            if case .installed = model.gallery.state(entry) { false } else { true }
+        }
+        if !offered.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                Eyebrow(Text("From the gallery"))
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: Theme.Space.m)], spacing: Theme.Space.m) {
+                    ForEach(offered) { entry in GalleryThemeCard(entry: entry, model: model.gallery) }
+                }
+                ForEach(offered.compactMap { model.gallery.failures[$0.id] }, id: \.message) { InlineError(error: $0) }
+            }
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.bottom, Theme.Space.m)
+        }
+    }
 
     @ViewBuilder private var makeButtons: some View {
         Button("Start a Theme…", action: startTheme).buttonStyle(.sf(.secondary)).fixedSize()
@@ -244,5 +265,46 @@ struct ThemeProblems: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Space.s)
         .background(report.isUsable ? Theme.surfaceSunken : Theme.dangerSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+    }
+}
+
+/// A theme in the gallery: its picture, name and line, and what a click does (get it, update it, or how far along).
+private struct GalleryThemeCard: View {
+    var entry: AddonEntry
+    var model: AddonGalleryModel
+
+    var body: some View {
+        let state = model.state(entry)
+        Button {
+            Task { await model.get(theme: entry, use: true) }
+        } label: {
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                Group {
+                    if let url = model.preview(entry), let image = NSImage(contentsOf: url) {
+                        Image(nsImage: image).resizable().scaledToFill()
+                    } else {
+                        Theme.surfaceSunken
+                    }
+                }
+                .frame(height: 64).frame(maxWidth: .infinity).clipped()
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line))
+                HStack {
+                    Text(verbatim: entry.name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
+                    Spacer(minLength: Theme.Space.xs)
+                    switch state {
+                    case .working(let p): ProgressView(value: max(p, 0.02)).progressViewStyle(.linear).frame(width: 44)
+                    case .update(let from): Text("Update from \(from)").font(Theme.Font.caption).foregroundStyle(Theme.link)
+                    default: Label("Get", systemImage: "arrow.down.circle").font(Theme.Font.caption).foregroundStyle(Theme.link)
+                    }
+                }
+                Text(verbatim: entry.tagline).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled({ if case .working = state { true } else { false } }())
+        .accessibilityLabel(Text(verbatim: "\(entry.name), \(entry.tagline)"))
+        .accessibilityHint(Text("Downloads it and uses it"))
     }
 }

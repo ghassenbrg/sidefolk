@@ -71,29 +71,27 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   companion's motion filmed for each one (Ember and Nimbo were, before painting); Iris's closed eye is an ink arc on
   the glass, not a shutter; folks and custom companions keep the soft look. *Next:* the founder reviews the ten
   (`swift run sidefolk-render out/`, or the dev app), then the 2D-character skill from the README.
-- **Themes, steps 1–8 built; a theme is now a file anyone can make (D57, D58):** the reasons are in
-  `docs/research/themes.md`, the build plan in `docs/research/themes-plan.md`, the seven boards locally in
-  `sandbox/theme-sandbox/`. Built in: Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight,
-  Night Studio, Paper Garden. Steps 1–7: theme tokens behind every `Theme` name; Activity rows that open in place;
-  links to conversations; Today with Guard's questions in its queue; the one bar; Your day with the calendar (D57);
-  watch tiles, Agents at work, the companion's nook, Glance. Step 8: `theme.json` format 1 (`ThemeFile`), checked by
-  `ThemeCheck` (problems in words, a contrast table), installed by `ThemeLibrary` with images re-encoded; type,
-  scale, density, radii, motion, translucent sidebar, grain, nook styles (cushion, badge, sticker) and backdrop, and
-  empty-page art all reach the app; a `link` role, and Harbor's faint ink, link text and danger red deepened to
-  4.5:1. Settings › General › Theme (previews, Start a Theme…, Load from Folder…, a followed folder repainted on each
-  save with its problems listed, remove, "drawn for …" companion offer); `sidefolk theme new/check`; snapshots in
-  compiled English by default and `--theme <folder>`; `dev.swift theme:<id>` and `themeFolder:<path>`. *Checked:*
-  ThemeCheckTests (6), ThemeTokensTests and the full suite (1,438) in a clean worktree; UI snapshots before and
-  after (Harbor unchanged but for the three colours and the new Theme group) and in a test theme (serif, relaxed,
-  bouncy, translucent, sticker, grain, backdrop, empty art) in light and dark; the CLI on a good and a pale theme
-  (exit 0 and 1); in the debug app with a fresh home: a followed folder painted the welcome bubble, an edited accent
-  repainted within a second, a broken save kept the last good theme with Settings listing why, and a relaunch kept
-  it. *Not by hand:* the open and save panels, Remove, the companion offer. *Founder's call:* the plan asks 3:1 for
-  controls and focus, which Harbor's aqua (1.8:1 on white) doesn't meet; the check enforces text only for now.
-  *Next:* plan step 9: the recipes (Board first, then Console, Stage, Planner) and each theme's manifest and art,
-  with the art made by image generation. Each theme must match its board, content and components included (the
-  founder's fidelity rule in the plan): list every element on each board against the app first, then build what's
-  missing.
+- **Themes, steps 1–10 built: a theme arranges the app's own pieces, each theme as faithful as its board (D57,
+  D58, D62):** reasons in `docs/research/themes.md`, plan in `docs/research/themes-plan.md`, each board's elements
+  against the app in `docs/research/themes-fidelity.md`, boards locally in `sandbox/theme-sandbox/`. Steps 1–8:
+  tokens, Today, the one bar, Your day with the calendar, watch tiles and agents, theme files with a check, install
+  and live reload. Steps 9–10 (D62): Today is rows of columns of blocks (header, queue, day, watching, agents,
+  recent, notes, art, companion), each in several styles, that a theme's `layout` arranges; presets desk (Harbor,
+  now two columns as its board), board, console, stage, planner; rail with a status bar, pill tabs and ribbon tabs;
+  collections as a column, jars or washi tabs; Activity as a table, log or diary; a Markdown editor with tabs and an
+  outline; the one bar's Will do panel (`IntentPlan`: action, parts, tool, risk, no model call); sparklines from
+  recent report values; each agent's steps. Built in: Harbor, Night Shift, Marshmallow, Field Notes
+  (`Resources/Themes`); gallery: Daylight, Night Studio, Paper Garden, packed in sidefolk-addons `themes/` (not
+  published: the founder's step), installed through `AddonStore.install(theme:)` and the shelf in Settings ›
+  General › Theme. Art by image generation (Daylight's night sky, Night Studio's dawn, Marshmallow's Moonlight
+  stage), grain drawn in code. 122 new strings in all nine languages. *Checked:* the full suite in a clean
+  worktree (ThemeCheckTests with every preset and every built-in, IntentPlanTests, a gallery theme install and
+  update, report value history); `--ui-snapshots --theme` for all seven themes in light and dark, side by side with
+  their boards; French and Arabic (right to left); the debug app with a fresh home: Night Shift chosen, its Console
+  and status bar drawn from the bundled theme, Settings listing the four built-ins with the "drawn for Spark" offer.
+  *Not built:* editing the Will do chips with Tab, a progress bar for runs (no run reports progress), Glance per
+  theme, blocks from extensions (reserved as `extension:`). *Next:* publish the three gallery themes
+  (`scripts/build.py` then `publish.sh` in sidefolk-addons), then the create-a-theme skill from this work.
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with

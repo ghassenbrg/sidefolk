@@ -49,6 +49,12 @@ extension AppCoordinator: AskActions {
             : String(localized: "Ask \(providerLabel)")
     }
 
+    func plan(for text: String) -> IntentPlan? {
+        guard ask.pendingReminderTitle == nil else { return nil }
+        return runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
+                                          watching: knownWatches)?.plan()
+    }
+
     var whenParser: WhenParser { WhenParser(calendar: .autoupdatingCurrent, settings: runtime.settings.current) }
 
     var providerLabel: String {

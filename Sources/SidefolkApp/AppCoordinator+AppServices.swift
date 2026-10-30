@@ -31,6 +31,7 @@ extension AppCoordinator: AppServices {
     }
 
     func openCalendarSettings() { MacCalendar.openSettings() }
+    func openActivity() { home.show(section: .activity) }
     func cancelReminder(_ id: String) async { _ = try? await runtime.scheduler.cancel(id: id) }
 
     func createReminder(title: String, when: String) async -> UserFacingError? {

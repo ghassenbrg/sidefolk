@@ -699,6 +699,13 @@ runtime's `com.apple.security.personal-information.calendars`); reading the stat
   invitation's title is written by whoever sent it. Other agents get no tool that reads it (`external: false`).
 *Residual:* once allowed for good, the AI may read the day's events in any later clean turn.
 
+**T35 Themes (L/M), D58, D62.** A theme is data: `theme.json` (64 KB at most) and PNGs (2 MB and 2048 px at most,
+inside its folder, decoded and written again by Sidefolk before use), never code, never words shown as the app's.
+Its layout names only blocks the app draws; anything else is left out and said, and what needs you (Guard's
+questions) always has a place, so no theme can hide a waiting approval. Ids under `dev.sidefolk.` and `harbor` are
+taken only from the app's Resources and the signed gallery (T33), so a theme from a folder can't pass as Sidefolk's.
+A followed theme folder is read once a second and only checked and copied; a broken save leaves the last good theme.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person

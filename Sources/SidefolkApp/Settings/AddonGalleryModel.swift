@@ -67,6 +67,7 @@ final class AddonGalleryModel {
         switch entry.kind {
         case .companion: companions.first { $0.id == entry.id }?.version
         case .extension: parent.extensions.first { $0.id == entry.id }?.version
+        case .theme: ThemeLibrary.app(parent.runtime.paths).all().first { $0.id == entry.id && $0.folder != nil }?.version
         }
     }
 
@@ -89,6 +90,32 @@ final class AddonGalleryModel {
             failures[entry.id] = error as? UserFacingError ?? UserFacingError("\(entry.name) couldn't be installed.")
         }
         // The store fetches the catalog again when a pack is newer than it.
+        catalog = await store.stored() ?? catalog
+    }
+
+    // MARK: Themes
+
+    /// Downloads and installs a theme (D58, D62), then wears it when `use` (a click on its card).
+    func get(theme entry: AddonEntry, use: Bool) async {
+        guard progress[entry.id] == nil else { return }
+        failures[entry.id] = nil
+        progress[entry.id] = 0
+        defer { progress[entry.id] = nil }
+        do {
+            let theme = try await store.install(theme: entry, into: .app(parent.runtime.paths)) { [weak self] p in
+                Task { @MainActor in if self?.progress[entry.id] != nil { self?.progress[entry.id] = p } }
+            }
+            if use {
+                parent.update {
+                    $0.theme = theme.id
+                    $0.themeFolder = nil
+                }
+            } else {
+                parent.services.settingsChanged()
+            }
+        } catch {
+            failures[entry.id] = error as? UserFacingError ?? UserFacingError("\(entry.name) couldn't be installed.")
+        }
         catalog = await store.stored() ?? catalog
     }
 

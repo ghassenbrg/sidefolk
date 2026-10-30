@@ -7,15 +7,31 @@ struct ActivityView: View {
     /// The row the keyboard is on: ↑↓ move, Space opens or closes its details.
     @FocusState private var focused: String?
 
+    /// The theme's Activity (D62): a table, or a log (dense, in mono, a word for each result).
+    private var style: ThemeLayout.Activity { ThemeStore.shared.style.tokens.layout.activity }
+    private var columns: [ActivityColumn] { style == .log ? [.time, .who, .what, .risk, .decision] : ActivityColumn.allCases }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
-            PageTitle(title: "Activity", subtitle: "Everything Sidefolk did, who asked, and what was allowed.")
-            stats
-            filters
+            if style == .log || style == .diary {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Activity").font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                    if style == .diary {
+                        Text("what was done, who asked, what you allowed").font(.system(size: 14, design: .serif)).italic()
+                            .foregroundStyle(Theme.inkMuted)
+                    }
+                    Spacer()
+                    filters
+                }
+            } else {
+                PageTitle(title: "Activity", subtitle: "Everything Sidefolk did, who asked, and what was allowed.")
+                stats
+                filters
+            }
             if let message = model.undoMessage {
                 Text(verbatim: message).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
-            table
+            if style == .diary { diary } else { table }
         }
         .padding(.horizontal, Theme.Space.xl)
         .padding(.top, Theme.Space.xl)
@@ -77,13 +93,15 @@ struct ActivityView: View {
             .cardSurface()
         } else {
             VStack(spacing: 0) {
-                ActivityRow(header: true) { _ in EmptyView() }
+                ActivityRow(header: true, columns: columns, log: style == .log) { _ in EmptyView() }
                 Rectangle().fill(Theme.line).frame(height: 1)
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(rows, id: \.rowKey) { e in
                             let open = e.id != nil && model.openId == e.id
-                            ActivityRow { column in cell(column, e, open: open) }
+                            ActivityRow(columns: columns, log: style == .log) { column in
+                                if style == .log { logCell(column, e) } else { cell(column, e, open: open) }
+                            }
                                 .background(focused == e.rowKey ? Theme.accentSoft : open ? Theme.surfaceSunken : .clear)
                                 .contentShape(Rectangle())
                                 .onTapGesture { model.toggle(e) }
@@ -112,6 +130,77 @@ struct ActivityView: View {
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             .cardSurface()
         }
+    }
+
+    /// The same facts as sentences, under the time of day they happened (D62); a click opens the same details.
+    @ViewBuilder private var diary: some View {
+        let rows = model.visible
+        if rows.isEmpty {
+            table
+        } else {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Self.days(rows), id: \.title) { part in
+                        Text(verbatim: part.title).font(.system(size: 17, design: .serif)).italic().foregroundStyle(Theme.ink)
+                            .padding(.top, Theme.Space.l).padding(.bottom, Theme.Space.xs)
+                        ForEach(part.entries, id: \.rowKey) { e in
+                            let open = e.id != nil && model.openId == e.id
+                            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.m) {
+                                Text(verbatim: TimeFormat.clock(e.at, calendar: .current)).font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(Theme.inkFaint).frame(width: 44, alignment: .leading)
+                                (Text(verbatim: Describe.caller(e.caller, companion: model.companionName)).fontWeight(.semibold)
+                                 + Text(verbatim: " · \(e.summary). ")
+                                 + Text(verbatim: Describe.decision(e.decision)).italic().foregroundColor(Theme.inkMuted))
+                                    .font(.system(size: 14, design: .serif)).foregroundStyle(Theme.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: Theme.Space.s)
+                                if let risk = Risk(rawValue: e.risk) { Stamp(risk: risk) }
+                            }
+                            .padding(.vertical, Theme.Space.s)
+                            .contentShape(Rectangle())
+                            .onTapGesture { model.toggle(e) }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityAddTraits(.isButton)
+                            if open {
+                                ActivityDetails(entry: e, who: Describe.caller(e.caller, companion: model.companionName),
+                                                askedIn: e.runId.flatMap { model.conversations[$0] },
+                                                open: { model.services.openConversation($0) },
+                                                seeRule: e.decision == .always ? { model.services.openSettings(tab: .privacy) } : nil)
+                            }
+                            Rectangle().fill(Theme.line).frame(height: 1)
+                        }
+                    }
+                }
+                .padding(.horizontal, Theme.Space.xl)
+                .padding(.bottom, Theme.Space.xl)
+            }
+            .background(Theme.surfaceRaised)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .cardSurface()
+        }
+    }
+
+    /// Rows under "This evening", "This afternoon", "Yesterday" or their date, newest first.
+    static func days(_ rows: [ActivityEntry], now: Date = Date()) -> [(title: String, entries: [ActivityEntry])] {
+        let cal = Calendar.current
+        func title(_ date: Date) -> String {
+            if cal.isDate(date, inSameDayAs: now) {
+                switch cal.component(.hour, from: date) {
+                case 5..<12: return String(localized: "This morning")
+                case 12..<18: return String(localized: "This afternoon")
+                case 18..<24: return String(localized: "This evening")
+                default: return String(localized: "Last night")
+                }
+            }
+            if cal.isDateInYesterday(date) { return String(localized: "Yesterday") }
+            return date.formatted(.dateTime.weekday(.wide).day().month(.wide))
+        }
+        var parts: [(title: String, entries: [ActivityEntry])] = []
+        for row in rows {
+            let t = title(row.at)
+            if parts.last?.title == t { parts[parts.count - 1].entries.append(row) } else { parts.append((t, [row])) }
+        }
+        return parts
     }
 
     private func move(_ step: Int, from e: ActivityEntry, in rows: [ActivityEntry]) {
@@ -147,6 +236,30 @@ struct ActivityView: View {
                 }
             }
         }
+    }
+
+    /// A log's cell: exact words in mono, the risk as a tag, and the result as one coloured word.
+    @ViewBuilder private func logCell(_ column: ActivityColumn, _ e: ActivityEntry) -> some View {
+        switch column {
+        case .time: Text(verbatim: TimeFormat.clock(e.at, calendar: .current)).foregroundStyle(Theme.inkMuted)
+        case .who: Text(verbatim: Describe.caller(e.caller, companion: model.companionName))
+            .foregroundStyle(e.caller.hasPrefix("external:") ? Theme.link : Theme.ink)
+        case .what: Text(verbatim: "\(e.tool.replacingOccurrences(of: ".", with: "_")) \(e.summary)").foregroundStyle(Theme.ink).help(e.summary)
+        case .risk: RiskTag(risk: e.risk)
+        case .decision, .outcome: result(e)
+        }
+    }
+
+    private func result(_ e: ActivityEntry) -> some View {
+        let (word, color): (String, Color) = switch e.decision {
+        case .denied: (String(localized: "denied", comment: "A log's result: you said no"), Theme.danger)
+        case .blocked: (String(localized: "blocked", comment: "A log's result: rules don't allow it"), Theme.danger)
+        case .failed: (String(localized: "failed", comment: "A log's result"), Theme.danger)
+        case .skipped: (String(localized: "skipped", comment: "A log's result: nobody answered in time"), Theme.link)
+        case .auto, .autoMode, .fullAccess, .webSetting: (String(localized: "auto", comment: "A log's result: done without asking"), Theme.inkMuted)
+        case .allowed, .always: (e.outcome?.clipped(24) ?? String(localized: "allowed", comment: "A log's result"), Theme.success)
+        }
+        return Text(verbatim: word).foregroundStyle(color).help(e.outcome ?? e.error ?? word)
     }
 
     @ViewBuilder private func riskChip(_ risk: String) -> some View {
@@ -284,16 +397,19 @@ private enum ActivityColumn: CaseIterable {
 /// One line of the table (or its header): the same column frames every time, so columns line up.
 private struct ActivityRow<Cell: View>: View {
     var header = false
+    var columns = ActivityColumn.allCases
+    /// A log's row: mono, and the decision column says the result.
+    var log = false
     @ViewBuilder var cell: (ActivityColumn) -> Cell
 
     var body: some View {
         HStack(spacing: Theme.Space.s + 2) {
-            ForEach(ActivityColumn.allCases, id: \.self) { column in
+            ForEach(columns, id: \.self) { column in
                 Group {
                     if header {
-                        Eyebrow(Text(column.title))
+                        Eyebrow(Text(log && column == .decision ? "Result" : column.title))
                     } else {
-                        cell(column)
+                        cell(column).font(log ? .system(size: 12, design: .monospaced) : nil)
                     }
                 }
                 .lineLimit(1)
@@ -332,5 +448,21 @@ private struct Stat: View {
         .frame(maxWidth: .infinity)
         .cardSurface()
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A risk stamped in small capitals, as on a page (D62).
+struct Stamp: View {
+    var risk: Risk
+
+    var body: some View {
+        let color = risk == .high ? Theme.danger : risk == .medium ? Theme.link : Theme.success
+        Text(verbatim: risk == .high ? String(localized: "risk.high", defaultValue: "high", comment: "High risk, in a narrow column")
+             : risk == .medium ? String(localized: "medium", comment: "A risk stamp") : String(localized: "risk.low", defaultValue: "low", comment: "Low risk, in a narrow column"))
+            .textCase(.uppercase).font(.system(size: 9.5, weight: .heavy)).kerning(0.6)
+            .foregroundStyle(color)
+            .padding(.horizontal, 5).padding(.vertical, 1)
+            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(color, lineWidth: 1.2))
+            .rotationEffect(.degrees(-2))
     }
 }

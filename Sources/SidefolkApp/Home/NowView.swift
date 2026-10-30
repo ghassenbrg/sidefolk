@@ -1,94 +1,181 @@
 import SidefolkCore
 import SwiftUI
 
-/// Home › Today: what needs you, what's coming up, what Sidefolk is watching and running.
+/// Home › Today, drawn from the theme's layout (D62): rows of columns of blocks, each one of Today's pieces in one of
+/// its styles. Harbor's is the Desk: decisions and the day on the left; what's watched, who's working and what just
+/// happened on the right. Columns stack when the window is narrow.
 /// Each domain wears its folk's color: Tempo for time, Scout for watching, Byte for agents and jobs.
 struct NowView: View {
     @Bindable var model: NowModel
     /// The queue row the keyboard is on (D58).
     @FocusState private var focused: String?
+    @State private var editing: Reminder?
+
+    private var layout: ThemeLayout { ThemeStore.shared.style.tokens.layout }
 
     var body: some View {
-        PageScroll {
-            TodayHeader(greeting: greeting, status: status, settings: model.services.runtime.settings.current) {
-                model.services.openAsk(prefill: "")
-            }
+        PageScroll(maxWidth: 1180) {
             if model.mode == .fullAccess {
                 FullAccessBanner(settings: { model.services.openSettings(tab: .privacy) }) { Task { await model.turnOffFullAccess() } }
             }
-            if model.needsYouCount > 0 || model.skippedRun != nil { needsYou }
-            // Values told every few seconds or minutes change as you look: they sit near the top.
-            if !model.reports.isEmpty { live }
-            // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
-            if busy { running }
-            comingUp
-            watching
-            if !busy { running }
-            if !model.recent.isEmpty { recently }
+            ForEach(Array(layout.today.enumerated()), id: \.offset) { _, row in
+                ColumnsLayout(widths: row.map(\.width), spacing: Theme.Space.l,
+                              minimums: row.map { $0.blocks.allSatisfy { $0.kind == .art } ? 150 : 230 }) {
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, column in
+                        let blocks = VStack(alignment: .leading, spacing: Theme.Space.xl) {
+                            ForEach(column.blocks.filter(shows), id: \.self) { block($0) }
+                        }
+                        if column.page { PaperPage { blocks } } else { blocks }
+                    }
+                }
+            }
+        }
+        .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: model) }
+    }
+
+    /// The Console's filter (D62): agents, your own, or watches, with the header and what needs you always there.
+    private func shows(_ block: ThemeLayout.Block) -> Bool {
+        switch model.focus {
+        case .all: true
+        case .agents: [.header, .queue, .agents].contains(block.kind)
+        case .mine: [.header, .queue, .day, .notes, .companion].contains(block.kind)
+        case .watches: [.header, .queue, .watching].contains(block.kind)
         }
     }
 
-    private var busy: Bool { !model.jobs.isEmpty || !model.workingSessions.isEmpty }
-
-    private var greeting: Text {
-        switch Calendar.current.component(.hour, from: Date()) {
-        case 5..<12: Text("Good morning")
-        case 12..<18: Text("Good afternoon")
-        default: Text("Good evening")
+    /// One of Today's pieces in its style. Only styles the theme check lets through reach here.
+    @ViewBuilder private func block(_ block: ThemeLayout.Block) -> some View {
+        switch block.kind {
+        case .header:
+            switch block.style {
+            case "console": ConsoleHeader(model: model)
+            case "page": PageHeader(model: model)
+            default: TodayHeader(greeting: TodayHeader.greeting(), line: model.headline, large: block.style == "large")
+            }
+        case .queue:
+            if model.needsYouCount > 0 || model.skippedRun != nil {
+                needsYou(block.style)
+            } else if block.style == "stack" || block.style == "index" {
+                // A column of its own stays, saying so, rather than leaving a gap.
+                emptyQueue(block.style)
+            }
+        case .day:
+            switch block.style {
+            case "list": DayList(model: model) { editing = $0 }
+            case "compact": DayCompact(model: model) { editing = $0 }
+            case "stickers": DayStickers(model: model) { editing = $0 }
+            case "ruled": RuledDay(model: model) { editing = $0 }
+            default: comingUp
+            }
+        case .watching:
+            switch block.style {
+            case "list": WatchingList(model: model)
+            case "signals": WatchSignals(model: model)
+            case "badges": WatchBadges(model: model)
+            case "margin": MarginWatches(model: model)
+            default: watching
+            }
+        case .agents:
+            switch block.style {
+            case "card": AgentsCard(model: model)
+            case "steps": AgentSteps(model: model)
+            case "helpers": HelpersCard(model: model)
+            default: running
+            }
+        case .recent: if !model.recent.isEmpty { recently }
+        case .notes:
+            if block.style == "chips" { JottedChips(model: model) } else { NotesCards(model: model) }
+        case .art: ArtTile()
+        case .companion:
+            if block.style == "sticker" {
+                CompanionSticker(model: model)
+            } else {
+                TodayStage(model: model) { decision in
+                    QueueRow(decision: decision, model: model, focused: $focused, style: "bubbles") { work in act(on: decision, work) }
+                }
+            }
         }
-    }
-
-    private var status: Text {
-        let needs = switch model.needsYouCount {
-        case 0: Text("Nothing needs you right now.")
-        case 1: Text("One thing needs you.")
-        case let n: Text("\(n) things need you.")
-        }
-        let left = model.remindersLeftToday
-        return left == 0 ? needs : Text("\(needs) \(Text("\(left) reminders left today."))", comment: "Two sentences in Today's header")
     }
 
     // MARK: Needs you
 
-    private var needsYou: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Needs you", folk: nil, count: model.needsYouCount)
-            RowsCard {
-                ForEach(model.queue) { decision in
-                    QueueRow(decision: decision, model: model, focused: $focused) { work in act(on: decision, work) }
+    @ViewBuilder private func emptyQueue(_ style: String) -> some View {
+        if style == "index" {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                Text("To decide").font(.system(size: 17, design: .serif)).italic().foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                Text("Nothing to decide.").font(.system(size: 14, design: .serif)).italic().foregroundStyle(Theme.inkMuted)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                ConsoleTitle(title: "Queue", count: 0, note: nil)
+                Text("Nothing waits on you.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
+        }
+    }
+
+    @ViewBuilder private func needsYou(_ style: String) -> some View {
+        if style == "index" {
+            VStack(alignment: .leading, spacing: Theme.Space.m) {
+                Text("To decide").font(.system(size: 17, design: .serif)).italic().foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                ForEach(model.focusedQueue) { decision in
+                    QueueRow(decision: decision, model: model, focused: $focused, style: "index") { work in act(on: decision, work) }
                 }
-                if let result = model.skippedRun {
-                    SkippedRunResult(result: result)
+                if let result = model.skippedRun { RowsCard { SkippedRunResult(result: result) } }
+            }
+        } else if style == "stack" {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                ConsoleTitle(title: "Queue", count: model.focusedQueue.count, note: Text("j/k move · ⏎ allow · ⌫ deny · s snooze"))
+                ForEach(model.focusedQueue) { decision in
+                    QueueRow(decision: decision, model: model, focused: $focused, style: "stack") { work in act(on: decision, work) }
+                }
+                if let result = model.skippedRun { RowsCard { SkippedRunResult(result: result) } }
+            }
+        } else {
+            needsYouList(style)
+        }
+    }
+
+    private func needsYouList(_ style: String) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
+            SectionHeader(title: "Needs you", folk: nil, count: model.needsYouCount) {
+                // The keys work on the row the keyboard is on; Tab gets there.
+                Group {
+                    if style == "cards" { Text("← → move · ⏎ answer · ⌫ not now") } else { Text("↑↓ to move · ⏎ to answer") }
+                }
+                .font(Theme.Font.caption).foregroundStyle(Theme.link)
+                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
+            }
+            if style == "cards" {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: Theme.Space.s) {
+                        ForEach(model.focusedQueue) { decision in
+                            QueueRow(decision: decision, model: model, focused: $focused, style: "cards") { work in act(on: decision, work) }
+                        }
+                    }
+                    .padding(2)
+                }
+                if let result = model.skippedRun { RowsCard { SkippedRunResult(result: result) } }
+            } else {
+                RowsCard {
+                    ForEach(model.focusedQueue) { decision in
+                        QueueRow(decision: decision, model: model, focused: $focused) { work in act(on: decision, work) }
+                    }
+                    if let result = model.skippedRun {
+                        SkippedRunResult(result: result)
+                    }
                 }
             }
-            // The keys work on the row the keyboard is on; Tab gets there.
-            Text(verbatim: "↑↓  ·  ⏎  ·  ⌫  ·  S")
-                .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                .padding(.leading, Theme.Space.xs)
-                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
-                .accessibilityHidden(true)
         }
     }
 
     /// Runs an answer, then keeps the keyboard where it was in the queue: on the next one, or the last.
     private func act(on decision: NowModel.Decision, _ work: @escaping () async -> Void) {
-        let index = model.queue.firstIndex { $0.id == decision.id } ?? 0
+        let index = model.focusedQueue.firstIndex { $0.id == decision.id } ?? 0
         let hadFocus = focused != nil
         Task {
             await work()
-            let queue = model.queue
+            let queue = model.focusedQueue
             if hadFocus { focused = queue.isEmpty ? nil : queue[min(index, queue.count - 1)].id }
-        }
-    }
-
-    // MARK: Live
-
-    private var live: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Live", folk: "scout", count: model.reports.count)
-            RowsCard {
-                ForEach(model.reports) { w in ReportRow(report: w, reading: model.readings[w.id], model: model) }
-            }
         }
     }
 
@@ -96,13 +183,25 @@ struct NowView: View {
 
     private var comingUp: some View {
         let groups = model.groups()
-        let reminders = { (day: NowModel.ReminderGroup.Day) in groups.first { $0.day == day }?.reminders ?? [] }
+        let today = groups.first { $0.day == .today }?.reminders ?? []
+        let tomorrow = groups.first { $0.day == .tomorrow }?.reminders ?? []
+        let later = groups.first { $0.day == .later }?.reminders ?? []
         return VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Your day", folk: "tempo", count: model.reminders.count)
-            // Today as a line (D58), with the calendar beside the reminders once it's shown (D57).
+            SectionHeader(title: "Your day", folk: "tempo", count: model.reminders.count) {
+                Text("Drag to move · double-click to add").font(Theme.Font.caption).foregroundStyle(Theme.link)
+            }
+            // Today as a line (D58), with the calendar beside the reminders once it's shown (D57), and tomorrow beside it.
             RowsCard {
-                DayRail(reminders: reminders(.today), events: model.events(on: .today), now: Date(),
-                        move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) })
+                HStack(alignment: .top, spacing: 0) {
+                    DayRail(reminders: today, done: model.doneToday, events: model.events(on: .today), now: Date(),
+                            move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) },
+                            menu: { AnyView(ReminderMenu(reminder: $0, model: model) { editing = $0 }) })
+                    if !tomorrow.isEmpty || !later.isEmpty || !model.events(on: .tomorrow).isEmpty {
+                        Divider()
+                        TomorrowColumn(reminders: tomorrow, events: model.events(on: .tomorrow), later: later, model: model) { editing = $0 }
+                            .frame(width: 180, alignment: .topLeading)
+                    }
+                }
                 if !model.calendarOn {
                     HStack(spacing: Theme.Space.m) {
                         Image(systemName: "calendar").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)
@@ -112,43 +211,27 @@ struct NowView: View {
                     }
                     .nowRow()
                 }
-            }
-            ForEach([NowModel.ReminderGroup.Day.today, .tomorrow, .later], id: \.self) { day in
-                let events = model.events(on: day)
-                let due = reminders(day)
-                if !events.isEmpty || !due.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Eyebrow(Text(verbatim: NowModel.ReminderGroup(day: day, reminders: due).title)).padding(.leading, Theme.Space.xs)
-                        RowsCard {
-                            // The day in time order: all-day events, then events and reminders as they come.
-                            ForEach(DayRow.merge(events: events, reminders: due)) { row in
-                                switch row {
-                                case .event(let event): EventRow(event: event)
-                                case .reminder(let r): ReminderRow(reminder: r, later: day == .later, model: model)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if model.reminders.isEmpty {
-                RowsCard {
+                if model.reminders.isEmpty {
                     InlineEmpty(text: "Nothing scheduled. Try “remind me at 5 to stretch”.", systemImage: "alarm")
                     NewReminderRow(model: model)
                 }
-            } else {
-                RowsCard { NewReminderRow(model: model) }
             }
         }
     }
 
     // MARK: Watching
 
-    /// Watches as tiles (D58): what each keeps an eye on, when it last looked, and what it last saw change.
+    /// Watches and live values as tiles (D58): what each keeps an eye on, in one big word or number, and what it last
+    /// saw. A click shows the whole watch and what can be done with it.
     private var watching: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Watching", folk: "scout", count: model.watchers.count)
-            if model.watchers.isEmpty {
+            SectionHeader(title: "Watching", folk: "scout", count: model.watchers.count + model.reports.count) {
+                if !model.watchers.isEmpty || !model.reports.isEmpty {
+                    Button("All") { model.services.openAsk(prefill: "what are you watching") }
+                        .buttonStyle(.plain).font(Theme.Font.caption).foregroundStyle(Theme.link)
+                }
+            }
+            if model.watchers.isEmpty && model.reports.isEmpty {
                 RowsCard {
                     InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
                                 systemImage: "binoculars", actionTitle: "Watch something…") {
@@ -156,9 +239,10 @@ struct NowView: View {
                     }
                 }
             } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: Theme.Space.m, alignment: .top)],
-                          alignment: .leading, spacing: Theme.Space.m) {
-                    ForEach(model.watchers) { w in WatchTile(watcher: w, model: model) }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: Theme.Space.s, alignment: .top)],
+                          alignment: .leading, spacing: Theme.Space.s) {
+                    ForEach(model.watchers) { w in WatchCard(watcher: w, model: model) }
+                    ForEach(model.reports) { r in ReportCard(report: r, reading: model.readings[r.id], values: model.values[r.id] ?? [], model: model) }
                 }
             }
         }
@@ -215,7 +299,10 @@ struct NowView: View {
 
     private var recently: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Recently")
+            SectionHeader(title: "Recently") {
+                Button("Activity") { model.services.openActivity() }
+                    .buttonStyle(.plain).font(Theme.Font.caption).foregroundStyle(Theme.link)
+            }
             RowsCard {
                 ForEach(model.recent) { e in
                     HStack(spacing: Theme.Space.m) {
@@ -240,7 +327,7 @@ struct NowView: View {
 
 /// A watch as a tile: what it keeps an eye on, its state, when it last looked, and what it last saw change, with the
 /// way to see that change in full. It stands out while what it noticed is still waiting in the queue (D58).
-private struct WatchTile: View {
+struct WatchTile: View {
     var watcher: Watcher
     var model: NowModel
     @State private var showingChange = false
@@ -334,7 +421,7 @@ private struct WatchTile: View {
 }
 
 /// A page's last change in full: the lines that went and the lines that came.
-private struct ChangeLines: View {
+struct ChangeLines: View {
     var change: PageChange
 
     var body: some View {
@@ -355,7 +442,7 @@ private struct ChangeLines: View {
 }
 
 /// A session that finished in the last hour: how long it took, and the last thing it asked of Sidefolk.
-private struct FinishedRow: View {
+struct FinishedRow: View {
     var session: AgentSession
     var lastCall: String?
 
@@ -377,7 +464,7 @@ private struct FinishedRow: View {
 }
 
 /// A line of a day under the rail: an event or a reminder.
-private enum DayRow: Identifiable {
+enum DayRow: Identifiable {
     case event(CalendarEvent)
     case reminder(Reminder)
 
@@ -396,7 +483,7 @@ private enum DayRow: Identifiable {
 }
 
 /// An event from the calendar (D57): read-only here; it lives in the Calendar app.
-private struct EventRow: View {
+struct EventRow: View {
     var event: CalendarEvent
 
     var body: some View {
@@ -423,28 +510,86 @@ private struct EventRow: View {
 /// One row of the queue, whatever it is, and the keys that answer it while it has the keyboard (D58). The rules are
 /// the approval card's: nothing answers until the row has been in view for a moment; a high-risk "yes" needs ⌘⏎;
 /// another app's or an extension's request is never approved from the keyboard, only said no to.
-private struct QueueRow: View {
+struct QueueRow: View {
     var decision: NowModel.Decision
     var model: NowModel
     var focused: FocusState<String?>.Binding
+    /// "rows" in a list, or "cards" side by side (D62), where ← → move as ↑ ↓ do.
+    var style = "rows"
     var act: (@escaping () async -> Void) -> Void
     @State private var armed = false
 
     var body: some View {
-        row
+        let isFocused = focused.wrappedValue == decision.id
+        Group {
+            if style == "cards" || style == "stack" {
+                QueueCardFrame(label: cardLabel, tint: cardTint, focused: isFocused, width: style == "stack" ? nil : 320,
+                               deadline: deadline) { row }
+            } else if style == "bubbles" {
+                QueueBubbleFrame(label: cardLabel, tint: cardTint, focused: isFocused) { row }
+            } else if style == "index" {
+                IndexCardFrame(label: cardLabel, risk: risk, focused: isFocused) { row }
+            } else {
+                row.background(isFocused ? Theme.accentSoft.opacity(0.6) : .clear)
+            }
+        }
             .focusable()
             .focusEffectDisabled()
             .focused(focused, equals: decision.id)
-            .background(focused.wrappedValue == decision.id ? Theme.accentSoft.opacity(0.6) : .clear)
-            .onKeyPress(keys: [.return, .delete, .upArrow, .downArrow, "s"], phases: .down) { press in handle(press) }
+.onKeyPress(keys: [.return, .delete, .upArrow, .downArrow, .leftArrow, .rightArrow, "s", "j", "k"], phases: .down) { press in handle(press) }
             .task {
                 try? await Task.sleep(for: .milliseconds(800))
                 armed = true
             }
     }
 
+    private var risk: Risk? {
+        if case .approval(let request) = decision { return request.risk }
+        if case .skipped(let step) = decision { return step.request.risk }
+        return nil
+    }
+
+    private var deadline: Date? {
+        if case .approval(let request) = decision { return request.expiresAt }
+        return nil
+    }
+
+    /// Who's asking, above a card: the board's "Mochi asks", "Claude Code is waiting", "Watch changed".
+    private var cardLabel: String {
+        switch decision {
+        case .approval(let request):
+            switch request.caller.kind {
+            case "agent": return String(localized: "\(model.services.runtime.settings.current.companionName) asks", comment: "Above a decision card: the companion asks")
+            case "user", "command": return String(localized: "You asked")
+            default: return String(localized: "Another app asks")
+            }
+        case .session(let session): return String(localized: "\(Describe.agentName(session.agent)) is waiting")
+        case .attention(let item):
+            switch item.refKind {
+            case "watcher": return String(localized: "Watch changed")
+            case "reminder": return String(localized: "Reminder")
+            default: return String(localized: "\(model.services.runtime.settings.current.companionName) noticed")
+            }
+        case .skipped: return String(localized: "Skipped", comment: "Above a decision card: a step nobody answered in time")
+        }
+    }
+
+    private var cardTint: Color {
+        switch decision {
+        case .approval(let request): request.risk == .high ? Theme.danger : Theme.sun
+        case .session: Theme.danger
+        case .attention: Theme.link
+        case .skipped: Theme.inkMuted
+        }
+    }
+
     @ViewBuilder private var row: some View {
         switch decision {
+        case .approval(let request) where style != "rows":
+            ApprovalCard(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }, framed: false, keys: false) { answer in
+                act { await model.answer(request, answer) }
+            }
+            .padding([.horizontal, .bottom], Theme.Space.m)
         case .approval(let request):
             ApprovalQueueRow(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }) { answer in
                 act { await model.answer(request, answer) }
@@ -460,8 +605,8 @@ private struct QueueRow: View {
 
     private func handle(_ press: KeyPress) -> KeyPress.Result {
         switch press.key {
-        case .upArrow: move(-1)
-        case .downArrow: move(1)
+        case .upArrow, .leftArrow, "k": move(-1)
+        case .downArrow, .rightArrow, "j": move(1)
         case .return: yes(command: press.modifiers.contains(.command))
         case .delete: no()
         default: snooze()
@@ -469,7 +614,7 @@ private struct QueueRow: View {
     }
 
     private func move(_ step: Int) -> KeyPress.Result {
-        let queue = model.queue
+        let queue = model.focusedQueue
         guard let i = queue.firstIndex(where: { $0.id == decision.id }) else { return .ignored }
         focused.wrappedValue = queue[min(max(i + step, 0), queue.count - 1)].id
         return .handled
@@ -510,7 +655,7 @@ private struct QueueRow: View {
 }
 
 /// Guard's question as a row of the queue: the approval card's words and buttons, beside Guard's icon.
-private struct ApprovalQueueRow: View {
+struct ApprovalQueueRow: View {
     var request: ApprovalRequest
     var look: ExtensionLook?
     var decide: (ApprovalDecision) -> Void
@@ -532,7 +677,7 @@ private extension View {
     }
 }
 
-private struct SessionNeedsYouRow: View {
+struct SessionNeedsYouRow: View {
     var session: AgentSession
     var open: () -> Void
 
@@ -560,7 +705,7 @@ private struct SessionNeedsYouRow: View {
     }
 }
 
-private struct AttentionRow: View {
+struct AttentionRow: View {
     var item: AttentionItem
     var respond: (String?) -> Void
 
@@ -637,7 +782,7 @@ struct CheckCircle: View {
     }
 }
 
-private struct ReminderRow: View {
+struct ReminderRow: View {
     var reminder: Reminder
     /// In the Later group, times carry their day.
     var later: Bool
@@ -721,7 +866,7 @@ private struct ReminderRow: View {
 
 /// The note or task a reminder belongs to (D49), a click away in the Notebook: its title when the reminder has words of
 /// its own, else just what kind of thing it is.
-private struct ItemLink: View {
+struct ItemLink: View {
     var item: NotebookItem
     var reminder: Reminder
     var open: () -> Void
@@ -757,7 +902,7 @@ private struct ItemLink: View {
     }
 }
 
-private struct NewReminderRow: View {
+struct NewReminderRow: View {
     @Bindable var model: NowModel
     @FocusState private var focus: Field?
     private enum Field { case title, when }
@@ -796,7 +941,7 @@ private struct NewReminderRow: View {
 }
 
 /// A report: its latest value, large, how often it reads and when it stops, with Pause and Stop at hand.
-private struct ReportRow: View {
+struct ReportRow: View {
     var report: Watcher
     var reading: WatchReading?
     var model: NowModel
@@ -835,7 +980,7 @@ private struct ReportRow: View {
     }
 }
 
-private struct RunningRow: View {
+struct RunningRow: View {
     var symbol: String
     var title: String
     var started: Date
@@ -874,7 +1019,7 @@ private struct RunningRow: View {
 }
 
 /// Rename a reminder or give it a new time, in the same words you'd type to the companion.
-private struct EditReminderSheet: View {
+struct EditReminderSheet: View {
     var reminder: Reminder
     var model: NowModel
     @Environment(\.dismiss) private var dismiss
