@@ -27,6 +27,8 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   tail, the cream nape and torn paw and tail-tip edges, grey brows, bright eyes and a wide mouth (now a ω); Purl got a
   linen weave, Rune granite speckle and an amber gem with depth, Iris one dark brow arc and a dark mouth. *Checked:*
   every move filmed front and side, close-ups of all four, the 8-mood sheet of Iris, the dev app (`build/review4`).
+  Then the same pass on Iris, Purl and Rune (no Meshy credits): Iris turns as a whole when it looks round
+  (`turnWhole`), Rune's open mouth is smaller; Purl's 36 moves were already clean.
 - **3D companions added from a folder; likeness faces (D60):** Settings › Companion › Made by you › Add from
   Folder… checks a companion's folder (addon.json and exactly its four files, sizes and kinds), warns that its
   character file runs as code, installs it beside the gallery's companions and wears it

@@ -559,6 +559,10 @@ export class Companion {
     if (ls) for (const n of ['armL', 'armR', 'handL', 'handR']) if (P.b[n]) P.b[n] = P.b[n].map((v) => v * ls);
     this.dynamics(dt, P, lying);
     this.followThrough(dt, P);
+    // A body with no neck (Iris, one block) turns as a whole: `turnWhole` of the head's and chest's
+    // yaw goes to the whole body, which a looking-round would otherwise wring like a towel.
+    const tw = this.C.turnWhole;
+    if (tw) for (const n of ['head', 'chest', 'spine']) if (P.b[n]) { P.root.ry += P.b[n][1] * tw; P.b[n][1] *= 1 - tw; }
     for (const [n, r] of Object.entries(this.rest)) {
       const e = P.b[n];
       const bone = this.bones[n];

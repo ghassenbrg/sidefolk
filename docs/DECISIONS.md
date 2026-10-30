@@ -1414,4 +1414,6 @@ which the material now paints by place. The texture probes read colour one gamma
 Rune's mottling are no longer flattened by their clamps. Faces: painted layers can be matte (`paintRoughness`;
 glossier paint turns dark strokes grey on felt), a cat's mouth is a ω (`mouth.cat`), and `twinkle: false` drops the
 idle twinkle cross the sheets don't have. Purl's linen is a procedural plain weave that fades below a pixel;
-Rune's granite has a speckle from a high pass of the pile map.
+Rune's granite has a speckle from a high pass of the pile map. The same films of Iris, Purl and Rune found one
+more: Iris has no neck, so looking round wrung the camera like a towel; `turnWhole` gives that share of the head's
+and chest's yaw to the whole body.
