@@ -68,7 +68,7 @@ private struct HomeSidebar: View {
                 .padding(.leading, Theme.Space.xs)
                 .padding(.bottom, Theme.Space.m)
             Section {
-                Label { Text("Now") } icon: { icon("sun.max.fill", Theme.sun) }
+                Label { Text("Today") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
                     .tag(HomeSelection.now)
                 Label { Text("Conversations") } icon: { icon("bubble.left.and.bubble.right.fill", Theme.aqua) }

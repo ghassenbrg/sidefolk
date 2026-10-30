@@ -34,7 +34,29 @@ final class NowModel {
         case tenMinutes, oneHour, tomorrowMorning
     }
 
+    /// One thing in Today's queue (D58): a question Guard is waiting on, an agent session that needs you, something
+    /// Sidefolk noticed, or a step nobody answered in time.
+    enum Decision: Identifiable {
+        case approval(ApprovalRequest)
+        case session(AgentSession)
+        case attention(AttentionItem)
+        case skipped(SkippedStep)
+
+        var id: String {
+            switch self {
+            case .approval(let r): "a" + r.id
+            case .session(let s): "s" + s.id
+            case .attention(let a): "n" + a.id
+            case .skipped(let s): "k" + s.id
+            }
+        }
+    }
+
     private(set) var attention: [AttentionItem] = []
+    /// Guard's questions still waiting (D58). The Ask panel shows them too; an answer in either place answers both.
+    private(set) var approvals: [ApprovalRequest] = []
+    /// Icons and names of the extensions whose tools are asking.
+    private(set) var extensionLooks: [String: ExtensionLook] = [:]
     /// Steps nobody answered in time; they wait here with "Run it now" (D37).
     private(set) var skipped: [SkippedStep] = []
     /// What the last "Run it now" did, said under the list.
@@ -65,10 +87,25 @@ final class NowModel {
         self.services = services
     }
 
-    var needsYouCount: Int { attention.count + sessionsNeedingYou.count + skipped.count }
+    var needsYouCount: Int { approvals.count + attention.count + sessionsNeedingYou.count + skipped.count }
+
+    /// What needs you, soonest deadline first: Guard's questions stop on their own, so they lead; then sessions,
+    /// what Sidefolk noticed, and steps already skipped.
+    var queue: [Decision] {
+        approvals.sorted { ($0.expiresAt ?? .distantFuture, $0.createdAt) < ($1.expiresAt ?? .distantFuture, $1.createdAt) }
+            .map(Decision.approval)
+            + sessionsNeedingYou.map(Decision.session) + attention.map(Decision.attention) + skipped.map(Decision.skipped)
+    }
+
+    /// Reminders still to come today, for the header.
+    var remindersLeftToday: Int { groups().first { $0.day == .today }?.reminders.count ?? 0 }
 
     func reload() async {
         let rt = runtime
+        approvals = await rt.broker.pending()
+        if approvals.contains(where: { $0.extensionId.map { extensionLooks[$0] == nil } ?? false }) {
+            extensionLooks = Dictionary(await services.extensions().map { ($0.id, $0.look) }, uniquingKeysWith: { a, _ in a })
+        }
         skipped = await rt.executor.skipped.list()
         mode = (try? await rt.permissions.policy())?.mode ?? .askOncePerKind
         let open = await rt.attention.open()
@@ -170,6 +207,12 @@ final class NowModel {
     func turnOffFullAccess() async {
         try? await runtime.permissions.updatePolicy { $0.mode = .askOncePerKind }
         runtime.events.changed(.permissions)
+        await reload()
+    }
+
+    /// Answers Guard's question, the same way the Ask panel's card does.
+    func answer(_ request: ApprovalRequest, _ decision: ApprovalDecision) async {
+        await runtime.broker.resolve(id: request.id, decision: decision)
         await reload()
     }
 

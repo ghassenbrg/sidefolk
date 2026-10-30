@@ -32,7 +32,7 @@ Translate these once and use the same word everywhere, including in Settings and
 | About you | The notebook collection of facts and preferences Sidefolk keeps in mind. Shown in quotes inside sentences: “About you”. |
 | collection, project, topic, list | Places in the notebook. A list is a shopping or to-do list. |
 | note, idea, task, link | The four kinds of notebook item. |
-| Now | The Home page that shows what is live: reminders, watches, agent sessions, things waiting. |
+| Today | The Home page that shows what is live: the questions waiting for you, reminders, watches, agent sessions. Called Now before D58; use the same word as for "today" in dates. |
 | Activity | The log of every action Sidefolk or an agent took. |
 | Trash | Use your language's name for the macOS Trash (Corbeille, Papelera, Papierkorb, Cestino, Lixo, ゴミ箱, 휴지통, 废纸篓, سلة المهملات). Things stay there 30 days. |
 | watch, watcher, watching | Sidefolk keeping an eye on something (a page, a site, a file, a folder, a program, a command) and saying when it happens. "A watch" and "a watcher" are the same thing. |

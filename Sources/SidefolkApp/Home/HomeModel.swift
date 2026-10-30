@@ -44,7 +44,7 @@ final class HomeModel {
             for await event in stream {
                 switch event {
                 case .dataChanged(let domain): self?.changed(domain)
-                case .attention: self?.changed(.attention)
+                case .attention, .approvalRequested, .approvalResolved: self?.changed(.attention)
                 case .watchReading(let reading): self?.now.update(reading)
                 default: break
                 }

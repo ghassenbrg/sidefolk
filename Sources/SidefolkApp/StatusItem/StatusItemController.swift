@@ -104,7 +104,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        let header = menu.addItem(withTitle: String(localized: "Now"), action: nil, keyEquivalent: "")
+        let header = menu.addItem(withTitle: String(localized: "Today"), action: nil, keyEquivalent: "")
         header.isEnabled = false
         if nowCache.isEmpty {
             let none = menu.addItem(withTitle: String(localized: "Nothing running or due soon"), action: nil, keyEquivalent: "")

@@ -422,7 +422,7 @@ private struct EntryView: View {
                         Text(summary).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                     }
                     Text(why).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
-                    Button("Open Now") { model.actions?.openNow() }.buttonStyle(.sf(.secondary))
+                    Button("Open Today") { model.actions?.openNow() }.buttonStyle(.sf(.secondary))
                 }
             }
         }

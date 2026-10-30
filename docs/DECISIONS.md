@@ -1345,6 +1345,11 @@ which every reply records in `meta.runId`, so no new column is needed. A note ha
 `v5-item-run`), written by `notes.save` and `profile.remember`. "Changed in" comes from `notes.update` and
 `notes.trash` rows that name the note and ran. A deleted conversation links to nothing.
 
+Step 4 renamed Now to Today in what people read (the sidebar, the menu bar, the Ask panel; code keeps `now`). Guard's
+waiting questions join Today's queue, soonest deadline first, with `ApprovalRequest.expiresAt` set by the broker.
+Keys answer only the queue row that has the keyboard, never a window-wide Return, and
+`ApprovalRequest.mayApproveFromKeys` (Core) is the one rule for the queue and the Ask panel's card.
+
 ### D60 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
 **Decision:**
 - **Adding one.** A 3D companion made the gallery's way (`companions-3d/`) can be added without being published:

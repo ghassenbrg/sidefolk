@@ -7,64 +7,81 @@ struct ApprovalCard: View {
     var request: ApprovalRequest
     /// The extension whose tool is asking, shown by its icon and name under the title.
     var look: ExtensionLook? = nil
+    /// On its own card (the Ask panel), or as a row of Today's queue, which draws its own row (D58).
+    var framed = true
+    /// Whether the buttons take Return and Escape. Today's queue answers from the keyboard per row instead, so
+    /// a Return typed into a field on the same page can never approve anything.
+    var keys = true
     var decide: (ApprovalDecision) -> Void
     @State private var armed = false
 
     var body: some View {
-        SFCard(accent: Theme.folkColor("guard")) {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+        if framed {
+            SFCard(accent: Theme.folkColor("guard")) { content }
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                // A queue row already wears Guard's icon beside it.
+                if framed {
                     Image(systemName: "checkmark.shield").foregroundStyle(Theme.folkColor("guard"))
-                    Text(request.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
-                if let look {
-                    HStack(spacing: 6) {
-                        ExtensionBadge(look: look, size: 16)
-                        Text("From the \(look.name) extension", comment: "Under an approval's title: which extension's tool asks")
-                            .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    }
-                }
-                Text(riskLabel).font(Theme.Font.eyebrow).textCase(.uppercase)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(riskTint, in: Capsule())
-                    .foregroundStyle(Theme.ink)
-                Text(request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                Text(request.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                details
-                if let service = request.service {
-                    Label("It goes only to \(service).", systemImage: "globe")
+            }
+            if let look {
+                HStack(spacing: 6) {
+                    ExtensionBadge(look: look, size: 16)
+                    Text("From the \(look.name) extension", comment: "Under an approval's title: which extension's tool asks")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
-                if request.canAlways, let site = request.site, carriesDetails {
-                    Text("“Always allow” covers addresses on \(site) with nothing after “?”.")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if request.tainted {
-                    Label(taintedWarning, systemImage: "exclamationmark.triangle")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.danger)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if request.caller != .user {
-                    asker.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                }
-                ButtonRow {
-                    Button("Not now") { decide(.deny) }
+            }
+            Text(riskLabel).font(Theme.Font.eyebrow).textCase(.uppercase)
+                .padding(.horizontal, 6).padding(.vertical, 2)
+                .background(riskTint, in: Capsule())
+                .foregroundStyle(Theme.ink)
+            Text(request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            details
+            if let service = request.service {
+                Label("It goes only to \(service).", systemImage: "globe")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
+            if request.canAlways, let site = request.site, carriesDetails {
+                Text("“Always allow” covers addresses on \(site) with nothing after “?”.")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if request.tainted {
+                Label(taintedWarning, systemImage: "exclamationmark.triangle")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if request.caller != .user {
+                asker.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+            }
+            if let ends = request.expiresAt {
+                Text("Waits for your answer until \(TimeText.short(ends))").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+            }
+            ButtonRow {
+                Button("Not now") { decide(.deny) }
+                    .buttonStyle(.sf(.secondary))
+                    .keyboardShortcut(keys ? .cancelAction : nil)
+                if request.canAlways {
+                    Button(alwaysTitle) { decide(.allowAlways) }
                         .buttonStyle(.sf(.secondary))
-                        .keyboardShortcut(.cancelAction)
-                    if request.canAlways {
-                        Button(alwaysTitle) { decide(.allowAlways) }
-                            .buttonStyle(.sf(.secondary))
-                            .disabled(!armed)
-                    } else if request.canAllowForRequest {
-                        Button("Allow for this request") { decide(.allowForRequest) }
-                            .buttonStyle(.sf(.secondary))
-                            .disabled(!armed)
-                            .help("Until this request is done, Sidefolk does this again without asking. Offered only for steps that send nothing anywhere but to your AI.")
-                    }
-                    allowButton
+                        .disabled(!armed)
+                } else if request.canAllowForRequest {
+                    Button("Allow for this request") { decide(.allowForRequest) }
+                        .buttonStyle(.sf(.secondary))
+                        .disabled(!armed)
+                        .help("Until this request is done, Sidefolk does this again without asking. Offered only for steps that send nothing anywhere but to your AI.")
                 }
+                allowButton
             }
         }
         .task {
@@ -81,10 +98,11 @@ struct ApprovalCard: View {
             .disabled(!armed)
         // Keys approve only your own and Sidefolk's requests (Return, or ⌘⏎ for high risk). Other apps and
         // extensions always need a click: they may ask while you are typing somewhere else.
-        let ours = ["user", "agent", "command"].contains(request.caller.kind)
-        if ours, request.risk == .high {
+        if !keys {
+            button
+        } else if request.answersFromKeys, request.risk == .high {
             button.keyboardShortcut(.return, modifiers: .command)
-        } else if ours {
+        } else if request.answersFromKeys {
             button.keyboardShortcut(.defaultAction)
         } else {
             button

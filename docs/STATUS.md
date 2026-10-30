@@ -41,23 +41,21 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   (animating, a wave, Mochi's page still loading under the new policy), in Made by you and in the Ask panel's
   header. *Not yet:* a UI snapshot of Made by you with a local companion; the two avatars in that list aren't
   aligned (Use is wider than the check mark).
-- **Themes, steps 1–3 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
+- **Themes, steps 1–4 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
   build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. Built in:
-  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Step 1:
-  `ThemeTokens` (SidefolkCore) and `ThemeStore` behind every `Theme` name. Step 2: Home › Activity rows open in
-  place (what, who, the decision in words, the outcome, the arguments, the rule in Settings). Step 3: links to
-  conversations. An Activity row shows "Asked in" and the conversation, found through its run
-  (`ExchangeStore.conversations(ofRuns:)`, no new column); a note shows "Saved in" and "Changed in" links under its
-  date (`items.run_id`, migration `v5-item-run`, written by `notes.save` and `profile.remember`; changes from
-  `notes.update`/`notes.trash` rows that ran); each opens the conversation (`AppServices.openConversation`). The
-  sample data gets a conversation that saved "Karim's new address" (new snapshot `window-home-notebook-connected`).
-  *Checked:* ConversationLinksTests through the real agent loop and tools (a mutation check proves the "ran" filter
-  matters); UI snapshots rendered in a clean worktree before and after each step and compared on every channel: the
-  differences are the intended ones plus relative times and capture flakes (a window caught as active, a title line,
-  a pressed button); the full suite in a clean worktree. *Found:* `--ui-snapshots` shows raw English keys because it
-  runs without the compiled catalog (plan B13). Harbor's `inkFaint` is 2.95:1 on white and white on the light danger
-  fill 4.27:1 (plan step 8). *Next:* plan step 4: Today and its decision queue (B1, B2), with Guard approvals in
-  Home and `ApprovalRequest.expiresAt`.
+  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–3:
+  theme tokens behind every `Theme` name; Activity rows that open in place; links to conversations ("Asked in",
+  "Saved in", "Changed in"). Step 4: Now is Today (sidebar, menu bar, the Ask panel's button; the glossary says so).
+  Its top is one header line (greeting, what needs you, reminders left today, "Ask …", the companion). Guard's
+  waiting questions are in Today's queue, soonest deadline first, each saying "Waits for your answer until …"
+  (`ApprovalRequest.expiresAt`, set by the broker); answering there answers the Ask panel too. The row with the
+  keyboard takes ↑↓, ⏎, ⌘⏎ for high risk, ⌫ and S; another app's request is only ever approved with a click
+  (`ApprovalRequest.mayApproveFromKeys`, shared with the Ask panel's card). *Checked:* ApprovalBrokerTests (the
+  deadline in the event and the list; the key rule's matrix), the full suite in a clean worktree, UI snapshots
+  before and after compared on every channel (the sidebar label and badge, the Ask panel's button, the new queue
+  with two waiting questions; the rest relative times). *Not by hand:* the keys in the window (agents can't type
+  into it); the rule they follow is tested in Core. *Next:* plan step 5: the one bar (B4), in Home's toolbar and as
+  the Ask panel.
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with

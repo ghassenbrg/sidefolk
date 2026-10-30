@@ -263,9 +263,30 @@ enum UISnapshots {
         let rt = try await runtime()
         let model = HomeModel(services: FixtureServices(runtime: rt))
         let sample = empty ? nil : try await SampleData.fill(rt, notebook: model.notebook)
-        if !empty { try await skipSteps(rt) }
+        if !empty {
+            try await skipSteps(rt)
+            await askWaiting(rt)
+        }
         await model.reloadAll()
         return (model, sample)
+    }
+
+    /// Two of Guard's questions still waiting (D58), through the broker as a real request is: Sidefolk's own, which
+    /// the keyboard may answer, and another app's, which only a click approves. They wait until the snapshots end.
+    private static func askWaiting(_ rt: SidefolkRuntime) async {
+        let home = NSHomeDirectory()
+        let questions = [
+            ApprovalRequest(tool: "files.move", title: "Move 12 PDFs to Invoices", summary: "Move 12 files from Downloads to Documents › Invoices",
+                            risk: .medium, caller: .agent(runId: "sample-move"),
+                            details: .paths([home + "/Downloads/Scan 0412.pdf", home + "/Downloads/Scan 0413.pdf"]), canAlways: true,
+                            effect: .changesFiles),
+            ApprovalRequest(tool: "clipboard.read", title: "Read the clipboard", summary: "Read what you copied last",
+                            risk: .medium, caller: .external(client: "codex"), details: .none, canAlways: false, effect: .readsPrivateData),
+        ]
+        for question in questions {
+            Task { _ = await rt.broker.request(question, timeout: 600) }
+        }
+        while await rt.broker.pending().count < questions.count { try? await Task.sleep(for: .milliseconds(10)) }
     }
 
     /// Two steps Sidefolk's agent asked about while nobody was there, through the real path: a page

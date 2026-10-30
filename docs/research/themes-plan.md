@@ -186,7 +186,7 @@ Community themes:
 | 1 ✅ | A1–A2 tokens at runtime, Harbor identical | **Done 2026-10-30:** `ThemeTokens`, `ThemeStore`, `Theme` reads the store. All 232 snapshots are pixel-identical. |
 | 2 ✅ | B11 | **Done 2026-10-30:** Activity rows open in place (who, the decision in words, the outcome, the arguments, the rule in Settings), Space and ↑↓, with translations in all nine languages. |
 | 3 ✅ | B9 links, B11's "Asked in", B12 | **Done 2026-10-30:** see B9 and B12. ConversationLinksTests run the real agent loop and tools, including a mutation check of the "only changes that ran" filter. |
-| 4 | B2 queue, B1 Today | The heart of the new Home. Touches the broker. |
+| 4 ✅ | B2 queue, B1 Today | **Done 2026-10-30:** "Today" in the sidebar, the menu bar and the Ask panel (code names stay `now`); a header line with the greeting, what needs you and the reminders left today, beside "Ask …" and the companion; Guard's waiting questions in the queue, soonest deadline first, each with "Waits for your answer until …" (`ApprovalRequest.expiresAt`); per-row keys (↑↓, ⏎, ⌘⏎ for high risk, ⌫, S), with the rule in Core (`mayApproveFromKeys`), shared with the Ask panel's card. |
 | 5 | B4 one bar (Home and Ask panel) | Depends on the queue's focus handling and the toast. |
 | 6 | B3 day line, B8 calendar (D57) | The calendar permission and tool come with it. |
 | 7 | B5 tiles, B6 agents, B7 nook, B10 Glance | Desk is now complete. Harbor is finished. |

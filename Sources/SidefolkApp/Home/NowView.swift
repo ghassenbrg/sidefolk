@@ -1,14 +1,16 @@
 import SidefolkCore
 import SwiftUI
 
-/// Home › Now: what needs you, what's coming up, what Sidefolk is watching and running.
+/// Home › Today: what needs you, what's coming up, what Sidefolk is watching and running.
 /// Each domain wears its folk's color: Tempo for time, Scout for watching, Byte for agents and jobs.
 struct NowView: View {
     @Bindable var model: NowModel
+    /// The queue row the keyboard is on (D58).
+    @FocusState private var focused: String?
 
     var body: some View {
         PageScroll {
-            NowHero(greeting: greeting, status: status, settings: model.services.runtime.settings.current) {
+            TodayHeader(greeting: greeting, status: status, settings: model.services.runtime.settings.current) {
                 model.services.openAsk(prefill: "")
             }
             if model.mode == .fullAccess {
@@ -37,11 +39,13 @@ struct NowView: View {
     }
 
     private var status: Text {
-        switch model.needsYouCount {
+        let needs = switch model.needsYouCount {
         case 0: Text("Nothing needs you right now.")
         case 1: Text("One thing needs you.")
         case let n: Text("\(n) things need you.")
         }
+        let left = model.remindersLeftToday
+        return left == 0 ? needs : Text("\(needs) \(Text("\(left) reminders left today."))", comment: "Two sentences in Today's header")
     }
 
     // MARK: Needs you
@@ -50,20 +54,30 @@ struct NowView: View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
             SectionHeader(title: "Needs you", folk: nil, count: model.needsYouCount)
             RowsCard {
-                ForEach(model.sessionsNeedingYou) { session in
-                    SessionNeedsYouRow(session: session) { model.openSession(session) }
-                }
-                ForEach(model.attention) { item in
-                    AttentionRow(item: item) { action in Task { await model.respond(item, action: action) } }
-                }
-                ForEach(model.skipped) { step in
-                    SkippedStepRow(step: step, run: { Task { await model.runSkipped(step) } },
-                                   dismiss: { Task { await model.dismissSkipped(step) } })
+                ForEach(model.queue) { decision in
+                    QueueRow(decision: decision, model: model, focused: $focused) { work in act(on: decision, work) }
                 }
                 if let result = model.skippedRun {
                     SkippedRunResult(result: result)
                 }
             }
+            // The keys work on the row the keyboard is on; Tab gets there.
+            Text(verbatim: "↑↓  ·  ⏎  ·  ⌫  ·  S")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                .padding(.leading, Theme.Space.xs)
+                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Runs an answer, then keeps the keyboard where it was in the queue: on the next one, or the last.
+    private func act(on decision: NowModel.Decision, _ work: @escaping () async -> Void) {
+        let index = model.queue.firstIndex { $0.id == decision.id } ?? 0
+        let hadFocus = focused != nil
+        Task {
+            await work()
+            let queue = model.queue
+            if hadFocus { focused = queue.isEmpty ? nil : queue[min(index, queue.count - 1)].id }
         }
     }
 
@@ -171,6 +185,111 @@ struct NowView: View {
 }
 
 // MARK: - Rows
+
+/// One row of the queue, whatever it is, and the keys that answer it while it has the keyboard (D58). The rules are
+/// the approval card's: nothing answers until the row has been in view for a moment; a high-risk "yes" needs ⌘⏎;
+/// another app's or an extension's request is never approved from the keyboard, only said no to.
+private struct QueueRow: View {
+    var decision: NowModel.Decision
+    var model: NowModel
+    var focused: FocusState<String?>.Binding
+    var act: (@escaping () async -> Void) -> Void
+    @State private var armed = false
+
+    var body: some View {
+        row
+            .focusable()
+            .focusEffectDisabled()
+            .focused(focused, equals: decision.id)
+            .background(focused.wrappedValue == decision.id ? Theme.accentSoft.opacity(0.6) : .clear)
+            .onKeyPress(keys: [.return, .delete, .upArrow, .downArrow, "s"], phases: .down) { press in handle(press) }
+            .task {
+                try? await Task.sleep(for: .milliseconds(800))
+                armed = true
+            }
+    }
+
+    @ViewBuilder private var row: some View {
+        switch decision {
+        case .approval(let request):
+            ApprovalQueueRow(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }) { answer in
+                act { await model.answer(request, answer) }
+            }
+        case .session(let session):
+            SessionNeedsYouRow(session: session) { model.openSession(session) }
+        case .attention(let item):
+            AttentionRow(item: item) { action in act { await model.respond(item, action: action) } }
+        case .skipped(let step):
+            SkippedStepRow(step: step, run: { act { await model.runSkipped(step) } }, dismiss: { act { await model.dismissSkipped(step) } })
+        }
+    }
+
+    private func handle(_ press: KeyPress) -> KeyPress.Result {
+        switch press.key {
+        case .upArrow: move(-1)
+        case .downArrow: move(1)
+        case .return: yes(command: press.modifiers.contains(.command))
+        case .delete: no()
+        default: snooze()
+        }
+    }
+
+    private func move(_ step: Int) -> KeyPress.Result {
+        let queue = model.queue
+        guard let i = queue.firstIndex(where: { $0.id == decision.id }) else { return .ignored }
+        focused.wrappedValue = queue[min(max(i + step, 0), queue.count - 1)].id
+        return .handled
+    }
+
+    private func yes(command: Bool) -> KeyPress.Result {
+        switch decision {
+        case .approval(let request):
+            guard request.mayApproveFromKeys(armed: armed, command: command) else { return .ignored }
+            act { await model.answer(request, .allowOnce) }
+        case .session(let session):
+            model.openSession(session)
+        case .attention(let item):
+            guard let primary = item.actions.first(where: \.isPrimary) else { return .ignored }
+            act { await model.respond(item, action: primary.id) }
+        case .skipped(let step):
+            guard armed, step.request.risk != .high || command else { return .ignored }
+            act { await model.runSkipped(step) }
+        }
+        return .handled
+    }
+
+    private func no() -> KeyPress.Result {
+        switch decision {
+        case .approval(let request): act { await model.answer(request, .deny) }
+        case .attention(let item): act { await model.respond(item, action: nil) }
+        case .skipped(let step): act { await model.dismissSkipped(step) }
+        case .session: return .ignored
+        }
+        return .handled
+    }
+
+    private func snooze() -> KeyPress.Result {
+        guard case .attention(let item) = decision, let later = item.actions.first(where: { $0.id.hasPrefix("snooze") }) else { return .ignored }
+        act { await model.respond(item, action: later.id) }
+        return .handled
+    }
+}
+
+/// Guard's question as a row of the queue: the approval card's words and buttons, beside Guard's icon.
+private struct ApprovalQueueRow: View {
+    var request: ApprovalRequest
+    var look: ExtensionLook?
+    var decide: (ApprovalDecision) -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Space.m) {
+            IconTile(symbol: "checkmark.shield", folk: "guard")
+            ApprovalCard(request: request, look: look, framed: false, keys: false, decide: decide)
+            Spacer(minLength: 0)
+        }
+        .nowRow()
+    }
+}
 
 /// Shared row padding so every list in Now lines up.
 private extension View {

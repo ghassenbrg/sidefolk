@@ -54,6 +54,9 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     /// The one service a built-in reaches whatever the model writes ("Open-Meteo"), so the card can say so (D47).
     public var service: String?
     public var createdAt: Date
+    /// When it stops waiting and counts as unanswered, set by the broker from the wait it was given, so Home can say
+    /// "stops at 18:08" (D58).
+    public var expiresAt: Date?
 
     public init(id: String = Identifier.make(), tool: String, title: String, summary: String, risk: Risk, caller: Caller,
                 details: Details, canAlways: Bool, tainted: Bool = false, effect: Effect = .changesThings, canAllowForRequest: Bool = false,
@@ -73,6 +76,16 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         self.site = site
         self.service = service
         self.createdAt = createdAt
+    }
+
+    /// Your own requests and Sidefolk's may be answered from the keyboard; another app's or an extension's only with a
+    /// click, since they may ask while you are typing somewhere else.
+    public var answersFromKeys: Bool { ["user", "agent", "command"].contains(caller.kind) }
+
+    /// Whether a key may say yes to it (D58): one of `answersFromKeys`, once it has been in view for a moment
+    /// (`armed`), and with ⌘ when the risk is high. The Ask panel's card and Today's queue both follow it.
+    public func mayApproveFromKeys(armed: Bool, command: Bool) -> Bool {
+        armed && answersFromKeys && (risk != .high || command)
     }
 
     /// Whether the person reading `other` was asked exactly this: same tool, same caller, same
@@ -130,6 +143,8 @@ public actor ApprovalBroker {
     /// check and the registration happen in one step, so parallel requests can't both find room.
     public func requestIfRoom(_ req: ApprovalRequest, timeout: TimeInterval) async -> ApprovalDecision? {
         guard hasRoom(for: req.caller) else { return nil }
+        var req = req
+        req.expiresAt = Date().addingTimeInterval(timeout)
         requests[req.id] = req
         events.publish(.approvalRequested(req))
         let id = req.id
