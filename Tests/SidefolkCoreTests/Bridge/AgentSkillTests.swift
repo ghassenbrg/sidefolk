@@ -226,7 +226,7 @@ import Testing
         #expect(description.count - "description: ".count <= 1024)
         #expect(front.count == 2)
 
-        let offered = ExternalToolPolicy.direct.union(ExternalToolPolicy.asking).map { $0.replacingOccurrences(of: ".", with: "_") }
+        let offered = ExternalToolPolicy.all.map { $0.replacingOccurrences(of: ".", with: "_") }
         for tool in offered { #expect(text.contains(tool), "the skill explains \(tool)") }
         let named = Set(text.matches(of: /`([a-z]+_[a-z]+)/).map { String($0.1) })
         let known = Set(offered)

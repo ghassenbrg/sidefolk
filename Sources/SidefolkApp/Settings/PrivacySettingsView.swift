@@ -211,6 +211,7 @@ struct PrivacySettingsView: View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
             ApprovalModeGroup(model: model)
             InternetGroup(model: model)
+            AgentAccessGroup(model: model)
             UnansweredGroup(model: model)
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.") {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in

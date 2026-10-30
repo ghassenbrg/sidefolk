@@ -204,6 +204,11 @@ public struct NotebookStore: Sendable {
         _ = try await db.writer.write { db in try NotebookItem.deleteOne(db, key: itemId) }
     }
 
+    /// Permanently removes everything in the Trash. Only the user can do this ("Empty Trash").
+    public func emptyTrash() async throws -> Int {
+        try await db.writer.write { db in try NotebookItem.filter(Column("deleted_at") != nil).deleteAll(db) }
+    }
+
     public func purgeTrash(olderThan cutoff: Date) async throws -> Int {
         try await db.writer.write { db in
             try NotebookItem.filter(Column("deleted_at") != nil && Column("deleted_at") < cutoff.timeIntervalSince1970).deleteAll(db)

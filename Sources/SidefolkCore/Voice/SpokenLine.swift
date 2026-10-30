@@ -30,6 +30,32 @@ public enum SpokenLine {
         return first(in: lines.joined(separator: "\n")) ?? onScreen
     }
 
+    /// About two minutes of speech: a longer answer is read this far, then the rest is left to the screen.
+    static let maxFullCharacters = 2_000
+
+    /// An AI answer read in full (`SpokenLength.full`): every sentence that says something, list items as
+    /// sentences of their own, code left out; past `maxFullCharacters` it stops at a sentence and says the rest
+    /// is on the screen.
+    public static func full(_ text: String) -> String {
+        let plain = text.replacingOccurrences(of: "```[\\s\\S]*?(```|$)", with: "\n", options: .regularExpression)
+        var spoken: [String] = []
+        var length = 0
+        for line in plain.components(separatedBy: .newlines) {
+            for sentence in Sentences.split(speakable(listItem(line) ?? line)) {
+                var said = speakable(sentence)
+                guard says(said) else { continue }
+                if !said.hasSuffix(".") && !said.hasSuffix("!") && !said.hasSuffix("?") && !said.hasSuffix("。") { said += "." }
+                if length + said.count > maxFullCharacters, !spoken.isEmpty {
+                    spoken.append(String(localized: "The rest is on the screen.", comment: "Said aloud after reading a long answer as far as it goes"))
+                    return spoken.joined(separator: " ")
+                }
+                spoken.append(said)
+                length += said.count + 1
+            }
+        }
+        return spoken.isEmpty ? onScreen : spoken.joined(separator: " ")
+    }
+
     /// The first sentence that still says something once made speakable (links go first: their
     /// "?" and "." would end a sentence).
     private static func first(in text: String) -> String? {

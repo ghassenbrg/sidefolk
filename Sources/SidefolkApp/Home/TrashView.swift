@@ -5,10 +5,16 @@ import SwiftUI
 struct TrashView: View {
     var model: NotebookModel
     @State private var confirming: NotebookItem?
+    @State private var confirmingEmpty = false
 
     var body: some View {
         PageScroll {
-            PageTitle(title: "Trash", subtitle: "Things stay here for 30 days, then they're gone for good.")
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.m) {
+                PageTitle(title: "Trash", subtitle: "Things stay here for 30 days, then they're gone for good.")
+                if !model.trash.isEmpty {
+                    Button("Empty Trash…") { confirmingEmpty = true }.buttonStyle(.sf(.destructive))
+                }
+            }
             if model.trash.isEmpty {
                 EmptyState(title: "The Trash is empty", message: "Things you delete wait here for 30 days, in case you change your mind.",
                            systemImage: "trash", folk: "brew")
@@ -25,6 +31,12 @@ struct TrashView: View {
             Button("Cancel", role: .cancel) {}
         } message: { _ in
             Text("This can't be undone.")
+        }
+        .alert("Delete \(model.trash.count) items forever?", isPresented: $confirmingEmpty) {
+            Button("Empty Trash", role: .destructive) { Task { await model.emptyTrash() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Everything in the Trash is deleted for good. This can't be undone.")
         }
     }
 

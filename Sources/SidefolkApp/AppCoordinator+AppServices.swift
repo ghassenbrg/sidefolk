@@ -282,7 +282,17 @@ extension AppCoordinator: AppServices {
             }
         }
         applyCompanionSettings()
+        applyAppearance()
         updater.settingsChanged()
+    }
+
+    /// Light or dark for every window, or nil to follow the Mac. Theme's colours follow it.
+    func applyAppearance() {
+        switch runtime.settings.current.appearance {
+        case .system: NSApp.appearance = nil
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
     }
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }

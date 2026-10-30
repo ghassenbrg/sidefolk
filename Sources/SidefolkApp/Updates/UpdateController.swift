@@ -109,7 +109,7 @@ final class UpdateController: UpdateActions {
 
     private func newest(in offers: [UpdateOffer]) -> UpdateOffer? {
         let s = runtime.settings.current.updates
-        return ReleaseFeed.newest(offers, channel: s.channel(running: app.version), after: app.version, skipping: s.skipped)
+        return ReleaseFeed.newest(offers, channel: s.effectiveChannel, after: app.version, skipping: s.skipped)
     }
 
     /// A gentle bubble beside the companion: it waits through quiet mode and full screen, and only adds to the

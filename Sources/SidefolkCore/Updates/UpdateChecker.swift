@@ -19,8 +19,9 @@ public struct UpdateState: Codable, Sendable, Equatable {
 public actor UpdateChecker {
     /// Automatic looks come this far apart.
     public static let interval: TimeInterval = 86_400
-    /// A version the person let pass ("Later", or the bubble faded) is brought up again after this.
-    public static let askAgainAfter: TimeInterval = 3 * 86_400
+    /// A version the person let pass ("Later", or the bubble faded) is brought up again the next day: a little
+    /// under a day, so the daily look that finds it again also asks.
+    public static let askAgainAfter: TimeInterval = 20 * 3_600
     static let key = "updates"
 
     private let transport: any HTTPTransport

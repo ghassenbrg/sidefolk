@@ -281,6 +281,13 @@ final class NotebookModel {
         await reloadTrash()
     }
 
+    /// Only the user, from the Trash, empties it.
+    func emptyTrash() async {
+        _ = try? await store.emptyTrash()
+        runtime.events.changed(.notebook)
+        await reloadTrash()
+    }
+
     // MARK: Reminders (D49)
 
     enum RemindPreset: CaseIterable {

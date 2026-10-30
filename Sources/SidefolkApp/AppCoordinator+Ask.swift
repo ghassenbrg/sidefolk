@@ -314,7 +314,7 @@ extension AppCoordinator: AskActions {
                         model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != "",
                                           tainted: reply.tainted, thread: handle.threadId),
                                   caption: caption())
-                        line = SpokenLine.answer(answer)
+                        line = runtime.settings.current.voice.length == .full ? SpokenLine.full(answer) : SpokenLine.answer(answer)
                     }
                 case .failed(let error):
                     model.add(.error(error, retryable: true), caption: caption())

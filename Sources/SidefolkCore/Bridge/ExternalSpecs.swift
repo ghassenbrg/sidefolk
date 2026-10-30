@@ -5,16 +5,24 @@ import Foundation
 /// another agent following them would try what Guard then refuses, so it gets words and schemas that
 /// say what it can actually do (T4). Model-facing text, so English (D28).
 extension ExternalToolPolicy {
-    /// The spec an external agent sees: its own description and schema, and reading tools raised to at
-    /// least medium so Guard asks every time.
-    public static func externalSpec(_ spec: ToolSpec) -> ToolSpec {
+    /// The spec an external agent sees: its own description and schema, and a tool the person set to "Ask
+    /// each time" raised to at least medium so Guard asks every time; "Allow" runs it as low risk.
+    public static func externalSpec(_ spec: ToolSpec, access: AgentAccess = AgentAccess()) -> ToolSpec {
         var spec = spec
-        if asking.contains(spec.name) { spec.risk = max(spec.risk, .medium) }
+        switch permission(spec.name, access: access) {
+        case .ask?: spec.risk = max(spec.risk, .medium)
+        case .allow?: spec.risk = min(spec.risk, .low)
+        default: break
+        }
         if let text = descriptions[spec.name] { spec.description = text }
         switch spec.name {
         case "notes.save":
             spec.inputSchema = editing(spec.inputSchema, removing: ["collection_kind"]) { props in
                 props["collection"] = Schema.string("One of the user's existing projects, topics or lists, e.g. “Pockito” or “Shopping”. Leave out for the Inbox.")
+            }
+        case "notes.update":
+            spec.inputSchema = editing(spec.inputSchema) { props in
+                props["collection"] = Schema.string("Move it to one of the user's existing projects, topics or lists, or the Inbox.")
             }
         case "reminders.create", "watch.create":
             spec.inputSchema = editing(spec.inputSchema) { props in
@@ -93,12 +101,21 @@ extension ExternalToolPolicy {
             don't do what you asked about.
             """,
         "status": "Whether Sidefolk is running, and how many agent sessions, jobs, reminders and watches it keeps track of (counts only).",
-        "notes.search": "Full-text search over the user's notes, ideas, tasks and links. The user is asked to allow each search.",
-        "notes.list": "List the user's newest notes, ideas, tasks and links, optionally for one collection, kind or status. The user is asked to allow each read.",
-        "reminders.list": "List the user's upcoming reminders, soonest first, with their ids. The user is asked to allow each read.",
+        "notes.update": """
+            Change one of the user's notes by its id (from notes_list, notes_search or notes_save): replace its text (the \
+            first line becomes the title), move it to an existing collection, mark a task open or done, replace its tags, or \
+            give it a reminder. Change only what the user asked for. The user can undo it from Sidefolk.
+            """,
+        "notes.trash": """
+            Move one of the user's notes to Sidefolk's Trash by its id, when the user asks to delete it. It stays restorable \
+            for 30 days; only the user can empty the Trash.
+            """,
+        "notes.search": "Full-text search over the user's notes, ideas, tasks and links, with their ids. The user may be asked to allow it.",
+        "notes.list": "List the user's newest notes, ideas, tasks and links with their ids, optionally for one collection, kind or status. The user may be asked to allow it.",
+        "reminders.list": "List the user's upcoming reminders, soonest first, with their ids. The user may be asked to allow it.",
         "agenda.today": """
             What's on the user's plate today: today's reminders with their times, open tasks and how many watches are \
-            running. The user is asked to allow each read.
+            running. The user may be asked to allow it.
             """,
     ]
 

@@ -96,13 +96,11 @@ import Testing
         #expect(ReleaseFeed.newest(offers, channel: .snapshots, after: ReleaseVersion("0.1.0")!) == nil)
     }
 
-    @Test func defaultChannelFollowsTheBuildThatRuns() {
-        let s = UpdateSettings()
-        #expect(s.channel(running: ReleaseVersion("0.1.0-snapshot.411")!) == .snapshots)
-        #expect(s.channel(running: ReleaseVersion("0.1.0")!) == .releases)
+    @Test func releasesOnlyUnlessSnapshotsAreChosen() {
+        #expect(UpdateSettings().effectiveChannel == .releases)
         var chosen = UpdateSettings()
-        chosen.channel = .releases
-        #expect(chosen.channel(running: ReleaseVersion("0.1.0-snapshot.411")!) == .releases)
+        chosen.channel = .snapshots
+        #expect(chosen.effectiveChannel == .snapshots)
     }
 
     @Test func settingsFromBeforeUpdatesExistedDecodeWithDefaults() throws {

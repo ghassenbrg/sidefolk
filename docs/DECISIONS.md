@@ -1163,3 +1163,26 @@ reactions to news, work done, errors and petting by level; every move is announc
 for sound effects later. Not shown in 3D yet: working props (laptop, notepad…); a 3D
 companion's still is one pose.
 D43's "3D, dropped" is superseded for these five companions.
+
+### D52 — Other agents change and delete notes; appearance, how much is said, releases by default (2026-10-30)
+**Decision:** *amends D42 and D46.* Claude Code, Codex and other MCP clients may change a note (`notes.update`:
+text, collection that exists, done, tags, reminder) and move it to the Trash (`notes.trash`) by id, without a
+card by default; only the person empties the Trash, now also all at once (Home › Trash › Empty Trash…, confirmed).
+Settings › Privacy › Other agents sets three groups to Allow, Ask each time or Off: saving (notes, their own
+reminders and watches; default Allow), changing and deleting notes (default Allow) and reading notes, reminders
+and today's plan (default Ask each time). Off hides the tools and refuses a call with words that name the setting.
+Settings › General › Appearance: Same as Mac, Light or Dark for every window. Settings › Voice › How much to say:
+Briefly (D34's one breath) or Everything (the whole answer, still without links, paths or code, up to about two
+minutes, then "The rest is on the screen."). Updates look for releases only unless the person chooses snapshots,
+whatever build runs, and a version the person let pass comes up again the next day instead of after three.
+**Why:** the founder asked an agent to delete notes and was told it couldn't, on purpose; agents are how they
+work, and a note in the Trash is restorable, so the default can trust them while Settings lets anyone tighten it.
+Reads stay asking by default: they are what a hostile repo would want (T4). The rest was asked for directly.
+**Alternatives:** *per-client permissions* (names are self-chosen and unverified, T4); *deleting for good from
+agents* (nothing to undo); *"Always allow" offered on the read card* (one click by accident opens the notebook;
+a setting is a deliberate choice).
+**Implications:** `AgentAccess` in `AppSettings.agentAccess`; `ExternalToolPolicy` groups (`always`, `saving`,
+`reading`, `changing`) and `permission(_:access:)`; `ExternalToolGateway(access:)` reads it at every call;
+the agent skill and MCP instructions say so (installed copies update on the next Connect, as for any skill
+change); `AppSettings.appearance`, `VoiceSettings.length`, `UpdateSettings.effectiveChannel`,
+`UpdateChecker.askAgainAfter` 20 h; `NotebookStore.emptyTrash`.

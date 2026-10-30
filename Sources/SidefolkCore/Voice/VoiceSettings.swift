@@ -8,6 +8,14 @@ public enum SpokenReplies: String, Codable, Sendable, CaseIterable {
     case always
 }
 
+/// How much of an answer is said aloud.
+public enum SpokenLength: String, Codable, Sendable, CaseIterable {
+    /// One breath (D34): the first sentence, or how many things and the first.
+    case brief
+    /// The whole answer, still without links, paths or code, up to a few minutes of speech.
+    case full
+}
+
 /// Which key is held to talk (D34).
 public enum TalkKey: String, Codable, Sendable, CaseIterable {
     /// Tap the Ask shortcut to open the panel, hold it to talk.
@@ -31,6 +39,7 @@ public struct VoiceSettings: Codable, Sendable, Equatable {
     /// A BCP 47 locale ("fr-FR") to listen in; nil follows the app's language.
     public var language: String?
     public var replies: SpokenReplies = .whenSpoken
+    public var length: SpokenLength = .brief
     public var engine: VoiceEngine = .apple
     /// An `AVSpeechSynthesisVoice` identifier; empty picks the best installed voice for the language.
     public var appleVoice = ""
@@ -47,7 +56,7 @@ public struct VoiceSettings: Codable, Sendable, Equatable {
     public static let rates = 0.75...1.5
 
     enum CodingKeys: String, CodingKey {
-        case input, talkKey, language, replies, engine, appleVoice, elevenLabsVoice, elevenLabsVoiceName, rate, volume
+        case input, talkKey, language, replies, length, engine, appleVoice, elevenLabsVoice, elevenLabsVoiceName, rate, volume
     }
 
     /// Every field has a default, so settings written by another version still load.
@@ -58,6 +67,7 @@ public struct VoiceSettings: Codable, Sendable, Equatable {
         read(.talkKey, &talkKey)
         language = try? c.decodeIfPresent(String.self, forKey: .language)
         read(.replies, &replies)
+        read(.length, &length)
         read(.engine, &engine)
         read(.appleVoice, &appleVoice)
         read(.elevenLabsVoice, &elevenLabsVoice)

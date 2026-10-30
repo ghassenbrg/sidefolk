@@ -4,7 +4,7 @@ import Foundation
 public struct UpdateSettings: Codable, Sendable, Equatable {
     /// Look once a day (and a minute after launch) without being asked.
     public var automatic = true
-    /// nil follows the build that runs: a snapshot looks for snapshots too, a release for releases only.
+    /// nil means releases only, whatever build runs: snapshots are for people who choose them.
     public var channel: UpdateChannel?
     /// "Skip This Version": never offered again; a newer one is.
     public var skipped: ReleaseVersion?
@@ -19,7 +19,5 @@ public struct UpdateSettings: Codable, Sendable, Equatable {
         skipped = try? c.decodeIfPresent(ReleaseVersion.self, forKey: .skipped)
     }
 
-    public func channel(running: ReleaseVersion) -> UpdateChannel {
-        channel ?? (running.isPrerelease ? .snapshots : .releases)
-    }
+    public var effectiveChannel: UpdateChannel { channel ?? .releases }
 }

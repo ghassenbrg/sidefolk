@@ -123,7 +123,12 @@ They see descriptions and schemas written for them (`ExternalToolPolicy.external
 to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
 result names the item by kind and id only.
 Reading user data (notes, reminders, `agenda.today`) asks every time; an external caller never gets
-"Always". Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,
+"Always". `notes.update` and `notes.trash` change or trash one note by id (never in "About you",
+never into a new collection, never deleting for good: only the person empties the Trash), each undoable
+from Activity (D52). Settings › Privacy › Other agents (`AgentAccess`) sets each group (saving,
+changing, reading) to Allow, Ask each time or Off; defaults: saving and changing allowed, reading asks.
+"Allow" on reads is the person's explicit choice, shown with what it means; Off hides the tools and
+refuses calls with a message that names the setting. The closed list itself never changes from Settings. Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,
 settings and extensions are not exposed. There is no per-client key: Connect only adds the MCP entry
 (after confirmation and backup), any same-uid process can connect, and names are self-chosen and
 shown as unverified, so the quotas that matter are the ones shared by all external clients. Rate limits: 60 calls/min and 4 concurrent per connection, 120 calls/min for all

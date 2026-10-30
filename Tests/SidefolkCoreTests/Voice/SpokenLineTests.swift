@@ -16,6 +16,16 @@ import Testing
         #expect(SpokenLine.answer("See [the release notes](https://example.com/notes) first.") == "See the release notes first.")
     }
 
+    /// "Everything" reads every sentence and list item, still without code or links, and stops a long answer.
+    @Test func aFullAnswerReadsEverySentenceWithoutCode() {
+        let text = "Here's the plan.\n\n- Check **the logs** at https://example.com/logs\n- Restart it\n\n```sh\nrm -rf /\n```\nThen we're done."
+        #expect(SpokenLine.full(text) == "Here's the plan. Check the logs at example.com. Restart it. Then we're done.")
+        let long = String(repeating: "This sentence is here to make the answer long. ", count: 100)
+        let said = SpokenLine.full(long)
+        #expect(said.count <= SpokenLine.maxFullCharacters + 40)
+        #expect(said.hasSuffix("The rest is on the screen."))
+    }
+
     @Test func codeIsNeverReadAloud() {
         #expect(SpokenLine.answer("Run `git status` to check.") == "Run to check.")
         #expect(SpokenLine.answer("```swift\nprint(1)\n```\nThat prints one.") == "That prints one.")

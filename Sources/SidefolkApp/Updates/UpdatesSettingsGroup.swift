@@ -31,7 +31,7 @@ struct UpdatesSettingsGroup: View {
     }
 
     private var channel: UpdateChannel {
-        model.settings.updates.channel(running: updates.version)
+        model.settings.updates.effectiveChannel
     }
 
     private var footer: Text {

@@ -11,6 +11,11 @@ public enum PresenceMode: String, Codable, Sendable, CaseIterable {
     case menuBarOnly
 }
 
+/// Light or dark windows, or whatever the Mac uses.
+public enum AppAppearance: String, Codable, Sendable, CaseIterable {
+    case system, light, dark
+}
+
 public enum CompanionSize: String, Codable, Sendable, CaseIterable {
     case small, medium, large
     public var points: Double {
@@ -212,6 +217,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// it gives way when another companion is chosen, unless the person named it themselves.
     public var customCompanionName: String?
     public var liveliness: CompanionLiveliness = .balanced
+    public var appearance: AppAppearance = .system
     public var presence: PresenceMode = .always
     public var size: CompanionSize = .medium
     public var eyesFollowPointer = true
@@ -238,6 +244,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var updates = UpdateSettings()
     /// Where the person is, when they share it (D48).
     public var location = LocationSettings()
+    /// What other agents may do through `sidefolk mcp` (D52).
+    public var agentAccess = AgentAccess()
 
     public init() {}
 
@@ -257,6 +265,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         customCompanion = try? c.decodeIfPresent(String.self, forKey: .customCompanion)
         customCompanionName = try? c.decodeIfPresent(String.self, forKey: .customCompanionName)
         read(.liveliness, &liveliness)
+        read(.appearance, &appearance)
         read(.presence, &presence)
         read(.size, &size)
         read(.eyesFollowPointer, &eyesFollowPointer)
@@ -277,6 +286,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.voice, &voice)
         read(.updates, &updates)
         read(.location, &location)
+        read(.agentAccess, &agentAccess)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

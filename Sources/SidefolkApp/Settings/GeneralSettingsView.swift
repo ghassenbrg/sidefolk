@@ -23,6 +23,16 @@ struct GeneralSettingsView: View {
                         .accessibilityLabel("Ask shortcut")
                 }
                 LanguageRow()
+                SettingsRow(title: "Appearance", detail: "Light or dark windows, or the same as your Mac.") {
+                    Picker("Appearance", selection: Binding(get: { model.settings.appearance }, set: { a in model.update { $0.appearance = a } })) {
+                        Text("Same as Mac").tag(AppAppearance.system)
+                        Text("Light").tag(AppAppearance.light)
+                        Text("Dark").tag(AppAppearance.dark)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+                }
             }
 
             SettingsGroup(title: "Quiet mode", footer: "While quiet, reminders still fire, but only important ones interrupt you.") {

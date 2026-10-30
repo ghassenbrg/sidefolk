@@ -90,6 +90,7 @@ final class AppCoordinator {
         onboarding = Onboarding(coordinator: self)
         companion.delegate = self
         applyCompanionSettings()
+        applyAppearance()
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
                                                           object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyCompanionSettings() }

@@ -17864,6 +17864,64 @@
         }
       }
     },
+    "Add to your notebook, remind you, and watch pages or this Mac for you. Their notes are tagged with their name." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإضافة إلى دفترك وتذكيرك ومراقبة الصفحات أو جهاز Mac هذا نيابةً عنك. تحمل ملاحظاتهم اسمهم كوسم."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu deinem Notizbuch hinzufügen, dich erinnern und Seiten oder diesen Mac für dich beobachten. Ihre Notizen tragen ihren Namen als Tag."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir a tu cuaderno, recordarte cosas y vigilar páginas o este Mac por ti. Sus notas llevan su nombre como etiqueta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à votre carnet, vous rappeler des choses, surveiller des pages ou ce Mac pour vous. Leurs notes portent leur nom en étiquette."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungere al tuo taccuino, ricordarti le cose e tenere d’occhio pagine o questo Mac per te. Le loro note hanno il loro nome come tag."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ノートブックへの追加、リマインド、ページやこのMacの見守りを代わりに行います。メモにはそのエージェントの名前がタグとして付きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수첩에 추가하고, 알려 주고, 페이지나 이 Mac을 대신 지켜봅니다. 저장한 메모에는 그 이름이 태그로 붙습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar ao seu caderno, lembrar você de coisas e vigiar páginas ou este Mac por você. As notas deles levam o nome deles como etiqueta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加到你的笔记本、提醒你，并替你留意网页或这台 Mac。它们保存的笔记会带上它们的名字作为标签。"
+          }
+        }
+      }
+    },
     "Add your ElevenLabs key first." : {
       "localizations" : {
         "ar" : {
@@ -20816,7 +20874,66 @@
         }
       }
     },
+    "An AI voice. %@ never reads out links, file paths or code." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوت ذكاء اصطناعي. لا يقرأ %@ أبدًا الروابط أو مسارات الملفات أو الشيفرة بصوت عالٍ."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine KI-Stimme. %@ liest nie Links, Dateipfade oder Code vor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una voz de IA. %@ nunca lee en voz alta enlaces, rutas de archivos ni código."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une voix d’IA. %@ ne lit jamais à voix haute les liens, les chemins de fichiers ni le code."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una voce IA. %@ non legge mai ad alta voce link, percorsi di file o codice."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIの声です。%@はリンク、ファイルパス、コードを読み上げません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 음성입니다. %@은(는) 링크, 파일 경로, 코드를 소리 내어 읽지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma voz de IA. %@ nunca lê em voz alta links, caminhos de arquivo ou código."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 语音。%@ 从不朗读链接、文件路径或代码。"
+          }
+        }
+      }
+    },
     "An AI voice. %@ says one short line, and never reads out links, file paths or code." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -22097,6 +22214,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保存时没说放在哪里的内容，都会放到这里。"
+          }
+        }
+      }
+    },
+    "Appearance" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المظهر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erscheinungsbild"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apariencia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apparence"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aspetto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外観"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모양"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparência"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外观"
           }
         }
       }
@@ -25657,6 +25832,64 @@
         }
       }
     },
+    "Briefly" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "باختصار"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurz"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breve"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brièvement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In breve"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手短に"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "짧게"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumido"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "简短"
+          }
+        }
+      }
+    },
     "Bring back reminder" : {
       "localizations" : {
         "ar" : {
@@ -27404,6 +27637,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改笔记（%@）"
+          }
+        }
+      }
+    },
+    "Change and delete notes" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير الملاحظات وحذفها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen ändern und löschen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar y eliminar notas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier et supprimer des notes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modificare ed eliminare note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモの変更と削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모 변경 및 삭제"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar e apagar notas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改和删除笔记"
           }
         }
       }
@@ -37701,6 +37992,64 @@
         }
       }
     },
+    "Dark" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "داكن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dunkel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oscuro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sombre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scuro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダーク"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다크"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色"
+          }
+        }
+      }
+    },
     "Data folder" : {
       "localizations" : {
         "ar" : {
@@ -38222,6 +38571,196 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除 %@"
+          }
+        }
+      }
+    },
+    "Delete %lld items forever?" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حذف %lld عنصر نهائيًا؟"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حذف عنصر واحد نهائيًا؟ (%lld)"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حذف عنصرين نهائيًا؟ (%lld)"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حذف %lld عناصر نهائيًا؟"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حذف %lld عنصرًا نهائيًا؟"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حذف %lld عنصر نهائيًا؟"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Objekt endgültig löschen?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Objekte endgültig löschen?"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld item forever?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld items forever?"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "¿Eliminar definitivamente %lld elemento?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "¿Eliminar definitivamente %lld elementos?"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Supprimer définitivement %lld élément ?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Supprimer définitivement %lld éléments ?"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Eliminare per sempre %lld elemento?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Eliminare per sempre %lld elementi?"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld項目を完全に削除しますか？"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "항목 %lld개를 영구 삭제할까요?"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Apagar %lld item para sempre?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Apagar %lld itens para sempre?"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "要永久删除 %lld 个项目吗？"
+                }
+              }
+            }
           }
         }
       }
@@ -41426,6 +41965,64 @@
         }
       }
     },
+    "Edit notes, move them, mark tasks done, or move them to the Trash. Only you can empty the Trash." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الملاحظات ونقلها ووضع علامة على المهام المنجزة أو نقلها إلى سلة المهملات. أنت وحدك من يمكنه إفراغ سلة المهملات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen bearbeiten, verschieben, Aufgaben abhaken oder in den Papierkorb legen. Nur du kannst den Papierkorb leeren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar notas, moverlas, marcar tareas como hechas o trasladarlas a la Papelera. Solo tú puedes vaciar la Papelera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier des notes, les déplacer, cocher des tâches, ou les placer dans la Corbeille. Vous seul pouvez vider la Corbeille."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modificare note, spostarle, segnare attività come fatte o spostarle nel Cestino. Solo tu puoi svuotare il Cestino."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモの編集や移動、タスクの完了、ゴミ箱への移動を行います。ゴミ箱を空にできるのはあなただけです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모를 편집하고, 옮기고, 할 일을 완료로 표시하거나 휴지통으로 이동합니다. 휴지통은 나만 비울 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar notas, movê-las, marcar tarefas como feitas ou movê-las para o Lixo. Só você pode esvaziar o Lixo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑笔记、移动笔记、把任务标为完成，或移到废纸篓。只有你能清倒废纸篓。"
+          }
+        }
+      }
+    },
     "Edit reminder" : {
       "localizations" : {
         "ar" : {
@@ -42062,6 +42659,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "空"
+          }
+        }
+      }
+    },
+    "Empty Trash" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إفراغ سلة المهملات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papierkorb leeren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaciar Papelera"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vider la Corbeille"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svuota Cestino"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゴミ箱を空にする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "휴지통 비우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esvaziar Lixo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清倒废纸篓"
+          }
+        }
+      }
+    },
+    "Empty Trash…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إفراغ سلة المهملات…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papierkorb leeren …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaciar Papelera…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vider la Corbeille…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svuota Cestino…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゴミ箱を空にする…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "휴지통 비우기…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esvaziar Lixo…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清倒废纸篓…"
           }
         }
       }
@@ -42892,6 +43605,64 @@
         }
       }
     },
+    "Everything" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل شيء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전부"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
+          }
+        }
+      }
+    },
     "Everything Sidefolk did, who asked, and what was allowed." : {
       "localizations" : {
         "ar" : {
@@ -43004,6 +43775,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 做的每件事以及由谁发起，都会显示在这里。"
+          }
+        }
+      }
+    },
+    "Everything in the Trash is deleted for good. This can't be undone." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحذف كل ما في سلة المهملات نهائيًا. لا يمكن التراجع عن ذلك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles im Papierkorb wird endgültig gelöscht. Das kann nicht widerrufen werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo lo que hay en la Papelera se elimina definitivamente. No se puede deshacer."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce qui est dans la Corbeille est supprimé définitivement. Impossible d’annuler."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutto ciò che è nel Cestino viene eliminato per sempre. Non si può annullare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゴミ箱の中身はすべて完全に削除されます。取り消せません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "휴지통의 모든 항목이 영구 삭제됩니다. 되돌릴 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo o que está no Lixo é apagado para sempre. Não dá para desfazer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "废纸篓里的所有内容都会被永久删除。此操作无法撤销。"
           }
         }
       }
@@ -45988,6 +46817,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "30 分钟"
+          }
+        }
+      }
+    },
+    "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in Activity, and you can undo it there. They never reach your files, commands, the web or Settings." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لـ Claude Code وCodex والتطبيقات الأخرى المتصلة بـ Sidefolk. يظهر كل ما تفعله في النشاط، ويمكنك التراجع عنه هناك. لا تصل أبدًا إلى ملفاتك أو أوامرك أو الويب أو الإعدادات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für Claude Code, Codex und andere mit Sidefolk verbundene Apps. Alles, was sie tun, erscheint unter Aktivität, wo du es widerrufen kannst. Deine Dateien, Befehle, das Web und die Einstellungen erreichen sie nie."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para Claude Code, Codex y otras apps conectadas a Sidefolk. Todo lo que hacen aparece en Actividad, donde puedes deshacerlo. Nunca acceden a tus archivos, comandos, la web ni Ajustes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour Claude Code, Codex et les autres apps connectées à Sidefolk. Tout ce qu’ils font apparaît dans Activité, où vous pouvez l’annuler. Ils n’accèdent jamais à vos fichiers, commandes, au web ni aux Réglages."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per Claude Code, Codex e le altre app collegate a Sidefolk. Tutto ciò che fanno compare nel Registro, dove puoi annullarlo. Non raggiungono mai i tuoi file, i comandi, il web o le Impostazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code、Codex、そのほかSidefolkに接続したアプリが対象です。行ったことはすべてアクティビティに表示され、そこで取り消せます。ファイル、コマンド、Web、設定には決して触れません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code, Codex 등 Sidefolk에 연결된 앱에 적용됩니다. 하는 일은 모두 활동에 표시되며 거기서 되돌릴 수 있습니다. 파일, 명령, 웹, 설정에는 절대 접근하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para o Claude Code, o Codex e outros apps conectados ao Sidefolk. Tudo o que eles fazem aparece em Atividade, onde você pode desfazer. Eles nunca acessam seus arquivos, comandos, a web ou os Ajustes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适用于 Claude Code、Codex 以及其他连接到 Sidefolk 的应用。它们做的每件事都显示在“活动”中，你可以在那里撤销。它们永远无法访问你的文件、命令、网络或设置。"
           }
         }
       }
@@ -50631,6 +51518,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 的询问频度"
+          }
+        }
+      }
+    },
+    "How much to say" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقدار الكلام"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viel gesagt wird"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto decir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantité à dire"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto dire"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "読み上げる量"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "말할 분량"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto falar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说多少"
           }
         }
       }
@@ -64896,6 +65841,64 @@
         }
       }
     },
+    "Light" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فاتح"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hell"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clair"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiaro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浅色"
+          }
+        }
+      }
+    },
     "Light blue" : {
       "localizations" : {
         "ar" : {
@@ -64950,6 +65953,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "浅蓝"
+          }
+        }
+      }
+    },
+    "Light or dark windows, or the same as your Mac." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوافذ فاتحة أو داكنة، أو مثل جهاز Mac."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Helle oder dunkle Fenster, oder wie dein Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventanas claras u oscuras, o como tu Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtres claires ou sombres, ou comme votre Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finestre chiare o scure, oppure come il tuo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライトかダークのウインドウ、またはMacと同じ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라이트 또는 다크 윈도우, 또는 Mac과 같게."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janelas claras ou escuras, ou igual ao seu Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浅色或深色窗口，或与 Mac 相同。"
           }
         }
       }
@@ -79895,6 +80956,64 @@
         }
       }
     },
+    "One short line: the gist, or how many things and the first." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سطر قصير واحد: الخلاصة، أو عدد الأشياء وأولها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein kurzer Satz: das Wichtigste, oder wie viele Dinge und das erste."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una frase corta: lo esencial, o cuántas cosas y la primera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une phrase courte : l’essentiel, ou combien de choses et la première."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una frase breve: l’essenziale, o quante cose e la prima."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "短い一文：要点、またはいくつあるかと最初のひとつ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "짧은 한 줄: 요점, 또는 몇 개인지와 첫 번째."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma frase curta: o essencial, ou quantas coisas e a primeira."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一句短话：要点，或有几项以及第一项。"
+          }
+        }
+      }
+    },
     "One thing needs you." : {
       "localizations" : {
         "ar" : {
@@ -90086,6 +91205,64 @@
         }
       }
     },
+    "Read your notes and reminders" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قراءة ملاحظاتك وتذكيراتك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Notizen und Erinnerungen lesen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer tus notas y recordatorios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire vos notes et rappels"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leggere note e promemoria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモとリマインダーの読み取り"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모와 리마인더 읽기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ler suas notas e lembretes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取你的笔记和提醒"
+          }
+        }
+      }
+    },
     "Read your open reminders in Apple Reminders" : {
       "localizations" : {
         "ar" : {
@@ -99269,6 +100446,64 @@
         }
       }
     },
+    "Same as Mac" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مثل Mac"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie der Mac"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como el Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comme le Mac"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come il Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macと同じ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac과 같게"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Igual ao Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 Mac 相同"
+          }
+        }
+      }
+    },
     "Same as Sidefolk (%@)" : {
       "localizations" : {
         "ar" : {
@@ -99846,6 +101081,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保存密钥"
+          }
+        }
+      }
+    },
+    "Save notes, reminders and watches" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ الملاحظات والتذكيرات والمراقبات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen, Erinnerungen und Beobachtungen speichern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar notas, recordatorios y vigilancias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer notes, rappels et surveillances"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvare note, promemoria e controlli"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモ、リマインダー、見守りの保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모, 리마인더, 지켜보기 저장"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvar notas, lembretes e vigilâncias"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存笔记、提醒和留意事项"
           }
         }
       }
@@ -101089,6 +102382,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索与监视"
+          }
+        }
+      }
+    },
+    "Search and list your notebook, your reminders and today's plan." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البحث في دفترك وتذكيراتك وخطة اليوم وعرضها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Notizbuch, deine Erinnerungen und den heutigen Plan durchsuchen und auflisten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar y listar tu cuaderno, tus recordatorios y el plan de hoy."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chercher et lister votre carnet, vos rappels et le programme du jour."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cercare ed elencare il tuo taccuino, i promemoria e il programma di oggi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ノートブック、リマインダー、今日の予定の検索と一覧。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수첩, 리마인더, 오늘 일정을 검색하고 나열합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar e listar seu caderno, seus lembretes e o plano de hoje."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索并列出你的笔记本、提醒和今天的安排。"
           }
         }
       }
@@ -121805,6 +123156,65 @@
         }
       }
     },
+    "The rest is on the screen." : {
+      "comment" : "Said aloud after reading a long answer as far as it goes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البقية على الشاشة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Rest steht auf dem Bildschirm."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El resto está en la pantalla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La suite est à l’écran."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il resto è sullo schermo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続きは画面に出ています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나머지는 화면에 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O resto está na tela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其余内容在屏幕上。"
+          }
+        }
+      }
+    },
     "The scripted model has no more turns." : {
       "localizations" : {
         "ar" : {
@@ -122972,6 +124382,64 @@
         }
       }
     },
+    "The user turned this off for other agents in Sidefolk's Settings › Privacy › Other agents. Ask them to do it in Sidefolk instead." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أوقف المستخدم هذا للوكلاء الآخرين في إعدادات Sidefolk › الخصوصية › وكلاء آخرون. اطلب منه القيام بذلك في Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Benutzer hat das für andere Agenten in Sidefolks Einstellungen › Datenschutz › Andere Agenten ausgeschaltet. Bitte ihn, es in Sidefolk zu tun."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El usuario desactivó esto para otros agentes en Ajustes › Privacidad › Otros agentes de Sidefolk. Pídele que lo haga en Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’utilisateur a désactivé ceci pour les autres agents dans Réglages › Confidentialité › Autres agents de Sidefolk. Demandez-lui de le faire dans Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’utente ha disattivato questa funzione per gli altri agenti in Impostazioni › Privacy › Altri agenti di Sidefolk. Chiedigli di farlo in Sidefolk."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ユーザーがSidefolkの設定 › プライバシー › ほかのエージェントで、ほかのエージェントに対してこれをオフにしています。Sidefolkで直接行うようユーザーに伝えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용자가 Sidefolk의 설정 › 개인정보 보호 › 다른 에이전트에서 다른 에이전트에 대해 이 기능을 껐습니다. Sidefolk에서 직접 하도록 요청하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O usuário desativou isto para outros agentes em Ajustes › Privacidade › Outros agentes do Sidefolk. Peça a ele que faça isso no Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户已在 Sidefolk 的设置 › 隐私 › 其他智能体中为其他智能体关闭了此功能。请让用户在 Sidefolk 中直接操作。"
+          }
+        }
+      }
+    },
     "The watcher doesn't have a setting called “%@”." : {
       "localizations" : {
         "ar" : {
@@ -123432,6 +124900,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "天气服务返回了我无法读懂的内容。"
+          }
+        }
+      }
+    },
+    "The whole answer, up to about two minutes." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإجابة كاملة، حتى دقيقتين تقريبًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ganze Antwort, bis zu etwa zwei Minuten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La respuesta completa, hasta unos dos minutos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toute la réponse, jusqu’à environ deux minutes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutta la risposta, fino a circa due minuti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回答全体を、2分ほどまで。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "답변 전체를, 2분 정도까지."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A resposta inteira, até uns dois minutos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完整回答，最多约两分钟。"
           }
         }
       }
@@ -130128,6 +131654,7 @@
       }
     },
     "Typed requests get a short spoken answer too." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -130181,6 +131708,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入的请求也会得到简短的语音回答。"
+          }
+        }
+      }
+    },
+    "Typed requests get a spoken answer too." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الطلبات المكتوبة تحصل على إجابة منطوقة أيضًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch getippte Anfragen bekommen eine gesprochene Antwort."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las peticiones escritas también reciben respuesta hablada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les demandes écrites reçoivent aussi une réponse parlée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anche le richieste scritte ricevono una risposta a voce."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力した依頼にも声で答えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "입력한 요청에도 음성으로 답합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedidos digitados também recebem resposta falada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打字的请求也会得到语音回答。"
           }
         }
       }

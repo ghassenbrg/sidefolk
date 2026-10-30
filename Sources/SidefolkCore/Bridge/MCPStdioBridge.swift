@@ -12,9 +12,9 @@ public actor MCPStdioBridge {
     /// What a client shows its model about the server as a whole; the Sidefolk skill says the rest.
     static let instructions = """
         Sidefolk is the user's desktop companion on this Mac. Use it to remind the user at a time, save notes and tasks \
-        to their notebook, tell them when a web page, site, file or program changes, show a live value of this Mac, \
-        notify them when your work finishes, or ask them a quick question on their desktop. Reading their notes and \
-        reminders asks them first. Never save secrets, and send one notice per event.
+        to their notebook and change or delete them when asked, tell them when a web page, site, file or program changes, \
+        show a live value of this Mac, notify them when your work finishes, or ask them a quick question on their \
+        desktop. Reading their notes and reminders may ask them first. Never save secrets, and send one notice per event.
         """
 
     private let connector: any BridgeConnector

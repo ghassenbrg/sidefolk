@@ -58,7 +58,7 @@ import Testing
         let list = try await s.pipes.request(2, "tools/list")
         let tools = list["result"]?["tools"]?.arrayValue ?? []
         let byName = Dictionary(uniqueKeysWithValues: tools.compactMap { t in t.string("name").map { ($0, t) } })
-        #expect(Set(byName.keys) == Set((ExternalToolPolicy.direct.union(ExternalToolPolicy.asking)).map { $0.replacingOccurrences(of: ".", with: "_") }))
+        #expect(Set(byName.keys) == Set((ExternalToolPolicy.all).map { $0.replacingOccurrences(of: ".", with: "_") }))
         // Words written for other agents: they can't create collections, set critical alerts or read web values.
         let save = try #require(byName["notes_save"])
         #expect(save.string("description")?.contains("can't create collections") == true)
@@ -68,6 +68,30 @@ import Testing
         #expect(byName["watch_report"]?["inputSchema"]?["properties"]?["url"] == nil)
         let initialize = try await s.pipes.request(3, "initialize", ["protocolVersion": "2025-06-18", "clientInfo": ["name": "codex-mcp-client"]])
         #expect(initialize["result"]?.string("instructions")?.contains("remind the user") == true)
+        await s.stop()
+    }
+
+    /// "mark the oat milk task done", then "delete it" (D52): allowed by default, to the Trash only; turned off,
+    /// refused with words that say where to change it.
+    @Test func changeAndTrashANoteThenTurnItOff() async throws {
+        let s = try await Stack()
+        let saved = try await s.call("notes_save", ["text": "Oat milk", "kind": "task"])
+        #expect(!saved.isError)
+        let id = try #require(saved.text.firstMatch(of: /\(id ([^)]+)\)/)?.1).description
+        let done = try await s.call("notes_update", ["id": .string(id), "status": "done"])
+        #expect(!done.isError, "\(done.text)")
+        #expect(try await s.runtime.notebook.item(id: id)?.status == .done)
+        let trashed = try await s.call("notes_trash", ["id": .string(id)])
+        #expect(!trashed.isError, "\(trashed.text)")
+        #expect(try await s.runtime.notebook.item(id: id)?.deletedAt != nil)
+
+        await s.runtime.settings.update { $0.agentAccess.change = .off }
+        let list = try await s.pipes.request(5, "tools/list")
+        let names = Set((list["result"]?["tools"]?.arrayValue ?? []).compactMap { $0.string("name") })
+        #expect(!names.contains("notes_update") && !names.contains("notes_trash") && names.contains("notes_save"))
+        let refused = try await s.call("notes_update", ["id": .string(id), "status": "open"])
+        #expect(refused.isError)
+        #expect(refused.text.contains("Other agents"))
         await s.stop()
     }
 

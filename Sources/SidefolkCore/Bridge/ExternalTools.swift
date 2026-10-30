@@ -3,19 +3,38 @@ import Foundation
 /// Which Sidefolk tools other AI agents (any MCP client, through `sidefolk mcp`) may see and use
 /// (SECURITY.md T4). An agent working in a hostile repo must not be able to borrow Sidefolk's
 /// folder grants, network or commands, so the list is by name and closed: files, clipboard, open,
-/// web, command watchers, skills, settings and extensions never appear.
+/// web, command watchers, skills, settings and extensions never appear. Within it, the person chooses
+/// in Settings › Privacy › Other agents what each group may do (`AgentAccess`).
 public enum ExternalToolPolicy {
-    /// Exposed and run without asking when the tool itself is low risk. Nothing here reads the
-    /// user's data: `watch.list` shows an agent only its own watchers, `reminders.cancel` reaches only
-    /// its own reminders, `watch.report` reads only this Mac's load, and `status` only counts.
-    public static let direct: Set<String> = [
+    /// Always offered and run without asking: they reach the user only through Sidefolk's own bubbles,
+    /// and `status` only counts.
+    public static let always: Set<String> = ["notify.user", "ask.user", "status"]
+    /// Adding to what the user has: `watch.list` shows an agent only its own watchers, `reminders.cancel`
+    /// reaches only its own reminders, `watch.report` reads only this Mac's load.
+    public static let saving: Set<String> = [
         "notes.save", "reminders.create", "reminders.cancel", "watch.create", "watch.report", "watch.list", "watch.stop",
-        "notify.user", "ask.user", "status",
     ]
-    /// Exposed, but reading the user's data (notes, reminders, today's plan) always asks first (T4).
-    public static let asking: Set<String> = ["notes.search", "notes.list", "reminders.list", "agenda.today"]
+    /// Reading the user's data (notes, reminders, today's plan).
+    public static let reading: Set<String> = ["notes.search", "notes.list", "reminders.list", "agenda.today"]
+    /// Changing the user's notes, or moving them to the Trash, where they stay restorable for 30 days.
+    /// Never deleting for good: only the user empties the Trash.
+    public static let changing: Set<String> = ["notes.update", "notes.trash"]
 
-    public static func isExposed(_ name: String) -> Bool { direct.contains(name) || asking.contains(name) }
+    public static var all: Set<String> { always.union(saving).union(reading).union(changing) }
+
+    /// What `access` lets other agents do with the tool called `name`; nil for a tool they never get.
+    public static func permission(_ name: String, access: AgentAccess) -> AgentPermission? {
+        if always.contains(name) { return .allow }
+        if saving.contains(name) { return access.save }
+        if reading.contains(name) { return access.read }
+        if changing.contains(name) { return access.change }
+        return nil
+    }
+
+    public static func isExposed(_ name: String, access: AgentAccess = AgentAccess()) -> Bool {
+        guard let p = permission(name, access: access) else { return false }
+        return p != .off
+    }
 
     /// Why this external call is refused before it reaches Guard, if it is. The external schemas
     /// already leave these out; this holds even if a schema check were ever skipped.
@@ -67,9 +86,12 @@ public final class ExternalToolGateway: Sendable {
     private let exposed = ToolRegistry()
     private let executor: ToolExecutor
 
+    private let access: @Sendable () -> AgentAccess
+
     public init(registry: ToolRegistry, permissions: PermissionStore, broker: ApprovalBroker, activity: ActivityStore,
-                events: EventBus, clock: any Clock = SystemClock()) {
+                events: EventBus, clock: any Clock = SystemClock(), access: @escaping @Sendable () -> AgentAccess = { AgentAccess() }) {
         source = registry
+        self.access = access
         executor = ToolExecutor(registry: exposed, permissions: permissions, broker: broker, activity: activity,
                                 events: events, clock: clock)
     }
@@ -79,18 +101,28 @@ public final class ExternalToolGateway: Sendable {
 
     /// The tools an external agent sees, by their specs.
     public func specs() -> [ToolSpec] {
-        source.all.filter { ExternalToolPolicy.isExposed($0.spec.name) }.map { ExternalToolPolicy.externalSpec($0.spec) }
+        let access = access()
+        return source.all.filter { ExternalToolPolicy.isExposed($0.spec.name, access: access) }
+            .map { ExternalToolPolicy.externalSpec($0.spec, access: access) }
     }
 
     public func call(_ name: String, input: JSONValue, client: String) async -> ToolOutcome {
         let caller = Caller.external(client: client)
-        guard let base = source.tool(named: name), ExternalToolPolicy.isExposed(base.spec.name) else {
+        let access = access()
+        if let base = source.tool(named: name), ExternalToolPolicy.permission(base.spec.name, access: access) == .off {
+            Log.shared.info("bridge", "external tool turned off", ["client": client, "tool": name.clipped(80)])
+            let act = ToolActivity(id: Identifier.make(), tool: name, title: base.spec.title, summary: "Turned off", category: .system,
+                                   caller: caller, error: "Turned off in Settings")
+            return ToolOutcome(activity: act, status: .failed(UserFacingError(
+                "The user turned this off for other agents in Sidefolk's Settings › Privacy › Other agents. Ask them to do it in Sidefolk instead.")))
+        }
+        guard let base = source.tool(named: name), ExternalToolPolicy.isExposed(base.spec.name, access: access) else {
             Log.shared.info("bridge", "external tool refused", ["client": client, "tool": name.clipped(80)])
             let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system,
                                    caller: caller, error: "Not exposed")
             return ToolOutcome(activity: act, status: .failed(UserFacingError("Sidefolk doesn't offer a tool called \(name) to other agents.")))
         }
-        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec))
+        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec, access: access))
         exposed.register(facade)
         let input = ExternalToolPolicy.adjustedInput(base.spec.name, input: input, schema: facade.spec.inputSchema, client: client)
         // Evaluating medium calls as tainted makes Guard ask every time and never offer

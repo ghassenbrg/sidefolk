@@ -27,11 +27,22 @@ struct VoiceSettingsView: View {
                 ChoiceRow(title: "Off", detail: "Replies stay on screen.", selected: settings.replies == .off) { voice.update { $0.replies = .off } }
                 ChoiceRow(title: "Only when I spoke", detail: "A short spoken answer to what you said aloud. Typed requests get text.",
                           selected: settings.replies == .whenSpoken) { voice.update { $0.replies = .whenSpoken } }
-                ChoiceRow(title: "Always", detail: "Typed requests get a short spoken answer too.",
+                ChoiceRow(title: "Always", detail: "Typed requests get a spoken answer too.",
                           selected: settings.replies == .always) { voice.update { $0.replies = .always } }
+                SettingsRow(title: Text("How much to say"),
+                            detail: settings.length == .brief ? Text("One short line: the gist, or how many things and the first.")
+                                : Text("The whole answer, up to about two minutes.")) {
+                    Picker("How much to say", selection: Binding(get: { settings.length }, set: { l in voice.update { $0.length = l } })) {
+                        Text("Briefly").tag(SpokenLength.brief)
+                        Text("Everything").tag(SpokenLength.full)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                .disabled(settings.replies == .off)
             }
 
-            SettingsGroup(title: "Voice", footer: "An AI voice. \(name) says one short line, and never reads out links, file paths or code.") {
+            SettingsGroup(title: "Voice", footer: "An AI voice. \(name) never reads out links, file paths or code.") {
                 EngineOption(engine: .apple, voice: voice)
                 EngineOption(engine: .elevenLabs, voice: voice)
                 SettingsRow(title: Text("Speed"), detail: Text(verbatim: settings.rate.formatted(.number.precision(.fractionLength(2))) + "×")) {

@@ -78,14 +78,14 @@ import Testing
         #expect(await checker.isDue())
     }
 
-    @Test func aVersionIsBroughtUpAgainOnlyAfterThreeDays() async throws {
+    @Test func aVersionIsBroughtUpAgainTheNextDay() async throws {
         let db = try AppDatabase.inMemory()
         let clock = ManualClock(TestEnv.referenceDate)
         let (checker, _) = checker([.response(HTTPResponse(status: 200, body: list))], clock: clock, db: db)
         let offer = try #require(try await checker.check().first)
         #expect(await checker.shouldAsk(about: offer))
         await checker.markAsked(offer)
-        clock.advance(86_400)
+        clock.advance(6 * 3_600)
         #expect(await !checker.shouldAsk(about: offer))
         var newer = offer
         newer.version = ReleaseVersion("0.1.0-snapshot.431")!

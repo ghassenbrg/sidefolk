@@ -32,8 +32,10 @@ your client's name (shown to the user as unverified). You act as another app, no
 | "show the CPU every 10 s" | `watch_report` |
 | "notify me when you're done" | `notify_user`, once, at the end |
 | "ask me before you push" | `ask_user`, then act only on a yes |
-| "what's on my plate today" | `agenda_today` (the user approves the read) |
-| "what did I save about X" | `notes_search` (the user approves the read) |
+| "what's on my plate today" | `agenda_today` (the user may approve the read) |
+| "what did I save about X" | `notes_search` (the user may approve the read) |
+| "mark the oat milk task done", "fix the typo in that note" | `notes_search` or `notes_list` for the id, then `notes_update` |
+| "delete that note", "remove the old ideas about X" | find the id, then `notes_trash` |
 | "is Sidefolk running?" | `status` |
 
 Use Sidefolk only for what the user asked. Don't set reminders or watches on your own initiative, and don't
@@ -72,6 +74,20 @@ name finds it ("shopping" finds "Shopping list"), and so does the name with "lis
 ("shopping list" finds "Shopping"). Other agents can't create collections: if the result says
 there is none by that name, save without `collection` (it goes to the Inbox) or ask the user to create it in
 Sidefolk. Notes you save carry a tag with your name.
+
+### notes_update, notes_trash
+
+Change or delete one of the user's notes by its id (`notes_save`, `notes_list` and `notes_search` give ids):
+
+```json
+{"id": "…", "status": "done"}
+{"id": "…", "text": "Pockito: try the offline cache first\nIt halves cold starts on 3G and 4G.", "tags": ["perf"]}
+{"id": "…", "collection": "Inbox"}
+```
+
+`notes_trash {"id": "…"}` moves a note to Sidefolk's Trash, where the user can restore it for 30 days; only the
+user empties the Trash. Change and delete only what the user asked about, one note per call, and say what you
+changed. Moving needs an existing collection.
 
 ### watch_create
 
@@ -128,9 +144,9 @@ with something that doesn't need it, and say so in your chat. Ask one question a
 
 ### agenda_today, reminders_list, notes_search, notes_list
 
-These read the user's own data, so Sidefolk shows them a card first ("Codex wants to read today's reminders
-and open tasks"). Call one, wait for it, and if the result says they declined, don't ask again; answer from
-what you have. `agenda_today` is the one to use for "what's on my plate today": today's reminders, open tasks
+These read the user's own data, so by default Sidefolk shows them a card first ("Codex wants to read today's
+reminders and open tasks"); the user may have allowed reads without a card. Call one, wait for it, and if the
+result says they declined, don't ask again; answer from what you have. `agenda_today` is the one to use for "what's on my plate today": today's reminders, open tasks
 and how many watches are running, in one read.
 
 ### status
@@ -157,11 +173,14 @@ when the user asked for it.
 
 ## Approvals and what is off limits
 
-- Saving notes, setting and cancelling your reminders, watching, reports, notices, questions and `status` run
-  at once.
-- Reading the user's data asks every time, on their desktop; nothing you do can make it "always allowed". The
-  card waits two minutes, then counts as a no. While one of your cards waits, your next read is refused at
-  once: wait for the first.
+- The user chooses in Sidefolk (Settings › Privacy › Other agents) what you may do: saving, changing and
+  deleting notes, and reading their data, can each be allowed, ask each time, or be off. By default saving,
+  setting and cancelling your reminders, watching, reports, changing notes and moving them to the Trash run at
+  once; notices, questions and `status` always do.
+- Reading the user's data asks every time by default, on their desktop. A card waits two minutes, then counts
+  as a no. While one of your cards waits, your next call that asks is refused at once: wait for the first.
+- A result saying the user turned something off is final: tell them they can do it in Sidefolk, or change it
+  in Settings › Privacy › Other agents. Don't retry.
 - You can't answer Sidefolk's approvals, and you never need to: don't ask the user to approve things in
   Sidefolk "so you can continue" unless a result says a card is waiting.
 - Not available to other agents, by design: creating collections, critical alerts, watches that run
