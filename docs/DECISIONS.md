@@ -1237,6 +1237,11 @@ Sidefolk", ids under `dev.sidefolk.`).
   a companion's files are exactly its four (`characters/<name>.js`, `assets/<name>.glb`, `portraits/`, `avatars/`).
   Entries that are malformed or need a newer Sidefolk or 3D engine are left out. Downloads come only from
   `github.com` and GitHub's file hosts, as updates do (T31); the last good catalog stays for offline use.
+- **A published version is never rebuilt.** A catalog is used for 30 minutes, so a pack replaced under the same
+  name (a new signature alone changes its bytes) would no longer match the digest a copy holds. `build.py` keeps
+  the release's pack of every version already published and stops when an add-on's files changed without a new
+  version (each entry records a `source` digest); `publish.sh` skips packs already there. And when a pack doesn't
+  arrive as its entry says, Sidefolk fetches the catalog again and, if the entry changed, the pack once more.
 - **Companions** download when picked in Settings › Companion (dashed cards with the seal and the size), install
   into `<home>/Addons/Companions/<name>/`, and the 3D page reads them beside the app's own; Control-click removes
   one (the one in use gives way to Mochi). A companion chosen before it moved, or whose files went missing, is

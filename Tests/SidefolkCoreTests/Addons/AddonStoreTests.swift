@@ -190,6 +190,22 @@ import Testing
         #expect(await g.store.installedCompanions().isEmpty)
     }
 
+    /// The release changed after the catalog was fetched (a pack rebuilt under the same name): the catalog is
+    /// fetched again and the pack installed as it now describes it.
+    @Test func aPackNewerThanTheCatalogFetchesTheCatalogAgain() async throws {
+        let g = try Gallery()
+        try g.companion("otter")
+        try g.publish()
+        let old = try #require(try await g.store.catalog().companion("otter"))
+        try g.companion("otter", files: Gallery.companionFiles("otter").merging(["assets/otter.glb": "glTF, rebuilt with more in it"]) { _, b in b })
+        try g.publish()
+        let installed = try await g.store.install(companion: old)
+        #expect(installed.version == "1.0.0")
+        let glb = g.paths.addons.appendingPathComponent("Companions/otter/assets/otter.glb")
+        #expect(try String(contentsOf: glb, encoding: .utf8) == "glTF, rebuilt with more in it")
+        #expect(await g.store.stored()?.companion("otter")?.sha256 != old.sha256, "the store keeps the new catalog")
+    }
+
     @Test func aPackNamingAnotherAddonIsRefused() async throws {
         let g = try Gallery()
         let made = try g.pack("otter", id: "dev.sidefolk.companions.stoat", files: Gallery.companionFiles("otter"))

@@ -83,6 +83,8 @@ final class AddonGalleryModel {
         } catch {
             failures[entry.id] = error as? UserFacingError ?? UserFacingError("\(entry.name) couldn't be installed.")
         }
+        // The store fetches the catalog again when a pack is newer than it.
+        catalog = await store.stored() ?? catalog
     }
 
     /// Removes a companion; the one in use gives way to Mochi first.
@@ -124,6 +126,7 @@ final class AddonGalleryModel {
         } catch {
             failures[entry.id] = error as? UserFacingError ?? UserFacingError("\(entry.name) couldn't be downloaded.")
         }
+        catalog = await store.stored() ?? catalog
     }
 }
 

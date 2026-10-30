@@ -12,6 +12,14 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
+  that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
+  gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with
+  the new entry, and sidefolk-addons' `build.py` keeps the published pack of every version already released
+  (stopping when files changed without a new version), `publish.sh` uploading only new ones. *Checked:* a test of
+  a rebuilt pack under an older catalog; a signed build kept all 13 published packs byte for byte; check.sh on
+  the staged files. *Not yet:* the gallery release still has the catalog without `source` digests until the
+  next publish (harmless: older Sidefolk ignores the key).
 - **Robot retired, gallery shelves and search, add buttons in sight (D56):** the original robot companion and its
   rig are gone (saved settings move to Mochi). Settings › Extensions › Gallery: search, shelves (Everyday, Files,
   Developers, Fun) with counts, grouped by shelf; Install from Folder… and Add MCP Server… at the top of the page.

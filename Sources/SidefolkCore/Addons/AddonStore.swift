@@ -99,6 +99,24 @@ public actor AddonStore {
     /// Downloads `entry`'s pack and checks it; returns the folder of its files (`Downloads/<id>/…/Resources`).
     /// The folder stays until `discard(_:)` or the next launch.
     public func fetch(_ entry: AddonEntry, progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws -> URL {
+        try await fetchCurrent(entry, progress: progress).folder
+    }
+
+    /// `fetch`, and the entry the pack matched. A pack that doesn't arrive as `entry` describes may be newer than
+    /// the catalog it was looked up in (the release changed since that catalog was fetched): when the catalog,
+    /// fetched again, describes it otherwise, the pack is fetched once more as the new entry says.
+    private func fetchCurrent(_ entry: AddonEntry, progress: @escaping @Sendable (Double) -> Void) async throws -> (folder: URL, entry: AddonEntry) {
+        do {
+            return (try await download(entry, progress: progress), entry)
+        } catch {
+            guard let newer = try? await catalog(refresh: true).entry(entry.id), newer != entry,
+                  newer.kind == entry.kind, newer.companion == entry.companion else { throw error }
+            Log.shared.info("addons", "the gallery changed since its catalog was fetched; trying again", ["id": entry.id])
+            return (try await download(newer, progress: progress), newer)
+        }
+    }
+
+    private func download(_ entry: AddonEntry, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
         guard let source else { throw UserFacingError("This copy of Sidefolk has no add-on gallery.") }
         let work = try fresh(downloads.appendingPathComponent(entry.id, isDirectory: true))
         do {
@@ -165,7 +183,7 @@ public actor AddonStore {
     @discardableResult
     public func install(companion entry: AddonEntry, progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws -> InstalledCompanion {
         guard entry.kind == .companion, let name = entry.companion else { throw UserFacingError("That add-on isn't a companion.") }
-        let resources = try await fetch(entry, progress: progress)
+        let (resources, entry) = try await fetchCurrent(entry, progress: progress)
         defer { discard(entry) }
         try Self.checkCompanionFiles(resources, name: name)
         let staged = folder.appendingPathComponent(".companion-\(UUID().uuidString)", isDirectory: true)
