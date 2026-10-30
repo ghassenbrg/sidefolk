@@ -48,7 +48,9 @@ import Testing
         #expect(director.restPose.squash.height < standing.squash.height)
         #expect(director.restPose.feetSplay > 0)
         director.setPosture(.lie, animated: false)
-        #expect(director.restPose.squash.height < 0.9)
+        // Lying down settles it low with its head resting aside; nothing is squashed (D59).
+        #expect(director.restPose.lift < 0 && director.restPose.headTilt > 0)
+        #expect(director.restPose.squash.height >= standing.squash.height)
         // Any other state stands up, and posture can't be changed there.
         director.show(.thinking, animated: false)
         #expect(director.posture == .stand)

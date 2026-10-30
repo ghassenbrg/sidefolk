@@ -1,0 +1,8 @@
+{
+ "head": "purl-head:1",
+ "armL": 2,
+ "torso": 3,
+ "armR": 4,
+ "footL": 5,
+ "footR": 6
+}

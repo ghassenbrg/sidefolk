@@ -43,6 +43,10 @@ struct Pose: Equatable, Sendable {
     var shine: CGFloat = 1
     /// Its signature thing in hand (1) or put away (0).
     var holding: CGFloat = 0
+    /// The head drooping, asleep or dozing: tilted (radians, positive toward our right) and sunk this far
+    /// around the neck. A body without a head of its own leans and sinks instead.
+    var headTilt: CGFloat = 0
+    var headDrop: CGFloat = 0
 
     static func eyes(_ left: Stroke, _ right: Stroke? = nil) -> (Stroke, Stroke) {
         (left, right ?? left.mirrored)

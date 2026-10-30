@@ -70,7 +70,8 @@ import Testing
         var idle = Choreography.look(for: .idle)
         SoftExpressions.adapt(&idle, for: .idle, face: face)
         #expect(idle.pose.eyeL == Ink.bead.scaled(face.scale))
-        #expect(idle.pose.mouthShown == 0)
+        // The 2D Mochi smiles at rest (D59).
+        #expect(idle.pose.mouthShown == 1)
         #expect(idle.pose.earFold == 0)
     }
 

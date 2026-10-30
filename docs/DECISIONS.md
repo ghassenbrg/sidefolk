@@ -1357,6 +1357,38 @@ Step 5's one bar searches with `SidefolkRuntime.find` and sends words only throu
 (`AppServices.ask`: Return as today, ⌘Return asks the AI even what is understood without it, ⌥Return saves a note),
 so nothing new can run a tool. The Ask panel keeps its own input (voice, drops, replies) and gains the same results.
 
+### D59 — Every companion also comes in 2D: painted cut-out parts on the vector rig, a real 2D look (2026-10-30)
+**Decision:** all ten companions (Mochi, Spark and the gallery's Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl, Rune) can
+be shown in 2D or 3D (Settings › Companion › Look; 3D is how they come). The 2D look is set by one style target,
+`companions-2d/references/lineup-2d.webp` (Codex image gen from the 3D portraits): a 2D cartoon, not a flat copy of the
+3D models. Nine are **painted cut-out rigs**, as 2D animated series rig them: Codex image gen paints each character's
+parts on a magenta sheet (blank-faced head, body, arms, ears, tail, feet), `companions-2d/parts/cut.py` keys and cuts
+them, and the vector rig (D30) moves them: the head turns and tilts, ears and tails sway, arms raise for props, feet
+splay; the eyes, mouth, nose and cheeks stay drawn live on top, so blinks, gaze, every expression and talking work as
+before. Each part's vector outline, measured off the target in canvas units, places the painting, takes clicks and
+anchors bubbles. Mochi keeps a flat vector drawing in the same look (the founder approved it). The engine gained
+`Painted`/`Painting` (`Species.painted`), the flat look (`Shading.flat`, `Flat`) for vector parts, cartoon eyes with a
+coloured iris and two catchlights, tails, hovering, a single lens eye, outward arms, shaped feet, and per-species eye,
+mouth and cheek sizes. The gallery companions' 2D rigs and paintings are built into the app (760 KB of 256-colour PNGs
+for nine); their packs still download when picked, and in 3D they keep running on their stand-in rigs. Nori comes
+wearing the shared scarf in mint. The folks and custom companions keep the soft look.
+**Why:** the founder wants each official character to have its own 2D form, light on the Mac, and found the old 2D
+Mochi and Spark out of date. They asked that 2D not try to look 3D, stay smooth and alive, and match the style target;
+hand-drawn vector parts fell well short of it ("they look very ugly"), and the founder pointed at image generation.
+Painted parts give the target's quality, and keeping the rig keeps everything a single picture can't do.
+**Alternatives:** vector-only parts (D30's way; far from the target's finish); a single painted image per pose or sprite
+sheets (no gaze, props, morphing faces or follow-through, D30); shipping the 2D rigs as data in gallery packs (D43's
+format can't say tails, hovering, single eyes or paintings yet, and packs would need a new file rule).
+**Implications:** `SidefolkCharacter` has resources (`Art/<companion>/<part>.png`, found through `Bundle.module` in the
+app's Resources); `CharacterSpecies.only3D` became `inGallery`; `CharacterLook.threeD` no longer forces gallery
+companions into 3D; `CompanionChoice.dimensions` is `[.threeD, .twoD]` for all ten; `standardStyle` dresses Nori.
+`sidefolk-render` compares every companion with its cut-out target (`overlay-<id>.png`). Asleep and lying down, a soft companion
+is no longer squashed (a painted body would distort): it sinks onto its feet, which stay planted and come forward,
+its head droops forward and aside (`Pose.headTilt`, `headDrop`; a body without a head leans and sinks as a whole),
+its arms hang in front, its eyes close in plain ink over a small round mouth, and asleep its head nods with each
+slow breath (until the loops settle, D20). How a 2D companion is made:
+`companions-2d/README.md`.
+
 ### D60 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
 **Decision:**
 - **Adding one.** A 3D companion made the gallery's way (`companions-3d/`) can be added without being published:

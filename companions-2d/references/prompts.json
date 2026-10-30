@@ -1,0 +1,53 @@
+{
+  "lineup-2d.webp": {
+    "tool": "codex-imagegen (Codex image_gen), 2026-10-30",
+    "references": [
+      "the ten 3D portraits in two rows: mochi, spark, ember, kiko, nimbo / folio, iris, nori, purl, rune"
+    ],
+    "prompt": "Style target for the 2D versions of ten desktop companion characters. The reference image shows the ten characters as 3D renders, in two rows of five (top: white rabbit with navy ear tips and teal scarf; cream robot with dark face screen and headphones; red fox with big tail; kid astronaut in orange suit with curly hair; lilac cloud with a little star. Bottom: coral folded-paper creature; yellow camera with a big lens; tuxedo cat with round glasses and mint scarf; patchwork plush doll with a big square head; mossy grey stone golem). Redraw all ten, same order and layout, as true 2D cartoon characters, NOT 3D: flat colour fills, clean smooth coloured outlines (a darker tone of each part's fill, never black), exactly one hard-edged cel shadow tone on the lower-right side of each part, a small flat highlight shape, big simple cartoon eyes (dark oval with a large white catchlight and a small second one), flat pink cheek ovals, simplified friendly shapes like a modern 2D animated series or premium sticker set. No gradients, no textures, no fur strands, no 3D lighting, no drop shadows except a flat soft oval on the floor. Each full body, frontal, standing, keep each character's colours and signature details from the reference. Plain very light grey background, landscape, generous spacing, no text, no labels, no watermark."
+  },
+  "parts": {
+    "sheets": "parts/generate.sh with parts/prompts.tsv, references targets/<name>.webp and lineup-2d.webp, 2026-10-30",
+    "spark-head.webp": {
+      "why": "the sheet's helmet came out a wide flat visor",
+      "references": [
+        "targets/spark.webp",
+        "the sheet's helmet on magenta"
+      ],
+      "prompt": "A single cut-out animation part: only the HEAD of the little robot in the middle of the first image, drawn exactly like it there: a rounded, almost square warm-white helmet about 1.3 times as wide as it is tall (NOT a wide flat visor like the second image), round headphones on both sides (white cups with an aqua band), a big dark navy face screen with rounded corners covering most of the front, the screen EMPTY (no eyes, no mouth, only a soft white reflection at its top left), WITHOUT the antenna, without neck or body. flat 2D cartoon style exactly like the references: flat colour fills, clean smooth dark outlines of even weight, one soft cel shadow tone, small glossy highlights, no gradients, no textures, no 3D rendering. Centred, large, on one solid flat pure magenta (#FF00FF) background everywhere, no floor shadow, no text, no watermark."
+    },
+    "iris-body.webp": {
+      "why": "the sheet's camera came out wide",
+      "references": [
+        "targets/iris.webp",
+        "the sheet's body on magenta"
+      ],
+      "prompt": "A single cut-out animation part: only the BODY of the yellow camera character in the middle of the first image, drawn exactly like it there: a rounded, almost SQUARE butter-yellow camera (about 1.1 times as wide as tall, NOT wide like the second image), the viewfinder window at top left, a dark slot on top, the orange shutter button on its top right corner, and the big round lens a little right of centre with its dark brown barrel and EMPTY light-blue glass (no pupil, no catchlights), no mouth, no blush, WITHOUT arms and WITHOUT feet. flat 2D cartoon style exactly like the references: flat colour fills, clean smooth dark outlines of even weight, one soft cel shadow tone, small glossy highlights, no gradients, no textures, no 3D rendering. Centred, large, on one solid flat pure magenta (#FF00FF) background everywhere, no floor shadow, no text, no watermark."
+    },
+    "purl-head.webp": {
+      "why": "the sheet's head came out a wide flat oval",
+      "references": [
+        "targets/purl.webp",
+        "lineup-2d.webp"
+      ],
+      "prompt": "A single cut-out animation part: only the HEAD of the patchwork plush in the middle of the first image, drawn exactly like it there: a big soft-square linen head about 1.45 times as wide as it is tall (NOT a wide flat oval), its top edge rising a little to the right, a stitched seam down its left side and a denim-blue patch sewn over its top right corner with cream stitches across its edge, with a COMPLETELY BLANK FACE: no eyes, no mouth, no blush; no neck, no body. flat 2D cartoon style exactly like the references: flat colour fills, clean smooth dark outlines of even weight, one soft cel shadow tone, small glossy highlights, no gradients, no textures, no 3D rendering. Centred, large, on one solid flat pure magenta (#FF00FF) background everywhere, no floor shadow, no text, no watermark."
+    },
+    "nori-fix-sheet.webp": {
+      "why": "the sheet's head came out flat and wide, its ears lying sideways and its body with paws (superseded by nori-body-sheet.webp)",
+      "references": [
+        "targets/nori.webp",
+        "lineup-2d.webp"
+      ],
+      "prompt": "Cut-out animation parts for the tuxedo cat in the middle of the first image, drawn exactly like it there, SEPARATED with generous empty space between them, each complete with its own closed outline: 1) the HEAD: a round head about 1.5 times as wide as it is tall (NOT flat and wide), charcoal on top with the cream lower face and a narrow cream blaze rising between the eyes to a point, WITHOUT EARS (plain smooth top) and with a COMPLETELY BLANK FACE: no eyes, no glasses, no nose, no mouth, no whiskers, no blush; 2) the LEFT EAR and 3) the RIGHT EAR, each standing UPRIGHT, a tall pointed triangle with rounded corners, charcoal with a pink inside, with a little extra at its base; 4) the BODY: charcoal with the cream belly and two short legs that END ABOVE THE PAWS (no paws, no feet: the paws are separate pieces), without scarf, arms, head or tail. (Same style sentence, without 'Centred, large'.)"
+    },
+    "ember head": "the sheet painted a face on the head; an edit to blank it was refused by the image model's safety filter (a false positive), so parts/blank.py took the face off the sheet's head instead (parts/ember.json: \"ember-head:1\", made by: python3 companions-2d/parts/blank.py parts/ember/02.png parts/ember-head/01.png)",
+    "nori-body-sheet.webp": {
+      "why": "the founder found the cat off: a lanky body pinched under the head, thin arms poking out, too little cream on the face",
+      "references": [
+        "targets/nori.webp",
+        "lineup-2d.webp"
+      ],
+      "prompt": "Cut-out animation parts for the tuxedo cat in the middle of the first image, drawn exactly like it there in the flat 2D cartoon style of the references (flat colour fills, clean smooth dark outlines of even weight, one soft cel shadow tone, small glossy highlights, no gradients, no textures, no 3D rendering). Draw these parts SEPARATED with generous empty space between them, never touching, each complete with its own closed outline: 1) the HEAD: big and round, about 1.4 times as wide as it is tall, charcoal only over the top third and the upper sides, the WHOLE lower face cream (from the level of the eyes down to the chin, cheek to cheek, a wide cream area), and a narrow cream blaze rising from it between the eyes up the forehead; WITHOUT ears (plain smooth top) and with a COMPLETELY BLANK FACE: no eyes, no glasses, no nose, no mouth, no whiskers, no blush; 2) the LEFT EAR and 3) the RIGHT EAR, each upright, a pointed triangle with rounded corners, charcoal with a pink inside, a little extra at the base; 4) the BODY: CHUBBY and round like a pear, about as wide as it is tall, with soft round shoulders as wide as the cat's lower face, charcoal with a big cream oval belly from the chest down between the legs, and two SHORT stubby legs that end above the paws (no paws, no feet); without arms, head, tail or scarf; 5) the LEFT ARM and 6) the RIGHT ARM: short and THICK, rounded, charcoal, hanging straight down, each ending in a round cream paw. On one solid flat pure magenta (#FF00FF) background everywhere, no floor shadow, no text, no labels, no watermark."
+    }
+  }
+}

@@ -23,7 +23,8 @@ let package = Package(
             name: "SidefolkCore",
             dependencies: [.product(name: "GRDB", package: "GRDB.swift")]
         ),
-        .target(name: "SidefolkCharacter"),
+        // Art: the 2D companions' painted parts (D59).
+        .target(name: "SidefolkCharacter", resources: [.copy("Art")]),
         .executableTarget(
             name: "SidefolkApp",
             dependencies: [

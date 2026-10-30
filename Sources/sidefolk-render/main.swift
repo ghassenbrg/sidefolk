@@ -171,6 +171,7 @@ enum Sheets {
             save(compare(name, reference: reference,
                          renders: [CharacterState.idle, .listening, .success, .sleeping].map { ($0.name, image($0, 300)) }),
                  dir.appendingPathComponent("compare-\(id).png"))
+            save(overlay(reference, image(.idle, 400)), dir.appendingPathComponent("overlay-\(id).png"))
         }
     }
 
@@ -180,6 +181,22 @@ enum Sheets {
 
     static func directionName(_ state: CharacterState, _ v: CGVector?) -> String {
         "\(state.name) \(v.map { "(\(Int($0.dx)), \(Int($0.dy)))" } ?? "center")"
+    }
+
+    /// The rig at rest over its target, side by side and then one over the other at half strength: a target cut in
+    /// canvas units (companions-2d/targets) lines up with the render point for point.
+    static func overlay(_ target: CGImage, _ render: CGImage) -> CGImage {
+        let side: CGFloat = 300
+        return draw(CGSize(width: side * 3, height: side)) { context in
+            let box = { (i: CGFloat) in CGRect(x: side * i, y: 0, width: side, height: side) }
+            context.draw(target, in: box(0))
+            context.setFillColor(NSColor(srgbRed: 0.91, green: 0.93, blue: 0.96, alpha: 1).cgColor)
+            context.fill(box(1))
+            context.draw(render, in: box(1))
+            context.draw(target, in: box(2))
+            context.setAlpha(0.55)
+            context.draw(render, in: box(2))
+        }
     }
 
     /// The reference art at the left, then the renders, all the same height.
@@ -367,10 +384,9 @@ enum Icons {
 /// The founder's concept renders each companion is drawn after (read from the repository).
 enum Reference {
     static func image(for species: CharacterSpecies) -> CGImage? {
-        let path = switch species {
-        case .mochi: "Resources/Brand/masters/mascot-mochi.png"
-        default: "folk-family/\(species.rawValue)/\(species.rawValue).png"
-        }
+        // The companions' 2D style target, cut out in canvas units (companions-2d/targets.py); the folks' own art.
+        let target = "companions-2d/targets/\(species.rawValue).webp"
+        let path = FileManager.default.fileExists(atPath: target) ? target : "folk-family/\(species.rawValue)/\(species.rawValue).png"
         guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else { return nil }
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }

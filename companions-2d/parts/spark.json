@@ -1,0 +1,9 @@
+{
+ "head": "spark-head:1",
+ "antenna": 2,
+ "armL": 3,
+ "torso": 4,
+ "armR": 5,
+ "footL": 6,
+ "footR": 7
+}

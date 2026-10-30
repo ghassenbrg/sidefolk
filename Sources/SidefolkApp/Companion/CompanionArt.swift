@@ -6,10 +6,10 @@ import SidefolkCore
 enum CompanionArt {
     private static var previews: [String: NSImage] = [:]
 
-    /// The companions Settings offers: only those whose rigs are finished, and the 3D-only ones once
-    /// they are installed from the add-on gallery (D55).
+    /// The companions Settings offers: only those whose rigs are finished, and the gallery's once
+    /// they are installed from it (D55).
     static var offered: [CompanionChoice] {
-        CharacterSpecies.available.filter { !$0.only3D || Companion3DStage.has($0) }
+        CharacterSpecies.available.filter { !$0.inGallery || Companion3DStage.has($0) }
             .compactMap { CompanionChoice(rawValue: $0.rawValue) }.filter { !$0.isRetired }
     }
 
@@ -95,6 +95,10 @@ enum CompanionArt {
         case .kiko: String(localized: "A young space explorer")
         case .nimbo: String(localized: "A dreamy little cloud")
         case .folio: String(localized: "A folded little wish")
+        case .iris: String(localized: "A little camera scout")
+        case .nori: String(localized: "A bookish little cat")
+        case .purl: String(localized: "A little mended friend")
+        case .rune: String(localized: "A pocket-sized golem")
         default: ""   // folks and the robot aren't offered (D54, D56)
         }
     }
@@ -167,7 +171,7 @@ enum CompanionArt {
         if let cached = previews[key] { return cached }
         let size = CGSize(width: side, height: side)
         // A 3D companion's still is a render of it (one pose: the 3D one has no 2D states to draw).
-        if threeD || species(choice).only3D, let still = Companion3DStage.portrait(choice.rawValue) {
+        if threeD, let still = Companion3DStage.portrait(choice.rawValue) {
             still.size = size
             previews[key] = still
             return still

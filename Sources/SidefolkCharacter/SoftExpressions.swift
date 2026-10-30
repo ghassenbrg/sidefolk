@@ -32,7 +32,7 @@ enum SoftExpressions {
     static func adapt(_ look: inout Look, for state: CharacterState, face: SoftFace) {
         switch face.kind {
         case .ink: ink(&look.pose, state, face.temper)
-        case .screen: screen(&look.pose)
+        case .screen: screen(&look.pose, state)
         }
         look.pose.scaleFace(face.scale)
         (look.pose.earL, look.pose.earR) = ears(state)
@@ -54,9 +54,10 @@ enum SoftExpressions {
         }
     }
 
-    /// The robot's light strokes fit Spark's screen; it rests with open ovals instead of smiles.
-    private static func screen(_ pose: inout Pose) {
+    /// The robot's light strokes fit Spark's screen; it rests with open ovals instead of smiles, and a small smile.
+    private static func screen(_ pose: inout Pose, _ state: CharacterState) {
         if pose.eyeL == Face.happy { pose.setEyes(Stroke.pill(width: 13.5, height: 22)) }
+        if state == .idle { pose.setMouth(Stroke.arc(width: 12, rise: -3.5, thickness: 3)) }
     }
 
     private static func ink(_ pose: inout Pose, _ state: CharacterState, _ temper: Temper) {
@@ -77,6 +78,8 @@ enum SoftExpressions {
         case .sleeping:
             face.setEyes(Ink.closed)
             face.shine = 0
+            // A small round mouth, breathing slowly through it.
+            face.setMouth(Stroke.dot(3.4))
         case .thinking:
             face.setEyes(Ink.squint, Ink.bead)
             face.setMouth(Ink.flat.offset(3, 0))
@@ -131,6 +134,9 @@ enum SoftExpressions {
             face.setEyes(Ink.closed)
             face.setMouth(Ink.cat)
             face.shine = 0
+        case .kitty:
+            face.setEyes(Ink.bead)
+            face.setMouth(Ink.cat)
         case .giddy:
             face.setEyes(Ink.giddy)
             face.setMouth(Ink.grin)

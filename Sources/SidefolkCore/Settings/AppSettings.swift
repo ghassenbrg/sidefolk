@@ -33,14 +33,14 @@ public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
     case minimal, balanced, lively
 }
 
-/// Who lives on the desktop: Mochi (the default, D29), Spark, or Ember, Kiko, Nimbo and Folio, who exist only
-/// in 3D (D51) and come from the add-on gallery (D55). The Folk Family (D30) are helpers beside the companion,
+/// Who lives on the desktop: Mochi (the default, D29), Spark, or Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl and Rune,
+/// who come from the add-on gallery (D55); each in 3D or 2D (D51, D59). The Folk Family (D30) are helpers beside the companion,
 /// never the companion itself (D54), and the original robot is retired (D56); their cases stay so older settings
 /// still read.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
-    case ember, kiko, nimbo, folio
+    case ember, kiko, nimbo, folio, iris, nori, purl, rune
 
     /// One of the Folk Family: a helper, not offered as the companion (D54).
     public var isFolk: Bool {
@@ -53,12 +53,11 @@ public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     /// No longer a companion: the folks (D54) and the original robot (D56). Settings that chose one move to Mochi.
     public var isRetired: Bool { isFolk || self == .sidefolk }
 
-    /// How it can be drawn (D51): Mochi and Spark either way, Ember, Kiko, Nimbo and Folio in 3D only,
-    /// the retired ones in 2D only. The first is how it comes.
+    /// How it can be drawn (D51, D59): every companion in 3D or 2D, the retired ones in 2D only. The
+    /// first is how it comes.
     public var dimensions: [CompanionDimension] {
         switch self {
-        case .mochi, .spark: [.threeD, .twoD]
-        case .ember, .kiko, .nimbo, .folio: [.threeD]
+        case .mochi, .spark, .ember, .kiko, .nimbo, .folio, .iris, .nori, .purl, .rune: [.threeD, .twoD]
         default: [.twoD]
         }
     }
@@ -71,9 +70,14 @@ public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
         }
     }
 
-    /// How it comes dressed: Mochi in its scarf, the others in nothing, aqua accents for all.
+    /// How it comes dressed: Mochi in its aqua scarf and Nori in a mint one (as their sheets show them), the
+    /// others in nothing with aqua accents.
     public var standardStyle: CompanionStyle {
-        CompanionStyle(color: .aqua, accessory: self == .mochi ? .scarf : .none)
+        switch self {
+        case .mochi: CompanionStyle(color: .aqua, accessory: .scarf)
+        case .nori: CompanionStyle(color: .mint, accessory: .scarf)
+        default: CompanionStyle(color: .aqua, accessory: .none)
+        }
     }
 }
 

@@ -138,6 +138,32 @@ struct Shading: Sendable {
         Shading(colors: [color.lighter(0.42), color.lighter(0.12), color, color.darker(0.14), color.darker(0.26)],
                 locations: [0, 0.3, 0.58, 0.84, 1])
     }
+
+    /// Drawn as a 2D cartoon instead (`Flat`): the 2D companions don't imitate their 3D selves.
+    var flat: Flat?
+
+    /// A flat cel-shaded fill in `color`: one hard shadow tone, a thin light rim, an outline.
+    static func flat(_ color: RGB, shade: RGB? = nil, line: RGB? = nil, light: CGFloat = 0.5) -> Shading {
+        var shading = Shading.tinted(color)
+        shading.flat = Flat(fill: color, shade: shade ?? Flat.shade(color), line: line ?? Flat.line(color), light: light)
+        return shading
+    }
+}
+
+/// The 2D companions' look, like an animated series: a flat fill, one hard-edged shadow along the
+/// lower right, a thin light rim along the upper left and a smooth outline a darker tone of the
+/// fill (never black). No gradients and no blurred drop shadows: those are the 3D look's.
+struct Flat: Sendable {
+    var fill: RGB
+    var shade: RGB
+    var line: RGB
+    /// How strong the light rim is, 0 for none (small or dark parts).
+    var light: CGFloat
+    var lineWidth: CGFloat = 2
+
+    /// Shadows lean cool and violet, as painted shadows do, rather than just darker.
+    static func shade(_ color: RGB) -> RGB { color.mix(RGB(0x4A3F78), 0.2) }
+    static func line(_ color: RGB) -> RGB { color.mix(RGB(0x2A2140), 0.62) }
 }
 
 /// A filled shape with radial shading: a gradient masked by the path, inside a container that
@@ -147,10 +173,17 @@ final class SoftShape {
     let layer = CALayer()
     private let gradient = CAGradientLayer()
     private let mask = CAShapeLayer()
+    private let flat: Bool
 
     init(_ path: CGPath, shading: Shading = .shell) {
         let box = path.boundingBoxOfPath
         layer.frame = box
+        flat = shading.flat != nil
+        if let style = shading.flat {
+            mask.path = Paths.translated(path, -box.minX, -box.minY)
+            Self.cel(mask.path!, style, size: box.size).forEach(layer.addSublayer)
+            return
+        }
         gradient.frame = layer.bounds
         gradient.type = .radial
         gradient.colors = shading.colors.map { $0.cg() }
@@ -164,11 +197,13 @@ final class SoftShape {
     }
 
     func shadow(radius: CGFloat, opacity: Float, offset: CGSize = CGSize(width: 0, height: -2)) {
+        guard !flat else { return }
         Layers.dropShadow(layer, path: mask.path, radius: radius, opacity: opacity, offset: offset)
     }
 
     /// A thin outline on top of the shading, so white parts separate from white backgrounds.
     func outline(_ color: RGB, alpha: CGFloat, width: CGFloat) {
+        guard !flat else { return }
         let line = CAShapeLayer()
         line.frame = layer.bounds
         line.path = mask.path
@@ -176,5 +211,33 @@ final class SoftShape {
         line.strokeColor = color.cg(alpha)
         line.lineWidth = width
         layer.addSublayer(line)
+    }
+
+    /// The flat look's layers for `path`: fill, the shadow (the shape minus itself moved up and
+    /// left, a crescent along the lower right), the light rim (the same the other way, thinner) and
+    /// the outline. The offsets follow the part's size so small parts get small crescents.
+    static func cel(_ path: CGPath, _ style: Flat, size: CGSize) -> [CALayer] {
+        let k = min(max(min(size.width, size.height) * 0.15, 1.6), 9)
+        var layers = [Self.fill(path, style.fill)]
+        layers.append(Self.fill(path.subtracting(Paths.translated(path, -0.55 * k, k)), style.shade))
+        if style.light > 0, min(size.width, size.height) > 14 {
+            let rim = path.subtracting(Paths.translated(path, 0.3 * k, -0.42 * k))
+            layers.append(Self.fill(rim, style.fill.lighter(0.55), alpha: style.light))
+        }
+        let line = CAShapeLayer()
+        line.path = path
+        line.fillColor = nil
+        line.strokeColor = style.line.cg()
+        line.lineWidth = style.lineWidth
+        line.lineJoin = .round
+        layers.append(line)
+        return layers
+    }
+
+    private static func fill(_ path: CGPath, _ color: RGB, alpha: CGFloat = 1) -> CAShapeLayer {
+        let layer = CAShapeLayer()
+        layer.path = path
+        layer.fillColor = color.cg(alpha)
+        return layer
     }
 }

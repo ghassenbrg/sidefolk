@@ -1,0 +1,14 @@
+{
+ "earL": "nori-body:1",
+ "earR": "nori-body:2",
+ "head": "nori-body:3",
+ "armL": "nori-body:4",
+ "torso": {
+  "piece": "nori-body:5",
+  "keep": 0.88
+ },
+ "armR": "nori-body:6",
+ "tail": 7,
+ "footL": 8,
+ "footR": 9
+}

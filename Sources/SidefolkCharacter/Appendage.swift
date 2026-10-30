@@ -70,8 +70,8 @@ final class Appendage {
     }
 
     /// The idle swing, out of step between the two ears.
-    func swayLoop(fast: Bool, phase: CFTimeInterval) -> Loop {
-        let reach = (fast ? 0.12 : 0.035) * spec.floppiness
+    func swayLoop(fast: Bool, phase: CFTimeInterval, reach more: CGFloat = 1) -> Loop {
+        let reach = (fast ? 0.12 : 0.035) * spec.floppiness * more
         let animation = Motion.loop("transform.rotation.z", from: -reach, to: reach, duration: fast ? 0.45 : 2.7, phase: phase)
         return Loop(layer: sway, key: "sway", animation: animation)
     }
@@ -86,12 +86,12 @@ final class Appendage {
 @MainActor
 enum Wardrobe {
     /// A knitted scarf: a band around the neck, sagging a little, with one end hanging in front.
-    static func scarf(_ collar: Collar, _ color: RGB) -> CALayer {
+    static func scarf(_ collar: Collar, _ color: RGB, flat: Bool = false) -> CALayer {
         let root = Layers.canvas()
         let shape = ScarfShape(collar)
-        let shading = Shading(colors: [color.lighter(0.32), color.lighter(0.12), color, color.darker(0.09), color.darker(0.18)],
-                              locations: [0, 0.3, 0.58, 0.84, 1], center: CGPoint(x: 0.32, y: 0.8),
-                              reach: CGSize(width: 1.0, height: 1.2))
+        let shading = flat ? .flat(color) : Shading(colors: [color.lighter(0.32), color.lighter(0.12), color, color.darker(0.09), color.darker(0.18)],
+                                                    locations: [0, 0.3, 0.58, 0.84, 1], center: CGPoint(x: 0.32, y: 0.8),
+                                                    reach: CGSize(width: 1.0, height: 1.2))
         let wrap = SoftShape(shape.band, shading: shading)
         wrap.shadow(radius: 2.5, opacity: 0.16, offset: CGSize(width: 0, height: -1.5))
         root.addSublayer(wrap.layer)

@@ -8,6 +8,8 @@ struct ArmStyle {
     var edge: (color: RGB, alpha: CGFloat)?
     /// A differently coloured hand over the end of the arm (Spark's dark mittens).
     var hand: (path: CGPath, shading: Shading)?
+    /// Drawn for the right arm, pointing out to that side, and mirrored for the left (Folio's paper wings).
+    var outward = false
 
     /// The robot's stubby white mitten.
     @MainActor static let robot = ArmStyle(
@@ -29,18 +31,27 @@ final class Limb {
     private let shape: CGPath
     private(set) var angle: CGFloat = 0
 
-    init(shoulder: CGPoint, style: ArmStyle = .robot) {
+    init(shoulder: CGPoint, style: ArmStyle = .robot, side: CGFloat = 1, painted: Painted? = nil) {
         self.shoulder = shoulder
+        let mirror = CGAffineTransform(scaleX: style.outward && side < 0 ? -1 : 1, y: 1)
+        var style = style
+        style.shape = Paths.transformed(style.shape, mirror)
+        style.hand = style.hand.map { (Paths.transformed($0.path, mirror), $0.shading) }
         shape = style.shape
         pose = Layers.canvas(anchor: shoulder)
         loop = Layers.canvas(anchor: shoulder)
-        let mitten = SoftShape(Paths.translated(style.shape, shoulder.x, shoulder.y), shading: style.shading)
-        mitten.shadow(radius: 2.5, opacity: 0.18, offset: CGSize(width: 0, height: -1))
-        if let edge = style.edge { mitten.outline(edge.color, alpha: edge.alpha, width: 0.7) }
         pose.addSublayer(loop)
-        loop.addSublayer(mitten.layer)
-        if let hand = style.hand {
-            loop.addSublayer(SoftShape(Paths.translated(hand.path, shoulder.x, shoulder.y), shading: hand.shading).layer)
+        if var painted {
+            painted.rect = painted.rect.offsetBy(dx: shoulder.x, dy: shoulder.y)
+            loop.addSublayer(painted.layer)
+        } else {
+            let mitten = SoftShape(Paths.translated(style.shape, shoulder.x, shoulder.y), shading: style.shading)
+            mitten.shadow(radius: 2.5, opacity: 0.18, offset: CGSize(width: 0, height: -1))
+            if let edge = style.edge { mitten.outline(edge.color, alpha: edge.alpha, width: 0.7) }
+            loop.addSublayer(mitten.layer)
+            if let hand = style.hand {
+                loop.addSublayer(SoftShape(Paths.translated(hand.path, shoulder.x, shoulder.y), shading: hand.shading).layer)
+            }
         }
         loop.addSublayer(grip)
     }

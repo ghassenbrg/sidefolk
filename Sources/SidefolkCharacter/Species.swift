@@ -18,9 +18,21 @@ struct Species {
     var footShading: Shading?
     var shoulders: (CGPoint, CGPoint)
     var arm: ArmStyle
+    /// Turns both arms in toward the body by this much in every pose (long arms that hang straight at rest).
+    var armTuck: CGFloat = 0
+    /// Feet of another shape than an oval (Folio's paper legs), drawn around each foot's centre.
+    var footShape: CGPath?
     var face: SoftFace
     /// Ears, antennae and sprouts, drawn behind the head; they sway, droop and trail.
     var appendages: [AppendageSpec] = []
+    /// The head in its own colour when it isn't the body's (Kiko's face, Purl's linen head).
+    var headShading: Shading?
+    /// Tails, drawn behind the body: they sway at rest, wag when happy and trail behind moves.
+    var tails: [AppendageSpec] = []
+    /// Painted parts drawn in place of the flat ones (D59).
+    var painting: Painting?
+    /// Floats this high above the floor, bobbing gently (Nimbo); 0 stands on its feet.
+    var hover: CGFloat = 0
     /// Fixed pieces drawn over the head or body (headphones, a chest badge, a cap).
     var gear: [Gear] = []
     var held: Held?
@@ -36,13 +48,25 @@ struct Species {
     /// stay inside the window when it hops or is lifted. Coordinates above are before it.
     var scale: CGFloat = 1
 
-    /// Every companion is a soft rig of its species (a stand-in for the 3D-only ones).
+    /// Drawn as a 2D cartoon (`Flat`) rather than softly shaded.
+    var flat: Bool { shading.flat != nil }
+
+    /// Every companion is a soft rig of its species. Shown in 3D, the gallery's companions run on a
+    /// stand-in shaped like their 3D body instead (Mochi and Spark on their own 2D rig).
     static func figure(for look: CharacterLook) -> any Figure {
         if let custom = look.custom { return SoftRig(Species(custom)) }
+        if look.threeD, look.species.inGallery { return SoftRig(standIn(for: look.species)) }
         return switch look.species {
         case .mochi: SoftRig(mochi)
         case .spark: SoftRig(spark)
-        case .ember, .kiko, .nimbo, .folio: SoftRig(standIn(for: look.species))
+        case .ember: SoftRig(ember)
+        case .kiko: SoftRig(kiko)
+        case .nimbo: SoftRig(nimbo)
+        case .folio: SoftRig(folio)
+        case .iris: SoftRig(iris)
+        case .nori: SoftRig(nori)
+        case .purl: SoftRig(purl)
+        case .rune: SoftRig(rune)
         default: SoftRig(folk(look.species.folk!))
         }
     }
@@ -69,6 +93,20 @@ struct SoftFace {
     var temper: Temper = .calm
     /// The nose's colour when it isn't the eyes' ink (a custom companion's pink nose).
     var noseColor: RGB?
+    /// The 2D companions' eyes: their ink fades into this colour toward the bottom, with two catchlights.
+    var iris: RGB?
+    /// How much bigger those eyes are than the face's other marks, and the mouth.
+    var eyeSize: CGFloat = 1
+    var mouthSize: CGFloat = 1
+    /// Eyes, brows and mouth in this ink instead of the bead eyes' navy.
+    var ink: RGB?
+    /// Cheeks in this colour instead of the folks' rosy pink.
+    var blush: RGB?
+    /// One eye only, at the left eye's place (Iris's lens): the right eye's marks stay hidden.
+    var single = false
+    /// Where the cheeks sit and their half size, when not under the eyes as the folks' do.
+    var blushAt: (CGPoint, CGPoint)?
+    var blushSize = CGSize(width: 5.5, height: 3.4)
 }
 
 /// Resting expressions, from the folks' personalities.
@@ -81,6 +119,8 @@ enum Temper {
     case beaming
     /// Closed, content eyes and a cat mouth.
     case content
+    /// Bead eyes and a cat's "ω" mouth (Ember, Nori).
+    case kitty
     /// > < eyes and a grin.
     case giddy
     /// Bead eyes under stern brows.
@@ -126,8 +166,10 @@ struct Held {
 
 /// A fixed piece worn over the head or body, optionally in the accent colour.
 struct Gear {
-    /// `back` hangs behind the body and turns with the head (Melody's headband).
-    enum Mount { case back, head, face, body }
+    /// `back` hangs behind the body and turns with the head (Melody's headband); `skin` is painted on
+    /// the head under the face (a fox's cream mask); `under` lies on the face under the eyes and mouth
+    /// (Iris's lens), `face` over them (glasses).
+    enum Mount { case back, head, skin, under, face, body }
     var mount: Mount
     /// Draws it in canvas units; `accent` is the style colour as a material.
     var draw: @MainActor (_ accent: RGB) -> CALayer

@@ -22,11 +22,17 @@ enum Choreography {
             break
 
         case .sleeping:
-            look.pose.squash = CGSize(width: 1.14, height: 0.8)
-            look.pose.lean = 0.05
+            // Dozing off where it stands: it sinks down onto its feet, which come forward as when sitting, its head
+            // droops forward and to one side and its arms hang in front. Nothing is squashed: a drawn body keeps
+            // its shape.
+            look.pose.lift = -6
+            look.pose.feetSplay = 1
+            look.pose.lean = 0.03
+            look.pose.headTilt = 0.2
+            look.pose.headDrop = 5
             look.pose.setEyes(Face.closed)
-            look.pose.armL = -0.15
-            look.pose.armR = -0.15
+            look.pose.armL = -0.3
+            look.pose.armR = -0.3
             look.pose.earGlow = 0.1
             look.pose.look = CGVector(dx: 0, dy: -0.3)
             look.pose.gazeFollow = 0

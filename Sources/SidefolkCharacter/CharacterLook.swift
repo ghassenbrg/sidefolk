@@ -5,7 +5,7 @@ public struct CharacterLook: Equatable, Sendable {
     /// A companion made from data (`CustomCompanion`), drawn on a soft rig instead of `species`.
     public var custom: CustomCompanion?
     /// Shown in 3D by the app (D51): this module's rig still runs, undrawn, and the app draws the
-    /// species' 3D character over it. Ember, Kiko, Nimbo and Folio are always 3D.
+    /// species' 3D character over it. Otherwise this module draws it in 2D (D59).
     public var threeD = false
     /// A 3D character added from a folder (D60) that the app draws instead of `species`' own: `species` then only
     /// lends the stand-in rig underneath (its outline, anchors and moves).
@@ -17,29 +17,30 @@ public struct CharacterLook: Equatable, Sendable {
     public init(_ species: CharacterSpecies, style: CharacterStyle? = nil, threeD: Bool = false) {
         self.species = species
         self.style = style ?? species.standardStyle
-        self.threeD = threeD || species.only3D
+        self.threeD = threeD && species.has3D
     }
 }
 
-/// Every companion that can live on the desktop: soft rigs built from a `Species`; Ember, Kiko, Nimbo and Folio
-/// are 3D characters drawn by the app over a stand-in rig (D51). The original robot's vector rig (D2) is retired
-/// (D56).
+/// Every companion that can live on the desktop: soft rigs built from a `Species`, each drawn in 2D here and,
+/// for the ten companions, in 3D by the app over that rig (D51, D59). The original robot's vector rig (D2) is
+/// retired (D56).
 public enum CharacterSpecies: String, CaseIterable, Sendable {
     case mochi, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
-    case ember, kiko, nimbo, folio
+    case ember, kiko, nimbo, folio, iris, nori, purl, rune
 
     /// Companions finished to the full bar (every state, gesture, prop): only these are offered.
     public static let available: [CharacterSpecies] = allCases
 
     /// Has a 3D character the app can draw (D51).
-    public var has3D: Bool { [.mochi, .spark, .ember, .kiko, .nimbo, .folio].contains(self) }
+    public var has3D: Bool { [.mochi, .spark, .ember, .kiko, .nimbo, .folio, .iris, .nori, .purl, .rune].contains(self) }
 
-    /// Has only a 3D character: its rig here is a stand-in that is never drawn.
-    public var only3D: Bool { [.ember, .kiko, .nimbo, .folio].contains(self) }
+    /// Comes from the add-on gallery (D55): its 3D files download on demand; its 2D rig is built in
+    /// (D59), and in 3D it runs on a stand-in shaped like its 3D body.
+    public var inGallery: Bool { [.ember, .kiko, .nimbo, .folio, .iris, .nori, .purl, .rune].contains(self) }
 
-    /// The companions this module draws itself (contact sheets leave out the 3D-only stand-ins).
-    public static var drawn2D: [CharacterSpecies] { allCases.filter { !$0.only3D } }
+    /// The companions this module draws itself: all of them, in 2D (D59).
+    public static var drawn2D: [CharacterSpecies] { allCases }
 
     public var displayName: String {
         switch self {
@@ -49,6 +50,10 @@ public enum CharacterSpecies: String, CaseIterable, Sendable {
         case .kiko: "Kiko"
         case .nimbo: "Nimbo"
         case .folio: "Folio"
+        case .iris: "Iris"
+        case .nori: "Nori"
+        case .purl: "Purl"
+        case .rune: "Rune"
         default: folk!.displayName
         }
     }
@@ -59,9 +64,13 @@ public enum CharacterSpecies: String, CaseIterable, Sendable {
     /// Whether the style colour paints part of the companion itself (Spark's gear), not only what it wears.
     public var hasOwnAccents: Bool { self == .spark }
 
-    /// How it comes dressed: Mochi in its scarf, the others in nothing; aqua accents for all.
+    /// How it comes dressed: Mochi in its aqua scarf and Nori in a mint one, the others in nothing with aqua accents.
     public var standardStyle: CharacterStyle {
-        CharacterStyle(color: .aqua, accessory: self == .mochi ? .scarf : .none)
+        switch self {
+        case .mochi: CharacterStyle(color: .aqua, accessory: .scarf)
+        case .nori: CharacterStyle(color: .mint, accessory: .scarf)
+        default: CharacterStyle(color: .aqua, accessory: .none)
+        }
     }
 }
 

@@ -70,7 +70,8 @@ enum Moods {
     }
 
     /// Sitting lowers the body around the floor and brings the feet forward, its thing still in hand;
-    /// lying down is lower and wider, eyes half-closed, soft ears lying half back, hands empty.
+    /// lying down settles it low on its feet, head resting to one side, eyes half-closed, soft ears lying
+    /// half back, hands empty.
     static func posture(_ posture: CharacterPosture, on pose: Pose, express: (Mood, Pose) -> Pose) -> Pose {
         var p = pose
         switch posture {
@@ -84,9 +85,12 @@ enum Moods {
                 p.armR = -0.1
             }
         case .lie:
-            p.squash = CGSize(width: 1.12, height: 0.82)
+            // Settled low on its feet, head resting a little to one side: lower, never squashed.
+            p.lift = -6
             p.feetSplay = 1.4
             p.lean = 0.02
+            p.headTilt = 0.12
+            p.headDrop = 3
             // It puts its thing down to lie down (Scout's magnifier would stick out of the window).
             p.holding = 0
             p.armL = -0.25

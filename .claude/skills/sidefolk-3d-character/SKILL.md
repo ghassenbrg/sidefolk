@@ -156,7 +156,9 @@ and a backdrop colour of its own from `prompts.json` › avatars. Keep the sourc
 `references/avatars/<id>-avatar.webp`, and save a round 256 px crop on the face (the face must read at 26 points;
 see how the six were cut) as `avatars/<id>.png` in its add-on folder. The Ask panel and Conversations show it.
 
-## 7. Wire it into the app (3D-only companion)
+## 7. Wire it into the app (a gallery companion)
+
+Every companion also gets a 2D form (D59): make it after the 3D one, following `companions-2d/README.md`.
 
 **A private companion** (a real person's likeness, or anything the user wants only on their Mac): keep every file
 outside the repos (e.g. `~/git/sidefolk-private/companions/<id>/` with the pipeline beside it), give `addon.json`
@@ -167,9 +169,9 @@ it onto the texture in the rig, and use the ink face's `lids` and `mouth.lips` i
 
 
 - `Sources/SidefolkCore/Settings/AppSettings.swift`: `CompanionChoice` case and `dimensions`
-  (`[.threeD]`; Mochi/Spark style `[.threeD, .twoD]` only when a 2D rig exists).
-- `Sources/SidefolkCharacter/CharacterLook.swift`: `CharacterSpecies` case, `has3D`, `only3D`,
-  `displayName`; `Species.swift` `figure(for:)`; `StandIns.swift`: a stand-in shaped like the 3D
+  (`[.threeD, .twoD]` once its 2D rig exists).
+- `Sources/SidefolkCharacter/CharacterLook.swift`: `CharacterSpecies` case, `has3D`, `inGallery`,
+  `displayName`; `Species.swift` `figure(for:)` (its 2D rig, and the stand-in in 3D); `StandIns.swift`: a stand-in shaped like the 3D
   silhouette (canvas units: one model unit = 87, floor at y = 20, centred at x = 100;
   `restingFrame` starts at y = 20).
 - `Sources/SidefolkApp/Companion/CompanionArt.swift`: `role` line.

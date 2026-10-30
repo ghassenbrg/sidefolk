@@ -41,6 +41,29 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   (animating, a wave, Mochi's page still loading under the new policy), in Made by you and in the Ask panel's
   header. *Not yet:* a UI snapshot of Made by you with a local companion; the two avatars in that list aren't
   aligned (Use is wider than the check mark).
+- **Every companion in 2D: painted cut-out rigs (D59):** all ten can be 2D or 3D (Settings › Companion › Look). The
+  look follows one style target (`companions-2d/references/lineup-2d.webp`). After the founder found the hand-drawn
+  vector parts "very ugly" next to it, nine became painted cut-out rigs: Codex image gen paints each one's parts
+  (blank-faced head, body, arms, ears, tail, feet; `companions-2d/parts/generate.sh`), `cut.py` keys and cuts them,
+  and the rig moves them on vector outlines measured off the target, the face drawn live on top. Mochi stays the flat
+  vector drawing the founder approved. Necks fixed after the founder's note: bodies sit up and wide under the chin,
+  shoulders raised, no pinched neck; and legs: painted paws and boots are drawn in front of the legs (they were hidden
+  behind them), sized to the target's. Nori repainted after the founder's second note (a chubby pear-shaped body, the
+  whole lower face cream, thick arms hanging close), drawn at nearly full size. Its legs then cut short (`"keep"` in
+  `parts/nori.json`, the cut's corners rounded off behind the paws) and its paws made bigger and set side by side, as
+  in the target. Its body widened (`widen` in `Species.painted`) so it isn't thin under its head without a scarf.
+  Sleep redone after the founder found it "just shrinks": no squash any more (asleep or lying down); the body settles
+  onto planted feet, the head droops aside and nods with each breath, arms hang in front, closed eyes in plain ink, a
+  small round mouth; Nimbo, Folio and Iris lean and sink whole. Checked in the sleeping tile of every companion and
+  films of Nori and Nimbo falling asleep; the lying-down posture only by its test, not by eye. Spark, Ember, Iris,
+  Nori and Purl needed parts painted again (wide heads, a drawn face); the Ember head edit was refused by the image
+  model's safety filter, so `blank.py` took the face off. How to make one: `companions-2d/README.md` (the base for a
+  2D-character skill). *Checked:* `overlay-<id>.png` (rig over its target) for all nine, contact sheets of every state
+  and prop, the lineup, the full suite (1391 core, 34 character), the dev app (painted Ember, Nori and Spark on the
+  desktop and in Settings, art loaded from the bundle in the app's Resources). *Not yet:* the founder's review; a 2D
+  companion's motion filmed for each one (Ember and Nimbo were, before painting); Iris's closed eye is an ink arc on
+  the glass, not a shutter; folks and custom companions keep the soft look. *Next:* the founder reviews the ten
+  (`swift run sidefolk-render out/`, or the dev app), then the 2D-character skill from the README.
 - **Themes, steps 1–5 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
   build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. Built in:
   Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–4:

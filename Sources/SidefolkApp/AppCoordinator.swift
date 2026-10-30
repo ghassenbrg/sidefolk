@@ -201,7 +201,7 @@ final class AppCoordinator {
     private func restoreCompanionAddon() {
         let s = runtime.settings.current
         let species = CompanionArt.species(s.companion)
-        guard s.customCompanion == nil, s.localCompanion == nil, species.only3D, !Companion3DStage.has(species) else { return }
+        guard s.customCompanion == nil, s.localCompanion == nil, species.inGallery, !Companion3DStage.has(species) else { return }
         let addons = runtime.addons, name = s.companion.rawValue
         Task {
             do {

@@ -1,0 +1,11 @@
+{
+ "earL": 1,
+ "earR": 3,
+ "tail": 4,
+ "torso": 6,
+ "armL": 5,
+ "armR": 7,
+ "footL": 8,
+ "footR": 9,
+ "head": "ember-head:1"
+}
