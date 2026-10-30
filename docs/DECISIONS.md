@@ -1488,7 +1488,7 @@ Rune's granite has a speckle from a high pass of the pile map. The same films of
 more: Iris has no neck, so looking round wrung the camera like a towel; `turnWhole` gives that share of the head's
 and chest's yaw to the whole body.
 
-### D62 — A theme arranges the app's own pieces: Today as blocks in rows and columns (2026-10-31)
+### D64 — A theme arranges the app's own pieces: Today as blocks in rows and columns (2026-10-31)
 **Decision:** a theme no longer picks one of a few fixed screens ("recipes"). Today is rows of columns of **blocks**,
 each one of the app's own pieces in one of its styles, and a theme's `layout` says where each goes and how it looks:
 - **Blocks and styles:** header (line, large, console, page), queue (rows, cards, stack, index), day (rail, list,
@@ -1519,6 +1519,7 @@ code and no words.
 **Alternatives:** whole-screen recipes per theme (step 9's first plan: each new arrangement needed new code and
 couldn't be mixed); themes shipping their own views (code from strangers).
 
-**Implications:** `docs/research/themes-fidelity.md` lists each board's elements against the app. Older copies of
-Sidefolk skip the gallery's theme entries (entries decode one by one). Not built: chips you can edit with Tab in the
-one bar, a progress bar for runs (no run reports progress yet), and blocks from extensions.
+**Implications:** first committed as D62 (0fb13ff0), renumbered: D62 and D63 were taken by the extensions work.
+`docs/research/themes-fidelity.md` lists each board's elements against the app. Older copies of Sidefolk skip the
+gallery's theme entries (entries decode one by one). Not built: chips you can edit with Tab in the one bar, a progress
+bar for runs (no run reports progress yet), and blocks from extensions.

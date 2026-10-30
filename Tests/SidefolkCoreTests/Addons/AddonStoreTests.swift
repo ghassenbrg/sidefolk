@@ -174,7 +174,7 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: folder.path))
     }
 
-    /// A theme from the gallery (D58, D62) installs like one from a folder, checked again, under its own id; the
+    /// A theme from the gallery (D58, D64) installs like one from a folder, checked again, under its own id; the
     /// gallery may use Sidefolk's ids, and a newer version shows as an update.
     @Test func aThemeFromTheGalleryIsInstalledAndUpdated() async throws {
         let g = try Gallery()

@@ -5,7 +5,7 @@
 checked against. **Have** is in the app today; **Build** is new work; **Data** means the board shows something the app
 doesn't record yet, so the data comes first (no fake features).
 
-**Built 2026-10-31 (D62),** every Build and Data row below, as blocks a theme arranges, except: chips you edit with
+**Built 2026-10-31 (D64),** every Build and Data row below, as blocks a theme arranges, except: chips you edit with
 Tab in the one bar (the Will do panel shows the parts; editing them is next), a progress bar for agents' runs (no run
 reports progress yet, so none is drawn), Glance's restyle per theme, and the boards' exact sample words (the app
 says its own, in its voice, without exclamation marks). Checked with `--ui-snapshots --theme` for each theme in

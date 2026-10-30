@@ -4,7 +4,7 @@ import Foundation
 /// releases. Everything here comes from the catalog, which is itself signed; the pack it points at is checked on
 /// its own before anything of it is used.
 public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
-    /// Themes are data (D58, D62); a copy of Sidefolk from before them skips their entries.
+    /// Themes are data (D58, D64); a copy of Sidefolk from before them skips their entries.
     public enum Kind: String, Codable, Sendable { case companion, `extension`, theme }
 
     /// Reverse DNS: `dev.sidefolk.companions.ember`, `dev.sidefolk.git`. The pack's signature names it too.

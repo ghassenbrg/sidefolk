@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// Home › Today, drawn from the theme's layout (D62): rows of columns of blocks, each one of Today's pieces in one of
+/// Home › Today, drawn from the theme's layout (D64): rows of columns of blocks, each one of Today's pieces in one of
 /// its styles. Harbor's is the Desk: decisions and the day on the left; what's watched, who's working and what just
 /// happened on the right. Columns stack when the window is narrow.
 /// Each domain wears its folk's color: Tempo for time, Scout for watching, Byte for agents and jobs.
@@ -33,7 +33,7 @@ struct NowView: View {
         .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: model) }
     }
 
-    /// The Console's filter (D62): agents, your own, or watches, with the header and what needs you always there.
+    /// The Console's filter (D64): agents, your own, or watches, with the header and what needs you always there.
     private func shows(_ block: ThemeLayout.Block) -> Bool {
         switch model.focus {
         case .all: true
@@ -514,7 +514,7 @@ struct QueueRow: View {
     var decision: NowModel.Decision
     var model: NowModel
     var focused: FocusState<String?>.Binding
-    /// "rows" in a list, or "cards" side by side (D62), where ← → move as ↑ ↓ do.
+    /// "rows" in a list, or "cards" side by side (D64), where ← → move as ↑ ↓ do.
     var style = "rows"
     var act: (@escaping () async -> Void) -> Void
     @State private var armed = false

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Where things go and how they look, as data (D62). Today is rows of columns of blocks; each block is one of the
+/// Where things go and how they look, as data (D64). Today is rows of columns of blocks; each block is one of the
 /// app's own pieces (what needs you, your day, watching…) in one of its styles. A theme arranges and dresses them;
 /// it never brings views of its own. The boards' layouts are presets written the same way.
 public struct ThemeLayout: Sendable, Equatable {

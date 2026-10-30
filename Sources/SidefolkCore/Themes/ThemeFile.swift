@@ -45,7 +45,7 @@ public struct ThemeFile: Codable, Sendable, Equatable {
         public var tile: String?
     }
 
-    /// Where things go (D62): a preset by name, then anything the theme sets itself.
+    /// Where things go (D64): a preset by name, then anything the theme sets itself.
     public struct LayoutSection: Codable, Sendable, Equatable {
         public var preset: String?
         public var navigation: String?

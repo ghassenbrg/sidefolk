@@ -95,7 +95,7 @@ final class AddonGalleryModel {
 
     // MARK: Themes
 
-    /// Downloads and installs a theme (D58, D62), then wears it when `use` (a click on its card).
+    /// Downloads and installs a theme (D58, D64), then wears it when `use` (a click on its card).
     func get(theme entry: AddonEntry, use: Bool) async {
         guard progress[entry.id] == nil else { return }
         failures[entry.id] = nil

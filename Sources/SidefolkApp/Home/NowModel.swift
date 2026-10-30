@@ -79,7 +79,7 @@ final class NowModel {
     private(set) var values: [String: [Double]] = [:]
     /// Reminders done today, struck through on the day's line.
     private(set) var doneToday: [Reminder] = []
-    /// The newest notes and tasks (pinned first), for layouts that show the notebook on Today (D62).
+    /// The newest notes and tasks (pinned first), for layouts that show the notebook on Today (D64).
     private(set) var recentNotes: [NotebookItem] = []
     private(set) var noteCollections: [String: NotebookCollection] = [:]
     private(set) var jobs: [Job] = []
@@ -88,10 +88,10 @@ final class NowModel {
     private(set) var finishedSessions: [AgentSession] = []
     /// Each other agent's latest call to Sidefolk, by the name its sessions use ("claude-code").
     private(set) var lastCalls: [String: ActivityEntry] = [:]
-    /// Each agent's last few calls to Sidefolk, newest last, for layouts that show its steps (D62); "" is your
+    /// Each agent's last few calls to Sidefolk, newest last, for layouts that show its steps (D64); "" is your
     /// companion's own.
     private(set) var steps: [String: [ActivityEntry]] = [:]
-    /// What the Console's filter shows (D62).
+    /// What the Console's filter shows (D64).
     var focus: Focus = .all
 
     enum Focus: String, CaseIterable, Identifiable {
@@ -166,7 +166,7 @@ final class NowModel {
         if let item = changeWaiting(for: watcher) { await respond(item, action: nil) }
     }
 
-    /// What the companion says in a nook with a speech bubble (D62): a hello for the time of day and how much needs you.
+    /// What the companion says in a nook with a speech bubble (D64): a hello for the time of day and how much needs you.
     var nookGreeting: String {
         let n = needsYouCount
         switch Calendar.current.component(.hour, from: Date()) {

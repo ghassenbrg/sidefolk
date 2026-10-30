@@ -694,7 +694,7 @@ struct ThemeGrain: View {
     }
 }
 
-/// A page's colour, with the theme's wash at the top when it has one (D62): a sky or a dusk fading into the page,
+/// A page's colour, with the theme's wash at the top when it has one (D64): a sky or a dusk fading into the page,
 /// behind the cards.
 struct PageBackground: View {
     @Environment(\.colorScheme) private var scheme

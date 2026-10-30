@@ -8,7 +8,7 @@ import SwiftUI
 struct NoteBodyEditor: NSViewRepresentable {
     @Binding var text: String
     var controller: NoteEditorController
-    /// Markdown as written (D62): every mark shows, in a mono face; the layout still draws boxes and bars.
+    /// Markdown as written (D64): every mark shows, in a mono face; the layout still draws boxes and bars.
     var showsMarks = false
 
     func makeCoordinator() -> Coordinator { Coordinator(text: $text, showsMarks: showsMarks) }

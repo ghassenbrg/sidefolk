@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// Today's pieces in the Stage's styles (D62): the companion big on its stage, saying what needs you; the day as
+// Today's pieces in the Stage's styles (D64): the companion big on its stage, saying what needs you; the day as
 // stickers, watches as round badges, helpers at work, and what was jotted today.
 
 // MARK: companion:stage
@@ -107,7 +107,7 @@ struct TodayStage<Bubble: View>: View {
     }
 }
 
-/// A decision as a speech bubble from the companion (D62): who's asking, then the question and its buttons.
+/// A decision as a speech bubble from the companion (D64): who's asking, then the question and its buttons.
 struct QueueBubbleFrame<Content: View>: View {
     var label: String
     var tint: Color
@@ -148,7 +148,7 @@ nonisolated struct BubbleShape: Shape {
 
 // MARK: day:stickers
 
-/// The day as stickers (D62): each with its picture, time and title; a late one stands out (and wiggles, unless motion
+/// The day as stickers (D64): each with its picture, time and title; a late one stands out (and wiggles, unless motion
 /// is reduced); done ones fade with a tick. Drag one sideways to move it, a quarter hour per step.
 struct DayStickers: View {
     var model: NowModel
@@ -271,7 +271,7 @@ private struct StickerCard: View {
 
 // MARK: watching:badges
 
-/// Watches as round badges (D62): a picture or a value inside, a dot when something changed, a word under it.
+/// Watches as round badges (D64): a picture or a value inside, a dot when something changed, a word under it.
 struct WatchBadges: View {
     var model: NowModel
 
@@ -338,7 +338,7 @@ private struct BadgeLabel<Inside: View>: View {
 
 // MARK: agents:helpers
 
-/// Agents as helpers at work (D62): who, where, and a word for whether they need you.
+/// Agents as helpers at work (D64): who, where, and a word for whether they need you.
 struct HelpersCard: View {
     var model: NowModel
 
@@ -373,7 +373,7 @@ struct HelpersCard: View {
 
 // MARK: notes:chips
 
-/// What was jotted today, as chips (D62): each note with its collection; a click opens it.
+/// What was jotted today, as chips (D64): each note with its collection; a click opens it.
 struct JottedChips: View {
     var model: NowModel
 

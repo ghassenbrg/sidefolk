@@ -220,7 +220,7 @@ struct ReminderMenu: View {
     }
 }
 
-/// A row of columns (D62): side by side, each its share of the width, while every column gets at least `minimum`;
+/// A row of columns (D64): side by side, each its share of the width, while every column gets at least `minimum`;
 /// otherwise one under the other at full width.
 struct ColumnsLayout: Layout {
     var widths: [Double]
@@ -267,7 +267,7 @@ struct ColumnsLayout: Layout {
     }
 }
 
-/// A decision as a card in a row of them (D62): a coloured dot and who's asking above the question, outlined while
+/// A decision as a card in a row of them (D64): a coloured dot and who's asking above the question, outlined while
 /// the keyboard is on it.
 struct QueueCardFrame<Content: View>: View {
     var label: String

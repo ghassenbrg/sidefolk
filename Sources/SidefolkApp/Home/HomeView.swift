@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Home window: the theme's navigation (D62; a sidebar with Today, Conversations, the Notebook's collections and
+/// The Home window: the theme's navigation (D64; a sidebar with Today, Conversations, the Notebook's collections and
 /// Activity, or a rail with a status bar) and the selected page.
 struct HomeView: View {
     @Bindable var model: HomeModel
@@ -63,7 +63,7 @@ struct HomeView: View {
                 .keyboardShortcut("k", modifiers: .command)
                 .opacity(0)
                 .accessibilityHidden(true)
-            // ⌘1–4 go to the four places in every navigation (D62).
+            // ⌘1–4 go to the four places in every navigation (D64).
             ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
                 Button(place.title) { model.go(to: place) }
                     .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
@@ -103,7 +103,7 @@ struct HomeView: View {
         .overlay { ThemeGrain() }
     }
 
-    /// Without a sidebar, the Notebook's pages bring their collections along (D62).
+    /// Without a sidebar, the Notebook's pages bring their collections along (D64).
     @ViewBuilder private func withCollections<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         switch navigation {
         case .sidebar:
@@ -163,7 +163,7 @@ private struct HomeSidebar: View {
                 .padding(.leading, Theme.Space.xs)
                 .padding(.bottom, Theme.Space.s)
             // The companion's nook (D58): who keeps track of all this, and what it's on now. A click goes to Today.
-            // The theme's layout may put it at the foot instead (D62).
+            // The theme's layout may put it at the foot instead (D64).
             if layout.nook == .top {
                 Button { model.selection = .now } label: {
                     CompanionNook(settings: model.services.runtime.settings.current, line: model.now.nookLine)

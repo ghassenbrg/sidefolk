@@ -699,7 +699,7 @@ runtime's `com.apple.security.personal-information.calendars`); reading the stat
   invitation's title is written by whoever sent it. Other agents get no tool that reads it (`external: false`).
 *Residual:* once allowed for good, the AI may read the day's events in any later clean turn.
 
-**T35 Themes (L/M), D58, D62.** A theme is data: `theme.json` (64 KB at most) and PNGs (2 MB and 2048 px at most,
+**T35 Themes (L/M), D58, D64.** A theme is data: `theme.json` (64 KB at most) and PNGs (2 MB and 2048 px at most,
 inside its folder, decoded and written again by Sidefolk before use), never code, never words shown as the app's.
 Its layout names only blocks the app draws; anything else is left out and said, and what needs you (Guard's
 questions) always has a place, so no theme can hide a waiting approval. Ids under `dev.sidefolk.` and `harbor` are

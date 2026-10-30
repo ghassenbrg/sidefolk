@@ -1,6 +1,6 @@
 import Foundation
 
-/// What Return will do with words understood on the Mac (D62), in parts the one bar shows before anything happens:
+/// What Return will do with words understood on the Mac (D64), in parts the one bar shows before anything happens:
 /// the kind of thing, its words, its pieces (day, time, collection, how often) and the tool that will run it.
 public struct IntentPlan: Sendable, Equatable {
     public var kind: String

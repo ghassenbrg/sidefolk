@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// The one bar's "Will do" (D62): what Return would do, in parts, and the tool that runs it, from the same parse.
+/// The one bar's "Will do" (D64): what Return would do, in parts, and the tool that runs it, from the same parse.
 @Suite struct IntentPlanTests {
     let now = TimeTest.wednesday10
     let parser = IntentParser(when: TimeTest.parser(), home: "/Users/test")

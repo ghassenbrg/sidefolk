@@ -9,7 +9,7 @@ struct NotebookEditor: View {
     @State private var formatting = NoteEditorController()
     private enum Field { case title, body }
 
-    /// The theme's editor (D62): formatted as you write, or Markdown as written with tabs and an outline.
+    /// The theme's editor (D64): formatted as you write, or Markdown as written with tabs and an outline.
     private var markdown: Bool { ThemeStore.shared.style.tokens.layout.editor == .markdown }
 
     var body: some View {
@@ -124,7 +124,7 @@ struct NotebookEditor: View {
         .padding(.vertical, Theme.Space.s + 2)
     }
 
-    // MARK: Markdown (D62)
+    // MARK: Markdown (D64)
 
     private func markdownEditor(_ item: NotebookItem) -> some View {
         VStack(alignment: .leading, spacing: 0) {

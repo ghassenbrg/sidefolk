@@ -156,7 +156,7 @@ public enum ThemeCheck {
 
     // MARK: Layout
 
-    /// The theme's layout (D62): a preset, then its own choices, each from what the app draws, within limits.
+    /// The theme's layout (D64): a preset, then its own choices, each from what the app draws, within limits.
     static func layout(_ section: ThemeFile.LayoutSection?, _ problem: (ThemeReport.Problem.Level, String) -> Void) -> ThemeLayout {
         var layout = ThemeLayout.desk
         guard let section else { return layout }

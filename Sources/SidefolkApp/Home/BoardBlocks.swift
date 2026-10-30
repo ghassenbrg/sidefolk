@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// Today's pieces in the Board's styles (D62): cards with their title inside, side by side.
+// Today's pieces in the Board's styles (D64): cards with their title inside, side by side.
 
 /// A card with its title, count and one small link inside, as the Board's columns are.
 struct TitledCard<Trailing: View, Content: View>: View {
@@ -34,7 +34,7 @@ struct TitledCard<Trailing: View, Content: View>: View {
 
 // MARK: day:list
 
-/// The day as a list (D62): what's done struck through, what's late in red with Done beside it, the calendar's events,
+/// The day as a list (D64): what's done struck through, what's late in red with Done beside it, the calendar's events,
 /// a line at the present, and tomorrow's first two at the foot.
 struct DayList: View {
     var model: NowModel
@@ -140,7 +140,7 @@ struct DayList: View {
 
 // MARK: watching:list
 
-/// Watches as a list (D62): each with how often it looks, and a word or a value at the right.
+/// Watches as a list (D64): each with how often it looks, and a word or a value at the right.
 struct WatchingList: View {
     var model: NowModel
 
@@ -231,7 +231,7 @@ struct ListRowLabel<Trailing: View>: View {
 
 // MARK: agents:card
 
-/// Who's working, then what just finished (D62): sessions with a word for where they are, commands, and the two newest
+/// Who's working, then what just finished (D64): sessions with a word for where they are, commands, and the two newest
 /// things done.
 struct AgentsCard: View {
     var model: NowModel
@@ -276,7 +276,7 @@ struct AgentsCard: View {
 
 // MARK: notes:cards and art:tile
 
-/// The newest notes as cards (D62): their collection, title, and its reminder or who saved it when. A click opens it.
+/// The newest notes as cards (D64): their collection, title, and its reminder or who saved it when. A click opens it.
 struct NotesCards: View {
     var model: NowModel
 
@@ -326,7 +326,7 @@ struct NotesCards: View {
     }
 }
 
-/// The theme's own picture among the cards (D62), never behind words.
+/// The theme's own picture among the cards (D64), never behind words.
 struct ArtTile: View {
     var body: some View {
         if let art = Theme.Art.tile {

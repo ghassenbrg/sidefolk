@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// Today's pieces in the Console's styles (D62): dense, keyboard first, every step visible, exact words in mono.
+// Today's pieces in the Console's styles (D64): dense, keyboard first, every step visible, exact words in mono.
 
 /// A Console section's title: small capitals, a count, and a quiet note at the right.
 struct ConsoleTitle: View {
@@ -74,7 +74,7 @@ struct ConsoleHeader: View {
 
 // MARK: agents:steps
 
-/// Every agent's steps, as they happen (D62): each session with where it is, then its last calls to Sidefolk with
+/// Every agent's steps, as they happen (D64): each session with where it is, then its last calls to Sidefolk with
 /// their risk; then your companion's own.
 struct AgentSteps: View {
     var model: NowModel
@@ -184,7 +184,7 @@ struct RiskTag: View {
 
 // MARK: watching:signals
 
-/// Watches and live values as signals (D62): how often each looks and what it saw, values with a line of the last few.
+/// Watches and live values as signals (D64): how often each looks and what it saw, values with a line of the last few.
 struct WatchSignals: View {
     var model: NowModel
 
@@ -246,7 +246,7 @@ struct WatchSignals: View {
 
 // MARK: day:compact
 
-/// What comes next, one line each (D62): the time, what, and a word when it's late, a calendar's, or someone else's.
+/// What comes next, one line each (D64): the time, what, and a word when it's late, a calendar's, or someone else's.
 struct DayCompact: View {
     var model: NowModel
     var edit: (Reminder) -> Void

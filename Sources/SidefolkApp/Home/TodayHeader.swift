@@ -113,7 +113,7 @@ struct CompanionNook: View {
     }
 }
 
-/// The companion at the foot of the sidebar (D62): its face, and a speech bubble with a hello and what it's on.
+/// The companion at the foot of the sidebar (D64): its face, and a speech bubble with a hello and what it's on.
 struct NookBubble: View {
     var settings: AppSettings
     var greeting: String

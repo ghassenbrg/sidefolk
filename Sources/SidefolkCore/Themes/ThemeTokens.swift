@@ -139,7 +139,7 @@ public struct ThemeTokens: Sendable, Equatable {
     public var motion: Motion
     public var material: Material
     public var nook: Nook
-    /// Where things go and how they look (D62).
+    /// Where things go and how they look (D64).
     public var layout: ThemeLayout
 
     public init(id: String, name: String, colors: Colors, space: Space, radius: Radius, type: Typography,

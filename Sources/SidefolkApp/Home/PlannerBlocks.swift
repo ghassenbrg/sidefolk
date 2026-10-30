@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// Today's pieces in the Planner's styles (D62): an open spread you write in, decisions as index cards, watches in the
+// Today's pieces in the Planner's styles (D64): an open spread you write in, decisions as index cards, watches in the
 // margin, and the companion as a sticker on the page.
 
 /// A sheet of the spread (a column with `page`): paper with a soft shadow.
@@ -51,7 +51,7 @@ struct PageHeader: View {
 
 // MARK: day:ruled
 
-/// The day on ruled lines (D62): a box to tick, what's done struck through with when, reminders and the calendar's
+/// The day on ruled lines (D64): a box to tick, what's done struck through with when, reminders and the calendar's
 /// events marked, a line at the present, and a last line to write on. Tomorrow and what was jotted today below.
 struct RuledDay: View {
     var model: NowModel
@@ -216,7 +216,7 @@ private extension View {
 
 // MARK: queue:index
 
-/// A decision as an index card (D62): who asks in small capitals with the risk stamped beside it, a clip at the corner,
+/// A decision as an index card (D64): who asks in small capitals with the risk stamped beside it, a clip at the corner,
 /// faint rules behind the words.
 struct IndexCardFrame<Content: View>: View {
     var label: String
@@ -261,7 +261,7 @@ struct IndexCardFrame<Content: View>: View {
 
 // MARK: watching:margin
 
-/// Watches as a quiet list in the margin (D62), a stamp on what changed until you look.
+/// Watches as a quiet list in the margin (D64), a stamp on what changed until you look.
 struct MarginWatches: View {
     var model: NowModel
 
@@ -308,7 +308,7 @@ struct MarginWatches: View {
 
 // MARK: companion:sticker
 
-/// The companion as a sticker on the page (D62), saying one line about what it's on.
+/// The companion as a sticker on the page (D64), saying one line about what it's on.
 struct CompanionSticker: View {
     var model: NowModel
 

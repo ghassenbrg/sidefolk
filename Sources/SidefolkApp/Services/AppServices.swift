@@ -185,7 +185,7 @@ protocol AppServices: AnyObject {
     func hint(for text: String) -> String?
     /// Whether Sidefolk does these words without AI, as Return in the Ask panel would.
     func understands(_ text: String) -> Bool
-    /// What Return would do, in parts (D62), when the words are understood on the Mac.
+    /// What Return would do, in parts (D64), when the words are understood on the Mac.
     func plan(for text: String) -> IntentPlan?
     /// Sends typed words on through the Ask panel, which shows what came of them.
     func ask(_ text: String, how: AskHow)

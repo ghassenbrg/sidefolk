@@ -175,7 +175,7 @@ final class NotebookModel {
         await reloadItems()
     }
 
-    /// Notes opened in the Markdown editor's tabs (D62), most recently opened last; at most eight.
+    /// Notes opened in the Markdown editor's tabs (D64), most recently opened last; at most eight.
     private(set) var tabs: [NotebookItem] = []
 
     func closeTab(_ id: String) {

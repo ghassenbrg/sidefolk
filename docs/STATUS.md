@@ -72,10 +72,10 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   the glass, not a shutter; folks and custom companions keep the soft look. *Next:* the founder reviews the ten
   (`swift run sidefolk-render out/`, or the dev app), then the 2D-character skill from the README.
 - **Themes, steps 1–10 built: a theme arranges the app's own pieces, each theme as faithful as its board (D57,
-  D58, D62):** reasons in `docs/research/themes.md`, plan in `docs/research/themes-plan.md`, each board's elements
+  D58, D64):** reasons in `docs/research/themes.md`, plan in `docs/research/themes-plan.md`, each board's elements
   against the app in `docs/research/themes-fidelity.md`, boards locally in `sandbox/theme-sandbox/`. Steps 1–8:
   tokens, Today, the one bar, Your day with the calendar, watch tiles and agents, theme files with a check, install
-  and live reload. Steps 9–10 (D62): Today is rows of columns of blocks (header, queue, day, watching, agents,
+  and live reload. Steps 9–10 (D64): Today is rows of columns of blocks (header, queue, day, watching, agents,
   recent, notes, art, companion), each in several styles, that a theme's `layout` arranges; presets desk (Harbor,
   now two columns as its board), board, console, stage, planner; rail with a status bar, pill tabs and ribbon tabs;
   collections as a column, jars or washi tabs; Activity as a table, log or diary; a Markdown editor with tabs and an

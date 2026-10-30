@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// Home's navigation besides the sidebar (D62): a rail of icons with a status bar, and the collections column the
+// Home's navigation besides the sidebar (D64): a rail of icons with a status bar, and the collections column the
 // Notebook brings along where there is no sidebar.
 
 /// A narrow rail: the companion's badge (glowing while something runs; a click goes to Today), the four places, and
@@ -166,7 +166,7 @@ struct CollectionColumn: View {
     }
 }
 
-/// Four big friendly tabs floating at the top (D62): the places, Today with what needs you.
+/// Four big friendly tabs floating at the top (D64): the places, Today with what needs you.
 struct PillTabs: View {
     @Bindable var model: HomeModel
 
@@ -199,7 +199,7 @@ struct PillTabs: View {
     }
 }
 
-/// The Notebook's collections across the top (D62): big jars with their picture and count, or washi tabs in each
+/// The Notebook's collections across the top (D64): big jars with their picture and count, or washi tabs in each
 /// collection's colour.
 struct CollectionStrip: View {
     @Bindable var model: HomeModel
@@ -255,7 +255,7 @@ struct CollectionStrip: View {
     }
 }
 
-/// Bookmark ribbons down the right edge (D62), each place its own colour, the open one standing out.
+/// Bookmark ribbons down the right edge (D64), each place its own colour, the open one standing out.
 struct RibbonTabs: View {
     @Bindable var model: HomeModel
 

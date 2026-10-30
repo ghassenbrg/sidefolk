@@ -7,7 +7,7 @@ struct ActivityView: View {
     /// The row the keyboard is on: ↑↓ move, Space opens or closes its details.
     @FocusState private var focused: String?
 
-    /// The theme's Activity (D62): a table, or a log (dense, in mono, a word for each result).
+    /// The theme's Activity (D64): a table, or a log (dense, in mono, a word for each result).
     private var style: ThemeLayout.Activity { ThemeStore.shared.style.tokens.layout.activity }
     private var columns: [ActivityColumn] { style == .log ? [.time, .who, .what, .risk, .decision] : ActivityColumn.allCases }
 
@@ -132,7 +132,7 @@ struct ActivityView: View {
         }
     }
 
-    /// The same facts as sentences, under the time of day they happened (D62); a click opens the same details.
+    /// The same facts as sentences, under the time of day they happened (D64); a click opens the same details.
     @ViewBuilder private var diary: some View {
         let rows = model.visible
         if rows.isEmpty {
@@ -451,7 +451,7 @@ private struct Stat: View {
     }
 }
 
-/// A risk stamped in small capitals, as on a page (D62).
+/// A risk stamped in small capitals, as on a page (D64).
 struct Stamp: View {
     var risk: Risk
 

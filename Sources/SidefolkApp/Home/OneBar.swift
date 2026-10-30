@@ -172,7 +172,7 @@ struct SearchPage: View {
     }
 }
 
-/// What Return will do with the words (D62), before anything happens: the action and its parts, the tool that runs it
+/// What Return will do with the words (D64), before anything happens: the action and its parts, the tool that runs it
 /// and its risk, whether a model is used; then the other two ways to send them.
 struct WillDo: View {
     var text: String
