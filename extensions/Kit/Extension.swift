@@ -25,6 +25,7 @@ public final class Extension {
     private let version: String
     private var tools: [Tool] = []
     private var watchers: [String: @MainActor (Arguments, [String: Any]) async throws -> Check] = [:]
+    private var pages: [String: @MainActor (Arguments) async throws -> Page] = [:]
 
     public init(name: String, version: String = "1.0.0") {
         self.name = name
@@ -42,6 +43,12 @@ public final class Extension {
     /// tell the person now.
     public func watcher(_ name: String, check: @escaping @MainActor (_ settings: Arguments, _ state: [String: Any]) async throws -> Check) {
         watchers[name] = check
+    }
+
+    /// A page the manifest declares (`pages.<name>`): what it shows now. The arguments carry `language`, the
+    /// person's (`en`, `fr`, `ar`), for an extension that speaks it.
+    public func page(_ name: String, render: @escaping @MainActor (Arguments) async throws -> Page) {
+        pages[name] = render
     }
 
     /// Answers every message that has an id until Sidefolk closes stdin. Nothing else may reach stdout.
@@ -88,6 +95,10 @@ public final class Extension {
             guard let check = watchers[watcher] else { throw Unknown(what: "Unknown watcher: \(watcher)") }
             let result = try await check(Arguments(params["config"] as? [String: Any] ?? [:]), params["state"] as? [String: Any] ?? [:])
             return ["triggered": result.triggered, "state": result.state, "summary": result.summary]
+        case "sidefolk/page.render":
+            let page = params["page"] as? String ?? ""
+            guard let render = pages[page] else { throw Unknown(what: "Unknown page: \(page)") }
+            return ["page": try await render(Arguments(params)).json]
         default:
             throw Unknown(what: "Method not found: \(method)")
         }

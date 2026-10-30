@@ -34,6 +34,8 @@ enum BuiltInExamples {
             String(localized: "what date is the Unix time 1800000000?", comment: "A request to try with the Dev Toolbox extension; keep the number")
         case "dev.sidefolk.feeds":
             String(localized: "what's new on the swift.org blog?", comment: "A request to try with the Feeds extension; keep the address")
+        case "dev.sidefolk.system-vitals-plus":
+            String(localized: "what's slowing my Mac?", comment: "A request to try with the System Vitals+ extension")
         default:
             nil
         }

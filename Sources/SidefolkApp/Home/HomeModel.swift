@@ -6,6 +6,8 @@ import SidefolkCore
 enum HomeSelection: Hashable {
     case now, conversations, activity, trash
     case collection(String)
+    /// An extension's page (D62), by `ExtensionPageInfo.id`.
+    case page(String)
 }
 
 /// State behind the Home window. Follows `.dataChanged` events while the window is open, so what
@@ -17,6 +19,8 @@ final class HomeModel {
     let notebook: NotebookModel
     let activity: ActivityModel
     let conversations: ConversationsModel
+    /// Extensions' pages (D62).
+    let pages: ExtensionPagesModel
     /// The one bar's search (D58); while it has words, Home shows what it found.
     let find: FindModel
 
@@ -34,7 +38,9 @@ final class HomeModel {
         notebook = NotebookModel(services: services)
         activity = ActivityModel(services: services)
         conversations = ConversationsModel(services: services)
+        pages = ExtensionPagesModel(services: services)
         find = FindModel { query in (try? await services.runtime.find(query)) ?? SearchResults() }
+        now.openPage = { [weak self] id in self?.selection = .page(id) }
     }
 
     /// Sends the one bar's words on, and empties it.
@@ -77,6 +83,7 @@ final class HomeModel {
         await notebook.reload()
         await activity.reload()
         await conversations.reload()
+        await pages.reload()
         if case .collection(let id) = selection, notebook.collectionId == nil { await notebook.show(collectionId: id) }
     }
 
@@ -107,7 +114,7 @@ final class HomeModel {
         case .trash: Task { await notebook.reloadTrash() }
         case .activity: Task { await activity.reload() }
         case .conversations: Task { await conversations.reload() }
-        case .now, nil: break
+        case .now, .page, nil: break
         }
     }
 
@@ -128,6 +135,10 @@ final class HomeModel {
             }
             if domains.contains(.activity) || domains.contains(.runs) { await activity.reload() }
             if domains.contains(.conversations) || domains.contains(.settings) { await conversations.reload() }
+            if domains.contains(.extensions) {
+                await pages.reload()
+                if case .page(let id) = selection, pages.info(id) == nil { selection = .now }
+            }
         }
     }
 }

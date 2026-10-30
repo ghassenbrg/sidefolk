@@ -1487,3 +1487,40 @@ idle twinkle cross the sheets don't have. Purl's linen is a procedural plain wea
 Rune's granite has a speckle from a high pass of the pile map. The same films of Iris, Purl and Rune found one
 more: Iris has no neck, so looking round wrung the camera like a towel; `turnWhole` gives that share of the head's
 and chest's yaw to the whole body.
+
+### D62 — Extensions add pages: a page in Home, a tile on Today, heads-ups as switches; System Vitals+ first (2026-10-31)
+**Decision:** an extension can add a whole feature, not only tools. `pages.<name>` in the manifest puts a page in
+Home's sidebar (under Extensions), with an optional tile on Today (`widget`). The extension answers
+`sidefolk/page.render {page, language}` with what is true (a summary and sections of parts: gauge, stat, chart, bars,
+facts, note, ask); Sidefolk draws it with its own components, so a page follows the theme, dark mode and right to
+left, and can't look like an approval card. Charts send only the value now: Sidefolk keeps their past
+(`ExtensionPageHistory`, 15 minutes of every value then a day at one a minute), so extensions need no storage and a
+chart isn't empty when it opens. Pages with `history` or `widget` are read once a minute while Sidefolk runs, which the
+install preview says. Under each page the extension's watchers are switches (heads-ups): on, `watch.extension` runs
+through the executor as the person, in repeat mode every five minutes, and the companion tells them. An `ask` part is
+a button that sends a sentence to Ask, so it reaches the extension's commands or the AI through Guard like anything
+typed. Sidefolk becomes 0.2.0; a page needs `"sidefolk": ">=0.2"`, and the gallery's `minimum_sidefolk` now comes
+from each manifest, so older copies skip such an extension instead of failing to install it.
+- **Not tools, like watchers:** a page read is not a tool call, so a page open for an hour doesn't write 1,200
+  Activity rows. It runs in the same sandbox as the extension's tools and can change nothing; what it says is shown
+  only on its page and never reaches a model. Anything that acts goes through a tool (an `ask` button, a heads-up).
+- **System Vitals+** (`dev.sidefolk.system-vitals-plus`, gallery, shelf Everyday) is the first: the whole Mac in plain
+  words. Processor and graphics, memory and its pressure, apps grouped by app (a browser's helpers are the browser),
+  disks, battery health against new, heat, network; a verdict on top with what to do; charts; eight tools with
+  instant commands ("how's my Mac", "what's slowing my Mac"); seven watchers (working hard, an app using a lot, memory
+  tight, hot, disk low, battery low, battery worn). Everything is read in the process (Mach, sysctl, the I/O Registry,
+  each process's own counters): no internet, no files, no programs. System Vitals stays, small and built in.
+
+**Why:** the founder wanted extensions that add whole features (screens, commands, ways to ask, the companion
+speaking up), and a 360° view of the Mac that anyone understands. Extensions could only add tools and watchers.
+
+**Alternatives:** a web view the extension draws in (any look, but it can imitate Sidefolk's own cards, ignores
+themes, and needs its own sandbox story); history kept by each extension (every author writes the same store, and
+it stops when the process idles); page reads as tool calls (an audit row every few seconds).
+
+**Implications:** found while building it: an extension in the sandbox can list every process and read its CPU
+time, memory and path (`proc_pid_rusage`, `proc_pidpath`), and read the I/O Registry, with no permission naming
+it. System Vitals+ uses exactly that, so the install preview says nothing about it. Worth a SECURITY note and maybe
+a permission of its own before third-party extensions are common. Page text is English only for now (`language` is
+passed for extensions that want it); a Mac's fan speeds and temperatures need the SMC, which the sandbox closes, so
+heat is macOS's own thermal state.

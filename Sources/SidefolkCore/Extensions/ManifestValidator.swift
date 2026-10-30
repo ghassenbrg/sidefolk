@@ -69,6 +69,7 @@ public struct ValidationReport: Sendable {
         let risks = toolRisks
         if !risks.isEmpty { out.append("Tools: " + risks.map { "\($0.name) (\($0.risk.rawValue))" }.joined(separator: ", ")) }
         if let m = manifest, !m.watchers.isEmpty { out.append("Watchers: " + m.watchers.keys.sorted().joined(separator: ", ")) }
+        if let m = manifest, !m.pages.isEmpty { out.append("Pages: " + m.pages.keys.sorted().compactMap { m.pages[$0]?.title }.joined(separator: ", ")) }
         let commands = commandLines
         if !commands.isEmpty {
             out.append("Answers without AI (D50):")
@@ -159,6 +160,7 @@ public struct ManifestValidator: Sendable {
         issues += ExtensionCommandRules.check(manifest)
         report.permissions = permissions
         checkWatchers(manifest, issues: &issues)
+        checkPages(manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report
@@ -480,6 +482,30 @@ public struct ManifestValidator: Sendable {
                 if let lo = f.minimum, let hi = f.maximum, lo > hi {
                     issues.append(ValidationIssue(field: kf, message: "has a minimum above its maximum."))
                 }
+            }
+        }
+    }
+}
+
+extension ManifestValidator {
+    static let symbolPattern = #"^[a-z0-9]+(\.[a-z0-9]+)*$"#
+
+    func checkPages(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
+        if m.pages.count > 4 { issues.append(ValidationIssue(field: "pages", message: "can declare at most 4 pages.")) }
+        for name in m.pages.keys.sorted() {
+            let field = "pages.\(name)"
+            guard let p = m.pages[name] else { continue }
+            if name.range(of: Self.namePattern, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: field, message: "isn't a valid page name (lowercase letters, digits and _)."))
+            }
+            if p.title.isEmpty || p.title.count > 40 || ExtensionText.clean(p.title) != p.title {
+                issues.append(ValidationIssue(field: "\(field).title", message: "must be 1–40 characters of plain text."))
+            }
+            if let s = p.symbol, s.count > 64 || s.range(of: Self.symbolPattern, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: "\(field).symbol", message: "must be an SF Symbol name, like gauge.with.dots.needle.67percent."))
+            }
+            if let r = p.refresh, !ExtensionManifest.PageMeta.refreshes.contains(r) {
+                issues.append(ValidationIssue(field: "\(field).refresh", message: "must be between 2 and 3600 seconds."))
             }
         }
     }

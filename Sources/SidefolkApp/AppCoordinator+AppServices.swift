@@ -123,6 +123,8 @@ extension AppCoordinator: AppServices {
             toolNames: manifest.tools.keys.sorted().map { manifest.tools[$0]?.title ?? $0 },
             watcherNames: manifest.watchers.keys.sorted().map { manifest.watchers[$0]?.title ?? $0 },
             commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
+            pageNames: manifest.pages.keys.sorted().compactMap { manifest.pages[$0]?.title },
+            pagesInBackground: manifest.pages.values.contains { $0.history == true || $0.widget == true },
             isUpdate: preview.update != nil,
             folk: manifest.folk, iconPath: preview.report.iconPath,
             fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/"),

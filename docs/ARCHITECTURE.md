@@ -306,6 +306,13 @@ not described there default to `medium`. Watchers are checked with `sidefolk/wat
 to its data dir unless granted, exec allow-list). MCP servers added by command run unsandboxed and
 are labelled so; their tools are medium risk until the user grants more.
 
+Pages (D62): `pages.<name>` in the manifest; the host asks `sidefolk/page.render {page, language}` → `{page}`, parsed
+strictly by `ExtensionPage` (known parts only, text cleaned and clipped). `ExtensionPageHistory` keeps every chart
+series (15 minutes fine, a day at one a minute, `PageHistory/<id>.json`); `ExtensionHost.startPageSampling` reads
+pages with `history` or `widget` once a minute, and `latestPage` feeds Today's tiles. In the app,
+`ExtensionPagesModel` lists them in Home's sidebar (`HomeSelection.page`), `ExtensionPageView` draws them (Swift
+Charts), and heads-ups start the extension's watchers through `watch.extension` as `Caller.user`.
+
 ## Build and release
 
 - `make dev` / `scripts/run.sh` — debug build, assemble `build/Sidefolk-dev.app`, launch with

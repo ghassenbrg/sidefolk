@@ -41,6 +41,15 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         present()
     }
 
+    /// Opens an extension's page (D62), by `extension id/page`.
+    func show(page id: String) {
+        Task {
+            await model.pages.reload()
+            model.selection = .page(id)
+        }
+        present()
+    }
+
     func close() { window?.performClose(nil) }
 
     /// Activity, with this row's details open.

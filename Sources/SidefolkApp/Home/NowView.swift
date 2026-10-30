@@ -19,6 +19,7 @@ struct NowView: View {
             if model.needsYouCount > 0 || model.skippedRun != nil { needsYou }
             // Values told every few seconds or minutes change as you look: they sit near the top.
             if !model.reports.isEmpty { live }
+            if !model.widgets.isEmpty { ExtensionWidgetsSection(model: model) }
             // Live agent work comes first while there is some: it is the part nothing else on the Mac shows.
             if busy { running }
             comingUp

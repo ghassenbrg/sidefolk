@@ -36,6 +36,8 @@ public struct SidefolkPaths: Sendable {
     public var updates: URL { home.appendingPathComponent("Updates", isDirectory: true) }
     /// Companions and the catalog from the add-on gallery (D55).
     public var addons: URL { home.appendingPathComponent("Addons", isDirectory: true) }
+    /// What extension pages' charts said over the last day (D62).
+    public var pageHistory: URL { home.appendingPathComponent("PageHistory", isDirectory: true) }
     /// Themes added from a folder, checked and copied (D58).
     public var themes: URL { home.appendingPathComponent("Themes", isDirectory: true) }
 

@@ -64,6 +64,37 @@ public struct MCPServerCommand: Codable, Sendable, Hashable {
     public var commandLine: String { ([command] + arguments).joined(separator: " ") }
 }
 
+/// A page an enabled extension adds to Home (D62).
+public struct ExtensionPageInfo: Sendable, Hashable, Identifiable {
+    public var extensionId: String
+    public var extensionName: String
+    public var page: String
+    public var title: String
+    public var symbol: String?
+    /// Seconds between reads while it is open.
+    public var refresh: Int
+    /// Read once a minute in the background, so its charts reach back a day.
+    public var history: Bool
+    /// Its summary is a tile on Today.
+    public var widget: Bool
+    public var iconPath: String?
+
+    public var id: String { "\(extensionId)/\(page)" }
+
+    public init(extensionId: String, extensionName: String, page: String, title: String, symbol: String? = nil, refresh: Int = 5,
+                history: Bool = false, widget: Bool = false, iconPath: String? = nil) {
+        self.extensionId = extensionId
+        self.extensionName = extensionName
+        self.page = page
+        self.title = title
+        self.symbol = symbol
+        self.refresh = refresh
+        self.history = history
+        self.widget = widget
+        self.iconPath = iconPath
+    }
+}
+
 /// A watcher kind an extension contributes, for the watcher engine and the "new watcher" UI.
 public struct ExtensionWatcherKind: Sendable, Hashable {
     public var extensionId: String
@@ -71,6 +102,14 @@ public struct ExtensionWatcherKind: Sendable, Hashable {
     public var title: String
     public var description: String
     public var config: [String: ExtensionManifest.ConfigField]
+
+    public init(extensionId: String, watcher: String, title: String, description: String, config: [String: ExtensionManifest.ConfigField]) {
+        self.extensionId = extensionId
+        self.watcher = watcher
+        self.title = title
+        self.description = description
+        self.config = config
+    }
 }
 
 public struct ExtensionToolInfo: Sendable, Hashable {

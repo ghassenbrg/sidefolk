@@ -182,6 +182,8 @@ final class AppCoordinator {
             Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
         }
         installHelperLink()
+        // Extension pages' charts reach back a day, and Today's tiles stay current (D62).
+        await runtime.extensions.startPageSampling()
         await refreshCollections()
         await refreshExtensionLooks()
         _ = await notificationsAuthorized()
@@ -428,6 +430,21 @@ final class AppCoordinator {
         }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            return
+        }
+        if command.hasPrefix("page:") {
+            // page:<extension id>/<page>: Home on an extension's page (D62).
+            home.show(page: String(command.dropFirst(5)))
+            return
+        }
+        if command.hasPrefix("installFolder:") {
+            // installFolder:<folder>: installs an extension as Settings does once the person approved its preview.
+            let folder = URL(fileURLWithPath: String(command.dropFirst("installFolder:".count)))
+            Task {
+                do { _ = try await runtime.extensions.install(from: folder) } catch {
+                    Log.shared.warning("dev", "install failed", ["error": String(describing: error)])
+                }
+            }
             return
         }
         if command.hasPrefix("review:") {

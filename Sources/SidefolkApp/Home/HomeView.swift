@@ -56,6 +56,12 @@ struct HomeView: View {
             ActivityView(model: model.activity)
         case .trash:
             TrashView(model: model.notebook)
+        case .page(let id):
+            if let info = model.pages.info(id) {
+                ExtensionPageView(model: model.pages.model(info))
+            } else {
+                Theme.surfaceSunken
+            }
         case .collection(let id):
             if let collection = model.notebook.collection(id: id) {
                 NotebookView(model: model.notebook, collection: collection)
@@ -105,6 +111,16 @@ private struct HomeSidebar: View {
                 Label { Text("Trash") } icon: { icon("trash", Theme.inkMuted) }
                     .badge(notebook.trashCount)
                     .tag(HomeSelection.trash)
+            }
+            // Pages extensions add (D62), under the extension's own name for the page.
+            if !model.pages.list.isEmpty {
+                Section("Extensions") {
+                    ForEach(model.pages.list) { p in
+                        Label { Text(verbatim: p.title) } icon: { icon(p.symbol ?? "puzzlepiece.extension", Theme.folkColor("byte")) }
+                            .tag(HomeSelection.page(p.id))
+                            .help(Text("Added by \(p.extensionName)", comment: "Under an extension page's title: the extension it comes from"))
+                    }
+                }
             }
             Section {
                 // The audit trail matters, but your notes come first.

@@ -23,6 +23,9 @@ struct BuiltInExtensionWordsTests {
             for (watcher, meta) in manifest.watchers {
                 #expect(BuiltInExtensionWords.watcher(manifest.id, watcher) == meta.title, "\(folder) \(watcher)")
             }
+            for (page, meta) in manifest.pages {
+                #expect(BuiltInExtensionWords.page(manifest.id, page) == meta.title, "\(folder) \(page)")
+            }
         }
     }
 }

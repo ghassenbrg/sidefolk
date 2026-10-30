@@ -26,6 +26,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var watchers: [String: WatcherMeta]
     /// Word lists its commands' slots can take (`{from:unit}` with `"unit": ["km", "miles", …]`) (D50).
     public var words: [String: [String]]
+    /// Pages it adds to Home, drawn by Sidefolk from what `sidefolk/page.render` returns (D62).
+    public var pages: [String: PageMeta]
 
     public struct Run: Sendable, Hashable, Decodable {
         /// `python3`, `node`, `sh`, or a program inside the folder (`bin/server`).
@@ -158,6 +160,41 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
     }
 
+    /// A page in Home's sidebar (D62). The extension says what is on it; Sidefolk draws it with its own parts, so a
+    /// page can't look like anything else in the app (an approval card, say).
+    public struct PageMeta: Sendable, Hashable, Decodable {
+        public var title: String
+        /// An SF Symbol for the sidebar and the Today tile, e.g. `gauge.with.dots.needle.67percent`.
+        public var symbol: String?
+        /// Seconds between reads while the page is open; missing means 5.
+        public var refresh: Int?
+        /// Also read once a minute while Sidefolk runs, so its charts reach back a day. The install preview says so.
+        public var history: Bool?
+        /// Its summary is also a tile on Today.
+        public var widget: Bool?
+
+        public static let refreshes = 2...3600
+        public static let defaultRefresh = 5
+
+        public init(title: String, symbol: String? = nil, refresh: Int? = nil, history: Bool? = nil, widget: Bool? = nil) {
+            self.title = title
+            self.symbol = symbol
+            self.refresh = refresh
+            self.history = history
+            self.widget = widget
+        }
+
+        public init(from decoder: Decoder) throws {
+            try decoder.rejectUnknownKeys(["title", "symbol", "refresh", "history", "widget"])
+            let c = try decoder.container(keyedBy: AnyKey.self)
+            title = try c.decode(String.self, forKey: "title")
+            symbol = try c.decodeIfPresent(String.self, forKey: "symbol")
+            refresh = try c.decodeIfPresent(Int.self, forKey: "refresh")
+            history = try c.decodeIfPresent(Bool.self, forKey: "history")
+            widget = try c.decodeIfPresent(Bool.self, forKey: "widget")
+        }
+    }
+
     /// One setting of a watcher, filled in by whoever creates the watcher.
     public struct ConfigField: Sendable, Hashable, Codable {
         public enum FieldType: String, Sendable, Hashable, Codable { case integer, number, string, boolean }
@@ -192,7 +229,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
 
     public init(id: String, name: String, version: String, sidefolk: String? = nil, description: String? = nil,
                 tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
-                tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:]) {
+                tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
+                pages: [String: PageMeta] = [:]) {
         self.id = id
         self.name = name
         self.version = version
@@ -207,11 +245,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.tools = tools
         self.watchers = watchers
         self.words = words
+        self.pages = pages
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers", "words"])
+                                       "permissions", "tools", "watchers", "words", "pages"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -227,6 +266,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         tools = try c.decodeIfPresent([String: ToolMeta].self, forKey: "tools") ?? [:]
         watchers = try c.decodeIfPresent([String: WatcherMeta].self, forKey: "watchers") ?? [:]
         words = try c.decodeIfPresent([String: [String]].self, forKey: "words") ?? [:]
+        pages = try c.decodeIfPresent([String: PageMeta].self, forKey: "pages") ?? [:]
     }
 
     /// The last part of the id (`dev.sidefolk.system-vitals` → `system-vitals`), used in tool names.

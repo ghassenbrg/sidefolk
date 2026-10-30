@@ -12,6 +12,16 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Extensions add pages; System Vitals+ (D62, Sidefolk 0.2.0):** `pages.<name>` in a manifest puts a page in Home's
+  sidebar (Extensions) and, with `widget`, a tile on Today; the extension answers `sidefolk/page.render` with
+  parts Sidefolk draws itself (gauge, stat, chart, bars, facts, note, ask) and its watchers are switches under the
+  page. Sidefolk keeps the charts' past (`PageHistory/`) and reads `history`/`widget` pages once a minute. System
+  Vitals+ is in `sidefolk-addons/extensions/system-vitals-plus` (gallery, minimum 0.2.0): page, 8 tools with commands,
+  7 watchers, nothing leaves the Mac. *Checked:* ExtensionPageTests (parsing, history, manifest, System Vitals+ in
+  the real sandbox), the add-ons' SystemVitalsPlusTests, `scripts/check.sh`, `make test`, UI snapshots
+  (`page-extension-mac`, `page-now-extension-tile`, light and dark), and the debug app with the extension installed
+  from a folder (`dev.swift installFolder:` / `page:`). *Not yet:* the page in Arabic looked at; page text is English
+  only; installing from the published gallery needs a 0.2.0 build (snapshot or release) of this branch.
 - **Gallery companions update by themselves (D55, amended):** a companion from the gallery gets its newer version
   90 s after launch and every six hours after, without asking; the one on the desktop swaps in place. Extensions
   keep their Update button. Launch's tidy no longer deletes a download already under way (a chosen companion coming

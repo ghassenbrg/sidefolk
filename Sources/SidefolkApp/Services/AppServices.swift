@@ -55,6 +55,9 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var watcherNames: [String]
     /// Sentences it will answer without the AI, as "time in …" (D50).
     var commands: [String] = []
+    /// Pages it adds to Home, and whether any is read in the background (D62).
+    var pageNames: [String] = []
+    var pagesInBackground = false
     var isUpdate: Bool
     var folk: String?
     var iconPath: String?

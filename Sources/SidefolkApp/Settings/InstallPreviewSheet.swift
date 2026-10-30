@@ -65,7 +65,7 @@ struct InstallPreviewSheet: View {
                     }
                 }
             }
-            if !preview.toolNames.isEmpty || !preview.watcherNames.isEmpty {
+            if !preview.toolNames.isEmpty || !preview.watcherNames.isEmpty || !preview.pageNames.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Eyebrow(text: "It adds")
                     if !preview.toolNames.isEmpty {
@@ -73,6 +73,10 @@ struct InstallPreviewSheet: View {
                     }
                     if !preview.watcherNames.isEmpty {
                         Text(ExtensionWords.watchers(preview.watcherNames)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    }
+                    if !preview.pageNames.isEmpty {
+                        Text(ExtensionWords.pages(preview.pageNames, background: preview.pagesInBackground))
+                            .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                     }
                     if !preview.commands.isEmpty {
                         Text(ExtensionWords.commands(preview.commands)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)

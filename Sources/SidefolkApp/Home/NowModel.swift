@@ -92,6 +92,10 @@ final class NowModel {
 
     let services: AppServices
     private var runtime: SidefolkRuntime { services.runtime }
+    /// Extensions' pages that put a tile on Today (D62), with what each said last.
+    var widgets: [ExtensionWidget] = []
+    /// Opens an extension's page in Home; set by Home.
+    var openPage: ((String) -> Void)?
 
     init(services: AppServices) {
         self.services = services
@@ -173,6 +177,7 @@ final class NowModel {
 
     func reload() async {
         let rt = runtime
+        await reloadWidgets()
         approvals = await rt.broker.pending()
         if approvals.contains(where: { $0.extensionId.map { extensionLooks[$0] == nil } ?? false }) {
             extensionLooks = Dictionary(await services.extensions().map { ($0.id, $0.look) }, uniquingKeysWith: { a, _ in a })

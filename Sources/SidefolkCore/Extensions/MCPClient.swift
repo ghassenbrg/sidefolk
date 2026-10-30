@@ -185,6 +185,13 @@ public final class MCPClient: Sendable {
         return MCPWatchResult(triggered: triggered, state: r["state"] ?? .null, summary: r["summary"]?.stringValue ?? "")
     }
 
+    /// `sidefolk/page.render {page, language}` → `{page: {summary, sections}}` (D62).
+    public func pageRender(page: String, language: String, timeout: TimeInterval = 30) async throws -> JSONValue {
+        let r = try await request("sidefolk/page.render", params: ["page": .string(page), "language": .string(language)], timeout: timeout)
+        guard let page = r["page"], page.objectValue != nil else { throw MCPError.badResponse("sidefolk/page.render") }
+        return page
+    }
+
     /// Sends a request and waits for its response, at most `timeout` seconds and 16 at a time.
     public func request(_ method: String, params: JSONValue?, timeout: TimeInterval) async throws -> JSONValue {
         await slots.acquire()

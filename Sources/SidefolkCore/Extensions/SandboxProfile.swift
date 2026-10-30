@@ -131,7 +131,10 @@ public struct SandboxProfile: Sendable, Hashable {
       (global-name "com.apple.system.opendirectoryd.libinfo")
       (global-name "com.apple.system.DirectoryService.libinfo_v1")
       (global-name "com.apple.cfprefsd.daemon") (global-name "com.apple.cfprefsd.agent")
-      (global-name "com.apple.trustd.agent") (global-name "com.apple.logd"))
+      (global-name "com.apple.trustd.agent") (global-name "com.apple.logd")
+      ;; free space as Finder and System Settings count it (what macOS can clear counts as free); read-only, and
+      ;; open to every app in Apple's own App Sandbox
+      (global-name "com.apple.cache_delete.public"))
     (allow ipc-posix-shm-read* (ipc-posix-name "apple.shm.notification_center"))
 
     ;; what dyld, libSystem and interpreters need

@@ -20,6 +20,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.archives": String(localized: "Archives", comment: "A built-in extension: zip files")
         case "dev.sidefolk.dev-toolbox": String(localized: "Dev Toolbox", comment: "A built-in extension for software developers")
         case "dev.sidefolk.feeds": String(localized: "Feeds", comment: "A built-in extension: RSS and Atom feeds")
+        case "dev.sidefolk.system-vitals-plus": String(localized: "System Vitals+", comment: "A built-in extension: the whole Mac with live charts")
         default: nil
         }
     }
@@ -40,6 +41,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.archives": String(localized: "Zip and unzip files", comment: "Archives: one line under its name")
         case "dev.sidefolk.dev-toolbox": String(localized: "JSON, base64, JWTs, UUIDs and more", comment: "Dev Toolbox: one line under its name")
         case "dev.sidefolk.feeds": String(localized: "New posts from blogs, news and podcasts", comment: "Feeds: one line under its name")
+        case "dev.sidefolk.system-vitals-plus": String(localized: "Your whole Mac at a glance, with live charts", comment: "System Vitals+: one line under its name")
         default: nil
         }
     }
@@ -70,6 +72,8 @@ enum BuiltInExtensionWords {
             String(localized: "Zips files and folders so you can send them, and opens zip files you receive, with macOS's own tools.")
         case "dev.sidefolk.dev-toolbox":
             String(localized: "For developers: format JSON, encode and decode base64, URLs and hex, decode JWTs, convert timestamps, make UUIDs, and check a file's checksum.")
+        case "dev.sidefolk.system-vitals-plus":
+            String(localized: "The whole Mac in plain words: processor, graphics, memory, apps, disks, battery health, heat and network, as a page with live charts, a tile on Today, instant answers and a heads-up when something needs you. Nothing leaves your Mac.")
         case "dev.sidefolk.feeds":
             String(localized: "The latest posts of blogs, news sites and podcasts from their RSS or Atom feeds, and a heads-up when a new one appears.")
         default: nil
@@ -111,6 +115,14 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.dev-toolbox", "generate"): String(localized: "Generate IDs")
         case ("dev.sidefolk.dev-toolbox", "checksum"): String(localized: "File checksum")
         case ("dev.sidefolk.feeds", "read_feed"): String(localized: "Latest posts")
+        case ("dev.sidefolk.system-vitals-plus", "health"): String(localized: "Mac health check")
+        case ("dev.sidefolk.system-vitals-plus", "cpu"): String(localized: "Processor and graphics")
+        case ("dev.sidefolk.system-vitals-plus", "memory"): String(localized: "Memory in detail")
+        case ("dev.sidefolk.system-vitals-plus", "storage"): String(localized: "Storage")
+        case ("dev.sidefolk.system-vitals-plus", "battery"): String(localized: "Battery in detail")
+        case ("dev.sidefolk.system-vitals-plus", "network"): String(localized: "Network activity")
+        case ("dev.sidefolk.system-vitals-plus", "top_apps"): String(localized: "What's using the Mac")
+        case ("dev.sidefolk.system-vitals-plus", "specs"): String(localized: "This Mac's specs")
         default: nil
         }
     }
@@ -122,6 +134,21 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.weather", "rain_soon"): String(localized: "Rain soon")
         case ("dev.sidefolk.currency", "rate_crosses"): String(localized: "Exchange rate")
         case ("dev.sidefolk.feeds", "new_post"): String(localized: "New post")
+        case ("dev.sidefolk.system-vitals-plus", "cpu_busy"): String(localized: "Mac working hard")
+        case ("dev.sidefolk.system-vitals-plus", "app_hog"): String(localized: "An app using a lot")
+        case ("dev.sidefolk.system-vitals-plus", "memory_pressure"): String(localized: "Memory tight")
+        case ("dev.sidefolk.system-vitals-plus", "hot"): String(localized: "Mac running hot")
+        case ("dev.sidefolk.system-vitals-plus", "disk_low"): String(localized: "Disk space low")
+        case ("dev.sidefolk.system-vitals-plus", "battery_low"): String(localized: "Battery low")
+        case ("dev.sidefolk.system-vitals-plus", "battery_health"): String(localized: "Battery worn")
+        default: nil
+        }
+    }
+
+    /// A page's title in the sidebar (D62).
+    static func page(_ id: String, _ page: String) -> String? {
+        switch (id, page) {
+        case ("dev.sidefolk.system-vitals-plus", "mac"): String(localized: "Your Mac", comment: "System Vitals+: its page in Home's sidebar")
         default: nil
         }
     }

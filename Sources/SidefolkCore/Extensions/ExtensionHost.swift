@@ -52,6 +52,11 @@ public actor ExtensionHost {
     private let integrity = ExtensionIntegrity()
     private var runtimes: [String: Runtime] = [:]
     private var launches = 0
+    /// What extension pages' charts said (D62).
+    public nonisolated let pageHistory: ExtensionPageHistory
+    private var sampling: Task<Void, Never>?
+    /// What each page said last, for Today's tiles: by `extension/page`.
+    private var latest: [String: (at: Date, page: ExtensionPage)] = [:]
 
     /// - Parameter secrets: environment values for an MCP server, by server id (from the Keychain).
     ///   Only the keys the server was added with are used.
@@ -65,6 +70,7 @@ public actor ExtensionHost {
         config = configuration
         self.secrets = secrets
         installer = ExtensionInstaller(paths: paths)
+        pageHistory = ExtensionPageHistory(folder: paths.pageHistory)
         validator = ManifestValidator(paths: paths, resolver: configuration.resolver, programs: configuration.programs)
     }
 
@@ -80,6 +86,9 @@ public actor ExtensionHost {
 
     /// Stops every running process.
     public func shutdown() async {
+        sampling?.cancel()
+        sampling = nil
+        await pageHistory.save()
         let clients = runtimes.values.compactMap(\.client) + runtimes.values.flatMap(\.oneShots.values)
         for id in runtimes.keys {
             runtimes[id]?.idleTask?.cancel()
@@ -309,6 +318,7 @@ public actor ExtensionHost {
         registry.unregister(owner: id)
         installer.remove(id: id)
         integrity.forget(id)
+        await pageHistory.forget(extensionId: id)
         try await store.delete(id: id)
         Log.shared.info("extensions", "uninstalled", ["id": id])
         events.changed(.extensions)
@@ -474,6 +484,60 @@ public actor ExtensionHost {
             return (r.triggered, r.state, ExtensionText.line(r.summary, characters: 200))
         } catch let error as MCPError {
             throw userFacing(error, action: String(localized: "checking “\(meta.title)”"), name: rt.pin.name)
+        }
+    }
+
+    // MARK: Pages (D62)
+
+    /// The pages of every enabled extension, for Home's sidebar and Today.
+    public func pages() -> [ExtensionPageInfo] {
+        runtimes.keys.sorted().flatMap { id -> [ExtensionPageInfo] in
+            guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
+            return m.pages.keys.sorted().compactMap { name -> ExtensionPageInfo? in
+                guard let p = m.pages[name] else { return nil }
+                let words = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.page(id, name) : nil
+                return ExtensionPageInfo(extensionId: id, extensionName: rt.pin.name, page: name, title: words ?? p.title,
+                                         symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
+                                         history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath)
+            }
+        }
+    }
+
+    /// Asks the extension for one of its pages, and keeps what its charts said. `language` is the person's
+    /// (`fr`, `ar`), for an extension that speaks it.
+    public func renderPage(extensionId id: String, page: String, language: String = "en", now: Date = Date()) async throws -> ExtensionPage {
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
+        guard let meta = rt.manifest?.pages[page] else { throw ToolError.notFound(String(localized: "the page \(page) in \(rt.pin.name)")) }
+        begin(id)
+        defer { end(id) }
+        let client = try await ensureRunning(id)
+        let json: JSONValue
+        do {
+            json = try await client.pageRender(page: page, language: language, timeout: config.callTimeout)
+        } catch let error as MCPError {
+            throw userFacing(error, action: String(localized: "showing “\(meta.title)”"), name: rt.pin.name)
+        }
+        let rendered = try ExtensionPage.parse(json)
+        latest["\(id)/\(page)"] = (now, rendered)
+        await pageHistory.record(extensionId: id, page: page, samples: rendered.samples, at: now)
+        return rendered
+    }
+
+    /// What the page said the last time anything read it, and when.
+    public func latestPage(extensionId id: String, page: String) -> (at: Date, page: ExtensionPage)? { latest["\(id)/\(page)"] }
+
+    /// Reads every page that keeps a history or has a tile on Today once every `interval` seconds while Sidefolk runs,
+    /// so its charts reach back a day and its tile is current. A page that fails is tried again next time.
+    public func startPageSampling(every interval: TimeInterval = 60) {
+        sampling?.cancel()
+        sampling = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                for p in await self.pages() where p.history || p.widget {
+                    _ = try? await self.renderPage(extensionId: p.extensionId, page: p.page)
+                }
+                try? await Task.sleep(for: .seconds(interval), tolerance: .seconds(interval / 10))
+            }
         }
     }
 

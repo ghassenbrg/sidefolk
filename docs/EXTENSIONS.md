@@ -33,13 +33,14 @@ Claude Code or Codex. You can also add any existing MCP server (see
 6. [Tools, risk and approvals](#tools-risk-and-approvals)
 7. [Answering without the AI: commands](#answering-without-the-ai-commands)
 8. [Watchers](#watchers)
-9. [Testing locally](#testing-locally)
-10. [Installing, updating, removing](#installing-updating-removing)
-11. [Built-in extensions](#built-in-extensions)
-12. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
-13. [Plain MCP servers](#plain-mcp-servers)
-14. [Troubleshooting](#troubleshooting)
-15. [Limits](#limits)
+9. [Pages](#pages)
+10. [Testing locally](#testing-locally)
+11. [Installing, updating, removing](#installing-updating-removing)
+12. [Built-in extensions](#built-in-extensions)
+13. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+14. [Plain MCP servers](#plain-mcp-servers)
+15. [Troubleshooting](#troubleshooting)
+16. [Limits](#limits)
 
 ## Quick start
 
@@ -121,6 +122,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `tools.<name>.ai` | no | `false` keeps the tool from Sidefolk's AI: only its commands reach it, and it costs no tokens. Missing means `true`. |
 | `words.<list>` | no | Word lists a command's slots can take (`"unit": ["km", "miles", "°F"]`), at most 16 lists and 2,000 words. |
 | `watchers.<name>` | no | A watcher kind: `title` (≤ 60), `description` (≤ 300) and `config`, its settings. |
+| `pages.<name>` | no | A page in Home (D62): `title` (≤ 40), `symbol` (an SF Symbol), `refresh` (seconds while it is open, 2–3600, 5 if missing), `history` (also read once a minute in the background so its charts reach back a day) and `widget` (its summary is a tile on Today). At most 4. See [Pages](#pages). |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 
 **Folder name.** When you validate a folder, its name should be the id or the id's last part
@@ -473,6 +475,49 @@ watcher engine decides when to check and what to do when a check says `triggered
   outside content.
 - Extension watchers can ask for the user's attention, but never at the "critical" level.
 
+## Pages
+
+An extension can add a whole page to Home (D62): a line in the sidebar under **Extensions**, the page itself, and,
+when the manifest asks, a tile on Today. You say what is true; Sidefolk draws it with its own parts, in the
+person's theme, light or dark, and right to left. No HTML, no drawing of your own: a page can't look like Sidefolk's
+own controls (an approval card, say), and it works the same in every theme.
+
+```json
+"pages": {
+  "mac": { "title": "Your Mac", "symbol": "gauge.with.dots.needle.67percent", "refresh": 3, "history": true, "widget": true }
+}
+```
+
+Sidefolk asks for it with `sidefolk/page.render {page, language}` (`language` is the person's, `en`, `fr`, `ar`,
+for an extension that speaks it) and expects `{page: {summary, sections}}`. In the Kit:
+
+```swift
+ext.page("mac") { args in
+    Page(summary: Summary("All good", detail: "CPU 12% · 214 GB free", tone: .good),
+         sections: [Section("Right now", [.gauge("CPU", "12%", fraction: 0.12, tone: .good, caption: "Most: Xcode"),
+                                          .chart(id: "cpu", "Processor", unit: "%", max: 100, series: [Series("total", "CPU", 12)])])])
+}
+```
+
+- **`summary`**: `title`, `detail`, `tone`, `symbol`. The banner on top of the page, and the Today tile.
+- **Parts** (`type`): `gauge` (a ring: `label`, `value`, `fraction` 0–1, `caption`), `stat` (`label`, `value`, `caption`),
+  `chart` (`id`, `title`, `unit`, `max`, `caption`, `series` of `{key, label, value, display}`, at most 4), `bars`
+  (`title`, `caption`, `items` of `{label, value, fraction}`), `facts` (`title`, `items` of `{label, value}`), `note`
+  (`text`), and `ask` (`label`, `ask`: a button that asks Sidefolk the sentence, as if typed in Ask, so it reaches
+  your commands, or the AI, through Guard). Most take a `tone`: `good`, `warn`, `bad`, `info` or `neutral`.
+- **Charts say only the value now.** Sidefolk keeps the past: every value for 15 minutes, then one a minute (the
+  minute's highest) for a day, under `PageHistory/`, removed with the extension. The person picks 10 minutes, an
+  hour or a day. Keep a chart's `id` and its series' `key`s stable, or its past is lost.
+- **When it runs.** While the page is open, every `refresh` seconds. With `history` or `widget`, also once a minute
+  while Sidefolk runs, and the install preview says so. Keep a render quick: it is a 30-second call like any other.
+- **Heads-ups.** Under the page, each of your watchers is a switch: on, it checks every five minutes in `repeat`
+  mode and the companion tells the person when it triggers. So a watcher should trigger on change (see Watchers).
+- **What Sidefolk refuses or drops.** A page over 128 KB, or one without `sections` or `summary`, fails. Within it, a
+  part Sidefolk doesn't know is skipped (so a newer extension still shows on an older Sidefolk), as is a part
+  missing what it needs; at most 16 sections, 24 parts a section, 24 items a list. Every text is cleaned of hidden
+  characters and clipped. A page is your text: it is never shown to a model.
+- A page needs Sidefolk 0.2: write `"sidefolk": ">=0.2"` in the manifest.
+
 ## Testing locally
 
 1. **Run your program by hand.** Pipe messages in and read what comes out:
@@ -647,6 +692,7 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Tool result shown to the model | 20 KB (an `isError` explanation: 4 KB) |
 | Processes running at once | 32, the program included |
 | Watcher interval | at least 5 minutes, 15 by default |
+| Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart |
 | Watcher summary / state | 200 characters / 64 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |
 | Idle stop | 5 minutes |

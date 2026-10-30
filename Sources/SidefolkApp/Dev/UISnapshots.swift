@@ -148,6 +148,11 @@ enum UISnapshots {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
             }
             try await page("page-now", NowView(model: full.now), width: 870)
+            // An extension's page, and its tile on Today (D62).
+            try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
+            full.now.widgets = [SampleExtensionPage.widget()]
+            try await page("page-now-extension-tile", NowView(model: full.now), width: 870)
+            full.now.widgets = []
             // With Full access on, Now leads with it (D37).
             let homePolicy = try await full.services.runtime.permissions.policy()
             try await full.services.runtime.permissions.setPolicy(GuardPolicy(mode: .fullAccess))

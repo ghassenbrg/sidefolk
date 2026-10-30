@@ -342,6 +342,11 @@ enum ExtensionWords {
                       comment: "Sentences an extension answers at once, each in quotes, “…” standing for the words the person fills in")
     }
     static func watchers(_ names: [String]) -> String { String(localized: "Watchers: \(Wording.list(names))") }
+    /// Pages in Home (D62); one read in the background says so, since it runs while nobody looks.
+    static func pages(_ names: [String], background: Bool) -> String {
+        background ? String(localized: "Pages in Home: \(Wording.list(names)), read once a minute in the background for their charts and Today's tile")
+            : String(localized: "Pages in Home: \(Wording.list(names))")
+    }
 }
 
 /// Small caption lines with a leading mark, for permission and warning lists.
