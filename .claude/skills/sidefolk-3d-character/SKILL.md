@@ -148,6 +148,12 @@ waiting. Then save the portrait: `(await import('./sheet.js')).portrait(companio
 `?frame=sidefolk&capture` page (see how the existing ones were made in the README) and copy
 `build/companions-3d/portrait-<id>/00001.png` to `Resources/Companions3D/portraits/<id>.png`.
 
+**Profile picture** (D54): with `codex-imagegen`, `--ref` the new portrait, the sheet and
+`companions-3d/references/avatars/mochi-avatar.webp` (framing and finish only), and the avatar style sentence
+and a backdrop colour of its own from `prompts.json` › avatars. Keep the source as
+`references/avatars/<id>-avatar.webp`, and save a round 256 px crop on the face (the face must read at 26 points;
+see how the six were cut) as `Resources/Companions3D/avatars/<id>.png`. The Ask panel and Conversations show it.
+
 ## 7. Wire it into the app (3D-only companion)
 
 - `Sources/SidefolkCore/Settings/AppSettings.swift`: `CompanionChoice` case and `dimensions`
