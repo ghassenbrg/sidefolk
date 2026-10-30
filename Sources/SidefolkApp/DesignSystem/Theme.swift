@@ -1,7 +1,9 @@
 import AppKit
+import SidefolkCore
 import SwiftUI
 
-/// Sidefolk design tokens. Every color, size and radius in the UI comes from here.
+/// Sidefolk design tokens. Every color, size and radius in the UI comes from here. The brand palette and logo
+/// plates are fixed; everything else is the active theme's (D58, `ThemeStore`), Harbor unless one is chosen.
 enum Theme {
     // MARK: Brand palette (approved identity)
     static let navy = Color(hex: 0x0F2D5B)
@@ -11,63 +13,67 @@ enum Theme {
     static let lightBlue = Color(hex: 0x93C5FD)
     static let sun = Color(hex: 0xFFC93C)
 
-    // MARK: Semantic, light/dark adaptive
-    static let ink = Color(light: 0x0F2D5B, dark: 0xE8EEF8)
-    static let inkMuted = Color(light: 0x5B6B85, dark: 0x9AA8BF)
-    static let inkFaint = Color(light: 0x8A97AD, dark: 0x6F7F99)
-    static let surface = Color(light: 0xFFFFFF, dark: 0x15233B)
-    static let surfaceSunken = Color(light: 0xF4F7FB, dark: 0x0E1A2E)
-    static let surfaceRaised = Color(light: 0xFFFFFF, dark: 0x1B2C49)
-    static let line = Color(light: 0xE2E8F0, dark: 0x26385A)
+    private static var style: ThemeStyle { ThemeStore.shared.style }
+
+    // MARK: Semantic, light/dark adaptive, from the theme
+    static var ink: Color { style.ink }
+    static var inkMuted: Color { style.inkMuted }
+    static var inkFaint: Color { style.inkFaint }
+    static var surface: Color { style.surface }
+    static var surfaceSunken: Color { style.surfaceSunken }
+    static var surfaceRaised: Color { style.surfaceRaised }
+    static var line: Color { style.line }
     /// What a service's logo sits on, and the ink of one drawn in a single colour (D36). Both are neutral so
     /// brand colours never clash with a folk colour, and the ink is the pure black or white the owners ask for.
+    /// The owners' rules don't change with a theme, so neither do these.
     static let logoPlate = Color(light: 0xFFFFFF, dark: 0x0E1A2E)
     static let logoInk = Color(light: 0x000000, dark: 0xFFFFFF)
-    static let accent = aqua
-    /// Text on aqua: navy keeps 7:1 contrast.
-    static let onAccent = Color(hex: 0x0F2D5B)
-    static let accentSoft = Color(light: 0xE3F9FA, dark: 0x173F4D)
-    static let danger = Color(light: 0xD9473A, dark: 0xFF8A7D)
-    static let dangerSoft = Color(light: 0xFFEDEA, dark: 0x4A2622)
-    /// Text on a `danger` fill: white on the deep red, navy on the light one dark mode uses.
-    static let onDanger = Color(light: 0xFFFFFF, dark: 0x0F2D5B)
-    static let success = Color(light: 0x2F9E6D, dark: 0x7DD3A7)
-    static let successSoft = Color(light: 0xE6F6EE, dark: 0x1D3D31)
-    /// The Now greeting's wash: aqua into light blue, as quiet as the cards around it.
-    static let heroStart = Color(light: 0xDDF6F7, dark: 0x153B49)
-    static let heroEnd = Color(light: 0xE6EFFD, dark: 0x1B2C49)
+    static var accent: Color { style.accent }
+    static var onAccent: Color { style.onAccent }
+    static var accentSoft: Color { style.accentSoft }
+    static var danger: Color { style.danger }
+    static var dangerSoft: Color { style.dangerSoft }
+    static var onDanger: Color { style.onDanger }
+    static var success: Color { style.success }
+    static var successSoft: Color { style.successSoft }
+    /// The Now greeting's wash, as quiet as the cards around it.
+    static var heroStart: Color { style.heroStart }
+    static var heroEnd: Color { style.heroEnd }
 
     // MARK: Metrics
     enum Space {
-        static let xxs: CGFloat = 2
-        static let xs: CGFloat = 4
-        static let s: CGFloat = 8
-        static let m: CGFloat = 12
-        static let l: CGFloat = 16
-        static let xl: CGFloat = 24
-        static let xxl: CGFloat = 32
+        private static var space: ThemeTokens.Space { style.tokens.space }
+        static var xxs: CGFloat { space.xxs }
+        static var xs: CGFloat { space.xs }
+        static var s: CGFloat { space.s }
+        static var m: CGFloat { space.m }
+        static var l: CGFloat { space.l }
+        static var xl: CGFloat { space.xl }
+        static var xxl: CGFloat { space.xxl }
     }
 
     enum Radius {
-        static let control: CGFloat = 8
-        static let card: CGFloat = 12
-        static let panel: CGFloat = 18
-        static let bubble: CGFloat = 20
+        private static var radius: ThemeTokens.Radius { style.tokens.radius }
+        static var control: CGFloat { radius.control }
+        static var card: CGFloat { radius.card }
+        static var panel: CGFloat { radius.panel }
+        static var bubble: CGFloat { radius.bubble }
     }
 
     enum Font {
-        static let bubble = SwiftUI.Font.system(size: 14, weight: .medium, design: .rounded)
-        static let bubbleTitle = SwiftUI.Font.system(size: 15, weight: .semibold, design: .rounded)
-        static let input = SwiftUI.Font.system(size: 16, weight: .regular, design: .rounded)
-        static let hint = SwiftUI.Font.system(size: 11.5, weight: .medium, design: .rounded)
-        static let hero = SwiftUI.Font.system(size: 30, weight: .bold, design: .rounded)
-        static let title = SwiftUI.Font.system(size: 22, weight: .bold, design: .rounded)
-        static let heading = SwiftUI.Font.system(size: 15, weight: .semibold, design: .rounded)
-        static let body = SwiftUI.Font.system(size: 13)
-        static let bodyStrong = SwiftUI.Font.system(size: 13, weight: .semibold)
-        static let caption = SwiftUI.Font.system(size: 11.5)
-        static let captionStrong = SwiftUI.Font.system(size: 11.5, weight: .semibold)
-        static let eyebrow = SwiftUI.Font.system(size: 10.5, weight: .semibold, design: .rounded)
+        private static var fonts: ThemeStyle.Fonts { style.fonts }
+        static var bubble: SwiftUI.Font { fonts.bubble }
+        static var bubbleTitle: SwiftUI.Font { fonts.bubbleTitle }
+        static var input: SwiftUI.Font { fonts.input }
+        static var hint: SwiftUI.Font { fonts.hint }
+        static var hero: SwiftUI.Font { fonts.hero }
+        static var title: SwiftUI.Font { fonts.title }
+        static var heading: SwiftUI.Font { fonts.heading }
+        static var body: SwiftUI.Font { fonts.body }
+        static var bodyStrong: SwiftUI.Font { fonts.bodyStrong }
+        static var caption: SwiftUI.Font { fonts.caption }
+        static var captionStrong: SwiftUI.Font { fonts.captionStrong }
+        static var eyebrow: SwiftUI.Font { fonts.eyebrow }
     }
 
     /// Accent color for each folk, used on cards of its domain.

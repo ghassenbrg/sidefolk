@@ -1289,3 +1289,53 @@ and found the other ways to add an extension hidden at the bottom of the page.
 **Implications:** `CompanionChoice.isRetired` (folks and the robot); `AddonCategory`, `AddonEntry.category/shelf/
 matches`; `AddonStore.freshFor` 30 minutes. Supersedes D2 and D3's robot as a companion (the brand stays Mochi,
 D29) and D27's robot choice.
+
+### D57 — Your calendar on Today, read-only and off until you turn it on (2026-10-30)
+**Decision:** Today's day line, Glance and the morning brief show calendar events beside reminders, read with
+EventKit and never written. Nothing is read until the person turns it on, from the day line ("Show your
+calendar") or Settings › Privacy › Calendar, which asks macOS for access. The AI sees events only through a new
+`calendar.today` tool with effect `readsPrivateData`, checked by the Guard like any other tool; when it's off,
+nothing is read.
+**Why:** the redesigned Today is the shape of your day (D58), and a day without its meetings is half a day. Decided
+by Claude at the founder's request (docs/research/themes.md section 5).
+**Alternatives:** reminders only (the day line misleads); reading the calendar for the AI by default (private data
+leaving without a choice).
+**Implications:** not built yet; step 6 of docs/research/themes-plan.md. A new privacy string in Info.plist, a
+setting, the tool, and SECURITY's private-data list.
+
+### D58 — Themes: a theme is data, the app owns the layouts (2026-10-30)
+**Decision:**
+- **What a theme is.** A theme is a `theme.json`, plus optional PNGs, that sets colour roles in light and dark,
+  the heading face (system, rounded or serif), density, radii, motion, the sidebar material, the companion's nook
+  and art. It also picks one of the app's own layouts ("recipes") for navigation, Today, Activity and the editor.
+  It never carries code or wording.
+- **The shared Home.** It's the same in every theme:
+  - Now becomes Today, a decision queue answered from the keyboard;
+  - the one bar (⌘K, and the Ask panel), which shows what it understood before ⏎;
+  - the day line, watch tiles, agents at work, the companion's nook and Glance;
+  - Activity rows that open in place;
+  - notes that show where they came from, with stored links to conversations.
+- **Approvals.** Another app's approval never takes ⏎ in any theme (the rule at `AppCoordinator.swift:562`).
+- **Built in:** Harbor (the default and today's design), Night Shift, Marshmallow and Field Notes.
+- **In the gallery:** Daylight, Night Studio and Paper Garden, as signed packs.
+- **Community themes** install from a folder or file once they pass the validator, labelled as not reviewed, with
+  their images re-encoded.
+
+**Why:** the founder wants themes that serve different people, and wants anyone to be able to make one. Shared
+recipes make each new theme only data. The reasons are in docs/research/themes.md and the build plan in
+docs/research/themes-plan.md; the boards are local in `sandbox/theme-sandbox/`. The founder chose the built-in set from Claude's recommendation.
+
+**Alternatives:**
+- Colour-only themes (every theme the same layout, which is what the first brainstorm produced).
+- Themes that bring their own views (code from strangers in the app).
+- Renaming Activity to Journal (confused with the Notebook).
+
+**Implications:** Step 1 is built:
+- `ThemeTokens` (SidefolkCore) holds Harbor's values.
+- `ThemeStore` (an observable `Mutex`, readable from any thread) turns tokens into SwiftUI colours, metrics and
+  fonts.
+- `Theme`'s names read the store, so call sites are unchanged.
+- The brand palette and the logo plates (D36) stay fixed.
+- All 232 UI snapshots are pixel-identical before and after.
+
+The rest follows the plan's order.

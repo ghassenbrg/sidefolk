@@ -12,6 +12,17 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Themes, step 1 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
+  build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. The founder
+  chose: built in Harbor (default), Night Shift, Marshmallow, Field Notes; gallery Daylight, Night Studio, Paper
+  Garden. Step 1 is in the app: `ThemeTokens` (SidefolkCore, Harbor's values) and `ThemeStore` (observable, a
+  `Mutex`, readable from any thread) behind every `Theme` name; the brand palette and the logo plates stay fixed.
+  *Checked:* all 232 UI snapshots pixel-identical before and after (two baseline runs agree pixel for pixel; only
+  PNG metadata differs); ThemeTokensTests (identity, AA contrast of ink and muted ink on every surface, 7:1 on
+  accent, both appearances); the full suite. *Found:* Harbor's `inkFaint` is 2.95:1 on white and white on the light
+  danger fill 4.27:1; fixed in plan step 8, not now, so step 1 stays identical. Conversations says "1 requests".
+  *Next:* plan step 2: the "requests" plural, Activity rows that open in place (B11) and the note's Connected list
+  (B12).
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with

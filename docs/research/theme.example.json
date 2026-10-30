@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "id": "com.sidefolk.theme.field-notes",
+  "name": "Field Notes",
+  "author": "Sidefolk",
+  "version": "1.0.0",
+  "minimumApp": "0.2.0",
+  "summary": "A planner on the desk: paper, ink and index cards.",
+  "recipes": {
+    "navigation": "ribbons",
+    "today": "planner",
+    "activity": "diary",
+    "editor": "rich"
+  },
+  "type": {
+    "display": "serif",
+    "text": "system",
+    "exact": "mono",
+    "scale": 1.0,
+    "density": "relaxed"
+  },
+  "shape": {
+    "control": 14,
+    "card": 4,
+    "window": 10
+  },
+  "colors": {
+    "light": {
+      "background": "#F3ECDF",
+      "surface": "#FBF8F1",
+      "surfaceRaised": "#FFFFFF",
+      "line": "#E4DACA",
+      "ink": "#2E2A24",
+      "inkMuted": "#6E655A",
+      "inkFaint": "#A2988A",
+      "accent": "#2E2A24",
+      "onAccent": "#FBF8F1",
+      "attention": "#C0603F",
+      "success": "#5F7F64",
+      "warning": "#B9862A",
+      "danger": "#B0442C",
+      "highlight": "#F6E27A"
+    },
+    "dark": {
+      "background": "#1A1612",
+      "surface": "#221D18",
+      "surfaceRaised": "#2C2620",
+      "line": "#3A322A",
+      "ink": "#EDE3D2",
+      "inkMuted": "#A89A86",
+      "inkFaint": "#7D7062",
+      "accent": "#EDE3D2",
+      "onAccent": "#221D18",
+      "attention": "#E08A68",
+      "success": "#9CB89F",
+      "warning": "#E2B45C",
+      "danger": "#F08A70",
+      "highlight": "#6B5A1E"
+    }
+  },
+  "material": {
+    "surface": "paper",
+    "grain": "assets/grain.png",
+    "sidebar": "solid"
+  },
+  "companion": {
+    "nook": "sticker",
+    "backdrop": null,
+    "suggests": "mochi"
+  },
+  "art": {
+    "emptyToday": "assets/empty-today.png",
+    "emptyNotebook": "assets/empty-notebook.png"
+  },
+  "motion": "calm"
+}
