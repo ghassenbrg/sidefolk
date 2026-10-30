@@ -87,7 +87,7 @@ Settings › Companion gains **Get more**: a gallery read from a signed catalog,
   `character.json`, the extension manifest), the loader, `sidefolk companion validate` and `sidefolk ext validate`,
   the gallery in Settings, the built-in companions and the bundled extensions. A format change edits the loader,
   the validator and our own characters in one commit, tested together.
-- **`sidefolk-gallery` (one public repository, made at step 2) holds** community content: `companions/` and
+- **`sidefolk-addons` (one public repository, made at step 2) holds** community content: `companions/` and
   `extensions/`, the signed catalog, and CI that validates each pull request and renders the contact sheet.
   Built packs are published on its GitHub Releases, and only sources stay in git (`.glb` in Git LFS). Ember,
   Kiko, Nimbo and Folio move there when they leave the app, as the example packs.
