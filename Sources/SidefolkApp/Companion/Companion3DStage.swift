@@ -35,7 +35,8 @@ final class Companion3DStage: NSView {
         file("portraits/\(character).png").flatMap(NSImage.init(contentsOf:))
     }
 
-    /// Its profile picture: head and shoulders on its own colour, round (companions-3d/references/avatars).
+    /// Its profile picture: head and shoulders on its own colour, round (companions-3d/references/avatars). The
+    /// same picture stands for its 2D look, unless one was made for that (`<character>-2d`).
     static func avatar(_ character: String) -> NSImage? {
         file("avatars/\(character).png").flatMap(NSImage.init(contentsOf:))
     }

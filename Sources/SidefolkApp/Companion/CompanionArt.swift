@@ -120,16 +120,20 @@ enum CompanionArt {
         return picture(choice, style: settings.style(for: choice), state: state, threeD: threeD(choice, in: settings), side: side)
     }
 
-    /// Who is talking, as a round picture `side` across (the Ask panel): a 3D companion's profile picture, or else
-    /// the drawn companion's face on a soft disc (its canvas has room around the body, so the middle is cut out).
+    /// Who is talking, as a round picture `side` across (the Ask panel, Conversations). A companion has one profile
+    /// picture for both its looks: the one made for the look it is in when it has its own (`<id>-2d` for 2D), else
+    /// the other, so a 2D companion shows the same picture as its 3D self. Only a companion with no picture at all
+    /// (a custom one) gets its drawn face on a soft disc (its canvas has room around the body, so the middle is cut out).
     static func avatar(for settings: AppSettings, side: CGFloat) -> NSImage {
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
         let local = local(settings.localCompanion)
-        if settings.customCompanion == nil, local != nil || threeD(choice, in: settings) || species(choice).only3D {
+        if settings.customCompanion == nil {
             let name = local?.companion ?? choice.rawValue
-            let key = "avatar.\(name).\(side)"
+            let twoD = local == nil && !threeD(choice, in: settings)
+            let key = "avatar.\(name).\(twoD).\(side)"
             if let cached = previews[key] { return cached }
-            if let image = Companion3DStage.avatar(name) {
+            let own = twoD ? Companion3DStage.avatar("\(name)-2d") : nil
+            if let image = own ?? Companion3DStage.avatar(name) {
                 image.size = CGSize(width: side, height: side)
                 previews[key] = image
                 return image

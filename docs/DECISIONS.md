@@ -1218,6 +1218,9 @@ move to Mochi, keeping a name the person gave it.
 conversations; and saw no need for folks as companions now that there are six designed ones.
 **Implications:** `CompanionChoice.isFolk`, `AppSettings.choose` ignores folks; `CompanionArt.offered` leaves them
 out. Supersedes the part of D30 that offered folks as companions.
+**Amended (2026-10-30, the founder):** a companion has one profile picture for both its looks. Its 2D look shows the
+same picture as its 3D self, unless a picture was made for the 2D look (`avatars/<id>-2d.png` beside the 3D one);
+only a companion with no picture at all (a custom one) shows its drawn face on a disc.
 
 ### D55 — The add-on gallery: Ember, Kiko, Nimbo, Folio and nine extensions download on demand (2026-10-30)
 **Decision:** Sidefolk keeps built in only what it needs: Mochi and Spark (3D and 2D), the robot, the folks (helpers,
