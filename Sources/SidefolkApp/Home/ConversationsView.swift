@@ -402,3 +402,23 @@ private struct ReplyAvatar: View {
         }
     }
 }
+
+/// A way to a kept conversation from somewhere else in Home (D58): its request, or the label given, as a link.
+struct ConversationLink: View {
+    var conversation: ConversationSummary
+    var label: Text?
+    var open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            Label {
+                (label ?? Text(verbatim: conversation.title.clipped(80))).lineLimit(1)
+            } icon: {
+                Image(systemName: "bubble.left.and.bubble.right")
+            }
+            .font(Theme.Font.caption)
+        }
+        .buttonStyle(.sf(.plain))
+        .help(Text(verbatim: conversation.title))
+    }
+}

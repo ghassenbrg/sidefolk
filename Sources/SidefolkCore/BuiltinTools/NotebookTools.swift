@@ -75,7 +75,8 @@ struct NotesSaveTool: Tool {
         let finalKind = kind ?? .note
         let item = NotebookItem(
             collectionId: target.collection.id, kind: finalKind, title: title, body: body, url: url,
-            tags: NoteText.cleanTags(input.textList("tags") ?? []), source: context.provenanceTag, now: context.now)
+            tags: NoteText.cleanTags(input.textList("tags") ?? []), source: context.provenanceTag, runId: context.caller.runId,
+            now: context.now)
         try await notebook.add(item)
         var reminder: Reminder?
         if let remindAt, let reminders {

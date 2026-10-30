@@ -16,6 +16,8 @@ final class ActivityModel {
     var callerKind: String?
     /// The row whose details are open, by id: one at a time, so the table stays a table.
     var openId: Int64?
+    /// The kept conversation each run belongs to, by run id (D58): "Asked in" on a row's details.
+    private(set) var conversations: [String: ConversationSummary] = [:]
     private(set) var entries: [ActivityEntry] = []
     /// Rows whose action can still be undone (the last 15 minutes), by row id.
     private(set) var undoable: Set<Int64> = []
@@ -66,6 +68,7 @@ final class ActivityModel {
 
     func reload() async {
         entries = (try? await runtime.activity.recent(limit: 1000)) ?? []
+        conversations = (try? await runtime.exchanges.conversations(ofRuns: entries.compactMap(\.runId))) ?? [:]
         undoable = await runtime.executor.undo.undoableRows().union(await runtime.gateway.undo.undoableRows())
         let weekStart = Calendar.current.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date().addingTimeInterval(-7 * 86400)
         if let totals = try? await runtime.runs.totals(since: weekStart) {

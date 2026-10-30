@@ -24,6 +24,7 @@ struct NotebookEditor: View {
                         .onSubmit { formatting.focus() }
                         .accessibilityLabel("Title")
                     meta(item)
+                    connected
                     if item.kind == .link { linkField(item) }
                     tagsField(item)
                     FormatBar(controller: formatting)
@@ -125,6 +126,25 @@ struct NotebookEditor: View {
             Text(verbatim: metaText(item)).foregroundStyle(Theme.inkFaint)
         }
         .font(Theme.Font.caption)
+    }
+
+    /// The conversations it was saved and changed in (D58): only links that were recorded, newest change first.
+    @ViewBuilder private var connected: some View {
+        let links = model.conversations
+        if links.madeIn != nil || !links.changedIn.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                if let made = links.madeIn {
+                    ConversationLink(conversation: made, label: Text("Saved in “\(made.title.clipped(60))”")) {
+                        model.services.openConversation(made.id)
+                    }
+                }
+                ForEach(links.changedIn.prefix(3)) { changed in
+                    ConversationLink(conversation: changed, label: Text("Changed in “\(changed.title.clipped(60))”")) {
+                        model.services.openConversation(changed.id)
+                    }
+                }
+            }
+        }
     }
 
     private func metaText(_ item: NotebookItem) -> String {

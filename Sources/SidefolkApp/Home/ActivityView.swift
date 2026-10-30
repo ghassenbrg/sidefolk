@@ -98,6 +98,8 @@ struct ActivityView: View {
                                 .accessibilityHint(Text("Shows or hides the details"))
                             if open {
                                 ActivityDetails(entry: e, who: Describe.caller(e.caller, companion: model.companionName),
+                                                askedIn: e.runId.flatMap { model.conversations[$0] },
+                                                open: { model.services.openConversation($0) },
                                                 seeRule: e.decision == .always ? { model.services.openSettings(tab: .privacy) } : nil)
                             }
                             Rectangle().fill(Theme.line).frame(height: 1).padding(.leading, Theme.Space.l)
@@ -188,6 +190,9 @@ struct ActivityView: View {
 private struct ActivityDetails: View {
     var entry: ActivityEntry
     var who: String
+    /// The conversation whose run did it, while that conversation is kept.
+    var askedIn: ConversationSummary?
+    var open: (String) -> Void
     /// Opens the rule in Settings, for something an "Always allow" let through.
     var seeRule: (() -> Void)?
 
@@ -195,6 +200,9 @@ private struct ActivityDetails: View {
         Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Theme.Space.m, verticalSpacing: Theme.Space.s) {
             line("What") { Text(entry.summary).font(Theme.Font.bodyStrong) }
             line("Who") { Text(verbatim: who) }
+            if let askedIn {
+                line("Asked in") { ConversationLink(conversation: askedIn) { open(askedIn.id) } }
+            }
             line("Decision") {
                 HStack(spacing: Theme.Space.s) {
                     Text(verbatim: Describe.decision(entry.decision))

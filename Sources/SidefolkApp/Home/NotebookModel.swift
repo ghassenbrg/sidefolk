@@ -65,6 +65,9 @@ final class NotebookModel {
     var pickingTime: NotebookItem?
 
     private(set) var selectedId: String?
+    /// Where the selected item was made and changed (D58), for its Connected list.
+    private(set) var conversations = ItemConversations()
+    private var conversationsTask: Task<Void, Never>?
     /// The selected item as edited; written back when editing pauses, the selection changes or the window closes.
     var draft: NotebookItem? {
         didSet { if draft != oldValue, draft != nil, draft?.id == oldValue?.id { scheduleSave() } }
@@ -102,6 +105,7 @@ final class NotebookModel {
         await reloadItems()
         await reloadTrash()
         await reloadReminders()
+        loadConversations()
     }
 
     func reloadReminders() async {
@@ -178,6 +182,20 @@ final class NotebookModel {
         selectedId = id
         draft = items.first { $0.id == id }
         if let leaving { Task { await write(leaving) } }
+        loadConversations()
+    }
+
+    private func loadConversations() {
+        conversationsTask?.cancel()
+        guard let item = draft else {
+            conversations = ItemConversations()
+            return
+        }
+        conversationsTask = Task {
+            let found = (try? await runtime.exchanges.conversations(about: item)) ?? ItemConversations()
+            guard !Task.isCancelled, selectedId == item.id else { return }
+            conversations = found
+        }
     }
 
     /// Saves the draft now (window closing, collection switch).

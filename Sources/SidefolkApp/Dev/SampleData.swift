@@ -11,6 +11,8 @@ enum SampleData {
         var profileItem: NotebookItem
         /// A task with a reminder that belongs to it (D49).
         var remindedTask: NotebookItem
+        /// A note Sidefolk's agent saved in a conversation that is still kept (D58).
+        var savedInConversation: NotebookItem
     }
 
     static func fill(_ rt: SidefolkRuntime, notebook: NotebookModel) async throws -> Created {
@@ -52,8 +54,10 @@ enum SampleData {
         try await rt.notebook.setArchived(collectionId: blog.id, true)
 
         func item(_ c: NotebookCollection, _ kind: NotebookItem.Kind, _ title: String, body: String = "", url: String? = nil,
-                  tags: [String] = [], source: String = "user", created: Date, edited: Date? = nil, done: Bool = false) async throws -> NotebookItem {
-            var i = NotebookItem(collectionId: c.id, kind: kind, title: title, body: body, url: url, tags: tags, source: source, now: created)
+                  tags: [String] = [], source: String = "user", run: String? = nil, created: Date, edited: Date? = nil,
+                  done: Bool = false) async throws -> NotebookItem {
+            var i = NotebookItem(collectionId: c.id, kind: kind, title: title, body: body, url: url, tags: tags, source: source,
+                                 runId: run, now: created)
             i.updatedAt = edited ?? created
             if done { i.status = .done }
             try await rt.notebook.add(i)
@@ -62,7 +66,8 @@ enum SampleData {
 
         _ = try await item(inbox, .idea, "Folks could have their own sounds", body: "A short chime per folk, so you know who's tapping you without looking.",
                            tags: ["folks", "sound"], source: "external:claude-code", created: ago(35))
-        _ = try await item(inbox, .note, "Karim's new address", body: "12 rue Oberkampf, 75011 Paris", created: ago(60 * 26))
+        let karim = try await item(inbox, .note, "Karim's new address", body: "12 rue Oberkampf, 75011 Paris", source: "user:agent",
+                                   run: "r-karim", created: ago(60 * 26))
         let passport = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50))
         _ = try await item(inbox, .link, "Swift Testing", url: "https://developer.apple.com/xcode/swift-testing/", created: ago(60 * 70))
 
@@ -228,7 +233,6 @@ enum SampleData {
             (300, "agent", "clipboard.read", "medium", .allowed, "Read the clipboard", "Read 214 characters", nil),
             (420, "routine:morning-brief", "notebook.search", "low", .auto, "Collect today's open tasks", "3 tasks", nil),
             (60 * 20, "agent", "apps.open", "low", .auto, "Open github.com/sidefolk/sidefolk", "Opened in Safari", nil),
-            (60 * 26, "user", "notebook.add", "low", .auto, "Save a note to Inbox", "Saved “Karim's new address”", nil),
             (60 * 30, "agent", "shell.run", "high", .allowed, "Run “npm test” in ~/git/pockito", "Exit 0 after 41 s", nil),
             (60 * 40, "agent", "files.trash", "high", .fullAccess, "Move 2 files in ~/Downloads to the Trash", "Moved to the Trash", nil),
             (60 * 50, "external:claude-code", "notify", "low", .auto, "Tell you that the build finished", "Shown as a bubble", nil),
@@ -271,6 +275,9 @@ enum SampleData {
         try await step("r-rain", 60 * 5 - 0.2, "ext.weather.forecast", "Weather forecast for Fukuoka")
         try await said("c-rain", .assistant, "Light rain is likely tomorrow morning in Fukuoka (70%), clearing after noon. Highs around 19 °C.",
                        60 * 5 - 0.4, run: "r-rain")
+        try await said("c-karim", .user, "Save Karim's new address: 12 rue Oberkampf, 75011 Paris", 60 * 26 + 0.2)
+        try await step("r-karim", 60 * 26 + 0.1, "notes.save", "Save a note to Inbox")
+        try await said("c-karim", .assistant, "Saved “Karim's new address” to your Inbox.", 60 * 26, run: "r-karim")
         try await said("c-plan", .user, "Plan my afternoon around the invoices and a run", 95)
         try await step("r-plan", 94.8, "notebook.search", "Search the notebook for “invoices”")
         try await step("r-plan", 94.7, "reminders.list", "Read your reminders for today")
@@ -295,7 +302,8 @@ enum SampleData {
                                                 callerKind: "agent", now: ago(60 * 5)))
         try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 
-        return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem, remindedTask: guide)
+        return Created(project: sidefolk, profile: profile, selectedItem: selected, profileItem: profileItem, remindedTask: guide,
+                       savedInConversation: karim)
     }
 
     /// A long answer, for Conversations and the Ask panel's Show all.

@@ -1340,6 +1340,11 @@ docs/research/themes-plan.md; the boards are local in `sandbox/theme-sandbox/`. 
 
 The rest follows the plan's order.
 
+Links between things (step 3) are stored, not guessed. An Activity row reaches its conversation through its run,
+which every reply records in `meta.runId`, so no new column is needed. A note has `items.run_id` (migration
+`v5-item-run`), written by `notes.save` and `profile.remember`. "Changed in" comes from `notes.update` and
+`notes.trash` rows that name the note and ran. A deleted conversation links to nothing.
+
 ### D60 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
 **Decision:**
 - **Adding one.** A 3D companion made the gallery's way (`companions-3d/`) can be added without being published:

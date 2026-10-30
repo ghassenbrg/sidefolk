@@ -93,6 +93,7 @@ final class FixtureServices: AppServices {
 
     func openSession(_ session: AgentSession) {}
     func open(item: NotebookItem) {}
+    func openConversation(_ thread: String?) {}
 
     // MARK: Extensions and skills
 

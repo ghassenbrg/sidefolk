@@ -268,6 +268,13 @@ public final class AppDatabase: Sendable {
                 t.add(column: "pinned_at", .double)
             }
         }
+        // The run that saved an item (D58), so a note can say which conversation it came from. Older items stay
+        // without one: nothing recorded it.
+        m.registerMigration("v5-item-run") { db in
+            try db.alter(table: "items") { t in
+                t.add(column: "run_id", .text)
+            }
+        }
         return m
     }
 }

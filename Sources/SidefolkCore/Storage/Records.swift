@@ -74,10 +74,12 @@ public struct NotebookItem: SidefolkRecord, Identifiable, Hashable {
     public var deletedAt: Date?
     /// Pinned items come first in their collection, newest pin first.
     public var pinnedAt: Date?
+    /// The AI run that saved it, when Sidefolk's own agent did: the way back to the conversation it came from.
+    public var runId: String?
 
     public init(
         id: String = Identifier.make(), collectionId: String, kind: Kind, title: String, body: String = "",
-        url: String? = nil, tags: [String] = [], source: String, now: Date = Date()
+        url: String? = nil, tags: [String] = [], source: String, runId: String? = nil, now: Date = Date()
     ) {
         self.id = id
         self.collectionId = collectionId
@@ -88,6 +90,7 @@ public struct NotebookItem: SidefolkRecord, Identifiable, Hashable {
         self.tags = tags.joined(separator: " ")
         status = .open
         self.source = source
+        self.runId = runId
         createdAt = now
         updatedAt = now
     }

@@ -109,12 +109,13 @@ Rules that hold throughout:
    - **For the AI:** only through a new `calendar.today` tool, with effect `readsPrivateData`, through the Guard
      like any other tool.
    - **When it's off:** nothing is read.
-9. **Real links between things** (a storage migration):
-   - **Activity:** each `ActivityEntry` gets the `threadId` of the conversation whose run made it, so a row says
-     "Asked in 💬 …" and opens that conversation.
-   - **Notebook:** `NotebookItem` gets an `originThreadId` when it's saved during a conversation. Notes mentioned
-     later in a conversation are linked from the conversation's references, which are written when the note is
-     read or changed there.
+9. **Real links between things.** Built as follows, with less storage than first planned:
+   - **Activity:** no new column. A row's `runId` already leads to its conversation: every reply records its run in
+     `meta.runId`. `ExchangeStore.conversations(ofRuns:)` gives the kept conversation each run belongs to.
+   - **Notebook:** one column, `items.run_id` (migration `v5-item-run`), which `notes.save` and `profile.remember`
+     fill from the caller's run. "Changed in" comes from the Activity rows of `notes.update` and `notes.trash` that
+     name the note and actually ran. Reads and searches don't count, because they touch many notes at once.
+   - **Deletion:** a deleted or expired conversation links to nothing.
 10. **Glance:** a small panel above the desktop companion, opened by clicking it or with its own shortcut. It
     holds:
     - the queue's top three decisions, answerable with the same safety rules;
@@ -129,8 +130,9 @@ Rules that hold throughout:
     - Undo while it can.
 
     Space toggles a row, and ↑↓ move between rows.
-12. **The note's Connected list:** who saved it, the conversation it came from and the ones it was talked about in
-    (B9), its reminders, and Add a reminder.
+12. **The note's Connected list:** under the date and "Saved by", "Saved in '…'" and up to three "Changed in '…'"
+    links, each one opening that conversation. Its reminders stay in the bell and the badge, where they already
+    are.
     - D53's formatting bar stays where it is. Hiding it until text is selected was considered and dropped: the
       founder asked for the bar, and a hidden bar is harder to find.
 13. **Snapshots that show real text:** `--ui-snapshots` runs without the compiled string catalog, so it shows raw
@@ -183,7 +185,7 @@ Community themes:
 |---|---|---|
 | 1 ✅ | A1–A2 tokens at runtime, Harbor identical | **Done 2026-10-30:** `ThemeTokens`, `ThemeStore`, `Theme` reads the store. All 232 snapshots are pixel-identical. |
 | 2 ✅ | B11 | **Done 2026-10-30:** Activity rows open in place (who, the decision in words, the outcome, the arguments, the rule in Settings), Space and ↑↓, with translations in all nine languages. |
-| 3 | B9 links (migration), then B11's "Asked in" and B12 | B12 waits for this step: without the conversation links it would only repeat the editor's "Saved by" and reminder line. It's a storage change, so it's done early and tested well. |
+| 3 ✅ | B9 links, B11's "Asked in", B12 | **Done 2026-10-30:** see B9 and B12. ConversationLinksTests run the real agent loop and tools, including a mutation check of the "only changes that ran" filter. |
 | 4 | B2 queue, B1 Today | The heart of the new Home. Touches the broker. |
 | 5 | B4 one bar (Home and Ask panel) | Depends on the queue's focus handling and the toast. |
 | 6 | B3 day line, B8 calendar (D57) | The calendar permission and tool come with it. |

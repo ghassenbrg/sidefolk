@@ -24,37 +24,99 @@ public struct ConversationSummary: Sendable, Hashable, Identifiable {
     }
 }
 
+/// The conversations a notebook item was made in and later changed in (D58), as its Connected list shows them.
+public struct ItemConversations: Sendable, Equatable {
+    /// Where Sidefolk's agent saved it, while that conversation is kept.
+    public var madeIn: ConversationSummary?
+    /// Where it was changed or moved to the Trash afterwards, most recent first, without the one it was made in.
+    public var changedIn: [ConversationSummary]
+
+    public init(madeIn: ConversationSummary? = nil, changedIn: [ConversationSummary] = []) {
+        self.madeIn = madeIn
+        self.changedIn = changedIn
+    }
+}
+
 extension ExchangeStore {
     /// Conversations, most recently active first. With `query`, only those where every word appears in a request
     /// or a reply (as typed: `%` and `_` are literal).
     public func conversations(matching query: String = "", limit: Int = 200) async throws -> [ConversationSummary] {
         let words = query.prefix(NotebookStore.maxQueryLength).split(whereSeparator: \.isWhitespace).prefix(8)
         return try await db.writer.read { db in
-            var sql = """
-                SELECT e.thread_id AS id, MIN(e.created_at) AS started, MAX(e.created_at) AS updated,
-                       SUM(e.role = 'user') AS requests,
-                       MAX(e.role = 'user' AND json_extract(e.meta, '$.spoken') = 1) AS spoken,
-                       (SELECT f.content FROM exchanges f WHERE f.thread_id = e.thread_id AND f.role = 'user'
-                        ORDER BY f.created_at, f.id LIMIT 1) AS title
-                FROM exchanges e
-                """
+            var filters: [String] = []
             var args: [any DatabaseValueConvertible] = []
             if !words.isEmpty {
-                sql += " WHERE " + words.map { _ in
+                filters += words.map { _ in
                     #"e.thread_id IN (SELECT thread_id FROM exchanges WHERE role IN ('user', 'assistant') AND content LIKE ? ESCAPE '\')"#
-                }.joined(separator: " AND ")
+                }
                 args += words.map { "%" + NotebookStore.escapeLike(String($0)) + "%" }
             }
-            sql += " GROUP BY e.thread_id ORDER BY updated DESC LIMIT ?"
-            args.append(limit)
-            return try Row.fetchAll(db, sql: sql, arguments: StatementArguments(args)).compactMap { row in
-                // A thread whose request is gone (a failure note only) has nothing to call it by.
-                guard let title: String = row["title"] else { return nil }
-                return ConversationSummary(id: row["id"], title: title,
-                                           startedAt: Date(timeIntervalSince1970: row["started"]),
-                                           updatedAt: Date(timeIntervalSince1970: row["updated"]),
-                                           requests: row["requests"], spoken: (row["spoken"] as Int?) == 1)
-            }
+            return try Self.summaries(db, filters: filters, arguments: args, limit: limit)
+        }
+    }
+
+    /// The kept conversation each of these runs was part of, by run id. A run whose conversation was deleted, or
+    /// that had none (another agent's call), has no entry. Replies carry their run's id (`ExchangeMeta.assistant`).
+    public func conversations(ofRuns runIds: [String]) async throws -> [String: ConversationSummary] {
+        let runIds = Array(Set(runIds))
+        guard !runIds.isEmpty else { return [:] }
+        return try await db.writer.read { db in try Self.conversations(db, ofRuns: runIds) }
+    }
+
+    /// Where `item` was made and later changed: its own run, then the Activity rows of `notes.update` and
+    /// `notes.trash` that name it and ran. Reading or searching notes doesn't count; those touch many notes at once.
+    public func conversations(about item: NotebookItem) async throws -> ItemConversations {
+        try await db.writer.read { db in
+            let changes = try String.fetchAll(db, sql: """
+                SELECT run_id FROM activity
+                WHERE run_id IS NOT NULL AND tool IN ('notes.update', 'notes.trash') AND json_extract(args, '$.id') = ?
+                  AND error IS NULL AND decision NOT IN ('denied', 'blocked', 'failed', 'skipped')
+                ORDER BY at DESC, id DESC
+                """, arguments: [item.id])
+            let found = try Self.conversations(db, ofRuns: Array(Set(changes + [item.runId].compactMap { $0 })))
+            let madeIn = item.runId.flatMap { found[$0] }
+            var seen = Set([madeIn?.id].compactMap { $0 })
+            let changedIn = changes.compactMap { found[$0] }.filter { seen.insert($0.id).inserted }
+            return ItemConversations(madeIn: madeIn, changedIn: changedIn)
+        }
+    }
+
+    private static func conversations(_ db: Database, ofRuns runIds: [String]) throws -> [String: ConversationSummary] {
+        guard !runIds.isEmpty else { return [:] }
+        let marks = Array(repeating: "?", count: runIds.count).joined(separator: ", ")
+        let threads = try Row.fetchAll(db, sql: """
+            SELECT DISTINCT json_extract(meta, '$.runId') AS run, thread_id FROM exchanges
+            WHERE json_extract(meta, '$.runId') IN (\(marks))
+            """, arguments: StatementArguments(runIds))
+        let threadOfRun = Dictionary(threads.map { ($0["run"] as String, $0["thread_id"] as String) }, uniquingKeysWith: { a, _ in a })
+        let threadIds = Array(Set(threadOfRun.values))
+        guard !threadIds.isEmpty else { return [:] }
+        let summaries = try summaries(db, filters: ["e.thread_id IN (\(Array(repeating: "?", count: threadIds.count).joined(separator: ", ")))"],
+                                      arguments: threadIds, limit: threadIds.count)
+        let byThread = Dictionary(summaries.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        return threadOfRun.compactMapValues { byThread[$0] }
+    }
+
+    /// One summary per thread matching every filter, most recently active first.
+    private static func summaries(_ db: Database, filters: [String], arguments: [any DatabaseValueConvertible],
+                                  limit: Int) throws -> [ConversationSummary] {
+        var sql = """
+            SELECT e.thread_id AS id, MIN(e.created_at) AS started, MAX(e.created_at) AS updated,
+                   SUM(e.role = 'user') AS requests,
+                   MAX(e.role = 'user' AND json_extract(e.meta, '$.spoken') = 1) AS spoken,
+                   (SELECT f.content FROM exchanges f WHERE f.thread_id = e.thread_id AND f.role = 'user'
+                    ORDER BY f.created_at, f.id LIMIT 1) AS title
+            FROM exchanges e
+            """
+        if !filters.isEmpty { sql += " WHERE " + filters.joined(separator: " AND ") }
+        sql += " GROUP BY e.thread_id ORDER BY updated DESC LIMIT ?"
+        return try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments + [limit])).compactMap { row in
+            // A thread whose request is gone (a failure note only) has nothing to call it by.
+            guard let title: String = row["title"] else { return nil }
+            return ConversationSummary(id: row["id"], title: title,
+                                       startedAt: Date(timeIntervalSince1970: row["started"]),
+                                       updatedAt: Date(timeIntervalSince1970: row["updated"]),
+                                       requests: row["requests"], spoken: (row["spoken"] as Int?) == 1)
         }
     }
 

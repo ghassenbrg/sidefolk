@@ -164,8 +164,10 @@ protocol AppServices: AnyObject {
     // Sessions and jobs
     func openSession(_ session: AgentSession)
 
-    // Notebook
+    // Notebook and conversations
     func open(item: NotebookItem)
+    /// Home › Conversations at `thread` (the list when nil).
+    func openConversation(_ thread: String?)
 
     // Extensions and skills
     func extensions() async -> [ExtensionInfo]
