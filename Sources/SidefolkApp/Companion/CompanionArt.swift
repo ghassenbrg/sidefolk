@@ -61,7 +61,7 @@ enum CompanionArt {
         return made.lazy.compactMap(\.companion).first { $0.id == id }
     }
 
-    /// 3D companions added from a folder (D59), as last read: those whose files are all here.
+    /// 3D companions added from a folder (D60), as last read: those whose files are all here.
     private(set) static var locals: [InstalledCompanion] = loadLocals()
 
     private static func loadLocals() -> [InstalledCompanion] {

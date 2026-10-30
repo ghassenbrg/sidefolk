@@ -1340,7 +1340,7 @@ docs/research/themes-plan.md; the boards are local in `sandbox/theme-sandbox/`. 
 
 The rest follows the plan's order.
 
-### D59 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
+### D60 — 3D companions added from a folder on this Mac; likeness faces (2026-10-30)
 **Decision:**
 - **Adding one.** A 3D companion made the gallery's way (`companions-3d/`) can be added without being published:
   Settings › Companion › Made by you › Add from Folder…. The folder must hold an `addon.json` (as the gallery's

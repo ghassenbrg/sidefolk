@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// 3D companions added from a folder (D59): what a folder must hold, where it lands, and how it is worn.
+/// 3D companions added from a folder (D60): what a folder must hold, where it lands, and how it is worn.
 @Suite struct LocalCompanionsTests {
     final class Fixture {
         let root: URL

@@ -97,7 +97,7 @@ struct CompanionSettingsView: View {
         }
     }
 
-    /// A 3D companion added from a folder (D59): its picture, name and what it is.
+    /// A 3D companion added from a folder (D60): its picture, name and what it is.
     private func localRow(_ local: InstalledCompanion) -> some View {
         SettingsRow(title: Text(verbatim: local.name), detail: Text(verbatim: local.tagline ?? "")) {
             HStack(spacing: Theme.Space.s) {

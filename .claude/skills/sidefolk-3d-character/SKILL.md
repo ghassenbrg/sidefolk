@@ -161,9 +161,9 @@ see how the six were cut) as `avatars/<id>.png` in its add-on folder. The Ask pa
 **A private companion** (a real person's likeness, or anything the user wants only on their Mac): keep every file
 outside the repos (e.g. `~/git/sidefolk-private/companions/<id>/` with the pipeline beside it), give `addon.json`
 an optional `body` (`biped`, `floating`, `card`: whose stand-in rig it borrows), and skip the rest of this step: the
-user adds the folder in Settings › Companion › Made by you › Add from Folder… (D59), or in the debug app
+user adds the folder in Settings › Companion › Made by you › Add from Folder… (D60), or in the debug app
 `swift scripts/dev.swift addCompanion:<folder>`. For a likeness, keep the sheet's face in the design image, project
-it onto the texture in the rig, and use the ink face's `lids` and `mouth.lips` instead of drawn eyes (D59).
+it onto the texture in the rig, and use the ink face's `lids` and `mouth.lips` instead of drawn eyes (D60).
 
 
 - `Sources/SidefolkCore/Settings/AppSettings.swift`: `CompanionChoice` case and `dimensions`

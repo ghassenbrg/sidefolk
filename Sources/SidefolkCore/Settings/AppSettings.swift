@@ -225,7 +225,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// A companion made from data in `<home>/companions/<id>/`, worn instead of `companion` while
     /// it loads (its style still comes from `companion`'s).
     public var customCompanion: String?
-    /// A 3D companion added from a folder (D59), worn instead of `companion` while it is installed: its folder's
+    /// A 3D companion added from a folder (D60), worn instead of `companion` while it is installed: its folder's
     /// name in `<home>/Addons/Companions/`.
     public var localCompanion: String?
     /// The name the custom or local companion came with, while it is worn: like a built-in's default name,
@@ -330,7 +330,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         customCompanionName = name
     }
 
-    /// Wears a 3D companion added from a folder (D59), called by its own name unless the person chose one.
+    /// Wears a 3D companion added from a folder (D60), called by its own name unless the person chose one.
     public mutating func choose(local folder: String, name: String) {
         if !hasCustomName { companionName = name }
         localCompanion = folder

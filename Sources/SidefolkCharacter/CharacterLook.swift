@@ -7,7 +7,7 @@ public struct CharacterLook: Equatable, Sendable {
     /// Shown in 3D by the app (D51): this module's rig still runs, undrawn, and the app draws the
     /// species' 3D character over it. Ember, Kiko, Nimbo and Folio are always 3D.
     public var threeD = false
-    /// A 3D character added from a folder (D59) that the app draws instead of `species`' own: `species` then only
+    /// A 3D character added from a folder (D60) that the app draws instead of `species`' own: `species` then only
     /// lends the stand-in rig underneath (its outline, anchors and moves).
     public var character3D: String?
 

@@ -415,7 +415,7 @@ final class AppCoordinator {
         }
         if command.hasPrefix("addCompanion:") {
             // addCompanion:<folder>: adds a 3D companion from a folder and wears it, as Settings does once the
-            // person agrees (D59).
+            // person agrees (D60).
             let folder = URL(fileURLWithPath: String(command.dropFirst("addCompanion:".count)))
             Task {
                 do {
@@ -431,7 +431,7 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("companion:local:") {
-            // companion:local:<name>: wears a companion added from a folder (D59).
+            // companion:local:<name>: wears a companion added from a folder (D60).
             guard let local = CompanionArt.local(String(command.dropFirst("companion:local:".count))) else { return }
             Task {
                 await runtime.settings.update { $0.choose(local: local.companion, name: local.name) }

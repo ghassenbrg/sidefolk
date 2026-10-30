@@ -13,7 +13,7 @@ struct CompanionPicker: View {
     private var chosen: CompanionChoice { CompanionArt.offered.contains(settings.companion) ? settings.companion : .mochi }
     /// A companion from "Made by you" in use: the stage and the title show it, and no built-in card is picked.
     private var custom: CustomCompanion? { CompanionArt.custom(settings.customCompanion) }
-    /// A 3D companion added from a folder in use (D59): likewise.
+    /// A 3D companion added from a folder in use (D60): likewise.
     private var local: InstalledCompanion? { CompanionArt.local(settings.localCompanion) }
     private var style: CompanionStyle { settings.style(for: chosen) }
     /// Shown in 3D (D51): its 3D character is fixed as designed, so colour and what it wears are

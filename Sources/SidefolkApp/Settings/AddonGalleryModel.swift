@@ -17,10 +17,10 @@ final class AddonGalleryModel {
     private(set) var progress: [String: Double] = [:]
     /// The last failure of each add-on, said under it until the next try.
     private(set) var failures: [String: UserFacingError] = [:]
-    /// Why the last companion added from a folder (D59) wasn't, said under "Made by you" until the next try.
+    /// Why the last companion added from a folder (D60) wasn't, said under "Made by you" until the next try.
     private(set) var localError: UserFacingError?
 
-    /// 3D companions added from a folder (D59).
+    /// 3D companions added from a folder (D60).
     var locals: [InstalledCompanion] { companions.filter(\.addedFromFolder) }
 
     init(parent: SettingsModel) { self.parent = parent }
@@ -109,7 +109,7 @@ final class AddonGalleryModel {
         parent.services.settingsChanged()
     }
 
-    // MARK: Added from a folder (D59)
+    // MARK: Added from a folder (D60)
 
     /// Adds the 3D companion in `folder` once the person agrees (its character file is code the 3D page runs), then
     /// makes it the companion.

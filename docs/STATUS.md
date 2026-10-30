@@ -12,7 +12,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
-- **3D companions added from a folder; likeness faces (D59):** Settings › Companion › Made by you › Add from
+- **3D companions added from a folder; likeness faces (D60):** Settings › Companion › Made by you › Add from
   Folder… checks a companion's folder (addon.json and exactly its four files, sizes and kinds), warns that its
   character file runs as code, installs it beside the gallery's companions and wears it
   (`AppSettings.localCompanion`, over a borrowed stand-in rig). The 3D page now has a Content Security Policy: only

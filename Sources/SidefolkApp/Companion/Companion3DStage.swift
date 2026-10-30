@@ -6,7 +6,7 @@ import WebKit
 /// runs, undrawn, underneath. The rig keeps Sidefolk's states, idle life, clicks, petting and
 /// bubble anchors; every cue it hears (`CharacterView.onCue`) is replayed here, where the 3D
 /// character acts it out. The page and models live in `Resources/Companions3D`; companions from the add-on
-/// gallery (D55) or added from a folder (D59) bring their own character, model and pictures, served beside them.
+/// gallery (D55) or added from a folder (D60) bring their own character, model and pictures, served beside them.
 final class Companion3DStage: NSView {
     private let web: WKWebView
     private var ready = false

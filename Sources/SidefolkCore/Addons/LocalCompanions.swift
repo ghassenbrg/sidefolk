@@ -1,6 +1,6 @@
 import Foundation
 
-/// 3D companions added from a folder on this Mac (D59): the person's own, made the way the gallery's are
+/// 3D companions added from a folder on this Mac (D60): the person's own, made the way the gallery's are
 /// (`companions-3d/`) but never published. Nothing vouches for them, so they are checked as strictly as a file can
 /// be (the manifest, exactly the four files, their size and kind) and installed beside the gallery's, in
 /// `<home>/Addons/Companions/<name>/`, marked as added from a folder. The character file is code the 3D page runs;

@@ -9,17 +9,17 @@ public struct InstalledCompanion: Codable, Sendable, Hashable {
     public var companion: String
     public var version: String
     public var author: String
-    /// One line about who it is (a companion added from a folder brings its own; D59).
+    /// One line about who it is (a companion added from a folder brings its own; D60).
     public var tagline: String?
-    /// The shape of the undrawn rig under it (one added from a folder; D59).
+    /// The shape of the undrawn rig under it (one added from a folder; D60).
     public var body: CompanionBody?
-    /// Added from a folder on this Mac (D59), not from the gallery: unsigned, shown under "Made by you".
+    /// Added from a folder on this Mac (D60), not from the gallery: unsigned, shown under "Made by you".
     public var fromFolder: Bool?
 
     public var addedFromFolder: Bool { fromFolder == true }
 }
 
-/// The body under a 3D companion added from a folder (D59): the 2D rig that runs undrawn beneath it, for its
+/// The body under a 3D companion added from a folder (D60): the 2D rig that runs undrawn beneath it, for its
 /// outline, bubble anchors and moves, borrowed from a gallery companion of the same build.
 public enum CompanionBody: String, Codable, Sendable, CaseIterable {
     /// Head, arms and legs, standing (Kiko's).
