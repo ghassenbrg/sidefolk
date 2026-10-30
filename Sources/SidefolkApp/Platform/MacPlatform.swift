@@ -5,6 +5,10 @@ import SidefolkCore
 final class MacPlatform: PlatformBridge {
     nonisolated init() {}
 
+    nonisolated func calendarEvents(from: Date, to: Date) async -> [CalendarEvent]? {
+        await MainActor.run { MacCalendar.events(from: from, to: to) }
+    }
+
     nonisolated func clipboardText() async -> String? {
         await MainActor.run { NSPasteboard.general.string(forType: .string) }
     }

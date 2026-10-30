@@ -344,9 +344,13 @@ public actor AgentRuntime {
         return UserMentions(text: typed)
     }
 
-    /// Tools an extension's author left to commands (D50) never reach the model.
+    /// Tools an extension's author left to commands (D50) never reach the model, nor the calendar while it's hidden
+    /// (D57): a card asking to read something that can't be read would only puzzle the person.
     private func offeredTools() -> [ToolSpec] {
-        executor.registry.specs.filter { $0.offeredToModel && !excludedTools.contains($0.name) }
+        let calendarShown = settings().showCalendar
+        return executor.registry.specs.filter {
+            $0.offeredToModel && !excludedTools.contains($0.name) && (calendarShown || !$0.capabilities.contains(.calendar))
+        }
     }
 
     /// A conversation the request names that is quiet now but whose history is still kept: it continues (D45).

@@ -250,6 +250,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var afternoonHour = 14
     public var eveningHour = 18
     public var morningBrief = true
+    /// Today, the morning brief and the AI may read the calendar (D57). Off until the person turns it on.
+    public var showCalendar = false
     public var useSystemNotificationsWhenHidden = true
     public var provider = ProviderSettings()
     /// Short-term conversation history is kept this many days.
@@ -301,6 +303,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.afternoonHour, &afternoonHour)
         read(.eveningHour, &eveningHour)
         read(.morningBrief, &morningBrief)
+        read(.showCalendar, &showCalendar)
         read(.useSystemNotificationsWhenHidden, &useSystemNotificationsWhenHidden)
         read(.provider, &provider)
         read(.historyDays, &historyDays)

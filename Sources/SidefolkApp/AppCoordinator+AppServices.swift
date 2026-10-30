@@ -7,6 +7,30 @@ extension AppCoordinator: AppServices {
 
     func completeReminder(_ id: String) async { _ = try? await runtime.scheduler.complete(id: id) }
     func snoozeReminder(_ id: String, until: Date) async { _ = try? await runtime.scheduler.snooze(id: id, until: until) }
+
+    func moveReminder(_ id: String, to date: Date) async -> UserFacingError? {
+        do {
+            if (try await runtime.reminderStore.reminder(id: id))?.recurrence == nil {
+                try await runtime.scheduler.edit(id: id, title: nil, fireAt: date, recurrence: nil)
+            } else {
+                _ = try await runtime.scheduler.snooze(id: id, until: date)
+            }
+            return nil
+        } catch let error as UserFacingError {
+            return error
+        } catch {
+            return UserFacingError("I couldn't move that reminder.")
+        }
+    }
+
+    var calendarAccess: CalendarAccess { MacCalendar.access }
+
+    func showCalendar(_ on: Bool) async {
+        if on { _ = await MacCalendar.request() }
+        await runtime.settings.update { $0.showCalendar = on }
+    }
+
+    func openCalendarSettings() { MacCalendar.openSettings() }
     func cancelReminder(_ id: String) async { _ = try? await runtime.scheduler.cancel(id: id) }
 
     func createReminder(title: String, when: String) async -> UserFacingError? {

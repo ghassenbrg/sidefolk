@@ -148,6 +148,8 @@ protocol AppServices: AnyObject {
     // Reminders
     func completeReminder(_ id: String) async
     func snoozeReminder(_ id: String, until: Date) async
+    /// Moves a reminder to another time: its own time if it happens once, only this time if it repeats (D58).
+    func moveReminder(_ id: String, to date: Date) async -> UserFacingError?
     func cancelReminder(_ id: String) async
     func createReminder(title: String, when: String) async -> UserFacingError?
     /// A reminder that belongs to a note or task (D49); `when` is natural language or ISO 8601.
@@ -168,6 +170,13 @@ protocol AppServices: AnyObject {
     func open(item: NotebookItem)
     /// Home › Conversations at `thread` (the list when nil).
     func openConversation(_ thread: String?)
+
+    // Your calendar (D57)
+    var calendarAccess: CalendarAccess { get }
+    /// Shows or hides the calendar; showing asks macOS the first time. The choice is kept either way.
+    func showCalendar(_ on: Bool) async
+    /// System Settings › Privacy & Security › Calendars.
+    func openCalendarSettings()
 
     // The one bar (D58)
     /// What Return does with these words, as the Ask panel's hint line says it.

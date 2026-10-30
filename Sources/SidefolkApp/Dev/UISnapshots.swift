@@ -268,7 +268,7 @@ enum UISnapshots {
     /// A minute of an unanswered approval lasts a millisecond here, so sample steps can be skipped (D37).
     private static func runtime() async throws -> SidefolkRuntime {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-ui-\(UUID().uuidString)", isDirectory: true)
-        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: NullPlatform(),
+        let rt = await SidefolkRuntime(paths: SidefolkPaths(home: home), db: try AppDatabase.inMemory(), platform: SamplePlatform(),
                                        approvalMinute: 0.001)
         try await rt.notebook.inbox()
         return rt

@@ -4,7 +4,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// Settings › Privacy & Permissions: how much Sidefolk asks and what it may do, where you are (D48), what is stored,
-/// which folders Sidefolk may use, what is always allowed, and the user's data (export, delete).
+/// your calendar (D57), which folders Sidefolk may use, what is always allowed, and the user's data (export, delete).
 struct PrivacySettingsView: View {
     var model: SettingsModel
     @State private var confirmingDelete = false
@@ -41,6 +41,7 @@ struct PrivacySettingsView: View {
         SettingsPage {
             guardSettings
             LocationGroup(model: model.location).id(Self.locationAnchor)
+            CalendarGroup(model: model)
             keeps
             SettingsGroup(title: "History",
                           footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Conversations, in Sidefolk's window. Then they're deleted.") {

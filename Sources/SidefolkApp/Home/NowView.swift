@@ -92,17 +92,41 @@ struct NowView: View {
         }
     }
 
-    // MARK: Coming up
+    // MARK: Your day
 
     private var comingUp: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Coming up", folk: "tempo", count: model.reminders.count)
-            ForEach(model.groups()) { group in
-                VStack(alignment: .leading, spacing: 6) {
-                    Eyebrow(Text(verbatim: group.title)).padding(.leading, Theme.Space.xs)
-                    RowsCard {
-                        ForEach(group.reminders) { r in
-                            ReminderRow(reminder: r, later: group.day == .later, model: model)
+        let groups = model.groups()
+        let reminders = { (day: NowModel.ReminderGroup.Day) in groups.first { $0.day == day }?.reminders ?? [] }
+        return VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
+            SectionHeader(title: "Your day", folk: "tempo", count: model.reminders.count)
+            // Today as a line (D58), with the calendar beside the reminders once it's shown (D57).
+            RowsCard {
+                DayRail(reminders: reminders(.today), events: model.events(on: .today), now: Date(),
+                        move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) })
+                if !model.calendarOn {
+                    HStack(spacing: Theme.Space.m) {
+                        Image(systemName: "calendar").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)
+                        Text("Your calendar can be here too, beside your reminders.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        Spacer(minLength: Theme.Space.s)
+                        Button("Show my calendar") { Task { await model.showCalendar() } }.buttonStyle(.sf(.secondary)).fixedSize()
+                    }
+                    .nowRow()
+                }
+            }
+            ForEach([NowModel.ReminderGroup.Day.today, .tomorrow, .later], id: \.self) { day in
+                let events = model.events(on: day)
+                let due = reminders(day)
+                if !events.isEmpty || !due.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Eyebrow(Text(verbatim: NowModel.ReminderGroup(day: day, reminders: due).title)).padding(.leading, Theme.Space.xs)
+                        RowsCard {
+                            // The day in time order: all-day events, then events and reminders as they come.
+                            ForEach(DayRow.merge(events: events, reminders: due)) { row in
+                                switch row {
+                                case .event(let event): EventRow(event: event)
+                                case .reminder(let r): ReminderRow(reminder: r, later: day == .later, model: model)
+                                }
+                            }
                         }
                     }
                 }
@@ -185,6 +209,50 @@ struct NowView: View {
 }
 
 // MARK: - Rows
+
+/// A line of a day under the rail: an event or a reminder.
+private enum DayRow: Identifiable {
+    case event(CalendarEvent)
+    case reminder(Reminder)
+
+    var id: String {
+        switch self {
+        case .event(let e): "e" + e.id
+        case .reminder(let r): "r" + r.id
+        }
+    }
+
+    static func merge(events: [CalendarEvent], reminders: [Reminder]) -> [DayRow] {
+        let timed = events.filter { !$0.allDay }.map { ($0.start, DayRow.event($0)) }
+            + reminders.map { ($0.nextDue ?? $0.fireAt, DayRow.reminder($0)) }
+        return events.filter(\.allDay).map(DayRow.event) + timed.sorted { $0.0 < $1.0 }.map(\.1)
+    }
+}
+
+/// An event from the calendar (D57): read-only here; it lives in the Calendar app.
+private struct EventRow: View {
+    var event: CalendarEvent
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Space.m) {
+            IconTile(symbol: "calendar", folk: "tempo")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: event.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: [when, event.calendar].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
+            Spacer(minLength: 0)
+        }
+        .nowRow()
+        .accessibilityElement(children: .combine)
+    }
+
+    private var when: String {
+        guard !event.allDay else { return String(localized: "All day") }
+        return "\(TimeFormat.clock(event.start, calendar: .current))–\(TimeFormat.clock(event.end, calendar: .current))"
+    }
+}
 
 /// One row of the queue, whatever it is, and the keys that answer it while it has the keyboard (D58). The rules are
 /// the approval card's: nothing answers until the row has been in view for a moment; a high-risk "yes" needs ⌘⏎;
@@ -557,6 +625,7 @@ private struct NewReminderRow: View {
         }
         .nowRow()
         .onChange(of: model.newWhen) { model.clearError() }
+        .onChange(of: model.newReminderFocus) { focus = .title }
     }
 }
 

@@ -208,6 +208,13 @@ final class FixtureServices: AppServices {
     func showAbout() {}
     func openAsk(prefill: String) {}
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? { nil }
+    func moveReminder(_ id: String, to date: Date) async -> UserFacingError? {
+        _ = try? await runtime.scheduler.snooze(id: id, until: date)
+        return nil
+    }
+    var calendarAccess: CalendarAccess { .allowed }
+    func showCalendar(_ on: Bool) async { await runtime.settings.update { $0.showCalendar = on } }
+    func openCalendarSettings() {}
     func removeCommandLineTool() async -> UserFacingError? { nil }
 
     func sampleExtensions() async -> [(name: String, folder: URL)] { [("Hello Folk", URL(fileURLWithPath: "/tmp/hello-folk"))] }

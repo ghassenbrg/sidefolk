@@ -1,6 +1,6 @@
 import Foundation
 
-/// A short, deterministic good-morning note: today's reminders, open tasks, watchers on duty.
+/// A short, deterministic good-morning note: today's calendar (when shown, D57), reminders, open tasks, watchers on duty.
 /// No AI. Shown once a day at the morning hour, only when there is something worth saying, and
 /// never twice (the day it was shown is stored, so restarting the app does not repeat it).
 ///
@@ -10,6 +10,7 @@ public actor MorningBrief {
         public var title: String
         public var body: String
         public var reminders: Int
+        public var events: Int = 0
         public var openTasks: Int
         public var watchers: Int
     }
@@ -27,9 +28,12 @@ public actor MorningBrief {
     private let settings: SettingsStore
     private let clock: any Clock
     private let calendar: Calendar
+    /// The day's calendar events, empty while the calendar is off.
+    private let events: @Sendable (Date) async -> [CalendarEvent]
 
     public init(db: AppDatabase, attention: AttentionCenter, settings: SettingsStore,
-                clock: any Clock = SystemClock(), calendar: Calendar = .autoupdatingCurrent) {
+                clock: any Clock = SystemClock(), calendar: Calendar = .autoupdatingCurrent,
+                events: @escaping @Sendable (Date) async -> [CalendarEvent] = { _ in [] }) {
         reminders = ReminderStore(db)
         notebook = NotebookStore(db)
         watchers = WatcherStore(db)
@@ -38,6 +42,7 @@ public actor MorningBrief {
         self.settings = settings
         self.clock = clock
         self.calendar = calendar
+        self.events = events
     }
 
     /// What the brief would say right now, or nil when there is nothing worth saying
@@ -51,17 +56,23 @@ public actor MorningBrief {
         }
         let tasks = ((try? await notebook.items(kinds: [.task], status: .open, limit: 1000)) ?? []).count
         let watching = ((try? await watchers.active()) ?? []).count
-        guard !today.isEmpty || tasks > 0 else { return nil }
+        let meetings = await events(now)
+        guard !today.isEmpty || tasks > 0 || !meetings.isEmpty else { return nil }
 
-        var lines = today.prefix(Self.listed).map { r in "\(TimeFormat.clock(r.nextDue ?? r.fireAt, calendar: calendar)) \(r.title)" }
-        if today.count > Self.listed { lines.append(String(localized: "+\(today.count - Self.listed) more")) }
+        // The day in time order: events and reminders together, the way Today shows them.
+        let timed = meetings.map { e in (e.allDay ? start : e.start, e.allDay ? "· \(e.title)" : "\(TimeFormat.clock(e.start, calendar: calendar)) \(e.title)") }
+            + today.map { r in (r.nextDue ?? r.fireAt, "\(TimeFormat.clock(r.nextDue ?? r.fireAt, calendar: calendar)) \(r.title)") }
+        let ordered = timed.sorted { $0.0 < $1.0 }.map(\.1)
+        var lines = Array(ordered.prefix(Self.listed))
+        if ordered.count > Self.listed { lines.append(String(localized: "+\(ordered.count - Self.listed) more")) }
         var facts: [String] = []
         if tasks > 0 { facts.append(String(localized: "\(tasks) open tasks")) }
         if watching > 0 { facts.append(String(localized: "\(watching) watchers on duty")) }
         if !facts.isEmpty { lines.append(facts.joined(separator: " · ")) }
 
         let headline = today.isEmpty ? String(localized: "Good morning") : String(localized: "Good morning · \(today.count) reminders today")
-        return Content(title: headline, body: lines.joined(separator: "\n"), reminders: today.count, openTasks: tasks, watchers: watching)
+        return Content(title: headline, body: lines.joined(separator: "\n"), reminders: today.count, events: meetings.count, openTasks: tasks,
+                       watchers: watching)
     }
 
     /// The next moment the brief could become due: the coming morning hour, or the following day's if it

@@ -18,6 +18,8 @@ enum SampleData {
     static func fill(_ rt: SidefolkRuntime, notebook: NotebookModel) async throws -> Created {
         let now = Date()
         let home = NSHomeDirectory()
+        // The calendar shown (D57): its events come from `SamplePlatform`.
+        await rt.settings.update { $0.showCalendar = true }
         func ago(_ minutes: Double) -> Date { now.addingTimeInterval(-minutes * 60) }
         func ahead(_ minutes: Double) -> Date { now.addingTimeInterval(minutes * 60) }
         let cal = Calendar.current

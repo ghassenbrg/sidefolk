@@ -249,6 +249,7 @@ public struct PermissionEngine: Sendable {
         case .filesRead: String(localized: "Reading files")
         case .filesWrite: String(localized: "Changing files")
         case .macApps: String(localized: "Using Apple Notes and Reminders")
+        case .calendar: String(localized: "Reading your calendar")
         }
     }
 }

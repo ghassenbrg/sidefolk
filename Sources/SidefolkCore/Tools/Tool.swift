@@ -19,6 +19,8 @@ public enum Capability: String, Codable, Sendable, CaseIterable {
     case filesWrite = "files.write"
     /// Reading the Mac's own apps (Apple Notes, Reminders) through Apple Events (DECISIONS D38).
     case macApps = "mac.apps"
+    /// Reading the person's calendar, while they show it (D57).
+    case calendar
 }
 
 /// Drives which prop the companion holds and which folk may cameo.

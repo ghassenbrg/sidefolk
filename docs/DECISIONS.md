@@ -1310,8 +1310,12 @@ nothing is read.
 by Claude at the founder's request (docs/research/themes.md section 5).
 **Alternatives:** reminders only (the day line misleads); reading the calendar for the AI by default (private data
 leaving without a choice).
-**Implications:** not built yet; step 6 of docs/research/themes-plan.md. A new privacy string in Info.plist, a
-setting, the tool, and SECURITY's private-data list.
+**Implications:** built in step 6 of docs/research/themes-plan.md. `AppSettings.showCalendar` (off);
+`CalendarReader` and `PlatformBridge.calendarEvents` (Core), `MacCalendar` (EventKit, full access, asked only from
+the person's choice); `Capability.calendar` and `calendar.today`, which `AgentRuntime` offers only while the calendar
+is shown; the morning brief lists events and reminders in time order. Info.plist's
+`NSCalendarsFullAccessUsageDescription`, the hardened runtime's calendars entitlement, SECURITY T34. Glance's
+events come with Glance (plan step 7).
 
 ### D58 — Themes: a theme is data, the app owns the layouts (2026-10-30)
 **Decision:**

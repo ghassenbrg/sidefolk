@@ -65,6 +65,10 @@ final class NowModel {
     private(set) var mode: GuardMode = .askOncePerKind
     private(set) var sessionsNeedingYou: [AgentSession] = []
     private(set) var reminders: [Reminder] = []
+    /// The calendar's events today and tomorrow (D57); empty while it's off or macOS doesn't allow it.
+    private(set) var events: [CalendarEvent] = []
+    /// Asks the new-reminder row to take the keyboard (after a double-click on the day rail).
+    private(set) var newReminderFocus = 0
     /// The notes and tasks reminders belong to (D49), by id.
     private(set) var linked: [String: NotebookItem] = [:]
     private(set) var watchers: [Watcher] = []
@@ -97,6 +101,41 @@ final class NowModel {
             + sessionsNeedingYou.map(Decision.session) + attention.map(Decision.attention) + skipped.map(Decision.skipped)
     }
 
+    var calendarOn: Bool { runtime.calendarReader.isOn }
+
+    /// The calendar's events on a day of `groups()`, all-day ones first.
+    func events(on day: ReminderGroup.Day, now: Date = Date()) -> [CalendarEvent] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        let start: Date = switch day {
+        case .today: today
+        case .tomorrow: cal.date(byAdding: .day, value: 1, to: today) ?? today
+        case .later: cal.date(byAdding: .day, value: 2, to: today) ?? today
+        }
+        let end = cal.date(byAdding: .day, value: 1, to: start) ?? start
+        let those = events.filter { $0.start < end && $0.end > start }
+        return those.filter(\.allDay) + those.filter { !$0.allDay }
+    }
+
+    /// Shows the calendar from Today; macOS asks the first time.
+    func showCalendar() async {
+        await services.showCalendar(true)
+        await reload()
+    }
+
+    /// Moves a reminder on the day rail.
+    func move(_ r: Reminder, to date: Date) async -> UserFacingError? {
+        let error = await services.moveReminder(r.id, to: date)
+        await reload()
+        return error
+    }
+
+    /// A double-click on an empty time of the day rail: the new-reminder row, at that time, takes the keyboard.
+    func newReminder(at date: Date) {
+        newWhen = "today at " + TimeFormat.clock(date, calendar: Calendar(identifier: .gregorian))
+        newReminderFocus += 1
+    }
+
     /// Reminders still to come today, for the header.
     var remindersLeftToday: Int { groups().first { $0.day == .today }?.reminders.count ?? 0 }
 
@@ -118,6 +157,8 @@ final class NowModel {
         sessionsNeedingYou = needing
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
+        let today = Calendar.current.startOfDay(for: Date())
+        events = await rt.calendarReader.events(from: today, to: today.addingTimeInterval(2 * 86400)) ?? []
         let items = (try? await rt.notebook.items(ids: Array(Set(reminders.compactMap(\.itemId))))) ?? []
         linked = Dictionary(items.filter { $0.deletedAt == nil }.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         // From the engine, not the database: routine check times are only saved every few minutes.

@@ -8,6 +8,8 @@ public final class SidefolkRuntime: Sendable {
     public let events: EventBus
     public let clock: any Clock
     public let platform: any PlatformBridge
+    /// The person's calendar, while they show it (D57).
+    public let calendarReader: CalendarReader
     public let settings: SettingsStore
 
     public let notebook: NotebookStore
@@ -80,7 +82,10 @@ public final class SidefolkRuntime: Sendable {
         executor = ToolExecutor(registry: registry, permissions: permissions, broker: broker, activity: activity,
                                 events: events, clock: clock, minute: approvalMinute)
         attention = AttentionCenter(store: AttentionStore(db), events: events, clock: clock)
-        brief = MorningBrief(db: db, attention: attention, settings: settings, clock: clock)
+        let calendarReader = CalendarReader(platform: platform, settings: settings)
+        self.calendarReader = calendarReader
+        brief = MorningBrief(db: db, attention: attention, settings: settings, clock: clock,
+                             events: { day in await calendarReader.events(on: day) ?? [] })
         scheduler = ReminderScheduler(store: reminderStore, attention: attention, events: events, settings: settings,
                                       clock: clock, brief: brief)
         watchers = WatcherEngine(store: watcherStore, attention: attention, events: events, clock: clock,
@@ -107,6 +112,7 @@ public final class SidefolkRuntime: Sendable {
                                             reminders: ReminderTools.shared(scheduler: scheduler, settings: settings), scores: KVStore(db)))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
+        registry.register([CalendarTodayTool(reader: calendarReader)])
         registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) },
                                           here: { [settings] in settings.current.location.current }))
         registry.register(AgendaTool(scheduler: scheduler, notebook: notebook, watchers: watchers,

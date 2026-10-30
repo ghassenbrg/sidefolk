@@ -71,21 +71,21 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   companion's motion filmed for each one (Ember and Nimbo were, before painting); Iris's closed eye is an ink arc on
   the glass, not a shutter; folks and custom companions keep the soft look. *Next:* the founder reviews the ten
   (`swift run sidefolk-render out/`, or the dev app), then the 2D-character skill from the README.
-- **Themes, steps 1–5 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
+- **Themes, steps 1–6 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
   build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. Built in:
-  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–4:
+  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–5:
   theme tokens behind every `Theme` name; Activity rows that open in place; links to conversations; Today with
-  Guard's questions in its queue and per-row keys. Step 5, the one bar: `SidefolkRuntime.find` (notes,
-  conversations, reminders to come, watches, Activity; every word, case and accents ignored, a few of each). Home's
-  toolbar has a search field (⌘K); while it has words, a page says what Return will do and offers "Do it" / "Ask …
-  instead" (⌘⏎) or "Ask …", and "Save as a note" (⌥⏎), above what was found, each opening where it lives. The Ask
-  panel shows the same results under its hint and takes ⌘⏎ and ⌥⏎. Everything sent goes through the Ask panel
-  (`AppServices.ask`). The dev channel's `find:` now drives this search. *Checked:* SearchTests; the full suite in a
-  clean worktree; UI snapshots before and after (every Home window: the toolbar field; new `window-home-search`,
-  `-search-command`, `desktop-ask-found`); the debug app with a fresh home: a note saved by an agent over MCP
-  (`sidefolk mcp`, `notes_save`) found by `find:tea`, captured with its toolbar field. *Not by hand:* typing in the
-  field and the ⌘⏎/⌥⏎ keys (agents can't type into the window). *Next:* plan step 6: the day line (B3) and the
-  calendar (D57).
+  Guard's questions in its queue; the one bar (⌘K, and in the Ask panel). Step 6: "Your day" on Today: a rail of the
+  hours around now with the calendar's events and the reminders (drag a reminder or ← → on it by quarter hours, ⌘Z
+  undoes, a repeating one moves only this time; double-click an empty time to add one), then each day's events and
+  reminders in time order. The calendar (D57) is read-only and off until chosen (Settings › Privacy › Your calendar,
+  or "Show my calendar" on Today), shows in the morning brief, and is offered to the AI as `calendar.today` (medium,
+  untrusted, through Guard) only while shown; SECURITY T34. *Checked:* CalendarTests (nothing read while off, day
+  order, the brief, the AI not offered the tool while hidden, the tool's untrusted result through Guard); the full
+  suite in a clean worktree; UI snapshots before and after (Today's rail and events with a sample calendar, Settings
+  › Privacy's new group). *Not by hand:* macOS's calendar prompt and EventKit on a real calendar (it would ask on
+  this Mac), dragging and the keys on the rail. *Next:* plan step 7: watch tiles (B5), agents at work (B6), the
+  companion's nook (B7) and Glance (B10).
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with

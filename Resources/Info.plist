@@ -66,6 +66,10 @@
 	</dict>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>When you choose “Show my calendar”, Sidefolk reads your events to show your day on Today and in the morning brief. It never changes your calendar, and your AI sees events only when it asks and you allow it.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>When you choose “Show my calendar”, Sidefolk reads your events to show your day on Today and in the morning brief. It never changes your calendar, and your AI sees events only when it asks and you allow it.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Sidefolk reaches your local network only when you ask it to watch something there, or to use an AI model running on another computer.</string>
 	<key>NSLocationUsageDescription</key>

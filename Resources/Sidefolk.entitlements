@@ -11,5 +11,8 @@
 	<!-- The hardened runtime blocks Location Services without it; used only after the person chooses their Mac's location (D48). -->
 	<key>com.apple.security.personal-information.location</key>
 	<true/>
+	<!-- The hardened runtime blocks the calendar without it; read only after the person chooses to show it (D57). -->
+	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
 </dict>
 </plist>

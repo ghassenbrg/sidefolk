@@ -47,7 +47,8 @@ without reading.
 
 **T2 Prompt injection (H/H).** Sources: web pages, watcher payloads, files, clipboard, drops,
 command output, extension and MCP results *and tool descriptions*, Apple Notes and Reminders (every
-`applenotes.*` and `applereminders.list` result, titles and folder names included), notes, memories, reminders and
+`applenotes.*` and `applereminders.list` result, titles and folder names included), calendar events (`calendar.today`:
+anyone who sends an invitation writes its title, T34), notes, memories, reminders and
 watchers written by external agents (or by Sidefolk's agent in a tainted turn). Every `ToolResult`
 carries `untrusted`; a list or read that quotes anyone else's words sets it (`reminders.*` and
 `watch.*` when a title isn't user-sourced, notes, and `collections.list`, `notes.*` when a quoted
@@ -556,6 +557,7 @@ paths and queries are dropped, hosts stay.
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
 | Clipboard | T12 |
+| Calendar events | T34 |
 | Writes into synced folders | Ask when tainted |
 | Command watchers | T9 |
 | Logs and diagnostics | T20 |
@@ -684,6 +686,18 @@ of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed a
   only if the person chose it; the gallery offers Update only for a newer version.
 *Residual:* the catalog's text (names, taglines, descriptions) is shown in Settings; only official entries' words
 reach the model, as one line each.
+
+**T34 The person's calendar (M/M), D57.** Off until the person chooses "Show my calendar" (Settings › Privacy ›
+Your calendar, or Today); until then nothing is read, the AI isn't offered `calendar.today`, and macOS is never
+asked. Choosing it asks macOS once for full access (`NSCalendarsFullAccessUsageDescription`, and the hardened
+runtime's `com.apple.security.personal-information.calendars`); reading the state never asks.
+- *Read-only.* EventKit is only queried; nothing in Sidefolk can create, change or delete an event.
+- *Where events go.* Today and the morning brief, on this Mac. Attention items, where the brief lands, never reach
+  the model's context.
+- *What the AI hears.* Only through `calendar.today`: medium risk, "Reads private data", through Guard like any
+  tool, so the person is asked (once per kind unless they choose otherwise). The result is untrusted (T2): an
+  invitation's title is written by whoever sent it. Other agents get no tool that reads it (`external: false`).
+*Residual:* once allowed for good, the AI may read the day's events in any later clean turn.
 
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
