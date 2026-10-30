@@ -50,6 +50,50 @@ def prepare(src, name, ratio=0.42, shift=(0, 0, 0), turn=0):
     return mesh
 
 
+def regutter(mesh, size=2048, margin=0.012):
+    """Meshy packs its texture islands edge to edge, so when the texture is shrunk (mipmaps, a small
+    window) the neighbouring island's colour bleeds into every seam as a pale crack. This packs the
+    islands again with a margin and bakes the colour into a new texture whose margin carries each
+    island's own colour outward."""
+    me = mesh.data
+    mat = me.materials[0]; nt = mat.node_tree
+    src = [n for n in nt.nodes if n.type == "TEX_IMAGE"][0]
+    old = me.uv_layers.active.name
+    # The old texture keeps reading the old UVs while the bake writes the new ones.
+    uvnode = nt.nodes.new("ShaderNodeUVMap"); uvnode.uv_map = old
+    nt.links.new(uvnode.outputs[0], src.inputs["Vector"])
+    # Layer handles go stale across mode switches: they are found again by name.
+    new = me.uv_layers.new(name="UVPacked"); new.active = True; new.active_render = True; packed = new.name
+    bpy.context.view_layer.objects.active = mesh
+    bpy.ops.object.select_all(action="DESELECT"); mesh.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.select_all(action="SELECT")
+    bpy.ops.uv.pack_islands(margin=margin, rotate=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    img = bpy.data.images.new("baked_color", size, size)
+    tgt = nt.nodes.new("ShaderNodeTexImage"); tgt.image = img
+    nt.nodes.active = tgt
+    # The texture is baked as light (a diffuse bake reads black on a material Meshy made metallic).
+    out = [n for n in nt.nodes if n.type == "OUTPUT_MATERIAL"][0]
+    shader = out.inputs["Surface"].links[0].from_socket
+    emit = nt.nodes.new("ShaderNodeEmission")
+    nt.links.new(src.outputs["Color"], emit.inputs["Color"])
+    nt.links.new(emit.outputs[0], out.inputs["Surface"])
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"; scene.cycles.device = "CPU"; scene.cycles.samples = 1
+    scene.render.bake.margin = 24; scene.render.bake.margin_type = "EXTEND"
+    bpy.ops.object.bake(type="EMIT")
+    nt.links.new(shader, out.inputs["Surface"]); nt.nodes.remove(emit)
+    # The baked texture replaces the old one on the new UVs, and the old UVs go.
+    nt.links.new(uvnode.outputs[0], src.inputs["Vector"])
+    uvnode.uv_map = packed
+    src.image = img
+    me.uv_layers.remove(me.uv_layers[old])
+    nt.nodes.remove(tgt)
+    print("regutter: baked", size, "px with margin", margin)
+
+
 def armature(name, bones):
     """bones: [(name, head, tail, parent or None, {connect, deform})]."""
     data = bpy.data.armatures.new(name)
@@ -128,6 +172,26 @@ def bake_ao(mesh, samples=96):
     bpy.ops.object.bake(type="AO", target="VERTEX_COLORS")
     v = np.empty(len(me.vertices) * 4, dtype=np.float32); ao.data.foreach_get("color", v)
     print("ao min/mean", float(v[0::4].min()), float(v[0::4].mean()))
+
+
+def mark(mesh, mask):
+    """A part the texture can't tell apart by colour (Nori's black frames against charcoal fur)
+    rides in the AO colour's green channel, after bake_ao(); the material reads it as `part`."""
+    me = mesh.data; ao = me.color_attributes["AO"]
+    v = np.empty(len(me.vertices) * 4, dtype=np.float32); ao.data.foreach_get("color", v)
+    v[1::4] = np.clip(mask, 0, 1); ao.data.foreach_set("color", v)
+
+
+def grow(mesh, seed, allowed, rings):
+    """seed spread over the mesh's edges `rings` times, only into `allowed` vertices."""
+    me = mesh.data
+    ev = np.empty(len(me.edges) * 2, dtype=np.int64); me.edges.foreach_get("vertices", ev)
+    a, b = ev.reshape(-1, 2).T
+    m = seed.copy()
+    for _ in range(rings):
+        n = m.copy(); n[a] |= m[b]; n[b] |= m[a]
+        m = n & allowed | seed
+    return m
 
 
 def islands(mesh):

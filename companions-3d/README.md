@@ -9,7 +9,7 @@ idle life, clicks, petting and bubble anchors, and every cue it gets is replayed
 | What | Where |
 |---|---|
 | Runtime the app ships: page, engine, characters, three.js r180, rigged models, detail maps, portraits | [`Resources/Companions3D`](../Resources/Companions3D) |
-| Character sheets: supplied (lineup, Spark, Mochi, Nimbo v2, Folio) and generated with Codex image gen (Ember, Kiko, Nimbo v1) | `references/` |
+| Character sheets: supplied (lineup, Spark, Mochi, Nimbo v2, Folio, Iris, Nori, Purl, Rune) and generated with Codex image gen (Ember, Kiko, Nimbo v1) | `references/` |
 | Every prompt, its references and the Meshy task ids | `references/prompts.json` |
 | Meshy front design images (blank faces, A-pose) | `meshy/` |
 | Rigs (Blender, headless) | `blender/rig_<name>.py` on the shared `blender/rigkit.py` |
@@ -24,7 +24,10 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
 1. **Sheet.** A turnaround and expression sheet, generated with Codex image gen when there is none
    (`references/prompts.json`).
 2. **Design image (Meshy, nano-banana-pro).** A front view in A-pose with the sheet's proportions and
-   a deliberately blank face, so the face can be built as animatable parts.
+   a deliberately blank face, so the face can be built as animatable parts. Whatever the prompt asks
+   for on the face, Meshy sculpts (Iris's first model had its brow and smile in relief), and it drifts
+   to rounder shapes unless told what not to make (Rune's first head was a mushroom dome: "NOT a dome,
+   NOT a mushroom" fixed it).
 3. **Model (Meshy 7.1 image-to-3D, 4K texture).** Raw models aren't kept here (Ember's is 132 MB);
    download them again by task id from `prompts.json` while Meshy keeps them.
 4. **Rig.** `measure.py` and `probe.py` print slices, colour zones and gaps to place joints by
@@ -32,7 +35,10 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
    doubles, decimates to about 70k faces, builds the bones, computes weights from position (bone heat
    tears these meshes; each part takes its share of what is left, so the shares always sum to one),
    bakes ambient occlusion into a vertex colour, exports the GLB with a 2K texture, and renders
-   deformation tests.
+   deformation tests. Meshy packs its texture islands edge to edge, so a shrunk texture shows pale
+   cracks along every seam: `regutter()` repacks the islands with a margin and bakes the colour again.
+   A part the texture can't tell apart by colour (Nori's black frames on charcoal fur) is marked by
+   the rig (`mark()`, the AO colour's green channel) and read by the material as `part`.
 
    ```sh
    blender -b -P companions-3d/blender/rig_spark.py -- spark-model.glb Resources/Companions3D/assets/spark.glb build/rig-tests/spark
@@ -66,11 +72,12 @@ the window is hidden: about 18% of a core (D51), against 0.2% for a 2D companion
 ## Playground
 
 ```sh
-python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (mochi, spark, ember, kiko, nimbo, folio)
+python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (mochi, spark, ember, kiko, nimbo, folio, iris, nori, purl, rune)
 ```
 
 `?bare&frame=tight` for clean captures; in the console `(await import('./sheet.js')).sheet(companion)`
-lays 16 feelings, moves and postures out in one grid. `?record=<name>&frame=tight` records the
+lays 16 feelings, moves and postures out in one grid, and `turnaround(companion)` saves front, ¾,
+side and back views to compare with the sheet's turnaround. `?record=<name>&frame=tight` records the
 showreel frame by frame into `build/companions-3d/<name>/`.
 
 ## Rebuild the app's copy

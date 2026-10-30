@@ -12,6 +12,17 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Iris, Nori, Purl and Rune in 3D (D61):** four gallery companions from the founder's sheets, add-ons in
+  `sidefolk-addons/companions/` (built and signed, not published). Iris, Purl and Rune were modelled again after
+  a first pass that missed their sheets; Nori kept its model and lost the glossy strip over its glasses. Rig kit:
+  `regutter()` (no pale seam cracks) and `mark()` (a part mask the material reads as `part`); the playground's
+  `sheet.js turnaround()` saves front, ¾, side and back to compare with a sheet. *Checked:* turnarounds and the
+  16-cue sheets of all four against their sheets in the playground; the dev app (all four animate, Rune waves);
+  `make test`. *Not yet:* the founder's review; Iris's arms pull a little yellow from the body's sides when raised;
+  the stand-ins were resized to the new models but not looked at in the app; the app's side (cases, stand-ins,
+  role lines, strings, tests) is in the working tree, interleaved with the 2D work (D59), and goes in with it. *Next:*
+  the founder reviews, then
+  `scripts/publish.sh` in sidefolk-addons; the app offers them once a release knows their cases.
 - **3D companions added from a folder; likeness faces (D60):** Settings › Companion › Made by you › Add from
   Folder… checks a companion's folder (addon.json and exactly its four files, sizes and kinds), warns that its
   character file runs as code, installs it beside the gallery's companions and wears it

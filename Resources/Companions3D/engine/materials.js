@@ -16,6 +16,8 @@ let shared;
  * on `uPlush` or `uKnit`. It sets any of: `c` (colour), `rough`, `bumpH` (relief height),
  * `glow` (emitted light), `sheenTint`, `clear` (clearcoat amount), `inner` (inner light, 0…1),
  * `spec` (how much it reflects, 0…1: dark glass that mirrors the room looks lit from the front).
+ * `part` is a mask the rig may store for a part colour can't find (rigkit.mark); read it only
+ * when the rig wrote one (otherwise it is the occlusion again).
  */
 export function bodyMaterial(body, { params = {}, surface = '', ao = [0.42, 0.3, 0.78], bump = 1, uniforms: own = {} } = {}) {
   shared ||= { uPlush: { value: detail('plush-height.png') }, uKnit: { value: detail('knit-height.png') } };
@@ -60,6 +62,7 @@ export function bodyMaterial(body, { params = {}, surface = '', ao = [0.42, 0.3,
         vec3 p = vRest; vec3 nR = normalize(vRestN);
         vec3 c = tex; float rough = ${(params.roughness ?? 0.78).toFixed(3)}; float bumpH = 0.0;
         vec3 glow = vec3(0.0); vec3 sheenTint = vec3(1.0); float clear = 1.0; float inner = 1.0; float spec = 1.0;
+        float part = ${hasAO ? 'vColor.g' : '0.0'};
         ${surface}
         diffuseColor.rgb = c;`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = rough;')

@@ -55,6 +55,30 @@
         "image_to_3d": "01a189a3-a501-7076-af80-914e944a5d3d",
         "reference": "folio-sheet.png (the founder's sheet)",
         "note": "Meshy faced it backwards; rig_folio.py turns it 180°"
+      },
+      "iris": {
+        "front_image": "01a18c55-1f0d-7423-959a-b88690f13cfe",
+        "image_to_3d": "01a18c56-67a9-7435-aca8-9ce78381a728",
+        "reference": "iris-sheet.webp (the founder's sheet)",
+        "note": "second model: the first design image asked for a brow and a smile, which Meshy sculpted into the body; this one keeps the front blank and the whole lens uncovered (the glass becomes the lens cap behind the eye)"
+      },
+      "nori": {
+        "front_image": "01a18c28-b56e-7457-9cc5-5d2251a7f00d",
+        "image_to_3d": "01a18c2a-5a7d-7148-b835-1b493e3d165b",
+        "reference": "nori-sheet.webp (the founder's sheet)",
+        "note": "thick black glasses frames are modelled (empty lenses); the face behind them is added by the engine"
+      },
+      "purl": {
+        "front_image": "01a18c55-22d6-723e-8d1f-f66d0c9b26c6",
+        "image_to_3d": "01a18c56-6fe4-7104-b46e-5af853b63b1b",
+        "reference": "purl-sheet.webp (the founder's sheet)",
+        "note": "second model: the first head came out lopsided; this prompt asks for a perfectly symmetric rounded cube. Meshy copied both patches onto the back: the material keeps only the front ones"
+      },
+      "rune": {
+        "front_image": "01a18c55-260d-710a-811a-1a332d213f5d",
+        "image_to_3d": "01a18c56-7a13-76c1-bd75-3735eae38bf4",
+        "reference": "rune-sheet.webp (the founder's sheet)",
+        "note": "second model: the first design image made a mushroom dome; this one says 'blocky boulder ... NOT a dome, NOT a mushroom'"
       }
     },
     "calls": [
@@ -195,6 +219,169 @@
           "folio-sheet.png crops: front, hero, side, back"
         ],
         "prompt": "Front view, full body, of this exact cute origami paper character \"Folio\", for 3D modeling. Keep the reference's shape exactly: a chunky folded-paper body shaped like a rounded house or pentagon (pointed roof top, slightly wider than its base), made of thick soft coral paper (#E8826E) with fine paper fibre texture and crisp folds; a cream-beige paper corner flap folded down over the top right of the roof; deep crimson-red inner folds (#B8344A) showing at both sides of the body; two small flat rounded paper-fin arms sticking out from the sides; two short folded paper feet, coral with crimson sides. IMPORTANT: the face is completely BLANK (...). Neutral symmetric pose (...). Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text."
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi toy-camera companion \"Iris\", for 3D modeling. Keep the reference's proportions exactly: soft thick rounded-square camera body in pastel butter yellow (#F6D77A), as wide as tall; ONE huge round lens (about 60% of the body width) in a chunky dark chocolate brown (#4A3022) ring with glossy slate-blue glass and black core; small square viewfinder window upper left; coral-peach (#E9967A) shutter button on top right; small brown brow arc above the lens and small dark smile below; two short stubby dark brown arms and two short chubby dark brown feet. Neutral symmetric A-pose, arms angled down 35 degrees with clear space, feet slightly apart. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "4:3",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a18c28-b1a1-7256-bbc0-664bf69671cb",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Glossy smooth pastel butter-yellow soft plastic camera body, one huge round lens in a chunky dark chocolate brown ring with glossy slate-blue glass and a black centre with white highlights, small square dark-framed viewfinder window, coral-peach shutter button on top, small dark brown eyebrow arc above the lens and small dark smile below it, dark chocolate brown rounded stubby arms and feet",
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi plush tuxedo cat companion \"Nori\" standing upright on two legs, for 3D modeling. Very large round head wider than the body, upright pointed ears with pink-beige inner ear; charcoal-black (#3A3638) soft fuzzy felt fur on head top, ears, back, arms, legs and tail; cream (#EFE2C8) muzzle in a widow's-peak pattern, chest and belly oval, paws; fluffy charcoal tail with cream tip curving out behind; mint-green (#4FC9A0) knitted scarf with a small square tag on the chest; thick black round-rimmed glasses frames (empty lens openings) kept as part of the character. The face is otherwise completely BLANK: no eyes, brows, nose, mouth, whiskers, blush; keep the cream face-colour zone. Neutral symmetric A-pose, arms angled down 35 degrees with clear space, feet slightly apart. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a18c28-b56e-7457-9cc5-5d2251a7f00d",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Soft fuzzy felt plush tuxedo cat, charcoal-black fur, cream face muzzle and chest and paws, pink-beige inner ears, mint-green knitted scarf with square tag, thick black round glasses frames with empty clear lenses, blank face with no eyes nose or mouth, charcoal tail with cream tip",
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi stitched-linen ragdoll companion \"Purl\", for 3D modeling. Very large soft rounded-SQUARE pillowy head in oatmeal linen (#D8C3A0), wider than the body, hand-stitched cream seam down the left side and a small indigo (#4B5A8C) patch with cream stitches at the top right; small pear-shaped indigo linen body with a mustard (#D9A53C) square patch with cream cross-stitches on the lower belly; short stubby indigo arms, legs and feet; woven linen texture, matte. The face is completely BLANK: no eyes, brows, nose, mouth, blush. Neutral symmetric A-pose, arms angled down 35 degrees with clear space, feet slightly apart. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a18c28-b8dd-7695-afbd-3ab626c7412b",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Woven oatmeal linen rounded-square head with cream hand stitched seam and an indigo patch with cream stitches on the top corner, blank face with no eyes nose or mouth, indigo-blue linen body, arms and feet, mustard-yellow square patch with cream cross-stitches on the belly, matte plush fabric",
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "prompt": "Front view, full body, of this exact cute chibi stone golem companion \"Rune\", for 3D modeling. Very large rounded trapezoid boulder head (wider at the base, smooth rounded corners, NOT lumpy), small separate rounded stone torso beneath it, two chubby egg-shaped stone arms, two short rounded pebble feet; weathered pale sandy-grey stone (#A8A08A) with subtle speckle, olive-green moss (#6E8B3D) on the top left of the head and small patches on torso, arms and feet; small glossy amber-gold (#E0A526) oval gem in the centre of the chest. The face is completely BLANK: no eyes, brows, nose, mouth, blush. Neutral symmetric A-pose, arms angled down 35 degrees with clear space, feet slightly apart. Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text.",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ]
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "input_task_id": "01a18c28-bc9c-705e-9500-6b89d56ebf0c",
+        "ai_model": "meshy-7.1",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Weathered pale sandy-grey speckled smooth stone golem, blank smooth face with no facial features, lush olive-green moss patch on the top of the head and small moss patches on the torso arms and feet, glossy amber-gold oval gem on the chest",
+        "references": []
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "aspect_ratio": "4:3",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ],
+        "prompt": "Front view, full body, of this exact cute chibi toy-camera companion \"Iris\", for 3D modeling, premium animated-feature quality. Keep the reference's proportions exactly: one thick soft rounded-square camera body in glossy pastel butter yellow plastic (#F3D27A), as wide as tall, evenly rounded corners and edges, perfectly symmetric and smooth. ONE huge perfectly round lens centred slightly above the middle of the front (about 58% of the body width): a chunky raised dark chocolate brown (#4A3022) lens barrel ring, inside it a full, completely round, uncovered glossy slate-blue glass disc (#5E7A99) with a round black core, the whole circle of glass visible, nothing covering its lower part. A small square smoky-grey viewfinder window in a brown frame at the upper left of the front; a small round coral-peach (#E9967A) shutter button on top at the right. Two short smooth rounded mitten-shaped dark chocolate brown arms (no fingers, no thumb) hanging at the lower sides of the body, angled out 30 degrees with a clear gap to the body; two short chubby rounded dark brown feet, slightly apart. IMPORTANT: NOTHING else on the front: NO eyebrow, NO brow arc, NO mouth, NO smile, NO markings, NO decals; the yellow front around the lens is plain smooth plastic (the face is added later as separate parts). Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text."
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "ai_model": "meshy-7.1",
+        "input": "the Iris image above",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Glossy smooth pastel butter-yellow plastic camera body (#F3D27A), plain and clean everywhere, with a raised rounded-rectangle battery door on the back in the same yellow; a chunky dark chocolate brown (#4A3022) lens ring around glossy slate-blue glass (#5E7A99) with a round black core; a small smoky-grey viewfinder window in a brown frame; a coral-peach (#E9967A) shutter button; smooth glossy dark chocolate brown arms and feet. Blank front: no brows, no mouth, no markings."
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ],
+        "prompt": "Front view, full body, of this exact cute chibi stitched-linen ragdoll plush companion \"Purl\", for 3D modeling, premium animated-feature quality. Keep the reference's proportions exactly. A very large, perfectly SYMMETRIC soft rounded-cube head like a firm plush pillow box: slightly wider than tall, a flat front face, straight vertical sides, a level flat top and a level flat bottom, all corners and edges evenly and softly rounded, both lower corners at the same height; warm oatmeal greige woven linen (#CBB89C). A hand-stitched cream running-stitch seam runs down the left edge of the face; a small indigo linen patch with cream stitches sits on the top right corner of the head. The head is about 55% of the total height and wider than the body. Under it a small rounded pear-shaped indigo linen body (#4C5788) with a cream seam down its left side and a mustard linen square patch (#C99B36) with cream cross-stitches on the lower right of the belly; short stubby rounded indigo arms angled down 35 degrees with a clear gap to the body; two short stubby round indigo legs, slightly apart. Fine woven linen texture, matte, soft. IMPORTANT: the face is completely BLANK: no eyes, no brows, no nose, no mouth, no blush, no markings (the face is added later as separate parts). Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text."
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "ai_model": "meshy-7.1",
+        "input": "the Purl image above",
+        "pose_mode": "a-pose",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Plush ragdoll of woven linen: the big rounded-cube head is warm oatmeal greige linen (#CBB89C) on every side, with cream hand-stitched running-stitch seams along its front edges and a small indigo linen patch with cream stitches on the top right corner only; the body, arms and legs are deep indigo linen (#4C5788) with a cream seam down the left side and a mustard linen square patch (#C99B36) with cream cross-stitches on the lower right belly. Fine visible weave, matte. Blank face: no eyes, no mouth, no blush."
+      },
+      {
+        "tool": "meshy_image_to_image",
+        "ai_model": "nano-banana-pro",
+        "aspect_ratio": "3:4",
+        "references": [
+          "crop-hero.png",
+          "crop-front.png",
+          "crop-side.png",
+          "crop-back.png"
+        ],
+        "prompt": "Front view, full body, of this exact cute chibi pocket stone golem companion \"Rune\", for 3D modeling, premium animated-feature quality. Keep the reference's proportions exactly. A very large chunky BLOCKY boulder head shaped like a river-worn stone block: a broad flat top, almost vertical sides that taper slightly so the top is a little narrower than the bottom, a flat bottom, a flat front face, softly rounded edges and corners; wider than tall, about 55% of the total height. It is NOT a dome, NOT a mushroom, NOT a bell. Under it a small rounded barrel-shaped stone torso, two smooth egg-shaped pebble arms (NO hands, NO fingers) hanging beside the torso angled out 30 degrees with a clear gap, and two short rounded pebble feet with flat soles, slightly apart. Material: warm grey-taupe granular stone (#9C9786) with fine speckle, soft mottled patches of pale lichen green (#8E9C62) all over the head, torso, arms and feet, and a thick fuzzy cushion of olive-green moss (#6B7F2E) on the top left corner of the head. A small glossy translucent amber-yellow oval gem (#E8B030), set flush in the centre of the chest. IMPORTANT: the face is completely BLANK stone: no eyes, no brows, no nose, no mouth, no blush, no markings (the face is added later as separate parts). Even soft studio lighting, plain flat light grey background (#E6E9EE), no ground shadow, no text."
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "ai_model": "meshy-7.1",
+        "input": "the Rune image above",
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Warm grey-taupe granular river stone (#9C9786) with fine speckle and soft mottled patches of pale lichen green (#8E9C62) on the head, torso, arms and feet on every side; a thick fuzzy olive-green moss cushion (#6B7F2E) only on the top left corner of the head; a small glossy translucent amber-yellow oval gem (#E8B030) in the centre of the chest. Blank stone face: no eyes, no mouth, no markings."
       }
     ]
   },
@@ -208,7 +395,11 @@
       "ember": "soft warm peach to pale apricot",
       "kiko": "soft pale sky blue to light lavender",
       "nimbo": "soft dawn pink to pale lilac",
-      "folio": "soft warm butter cream to pale yellow"
+      "folio": "soft warm butter cream to pale yellow",
+      "iris": "soft sky blue to pale periwinkle",
+      "nori": "soft pale mint to light seafoam",
+      "purl": "soft pale lavender to light periwinkle",
+      "rune": "soft warm sand to pale peach"
     },
     "output": "references/avatars/<id>-avatar.webp (1254 px); the app's Resources/Companions3D/avatars/<id>.png is a round 256 px crop on the face"
   }

@@ -44,6 +44,22 @@ export function sheet(m, cues = CUES, { cols = 4, size = 300 } = {}) {
   return img;
 }
 
+/** Front, three-quarter, side and back in one strip, like a reference sheet's turnaround row, to
+ *  compare with it; saved through serve.py as build/companions-3d/turn-<id>/00001.png. */
+export async function turnaround(m, { w = 640, h = 760, yaws = [0, 35, 90, 180] } = {}) {
+  m.pause(); m.nextFidget = 1e9;
+  m.canvas.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px`;
+  m.renderer.setPixelRatio(1); m.resize();
+  m.actions = []; m.setState('idle'); m.setMood('smile'); m.blink.next = 1e9; m.lookAt(0, 0.1); m.step(2.5);
+  const out = document.createElement('canvas'); out.width = w * yaws.length; out.height = h;
+  const g = out.getContext('2d'); g.fillStyle = '#eef1f6'; g.fillRect(0, 0, out.width, h);
+  yaws.forEach((yaw, i) => { m.root.rotation.y = -yaw * Math.PI / 180; m.step(0.05); g.drawImage(m.canvas, i * w, 0); });
+  m.root.rotation.y = 0; m.step(0.05);
+  const blob = await new Promise((res) => out.toBlob(res, 'image/png'));
+  await fetch(`/frame/turn-${m.C.id}/1.png`, { method: 'POST', body: blob });
+  return blob.size;
+}
+
 /** The still Settings shows: idle and smiling, transparent, square; saved through serve.py. */
 export async function portrait(m, size = 512) {
   m.pause(); m.nextFidget = 1e9;

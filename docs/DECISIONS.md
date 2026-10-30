@@ -1373,3 +1373,28 @@ like the sheets, which drawn cartoon eyes and mouths can't.
 **Implications:** `InstalledCompanion.tagline/body/fromFolder`, `CompanionBody`, `AddonStore.readLocalCompanion`
 and `install(companionFolder:)`; `CharacterLook.character3D`; `Companion3DStage` keyed by a character's name;
 `CompanionArt.locals`. Debug: `swift scripts/dev.swift addCompanion:<folder>` and `companion:local:<id>`.
+
+### D61 — Iris, Nori, Purl and Rune in 3D, made to their sheets (2026-10-30)
+**Decision:** four more gallery companions (D55), from the founder's sheets: Iris (a toy camera whose one lens is
+its eye; blinking shuts a brown lens cap), Nori (a tuxedo cat in glasses and a mint scarf), Purl (a stitched linen
+ragdoll) and Rune (a pocket stone golem whose amber gem glows while it listens). Each is an add-on in
+`sidefolk-addons/companions/<id>/` and a `CompanionChoice` case. The first models of Iris, Purl and Rune missed
+their sheets and were made again: the bar is the sheet's turnaround, checked side by side with
+`sheet.js turnaround()` before anything else.
+- **Design images**: whatever the prompt puts on a face, Meshy sculpts (Iris's brow and smile came out in relief);
+  and it rounds shapes off unless told what not to make (Rune's blocky head became a dome until the prompt said
+  "NOT a dome, NOT a mushroom"; Purl's head was lopsided until it said "perfectly symmetric").
+- **Textures**: Meshy packs its islands edge to edge, so a shrunk texture cracks pale along every seam;
+  `rigkit.regutter()` repacks them with a margin and bakes the colour again (as light: a metallic material bakes
+  black as diffuse). Colours are set by zone in the material, keeping only part of Meshy's shading, so its specks,
+  crumples and copied patches go.
+- **Parts colour can't find**: the rig marks them in the AO colour's green channel (`rigkit.mark()`), read by the
+  material as `part` (Nori's black frames on charcoal fur).
+
+**Why:** the first pass was rigged and wired but looked unlike the sheets (sculpted brows, a dome for a block, a
+lopsided head, pale cracks, glossy fur over the glasses); the founder's bar is that a companion looks like its
+sheet.
+
+**Implications:** Iris's eye ignores the lower lid (`uLid.z`), so smiles don't cover the lens; Purl's arm weights
+are everything past the body's sides, as the mitten tips curl off the arm's line. Raw models stay on Meshy (task
+ids in `prompts.json`).
