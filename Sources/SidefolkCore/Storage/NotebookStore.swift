@@ -23,7 +23,7 @@ public struct NotebookStore: Sendable {
             if let existing = try NotebookCollection.filter(Column("kind") == NotebookCollection.Kind.inbox.rawValue).fetchOne(db) {
                 return existing
             }
-            let inbox = NotebookCollection(name: Self.inboxName, kind: .inbox, emoji: "📥", now: now)
+            let inbox = NotebookCollection(name: Self.inboxName, kind: .inbox, now: now)
             try inbox.insert(db)
             return inbox
         }
@@ -106,6 +106,18 @@ public struct NotebookStore: Sendable {
         }
     }
 
+    /// The person's look for a collection (D53): an emoji or a symbol, and a colour; nil goes back to the kind's.
+    public func setLook(collectionId: String, emoji: String?, symbol: String?, color: String?, now: Date = Date()) async throws {
+        try await db.writer.write { db in
+            guard var c = try NotebookCollection.fetchOne(db, key: collectionId) else { return }
+            c.emoji = emoji.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(8)) }.flatMap { $0.isEmpty ? nil : $0 }
+            c.symbol = symbol.map { String($0.prefix(60)) }
+            c.color = color.map { String($0.prefix(20)) }
+            c.updatedAt = now
+            try c.update(db)
+        }
+    }
+
     public func setArchived(collectionId: String, _ archived: Bool, now: Date = Date()) async throws {
         try await db.writer.write { db in
             guard var c = try NotebookCollection.fetchOne(db, key: collectionId), c.kind != .inbox else { return }
@@ -159,7 +171,16 @@ public struct NotebookStore: Sendable {
             if let kinds { r = r.filter(kinds.map(\.rawValue).contains(Column("kind"))) }
             if let status { r = r.filter(Column("status") == status.rawValue) }
             if !includeDeleted { r = r.filter(Column("deleted_at") == nil) }
-            return try r.order(Column("created_at").desc).limit(limit).fetchAll(db)
+            return try r.order(sql: "pinned_at IS NULL, pinned_at DESC, created_at DESC").limit(limit).fetchAll(db)
+        }
+    }
+
+    /// Pins an item to the top of its collection, or unpins it. Pinning isn't an edit, so `updatedAt` stays.
+    public func setPinned(itemId: String, _ pinned: Bool, now: Date = Date()) async throws {
+        try await db.writer.write { db in
+            guard var item = try NotebookItem.fetchOne(db, key: itemId) else { return }
+            item.pinnedAt = pinned ? now : nil
+            try item.update(db)
         }
     }
 

@@ -234,7 +234,10 @@ enum UISnapshots {
             }
 
             // Sheets.
-            try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 400)
+            try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 420)
+            if let edited = full.notebook.collections.first(where: { $0.symbol != nil }) {
+                try await page("sheet-edit-collection", CollectionSheet(mode: .edit(edited), model: full.notebook) { _ in }, width: 420)
+            }
             try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
             try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 480)
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)

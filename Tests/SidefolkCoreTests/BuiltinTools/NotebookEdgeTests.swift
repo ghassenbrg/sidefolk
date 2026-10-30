@@ -7,6 +7,37 @@ import Testing
 @Suite struct NotebookEdgeTests {
     private func names(_ t: BuiltinEnv) async throws -> [String] { try await t.notebook.collections().map(\.name) }
 
+    // MARK: Looks and pins (D53)
+
+    @Test func aCollectionKeepsItsLookAndPinnedItemsComeFirst() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        let c = try await t.notebook.createCollection(name: "Trips", kind: .project)
+        try await t.notebook.setLook(collectionId: c.id, emoji: " 🌍 ", symbol: "airplane", color: "blue")
+        let looked = try #require(try await t.notebook.collections().first { $0.id == c.id })
+        #expect(looked.emoji == "🌍" && looked.symbol == "airplane" && looked.color == "blue")
+        try await t.notebook.setLook(collectionId: c.id, emoji: "", symbol: nil, color: nil)
+        #expect(try await t.notebook.collections().first { $0.id == c.id }?.emoji == nil)
+
+        let old = NotebookItem(collectionId: c.id, kind: .note, title: "Old", source: "user", now: Date(timeIntervalSinceNow: -100))
+        let new = NotebookItem(collectionId: c.id, kind: .note, title: "New", source: "user")
+        try await t.notebook.add(old)
+        try await t.notebook.add(new)
+        #expect(try await t.notebook.items(collectionId: c.id).map(\.title) == ["New", "Old"])
+        try await t.notebook.setPinned(itemId: old.id, true)
+        #expect(try await t.notebook.items(collectionId: c.id).map(\.title) == ["Old", "New"])
+        let stored = try #require(try await t.notebook.item(id: old.id))
+        #expect(abs(stored.updatedAt.timeIntervalSince(old.updatedAt)) < 0.01, "pinning isn't an edit")
+        try await t.notebook.setPinned(itemId: old.id, false)
+        #expect(try await t.notebook.items(collectionId: c.id).map(\.title) == ["New", "Old"])
+    }
+
+    @Test func theInboxComesWithoutAnEmoji() async throws {
+        let t = try BuiltinEnv()
+        defer { t.cleanup() }
+        #expect(try await t.notebook.inbox().emoji == nil)
+    }
+
     // MARK: collection_kind
 
     @Test func aNewCollectionIsMadeAsTheKindAskedFor() async throws {

@@ -59,7 +59,8 @@ extension ExternalToolPolicy {
             lists; other agents can't create collections, so when the name isn't found, save to the Inbox or ask the user to \
             create it. Use kind task for to-dos and list items. Give `remind` a time when the user wants to be reminded about \
             it too: the reminder belongs to the note and stops when the task is done. Notes you save are tagged with your \
-            name. Never save passwords, API keys, tokens or other secrets.
+            name. The body may use simple Markdown (**bold**, *italic*, `## headings`, `- ` lists, `- [ ] ` checklists, links), \
+            which the notebook shows formatted. Never save passwords, API keys, tokens or other secrets.
             """,
         "reminders.create": """
             Remind the user about something at a time: a bubble on their desktop with Done and Snooze, kept across restarts. \

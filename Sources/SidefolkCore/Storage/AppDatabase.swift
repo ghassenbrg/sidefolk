@@ -256,6 +256,18 @@ public final class AppDatabase: Sendable {
                 END
                 """)
         }
+        // How a collection looks (D53) and pinned items. The Inbox's and About you's emoji were set when they were made
+        // but never shown; they go, so a look the person picks is the only one.
+        m.registerMigration("v4-notebook-look") { db in
+            try db.alter(table: "collections") { t in
+                t.add(column: "symbol", .text)
+                t.add(column: "color", .text)
+            }
+            try db.execute(sql: "UPDATE collections SET emoji = NULL WHERE kind IN ('inbox', 'profile')")
+            try db.alter(table: "items") { t in
+                t.add(column: "pinned_at", .double)
+            }
+        }
         return m
     }
 }

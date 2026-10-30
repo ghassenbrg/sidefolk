@@ -146,13 +146,15 @@ private struct HomeSidebar: View {
     }
 
     private func collectionRow(_ c: NotebookCollection) -> some View {
-        Label { Text(NotebookCollections.shownName(c)) } icon: { icon(symbol(c), c.kind == .profile ? Theme.aqua : Theme.folkColor("pip")) }
+        Label { Text(NotebookCollections.shownName(c)) } icon: { CollectionIcon(collection: c) }
             .badge(notebook.counts[c.id] ?? 0)
             .tag(HomeSelection.collection(c.id))
             .help(c.kind == .profile ? Text("Sidefolk keeps these in mind in every conversation.") : Text(verbatim: c.name))
             .contextMenu {
+                if c.kind != .profile {
+                    Button("Edit…") { sheet = .edit(c) }
+                }
                 if c.kind != .inbox && c.kind != .profile {
-                    Button("Rename…") { sheet = .rename(c) }
                     Button("Archive") {
                         if model.selection == .collection(c.id) { model.selection = .now }
                         Task { await notebook.setArchived(c, true) }
@@ -167,28 +169,19 @@ private struct HomeSidebar: View {
         Image(systemName: name).foregroundStyle(color)
     }
 
-    private func symbol(_ c: NotebookCollection) -> String {
-        switch c.kind {
-        case .inbox: "tray.fill"
-        case .profile: "person.crop.circle.fill"
-        case .project: "folder.fill"
-        case .topic: "number"
-        case .list: "checklist"
-        }
-    }
 }
 
-// MARK: - New and rename collection
+// MARK: - New and edit collection
 
 struct CollectionSheet: View {
     enum Mode: Identifiable {
         case create
-        case rename(NotebookCollection)
+        case edit(NotebookCollection)
 
         var id: String {
             switch self {
             case .create: "create"
-            case .rename(let c): c.id
+            case .edit(let c): c.id
             }
         }
     }
@@ -198,6 +191,9 @@ struct CollectionSheet: View {
     var done: (NotebookCollection?) -> Void
     @State private var name = ""
     @State private var kind: NotebookCollection.Kind = .project
+    @State private var symbol: String?
+    @State private var color: String?
+    @State private var emoji = ""
     @State private var error: UserFacingError?
     @Environment(\.dismiss) private var dismiss
 
@@ -209,10 +205,12 @@ struct CollectionSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
-            Text(isCreate ? "New collection" : "Rename collection").font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            TextField("Name", text: $name, prompt: Text("Name"))
-                .textFieldStyle(.roundedBorder)
-                .onSubmit(save)
+            Text(isCreate ? "New collection" : "Edit collection").font(Theme.Font.heading).foregroundStyle(Theme.ink)
+            if namable {
+                TextField("Name", text: $name, prompt: Text("Name"))
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(save)
+            }
             if isCreate {
                 VStack(alignment: .leading, spacing: 6) {
                     Picker("Kind", selection: $kind) {
@@ -225,23 +223,35 @@ struct CollectionSheet: View {
                     }
                 }
             }
+            CollectionLookPicker(symbol: $symbol, color: $color, emoji: $emoji, kind: currentKind)
             if let error { InlineError(error: error) }
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }.buttonStyle(.sfSecondary).keyboardShortcut(.cancelAction)
-                Button(isCreate ? "Create collection" : "Rename collection", action: save)
+                Button(isCreate ? "Create collection" : "Save", action: save)
                     .buttonStyle(.sfPrimary)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(namable && name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
         .padding(Theme.Space.xl)
-        .frame(width: 400)
+        .frame(width: 420)
         .background(Theme.surface)
-        .onAppear { if case .rename(let c) = mode { name = c.name } }
+        .onAppear {
+            guard case .edit(let c) = mode else { return }
+            name = c.name
+            symbol = c.symbol
+            color = c.color
+            emoji = c.emoji ?? ""
+        }
     }
 
     private var isCreate: Bool { if case .create = mode { true } else { false } }
+
+    /// The Inbox keeps its name; its look is the person's.
+    private var namable: Bool { if case .edit(let c) = mode { c.kind != .inbox } else { true } }
+
+    private var currentKind: NotebookCollection.Kind { if case .edit(let c) = mode { c.kind } else { kind } }
 
     private func save() {
         Task {
@@ -249,18 +259,20 @@ struct CollectionSheet: View {
             case .create:
                 switch await model.createCollection(named: name, kind: kind) {
                 case .success(let c):
+                    await model.setLook(c, emoji: emoji, symbol: symbol, color: color)
                     done(c)
                     dismiss()
                 case .failure(let e):
                     error = e
                 }
-            case .rename(let c):
-                if let e = await model.rename(c, to: name) {
+            case .edit(let c):
+                if namable, name != c.name, let e = await model.rename(c, to: name) {
                     error = e
-                } else {
-                    done(nil)
-                    dismiss()
+                    return
                 }
+                await model.setLook(c, emoji: emoji, symbol: symbol, color: color)
+                done(nil)
+                dismiss()
             }
         }
     }

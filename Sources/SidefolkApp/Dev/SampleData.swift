@@ -46,6 +46,9 @@ enum SampleData {
         let groceries = try await make("Groceries", .list)
         _ = try await make("Design", .topic)
         let blog = try await make("Old blog", .project)
+        try await rt.notebook.setLook(collectionId: sidefolk.id, emoji: nil, symbol: "sparkles", color: "teal")
+        try await rt.notebook.setLook(collectionId: pockito.id, emoji: nil, symbol: "bolt.fill", color: "orange")
+        try await rt.notebook.setLook(collectionId: groceries.id, emoji: "🥕", symbol: nil, color: nil)
         try await rt.notebook.setArchived(collectionId: blog.id, true)
 
         func item(_ c: NotebookCollection, _ kind: NotebookItem.Kind, _ title: String, body: String = "", url: String? = nil,
@@ -72,14 +75,20 @@ enum SampleData {
 
         let selected = try await item(sidefolk, .idea, "Extensions could bring their own folk",
                                       body: """
-                                      An extension's manifest could name a folk (color, prop, voice). While its tools run, that folk \
-                                      sits beside Sidefolk like Tempo and Scout do.
+                                      An extension's manifest could name a **folk** (color, prop, voice). While its tools run, that folk \
+                                      sits beside Sidefolk like *Tempo* and *Scout* do.
 
-                                      Questions:
+                                      ## Questions
                                       - Who draws the folk? A template with a few colors and props is enough for v1.
                                       - Cap at three folks on screen, as today.
+
+                                      ## Before v1
+                                      - [x] Sketch three folks
+                                      - [ ] Ask on the [forum](https://example.com/forum)
+                                      - [ ] Write the `folk` manifest key
                                       """,
                                       tags: ["extensions", "folks"], source: "external:claude-code", created: ago(60 * 47), edited: ago(12))
+        try await rt.notebook.setPinned(itemId: selected.id, true, now: ago(10))
         let guide = try await item(sidefolk, .task, "Write the extension developer guide", body: "Manifest, permissions, the watcher protocol, a sample.",
                                    tags: ["docs"], created: ago(60 * 30))
         _ = try await item(sidefolk, .task, "Record a 30-second demo", tags: ["launch"], created: ago(60 * 80), edited: ago(60 * 20), done: true)

@@ -79,7 +79,8 @@ private struct ItemList: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center, spacing: Theme.Space.s + 2) {
+                CollectionTile(collection: collection)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1)
                         .accessibilityAddTraits(.isHeader)
@@ -298,6 +299,9 @@ private struct ItemRow: View {
                         .truncationMode(item.kind == .link ? .middle : .tail)
                 }
                 HStack(spacing: 6) {
+                    if item.pinnedAt != nil {
+                        Image(systemName: "pin.fill").foregroundStyle(Theme.sun).accessibilityLabel("Pinned")
+                    }
                     if let reminder = model.reminders[item.id] { ReminderBadge(reminder: reminder) }
                     Text(TimeText.short(item.updatedAt))
                     if let place = elsewhere { Text("in \(place)") }
@@ -322,6 +326,7 @@ private struct ItemRow: View {
             if item.kind == .task {
                 Button(item.status == .done ? "Mark not done" : "Mark done") { Task { await model.toggleDone(item) } }
             }
+            Button(item.pinnedAt == nil ? "Pin" : "Unpin") { Task { await model.togglePin(item) } }
             if RemindMenuItems.offered(for: item) {
                 Menu("Remind me") { RemindMenuItems(item: item, model: model) }
             }
@@ -344,8 +349,9 @@ private struct ItemRow: View {
         if item.kind == .link, let url = item.url {
             return url.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: "")
         }
-        let line = item.body.split(whereSeparator: \.isNewline).first.map(String.init)?.trimmingCharacters(in: .whitespaces)
-        return line?.isEmpty == false ? line : nil
+        // The first line that says something, without its Markdown marks ("- [ ] milk" reads "milk").
+        let line = item.body.split(whereSeparator: \.isNewline).lazy.map { NoteMarks.plain(String($0)) }.first { !$0.isEmpty }
+        return line
     }
 }
 

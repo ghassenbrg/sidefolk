@@ -16,7 +16,9 @@ struct NotesSaveTool: Tool {
         description: """
             Save a note, idea, task or link in the user's notebook. The first line of `text` becomes the title and the \
             rest the body. Saves to the Inbox unless `collection` names a project or topic (it is created if it \
-            doesn't exist; `collection_kind` says what it is then). Use this when the user asks to remember, save, jot down or capture something.
+            doesn't exist; `collection_kind` says what it is then). Use this when the user asks to remember, save, jot down or capture something. \
+            The body may use simple Markdown (**bold**, *italic*, `## headings`, `- ` lists, `- [ ] ` checklists, links); \
+            the notebook shows it formatted.
             """,
         inputSchema: Schema.object([
             "text": Schema.string("What to save. First line = title, the rest = body."),

@@ -6,6 +6,7 @@ import SwiftUI
 struct NotebookEditor: View {
     @Bindable var model: NotebookModel
     @FocusState private var focus: Field?
+    @State private var formatting = NoteEditorController()
     private enum Field { case title, body }
 
     var body: some View {
@@ -20,22 +21,14 @@ struct NotebookEditor: View {
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1...3)
                         .focused($focus, equals: .title)
-                        .onSubmit { focus = .body }
+                        .onSubmit { formatting.focus() }
                         .accessibilityLabel("Title")
                     meta(item)
                     if item.kind == .link { linkField(item) }
                     tagsField(item)
-                    Rectangle().fill(Theme.line).frame(height: 1)
-                    TextEditor(text: field(item, \.body, ""))
-                        .font(Theme.Font.body)
-                        .lineSpacing(3)
-                        .foregroundStyle(Theme.ink)
-                        .scrollContentBackground(.hidden)
-                        .focused($focus, equals: .body)
+                    FormatBar(controller: formatting)
+                    NoteBodyEditor(text: field(item, \.body, ""), controller: formatting)
                         .frame(maxHeight: .infinity)
-                        // The text view insets its text by 5 points; pull it back in line with the title.
-                        .padding(.horizontal, -5)
-                        .accessibilityLabel("Text")
                         .overlay(alignment: .topLeading) {
                             if item.body.isEmpty {
                                 Text("Write anything…").font(Theme.Font.body).foregroundStyle(Theme.inkFaint)
@@ -104,6 +97,13 @@ struct NotebookEditor: View {
                 .padding(.leading, Theme.Space.xs)
             }
             Spacer(minLength: Theme.Space.s)
+            Button {
+                Task { await model.togglePin(item) }
+            } label: {
+                Label(item.pinnedAt == nil ? "Pin" : "Unpin", systemImage: item.pinnedAt == nil ? "pin" : "pin.fill").labelStyle(.iconOnly)
+            }
+            .buttonStyle(.sf(.secondary))
+            .help(item.pinnedAt == nil ? "Pin to the top" : "Unpin")
             RemindButton(item: item, model: model)
             Button {
                 Task { await model.moveToTrash(item) }
@@ -172,5 +172,57 @@ struct NotebookEditor: View {
     private func webURL(_ text: String?) -> URL? {
         guard let text, let url = URL(string: text), ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return nil }
         return url
+    }
+}
+
+/// The formatting buttons over a note's text (D53); each also has its shortcut while the text has focus.
+private struct FormatBar: View {
+    var controller: NoteEditorController
+
+    var body: some View {
+        HStack(spacing: 2) {
+            button("bold", Text("Bold (⌘B)")) { controller.toggle(.bold) }
+            button("italic", Text("Italic (⌘I)")) { controller.toggle(.italic) }
+            button("strikethrough", Text("Strikethrough (⇧⌘X)")) { controller.toggle(.strike) }
+            button("chevron.left.forwardslash.chevron.right", Text("Code")) { controller.toggle(.code) }
+            divider
+            Menu {
+                Button("Title") { controller.set(.heading(1)) }
+                Button("Heading") { controller.set(.heading(2)) }
+                Button("Subheading") { controller.set(.heading(3)) }
+                Button("Body") { controller.set(.paragraph) }
+            } label: {
+                Image(systemName: "textformat.size")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .frame(width: 28, height: 24)
+            .help("Text style")
+            divider
+            button("checklist", Text("Checklist (⇧⌘L)")) { controller.set(.check(done: false)) }
+            button("list.bullet", Text("Bulleted list (⇧⌘8)")) { controller.set(.bullet) }
+            button("list.number", Text("Numbered list (⇧⌘7)")) { controller.set(.numbered(1)) }
+            button("text.quote", Text("Quote")) { controller.set(.quote) }
+            divider
+            button("link", Text("Link (⌘K)")) { controller.link() }
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Theme.inkMuted)
+        .padding(.vertical, 2)
+        .padding(.horizontal, -4)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(Theme.line).frame(width: 1, height: 14).padding(.horizontal, 4)
+    }
+
+    private func button(_ symbol: String, _ help: Text, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 12.5, weight: .medium)).frame(width: 28, height: 24).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel(help)
     }
 }

@@ -120,7 +120,7 @@ public enum NotebookCollections {
         }
         return try await notebook.db.writer.write { db in
             if let existing = try NotebookCollection.filter(Column("kind") == kind).fetchOne(db) { return existing }
-            let profile = NotebookCollection(name: profileName, kind: .profile, emoji: "👤", now: now)
+            let profile = NotebookCollection(name: profileName, kind: .profile, now: now)
             try profile.insert(db)
             return profile
         }

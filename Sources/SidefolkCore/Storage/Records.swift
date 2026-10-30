@@ -30,7 +30,11 @@ public struct NotebookCollection: SidefolkRecord, Identifiable, Hashable {
     public var id: String
     public var name: String
     public var kind: Kind
+    /// The person's own touch (D53): an emoji, or else an SF Symbol name, and a colour from the app's palette by
+    /// name ("blue"). Unset, the kind decides.
     public var emoji: String?
+    public var symbol: String?
+    public var color: String?
     /// Who named it, as for items (`user | user:agent | agent | …`): a name is quoted to the model only
     /// when it is the user's own (SECURITY T3).
     public var source: String
@@ -68,6 +72,8 @@ public struct NotebookItem: SidefolkRecord, Identifiable, Hashable {
     public var createdAt: Date
     public var updatedAt: Date
     public var deletedAt: Date?
+    /// Pinned items come first in their collection, newest pin first.
+    public var pinnedAt: Date?
 
     public init(
         id: String = Identifier.make(), collectionId: String, kind: Kind, title: String, body: String = "",

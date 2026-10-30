@@ -247,6 +247,16 @@ final class NotebookModel {
         if let i = items.firstIndex(where: { $0.id == item.id }) { items[i].status = next }
     }
 
+    /// Pinned items come first in their collection.
+    func togglePin(_ item: NotebookItem) async {
+        let pinned = item.pinnedAt == nil
+        await flush()
+        try? await store.setPinned(itemId: item.id, pinned)
+        if draft?.id == item.id { draft?.pinnedAt = pinned ? Date() : nil }
+        runtime.events.changed(.notebook)
+        await reloadItems()
+    }
+
     func moveToTrash(_ item: NotebookItem) async {
         if draft?.id == item.id {
             await flush()
@@ -372,6 +382,13 @@ final class NotebookModel {
         runtime.events.changed(.notebook)
         await reloadCollections()
         return nil
+    }
+
+    func setLook(_ c: NotebookCollection, emoji: String, symbol: String?, color: String?) async {
+        let emoji = emoji.trimmingCharacters(in: .whitespacesAndNewlines)
+        try? await store.setLook(collectionId: c.id, emoji: emoji.isEmpty ? nil : emoji, symbol: symbol, color: color)
+        runtime.events.changed(.notebook)
+        await reloadCollections()
     }
 
     func setArchived(_ c: NotebookCollection, _ archived: Bool) async {

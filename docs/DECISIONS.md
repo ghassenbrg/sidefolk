@@ -1186,3 +1186,22 @@ a setting is a deliberate choice).
 the agent skill and MCP instructions say so (installed copies update on the next Connect, as for any skill
 change); `AppSettings.appearance`, `VoiceSettings.length`, `UpdateSettings.effectiveChannel`,
 `UpdateChecker.askAgainAfter` 20 h; `NotebookStore.emptyTrash`.
+
+### D53 — A notebook that feels like yours: looks for collections, pinned notes, formatted text (2026-10-30)
+**Decision:** a collection gets an icon (one of 30 symbols, or any emoji) and a colour (12, stored by name), from
+Edit… in its menu or when it is made; the sidebar and its header show them, and the Inbox can have a look too
+(About you keeps its own). A note can be pinned to the top of its collection (pinning isn't an edit). A note's text
+is formatted as you write: headings, bold, italic, strikethrough, inline code, links, bulleted, numbered and
+checklists (the box ticks on a click), quotes, from a formatting bar or the usual shortcuts (⌘B, ⌘I, ⇧⌘X, ⌘K,
+⇧⌘L, ⇧⌘7, ⇧⌘8); Return carries a list on and an empty item ends it. The text stays a small Markdown (`NoteMarks`):
+its marks hide except on the line being edited, and the list shows each note's first line without them.
+**Why:** the founder wants the notebook to look and feel like theirs and to write notes the way Apple Notes allows.
+Markdown keeps every other reader working unchanged: search, agents (which may now write it, and are told so),
+export, the Apple Notes import (which already wrote Markdown) and older versions.
+**Alternatives:** *rich text stored as RTF or HTML* (search, agents and export would each need a converter, and
+an agent's plain text would arrive unformatted); *a WebView editor* (another runtime in the Home window); *showing
+the Markdown as typed* (what people asked to get away from).
+**Implications:** migration `v4-notebook-look` (`collections.symbol`, `collections.color`, `items.pinned_at`; the
+Inbox's and About you's unused emoji cleared); `NotebookStore.setLook`, `setPinned`; items list pinned first;
+`NoteBodyEditor` (TextKit 1: hidden marks are null glyphs, boxes and bullets drawn by the layout manager);
+`CollectionLook`; the UI snapshots show a formatted, pinned note and the Edit collection sheet.
