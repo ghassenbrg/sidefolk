@@ -35,7 +35,6 @@ theme comes in light and dark.
 - **Claude Code and Codex only appear when they need you.** You can't see that they're working.
 - **Activity cuts off What and Outcome,** the columns that matter for trust.
 - **Links exist but are scattered:** who saved a note, its reminders, the conversation.
-- Conversations says "1 requests".
 
 ## 2. Principles
 

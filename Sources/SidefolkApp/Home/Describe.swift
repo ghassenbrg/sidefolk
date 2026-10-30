@@ -127,6 +127,43 @@ enum Describe {
         return spaced.prefix(1).uppercased() + spaced.dropFirst()
     }
 
+    /// How an action came to run, or why it didn't, for Activity's details.
+    static func decision(_ d: ActivityEntry.Decision) -> String {
+        switch d {
+        case .auto: String(localized: "Ran without asking: Sidefolk's rules allow it.")
+        case .allowed: String(localized: "You allowed it.")
+        case .always: String(localized: "Allowed by an “Always allow” you gave earlier.")
+        case .denied: String(localized: "Not run: you said no, or the request was turned down.")
+        case .blocked: String(localized: "Not run: Sidefolk's rules don't allow it.")
+        case .failed: String(localized: "Allowed, but it didn't work.")
+        case .autoMode: String(localized: "Ran without asking because Auto mode was on.")
+        case .fullAccess: String(localized: "Ran without asking because Full access was on.")
+        case .skipped: String(localized: "Not run: nobody answered in time.")
+        case .webSetting: String(localized: "Ran without asking because of your web setting.")
+        }
+    }
+
+    /// An action's arguments as name and value, in name order: the home folder shortened, long values cut.
+    /// The names are the tool's own and stay untranslated (GLOSSARY).
+    static func arguments(_ args: JSONValue?) -> [(name: String, value: String)] {
+        guard case .object(let fields)? = args else { return [] }
+        return fields.keys.sorted().compactMap { name in
+            guard let value = fields[name].flatMap(plain), !value.isEmpty else { return nil }
+            return (name, value.count > 600 ? value.prefix(600) + "…" : value)
+        }
+    }
+
+    private static func plain(_ value: JSONValue) -> String? {
+        switch value {
+        case .null: nil
+        case .bool(let b): b ? "true" : "false"
+        case .number(let n): n == n.rounded() && abs(n) < 1e15 ? String(Int64(n)) : String(n)
+        case .string(let s): s.hasPrefix("/") ? FolderAccess.displayPath(s) : s
+        case .array(let items): items.compactMap(plain).joined(separator: ", ")
+        case .object(let fields): "{" + fields.keys.sorted().joined(separator: ", ") + "}"
+        }
+    }
+
     static func callerKind(_ raw: String) -> String {
         String(raw.split(separator: ":", maxSplits: 1).first ?? Substring(raw))
     }

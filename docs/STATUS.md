@@ -20,19 +20,26 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   that live in the texture. The founder's own two (themselves and Kana) are in `~/git/sidefolk-private/`, outside
   every repository (README there; 165 Meshy credits). The playground's `?c=` takes any companion the server finds.
   *Checked:* LocalCompanionsTests (6) and the full suite; both companions' review sheets and face close-ups in the
-  playground; Mochi and Spark unchanged; see the next entry for the running app. *Not yet:* a UI snapshot of Made
-  by you with a local companion.
-- **Themes, step 1 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`, the
-  build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. The founder
-  chose: built in Harbor (default), Night Shift, Marshmallow, Field Notes; gallery Daylight, Night Studio, Paper
-  Garden. Step 1 is in the app: `ThemeTokens` (SidefolkCore, Harbor's values) and `ThemeStore` (observable, a
-  `Mutex`, readable from any thread) behind every `Theme` name; the brand palette and the logo plates stay fixed.
-  *Checked:* all 232 UI snapshots pixel-identical before and after (two baseline runs agree pixel for pixel; only
-  PNG metadata differs); ThemeTokensTests (identity, AA contrast of ink and muted ink on every surface, 7:1 on
-  accent, both appearances); the full suite. *Found:* Harbor's `inkFaint` is 2.95:1 on white and white on the light
-  danger fill 4.27:1; fixed in plan step 8, not now, so step 1 stays identical. Conversations says "1 requests".
-  *Next:* plan step 2: the "requests" plural, Activity rows that open in place (B11) and the note's Connected list
-  (B12).
+  playground (Mochi and Spark unchanged); in the debug app, both added from their folders, on the desktop
+  (animating, a wave, Mochi's page still loading under the new policy), in Made by you and in the Ask panel's
+  header. *Not yet:* a UI snapshot of Made by you with a local companion; the two avatars in that list aren't
+  aligned (Use is wider than the check mark).
+- **Themes, steps 1 and 2 built; the Home rework planned (D57, D58):** the reasons are in `docs/research/themes.md`,
+  the build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. Built in:
+  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Step 1:
+  `ThemeTokens` (SidefolkCore, Harbor's values) and `ThemeStore` (observable, a `Mutex`, readable from any thread)
+  behind every `Theme` name; the brand palette and the logo plates stay fixed. Step 2: Home › Activity rows open in
+  place (a click or Space, ↑↓ between rows): what, who, the decision in words (`Describe.decision`), the full
+  outcome, the arguments (`Describe.arguments`, home folder shortened), the tool, and for an "Always allow" a link
+  to Settings › Privacy; 12 new strings translated in all nine languages. *Checked:* UI snapshots against a baseline
+  with every channel compared: 200 of 232 identical; the rest are snapshots that show relative times (they also
+  differ between two runs of unchanged code) plus the intended Activity changes; the note editor's layout matches in
+  three runs of four (one capture lost a wrapped title line, a flake); the new `window-home-activity-open` snapshot,
+  light and dark; ThemeTokensTests; the full suite. *Found:* `--ui-snapshots` shows raw English keys because it runs
+  without the compiled catalog, so the "1 requests" noted in step 1 was never in the app (the plural was already
+  there); plan B13 makes snapshots compile it. Harbor's `inkFaint` is 2.95:1 on white and white on the light danger
+  fill 4.27:1, fixed in plan step 8. *Next:* plan step 3: the conversation links (a migration: `threadId` on
+  Activity rows, `originThreadId` on notes), then "Asked in" in Activity and the note's Connected list.
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with
