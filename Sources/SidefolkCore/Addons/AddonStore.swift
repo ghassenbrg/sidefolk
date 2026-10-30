@@ -255,6 +255,34 @@ public actor AddonStore {
         return updated
     }
 
+    // MARK: Themes
+
+    /// Downloads a theme from the gallery, checks its signature, then installs it as any theme is: checked again,
+    /// its images decoded and written anew. Only the signed gallery may use Sidefolk's own ids.
+    @discardableResult
+    public func install(theme entry: AddonEntry, into library: ThemeLibrary,
+                        progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws -> InstalledTheme {
+        guard entry.kind == .theme else { throw UserFacingError("That add-on isn't a theme.") }
+        let (resources, entry) = try await fetchCurrent(entry, progress: progress)
+        defer { discard(entry) }
+        let (theme, _) = try library.install(from: resources, own: entry.official)
+        guard theme.id == entry.id else {
+            try? library.remove(id: theme.id)
+            throw UserFacingError("The download isn't the theme the gallery lists.")
+        }
+        Log.shared.info("addons", "installed theme", ["id": entry.id, "version": entry.version])
+        return theme
+    }
+
+    /// The gallery's themes on this Mac that `catalog` has a newer version of.
+    public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary) -> [AddonEntry] {
+        library.all().compactMap { have in
+            guard have.folder != nil, let entry = catalog.entry(have.id), entry.kind == .theme,
+                  let new = ReleaseVersion(entry.version), let old = have.version.flatMap(ReleaseVersion.init), new > old else { return nil }
+            return entry
+        }
+    }
+
     /// The four files a 3D companion needs, named after it, and nothing else.
     static func checkCompanionFiles(_ root: URL, name: String) throws {
         let expected = ["characters/\(name).js", "assets/\(name).glb", "portraits/\(name).png", "avatars/\(name).png"]

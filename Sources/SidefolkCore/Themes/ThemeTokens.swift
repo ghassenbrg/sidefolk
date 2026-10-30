@@ -1,7 +1,7 @@
 import Foundation
 
 /// What a theme sets, as plain values (D58): colours as light and dark pairs, spacing and density, type, corner radii,
-/// motion, the sidebar's material, the companion's nook and which of the app's own layouts it uses. The app turns
+/// motion, the sidebar's material, the companion's nook and where the app's pieces go (`ThemeLayout`). The app turns
 /// them into SwiftUI values; keeping them here lets theme files be read and checked without a window. Harbor is the
 /// default.
 public struct ThemeTokens: Sendable, Equatable {
@@ -107,10 +107,13 @@ public struct ThemeTokens: Sendable, Equatable {
         public var sidebar: Sidebar
         /// A faint paper texture over the pages, from the theme's own image.
         public var grain: Bool
+        /// A picture washed in at the top of each page, behind the cards.
+        public var page: Bool
 
-        public init(sidebar: Sidebar, grain: Bool) {
+        public init(sidebar: Sidebar, grain: Bool, page: Bool = false) {
             self.sidebar = sidebar
             self.grain = grain
+            self.page = page
         }
     }
 
@@ -127,21 +130,6 @@ public struct ThemeTokens: Sendable, Equatable {
         }
     }
 
-    /// Which of the app's own layouts the theme uses for each surface. Only these exist in this version; a theme that
-    /// names another gets these, and the check says so.
-    public struct Recipes: Sendable, Equatable {
-        public enum Navigation: String, Sendable, Equatable, CaseIterable { case sidebar }
-        public enum Today: String, Sendable, Equatable, CaseIterable { case desk }
-        public enum Activity: String, Sendable, Equatable, CaseIterable { case table }
-        public enum Editor: String, Sendable, Equatable, CaseIterable { case rich }
-        public var navigation: Navigation = .sidebar
-        public var today: Today = .desk
-        public var activity: Activity = .table
-        public var editor: Editor = .rich
-
-        public init() {}
-    }
-
     public var id: String
     public var name: String
     public var colors: Colors
@@ -151,11 +139,12 @@ public struct ThemeTokens: Sendable, Equatable {
     public var motion: Motion
     public var material: Material
     public var nook: Nook
-    public var recipes: Recipes
+    /// Where things go and how they look (D64).
+    public var layout: ThemeLayout
 
     public init(id: String, name: String, colors: Colors, space: Space, radius: Radius, type: Typography,
                 motion: Motion = .calm, material: Material = Material(sidebar: .solid, grain: false),
-                nook: Nook = Nook(style: .cushion, suggests: nil), recipes: Recipes = Recipes()) {
+                nook: Nook = Nook(style: .cushion, suggests: nil), layout: ThemeLayout = .desk) {
         self.id = id
         self.name = name
         self.colors = colors
@@ -165,7 +154,7 @@ public struct ThemeTokens: Sendable, Equatable {
         self.motion = motion
         self.material = material
         self.nook = nook
-        self.recipes = recipes
+        self.layout = layout
     }
 }
 

@@ -1,10 +1,11 @@
 import Foundation
 
-/// One add-on in the gallery (D55): a companion or an extension, published in the sidefolk-addons repository's
+/// One add-on in the gallery (D55): a companion, an extension or a theme, published in the sidefolk-addons repository's
 /// releases. Everything here comes from the catalog, which is itself signed; the pack it points at is checked on
 /// its own before anything of it is used.
 public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
-    public enum Kind: String, Codable, Sendable { case companion, `extension` }
+    /// Themes are data (D58, D64); a copy of Sidefolk from before them skips their entries.
+    public enum Kind: String, Codable, Sendable { case companion, `extension`, theme }
 
     /// Reverse DNS: `dev.sidefolk.companions.ember`, `dev.sidefolk.git`. The pack's signature names it too.
     public var id: String
@@ -106,7 +107,7 @@ public struct AddonCatalog: Sendable, Equatable {
         switch e.kind {
         case .companion:
             guard let name = e.companion, matches(name, #"^[a-z][a-z0-9-]{0,30}$"#), e.engine != nil else { return false }
-        case .extension:
+        case .extension, .theme:
             guard e.companion == nil else { return false }
         }
         return true

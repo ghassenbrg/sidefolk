@@ -87,6 +87,15 @@ public struct WatchReading: Sendable, Hashable {
     }
 }
 
+extension WatchReading {
+    /// The first number in a shown value ("34 %", "18.5 °C", "1,2 GB"), or nil for words ("Rain"). A comma between
+    /// digits is read as a decimal point, as several languages write it.
+    public static func number(in shown: String) -> Double? {
+        guard let match = shown.firstMatch(of: /-?\d+(?:[.,]\d+)?/) else { return nil }
+        return Double(match.output.replacingOccurrences(of: ",", with: "."))
+    }
+}
+
 /// Something the system can tell us about, so a check can happen the moment it changes.
 public enum WatchEventTarget: Sendable, Hashable {
     /// Entries added, removed or renamed inside a folder.

@@ -83,7 +83,6 @@ public enum ThemeCheck {
         }
         let idOK = !file.id.isEmpty && file.id.count <= 80 && file.id.allSatisfy { $0.isASCII && ($0.isLowercase || $0.isNumber || $0 == "." || $0 == "-") }
         if !idOK { problem(.error, "id must be lowercase letters, digits, dots and dashes, like com.you.sunset (80 at most).") }
-        if ThemeLibrary.builtIn.contains(where: { $0.id == file.id }) { problem(.error, "id “\(file.id)” belongs to a built-in theme; pick your own.") }
         let name = file.name.trimmingCharacters(in: .whitespacesAndNewlines)
         if name.isEmpty || name.count > 40 { problem(.error, "name must be 1 to 40 characters.") }
 
@@ -142,6 +141,7 @@ public enum ThemeCheck {
         t.motion = pick(file.motion, "motion", t.motion)
         t.material.sidebar = pick(file.material?.sidebar, "material.sidebar", t.material.sidebar)
         t.material.grain = file.material?.grain != nil
+        t.material.page = file.material?.page != nil || file.material?.pageDark != nil
         t.nook.style = pick(file.companion?.nook, "companion.nook", t.nook.style)
         if let suggests = file.companion?.suggests {
             if let choice = CompanionChoice(rawValue: suggests), !choice.isRetired {
@@ -150,12 +150,93 @@ public enum ThemeCheck {
                 problem(.warning, "companion.suggests “\(suggests)” isn't a companion Sidefolk knows; nothing is suggested.")
             }
         }
-        let recipes = file.recipes ?? [:]
-        t.recipes.navigation = pick(recipes["navigation"], "recipes.navigation", t.recipes.navigation)
-        t.recipes.today = pick(recipes["today"], "recipes.today", t.recipes.today)
-        t.recipes.activity = pick(recipes["activity"], "recipes.activity", t.recipes.activity)
-        t.recipes.editor = pick(recipes["editor"], "recipes.editor", t.recipes.editor)
+        t.layout = layout(file.layout, problem)
         report.tokens = t
+    }
+
+    // MARK: Layout
+
+    /// The theme's layout (D64): a preset, then its own choices, each from what the app draws, within limits.
+    static func layout(_ section: ThemeFile.LayoutSection?, _ problem: (ThemeReport.Problem.Level, String) -> Void) -> ThemeLayout {
+        var layout = ThemeLayout.desk
+        guard let section else { return layout }
+        if let name = section.preset {
+            if let preset = ThemeLayout.presets[name] {
+                layout = preset
+            } else {
+                problem(.warning, "layout.preset “\(name)” isn't one of \(ThemeLayout.presets.keys.sorted().joined(separator: ", ")); desk is used.")
+            }
+        }
+        func pick<E: RawRepresentable>(_ text: String?, _ key: String, _ drawn: [E], _ fallback: E) -> E where E.RawValue == String {
+            guard let text else { return fallback }
+            if let value = E(rawValue: text), drawn.contains(where: { $0.rawValue == value.rawValue }) { return value }
+            problem(.warning, "layout.\(key) “\(text)” isn't one of \(drawn.map(\.rawValue).joined(separator: ", ")); \(fallback.rawValue) is used.")
+            return fallback
+        }
+        layout.navigation = pick(section.navigation, "navigation", ThemeLayout.drawnNavigation, layout.navigation)
+        layout.nook = pick(section.nook, "nook", ThemeLayout.drawnNook, layout.nook)
+        layout.activity = pick(section.activity, "activity", ThemeLayout.drawnActivity, layout.activity)
+        layout.editor = pick(section.editor, "editor", ThemeLayout.drawnEditor, layout.editor)
+        guard let rows = section.today else { return layout }
+
+        typealias Block = ThemeLayout.Block
+        var seen: Set<Block.Kind> = []
+        var today: [[ThemeLayout.Column]] = []
+        if rows.count > ThemeLayout.maxRows { problem(.warning, "layout.today has \(rows.count) rows; the first \(ThemeLayout.maxRows) are used.") }
+        for row in rows.prefix(ThemeLayout.maxRows) {
+            if row.count > ThemeLayout.maxColumns {
+                problem(.warning, "A row of layout.today has \(row.count) columns; the first \(ThemeLayout.maxColumns) are used.")
+            }
+            var columns: [ThemeLayout.Column] = []
+            for column in row.prefix(ThemeLayout.maxColumns) {
+                var blocks: [Block] = []
+                for name in column.blocks {
+                    guard let block = Self.block(name, problem) else { continue }
+                    guard seen.insert(block.kind).inserted else {
+                        problem(.warning, "layout.today has \(block.kind.rawValue) twice; the second is left out.")
+                        continue
+                    }
+                    blocks.append(block)
+                }
+                guard !blocks.isEmpty else { continue }
+                var width = column.width ?? 1
+                if blocks.contains(where: { $0.kind == .companion && $0.style == "stage" }) { seen.insert(.queue) }
+                if !(0.5...4).contains(width) {
+                    problem(.warning, "A column's width \(width) is kept between 0.5 and 4.")
+                    width = min(max(width, 0.5), 4)
+                }
+                columns.append(ThemeLayout.Column(width: width, page: column.page ?? false, blocks))
+            }
+            if !columns.isEmpty { today.append(columns) }
+        }
+        if today.isEmpty {
+            problem(.warning, "layout.today has no block Sidefolk can draw; \(section.preset ?? "desk")'s is used.")
+            return layout
+        }
+        // What needs you must always have a place: it holds Guard's questions.
+        if !seen.contains(.queue) {
+            problem(.warning, "layout.today has no queue, so what needs you would have nowhere to go; it's added at the top.")
+            today.insert([ThemeLayout.Column([Block(.queue)])], at: seen.contains(.header) ? 1 : 0)
+        }
+        layout.today = today
+        return layout
+    }
+
+    /// "kind" or "kind:style", from what the app draws.
+    static func block(_ name: String, _ problem: (ThemeReport.Problem.Level, String) -> Void) -> ThemeLayout.Block? {
+        if name.hasPrefix("extension:") {
+            problem(.warning, "“\(name)”: blocks from extensions aren't supported yet; it's left out.")
+            return nil
+        }
+        let parts = name.split(separator: ":", maxSplits: 1).map(String.init)
+        guard let kind = parts.first.flatMap(ThemeLayout.Block.Kind.init(rawValue:)), ThemeLayout.Block.Kind.available.contains(kind) else {
+            problem(.warning, "“\(name)” isn't one of \(ThemeLayout.Block.Kind.available.map(\.rawValue).joined(separator: ", ")); it's left out.")
+            return nil
+        }
+        guard parts.count == 2 else { return ThemeLayout.Block(kind) }
+        if kind.styles.contains(parts[1]) { return ThemeLayout.Block(kind, parts[1]) }
+        problem(.warning, "“\(name)”: \(kind.rawValue) comes as \(kind.styles.joined(separator: ", ")); \(kind.styles[0]) is used.")
+        return ThemeLayout.Block(kind)
     }
 
     // MARK: Contrast

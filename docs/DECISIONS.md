@@ -1560,3 +1560,39 @@ the clipboard, and Keep Awake finds open apps from the process list.
 **Alternatives:** Sidefolk building these in (they are what extensions are for, and others can now build the
 like); a jiggler that really moves the pointer (visible, fights the person); palette results through tool calls
 (an audit row per keystroke); keeping secrets on disk briefly (a crash would leave them).
+
+### D64 — A theme arranges the app's own pieces: Today as blocks in rows and columns (2026-10-31)
+**Decision:** a theme no longer picks one of a few fixed screens ("recipes"). Today is rows of columns of **blocks**,
+each one of the app's own pieces in one of its styles, and a theme's `layout` says where each goes and how it looks:
+- **Blocks and styles:** header (line, large, console, page), queue (rows, cards, stack, index), day (rail, list,
+  compact, stickers, ruled), watching (tiles, list, signals, badges, margin), agents (rows, card, steps, helpers),
+  recent (rows), notes (cards, chips), art (tile), companion (stage, sticker). A column has a width (its share) and
+  may be drawn on a sheet of paper (`page`); columns sit side by side while each gets its least width, else stack.
+- **Around Today:** navigation (sidebar, rail with a status bar, pills, ribbons), where the nook sits (top, foot, or
+  none when the layout gives the companion a block), Activity (table, log, diary) and the editor (rich, or Markdown
+  with tabs, references and an outline).
+- **Presets** are layouts written the same way: desk (Harbor), board (Daylight, Night Studio, Paper Garden), console
+  (Night Shift), stage (Marshmallow), planner (Field Notes). A theme names one and changes what it likes.
+- **Rules the check keeps:** only what the app draws is accepted (anything else is left out or replaced, and said);
+  what needs you always has a place (a queue, or a stage that speaks it); a block appears once; at most 8 rows and 4
+  columns. `extension:` blocks are reserved for extensions and refused for now.
+- **Data behind the boards:** recent values of live reports (a sparkline, memory only), each agent's last calls to
+  Sidefolk, reminders done today, the newest notes, and the one bar's plan (`IntentPlan`: the action, its parts, the
+  tool and its risk, from the same parse that runs it).
+- **Where themes come from:** Harbor in code; Night Shift, Marshmallow and Field Notes in the app's
+  `Resources/Themes`; Daylight, Night Studio and Paper Garden as signed packs in the add-on gallery (D55, kind
+  `theme`), installed through the same check with images re-encoded. Only Sidefolk's Resources and signed gallery
+  may use ids under `dev.sidefolk.`.
+
+**Why:** the founder asked for themes as faithful as their boards, content and components included, and for a
+flexible UI where a theme decides where things go and how, with extensions joining later, not a fixed Home in
+different skins. Blocks keep every action going through the same models and `ToolExecutor`; a theme still carries no
+code and no words.
+
+**Alternatives:** whole-screen recipes per theme (step 9's first plan: each new arrangement needed new code and
+couldn't be mixed); themes shipping their own views (code from strangers).
+
+**Implications:** first committed as D62 (0fb13ff0), renumbered: D62 and D63 were taken by the extensions work.
+`docs/research/themes-fidelity.md` lists each board's elements against the app. Older copies of Sidefolk skip the
+gallery's theme entries (entries decode one by one). Not built: chips you can edit with Tab in the one bar, a progress
+bar for runs (no run reports progress yet), and blocks from extensions.

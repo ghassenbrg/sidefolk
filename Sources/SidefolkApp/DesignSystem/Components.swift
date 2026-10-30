@@ -458,11 +458,11 @@ struct PageScroll<Content: View>: View {
 
     var body: some View {
         if fullPage {
-            column.frame(maxWidth: .infinity, alignment: .top).background(Theme.surfaceSunken)
+            column.frame(maxWidth: .infinity, alignment: .top).background { PageBackground() }
         } else {
             ScrollView { column.frame(maxWidth: .infinity) }
                 .scrollContentBackground(.hidden)
-                .background(Theme.surfaceSunken)
+                .background { PageBackground() }
         }
     }
 
@@ -691,5 +691,27 @@ struct ThemeGrain: View {
                 .allowsHitTesting(false)
                 .ignoresSafeArea()
         }
+    }
+}
+
+/// A page's colour, with the theme's wash at the top when it has one (D64): a sky or a dusk fading into the page,
+/// behind the cards.
+struct PageBackground: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Theme.surfaceSunken
+            if let wash = Theme.Art.page(dark: scheme == .dark) {
+                Image(decorative: wash, scale: 2).resizable().scaledToFill()
+                    .frame(height: 420, alignment: .top)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .clipped()
+                    .mask(LinearGradient(colors: [.black, .black.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom))
+                    .opacity(0.55)
+            }
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
     }
 }

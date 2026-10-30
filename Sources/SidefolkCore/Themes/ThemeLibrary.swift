@@ -9,34 +9,60 @@ public struct InstalledTheme: Sendable, Equatable {
     public var images: [String: URL]
     /// Where Sidefolk keeps it; nil for a built-in.
     public var folder: URL?
+    /// As its theme.json says, for updates from the gallery.
+    public var version: String?
 
     public var id: String { tokens.id }
 
-    public init(tokens: ThemeTokens, images: [String: URL] = [:], folder: URL? = nil) {
+    public init(tokens: ThemeTokens, images: [String: URL] = [:], folder: URL? = nil, version: String? = nil) {
         self.tokens = tokens
         self.images = images
         self.folder = folder
+        self.version = version
     }
 
     public static let harbor = InstalledTheme(tokens: .harbor)
 }
 
-/// The themes Sidefolk can use (D58): its built-ins, and themes added from a folder, which are checked and copied into
-/// `<home>/Themes/<id>/` with every image decoded and written again by Sidefolk, so only plain pixels are kept.
+/// The themes Sidefolk can use (D58): Harbor, the others it ships in its Resources (`Themes/<name>/`), and themes added
+/// from a folder or the gallery, which are checked and copied into `<home>/Themes/<id>/` with every image decoded and
+/// written again by Sidefolk, so only plain pixels are kept.
 public struct ThemeLibrary: Sendable {
-    public static let builtIn: [ThemeTokens] = [.harbor]
+    /// Ids that are Sidefolk's own: only its Resources and its signed gallery may use them.
+    public static let ownPrefix = "dev.sidefolk."
+    /// The built-ins in the order they're offered.
+    public static let builtInOrder = ["harbor", "dev.sidefolk.theme.night-shift", "dev.sidefolk.theme.marshmallow", "dev.sidefolk.theme.field-notes"]
 
     let directory: URL
+    let bundled: URL?
 
-    public init(paths: SidefolkPaths) {
+    /// - Parameter bundled: the app's `Resources/Themes`, where the built-ins besides Harbor live.
+    public init(paths: SidefolkPaths, bundled: URL? = nil) {
         directory = paths.themes
+        self.bundled = bundled
+    }
+
+    /// Harbor, then the themes Sidefolk ships, in their order.
+    public func builtIns() -> [InstalledTheme] {
+        let shipped = ((try? FileManager.default.contentsOfDirectory(at: bundled ?? directory.appendingPathComponent(".none"),
+                                                                     includingPropertiesForKeys: nil)) ?? [])
+            .compactMap { folder -> InstalledTheme? in
+                let report = ThemeCheck.check(folder: folder)
+                guard report.isUsable, report.tokens.id.hasPrefix(Self.ownPrefix) else { return nil }
+                return InstalledTheme(tokens: report.tokens, images: report.images, folder: nil)
+            }
+        let rank = { (id: String) in Self.builtInOrder.firstIndex(of: id) ?? Self.builtInOrder.count }
+        return [.harbor] + shipped.sorted { rank($0.id) < rank($1.id) }
     }
 
     /// The built-ins, then the added themes by name.
     public func all() -> [InstalledTheme] {
+        let builtIns = builtIns()
         let added = ((try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? [])
-            .compactMap(installed).sorted { $0.tokens.name.localizedStandardCompare($1.tokens.name) == .orderedAscending }
-        return Self.builtIn.map { InstalledTheme(tokens: $0) } + added
+            .compactMap(installed)
+            .filter { theme in !builtIns.contains { $0.id == theme.id } }
+            .sorted { $0.tokens.name.localizedStandardCompare($1.tokens.name) == .orderedAscending }
+        return builtIns + added
     }
 
     /// The theme with this id, or Harbor when there's none (removed, or never there).
@@ -44,12 +70,16 @@ public struct ThemeLibrary: Sendable {
         all().first { $0.id == id } ?? .harbor
     }
 
-    /// Checks the theme in `folder` and keeps a copy; a theme with the same id is replaced.
-    public func install(from folder: URL) throws -> (theme: InstalledTheme, report: ThemeReport) {
+    /// Checks the theme in `folder` and keeps a copy; a theme with the same id is replaced. Only Sidefolk's signed gallery
+    /// (`own`) may install a theme with one of Sidefolk's ids.
+    public func install(from folder: URL, own: Bool = false) throws -> (theme: InstalledTheme, report: ThemeReport) {
         let report = ThemeCheck.check(folder: folder)
         guard report.isUsable, let file = report.file else {
             throw UserFacingError("This theme can't be used yet.",
                                   detail: report.problems.filter { $0.level == .error }.map(\.message).joined(separator: "\n"))
+        }
+        if !own, file.id == ThemeTokens.harbor.id || file.id.hasPrefix(Self.ownPrefix) {
+            throw UserFacingError("This theme's id is one of Sidefolk's own.", recovery: "Give it an id of your own, like com.you.sunset.")
         }
         let fm = FileManager.default
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -70,7 +100,7 @@ public struct ThemeLibrary: Sendable {
 
     /// Takes an added theme away; a built-in can't be.
     public func remove(id: String) throws {
-        guard !Self.builtIn.contains(where: { $0.id == id }) else { return }
+        guard !builtIns().contains(where: { $0.id == id }) else { return }
         let target = directory.appendingPathComponent(id, isDirectory: true)
         guard target.deletingLastPathComponent().standardizedFileURL == directory.standardizedFileURL else { return }
         try? FileManager.default.removeItem(at: target)
@@ -80,7 +110,7 @@ public struct ThemeLibrary: Sendable {
         guard !folder.lastPathComponent.hasPrefix(".") else { return nil }
         let report = ThemeCheck.check(folder: folder)
         guard report.isUsable else { return nil }
-        return InstalledTheme(tokens: report.tokens, images: report.images, folder: folder)
+        return InstalledTheme(tokens: report.tokens, images: report.images, folder: folder, version: report.file?.version)
     }
 
     /// Decodes an image and writes its pixels as a new PNG, leaving behind anything else the file carried.

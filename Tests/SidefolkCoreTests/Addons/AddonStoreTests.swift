@@ -174,6 +174,34 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: folder.path))
     }
 
+    /// A theme from the gallery (D58, D64) installs like one from a folder, checked again, under its own id; the
+    /// gallery may use Sidefolk's ids, and a newer version shows as an update.
+    @Test func aThemeFromTheGalleryIsInstalledAndUpdated() async throws {
+        let g = try Gallery()
+        func publishTheme(version: String) throws {
+            var file = ThemeFile(.harbor, id: "dev.sidefolk.theme.dusk", name: "Dusk")
+            file.version = version
+            let made = try g.pack("theme-dusk", id: "dev.sidefolk.theme.dusk", version: version,
+                                  files: ["theme.json": String(decoding: try file.encoded(), as: UTF8.self)])
+            g.entries.removeAll { $0["id"] as? String == "dev.sidefolk.theme.dusk" }
+            g.entries.append(["id": "dev.sidefolk.theme.dusk", "kind": "theme", "name": "Dusk", "tagline": "A test theme", "description": "",
+                              "author": "Sidefolk", "version": version, "file": made.file, "bytes": made.bytes, "sha256": made.sha])
+            try g.publish()
+        }
+        try publishTheme(version: "1.0.0")
+        let library = ThemeLibrary(paths: g.paths)
+        let entry = try #require(try await g.store.catalog().entry("dev.sidefolk.theme.dusk"))
+        #expect(entry.kind == .theme)
+        let theme = try await g.store.install(theme: entry, into: library)
+        #expect(theme.tokens.name == "Dusk" && theme.version == "1.0.0")
+        #expect(library.theme(id: "dev.sidefolk.theme.dusk").tokens.name == "Dusk")
+        #expect(await g.store.themeUpdates(in: try await g.store.catalog(), library: library).isEmpty)
+
+        try publishTheme(version: "1.1.0")
+        let catalog = try await g.store.catalog(refresh: true)
+        #expect(await g.store.themeUpdates(in: catalog, library: library).map(\.version) == ["1.1.0"])
+    }
+
     /// A companion already on this Mac gets the gallery's newer version by itself; a version this copy can't run
     /// and one that fails its check stay as they are.
     @Test func companionsOnThisMacUpdateToTheGallerysNewerVersion() async throws {

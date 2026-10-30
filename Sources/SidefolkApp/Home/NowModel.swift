@@ -75,12 +75,29 @@ final class NowModel {
     /// Reports: values told every few seconds or minutes, with their latest readings.
     private(set) var reports: [Watcher] = []
     private(set) var readings: [String: WatchReading] = [:]
+    /// Each report's recent values as numbers, for the line under its value (D58).
+    private(set) var values: [String: [Double]] = [:]
+    /// Reminders done today, struck through on the day's line.
+    private(set) var doneToday: [Reminder] = []
+    /// The newest notes and tasks (pinned first), for layouts that show the notebook on Today (D64).
+    private(set) var recentNotes: [NotebookItem] = []
+    private(set) var noteCollections: [String: NotebookCollection] = [:]
     private(set) var jobs: [Job] = []
     private(set) var workingSessions: [AgentSession] = []
     /// Sessions that finished in the last hour, so Agents at work says how they ended (D58).
     private(set) var finishedSessions: [AgentSession] = []
     /// Each other agent's latest call to Sidefolk, by the name its sessions use ("claude-code").
     private(set) var lastCalls: [String: ActivityEntry] = [:]
+    /// Each agent's last few calls to Sidefolk, newest last, for layouts that show its steps (D64); "" is your
+    /// companion's own.
+    private(set) var steps: [String: [ActivityEntry]] = [:]
+    /// What the Console's filter shows (D64).
+    var focus: Focus = .all
+
+    enum Focus: String, CaseIterable, Identifiable {
+        case all, agents, mine, watches
+        var id: Self { self }
+    }
     /// Your companion's own AI run while it's working: the conversation it's for and its latest step.
     private(set) var ownRun: (run: AgentRun, conversation: ConversationSummary?, step: ActivityEntry?)?
     private(set) var recent: [RecentEntry] = []
@@ -113,6 +130,35 @@ final class NowModel {
 
     var calendarOn: Bool { runtime.calendarReader.isOn }
 
+    /// The queue as the Console's filter shows it: agents' requests and sessions, your own (reminders and your
+    /// companion's questions), or what watches noticed.
+    var focusedQueue: [Decision] {
+        queue.filter { decision in
+            switch (focus, decision) {
+            case (.all, _): true
+            case (.agents, .approval(let r)): r.caller.kind != "agent" && r.caller.kind != "user"
+            case (.agents, .session), (.agents, .skipped): true
+            case (.mine, .approval(let r)): r.caller.kind == "agent" || r.caller.kind == "user"
+            case (.mine, .attention(let item)): item.refKind != "watcher"
+            case (.watches, .attention(let item)): item.refKind == "watcher"
+            default: false
+            }
+        }
+    }
+
+    /// Changes Sidefolk noticed on watched pages that you haven't looked at yet.
+    var pagesChanged: Int { attention.filter { $0.refKind == "watcher" }.count }
+
+    /// Today's header in counts (D58): "3 decisions · 2 reminders left today · 1 page changed", or that nothing needs you.
+    var headline: [String] {
+        let decisions = needsYouCount - pagesChanged
+        var parts: [String] = []
+        if decisions > 0 { parts.append(String(localized: "\(decisions) decisions", comment: "Today's header: what needs an answer")) }
+        if remindersLeftToday > 0 { parts.append(String(localized: "\(remindersLeftToday) reminders left today")) }
+        if pagesChanged > 0 { parts.append(String(localized: "\(pagesChanged) pages changed", comment: "Today's header: watched pages that changed and weren't looked at")) }
+        return parts.isEmpty ? [String(localized: "Nothing needs you right now.")] : parts
+    }
+
     /// Whether Sidefolk noticed something about this watch that's still waiting for you: its tile stands out until
     /// you look (D58).
     func changeWaiting(for watcher: Watcher) -> AttentionItem? {
@@ -122,6 +168,16 @@ final class NowModel {
     /// Looking at what changed counts as having seen it: the notice leaves Today's queue.
     func seen(_ watcher: Watcher) async {
         if let item = changeWaiting(for: watcher) { await respond(item, action: nil) }
+    }
+
+    /// What the companion says in a nook with a speech bubble (D64): a hello for the time of day and how much needs you.
+    var nookGreeting: String {
+        let n = needsYouCount
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12: return n == 0 ? String(localized: "Morning. Nothing needs you yet.") : String(localized: "Morning. \(n) things need you, then you're clear.")
+        case 12..<18: return n == 0 ? String(localized: "Afternoon. You're all caught up.") : String(localized: "Afternoon. \(n) things need you, then you're clear.")
+        default: return n == 0 ? String(localized: "Evening. You're all caught up.") : String(localized: "Evening. \(n) things need you, then you're clear.")
+        }
     }
 
     /// One line for the companion's nook (D58): what it's keeping an eye on and what comes next.
@@ -194,6 +250,8 @@ final class NowModel {
         sessionsNeedingYou = needing
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
+        doneToday = ((try? await rt.reminderStore.recentlyFinished()) ?? [])
+            .filter { $0.state == .done && Calendar.current.isDateInToday($0.lastFiredAt ?? $0.fireAt) }
         let today = Calendar.current.startOfDay(for: Date())
         events = await rt.calendarReader.events(from: today, to: today.addingTimeInterval(2 * 86400)) ?? []
         let items = (try? await rt.notebook.items(ids: Array(Set(reminders.compactMap(\.itemId))))) ?? []
@@ -203,16 +261,27 @@ final class NowModel {
         watchers = watching.filter { $0.mode != .report }
         reports = watching.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
         readings = Dictionary(await rt.watchers.latestReadings().map { ($0.watcherId, $0) }, uniquingKeysWith: { a, _ in a })
+        values = await rt.watchers.recentValues()
         jobs = (try? await rt.jobs.running()) ?? []
         let hourAgo = Date().addingTimeInterval(-3600)
         finishedSessions = ((try? await rt.sessions.recent(limit: 20)) ?? [])
             .filter { $0.state == .finished && ($0.endedAt ?? $0.updatedAt) > hourAgo }
         let calls = (try? await rt.activity.recent(limit: 200)) ?? []
         lastCalls = [:]
-        for call in calls where call.caller.hasPrefix("external:") {
-            let agent = String(call.caller.dropFirst("external:".count))
-            if lastCalls[agent] == nil { lastCalls[agent] = call }
+        var steps: [String: [ActivityEntry]] = [:]
+        for call in calls {
+            let agent: String
+            if call.caller.hasPrefix("external:") {
+                agent = String(call.caller.dropFirst("external:".count))
+                if lastCalls[agent] == nil { lastCalls[agent] = call }
+            } else if call.caller == "agent" || call.caller.hasPrefix("agent:") {
+                agent = ""
+            } else {
+                continue
+            }
+            if steps[agent, default: []].count < 5 { steps[agent, default: []].append(call) }
         }
+        self.steps = steps.mapValues { $0.reversed() }
         if let run = ((try? await rt.runs.recent(limit: 3)) ?? []).first(where: { $0.endedAt == nil && $0.startedAt > Date().addingTimeInterval(-900) }) {
             let conversation = try? await rt.exchanges.conversations(ofRuns: [run.id])[run.id]
             ownRun = (run, conversation ?? nil, calls.first { $0.runId == run.id })
@@ -220,6 +289,10 @@ final class NowModel {
             ownRun = nil
         }
         recent = await loadRecent()
+        let collections = (try? await rt.notebook.collections()) ?? []
+        noteCollections = Dictionary(collections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let shown = Set(collections.filter { $0.kind != .profile }.map(\.id))
+        recentNotes = ((try? await rt.notebook.items(limit: 12)) ?? []).filter { shown.contains($0.collectionId) }.prefix(3).map { $0 }
     }
 
     private func loadRecent() async -> [RecentEntry] {
@@ -403,6 +476,9 @@ final class NowModel {
     func update(_ reading: WatchReading) {
         guard reports.contains(where: { $0.id == reading.watcherId }) else { return }
         readings[reading.watcherId] = reading
+        if let number = WatchReading.number(in: reading.value) {
+            values[reading.watcherId] = (values[reading.watcherId, default: []] + [number]).suffix(WatcherEngine.historyLength).map { $0 }
+        }
     }
 
     func checkNow(_ w: Watcher) async {

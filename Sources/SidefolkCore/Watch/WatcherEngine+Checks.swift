@@ -49,6 +49,10 @@ extension WatcherEngine {
                 w.lastState = result.state.setting("reading", ["shown": .string(reading.shown)])
                 let value = WatchReading(w, value: reading.shown, at: now)
                 readings[w.id] = value
+                if let number = WatchReading.number(in: reading.shown) {
+                    history[w.id, default: []].append(number)
+                    history[w.id] = history[w.id]?.suffix(Self.historyLength).map { $0 }
+                }
                 events.publish(.watchReading(value))
             }
             watchers[w.id] = w

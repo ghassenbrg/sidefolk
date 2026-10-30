@@ -96,8 +96,11 @@ enum Theme {
     /// The theme's own pictures (D58), when it has them.
     enum Art {
         static var grain: CGImage? { style.grain }
+        static func page(dark: Bool) -> CGImage? { dark ? style.pageDark : style.page }
         static var backdrop: CGImage? { style.backdrop }
+        static func backdrop(dark: Bool) -> CGImage? { dark ? style.backdropDark ?? style.backdrop : style.backdrop }
         static var empty: CGImage? { style.emptyArt }
+        static var tile: CGImage? { style.artTile }
     }
 
     /// Accent color for each folk, used on cards of its domain.

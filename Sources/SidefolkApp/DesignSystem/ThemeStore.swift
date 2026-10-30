@@ -51,7 +51,7 @@ struct ThemeStyle: Sendable {
     let space: ThemeTokens.Space
     let fonts: Fonts
     /// The theme's own pictures, decoded once: paper grain, the nook's backdrop, the empty-page art.
-    let grain, backdrop, emptyArt: CGImage?
+    let grain, page, pageDark, backdrop, backdropDark, emptyArt, artTile: CGImage?
 
     struct Fonts: Sendable {
         let bubble, bubbleTitle, input, hint, hero, title, heading, body, bodyStrong, caption, captionStrong, eyebrow: Font
@@ -105,8 +105,12 @@ struct ThemeStyle: Sendable {
                                   xl: scaled(s.xl), xxl: scaled(s.xxl))
         fonts = Fonts(tokens.type)
         grain = Self.image(theme.images["material.grain"])
+        page = Self.image(theme.images["material.page"])
+        pageDark = Self.image(theme.images["material.pageDark"])
         backdrop = Self.image(theme.images["companion.backdrop"])
+        backdropDark = Self.image(theme.images["companion.backdropDark"])
         emptyArt = Self.image(theme.images["art.empty"])
+        artTile = Self.image(theme.images["art.tile"])
     }
 
     private static func image(_ url: URL?) -> CGImage? {

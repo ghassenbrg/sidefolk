@@ -189,6 +189,28 @@ import Testing
         #expect(await engine.latestReadings().isEmpty)
     }
 
+    /// Today's tiles draw a line of the last values (D58): numbers only, the last few, gone with the report.
+    @Test func recentValuesMakeALineAndGoWithTheReport() async throws {
+        _ = try ok(await run("watch.report", ["source": "metric", "metric": "cpu", "every_seconds": 10]))
+        let id = try #require(await engine.list().first?.id)
+        for _ in 0..<(WatcherEngine.historyLength + 5) {
+            env.clock.advance(10)
+            await engine.tick()
+        }
+        let line = try #require(await engine.recentValues()[id])
+        #expect(line.count == WatcherEngine.historyLength && line.allSatisfy { $0 == 25 })
+        _ = try ok(await run("watch.stop", ["id": "CPU"]))
+        #expect(await engine.recentValues()[id] == nil)
+    }
+
+    @Test func theFirstNumberInAValueIsRead() {
+        #expect(WatchReading.number(in: "34%") == 34)
+        #expect(WatchReading.number(in: "18.5 °C") == 18.5)
+        #expect(WatchReading.number(in: "1,2 GB") == 1.2)
+        #expect(WatchReading.number(in: "-3 °C") == -3)
+        #expect(WatchReading.number(in: "Rain") == nil)
+    }
+
     @Test func checksDueAMomentApartShareAWakeUp() async throws {
         _ = try ok(await run("watch.report", ["source": "metric", "metric": "cpu", "every_seconds": 10]))
         env.clock.advance(0.3)

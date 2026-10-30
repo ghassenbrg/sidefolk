@@ -13,7 +13,7 @@ import Testing
         #expect(harbor.type.display == .rounded)
         #expect(harbor.space.l == 16)
         #expect(harbor.radius.card == 12)
-        #expect(harbor.recipes == ThemeTokens.Recipes())
+        #expect(harbor.layout == .desk)
     }
 
     @Test func everyTextColourReadsOnEverySurface() {

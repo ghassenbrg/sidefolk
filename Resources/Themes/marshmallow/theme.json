@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "id": "dev.sidefolk.theme.marshmallow",
+  "name": "Marshmallow",
+  "author": "Sidefolk",
+  "version": "1.0.0",
+  "summary": "For people who love their companion most: soft candy colours, squishy buttons, the companion on a little stage.",
+  "type": {
+    "display": "rounded",
+    "text": "system",
+    "exact": "mono",
+    "scale": 1.05,
+    "density": "relaxed"
+  },
+  "shape": {
+    "control": 999,
+    "card": 22,
+    "window": 26
+  },
+  "motion": "bouncy",
+  "material": {
+    "sidebar": "solid"
+  },
+  "companion": {
+    "nook": "sticker",
+    "backdrop": "art/stage.png",
+    "backdropDark": "art/stage-night.png",
+    "suggests": "mochi"
+  },
+  "layout": {
+    "preset": "stage"
+  },
+  "colors": {
+    "light": {
+      "ink": "#4A3A5C",
+      "inkMuted": "#7A6A8C",
+      "inkFaint": "#7A688B",
+      "surface": "#FFF9F6",
+      "surfaceSunken": "#FFF6F1",
+      "surfaceRaised": "#FFFFFF",
+      "line": "#F1E4EE",
+      "accent": "#FF9EB8",
+      "onAccent": "#4A2236",
+      "accentSoft": "#FFE3EB",
+      "link": "#C2406A",
+      "danger": "#D22956",
+      "dangerSoft": "#FFE3EB",
+      "onDanger": "#FFFFFF",
+      "success": "#2E9E73",
+      "successSoft": "#DFF7EC"
+    },
+    "dark": {
+      "ink": "#F4ECFF",
+      "inkMuted": "#C3B5D9",
+      "inkFaint": "#AA99C4",
+      "surface": "#2E2347",
+      "surfaceSunken": "#261C3D",
+      "surfaceRaised": "#3A2D58",
+      "line": "#4A3C6B",
+      "accent": "#FF9EB8",
+      "onAccent": "#3A1426",
+      "accentSoft": "#4A3366",
+      "link": "#FFB3C8",
+      "danger": "#FF8FAD",
+      "dangerSoft": "#552A45",
+      "onDanger": "#2A1020",
+      "success": "#7FD8B4",
+      "successSoft": "#26443F"
+    }
+  }
+}

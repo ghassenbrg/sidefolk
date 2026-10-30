@@ -1,28 +1,61 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Home window: a sidebar (Now, Conversations, the Notebook's collections, Trash, Activity) and the selected page.
+/// The Home window: the theme's navigation (D64; a sidebar with Today, Conversations, the Notebook's collections and
+/// Activity, or a rail with a status bar) and the selected page.
 struct HomeView: View {
     @Bindable var model: HomeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var searching: Bool
 
+    private var navigation: ThemeLayout.Navigation { ThemeStore.shared.style.tokens.layout.navigation }
+
     var body: some View {
-        NavigationSplitView {
-            HomeSidebar(model: model)
-                .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
-        } detail: {
-            Group {
-                if model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    detail
-                } else {
-                    SearchPage(find: model.find, services: model.services) { model.send($0) }
+        Group {
+            switch navigation {
+            case .rail:
+                HStack(spacing: 0) {
+                    HomeRail(model: model)
+                    Divider()
+                    page
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) { HomeStatusBar(model: model) }
+            case .pills:
+                page.toolbar {
+                    ToolbarItem(placement: .principal) { PillTabs(model: model) }
+                }
+            case .ribbons:
+                HStack(spacing: 0) {
+                    page
+                    RibbonTabs(model: model)
+                }
+            default:
+                NavigationSplitView {
+                    HomeSidebar(model: model)
+                        .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
+                } detail: {
+                    page
                 }
             }
-            .overlay { ThemeGrain() }
         }
         // The one bar (D58): search everything, or type what to do. Return does it, as in the Ask panel.
-        .searchable(text: Bindable(model.find).query, placement: .toolbar, prompt: Text("Search, or say what to do"))
+        .searchable(text: Bindable(model.find).query, placement: .toolbar,
+                    prompt: Text("Search, write a note, set a reminder or ask \(model.services.runtime.settings.current.companionName)…"))
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                // Everything Home can start, in one place (D58).
+                Menu {
+                    Button("Note") { Task { await model.newNote() } }
+                    Button("Reminder…") { model.services.openAsk(prefill: "remind me ") }
+                    Button("Watch…") { model.services.openAsk(prefill: "tell me when ") }
+                    Divider()
+                    Button("Collection…") { model.collectionSheet = .create }
+                } label: {
+                    Label("New", systemImage: "plus")
+                }
+                .help("New note, reminder, watch or collection")
+            }
+        }
         .searchFocused($searching)
         .onSubmit(of: .search) { model.send(.auto) }
         .background {
@@ -30,8 +63,20 @@ struct HomeView: View {
                 .keyboardShortcut("k", modifiers: .command)
                 .opacity(0)
                 .accessibilityHidden(true)
+            // ⌘1–4 go to the four places in every navigation (D64).
+            ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
+                Button(place.title) { model.go(to: place) }
+                    .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
+                    .opacity(0)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(minWidth: 860, minHeight: 560)
+        .sheet(item: $model.collectionSheet) { mode in
+            CollectionSheet(mode: mode, model: model.notebook) { created in
+                if let created { model.selection = .collection(created.id) }
+            }
+        }
         .overlay(alignment: .bottom) {
             if let toast = model.notebook.toast {
                 Toast(message: toast.message, actionTitle: toast.actionTitle) {
@@ -46,6 +91,38 @@ struct HomeView: View {
         .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
     }
 
+    /// The selected page, or what the one bar found while it has words.
+    private var page: some View {
+        Group {
+            if model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                detail
+            } else {
+                SearchPage(find: model.find, services: model.services) { model.send($0) }
+            }
+        }
+        .overlay { ThemeGrain() }
+    }
+
+    /// Without a sidebar, the Notebook's pages bring their collections along (D64).
+    @ViewBuilder private func withCollections<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        switch navigation {
+        case .sidebar:
+            content()
+        case .rail:
+            HStack(spacing: 0) {
+                CollectionColumn(model: model).frame(width: 200)
+                Divider()
+                content()
+            }
+        case .pills, .ribbons:
+            VStack(spacing: 0) {
+                CollectionStrip(model: model, washi: navigation == .ribbons)
+                Divider()
+                content()
+            }
+        }
+    }
+
     @ViewBuilder private var detail: some View {
         switch model.selection ?? .now {
         case .now:
@@ -55,7 +132,7 @@ struct HomeView: View {
         case .activity:
             ActivityView(model: model.activity)
         case .trash:
-            TrashView(model: model.notebook)
+            withCollections { TrashView(model: model.notebook) }
         case .page(let id):
             if let info = model.pages.info(id) {
                 ExtensionPageView(model: model.pages.model(info))
@@ -64,7 +141,7 @@ struct HomeView: View {
             }
         case .collection(let id):
             if let collection = model.notebook.collection(id: id) {
-                NotebookView(model: model.notebook, collection: collection)
+                withCollections { NotebookView(model: model.notebook, collection: collection) }
             } else {
                 Theme.surfaceSunken
             }
@@ -76,7 +153,7 @@ struct HomeView: View {
 
 private struct HomeSidebar: View {
     @Bindable var model: HomeModel
-    @State private var sheet: CollectionSheet.Mode?
+    private var layout: ThemeLayout { ThemeStore.shared.style.tokens.layout }
     @State private var deleting: NotebookCollection?
 
     private var notebook: NotebookModel { model.notebook }
@@ -92,13 +169,16 @@ private struct HomeSidebar: View {
                 .padding(.leading, Theme.Space.xs)
                 .padding(.bottom, Theme.Space.s)
             // The companion's nook (D58): who keeps track of all this, and what it's on now. A click goes to Today.
-            Button { model.selection = .now } label: {
-                CompanionNook(settings: model.services.runtime.settings.current, line: model.now.nookLine)
+            // The theme's layout may put it at the foot instead (D64).
+            if layout.nook == .top {
+                Button { model.selection = .now } label: {
+                    CompanionNook(settings: model.services.runtime.settings.current, line: model.now.nookLine)
+                }
+                .buttonStyle(.plain)
+                .selectionDisabled()
+                .listRowSeparator(.hidden)
+                .padding(.bottom, Theme.Space.s)
             }
-            .buttonStyle(.plain)
-            .selectionDisabled()
-            .listRowSeparator(.hidden)
-            .padding(.bottom, Theme.Space.s)
             Section {
                 Label { Text("Today") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
@@ -108,9 +188,6 @@ private struct HomeSidebar: View {
             }
             Section("Notebook") {
                 ForEach(notebook.collections) { c in collectionRow(c) }
-                Label { Text("Trash") } icon: { icon("trash", Theme.inkMuted) }
-                    .badge(notebook.trashCount)
-                    .tag(HomeSelection.trash)
             }
             // Pages extensions add (D62), under the extension's own name for the page.
             if !model.pages.list.isEmpty {
@@ -146,28 +223,39 @@ private struct HomeSidebar: View {
         // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
         .background(ThemeStore.shared.style.tokens.material.sidebar == .solid ? Theme.surface : .clear)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            HStack {
-                Button { sheet = .create } label: {
-                    // Two lines rather than cut off, where a language needs the room.
-                    Label("New collection", systemImage: "plus").lineLimit(2)
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                if layout.nook == .foot {
+                    Button { model.selection = .now } label: {
+                        NookBubble(settings: model.services.runtime.settings.current, greeting: model.now.nookGreeting, line: model.now.nookLine)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, Theme.Space.s)
                 }
-                .buttonStyle(.sfPlain)
-                Spacer()
-                // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window
-                // is in front; Settings is also one click from wherever Home is.
-                Button { model.services.openSettings(tab: nil) } label: {
-                    Image(systemName: "gearshape").font(.system(size: 14, weight: .medium))
+                HStack {
+                    // The Trash at the foot, out of the way of the collections (D58); a new collection is in the New menu.
+                    Button { model.selection = .trash } label: {
+                        Label { Text("Trash") + Text(verbatim: notebook.trashCount > 0 ? " · \(notebook.trashCount)" : "") }
+                            icon: { Image(systemName: "trash") }
+                            .fixedSize()
+                    }
+                    .buttonStyle(.sfPlain)
+                    .foregroundStyle(model.selection == .trash ? Theme.ink : Theme.inkMuted)
+                    Spacer()
+                    // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window
+                    // is in front; Settings is also one click from wherever Home is.
+                    Button { model.services.openSettings(tab: nil) } label: {
+                        // The word where it fits; a roomy theme or a long language keeps the gear alone.
+                        ViewThatFits(in: .horizontal) {
+                            Label("Settings", systemImage: "gearshape").fixedSize()
+                            Image(systemName: "gearshape").accessibilityLabel(Text("Settings"))
+                        }
+                    }
+                    .buttonStyle(.sfPlain)
+                    .foregroundStyle(Theme.inkMuted)
+                    .help("Settings (⌘,)")
                 }
-                .buttonStyle(.sfPlain)
-                .help("Settings (⌘,)")
-                .accessibilityLabel("Settings")
-            }
-            .padding(.horizontal, Theme.Space.s)
-            .padding(.vertical, Theme.Space.s)
-        }
-        .sheet(item: $sheet) { mode in
-            CollectionSheet(mode: mode, model: notebook) { created in
-                if let created { model.selection = .collection(created.id) }
+                .padding(.horizontal, Theme.Space.s)
+                .padding(.vertical, Theme.Space.s)
             }
         }
         .alert("Delete “\(deleting?.name ?? "")”?", isPresented: Binding(
@@ -195,7 +283,7 @@ private struct HomeSidebar: View {
             .help(c.kind == .profile ? Text("Sidefolk keeps these in mind in every conversation.") : Text(verbatim: c.name))
             .contextMenu {
                 if c.kind != .profile {
-                    Button("Edit…") { sheet = .edit(c) }
+                    Button("Edit…") { model.collectionSheet = .edit(c) }
                 }
                 if c.kind != .inbox && c.kind != .profile {
                     Button("Archive") {

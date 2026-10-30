@@ -3,20 +3,23 @@ import SwiftUI
 
 /// Today as a line (D58): the hours around now, the calendar's events as blocks and reminders as chips, with a line at
 /// the present. Drag a reminder, or press ← → on it, to move it by quarter hours (⌘Z puts it back); double-click an
-/// empty time to add a reminder there. The lists under it stay the place to tick, snooze and edit.
+/// empty time to add a reminder there. What's done today stays on it, struck through; a reminder's menu (Control-click)
+/// ticks, snoozes and edits it.
 struct DayRail: View {
     var reminders: [Reminder]
+    var done: [Reminder] = []
     var events: [CalendarEvent]
     var now: Date
     var move: (Reminder, Date) async -> UserFacingError?
     var add: (Date) -> Void
+    var menu: (Reminder) -> AnyView = { _ in AnyView(EmptyView()) }
     @Environment(\.undoManager) private var undoManager
     @State private var problem: UserFacingError?
     /// The rail's width, measured; laying out happens in points, so a short event still shows its title.
     @State private var width: CGFloat = 640
 
     private static let step: TimeInterval = 15 * 60
-    private static let lane: CGFloat = 34
+    private static let lane: CGFloat = 44
 
     var body: some View {
         let span = range
@@ -54,7 +57,7 @@ struct DayRail: View {
         let cal = Calendar.current
         let dayStart = cal.startOfDay(for: now)
         let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(86400)
-        let all = items(in: dayStart...dayEnd)
+        let all = items(in: dayStart...dayEnd).filter { if case .done = $0 { false } else { true } }
         var lower = min(now.addingTimeInterval(-3600), all.map(\.start).min() ?? now)
         var upper = max(now.addingTimeInterval(3 * 3600), all.map(\.end).max() ?? now)
         lower = max(dayStart, hourFloor(lower))
@@ -88,29 +91,33 @@ struct DayRail: View {
 
     enum Item {
         case reminder(Reminder, due: Date)
+        case done(Reminder, at: Date)
         case event(CalendarEvent)
 
         var id: String {
             switch self {
             case .reminder(let r, _): "r" + r.id
+            case .done(let r, _): "d" + r.id
             case .event(let e): "e" + e.id
             }
         }
         var start: Date {
             switch self {
             case .reminder(_, let due): due
+            case .done(_, let at): at
             case .event(let e): e.start
             }
         }
         var end: Date {
             switch self {
             case .reminder(_, let due): due
+            case .done(_, let at): at
             case .event(let e): e.end
             }
         }
         var title: String {
             switch self {
-            case .reminder(let r, _): r.title
+            case .reminder(let r, _), .done(let r, _): r.title
             case .event(let e): e.title
             }
         }
@@ -122,7 +129,11 @@ struct DayRail: View {
             let at = r.nextDue ?? r.fireAt
             return span.contains(at) ? .reminder(r, due: at) : nil
         }
-        return (timed + due).sorted { $0.start < $1.start }
+        let finished = done.compactMap { r -> Item? in
+            let at = r.lastFiredAt ?? r.fireAt
+            return span.contains(at) ? .done(r, at: at) : nil
+        }
+        return (timed + due + finished).sorted { $0.start < $1.start }
     }
 
     /// Where each item sits, in points: at its time, wide enough to read (an event at least its length), kept inside
@@ -174,8 +185,11 @@ struct DayRail: View {
     @ViewBuilder private func view(_ item: Item, width itemWidth: CGFloat, span: ClosedRange<Date>) -> some View {
         switch item {
         case .event(let event):
-            Text(verbatim: event.title)
-                .font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(1)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(verbatim: event.title).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(verbatim: "\(TimeFormat.clock(event.start, calendar: .current)) · \(String(localized: "Calendar"))")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            }
                 .padding(.horizontal, 7)
                 .frame(width: itemWidth - 3, height: Self.lane - 6, alignment: .leading)
                 .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
@@ -190,6 +204,18 @@ struct DayRail: View {
             } drop: { seconds in
                 shift(reminder, from: due, to: snap(due.addingTimeInterval(seconds)))
             }
+            .contextMenu { menu(reminder) }
+        case .done(let reminder, let at):
+            VStack(alignment: .leading, spacing: 0) {
+                Text(verbatim: reminder.title).font(Theme.Font.captionStrong).strikethrough()
+                Text(verbatim: TimeFormat.clock(at, calendar: .current)).font(Theme.Font.caption).strikethrough()
+            }
+            .foregroundStyle(Theme.success).lineLimit(1)
+            .padding(.horizontal, 8)
+            .frame(width: itemWidth - 3, height: Self.lane - 6, alignment: .leading)
+            .background(Theme.successSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Done: \(reminder.title)"))
         }
     }
 
@@ -232,16 +258,21 @@ private struct ReminderChip: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "alarm").imageScale(.small)
-            Text(verbatim: reminder.title).lineLimit(1)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 4) {
+                Image(systemName: "alarm").imageScale(.small)
+                Text(verbatim: reminder.title).lineLimit(1)
+            }
+            .font(Theme.Font.captionStrong)
+            Text(verbatim: late ? String(localized: "\(TimeFormat.clock(due, calendar: .current)) · late", comment: "A reminder on the day's line whose time passed")
+                            : TimeFormat.clock(due, calendar: .current))
+                .font(Theme.Font.caption).monospacedDigit().lineLimit(1)
         }
-        .font(Theme.Font.captionStrong)
         .foregroundStyle(late ? Theme.danger : Theme.ink)
         .padding(.horizontal, 8)
-        .frame(width: width, height: 28, alignment: .leading)
-        .background(late ? Theme.dangerSoft : Theme.surfaceRaised, in: Capsule())
-        .overlay(Capsule().strokeBorder(focused ? Theme.accent : Theme.line, lineWidth: focused ? 2 : 1))
+        .frame(width: width, height: 38, alignment: .leading)
+        .background(late ? Theme.dangerSoft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(focused ? Theme.accent : Theme.accent.opacity(0.45), lineWidth: focused ? 2 : 1))
         .shadow(color: .black.opacity(drag == 0 ? 0 : 0.15), radius: 6, y: 2)
         .offset(x: drag)
         .gesture(DragGesture(minimumDistance: 3)

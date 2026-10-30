@@ -60,6 +60,10 @@ public actor WatcherEngine {
     /// The latest value of each report, kept here: it changes every few seconds, so it reaches the database
     /// only with the routine saves.
     var readings: [String: WatchReading] = [:]
+    /// Each report's recent values that are numbers, oldest first, for a sparkline (D58). Memory only: a line of the
+    /// last few minutes, not a record.
+    var history: [String: [Double]] = [:]
+    public static let historyLength = 40
 
     /// - Parameters:
     ///   - opener: opens a web address or a file for the "Open" button (the app's `PlatformBridge`).
@@ -162,6 +166,9 @@ public actor WatcherEngine {
             .compactMap { w in readings[w.id] ?? Self.savedReading(w) }
     }
 
+    /// The recent values of every report that reads as a number, oldest first.
+    public func recentValues() -> [String: [Double]] { history }
+
     static func savedReading(_ w: Watcher) -> WatchReading? {
         guard let shown = w.lastState?["reading"]?.string("shown"), let at = w.lastCheckedAt else { return nil }
         return WatchReading(w, value: shown, at: at)
@@ -213,6 +220,7 @@ public actor WatcherEngine {
     public func remove(_ id: String) async -> Watcher? {
         lastSaved[id] = nil
         readings[id] = nil
+        history[id] = nil
         await ensureLoaded()
         guard let w = watchers.removeValue(forKey: id) else { return nil }
         inflight.removeValue(forKey: id)?.cancel()

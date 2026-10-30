@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "id": "dev.sidefolk.theme.night-shift",
+  "name": "Night Shift",
+  "author": "Sidefolk",
+  "version": "1.0.0",
+  "summary": "For people who work beside Claude Code and Codex: dense, keyboard first, every step visible.",
+  "type": {
+    "display": "system",
+    "text": "system",
+    "exact": "mono",
+    "scale": 0.95,
+    "density": "compact"
+  },
+  "shape": {
+    "control": 6,
+    "card": 8,
+    "window": 10
+  },
+  "motion": "calm",
+  "material": {
+    "sidebar": "solid"
+  },
+  "companion": {
+    "nook": "badge",
+    "suggests": "spark"
+  },
+  "layout": {
+    "preset": "console"
+  },
+  "colors": {
+    "dark": {
+      "ink": "#E6EDF3",
+      "inkMuted": "#8B97A6",
+      "inkFaint": "#758294",
+      "surface": "#0D1117",
+      "surfaceSunken": "#0B0E13",
+      "surfaceRaised": "#11161D",
+      "line": "#232B36",
+      "accent": "#5EEAD4",
+      "onAccent": "#062A25",
+      "accentSoft": "#123A35",
+      "link": "#5EEAD4",
+      "danger": "#FB7185",
+      "dangerSoft": "#3A1D27",
+      "onDanger": "#1A0B10",
+      "success": "#5EEAD4",
+      "successSoft": "#10302B"
+    },
+    "light": {
+      "ink": "#0F1720",
+      "inkMuted": "#4B5563",
+      "inkFaint": "#666D7A",
+      "surface": "#F6F8FA",
+      "surfaceSunken": "#EFF2F5",
+      "surfaceRaised": "#FFFFFF",
+      "line": "#DCE2E8",
+      "accent": "#0C8375",
+      "onAccent": "#FFFFFF",
+      "accentSoft": "#DDF6F2",
+      "link": "#0B776C",
+      "danger": "#C2384F",
+      "dangerSoft": "#FDE4E8",
+      "onDanger": "#FFFFFF",
+      "success": "#0B7C70",
+      "successSoft": "#DDF6F2"
+    }
+  }
+}

@@ -4,7 +4,7 @@ import SidefolkCore
 /// Themes (D58): every window draws with the chosen one, and while a theme is being made in a folder, Sidefolk
 /// follows that folder and repaints each time it is saved.
 extension AppCoordinator {
-    var themes: ThemeLibrary { ThemeLibrary(paths: runtime.paths) }
+    var themes: ThemeLibrary { .app(runtime.paths) }
 
     func applyTheme() {
         let s = runtime.settings.current
@@ -30,6 +30,13 @@ extension AppCoordinator {
         } catch {
             ThemeStore.shared.setFolderReport(ThemeCheck.check(folder: folder))
         }
+    }
+}
+
+extension ThemeLibrary {
+    /// The library with the built-ins this copy of Sidefolk ships in its Resources.
+    static func app(_ paths: SidefolkPaths) -> ThemeLibrary {
+        ThemeLibrary(paths: paths, bundled: ResourceLocator.resources?.appendingPathComponent("Themes", isDirectory: true))
     }
 }
 

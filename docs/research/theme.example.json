@@ -5,11 +5,8 @@
   "author": "Sidefolk",
   "version": "1.0.0",
   "summary": "A planner on the desk: paper, ink and index cards.",
-  "recipes": {
-    "navigation": "ribbons",
-    "today": "planner",
-    "activity": "diary",
-    "editor": "rich"
+  "layout": {
+    "preset": "planner"
   },
   "type": {
     "display": "serif",
