@@ -1,19 +1,36 @@
 # Status
 
-Updated: 2026-10-30. Version 0.1.0. Latest: 3D companions (D51): Mochi and Spark in 3D or 2D, and Ember,
-Kiko, Nimbo and Folio in 3D only, with the 2D effects over them and more life in Balanced and Lively.
-Before that: the approved 3D Mochi app icon, exported and built locally.
-Previous update: the founder's list after snapshot 411, built by a team
-of parallel agents and merged: conversations you can start fresh, read in full, follow up and delete (D45);
-Sidefolk updates itself from GitHub Releases, asking first (D46); a setting for using the internet, with allowed
-sites and services that keep working after a page was read (D47); your town when you choose it (D48); reminders
-that belong to a note or task (D49); "what's my CPU?" answered with one reading, and coins, dice and
-rock-paper-scissors the companion plays on the desktop (D35, D44 amended); a searchable extensions list (D39
-amended); extensions that answer simple sentences instantly, without the AI, as their author decides (D50). Also: the licence options (docs/research/licence.md), seventy extension ideas and a plan for an
-extension library, both for the founder to review. 1357 core and 34 character tests pass; CI green; snapshot 466
-is published, signed and notarized.
+Updated: 2026-10-30. Version 0.1.0. Latest: the founder's list after snapshot 478: other agents change and
+delete notes, with Settings › Privacy › Other agents choosing what they may do; Empty Trash; Light, Dark or Same
+as Mac; spoken replies briefly or in full; releases only by default, offered again daily (D52); 3D companions
+that really sleep; a notebook with collection icons, emoji and colours, pinned notes and notes formatted as you
+write (D53); and a brainstorm on companions made by people and a gallery to get them
+(docs/research/companion-marketplace.md). 1367 core and 34 character tests pass. Before that: 3D companions
+(D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Other agents change and delete notes; settings (D52):** `notes.update` and `notes.trash` reach Claude Code,
+  Codex and other MCP clients (to the Trash only; only the person empties it). Settings › Privacy › Other agents:
+  saving, changing and reading each Allow / Ask each time / Off (defaults Allow, Allow, Ask); Off hides the tools
+  and refuses with words naming the setting. The skill and MCP instructions say so (installed copies refresh on the
+  next Connect). Home › Trash › Empty Trash… (confirmed). Settings › General › Appearance. Settings › Voice ›
+  How much to say: Briefly or Everything (up to about two minutes, then "The rest is on the screen."). Updates:
+  releases only unless snapshots are chosen; a version let pass comes back the next day. *Checked:* tests (a
+  fake MCP client saves, ticks and trashes a note, then is refused when turned off; full readings; the update
+  timing), a note saved through `sidefolk mcp` into the dev app, UI snapshots of each new setting and the Trash.
+  *Note:* no production release exists yet, so a snapshot copy left on the default now finds nothing to update
+  to until 0.1.0 ships; choosing "Releases and snapshots" brings snapshots back.
+- **Sleeping 3D companions:** Mochi and Spark sleep on their tummy facing you, chin on their paws, ears flopped,
+  eyes closed; Ember and Kiko nod off sitting up (`doze`); Nimbo and Folio keep theirs. *Checked:* each one in
+  the playground at the app's framing. *Not yet:* the 2D companions' sleep is unchanged.
+- **Notebook looks and formatting (D53):** collection icons (30 symbols or any emoji) and 12 colours from Edit…
+  (and when made), shown in the sidebar and the header; pinned notes first; notes formatted as you write
+  (headings, bold, italic, strikethrough, code, links, bullets, numbers, checklists that tick on a click, quotes)
+  from a formatting bar or shortcuts, stored as Markdown (`NoteMarks`), marks hidden except on the line being
+  edited. *Checked:* NoteMarks and store tests, UI snapshots light and dark (a formatted, pinned note; the Edit
+  collection sheet). *Not by hand:* typing in the editor (Return continuing a list, clicking a box, marks
+  showing on the caret's line, the shortcuts): agents can't type into the native window. *Next:* the founder
+  tries writing a note.
 - **3D companions (D51):** Settings › Companion › Look chooses 3D (how Mochi and Spark now come) or 2D;
   Ember (a red fox), Kiko (a kid astronaut), Nimbo (a floating cloud, remodelled after the founder's sheet)
   and Folio (folded paper) join the gallery in 3D only. A three.js page in a transparent web view
