@@ -2,7 +2,7 @@ import KeyboardShortcuts
 import SidefolkCore
 import SwiftUI
 
-/// Settings › General: startup, the Ask shortcut, language, quiet mode, what times of day mean,
+/// Settings › General: startup, the Ask shortcut, language, the theme, quiet mode, what times of day mean,
 /// notifications, updates and the welcome. The companion's name lives with the companion (Settings › Companion).
 struct GeneralSettingsView: View {
     var model: SettingsModel
@@ -34,6 +34,8 @@ struct GeneralSettingsView: View {
                     .fixedSize()
                 }
             }
+
+            ThemeSettingsGroup(model: model)
 
             SettingsGroup(title: "Quiet mode", footer: "While quiet, reminders still fire, but only important ones interrupt you.") {
                 quietRow

@@ -15,7 +15,7 @@ struct ReminderBadge: View {
             Image(systemName: reminder.recurrence == nil ? "bell" : "bell.and.waves.left.and.right")
         }
         .labelStyle(.titleAndIcon)
-        .foregroundStyle(Theme.accent)
+        .foregroundStyle(Theme.link)
         .accessibilityLabel(Text("Reminder \(when)"))
     }
 

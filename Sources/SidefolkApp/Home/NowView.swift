@@ -742,7 +742,7 @@ private struct ItemLink: View {
             .lineLimit(1)
         }
         .buttonStyle(.plain)
-        .foregroundStyle(Theme.accent)
+        .foregroundStyle(Theme.link)
         .help(Text("Open “\(item.title.clipped(60))” in the Notebook"))
         .accessibilityLabel(Text("Open “\(item.title.clipped(60))” in the Notebook"))
     }

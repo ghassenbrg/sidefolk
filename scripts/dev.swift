@@ -11,6 +11,7 @@
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>   (a 3D companion from a folder, D60)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
+//   swift scripts/dev.swift theme:harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)

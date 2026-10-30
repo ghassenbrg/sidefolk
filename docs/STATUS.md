@@ -71,21 +71,29 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   companion's motion filmed for each one (Ember and Nimbo were, before painting); Iris's closed eye is an ink arc on
   the glass, not a shutter; folks and custom companions keep the soft look. *Next:* the founder reviews the ten
   (`swift run sidefolk-render out/`, or the dev app), then the 2D-character skill from the README.
-- **Themes, steps 1–7 built; Harbor's Home is complete (D57, D58):** the reasons are in `docs/research/themes.md`,
-  the build plan in `docs/research/themes-plan.md`, the seven boards locally in `sandbox/theme-sandbox/`. Built in:
-  Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight, Night Studio, Paper Garden. Steps 1–6:
-  theme tokens behind every `Theme` name; Activity rows that open in place; links to conversations; Today with
-  Guard's questions in its queue; the one bar; Your day with the calendar (D57). Step 7: watches as tiles with their
-  last change (`PageChange`, kept in a page watch's state) and "See the change", a tile outlined while its notice
-  waits; Agents at work (your companion's own run, sessions with their last call to Sidefolk, commands, sessions
-  finished in the last hour); the companion's nook in Home's sidebar; Glance as the Ask panel's idle state (what
-  needs you, the next two things, who's working, Open Today). *Checked:* the page probe keeps and carries its change
-  (UrlChangeProbeTests); the full suite in a clean worktree; UI snapshots before and after (Today's tiles and
-  agents, the nook, new `desktop-ask-glance`); the debug app with a fresh home: a reminder set by an agent over MCP
-  shows in Glance after `dev.swift click`, captured. *Not by hand:* answering from Glance, the tiles' popover.
-  *Next:* plan step 8: the rest of the theme foundation (type, density, shape, motion, material, nook, art, recipes
-  as data; the manifest loader and validator; Settings › Appearance's theme picker; `sidefolk theme` commands; live
-  reload), plus snapshots with the compiled catalog (B13) and Harbor's two contrast fixes.
+- **Themes, steps 1–8 built; a theme is now a file anyone can make (D57, D58):** the reasons are in
+  `docs/research/themes.md`, the build plan in `docs/research/themes-plan.md`, the seven boards locally in
+  `sandbox/theme-sandbox/`. Built in: Harbor (default), Night Shift, Marshmallow, Field Notes; gallery: Daylight,
+  Night Studio, Paper Garden. Steps 1–7: theme tokens behind every `Theme` name; Activity rows that open in place;
+  links to conversations; Today with Guard's questions in its queue; the one bar; Your day with the calendar (D57);
+  watch tiles, Agents at work, the companion's nook, Glance. Step 8: `theme.json` format 1 (`ThemeFile`), checked by
+  `ThemeCheck` (problems in words, a contrast table), installed by `ThemeLibrary` with images re-encoded; type,
+  scale, density, radii, motion, translucent sidebar, grain, nook styles (cushion, badge, sticker) and backdrop, and
+  empty-page art all reach the app; a `link` role, and Harbor's faint ink, link text and danger red deepened to
+  4.5:1. Settings › General › Theme (previews, Start a Theme…, Load from Folder…, a followed folder repainted on each
+  save with its problems listed, remove, "drawn for …" companion offer); `sidefolk theme new/check`; snapshots in
+  compiled English by default and `--theme <folder>`; `dev.swift theme:<id>` and `themeFolder:<path>`. *Checked:*
+  ThemeCheckTests (6), ThemeTokensTests and the full suite (1,438) in a clean worktree; UI snapshots before and
+  after (Harbor unchanged but for the three colours and the new Theme group) and in a test theme (serif, relaxed,
+  bouncy, translucent, sticker, grain, backdrop, empty art) in light and dark; the CLI on a good and a pale theme
+  (exit 0 and 1); in the debug app with a fresh home: a followed folder painted the welcome bubble, an edited accent
+  repainted within a second, a broken save kept the last good theme with Settings listing why, and a relaunch kept
+  it. *Not by hand:* the open and save panels, Remove, the companion offer. *Founder's call:* the plan asks 3:1 for
+  controls and focus, which Harbor's aqua (1.8:1 on white) doesn't meet; the check enforces text only for now.
+  *Next:* plan step 9: the recipes (Board first, then Console, Stage, Planner) and each theme's manifest and art,
+  with the art made by image generation. Each theme must match its board, content and components included (the
+  founder's fidelity rule in the plan): list every element on each board against the app first, then build what's
+  missing.
 - **Gallery packs newer than the catalog (D55):** republishing rebuilt every pack under the same name, so a copy
   that had fetched the catalog in the 30 minutes before refused Folio, Kiko and Nimbo ("didn't arrive as the
   gallery describes it"). Now a pack that doesn't match makes the store fetch the catalog again and retry with

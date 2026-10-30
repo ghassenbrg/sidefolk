@@ -200,7 +200,7 @@ struct GalleryCompanionCard: View {
                         ProgressView(value: max(p, 0.02)).progressViewStyle(.linear).frame(width: 64)
                     } else {
                         Label(ByteCountFormatter.string(fromByteCount: entry.bytes, countStyle: .file), systemImage: "arrow.down.circle")
-                            .font(Theme.Font.caption).foregroundStyle(Theme.accent)
+                            .font(Theme.Font.caption).foregroundStyle(Theme.link)
                     }
                 }
                 .frame(height: 14)

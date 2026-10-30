@@ -11,6 +11,8 @@ public enum HelperCommands {
           sidefolk hook <EventName> [--agent codex] for Claude Code and Codex hooks (reads the payload on stdin)
           sidefolk status                           is Sidefolk running, and what it keeps track of
           sidefolk ext validate [--no-run] <folder> check an extension, then start it in its sandbox and list its tools
+          sidefolk theme new "Name" [folder]        start a theme: a copy of Harbor and a short guide
+          sidefolk theme check <folder>             say what's wrong with a theme, and how well its text reads
           sidefolk --version
         """
 

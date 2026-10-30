@@ -185,7 +185,7 @@ struct AskView: View {
                     // Here rather than in the header: it says what continues, and the header has no room in longer languages.
                     Button(action: startFresh) { Label("New conversation", systemImage: "square.and.pencil") }
                         .buttonStyle(.plain)
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.link)
                         .fixedSize()
                         .help(Text("\(String(localized: "New conversation")) (⌘N)", comment: "A button's name, then its shortcut"))
                 }
@@ -222,7 +222,7 @@ struct AskView: View {
                             .transition(arrival)
                     }
                 }
-                .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.3), value: model.entries)
+                .animation(reduceMotion ? .easeOut(duration: 0.15) : Theme.Motion.spring(0.3), value: model.entries)
                 .padding(Theme.Space.m)
                 .id(Self.top)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { resultsHeight = $0 }
@@ -344,7 +344,7 @@ private struct RequestView: View {
         .contentShape(Rectangle())
         .offset(x: offset)
         .opacity(1 - min(abs(offset) / 360, 0.8))
-        .animation(reduceMotion ? nil : .spring(duration: 0.25), value: offset)
+        .animation(reduceMotion ? nil : Theme.Motion.spring(0.25), value: offset)
         .onHover { inside in
             hovering = inside
             if inside { model.hoveredRequest = request.id } else if model.hoveredRequest == request.id { model.hoveredRequest = nil }
@@ -579,7 +579,7 @@ private struct AnswerCard: View {
                     }
                 if expanded || fullHeight > shownHeight + 1 {
                     Button {
-                        withAnimation(.easeOut(duration: 0.2)) { expanded.toggle() }
+                        withAnimation(Theme.Motion.ease(0.2)) { expanded.toggle() }
                     } label: {
                         Label(expanded ? "Show less" : "Show all", systemImage: expanded ? "chevron.up" : "chevron.down")
                             .font(Theme.Font.caption)

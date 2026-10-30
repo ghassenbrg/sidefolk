@@ -2,15 +2,17 @@
 import Foundation
 
 /// `--ui-snapshots <dir> --language fr [--catalog <file>]`: the pictures in another language, so each
-/// page can be reviewed in each of them (D28). macOS picks the language once, at launch, from
-/// `AppleLanguages` and the bundle's `.lproj` folders, so this runs a second copy with
-/// `-AppleLanguages (fr)` and waits for it. A plain `swift run` has no `.lproj` folders: the catalog
+/// page can be reviewed in each of them (D28). Without `--language` they're in English, from the compiled
+/// catalog too, so plurals read as they do in the app ("1 request", not "1 requests"). macOS picks the
+/// language once, at launch, from `AppleLanguages` and the bundle's `.lproj` folders, so this runs a second
+/// copy with `-AppleLanguages (fr)` and waits for it. A plain `swift run` has no `.lproj` folders: the catalog
 /// (or the copy `--catalog` names, such as scripts/pseudo-l10n.py's) is compiled next to the
 /// executable for that run and removed after it. Inside an app bundle its own folders are used.
 enum SnapshotLanguage {
     /// Nil when this copy should render; otherwise the exit status of the copy that rendered.
     static func relaunchIfNeeded(_ args: [String]) -> Int32? {
-        guard let language = value(after: "--language", in: args), !args.contains("-AppleLanguages") else { return nil }
+        guard !args.contains("-AppleLanguages") else { return nil }
+        let language = value(after: "--language", in: args) ?? "en"
         var installed: [URL] = []
         defer { installed.forEach { try? FileManager.default.removeItem(at: $0) } }
         do {

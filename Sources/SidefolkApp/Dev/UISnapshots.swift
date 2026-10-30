@@ -5,8 +5,8 @@ import SwiftUI
 
 /// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
 /// and dark, then exits:
-/// `SidefolkApp --ui-snapshots <dir> [--language fr]`. Lets agents (who can't see the screen) review the
-/// UI, in any language (SnapshotLanguage). Uses an in-memory database, a temp home and fixture services:
+/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>]`. Lets agents (who can't see the screen) review
+/// the UI, in any language (SnapshotLanguage) and in any theme (D58), read straight from its folder. Uses an in-memory database, a temp home and fixture services:
 /// no real data is read or touched. The sample notes, reminders and activity are content, so they stay
 /// English in every language.
 ///
@@ -19,6 +19,15 @@ enum UISnapshots {
         let args = CommandLine.arguments
         guard let flag = args.firstIndex(of: "--ui-snapshots"), flag + 1 < args.count else { return }
         if let status = SnapshotLanguage.relaunchIfNeeded(args) { exit(status) }
+        if let i = args.firstIndex(of: "--theme"), i + 1 < args.count {
+            let folder = URL(fileURLWithPath: args[i + 1], isDirectory: true)
+            let report = ThemeCheck.check(folder: folder)
+            guard report.isUsable else {
+                FileHandle.standardError.write(Data("ui-snapshots: \(report.text)\n".utf8))
+                exit(1)
+            }
+            ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
+        }
         let dir = URL(fileURLWithPath: args[flag + 1], isDirectory: true)
         let app = NSApplication.shared
         // Prohibited: no Dock icon, no menu bar, never takes focus from the user.

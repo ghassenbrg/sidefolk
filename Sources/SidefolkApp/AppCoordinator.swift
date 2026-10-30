@@ -43,6 +43,8 @@ final class AppCoordinator {
     private lazy var about = AboutWindowController()
     /// Looking for a newer Sidefolk and installing it when asked (D46).
     private(set) lazy var updater = UpdateController(runtime: runtime)
+    /// The folder a theme is being made in, followed while Settings says so (D58).
+    let themeFollower = ThemeFollower()
     /// Collection names for the intent parser ("ideas for Sidefolk").
     var knownCollections: [String] = []
     /// What is watched or reported, so "stop the Fukuoka temperature" can be understood without AI.
@@ -91,6 +93,7 @@ final class AppCoordinator {
         companion.delegate = self
         applyCompanionSettings()
         applyAppearance()
+        applyTheme()
         restoreCompanionAddon()
         keepCompanionAddonsUpdated()
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
@@ -447,6 +450,19 @@ final class AppCoordinator {
                 } catch {
                     NSLog("addCompanion: \(error)")
                 }
+            }
+            return
+        }
+        if command.hasPrefix("themeFolder:") || command.hasPrefix("theme:") {
+            // theme:<id> picks a theme, themeFolder:<path> follows a folder, as Settings › General › Theme does (D58).
+            let folder = command.hasPrefix("themeFolder:") ? String(command.dropFirst("themeFolder:".count)) : nil
+            let id = folder == nil ? String(command.dropFirst("theme:".count)) : nil
+            Task {
+                await runtime.settings.update { s in
+                    s.themeFolder = folder
+                    if let id { s.theme = id }
+                }
+                settingsChanged()
             }
             return
         }

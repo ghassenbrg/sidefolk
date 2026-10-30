@@ -12,11 +12,14 @@ struct HomeView: View {
             HomeSidebar(model: model)
                 .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
         } detail: {
-            if model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                detail
-            } else {
-                SearchPage(find: model.find, services: model.services) { model.send($0) }
+            Group {
+                if model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    detail
+                } else {
+                    SearchPage(find: model.find, services: model.services) { model.send($0) }
+                }
             }
+            .overlay { ThemeGrain() }
         }
         // The one bar (D58): search everything, or type what to do. Return does it, as in the Ask panel.
         .searchable(text: Bindable(model.find).query, placement: .toolbar, prompt: Text("Search, or say what to do"))
@@ -40,7 +43,7 @@ struct HomeView: View {
                 .id(toast.id)
             }
         }
-        .animation(.spring(duration: 0.3), value: model.notebook.toast?.id)
+        .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
     }
 
     @ViewBuilder private var detail: some View {
@@ -124,7 +127,8 @@ private struct HomeSidebar: View {
         }
         .listStyle(.sidebar)
         .scrollContentBackground(.hidden)
-        .background(Theme.surface)
+        // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
+        .background(ThemeStore.shared.style.tokens.material.sidebar == .solid ? Theme.surface : .clear)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Button { sheet = .create } label: {

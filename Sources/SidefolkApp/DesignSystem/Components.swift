@@ -37,7 +37,7 @@ struct SFButtonStyle: ButtonStyle {
                 }
             }
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(Theme.Motion.ease(0.12), value: configuration.isPressed)
     }
 
     private var foreground: Color {
@@ -153,6 +153,10 @@ struct EmptyState: View {
         VStack(spacing: Theme.Space.s) {
             if let art {
                 Image(nsImage: art).resizable().frame(width: art.size.width, height: art.size.height).accessibilityHidden(true)
+            } else if let themed = Theme.Art.empty {
+                // The theme's own picture for empty pages (D58), in place of the folk.
+                Image(decorative: themed, scale: 2).resizable().scaledToFit().frame(maxWidth: 120, maxHeight: 120)
+                    .accessibilityHidden(true)
             } else if let folk, let art = FolkArt.image(folk, size: 88) {
                 Image(nsImage: art).resizable().scaledToFit().frame(width: 88, height: 88).accessibilityHidden(true)
             } else {
@@ -673,5 +677,19 @@ struct InlineError: View {
         }
         .font(Theme.Font.caption)
         .foregroundStyle(Theme.danger)
+    }
+}
+
+/// The theme's paper grain (D58), tiled faintly over a page. It never takes a click and VoiceOver never sees it.
+struct ThemeGrain: View {
+    var body: some View {
+        if let grain = Theme.Art.grain {
+            Image(decorative: grain, scale: 2)
+                .resizable(resizingMode: .tile)
+                .opacity(0.06)
+                .blendMode(.multiply)
+                .allowsHitTesting(false)
+                .ignoresSafeArea()
+        }
     }
 }

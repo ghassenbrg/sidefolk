@@ -56,7 +56,7 @@ struct GlanceView: View {
             }
             Button(action: openToday) { Label("Open Today", systemImage: "sun.max") }
                 .buttonStyle(.plain)
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.link)
                 .font(Theme.Font.caption)
         }
         .padding(.top, Theme.Space.xs)

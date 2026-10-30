@@ -3,7 +3,7 @@ import Foundation
 import SidefolkCore
 
 // The `sidefolk` helper: an MCP bridge for other agents, `run` for long commands, `hook` for
-// Claude Code, `status`. The logic lives in SidefolkCore (HelperCommands) where it is tested.
+// Claude Code, `status`, and checks for extension and theme authors. The logic lives in SidefolkCore (HelperCommands) where it is tested.
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 let paths = SidefolkPaths.standard()
@@ -64,6 +64,27 @@ case "ext":
     let trial = await ExtensionValidator.trial(at: folder)
     print(trial.text)
     exit(trial.problem == nil ? 0 : 1)
+
+case "theme":
+    // Themes are data (D58): both commands only read and write the folder they're given.
+    switch (arguments.dropFirst().first, arguments.count) {
+    case ("new", 3), ("new", 4):
+        let name = arguments[2]
+        let folder = URL(fileURLWithPath: ((arguments.count == 4 ? arguments[3] : name) as NSString).expandingTildeInPath, isDirectory: true)
+        do {
+            _ = try ThemeLibrary.start(name, at: folder)
+            print("Made \(folder.path).\nChange theme.json, then: sidefolk theme check \(folder.path)")
+            print("To see it, choose Settings › General › Theme › Load from Folder…; each save repaints Sidefolk.")
+        } catch {
+            fail("\(error)", code: 1)
+        }
+    case ("check", 3):
+        let report = ThemeCheck.check(folder: URL(fileURLWithPath: (arguments[2] as NSString).expandingTildeInPath, isDirectory: true))
+        print(report.text)
+        exit(report.isUsable ? 0 : 1)
+    default:
+        fail("usage: sidefolk theme new \"Name\" [folder] | sidefolk theme check <folder>")
+    }
 
 case "--version", "version":
     print("sidefolk \(SidefolkVersion.current)")

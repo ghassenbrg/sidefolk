@@ -33,7 +33,7 @@ struct NoteBodyEditor: NSViewRepresentable {
         view.isAutomaticDashSubstitutionEnabled = false
         view.textContainerInset = NSSize(width: 0, height: 2)
         view.typingAttributes = NoteStyler.base
-        view.linkTextAttributes = [.foregroundColor: NSColor(Theme.accent), .cursor: NSCursor.pointingHand]
+        view.linkTextAttributes = [.foregroundColor: NSColor(Theme.link), .cursor: NSCursor.pointingHand]
         view.delegate = context.coordinator
         view.setAccessibilityLabel(String(localized: "Text"))
         view.string = text

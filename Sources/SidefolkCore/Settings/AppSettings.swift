@@ -252,6 +252,10 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var morningBrief = true
     /// Today, the morning brief and the AI may read the calendar (D57). Off until the person turns it on.
     public var showCalendar = false
+    /// The theme every window draws with (D58), by id; Harbor when it's missing.
+    public var theme = "harbor"
+    /// A theme folder being worked on: Sidefolk reloads it each time it changes.
+    public var themeFolder: String?
     public var useSystemNotificationsWhenHidden = true
     public var provider = ProviderSettings()
     /// Short-term conversation history is kept this many days.
@@ -304,6 +308,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.eveningHour, &eveningHour)
         read(.morningBrief, &morningBrief)
         read(.showCalendar, &showCalendar)
+        read(.theme, &theme)
+        themeFolder = try? c.decodeIfPresent(String.self, forKey: .themeFolder)
         read(.useSystemNotificationsWhenHidden, &useSystemNotificationsWhenHidden)
         read(.provider, &provider)
         read(.historyDays, &historyDays)

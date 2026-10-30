@@ -4,7 +4,6 @@
   "name": "Field Notes",
   "author": "Sidefolk",
   "version": "1.0.0",
-  "minimumApp": "0.2.0",
   "summary": "A planner on the desk: paper, ink and index cards.",
   "recipes": {
     "navigation": "ribbons",
@@ -26,42 +25,45 @@
   },
   "colors": {
     "light": {
-      "background": "#F3ECDF",
+      "ink": "#2E2A24",
+      "inkMuted": "#665D52",
+      "inkFaint": "#6E6458",
       "surface": "#FBF8F1",
+      "surfaceSunken": "#F3ECDF",
       "surfaceRaised": "#FFFFFF",
       "line": "#E4DACA",
-      "ink": "#2E2A24",
-      "inkMuted": "#6E655A",
-      "inkFaint": "#A2988A",
       "accent": "#2E2A24",
       "onAccent": "#FBF8F1",
-      "attention": "#C0603F",
-      "success": "#5F7F64",
-      "warning": "#B9862A",
-      "danger": "#B0442C",
-      "highlight": "#F6E27A"
+      "accentSoft": "#EFE6D6",
+      "link": "#8A4A2E",
+      "danger": "#A63F28",
+      "dangerSoft": "#F7E2DA",
+      "onDanger": "#FFFFFF",
+      "success": "#4F6F54",
+      "successSoft": "#E3ECE1"
     },
     "dark": {
-      "background": "#1A1612",
+      "ink": "#EDE3D2",
+      "inkMuted": "#B3A591",
+      "inkFaint": "#9C8F7E",
       "surface": "#221D18",
+      "surfaceSunken": "#1A1612",
       "surfaceRaised": "#2C2620",
       "line": "#3A322A",
-      "ink": "#EDE3D2",
-      "inkMuted": "#A89A86",
-      "inkFaint": "#7D7062",
       "accent": "#EDE3D2",
       "onAccent": "#221D18",
-      "attention": "#E08A68",
-      "success": "#9CB89F",
-      "warning": "#E2B45C",
+      "accentSoft": "#3A3128",
+      "link": "#E8A483",
       "danger": "#F08A70",
-      "highlight": "#6B5A1E"
+      "dangerSoft": "#47261E",
+      "onDanger": "#221D18",
+      "success": "#9CB89F",
+      "successSoft": "#24312A"
     }
   },
   "material": {
-    "surface": "paper",
-    "grain": "assets/grain.png",
-    "sidebar": "solid"
+    "sidebar": "solid",
+    "grain": "art/grain.png"
   },
   "companion": {
     "nook": "sticker",
@@ -69,8 +71,7 @@
     "suggests": "mochi"
   },
   "art": {
-    "emptyToday": "assets/empty-today.png",
-    "emptyNotebook": "assets/empty-notebook.png"
+    "empty": "art/empty.png"
   },
   "motion": "calm"
 }

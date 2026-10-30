@@ -38,10 +38,12 @@ struct CompanionNook: View {
     var settings: AppSettings
     var line: String
 
+    /// The theme says how the companion sits (D58): on a soft cushion, as a small badge, or as a tilted sticker.
+    private var style: ThemeTokens.Nook.Style { ThemeStore.shared.style.tokens.nook.style }
+
     var body: some View {
         HStack(spacing: Theme.Space.s) {
-            CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: 38)
-                .accessibilityHidden(true)
+            portrait
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: settings.companionName).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 Text(verbatim: line).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
@@ -49,10 +51,45 @@ struct CompanionNook: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(Theme.Space.s)
-        .background(Theme.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .padding(style == .badge ? Theme.Space.xxs : Theme.Space.s)
+        .background { background }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Opens Today"))
+    }
+
+    private var portrait: some View {
+        let side: CGFloat = style == .badge ? 30 : 38
+        return CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: side)
+            .padding(style == .badge ? 3 : 0)
+            .background { if style == .badge { Circle().fill(Theme.accentSoft) } }
+            .overlay { if style == .badge { Circle().strokeBorder(Theme.line) } }
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var background: some View {
+        let shape = RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+        switch style {
+        case .cushion:
+            ZStack {
+                shape.fill(Theme.accentSoft.opacity(0.6))
+                if let art = Theme.Art.backdrop {
+                    // The theme's backdrop, faded so the name and line above it still read.
+                    Image(decorative: art, scale: 2).resizable().scaledToFill().opacity(0.35).clipShape(shape)
+                }
+            }
+        case .badge:
+            EmptyView()
+        case .sticker:
+            ZStack {
+                shape.fill(Theme.surfaceRaised)
+                if let art = Theme.Art.backdrop {
+                    Image(decorative: art, scale: 2).resizable().scaledToFill().opacity(0.35).clipShape(shape)
+                }
+                shape.strokeBorder(Theme.line, lineWidth: 1.5)
+            }
+            .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
+            .rotationEffect(.degrees(-1.5))
+        }
     }
 }

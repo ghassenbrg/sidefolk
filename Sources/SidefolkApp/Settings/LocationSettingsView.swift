@@ -85,7 +85,7 @@ private struct ChosenPlaceRows: View {
                         Image(systemName: "mappin").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)
                         Text(verbatim: place.fullName).font(Theme.Font.body).foregroundStyle(Theme.ink)
                         Spacer(minLength: 0)
-                        Text("Use", comment: "Picks this town as the person's place").font(Theme.Font.captionStrong).foregroundStyle(Theme.accent)
+                        Text("Use", comment: "Picks this town as the person's place").font(Theme.Font.captionStrong).foregroundStyle(Theme.link)
                     }
                     .contentShape(Rectangle())
                 }

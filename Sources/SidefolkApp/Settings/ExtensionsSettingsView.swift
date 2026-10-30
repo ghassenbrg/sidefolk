@@ -137,7 +137,7 @@ struct ExtensionsSettingsView: View {
 
     private func toggle(_ id: String, needsYou: Bool = false) {
         let open = !isExpanded(id, needsYou: needsYou)
-        withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
+        withAnimation(reduceMotion ? nil : Theme.Motion.spring(0.22, bounce: 0.15)) {
             if open {
                 expanded.insert(id)
                 closed.remove(id)

@@ -36,6 +36,8 @@ public struct SidefolkPaths: Sendable {
     public var updates: URL { home.appendingPathComponent("Updates", isDirectory: true) }
     /// Companions and the catalog from the add-on gallery (D55).
     public var addons: URL { home.appendingPathComponent("Addons", isDirectory: true) }
+    /// Themes added from a folder, checked and copied (D58).
+    public var themes: URL { home.appendingPathComponent("Themes", isDirectory: true) }
 
     /// Creates the folders with owner-only permissions.
     public func prepare() throws {

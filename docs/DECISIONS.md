@@ -1374,6 +1374,15 @@ finished in the last hour; the companion's nook sits in Home's sidebar. Glance i
 separate panel: one click on the companion opens it, with what needs you (answered there as on Today), the next
 two things in your day, who's working and the way to Today.
 
+Step 8 made a theme a file. `theme.json` (format 1) is read by `ThemeCheck`: an error (a missing id, a built-in's
+id, text under 4.5:1, an image outside the folder, not a PNG or over 2 MB or 2048 px) stops it; anything else is
+fixed on the way in and said (a missing colour is Harbor's, a value is clamped, an unknown layout is the one that
+exists). Installing copies it into `<home>/Themes/<id>/` and decodes and writes every image again, so only pixels
+are kept. A folder chosen in Settings, or made by "Start a Theme…" / `sidefolk theme new`, is followed: each save is
+checked and, if usable, installed and painted within a second; if not, the last good theme stays and Settings lists
+the problems. Harbor changed in three colours so it passes its own check: faint ink, a new `link` role for the
+accent as text, and the danger red.
+
 ### D59 — Every companion also comes in 2D: painted cut-out parts on the vector rig, a real 2D look (2026-10-30)
 **Decision:** all ten companions (Mochi, Spark and the gallery's Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl, Rune) can
 be shown in 2D or 3D (Settings › Companion › Look; 3D is how they come). The 2D look is set by one style target,

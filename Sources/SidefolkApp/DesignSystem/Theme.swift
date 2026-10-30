@@ -31,18 +31,17 @@ enum Theme {
     static var accent: Color { style.accent }
     static var onAccent: Color { style.onAccent }
     static var accentSoft: Color { style.accentSoft }
+    /// The accent as text (links, "Open Today"); `accent` is for fills and icons, and may be too light to read.
+    static var link: Color { style.link }
     static var danger: Color { style.danger }
     static var dangerSoft: Color { style.dangerSoft }
     static var onDanger: Color { style.onDanger }
     static var success: Color { style.success }
     static var successSoft: Color { style.successSoft }
-    /// The Now greeting's wash, as quiet as the cards around it.
-    static var heroStart: Color { style.heroStart }
-    static var heroEnd: Color { style.heroEnd }
 
     // MARK: Metrics
     enum Space {
-        private static var space: ThemeTokens.Space { style.tokens.space }
+        private static var space: ThemeTokens.Space { style.space }
         static var xxs: CGFloat { space.xxs }
         static var xs: CGFloat { space.xs }
         static var s: CGFloat { space.s }
@@ -74,6 +73,31 @@ enum Theme {
         static var caption: SwiftUI.Font { fonts.caption }
         static var captionStrong: SwiftUI.Font { fonts.captionStrong }
         static var eyebrow: SwiftUI.Font { fonts.eyebrow }
+    }
+
+    /// How things move, in the theme's way. Each returns nil (no animation) when the theme asks for none; views
+    /// still check Reduce Motion themselves, since what to do then depends on what moves.
+    enum Motion {
+        /// Something arriving, leaving or moving. Bouncy themes overshoot a little more and settle a little slower.
+        static func spring(_ duration: Double, bounce: Double = 0) -> Animation? {
+            switch style.tokens.motion {
+            case .calm: .spring(duration: duration, bounce: bounce)
+            case .bouncy: .spring(duration: duration * 1.15, bounce: bounce + 0.25)
+            case .none: nil
+            }
+        }
+
+        /// A quick change in place: a press, a fold opening.
+        static func ease(_ duration: Double) -> Animation? {
+            style.tokens.motion == .none ? nil : .easeOut(duration: duration)
+        }
+    }
+
+    /// The theme's own pictures (D58), when it has them.
+    enum Art {
+        static var grain: CGImage? { style.grain }
+        static var backdrop: CGImage? { style.backdrop }
+        static var empty: CGImage? { style.emptyArt }
     }
 
     /// Accent color for each folk, used on cards of its domain.

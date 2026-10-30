@@ -315,6 +315,7 @@ extension AppCoordinator: AppServices {
         }
         applyCompanionSettings()
         applyAppearance()
+        applyTheme()
         updater.settingsChanged()
     }
 
