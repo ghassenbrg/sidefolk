@@ -30,14 +30,22 @@ jobs:
         with:
           fetch-depth: 0 # the app's build number is the commit count
 
+      # The add-on gallery's extensions (D55): their sandbox tests here run against a build of them.
+      - uses: actions/checkout@v4
+        with:
+          repository: ghassenbrg/sidefolk-addons
+          path: .addons
+
       - name: Select Xcode
         run: scripts/ci/select-xcode.sh
 
       - name: Build
-        run: swift build
+        run: |
+          swift build
+          swift build --package-path .addons
 
       - name: Test
-        run: swift test --no-parallel
+        run: SIDEFOLK_ADDONS_REPO="$PWD/.addons" swift test --no-parallel
 
       - name: Translations
         run: |

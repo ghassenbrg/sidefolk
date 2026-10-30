@@ -60,7 +60,15 @@ public final class BundledExtensions: Sendable {
     /// when nothing changed it only hashes the shipped files.
     public func install(into host: ExtensionHost) async {
         var found: [Problem] = []
-        for entry in entries() {
+        let shipped = entries()
+        // Built-ins installed by an earlier version that this one doesn't ship (D55) stay, as add-ons.
+        if !shipped.isEmpty {
+            let ids = Set(shipped.map(\.id))
+            for info in await host.extensions() where info.origin == .bundled && !ids.contains(info.id) {
+                await host.adopt(id: info.id)
+            }
+        }
+        for entry in shipped {
             if let problem = await reconcile(entry, host: host) {
                 found.append(Problem(id: entry.id, name: entry.name, message: problem))
                 Log.shared.warning("extensions", "built-in extension not installed", ["id": entry.id, "why": problem])

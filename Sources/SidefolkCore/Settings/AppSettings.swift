@@ -34,7 +34,7 @@ public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
 }
 
 /// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, or Ember, Kiko, Nimbo and
-/// Folio, who exist only in 3D (D51). The Folk Family (D30) are helpers beside the companion, never the
+/// Folio, who exist only in 3D (D51) and come from the add-on gallery (D55). The Folk Family (D30) are helpers beside the companion, never the
 /// companion itself (D54); their cases stay so older settings still read.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark

@@ -101,12 +101,20 @@ extension AppCoordinator: AppServices {
             commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
             isUpdate: preview.update != nil,
             folk: manifest.folk, iconPath: preview.report.iconPath,
-            fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/")))
+            fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/"),
+            fromGallery: Self.fromGallery(folder, paths: runtime.paths)))
+    }
+
+    /// A folder the add-on gallery downloaded and checked (`AddonStore.fetch`): Sidefolk's own extension (D55).
+    static func fromGallery(_ folder: URL, paths: SidefolkPaths) -> Bool {
+        let downloads = paths.addons.appendingPathComponent("Downloads").resolvingSymlinksInPath().path
+        return folder.resolvingSymlinksInPath().path.hasPrefix(downloads + "/")
     }
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? {
         do {
-            _ = try await runtime.extensions.install(from: preview.sourceFolder)
+            _ = try await runtime.extensions.install(from: preview.sourceFolder, origin: preview.fromGallery ? .official : nil)
+            if preview.fromGallery { await runtime.addons.discard(id: preview.id) }
             return nil
         } catch {
             return Self.userFacing(error, fallback: String(localized: "I couldn't install \(preview.name)."))
@@ -320,7 +328,7 @@ extension AppCoordinator: AppServices {
                 + e.toolWarnings,
             sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
-            iconPath: e.iconPath, fromDraft: e.origin == .draft, command: e.command, author: e.author,
+            iconPath: e.iconPath, fromDraft: e.origin == .draft, fromGallery: e.origin == .official, command: e.command, author: e.author,
             hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands))
     }
 

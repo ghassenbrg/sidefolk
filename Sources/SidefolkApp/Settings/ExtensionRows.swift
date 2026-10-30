@@ -177,7 +177,7 @@ struct ExtensionRow: View {
             Label(error, systemImage: "exclamationmark.circle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
         }
-        if ext.bundled, ext.enabled, let example = BuiltInExamples.request(for: ext.id) {
+        if ext.bundled || ext.fromGallery, ext.enabled, let example = BuiltInExamples.request(for: ext.id) {
             // What to say to use it, one click from the Ask panel; nothing is sent until Return.
             Button { model.services.openAsk(prefill: example) } label: {
                 Label { Text("Try “\(example)”", comment: "A button under a built-in extension: opens the Ask panel with these words") }
@@ -205,6 +205,8 @@ struct ExtensionRow: View {
     private var origin: String {
         let source = if ext.bundled {
             String(localized: "Comes with Sidefolk", comment: "Where an extension came from, under its name in Settings")
+        } else if ext.fromGallery {
+            String(localized: "From Sidefolk's add-on gallery", comment: "Where an extension came from, under its name in Settings")
         } else if ext.fromDraft {
             String(localized: "Written by Sidefolk at your request", comment: "Where an extension came from, under its name in Settings")
         } else if ext.kind == .mcpServer {
@@ -214,7 +216,7 @@ struct ExtensionRow: View {
         }
         var parts = [source]
         if !ext.version.isEmpty { parts.insert(String(localized: "Version \(ext.version)", comment: "An extension's version: “Version 1.1.0”"), at: 0) }
-        if let author = ext.author, !author.isEmpty, !ext.bundled {
+        if let author = ext.author, !author.isEmpty, !ext.bundled, !ext.fromGallery {
             parts.append(String(localized: "by \(author)", comment: "Who wrote an extension: “by Jane Doe”"))
         }
         return parts.joined(separator: " · ")

@@ -29,6 +29,8 @@ struct ExtensionInfo: Identifiable, Hashable {
     var iconPath: String?
     /// Sidefolk's AI wrote it for the person, who installed it from the drafts.
     var fromDraft = false
+    /// Sidefolk's own, from the add-on gallery (D55): updated there, and the person's to remove.
+    var fromGallery = false
     /// For an MCP server, the command line as added.
     var command: String?
     var author: String?
@@ -58,6 +60,8 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var iconPath: String?
     /// A draft Sidefolk's AI wrote at the person's request (D39), not a folder from elsewhere.
     var fromDraft = false
+    /// Sidefolk's own, from the add-on gallery, its signature checked (D55).
+    var fromGallery = false
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }

@@ -13,8 +13,6 @@ final class FixtureServices: AppServices {
     var keys: Set<APIKeyTarget> = []
     /// What Settings › AI finds; snapshots change it to show each provider's states.
     var detection = FixtureServices.sampleDetection
-    /// Shows Settings › Extensions on a Mac without git, where the built-in Git extension can't run.
-    var gitMissing = false
     let voice = FixtureVoiceServices()
     var voiceServices: any VoiceServices { voice }
     /// A published snapshot that looked an hour ago; snapshots set other phases.
@@ -104,6 +102,13 @@ final class FixtureServices: AppServices {
             .deletingLastPathComponent().appendingPathComponent("extensions/\(folder)/icon.pdf").path
     }
 
+    /// An icon in a sidefolk-addons checkout beside this one, for the gallery's extensions (D55).
+    static func addonIcon(_ folder: String) -> String {
+        URL(fileURLWithPath: icon(folder)).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("sidefolk-addons/extensions/\(folder)/icon.pdf").path
+    }
+
+    /// From the add-on gallery (D55).
     static let git = ExtensionInfo(
         id: "dev.sidefolk.git", name: "Git", version: "1.0.0",
         description: "Clone public repositories into a folder you choose, and check, update and read the history of the ones you have.",
@@ -113,10 +118,10 @@ final class FixtureServices: AppServices {
         permissionLines: ["Can use the internet", "Can read and change files in a folder you name, for that request only, once you approve it",
                           "Can run git (/Applications/Xcode.app/Contents/Developer/usr/bin/git)"],
         warnings: ["It can use the internet while it works in a folder you name, so it could upload what's in that folder."],
-        sandboxed: true, lastError: nil, bundled: true, iconPath: icon("git"))
+        sandboxed: true, lastError: nil, bundled: false, iconPath: addonIcon("git"), fromGallery: true)
 
     func extensions() async -> [ExtensionInfo] {
-        ((gitMissing ? [] : [Self.git]) + [
+        ([Self.git] + [
             ExtensionInfo(id: "dev.sidefolk.world-clock", name: "World Clock", version: "1.0.0",
                           description: "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.",
                           tagline: "The time anywhere, and times between places",
@@ -200,12 +205,7 @@ final class FixtureServices: AppServices {
 
     func sampleExtensions() async -> [(name: String, folder: URL)] { [("Hello Folk", URL(fileURLWithPath: "/tmp/hello-folk"))] }
 
-    func unavailableExtensions() async -> [UnavailableExtension] {
-        guard gitMissing else { return [] }
-        return [UnavailableExtension(id: Self.git.id, name: Self.git.name,
-                                     message: "git isn't installed on this Mac. Install Apple's command line tools with xcode-select --install, or git with Homebrew.",
-                                     look: Self.git.look)]
-    }
+    func unavailableExtensions() async -> [UnavailableExtension] { [] }
 
     func retryBuiltInExtensions() async {}
 

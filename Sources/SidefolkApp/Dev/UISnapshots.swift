@@ -188,11 +188,6 @@ enum UISnapshots {
             }
             settings.update { $0.location = LocationSettings() }
 
-            // A Mac without git: the built-in Git extension says why it isn't there.
-            fixtures.gitMissing = true
-            await settings.loadExtensions()
-            try await page("page-settings-extensions-no-git", ExtensionsSettingsView(model: settings), width: width)
-            fixtures.gitMissing = false
             await settings.loadExtensions()
             // The list kept short (D39): one row open, only those switched off, a search that finds rows by their
             // permissions and tools, and one that finds nothing switched on.
@@ -502,7 +497,7 @@ enum UISnapshots {
         return ask
     }
 
-    /// The founder's case (D39): cloning into ~/git with the built-in Git extension, after a World Clock answer.
+    /// The founder's case (D39): cloning into ~/git with the Git extension, after a World Clock answer.
     private static func sampleAskExtensions() -> AskModel {
         let ask = AskModel()
         let git = FixtureServices.git

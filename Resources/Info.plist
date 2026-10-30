@@ -41,6 +41,11 @@
 	<string>15.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<!-- The add-on gallery (DECISIONS D55): where its catalog and packs are, and the Developer ID team that must have signed them. -->
+	<key>SidefolkAddons</key>
+	<string>https://github.com/ghassenbrg/sidefolk-addons/releases/download/gallery</string>
+	<key>SidefolkAddonsTeam</key>
+	<string>2XQJWQBD4W</string>
 	<key>LSFileQuarantineEnabled</key>
 	<true/>
 	<key>NSHighResolutionCapable</key>

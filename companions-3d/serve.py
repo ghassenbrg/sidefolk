@@ -7,6 +7,10 @@ import http.server, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOTS = [os.path.join(HERE, "playground"), os.path.join(HERE, "..", "Resources", "Companions3D")]
+# The add-on gallery's companions (D55), from a sidefolk-addons checkout beside this one ($SIDEFOLK_ADDONS_REPO).
+ADDONS = os.environ.get("SIDEFOLK_ADDONS_REPO") or os.path.join(HERE, "..", "..", "sidefolk-addons")
+if os.path.isdir(os.path.join(ADDONS, "companions")):
+    ROOTS[1:1] = sorted(os.path.join(ADDONS, "companions", n) for n in os.listdir(os.path.join(ADDONS, "companions")))
 REC = os.path.join(HERE, "..", "build", "companions-3d")
 
 class Handler(http.server.SimpleHTTPRequestHandler):

@@ -6,10 +6,10 @@ import SidefolkCore
 enum CompanionArt {
     private static var previews: [String: NSImage] = [:]
 
-    /// The companions Settings offers: only those whose rigs are finished, and the 3D-only ones
-    /// when this copy of the app carries the 3D characters.
+    /// The companions Settings offers: only those whose rigs are finished, and the 3D-only ones once
+    /// they are installed from the add-on gallery (D55).
     static var offered: [CompanionChoice] {
-        CharacterSpecies.available.filter { !$0.only3D || Companion3DStage.folder != nil }
+        CharacterSpecies.available.filter { !$0.only3D || Companion3DStage.has($0) }
             .compactMap { CompanionChoice(rawValue: $0.rawValue) }.filter { !$0.isFolk }
     }
 
@@ -31,6 +31,9 @@ enum CompanionArt {
         guard let custom = custom(settings.customCompanion) else { return built }
         return CharacterLook(custom: custom, style: built.style)
     }
+
+    /// Drops the pictures drawn so far (a companion was installed or removed).
+    static func forgetPictures() { previews = [:] }
 
     static func liveliness(_ level: CompanionLiveliness) -> Liveliness {
         Liveliness(rawValue: level.rawValue) ?? .balanced

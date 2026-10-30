@@ -35,6 +35,8 @@ public final class SidefolkRuntime: Sendable {
     public let extensions: ExtensionHost
     /// Extensions Sidefolk ships, installed and updated with the app (D39).
     public let bundledExtensions: BundledExtensions
+    /// The add-on gallery: companions and extensions downloaded on demand (D55).
+    public let addons: AddonStore
     /// Extensions Sidefolk's AI wrote for the person, waiting for review (D39).
     public let extensionDrafts: ExtensionDrafts
     public let skills: SkillLibrary
@@ -94,6 +96,7 @@ public final class SidefolkRuntime: Sendable {
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)
         bundledExtensions = BundledExtensions(directory: bundledResources?.appendingPathComponent("Extensions", isDirectory: true))
         extensionDrafts = ExtensionDrafts(paths: paths)
+        addons = AddonStore(paths: paths)
         skills = SkillLibrary(userDirectory: paths.skills, bundledDirectory: bundledResources?.appendingPathComponent("Skills", isDirectory: true),
                               events: events)
         appleNotesLedger = AppleNotesLedger(db: db)
@@ -141,6 +144,7 @@ public final class SidefolkRuntime: Sendable {
         // Off the launch path: the first launch installs each built-in extension (a short start of each).
         let bundled = bundledExtensions, host = extensions
         Task { await bundled.install(into: host) }
+        await addons.tidy()
         await watchers.register(ExtensionWatcherProbe(host: extensions))
         await watchers.start()
         await sessionTracker.start()

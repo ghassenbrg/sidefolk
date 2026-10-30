@@ -35,6 +35,29 @@ enum ExtFixtures {
         return all.filter { FileManager.default.fileExists(atPath: repoRoot.appendingPathComponent("extensions/\($0)/Sources").path) }.sorted()
     }()
 
+    /// Sidefolk's extensions in the add-on gallery (D55) live in the sidefolk-addons repository. Their tests here
+    /// run them in this host's sandbox when a checkout of it sits beside this one ($SIDEFOLK_ADDONS_REPO moves it),
+    /// built with `swift build`; without one they are skipped (`noAddons`).
+    static let addonsRepo: URL = ProcessInfo.processInfo.environment["SIDEFOLK_ADDONS_REPO"].map { URL(fileURLWithPath: $0, isDirectory: true) }
+        ?? repoRoot.deletingLastPathComponent().appendingPathComponent("sidefolk-addons", isDirectory: true)
+    static let addonProducts = addonsRepo.appendingPathComponent(".build/debug", isDirectory: true)
+    static let addonFolders: [String] = {
+        let root = addonsRepo.appendingPathComponent("extensions")
+        let all = (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? []
+        return all.filter {
+            FileManager.default.fileExists(atPath: root.appendingPathComponent("\($0)/Sources").path)
+                && FileManager.default.fileExists(atPath: addonProducts.appendingPathComponent("ext-\($0)").path)
+        }.sorted()
+    }()
+    static var hasAddons: Bool { !addonFolders.isEmpty }
+    static let noAddons: Comment = "no built sidefolk-addons checkout beside this one (run swift build there); skipping its extensions"
+
+    /// An extension's folder in its repository: the app's own, or the gallery's.
+    static func source(_ folder: String) -> URL {
+        builtInFolders.contains(folder) ? repoRoot.appendingPathComponent("extensions/\(folder)", isDirectory: true)
+            : addonsRepo.appendingPathComponent("extensions/\(folder)", isDirectory: true)
+    }
+
     /// The built-ins put together the way scripts/build-app.sh puts them in the app: the catalog, and each folder's
     /// manifest, icon and program (built with the tests, which depend on them).
     static let builtIns: URL = {
@@ -42,13 +65,15 @@ enum ExtFixtures {
         let source = repoRoot.appendingPathComponent("extensions")
         let fm = FileManager.default
         try! fm.copyItem(at: source.appendingPathComponent(BundledExtensions.catalogFile), to: dir.appendingPathComponent(BundledExtensions.catalogFile))
-        for folder in builtInFolders {
+        // The gallery's are put together the same way, beside them but outside the catalog, as an add-on is installed.
+        for folder in builtInFolders + addonFolders {
             let to = dir.appendingPathComponent(folder, isDirectory: true)
             try! fm.createDirectory(at: to.appendingPathComponent("bin"), withIntermediateDirectories: true)
             for file in [ExtensionManifest.fileName, "icon.pdf"] {
-                try! fm.copyItem(at: source.appendingPathComponent("\(folder)/\(file)"), to: to.appendingPathComponent(file))
+                try! fm.copyItem(at: ExtFixtures.source(folder).appendingPathComponent(file), to: to.appendingPathComponent(file))
             }
-            try! fm.copyItem(at: products.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
+            let built = builtInFolders.contains(folder) ? products : addonProducts
+            try! fm.copyItem(at: built.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
         }
         return dir
     }()

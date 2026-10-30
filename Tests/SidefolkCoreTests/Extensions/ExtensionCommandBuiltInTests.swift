@@ -47,7 +47,8 @@ import Testing
         await runtime.extensions.shutdown()
     }
 
-    @Test func worldClockPlaytimeToolboxAndVitalsAnswerAtOnce() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func worldClockPlaytimeToolboxAndVitalsAnswerAtOnce() async throws {
         try await install("world-clock", "playtime", "dev-toolbox", "system-vitals")
         #expect(await answer("what time is it in Tokyo")?.contains("Tokyo") == true)
         let number = try #require(await answer("pick a number between 1 and 6"))
@@ -78,7 +79,8 @@ import Testing
         await runtime.extensions.shutdown()
     }
 
-    @Test func currencyAndUnitsNeverClaimTheSameSentence() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func currencyAndUnitsNeverClaimTheSameSentence() async throws {
         try await install("calculator", "currency")
         func tool(_ text: String) async -> String? {
             guard case .extensionCommand(let call)? = await runner.parse(text)?.intent else { return nil }

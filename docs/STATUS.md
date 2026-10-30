@@ -1,6 +1,9 @@
 # Status
 
-Updated: 2026-10-30. Version 0.1.0. Latest: the founder's list after snapshot 478: other agents change and
+Updated: 2026-10-30. Version 0.1.0. Latest: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
+extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
+published yet: the founder runs scripts/publish.sh there). 1373 core and 34 character tests pass, serially.
+Before that: the founder's list after snapshot 478: other agents change and
 delete notes, with Settings › Privacy › Other agents choosing what they may do; Empty Trash; Light, Dark or Same
 as Mac; spoken replies briefly or in full; releases only by default, offered again daily (D52); 3D companions
 that really sleep; a notebook with collection icons, emoji and colours, pinned notes and notes formatted as you
@@ -9,6 +12,22 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **The add-on gallery (D55):** built in now are Mochi, Spark, the robot, the folks and four extensions (World
+  Clock, Calculator, System Vitals, Weather). Ember, Kiko, Nimbo, Folio and Git, Currency, Playtime, Images, PDF
+  Tools, QR Codes, Archives, Dev Toolbox and Feeds are packs in `sidefolk-addons` (`scripts/build.py` signs each
+  and the catalog with the Developer ID; `scripts/publish.sh` uploads them to its `gallery` release). Settings ›
+  Companion shows the gallery's companions as dashed cards with the seal and size (a click downloads and picks
+  one; Control-click removes); Settings › Extensions › Gallery lists the extensions (Get → the install preview,
+  Update, Added). Moved built-ins already installed stay, as add-ons; a chosen companion that moved comes back by
+  itself. *Checked:* AddonStoreTests (catalog rules, a companion installed, replaced and removed, packs that
+  aren't what the catalog says, the real signed packs from `sidefolk-addons/dist` through the real check, another
+  team refused, adoption of moved built-ins, the AI's line); the moved extensions' sandbox tests against the
+  sibling checkout, skipped cleanly without it; in the dev app with `SIDEFOLK_ADDONS=…/dist`: Ember (chosen
+  before) came back from the signed pack and drew in 3D, the companion gallery and the extensions Gallery shown.
+  *Not yet:* the `gallery` release isn't published, so a copy built now finds no gallery online until the
+  founder runs `scripts/publish.sh` in sidefolk-addons; clicking Get in the native window wasn't driven by hand
+  (the same code ran from launch and in tests); the add-ons repo's CI only builds and tests (signing stays on the
+  founder's Mac).
 - **Profile pictures; folks are helpers only (D54):** six profile pictures (Codex image gen from each 3D render
   and sheet) in the Ask panel's header and beside each reply in Home › Conversations; 2D and custom companions
   show their drawn face on a disc. Folks are no longer in the companion gallery; a saved folk becomes Mochi.

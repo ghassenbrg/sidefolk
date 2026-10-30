@@ -4,6 +4,10 @@ A brainstorm for the founder (2026-10-30), not a decision. Two asks: anyone can 
 or one someone else made (an extension could bring one); and Sidefolk ships only a few companions built in and
 downloads the rest, so nobody carries models they never use.
 
+*Update (2026-10-30): step 2 is built ahead of step 1 (D55).* The gallery lives in `sidefolk-addons` with Sidefolk's
+own companions (Ember, Kiko, Nimbo, Folio) and nine extensions. Packs and the catalog are signed with the Developer
+ID rather than a new Ed25519 key. Our 3D characters still carry code, so community 3D companions wait for step 1.
+
 ## Where things stand
 
 - **2D, made by you (D43):** a folder with `species.json` and SVG parts in `<home>/companions/` or inside an
@@ -87,10 +91,11 @@ Settings › Companion gains **Get more**: a gallery read from a signed catalog,
   `character.json`, the extension manifest), the loader, `sidefolk companion validate` and `sidefolk ext validate`,
   the gallery in Settings, the built-in companions and the bundled extensions. A format change edits the loader,
   the validator and our own characters in one commit, tested together.
-- **`sidefolk-addons` (one public repository, made at step 2) holds** community content: `companions/` and
-  `extensions/`, the signed catalog, and CI that validates each pull request and renders the contact sheet.
-  Built packs are published on its GitHub Releases, and only sources stay in git (`.glb` in Git LFS). Ember,
-  Kiko, Nimbo and Folio move there when they leave the app, as the example packs.
+- **`sidefolk-addons` (one public repository, made with D55) holds** every add-on, Sidefolk's own and later the
+  community's: `companions/` and `extensions/`, the signed catalog, and CI that builds and tests each pull request
+  (the contact sheet comes with community packs). Built packs are published on its `gallery` release, and only
+  sources stay in git (plain git for now, about 19 MB; Git LFS if it grows). Ember, Kiko, Nimbo and Folio are
+  there, as the example packs.
 - **Why it's apart from the app:**
   - Strangers' pull requests stay away from the repository that builds and signs the app.
   - The catalog updates without an app release.

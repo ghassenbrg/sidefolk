@@ -41,7 +41,9 @@ choose *Only when needed* or *Menu bar only*.
 
 <p align="center"><img src="Resources/Character/companions.png" width="760" alt="The thirteen companions: Mochi, Sidefolk, Spark, Pip, Byte, Seed, Melody, Scout, Tempo, Play, Guard, Nova and Brew"></p>
 
-Pick your companion in **Settings › Companion**, name it, and give it a colour and a scarf. Every
+Pick your companion in **Settings › Companion**, name it, and give it a colour and a scarf. Mochi and
+Spark come in 3D or 2D; Ember (a fox), Kiko (a young astronaut), Nimbo (a cloud) and Folio (a paper
+wish) are 3D companions from the add-on gallery, downloaded when you pick one (2 to 3.4 MB). Every
 companion is drawn live, so each one has every pose: listening, thinking, working with a prop that
 says what it's doing, waiting, happy, worried, asleep. You can also make your own: a companion is a
 folder with a `species.json` and SVG shapes, read as data and never run (`companions/template/` and
@@ -144,7 +146,7 @@ turn that off), and asks before installing one.
 | Sidefolk's version | GitHub (api.github.com) | Once a day while "Check for updates automatically" is on, and when you click Check for Updates |
 | A request for the list of models, or one tiny test prompt | Your AI provider | When you pick a provider in Settings, or click **Test** |
 | The words your companion says aloud | ElevenLabs (api.elevenlabs.io), with your key | Only if you choose an ElevenLabs voice |
-| Whatever that extension sends | The internet | Only extensions you allowed to use the internet. The built-in Git extension clones the repositories you ask for. |
+| Whatever that extension sends | The internet | Only extensions you allowed to use the internet. Git, from the add-on gallery, clones the repositories you ask for. |
 | Whatever that server does | Anywhere | MCP servers you add yourself run outside Sidefolk's sandbox, and are labelled so |
 
 What stays on your Mac:
@@ -187,9 +189,8 @@ effort where the model accepts one. **Test** sends one tiny real request.
 
 - A Mac with Apple silicon, macOS 15 or later.
 - Optional, for AI: the `claude` or `codex` command signed in, an API key, or Ollama or LM Studio.
-- Optional, for the built-in extensions (Git, World Clock, System Vitals, Weather): Python 3 and git
-  from Apple's Command Line Tools (`xcode-select --install`) or Homebrew. Without them, Settings ›
-  Extensions says what's missing; everything else works.
+- Optional, for the Git extension from the add-on gallery: git from Apple's Command Line Tools
+  (`xcode-select --install`) or Homebrew. The built-in extensions need nothing installed.
 - Optional, for voice: macOS 26 or later for Apple's newer speech recognition. macOS 15 uses the older
   on-device recognizer, labelled "basic".
 
@@ -225,9 +226,12 @@ manifest and a small program that speaks [MCP](https://modelcontextprotocol.io).
 macOS sandbox built from what the manifest asks for, and shows you those permissions in plain words
 before you install it.
 
-- **Built in:** Git (clone a public repository into a folder you name, status, pull, log), World Clock,
-  System Vitals and Weather (forecasts and a rain watcher; only the place you ask about goes to
-  Open-Meteo). All four start on, and you can switch any of them off.
+- **Built in:** World Clock, Calculator, System Vitals and Weather (forecasts and a rain watcher; only
+  the place you ask about goes to Open-Meteo). All four start on, and you can switch any of them off.
+- **From the gallery:** Settings › Extensions › Gallery lists Sidefolk's other extensions (Git, Currency,
+  Images, PDF Tools, QR Codes, Archives, Feeds, Dev Toolbox, Playtime), each downloaded only when you
+  click Get. They are published in [sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons) and
+  signed by Sidefolk's developer; Sidefolk checks the signature and shows you the usual install sheet.
 - **Install one:** Settings › Extensions › Install from folder…, or drop the folder on the companion.
 - **Add an MCP server you already use:** Settings › Extensions › Add MCP Server. It runs outside the
   sandbox and is labelled that way.

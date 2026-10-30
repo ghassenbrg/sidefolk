@@ -7,9 +7,10 @@ import Testing
 /// place and not the other.
 struct BuiltInExtensionWordsTests {
     @Test func everyBuiltInWordMatchesItsManifestInEnglish() throws {
-        #expect(ExtFixtures.builtInFolders.count >= 13)
-        for folder in ExtFixtures.builtInFolders {
-            let url = ExtFixtures.repoRoot.appendingPathComponent("extensions/\(folder)/\(ExtensionManifest.fileName)")
+        // The gallery's too: Sidefolk's own add-ons are translated in the app (D55), when a checkout of them is here.
+        #expect(ExtFixtures.builtInFolders.count == 4)
+        for folder in ExtFixtures.builtInFolders + ExtFixtures.addonFolders {
+            let url = ExtFixtures.source(folder).appendingPathComponent(ExtensionManifest.fileName)
             let manifest = try ExtensionManifest.decode(try Data(contentsOf: url))
             #expect(BuiltInExtensionWords.name(manifest.id) == manifest.name, "\(folder)")
             #expect(BuiltInExtensionWords.description(manifest.id) == manifest.description, "\(folder)")

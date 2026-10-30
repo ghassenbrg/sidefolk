@@ -261,10 +261,10 @@ import Testing
 /// Sidefolk's word for its own programs (`BuiltInServices`) is checked against their code.
 @Suite struct BuiltInServicesTests {
     @Test func eachServiceProgramReachesOnlyItsListedHosts() throws {
-        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent()
         for (id, service) in BuiltInServices.byExtension {
-            let folder = root.appendingPathComponent("extensions/\(id.split(separator: ".").last!)/Sources")
+            // Currency is in the add-on gallery (D55): read when a checkout of it is beside this one.
+            let folder = ExtFixtures.source(String(id.split(separator: ".").last!)).appendingPathComponent("Sources")
+            guard FileManager.default.fileExists(atPath: folder.path) else { continue }
             let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil).filter { $0.pathExtension == "swift" }
             #expect(!files.isEmpty, "\(id) has no sources at \(folder.path)")
             var found: Set<String> = []

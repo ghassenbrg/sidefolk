@@ -76,6 +76,8 @@ final class SettingsModel {
     /// The install preview on screen, from a folder, a sample, a draft, or Sidefolk handing one over.
     var installPreview: ExtensionInstallPreview?
     private(set) var skills: [SkillInfo] = []
+    /// Companions and extensions from the add-on gallery (D55).
+    @ObservationIgnored private(set) lazy var gallery = AddonGalleryModel(parent: self)
     private(set) var integration: IntegrationStatus?
     private(set) var extensionError: UserFacingError?
     private(set) var integrationError: UserFacingError?

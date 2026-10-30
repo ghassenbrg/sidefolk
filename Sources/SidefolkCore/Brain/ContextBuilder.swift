@@ -26,15 +26,19 @@ public struct ContextSources: Sendable {
     /// Built-in extensions installed but switched off, one line each (`ExtensionContext.switchedOff`): what the AI
     /// can suggest switching on, at a line's cost instead of every tool's.
     public var switchedOff: @Sendable () async -> [String]
+    /// Sidefolk's own extensions in the add-on gallery that aren't installed (`ExtensionContext.inGallery`, D55).
+    public var inGallery: @Sendable () async -> [String]
 
     public init(frontmostApp: @escaping @Sendable () async -> FrontmostApp? = { nil },
                 liveState: @escaping @Sendable () async -> String? = { nil },
                 skills: @escaping @Sendable () async -> [SkillSummary] = { [] },
-                switchedOff: @escaping @Sendable () async -> [String] = { [] }) {
+                switchedOff: @escaping @Sendable () async -> [String] = { [] },
+                inGallery: @escaping @Sendable () async -> [String] = { [] }) {
         self.frontmostApp = frontmostApp
         self.liveState = liveState
         self.skills = skills
         self.switchedOff = switchedOff
+        self.inGallery = inGallery
     }
 }
 
@@ -89,7 +93,7 @@ public struct ContextBuilder: Sendable {
         let now = clock.now
         let budget = thinkHarder ? budgets.thinkHarderSystem : budgets.system
         let frontmost = await sources.frontmostApp()
-        let core = [Self.persona(name: settings.companionName), Self.rules, Self.reach(tools, switchedOff: await sources.switchedOff()),
+        let core = [Self.persona(name: settings.companionName), Self.rules, Self.reach(tools, switchedOff: await sources.switchedOff(), inGallery: await sources.inGallery()),
                     Self.environment(now: now, timeZone: timeZone, settings: settings, frontmost: frontmost)]
             + (spoken ? [Self.spokenRequest] : [])
         var parts = [core.joined(separator: "\n\n")]
@@ -189,7 +193,7 @@ public struct ContextBuilder: Sendable {
 
     /// What the model can and can't reach on this Mac, from the tools it is offered, so it says plainly
     /// what it can't do instead of opening an app and sending the user off to do it by hand (DECISIONS D38).
-    static func reach(_ tools: [ToolSpec], switchedOff: [String] = []) -> String {
+    static func reach(_ tools: [ToolSpec], switchedOff: [String] = [], inGallery: [String] = []) -> String {
         let names = Set(tools.map(\.name))
         var apps: [String] = []
         if names.contains("applenotes.list") {
@@ -218,6 +222,10 @@ public struct ContextBuilder: Sendable {
         if !switchedOff.isEmpty {
             lines.append("- Built-in extensions the user has switched off (Settings › Extensions): " + switchedOff.joined(separator: "; ")
                 + ". When one of them would do what the user asks, say which, and that they can switch it on there; you can't use it until they do.")
+        }
+        if !inGallery.isEmpty {
+            lines.append("- Sidefolk extensions the user hasn't added (Settings › Extensions › Gallery): " + inGallery.joined(separator: "; ")
+                + ". When one of them would do what the user asks, say which, and that they can add it there; you can't use it until they do.")
         }
         return lines.joined(separator: "\n")
     }

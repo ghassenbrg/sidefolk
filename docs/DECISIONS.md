@@ -1218,3 +1218,50 @@ move to Mochi, keeping a name the person gave it.
 conversations; and saw no need for folks as companions now that there are six designed ones.
 **Implications:** `CompanionChoice.isFolk`, `AppSettings.choose` ignores folks; `CompanionArt.offered` leaves them
 out. Supersedes the part of D30 that offered folks as companions.
+
+### D55 — The add-on gallery: Ember, Kiko, Nimbo, Folio and nine extensions download on demand (2026-10-30)
+**Decision:** Sidefolk keeps built in only what it needs: Mochi and Spark (3D and 2D), the robot, the folks (helpers,
+D54), and four extensions (World Clock, Calculator, System Vitals, Weather). Everything else is an **add-on** in
+the public repository `ghassenbrg/sidefolk-addons`: the companions Ember, Kiko, Nimbo and Folio, and the extensions
+Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev Toolbox and Feeds. One repository holds every
+add-on, Sidefolk's own and later anyone else's, each with its author; Sidefolk's own carry a seal ("Made by
+Sidefolk", ids under `dev.sidefolk.`).
+- **Packs.** `scripts/build.py` there wraps each add-on as a bundle, `<name>.sidefolkaddon/Contents/{Info.plist,
+  Resources/…}`, signed as a whole with Sidefolk's Developer ID (codesign seals every file; extension programs are
+  signed on their own too, with the hardened runtime), and zipped. The catalog is a pack of its own
+  (`dev.sidefolk.addons.catalog`: `catalog.json` and previews). `scripts/publish.sh` uploads them to the
+  `gallery` release, packs first and the catalog last.
+- **What Sidefolk checks** (`AddonStore`): the catalog's and every pack's signature, strictly, against a Developer
+  ID Application certificate of the team the app's Info.plist names (`SidefolkAddonsTeam`) and the exact
+  identifier asked for; a pack's size and SHA-256 against the (signed) catalog, and its Info.plist's id and version;
+  a companion's files are exactly its four (`characters/<name>.js`, `assets/<name>.glb`, `portraits/`, `avatars/`).
+  Entries that are malformed or need a newer Sidefolk or 3D engine are left out. Downloads come only from
+  `github.com` and GitHub's file hosts, as updates do (T31); the last good catalog stays for offline use.
+- **Companions** download when picked in Settings › Companion (dashed cards with the seal and the size), install
+  into `<home>/Addons/Companions/<name>/`, and the 3D page reads them beside the app's own; Control-click removes
+  one (the one in use gives way to Mochi). A companion chosen before it moved, or whose files went missing, is
+  fetched again by itself at launch; Mochi stands in meanwhile.
+- **Extensions** are listed in Settings › Extensions › Gallery (beside Installed). Get downloads and checks the
+  pack, then opens the usual install preview; installed, they are origin `official`: first-party like a built-in
+  (their descriptions, translated words and services count, D39 and D47), but the person's to remove, and updated
+  from the gallery (Update), never by themselves. Built-ins an earlier version installed and this one doesn't ship
+  stay installed and become `official` (`ExtensionHost.adopt`).
+- **The AI** hears of Sidefolk's own extensions that aren't added, one line each, so it can say "Currency would do
+  that; add it in Settings › Extensions › Gallery" (only official entries: their words are Sidefolk's).
+**Why:** the founder wants companions and extensions outside the app so nobody carries what they don't use, a
+place to browse and add them, and one repository for official and community add-ons. The DMG loses about 20 MB
+(the four companions' models and pictures, and nine programs). *Signing with the Developer ID* rather than a new
+Ed25519 key (docs/research/companion-marketplace.md): it needs no second secret, matches how updates are trusted
+(D46, T31), and codesign already seals whole folders; a stolen GitHub account alone can't publish a pack that
+passes. *Extensions keep the install preview* because one can act for the person; a companion only draws.
+*Alternatives:* two repositories (sidefolk-companions, sidefolk-extensions) share everything but the folder;
+a catalog JSON on raw.githubusercontent.com without a signature (anyone with the account could change it);
+community 3D characters now (their character files are code: they wait for the data-only format, step 1 of the
+brainstorm).
+**Implications:** `AddonCatalog`, `AddonSource`, `AddonStore`, `AddonCodeCheck`, `ExtensionOrigin.official`
+(`firstParty`), `ExtensionHost.adopt`, `SidefolkPaths.addons`, `ContextSources.inGallery`; app: `AddonGalleryModel`,
+`GalleryExtensionsView`, `GalleryCompanionCard`, `CompanionAddons`, `Companion3DStage.has/file`; Info.plist
+`SidefolkAddons` and `SidefolkAddonsTeam`; `SIDEFOLK_ADDONS=<folder>` points a non-release copy at a local build.
+Tests of the moved extensions stay here and run against a built sidefolk-addons checkout beside this one
+(`SIDEFOLK_ADDONS_REPO`), skipped without one; their pure logic tests moved there. SECURITY T33. Supersedes D51's
+"Ember, Kiko, Nimbo and Folio … join the gallery" as built-ins, and D39's list of built-ins.

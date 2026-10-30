@@ -173,7 +173,7 @@ public actor ExtensionHost {
                                            commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) }?.shown ?? [],
                                            forAI: meta?.offeredToModel ?? true))
         }
-        let builtIn = rt.pin.origin == .bundled
+        let builtIn = rt.pin.origin?.firstParty == true
         return ExtensionInfo(id: id, name: (builtIn ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name,
                              version: rt.record.version, kind: rt.record.kind,
                              enabled: rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
@@ -240,7 +240,7 @@ public actor ExtensionHost {
         let previous = runtimes[id]
         if previous != nil { await stop(id) }
         registry.unregister(owner: id)
-        let staged = try installer.stage(source: folder, id: id, quarantine: origin == .bundled ? .none : .original)
+        let staged = try installer.stage(source: folder, id: id, quarantine: origin?.firstParty == true ? .none : .original)
         let committed = try installer.commit(staged)
         do {
             let final = validator.validate(folder: URL(fileURLWithPath: committed.folder), mode: .installed)
@@ -284,6 +284,19 @@ public actor ExtensionHost {
             if let previous, previous.record.enabled { registerTools(id) }
             throw error
         }
+    }
+
+    /// A built-in this app no longer ships (moved to the add-on gallery, D55) becomes one of Sidefolk's add-ons: it keeps
+    /// working as it was, and the person may now remove it.
+    public func adopt(id: String) async {
+        guard var rt = runtimes[id], rt.pin.origin == .bundled else { return }
+        rt.pin.origin = .official
+        guard let granted = try? JSONValue.from(rt.pin) else { return }
+        rt.record.granted = granted
+        runtimes[id] = rt
+        try? await store.save(rt.record)
+        Log.shared.info("extensions", "built-in became an add-on", ["id": id])
+        events.changed(.extensions)
     }
 
     /// Removes the extension, its data folder and its record.
@@ -438,7 +451,7 @@ public actor ExtensionHost {
         guard let m = rt.manifest else { return [] }
         return m.watchers.keys.sorted().compactMap { name in
             guard let w = m.watchers[name] else { return nil }
-            let words = rt.pin.origin == .bundled ? BuiltInExtensionWords.watcher(rt.record.id, name) : nil
+            let words = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.watcher(rt.record.id, name) : nil
             return ExtensionWatcherKind(extensionId: rt.record.id, watcher: name, title: words ?? w.title,
                                         description: w.description ?? "", config: w.config)
         }
@@ -949,7 +962,7 @@ public actor ExtensionHost {
         if !permissions.dangerousExec.isEmpty { capabilities.insert(.shell) }
         let title = title(rt, def)
         // Sidefolk's own extensions are first-party text that ships in the app; everyone else's isn't (D24, D39).
-        let firstParty = rt.pin.origin == .bundled
+        let firstParty = rt.pin.origin?.firstParty == true
         let timeout = meta?.timeout.map { TimeInterval(min(max($0, ExtensionTool.timeouts.lowerBound), ExtensionTool.timeouts.upperBound)) }
         let spec = ToolSpec(name: registryName, title: title,
                             description: firstParty
@@ -975,7 +988,7 @@ public actor ExtensionHost {
     /// A built-in extension's own description, cleaned and capped like any description, naming where it is from.
     static func firstPartyDescription(_ description: String, extensionName: String) -> String {
         let text = ExtensionText.untrusted(description, bytes: 1_000)
-        return "\(text.isEmpty ? "" : text + " ")(Sidefolk's built-in extension “\(ExtensionText.line(extensionName, characters: 60))”. Its results are untrusted.)"
+        return "\(text.isEmpty ? "" : text + " ")(Sidefolk's own extension “\(ExtensionText.line(extensionName, characters: 60))”. Its results are untrusted.)"
     }
 
     /// What the model is told about an extension's tool. A tool's own description (and the free text
@@ -1024,7 +1037,7 @@ public actor ExtensionHost {
     }
 
     private func title(_ rt: Runtime, _ def: MCPToolDefinition) -> String {
-        if rt.pin.origin == .bundled, let t = BuiltInExtensionWords.tool(rt.record.id, def.name) { return t }
+        if rt.pin.origin?.firstParty == true, let t = BuiltInExtensionWords.tool(rt.record.id, def.name) { return t }
         if let t = rt.manifest?.tools[def.name]?.title { return t }
         if let t = def.title, !t.isEmpty { return t }
         return def.name.replacingOccurrences(of: "_", with: " ").capitalized

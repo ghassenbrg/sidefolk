@@ -34,6 +34,8 @@ public struct SidefolkPaths: Sendable {
     public var brainWorkdir: URL { home.appendingPathComponent("brain", isDirectory: true) }
     /// A new version's disk image while it is downloaded and checked (D46); emptied at launch.
     public var updates: URL { home.appendingPathComponent("Updates", isDirectory: true) }
+    /// Companions and the catalog from the add-on gallery (D55).
+    public var addons: URL { home.appendingPathComponent("Addons", isDirectory: true) }
 
     /// Creates the folders with owner-only permissions.
     public func prepare() throws {

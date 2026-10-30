@@ -15,7 +15,8 @@ extension AppCoordinator {
                 return lines.isEmpty ? nil : lines.joined(separator: "\n")
             },
             skills: { skills.index() },
-            switchedOff: { ExtensionContext.switchedOff(await extensions.extensions()) }
+            switchedOff: { ExtensionContext.switchedOff(await extensions.extensions()) },
+            inGallery: { [addons = runtime.addons] in ExtensionContext.inGallery(await addons.stored(), installed: await extensions.extensions()) }
         )
         let context = ContextBuilder(notebook: runtime.notebook, exchanges: runtime.exchanges, sources: sources)
         let paths = runtime.paths

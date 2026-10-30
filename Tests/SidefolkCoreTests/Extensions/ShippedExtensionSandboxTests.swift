@@ -74,7 +74,8 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
-    @Test func calculatorPlaytimeAndDevToolboxNeedNoPermission() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func calculatorPlaytimeAndDevToolboxNeedNoPermission() async throws {
         let h = try HostEnv()
         for folder in ["calculator", "playtime", "dev-toolbox"] {
             let info = try await h.host.install(from: ExtFixtures.builtIn(folder))
@@ -102,7 +103,8 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
-    @Test func imagesConvertIntoTheFolderNamedOnly() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func imagesConvertIntoTheFolderNamedOnly() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("images"))
         #expect(info.summary.texts.contains("Can use the Mac's graphics hardware for pictures"))
@@ -121,7 +123,8 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: appleGPU, "Core Image needs an Apple GPU (not a virtual machine's)"))
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons),
+          .enabled(if: appleGPU, "Core Image needs an Apple GPU (not a virtual machine's)"))
     func qrCodesAreMadeAndReadInTheSandbox() async throws {
         let h = try HostEnv()
         try await h.host.install(from: ExtFixtures.builtIn("qr-codes"))
@@ -134,7 +137,8 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
-    @Test func pdfToolsReadCombineAndExtract() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func pdfToolsReadCombineAndExtract() async throws {
         let h = try HostEnv()
         try await h.host.install(from: ExtFixtures.builtIn("pdf"))
         let work = try await Self.sharedFolder(h)
@@ -154,7 +158,8 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
-    @Test func archivesZipAndUnzipWithMacOSOwnTools() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func archivesZipAndUnzipWithMacOSOwnTools() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("archives"))
         #expect(info.summary.texts.contains("Can run /usr/bin/zip") && info.summary.texts.contains("Can run /usr/bin/ditto"))
@@ -173,7 +178,8 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: ExtFixtures.liveNetwork, "set SIDEFOLK_LIVE_NETWORK=1 to ask the ECB and swift.org"))
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons),
+          .enabled(if: ExtFixtures.liveNetwork, "set SIDEFOLK_LIVE_NETWORK=1 to ask the ECB and swift.org"))
     func currencyAndFeedsReachTheInternetFromTheirSandbox() async throws {
         let h = try HostEnv()
         try await h.host.install(from: ExtFixtures.builtIn("currency"))

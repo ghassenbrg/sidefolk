@@ -87,8 +87,9 @@ import Testing
         }
     }
 
-    /// The thirteen built-ins as installed, found by the words a person would try.
-    @Test func theShippedBuiltInsAreFoundByTheirToolsAndPermissions() async throws {
+    /// The built-ins and the gallery's extensions as installed, found by the words a person would try.
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func theShippedBuiltInsAreFoundByTheirToolsAndPermissions() async throws {
         struct Row: ExtensionListEntry {
             var info: ExtensionInfo
             var isOn: Bool { info.enabled }
@@ -97,6 +98,9 @@ import Testing
         let h = try HostEnv()
         let bundled = BundledExtensions(directory: ExtFixtures.builtIns)
         await bundled.install(into: h.host)
+        for folder in ExtFixtures.addonFolders {
+            try await h.host.install(from: ExtFixtures.builtIn(folder), origin: .official, enabled: !["pdf", "qr-codes", "archives", "dev-toolbox", "feeds"].contains(folder))
+        }
         let rows = await h.host.extensions().map(Row.init)
         await h.host.shutdown()
         func found(_ text: String) -> Set<String> {

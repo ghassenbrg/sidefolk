@@ -10,7 +10,8 @@ in a web view over an undrawn 2D stand-in rig. Everything lives in the repo:
 
 | Where | What |
 |---|---|
-| `Resources/Companions3D/` | Shipped runtime: `companion.html`, `engine/`, `characters/<id>.js`, `assets/<id>.glb`, `portraits/<id>.png` |
+| `Resources/Companions3D/` | Shipped runtime: `companion.html`, `engine/`, and the built-in companions' `characters/<id>.js`, `assets/<id>.glb`, `portraits/<id>.png`, `avatars/<id>.png` (Mochi, Spark) |
+| `../sidefolk-addons/companions/<id>/` | Every other 3D companion (D55): the same four files and `addon.json`, published as a signed pack; `companions-3d/serve.py` serves them beside the app's |
 | `companions-3d/` | Pipeline: `references/` (sheets, `prompts.json` with every prompt and Meshy task id), `meshy/<id>-front.png`, `blender/` (rig kit, `rig_<id>.py`, `measure.py`, `probe.py`, `look.py`), `playground/`, `serve.py` |
 | This skill's `templates/` | `rig_template.py`, `character_template.js` to start from |
 
@@ -95,7 +96,7 @@ Start from `templates/rig_template.py` (or the closest `rig_<id>.py`), save as
 `companions-3d/blender/rig_<id>.py`, write the measured numbers into its header comment, and run:
 
 ```sh
-blender -b -P companions-3d/blender/rig_<id>.py -- <model.glb> Resources/Companions3D/assets/<id>.glb /tmp/<id>/tests
+blender -b -P companions-3d/blender/rig_<id>.py -- <model.glb> ../sidefolk-addons/companions/<id>/assets/<id>.glb /tmp/<id>/tests
 ```
 
 Rules that came from mistakes:
@@ -113,9 +114,10 @@ Rules that came from mistakes:
 
 ## 5. Character file
 
-Start from `templates/character_template.js`, save as `Resources/Companions3D/characters/<id>.js`,
-and add `<id>` to `CHARACTERS` in `Resources/Companions3D/companion.html` and
-`companions-3d/playground/index.html`. Coordinates there are three.js: x = its left, **y up**,
+Start from `templates/character_template.js`. A new companion is an add-on (D55): save it as
+`../sidefolk-addons/companions/<id>/characters/<id>.js`, with its model at `assets/<id>.glb` beside it (and the
+portrait and profile picture below), and add `<id>` to `CHARACTERS` in `companions-3d/playground/index.html`.
+Only a companion meant to ship inside the app goes in `Resources/Companions3D/`. Coordinates there are three.js: x = its left, **y up**,
 **z toward the viewer** (Blender `(x, y, z)` → three `(x, z, -y)`; three y = Blender z).
 
 - **material**: `bodyMaterial` with a GLSL `surface` that classifies Meshy's texture into clean
@@ -146,13 +148,13 @@ placement, mouth, brows, blush and postures until it reads as the same character
 browser pane runs no animation frames while hidden: use `companion.step(seconds)` (renders), not
 waiting. Then save the portrait: `(await import('./sheet.js')).portrait(companion)` in a 512 px
 `?frame=sidefolk&capture` page (see how the existing ones were made in the README) and copy
-`build/companions-3d/portrait-<id>/00001.png` to `Resources/Companions3D/portraits/<id>.png`.
+`build/companions-3d/portrait-<id>/00001.png` to `portraits/<id>.png` in its add-on folder.
 
 **Profile picture** (D54): with `codex-imagegen`, `--ref` the new portrait, the sheet and
 `companions-3d/references/avatars/mochi-avatar.webp` (framing and finish only), and the avatar style sentence
 and a backdrop colour of its own from `prompts.json` › avatars. Keep the source as
 `references/avatars/<id>-avatar.webp`, and save a round 256 px crop on the face (the face must read at 26 points;
-see how the six were cut) as `Resources/Companions3D/avatars/<id>.png`. The Ask panel and Conversations show it.
+see how the six were cut) as `avatars/<id>.png` in its add-on folder. The Ask panel and Conversations show it.
 
 ## 7. Wire it into the app (3D-only companion)
 
@@ -163,6 +165,10 @@ see how the six were cut) as `Resources/Companions3D/avatars/<id>.png`. The Ask 
   silhouette (canvas units: one model unit = 87, floor at y = 20, centred at x = 100;
   `restingFrame` starts at y = 20).
 - `Sources/SidefolkApp/Companion/CompanionArt.swift`: `role` line.
+- The add-on: `../sidefolk-addons/companions/<id>/addon.json` (copy Ember's: id `dev.sidefolk.companions.<id>`,
+  name, tagline = the role line, a description true to the character, version, `engine`), then
+  `scripts/build.py` there (it checks the four files) and, once the founder agrees, `scripts/publish.sh`. The app
+  offers it only once a copy that knows the `CompanionChoice` case is out.
 - Strings: `bash scripts/strings.sh`, then translate every new string into the nine other
   languages in `Resources/Localization/Localizable.xcstrings` (state "translated"); rerun until
   every language shows the full count.

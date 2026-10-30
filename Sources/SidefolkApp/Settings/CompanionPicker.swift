@@ -159,17 +159,39 @@ struct CompanionPicker: View {
 
     // MARK: Everyone
 
+    /// Everyone on this Mac, then those in the add-on gallery not downloaded yet (D55): a click on one fetches it.
     private var gallery: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
-            ForEach(CompanionArt.offered, id: \.self) { choice in
-                CompanionCard(choice: choice,
-                              image: CompanionArt.preview(choice, style: settings.style(for: choice),
-                                                          threeD: CompanionArt.threeD(choice, in: settings), side: 84),
-                              selected: custom == nil && choice == chosen) {
-                    model.update { $0.choose(choice) }
+        let offered = CompanionArt.offered
+        let more = model.gallery.entries(.companion).filter { entry in
+            entry.companion.flatMap(CompanionChoice.init(rawValue:)).map { !offered.contains($0) } ?? false
+        }
+        let failures = model.gallery.entries(.companion).compactMap { model.gallery.failures[$0.id] }
+        return VStack(alignment: .leading, spacing: Theme.Space.s) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
+                ForEach(offered, id: \.self) { choice in
+                    CompanionCard(choice: choice,
+                                  image: CompanionArt.preview(choice, style: settings.style(for: choice),
+                                                              threeD: CompanionArt.threeD(choice, in: settings), side: 84),
+                                  selected: custom == nil && choice == chosen) {
+                        model.update { $0.choose(choice) }
+                    }
+                    .contextMenu {
+                        if model.gallery.companions.contains(where: { $0.companion == choice.rawValue }) {
+                            Button("Remove \(choice.defaultName)") { Task { await model.gallery.remove(companion: choice.rawValue) } }
+                        }
+                    }
                 }
+                ForEach(more) { entry in GalleryCompanionCard(entry: entry, model: model) }
+            }
+            ForEach(failures, id: \.message) { InlineError(error: $0) }
+            if !more.isEmpty || !model.gallery.companions.isEmpty {
+                Text("Companions from the add-on gallery download when you pick them. To remove one, Control-click it.")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, Theme.Space.xs)
             }
         }
+        .task { await model.gallery.load() }
     }
 
     static func title(_ accessory: CompanionAccessory) -> LocalizedStringKey {

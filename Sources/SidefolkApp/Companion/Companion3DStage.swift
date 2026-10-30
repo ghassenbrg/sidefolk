@@ -5,7 +5,8 @@ import WebKit
 /// A 3D companion (D51): a transparent WebGL view laid over the companion's 2D rig, which still
 /// runs, undrawn, underneath. The rig keeps Sidefolk's states, idle life, clicks, petting and
 /// bubble anchors; every cue it hears (`CharacterView.onCue`) is replayed here, where the 3D
-/// character acts it out. The page and models live in `Resources/Companions3D`.
+/// character acts it out. The page and models live in `Resources/Companions3D`; companions from the add-on
+/// gallery (D55) bring their own character, model and pictures, served beside them.
 final class Companion3DStage: NSView {
     private let web: WKWebView
     private var ready = false
@@ -30,17 +31,31 @@ final class Companion3DStage: NSView {
 
     /// The still Settings shows for a companion drawn in 3D.
     static func portrait(_ species: CharacterSpecies) -> NSImage? {
-        folder.flatMap { NSImage(contentsOf: $0.appendingPathComponent("portraits/\(species.rawValue).png")) }
+        file("portraits/\(species.rawValue).png").flatMap(NSImage.init(contentsOf:))
     }
 
     /// Its profile picture: head and shoulders on its own colour, round (companions-3d/references/avatars).
     static func avatar(_ species: CharacterSpecies) -> NSImage? {
-        folder.flatMap { NSImage(contentsOf: $0.appendingPathComponent("avatars/\(species.rawValue).png")) }
+        file("avatars/\(species.rawValue).png").flatMap(NSImage.init(contentsOf:))
     }
 
-    /// Nil when the app has no 3D resources or the species has no 3D character.
+    /// Whether this Mac has `species`' 3D character: in the app, or installed from the gallery.
+    static func has(_ species: CharacterSpecies) -> Bool {
+        species.has3D && folder != nil && file("characters/\(species.rawValue).js") != nil
+    }
+
+    /// One of the page's files: the app's own, else an installed companion's (`characters/<name>.js`…).
+    static func file(_ path: String, root: URL? = folder) -> URL? {
+        if let root {
+            let own = root.appendingPathComponent(path)
+            if FileManager.default.fileExists(atPath: own.path) { return own }
+        }
+        return CompanionAddons.file(path)
+    }
+
+    /// Nil when the app has no 3D resources or this Mac doesn't have the species' 3D character.
     init?(_ species: CharacterSpecies, folder: URL? = Companion3DStage.folder) {
-        guard let folder, species.has3D else { return nil }
+        guard let folder, species.has3D, Self.file("characters/\(species.rawValue).js", root: folder) != nil else { return nil }
         self.species = species
         let frame = NSRect(x: 0, y: 0, width: 100, height: 100)
         let config = WKWebViewConfiguration()
@@ -83,7 +98,7 @@ final class Companion3DStage: NSView {
     /// Swaps the character inside the running page: the one shown stays until the next one has
     /// drawn, so switching between 3D companions never shows an empty or 2D window.
     func show(_ next: CharacterSpecies) {
-        guard next != species, next.has3D else { return }
+        guard next != species, Self.has(next) else { return }
         species = next
         send(["kind": "character", "id": next.rawValue])
     }
@@ -163,7 +178,8 @@ private final class PassThroughWebView: WKWebView {
     override var acceptsFirstResponder: Bool { false }
 }
 
-/// Serves files under `root` for `companion3d://app/<path>`; nothing outside it.
+/// Serves files under `root` for `companion3d://app/<path>`, and an installed companion's own files
+/// (`CompanionAddons.file`); nothing else.
 private final class FolderSchemeHandler: NSObject, WKURLSchemeHandler {
     let root: URL
 
@@ -171,8 +187,11 @@ private final class FolderSchemeHandler: NSObject, WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, start task: any WKURLSchemeTask) {
         guard let url = task.request.url else { return }
-        let file = root.appendingPathComponent(String(url.path.drop { $0 == "/" })).standardizedFileURL
-        guard file.path.hasPrefix(root.path + "/"), let data = try? Data(contentsOf: file) else {
+        let path = String(url.path.drop { $0 == "/" })
+        var file = root.appendingPathComponent(path).standardizedFileURL
+        if !FileManager.default.fileExists(atPath: file.path), let addon = CompanionAddons.file(path) { file = addon }
+        guard file.path.hasPrefix(root.path + "/") || CompanionAddons.file(path) == file,
+              let data = try? Data(contentsOf: file) else {
             task.didFailWithError(URLError(.fileDoesNotExist))
             return
         }

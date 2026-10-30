@@ -2,11 +2,9 @@
 import PackageDescription
 
 /// The extensions that ship with Sidefolk (extensions/catalog.json): one small program each, built with the app and
-/// signed inside it, so they need nothing installed on the Mac (D39, amended 2026-10-27).
-let builtInExtensions = [
-    "git", "world-clock", "system-vitals", "weather", "calculator", "currency", "playtime", "images", "pdf", "qr-codes", "archives",
-    "dev-toolbox", "feeds",
-]
+/// signed inside it, so they need nothing installed on the Mac (D39, amended 2026-10-27). The rest are in the add-on
+/// gallery, built and signed in the sidefolk-addons repository (D55).
+let builtInExtensions = ["world-clock", "system-vitals", "weather", "calculator"]
 
 let package = Package(
     name: "Sidefolk",

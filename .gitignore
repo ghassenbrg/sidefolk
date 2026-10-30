@@ -24,3 +24,4 @@ __pycache__/
 
 # Claude's experiments and history for the 3D companions (the shipped pipeline is companions-3d/)
 sandbox-claude/
+.addons/

@@ -91,6 +91,7 @@ final class AppCoordinator {
         companion.delegate = self
         applyCompanionSettings()
         applyAppearance()
+        restoreCompanionAddon()
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
                                                           object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyCompanionSettings() }
@@ -194,6 +195,25 @@ final class AppCoordinator {
     }
 
     // MARK: Companion
+
+    /// A companion chosen before it moved to the add-on gallery (D55), or whose files went missing, comes back by
+    /// itself: the person chose it. Mochi stands in until it has arrived.
+    private func restoreCompanionAddon() {
+        let s = runtime.settings.current
+        let species = CompanionArt.species(s.companion)
+        guard s.customCompanion == nil, species.only3D, !Companion3DStage.has(species) else { return }
+        let addons = runtime.addons, name = s.companion.rawValue
+        Task {
+            do {
+                guard let entry = try await addons.catalog().companion(name) else { return }
+                try await addons.install(companion: entry)
+                CompanionArt.forgetPictures()
+                settingsChanged()
+            } catch {
+                Log.shared.warning("addons", "chosen companion not restored", ["companion": name, "error": String(describing: error)])
+            }
+        }
+    }
 
     func applyCompanionSettings() {
         let s = runtime.settings.current

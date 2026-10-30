@@ -99,9 +99,19 @@ public enum ExtensionContext {
     /// "PDF Tools (A PDF's details and text, …)" for each built-in that is installed but off. Their words ship in the
     /// signed app (D39), so they may reach the model; anyone else's extension never appears here.
     public static func switchedOff(_ installed: [ExtensionInfo]) -> [String] {
-        installed.filter { $0.origin == .bundled && !$0.enabled }.sorted { $0.name < $1.name }.map { e in
+        installed.filter { $0.origin?.firstParty == true && !$0.enabled }.sorted { $0.name < $1.name }.map { e in
             "\(ExtensionText.line(e.name, characters: 40))" + (e.description.map { " (\(ExtensionText.line($0, characters: 110)))" } ?? "")
         }
+    }
+
+    /// "Currency (Money in 30 currencies at today's rates)" for each of Sidefolk's own extensions in the gallery that
+    /// isn't installed (D55). Only official entries: their words are Sidefolk's, from the signed catalog.
+    public static func inGallery(_ catalog: AddonCatalog?, installed: [ExtensionInfo]) -> [String] {
+        let have = Set(installed.map(\.id))
+        return (catalog?.addons ?? []).filter { $0.kind == .extension && $0.official && !have.contains($0.id) }
+            .sorted { $0.name < $1.name }.prefix(16).map { e in
+                ExtensionText.line(e.name, characters: 40) + (e.tagline.isEmpty ? "" : " (\(ExtensionText.line(e.tagline, characters: 80)))")
+            }
     }
 
     public static func watcherLines(_ kinds: [ExtensionWatcherKind]) -> String? {

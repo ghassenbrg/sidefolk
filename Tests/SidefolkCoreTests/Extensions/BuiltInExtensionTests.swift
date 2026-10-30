@@ -35,7 +35,8 @@ struct BuiltInExtensionTests {
         return repo
     }
 
-    @Test(.enabled(if: ExtFixtures.git != nil, noGit))
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons),
+          .enabled(if: ExtFixtures.git != nil, noGit))
     func gitReadsOnlyTheFolderACallNames() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("git"))
@@ -70,7 +71,8 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: ExtFixtures.git != nil, noGit))
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons),
+          .enabled(if: ExtFixtures.git != nil, noGit))
     func cloneRefusesWhatItCantDoWithoutTouchingTheNetwork() async throws {
         let h = try HostEnv()
         try await h.host.install(from: ExtFixtures.builtIn("git"))
@@ -95,7 +97,8 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: ExtFixtures.liveNetwork && ExtFixtures.git != nil, "set SIDEFOLK_LIVE_NETWORK=1 to clone from GitHub"))
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons),
+          .enabled(if: ExtFixtures.liveNetwork && ExtFixtures.git != nil, "set SIDEFOLK_LIVE_NETWORK=1 to clone from GitHub"))
     func clonesAPublicRepositoryIntoTheNamedFolder() async throws {
         let h = try HostEnv()
         try await h.host.install(from: ExtFixtures.builtIn("git"))
@@ -139,7 +142,8 @@ struct BuiltInExtensionTests {
     /// The founder's request, "please clone this repository under ~/git", through the agent loop with a
     /// scripted model: the folder card, then the action card, then the clone in its own sandbox. Offline,
     /// the destination is taken, so git is never reached; with SIDEFOLK_LIVE_NETWORK=1 it really clones.
-    @Test(.enabled(if: ExtFixtures.git != nil, noGit), arguments: [false, true])
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons),
+          .enabled(if: ExtFixtures.git != nil, noGit), arguments: [false, true])
     func theFoundersRequestClonesBehindTwoApprovals(live: Bool) async throws {
         guard !live || ExtFixtures.liveNetwork else { return }
         let h = try HostEnv()
@@ -219,17 +223,17 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: ExtFixtures.git != nil, noGit))
-    func theShippedCatalogInstallsAsFirstParty() async throws {
+    @Test func theShippedCatalogInstallsAsFirstParty() async throws {
         let h = try HostEnv()
         let bundled = BundledExtensions(directory: ExtFixtures.builtIns)
-        let ids = ["git", "world-clock", "system-vitals", "weather", "calculator", "currency", "playtime", "images", "pdf", "qr-codes",
-                   "archives", "dev-toolbox", "feeds"].map { "dev.sidefolk." + $0 }
+        // The rest are in the add-on gallery (D55).
+        let ids = ["world-clock", "system-vitals", "weather", "calculator"].map { "dev.sidefolk." + $0 }
         #expect(bundled.entries().map(\.id) == ids)
-        let on = Set(["git", "world-clock", "system-vitals", "weather", "calculator", "currency", "playtime", "images"].map { "dev.sidefolk." + $0 })
+        let on = Set(ids)
         #expect(bundled.entries().map(\.on) == ids.map(on.contains))
         #expect(Set(ExtFixtures.builtInFolders) == Set(bundled.entries().map(\.folder.lastPathComponent)), "every program ships, and only those")
-        #expect(bundled.samples().isEmpty, "the Python sample stays in the repository")
+        #expect(Set(bundled.samples().map(\.lastPathComponent)) == Set(ExtFixtures.addonFolders),
+                "the Python sample stays in the repository (the gallery's extensions sit beside the built-ins in these tests)")
         await bundled.install(into: h.host)
         #expect(bundled.unavailable.isEmpty, "\(bundled.unavailable)")
         let installed = await h.host.extensions()
@@ -237,12 +241,10 @@ struct BuiltInExtensionTests {
         #expect(installed.allSatisfy { $0.origin == .bundled && $0.iconPath != nil })
         #expect(Set(installed.filter(\.enabled).map(\.id)) == on, "the catalog decides what starts on")
         // Their own descriptions and schema reach the model: first-party text from the app (D39), unlike D24's rule.
-        let clone = try #require(h.env.registry.tool(named: "ext.git.clone")?.spec)
-        #expect(clone.description.contains("Clones a public Git repository"))
-        #expect(clone.description.contains("Sidefolk's built-in extension “Git”"))
-        #expect(clone.inputSchema["properties"]?["url"]?["description"] != nil)
-        #expect(clone.timeout == 305)
-        await #expect(throws: UserFacingError.self) { try await h.host.uninstall(id: "dev.sidefolk.git") }
+        let time = try #require(h.env.registry.tool(named: "ext.world-clock.current_time")?.spec)
+        #expect(time.description.contains("Sidefolk's own extension “World Clock”"), "\(time.description)")
+        #expect(time.inputSchema["properties"]?["places"]?["description"] != nil)
+        await #expect(throws: UserFacingError.self) { try await h.host.uninstall(id: "dev.sidefolk.world-clock") }
         await h.host.shutdown()
     }
 }

@@ -6,6 +6,12 @@ public enum ExtensionOrigin: String, Codable, Sendable, Hashable {
     case bundled
     /// Written by Sidefolk's AI for the person in the drafts folder, installed once they approved it (D39).
     case draft
+    /// Sidefolk's own, from the add-on gallery: signed by Sidefolk's developer, checked, and installed once the
+    /// person approved it (D55). First-party like a built-in, but theirs to remove.
+    case official
+
+    /// Sidefolk's own code: its descriptions and translated words are used, and its services trusted (D39, D47).
+    public var firstParty: Bool { self == .bundled || self == .official }
 }
 
 /// What Sidefolk pinned when the user installed an extension or added an MCP server. Stored as JSON in

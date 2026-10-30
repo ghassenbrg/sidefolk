@@ -661,6 +661,30 @@ only thing it believes about a download is its signature:
 from the release page); the Developer ID certificate expires on 2027-02-01, and its replacement keeps the team,
 so updates carry on.
 
+**T33 Add-ons from the gallery (M/H), D55.** Companions and extensions are downloaded from the `gallery` release
+of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed about a download but its signature:
+- *Where from.* Only `github.com` and GitHub's file hosts over https, redirects included, in an ephemeral session;
+  a file larger than the catalog says is cut off. The request carries Sidefolk's version and nothing about the
+  person; the catalog is fetched when the person opens a gallery, or at launch when their chosen companion is
+  missing.
+- *The catalog* is itself a signed bundle (`dev.sidefolk.addons.catalog`). Every pack must be signed, strictly and
+  over every file, with a Developer ID Application certificate of the team in the app's own Info.plist, and carry
+  the exact identifier the catalog lists; its size and SHA-256 must match the catalog, and its Info.plist the id and
+  version. A pack that is another signed pack can't stand in for the one asked for. Folder paths in the catalog are
+  never used: files are named by pattern (`<name>-<version>.zip`, `previews/<name>.png|pdf`).
+- *Companions* are four files, named after the companion, and nothing else; the 3D page serves only those four
+  kinds of path from an installed companion's folder. Their character file is JavaScript run in the companion's
+  WebKit page (no network, no file access, a private scheme): acceptable only because Sidefolk signed it.
+  Anyone else's 3D companion waits for a data-only format.
+- *Extensions* go through the install preview like any extension, with its permissions and warnings; origin
+  `official` makes them first-party (T2's rule doesn't apply to Sidefolk's own words, D39) and drops the download
+  mark after the checks, as for built-ins. They are never installed or updated without the person's click.
+- *A stolen GitHub account* can replace files in the release but can't sign them. A stolen Developer ID key is
+  answered by Apple's revocation, as for the app. Downgrades: an older signed pack the catalog lists would install
+  only if the person chose it; the gallery offers Update only for a newer version.
+*Residual:* the catalog's text (names, taglines, descriptions) is shown in Settings; only official entries' words
+reach the model, as one line each.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
@@ -883,7 +907,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   never "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing
   granted to check it, then only after the person installs it from the install preview (T27).
 - Never hard-deletes, sets exec bits or strips quarantine, except from its own code: the built-ins it
-  installs from its bundle (D39) and a new version of itself after the checks of T31.
+  installs from its bundle (D39), add-ons after the checks of T33, and a new version of itself after the
+  checks of T31.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.
 - Never listens on TCP in release, and never takes commands via URL schemes, AppleScript or
@@ -895,8 +920,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   their Mac's location, and never coordinates to an AI (T30).
 - Never removes anything from another app unless its whole copy is in the notebook and the person
   approved that removal (T25).
-- Never offers MCP sampling, roots or elicitation to extensions; never downloads or auto-updates
-  extension code.
+- Never offers MCP sampling, roots or elicitation to extensions; never downloads extension code except
+  Sidefolk's signed add-ons when the person clicks Get or Update (T33), and never updates one by itself.
 - Never edits `~/.claude`, `~/.claude.json` or `~/.codex` without a click, a confirmation and a
   backup; never writes through a linked skill folder, and never answers Codex's hook trust review
   for the person (T28).
