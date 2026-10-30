@@ -19,10 +19,10 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   `sheet.js turnaround()` saves front, ¾, side and back to compare with a sheet. *Checked:* turnarounds and the
   16-cue sheets of all four against their sheets in the playground; the dev app (all four animate, Rune waves);
   `make test`. *Not yet:* the founder's review; Iris's arms pull a little yellow from the body's sides when raised;
-  the stand-ins were resized to the new models but not looked at in the app; the app's side (cases, stand-ins,
-  role lines, strings, tests) is in the working tree, interleaved with the 2D work (D59), and goes in with it. *Next:*
-  the founder reviews, then
-  `scripts/publish.sh` in sidefolk-addons; the app offers them once a release knows their cases.
+  the stand-ins were resized to the new models but not looked at in the app. The app's side (cases, stand-ins,
+  role lines, strings, tests) went in with the 2D work (8d3db65c, D59). The founder approved the four; *Next:* the
+  founder runs `scripts/publish.sh` in sidefolk-addons (this session's permissions blocked the upload); the app
+  offers them once a release has their cases (older copies skip companions they don't know).
   *Review round (the founder on Nori):* fixed the tail tearing a sheet off the head in a flip, the feet dragging the
   tail, the cream nape and torn paw and tail-tip edges, grey brows, bright eyes and a wide mouth (now a ω); Purl got a
   linen weave, Rune granite speckle and an amber gem with depth, Iris one dark brow arc and a dark mouth. *Checked:*
