@@ -131,9 +131,12 @@ Rules that hold throughout:
     Space toggles a row, and ↑↓ move between rows.
 12. **The note's Connected list:** who saved it, the conversation it came from and the ones it was talked about in
     (B9), its reminders, and Add a reminder.
-    - The formatting bar appears only when text is selected or the caret is in a marked line.
-    - ⌘B, ⌘I and the other D53 shortcuts stay.
-13. **Fixes found along the way:** "1 requests" gets an English plural.
+    - D53's formatting bar stays where it is. Hiding it until text is selected was considered and dropped: the
+      founder asked for the bar, and a hidden bar is harder to find.
+13. **Snapshots that show real text:** `--ui-snapshots` runs without the compiled string catalog, so it shows raw
+    English keys ("1 requests", where the app says "1 request") and never a translation. It should compile the
+    catalog first, as `build-app.sh` does, and take a language, so plurals and every language can be checked. This
+    lands with `sidefolk theme preview` (A13), which renders the same snapshots.
 
 ## C. Recipes
 
@@ -179,13 +182,13 @@ Community themes:
 | # | Work | Why here |
 |---|---|---|
 | 1 ✅ | A1–A2 tokens at runtime, Harbor identical | **Done 2026-10-30:** `ThemeTokens`, `ThemeStore`, `Theme` reads the store. All 232 snapshots are pixel-identical. |
-| 2 | B13, B11, B12 | Small, visible fixes that need no new models. |
-| 3 | B9 links (migration) | B11 and B12 show them. It's a storage change, so it's done early and tested well. |
+| 2 ✅ | B11 | **Done 2026-10-30:** Activity rows open in place (who, the decision in words, the outcome, the arguments, the rule in Settings), Space and ↑↓, with translations in all nine languages. |
+| 3 | B9 links (migration), then B11's "Asked in" and B12 | B12 waits for this step: without the conversation links it would only repeat the editor's "Saved by" and reminder line. It's a storage change, so it's done early and tested well. |
 | 4 | B2 queue, B1 Today | The heart of the new Home. Touches the broker. |
 | 5 | B4 one bar (Home and Ask panel) | Depends on the queue's focus handling and the toast. |
 | 6 | B3 day line, B8 calendar (D57) | The calendar permission and tool come with it. |
 | 7 | B5 tiles, B6 agents, B7 nook, B10 Glance | Desk is now complete. Harbor is finished. |
-| 8 | A3–A13 the rest of the foundation, Settings picker, CLI, live reload | Needed before a second theme. The validator also fixes two Harbor shortfalls found in step 1: `inkFaint` in light mode is 2.95:1 on white (raise it to 4.5:1), and white on the light `danger` fill is 4.27:1 (deepen the red). |
+| 8 | A3–A13 and B13: the rest of the foundation, snapshots with the compiled catalog, Settings picker, CLI, live reload | Needed before a second theme. The validator also fixes two Harbor shortfalls found in step 1: `inkFaint` in light mode is 2.95:1 on white (raise it to 4.5:1), and white on the light `danger` fill is 4.27:1 (deepen the red). |
 | 9 | C recipes, then each theme's manifest and art | Board first (three themes use it), then Console, Stage, Planner. |
 | 10 | Gallery shelf for themes, community install | Reuses D55. |
 

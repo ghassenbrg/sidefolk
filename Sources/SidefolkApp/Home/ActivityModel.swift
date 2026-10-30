@@ -14,6 +14,8 @@ final class ActivityModel {
 
     var show: Show = .all
     var callerKind: String?
+    /// The row whose details are open, by id: one at a time, so the table stays a table.
+    var openId: Int64?
     private(set) var entries: [ActivityEntry] = []
     /// Rows whose action can still be undone (the last 15 minutes), by row id.
     private(set) var undoable: Set<Int64> = []
@@ -43,6 +45,10 @@ final class ActivityModel {
 
     static func needsAttention(_ e: ActivityEntry) -> Bool {
         [.denied, .blocked, .failed, .skipped].contains(e.decision)
+    }
+
+    func toggle(_ e: ActivityEntry) {
+        openId = openId == e.id ? nil : e.id
     }
 
     /// Undoes what a row did. Sidefolk's own actions and other agents' are undone by different executors.

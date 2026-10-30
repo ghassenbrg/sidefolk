@@ -68,6 +68,10 @@ enum UISnapshots {
             try await homeShot("conversations-stopped")
             full.selection = .activity
             try await homeShot("activity")
+            // A row opened in place: the rule that allowed it and what it was called with.
+            full.activity.openId = full.activity.entries.first { $0.decision == .always }?.id
+            try await homeShot("activity-open")
+            full.activity.openId = nil
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             try await homeShot("activity-small", size: small)

@@ -233,9 +233,14 @@ enum SampleData {
             (60 * 40, "agent", "files.trash", "high", .fullAccess, "Move 2 files in ~/Downloads to the Trash", "Moved to the Trash", nil),
             (60 * 50, "external:claude-code", "notify", "low", .auto, "Tell you that the build finished", "Shown as a bubble", nil),
         ]
+        // What a few of them were called with, as the details show it.
+        let args: [Double: JSONValue] = [
+            6: .object(["command": "git push origin main", "cwd": .string(home + "/git/sidefolk")]),
+            61: .object(["from": .string(home + "/Downloads"), "to": .string(home + "/Documents/Invoices"), "pattern": "*.pdf"]),
+        ]
         for (minutes, caller, tool, risk, decision, summary, outcome, error) in entries {
             try await rt.activity.log(ActivityEntry(at: ago(minutes), caller: caller, tool: tool, risk: risk, decision: decision,
-                                                    summary: summary, outcome: outcome, error: error))
+                                                    summary: summary, args: args[minutes], outcome: outcome, error: error))
         }
         for i in 0..<14 {
             var run = AgentRun(threadId: "t\(i)", provider: "claudeCode", model: "sonnet", now: ago(Double(i) * 200))

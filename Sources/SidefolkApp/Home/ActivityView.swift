@@ -4,6 +4,8 @@ import SwiftUI
 /// Home › Activity: the audit log of everything Sidefolk did, who asked and what Guard decided.
 struct ActivityView: View {
     @Bindable var model: ActivityModel
+    /// The row the keyboard is on: ↑↓ move, Space opens or closes its details.
+    @FocusState private var focused: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
@@ -80,8 +82,24 @@ struct ActivityView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(rows, id: \.rowKey) { e in
-                            ActivityRow { column in cell(column, e) }
+                            let open = e.id != nil && model.openId == e.id
+                            ActivityRow { column in cell(column, e, open: open) }
+                                .background(focused == e.rowKey ? Theme.accentSoft : open ? Theme.surfaceSunken : .clear)
+                                .contentShape(Rectangle())
+                                .onTapGesture { model.toggle(e) }
+                                .focusable()
+                                .focusEffectDisabled()
+                                .focused($focused, equals: e.rowKey)
+                                .onKeyPress(.space) { model.toggle(e); return .handled }
+                                .onKeyPress(.upArrow) { move(-1, from: e, in: rows); return .handled }
+                                .onKeyPress(.downArrow) { move(1, from: e, in: rows); return .handled }
                                 .accessibilityElement(children: .combine)
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityHint(Text("Shows or hides the details"))
+                            if open {
+                                ActivityDetails(entry: e, who: Describe.caller(e.caller, companion: model.companionName),
+                                                seeRule: e.decision == .always ? { model.services.openSettings(tab: .privacy) } : nil)
+                            }
                             Rectangle().fill(Theme.line).frame(height: 1).padding(.leading, Theme.Space.l)
                         }
                     }
@@ -94,10 +112,20 @@ struct ActivityView: View {
         }
     }
 
-    @ViewBuilder private func cell(_ column: ActivityColumn, _ e: ActivityEntry) -> some View {
+    private func move(_ step: Int, from e: ActivityEntry, in rows: [ActivityEntry]) {
+        guard let i = rows.firstIndex(where: { $0.rowKey == e.rowKey }) else { return }
+        focused = rows[min(max(i + step, 0), rows.count - 1)].rowKey
+    }
+
+    @ViewBuilder private func cell(_ column: ActivityColumn, _ e: ActivityEntry, open: Bool) -> some View {
         switch column {
         case .time:
-            Text(TimeText.short(e.at)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            HStack(spacing: Theme.Space.xs) {
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(Theme.inkFaint)
+                    .rotationEffect(.degrees(open ? 90 : 0))
+                    .accessibilityHidden(true)
+                Text(TimeText.short(e.at)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
         case .who:
             Text(verbatim: Describe.caller(e.caller, companion: model.companionName)).font(Theme.Font.body).foregroundStyle(Theme.ink)
         case .what:
@@ -152,6 +180,60 @@ struct ActivityView: View {
             Text(outcome).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).help(outcome)
         } else {
             Text("—").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).accessibilityLabel("No outcome")
+        }
+    }
+}
+
+/// A row's details, opened in place: everything the columns cut, how it was allowed, and its arguments.
+private struct ActivityDetails: View {
+    var entry: ActivityEntry
+    var who: String
+    /// Opens the rule in Settings, for something an "Always allow" let through.
+    var seeRule: (() -> Void)?
+
+    var body: some View {
+        Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Theme.Space.m, verticalSpacing: Theme.Space.s) {
+            line("What") { Text(entry.summary).font(Theme.Font.bodyStrong) }
+            line("Who") { Text(verbatim: who) }
+            line("Decision") {
+                HStack(spacing: Theme.Space.s) {
+                    Text(verbatim: Describe.decision(entry.decision))
+                    if let seeRule {
+                        Button("See the rule in Settings…", action: seeRule).buttonStyle(.sf(.plain))
+                    }
+                }
+            }
+            if let error = entry.error {
+                line("Outcome") { Text(error).foregroundStyle(Theme.danger) }
+            } else if let outcome = entry.outcome {
+                line("Outcome") { Text(outcome) }
+            }
+            ForEach(Describe.arguments(entry.args), id: \.name) { argument in
+                GridRow {
+                    Text(verbatim: argument.name).font(.system(size: 11.5, design: .monospaced)).foregroundStyle(Theme.inkFaint)
+                    Text(verbatim: argument.value).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                }
+            }
+            GridRow {
+                Color.clear.frame(width: 1, height: 1)
+                Text(verbatim: entry.tool).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkFaint)
+            }
+        }
+        .font(Theme.Font.body)
+        .foregroundStyle(Theme.ink)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, Theme.Space.l + 13)
+        .padding(.trailing, Theme.Space.l)
+        .padding(.vertical, Theme.Space.m)
+        .background(Theme.surfaceSunken)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func line(_ label: LocalizedStringKey, @ViewBuilder _ value: () -> some View) -> some View {
+        GridRow {
+            Eyebrow(Text(label)).gridColumnAlignment(.trailing)
+            value().fixedSize(horizontal: false, vertical: true)
         }
     }
 }
