@@ -186,7 +186,8 @@ export class Companion {
     this.face3 = new Face(F);
     this.body.parent.add(this.face3.buildDecal(this.body));
     this.eyes = [];
-    if (F.kind === 'screen') { this.faceKey = ''; return; }
+    // A screen paints its eyes, and a likeness keeps the model's own (painted lids only).
+    if (F.kind === 'screen' || !F.layout.eye) { this.faceKey = ''; return; }
 
     // Eyes: found on the head's surface by ray, then carried by the surface itself: three skinned
     // vertices around each eye give its place and turn every frame. (Carried by the head bone, an

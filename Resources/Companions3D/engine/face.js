@@ -1,6 +1,9 @@
 // A companion's face, from its character's `face` settings. Two kinds:
 //  - ink: glossy 3D eyes with shader eyelids, and a painted layer (nose, mouth, blush, brows,
-//    closed-eye arcs, tears) on a decal cut from the head itself, so it bends with it.
+//    closed-eye arcs, tears) on a decal cut from the head itself, so it bends with it. A face that is
+//    a likeness in the model's own texture (a person's) keeps its eyes, brows and lips: `layout.lids`
+//    paints only lids over its eyes, `layout.mouth.lips` paints a mouth only while it is open, and
+//    `layout.brow: false` paints no brows.
 //  - screen: everything glows on a dark visor (Spark): eyes, lids and mouth are light, painted.
 // Model units, three.js axes: x = the character's left, y up, z toward the viewer.
 import * as THREE from 'three';
@@ -14,7 +17,12 @@ export class Face {
     this.R = R; this.span = span; this.cx = cx; this.cz = cz; this.cy = cy;
     this.unit = CANVAS / (2 * span);
     this.L = cfg.layout;
-    this.C = { ink: '#16285e', brow: null, mouth: '#8c1f33', mouthDeep: '#5e1424', tongue: '#ff7a86', lip: '#3a1630', blush: '255,140,160', ...cfg.colors };
+    // Painted lids stand in for 3D eyes wherever the face needs an eye's place (tears).
+    if (this.L.lids && !this.L.eye) {
+      const [a, b] = this.L.lids;
+      this.L = { ...this.L, eye: { x: (Math.abs(a.x) + Math.abs(b.x)) / 2, y: (a.y + b.y) / 2, w: a.w, h: a.h } };
+    }
+    this.C = { ink: '#16285e', brow: null, teeth: null, lid: null, lash: null, mouth: '#8c1f33', mouthDeep: '#5e1424', tongue: '#ff7a86', lip: '#3a1630', blush: '255,140,160', ...cfg.colors };
   }
 
   // Cylindrical unwrap around the head's vertical axis: arc length keeps features undistorted on
@@ -100,6 +108,8 @@ export class Face {
       f.noseTwitch, (f.lidL > 0.8 || f.lidR > 0.8) ? f.gazeX : 0];
     // On a screen the eyes are painted too: every blink, glance and lid change repaints.
     if (this.cfg.kind === 'screen') v.push(f.lidL, f.lidR, f.gazeX, f.gazeY, f.eyeOpen, f.lidSlant, f.lidBottom);
+    // So are painted lids: every blink repaints.
+    else if (this.L.lids) v.push(f.lidL, f.lidR, f.lidBottom);
     return v.map((x) => x.toFixed(3)).join();
   }
 
@@ -109,7 +119,7 @@ export class Face {
     const L = this.L, C = this.C, u = this.unit;
 
     // Blush: soft, always a little there, stronger when happy or shy.
-    for (const side of [1, -1]) {
+    for (const side of L.blush ? [1, -1] : []) {
       const [cx, cy] = this.at(side * L.blush.x, L.blush.y);
       const rx = L.blush.w * u, ry = L.blush.h * u;
       const a = (L.blush.alpha ?? 0.42) * f.blush;
@@ -133,7 +143,7 @@ export class Face {
     this.paintMouth(ctx, f);
 
     // Brows: always there for some characters (`brow.base`), or only for strong feelings.
-    const browA = Math.min(1, f.brow + (L.brow?.base ?? 0));
+    const browA = L.brow === false ? 0 : Math.min(1, f.brow + (L.brow?.base ?? 0));
     if (browA > 0.02) {
       const B = L.brow || {};
       for (const side of [1, -1]) {
@@ -149,6 +159,7 @@ export class Face {
       }
     }
 
+    if (L.lids) this.paintLids(ctx, f);
     // Closed eyes are drawn where the 3D eyes hide: ^ for happy, a soft ‿ for sleep, > < for giddy.
     for (const e of eyes) {
       const lid = e.side > 0 ? f.lidL : f.lidR;
@@ -194,6 +205,59 @@ export class Face {
     }
   }
 
+  /**
+   * Lids over the model's own eyes: skin comes down from above (blinks, sleep) and up from below (a smile's
+   * squint), its edge drawn as a lash line; shut, the line curves up for happy and down for sleep.
+   * Each of `layout.lids`: x, y (its middle; x + is the character's left), w, h (the opening), tilt (radians,
+   * + rises toward its left), cover (how much larger the lid is, [w, h]); colours `lid` (the skin around the
+   * eyes) and `lash`. The face's unwrap cylinder should pass through the eyes (`R` large, `cz` = their depth − R).
+   */
+  paintLids(ctx, f) {
+    const C = this.C, u = this.unit;
+    for (const E of this.L.lids) {
+      // Real eyes already smile on their own: the squint only hints.
+      const top = Math.max(0, E.x > 0 ? f.lidL : f.lidR), bottom = Math.min(0.22, Math.max(0, f.lidBottom) * 0.25);
+      if (top < 0.03 && bottom < 0.03) continue;
+      const [cx, cy] = this.at(E.x, E.y);
+      // A little larger than the opening (`cover`), so the eye's own lashes are covered too.
+      const [cw, ch] = E.cover ?? [1.2, 1.5];
+      const w = E.w * u * cw, h = E.h * u * ch;
+      const shut = THREE.MathUtils.smoothstep(top, 0.82, 0.97);
+      const edge = -h / 2 + h * Math.min(top, 1);
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-(E.tilt ?? 0));
+      // The skin is drawn on a layer of its own and faded out toward the oval's rim, so no outline shows.
+      const L = this.lidLayer ||= document.createElement('canvas');
+      L.width = Math.ceil(w) + 2; L.height = Math.ceil(h) + 2;
+      const g = L.getContext('2d');
+      g.translate(L.width / 2, L.height / 2);
+      g.fillStyle = C.lid;
+      // The upper lid's edge bows down a little in the middle, like a real one.
+      g.beginPath(); g.moveTo(-w, -h); g.lineTo(w, -h); g.lineTo(w, edge);
+      g.quadraticCurveTo(0, edge + h * 0.25 * (1 - shut), -w, edge); g.closePath(); g.fill();
+      if (bottom > 0.02) g.fillRect(-w, h / 2 - h * bottom, 2 * w, h);
+      g.globalCompositeOperation = 'destination-in';
+      g.scale(1, h / w);
+      const fade = g.createRadialGradient(0, 0, 0, 0, 0, w / 2);
+      fade.addColorStop(0.72, 'rgba(0,0,0,1)'); fade.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = fade; g.beginPath(); g.arc(0, 0, w / 2, 0, Math.PI * 2); g.fill();
+      ctx.drawImage(L, -L.width / 2, -L.height / 2);
+      ctx.strokeStyle = C.lash || C.ink; ctx.lineCap = 'round';
+      if (shut > 0.01) {
+        // Shut: one lash curve across the eye, ^ when happy, a soft ‿ asleep.
+        const bend = THREE.MathUtils.lerp(0.35, -0.55, f.happyEyes) * h;
+        ctx.globalAlpha = shut; ctx.lineWidth = E.lash ?? 7;
+        ctx.beginPath(); ctx.moveTo(-w * 0.46, h * 0.1); ctx.quadraticCurveTo(0, h * 0.1 + bend, w * 0.46, h * 0.1); ctx.stroke();
+      }
+      if (shut < 0.99 && top > 0.08) {
+        // Partly down: the lid's edge, where its lashes are.
+        ctx.globalAlpha = (1 - shut) * THREE.MathUtils.smoothstep(top, 0.08, 0.25); ctx.lineWidth = (E.lash ?? 7) * 0.8;
+        const half = (w / 2) * Math.sqrt(Math.max(0.05, 1 - (2 * edge / h) ** 2));
+        ctx.beginPath(); ctx.moveTo(-half, edge); ctx.quadraticCurveTo(0, edge + h * 0.25, half, edge); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
   paintNose(ctx, f) {
     const N = this.L.nose, C = this.C, u = this.unit;
     const [cx, y0] = this.at(0, N.y); const cy = y0 + f.noseTwitch * 4;
@@ -218,9 +282,33 @@ export class Face {
 
   paintMouth(ctx, f) {
     const C = this.C, M = this.L.mouth, u = this.unit;
-    const [cx, cy] = this.at(f.mouthX * 0.02, M.y);
+    const [cx, cy] = this.at((M.x ?? 0) + f.mouthX * 0.02, M.y);
     const scale = M.scale ?? 1;
     const open = Math.max(0, f.mouthOpen);
+    // The model's own lips (`M.lips`: w, h) stay: an opening mouth parts them, from the line between them
+    // (`colors.teeth` for the upper teeth, `M.lipWidth` for its edge).
+    if (M.lips) {
+      if (open < 0.04) return;
+      const w = M.lips.w * u * (0.5 + 0.2 * f.mouthWidth) * (1 - 0.3 * f.mouthRound) * (1 + 0.25 * Math.min(open, 0.8));
+      const h = M.lips.h * u * (0.1 + 1.4 * open) * (1 + 0.2 * f.mouthRound);
+      const lift = Math.max(0, f.smile) * h * 0.25;
+      const shape = new Path2D();
+      if (f.mouthRound > 0.5) shape.ellipse(cx, cy + h * 0.15, w * 0.42, h * 0.55, 0, 0, Math.PI * 2);
+      else {
+        shape.moveTo(cx - w / 2, cy - lift);
+        shape.bezierCurveTo(cx - w / 4, cy - h * 0.32, cx + w / 4, cy - h * 0.32, cx + w / 2, cy - lift);
+        shape.bezierCurveTo(cx + w / 3, cy + h * 0.8, cx - w / 3, cy + h * 0.8, cx - w / 2, cy - lift);
+      }
+      ctx.save(); ctx.clip(shape);
+      const g = ctx.createLinearGradient(0, cy - h * 0.3, 0, cy + h * 0.7);
+      g.addColorStop(0, C.mouthDeep); g.addColorStop(1, C.mouth);
+      ctx.fillStyle = g; ctx.fill(shape);
+      if (C.teeth && f.mouthRound < 0.5) { ctx.fillStyle = C.teeth; ctx.beginPath(); ctx.ellipse(cx, cy - h * 0.3, w * 0.42, h * 0.32, 0, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = C.tongue; ctx.beginPath(); ctx.ellipse(cx, cy + h * 0.75, w * 0.3, h * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = C.lip; ctx.globalAlpha = 0.6; ctx.lineWidth = M.lipWidth ?? 3; ctx.stroke(shape); ctx.globalAlpha = 1;
+      return;
+    }
     // Open smiles widen too (a big "D" grin).
     const w = (0.048 + 0.075 * f.mouthWidth) * u * scale * (1 - 0.35 * f.mouthRound) * (1 + 0.3 * Math.min(open, 0.8));
     const smile = f.smile;             // −1 frown … 1 big smile
