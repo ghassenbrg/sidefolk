@@ -33,7 +33,7 @@ import Testing
     }
 
     /// Speaking adds no repeating animation: the mouth moves only when a level arrives, and stops with it.
-    @Test(arguments: [CharacterSpecies.mochi, .sidefolk, .spark, .scout])
+    @Test(arguments: [CharacterSpecies.mochi, .spark, .scout])
     func talkingNeverLoops(_ species: CharacterSpecies) {
         let v = view(species)
         let window = NSWindow(contentRect: v.frame, styleMask: .borderless, backing: .buffered, defer: true)

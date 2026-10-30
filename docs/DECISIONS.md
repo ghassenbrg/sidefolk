@@ -1265,3 +1265,22 @@ brainstorm).
 Tests of the moved extensions stay here and run against a built sidefolk-addons checkout beside this one
 (`SIDEFOLK_ADDONS_REPO`), skipped without one; their pure logic tests moved there. SECURITY T33. Supersedes D51's
 "Ember, Kiko, Nimbo and Folio … join the gallery" as built-ins, and D39's list of built-ins.
+
+### D56 — The original robot is retired; the gallery gets shelves and search; other ways to add stay in sight (2026-10-30)
+**Decision:**
+- **The robot.** The original Sidefolk robot is no longer a companion: its vector rig (`RobotRig`, D2) is gone and
+  `CharacterSpecies.sidefolk` with it; Mochi draws by default. `CompanionChoice.sidefolk` stays only so older
+  settings read: one that chose it moves to Mochi, keeping a name the person gave it, and the robot's default name
+  ("Sidefolk") now follows whichever companion is chosen.
+- **Gallery shelves and search.** Each gallery extension names a shelf in the catalog (`category`: everyday, files,
+  developer, fun; `addon.json` beside the manifest in sidefolk-addons); one this copy doesn't know shows under Other,
+  and a malformed one drops the entry. Settings › Extensions › Gallery has its own search (name, tagline,
+  description, author and shelf, ignoring case and accents) and a segmented row of shelves with counts; the list
+  is grouped by shelf. A catalog fetched more than 30 minutes ago is fetched again when the gallery opens.
+- **Other ways to add.** Install from Folder… and Add MCP Server… sit at the top of Settings › Extensions, beside
+  the Installed / Gallery switch, on both pages; the samples stay under Added by you.
+**Why:** the founder no longer wants the robot as a companion; asked for search and categories in the gallery;
+and found the other ways to add an extension hidden at the bottom of the page.
+**Implications:** `CompanionChoice.isRetired` (folks and the robot); `AddonCategory`, `AddonEntry.category/shelf/
+matches`; `AddonStore.freshFor` 30 minutes. Supersedes D2 and D3's robot as a companion (the brand stays Mochi,
+D29) and D27's robot choice.

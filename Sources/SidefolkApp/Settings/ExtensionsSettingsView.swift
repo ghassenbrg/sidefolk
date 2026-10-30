@@ -14,6 +14,7 @@ struct ExtensionsSettingsView: View {
     @State private var search: String
     @State private var show: ExtensionListQuery.Show
     @State private var page: Page
+    @State private var gallerySearch = ""
 
     enum Page: String, Hashable { case installed, gallery }
     @State private var expanded: Set<String>
@@ -48,7 +49,7 @@ struct ExtensionsSettingsView: View {
                 .frame(maxWidth: .infinity)
             SettingsPage {
                 if page == .gallery {
-                    GalleryExtensionsView(model: model)
+                    GalleryExtensionsView(model: model, search: gallerySearch)
                 } else {
                     ScrollViewReader { proxy in
                         VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
@@ -160,6 +161,7 @@ struct ExtensionsSettingsView: View {
 
     // MARK: Header
 
+    /// The two pages, the other ways to add an extension (always in sight), then the page's search.
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(alignment: .center, spacing: Theme.Space.m) {
@@ -172,7 +174,15 @@ struct ExtensionsSettingsView: View {
                 .labelsHidden()
                 .fixedSize()
                 Spacer(minLength: Theme.Space.s)
-                if page == .installed {
+                Button("Install from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary))
+                    .help("Review and install an extension from a folder on this Mac")
+                Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }.buttonStyle(.sf(.secondary))
+                    .help("Add an MCP server you already use; it runs with your full permissions")
+            }
+            if page == .installed {
+                HStack(alignment: .center, spacing: Theme.Space.m) {
+                    SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
+                              submit: focusFirstRow)
                     Picker("Show", selection: $show) {
                         Text("All \(counts.all)", comment: "A filter in Settings › Extensions with how many it shows: “All 15”")
                             .tag(ExtensionListQuery.Show.all)
@@ -186,11 +196,10 @@ struct ExtensionsSettingsView: View {
                     .fixedSize()
                     .help("Show every extension, or only those switched on or off")
                 }
+            } else {
+                SearchBox(text: $gallerySearch, prompt: Text("Search the gallery"), focus: $focus, focusValue: .search, submit: {})
             }
-            if page == .installed {
-                SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
-                          submit: focusFirstRow)
-            }
+            if let error = model.extensionError { InlineError(error: error) }
         }
     }
 
@@ -274,33 +283,25 @@ struct ExtensionsSettingsView: View {
         SettingsGroup(title: "Added by you",
                       footer: "Extensions run in a sandbox limited to what they asked for at install. MCP servers run with your full permissions.") {
             if added.isEmpty {
-                InlineEmpty(text: "Nothing added yet. Install an extension from a folder, add an MCP server, or ask Sidefolk to build one.",
+                InlineEmpty(text: "Nothing added yet. Get one from the Gallery, install one from a folder, add an MCP server, or ask Sidefolk to build one.",
                             systemImage: "puzzlepiece.extension")
             }
             ForEach(added) { ext in
                 row(ext) { uninstalling = ext }
             }
-            if !query.isNarrowed {
-                VStack(alignment: .leading, spacing: Theme.Space.s) {
-                    HStack(spacing: Theme.Space.s) {
-                        Button("Install from Folder…", action: chooseFolder).buttonStyle(.sf(.secondary))
-                        Button("Add MCP Server…") { addingServer = true }.buttonStyle(.sf(.secondary))
-                    }
-                    if !model.samples.isEmpty {
-                        HStack(spacing: Theme.Space.s) {
-                            Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                            ForEach(model.samples, id: \.folder) { sample in
-                                Button {
-                                    model.clearExtensionError()
-                                    Task { model.installPreview = await model.preview(folder: sample.folder) }
-                                } label: {
-                                    Text(verbatim: "\(sample.name)…")
-                                }
-                                .buttonStyle(.sf(.plain))
-                            }
+            // The ways to add one are at the top of the page; samples stay here.
+            if !query.isNarrowed, !model.samples.isEmpty {
+                HStack(spacing: Theme.Space.s) {
+                    Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    ForEach(model.samples, id: \.folder) { sample in
+                        Button {
+                            model.clearExtensionError()
+                            Task { model.installPreview = await model.preview(folder: sample.folder) }
+                        } label: {
+                            Text(verbatim: "\(sample.name)…")
                         }
+                        .buttonStyle(.sf(.plain))
                     }
-                    if let error = model.extensionError { InlineError(error: error) }
                 }
                 .padding(.horizontal, Theme.Space.l)
                 .padding(.vertical, Theme.Space.m)

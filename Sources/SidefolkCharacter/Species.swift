@@ -36,12 +36,10 @@ struct Species {
     /// stay inside the window when it hops or is lifted. Coordinates above are before it.
     var scale: CGFloat = 1
 
-    /// The robot is its own rig; every other companion is a soft rig of its species (a stand-in
-    /// for the 3D-only ones).
+    /// Every companion is a soft rig of its species (a stand-in for the 3D-only ones).
     static func figure(for look: CharacterLook) -> any Figure {
         if let custom = look.custom { return SoftRig(Species(custom)) }
         return switch look.species {
-        case .sidefolk: RobotRig()
         case .mochi: SoftRig(mochi)
         case .spark: SoftRig(spark)
         case .ember, .kiko, .nimbo, .folio: SoftRig(standIn(for: look.species))

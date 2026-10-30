@@ -113,6 +113,29 @@ import Testing
         }
     }
 
+    /// Shelves and search (D56): a known shelf, one this copy doesn't know (Other), and words found anywhere in the
+    /// entry, ignoring case and accents.
+    @Test func entriesAreShelvedAndFoundByTheirWords() throws {
+        func entry(_ id: String, _ category: String?, tagline: String) -> [String: Any] {
+            var e: [String: Any] = ["id": id, "kind": "extension", "name": "N", "tagline": tagline, "description": "Reads café menus",
+                                    "author": "Ada", "version": "1.0.0", "file": "n-1.0.0.zip", "bytes": 10,
+                                    "sha256": String(repeating: "a", count: 64)]
+            if let category { e["category"] = category }
+            return e
+        }
+        let data = try JSONSerialization.data(withJSONObject: ["format": 1, "addons": [
+            entry("dev.sidefolk.currency", "everyday", tagline: "Money in 30 currencies at today's rates"),
+            entry("com.ada.menus", "food-and-drink", tagline: "Menus"),
+            entry("com.ada.bad", "Not A Shelf!", tagline: "x"),
+        ]])
+        let catalog = try AddonCatalog.parse(data, folder: URL(fileURLWithPath: "/tmp"), fetched: Date())
+        #expect(catalog.addons.map(\.id) == ["dev.sidefolk.currency", "com.ada.menus"], "a malformed category drops the entry")
+        let currency = try #require(catalog.entry("dev.sidefolk.currency")), menus = try #require(catalog.entry("com.ada.menus"))
+        #expect(currency.shelf == .everyday && menus.shelf == nil)
+        #expect(currency.matches("MONEY rates") && currency.matches("") && !currency.matches("money pounds"))
+        #expect(menus.matches("cafe ada") && menus.matches("Food", extra: ["Food and drink"]))
+    }
+
     @Test func theSourceComesFromTheAppAndAFolderOnlyOutsideARelease() throws {
         #expect(AddonSource(base: URL(string: "https://github.com/x")!, team: "short") == nil)
         #expect(AddonSource(base: URL(string: "http://github.com/x")!, team: Self.team) == nil, "https only")

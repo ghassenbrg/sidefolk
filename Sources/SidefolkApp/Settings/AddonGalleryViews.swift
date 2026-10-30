@@ -2,15 +2,25 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Extensions › Gallery (D55): the extensions Sidefolk and others publish, to add with a click. Each row
-/// says who made it, with a seal on Sidefolk's own; Get downloads it, checks its signature and opens the install
-/// preview, as for any extension.
+/// Settings › Extensions › Gallery (D55): the extensions Sidefolk and others publish, to add with a click, on shelves
+/// (D56: Everyday, Files and documents, For developers, Fun) and found by the words typed above. Each row says who
+/// made it, with a seal on Sidefolk's own; Get downloads it, checks its signature and opens the install preview, as
+/// for any extension.
 struct GalleryExtensionsView: View {
     var model: SettingsModel
+    /// The words typed in the page's search box.
+    var search: String
+    @State private var shelf: Shelf = .all
     private var gallery: AddonGalleryModel { model.gallery }
+
+    enum Shelf: Hashable {
+        case all
+        case one(AddonCategory?)
+    }
 
     var body: some View {
         let entries = gallery.entries(.extension)
+        let found = entries.filter { $0.matches(search, extra: [Self.title($0.shelf)]) }
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
             if !gallery.available {
                 RowsCard { InlineEmpty(text: "This copy of Sidefolk has no add-on gallery.", systemImage: "shippingbox") }
@@ -30,18 +40,23 @@ struct GalleryExtensionsView: View {
                     }
                 }
             } else {
-                let official = entries.filter(\.official), others = entries.filter { !$0.official }
-                if !official.isEmpty {
-                    SettingsGroup(title: "From Sidefolk",
-                                  footer: "Made and signed by Sidefolk. Each runs in its own sandbox, and you see what it may do before it is added.") {
-                        ForEach(official) { GalleryRow(entry: $0, model: model) }
+                shelves(found)
+                let shown = found.filter { shelf == .all || shelf == .one($0.shelf) }
+                if shown.isEmpty {
+                    RowsCard {
+                        InlineEmpty(text: "Nothing in the gallery matches “\(search.trimmingCharacters(in: .whitespaces))”.",
+                                    systemImage: "magnifyingglass")
                     }
                 }
-                if !others.isEmpty {
-                    SettingsGroup(title: "From the community", footer: "Reviewed and signed by Sidefolk; made by the people named.") {
-                        ForEach(others) { GalleryRow(entry: $0, model: model) }
+                ForEach(Self.order(shown), id: \.self) { category in
+                    SettingsGroup(title: Text(verbatim: Self.title(category))) {
+                        ForEach(shown.filter { $0.shelf == category }) { GalleryRow(entry: $0, model: model) }
                     }
                 }
+                Text("Sidefolk's own carry its seal. Every extension here is signed by Sidefolk, runs in its own sandbox, and shows what it may do before it is added.")
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, Theme.Space.xs)
             }
             if let error = gallery.error, !entries.isEmpty {
                 Text("Showing the gallery as last seen: \(error.message)").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
@@ -49,6 +64,35 @@ struct GalleryExtensionsView: View {
             }
         }
         .task { await gallery.load() }
+    }
+
+    /// All, then each shelf that has something, with how many the words find on it.
+    private func shelves(_ found: [AddonEntry]) -> some View {
+        Picker("Category", selection: $shelf) {
+            Text("All \(found.count)", comment: "The gallery's shelves: every extension, with how many: “All 9”").tag(Shelf.all)
+            ForEach(Self.order(gallery.entries(.extension)), id: \.self) { category in
+                Text(verbatim: "\(Self.title(category)) \(found.filter { $0.shelf == category }.count)").tag(Shelf.one(category))
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .fixedSize()
+    }
+
+    /// The shelves `entries` are on, in their usual order, Other last.
+    static func order(_ entries: [AddonEntry]) -> [AddonCategory?] {
+        let present = Set(entries.map(\.shelf))
+        return (AddonCategory.allCases.map { Optional($0) } + [nil]).filter(present.contains)
+    }
+
+    static func title(_ category: AddonCategory?) -> String {
+        switch category {
+        case .everyday?: String(localized: "Everyday", comment: "A shelf of the add-on gallery: currency, news feeds…")
+        case .files?: String(localized: "Files", comment: "A shelf of the add-on gallery: PDFs, pictures, zip files, QR codes")
+        case .developer?: String(localized: "Developers", comment: "A shelf of the add-on gallery: Git, developer tools")
+        case .fun?: String(localized: "Fun", comment: "A shelf of the add-on gallery: games and trivia")
+        case nil: String(localized: "Other", comment: "A shelf of the add-on gallery: what fits none of the others")
+        }
     }
 }
 

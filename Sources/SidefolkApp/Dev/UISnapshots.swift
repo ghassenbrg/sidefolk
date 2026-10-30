@@ -144,12 +144,12 @@ enum UISnapshots {
             await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
             try await page("page-settings-privacy-full-access", SettingsTabContent(tab: .privacy, model: settings), width: width)
             await settings.setPolicy { $0 = policy }
-            // The companion chooser with Spark chosen, then the robot in coral with a scarf.
+            // The companion chooser with Spark chosen, then Spark in 2D, coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)
-            settings.update { $0.choose(.sidefolk); $0.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .sidefolk) }
+            settings.update { $0.setDimension(.twoD, for: .spark); $0.setStyle(CompanionStyle(color: .coral, accessory: .scarf), for: .spark) }
             try await page("page-settings-companion-coral", SettingsTabContent(tab: .companion, model: settings), width: width)
-            settings.update { $0.choose(.mochi); $0.styles = [:] }
+            settings.update { $0.choose(.mochi); $0.styles = [:]; $0.dimensions = [:] }
             // A companion from "Made by you" in use, when the home has one (D43): the stage and the
             // title show it, and no built-in card is picked.
             if let made = CompanionArt.made.lazy.compactMap(\.companion).first {

@@ -28,13 +28,15 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
     /// The 3D engine a companion was made for.
     public var engine: Int?
     public var license: String?
+    /// Where an extension sits in the gallery (`AddonCategory`); one this copy doesn't know shows under Other.
+    public var category: String?
 
     /// Made by Sidefolk. Only Sidefolk signs packs and catalogs (D55), and review refuses this prefix to anyone
     /// else, so the id is enough.
     public var official: Bool { id.hasPrefix("dev.sidefolk.") }
 
     enum CodingKeys: String, CodingKey {
-        case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license
+        case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license, category
         case minimumSidefolk = "minimum_sidefolk"
     }
 }
@@ -97,6 +99,7 @@ public struct AddonCatalog: Sendable, Equatable {
               matches(e.sha256, #"^[0-9a-f]{64}$"#),
               ReleaseVersion(e.version) != nil,
               !e.name.isEmpty, e.name.count <= 40, e.tagline.count <= 60, e.description.count <= 1000, e.author.count <= 60 else { return false }
+        if let category = e.category, !matches(category, #"^[a-z][a-z-]{0,23}$"#) { return false }
         if let preview = e.preview, !matches(preview, #"^previews/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.(png|pdf)$"#) || preview.contains("..") {
             return false
         }
@@ -156,7 +159,22 @@ public struct AddonSource: Sendable, Equatable {
     }
 }
 
+/// The gallery's shelves for extensions (D56). The catalog may name others later; this copy lists them under Other.
+public enum AddonCategory: String, CaseIterable, Sendable {
+    case everyday, files, developer, fun
+}
+
 extension AddonEntry {
+    public var shelf: AddonCategory? { category.flatMap(AddonCategory.init(rawValue:)) }
+
+    /// Whether every word of `text` is in its name, tagline, description, author or `extra` (a category's title),
+    /// ignoring case, accents and width, as Settings' other searches do.
+    public func matches(_ text: String, extra: [String] = []) -> Bool {
+        let fold: (String) -> String = { $0.folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: nil) }
+        let haystack = fold(([shownName, shownTagline, shownDescription, author, name] + extra).joined(separator: "\n"))
+        return text.split(whereSeparator: \.isWhitespace).allSatisfy { haystack.contains(fold(String($0))) }
+    }
+
     /// Sidefolk's own extensions in the person's language (their words are in the app's string catalog, D28);
     /// anyone else's as published.
     private var translated: Bool { official && kind == .extension }

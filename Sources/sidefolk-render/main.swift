@@ -222,7 +222,7 @@ enum Sheets {
     }
 
     /// The state with its click-through outline drawn on top, as CharacterView reports it.
-    static func hitImage(_ state: CharacterState, look: CharacterLook = CharacterLook(.sidefolk)) -> CGImage {
+    static func hitImage(_ state: CharacterState, look: CharacterLook = CharacterLook(.mochi)) -> CGImage {
         let side: CGFloat = 104
         let view = CharacterView(frame: NSRect(x: 0, y: 0, width: side, height: side))
         view.look = look

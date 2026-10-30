@@ -25,18 +25,16 @@ import Testing
         #expect(v.characterFrame.minY == 20)
     }
 
-    @Test func switchingKeepsStateAndTheRobotsAnchor() {
-        let v = view(.sidefolk)
-        // The robot's anchor is the app's original inset: 17% across, 10% down.
-        #expect(v.characterFrame == NSRect(x: 34, y: 20, width: 132, height: 160))
+    @Test func switchingKeepsStateAndEachOnesAnchor() {
+        let v = view(.mochi)
+        let mochi = v.characterFrame
         v.setState(.thinking, animated: false)
         v.badges = [.count(2)]
-        v.look = CharacterLook(.mochi)
+        v.look = CharacterLook(.spark)
         #expect(v.state == .thinking)
-        #expect(v.characterFrame.width < 132)
-        v.look = CharacterLook(.sidefolk, style: CharacterStyle(color: .coral, accessory: .none))
+        v.look = CharacterLook(.mochi, style: CharacterStyle(color: .coral, accessory: .none))
         #expect(v.state == .thinking)
-        #expect(v.characterFrame == NSRect(x: 34, y: 20, width: 132, height: 160))
+        #expect(v.characterFrame == mochi)
     }
 
     @Test func mochisClicksFollowItsShape() {

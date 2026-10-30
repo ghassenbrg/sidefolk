@@ -142,7 +142,6 @@ struct CompanionPicker: View {
 
     private var colourDetail: LocalizedStringKey {
         switch chosen {
-        case .sidefolk: "Its eyes, ear lights and what it wears."
         case .spark: "Its headphones, antenna, eyes and what it wears."
         default: colours ? "What it wears." : "Give it something to wear to choose a color."
         }

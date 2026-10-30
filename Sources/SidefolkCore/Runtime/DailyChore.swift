@@ -21,8 +21,12 @@ actor DailyChore {
         }
     }
 
-    func stop() {
-        task?.cancel()
+    /// Stops it, and waits for a run already under way: once this returns, nothing more runs (a run that had
+    /// passed its check when the task was cancelled used to finish afterwards, seen on CI).
+    func stop() async {
+        let running = task
         task = nil
+        running?.cancel()
+        await running?.value
     }
 }

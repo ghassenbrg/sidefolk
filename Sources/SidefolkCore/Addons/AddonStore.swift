@@ -27,7 +27,7 @@ public actor AddonStore {
     private var cached: AddonCatalog?
 
     /// How long a fetched catalog is used before the gallery asks again.
-    public static let freshFor: TimeInterval = 6 * 3600
+    public static let freshFor: TimeInterval = 30 * 60
     static let catalogLimit: Int64 = 16 * 1024 * 1024
 
     public init(paths: SidefolkPaths, source: AddonSource? = AddonSource.current(), downloader: UpdateDownloading? = nil,

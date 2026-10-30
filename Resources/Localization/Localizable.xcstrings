@@ -17697,6 +17697,64 @@
         }
       }
     },
+    "Add an MCP server you already use; it runs with your full permissions" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف خادم MCP تستخدمه بالفعل؛ يعمل بكامل صلاحياتك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen MCP-Server hinzufügen, den du schon nutzt; er läuft mit all deinen Rechten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade un servidor MCP que ya usas; se ejecuta con todos tus permisos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un serveur MCP que vous utilisez déjà ; il s'exécute avec toutes vos autorisations"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi un server MCP che usi già; funziona con tutti i tuoi permessi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すでに使っている MCP サーバを追加します。サーバはあなたのすべての権限で動作します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 사용하는 MCP 서버를 추가합니다. 서버는 사용자의 모든 권한으로 실행됩니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione um servidor MCP que você já usa; ele roda com todas as suas permissões"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加你已在使用的 MCP 服务器；它以你的全部权限运行"
+          }
+        }
+      }
+    },
     "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Voice." : {
       "localizations" : {
         "ar" : {
@@ -20010,7 +20068,7 @@
       }
     },
     "All %lld" : {
-      "comment" : "A filter in Settings › Extensions with how many it shows: “All 15”",
+      "comment" : "A filter in Settings › Extensions with how many it shows: “All 15”\nThe gallery's shelves: every extension, with how many: “All 9”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -27881,6 +27939,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来抓我！"
+          }
+        }
+      }
+    },
+    "Category" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفئة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kategorie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categoría"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catégorie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categoria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カテゴリ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "카테고리"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categoria"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "类别"
           }
         }
       }
@@ -41042,6 +41158,65 @@
         }
       }
     },
+    "Developers" : {
+      "comment" : "A shelf of the add-on gallery: Git, developer tools",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للمطوّرين"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entwickler"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desarrolladores"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développeurs"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sviluppatori"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開発者向け"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개발자"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenvolvedores"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开发者"
+          }
+        }
+      }
+    },
     "Diagnostics" : {
       "localizations" : {
         "ar" : {
@@ -44432,6 +44607,65 @@
         }
       }
     },
+    "Everyday" : {
+      "comment" : "A shelf of the add-on gallery: currency, news feeds…",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يومي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alltag"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día a día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au quotidien"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quotidiano"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎日"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일상"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dia a dia"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日常"
+          }
+        }
+      }
+    },
     "Everyone" : {
       "localizations" : {
         "ar" : {
@@ -46410,6 +46644,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文件校验和"
+          }
+        }
+      }
+    },
+    "Files" : {
+      "comment" : "A shelf of the add-on gallery: PDFs, pictures, zip files, QR codes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملفات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateien"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arquivos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件"
           }
         }
       }
@@ -49078,6 +49371,7 @@
       }
     },
     "From Sidefolk" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -49254,6 +49548,7 @@
       }
     },
     "From the community" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -49539,6 +49834,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完全访问…"
+          }
+        }
+      }
+    },
+    "Fun" : {
+      "comment" : "A shelf of the add-on gallery: games and trivia",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسلية"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaß"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diversión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loisirs"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svago"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "おたのしみ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재미"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diversão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "娱乐"
           }
         }
       }
@@ -64736,6 +65090,7 @@
       }
     },
     "Its eyes, ear lights and what it wears." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70387,6 +70742,7 @@
       }
     },
     "Made and signed by Sidefolk. Each runs in its own sandbox, and you see what it may do before it is added." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -80507,7 +80863,66 @@
         }
       }
     },
+    "Nothing added yet. Get one from the Gallery, install one from a folder, add an MCP server, or ask Sidefolk to build one." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُضِف شيئًا بعد. احصل على واحدة من المعرض، أو ثبّت واحدة من مجلد، أو أضف خادم MCP، أو اطلب من Sidefolk إنشاء واحدة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts hinzugefügt. Hol dir eine aus der Galerie, installiere eine aus einem Ordner, füge einen MCP-Server hinzu oder bitte Sidefolk, eine zu bauen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no has añadido nada. Consigue una en la Galería, instala una desde una carpeta, añade un servidor MCP o pide a Sidefolk que cree una."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien d'ajouté pour l'instant. Obtenez-en une dans la Galerie, installez-en une depuis un dossier, ajoutez un serveur MCP, ou demandez à Sidefolk d'en créer une."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancora niente. Prendine una dalla Galleria, installane una da una cartella, aggiungi un server MCP o chiedi a Sidefolk di crearne una."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ何も追加されていません。ギャラリーから入手する、フォルダからインストールする、MCP サーバを追加する、または Sidefolk に作ってもらいましょう。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 추가한 것이 없습니다. 갤러리에서 받거나, 폴더에서 설치하거나, MCP 서버를 추가하거나, Sidefolk에게 만들어 달라고 하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada adicionado ainda. Pegue uma na Galeria, instale uma de uma pasta, adicione um servidor MCP ou peça ao Sidefolk para criar uma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未添加任何内容。从画廊获取、从文件夹安装、添加 MCP 服务器，或让 Sidefolk 为你制作一个。"
+          }
+        }
+      }
+    },
     "Nothing added yet. Install an extension from a folder, add an MCP server, or ask Sidefolk to build one." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -80793,6 +81208,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这里还什么都没有"
+          }
+        }
+      }
+    },
+    "Nothing in the gallery matches “%@”." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء في المعرض يطابق “%@”."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts in der Galerie passt zu „%@“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada en la galería coincide con «%@»."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien dans la galerie ne correspond à « %@ »."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niente nella galleria corrisponde a «%@»."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」に一致するものはギャラリーにありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리에 “%@”와(과) 일치하는 항목이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada na galeria corresponde a “%@”."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画廊中没有与“%@”匹配的内容。"
           }
         }
       }
@@ -85495,6 +85968,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "或者在上方输入其他回答。"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "comment" : "A shelf of the add-on gallery: what fits none of the others",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخرى"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonstige"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otras"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その他"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기타"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outras"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
           }
         }
       }
@@ -99617,6 +100149,64 @@
         }
       }
     },
+    "Review and install an extension from a folder on this Mac" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجع امتدادًا من مجلد على هذا الـ Mac وثبّته"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Erweiterung aus einem Ordner auf diesem Mac prüfen und installieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa e instala una extensión desde una carpeta de este Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifier et installer une extension depuis un dossier de ce Mac"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla e installa un'estensione da una cartella di questo Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この Mac のフォルダにある拡張機能を確認してインストールします"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 Mac의 폴더에서 확장 프로그램을 검토하고 설치합니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar e instalar uma extensão de uma pasta deste Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从这台 Mac 上的文件夹检查并安装扩展"
+          }
+        }
+      }
+    },
     "Review changed tools…" : {
       "localizations" : {
         "ar" : {
@@ -99792,6 +100382,7 @@
       }
     },
     "Reviewed and signed by Sidefolk; made by the people named." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -104955,6 +105546,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索笔记本"
+          }
+        }
+      }
+    },
+    "Search the gallery" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابحث في المعرض"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Galerie durchsuchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar en la galería"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans la galerie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca nella galleria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーを検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리 검색"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar na galeria"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索画廊"
           }
         }
       }
@@ -110800,6 +111449,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 的 AI 文件夹不是私有的。"
+          }
+        }
+      }
+    },
+    "Sidefolk's own carry its seal. Every extension here is signed by Sidefolk, runs in its own sandbox, and shows what it may do before it is added." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحمل امتدادات Sidefolk ختمه. كل امتداد هنا موقّع من Sidefolk، ويعمل في بيئته المعزولة، ويُظهر ما يمكنه فعله قبل إضافته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die von Sidefolk tragen sein Siegel. Jede Erweiterung hier ist von Sidefolk signiert, läuft in ihrer eigenen Sandbox und zeigt vor dem Hinzufügen, was sie darf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las de Sidefolk llevan su sello. Cada extensión de aquí está firmada por Sidefolk, se ejecuta en su propio entorno aislado y muestra lo que puede hacer antes de añadirla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celles de Sidefolk portent son sceau. Chaque extension ici est signée par Sidefolk, s'exécute dans son propre bac à sable et montre ce qu'elle peut faire avant d'être ajoutée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle di Sidefolk portano il suo sigillo. Ogni estensione qui è firmata da Sidefolk, funziona nella propria sandbox e mostra cosa può fare prima di essere aggiunta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 製のものにはシールが付いています。ここにある拡張機能はすべて Sidefolk が署名し、それぞれ専用のサンドボックスで動き、追加する前にできることを確認できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 제작 항목에는 인증 표시가 있습니다. 여기 있는 모든 확장 프로그램은 Sidefolk가 서명했고, 자체 샌드박스에서 실행되며, 추가하기 전에 할 수 있는 일을 보여 줍니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As do Sidefolk levam o selo dele. Cada extensão aqui é assinada pelo Sidefolk, roda na própria sandbox e mostra o que pode fazer antes de ser adicionada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 自己的扩展带有其标志。这里的每个扩展都由 Sidefolk 签名，在各自的沙盒中运行，并在添加前显示它能做什么。"
           }
         }
       }
@@ -125498,6 +126205,7 @@
       }
     },
     "The original robot" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

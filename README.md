@@ -39,7 +39,7 @@ throw it. It holds still while you type, and at rest it uses well under 0.1 % of
 *Lively*; *Balanced* is the default, and Reduce Motion is respected. If "always there" is too much,
 choose *Only when needed* or *Menu bar only*.
 
-<p align="center"><img src="Resources/Character/companions.png" width="760" alt="The thirteen companions: Mochi, Sidefolk, Spark, Pip, Byte, Seed, Melody, Scout, Tempo, Play, Guard, Nova and Brew"></p>
+<p align="center"><img src="Resources/Character/companions.png" width="760" alt="Mochi and Spark with the folks: Pip, Byte, Seed, Melody, Scout, Tempo, Play, Guard, Nova and Brew"></p>
 
 Pick your companion in **Settings › Companion**, name it, and give it a colour and a scarf. Mochi and
 Spark come in 3D or 2D; Ember (a fox), Kiko (a young astronaut), Nimbo (a cloud) and Folio (a paper
@@ -344,8 +344,8 @@ deletes it all.
 <!-- FOUNDER: pricing -->Nothing is sold yet; this release is built from source.
 
 **Why a rabbit?**
-Mochi is the mascot. If you'd rather have the original robot, Spark or one of the folks, pick it in
-Settings › Companion.
+Mochi is the mascot. If you'd rather have Spark, or Ember, Kiko, Nimbo or Folio from the add-on gallery,
+pick one in Settings › Companion.
 
 ## Troubleshooting
 

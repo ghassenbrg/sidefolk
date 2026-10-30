@@ -5,7 +5,7 @@ public enum CharacterRenderer {
     /// A still frame of `state`, centered and scaled to fit `size` (points) at `scale` pixels per point.
     @MainActor
     public static func image(state: CharacterState, size: CGSize, scale: CGFloat, badges: Set<CharacterBadge> = [],
-                             gaze: CGVector? = nil, look: CharacterLook = CharacterLook(.sidefolk),
+                             gaze: CGVector? = nil, look: CharacterLook = CharacterLook(.mochi),
                              posture: CharacterPosture = .stand) -> CGImage {
         let director = Director(look, live: false)
         director.show(state, animated: false)
@@ -19,7 +19,7 @@ public enum CharacterRenderer {
     /// the live animation plays; face changes cut instead of easing).
     @MainActor
     public static func frames(of antic: CharacterAntic, count: Int, size: CGSize, scale: CGFloat,
-                              look: CharacterLook = CharacterLook(.sidefolk), state: CharacterState = .idle,
+                              look: CharacterLook = CharacterLook(.mochi), state: CharacterState = .idle,
                               posture: CharacterPosture = .stand, mirrored: Bool = false) -> [CGImage] {
         let director = Director(look, live: false)
         director.show(state, animated: false)

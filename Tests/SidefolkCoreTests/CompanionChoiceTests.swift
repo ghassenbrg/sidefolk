@@ -11,14 +11,14 @@ import Testing
         let s = try decode(#"{"companionName": "Sidefolk", "size": "large"}"#)
         #expect(s.companion == .mochi)
         #expect(s.style(for: .mochi) == CompanionStyle(color: .aqua, accessory: .scarf))
-        #expect(s.style(for: .sidefolk) == CompanionStyle(color: .aqua, accessory: .none))
+        #expect(s.style(for: .spark) == CompanionStyle(color: .aqua, accessory: .none))
         #expect(s.size == .large)
     }
 
     @Test func unknownValuesFallBackWithoutLosingTheRest() throws {
         let s = try decode(#"{"companion": "pebble", "accent": "purple", "companionName": "Bob"}"#)
         #expect(s.companion == .mochi)
-        #expect(s.style(for: .sidefolk).color == .aqua)
+        #expect(s.style(for: .spark).color == .aqua)
         #expect(s.companionName == "Bob")
     }
 
@@ -40,7 +40,7 @@ import Testing
         s.choose(.mochi)
         #expect(s.style(for: .mochi) == CompanionStyle(color: .mint, accessory: .none))
         #expect(s.style(for: .spark) == CompanionStyle(color: .coral, accessory: .scarf))
-        #expect(s.style(for: .sidefolk) == CompanionStyle(color: .aqua, accessory: .none))
+        #expect(s.style(for: .ember) == CompanionStyle(color: .aqua, accessory: .none))
     }
 
     /// Folks are helpers, never the companion (D54): choosing one changes nothing, and one chosen before hands
@@ -60,14 +60,20 @@ import Testing
         let settings = AppSettings()
         #expect(settings.companion == .mochi)
         #expect(settings.companionName == "Mochi")
-        #expect(CompanionChoice.allCases.contains(.sidefolk))
     }
 
-    @Test func aSavedRobotAndItsCustomizationSurviveTheRebrand() throws {
-        let settings = try decode(#"{"companion":"sidefolk","accent":"coral","companionName":"Biscuit"}"#)
-        #expect(settings.companion == .sidefolk)
-        #expect(settings.style(for: .sidefolk) == CompanionStyle(color: .coral, accessory: .none))
-        #expect(settings.companionName == "Biscuit")
+    /// The original robot is retired (D56): one chosen before hands over to Mochi, keeping a name the person gave it,
+    /// and choosing it changes nothing.
+    @Test func aSavedRobotBecomesMochi() throws {
+        let named = try decode(#"{"companion":"sidefolk","accent":"coral","companionName":"Biscuit"}"#)
+        #expect(named.companion == .mochi && named.companionName == "Biscuit")
+        let plain = try decode(#"{"companion":"sidefolk","companionName":"Sidefolk"}"#)
+        #expect(plain.companion == .mochi && plain.companionName == "Mochi")
+        var s = AppSettings()
+        s.choose(.sidefolk)
+        #expect(s.companion == .mochi)
+        let spark = try decode(#"{"companion":"spark","companionName":"Sidefolk"}"#)
+        #expect(spark.companion == .spark && spark.companionName == "Spark", "the robot's name was a default, not the person's")
     }
 
     @Test func defaultNameFollowsTheCompanion() {
@@ -76,8 +82,8 @@ import Testing
         #expect(s.companionName == "Mochi")
         s.choose(.spark)
         #expect(s.companionName == "Spark")
-        s.choose(.sidefolk)
-        #expect(s.companionName == "Sidefolk")
+        s.choose(.ember)
+        #expect(s.companionName == "Ember")
     }
 
     @Test func aCustomNameStays() {
@@ -100,8 +106,8 @@ import Testing
         s.choose(.spark)
         #expect(s.companionName == "Spark")
         s.companionName = "mochi"
-        s.choose(.sidefolk)
-        #expect(s.companionName == "Sidefolk")
+        s.choose(.kiko)
+        #expect(s.companionName == "Kiko")
     }
 
     /// A companion from "Made by you" goes by its own name, which gives way like a built-in's default,
@@ -121,12 +127,12 @@ import Testing
         #expect(s.companionName == "Bun")
     }
 
-    /// D51: Mochi and Spark come in 3D and can be 2D; Ember, Kiko and Nimbo are 3D only; the robot
-    /// and the Folks are 2D only, whatever the stored settings say.
+    /// D51: Mochi and Spark come in 3D and can be 2D; Ember, Kiko and Nimbo are 3D only; the Folks are
+    /// 2D only, whatever the stored settings say.
     @Test func eachCompanionIsDrawnTheWaysItCanBe() throws {
         var s = AppSettings()
         #expect(s.dimension(for: .mochi) == .threeD && s.dimension(for: .ember) == .threeD)
-        #expect(s.dimension(for: .sidefolk) == .twoD && s.dimension(for: .pip) == .twoD)
+        #expect(s.dimension(for: .pip) == .twoD)
         s.setDimension(.twoD, for: .mochi)
         s.setDimension(.twoD, for: .kiko)
         s.setDimension(.threeD, for: .scout)

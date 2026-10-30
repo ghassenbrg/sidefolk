@@ -33,9 +33,10 @@ public enum CompanionLiveliness: String, Codable, Sendable, CaseIterable {
     case minimal, balanced, lively
 }
 
-/// Who lives on the desktop: Mochi (the default, D29), the original robot, Spark, or Ember, Kiko, Nimbo and
-/// Folio, who exist only in 3D (D51) and come from the add-on gallery (D55). The Folk Family (D30) are helpers beside the companion, never the
-/// companion itself (D54); their cases stay so older settings still read.
+/// Who lives on the desktop: Mochi (the default, D29), Spark, or Ember, Kiko, Nimbo and Folio, who exist only
+/// in 3D (D51) and come from the add-on gallery (D55). The Folk Family (D30) are helpers beside the companion,
+/// never the companion itself (D54), and the original robot is retired (D56); their cases stay so older settings
+/// still read.
 public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
     case mochi, sidefolk, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
@@ -49,8 +50,11 @@ public enum CompanionChoice: String, Codable, Sendable, CaseIterable {
         }
     }
 
+    /// No longer a companion: the folks (D54) and the original robot (D56). Settings that chose one move to Mochi.
+    public var isRetired: Bool { isFolk || self == .sidefolk }
+
     /// How it can be drawn (D51): Mochi and Spark either way, Ember, Kiko, Nimbo and Folio in 3D only,
-    /// the robot and the Folks in 2D only. The first is how it comes.
+    /// the retired ones in 2D only. The first is how it comes.
     public var dimensions: [CompanionDimension] {
         switch self {
         case .mochi, .spark: [.threeD, .twoD]
@@ -263,18 +267,17 @@ public struct AppSettings: Codable, Sendable, Equatable {
         func read<T: Decodable>(_ key: CodingKeys, _ into: inout T) { if let v = try? c.decode(T.self, forKey: key) { into = v } }
         read(.companionName, &companionName)
         read(.companion, &companion)
-        // A folk chosen before D54 hands over to Mochi; a name the person gave it stays.
-        if companion.isFolk {
+        // A folk (D54) or the robot (D56) chosen before hands over to Mochi; a name the person gave it stays.
+        if companion.isRetired {
             companion = .mochi
             if !hasCustomName { companionName = CompanionChoice.mochi.defaultName }
         }
+        // The robot's name was the default for every companion once; it now follows the companion.
+        if companionName.trimmingCharacters(in: .whitespaces).lowercased() == CompanionChoice.sidefolk.defaultName.lowercased() {
+            companionName = companion.defaultName
+        }
         read(.styles, &styles)
         read(.dimensions, &dimensions)
-        // Before D30 the robot's light colour was the only style ("accent"); keep it.
-        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
-        if styles[CompanionChoice.sidefolk.rawValue] == nil, let accent = try? legacy.decode(CompanionAccent.self, forKey: .accent) {
-            styles[CompanionChoice.sidefolk.rawValue] = CompanionStyle(color: accent, accessory: .none)
-        }
         customCompanion = try? c.decodeIfPresent(String.self, forKey: .customCompanion)
         customCompanionName = try? c.decodeIfPresent(String.self, forKey: .customCompanionName)
         read(.liveliness, &liveliness)
@@ -307,7 +310,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     /// Switches companion. A name that is still one of the built-in defaults follows the new
     /// companion ("Sidefolk" becomes "Mochi"); a name the user chose stays.
     public mutating func choose(_ next: CompanionChoice) {
-        guard !next.isFolk else { return }
+        guard !next.isRetired else { return }
         if !hasCustomName { companionName = next.defaultName }
         companion = next
         customCompanion = nil
@@ -320,8 +323,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
         customCompanion = id
         customCompanionName = name
     }
-
-    private enum LegacyKeys: String, CodingKey { case accent }
 
     /// How `companion` is dressed: what the user chose for it, or how it comes.
     public func style(for companion: CompanionChoice) -> CompanionStyle {

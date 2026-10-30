@@ -5,7 +5,7 @@ import AppKit
 /// `look` picks who is drawn and how it is dressed; everything else works the same for every companion.
 @MainActor
 public final class CharacterView: NSView {
-    private var director = Director(CharacterLook(.sidefolk), live: true)
+    private var director = Director(CharacterLook(.mochi), live: true)
     private var blinkTimer: Timer?
     private var gaze: CGVector?
 
@@ -26,7 +26,7 @@ public final class CharacterView: NSView {
 
     /// Who is drawn. A new style redresses it in place; another companion crossfades in, in the
     /// same state, with the same badges.
-    public var look = CharacterLook(.sidefolk) {
+    public var look = CharacterLook(.mochi) {
         didSet {
             guard look != oldValue else { return }
             if look.identity == director.identity {

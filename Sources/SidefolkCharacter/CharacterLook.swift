@@ -18,11 +18,11 @@ public struct CharacterLook: Equatable, Sendable {
     }
 }
 
-/// Every companion that can live on the desktop. The robot is its own vector rig (D2); the others
-/// are soft rigs built from a `Species`; Ember, Kiko, Nimbo and Folio are 3D characters drawn by the app
-/// over a stand-in rig (D51).
+/// Every companion that can live on the desktop: soft rigs built from a `Species`; Ember, Kiko, Nimbo and Folio
+/// are 3D characters drawn by the app over a stand-in rig (D51). The original robot's vector rig (D2) is retired
+/// (D56).
 public enum CharacterSpecies: String, CaseIterable, Sendable {
-    case mochi, sidefolk, spark
+    case mochi, spark
     case pip, byte, seed, melody, scout, tempo, play, guard_ = "guard", nova, brew
     case ember, kiko, nimbo, folio
 
@@ -41,7 +41,6 @@ public enum CharacterSpecies: String, CaseIterable, Sendable {
     public var displayName: String {
         switch self {
         case .mochi: "Mochi"
-        case .sidefolk: "Sidefolk"
         case .spark: "Spark"
         case .ember: "Ember"
         case .kiko: "Kiko"
@@ -54,9 +53,8 @@ public enum CharacterSpecies: String, CaseIterable, Sendable {
     /// The folk this companion is, when it is one of the Folk Family.
     public var folk: Folk? { Folk(rawValue: rawValue) }
 
-    /// Whether the style colour paints part of the companion itself (the robot's light, Spark's
-    /// gear), not only what it wears.
-    public var hasOwnAccents: Bool { self == .sidefolk || self == .spark }
+    /// Whether the style colour paints part of the companion itself (Spark's gear), not only what it wears.
+    public var hasOwnAccents: Bool { self == .spark }
 
     /// How it comes dressed: Mochi in its scarf, the others in nothing; aqua accents for all.
     public var standardStyle: CharacterStyle {
@@ -66,7 +64,7 @@ public enum CharacterSpecies: String, CaseIterable, Sendable {
 
 /// The same small set of choices for every companion: one brand colour and one thing to wear.
 public struct CharacterStyle: Equatable, Sendable {
-    /// Colours what it wears and its own accent parts (the robot's light, Spark's headphones).
+    /// Colours what it wears and its own accent parts (Spark's headphones).
     public var color: CharacterAccent
     public var accessory: CharacterAccessory
 

@@ -2,7 +2,7 @@
 
 Updated: 2026-10-30. Version 0.1.0. Latest: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
 extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
-published yet: the founder runs scripts/publish.sh there). 1373 core and 34 character tests pass, serially.
+published yet: the founder runs scripts/publish.sh there). 1374 core and 34 character tests pass, serially.
 Before that: the founder's list after snapshot 478: other agents change and
 delete notes, with Settings › Privacy › Other agents choosing what they may do; Empty Trash; Light, Dark or Same
 as Mac; spoken replies briefly or in full; releases only by default, offered again daily (D52); 3D companions
@@ -12,6 +12,14 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Robot retired, gallery shelves and search, add buttons in sight (D56):** the original robot companion and its
+  rig are gone (saved settings move to Mochi). Settings › Extensions › Gallery: search, shelves (Everyday, Files,
+  Developers, Fun) with counts, grouped by shelf; Install from Folder… and Add MCP Server… at the top of the page.
+  CI's failure was a real race in `DailyChore.stop` (a run already past its check finished after stop); stop now
+  waits for it. *Checked:* tests (shelves, search, a saved robot becoming Mochi), the dev app (Gallery with
+  shelves, Installed with the new header, the companion picker without the robot). *Not yet:* the gallery release
+  still has the catalog without shelves until it is published again (sidefolk-addons scripts/publish.sh). The
+  README's companions picture is rendered again without the robot.
 - **The add-on gallery (D55):** built in now are Mochi, Spark, the robot, the folks and four extensions (World
   Clock, Calculator, System Vitals, Weather). Ember, Kiko, Nimbo, Folio and Git, Currency, Playtime, Images, PDF
   Tools, QR Codes, Archives, Dev Toolbox and Feeds are packs in `sidefolk-addons` (`scripts/build.py` signs each

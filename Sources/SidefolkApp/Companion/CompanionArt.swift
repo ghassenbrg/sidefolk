@@ -10,7 +10,7 @@ enum CompanionArt {
     /// they are installed from the add-on gallery (D55).
     static var offered: [CompanionChoice] {
         CharacterSpecies.available.filter { !$0.only3D || Companion3DStage.has($0) }
-            .compactMap { CompanionChoice(rawValue: $0.rawValue) }.filter { !$0.isFolk }
+            .compactMap { CompanionChoice(rawValue: $0.rawValue) }.filter { !$0.isRetired }
     }
 
     /// Whether `choice` is shown in 3D: as the settings say, when this copy can draw it so (D51).
@@ -63,13 +63,12 @@ enum CompanionArt {
     static func role(_ choice: CompanionChoice) -> String {
         switch choice {
         case .mochi: String(localized: "Your AI companion")
-        case .sidefolk: String(localized: "The original robot")
         case .spark: String(localized: "A little robot helper")
         case .ember: String(localized: "A curious little fox")
         case .kiko: String(localized: "A young space explorer")
         case .nimbo: String(localized: "A dreamy little cloud")
         case .folio: String(localized: "A folded little wish")
-        default: ""   // folks aren't offered (D54)
+        default: ""   // folks and the robot aren't offered (D54, D56)
         }
     }
 
