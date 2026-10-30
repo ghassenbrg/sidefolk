@@ -81,7 +81,30 @@ Settings › Companion gains **Get more**: a gallery read from a signed catalog,
 - **Licences:** CC0 or CC BY, or the author's own terms shown before download. Paid companions are a later
   question (link out to the creator).
 
-## 6. In what order
+## 6. Where it lives: repositories
+
+- **`sidefolk` (this repository) keeps** what changes with the app: the pack formats (`companion.json`,
+  `character.json`, the extension manifest), the loader, `sidefolk companion validate` and `sidefolk ext validate`,
+  the gallery in Settings, the built-in companions and the bundled extensions. A format change edits the loader,
+  the validator and our own characters in one commit, tested together.
+- **`sidefolk-gallery` (one public repository, made at step 2) holds** community content: `companions/` and
+  `extensions/`, the signed catalog, and CI that validates each pull request and renders the contact sheet.
+  Built packs are published on its GitHub Releases, and only sources stay in git (`.glb` in Git LFS). Ember,
+  Kiko, Nimbo and Folio move there when they leave the app, as the example packs.
+- **Why it's apart from the app:**
+  - Strangers' pull requests stay away from the repository that builds and signs the app.
+  - The catalog updates without an app release.
+  - `sidefolk/.git` is already 2.8 GB, mostly models and reference images.
+  - Packs carry their own licences (CC0, CC BY).
+- **Why it's one repository and not two:**
+  - Companions and extensions share the signed catalog, release hosting and review process.
+  - Their different trust is handled by separate CI jobs per folder and `CODEOWNERS`.
+  - Extensions can split out later if they ever need their own reviewers.
+- **`sidefolk-companion-template` (step 3)** is a GitHub template repository with the creator kit (the skill,
+  the pipeline and `sidefolk companion pack`), so a creator can click "Use this template".
+- **Nothing is created before it is needed:** step 1 happens entirely in this repository.
+
+## 7. In what order
 
 1. **Format:** `character.json` and material presets; our six converted; packs load from `<home>/companions/`
    (3D "Made by you"); `sidefolk companion validate`. Small, and it proves the format.
