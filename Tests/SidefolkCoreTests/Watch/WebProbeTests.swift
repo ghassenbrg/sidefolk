@@ -30,6 +30,11 @@ import Testing
         #expect(changed.summary == "example.com/pricing changed")
         #expect(changed.detail == "“Pro: $19” → “Pro: $29”")
         #expect(changed.openTarget == "https://example.com/pricing")
+        // The change is kept for Today's tile, and stays through checks where nothing changes (D58).
+        let kept = try #require(w.lastPageChange)
+        #expect(kept.removed == ["Pro: $19"] && kept.added == ["Pro: $29"])
+        _ = try await probe.step(&w, at: t0.addingTimeInterval(600))
+        #expect(w.lastPageChange == kept)
     }
 
     @Test func noiseDoesNotTrigger() async throws {

@@ -229,7 +229,17 @@ enum UISnapshots {
             finding.found.find = { query in (try? await full.services.runtime.find(query)) ?? SearchResults() }
             finding.text = "invoice"
             await finding.found.searchNow()
-            let panels = [("desktop-ask-found", finding), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
+            // Nothing typed: Today at a glance (D58).
+            let glancing = AskModel()
+            glancing.actions = actions
+            glancing.glance = Glance(
+                decisions: [AttentionItem(level: .attention, source: "watcher", title: "Pricing changed: Pro went from $12 to $15.",
+                                          actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)])],
+                sessions: [AgentSession(id: "cc-1", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou)],
+                next: [Glance.Next(title: "Stretch", at: Date().addingTimeInterval(25 * 60), event: false),
+                       Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)],
+                working: ["Codex in pockito"])
+            let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
                           ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-internet", sampleAskInternet()),

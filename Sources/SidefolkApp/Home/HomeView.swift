@@ -81,7 +81,15 @@ private struct HomeSidebar: View {
                 .selectionDisabled()
                 .listRowSeparator(.hidden)
                 .padding(.leading, Theme.Space.xs)
-                .padding(.bottom, Theme.Space.m)
+                .padding(.bottom, Theme.Space.s)
+            // The companion's nook (D58): who keeps track of all this, and what it's on now. A click goes to Today.
+            Button { model.selection = .now } label: {
+                CompanionNook(settings: model.services.runtime.settings.current, line: model.now.nookLine)
+            }
+            .buttonStyle(.plain)
+            .selectionDisabled()
+            .listRowSeparator(.hidden)
+            .padding(.bottom, Theme.Space.s)
             Section {
                 Label { Text("Today") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)

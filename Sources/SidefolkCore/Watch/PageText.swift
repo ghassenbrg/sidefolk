@@ -187,3 +187,48 @@ public enum TextDiff {
         return !n.isEmpty && squash(text).contains(n)
     }
 }
+
+/// The last change a page watch saw (D58), kept in its state until the next one, so Today can show what changed
+/// after the notice is gone. Cut short: a few lines, each clipped, 2 KB in all.
+public struct PageChange: Sendable, Equatable {
+    public var at: Date
+    public var removed: [String]
+    public var added: [String]
+
+    static let maxLines = 6
+    static let maxLine = 200
+    static let maxTotal = 2048
+
+    init(_ change: TextChange, at: Date) {
+        self.at = at
+        var budget = Self.maxTotal
+        func keep(_ lines: [String]) -> [String] {
+            lines.prefix(Self.maxLines).compactMap { line in
+                let clipped = line.clipped(Self.maxLine)
+                guard budget > 0 else { return nil }
+                budget -= clipped.utf8.count
+                return clipped
+            }
+        }
+        removed = keep(change.removed)
+        added = keep(change.added)
+    }
+
+    /// From a watch's state, where the page probe keeps it.
+    public init?(state: JSONValue?) {
+        guard let kept = state?["change"], let seconds = kept["at"]?.doubleValue else { return nil }
+        at = Date(timeIntervalSince1970: seconds)
+        removed = kept["removed"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        added = kept["added"]?.arrayValue?.compactMap(\.stringValue) ?? []
+    }
+
+    var json: JSONValue {
+        .object(["at": .number(at.timeIntervalSince1970), "removed": .array(removed.map(JSONValue.string)),
+                 "added": .array(added.map(JSONValue.string))])
+    }
+}
+
+extension Watcher {
+    /// What a page watch last saw change, if anything yet.
+    public var lastPageChange: PageChange? { PageChange(state: lastState) }
+}

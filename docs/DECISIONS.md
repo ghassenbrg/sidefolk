@@ -1368,6 +1368,12 @@ Step 5's one bar searches with `SidefolkRuntime.find` and sends words only throu
 (`AppServices.ask`: Return as today, ⌘Return asks the AI even what is understood without it, ⌥Return saves a note),
 so nothing new can run a tool. The Ask panel keeps its own input (voice, drops, replies) and gains the same results.
 
+Step 7 completes the Desk recipe. A page watch keeps its last change (`PageChange`, 2 KB) in its state for Today's
+tile; agents at work show your companion's own run, sessions with their last call to Sidefolk, commands and sessions
+finished in the last hour; the companion's nook sits in Home's sidebar. Glance is the Ask panel's idle state, not a
+separate panel: one click on the companion opens it, with what needs you (answered there as on Today), the next
+two things in your day, who's working and the way to Today.
+
 ### D59 — Every companion also comes in 2D: painted cut-out parts on the vector rig, a real 2D look (2026-10-30)
 **Decision:** all ten companions (Mochi, Spark and the gallery's Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl, Rune) can
 be shown in 2D or 3D (Settings › Companion › Look; 3D is how they come). The 2D look is set by one style target,

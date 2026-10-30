@@ -344,6 +344,7 @@ final class AppCoordinator {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             self?.statusItem.refreshNow()
+            self?.refreshGlance()
         }
     }
 
@@ -537,6 +538,7 @@ final class AppCoordinator {
 
     func showAsk(prefill: String? = nil, focus: Bool = true) {
         if let prefill { ask.text = prefill }
+        refreshGlance()
         companion.keepRaised(true)
         guard let (frame, screen) = anchor() else { return }
         askPanel.show(beside: frame, on: screen, focus: focus)

@@ -145,8 +145,10 @@ enum SampleData {
 
         // Watchers
         func watcher(_ title: String, kind: String, config: JSONValue, every: Double, state: Watcher.State = .active, checked: Date? = nil,
-                     error: String? = nil, updated: Date? = nil) async throws {
-            var w = Watcher(kind: kind, title: title, config: config, intervalS: every, source: "user", now: ago(60 * 24 * 2))
+                     error: String? = nil, updated: Date? = nil, id: String? = nil, seen: JSONValue? = nil) async throws {
+            var w = Watcher(id: id ?? Identifier.make(), kind: kind, title: title, config: config, intervalS: every, source: "user",
+                            now: ago(60 * 24 * 2))
+            w.lastState = seen
             w.state = state
             w.lastCheckedAt = checked
             w.lastError = error
@@ -154,7 +156,10 @@ enum SampleData {
             if let updated { w.updatedAt = updated }
             try await rt.watcherStore.save(w)
         }
-        try await watcher("Pro pricing on example.com", kind: "web.change", config: ["url": "https://example.com/pricing"], every: 1800, checked: ago(4))
+        // What the page probe keeps of its last change (D58), and the notice about it still waiting on Today.
+        try await watcher("Pro pricing on example.com", kind: "web.change", config: ["url": "https://example.com/pricing"], every: 1800, checked: ago(4),
+                          id: "w-pricing", seen: ["change": ["at": .number(ago(25).timeIntervalSince1970),
+                                                             "removed": ["Pro $12 / month, billed yearly"], "added": ["Pro $15 / month, billed yearly"]]])
         try await watcher("Staging is up", kind: "site.up", config: ["url": "https://staging.sidefolk.app"], every: 60, state: .error, checked: ago(1),
                           error: "Couldn't reach staging.sidefolk.app (timed out). I'll try again in 4 min.")
         try await watcher("report.pdf lands in Downloads", kind: "file.appears", config: ["path": .string(home + "/Downloads/report.pdf")],
@@ -253,6 +258,8 @@ enum SampleData {
             run.inputTokens = 9_000 + i * 1_300
             run.outputTokens = 1_200 + i * 160
             run.steps = 2
+            // Done, as past runs are: only a run without an end shows as working (D58).
+            run.endedAt = ago(Double(i) * 200 - 0.7)
             try await rt.runs.save(run)
         }
 

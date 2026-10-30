@@ -31,3 +31,28 @@ struct TodayHeader: View {
         .accessibilityElement(children: .contain)
     }
 }
+
+/// The companion in Home's sidebar (D58): its face, its name and one line about what it's keeping track of; asleep
+/// while quiet mode is on, as on the desktop.
+struct CompanionNook: View {
+    var settings: AppSettings
+    var line: String
+
+    var body: some View {
+        HStack(spacing: Theme.Space.s) {
+            CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: 38)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: settings.companionName).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Text(verbatim: line).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(Theme.Space.s)
+        .background(Theme.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text("Opens Today"))
+    }
+}

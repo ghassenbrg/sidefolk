@@ -88,6 +88,9 @@ protocol AskActions: AnyObject {
     func open(_ found: Found)
     /// Keeps the words as a note in Inbox (⌥Return).
     func saveAsNote(_ text: String, in model: AskModel)
+    func openSession(_ session: AgentSession)
+    /// Something Sidefolk noticed, set aside without an answer (Glance's ×).
+    func dismissAttention(_ item: AttentionItem)
     func stop()
     /// The next request starts a new conversation with the AI; `announce` says so in the panel (D45).
     func startFresh(in model: AskModel, announce: Bool)
@@ -143,6 +146,8 @@ final class AskModel {
     }
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
+    /// Today at a glance, shown while nothing is typed (D58).
+    var glance = Glance()
     var attachment: Attachment?
     var entries: [AskEntry] = []
     var busy = false

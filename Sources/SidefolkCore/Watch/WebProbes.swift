@@ -176,6 +176,8 @@ public struct UrlChangeProbe: WatcherProbe {
         ]
         if let tag = response.headers["etag"] { state["etag"] = .string(tag) }
         if let modified = response.headers["last-modified"] { state["last_modified"] = .string(modified) }
+        // The last change stays until the next, for Today's tile (D58).
+        if let kept = previous?["change"] { state["change"] = kept }
         let open = url.absoluteString
 
         if condition.hasText {
@@ -202,6 +204,7 @@ public struct UrlChangeProbe: WatcherProbe {
         }
         let change = TextDiff.compare(old: before, new: text)
         guard change.isSignificant else { return ProbeResult(state: .object(state)) }
+        state["change"] = PageChange(change, at: now).json
         return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: change.snippet, openTarget: open)
     }
 

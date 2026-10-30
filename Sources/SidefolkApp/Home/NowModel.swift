@@ -77,6 +77,12 @@ final class NowModel {
     private(set) var readings: [String: WatchReading] = [:]
     private(set) var jobs: [Job] = []
     private(set) var workingSessions: [AgentSession] = []
+    /// Sessions that finished in the last hour, so Agents at work says how they ended (D58).
+    private(set) var finishedSessions: [AgentSession] = []
+    /// Each other agent's latest call to Sidefolk, by the name its sessions use ("claude-code").
+    private(set) var lastCalls: [String: ActivityEntry] = [:]
+    /// Your companion's own AI run while it's working: the conversation it's for and its latest step.
+    private(set) var ownRun: (run: AgentRun, conversation: ConversationSummary?, step: ActivityEntry?)?
     private(set) var recent: [RecentEntry] = []
 
     var newTitle = ""
@@ -102,6 +108,32 @@ final class NowModel {
     }
 
     var calendarOn: Bool { runtime.calendarReader.isOn }
+
+    /// Whether Sidefolk noticed something about this watch that's still waiting for you: its tile stands out until
+    /// you look (D58).
+    func changeWaiting(for watcher: Watcher) -> AttentionItem? {
+        attention.first { $0.refKind == "watcher" && $0.refId == watcher.id }
+    }
+
+    /// Looking at what changed counts as having seen it: the notice leaves Today's queue.
+    func seen(_ watcher: Watcher) async {
+        if let item = changeWaiting(for: watcher) { await respond(item, action: nil) }
+    }
+
+    /// One line for the companion's nook (D58): what it's keeping an eye on and what comes next.
+    var nookLine: String {
+        var parts: [String] = []
+        let watching = watchers.filter { $0.state == .active }.count + reports.count
+        if watching > 0 { parts.append(String(localized: "Watching \(watching)", comment: "The companion's nook: how many watches are on")) }
+        let now = Date()
+        let nextReminder = reminders.compactMap { r in (r.nextDue ?? r.fireAt) > now ? (r.nextDue ?? r.fireAt, r.title) : nil }.min { $0.0 < $1.0 }
+        let nextEvent = events.filter { !$0.allDay && $0.start > now }.map { ($0.start, $0.title) }.min { $0.0 < $1.0 }
+        if let next = [nextReminder, nextEvent].compactMap({ $0 }).min(by: { $0.0 < $1.0 }) {
+            parts.append(String(localized: "next: \(next.1.clipped(24)) at \(TimeFormat.clock(next.0, calendar: .current))",
+                                comment: "The companion's nook: what comes next, “next: Stretch at 17:30”"))
+        }
+        return parts.isEmpty ? String(localized: "Nothing coming up") : parts.joined(separator: " · ")
+    }
 
     /// The calendar's events on a day of `groups()`, all-day ones first.
     func events(on day: ReminderGroup.Day, now: Date = Date()) -> [CalendarEvent] {
@@ -167,6 +199,21 @@ final class NowModel {
         reports = watching.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
         readings = Dictionary(await rt.watchers.latestReadings().map { ($0.watcherId, $0) }, uniquingKeysWith: { a, _ in a })
         jobs = (try? await rt.jobs.running()) ?? []
+        let hourAgo = Date().addingTimeInterval(-3600)
+        finishedSessions = ((try? await rt.sessions.recent(limit: 20)) ?? [])
+            .filter { $0.state == .finished && ($0.endedAt ?? $0.updatedAt) > hourAgo }
+        let calls = (try? await rt.activity.recent(limit: 200)) ?? []
+        lastCalls = [:]
+        for call in calls where call.caller.hasPrefix("external:") {
+            let agent = String(call.caller.dropFirst("external:".count))
+            if lastCalls[agent] == nil { lastCalls[agent] = call }
+        }
+        if let run = ((try? await rt.runs.recent(limit: 3)) ?? []).first(where: { $0.endedAt == nil && $0.startedAt > Date().addingTimeInterval(-900) }) {
+            let conversation = try? await rt.exchanges.conversations(ofRuns: [run.id])[run.id]
+            ownRun = (run, conversation ?? nil, calls.first { $0.runId == run.id })
+        } else {
+            ownRun = nil
+        }
         recent = await loadRecent()
     }
 

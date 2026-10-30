@@ -419,6 +419,37 @@ extension AppCoordinator: AskActions {
         (try? await runtime.find(query)) ?? SearchResults()
     }
 
+    func dismissAttention(_ item: AttentionItem) {
+        Task { await runtime.attention.respond(id: item.id, actionId: nil) }
+    }
+
+    /// Refreshes the Ask panel's Glance (D58): when it opens, and when what it shows changes.
+    func refreshGlance() {
+        Task { ask.glance = await glance() }
+    }
+
+    private func glance() async -> Glance {
+        var glance = Glance()
+        let now = Date()
+        let live = (try? await runtime.sessions.live()) ?? []
+        glance.sessions = live.filter { $0.state == .needsYou }
+        let asking = Set(glance.sessions.map(\.id))
+        // As on Today: things that need a decision, a session's own notice shown once, as the session.
+        glance.decisions = await runtime.attention.open()
+            .filter { $0.level >= .attention && !($0.refKind == "session" && asking.contains($0.refId ?? "")) }
+        let soon = now.addingTimeInterval(12 * 3600)
+        let reminders = ((try? await runtime.reminderStore.pending()) ?? []).compactMap { r -> Glance.Next? in
+            let at = r.nextDue ?? r.fireAt
+            return at > now && at < soon ? Glance.Next(title: r.title, at: at, event: false) : nil
+        }
+        let events = (await runtime.calendarReader.events(from: now, to: soon) ?? []).filter { !$0.allDay && $0.start > now }
+            .map { Glance.Next(title: $0.title, at: $0.start, event: true) }
+        glance.next = Array((reminders + events).sorted { $0.at < $1.at }.prefix(Glance.nextShown))
+        glance.working = live.filter { $0.state == .working }.map(Describe.session)
+            + ((try? await runtime.jobs.running()) ?? []).map(\.title)
+        return glance
+    }
+
     func remind(_ guess: ReminderGuess, in model: AskModel) {
         runLocal(.remind(title: guess.title, when: guess.when, recurrence: guess.recurrence), caption: nil, into: model)
     }

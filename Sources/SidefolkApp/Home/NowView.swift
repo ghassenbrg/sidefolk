@@ -144,43 +144,71 @@ struct NowView: View {
 
     // MARK: Watching
 
+    /// Watches as tiles (D58): what each keeps an eye on, when it last looked, and what it last saw change.
     private var watching: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
             SectionHeader(title: "Watching", folk: "scout", count: model.watchers.count)
-            RowsCard {
-                if model.watchers.isEmpty {
+            if model.watchers.isEmpty {
+                RowsCard {
                     InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
                                 systemImage: "binoculars", actionTitle: "Watch something…") {
                         model.services.openAsk(prefill: "tell me when ")
                     }
                 }
-                ForEach(model.watchers) { w in WatcherRow(watcher: w, model: model) }
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: Theme.Space.m, alignment: .top)],
+                          alignment: .leading, spacing: Theme.Space.m) {
+                    ForEach(model.watchers) { w in WatchTile(watcher: w, model: model) }
+                }
             }
         }
     }
 
-    // MARK: Running
+    // MARK: Agents at work
 
+    private var agentCount: Int {
+        model.workingSessions.count + model.finishedSessions.count + model.jobs.count + (model.ownRun == nil ? 0 : 1)
+    }
+
+    /// Who is working right now (D58): your companion, Claude Code and Codex sessions with the last thing each asked
+    /// of Sidefolk, commands Sidefolk was asked to keep an eye on, and sessions that finished in the last hour.
     private var running: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Running", folk: "byte", count: model.jobs.count + model.workingSessions.count)
+            SectionHeader(title: "Agents at work", folk: "byte", count: agentCount)
             RowsCard {
-                if model.jobs.isEmpty && model.workingSessions.isEmpty {
+                if agentCount == 0 {
                     InlineEmpty(text: "Nothing running. Connect Claude Code or Codex to see their sessions here, or start a command with “sidefolk run -- npm test”.",
                                 systemImage: "terminal", actionTitle: "Connect your agents…") {
                         model.services.openSettings(tab: .agents)
                     }
                 }
+                if let own = model.ownRun {
+                    RunningRow(symbol: "bubble.left.and.bubble.right", title: own.conversation.map { "\(companion): \($0.title)" } ?? companion,
+                               started: own.run.startedAt, detail: own.step?.summary,
+                               actionTitle: own.conversation == nil ? nil : "Open conversation") {
+                        if let id = own.conversation?.id { model.services.openConversation(id) }
+                    }
+                }
                 ForEach(model.workingSessions) { s in
-                    RunningRow(symbol: "sparkles", title: Describe.session(s), started: s.startedAt, detail: s.detail,
+                    RunningRow(symbol: "sparkles", title: Describe.session(s), started: s.startedAt, detail: lastCall(s) ?? s.detail,
                                actionTitle: "Open session") { model.openSession(s) }
                 }
                 ForEach(model.jobs) { j in
                     RunningRow(symbol: "terminal", title: j.title, started: j.startedAt,
                                detail: j.cwd.map { String(localized: "in \(FolderAccess.displayPath($0))") }, command: j.command)
                 }
+                ForEach(model.finishedSessions) { s in
+                    FinishedRow(session: s, lastCall: lastCall(s))
+                }
             }
         }
+    }
+
+    private var companion: String { model.services.runtime.settings.current.companionName }
+
+    /// The last thing a session's agent asked Sidefolk to do, in Activity's words.
+    private func lastCall(_ session: AgentSession) -> String? {
+        model.lastCalls[session.agent].map { String(localized: "Last: \($0.summary)", comment: "The last thing an agent asked Sidefolk to do") }
     }
 
     // MARK: Recently
@@ -209,6 +237,144 @@ struct NowView: View {
 }
 
 // MARK: - Rows
+
+/// A watch as a tile: what it keeps an eye on, its state, when it last looked, and what it last saw change, with the
+/// way to see that change in full. It stands out while what it noticed is still waiting in the queue (D58).
+private struct WatchTile: View {
+    var watcher: Watcher
+    var model: NowModel
+    @State private var showingChange = false
+
+    var body: some View {
+        let kind = Describe.watcherKind(watcher.kind)
+        let waiting = model.changeWaiting(for: watcher) != nil
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            HStack(alignment: .top, spacing: Theme.Space.s) {
+                IconTile(symbol: kind.symbol, folk: "scout", size: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(watcher.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
+                    if let target = Describe.watcherTarget(watcher), !watcher.title.contains(target) {
+                        Text(target).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkFaint)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
+                }
+                Spacer(minLength: Theme.Space.xs)
+                state
+            }
+            Text(meta(kind)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            if let change = watcher.lastPageChange {
+                Button { showingChange = true } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Changed \(TimeText.short(change.at))").font(Theme.Font.captionStrong)
+                            .foregroundStyle(waiting ? Theme.danger : Theme.inkMuted)
+                        if let line = change.added.first ?? change.removed.first {
+                            Text(verbatim: line).font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(Text("See the change"))
+                .popover(isPresented: $showingChange, arrowEdge: .bottom) { ChangeLines(change: change) }
+            }
+            if watcher.state == .error || watcher.errorCount > 0, let error = watcher.lastError {
+                Text(error).font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 6) {
+                Button("Check now") { Task { await model.checkNow(watcher) } }
+                    .buttonStyle(.sf(.secondary))
+                    .disabled(watcher.state == .paused)
+                if watcher.state == .paused {
+                    Button("Resume") { Task { await model.resume(watcher) } }.buttonStyle(.sf(.secondary))
+                } else {
+                    Button("Pause") { Task { await model.pause(watcher) } }.buttonStyle(.sf(.secondary))
+                }
+                Spacer(minLength: 0)
+                Menu {
+                    Button("Stop watching", role: .destructive) { Task { await model.stop(watcher) } }
+                } label: {
+                    Image(systemName: "ellipsis")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .accessibilityLabel("More for “\(watcher.title)”")
+            }
+        }
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .cardSurface()
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+            .strokeBorder(waiting ? Theme.danger.opacity(0.6) : .clear, lineWidth: 1.5))
+        .onChange(of: showingChange) { _, open in if open { Task { await model.seen(watcher) } } }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func meta(_ kind: Describe.WatcherKind) -> String {
+        var parts = [kind.label, Describe.interval(watcher.intervalS)]
+        if let checked = watcher.lastCheckedAt {
+            parts.append(String(localized: "checked \(TimeText.relative(checked))", comment: "“checked 5 min ago”"))
+        } else {
+            parts.append(String(localized: "not checked yet"))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    @ViewBuilder private var state: some View {
+        switch watcher.state {
+        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .accent)
+        case .paused: Chip("Paused", tone: .neutral)
+        case .error: Chip("Having trouble", tone: .danger)
+        case .triggered: Chip("Spotted", tone: .success)
+        case .expired: Chip("Expired", tone: .neutral)
+        }
+    }
+}
+
+/// A page's last change in full: the lines that went and the lines that came.
+private struct ChangeLines: View {
+    var change: PageChange
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            Text("Changed \(TimeText.short(change.at))").font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
+            ForEach(Array(change.removed.enumerated()), id: \.offset) { _, line in
+                Text(verbatim: "− " + line).foregroundStyle(Theme.danger)
+            }
+            ForEach(Array(change.added.enumerated()), id: \.offset) { _, line in
+                Text(verbatim: "+ " + line).foregroundStyle(Theme.success)
+            }
+        }
+        .font(.system(size: 12, design: .monospaced))
+        .textSelection(.enabled)
+        .padding(Theme.Space.m)
+        .frame(maxWidth: 420, alignment: .leading)
+    }
+}
+
+/// A session that finished in the last hour: how long it took, and the last thing it asked of Sidefolk.
+private struct FinishedRow: View {
+    var session: AgentSession
+    var lastCall: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Space.m) {
+            IconTile(symbol: "checkmark.seal", folk: "byte")
+            VStack(alignment: .leading, spacing: 3) {
+                Text(Describe.session(session)).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
+                let end = session.endedAt ?? session.updatedAt
+                Text(verbatim: ([String(localized: "Finished \(TimeText.relative(end))", comment: "“Finished 12 min ago”")] + [lastCall].compactMap { $0 })
+                    .joined(separator: " · "))
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .nowRow()
+        .accessibilityElement(children: .combine)
+    }
+}
 
 /// A line of a day under the rail: an event or a reminder.
 private enum DayRow: Identifiable {
@@ -626,75 +792,6 @@ private struct NewReminderRow: View {
         .nowRow()
         .onChange(of: model.newWhen) { model.clearError() }
         .onChange(of: model.newReminderFocus) { focus = .title }
-    }
-}
-
-private struct WatcherRow: View {
-    var watcher: Watcher
-    var model: NowModel
-
-    var body: some View {
-        let kind = Describe.watcherKind(watcher.kind)
-        HStack(alignment: .top, spacing: Theme.Space.m) {
-            IconTile(symbol: kind.symbol, folk: "scout")
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: Theme.Space.s) {
-                    Text(watcher.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
-                    state
-                }
-                Text(meta(kind)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
-                if let target = Describe.watcherTarget(watcher), !watcher.title.contains(target) {
-                    Text(target).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkFaint)
-                        .lineLimit(1).truncationMode(.middle)
-                }
-                if watcher.state == .error || watcher.errorCount > 0, let error = watcher.lastError {
-                    Text(error).font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            Spacer(minLength: Theme.Space.s)
-            HStack(spacing: 6) {
-                Button("Check now") { Task { await model.checkNow(watcher) } }
-                    .buttonStyle(.sf(.secondary))
-                    .disabled(watcher.state == .paused)
-                if watcher.state == .paused {
-                    Button("Resume") { Task { await model.resume(watcher) } }.buttonStyle(.sf(.secondary))
-                } else {
-                    Button("Pause") { Task { await model.pause(watcher) } }.buttonStyle(.sf(.secondary))
-                }
-                Menu {
-                    Button("Stop watching", role: .destructive) { Task { await model.stop(watcher) } }
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .accessibilityLabel("More for “\(watcher.title)”")
-            }
-        }
-        .nowRow()
-        .accessibilityElement(children: .contain)
-    }
-
-    private func meta(_ kind: Describe.WatcherKind) -> String {
-        var parts = [kind.label, Describe.interval(watcher.intervalS)]
-        if let checked = watcher.lastCheckedAt {
-            parts.append(String(localized: "checked \(TimeText.relative(checked))", comment: "“checked 5 min ago”"))
-        } else {
-            parts.append(String(localized: "not checked yet"))
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    @ViewBuilder private var state: some View {
-        switch watcher.state {
-        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .accent)
-        case .paused: Chip("Paused", tone: .neutral)
-        case .error: Chip("Having trouble", tone: .danger)
-        case .triggered: Chip("Spotted", tone: .success)
-        case .expired: Chip("Expired", tone: .neutral)
-        }
     }
 }
 

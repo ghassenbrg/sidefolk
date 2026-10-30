@@ -195,6 +195,15 @@ struct AskView: View {
                 FoundList(results: model.found.results, each: 2) { model.actions?.open($0) }
                     .padding(.top, Theme.Space.xs)
             }
+            // Nothing typed: Today at a glance (D58).
+            if model.text.isEmpty, model.attachment == nil, model.voice == nil, model.pendingQuestion == nil, !model.glance.isEmpty {
+                GlanceView(glance: model.glance,
+                           answer: { item, action in
+                               if let action { model.actions?.answer(question: item, actionId: action) } else { model.actions?.dismissAttention(item) }
+                           },
+                           openSession: { model.actions?.openSession($0) },
+                           openToday: { model.actions?.openNow() })
+            }
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m)

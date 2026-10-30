@@ -13,6 +13,8 @@ final class FixtureAskActions: AskActions {
     func find(_ query: String) async -> SearchResults { SearchResults() }
     func open(_ found: Found) {}
     func saveAsNote(_ text: String, in model: AskModel) {}
+    func openSession(_ session: AgentSession) {}
+    func dismissAttention(_ item: AttentionItem) {}
     func stop() {}
     func startFresh(in model: AskModel, announce: Bool) {}
     func openConversation(_ thread: String?) {}

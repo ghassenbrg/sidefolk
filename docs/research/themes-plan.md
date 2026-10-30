@@ -116,8 +116,8 @@ Rules that hold throughout:
      fill from the caller's run. "Changed in" comes from the Activity rows of `notes.update` and `notes.trash` that
      name the note and actually ran. Reads and searches don't count, because they touch many notes at once.
    - **Deletion:** a deleted or expired conversation links to nothing.
-10. **Glance:** a small panel above the desktop companion, opened by clicking it or with its own shortcut. It
-    holds:
+10. **Glance:** as built, the Ask panel's idle state rather than a panel of its own: a click on the companion already
+    opens the Ask panel, so Glance needs no second panel and no new shortcut. While nothing is typed, it holds:
     - the queue's top three decisions, answerable with the same safety rules;
     - the next two reminders or events;
     - changed watches;
@@ -189,7 +189,7 @@ Community themes:
 | 4 ✅ | B2 queue, B1 Today | **Done 2026-10-30:** "Today" in the sidebar, the menu bar and the Ask panel (code names stay `now`); a header line with the greeting, what needs you and the reminders left today, beside "Ask …" and the companion; Guard's waiting questions in the queue, soonest deadline first, each with "Waits for your answer until …" (`ApprovalRequest.expiresAt`); per-row keys (↑↓, ⏎, ⌘⏎ for high risk, ⌫, S), with the rule in Core (`mayApproveFromKeys`), shared with the Ask panel's card. |
 | 5 ✅ | B4 one bar (Home and Ask panel) | **Done 2026-10-30:** `SidefolkRuntime.find` searches notes, conversations, reminders to come, watches and Activity. Home has a toolbar field (⌘K): while it has words, a page says what Return does (the Ask panel's hint), offers "Do it" and "Ask … instead" (⌘⏎) for words understood without AI, or "Ask …" alone when they go to the AI anyway, and "Save as a note" (⌥⏎), then what was found, each opening where it lives. The Ask panel shows the same results under its hint and takes ⌘⏎ and ⌥⏎. Everything sent goes down the Ask panel's one path (`AppServices.ask`). Not done as first written: the understood parts as chips you can edit (the hint says what was understood; editing is the Ask panel's follow-up), and ↑↓ through results (Tab reaches them). |
 | 6 ✅ | B3 day line, B8 calendar (D57) | **Done 2026-10-30:** "Your day" on Today: a rail of the hours around now with the calendar's events and the reminders (drag a reminder, or ← → on it, a quarter hour at a time; ⌘Z undoes; a repeating one moves only this time; double-click an empty time to add one), then each day's events and reminders in time order. The calendar is read-only, off until chosen (Settings › Privacy › Your calendar, or "Show my calendar" on Today), in the morning brief, and offered to the AI as `calendar.today` only while shown. |
-| 7 | B5 tiles, B6 agents, B7 nook, B10 Glance | Desk is now complete. Harbor is finished. |
+| 7 ✅ | B5 tiles, B6 agents, B7 nook, B10 Glance | **Done 2026-10-30:** watches as tiles with their last change (`PageChange`, kept in a page watch's state, 2 KB), "See the change" in a popover, a tile outlined while its notice waits (looking counts as seen); Agents at work: your companion's own run, working sessions with the last thing each asked of Sidefolk, commands, sessions finished in the last hour; the companion's nook in Home's sidebar (its line, asleep in quiet mode, a click goes to Today); Glance in the Ask panel. Desk is complete. |
 | 8 | A3–A13 and B13: the rest of the foundation, snapshots with the compiled catalog, Settings picker, CLI, live reload | Needed before a second theme. The validator also fixes two Harbor shortfalls found in step 1: `inkFaint` in light mode is 2.95:1 on white (raise it to 4.5:1), and white on the light `danger` fill is 4.27:1 (deepen the red). |
 | 9 | C recipes, then each theme's manifest and art | Board first (three themes use it), then Console, Stage, Planner. |
 | 10 | Gallery shelf for themes, community install | Reuses D55. |
