@@ -669,19 +669,32 @@ export const POSTURES = {
     for (const s of ['L', 'R']) for (const i of [1, 2, 3]) add(P, `ear${s}${i}`, 0, 0, 14);
   },
 
-  // Asleep curled on its side, cheek on the floor, paws tucked under its chin, ears spilled out.
+  // Asleep on its tummy facing you, chin resting on its paws, ears flopped to the sides: the face
+  // and its closed eyes stay in view (curled on its side, a front camera saw a toy tipped over).
   sleep: (t, P) => {
-    Object.assign(P.root, { rz: P.root.rz + 90, py: P.root.py - 0.18, px: P.root.px + 0.32 });
-    add(P, 'head', 6, 0, -12);
-    add(P, 'chest', 6, 0, -4); add(P, 'spine', 6);
+    Object.assign(P.root, { rx: P.root.rx + 62, py: P.root.py - 0.22, pz: P.root.pz + 0.15 });
+    add(P, 'head', -46, 0, 12); add(P, 'chest', -6);
     for (const s of ['L', 'R']) {
-      add(P, 'arm' + s, 0, -S[s] * 72, 0); handBend(P, s, -20);
-      add(P, 'thigh' + s, -62, 0, 0); add(P, 'foot' + s, 40);
+      add(P, 'arm' + s, 0, 0, -S[s] * 5); fwd(P, s, 85); handBend(P, s, -30);
+      add(P, 'thigh' + s, 20, 0, S[s] * 10); add(P, 'foot' + s, 30);
     }
-    for (const s of ['L', 'R']) for (const i of [1, 2, 3]) add(P, `ear${s}${i}`, 4, 0, 18 + (s === 'L' ? 6 : 0));
+    for (const s of ['L', 'R']) for (const i of [1, 2, 3]) add(P, `ear${s}${i}`, 25, 0, -S[s] * 18);
     const br = Math.sin(t * Math.PI * 2 * 0.2);
-    add(P, 'chest', br * 3); add(P, 'head', -br * 1.5); P.squash *= 1 + br * 0.014;
+    add(P, 'chest', br * 2); add(P, 'head', br * 1.2); P.squash *= 1 + br * 0.014;
   },
+};
+
+/** Asleep sitting up, nodding off: head tilted, ears drooping. For bodies that lying on the tummy
+ *  doesn't suit (a child's arms read as legs, a big tail stands up behind the head). */
+export const doze = (t, P) => {
+  POSTURES.sit(t, P);
+  add(P, 'spine', 8); add(P, 'chest', 5); add(P, 'head', 10, 0, 22);
+  for (const s of ['L', 'R']) {
+    raise(P, s, -6); fwd(P, s, 10);
+    for (const i of [1, 2]) add(P, `ear${s}${i}`, 20, 0, -S[s] * 12);
+  }
+  const br = Math.sin(t * Math.PI * 2 * 0.2);
+  add(P, 'chest', br * 3); add(P, 'head', br * 2); P.squash *= 1 + br * 0.014;
 };
 
 export { HAPPY };

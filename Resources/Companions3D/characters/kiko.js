@@ -1,7 +1,7 @@
 // Kiko: a chibi kid astronaut: warm brown skin, fluffy dark curls, a padded mustard spacesuit with
 // a copper neck ring, plum gloves, knee pads, boots and backpack. Rig: blender/rig_kiko.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { add, raise, face, hopY } from '../engine/moves.js';
+import { add, raise, face, hopY, doze } from '../engine/moves.js';
 import { win } from '../engine/motion.js';
 
 export default {
@@ -78,6 +78,9 @@ export default {
   chains: [],
   pick: { head: { r: 0.45, at: [0, 0.48, 0] }, body: { r: 0.3, at: [0, -0.4, 0] } },
   fidgets: ['lookAround', 'tilt', 'smile', 'stretch', 'hop', 'blinkDouble', 'giggle', 'scratch'],
+
+  // A child asleep on its tummy, gloves forward, read as crouching: he nods off sitting instead.
+  postures: { sleep: doze },
 
   // Arms relaxed down from the modelled A-pose.
   stand(t, P) {

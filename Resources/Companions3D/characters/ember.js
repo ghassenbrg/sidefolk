@@ -1,7 +1,7 @@
 // Ember: a chibi red fox on its hind legs: orange fur, cream muzzle and chest, dark brown paws,
 // ear tips and brows, big amber eyes and a big fluffy tail. Rig: blender/rig_ember.py.
 import { bodyMaterial } from '../engine/materials.js';
-import { add, raise, lean, face } from '../engine/moves.js';
+import { add, raise, lean, face, doze } from '../engine/moves.js';
 import { win, smooth } from '../engine/motion.js';
 
 const ear = (s, side) => ({ bones: [`ear${s}1`, `ear${s}2`], side, twitch: true, k: [190, 135], d: [11, 7.5], limit: [40, 35] });
@@ -77,6 +77,9 @@ export default {
   ],
   pick: { head: { r: 0.5, at: [0, 0.27, 0.1] }, body: { r: 0.3, at: [0, -0.48, 0] }, tips: ['earL2', 'earR2'] },
   fidgets: ['lookAround', 'earTwitch', 'earTwitch', 'tilt', 'sniff', 'smile', 'stretch', 'hop', 'blinkDouble', 'giggle'],
+
+  // Lying on its tummy, the big tail would stand up behind its head: it nods off sitting instead.
+  postures: { sleep: doze },
 
   // The model stands in a T: arms come down to the sides, paws a little forward.
   stand(t, P) {
