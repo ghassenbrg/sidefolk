@@ -43,6 +43,8 @@ public actor AddonStore {
     private let downloader: UpdateDownloading
     private let checker: CodeChecking
     private let now: @Sendable () -> Date
+    /// When this store began: `tidy()` leaves what this run has started.
+    private let started: Date
     private var cached: AddonCatalog?
 
     /// How long a fetched catalog is used before the gallery asks again.
@@ -56,6 +58,7 @@ public actor AddonStore {
         self.downloader = downloader ?? (source?.base.isFileURL == true ? LocalCopy() : UpdateDownloader())
         self.checker = checker
         self.now = now
+        started = now()
     }
 
     var companionsFolder: URL { folder.appendingPathComponent("Companions", isDirectory: true) }
@@ -165,11 +168,21 @@ public actor AddonStore {
         try? FileManager.default.removeItem(at: downloads.appendingPathComponent(id, isDirectory: true))
     }
 
-    /// Empties the downloads folder (at launch: a fetch interrupted by quitting leaves its files).
+    /// Removes what earlier runs left in the downloads folder and half-made copies (a fetch interrupted by
+    /// quitting leaves its files). Not what this run has started: at launch a companion coming back by itself may
+    /// already be downloading.
     public func tidy() {
-        try? FileManager.default.removeItem(at: downloads)
-        for name in (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [] where name.hasPrefix(".") {
-            try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
+        let fm = FileManager.default
+        func old(_ url: URL) -> Bool {
+            ((try? fm.attributesOfItem(atPath: url.path)[.modificationDate]) as? Date ?? .distantPast) < started
+        }
+        for name in (try? fm.contentsOfDirectory(atPath: downloads.path)) ?? [] {
+            let url = downloads.appendingPathComponent(name)
+            if old(url) { try? fm.removeItem(at: url) }
+        }
+        for name in (try? fm.contentsOfDirectory(atPath: folder.path)) ?? [] where name.hasPrefix(".") {
+            let url = folder.appendingPathComponent(name)
+            if old(url) { try? fm.removeItem(at: url) }
         }
     }
 
@@ -214,6 +227,32 @@ public actor AddonStore {
         try replace(companionsFolder.appendingPathComponent(name, isDirectory: true), with: staged)
         Log.shared.info("addons", "installed companion", ["id": entry.id, "version": entry.version])
         return installed
+    }
+
+    /// The gallery's companions on this Mac (not those added from a folder) that `catalog` has a newer version of.
+    /// The catalog already leaves out what this Sidefolk can't run (a newer engine or app), so such a version waits.
+    public func companionUpdates(in catalog: AddonCatalog) -> [AddonEntry] {
+        installedCompanions().filter { !$0.addedFromFolder }.compactMap { have in
+            guard let entry = catalog.companion(have.companion), entry.id == have.id,
+                  let new = ReleaseVersion(entry.version), let old = ReleaseVersion(have.version), new > old else { return nil }
+            return entry
+        }
+    }
+
+    /// Installs the newer version of each gallery companion on this Mac, without asking: a companion only draws.
+    /// Returns those it updated. One that fails keeps its old copy (a pack is swapped in only once checked) and is
+    /// tried again at the next look.
+    public func updateCompanions() async -> [InstalledCompanion] {
+        guard source != nil, let catalog = try? await catalog() else { return [] }
+        var updated: [InstalledCompanion] = []
+        for entry in companionUpdates(in: catalog) {
+            do {
+                updated.append(try await install(companion: entry))
+            } catch {
+                Log.shared.warning("addons", "companion not updated", ["id": entry.id, "error": String(describing: error)])
+            }
+        }
+        return updated
     }
 
     /// The four files a 3D companion needs, named after it, and nothing else.

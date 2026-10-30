@@ -174,6 +174,50 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: folder.path))
     }
 
+    /// A companion already on this Mac gets the gallery's newer version by itself; a version this copy can't run
+    /// and one that fails its check stay as they are.
+    @Test func companionsOnThisMacUpdateToTheGallerysNewerVersion() async throws {
+        let g = try Gallery()
+        for name in ["otter", "stoat", "heron"] { try g.companion(name) }
+        try g.publish()
+        let first = try await g.store.catalog()
+        for name in ["otter", "stoat", "heron"] { try await g.store.install(companion: try #require(first.companion(name))) }
+        #expect(await g.store.updateCompanions().isEmpty, "nothing newer yet")
+
+        try g.companion("otter", version: "1.1.0")
+        try g.companion("stoat", version: "2.0.0")
+        g.entries = g.entries.map { $0["companion"] as? String == "stoat" ? $0.merging(["engine": AddonCatalog.engine + 1]) { _, b in b } : $0 }
+        try g.companion("heron", version: "1.2.0")
+        try g.pack("heron", id: "dev.sidefolk.companions.heron", version: "1.2.0",
+                   files: Gallery.companionFiles("heron").merging(["assets/heron.glb": "glTF, not what the catalog says"]) { _, b in b })
+        try g.publish()
+        _ = try await g.store.catalog(refresh: true)
+
+        let updated = await g.store.updateCompanions()
+        #expect(updated.map(\.companion) == ["otter"])
+        let versions = Dictionary(uniqueKeysWithValues: await g.store.installedCompanions().map { ($0.companion, $0.version) })
+        #expect(versions == ["otter": "1.1.0", "stoat": "1.0.0", "heron": "1.0.0"], "a newer engine waits; a bad pack keeps the old copy")
+        #expect(await g.store.updateCompanions().isEmpty, "up to date now; heron is tried again and refused again")
+    }
+
+    /// Tidying at launch removes what an earlier run left, not a download this run has already begun (a companion
+    /// coming back by itself starts at launch too).
+    @Test func tidyingLeavesThisRunsDownloads() async throws {
+        let g = try Gallery()
+        let downloads = g.paths.addons.appendingPathComponent("Downloads", isDirectory: true)
+        let fm = FileManager.default
+        for name in ["left-over", "under-way"] { try fm.createDirectory(at: downloads.appendingPathComponent(name), withIntermediateDirectories: true) }
+        let staged = g.paths.addons.appendingPathComponent(".companion-left-over")
+        try fm.createDirectory(at: staged, withIntermediateDirectories: true)
+        for url in [downloads.appendingPathComponent("left-over"), staged] {
+            try fm.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -3600)], ofItemAtPath: url.path)
+        }
+        await g.store.tidy()
+        #expect(!fm.fileExists(atPath: downloads.appendingPathComponent("left-over").path))
+        #expect(!fm.fileExists(atPath: staged.path))
+        #expect(fm.fileExists(atPath: downloads.appendingPathComponent("under-way").path))
+    }
+
     @Test func aPackThatIsntWhatTheCatalogSaysIsRefused() async throws {
         let g = try Gallery()
         try g.companion("otter")

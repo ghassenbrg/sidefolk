@@ -92,6 +92,7 @@ final class AppCoordinator {
         applyCompanionSettings()
         applyAppearance()
         restoreCompanionAddon()
+        keepCompanionAddonsUpdated()
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
                                                           object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyCompanionSettings() }
@@ -211,6 +212,24 @@ final class AppCoordinator {
                 settingsChanged()
             } catch {
                 Log.shared.warning("addons", "chosen companion not restored", ["companion": name, "error": String(describing: error)])
+            }
+        }
+    }
+
+    /// Gallery companions on this Mac update by themselves (D55): a look soon after launch, then every six hours.
+    /// The companion on the desktop, if it was one of them, reloads in place, and its pictures are drawn again.
+    private func keepCompanionAddonsUpdated() {
+        let addons = runtime.addons
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(90))
+            while !Task.isCancelled {
+                let updated = await addons.updateCompanions()
+                if !updated.isEmpty, let self {
+                    CompanionArt.forgetPictures()
+                    companion.reload3D(updated.map(\.companion))
+                    settingsChanged()
+                }
+                try? await Task.sleep(for: .seconds(6 * 3600))
             }
         }
     }

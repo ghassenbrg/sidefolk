@@ -160,6 +160,21 @@ final class CompanionWindowController {
         character.onCue = { [weak stage] in stage?.handle($0) }
     }
 
+    /// The files of these 3D characters changed on disk (a newer version from the gallery): if one is on the
+    /// desktop, a fresh page loads it (the running one keeps what it imported) and takes over once it has drawn,
+    /// so the window is never empty.
+    func reload3D(_ names: [String]) {
+        guard let old = stage3D, names.contains(old.character) else { return }
+        occlusion3D.map(NotificationCenter.default.removeObserver)
+        occlusion3D = nil
+        stage3D = nil
+        show3D(old.character)
+        guard let fresh = stage3D else { old.removeFromSuperview(); return }
+        let ready = fresh.onReady, failed = fresh.onFailed
+        fresh.onReady = { [weak old] in ready?(); old?.removeFromSuperview() }
+        fresh.onFailed = { [weak old] in old?.removeFromSuperview(); failed?() }
+    }
+
     private func removeStage3D() {
         stage3D?.removeFromSuperview()
         stage3D = nil

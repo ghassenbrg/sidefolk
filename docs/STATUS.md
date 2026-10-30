@@ -12,6 +12,13 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Gallery companions update by themselves (D55, amended):** a companion from the gallery gets its newer version
+  90 s after launch and every six hours after, without asking; the one on the desktop swaps in place. Extensions
+  keep their Update button. Launch's tidy no longer deletes a download already under way (a chosen companion coming
+  back at launch failed with "unpacked doesn't exist"). *Checked:* AddonStoreTests (an update installs; a newer
+  engine waits; a bad pack keeps the old copy; tidy keeps this run's downloads), and live: a test gallery with a
+  red-scarf Nori 1.0.1 over an installed 1.0.0 swapped on the desktop 90 s after launch. *Not yet:* Settings shows
+  no "updated" note.
 - **Iris, Nori, Purl and Rune in 3D (D61):** four gallery companions from the founder's sheets, add-ons in
   `sidefolk-addons/companions/` (built and signed, not published). Iris, Purl and Rune were modelled again after
   a first pass that missed their sheets; Nori kept its model and lost the glossy strip over its glasses. Rig kit:

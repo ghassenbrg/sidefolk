@@ -1273,6 +1273,13 @@ brainstorm).
 Tests of the moved extensions stay here and run against a built sidefolk-addons checkout beside this one
 (`SIDEFOLK_ADDONS_REPO`), skipped without one; their pure logic tests moved there. SECURITY T33. Supersedes D51's
 "Ember, Kiko, Nimbo and Folio … join the gallery" as built-ins, and D39's list of built-ins.
+**Amended (2026-10-30, the founder asked how updates reach people):** a gallery companion on this Mac updates by
+itself to the catalog's newer version (`AddonStore.updateCompanions`: a look 90 s after launch, then every six
+hours), since a companion only draws; the one on the desktop swaps to it in place (a fresh 3D page takes over once
+it has drawn: `CompanionWindowController.reload3D`). Extensions still wait for **Update** in the gallery: one can act
+for the person. A version a copy can't run (`minimum_sidefolk`, `engine`) is left out of its catalog, so that copy
+keeps what it has. Launch's `tidy()` now removes only what earlier runs left, so a companion coming back by itself
+at launch is no longer cut off mid-download.
 
 ### D56 — The original robot is retired; the gallery gets shelves and search; other ways to add stay in sight (2026-10-30)
 **Decision:**
