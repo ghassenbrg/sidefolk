@@ -71,6 +71,16 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Games: switching who guesses, more words, and toy-like art (D75, D79):** the founder couldn't switch Higher or
+  Lower's mode (a closed game reopens its session; Play again kept the mode) and wanted more than one Daily Word a day.
+  Playtime 1.0.0-snapshot.3 (published): both modes on the start board each time (last one preselected), a Switch
+  button (S) in a game and on the end card; after today's word, "Play another word" practice rounds (random, no repeat
+  until the list runs out, never in the streak, tallied apart). App: generated art for the cup, gem, balloon and trophy
+  (`Play/Art`, 36 KB, chosen by the board parts' existing data; extensions still send no images), raised pads, keys and
+  tiles with a press squash, an arcade reflex button, candy sticks, a felt cup table, confetti and a "New best!" sticker
+  with the verdict only (Reduce Motion: none). *Checked:* add-ons `swift test` (100), `build.py` and check.sh; app
+  `make test`; before/after snapshots of every game in light and dark, the thermometer in Arabic. *Not checked live:*
+  the pads' playback, the cups' shuffle with pictures and confetti timing in motion.
 - **An add-on version can need a Sidefolk snapshot (D83):** the founder's 590 showed Miraya snapshot.4's update failing
   on `output_mute`. Catalog minimums may name a snapshot (`AddonCatalog.fits`, `SidefolkVersion.running`); the validator
   reads `>=0.1.0-snapshot.N`; an install blocked only by unknown keys or the minimum says to update Sidefolk. Gallery:

@@ -2206,6 +2206,8 @@ Stick, Memory Pairs and Daily Word, beside trivia.
 **Why:** the founder approved all ten games; phase 1 built the platform and left these parts and games to come.
 **Alternatives:** a timer in the extension for the companion's turn (stdin can't keep time, and it would hold a process
 awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
+**Amended (2026-11-01):** some parts are drawn with built-in pictures (`Sources/SidefolkApp/Play/Art`: cup, gem,
+balloon, trophy, made for Sidefolk), picked from the part's data; a board still never carries an image.
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
