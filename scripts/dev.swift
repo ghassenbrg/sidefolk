@@ -7,6 +7,7 @@
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:extensions | find:milk | drop:https://example.com
+//   swift scripts/dev.swift calendar | calendar:month | calendar:week:2026-11-03 | calendar:day   (D66)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)

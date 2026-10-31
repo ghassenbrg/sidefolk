@@ -96,6 +96,15 @@ enum UISnapshots {
             full.activity.openId = full.activity.entries.first { $0.decision == .always }?.id
             try await homeShot("activity-open")
             full.activity.openId = nil
+            // The Calendar (D66): the month, the week and the list, with the sample's reminders and events.
+            full.selection = .calendar
+            for mode in CalendarModel.Mode.allCases {
+                full.calendar.mode = mode
+                await full.calendar.reload()
+                try await homeShot("calendar-\(mode.rawValue)")
+            }
+            full.calendar.mode = .month
+            await full.calendar.reload()
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             try await homeShot("activity-small", size: small)
@@ -103,6 +112,13 @@ enum UISnapshots {
             try await homeShot("conversations-small", size: small)
             full.selection = .now
             try await homeShot("now-small", size: small)
+            full.selection = .calendar
+            for mode in CalendarModel.Mode.allCases {
+                full.calendar.mode = mode
+                await full.calendar.reload()
+                try await homeShot("calendar-\(mode.rawValue)-small", size: small)
+            }
+            full.calendar.mode = .month
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook-small", size: small)
             home.orderOut(nil)
@@ -116,6 +132,9 @@ enum UISnapshots {
                 await empty.notebook.show(collectionId: inbox)
             }
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-notebook-empty"))
+            empty.selection = .calendar
+            await empty.calendar.reload()
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-calendar-empty"))
             empty.selection = .activity
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-activity-empty"))
             await empty.showConversation(nil)
