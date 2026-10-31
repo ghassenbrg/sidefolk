@@ -2,13 +2,13 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// Playtime's eleven games (D75), installed from the add-ons checkout and played over the game channel inside the
+/// Playtime's fifteen games (D75, D79), installed from the add-ons checkout and played over the game channel inside the
 /// sandbox by a bot that clicks what the board offers: every board parses, every move it sends was offered, every
 /// game reaches its end card, and every build-up Sidefolk would show holds its verdict back. Then each game's
 /// sentences open it in each language.
 struct PlaytimeGamesSandboxTests {
     static let games = ["daily_word", "trivia", "tictactoe", "copy_me", "quick_paws", "which_cup", "higher_lower", "guess_animal",
-                        "balloon_words", "last_stick", "memory_pairs"]
+                        "balloon_words", "last_stick", "memory_pairs", "plots", "seesaw", "sudoku", "blossoms"]
 
     /// A move the board offers, as a person might click; enough to reach every game's end.
     static func botMove(_ b: GameBoard, step: Int) -> GameMove? {
@@ -34,6 +34,17 @@ struct PlaytimeGamesSandboxTests {
         if let e = b.entry, !e.locked {
             return e.kind == .word ? .word(["一心一意", "七上八下", "人山人海", "三心二意", "十全十美", "五颜六色"][step % 6])
                 : .text(name: e.name, value: e.name == "animal" ? "axolotl" : "Does it live in a lake?")
+        }
+        if let p = b.puzzle, !p.locked {
+            // A puzzle is played by its hints: the cell or plot each points at, played as it shows.
+            if let i = p.cells.firstIndex(where: { $0.state == .target }) {
+                let (r, c) = (i / p.columns, i % p.columns)
+                return p.input == .digits ? .place(row: r, column: c, value: Int(p.cells[i].text ?? "") ?? 0, note: false) : .cell(row: r, column: c)
+            }
+            if let plot = p.plots.first(where: { $0.state == .hint }) {
+                return .area(row: plot.row, column: plot.column, toRow: plot.row + plot.height - 1, toColumn: plot.column + plot.width - 1)
+            }
+            return .button("hint")
         }
         if let primary = b.primary { return .button(primary.move) }
         for part in b.parts { if case .choice(let c) = part, c.name != "level" { return .choice(name: c.name, value: c.options[0].value) } }
@@ -82,7 +93,8 @@ struct PlaytimeGamesSandboxTests {
         for (sentence, game) in [("let's play tic-tac-toe", "tictactoe"), ("jouons au morpion", "tictactoe"), ("来玩井字棋", "tictactoe"),
                                  ("daily word", "daily_word"), ("오늘의 단어", "daily_word"), ("كلمة اليوم", "daily_word"),
                                  ("lass uns ballonwörter spielen", "balloon_words"), ("神経衰弱しよう", "memory_pairs"),
-                                 ("vamos jogar maior ou menor", "higher_lower"), ("quiz me", "trivia")] {
+                                 ("vamos jogar maior ou menor", "higher_lower"), ("quiz me", "trivia"), ("数独をしよう", "sudoku"),
+                                 ("lass uns wippe spielen", "seesaw"), ("garden plots", "plots"), ("لنلعب الأزهار", "blossoms")] {
             guard case .game(_, let found)? = parser.parse(sentence, now: TimeTest.wednesday10)?.intent else { Issue.record("\(sentence) didn't open a game"); continue }
             #expect(found == game, "\(sentence)")
         }

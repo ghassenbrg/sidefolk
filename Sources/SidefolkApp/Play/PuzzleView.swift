@@ -37,8 +37,6 @@ struct PuzzleGrid: View {
     var puzzle: GameBoard.Puzzle
     var model: PlayModel
     var side: CGFloat
-    /// A drag on a plots board: where it started and where it is.
-    @State private var drag: (from: Int, to: Int)?
 
     private var size: CGSize { CGSize(width: side * CGFloat(puzzle.columns), height: side * CGFloat(puzzle.rows)) }
 
@@ -53,7 +51,7 @@ struct PuzzleGrid: View {
             }
             PuzzleLines(puzzle: puzzle, side: side).allowsHitTesting(false)
             ForEach(Array(puzzle.plots.enumerated()), id: \.offset) { _, plot in PlotShape(plot: plot, side: side).allowsHitTesting(false) }
-            if let drag {
+            if let drag = model.parts.drag {
                 let (a, b) = (drag.from, drag.to)
                 let plot = GameBoard.Puzzle.Plot(row: min(a / puzzle.columns, b / puzzle.columns), column: min(a % puzzle.columns, b % puzzle.columns),
                                                  height: abs(a / puzzle.columns - b / puzzle.columns) + 1,
@@ -77,10 +75,10 @@ struct PuzzleGrid: View {
     /// Corner to corner; a click without moving takes a plot away (or draws one cell).
     private var dragging: some Gesture {
         DragGesture(minimumDistance: 0)
-            .onChanged { v in drag = (index(at: v.startLocation), index(at: v.location)) }
+            .onChanged { v in model.parts.drag = (index(at: v.startLocation), index(at: v.location)) }
             .onEnded { v in
                 let (a, b) = (index(at: v.startLocation), index(at: v.location))
-                drag = nil
+                model.parts.drag = nil
                 let w = puzzle.columns
                 if a == b { model.send(.cell(row: a / w, column: a % w)) } else { model.send(.area(row: a / w, column: a % w, toRow: b / w, toColumn: b % w)) }
             }

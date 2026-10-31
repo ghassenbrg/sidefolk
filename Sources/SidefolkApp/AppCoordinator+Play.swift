@@ -158,7 +158,7 @@ extension AppCoordinator {
     #if DEBUG
     /// `game:<extension>/<game>[:level]` opens a game as the AI would, waiting for a click rather than taking the keyboard
     /// (a debug run must never catch the keys of someone typing elsewhere); `move:<json>` sends a move as a click on the
-    /// board would (only one it offers); `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu` opens
+    /// board would (only one it offers); `drag:r,c,r2,c2` drags a puzzle's plot cell by cell, then lets go; `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu` opens
     /// the panel's menu of games.
     func devGame(_ command: String) -> Bool {
         if command.hasPrefix("game:") {
@@ -173,6 +173,23 @@ extension AppCoordinator {
         if command.hasPrefix("move:") {
             guard let json = try? JSONValue.parse(String(command.dropFirst(5))), let move = GameMove.parse(json) else { return true }
             playPanel.model?.send(move)
+            return true
+        }
+        if command.hasPrefix("drag:") {
+            // `drag:r,c,r2,c2`: a plot dragged corner to corner as the pointer would, a cell at a time, then let go.
+            let n = command.dropFirst(5).split(separator: ",").compactMap { Int($0) }
+            guard n.count == 4, let model = playPanel.model, let p = model.board?.puzzle else { return true }
+            let w = p.columns
+            Task { @MainActor in
+                let steps = max(abs(n[2] - n[0]), abs(n[3] - n[1]), 1)
+                for i in 0...steps {
+                    let r = n[0] + (n[2] - n[0]) * i / steps, c = n[1] + (n[3] - n[1]) * i / steps
+                    model.parts.drag = (n[0] * w + n[1], r * w + c)
+                    try? await Task.sleep(for: .milliseconds(220))
+                }
+                model.parts.drag = nil
+                model.send(.area(row: n[0], column: n[1], toRow: n[2], toColumn: n[3]))
+            }
             return true
         }
         if command.hasPrefix("key:") {

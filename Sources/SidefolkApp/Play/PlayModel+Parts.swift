@@ -29,6 +29,8 @@ struct PartsState {
     var notes = false
     /// When the puzzle's board showed, for its clock to count on from the time it says.
     var puzzleShown = Date()
+    /// A plot being dragged: the cell it started on and the one under the pointer.
+    var drag: (from: Int, to: Int)?
 }
 
 extension PlayModel {

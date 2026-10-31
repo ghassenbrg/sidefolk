@@ -109,7 +109,7 @@ struct ShippedExtensionSandboxTests {
     func playtimeTriviaIsPlayedOverTheGameChannel() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
-        #expect(h.host.gameShelf.all.map(\.id).contains("\(info.id)/trivia") && h.host.gameShelf.all.count == 11)
+        #expect(h.host.gameShelf.all.map(\.id).contains("\(info.id)/trivia") && h.host.gameShelf.all.count == 15)
         let (session, setup) = try await h.host.startGame(extensionId: info.id, game: "trivia",
                                                           setup: GameSetup(language: "de", options: ["companion": "Nori"]))
         guard case .prompt(let p) = setup.parts.first else { Issue.record("\(setup.parts)"); return }

@@ -2246,6 +2246,37 @@ Sidefolk's own Activity rows (`GameStats`; each `games.play` row now records `re
   and `game-icon-<look>.webp` in Play/Art with their `GameArt` cases, then `"look"` in the manifest.
 - **Implications:** a Sidefolk from before this refuses a Playtime naming looks and taglines (unknown manifest keys,
   T13), as with earlier snapshots; a pad's `art` is ignored by older copies.
+**Amended (2026-11-01), the puzzles:** the founder asked for four logic puzzles in the spirit of the ones LinkedIn
+offers; they are built on the classic public genres with Sidefolk's own names, pieces, words and look, nothing of
+LinkedIn's (names, colours, layouts or pieces: no sun and moon, no crowns). **Garden Plots** (Shikaku: rectangles over
+numbers, as many squares as the number), **Seesaw** (Takuzu: hearts and stars balanced in every line, never three
+alike, `=` and `×` between cells), **Sudoku** (6 × 6 with 2 × 3 boxes on Easy and Fair, 9 × 9 on Hard) and **Blossoms**
+(one-star Star Battle: one flower per row, column and bed, none touching). Played alone, under "Puzzles".
+- **Engines in Playtime** (`Sources/Games/Puzzles`): each generator keeps only a board its own step-by-step solver
+  finishes with the level's techniques (Easy the plain rules, Fair one more, Hard a short chain), so the solution is
+  unique and a hint is always the next forced move with its reason, from wherever the person is (a wrong mark first,
+  to take back). Uniqueness is checked again in tests by plain backtracking; the worst board takes about 60 ms in
+  release. One daily board per puzzle and date at Fair, the same for everyone (seeded by puzzle and day; a fingerprint
+  test guards it), kept as far as played; after it, "Play another" deals practice boards at the level picked. Records:
+  a best time per level only without hints, the daily streak, the practice tally (`PuzzleRecord`, read leniently),
+  Home rows, Last games ("Solved in 3:12") and the puzzles' live streaks on the Today tile.
+- **One new part, `puzzle`** (GamePuzzle.swift, checked and capped: 2–10 a side, two-character numbers, notes 1–9,
+  twelve regions, 200 edges, 100 plots), with moves `{area}` (a rectangle dragged) and `{place}` (a number or a note),
+  offered only by a puzzle that takes them; Sidefolk draws the cells, beds with heavier lines, Sudoku's boxes, `=`/`×`
+  discs, plots (dashed while dragged), the digit pad with a Notes switch (N) and the clock, which counts on in the panel
+  from the time the board says (once a second, nothing else moves). A rule broken is the calm loss tone with a !, never
+  red; a hint lights what it rests on in the sun's colour and shows its move faintly in an accent ring. A puzzle is the
+  same picture in every language: laid out left to right in Arabic too, arrows moving as they point.
+- **Room:** a puzzle has no "You vs" bar; its clock and Notes switch share the eyebrow's row; cells are sized so a 9 × 9
+  Sudoku with its pad, Hint, Undo and Start over is about 630 pt tall (the panel's 720 pt rule). The solve settles on a
+  still, locked board for the beat before the end card ("Solved!", the time, hints, best and streak), the companion
+  celebrating then, with a line only for a new best; a hint is a nod, a broken rule a thoughtful look.
+- **Looks:** `plots` (soil brown, a vegetable garden), `seesaw` (plum, a playground at golden hour), `sudoku` (slate
+  blue, a reading desk), `blossoms` (coral, a flower garden), with four scenes and four icons made in the games' style
+  (Codex image generation; the rooms softened in the picture). The game pieces are the existing heart, star and flower
+  faces.
+- **Not built:** dragging a plot from the keyboard (arrows and Return clear or plant one cell), a hint that plays its
+  move by itself, a daily board per level.
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.

@@ -691,7 +691,8 @@ Activity row when the game ends.
   tic-tac-toe", "jouons au morpion", "来玩井字棋"); the game's title is translated in `strings/` (`games.<name>.title`).
   `levels`: up to five names, easiest first. `look` dresses the game in one of Sidefolk's looks (D79 amended: its
   colour, illustrated scene and menu icon; `cups`, `dance`, `arcade`, `sticks`, `quiz`, `grid`, `numbers`, `animals`,
-  `balloons`, `cards`, `hands`, `words`; a game without one gets the plain look); `tagline` is one line (60 characters)
+  `balloons`, `cards`, `hands`, `words`, and the puzzles' `plots`, `seesaw`, `sudoku`, `blossoms`, listed under "Puzzles";
+  a game without one gets the plain look); `tagline` is one line (60 characters)
   under its title on the Play panel's menu, translated as `games.<name>.tagline`. A game never sends a picture.
 - **The channel:** `sidefolk/game.start {game, level, language, options}` answers `{session, board}`;
   `sidefolk/game.move {game, session, move}` answers `{board}`; `sidefolk/game.end {game, session, reason}` (`closed`,
@@ -699,7 +700,8 @@ Activity row when the game ends.
   `companion` (its name). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
   for a part the board on screen offered, at most 20 a second: `{answer: i}`, `{cell: [r, c]}`, `{button: "next"}`,
   `{choice: {name, value}}`, `{timeout: true}`, `{letter: "e"}`, `{word: "crane"}`, `{number: 42}`, `{pad: 2}`,
-  `{press: {ms: 243}}`, `{early: true}`, `{text: {name, value}}` and `{next: true}` (a board's `after_ms` passed). Moves
+  `{press: {ms: 243}}`, `{early: true}`, `{text: {name, value}}`, `{next: true}` (a board's `after_ms` passed), and on a
+  puzzle `{area: [r, c, r2, c2]}` (a rectangle dragged) and `{place: {cell: [r, c], value, note}}` (a number, 0 clears). Moves
   are not tool calls: a game changes only its own state. Anything that acts on the world stays a tool behind Guard.
 - **Board parts:** `prompt` (text, `eyebrow`, `chip`), `answers` (2–4 `items` with `label`, `state` none, picked,
   right, wrong or faded, `companion` for its pick, `art` rock, paper or scissors; `layout` grid, row or column;
@@ -724,7 +726,13 @@ Activity row when the game ends.
   letter or spell with `length`; `script` latin, kana, hangul or arabic, so Korean jamo typed group into syllables),
   `entry` (a text field, so the input method types Chinese idioms; `kind` word or text, `max` up to 120), `sticks`
   (`total`, `left`, `take`, `groups`, `hint`, the last `taken` and `taken_by`), `lives` (`total`, `left`, `symbol`
-  balloon or heart). **`after_ms`** (100–6000) on a board: Sidefolk shows it that long, then asks for the next with
+  balloon or heart), `puzzle` (a logic puzzle's grid, 2–10 cells a side: `cells` with `symbol` heart, star, blossom or dot,
+  `text` a number of up to two characters, `given`, pencil `notes` 1–9, `region` 0–11 (coloured, heavier lines between),
+  `state` conflict (drawn in the calm loss tone with a !), hint or target (the move shown faintly), `fresh`, `label`;
+  `input` tap (`{cell}`), drag (`{area}`, a click alone `{cell}`) or digits with `digits` 1–9 (`{place}`, Sidefolk's pad,
+  N for notes); `box` [rows, columns] for Sudoku's thicker lines; `edges` of `{cell, down, clue}` same (=) or different
+  (×), up to 200; `plots` of `{row, column, height, width, state, tint}`, up to 100; `clock` `{seconds, running}`, which
+  Sidefolk counts on; drawn left to right in every language). **`after_ms`** (100–6000) on a board: Sidefolk shows it that long, then asks for the next with
   `{next: true}`: the companion thinking before its move, two cards left face up. The game never keeps time.
 - **The companion's cue** (`"companion"` on a board), every value from a fixed list, anything else dropped: `move`
   (think, cheer, celebrate, sulk, bow, nod, shrug, giggle, wince, gasp, tease, sweat, dizzy, ready, shuffle, hop, spin,

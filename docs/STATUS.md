@@ -1,5 +1,19 @@
 # Status
 
+- **Four puzzles in the Play panel (D79 amended, the puzzles; branches `team/puzzles-b` in both repositories, on
+  `team/games-look`, not merged):** Garden Plots (Shikaku), Seesaw (Takuzu with hearts and stars), Sudoku (6 × 6, 9 × 9
+  on Hard) and Blossoms (Star Battle), our own names and look, nothing of LinkedIn's. Generators with unique solutions
+  and logical hints (Playtime `Sources/Games/Puzzles`), a daily board per puzzle kept as far as played, then practice;
+  best times, streaks, Home rows and the Today tile's streaks; a new checked `puzzle` part with `area` and `place` moves
+  drawn in PuzzleView (beds, boxes, = and ×, plots dragged, notes, conflicts in the calm loss tone with a !, hints, a
+  clock); four looks with scenes and icons; every word in ten languages, Playtime still 1.0.0. *Checked:* add-ons
+  `swift test` (118), `build.py --unsigned` + `check.sh` against this app (all ok); `make test` with
+  SIDEFOLK_ADDONS_REPO on the add-ons branch (the sandbox bot plays all fifteen games to their end in en, ja and ar,
+  the puzzles by their hints); UI snapshots of each puzzle's start, a broken rule, a hint, the solve's build-up and end
+  card and a Hard board, light and dark, in en, de, ar and ja (the tallest panel 656 pt); a debug app (build 621,
+  SIDEFOLK_HOME build/qp-1) with Playtime from the branch: a plot dragged cell by cell (`drag:` dev command) and the day's
+  Garden Plots solved, filmed. *Next:* the founder plays them; merge after team/games-look.
+
 - **The games look like games (D79 amended, branch `team/games-look` in both repositories, not merged):** after the
   founder's two direction boards, every game in the Play panel has its own colour, illustrated scene and icon (a
   manifest `look`, with a translated `tagline`), "You vs <companion>" with both faces (the Mac account's picture when it
