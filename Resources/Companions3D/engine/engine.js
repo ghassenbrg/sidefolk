@@ -446,7 +446,7 @@ export class Companion {
       const w = clamp(s.step(name === this.posture ? 1 : 0, dt), 0, 1.05);
       if (w < 0.001) continue;
       const L = this.layer();
-      postures[name](t, L);
+      postures[name](t, L, this.C, w);
       this.mix(P, L, w);
     }
     const lying = clamp(this.postureW.lie.x + this.postureW.sleep.x);

@@ -2,7 +2,7 @@
 // headphones and a springy antenna with an aqua ball. Rig: blender/rig_spark.py.
 import { bodyMaterial } from '../engine/materials.js';
 import { damp, curve, win } from '../engine/motion.js';
-import { add, face } from '../engine/moves.js';
+import { add, raise, fwd, face, POSTURES } from '../engine/moves.js';
 
 export default {
   id: 'spark',
@@ -78,12 +78,41 @@ export default {
   fidgets: ['lookAround', 'earTwitch', 'earTwitch', 'tilt', 'smile', 'stretch', 'hop', 'blinkDouble', 'giggle'],
   skip: ['sniff', 'sneeze'],
 
-  // Headphones and antenna light up while Spark pays attention.
+  // Headphones and antenna light up while Spark pays attention. Asleep it is on standby: the face
+  // dims to a faint glow and the headphone rings go dark but for a slow pulse.
   dynamics(c, dt) {
     const busy = ['listening', 'hearing', 'thinking', 'working'].includes(c.loopName);
-    const target = busy ? 0.55 + 0.35 * Math.sin(c.time * (c.loopName === 'thinking' ? 5 : 3)) : 0;
+    const standby = c.postureW.sleep.x;
+    const slow = 0.5 + 0.5 * Math.sin(c.time * Math.PI * 2 * 0.2);
+    const target = busy ? 0.55 + 0.35 * Math.sin(c.time * (c.loopName === 'thinking' ? 5 : 3)) : -0.22 * standby * (1 - 0.4 * slow);
     const u = c.body.material.userData.u.uPulse;
     u.value = damp(u.value, target, 6, dt);
+    c.faceDecal ||= c.body.parent.getObjectByName('FaceDecal');
+    c.faceDecal.material.color.setScalar(1 - standby * (0.62 - 0.12 * slow));
+  },
+
+  postures: {
+    // Kicked back: sitting with its legs out, leaning back on its hands, the visor tipped to you.
+    // (On its side, the shared lie of old, the big helmet stayed upright over a sideways body.)
+    lie: (t, P, C) => {
+      C.stand(t, P);
+      P.root.py -= 0.16; P.root.rx -= 36; P.root.pz += 0.03;
+      for (const [s, d] of [['L', 1], ['R', -1]]) {
+        add(P, 'thigh' + s, -54, 0, -d * 8);
+        raise(P, s, -12); fwd(P, s, -70);
+      }
+      add(P, 'head', 22, 0, 10); add(P, 'chest', 6);
+      add(P, 'footL', 0, 0, 10 * Math.sin(t * 1.3));
+    },
+    // Standby: sitting, slumped a little, head bowed, arms limp, antenna drooping; the face dims
+    // (dynamics) and breathes no more than a slow pulse.
+    sleep: (t, P, C) => {
+      POSTURES.sit(t, P, C);
+      for (const s of ['L', 'R']) { raise(P, s, -4); fwd(P, s, -18); }
+      add(P, 'spine', 6); add(P, 'chest', 6); add(P, 'head', 14, 0, 6);
+      add(P, 'antenna1', 26); add(P, 'antenna2', 20);
+      P.look *= 0.2;
+    },
   },
 
   // Arms relaxed down from the modelled A-pose.

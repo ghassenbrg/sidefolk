@@ -9,7 +9,7 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np
-from rigkit import ss, seg_param, limb, prepare, armature, coords, skin, bake_ao, export, shots
+from rigkit import ss, seg_param, seg_dist, limb, prepare, armature, coords, skin, bake_ao, export, shots
 
 src, dst, tests = sys.argv[sys.argv.index("--") + 1:][:3]
 # 4.4M faces of fur: a desktop companion needs a fraction of that.
@@ -42,9 +42,11 @@ W = {}
 def add(n, w): W[n] = W.get(n, 0) + w
 
 # Each part takes its share of what is left, so the shares always sum to one. The tail's tip
-# rises beside the head: inside the head's ellipsoid is head, near the tail's line is tail.
+# rises beside the head: inside the head's ellipsoid is head, near the tail's segments is tail (their
+# endless lines ran on through the right ear, whose tip then followed the tail; the shipped ember.glb had
+# those weights moved to the ear and head in place, 2026-10-31).
 r = np.sqrt((x / 0.53) ** 2 + ((y + 0.12) / 0.43) ** 2 + ((z - 0.26) / 0.39) ** 2)
-d = np.stack([seg_param(co, TAIL[i], TAIL[i + 1])[1] for i in range(3)])
+d = np.stack([seg_dist(co, TAIL[i], TAIL[i + 1]) for i in range(3)])
 tail = ss(0.32, 0.24, d.min(0)) * ss(-0.2, -0.28, x) * (1 - ss(1.08, 0.98, r))
 tail = np.maximum(tail, ss(-0.05, -0.12, x) * ss(0.28, 0.36, y) * (1 - ss(-0.45, -0.38, z)))
 head = np.maximum(ss(1.08, 0.98, r), ss(-0.17, -0.1, z)) * (1 - tail)
