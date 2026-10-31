@@ -71,10 +71,24 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |
 | `LightPool(state:)`, `LightPoolState`, `ShoulderBadge` | `LightPool.swift` | the companion's state as light, with its VoiceOver words |
 
+### Home's parts (phase 3)
+
+In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
+
+| Component | File | Use |
+|---|---|---|
+| `HomePage` | `TodayView.swift` | a place's scrolling page: content ≤ `contentMaxWidth`, `contentPadding` (24 under 900) |
+| `.lanternTile(bar:)` | `TodayParts.swift` | a tile's surface with its 3 pt state bar (Today's watch and value tiles) |
+| `NeedsYouCard` | `TodayView.swift` | one thing that waits: folk avatar, "who · time", the card's words, a 3 pt amber bar, the keyboard's ring |
+| `FolkCard` | `OnDutyView.swift` | a folk's group of rows: avatar with its live ring, name, role, count |
+| `SidebarSquircle`, `PageSquircle`, `SidebarNook` | `HomeSidebar.swift`, `ExtensionsSidebar.swift` | 20 pt tinted icons in the sidebar; the companion's nook |
+| `SayPanel`, `SayWords` | `SayPanel.swift` | what typed words will do, from `IntentPlan`: sentence, chips, AI chip, keys |
+| `PersonAvatar`, `CompanionAvatar` | `HistoryView.swift` | who did something, beside a sentence |
+| `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
+
 ## Not built yet (phases 2–4)
 
 The desktop's behaviour (placing the pool and Sidecard by the companion, the stack's arc, pins, the agents lane, the
-permission slip wired to Guard), Home's places (Today rebuilt, On duty, History, You, the Gallery in Home, the Say
-bar in the toolbar), Settings' 8 tabs with search, the menu bar Pocket, Full access with an end time. The 16 text
-fields still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. The theme-specific Today block
-styles (console, planner, stage) keep their own capitals until phase 3 retires them (one layout per place).
+permission slip wired to Guard), Settings' 8 tabs with search, the menu bar Pocket, Full access with an end time. The 16 text
+fields still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. Home is built (phase 3, D84); its theme
+layouts are retired.

@@ -87,6 +87,7 @@ struct TodayView: View {
                     KeyHint("↩")
                     Text("to answer").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
+                .fixedSize()
                 .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
             }
         }

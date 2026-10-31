@@ -7549,189 +7549,57 @@
     "%@ keeps %lld things in mind about you. They shape its answers, and never leave this Mac unless an answer needs the AI." : {
       "localizations" : {
         "ar" : {
-          "variations" : {
-            "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتفظ %1$@ بـ%2$lld شيء عنك."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتفظ %1$@ بـ%2$lld شيء عنك. يشكّل إجاباته، ولا يغادر هذا الـMac إلا إذا احتاجت إجابة إلى الذكاء الاصطناعي."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتفظ %1$@ بـ%2$lld شيئين عنك. يشكّلان إجاباته، ولا يغادران هذا الـMac إلا إذا احتاجت إجابة إلى الذكاء الاصطناعي."
-                }
-              },
-              "few" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتفظ %1$@ بـ%2$lld أشياء عنك. تشكّل إجاباته، ولا تغادر هذا الـMac إلا إذا احتاجت إجابة إلى الذكاء الاصطناعي."
-                }
-              },
-              "many" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتفظ %1$@ بـ%2$lld شيئًا عنك. تشكّل إجاباته، ولا تغادر هذا الـMac إلا إذا احتاجت إجابة إلى الذكاء الاصطناعي."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يحتفظ %1$@ بـ%2$lld شيء عنك. تشكّل إجاباته، ولا تغادر هذا الـMac إلا إذا احتاجت إجابة إلى الذكاء الاصطناعي."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتفظ %1$@ بـ%2$lld من المعلومات عنك. تشكّل إجاباته، ولا تغادر هذا الـMac إلا إذا احتاجت إجابة إلى الذكاء الاصطناعي."
           }
         },
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ behält %2$lld Sache über dich im Kopf. Sie prägt die Antworten und verlässt diesen Mac nie, außer eine Antwort braucht die KI."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ behält %2$lld Dinge über dich im Kopf. Sie prägen die Antworten und verlassen diesen Mac nie, außer eine Antwort braucht die KI."
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ keeps %2$lld thing in mind about you. It shapes its answers, and never leaves this Mac unless an answer needs the AI."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ keeps %2$lld things in mind about you. They shape its answers, and never leave this Mac unless an answer needs the AI."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ behält %2$lld Dinge über dich im Kopf. Sie prägen die Antworten und verlassen diesen Mac nie, außer eine Antwort braucht die KI."
           }
         },
         "es" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ tiene presente %2$lld cosa sobre ti. Da forma a sus respuestas y nunca sale de este Mac salvo que una respuesta necesite la IA."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ tiene presentes %2$lld cosas sobre ti. Dan forma a sus respuestas y nunca salen de este Mac salvo que una respuesta necesite la IA."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ tiene presentes %2$lld cosas sobre ti. Dan forma a sus respuestas y nunca salen de este Mac salvo que una respuesta necesite la IA."
           }
         },
         "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ garde %2$lld chose en tête à votre sujet. Elle guide ses réponses et ne quitte jamais ce Mac, sauf si une réponse a besoin de l’IA."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ garde %2$lld choses en tête à votre sujet. Elles guident ses réponses et ne quittent jamais ce Mac, sauf si une réponse a besoin de l’IA."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ garde %2$lld choses en tête à votre sujet. Elles guident ses réponses et ne quittent jamais ce Mac, sauf si une réponse a besoin de l’IA."
           }
         },
         "it" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ tiene a mente %2$lld cosa su di te. Orienta le sue risposte e non lascia mai questo Mac, a meno che una risposta non richieda l’IA."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ tiene a mente %2$lld cose su di te. Orientano le sue risposte e non lasciano mai questo Mac, a meno che una risposta non richieda l’IA."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ tiene a mente %2$lld cose su di te. Orientano le sue risposte e non lasciano mai questo Mac, a meno che una risposta non richieda l’IA."
           }
         },
         "ja" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@はあなたについて%2$lld件のことを覚えています。回答に活かされ、AIが必要な回答以外でこのMacの外に出ることはありません。"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@はあなたについて%2$lld件のことを覚えています。回答に活かされ、AIが必要な回答以外でこのMacの外に出ることはありません。"
           }
         },
         "ko" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@이(가) 당신에 대해 %2$lld가지를 기억하고 있어요. 답변에 반영되며, AI가 필요한 답변이 아니면 이 Mac 밖으로 나가지 않아요."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@이(가) 당신에 대해 %2$lld가지를 기억하고 있어요. 답변에 반영되며, AI가 필요한 답변이 아니면 이 Mac 밖으로 나가지 않아요."
           }
         },
         "pt-BR" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ guarda %2$lld coisa sobre você. Ela orienta as respostas e nunca sai deste Mac, a menos que uma resposta precise da IA."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ guarda %2$lld coisas sobre você. Elas orientam as respostas e nunca saem deste Mac, a menos que uma resposta precise da IA."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ guarda %2$lld coisas sobre você. Elas orientam as respostas e nunca saem deste Mac, a menos que uma resposta precise da IA."
           }
         },
         "zh-Hans" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%1$@ 记着关于你的 %2$lld 件事。它们会影响回答，除非回答需要 AI，否则绝不会离开这台 Mac。"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 记着关于你的 %2$lld 件事。它们会影响回答，除非回答需要 AI，否则绝不会离开这台 Mac。"
           }
         }
       }
@@ -12117,24 +11985,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا طلبات · %2$@"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "طلب واحد · %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "طلبان · %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -12147,10 +11997,28 @@
                   "value" : "%1$lld طلبًا · %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "طلب واحد · %2$@"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%1$lld طلب · %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "طلبان · %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا طلبات · %2$@"
                 }
               }
             }
@@ -12498,24 +12366,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لم تفشل أي عملية تحقق"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "فشلت عملية تحقق واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "فشلت عمليتا تحقق"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -12528,10 +12378,28 @@
                   "value" : "فشلت %lld عملية تحقق"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "فشلت عملية تحقق واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "فشلت %lld عملية تحقق"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "فشلت عمليتا تحقق"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم تفشل أي عملية تحقق"
                 }
               }
             }
@@ -15083,24 +14951,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا قيم مباشرة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "قيمة مباشرة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "قيمتان مباشرتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -15113,10 +14963,28 @@
                   "value" : "%lld قيمة مباشرة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قيمة مباشرة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld قيمة مباشرة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "قيمتان مباشرتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا قيم مباشرة"
                 }
               }
             }
@@ -15895,24 +15763,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا مرات أخرى في هذا اليوم"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مرة أخرى في هذا اليوم"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "مرتان أخريان في هذا اليوم"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -15925,10 +15775,28 @@
                   "value" : "%lld مرة أخرى في هذا اليوم"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مرة أخرى في هذا اليوم"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld مرة أخرى في هذا اليوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مرتان أخريان في هذا اليوم"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا مرات أخرى في هذا اليوم"
                 }
               }
             }
@@ -17225,24 +17093,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا تذكيرات"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تذكير واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تذكيران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -17255,10 +17105,28 @@
                   "value" : "%lld تذكيرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكير واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld تذكير"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تذكيران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تذكيرات"
                 }
               }
             }
@@ -18412,24 +18280,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا شيء يعمل لأجلك"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "شيء واحد يعمل لأجلك"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "شيئان يعملان لأجلك"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -18442,10 +18292,28 @@
                   "value" : "%lld شيئًا يعمل لأجلك"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيء واحد يعمل لأجلك"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld شيء يعمل لأجلك"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيئان يعملان لأجلك"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا شيء يعمل لأجلك"
                 }
               }
             }
@@ -18603,24 +18471,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لم يحدث شيء"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حدث شيء واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حدث شيئان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -18633,10 +18483,28 @@
                   "value" : "حدث %lld شيئًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حدث شيء واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "حدث %lld شيء"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حدث شيئان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم يحدث شيء"
                 }
               }
             }
@@ -18985,24 +18853,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا شيء ينتظر حتى %2$@"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "شيء واحد ينتظر حتى %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "شيئان ينتظران حتى %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -19015,10 +18865,28 @@
                   "value" : "%1$lld شيئًا ينتظر حتى %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيء واحد ينتظر حتى %2$@"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%1$lld شيء ينتظر حتى %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيئان ينتظران حتى %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا شيء ينتظر حتى %2$@"
                 }
               }
             }
@@ -19807,24 +19675,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لم تتغير أي صفحة مراقبة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تغيرت صفحة مراقبة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تغيرت صفحتان مراقبتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -19837,10 +19687,28 @@
                   "value" : "تغيرت %lld صفحة مراقبة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تغيرت صفحة مراقبة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "تغيرت %lld صفحة مراقبة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تغيرت صفحتان مراقبتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم تتغير أي صفحة مراقبة"
                 }
               }
             }
@@ -66003,6 +65871,7 @@
     },
     "From %@ · deleted %@ · %@" : {
       "comment" : "“From Inbox · deleted 2 days ago · gone in 28 days”",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -104990,24 +104859,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الدفتر · لا عناصر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الدفتر · عنصر واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الدفتر · عنصران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -105020,10 +104871,28 @@
                   "value" : "الدفتر · %lld عنصرًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "الدفتر · عنصر واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "الدفتر · %lld عنصر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "الدفتر · عنصران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "الدفتر · لا عناصر"
                 }
               }
             }
@@ -105181,24 +105050,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الدفتر · لا يعرف %2$@ شيئًا"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الدفتر · شيء واحد يعرفه %2$@"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الدفتر · شيئان يعرفهما %2$@"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -105211,10 +105062,28 @@
                   "value" : "الدفتر · %1$lld شيئًا يعرفه %2$@"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "الدفتر · شيء واحد يعرفه %2$@"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "الدفتر · %1$lld شيء يعرفه %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "الدفتر · شيئان يعرفهما %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "الدفتر · لا يعرف %2$@ شيئًا"
                 }
               }
             }
@@ -157252,31 +157121,31 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تعذّر الاحتفاظ بهذه المعلومة. لم يتغير شيء."
+            "value" : "تعذّر الاحتفاظ بهذه المعلومة. لم يتغيّر شيء."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Fakt konnte nicht behalten werden. Nichts wurde geändert."
+            "value" : "Der Fakt konnte nicht behalten werden. Es wurde nichts geändert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo conservar ese dato. No cambió nada."
+            "value" : "No se pudo conservar ese dato. No se ha cambiado nada."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ce fait n’a pas pu être gardé. Rien n’a changé."
+            "value" : "Ce fait n’a pas pu être gardé. Rien n’a été modifié."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non è stato possibile tenere quel fatto. Non è cambiato nulla."
+            "value" : "Non è stato possibile tenere quel fatto. Non è stato modificato nulla."
           }
         },
         "ja" : {
@@ -157288,19 +157157,19 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "그 사실을 유지하지 못했어요. 바뀐 것은 없어요."
+            "value" : "그 사실을 유지하지 못했어요. 아무것도 변경되지 않았어요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível manter esse fato. Nada mudou."
+            "value" : "Não foi possível manter esse fato. Nada foi alterado."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法保留这条信息。没有任何更改。"
+            "value" : "无法保留这条信息。没有做任何更改。"
           }
         }
       }
@@ -157310,31 +157179,31 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تعذّر حفظ هذه المعلومة. لم يتغير شيء."
+            "value" : "تعذّر حفظ هذه المعلومة. لم يتغيّر شيء."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Fakt konnte nicht gespeichert werden. Nichts wurde geändert."
+            "value" : "Der Fakt konnte nicht gespeichert werden. Es wurde nichts geändert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo guardar ese dato. No cambió nada."
+            "value" : "No se pudo guardar ese dato. No se ha cambiado nada."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ce fait n’a pas pu être enregistré. Rien n’a changé."
+            "value" : "Ce fait n’a pas pu être enregistré. Rien n’a été modifié."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non è stato possibile salvare quel fatto. Non è cambiato nulla."
+            "value" : "Non è stato possibile salvare quel fatto. Non è stato modificato nulla."
           }
         },
         "ja" : {
@@ -157346,19 +157215,19 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "그 사실을 저장하지 못했어요. 바뀐 것은 없어요."
+            "value" : "그 사실을 저장하지 못했어요. 아무것도 변경되지 않았어요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível salvar esse fato. Nada mudou."
+            "value" : "Não foi possível salvar esse fato. Nada foi alterado."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法保存这条信息。没有任何更改。"
+            "value" : "无法保存这条信息。没有做任何更改。"
           }
         }
       }

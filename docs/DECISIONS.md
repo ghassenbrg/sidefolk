@@ -2317,6 +2317,37 @@ search as wells; the Say bar's shell, key hints and the understanding row; the S
 whisper, card, slip strip and stack; the light pool and shoulder badge. A design-system sheet in the UI snapshots is
 the reference. An approval's risk tag became a sentence-case chip.
 
+**Phase 3, built (Home):** one layout in every theme. The sidebar (232) holds the companion live in its nook (its
+portrait in the desktop's pose on its `LightPool`, a state chip, one line), the five places (Today ⌘1, Calendar ⌘2,
+Notebook ⌘3, On duty ⌘4, History ⌘5), the Notebook (You, the Inbox and collections in tinted squircles, the Trash last as
+a filter), the person's extension pages arranged by dragging (pages put out of the sidebar are one menu row; All
+Extensions is gone) with "Get add-ons", and Quiet at the foot (the menu bar's Quiet; Focus comes with phase 4's
+Attention). The toolbar has the place's title and line, the Say bar in the centre (⌘K, `SayBarField(size: .home)`) whose
+panel says in plain words what Return will do, its parts as chips and whether AI is used, from the same `IntentPlan` that
+runs the words, with ↩ / ⌘↩ / ⌥↩ as buttons and what the words find under it. **Today:** a greeting with the Mac's first
+name and one deterministic sentence (`DayBrief`), three counts (need you, on duty, done today), the day as a line, then
+Needs you (three cards, the rest folded into one line with Show all; held in one card while Quiet is on; all clear says so
+with what's next) beside On duty at a glance (watch and live-value tiles, agents at work, extension tiles), and what was
+captured today; a first day keeps the day and offers three starts that fill the Say bar. **On duty** (new): every watch,
+live value, repeating reminder and routine, agent session, command and extension working in the background (a page whose
+main switch is on), grouped by folk with state and Pause, Resume or Stop through the existing calls (`OnDuty` counts what
+runs, paused ones are listed but not counted). **History**: Activity, the kept conversations, what Sidefolk told the
+person (attention items) and other agents' sessions as one timeline (`HistoryTimeline`) by the hour, a plain sentence
+per row with an outcome chip (said no and skipped are calm), Undo where Activity's undo still exists, the exact record
+folded in each row, conversations opening in place with their reply field, sessions as receipts of their calls; filters,
+a span and search. **You**: the About-you facts as a profile with where each came from, Edit (in place) and Forget (the
+Notebook's Trash with its Undo); facts another agent suggested wait at the top, out of answers, with Keep (new: re-tags
+the fact as the person's, `ProfileFacts.keep`). When a fact was last used isn't kept, so it isn't shown. **Calendar**: the
+Agenda (two weeks as a list, today's now line, a repeating reminder once a day with how many more) comes first, then Week
+and Month. **The Gallery** is in Home on Settings' own models (companions with big pictures and the browser's filters,
+extensions with their passport: what they can touch once added, else that the install preview says it, who signed them,
+amber when Sidefolk didn't check them; themes); Settings' Companion and Extensions tabs lose their Gallery page for a way
+to it. **Retired** (one layout per place): the theme layouts' rail, pills, ribbons and status bar, the Today blocks
+(console, planner, board, stage), the Activity table/log/diary styles and the Markdown editor with tabs; the keys still
+decode, so themes keep working, and `ThemeCheck` still reads them. A reminder's Activity line reads its time as a date,
+not ISO. Not done: the permission slip on Today's cards (phase 2's `ApprovalCard`), the Week view's "read only" note and
+"+1" overlaps, a watch's detail page (A9: no check log or page versions are kept), Focus in the sidebar's pill.
+
 **Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
 disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
 per place and one component set keep the product learnable and let extensions place parts predictably; themes still
