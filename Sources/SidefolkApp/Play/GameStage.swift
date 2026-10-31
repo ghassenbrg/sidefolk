@@ -33,7 +33,20 @@ struct GameStage: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            if let eyebrow = prompt?.eyebrow, !(board.over && board.result != nil) { RoundChip(text: eyebrow, style: style) }
+            if let eyebrow = prompt?.eyebrow, !(board.over && board.result != nil) {
+                RoundChip(text: eyebrow, style: style)
+                    .frame(maxWidth: .infinity)
+                    .overlay {
+                        // A puzzle's clock and Sudoku's notes switch share the eyebrow's row, so a 9 × 9 board keeps its room.
+                        if let puzzle = board.puzzle, let seconds = puzzle.seconds {
+                            HStack {
+                                PuzzleClock(seconds: seconds, running: puzzle.running, since: model.parts.puzzleShown)
+                                Spacer(minLength: 0)
+                                if puzzle.input == .digits, !puzzle.locked { NotesSwitch(model: model) }
+                            }
+                        }
+                    }
+            }
             HStack(alignment: peeking ? .top : .bottom, spacing: 6) {
                 CompanionFigure(picture: pose, size: peeking ? CGSize(width: 104, height: 100) : CGSize(width: 54, height: 54), beat: model.turn)
                     // On a table: the feet sink a little past the stage's edge, onto the table's top.

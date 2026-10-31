@@ -61,7 +61,11 @@ extension PlayModel {
         if board.numberField?.history.count != parts.guessesSeen { parts.draft = "" }
         parts.guessesSeen = board.numberField?.history.count
         if let cursor = parts.cursor, cursor >= cells(board) { parts.cursor = nil }
-        if board.puzzle != nil { parts.puzzleShown = Date() }
+        if let p = board.puzzle {
+            parts.puzzleShown = Date()
+            // Sudoku's pad works at once: the first open cell is picked until the person picks another.
+            if p.input == .digits, parts.cursor == nil { parts.cursor = p.cells.firstIndex { !$0.given } }
+        }
         if let pads = board.pads, !pads.play.isEmpty, !pads.locked { play(pads) }
         if let cups = board.cups, cups.shuffleSeconds > 0 { shuffle(cups) }
         if let reflex = board.reflex, reflex.armed, let after = reflex.after { arm(after, window: reflex.window) }

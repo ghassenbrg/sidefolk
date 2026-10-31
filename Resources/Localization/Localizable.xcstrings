@@ -18766,6 +18766,7 @@
       }
     },
     "A break with your companion: eleven games you play against it beside it on the desktop (Daily Word, trivia, tic-tac-toe, Copy Me and more), with your scores and streaks kept, and chance to pick a number or choose from a list." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -18878,6 +18879,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "和你的伙伴休息一下：抛硬币、掷骰子、随机挑选、玩石头剪刀布，或者玩一个记录分数的问答游戏。"
+          }
+        }
+      }
+    },
+    "A break with your companion: ten games you play against it beside it on the desktop (trivia, tic-tac-toe, Copy Me and more) and five puzzles of your own (Daily Word, Sudoku and more), with your scores, best times and streaks kept, and chance to pick a number or choose from a list." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استراحة مع رفيقك: عشر ألعاب تلعبها ضده بجانبه على سطح المكتب (مسابقة، إكس-أو، قلّدني وغيرها) وخمسة ألغاز لك (كلمة اليوم، سودوكو وغيرها)، مع حفظ نقاطك وأفضل أوقاتك وسلاسلك، والصدفة لاختيار رقم أو شيء من قائمة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Pause mit deinem Begleiter: zehn Spiele gegen ihn, neben ihm auf dem Schreibtisch (Quiz, Tic-Tac-Toe, Mach's nach und mehr) und fünf Rätsel für dich (Wort des Tages, Sudoku und mehr), mit gespeicherten Punkten, Bestzeiten und Serien, und Zufall, um eine Zahl oder etwas aus einer Liste zu wählen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un respiro con tu compañero: diez juegos contra él, a su lado en el escritorio (un quiz, tres en raya, Imítame y más) y cinco rompecabezas para ti (la palabra del día, el sudoku y más), con tus puntuaciones, mejores tiempos y rachas guardados, y el azar para elegir un número o una opción de una lista."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une pause avec votre compagnon : dix jeux contre lui, à côté de lui sur le bureau (un quiz, le morpion, Imite-moi et d'autres) et cinq casse-têtes pour vous (le mot du jour, le sudoku et d'autres), vos scores, meilleurs temps et séries gardés, et le hasard pour tirer un nombre ou choisir dans une liste."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una pausa con il tuo compagno: dieci giochi contro di lui, accanto a lui sulla scrivania (un quiz, tris, Copiami e altri) e cinque rompicapi per te (la parola del giorno, il sudoku e altri), con punteggi, tempi migliori e serie salvati, e il caso per scegliere un numero o qualcosa da una lista."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相棒とひと休み：デスクトップのとなりで相棒と対戦する10のゲーム（クイズ、まるばつ、まねっこなど）と、ひとりで解く5つのパズル（今日のことば、数独など）。スコア、ベストタイム、連続記録は保存され、数やリストからランダムに選ぶこともできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동반자와 잠깐 쉬어요: 바탕화면에서 동반자 옆에서 겨루는 게임 10가지(퀴즈, 틱택토, 따라 해 봐 등)와 혼자 푸는 퍼즐 5개(오늘의 단어, 스도쿠 등). 점수, 최고 기록, 연속 기록이 저장되고, 숫자나 목록에서 무작위로 고를 수도 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma pausa com o seu companheiro: dez jogos contra ele, ao lado dele na mesa (quiz, jogo da velha, Me imite e mais) e cinco quebra-cabeças para você (a palavra do dia, o sudoku e mais), com pontuações, melhores tempos e sequências guardados, e o acaso para sortear um número ou algo de uma lista."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和伙伴一起休息一下：在桌面上伙伴旁边和它对战的十个游戏（问答、井字棋、跟我学等），加上自己解的五个谜题（每日成语、数独等），保存你的分数、最佳用时和连胜，还能随机抽一个数字或从列表里选。"
           }
         }
       }
@@ -41968,6 +42027,65 @@
         }
       }
     },
+    "Clear the cell" : {
+      "comment" : "Sudoku's digit pad: empties the cell picked",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أفرغ الخانة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld leeren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaciar la casilla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vider la case"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svuota la casella"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マスを空にする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "칸 비우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar a casa"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清空这一格"
+          }
+        }
+      }
+    },
     "Clear the history" : {
       "localizations" : {
         "ar" : {
@@ -42022,6 +42140,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除历史"
+          }
+        }
+      }
+    },
+    "Click a cell to change it" : {
+      "comment" : "Keys in the Play panel: a puzzle whose cells change with a click",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر خانة لتغييرها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klick ein Feld an, um es zu ändern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic en una casilla para cambiarla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur une case pour la changer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic su una casella per cambiarla"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マスをクリックして変える"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "칸을 클릭해 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique numa casa para mudá-la"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点一格来改变它"
           }
         }
       }
@@ -53524,6 +53701,65 @@
         }
       }
     },
+    "Drag from corner to corner, click a plot to clear it" : {
+      "comment" : "Keys in the Play panel: Garden Plots, drawing rectangles",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب من زاوية إلى أخرى، وانقر قطعة لإزالتها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von Ecke zu Ecke ziehen, eine Parzelle anklicken zum Entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra de esquina a esquina, haz clic en una parcela para quitarla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glissez d'un coin à l'autre, cliquez sur une parcelle pour l'effacer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina da angolo ad angolo, fai clic su un lotto per toglierlo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "角から角へドラッグ、区画をクリックで消す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모서리에서 모서리로 드래그, 구획을 클릭하면 지우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste de canto a canto, clique num lote para tirá-lo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从一角拖到对角，点一块地来去掉"
+          }
+        }
+      }
+    },
     "Drag to move it, or use ← and → a quarter hour at a time" : {
       "localizations" : {
         "ar" : {
@@ -54166,6 +54402,7 @@
     },
     "Eleven games with your companion, and random picks" : {
       "comment" : "Playtime: one line under its name",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -62627,6 +62864,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "游戏"
+          }
+        }
+      }
+    },
+    "Games and puzzles with your companion, and random picks" : {
+      "comment" : "Playtime: one line under its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألعاب وألغاز مع رفيقك، واختيار عشوائي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele und Rätsel mit deinem Begleiter, und Zufallswahl"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juegos y rompecabezas con tu compañero, y sorteos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeux et casse-têtes avec votre compagnon, et tirages au sort"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giochi e rompicapi con il tuo compagno, e scelte a caso"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相棒と遊ぶゲームとパズル、ランダム選び"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동반자와 즐기는 게임과 퍼즐, 무작위 뽑기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogos e quebra-cabeças com o seu companheiro, e sorteios"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和伙伴一起玩游戏和谜题，还有随机抽选"
           }
         }
       }
@@ -98749,6 +99045,124 @@
         }
       }
     },
+    "Notes off" : {
+      "comment" : "Sudoku: numbers go in as answers, not notes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملاحظات متوقفة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas desactivadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes désactivées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note disattivate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモ オフ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모 끔"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas desligadas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "笔记关"
+          }
+        }
+      }
+    },
+    "Notes on" : {
+      "comment" : "Sudoku: numbers go in as pencil notes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملاحظات مفعّلة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen an"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas activadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes activées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note attive"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモ オン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모 켬"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas ligadas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "笔记开"
+          }
+        }
+      }
+    },
     "Notes, ideas and tasks for something you're making." : {
       "localizations" : {
         "ar" : {
@@ -108800,6 +109214,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "照片信息和转换后的副本"
+          }
+        }
+      }
+    },
+    "Pick a cell, then a number · N for notes" : {
+      "comment" : "Keys in the Play panel: Sudoku",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر خانة ثم رقمًا · N للملاحظات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld wählen, dann eine Zahl · N für Notizen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una casilla y luego un número · N para notas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez une case, puis un chiffre · N pour les notes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli una casella, poi un numero · N per le note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マスを選んで数字 · Nでメモ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "칸을 고른 뒤 숫자 · N은 메모"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha uma casa, depois um número · N para notas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选一格，再选数字 · N 切换笔记"
           }
         }
       }
@@ -140258,6 +140731,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "软件更新"
+          }
+        }
+      }
+    },
+    "Solved!" : {
+      "comment" : "A puzzle's end card: the person solved it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُلّت!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelöst!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Resuelto!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Résolu !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Risolto!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解けました！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "풀었어요!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resolvido!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解开了！"
           }
         }
       }

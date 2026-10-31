@@ -456,6 +456,8 @@ struct GameResultView: View {
     /// Who won, in Sidefolk's words: said only for a win or a loss (a draw's card speaks for itself).
     private var title: String? {
         switch verdict {
+        // A puzzle is played alone: solved, not won against anyone.
+        case .win where model.info.look?.solo == true: String(localized: "Solved!", comment: "A puzzle's end card: the person solved it")
         case .win: String(localized: "You win!", comment: "A game's end card: the person won")
         case .loss: String(localized: "\(model.companionName) wins!", comment: "A game's end card: the companion (named) won")
         case .draw: nil

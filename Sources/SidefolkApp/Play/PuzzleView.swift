@@ -12,20 +12,13 @@ struct PuzzleView: View {
 
     /// Room for the grid, so a 9 × 9 Sudoku with its pad keeps the panel under 720 pt.
     static func side(_ p: GameBoard.Puzzle) -> CGFloat {
-        let tall: CGFloat = p.input == .digits ? 336 : 360
+        let tall: CGFloat = p.input == .digits ? 300 : 324
         return floor(min(54, (PlayView.inner - 12) / CGFloat(p.columns), tall / CGFloat(p.rows)))
     }
 
     var body: some View {
         let side = Self.side(puzzle)
         VStack(spacing: 8) {
-            if let seconds = puzzle.seconds {
-                HStack {
-                    PuzzleClock(seconds: seconds, running: puzzle.running, since: model.parts.puzzleShown)
-                    Spacer(minLength: 0)
-                    if puzzle.input == .digits { NotesSwitch(model: model) }
-                }
-            }
             PuzzleGrid(puzzle: puzzle, model: model, side: side)
                 .padding(6)
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface)
@@ -283,11 +276,12 @@ struct EdgeClue: View {
     var body: some View {
         let r = CGFloat(edge.cell / columns), c = CGFloat(edge.cell % columns)
         let center = edge.down ? CGPoint(x: (c + 0.5) * side, y: (r + 1) * side) : CGPoint(x: (c + 1) * side, y: (r + 0.5) * side)
-        let d = max(14, side * 0.36)
+        let d = max(17, side * 0.42)
         Text(verbatim: edge.clue == .same ? "=" : "×")
-            .font(.system(size: d * 0.72, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
+            .font(.system(size: d * 0.78, weight: .black, design: .rounded)).foregroundStyle(Theme.ink)
             .frame(width: d, height: d)
-            .background(Circle().fill(Theme.surface).overlay(Circle().strokeBorder(Theme.line, lineWidth: 1)))
+            .background(Circle().fill(Theme.surface).overlay(Circle().strokeBorder(Theme.ink.opacity(0.45), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.12), radius: 1, y: 1))
             .offset(x: center.x - d / 2, y: center.y - d / 2)
             .accessibilityHidden(true)
     }
@@ -356,11 +350,34 @@ struct DigitPad: View {
 
     private func key(_ label: Text, value: Int) -> some View {
         Button { model.placeDigit(value) } label: {
-            label.font(.system(size: 18, weight: .heavy, design: .rounded)).frame(maxWidth: .infinity)
+            label.font(.system(size: 17, weight: .heavy, design: .rounded)).frame(maxWidth: .infinity)
         }
-        .buttonStyle(ChunkyButtonStyle(kind: .secondary))
+        .buttonStyle(DigitKeyStyle())
         .disabled(puzzle.locked || model.parts.cursor == nil)
         .focusable(false)
+    }
+}
+
+/// A digit key: a small toy key on its lip, narrow enough for ten in a row.
+struct DigitKeyStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed && !GameMotion.reduced
+        configuration.label
+            .foregroundStyle(Theme.ink)
+            .frame(height: 34)
+            .background {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.line).offset(y: 3)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.surface)
+                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+                        .offset(y: pressed ? 2 : 0)
+                }
+            }
+            .offset(y: pressed ? 2 : 0)
+            .opacity(enabled ? 1 : 0.5)
+            .contentShape(Rectangle())
     }
 }
 
