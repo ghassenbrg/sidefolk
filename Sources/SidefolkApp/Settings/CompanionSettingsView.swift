@@ -55,30 +55,22 @@ struct CompanionSettingsView: View {
                     model.update { $0.presence = mode }
                 }
             }
-
-            // Games in the Play panel (D75): how the companion takes a win, and sounds, off until turned on.
-            SettingsGroup(title: "Games") {
-                SettingsRow(title: "When it wins", detail: toneDetail) {
-                    Picker("When it wins", selection: Binding(get: { model.settings.games.tone }, set: { tone in model.update { $0.games.tone = tone } })) {
-                        Text(String(localized: "tone.gentle", defaultValue: "Gentle", comment: "How the companion takes a win in games: kindly")).tag(GameTone.gentle)
-                        Text(String(localized: "tone.cheeky", defaultValue: "Cheeky", comment: "How the companion takes a win in games: a small tease, then kind")).tag(GameTone.cheeky)
-                        Text(String(localized: "tone.competitive", defaultValue: "Competitive", comment: "How the companion takes a win in games: a victory dance")).tag(GameTone.competitive)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
-                }
-                SettingsToggle(title: "Game sounds", detail: "Soft sounds in games. Each game's speaker button turns its own on or off.",
-                               isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
-            }
         }
-    }
 
-    private var toneDetail: LocalizedStringKey {
-        switch model.settings.games.tone {
-        case .gentle: "“Good game!” and nothing more."
-        case .cheeky: "A small tease, then kind: “Ha! Mine. Rematch?”"
-        case .competitive: "A victory dance, and it wants a rematch when it loses."
+        // Games in the Play panel (D75): how the companion takes a win, and sounds, off until turned on.
+        SettingsGroup(title: "Games") {
+            SettingsRow(title: "When it wins", detail: toneDetail) {
+                Picker("When it wins", selection: Binding(get: { model.settings.games.tone }, set: { tone in model.update { $0.games.tone = tone } })) {
+                    Text(String(localized: "tone.gentle", defaultValue: "Gentle", comment: "How the companion takes a win in games: kindly")).tag(GameTone.gentle)
+                    Text(String(localized: "tone.cheeky", defaultValue: "Cheeky", comment: "How the companion takes a win in games: a small tease, then kind")).tag(GameTone.cheeky)
+                    Text(String(localized: "tone.competitive", defaultValue: "Competitive", comment: "How the companion takes a win in games: a victory dance")).tag(GameTone.competitive)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+            }
+            SettingsToggle(title: "Game sounds", detail: "Soft sounds in games. Each game's speaker button turns its own on or off.",
+                           isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
         }
 
         SettingsGroup(title: "Look") {
@@ -115,6 +107,14 @@ struct CompanionSettingsView: View {
             SettingsToggle(title: "Sleep when you're away", detail: "Naps after 10 minutes without input and wakes when you're back.",
                            isOn: setting(\.sleepWhenIdle))
             SettingsToggle(title: "Sounds", detail: "A soft chime for reminders and finished jobs.", isOn: setting(\.sounds))
+        }
+    }
+
+    private var toneDetail: LocalizedStringKey {
+        switch model.settings.games.tone {
+        case .gentle: "“Good game!” and nothing more."
+        case .cheeky: "A small tease, then kind: “Ha! Mine. Rematch?”"
+        case .competitive: "A victory dance, and it wants a rematch when it loses."
         }
     }
 
