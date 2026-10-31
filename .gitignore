@@ -22,6 +22,8 @@ reports/
 # Python bytecode from the Blender rig scripts
 __pycache__/
 
-# Claude's experiments and history for the 3D companions (the shipped pipeline is companions-3d/)
+# Local experiments and scratch output, never committed (the shipped 3D pipeline is companions-3d/)
+sandbox/
 sandbox-claude/
+output/
 .addons/

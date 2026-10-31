@@ -2,201 +2,167 @@
   <img src="Resources/Brand/exports/logo-horizontal-color.png" width="440" alt="Sidefolk">
 </p>
 
-<p align="center"><b>A small companion that lives on your Mac's desktop. It remembers, reminds and keeps watch, and your AI agents can talk to it.</b></p>
+<p align="center"><b>A small companion that lives on your Mac's desktop. It remembers, reminds and keeps watch, plays a game with you, and your AI agents can talk to it.</b></p>
 
-<p align="center">Version 0.1.0 · macOS 15 or later · Apple silicon · ten languages</p>
+<p align="center">Version 0.1.0 (snapshots) · macOS 15 or later · Apple silicon · ten languages</p>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/launch/screenshots/hero-dark.png">
-  <img src="docs/launch/screenshots/hero-light.png" alt="Mochi the rabbit on the desktop, with the Home window, the Ask panel, a reminder bubble and two live values">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-dark.png">
+  <img src="docs/screenshots/desktop-light.png" alt="Mochi the rabbit on its light at the bottom of the desktop, with a count of 12 on its shoulder, three waiting cards fanned above it and Scout beside it">
 </picture>
 
-Sidefolk puts a character on your desktop: Mochi the rabbit, or one of twelve others. Tell it things
-in plain words and it keeps them: notes, ideas, lists, reminders, pages and files to watch. All of
-that works on your Mac without any AI. When you want answers or help with bigger jobs, connect the
-AI you already use: Claude Code, Codex, an API key, or a model running on your own Mac.
+Sidefolk puts a character on your desktop: Mochi the rabbit, Spark, or one of eight more from the add-on gallery.
+Tell it things in plain words and it keeps them: notes, ideas, lists, reminders, pages and files to watch. All of
+that works on your Mac without any AI. When you want answers or help with bigger jobs, connect the AI you already
+use: Claude Code, Codex, an API key, or a model running on your own Mac.
 
-> **0.1.0 is the first release, and it isn't out yet.** Signed and notarized test builds ("snapshots") are
-> on [Releases](https://github.com/ghassenbrg/sidefolk/releases), or [build it from source](#build-from-source).
-> Read [what isn't done yet](#what-isnt-done-yet) before you rely on it.
+> **0.1.0 isn't released yet.** Signed and notarized test builds ("snapshots") are on
+> [Releases](https://github.com/ghassenbrg/sidefolk/releases); once installed, Sidefolk finds the next ones
+> itself and asks before installing. Or [build it from source](#build-from-source). Read
+> [what isn't done yet](#what-isnt-done-yet) before you rely on it.
 
 **Contents:** [What it does](#what-it-does) · [Privacy](#privacy) · [Choosing an AI](#choosing-an-ai) ·
-[Install](#install) · [Extensions](#extensions) · [Agents and MCP](#agents-and-mcp) ·
-[Languages](#languages) · [What isn't done yet](#what-isnt-done-yet) · [FAQ](#faq) ·
-[Develop](#develop) · [Licence and credits](#licence-credits-and-trademarks)
+[Install](#install) · [Add-ons](#add-ons-companions-extensions-and-themes) · [Agents and MCP](#agents-and-mcp) ·
+[What isn't done yet](#what-isnt-done-yet) · [FAQ](#faq) · [Develop](#develop) ·
+[Licence and credits](#licence-credits-and-trademarks)
 
 ## What it does
 
 ### It lives on your desktop
 
-The companion stands on the bottom edge of your screen and shows what it is doing: thinking, writing,
-watching, waiting for your OK, done. When a reminder is close, a page is being watched or an agent is
-working, a small folk sits beside it (Tempo, Scout, Byte). Between tasks it has a life of its own:
-now and then a stretch, a yawn, an ear twitch or a glance at your work, and it sits, then lies down,
-when nothing happens. Click it for a boop, stroke it with the pointer to pet it, drag it and drop or
-throw it. It holds still while you type, and at rest it uses well under 0.1 % of one CPU core.
-**Settings › Companion › Liveliness** goes from *Minimal* (moves only when something happens) to
-*Lively*; *Balanced* is the default, and Reduce Motion is respected. If "always there" is too much,
-choose *Only when needed* or *Menu bar only*.
+The companion stands on its own small light at the bottom of your screen. The light says how things are: aqua while
+it works, amber when something waits for you (with a count on its shoulder), grey in Focus, out in Quiet. Between
+tasks it has a life of its own (a stretch, a yawn, a glance at your work) and it sits, then lies down, when nothing
+happens. Click it, stroke it with the pointer, drag and throw it. It holds still while you type and uses little CPU
+at rest; **Settings › Companion › Liveliness** goes from *Minimal* to *Lively*, and Reduce Motion is respected.
 
-<p align="center"><img src="Resources/Character/companions.png" width="760" alt="Mochi and Spark with the folks: Pip, Byte, Seed, Melody, Scout, Tempo, Play, Guard, Nova and Brew"></p>
+Everything it says is one kind of card beside it, the **Sidecard**: a short whisper for news that fades by itself,
+a card when something needs an answer (it folds into the count after 30 seconds), and a permission slip when it wants
+to do something you haven't allowed. Small folks stand beside it while their job runs (Tempo for reminders, Scout
+for watches, Byte for agents), and live values sit beside it as pins.
 
-Pick your companion in **Settings › Companion**, name it, and give it a colour and a scarf. Mochi and
-Spark come in 3D or 2D; Ember (a fox), Kiko (a young astronaut), Nimbo (a cloud) and Folio (a paper
-wish) are 3D companions from the add-on gallery, downloaded when you pick one (2 to 3.4 MB). Every
-companion is drawn live, so each one has every pose: listening, thinking, working with a prop that
-says what it's doing, waiting, happy, worried, asleep. You can also make your own: a companion is a
-folder with a `species.json` and SVG shapes, read as data and never run (`companions/template/` and
-Miso, a cat, show how; they appear under *Made by you*).
+Pick a companion, its size, how lively it is and where it lives (always, only when needed, or in the menu bar) in
+**Settings › Companion**. Mochi and Spark are built in, in 3D or 2D; Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl and
+Rune come from the gallery. You can also make your own: a folder with a `species.json` and SVG shapes, read as data
+and never run (`companions/template/` and Miso, a cat, show how).
 
 ### Ask in plain words, no AI needed for the basics
 
-Click the companion or press **⌘⇧Space** and type:
+Click the companion or press **⌘⇧Space** and type, or use the Say bar at the top of Home (**⌘K**):
 
-- `remind me tomorrow at 9 to send the deck` · `remind me every weekday at 9 to do standup` ·
-  `remind me every 10 minutes until 6pm to drink water`
+- `remind me tomorrow at 9 to send the deck` · `remind me every weekday at 9 to do standup`
 - `idea: extensions could bring their own folk` · `add oat milk to my groceries list`
-- `watch example.com/pricing` · `tell me when report.pdf appears in Downloads` ·
-  `tell me when localhost:3000 is back up`
-- `tell me the CPU every 10 seconds` · `temperature in Fukuoka every minute`
-- `quiet for 1 hour` · `what ideas did I save for Sidefolk?`
+- `watch example.com/pricing` · `tell me when report.pdf appears in Downloads`
+- `tell me the CPU every 10 seconds` · `temperature in Fukuoka every minute` · `time in Tokyo`
 
-These finish on your Mac in a moment, without AI. The line under the box tells you what Enter will do
-and whether it uses AI. Every request ends in a card (a saved note, a reminder, an answer, a question
-for you), not a chat log, and most can be undone. You can also drop a file, a link or some text on the
-companion and choose Save, Remind me…, Watch or Ask.
+These finish on your Mac in a moment, without AI. The line under the field says what Return will do and whether it
+uses AI (⌘Return always asks the AI, ⌥Return saves a note). Every request ends in a card (a saved note, a reminder,
+an answer, a question for you), not a chat log, and most can be undone. Drop a file, a link or some text on the
+companion to save it, watch it or ask about it.
 
-<p align="center"><img src="docs/launch/screenshots/ask-panel-light.png" width="380" alt="The Ask panel: an approval card to move three files, an answer, and a reminder set for 17:00"></p>
+<p align="center"><img src="docs/screenshots/ask-light.png" width="420" alt="Ask beside the companion: a permission slip to move three files, an answer, and a reminder set for 17:00"></p>
 
-### It remembers, where you can see it
+### Home: your day, your notes, what's running, what happened
 
-The **Notebook** has an Inbox, **About you** (facts it keeps in mind about you, which you can read and
-change), and your own projects, topics and lists of notes, ideas, tasks and links. Search everything
-with ⌘F. Deleted things stay in the Trash for 30 days. Notes an agent saved say which one.
+- **Today:** what needs you, what's on duty, your day as a line (with your calendar if you turn it on), what you
+  captured.
+- **Calendar:** reminders and calendar events as an agenda, a week or a month.
+- **Notebook:** an Inbox, your projects, topics and lists of notes, ideas, tasks and links, **You** (the facts it
+  keeps in mind about you, which you can read, edit and forget) and the Trash (30 days).
+- **On duty:** every watch, live value, repeating reminder, agent session and extension at work, with Pause and Stop.
+- **History:** every action (who asked, what was decided, what happened, Undo where it can), your conversations
+  with the AI, and what Sidefolk told you.
+- **Extension pages** and the **Gallery** of add-ons.
 
-<p align="center"><img src="docs/launch/screenshots/home-notebook-light.png" width="760" alt="The Notebook: a collection with notes, ideas, tasks and a link, and one idea open"></p>
+<p align="center"><img src="docs/screenshots/home-on-duty-light.png" width="760" alt="On duty: Scout's watches, Tempo's repeating reminders, Byte's agents and Keep Awake, and two live values"></p>
 
 ### It reminds you, and keeps watch
 
-- **Reminders** with natural times and repeats down to every minute, snooze, done, a summary of what
-  you missed, and a morning brief. When Sidefolk is quit, macOS notifications stand in.
-- **Watches**: a web page (meaningful changes only), a site going down or coming back, a file appearing
-  or changing, a new file in a folder, a program finishing, or a command you approved.
-- **Live values**: a number told every few seconds or minutes (CPU, memory, battery, disk, network, the
-  weather somewhere, one value on a page or API) shows in a small pill beside the companion and on Now.
+- **Reminders** with natural times and repeats down to every minute, snooze, done, a summary of what you missed, and
+  a morning brief. When Sidefolk is quit, macOS notifications stand in.
+- **Watches:** a web page (meaningful changes only), a site going down or coming back, a file appearing or changing,
+  a new file in a folder, a program finishing, or a command you approved.
+- **Live values:** a number told every few seconds or minutes (CPU, memory, battery, disk, network, the weather
+  somewhere, one value on a page or API).
+- **Focus and Quiet:** Focus keeps the small news for later and gives it back as one card; Quiet holds everything
+  but the urgent. Both can end by themselves, and quiet hours can come every night (**Settings › Attention**).
 
-<p align="center">
-  <img src="docs/launch/screenshots/bubble-reminder-light.png" width="320" alt="A reminder bubble with Done and 10 min">
-  <img src="docs/launch/screenshots/live-values-light.png" width="200" alt="Live values: CPU 23%, Fukuoka 18.4 °C">
-</p>
+### Games
 
-### Now, and everything it did
+With Playtime from the gallery, the companion plays with you in a small panel beside it: Tic-tac-toe, Copy Me, Quick
+Paws, Which Cup?, Higher or Lower, Guess My Animal, Balloon Words, Last Stick, Memory Pairs, Daily Word and trivia,
+and four puzzles to solve alone (Garden Plots, Seesaw, Sudoku, Blossoms) with a daily board, hints and best times.
+No AI, in all ten languages.
 
-**Now** shows what needs you, live values, what's running, what's coming up and what's being watched.
-**Activity** lists every action: who asked (you, your companion, Claude Code, an extension), how risky
-it was, what was decided and what happened, with Undo for the last 15 minutes.
+<p align="center"><img src="docs/screenshots/play-menu-light.png" width="380" alt="The Play panel's menu: Mochi asks which game, with wins, streak and games played"></p>
 
-<p align="center"><img src="docs/launch/screenshots/home-now-light.png" width="760" alt="Now: a greeting with Mochi, then things that need you"></p>
-<p align="center"><img src="docs/launch/screenshots/home-activity-light.png" width="760" alt="Activity: each action with who asked, risk, decision and outcome"></p>
+### More
 
-### It works with Apple Notes
-
-With an AI connected, ask "check my Apple Notes and move them, well organized, into the notebook".
-Sidefolk lists, reads and copies your notes in batches of up to 50, keeps their dates, and remembers
-which ones are copied, so a big library can be done over a few requests. It removes a note from Notes
-only if you ask, only after a whole copy, and asks you every time. It can also read your open Apple
-Reminders. macOS asks you once before Sidefolk can talk to Notes or Reminders.
-
-<p align="center"><img src="docs/launch/screenshots/ask-apple-notes-light.png" width="380" alt="Approval cards for listing and removing Apple Notes, and a result: 25 notes copied, 75 of 214 so far"></p>
-
-### It listens and talks, if you want
-
-Off until you switch it on in **Settings › Voice**. Hold the Ask shortcut (or press and hold the
-companion), talk, and let go to send. What you say is understood on your Mac by Apple's speech
-recognition; the microphone is on only while you hold the key, and the recording is never kept. The
-companion answers in one short spoken line, by default only when you spoke. Voices: Apple's, made on
-your Mac, or ElevenLabs with your own key.
-
-<p align="center"><img src="docs/launch/screenshots/ask-listening-light.png" width="380" alt="The Ask panel while listening: Remind me at 5 to stretch. Release: Reminder, Today 17:00, no AI"></p>
+- **Apple Notes and Reminders:** with an AI connected, it can copy your Apple Notes into the notebook, organized, and
+  read your open reminders. It removes a note from Notes only when you ask, after a whole copy, asking every time.
+- **Voice, if you want it** (**Settings › Brain › Voice**): hold the Ask shortcut, talk, let go. Speech is
+  recognised on your Mac and never kept; it answers in one short spoken line.
+- **Themes** dress the app (colours, type, density): Harbor, Night Shift, Marshmallow and Field Notes built in, more
+  in the gallery, or your own (`sidefolk theme new`).
 
 ### You decide how much it asks
 
-A fixed set of rules, not the AI, decides what may run. Choose how often Sidefolk asks before its own
-AI acts: **Ask every time**, **Ask once per kind** (the default), **Auto** or **Full access**. In every
-mode, files are touched only in folders you shared, deleting means the Trash, anything a web page,
-file or extension could have steered still asks before it could send your data out, and other agents
-and extensions keep stricter rules. If you don't answer, the task skips that step after 10 minutes (or
-waits, or stops; your choice) and the step waits on Now with **Run it now**.
-
-<p align="center"><img src="docs/launch/screenshots/settings-approvals-light.png" width="640" alt="Settings: how much Sidefolk asks, and what happens if you don't answer"></p>
+A fixed set of rules, Guard, decides what may run, never the AI. Choose how often it asks before its own AI acts in
+**Settings › Trust**: **Ask every time**, **Ask once per kind** (the default), **Auto** or **Full access** (which can
+end by itself, in an hour or tonight). In every mode, files are touched only in folders you shared, deleting means
+the Trash, anything a web page, file or extension could have steered still asks before it could send your data out,
+and other agents and extensions keep stricter rules. Approvals from another app never take Return: they need ⌘Return
+or a click.
 
 ## Privacy
 
-Sidefolk is local first. Everything it keeps is in one folder on your Mac. There is no account, no
-telemetry, no analytics and no crash reporter. It looks for a new version on GitHub once a day (you can
-turn that off), and asks before installing one.
+Sidefolk is local first. Everything it keeps is in one folder on your Mac. There is no account, no telemetry, no
+analytics and no crash reporter.
 
 **What leaves your Mac, and when:**
 
 | What | Where it goes | When |
 |---|---|---|
-| Your request and its context: your words, the date and time zone, your town if you set your location, the name of the app in front, your "About you" notes, notes that match, what's running, and the last few minutes of the conversation | The AI you chose: Anthropic or OpenAI through Claude Code or Codex (your account), an API provider, or nowhere if it's Ollama or LM Studio on your Mac | Only for requests that need AI. **Settings › AI** shows exactly what was last sent. |
+| Your request and its context: your words, the date and time zone, your town if you set your location, the name of the app in front, what it keeps about you, notes that match, what's running, and the last few minutes of the conversation | The AI you chose: Anthropic or OpenAI through Claude Code or Codex (your account), an API provider, or nowhere if it's Ollama or LM Studio on your Mac | Only for requests that need AI. **Settings › Brain** shows exactly what was last sent. |
 | A request for the page | That site | When you ask it to read or watch a page or a site, or when its AI wants to read a page to answer you (an address you didn't type asks you first, unless you chose Auto or Full access or allowed that site) |
-| The place you asked about, or your own town's coordinates (rounded) when you set your location | Open-Meteo (no account, no key) | When you ask for the weather |
-| Sidefolk's version | GitHub (api.github.com) | Once a day while "Check for updates automatically" is on, and when you click Check for Updates |
+| The place you asked about, or your own town's coordinates (rounded) | Open-Meteo (no account, no key) | When you ask for the weather |
+| Sidefolk's version | GitHub | Once a day while update checks are on, and when you click Check for Updates… |
+| The gallery's catalog and the add-ons you pick | GitHub | When you open the Gallery, pick an add-on, or add-ons look for updates |
 | A request for the list of models, or one tiny test prompt | Your AI provider | When you pick a provider in Settings, or click **Test** |
-| The words your companion says aloud | ElevenLabs (api.elevenlabs.io), with your key | Only if you choose an ElevenLabs voice |
-| Whatever that extension sends | The internet | Only extensions you allowed to use the internet. Git, from the add-on gallery, clones the repositories you ask for. |
+| The words your companion says aloud | ElevenLabs, with your key | Only if you choose an ElevenLabs voice |
+| Whatever that extension sends | The internet | Only extensions whose install sheet said they use the internet |
 | Whatever that server does | Anywhere | MCP servers you add yourself run outside Sidefolk's sandbox, and are labelled so |
 
-What stays on your Mac:
-
-- Your data: `~/Library/Application Support/Sidefolk` (readable only by you). Logs:
-  `~/Library/Logs/Sidefolk`, kept 7 days, with secrets taken out. API keys: your Keychain.
-- Conversations are kept 7 days (you choose how long) to answer follow-ups; Home › Conversations shows
-  them, and you can delete one or all.
-- Voice: speech is recognised on your Mac; the audio is never stored. (macOS may download a language's
-  speech model from Apple the first time.)
-- Sidefolk never reads your screen or other apps' windows. It knows the *name* of the app in front.
-- **Settings › Privacy & Permissions** exports everything (JSON) or deletes everything, Keychain items
-  included.
-
-How it protects you from prompt injection, rogue extensions and other agents is written up in
-[docs/SECURITY.md](docs/SECURITY.md).
+What stays on your Mac: your data in `~/Library/Application Support/Sidefolk` (readable only by you), logs in
+`~/Library/Logs/Sidefolk` (7 days, secrets taken out), API keys in your Keychain. Conversations are kept 7 days (you
+choose how long) and can be deleted from History. Sidefolk never reads your screen or other apps' windows; it knows
+the *name* of the app in front. **Settings › Trust** exports everything as JSON or deletes everything, Keychain items
+included. How it protects you from prompt injection, rogue extensions and other agents: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Choosing an AI
 
-You don't need one. Notes, reminders, watches, live values, quiet mode, search and the drop buttons
-all work without AI. Questions and open-ended requests ("organise my Downloads", "which of my launch notes
-should I do first?") need one. Pick it in **Settings › AI**:
+You don't need one. Notes, reminders, watches, live values, the calendar, games, search and the drop buttons work
+without AI. Questions and open-ended requests ("organise my Downloads") need one. Pick it in **Settings › Brain**:
 
 | How you pay | Choices | What to know |
 |---|---|---|
 | Nothing | No AI | Everything above that says "no AI" keeps working. |
-| A plan you already have | **Claude Code** (your Claude subscription), **Codex** (your ChatGPT plan) | No API key. Their own tools (shell, file edits, browser) are switched off: they can act only through Sidefolk's tools, so every action goes through the same checks. Uses your plan's quota. |
+| A plan you already have | **Claude Code** (your Claude subscription), **Codex** (your ChatGPT plan) | No API key. Their own tools are switched off: they act only through Sidefolk's tools, so every action goes through the same checks. Uses your plan's quota. |
 | An API key | Anthropic, OpenAI, Google Gemini, Mistral, Groq, xAI, DeepSeek, OpenRouter | Each key is kept in your Keychain and only ever sent to its own service. |
 | This Mac | Ollama, LM Studio | Nothing leaves your Mac. |
 | Your own server | Any OpenAI-compatible address | With or without a key. |
 
-Each choice has an everyday model and an optional "Think harder" model, each with its own reasoning
-effort where the model accepts one. **Test** sends one tiny real request.
-
-<p align="center"><img src="docs/launch/screenshots/settings-ai-light.png" width="640" alt="Settings › AI: Claude Code found, models and effort, Codex signed in, API key choices"></p>
+Each choice has an everyday model and an optional "Think harder" model, each with its own reasoning effort where the
+model accepts one. **Test** sends one tiny real request.
 
 ## Install
 
-### Requirements
+**Requirements:** a Mac with Apple silicon and macOS 15 or later. Optional: the `claude` or `codex` command signed
+in, an API key, or Ollama or LM Studio for AI; git (`xcode-select --install`) for the Git extension; macOS 26 for
+Apple's newer speech recognition.
 
-- A Mac with Apple silicon, macOS 15 or later.
-- Optional, for AI: the `claude` or `codex` command signed in, an API key, or Ollama or LM Studio.
-- Optional, for the Git extension from the add-on gallery: git from Apple's Command Line Tools
-  (`xcode-select --install`) or Homebrew. The built-in extensions need nothing installed.
-- Optional, for voice: macOS 26 or later for Apple's newer speech recognition. macOS 15 uses the older
-  on-device recognizer, labelled "basic".
-
-### Download
-
-There is no signed, notarized download yet. Until there is, build it yourself.
+**Download:** the latest snapshot's disk image is on [Releases](https://github.com/ghassenbrg/sidefolk/releases),
+signed with a Developer ID and notarized.
 
 ### Build from source
 
@@ -209,216 +175,136 @@ make app                 # builds build/Sidefolk.app (release)
 open build/Sidefolk.app
 ```
 
-Drag `build/Sidefolk.app` to `/Applications` to keep it. The build is signed with your "Apple
-Development" certificate if you have one, otherwise ad hoc; with an ad-hoc build, macOS forgets the
-microphone and Automation permissions each time you rebuild.
+The build is signed with your "Apple Development" certificate if you have one, otherwise ad hoc; with an ad-hoc
+build, macOS forgets the microphone and Automation permissions each time you rebuild.
 
-### First launch
+**First launch:** the companion says hello on the desktop, sets a real reminder two minutes out (no AI involved),
+asks for notifications when it first needs them, offers to open at login, and points to Settings › Connections if
+it finds Claude Code or Codex. Choose an AI later, when you first need one.
 
-The companion says hello in a few bubbles, offers to connect Claude Code and Codex if it finds them,
-sets a real reminder two minutes out (no AI involved), asks for notifications when it first needs
-them, and offers to open at login. Choose an AI later, when you first need one.
+## Add-ons: companions, extensions and themes
 
-## Extensions
+Home's **Gallery** lists what Sidefolk's developer publishes in [sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons):
+companions, extensions (Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev Toolbox, Feeds, Your Mac,
+Clipboard, Keep Awake, Miraya) and themes. Each is downloaded only when you pick it, as a pack signed by the
+developer, and Sidefolk checks the signature before using it. Add-ons update by themselves when they ask for nothing
+new; otherwise they wait for your look.
 
-Extensions give your companion new tools and new things to watch. An extension is a folder with a
-manifest and a small program that speaks [MCP](https://modelcontextprotocol.io). Sidefolk runs it in a
-macOS sandbox built from what the manifest asks for, and shows you those permissions in plain words
-before you install it.
+Extensions give your companion new tools, things to watch, pages in Home, tiles on Today, palettes and games. An
+extension is a folder with a manifest and a small program that speaks [MCP](https://modelcontextprotocol.io).
+Sidefolk runs it in a macOS sandbox built from what the manifest asks for, and shows you those permissions in plain
+words before you install it.
 
-- **Built in:** World Clock, Calculator, System Vitals and Weather (forecasts and a rain watcher; only
-  the place you ask about goes to Open-Meteo). All four start on, and you can switch any of them off.
-- **From the gallery:** Settings › Extensions › Gallery lists Sidefolk's other extensions (Git, Currency,
-  Images, PDF Tools, QR Codes, Archives, Feeds, Dev Toolbox, Playtime), each downloaded only when you
-  click Get. They are published in [sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons) and
-  signed by Sidefolk's developer; Sidefolk checks the signature and shows you the usual install sheet.
-- **Install one:** Settings › Extensions › Install from folder…, or drop the folder on the companion.
-- **Add an MCP server you already use:** Settings › Extensions › Add MCP Server. It runs outside the
-  sandbox and is labelled that way.
-- **Ask Sidefolk to write one:** with an AI connected, ask for something it can't do yet. It describes
-  the extension, waits for your yes, writes a text-only draft, tries it with every permission removed,
-  and then shows you the normal install sheet ("written by Sidefolk for you", with Show Files). Nothing
-  is installed until you click Install.
-- **Write your own:** [docs/EXTENSIONS.md](docs/EXTENSIONS.md), the samples in [extensions/](extensions),
-  and the [`sidefolk-extension` skill](skills/sidefolk-extension/SKILL.md) for Claude Code or Codex,
-  with Python, Node and sh templates.
-
-<p align="center"><img src="docs/launch/screenshots/settings-extensions-light.png" width="640" alt="Settings › Extensions: Git, World Clock and System Vitals, each sandboxed, with what it can do"></p>
+- **Built in:** World Clock, Calculator, System Vitals and Weather (only the place you ask about goes to Open-Meteo).
+- **Install one from a folder:** Settings › Add-ons › Install from folder…, or drop the folder on the companion.
+- **Add an MCP server you already use:** Settings › Add-ons › Add MCP Server…. It runs outside the sandbox and is
+  labelled that way.
+- **Ask Sidefolk to write one:** with an AI connected, ask for something it can't do yet. It describes the
+  extension, waits for your yes, writes a text-only draft, tries it with every permission removed, and shows you the
+  normal install sheet. Nothing is installed until you click Install.
+- **Write your own:** [docs/EXTENSIONS.md](docs/EXTENSIONS.md), the samples in [extensions/](extensions), and the
+  [`sidefolk-extension` skill](skills/sidefolk-extension/SKILL.md) for Claude Code or Codex.
 
 ## Agents and MCP
 
-Sidefolk is also a small MCP server, so Claude Code, Codex or any MCP client can leave you a note, set
-a reminder, watch something, tell you something or ask you a question.
+Sidefolk is also a small MCP server, so Claude Code, Codex or any MCP client can leave you a note, change or trash
+one, set a reminder, watch something, show a live value, tell you something or ask you a question. Set it up in
+**Settings › Connections**:
 
-- **Connect:** Settings › Agents › Connect. For Claude Code it adds a `sidefolk` server to
-  `~/.claude.json`; for Codex an `[mcp_servers.sidefolk]` entry in `~/.codex/config.toml`. It shows every
-  change first, saves a backup next to the file, and Disconnect removes only what it added.
-- **What other agents can do:** save a note (tagged with the agent's name), set a reminder, watch a
-  page, file or program (never a command), list and stop their own watches, notify you, ask you, and
-  check status. Reading your notes or reminders always asks you first. Files, the clipboard, the web,
-  commands, settings and extensions are not offered to them, and they can never answer an approval.
-- **Claude Code sessions:** turn on "Notice when a session needs you" (it adds hooks to
-  `~/.claude/settings.json`, with a backup) and the companion tells you when a session needs you or
-  finishes; "Open session" brings its window forward.
-- **Long commands:** install the `sidefolk` command (Settings › Agents), then
-  `sidefolk run -- npm test`. The companion tells you when it ends, and when it fails, the last lines
-  it printed.
-- **Any other MCP client:** run `sidefolk mcp` over stdio, for example
-  `{"command": "/Users/you/.local/bin/sidefolk", "args": ["mcp"]}`. Its name is shown as unverified.
+- **Connect** Claude Code or Codex: it adds a `sidefolk` server and the Sidefolk skill to their settings, shows every
+  change first, saves a backup next to each file, and Disconnect removes only what it added.
+- **Sessions:** with hooks turned on, the companion tells you when a Claude Code or Codex session needs you, and
+  shows working sessions as small faces beside it.
+- **Long commands:** install the `sidefolk` command, then `sidefolk run -- npm test`; the companion tells you when it
+  ends, and when it fails, the last lines it printed.
+- **Any other MCP client:** run `sidefolk mcp` over stdio; Settings › Connections › Other apps has the snippet.
 
-<p align="center">
-  <img src="docs/launch/screenshots/settings-agents-light.png" width="520" alt="Settings › Agents: Claude Code connected, Codex not connected, the sidefolk command installed">
-  <img src="docs/launch/screenshots/bubble-command-failed-light.png" width="320" alt="A bubble: npm test failed (exit 1), with the last lines it printed">
-</p>
-
-## Languages
-
-Sidefolk speaks English, French, Spanish, German, Italian, Portuguese (Brazil), Japanese, Korean,
-Chinese (Simplified) and Arabic, right to left. It follows your Mac's language; change it in
-Settings › General.
-
-<p align="center">
-  <img src="docs/launch/screenshots/home-now-fr-light.png" width="380" alt="Now, in French">
-  <img src="docs/launch/screenshots/home-now-ar-light.png" width="380" alt="Now, in Arabic, laid out right to left">
-</p>
-
-The quick understanding that works without AI ("remind me tomorrow at 9…") reads English only for
-now. With an AI connected, ask in any language. The Save, Remind me… and Watch buttons work in every
-language. The translations are new: corrections are welcome.
+What other agents may do (save, change, read) is yours to set in **Settings › Trust**. Reading your notes or
+reminders asks you first by default. Files, the clipboard, the web, commands, settings and extensions are never
+offered to them, and they can never answer an approval.
 
 ## What isn't done yet
 
-- **Snapshots only.** 0.1.0 isn't released yet; the signed, notarized snapshots on GitHub are test builds.
-  Once installed, Sidefolk looks for new versions on GitHub itself and asks before installing one.
-- **Apple silicon only**, and most testing so far has been on macOS 27.
-- **Calendar, Mail, Music and Shortcuts** can't be reached yet. Neither can scheduled AI routines
-  ("every weekday at 9, give me my open tasks") or a "what was I doing today" timeline.
-- **Watches and live values run only while Sidefolk runs.** Reminders fall back to macOS notifications
-  when it's quit. A folder with more than 20,000 items can't be watched.
-- **Extensions** can use the whole internet or none of it (not chosen sites), can't keep an API key
-  yet, and there is no extension directory to browse.
-- **Not yet tried by hand:** voice with a real microphone (it was checked with recorded audio), a live
-  ElevenLabs voice, Claude Code hooks in a real session, multiple displays and fullscreen apps, the
-  notification permission prompt, and opening at login from /Applications.
-- **New and lightly tested:** Apple Notes support (copying is the default, removing always asks), the
-  extension builder, and the nine translations.
+- **Snapshots only.** 0.1.0 isn't released, and its licence isn't chosen yet.
+- **Apple silicon only**, and most testing has been on macOS 27.
+- **Mail, Music and Shortcuts** can't be reached; the calendar is read only. Scheduled AI routines ("every weekday
+  at 9, give me my open tasks") aren't built.
+- **Watches and live values run only while Sidefolk runs.** Reminders fall back to macOS notifications when it's quit.
+- **Extensions** can use the whole internet or none of it (not chosen sites) and can't keep an API key yet.
+- **The quick understanding without AI reads English only**; with an AI connected, ask in any language.
+- **Not yet tried by hand:** voice with a real microphone, Claude Code hooks in a real session, several displays.
 
 The full, current list is in [docs/STATUS.md](docs/STATUS.md).
 
 ## FAQ
 
-**Do I need an AI subscription or an API key?**
-No. Notes, reminders, watches, live values and search work without one. Add one when you want answers.
+**Will it spend my Claude or ChatGPT quota?** Only for requests that need AI. The line under the field says "no AI"
+when Return won't use any.
 
-**Will it spend my Claude or ChatGPT quota?**
-Only for requests that need AI. The hint under the box says "no AI" when Enter won't use any, and the
-quick commands never do.
+**Does it watch my screen or listen all the time?** No. It never reads your screen or other apps' windows. The
+microphone is off unless you turned voice on and are holding the key.
 
-**Does it watch my screen or listen all the time?**
-No. It never reads your screen or other apps' windows. The microphone is off unless you turned voice on
-and are holding the key.
+**Can it delete my files?** It works only in folders you share with it, asks before changing things (unless you chose
+otherwise), and "deleting" moves things to the Trash. Every action is in History, and most can be undone.
 
-**Can it delete my files?**
-It works only in folders you share with it, asks before changing things (unless you chose otherwise),
-and "deleting" moves things to the Trash. Every action is in Activity, and most can be undone.
+**What happens if a web page tries to give it instructions?** Anything Sidefolk reads from outside (pages, files,
+notes, extension output) marks the request as untrusted, and from then on anything that could change things or send
+data out asks you first, in every mode. See [docs/SECURITY.md](docs/SECURITY.md).
 
-**What happens if a web page tries to give it instructions?**
-Anything Sidefolk reads from outside (pages, files, notes, extension output) marks the request as
-untrusted, and from then on anything that could change things or send data out asks you first, in
-every mode. See [docs/SECURITY.md](docs/SECURITY.md).
+**Does it change my Claude Code or Codex settings?** Only when you click Connect, after showing you every change,
+with a backup next to each file.
 
-**Does it change my Claude Code or Codex settings?**
-Only when you click Connect, after showing you every change, with a backup next to each file.
+**Intel Macs, Windows, Linux, iPhone?** Not now. Sidefolk is a native Mac app built for Apple silicon.
 
-**Intel Macs, Windows, Linux, iPhone?**
-Not now. Sidefolk is a native Mac app built for Apple silicon.
-
-**Does it work offline?**
-Yes, everything that doesn't need AI or the web. A model in Ollama or LM Studio also works offline.
-
-**Where is my data, and how do I get it out?**
-In `~/Library/Application Support/Sidefolk`. Settings › Privacy & Permissions exports it all as JSON or
-deletes it all.
-
-**How much does it cost?**
-<!-- FOUNDER: pricing -->Nothing is sold yet; this release is built from source.
-
-**Why a rabbit?**
-Mochi is the mascot. If you'd rather have Spark, or Ember, Kiko, Nimbo or Folio from the add-on gallery,
-pick one in Settings › Companion.
-
-## Troubleshooting
-
-- **Nothing happens on ⌘⇧Space:** another app may use that shortcut; change it in Settings › General.
-- **"That needs AI, which isn't set up yet":** pick a provider in Settings › AI; local commands keep working.
-- **Claude Code or Codex isn't found:** Settings › AI shows the command to install it; set a custom path
-  if it's somewhere unusual. Codex must be signed in (`codex login` in Terminal).
-- **An extension "didn't start":** run `sidefolk ext validate <folder>`; Settings › Extensions shows its
-  last error. Diagnostics (logs without your content) export from Settings › Privacy & Permissions.
-- **Reminders while the Mac sleeps:** the companion sleeps too; missed reminders appear when you're back.
+**Troubleshooting.** Nothing on ⌘⇧Space: another app may use it; change it in Settings › General. "That needs AI":
+pick a provider in Settings › Brain. An extension "didn't start": `sidefolk ext validate <folder>`, and Settings ›
+Add-ons shows its last error. Diagnostics (logs without your content) export from Settings › Trust.
 
 ## Develop
 
 ```sh
 swift build                      # everything
-make test                        # the test suite (Swift Testing), serially, about 45 s
+make test                        # the test suite (Swift Testing), serially
 make dev                         # debug app with its own data in build/dev-home (never your real data)
 swift run sidefolk-render out/   # character contact sheets for visual review
-SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # every page, light and dark
-swift run SidefolkApp --ui-snapshots /tmp/sf-fr --language fr   # the same in another language
-swift scripts/launch-screenshots.swift   # rebuild docs/launch/screenshots from fresh snapshots
+SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots /tmp/sf-ui   # every screen, light and dark
 make strings                     # collect every string people read into the catalog
 swift scripts/dev.swift snap     # snapshot the running debug app's windows (see AGENTS.md)
 ```
 
 Read [AGENTS.md](AGENTS.md) before changing things. The plan and the decisions live in [docs/](docs):
-[PRODUCT](docs/PRODUCT.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [DECISIONS](docs/DECISIONS.md) ·
-[SECURITY](docs/SECURITY.md) · [EXTENSIONS](docs/EXTENSIONS.md) · [CHARACTER](docs/CHARACTER.md) ·
-[VOICE](docs/VOICE.md) · [STATUS](docs/STATUS.md) · [MACOS-NOTES](docs/MACOS-NOTES.md) ·
-[RELEASE-NOTES](docs/RELEASE-NOTES.md). The launch kit is in [docs/launch/](docs/launch).
+[STATUS](docs/STATUS.md) · [PRODUCT](docs/PRODUCT.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) ·
+[DESIGN](docs/DESIGN.md) · [DECISIONS](docs/DECISIONS.md) · [SECURITY](docs/SECURITY.md) ·
+[EXTENSIONS](docs/EXTENSIONS.md) · [CHARACTER](docs/CHARACTER.md) · [VOICE](docs/VOICE.md) ·
+[MACOS-NOTES](docs/MACOS-NOTES.md) · [RELEASE](docs/RELEASE.md) · [HISTORY](docs/HISTORY.md).
 
 | Path | What lives there |
 |------|------------------|
-| `Sources/SidefolkCore/` | Everything that isn't UI: storage, Guard, tools, brain, time, watchers, bridge, extensions, skills, voice, the Mac's own apps |
-| `Sources/SidefolkCharacter/` | The Core Animation rigs for every companion and folk, the icon renderer |
-| `Sources/SidefolkApp/` | The app: companion window, Ask panel, bubbles, menu bar, Home, Settings, onboarding, voice |
-| `Sources/sidefolk/` | The `sidefolk` command-line helper (mcp, run, hook, status, ext validate) |
-| `Tests/` | Core and character tests |
-| `extensions/` | Built-in and sample extensions |
-| `skills/` | The `sidefolk-extension` skill for Claude Code and Codex |
-| `Resources/` | Info.plist, icon, brand, localization, bundled skills, character sheets |
-| `scripts/` | `build-app.sh` (assemble and sign the .app), `release.sh` (Developer ID, DMG, notarization), `dev.swift` (drive the debug app) |
+| `Sources/SidefolkCore/` | Everything that isn't UI: storage, Guard, tools, brain, time, watchers, attention, bridge, extensions, updates, voice, the Mac's own apps |
+| `Sources/SidefolkCharacter/` | The 2D rigs for every companion and folk, custom companions as data, the icon renderer |
+| `Sources/SidefolkApp/` | The app: the companion and its Sidecard, Ask, the Play panel, Home, Settings, the Pocket, onboarding, voice |
+| `Sources/sidefolk/` | The `sidefolk` command-line helper (mcp, run, hook, status, ext validate, theme) |
+| `Resources/Companions3D/` | The three.js engine and the built-in 3D companions; `companions-3d/` and `companions-2d/` hold the pipelines |
+| `extensions/` | The built-in extensions, a sample, and the Kit they are written on |
+| `skills/` | The skill Connect gives other agents, and the `sidefolk-extension` skill |
+| `scripts/` | `build-app.sh`, `release.sh`, `dev.swift` (drive the debug app), strings and brand tools |
 
-### Release
-
-`scripts/release.sh` runs the tests, builds, signs with the hardened runtime, makes a DMG, notarizes and
-staples it. It needs two things that aren't in the repository:
-
-```sh
-export SIDEFOLK_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
-xcrun notarytool store-credentials sidefolk --apple-id you@example.com --team-id TEAMID
-export SIDEFOLK_NOTARY_PROFILE=sidefolk
-scripts/release.sh
-```
-
-`scripts/package.sh` makes the disk image alone, for an install on your own Mac.
-
-On GitHub, **CI** builds and tests every push and pull request to `main`, and **Release** (Actions › Release ›
-Run workflow) publishes a snapshot or, from a `v<version>` tag, a signed and notarized production release.
-Secrets and settings: [docs/RELEASE.md](docs/RELEASE.md#github-actions).
+**Release:** on GitHub, **CI** builds and tests every push and pull request to `main`, and **Release** (Actions ›
+Release › Run workflow) publishes a signed, notarized snapshot or, from a `v<version>` tag, a production release.
+`scripts/release.sh` does the same on a Mac with a Developer ID: [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Licence, credits and trademarks
 
-**Licence.** Sidefolk is © 2026 Ghassen Bargougui, all rights reserved ([LICENSE](LICENSE)). The code
-is public to read; a licence for using and changing it hasn't been chosen yet.
+**Licence.** Sidefolk is © 2026 Ghassen Bargougui, all rights reserved ([LICENSE](LICENSE)). The code is public to
+read; a licence for using and changing it hasn't been chosen yet.
 
 **Built with** [GRDB.swift](https://github.com/groue/GRDB.swift) by Gwendal Roué and
-[KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) by Sindre Sorhus (both MIT).
-Service logos in Settings come from [LobeHub Icons](https://github.com/lobehub/lobe-icons) (MIT).
-Weather data by [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Full notices:
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) by Sindre Sorhus (both MIT), and
+[three.js](https://threejs.org) (MIT) for the 3D companions. Service logos in Settings come from
+[LobeHub Icons](https://github.com/lobehub/lobe-icons) (MIT). Weather data by [Open-Meteo.com](https://open-meteo.com)
+(CC BY 4.0). Full notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-**Trademarks.** Sidefolk, Mochi and the Folk Family characters belong to Sidefolk's author. Claude and
-Claude Code are trademarks of Anthropic; ChatGPT, Codex and OpenAI of OpenAI; Apple, Mac, macOS and
-Apple Notes of Apple; other names and logos belong to their owners. They are used only to say which
-service Sidefolk connects to. Sidefolk is not affiliated with or endorsed by any of them.
+**Trademarks.** Sidefolk, Mochi and the Folk Family characters belong to Sidefolk's author. Claude and Claude Code
+are trademarks of Anthropic; ChatGPT, Codex and OpenAI of OpenAI; Apple, Mac, macOS and Apple Notes of Apple; other
+names and logos belong to their owners. They are used only to say which service Sidefolk connects to. Sidefolk is not
+affiliated with or endorsed by any of them.
