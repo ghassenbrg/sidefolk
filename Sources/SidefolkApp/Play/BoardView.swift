@@ -32,6 +32,8 @@ struct BoardView: View {
         var out: [Item] = []
         for (i, part) in board.parts.enumerated() {
             if ended, Self.isPlay(part) { continue }
+            // The end card holds the level picker itself, so they don't stack.
+            if ended, case .choice(let c) = part, c.style == .segmented { continue }
             if case .button(let b) = part {
                 if case .buttons(let at, let row)? = out.last { out[out.count - 1] = .buttons(at, row + [b]) } else { out.append(.buttons(i, [b])) }
             } else if case .score = part {
@@ -49,6 +51,12 @@ struct BoardView: View {
         return out
     }
 
+    /// The small choices an end card offers (the level for the next game), drawn inside it.
+    private var endChoices: [GameBoard.Choice] {
+        guard ended else { return [] }
+        return board.parts.compactMap { if case .choice(let c) = $0, c.style == .segmented { c } else { nil } }
+    }
+
     private var prompt: GameBoard.Prompt? { board.parts.lazy.compactMap { if case .prompt(let p) = $0 { p } else { nil } }.first }
 
     /// The companion peeks over a table prop in the middle of the scene; over anything bigger it sits at the side.
@@ -57,10 +65,11 @@ struct BoardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             ForEach(items) { item in
                 switch item {
-                case .stage(_, let prompt): GameStage(model: model, board: board, prompt: prompt, style: style, peeking: peeking)
+                // Above the table drawn after it, so the companion stands on it.
+                case .stage(_, let prompt): GameStage(model: model, board: board, prompt: prompt, style: style, peeking: peeking).zIndex(1)
                 case .buttons(_, let row): GameButtonRow(buttons: row, model: model)
                 case .part(_, let part): view(part)
                 }
@@ -74,7 +83,7 @@ struct BoardView: View {
         case .prompt: EmptyView()
         case .answers(let a): AnswersView(answers: a, model: model)
         case .board(let g): GameGridView(grid: g, model: model)
-        case .result(let r): GameResultView(result: r, model: model, style: style, said: prompt?.text)
+        case .result(let r): GameResultView(result: r, model: model, style: style, said: prompt?.text, choices: endChoices)
         case .reveal(let r): RevealView(reveal: r, companionName: model.companionName, start: model.revealStart).frame(maxWidth: .infinity)
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface.opacity(0.9)))
         case .note(let n): GameNoteView(note: n)
@@ -89,7 +98,7 @@ struct BoardView: View {
         case .reflex(let r): ReflexView(reflex: r, model: model, style: style).modifier(OnTable(style: style))
         case .meter(let m): MeterView(meter: m).padding(10).background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.92)))
         case .number(let n): NumberFieldView(field: n, model: model)
-        case .letters(let l): LettersView(letters: l, model: model)
+        case .letters(let l): LettersView(letters: l, model: model, largest: (board.keys?.pages.map(\.rows.count).max() ?? 0) > 3 ? 24 : 37)
         case .keys(let k): KeyboardView(keys: k, model: model)
         case .entry(let e): GameEntryView(entry: e, model: model).id(e.name)
         case .sticks(let s): SticksView(sticks: s, model: model).modifier(OnTable(style: style))
@@ -355,7 +364,7 @@ struct ChunkyButtonStyle: ButtonStyle {
         let corner: CGFloat = kind == .plain ? 20 : 16
         configuration.label
             .font(.system(size: kind == .plain ? 13 : 16, weight: .heavy, design: .rounded))
-            .lineLimit(1).minimumScaleFactor(0.8)
+            .lineLimit(1).minimumScaleFactor(0.65)
             .foregroundStyle(ink)
             .padding(.horizontal, kind == .plain ? 14 : 16)
             .frame(minHeight: kind == .plain ? 34 : 46)
@@ -427,6 +436,8 @@ struct GameResultView: View {
     var style: GameStyle = .of(nil)
     /// What the companion's bubble already says, not repeated under the score.
     var said: String?
+    /// The level for the next game, at the card's foot.
+    var choices: [GameBoard.Choice] = []
     @State private var shown = false
 
     @Environment(\.layoutDirection) private var layoutDirection
@@ -466,7 +477,7 @@ struct GameResultView: View {
             }
             if verdict == .win, GameArt.trophy.image != nil {
                 // The person's win: a trophy (a crown in it, the symbol that goes with the colour), bouncing in.
-                GameArt.trophy.view(height: 66)
+                GameArt.trophy.view(height: 54)
                     .overlay(alignment: .topTrailing) {
                         Image(systemName: "crown.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(GameColors.color(verdict))
                             .padding(4).background(Circle().fill(Theme.surface)).offset(x: 8, y: -4)
@@ -475,21 +486,21 @@ struct GameResultView: View {
                     .rotationEffect(.degrees(shown ? 0 : -12))
                     .opacity(shown ? 1 : 0)
                     // Confetti bursts around the trophy, in its own row: never over the words or the buttons.
-                    .frame(maxWidth: .infinity, minHeight: 74)
-                    .background { TrophyRays().frame(width: 150, height: 150).opacity(shown ? 1 : 0) }
+                    .frame(maxWidth: .infinity, minHeight: 60)
+                    .background { TrophyRays().frame(width: 124, height: 124).opacity(shown ? 1 : 0) }
                     .background { Celebration().clipped() }
             } else {
-                Image(systemName: Self.symbol(verdict)).font(.system(size: 30, weight: .bold)).foregroundStyle(GameColors.color(verdict))
+                Image(systemName: Self.symbol(verdict)).font(.system(size: 24, weight: .bold)).foregroundStyle(GameColors.color(verdict))
                     .opacity(shown ? 1 : 0)
             }
             // "7 / 10" is a score read left to right in every language: isolated so Arabic doesn't turn it round.
             Text(verbatim: result.figure.contains("/") ? "\u{2066}\(result.figure)\u{2069}" : result.figure)
-                .font(.system(size: 44, weight: .black, design: .rounded))
+                .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(verdict == .draw ? Theme.ink : GameColors.color(verdict))
                 .scaleEffect(shown ? 1 : 0.6)
                 .opacity(shown ? 1 : 0)
             if let title {
-                Text(verbatim: title).font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
+                Text(verbatim: title).font(.system(size: 21, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
             }
             if let line = result.line, line != said {
@@ -497,14 +508,18 @@ struct GameResultView: View {
                     .multilineTextAlignment(.center)
             }
             if !result.facts.isEmpty { GameFactsView(facts: result.facts) }
-            if !result.actions.isEmpty { GameButtonRow(buttons: result.actions, model: model) }
-            if let back = model.onBack {
-                Button(action: back) {
-                    Label(String(localized: "Back to games", comment: "A game's end card: back to the Play panel's menu"), systemImage: "square.grid.2x2.fill")
-                        .frame(maxWidth: .infinity)
+            HStack(spacing: 8) {
+                if !result.actions.isEmpty { GameButtonRow(buttons: result.actions, model: model) }
+                if let back = model.onBack {
+                    // Back to the menu, beside what to do next: a square with the menu's grid.
+                    let words = String(localized: "Back to games", comment: "A game's end card: back to the Play panel's menu")
+                    Button(action: back) { Image(systemName: "square.grid.2x2.fill").frame(width: 22) }
+                        .buttonStyle(ChunkyButtonStyle(kind: .secondary))
+                        .help(words)
+                        .accessibilityLabel(words)
                 }
-                .buttonStyle(ChunkyButtonStyle(kind: .plain))
             }
+            ForEach(Array(choices.enumerated()), id: \.offset) { _, c in GameChoiceView(choice: c, model: model, compact: true) }
         }
         .frame(maxWidth: .infinity)
         .padding(12)
@@ -522,10 +537,12 @@ struct GameResultView: View {
 struct GameChoiceView: View {
     var choice: GameBoard.Choice
     var model: PlayModel
+    /// Inside an end card: the label beside a slimmer row.
+    var compact = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let label = choice.label {
+            if let label = choice.label, !compact {
                 Text(verbatim: label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
                     .padding(.horizontal, 8).padding(.vertical, 2).background(Capsule().fill(Theme.surface.opacity(0.9)))
             }
@@ -535,11 +552,16 @@ struct GameChoiceView: View {
                     ForEach(Array(choice.options.enumerated()), id: \.offset) { _, o in card(o) }
                 }
             case .segmented:
-                HStack(spacing: 4) {
-                    ForEach(Array(choice.options.enumerated()), id: \.offset) { _, o in segment(o) }
+                HStack(spacing: 6) {
+                    if compact, let label = choice.label {
+                        Text(verbatim: label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted).lineLimit(1).fixedSize()
+                    }
+                    HStack(spacing: 4) {
+                        ForEach(Array(choice.options.enumerated()), id: \.offset) { _, o in segment(o) }
+                    }
+                    .padding(3)
+                    .background(Capsule().fill(compact ? Theme.surfaceSunken : Theme.surface.opacity(0.95)))
                 }
-                .padding(3)
-                .background(Capsule().fill(Theme.surface.opacity(0.95)))
             }
         }
     }
@@ -549,23 +571,25 @@ struct GameChoiceView: View {
     private func card(_ o: GameBoard.Choice.Option) -> some View {
         let selected = choice.selected == o.value
         return Button { pick(o) } label: {
-            VStack(spacing: 5) {
+            VStack(spacing: 4) {
                 if let art = GameArt.topic(o.symbol), art.image != nil {
                     // Sidefolk's picture of the thing itself (a flask for science, a planet for space).
-                    art.view(fitting: 40)
+                    art.view(fitting: 32)
                 } else if let symbol = o.symbol {
                     Image(systemName: symbol).font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(selected ? Theme.onAccent : Theme.ink)
                         .frame(width: 38, height: 38)
                         .background(Circle().fill(selected ? Theme.accent : Theme.accentSoft))
                 }
-                Text(verbatim: o.label).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(2).multilineTextAlignment(.center)
+                // A long name wraps (up to three lines, a little smaller) rather than being cut.
+                Text(verbatim: o.label).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(3).minimumScaleFactor(0.8)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 if let detail = o.detail {
                     Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
                 }
             }
-            .padding(.vertical, 10).padding(.horizontal, 6)
-            .frame(maxWidth: .infinity, minHeight: 84)
+            .padding(.vertical, 7).padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, minHeight: 64)
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(selected ? Theme.accentSoft : Theme.surface)
                 .shadow(color: .black.opacity(0.08), radius: 2, y: 2))
             .overlay {

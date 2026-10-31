@@ -17,23 +17,36 @@ struct PlayView: View {
 
     var style: GameStyle { .of(model.info.look) }
 
+    /// The panel stays under about 720 pt, so it never crowds a 13" screen: a board taller than its room scrolls.
+    static let maxHeight: CGFloat = 720
+    static let boardRoom: CGFloat = 540
+
     var body: some View {
         VStack(spacing: 0) {
             PlayHeader(model: model, style: style, onSpeaker: onSpeaker)
             ZStack(alignment: .top) {
                 GameSceneBackground(style: style)
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     ScoreBar(score: model.board?.score, companionName: model.companionName, portrait: model.portrait, you: model.you, style: style)
-                    if let failure = model.failure {
-                        failed(failure)
-                    } else if let board = model.board {
-                        BoardView(model: model, board: board, style: style)
-                    } else {
-                        ProgressView().controlSize(.small).frame(maxWidth: .infinity).frame(height: 160)
+                        .padding(.horizontal, Self.pad)
+                    Group {
+                        if let failure = model.failure {
+                            failed(failure).padding(.horizontal, Self.pad)
+                        } else if let board = model.board {
+                            ScrollView(.vertical, showsIndicators: false) {
+                                BoardView(model: model, board: board, style: style)
+                                    .padding(.horizontal, Self.pad).padding(.vertical, 2)
+                            }
+                            .scrollBounceBehavior(.basedOnSize)
+                            .frame(maxHeight: Self.boardRoom)
+                            .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            ProgressView().controlSize(.small).frame(maxWidth: .infinity).frame(height: 160)
+                        }
                     }
-                    HintRow(text: model.footer)
+                    HintRow(text: model.footer).padding(.horizontal, Self.pad)
                 }
-                .padding(Self.pad)
+                .padding(.vertical, 11)
             }
         }
         .frame(width: Self.width)
@@ -89,10 +102,10 @@ struct PlayHeader: View {
                 HeaderButton(symbol: "chevron.backward", label: String(localized: "All games", comment: "Play panel: back to the menu of games"),
                              style: style, action: back)
             }
-            GameIconTile(info: model.info, style: style, side: 42)
+            GameIconTile(info: model.info, style: style, side: 38)
             VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: model.info.title).font(.system(size: 19, weight: .heavy, design: .rounded)).foregroundStyle(style.onColor)
-                    .lineLimit(1).minimumScaleFactor(0.75)
+                    .lineLimit(1).minimumScaleFactor(0.6)
                     .shadow(color: .black.opacity(style.onColor == .white ? 0.18 : 0), radius: 1, y: 1)
                 if !model.info.isSidefolk {
                     // Whose game it is, so it never passes for Sidefolk's own.
@@ -112,7 +125,7 @@ struct PlayHeader: View {
             HeaderButton(symbol: "xmark", label: String(localized: "Close", comment: "Closes the Play panel"), style: style) { model.onClose?() }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.vertical, 9)
         .background(style.gradient.overlay(alignment: .top) {
             LinearGradient(colors: [.white.opacity(0.22), .clear], startPoint: .top, endPoint: .bottom).frame(height: 24)
         })
@@ -152,19 +165,19 @@ struct ScoreBar: View {
     var body: some View {
         HStack(spacing: 6) {
             side(name: String(localized: "You", comment: "The person, on a game's score"), points: score?.you, won: .win, mine: true) {
-                PlayerAvatar(picture: you, size: 36)
+                PlayerAvatar(picture: you, size: 32)
             }
             Text(String(localized: "VS", comment: "Between the person and the companion on a game's score bar"))
                 .font(.system(size: 15, weight: .black, design: .rounded)).italic()
                 .foregroundStyle(style.night ? Color(hex: 0x7A4FE0) : style.bottom)
                 .accessibilityHidden(true)
             side(name: companionName, points: score?.companion, won: .loss, mine: false) {
-                GameAvatar(portrait: portrait, size: 36).overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                GameAvatar(portrait: portrait, size: 32).overlay(Circle().strokeBorder(.white, lineWidth: 2))
                     .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
             }
         }
-        .padding(6)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface.opacity(0.95))
+        .padding(5)
+        .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(Theme.surface.opacity(0.95))
             .shadow(color: .black.opacity(0.1), radius: 6, y: 3))
         .foregroundStyle(Theme.ink)
     }
@@ -193,8 +206,8 @@ struct ScoreBar: View {
                     .accessibilityLabel(String(localized: "\(companionName) has picked", comment: "The companion chose its answer and keeps it hidden"))
             }
         }
-        .padding(.horizontal, 8).padding(.vertical, 5)
-        .frame(maxWidth: .infinity, minHeight: 48)
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .frame(maxWidth: .infinity, minHeight: 42)
         .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(Theme.surfaceSunken.opacity(0.7)))
         .accessibilityElement(children: .combine)
     }
@@ -211,7 +224,7 @@ struct ScoreBar: View {
             .padding(.vertical, 4)
             .accessibilityLabel(Text(verbatim: Toss.number(n)))
         } else {
-            Text(verbatim: Toss.number(n)).font(.system(size: 22, weight: .heavy, design: .rounded)).monospacedDigit()
+            Text(verbatim: Toss.number(n)).font(.system(size: 20, weight: .heavy, design: .rounded)).monospacedDigit()
                 .contentTransition(.numericText())
         }
     }

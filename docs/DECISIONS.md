@@ -2213,10 +2213,13 @@ boards). The Play panel (400 pt) is drawn as one: a header in the game's colour 
 title, whose game it is, speaker, ✕), "You vs <companion>" with both faces (the Mac account's picture read once from the
 local directory through Collaboration, else a smiling stand-in; never in snapshots) and the score or round pips, the
 game's illustrated scene behind the board (dimmed in dark mode, the arcade dark in both), the companion in it saying the
-prompt in a speech bubble (peeking over the table for cups, pads, sticks and the Boop button; small at the side over a
-bigger board; its 2D poses follow the cue's move, a 3D one shows its still; always the person's own companion), the
-eyebrow as a round chip, chunky toy buttons and tiles, a hint pill, and an end card that stands in for the board (who
-won in words, the trophy with rays and confetti for the person's win, "Back to games"). The panel's home is a **menu**
+prompt in a speech bubble (whole, never cut: standing on the table's back edge with a soft shadow for cups, pads,
+sticks and the Boop button, small beside its bubble over a bigger board, fitted by height or width so a tall Spark or a
+wide Ember shows entire; its 2D poses follow the cue's move, a 3D one shows its still; always the person's own
+companion), the eyebrow as a round chip, chunky toy buttons and tiles, a hint pill, and an end card that stands in for
+the board and holds the level for the next game (who won in words, the trophy with rays and confetti for the person's
+win, Play again beside a "Back to games" square). The panel stays under about 720 pt for a 13" screen: a board taller
+than its room (540 pt) scrolls inside it; none does in English, German, Arabic or Japanese. The panel's home is a **menu**
 (the Play menu's All Games…, a game's back button): game cards in their colours with icon and tagline, "Play against
 <companion>" then "Puzzles" (`GameLook.solo`), "Resume" on a game put away, and Wins, Streak and Played counted from
 Sidefolk's own Activity rows (`GameStats`; each `games.play` row now records `result` win, loss or draw).

@@ -3,15 +3,18 @@ import SidefolkCore
 import SwiftUI
 
 /// The companion in the game's scene, saying the board's prompt in a speech bubble. Over a table (cups, pads, sticks,
-/// the Boop button) it peeks over it in the middle, the bubble above; over a bigger board it sits small at the side of
-/// its bubble. While Sidefolk plays its own part (the cups shuffling, the pads' sequence) the bubble says so.
+/// the Boop button) it stands on the table's back edge beside its bubble, its feet over the table (the board raises the
+/// stage above the table drawn after it); over a bigger board it stands small at the side of its bubble. While Sidefolk
+/// plays its own part (the cups shuffling, the pads' sequence) the bubble says so.
 struct GameStage: View {
     var model: PlayModel
     var board: GameBoard
     var prompt: GameBoard.Prompt?
     var style: GameStyle
-    /// Peeking over a table that follows, rather than at the side.
+    /// Standing on a table that follows, rather than small at the side.
     var peeking: Bool
+    /// How far the companion's feet reach onto the table below the stage.
+    static let sink: CGFloat = 12
 
     private var words: String? {
         if board.cups != nil, model.parts.shuffling {
@@ -29,20 +32,14 @@ struct GameStage: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            if let eyebrow = prompt?.eyebrow { RoundChip(text: eyebrow, style: style) }
-            if peeking {
-                VStack(spacing: 2) {
-                    if let words { SpeechBubble(text: words, chip: prompt?.chip, clock: model.clock, tail: .bottom) }
-                    CompanionPeek(picture: pose, width: 96, share: 0.74, beat: model.turn)
-                }
-            } else {
-                HStack(alignment: .bottom, spacing: 4) {
-                    CompanionPeek(picture: pose, width: 66, share: 0.8, beat: model.turn)
-                        .clipped()
-                    if let words { SpeechBubble(text: words, chip: prompt?.chip, clock: model.clock, tail: .leading) }
-                    else { Spacer(minLength: 0) }
-                }
+        VStack(spacing: 6) {
+            if let eyebrow = prompt?.eyebrow, !(board.over && board.result != nil) { RoundChip(text: eyebrow, style: style) }
+            HStack(alignment: peeking ? .top : .bottom, spacing: 6) {
+                CompanionFigure(picture: pose, size: peeking ? CGSize(width: 104, height: 100) : CGSize(width: 54, height: 54), beat: model.turn)
+                    // On a table: the feet sink a little past the stage's edge, onto the table's top.
+                    .padding(.bottom, peeking ? -Self.sink : 0)
+                if let words { SpeechBubble(text: words, chip: prompt?.chip, clock: model.clock, tail: .leading) }
+                else { Spacer(minLength: 0) }
             }
         }
         .frame(maxWidth: .infinity)

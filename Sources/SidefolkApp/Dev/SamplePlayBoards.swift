@@ -95,9 +95,14 @@ enum SamplePlayBoards {
     /// As the app opens a game: the companion's figure in the scene, a way back to the menu (the stand-in face for "You",
     /// never the Mac account's picture in a snapshot).
     static func dress(_ model: PlayModel) {
-        model.figure = { state in CompanionArt.portrait(for: AppSettings(), state: state, side: 220) }
+        let other = figure
+        model.figure = { state in other ?? CompanionArt.portrait(for: AppSettings(), state: state, side: 220) }
         model.onBack = {}
     }
+
+    /// Another companion's still to stand in the scenes (`SIDEFOLK_GAME_FIGURE=<png>`), to check a tall, a wide or a
+    /// 2D one without changing the settings.
+    static let figure: NSImage? = ProcessInfo.processInfo.environment["SIDEFOLK_GAME_FIGURE"].flatMap { NSImage(contentsOfFile: $0) }
 
     /// The menu of games as the panel's home shows it: Sidefolk's best of three and Playtime's games from the boards'
     /// folder (their titles and taglines in its language), with a game kept to resume and some stats.
@@ -117,7 +122,7 @@ enum SamplePlayBoards {
         var stats = GameStats()
         (stats.played, stats.wins, stats.streak, stats.bestStreak) = (23, 12, 3, 5)
         return PlayMenuModel(games: games, stats: stats, companionName: "Mochi", portrait: portrait,
-                             figure: CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220),
+                             figure: figure ?? CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220),
                              kept: games.first { $0.game == "which_cup" })
     }
 

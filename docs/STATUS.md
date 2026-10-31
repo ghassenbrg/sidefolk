@@ -3,9 +3,9 @@
 - **The games look like games (D79 amended, branch `team/games-look` in both repositories, not merged):** after the
   founder's two direction boards, every game in the Play panel has its own colour, illustrated scene and icon (a
   manifest `look`, with a translated `tagline`), "You vs <companion>" with both faces (the Mac account's picture when it
-  has one), the person's own companion peeking in the scene saying the prompt, chunky toy buttons and tiles, Copy Me's
+  has one), the person's own companion standing whole in the scene saying the prompt, chunky toy buttons and tiles, Copy Me's
   pads picturing their moves (a pad's `art`), memory faces and trivia topics drawn as the things, the Boop button,
-  Take 1/2/3, and an end card with trophy, rays and confetti. The panel's home is a menu of game cards ("Play against
+  Take 1/2/3, and an end card with trophy, rays and confetti that holds the level picker. The panel stays under 720 pt. The panel's home is a menu of game cards ("Play against
   Mochi", "Puzzles"), with Resume and Wins/Streak/Played from Activity (`GameStats`): Play menu › All Games… or a game's
   back button. Restrained on review: soft scenes, still companion art with a one-shot hop, nothing looping (idle CPU
   about 4–4.5 % against 3.7 % with the panel closed), cups that pass in front of each other. Art: about 0.8 MB in

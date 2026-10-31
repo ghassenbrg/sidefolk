@@ -70,7 +70,7 @@ struct PlayMenuView: View {
                 GameSceneBackground(style: style)
                 VStack(spacing: 12) {
                     HStack(alignment: .bottom, spacing: 4) {
-                        CompanionPeek(picture: menu.figure ?? menu.portrait, width: 66, share: 0.7).clipped()
+                        CompanionFigure(picture: menu.figure ?? menu.portrait, size: CGSize(width: 58, height: 60))
                         SpeechBubble(text: String(localized: "Pick a game! Can you beat me?", comment: "The companion on the Play panel's menu"),
                                      clock: nil, tail: .leading)
                     }
@@ -167,7 +167,7 @@ struct PlayMenuView: View {
             }
             .padding(.vertical, 2).padding(.bottom, 4)
         }
-        .frame(maxHeight: 500)
+        .frame(maxHeight: 400)
         .fixedSize(horizontal: false, vertical: true)
     }
 }
