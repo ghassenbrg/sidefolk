@@ -98,7 +98,7 @@ private struct AttentionHero: View {
                 AttentionDial(model: model)
                 if mode != .open, model.heldCount > 0 {
                     Label {
-                        Text(Self.holding(model.heldCount, name: model.settings.companionName, mode: mode))
+                        Text(Self.holding(model.heldCount, mode: mode))
                             .fixedSize(horizontal: false, vertical: true)
                     } icon: {
                         Image(systemName: "tray").foregroundStyle(Theme.inkMuted)
@@ -128,11 +128,11 @@ private struct AttentionHero: View {
         String(localized: "\(TimeText.span(max(60, until.timeIntervalSince(now)))) left", comment: "Settings › Attention: “58 min left”")
     }
 
-    static func holding(_ count: Int, name: String, mode: AttentionMode) -> String {
+    static func holding(_ count: Int, mode: AttentionMode) -> String {
         mode == .focus
-            ? String(localized: "\(name) is holding \(count) things. They come as one card when Focus ends.",
-                     comment: "Settings › Attention: what waits during Focus")
-            : String(localized: "\(name) is holding \(count) things until Quiet ends.", comment: "Settings › Attention: what waits during Quiet")
+            ? String(localized: "\(count) things wait. They come as one card when Focus ends.",
+                     comment: "Settings › Attention: what waits during Focus, “2 things wait…”")
+            : String(localized: "\(count) things wait until Quiet ends.", comment: "Settings › Attention: what waits during Quiet")
     }
 }
 
@@ -276,15 +276,18 @@ private struct QuietHoursRow: View {
         let hours = model.settings.quietHours
         SettingsRow(.quietHours) {
             HStack(spacing: Theme.Space.s) {
-                time(\.start, hours.start)
-                Text("to", comment: "Quiet hours: “22:00 to 08:00”").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                time(\.end, hours.end)
+                // The two times read left to right in every language; the switch stays at the row's end.
+                HStack(spacing: Theme.Space.s) {
+                    time(\.start, hours.start)
+                    Text("to", comment: "Quiet hours: “22:00 to 08:00”").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    time(\.end, hours.end)
+                }
+                .environment(\.layoutDirection, .leftToRight)
                 Toggle(isOn: Binding(get: { hours.on }, set: { on in model.update { $0.quietHours.on = on } })) {
                     Text(verbatim: SettingKey.quietHours.title)
                 }
                 .toggleStyle(.switch).labelsHidden().tint(Theme.accent)
             }
-            .environment(\.layoutDirection, .leftToRight)
         }
     }
 

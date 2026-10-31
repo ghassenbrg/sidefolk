@@ -218,11 +218,11 @@ struct ExtensionsSettingsView: View {
         }
     }
 
-    /// "8 extensions, 2 tool servers and 3 skills."
+    /// "Extensions: 8 · Tool servers: 2 · Skills: 3."
     private var summary: String {
         let servers = model.extensions.filter { $0.kind == .mcpServer }.count
         let extensions = model.extensions.count - servers
-        return String(localized: "\(extensions) extensions, \(servers) tool servers and \(model.skills.count) skills. Each runs only with what its passport says.",
+        return String(localized: "Extensions: \(extensions) · Tool servers: \(servers) · Skills: \(model.skills.count). Each runs only with what its passport says.",
                       comment: "Settings › Add-ons: under the title")
     }
 
