@@ -11,8 +11,13 @@ public struct CharacterLook: Equatable, Sendable {
     /// lends the stand-in rig underneath (its outline, anchors and moves).
     public var character3D: String?
 
-    /// Who is drawn, whatever it wears: another identity means another body.
-    var identity: String { custom.map { "custom:\($0.id)" } ?? species.rawValue }
+    /// Who is drawn, whatever it wears: another identity means another body. A gallery companion in 3D runs on a
+    /// stand-in rig (`Species.figure(for:)`), a different body from its painted 2D one, so switching its look
+    /// rebuilds the rig instead of redressing the stand-in.
+    var identity: String {
+        if let custom { return "custom:\(custom.id)" }
+        return threeD && species.inGallery ? "\(species.rawValue).3d" : species.rawValue
+    }
 
     public init(_ species: CharacterSpecies, style: CharacterStyle? = nil, threeD: Bool = false) {
         self.species = species

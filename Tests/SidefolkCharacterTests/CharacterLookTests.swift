@@ -37,6 +37,17 @@ import Testing
         #expect(v.characterFrame == mochi)
     }
 
+    /// Iris shown in 3D runs on Kiko's undrawn stand-in; turned to 2D it must get its own painted rig, not the
+    /// stand-in made visible (the founder saw a blank soft figure until another companion was picked and back).
+    @Test func aGalleryCompanionTurnedTo2DGetsItsOwnRig() {
+        let v = view(.iris)
+        let painted = v.characterPath.boundingBoxOfPath
+        v.look = CharacterLook(.iris, threeD: true)
+        #expect(v.characterPath.boundingBoxOfPath != painted)
+        v.look = CharacterLook(.iris)
+        #expect(v.characterPath.boundingBoxOfPath == painted)
+    }
+
     @Test func mochisClicksFollowItsShape() {
         let v = view(.mochi)
         let body = v.characterFrame
