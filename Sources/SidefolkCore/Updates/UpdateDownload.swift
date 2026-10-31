@@ -36,10 +36,16 @@ public struct UpdateDownloader: UpdateDownloading {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 delegate.finish = { continuation.resume(with: $0) }
-                session.downloadTask(with: request).resume()
+                if !delegate.start({ session.downloadTask(with: request) }) {
+                    delegate.finish = nil
+                    continuation.resume(throwing: CancellationError())
+                }
             }
         } onCancel: {
-            session.invalidateAndCancel()
+            // Not `session.invalidateAndCancel()`: a task already cancelled runs this before the download starts,
+            // and a task created in an invalidated session raises an exception (the app quit when Settings closed
+            // while the gallery's catalog was loading).
+            delegate.cancel()
         }
     }
 
@@ -49,7 +55,29 @@ public struct UpdateDownloader: UpdateDownloading {
         let progress: @Sendable (Int64) -> Void
         var finish: ((Result<Void, Error>) -> Void)?
         private var moved: Result<Void, Error>?
+        private var task: URLSessionTask?
+        private var cancelled = false
         private let lock = NSLock()
+
+        /// Makes and starts the download unless it was cancelled first; false when it never started.
+        func start(_ make: () -> URLSessionTask) -> Bool {
+            let started: URLSessionTask? = lock.withLock {
+                guard !cancelled else { return nil }
+                task = make()
+                return task
+            }
+            started?.resume()
+            return started != nil
+        }
+
+        /// Stops the download if it started (its delegate then reports it stopped), and keeps one from starting.
+        func cancel() {
+            let running: URLSessionTask? = lock.withLock {
+                cancelled = true
+                return task
+            }
+            running?.cancel()
+        }
 
         init(destination: URL, limit: Int64, progress: @escaping @Sendable (Int64) -> Void) {
             self.destination = destination
