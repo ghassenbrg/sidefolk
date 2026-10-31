@@ -13,6 +13,26 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Install sheets and approval cards, honest but not scary (D71, branch team/trust):** the founder was scared by two
+  red warnings installing his own Miraya, and by a raw-JSON card in Full access. The install sheet now says where it
+  comes from first (gallery: signed and checked; folder: not checked; draft: written by Sidefolk), the same risky
+  combinations in a calm *Good to know* box for Sidefolk's own signed extensions and a red *Read this before
+  installing* box for everything else, what guards each permission beside it (per-call folders, Screen Recording's
+  shared switch, programs' helpers, *Can't use the internet*), *After you install* (sandbox, background work without
+  cards, Guard, Local Network, how to remove), what it adds folded, and an update that asks for more in its own box.
+  Approval cards say an extension's arguments in words with *Exact request* folded, and why they ask after outside
+  content (what was read first, what this call could do, that Full access or Auto doesn't decide it); Guard unchanged.
+  *Checked:* `make test` (1478 core and 35 character tests; one failure not from this change: `AddonStoreTests.theSignedGallery…`
+  expects "System Vitals+", and the published pack is now named "Your Mac"); new `InstallReviewTests`, `ApprovalReasonTests` (with an executor run: Miraya's TV list
+  taints, the share card names Miraya, Full access still asks, no Always); UI snapshots `sheet-install-gallery`,
+  `-unknown`, `-update`, `-extension`, `-draft`, `desktop-ask-outside` in light, dark, German and Arabic; the debug app
+  (`SIDEFOLK_ADDONS` at the published dist, read only) with the real Miraya pack as a gallery download and as a folder.
+  *Not yet:* the gallery's Get button end to end (the sheet was opened with `reviewFolder:` on a copy in
+  `Addons/Downloads`), a real update sheet in the app (fixture only), VoiceOver by ear. A debug app on a fresh home
+  without `SIDEFOLK_ADDONS` crashes at launch: `UpdateDownloader.download` creates a task on a session its cancellation
+  handler already invalidated (`ThemeSettingsGroup` → `AddonGalleryModel.load`); not fixed here, the updater is
+  another branch's. *Next:* the founder reads the Miraya sheet and a tainted card in a build; the stale keys the change
+  left are marked stale in the catalog, as the tooling does.
 - **3D companion lay down while alerting (fix):** the 2D director resets the posture to standing on any non-idle
   state but sends no cue, so a 3D companion that had lain down stayed lying, eyes open, when a bubble or alert
   arrived. `engine.js` `setState` now stands up for every state except idle (and `sleeping`, which lies by design).

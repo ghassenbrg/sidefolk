@@ -47,6 +47,7 @@ struct ApprovalCard: View {
             Text(request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
             details
+            if let input = request.input { ExactRequest(input: input) }
             if let service = request.service {
                 Label("It goes only to \(service).", systemImage: "globe")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
@@ -57,9 +58,13 @@ struct ApprovalCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if request.tainted {
-                Label(taintedWarning, systemImage: "exclamationmark.triangle")
-                    .font(Theme.Font.caption).foregroundStyle(Theme.danger)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let siteWarning {
+                    Label(siteWarning, systemImage: "exclamationmark.triangle")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let reason = ApprovalReason(request) {
+                    ApprovalReasonLine(reason: reason)
+                }
             }
             if request.caller != .user {
                 asker.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
@@ -130,11 +135,9 @@ struct ApprovalCard: View {
     }
 
     /// Why a page Sidefolk wrote the address of asks after outside content (D47): only a site the person allowed
-    /// goes without a card then, and not with anything after "?".
-    private var taintedWarning: LocalizedStringKey {
-        guard request.site != nil, request.effect == .usesInternet else {
-            return "This came up while reading outside content. Check it carefully."
-        }
+    /// goes without a card then, and not with anything after "?". Anything else says why with `ApprovalReason` (D71).
+    private var siteWarning: LocalizedStringKey? {
+        guard request.site != nil, request.effect == .usesInternet else { return nil }
         return carriesDetails
             ? "This came up while reading outside content, so an address with details after “?” asks, even on a site you allowed. Check it carefully."
             : "This came up while reading outside content, so a site you haven't allowed asks each time. Check the address carefully."
@@ -176,6 +179,42 @@ struct ApprovalCard: View {
         case .low: Theme.accentSoft
         case .medium: Theme.surfaceSunken
         case .high: Theme.dangerSoft
+        }
+    }
+}
+
+/// Why a card asks after outside content (D71), in the tone the install sheet uses: calm when Sidefolk's own extension
+/// acts on what Sidefolk's own extension returned, strong otherwise.
+struct ApprovalReasonLine: View {
+    var reason: ApprovalReason
+
+    var body: some View {
+        Label {
+            Text(verbatim: reason.text).fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: reason.calm ? "info.circle" : "exclamationmark.triangle").accessibilityHidden(true)
+        }
+        .font(Theme.Font.caption).foregroundStyle(reason.calm ? Theme.inkMuted : Theme.danger)
+    }
+}
+
+/// The whole request an extension's tool would receive, folded: the summary above says it in words (D71).
+struct ExactRequest: View {
+    var input: String
+    @State private var open = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $open) {
+            ScrollView {
+                Text(verbatim: input).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 140)
+            .padding(Theme.Space.s)
+            .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
+        } label: {
+            Text("Exact request", comment: "An approval card: shows the arguments exactly as the extension receives them")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
         }
     }
 }

@@ -28,7 +28,9 @@ file writes, custom-scheme open and network to a model-built URL = at least medi
 as user-given only when it, or for opening a link its site, appears in the user's own message:
 `UserMentions`); manifest risk can raise but never lower them.
 Approval cards render the tool's deterministic `summary(input)` and raw args (full URL, absolute
-path, verbatim command), never model prose. A medium card's label says what the call can do
+path, verbatim command), never model prose. An extension's arguments are said in words (`ArgumentWords`: each value
+the call's own, cleaned and clipped), with the exact request one click away (D71); a card after outside content says
+what was read first and why it asks (`ApprovalReason`), never changing what Guard decided. A medium card's label says what the call can do
 (`ApprovalRequest.Effect`: reads private data, reads files, uses the internet, opens a link or app, uses an
 extension, changes files, runs a program, changes things), from what Sidefolk lets it do: for an extension
 its sandbox's permissions, never the manifest's word that a tool changes nothing. Approval is bound to `SHA-256(tool, canonical args)`
@@ -404,7 +406,9 @@ means false, ≤ 64 KiB.
   IHDR must say square 64–1024 px; a PDF must parse with CoreGraphics as one unencrypted, square page.
   Never SVG. Nothing in it is executed or fetched; the app draws the pinned, installed copy.
 - The install screen names dangerous combinations, e.g. read ~/Documents + network = can upload
-  them.
+  them: as a red warning before the permissions, except for Sidefolk's own signed gallery extensions, where the
+  same sentences are a calm "Good to know" (D71). Where it comes from is said first; an update that adds a
+  permission is shown prominently whoever signed it.
 
 **T14 Tamper and update (M/H).**
 - Install copies the folder into `Extensions/<id>/`, read-only.

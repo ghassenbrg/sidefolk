@@ -110,29 +110,22 @@ extension AppCoordinator: AppServices {
         guard preview.canInstall else {
             return .failure(UserFacingError(verbatim: preview.conflict ?? String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
         }
-        let summary = preview.report.summary
-        var warnings = (summary?.warnings ?? []) + preview.report.warnings
-        if let diff = preview.update {
-            // The same version again (a folder being worked on, or a pack fetched again) isn't an update.
-            warnings.insert(diff.fromVersion == diff.toVersion
-                            ? String(localized: "Installs \(diff.toVersion) again.", comment: "A version number")
-                            : String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"), at: 0)
-            warnings += diff.addedPermissions.map { String(localized: "New permission: \($0)") }
-        }
         let drafts = runtime.extensionDrafts.directory.resolvingSymlinksInPath().path
+        let source: InstallSource = folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/") ? .draft
+            : Self.fromGallery(folder, paths: runtime.paths) ? .gallery : .folder
+        guard let review = InstallReview(preview, source: source) else {
+            return .failure(UserFacingError(verbatim: String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
+        }
         return .success(ExtensionInstallPreview(
             id: manifest.id, name: manifest.name, version: manifest.version, description: manifest.description ?? "",
-            sourceFolder: folder, permissionLines: summary?.lines.map(\.text) ?? [], warnings: warnings,
+            sourceFolder: folder, review: review,
             // Titles, as the person will see the tools everywhere else.
             toolNames: manifest.tools.keys.sorted().map { manifest.tools[$0]?.title ?? $0 },
             watcherNames: manifest.watchers.keys.sorted().map { manifest.watchers[$0]?.title ?? $0 },
             commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
             pageNames: manifest.pages.keys.sorted().compactMap { manifest.pages[$0]?.title },
             pagesInBackground: manifest.pages.values.contains { $0.history == true || $0.widget == true },
-            isUpdate: preview.update != nil,
-            folk: manifest.folk, iconPath: preview.report.iconPath,
-            fromDraft: folder.resolvingSymlinksInPath().path.hasPrefix(drafts + "/"),
-            fromGallery: Self.fromGallery(folder, paths: runtime.paths)))
+            folk: manifest.folk, iconPath: preview.report.iconPath))
     }
 
     /// A folder the add-on gallery downloaded and checked (`AddonStore.fetch`): Sidefolk's own extension (D55).

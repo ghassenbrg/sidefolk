@@ -17,7 +17,7 @@ struct ExtensionScreenUDPTests {
         let kinds = summary.lines.map(\.kind)
         #expect(kinds.contains(.screen) && kinds.contains(.udp))
         #expect(summary.lines.filter { $0.kind == .screen || $0.kind == .udp }.allSatisfy { $0.caution })
-        #expect(summary.lines.first { $0.kind == .screen }?.text.contains("Screen Recording") == true, "macOS asks too, and says so")
+        #expect(summary.lines.first { $0.kind == .screen }?.note?.contains("Screen & System Audio Recording") == true, "macOS's switch guards it, and the sheet says so")
         #expect(summary.warnings.contains { $0.contains("what's on your screen") }, "the screen and the internet together")
         #expect(ExtensionPermissions(screen: true).raisesRiskFloor, "what's on screen is the person's alone")
     }
