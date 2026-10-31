@@ -15,14 +15,24 @@ public struct ExtensionTool: Tool {
     public let firstParty: Bool
     /// Sentences its manifest says call it without the AI (D50); nil when there are none.
     public let commands: ToolCommands?
+    /// Its calls reach only a device the person paired, which its program confirms (D72); nil for everyone but
+    /// Sidefolk's own extensions, whatever their manifest says: the sandbox can't hold a program to its word.
+    public let paired: PairedDevice?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
+
+    /// A tool whose calls go to a device the person paired: the parameter that names it (nil: the device in use now),
+    /// and how to ask the program which paired device a call would reach (`sidefolk/paired.check`).
+    public struct PairedDevice: Sendable {
+        public var parameter: String?
+        public var check: @Sendable (JSONValue) async -> PairedAnswer?
+    }
 
     /// Seconds a manifest may give one call (`tools.<name>.timeout`).
     public static let timeouts = 1...300
 
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
-         invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
+         paired: PairedDevice? = nil, invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
         self.extensionId = extensionId
         self.extensionName = extensionName
@@ -30,6 +40,7 @@ public struct ExtensionTool: Tool {
         self.folderParameters = folderParameters
         self.firstParty = firstParty
         self.commands = commands
+        self.paired = firstParty ? paired : nil
         self.invoke = invoke
     }
 
@@ -67,6 +78,24 @@ public struct ExtensionTool: Tool {
         return scope
     }
 
+    /// Asks the program which paired device this call would reach, and binds the call to it: the parameter naming the
+    /// device becomes that device's id, so what runs is what was confirmed, not whatever answers to the same name by
+    /// then (D72). A tool that names no device may reach none at all (stopping what isn't running). Anything short of a
+    /// clear answer leaves the scope as it was, and Guard asks as before.
+    public func confirmReach(_ input: JSONValue, scope: ToolScope) async -> (scope: ToolScope, input: JSONValue) {
+        // The program hears only the words naming the device: the rest of the call waits for Guard.
+        let naming: JSONValue = .object(paired?.parameter.flatMap { p in input[p].map { [p: $0] } } ?? [:])
+        guard let paired, let answer = await paired.check(naming), answer.paired else { return (scope, input) }
+        var scope = scope
+        if let parameter = paired.parameter {
+            guard let device = answer.device else { return (scope, input) }
+            scope.reach = .paired(device: device)
+            return (scope, input.setting(parameter, .string(device)))
+        }
+        scope.reach = .paired(device: answer.device)
+        return (scope, input)
+    }
+
     /// A folder parameter must be a path Guard can check; a relative one would mean the extension's own folder.
     public func refusal(for input: JSONValue, context: ToolContext) -> String? {
         for param in folderParameters.keys.sorted() {
@@ -96,6 +125,27 @@ public struct ExtensionTool: Tool {
             input = input.setting(param, .string(canon))
         }
         return try await invoke(input, grants)
+    }
+}
+
+/// What a program said about the device a call would reach (`sidefolk/paired.check`, D72): `paired` with the device's
+/// id when it's one the person paired, `paired` with none when the call reaches no device, otherwise not paired.
+public struct PairedAnswer: Sendable, Hashable {
+    public var paired: Bool
+    public var device: String?
+
+    public init(paired: Bool, device: String? = nil) {
+        self.paired = paired
+        self.device = device
+    }
+
+    /// The program's reply, read strictly: anything unexpected is "not paired".
+    static func parse(_ reply: JSONValue) -> PairedAnswer {
+        guard case .bool(true)? = reply["paired"] else { return PairedAnswer(paired: false) }
+        guard let raw = reply["device"], !raw.isNull else { return PairedAnswer(paired: true) }
+        guard let device = raw.stringValue, (1...128).contains(device.count),
+              device.range(of: #"^[A-Za-z0-9._:-]+$"#, options: .regularExpression) != nil else { return PairedAnswer(paired: false) }
+        return PairedAnswer(paired: true, device: device)
     }
 }
 

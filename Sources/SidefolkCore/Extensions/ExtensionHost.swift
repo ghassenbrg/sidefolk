@@ -694,6 +694,18 @@ public actor ExtensionHost {
                           untrusted: true)
     }
 
+    /// Which paired device a call would reach, asked of the extension's running program, never through the model
+    /// (`sidefolk/paired.check`, D72). Nil when it can't say in time: Guard then asks as before.
+    func pairedCheck(_ id: String, tool remote: String, input: JSONValue) async -> PairedAnswer? {
+        guard let rt = runtimes[id], rt.record.enabled, rt.pin.origin?.firstParty == true, restingFor(id) == nil,
+              let client = try? await ensureRunning(id) else { return nil }
+        begin(id)
+        defer { end(id) }
+        guard let reply = try? await client.request("sidefolk/paired.check", params: ["tool": .string(remote), "arguments": input],
+                                                    timeout: 5) else { return nil }
+        return PairedAnswer.parse(reply)
+    }
+
     /// A call that works in folders the person named gets a process of its own: its sandbox adds exactly
     /// those folders, and it stops when the call ends, so the extension never keeps that access (D39).
     /// It lists its tools first, so a tool that changed since install is held as it would be otherwise.
@@ -1174,9 +1186,15 @@ public actor ExtensionHost {
                             offeredToModel: meta?.offeredToModel ?? true)
         let id = rt.record.id
         let remote = def.name
+        // Only Sidefolk's own extensions are asked which paired device a call reaches (D72); ExtensionTool drops it for
+        // anyone else too.
+        let paired = firstParty && meta?.reach == .paired
+            ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
+            : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote,
                              folderParameters: meta?.paths ?? [:], firstParty: firstParty,
-                             commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) }) { [weak self] input, folders in
+                             commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) },
+                             paired: paired) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)
         }

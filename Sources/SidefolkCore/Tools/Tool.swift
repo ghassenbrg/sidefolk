@@ -149,6 +149,10 @@ public enum NetworkReach: Sendable, Hashable {
     /// One public service named in Sidefolk's own code (Open-Meteo, the European Central Bank): the model
     /// chooses what to ask it, never where the request goes, so what it writes reaches no one else.
     case service(String)
+    /// Only a device the person paired themselves (a TV whose code they compared on both screens and whose key is
+    /// pinned), by its id, or none at all when the call reaches no device (stopping what isn't running). Only
+    /// Sidefolk's own extensions say so, asked before Guard decides, and the call is then bound to that device (D72).
+    case paired(device: String?)
 }
 
 /// A compact, presentable result shown in the Ask panel and the Activity log.
@@ -263,12 +267,17 @@ public protocol Tool: Sendable {
     /// Why this call can't run at all, decided before Guard asks anything: an approval card for a call
     /// the tool would then refuse is a question with no right answer. Nil lets Guard decide.
     func refusal(for input: JSONValue, context: ToolContext) -> String?
+    /// Where the call goes when only the program behind it can say, asked before Guard decides: the scope Guard
+    /// weighs and the input that then runs, bound to what was confirmed. Sidefolk's own extensions confirm a device
+    /// the person paired this way (D72); every other tool has nothing to add.
+    func confirmReach(_ input: JSONValue, scope: ToolScope) async -> (scope: ToolScope, input: JSONValue)
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult
 }
 
 public extension Tool {
     func scope(for input: JSONValue) -> ToolScope { .none }
     func refusal(for input: JSONValue, context: ToolContext) -> String? { nil }
+    func confirmReach(_ input: JSONValue, scope: ToolScope) async -> (scope: ToolScope, input: JSONValue) { (scope, input) }
 }
 
 /// JSON Schema helpers so tool definitions stay short and consistent.

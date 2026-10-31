@@ -134,9 +134,15 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var ai: Bool?
         /// Whole sentences that call it at once, without the AI (D50).
         public var commands: [Command]
+        /// `paired`: the call reaches only a device the person paired, which the program confirms before Guard
+        /// decides (`sidefolk/paired.check`, D72). Honoured for Sidefolk's own extensions only.
+        public var reach: Reach?
+        /// With `reach`: the parameter naming the device; missing means the device in use now.
+        public var device: String?
 
         public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
-                    paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = []) {
+                    paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = [],
+                    reach: Reach? = nil, device: String? = nil) {
             self.title = title
             self.risk = risk
             self.category = category
@@ -145,13 +151,15 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             self.timeout = timeout
             self.ai = ai
             self.commands = commands
+            self.reach = reach
+            self.device = device
         }
 
         /// What the AI is offered: everything, unless the author said only commands reach it.
         public var offeredToModel: Bool { ai ?? true }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
@@ -161,8 +169,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             timeout = try c.decodeIfPresent(Int.self, forKey: "timeout")
             ai = try c.decodeIfPresent(Bool.self, forKey: "ai")
             commands = try c.decodeIfPresent([Command].self, forKey: "commands") ?? []
+            reach = try c.decodeIfPresent(Reach.self, forKey: "reach")
+            device = try c.decodeIfPresent(String.self, forKey: "device")
         }
     }
+
+    /// Where a tool's calls go, when its program can say better than Sidefolk (D72).
+    public enum Reach: String, Sendable, Hashable, Codable { case paired }
 
     /// What a tool does in a folder the person names in a call.
     public enum FolderUse: String, Sendable, Hashable, Codable { case read, write }

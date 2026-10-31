@@ -1852,3 +1852,40 @@ cards (couples the app to a gallery add-on; arguments in words serve every exten
 `ApprovalReasonLine`, `ExactRequest`; snapshots `sheet-install-gallery|unknown|update`, `desktop-ask-outside`.
 A future community shelf in the gallery gets the strong tone (only `dev.sidefolk.` ids are calm). MCP servers keep
 their own add sheet, already "only add servers you trust". SECURITY T1, T13, T33.
+
+### D72 — A TV the person paired is their own destination: no card for it after outside content in Auto and Full access (2026-10-31)
+**Decision:** amends D37, D47 and D69. A tool of Sidefolk's own extensions (origin `bundled` or `official`) may declare
+`"reach": "paired"`, with `"device"` naming the parameter that names the device (none: the device in use now). For
+Sidefolk's own agent, after the run read outside content, in Auto or Full access, Sidefolk asks the running program
+`sidefolk/paired.check` with only those words, before Guard decides. When it names a device the person paired,
+Sidefolk binds the call to that device's id (the parameter becomes the id) and Guard answers it: Full access always,
+Auto unless high risk (Activity: a **Paired device** chip in the mode's colour, its details naming the mode). "Ask every time" and
+"Ask once per kind" ask as before; a clean turn, typed commands, other callers, and anything not confirmed (not
+paired, no answer within 5 s, someone else's extension, a copy installed from a folder) are unchanged. A call that
+also carries a link the person didn't type, a file outside a folder the person allowed in a card for that very call, a
+program, a file change or text to read in full keeps its card. Miraya declares it on share_screen and play_on_tv (the
+`tv` parameter) and on stop, pause, resume, seek and tv_volume (the TV in use; nothing playing reaches no device, and
+stopping gives a TV nothing). Its check finds the TV exactly as the call does and names it only when it's in its trust
+store; a paired TV now comes before any other device the same words fit, including when no TV is named; a call bound
+to an id reaches only that pairing; and the connection still demands the pinned certificate before the token or any
+picture is sent.
+
+**Why:** the founder: "mirror my screen to the living room TV" in Full access still showed a card, because the run had
+first read Miraya's TV list (names come from the network), and D37 never lets Full access hand input to an extension
+after outside content. A TV the person paired (six digits compared on both screens, Allow on the TV, its key pinned)
+is their own destination, like an address they typed: an injected instruction can at most put the screen on the
+person's own TV. A new TV still asks.
+
+**Alternatives:** reading `tvs.json` in Miraya's data folder through the safe reader (Sidefolk would have to repeat
+Miraya's name matching, which depends on what Bonjour shows now, and own its file format; asking the program that will
+make the connection keeps one lookup, and binding the call closes the gap between the check and the call); trusting
+any extension's declaration (the sandbox can't hold a program to it, D47); honouring the extension's "Always allow"
+after outside content in "Ask once per kind" (D47's rule would allow it, but the founder asked about Full access and
+Auto; it can follow); passing the whole call to the check (the program would hear arguments before Guard decided).
+
+**Implications:** `NetworkReach.paired(device:)`, `Tool.confirmReach`, `ExtensionTool.PairedDevice`, `PairedAnswer`,
+`ActivityEntry.Decision.fullAccessPaired`/`autoModePaired`, manifest keys `reach` and `device` (an older Sidefolk
+refuses the manifest, as with D69's permissions), the Kit's `ext.paired`. *Residual:* in Auto and Full access an
+injected instruction can show the screen, a window or a video the person allowed on their own paired TV, or stop,
+pause or seek it there. If an official program lied about pairing it could stream anywhere anyway (it records the
+screen and has the network), so its word adds no reach. SECURITY T2, T21, T36; EXTENSIONS › A device the person paired.

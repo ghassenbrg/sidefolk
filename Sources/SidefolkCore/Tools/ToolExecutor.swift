@@ -119,7 +119,7 @@ public final class ToolExecutor: Sendable {
             return ToolOutcome(activity: a, status: .failed(UserFacingError("I don't have a tool called \(name).")))
         }
         let spec = tool.spec
-        let input = input.objectValue == nil ? .object([:]) : input
+        var input = input.objectValue == nil ? .object([:]) : input
         let summary = tool.summary(for: input).clipped(240)
         var act = ToolActivity(id: callId, tool: spec.name, title: spec.title, summary: summary, category: spec.category, caller: caller,
                                mutates: spec.mutates)
@@ -140,9 +140,17 @@ public final class ToolExecutor: Sendable {
             return ToolOutcome(activity: act, status: .denied(why))
         }
 
-        let scope = tool.scope(for: input)
+        var scope = tool.scope(for: input)
+        // Only where it can change the answer (Sidefolk's agent, after outside content, in a mode that answers for the
+        // person) is a program asked where its call goes, and the call is then bound to what it confirmed (D72).
+        if tainted, let policy = try? await permissions.policy(), [.auto, .fullAccess].contains(policy.mode(for: caller)) {
+            (scope, input) = await tool.confirmReach(input, scope: scope)
+        }
         var decisionTag: ActivityEntry.Decision = .auto
         var extraFolders: [GrantedFolder] = []
+        // Folders the person allowed in a card for this call: a file there was named for this call, not picked from a
+        // folder shared for good (D72).
+        var answeredFolders: [String] = []
         var answered = answered
         // The person clicked "Run it now": they're here, so any further card waits as for anyone present.
         let present = answered != nil
@@ -161,7 +169,8 @@ public final class ToolExecutor: Sendable {
             let grants = (try? await permissions.grants()) ?? []
             let folders = ((try? await permissions.folders()) ?? []) + extraFolders
             let decision = engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller,
-                                           tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions)
+                                           tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions,
+                                           answeredFolders: answeredFolders)
             switch decision {
             case .allow(let tag):
                 // A site allowed for good, used while outside content is in play, is the only site the call may reach:
@@ -224,6 +233,7 @@ public final class ToolExecutor: Sendable {
                 }
                 if case .folderAccess(let folder, let write) = request.details {
                     let access: GrantedFolder.Access = write ? .readwrite : .read
+                    answeredFolders.append(FolderAccess.canonical(folder) ?? folder)
                     if answer == .allowAlways {
                         try? await permissions.grantFolder(folder, access: access)
                         events.changed(.permissions)

@@ -228,6 +228,8 @@ enum SampleData {
             (1, "agent", "files.rename", "medium", .autoMode, "Rename “Scan 0412.pdf” to “Invoice April.pdf”", "Renamed", nil),
             (2, "agent", "notebook.search", "low", .auto, "Search the notebook for “sidefolk ideas”", "Found 4 items", nil),
             (6, "external:claude-code", "shell.run", "high", .denied, "Run “git push origin main” in ~/git/sidefolk", nil, "You said not now."),
+            (15, "agent", "ext.miraya.share_screen", "medium", .fullAccessPaired, "Share the screen to Living Room TV",
+             "Sharing Built-in display on Living Room TV", nil),
             (35, "external:claude-code", "notebook.add", "low", .auto, "Save an idea to Inbox", "Saved “Folks could have their own sounds”", nil),
             (52, "agent", "web.fetch", "medium", .allowed, "Fetch example.com/pricing", "Read 12 KB", nil),
             (61, "agent", "files.move", "medium", .always, "Move 12 PDFs from Downloads to Invoices", "Moved 12 files", nil),

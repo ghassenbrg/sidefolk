@@ -84,6 +84,19 @@ default), or *Don't ask before reading* (in a clean turn any public page and the
 without a card, logged `web_setting`, as Auto does for medium; after outside content the built-in services
 and the allowed sites do, so a steered place name can reach Open-Meteo, and nothing else changes). Sites can
 also be allowed in Settings.
+*A device the person paired (D72), for Sidefolk's own agent in Auto and Full access only.* After outside content,
+a call that reaches only a device the person paired goes without a card: Full access answers it (`full_access_paired`
+in Activity), Auto too unless it's high risk (`auto_mode_paired`); "Ask every time" and "Ask once per kind" ask as
+before. What a steered model writes into it reaches the person's own TV and no one else, as with an address the person
+typed. It holds only when all of this does: the tool declares `"reach": "paired"` and its extension is Sidefolk's own
+(origin `bundled` or `official`, signed by Sidefolk's team; anyone else's declaration is ignored, since the sandbox
+can't hold a program to it, as with D47's services); Sidefolk asked the running program (`sidefolk/paired.check`,
+never through the model, with only the words naming the device) and it named a device the person paired, whose key
+the connection then demands; and Sidefolk bound the call to that device's id before Guard looked, so what runs is
+what was confirmed, not whatever answers to the same name by then. A link in the call that the person didn't type
+(a video address the TV would fetch), a file not in a folder the person allowed for that very call, a program, a
+file change, text to read in full, or high risk keep the card. No answer, a slow one (5 s), or "not paired" leave
+everything as before.
 Extension and MCP
 tool descriptions never reach the model: it gets a neutral line built from the tool title and
 extension name, and the schema without its free text (descriptions stay on the install sheet). The
@@ -97,7 +110,10 @@ host. *Residual:* injection can still steer low-risk actions; extension tool nam
 path, whatever a steered model puts there: only that site's owner reads it, so the trade rests on the
 person allowing sites they trust (a site where strangers can read who fetched what, a request bin, isn't
 one). `BuiltInServices` is Sidefolk's word for its own code: the sandbox can't hold a program to host
-names (§3), so a change to those programs must keep the address test passing.
+names (§3), so a change to those programs must keep the address test passing. In Full access or Auto, an injected
+instruction can put the Mac's screen, a window, or a video the person allowed for that call on a TV the person paired,
+or stop, pause or seek what plays there (D72): that is what those modes accept for the person's own devices, with
+each such call in Activity as done because of a paired device. Miraya's pin is its own code's word, checked by its tests.
 
 **T3 Persistent injection (M/H).** Items, collections, memories, reminders, watchers, skills and
 routines record `source` (`user | user:agent | agent | external:<client> | extension:<id>`;
@@ -557,7 +573,7 @@ paths and queries are dropped, hosts stay.
 | Fetch or watcher URLs (query, path, DNS label) | Taint rule; after outside content a fetch goes without a card only to a site allowed for good: exact site, no query or fragment, no redirect off it (D47) |
 | Open URL | Same as T11 |
 | Markdown images | Never loaded |
-| Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47) |
+| Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47), and Sidefolk's own extensions' calls to a device the person paired, confirmed and bound per call, in Auto and Full access (D72) |
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
 | Clipboard | T12 |
@@ -728,8 +744,15 @@ prompt: it lists Sidefolk, off, in Screen & System Audio Recording, and the exte
   adding the author's `network_purpose` after it, never instead. UDP inbound is from any host that can reach the Mac.
 - *Files named per call that must outlive the call* (a film on the TV): the call's own process clones the file into
   the data folder and hands it over; the clone is deleted at stop, and at the next start if Sidefolk quit first.
+- *A paired TV* (D72): Miraya pairs by the six digits on both screens, pins the TV's certificate (SHA-256 of the
+  whole certificate) and checks it on every later connection before its token or anything else is sent; a TV it
+  can't match by key is a first contact, and nothing is shared until the person compares the code. A device that
+  advertises a paired TV's name never stands in for it (a paired TV comes first for the same words), and one that
+  advertises its id or takes its address fails the pin. That is what lets Guard answer, after outside content, a call
+  Miraya confirmed reaches only a paired TV.
 *Residual:* a screen-recording extension with the network could send the screen anywhere; the sheet says it in those
-words. The TCC grant isn't per extension.
+words. The TCC grant isn't per extension. In Auto and Full access, an injected instruction can show the screen on the
+person's own paired TV (D72).
 
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
@@ -899,6 +922,11 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
    offered "Always" after outside content; someone else's network extension asks with its grant in every rule;
    a built-in service claim never covers files; each built-in service program reaches only its listed hosts;
    "Ask each time" asks in every mode; other callers keep their rules; an unknown stored rule reads as the default.
+   A paired device (D72, `PairedDeviceTests`, `MirayaPairedCheckTests`, and Miraya's own tests in sidefolk-addons):
+   answered after outside content only in Full access and Auto, only for Sidefolk's own extension, only once its
+   program confirmed it and the call is bound to that device; a link the person didn't type, a file from a folder
+   shared for good, a program, a file change and high risk still ask; a copy installed from a folder is never asked;
+   a device with a paired TV's name never stands in for it, and a different key fails the pin.
 4. **Socket:** foreign uid rejected (seam over `LOCAL_PEERCRED`); no token → `.external`; bad,
    expired or reused token → disconnect; oversized line rejected; symlinked, foreign-owned or 0755
    run dir refused; a live socket is never unlinked; mode is 0600; a session event's host pid that

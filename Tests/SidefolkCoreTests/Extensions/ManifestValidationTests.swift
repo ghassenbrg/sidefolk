@@ -44,6 +44,16 @@ import Testing
                                           "Can use the Mac's graphics hardware for pictures", "Can't use the internet"])
     }
 
+    /// A tool whose calls go to a device the person paired names the parameter that holds it (D72).
+    @Test func aPairedDeviceParameterNeedsItsReach() throws {
+        #expect(fields(try validate(ExtFixtures.manifest(tools: ["echo": ["reach": "paired", "device": "tv"]]), folder: "p1")).isEmpty)
+        #expect(fields(try validate(ExtFixtures.manifest(tools: ["echo": ["reach": "paired"]]), folder: "p2")).isEmpty)
+        #expect(fields(try validate(ExtFixtures.manifest(tools: ["echo": ["device": "tv"]]), folder: "p3")) == ["tools.echo.device"])
+        #expect(fields(try validate(ExtFixtures.manifest(tools: ["echo": ["reach": "paired", "device": "TV!"]]), folder: "p4")) == ["tools.echo.device"])
+        let both: JSONValue = ["echo": ["reach": "paired", "device": "file", "paths": ["file": "read"]]]
+        #expect(fields(try validate(ExtFixtures.manifest(tools: both), folder: "p5")) == ["tools.echo.device"], "a device isn't a path")
+    }
+
     @Test func unknownKeysAreRejectedAnywhere() throws {
         var m = ExtFixtures.manifest(extra: ["homepage": "https://example.com"])
         #expect(fields(try validate(m)) == ["homepage"])

@@ -125,6 +125,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `tools.<name>.timeout` | no | Seconds one call may take, 1–300; 30 if missing. For slow work like cloning. |
 | `tools.<name>.commands` | no | Sentences that call the tool at once, without the AI: `[{ "say": [...], "input": {...} }]`. See [Answering without the AI](#answering-without-the-ai-commands). |
 | `tools.<name>.ai` | no | `false` keeps the tool from Sidefolk's AI: only its commands reach it, and it costs no tokens. Missing means `true`. |
+| `tools.<name>.reach` | no | `"paired"`: the tool's calls go only to a device the person paired (a TV whose code they compared), which your program confirms per call (`sidefolk/paired.check`). **Honoured for Sidefolk's own extensions only** (D72); anyone else's is accepted and ignored. See [A device the person paired](#a-device-the-person-paired). |
+| `tools.<name>.device` | no | With `reach`: the parameter naming the device (`"tv"`), not a `paths` one. Missing means the device in use now (stop, pause). |
 | `words.<list>` | no | Word lists a command's slots can take (`"unit": ["km", "miles", "°F"]`), at most 16 lists and 2,000 words. |
 | `watchers.<name>` | no | A watcher kind: `title` (≤ 60), `description` (≤ 300) and `config`, its settings. |
 | `pages.<name>` | no | A page in Home (D62): `title` (≤ 40), `symbol` (an SF Symbol), `refresh` (seconds while it is open, 2–3600, 5 if missing), `history` (also read once a minute in the background so its charts reach back a day) and `widget` (its summary, with its main switch if it has one, is a tile on Today). At most 4. See [Pages](#pages). |
@@ -339,6 +341,25 @@ only to the log. Image and audio content is not shown to the model yet.
 
 `config` has been checked against the manifest and has defaults filled in. `state` is whatever you
 returned last time (`null` on the first check). See [Watchers](#watchers).
+
+### A device the person paired
+
+For a tool whose manifest says `"reach": "paired"`, in one of Sidefolk's own extensions, Sidefolk may ask before it
+decides whether to ask the person: only for its own agent, after the run read outside content, in Auto or Full access.
+
+```json
+→ {"jsonrpc":"2.0","id":5,"method":"sidefolk/paired.check",
+   "params":{"tool":"share_screen","arguments":{"tv":"living room"}}}
+← {"jsonrpc":"2.0","id":5,"result":{"paired":true,"device":"6f1c2b9a-1111-4222-8333-944455556666"}}
+```
+
+`arguments` holds only the parameter `device` names (nothing for a tool without one). Find the device exactly as the
+call will, and answer `paired` with its `device` id only when the person paired it and the connection will demand its
+pinned key; `{"paired": true}` with no device when the call reaches no device at all (stopping what isn't running);
+`{"paired": false}` otherwise. Sidefolk then puts the id in that parameter, so the call reaches what you confirmed:
+take an id there. On the Kit: `ext.paired { tool, args in … }` returning `.device(id)`, `.nothing` or `.unpaired`.
+A call confirmed this way runs without a card in Auto and Full access even after outside content, unless it also
+carries a link the person didn't type, or a file whose folder they didn't allow for that call (D72).
 
 ### What Sidefolk never answers
 

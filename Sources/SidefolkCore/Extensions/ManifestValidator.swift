@@ -474,6 +474,13 @@ public struct ManifestValidator: Sendable {
             if let t = meta.timeout, !ExtensionTool.timeouts.contains(t) {
                 issues.append(ValidationIssue(field: "\(field).timeout", message: "must be between 1 and 300 seconds."))
             }
+            if let device = meta.device {
+                if meta.reach == nil {
+                    issues.append(ValidationIssue(field: "\(field).device", message: "needs \"reach\": \"paired\"."))
+                } else if device.range(of: Self.namePattern, options: .regularExpression) == nil || meta.paths[device] != nil {
+                    issues.append(ValidationIssue(field: "\(field).device", message: "isn't a valid parameter name (lowercase letters, digits and _), or names a path."))
+                }
+            }
             if meta.paths.count > 4 { issues.append(ValidationIssue(field: "\(field).paths", message: "can name at most 4 parameters.")) }
             for (param, use) in meta.paths.sorted(by: { $0.key < $1.key }) {
                 if param.range(of: Self.namePattern, options: .regularExpression) == nil {
