@@ -154,15 +154,25 @@ private struct LanguageRow: View {
                     chosen = code.isEmpty ? nil : code
                     AppLanguage.chosen = chosen
                 })) {
-                    Text("Same as the Mac (\(AppLanguage.name(of: AppLanguage.system)))").tag("")
+                    Text(verbatim: Self.sameAsMac).tag("")
                     Divider()
                     ForEach(AppLanguage.supported, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
                 }
                 .labelsHidden()
-                .fixedSize()
+                .frame(width: Self.pickerWidth)
             }
         }
     }
+
+    private static let sameAsMac = String(localized: "Same as the Mac (\(AppLanguage.name(of: AppLanguage.system)))")
+
+    /// As wide as its widest choice, measured here once (the language is fixed for the launch). Left to size itself,
+    /// the popup was sometimes measured before its items were in, and showed one letter until it was opened.
+    private static let pickerWidth: CGFloat = {
+        let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+        popup.addItems(withTitles: [sameAsMac] + AppLanguage.supported.map(\.name))
+        return ceil(popup.fittingSize.width)
+    }()
 
     private var detail: Text {
         (chosen ?? AppLanguage.system) == running
