@@ -320,6 +320,8 @@ struct QueueRow: View {
                             .buttonStyle(.sf(action.isPrimary ? .primary : .secondary, size: .regular))
                     }
                 }
+                // At the card's trailing end with the main answer last, as the permission slip and the Sidecard have them.
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
         case .skipped(let step):
             SkippedStepRow(step: step, run: { act { await model.runSkipped(step) } }, dismiss: { act { await model.dismissSkipped(step) } },

@@ -2422,6 +2422,27 @@ unchanged, Install armed only on the second step. The update window and About ar
 desktop (D4) and its bubbles are phase 2's; its "Connect…" now opens Settings › Connections, where each file that
 changes is listed, instead of connecting at once.
 
+**Phase 5, built (polish):** the whole app walked as a person would in the debug app (onboarding, a reminder typed
+and fired, its card, fold and stack, another app's approval, Focus and Quiet with their one card, every place of Home
+with ⌘K, every Settings tab and search, the Pocket, an extension installed from a folder, the Gallery, a game from
+Playtime), then fixed: the Calendar asked Home's window for more height than it had and pushed the whole window under
+its toolbar; Today's reminder card lost Done (its main answer was sorted out) and cards keep their answers at the
+trailing end, as in Ask; a card replacing a shorter one is measured again (it was cut at the top); onboarding's lines
+never fold or make an "All clear"; the Say field's ring had flat bars beside its round ends; empty On duty and You
+had two primaries; History and Today name another app's notice by the app and show the companion's face for its own
+words; opening a tab clears an old search; "In 10 min" for the snooze; buttons in sentence case; Trust says History,
+not Activity. What a "While you were…" card told is settled in the store (a notice as told, a question as shown in
+Needs you), so it never comes back after a restart or counts twice. `ThemeCheck` reads only `layout.icons` (and a
+preset's icons); the other layout keys still decode, unread and unsaid, and a new theme writes only its icons. Every
+`.roundedBorder` field is on Lantern's well (`.lanternField()`, `WhenField(boxed:)`). Pins at rest show their number
+and unit (`PinValue.atRest`: "17.2 GB", the rest in the tip). Reduce Transparency draws every glass solid;
+Increase Contrast makes `Theme.line` a control's border through the high-contrast appearances, and fills without a
+border (wells, the segmented track, the Pocket's cards, Today's cards) get one (`.contrastEdge`); snapshots stand in
+for both with `\.solidSurfaces` (`a11y-*`). VoiceOver hears a card or whisper arrive. Home's nook keeps a still light:
+its breath redrew the whole window every frame (Home open: 4.1% CPU against 1.4% before the revamp; now 1.5%; the
+desktop at rest 1.4% both). *Not done:* the mockups' per-source "what may interrupt you" table (no source has a level
+of its own), Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card.
+
 **Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
 fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
 snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.

@@ -1,5 +1,23 @@
 # Status
 
+- **The Lantern revamp, phase 5: polish (D84, branch `team/lantern-2`, not merged, not pushed):** the whole app walked
+  in the debug app (`build/qp-1`, `qm-*`) and fixed: the Calendar pushed Home's whole window under its toolbar (its
+  least height), Today's reminder card lost Done, a card replacing a shorter one was cut at the top, onboarding made an
+  "All clear", the Say field's ring had flat bars, empty On duty and You had two primaries, History/Today named another
+  app's notice "Mochi" with Pip's face, an old Settings search hid the tab asked for, Title Case buttons, "Activity" in
+  Trust, "10 min" (now "In 10 min"). Leftovers done: held whispers settled after "While you were…" (`AttentionCenter`,
+  test `whatTheCardToldNeverComesBack`), `ThemeCheck` reads only `layout.icons` (old keys still decode), no
+  `.roundedBorder` left (`.lanternField()`, `WhenField(boxed:)`), pins at rest show number and unit (`PinValue`, test),
+  Reduce Transparency and Increase Contrast versions (`\.solidSurfaces`, `Theme.line` in high contrast,
+  `.contrastEdge`), VoiceOver hears cards arrive. *CPU* (top, 12 × 5 s, debug apps on fresh homes, companion resting
+  with 2 pins and 2 agents): origin/main 1.4% at rest, 1.4% with Home open; this branch before the fix 1.6% / 4.1%
+  (the nook's breathing light redrew Home every frame), after 1.4% / 1.5%. *Checked:* `make test` with
+  SIDEFOLK_ADDONS_REPO on the clean add-ons checkout (TESTCOUNTS); `make strings`, all ten languages complete; UI
+  snapshots in light, dark, German and Arabic (SNAPDIRS) and `--only a11y`; Playtime built from the add-ons checkout
+  and installed from a folder to see a game open. *Not done:* the per-source interruption table (no such levels),
+  Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card; "done today" counts
+  other agents' reads; the greeting says "Good evening" after midnight. *Next:* merge `team/lantern-2` to main and
+  release a snapshot (the lead's call).
 - **The Lantern revamp, phase 2: the desktop (D84, branch `team/lantern-2`, not merged):** the companion stands on
   its light pool (idle, working, waiting with the count on its shoulder, alert while a card is out, failed, Quiet's moon)
   driven by `DesktopLight`; bubbles became the Sidecard (`Sidecard/`: whisper with its 6 s line, Undo for an agent's

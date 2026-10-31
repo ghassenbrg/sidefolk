@@ -24,7 +24,11 @@ disagree, use the sheet's component; if the sheet looks wrong, fix the component
 - **Focus is a half circle (`circle.lefthalf.filled`), Quiet a moon (`moon.fill`)**, everywhere: `Theme.Symbol`.
 - **Text floor 11 pt;** leading/trailing, never left/right; numbers, keys and paths in left-to-right isolation.
 - Reduce Motion: no scale or travel, the pool is a still colour. Reduce Transparency: glass becomes the card
-  surface. Increase Contrast: hairlines become `Theme.controlBorder`, the pool a 2 pt ring.
+  surface (`.lanternGlass`, `SidecardSurface`). Increase Contrast: `Theme.line` itself becomes a control's border (it
+  follows the high-contrast appearances), fills without a border get one (`.contrastEdge(radius:)`), the pool a 2 pt
+  ring. Snapshots stand in for both with `\.solidSurfaces` and `\._colorSchemeContrast` (`--only a11y`).
+- A copy of the light that isn't the companion's own (Home's nook) is still (`LightPool(still: true)`): a breath
+  forever redraws its whole window every frame.
 
 ## Tokens
 
@@ -66,7 +70,8 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `SegmentedPicker` | `SegmentedPicker.swift` | 2–5 choices; `small`, `equalWidths`; replaces every `.pickerStyle(.segmented)` |
 | `StatusBadge` (dot + word, `BadgeState.tone/.live`), `CountBadge`, `StateWord`, `StateTile`, `PinCapsule`, `FolkAvatar` | `StateViews.swift` | `Sparkline` is in `Home/TodayParts.swift` |
 | `EmptyState` (with its one action) | `Components.swift` | |
-| `SearchBox`, `.fieldChrome(focused:problem:)`, `CommitField` | `SearchBox.swift`, `FieldChrome.swift`, `Components.swift` | a well, no border until focus |
+| `SearchBox`, `.fieldChrome(focused:problem:)`, `.lanternField()`, `WhenField(boxed:)`, `CommitField` | `SearchBox.swift`, `FieldChrome.swift`, `WhenField.swift`, `Components.swift` | a well, no border until focus; `.lanternField()` keeps its own focus (no `.roundedBorder` anywhere) |
+| `.contrastEdge(radius:)` | `FieldChrome.swift` | a border under Increase Contrast only, for fills that have none |
 | `SayBarField` (.home / .desktop), `KeyHint`, `UnderstandingRow` | `SayBar.swift` | the Say bar's shell; behaviour is the screen's |
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |
 | `LightPool(state:)`, `LightPoolState`, `ShoulderBadge(state:count:)` | `LightPool.swift` | the companion's state as light, with its VoiceOver words; an alert pulses once |
@@ -79,7 +84,7 @@ The parts above, placed and wired, in `Sources/SidefolkApp/`. The logic that dec
 
 | Part | File | What it does |
 |---|---|---|
-| The floor: `FloorModel`, `FloorUnderlay` (pool), `FloorOverlay` (badge, extras), `FloorExtras`, `MiniPin`, `AgentDot`, `FloorTip` | `Companion/CompanionFloor.swift` | the light under the feet, the count on the outer shoulder, pins as icon + number and agents as round faces above the folks; details only in a tip on hover; the extras fade and shrink while the person types in a window under them or passes the pointer through |
+| The floor: `FloorModel`, `FloorUnderlay` (pool), `FloorOverlay` (badge, extras), `FloorExtras`, `MiniPin`, `AgentDot`, `FloorTip` | `Companion/CompanionFloor.swift` | the light under the feet, the count on the outer shoulder, pins as icon + number and unit (`PinValue.atRest`, never cut with "…") and agents as round faces above the folks; details only in a tip on hover; the extras fade and shrink while the person types in a window under them or passes the pointer through |
 | `CompanionWindowController.area(box:folk:extras:)` | `Companion/CompanionWindowController.swift` | the corner the companion takes; with everything on it is no bigger than before D84 (281 × 159 pt at the medium size, 3D) |
 | `SidecardController`, `SidecardModel`, `SidecardView`, `SidecardItemCard` | `Sidecard/` | whisper (6 s, a line runs out the time, waits under the pointer, grows into a card on click), card (source line, ≤ 3 answers with the rest in ⋯), the stack fanned from the count, "All clear" |
 | Ask: `AskView` on `SidecardSurface`, `SayBarField(size: .desktop)`, the understanding row, `GlanceView` (resting: Needs you, Next up, Working) | `Ask/` | the Sidecard's Ask size, its tail toward the head; requests as one card each with their words inside |
@@ -117,6 +122,5 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 
 On the desktop (phase 2 left these): the stack's arc animation, the choice card for drops, the evening wrap, voice's
 level-reactive pool, keyboard answering of cards outside Ask. Home is built (phase 3, D84; its theme layouts are
-retired); Settings, the Pocket, Full access with an end and the install passport are phase 4 (above). The 16 text fields
-still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. Reduce Transparency and Contrast versions
-are phase 5.
+retired); Settings, the Pocket, Full access with an end and the install passport are phase 4 (above); phase 5 polished
+them, moved the last fields to the well and made the Reduce Transparency and Increase Contrast versions.

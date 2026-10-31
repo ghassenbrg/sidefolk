@@ -529,7 +529,8 @@ struct ResultCardView<Actions: View>: View {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                ButtonRow { actions }
+                // At the trailing end, as every card's answers are (b07).
+                ButtonRow { actions }.frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .accessibilityElement(children: .contain)
