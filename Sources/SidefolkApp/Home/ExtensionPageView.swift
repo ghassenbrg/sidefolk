@@ -46,7 +46,7 @@ struct ExtensionPageView: View {
         HStack(alignment: .center, spacing: Theme.Space.m) {
             PageIcon(info: model.info, size: 40)
             VStack(alignment: .leading, spacing: 3) {
-                Text(verbatim: model.info.title).font(Theme.Font.title).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                Text(ext: model.info.title).font(Theme.Font.title).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
                 Text(subtitle).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: 0)
@@ -124,9 +124,9 @@ private struct SummaryBanner: View {
             Image(systemName: summary.symbol ?? summary.tone.symbol)
                 .font(.system(size: 26, weight: .semibold)).foregroundStyle(summary.tone.color)
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: summary.title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                Text(ext: summary.title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
                 if !summary.detail.isEmpty {
-                    Text(verbatim: summary.detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    Text(ext: summary.detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 }
             }
             Spacer(minLength: 0)
@@ -140,10 +140,10 @@ private struct SummaryBanner: View {
                             await model.run(control, on: new)
                             pending = nil
                         }
-                    })) { Text(verbatim: control.label) }
+                    })) { Text(ext: control.label) }
                         .toggleStyle(.switch).labelsHidden()
                         .disabled(pending != nil)
-                        .help(Text(verbatim: control.detail ?? control.label))
+                        .help(Text(ext: control.detail ?? control.label))
                 case .button:
                     PageButton(control: control, model: model)
                 }
@@ -195,7 +195,7 @@ private struct SectionView: View {
                     HStack(spacing: Theme.Space.s) {
                         Image(systemName: "chevron.forward").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.inkMuted)
                             .rotationEffect(.degrees(open ? 90 : 0))
-                        Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                        Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
                         Spacer(minLength: 0)
                     }
                     .contentShape(Rectangle())
@@ -206,7 +206,7 @@ private struct SectionView: View {
                                          : Text("Folded", comment: "Spoken state of a section of an extension page that folds: closed now"))
             } else if section.title != nil || hasCharts {
                 HStack {
-                    if let title = section.title { Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
+                    if let title = section.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
                     Spacer(minLength: Theme.Space.s)
                     if hasCharts { windowPicker }
                 }
@@ -253,9 +253,9 @@ private struct SectionView: View {
             case .asks(let asks):
                 FlowRow(spacing: Theme.Space.s) {
                     ForEach(Array(asks.enumerated()), id: \.offset) { _, a in
-                        Button { model.ask(a.ask) } label: { Label { Text(verbatim: a.label) } icon: { Image(systemName: "sparkles") } }
+                        Button { model.ask(a.ask) } label: { Label { Text(ext: a.label) } icon: { Image(systemName: "sparkles") } }
                             .buttonStyle(.sf(.secondary))
-                            .help(Text(verbatim: a.ask))
+                            .help(Text(ext: a.ask))
                     }
                 }
             }
@@ -340,14 +340,14 @@ private struct GaugeView: View {
                     .stroke(gauge.tone.color, style: StrokeStyle(lineWidth: 9, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(Theme.Motion.spring(0.5), value: gauge.fraction)
-                Text(verbatim: gauge.value).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
+                Text(ext: gauge.value).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
                     .minimumScaleFactor(0.6).lineLimit(1).padding(.horizontal, 12).monospacedDigit()
             }
             .frame(width: 92, height: 92)
             VStack(spacing: 1) {
-                Text(verbatim: gauge.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Text(ext: gauge.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 if let caption = gauge.caption {
-                    Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
+                    Text(ext: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
                 }
             }
         }
@@ -355,7 +355,7 @@ private struct GaugeView: View {
         .padding(Theme.Space.m)
         .cardSurface()
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(gauge.label) \(gauge.value)" + (gauge.caption.map { ", \($0)" } ?? "")))
+        .accessibilityLabel(Text(ext: "\(gauge.label) \(gauge.value)" + (gauge.caption.map { ", \($0)" } ?? "")))
     }
 }
 
@@ -364,14 +364,14 @@ private struct StatView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(verbatim: stat.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            Text(ext: stat.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             HStack(spacing: 6) {
                 if stat.tone != .neutral { Circle().fill(stat.tone.color).frame(width: 8, height: 8) }
-                Text(verbatim: stat.value).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
+                Text(ext: stat.value).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
                     .lineLimit(1).minimumScaleFactor(0.7).monospacedDigit()
             }
             if let caption = stat.caption {
-                Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
+                Text(ext: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -387,7 +387,7 @@ private struct NoteView: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
             Image(systemName: note.tone.symbol).foregroundStyle(note.tone == .neutral ? Theme.inkFaint : note.tone.color)
-            Text(verbatim: note.text).font(Theme.Font.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+            Text(ext: note.text).font(Theme.Font.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, Theme.Space.m)
@@ -402,8 +402,8 @@ private struct CardTitle: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-            if let caption { Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true) }
+            Text(ext: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+            if let caption { Text(ext: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true) }
         }
     }
 }
@@ -437,14 +437,14 @@ private struct ChartCard: View {
         let points = chart.series.flatMap { s in model.points(chart: chart.id, series: s.key).map { Point(series: s.label, t: $0.t, v: $0.v) } }
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(alignment: .top) {
-                Text(verbatim: chart.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Text(ext: chart.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 Spacer(minLength: Theme.Space.s)
                 // The value now, by line, in the line's color: the legend and the reading at once.
                 HStack(spacing: Theme.Space.s) {
                     ForEach(Array(chart.series.enumerated()), id: \.offset) { i, s in
                         HStack(spacing: 4) {
                             Circle().fill(seriesColors[i % seriesColors.count]).frame(width: 7, height: 7)
-                            Text(verbatim: chart.series.count > 1 ? "\(s.label) \(s.display ?? "")" : (s.display ?? ""))
+                            Text(ext: chart.series.count > 1 ? "\(s.label) \(s.display ?? "")" : (s.display ?? ""))
                                 .font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).monospacedDigit()
                         }
                     }
@@ -464,7 +464,7 @@ private struct ChartCard: View {
             .chartYAxis {
                 AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
                     AxisGridLine().foregroundStyle(Theme.line)
-                    AxisValueLabel { if let v = value.as(Double.self) { Text(verbatim: Self.axis(v, unit: chart.unit)) } }
+                    AxisValueLabel { if let v = value.as(Double.self) { Text(ext: Self.axis(v, unit: chart.unit)) } }
                 }
             }
             .chartXAxis {
@@ -480,7 +480,7 @@ private struct ChartCard: View {
                 }
             }
             if let caption = chart.caption {
-                Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                Text(ext: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
@@ -511,9 +511,9 @@ private struct BarsCard: View {
             ForEach(Array(bars.items.enumerated()), id: \.offset) { _, item in
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text(verbatim: item.label).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
+                        Text(ext: item.label).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
                         Spacer(minLength: Theme.Space.s)
-                        Text(verbatim: item.value).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted).monospacedDigit()
+                        Text(ext: item.value).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted).monospacedDigit()
                     }
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
@@ -544,9 +544,9 @@ private struct FactsCard: View {
                 ForEach(Array(facts.items.enumerated()), id: \.offset) { i, fact in
                     if i > 0 { Rectangle().fill(Theme.line).frame(height: pixel * 2) }
                     HStack(alignment: .firstTextBaseline, spacing: Theme.Space.m) {
-                        Text(verbatim: fact.label).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                        Text(ext: fact.label).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                         Spacer(minLength: Theme.Space.s)
-                        Text(verbatim: fact.value).font(Theme.Font.body).foregroundStyle(Theme.ink).multilineTextAlignment(.trailing)
+                        Text(ext: fact.value).font(Theme.Font.body).foregroundStyle(Theme.ink).multilineTextAlignment(.trailing)
                             .textSelection(.enabled)
                     }
                     .padding(.vertical, 7)
@@ -573,9 +573,9 @@ private struct SwitchRow: View {
         HStack(spacing: Theme.Space.m) {
             if let symbol = control.symbol { Image(systemName: symbol).foregroundStyle(Theme.inkMuted).frame(width: 20) }
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: control.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Text(ext: control.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 if let detail = control.detail {
-                    Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                    Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer(minLength: Theme.Space.m)
@@ -585,7 +585,7 @@ private struct SwitchRow: View {
                     await model.run(control, on: on)
                     pending = nil
                 }
-            })) { Text(verbatim: control.label) }
+            })) { Text(ext: control.label) }
                 .toggleStyle(.switch).labelsHidden()
                 .disabled(pending != nil)
         }
@@ -662,15 +662,15 @@ private struct HeadsUps: View {
                 ForEach(model.alerts) { alert in
                     HStack(spacing: Theme.Space.m) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: alert.kind.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                            Text(ext: alert.kind.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                             if !alert.kind.description.isEmpty {
-                                Text(verbatim: alert.kind.description).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                                Text(ext: alert.kind.description).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                         Spacer(minLength: Theme.Space.m)
                         Toggle(isOn: Binding(get: { alert.watcherId != nil }, set: { on in Task { await model.setAlert(alert, on: on) } })) {
-                            Text(verbatim: alert.kind.title)
+                            Text(ext: alert.kind.title)
                         }
                         .toggleStyle(.switch).labelsHidden()
                     }
@@ -679,7 +679,7 @@ private struct HeadsUps: View {
                 }
             }
             if let problem = model.alertProblem {
-                Text(verbatim: problem).font(Theme.Font.caption).foregroundStyle(Theme.danger)
+                Text(ext: problem).font(Theme.Font.caption).foregroundStyle(Theme.danger)
             }
         }
     }

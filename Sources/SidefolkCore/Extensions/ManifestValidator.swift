@@ -27,6 +27,8 @@ public struct ValidationReport: Sendable {
     public var summary: PermissionSummary?
     /// The icon file, when the manifest names one that passed the checks.
     public var iconPath: String?
+    /// Its words in other languages, from `strings/` (D76).
+    public var strings: ExtensionStrings?
 
     public var isValid: Bool { errors.isEmpty && manifest != nil && launch != nil && permissions != nil }
 
@@ -75,6 +77,9 @@ public struct ValidationReport: Sendable {
                 .joined(separator: ", "))
         }
         if manifest?.background == true { out.append("Keeps running while it's on") }
+        if let strings, !strings.tables.isEmpty {
+            out.append("Languages: " + ExtensionStrings.languages.filter { strings.tables[$0] != nil || $0 == "en" }.joined(separator: ", "))
+        }
         let commands = commandLines
         if !commands.isEmpty {
             out.append("Answers without AI (D50):")
@@ -167,6 +172,7 @@ public struct ManifestValidator: Sendable {
         checkWatchers(manifest, issues: &issues)
         checkPages(manifest, issues: &issues)
         checkPalettes(manifest, issues: &issues)
+        report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report

@@ -12,9 +12,9 @@ struct PageChoiceView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: choice.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Text(ext: choice.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 if let detail = choice.detail {
-                    Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                    Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                 }
             }
             switch choice.style {
@@ -39,7 +39,7 @@ struct PageChoiceView: View {
         .disabled(pending != nil || choice.disabled)
         .opacity(choice.disabled ? 0.6 : 1)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text(verbatim: choice.label))
+        .accessibilityLabel(Text(ext: choice.label))
     }
 
     private func isPicked(_ option: ExtensionPage.Choice.Option) -> Bool { (pending ?? choice.selected) == option.value }
@@ -70,7 +70,7 @@ private struct BadgeView: View {
     var badge: ExtensionPage.Badge
 
     var body: some View {
-        Text(verbatim: badge.text).font(Theme.Font.captionStrong).lineLimit(1)
+        Text(ext: badge.text).font(Theme.Font.captionStrong).lineLimit(1)
             .foregroundStyle(badge.tone == .neutral ? Theme.inkMuted : badge.tone.color)
             .padding(.horizontal, 7).padding(.vertical, 2)
             .background(badge.tone.soft, in: Capsule())
@@ -86,10 +86,10 @@ private struct OptionCard: View {
         Button(action: action) {
             VStack(spacing: 2) {
                 if let symbol = option.symbol { Image(systemName: symbol).font(.system(size: 15)).padding(.bottom, 2) }
-                Text(verbatim: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? Theme.accent : Theme.ink).lineLimit(1)
+                Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? Theme.accent : Theme.ink).lineLimit(1)
                     .minimumScaleFactor(0.8)
                 if let detail = option.detail {
-                    Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
+                    Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -100,7 +100,7 @@ private struct OptionCard: View {
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text(verbatim: [option.label, option.detail].compactMap { $0 }.joined(separator: ", ")))
+        .accessibilityLabel(Text(ext: [option.label, option.detail].compactMap { $0 }.joined(separator: ", ")))
         .accessibilityAddTraits(picked ? .isSelected : [])
     }
 }
@@ -131,9 +131,9 @@ private struct OptionTile: View {
                     }
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(verbatim: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? Theme.accent : Theme.ink).lineLimit(1)
+                            Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? Theme.accent : Theme.ink).lineLimit(1)
                             if let detail = option.detail {
-                                Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                                Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                             }
                         }
                         Spacer(minLength: 0)
@@ -144,7 +144,7 @@ private struct OptionTile: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text(verbatim: [option.label, option.detail, option.badge?.text].compactMap { $0 }.joined(separator: ", ")))
+            .accessibilityLabel(Text(ext: [option.label, option.detail, option.badge?.text].compactMap { $0 }.joined(separator: ", ")))
             .accessibilityAddTraits(picked ? .isSelected : [])
             if let action = option.action { PageButton(control: action, model: model) }
         }
@@ -185,9 +185,9 @@ private struct OptionRow: View {
                             .background(picked ? Theme.surfaceRaised : Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: option.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
+                        Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
                         if let detail = option.detail {
-                            Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                            Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                         }
                     }
                     Spacer(minLength: Theme.Space.s)
@@ -197,7 +197,7 @@ private struct OptionRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text(verbatim: [option.label, option.detail, option.badge?.text].compactMap { $0 }.joined(separator: ", ")))
+            .accessibilityLabel(Text(ext: [option.label, option.detail, option.badge?.text].compactMap { $0 }.joined(separator: ", ")))
             .accessibilityAddTraits(picked ? .isSelected : [])
             if let action = option.action { PageButton(control: action, model: model) }
         }

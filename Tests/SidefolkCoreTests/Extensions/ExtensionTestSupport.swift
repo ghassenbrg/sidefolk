@@ -72,6 +72,9 @@ enum ExtFixtures {
             for file in [ExtensionManifest.fileName, "icon.pdf"] {
                 try! fm.copyItem(at: ExtFixtures.source(folder).appendingPathComponent(file), to: to.appendingPathComponent(file))
             }
+            // Its words in other languages, as build-app.sh and the gallery's build.py copy them (D76).
+            let strings = ExtFixtures.source(folder).appendingPathComponent(ExtensionStrings.folder)
+            if fm.fileExists(atPath: strings.path) { try! fm.copyItem(at: strings, to: to.appendingPathComponent(ExtensionStrings.folder)) }
             let built = builtInFolders.contains(folder) ? products : addonProducts
             try! fm.copyItem(at: built.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
             // Frameworks it links (Miraya's WebRTC) go to lib/, one plain file each, as sidefolk-addons' build.py packs them.

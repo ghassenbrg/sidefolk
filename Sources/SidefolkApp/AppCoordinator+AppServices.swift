@@ -116,14 +116,18 @@ extension AppCoordinator: AppServices {
         guard let review = InstallReview(preview, source: source) else {
             return .failure(UserFacingError(verbatim: String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
         }
+        // In the person's language, as the extension will be named everywhere once installed (D76).
+        guard let words = preview.report.shownWords(official: source == .gallery && AddonEntry.isOfficial(id: manifest.id)) else {
+            return .failure(UserFacingError(verbatim: String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
+        }
         return .success(ExtensionInstallPreview(
-            id: manifest.id, name: manifest.name, version: manifest.version, description: manifest.description ?? "",
+            id: manifest.id, name: words.name, version: manifest.version, description: words.description,
             sourceFolder: folder, review: review,
             // Titles, as the person will see the tools everywhere else.
-            toolNames: manifest.tools.keys.sorted().map { manifest.tools[$0]?.title ?? $0 },
-            watcherNames: manifest.watchers.keys.sorted().map { manifest.watchers[$0]?.title ?? $0 },
+            toolNames: words.tools,
+            watcherNames: words.watchers,
             commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
-            pageNames: manifest.pages.keys.sorted().compactMap { manifest.pages[$0]?.title },
+            pageNames: words.pages,
             pagesInBackground: manifest.pages.values.contains { $0.history == true || $0.widget == true },
             folk: manifest.folk, iconPath: preview.report.iconPath))
     }

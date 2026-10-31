@@ -60,9 +60,9 @@ private struct PageRowLabel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+            Text(ext: label).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
             if let detail {
-                Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -100,12 +100,12 @@ private struct PageChoiceRow: View {
                 pending = nil
             }
         })
-        let options = ForEach(choice.options, id: \.value) { Text(verbatim: $0.label).tag($0.value) }
+        let options = ForEach(choice.options, id: \.value) { Text(ext: $0.label).tag($0.value) }
         Group {
             if choice.options.count <= 4 {
-                Picker(selection: binding) { options } label: { Text(verbatim: choice.label) }.pickerStyle(.segmented)
+                Picker(selection: binding) { options } label: { Text(ext: choice.label) }.pickerStyle(.segmented)
             } else {
-                Picker(selection: binding) { options } label: { Text(verbatim: choice.label) }.pickerStyle(.menu)
+                Picker(selection: binding) { options } label: { Text(ext: choice.label) }.pickerStyle(.menu)
             }
         }
         .labelsHidden()
@@ -125,10 +125,10 @@ private struct PageFieldRow: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             PageRowLabel(label: field.label, detail: field.detail)
             HStack(spacing: Theme.Space.s) {
-                TextField(text: $text) { Text(verbatim: field.placeholder ?? field.label) }
+                TextField(text: $text) { Text(ext: field.placeholder ?? field.label) }
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(send)
-                Button(action: send) { Text(verbatim: field.button) }
+                Button(action: send) { Text(ext: field.button) }
                     .buttonStyle(.sf(.secondary))
                     .disabled(running || text.trimmingCharacters(in: .whitespaces).isEmpty)
             }
@@ -157,9 +157,9 @@ private struct PageListCard: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             if list.title != nil || list.caption != nil {
                 VStack(alignment: .leading, spacing: 2) {
-                    if let title = list.title { Text(verbatim: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink) }
+                    if let title = list.title { Text(ext: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink) }
                     if let caption = list.caption {
-                        Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                        Text(ext: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -199,8 +199,8 @@ private struct PageListRow: View {
                 Image(systemName: symbol).foregroundStyle(Theme.inkMuted).frame(width: 22)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: row.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2).truncationMode(.middle)
-                if let detail = row.detail { Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1) }
+                Text(ext: row.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2).truncationMode(.middle)
+                if let detail = row.detail { Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1) }
             }
             Spacer(minLength: Theme.Space.s)
             if let button = row.button {
@@ -212,9 +212,9 @@ private struct PageListRow: View {
                     }
                 } label: {
                     if let symbol = button.symbol {
-                        Label { Text(verbatim: button.label) } icon: { Image(systemName: symbol) }
+                        Label { Text(ext: button.label) } icon: { Image(systemName: symbol) }
                     } else {
-                        Text(verbatim: button.label)
+                        Text(ext: button.label)
                     }
                 }
                 .buttonStyle(.sf(.secondary))
