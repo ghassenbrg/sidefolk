@@ -113,7 +113,10 @@ extension AppCoordinator: AppServices {
         let summary = preview.report.summary
         var warnings = (summary?.warnings ?? []) + preview.report.warnings
         if let diff = preview.update {
-            warnings.insert(String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"), at: 0)
+            // The same version again (a folder being worked on, or a pack fetched again) isn't an update.
+            warnings.insert(diff.fromVersion == diff.toVersion
+                            ? String(localized: "Installs \(diff.toVersion) again.", comment: "A version number")
+                            : String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"), at: 0)
             warnings += diff.addedPermissions.map { String(localized: "New permission: \($0)") }
         }
         let drafts = runtime.extensionDrafts.directory.resolvingSymlinksInPath().path

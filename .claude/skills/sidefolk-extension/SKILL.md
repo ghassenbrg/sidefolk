@@ -290,4 +290,11 @@ definitions are held until approved.
   few values, a text setting, and rows with a picture and a button each.
 - **Notices (`ext.on`, D68).** `ext.on("sidefolk/clipboard.source") { … }` hears what Sidefolk tells the program
   without a request; Sidefolk answers the clipboard source only with `permissions.clipboard`, once per copy.
-- **Still to document:** the permissions a Miraya extension needs (screen capture, the local network), once it merges.
+- **Screen, UDP and a network purpose (D69).** `permissions.screen` records the screen and the Mac's sound
+  (ScreenCaptureKit and the video encoder; every tool at least medium risk; macOS asks for Sidefolk, not the
+  extension). `permissions.udp` (with `network`) lets it bind and receive UDP, e.g. for WebRTC.
+  `permissions.network_purpose` ("to find TVs on your local network and stream to them") is shown after the network
+  line, which always says "the internet included": the sandbox can't limit an extension to the local network, so
+  never claim it. Linked frameworks ship in `lib/` (plain files, no symlinks), signed by the same team. A process
+  started for one call (a file grant) gets `SIDEFOLK_ONE_CALL=1` and the Kit skips background work there. Miraya
+  (sidefolk-addons `extensions/miraya`) is the example.

@@ -17928,6 +17928,64 @@
         }
       }
     },
+    "A paired TV is on" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تلفاز مقترن قيد التشغيل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gekoppelter TV ist an"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una TV vinculada está encendida"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une TV jumelée est allumée"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una TV abbinata è accesa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ペアリング済みの TV がオンになりました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페어링한 TV가 켜졌습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma TV pareada está ligada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已配对的电视已开启"
+          }
+        }
+      }
+    },
     "A photo's details, and copies of pictures converted to JPEG, PNG or HEIC, made smaller, or without their location. Your originals stay as they are." : {
       "localizations" : {
         "ar" : {
@@ -31687,6 +31745,122 @@
         }
       }
     },
+    "Can receive live audio and video traffic (UDP) from any device that can reach your Mac" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها استقبال بيانات صوت وفيديو مباشرة (UDP) من أي جهاز يستطيع الوصول إلى جهاز Mac"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann Live-Audio- und Videodaten (UDP) von jedem Gerät empfangen, das deinen Mac erreicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede recibir tráfico de audio y vídeo en directo (UDP) de cualquier dispositivo que llegue a tu Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut recevoir du trafic audio et vidéo en direct (UDP) de tout appareil qui peut joindre votre Mac"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può ricevere traffico audio e video dal vivo (UDP) da qualsiasi dispositivo che raggiunge il tuo Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac に届くあらゆるデバイスからライブの音声・映像トラフィック（UDP）を受信できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac에 연결할 수 있는 모든 기기로부터 실시간 오디오·비디오 트래픽(UDP)을 받을 수 있습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode receber tráfego de áudio e vídeo ao vivo (UDP) de qualquer dispositivo que alcance seu Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以接收任何能连接到你 Mac 的设备发来的实时音视频流量（UDP）"
+          }
+        }
+      }
+    },
+    "Can record your screen and the sound your Mac plays, once you allow Sidefolk in Screen Recording" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها تسجيل شاشتك والصوت الذي يشغّله الـ Mac، بعد أن تسمح لـ Sidefolk في تسجيل الشاشة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann deinen Bildschirm und den Ton deines Mac aufnehmen, sobald du Sidefolk unter Bildschirmaufnahme erlaubst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede grabar tu pantalla y el sonido de tu Mac, cuando permitas a Sidefolk en Grabación de pantalla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut enregistrer votre écran et le son de votre Mac, une fois que vous avez autorisé Sidefolk dans Enregistrement de l’écran"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può registrare lo schermo e l’audio del Mac, dopo che consenti Sidefolk in Registrazione schermo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk に「画面収録」を許可すると、画面と Mac の音を収録できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화면 기록에서 Sidefolk를 허용하면 화면과 Mac의 소리를 기록할 수 있습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode gravar sua tela e o som do Mac, depois que você permitir o Sidefolk em Gravação de Tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“屏幕录制”中允许 Sidefolk 后，可以录制你的屏幕和 Mac 播放的声音"
+          }
+        }
+      }
+    },
     "Can run %@" : {
       "localizations" : {
         "ar" : {
@@ -31979,6 +32153,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可以访问互联网"
+          }
+        }
+      }
+    },
+    "Can use the network, the internet included. It says it uses it %@." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها استخدام الشبكة، ومنها الإنترنت. وتقول إنها تستخدمها %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann das Netzwerk nutzen, das Internet eingeschlossen. Laut eigener Angabe nutzt es es, %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede usar la red, incluido internet. Dice que la usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut utiliser le réseau, Internet compris. Elle dit l’utiliser %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può usare la rete, internet compreso. Dice di usarla %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネットを含むネットワークを使用できます。用途の説明：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인터넷을 포함한 네트워크를 사용할 수 있습니다. 용도 설명: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode usar a rede, incluindo a internet. Diz que a usa %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以使用网络，包括互联网。它说明用途为：%@。"
           }
         }
       }
@@ -35352,6 +35584,64 @@
         }
       }
     },
+    "Choose a TV" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختيار تلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV wählen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir una TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir une TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli una TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV を選ぶ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV 선택"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher uma TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择电视"
+          }
+        }
+      }
+    },
     "Choose a folder Sidefolk may read and organize." : {
       "localizations" : {
         "ar" : {
@@ -38318,6 +38608,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "代码、智能体与扩展"
+          }
+        }
+      }
+    },
+    "Codes match · Pair" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرمزان متطابقان · اقتران"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codes stimmen überein · Koppeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los códigos coinciden · Vincular"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les codes correspondent · Jumeler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I codici coincidono · Abbina"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コードが一致 · ペアリング"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "코드 일치 · 페어링"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os códigos batem · Parear"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代码一致 · 配对"
           }
         }
       }
@@ -54621,6 +54969,64 @@
         }
       }
     },
+    "Forget a TV" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسيان تلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV vergessen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olvidar una TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier une TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimentica una TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV を削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV 지우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esquecer uma TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘记电视"
+          }
+        }
+      }
+    },
     "Forget a fact" : {
       "localizations" : {
         "ar" : {
@@ -69791,6 +70197,65 @@
         }
       }
     },
+    "Installs %@ again." : {
+      "comment" : "A version number",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يثبّت الإصدار %@ مرة أخرى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installiert %@ erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a instalar la %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinstalle la version %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstalla la %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ をもう一度インストールします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 다시 설치합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instala a %@ de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新安装 %@。"
+          }
+        }
+      }
+    },
     "Internet access" : {
       "localizations" : {
         "ar" : {
@@ -70077,6 +70542,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它能读取你复制的内容并使用互联网，因此可能把复制的内容发送到别处。"
+          }
+        }
+      }
+    },
+    "It can record your screen and use the internet, so it could send what's on your screen elsewhere." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها تسجيل شاشتك واستخدام الإنترنت، لذا يمكنها إرسال ما على شاشتك إلى مكان آخر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es kann deinen Bildschirm aufnehmen und das Internet nutzen, könnte also senden, was auf deinem Bildschirm ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede grabar tu pantalla y usar internet, así que podría enviar lo que hay en tu pantalla a otro sitio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle peut enregistrer votre écran et utiliser Internet : elle pourrait donc envoyer ce qui est à l’écran ailleurs."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può registrare lo schermo e usare internet, quindi potrebbe inviare altrove ciò che è sullo schermo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画面を収録してインターネットを使えるため、画面の内容を外部に送信できてしまいます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화면을 기록하고 인터넷을 사용할 수 있으므로 화면 내용을 다른 곳으로 보낼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode gravar sua tela e usar a internet, então poderia enviar o que está na sua tela para outro lugar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它可以录制你的屏幕并使用互联网，因此可能把屏幕内容发送到别处。"
           }
         }
       }
@@ -81084,6 +81607,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "薄荷绿"
+          }
+        }
+      }
+    },
+    "Miraya setting" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعداد Miraya"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miraya-Einstellung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste de Miraya"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage de Miraya"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazione di Miraya"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miraya の設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miraya 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste do Miraya"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miraya 设置"
           }
         }
       }
@@ -98714,6 +99295,64 @@
         }
       }
     },
+    "Pair with a TV" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاقتران بتلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einem TV koppeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vincular una TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jumeler une TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbina una TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV とペアリング"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV와 페어링"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parear com uma TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与电视配对"
+          }
+        }
+      }
+    },
     "Paper beats rock: I win!" : {
       "comment" : "The companion speaks",
       "localizations" : {
@@ -99291,6 +99930,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂停监视"
+          }
+        }
+      }
+    },
+    "Pause sharing" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف المشاركة مؤقتًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen pausieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar lo compartido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre le partage en pause"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metti in pausa la condivisione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共有を一時停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유 일시 정지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar compartilhamento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停共享"
           }
         }
       }
@@ -100919,6 +101616,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "玩一轮问答"
+          }
+        }
+      }
+    },
+    "Play on TV" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التشغيل على التلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf dem TV abspielen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir en la TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire sur la TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riproduci sulla TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV で再生"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV에서 재생"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduzir na TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在电视上播放"
           }
         }
       }
@@ -112903,6 +113658,64 @@
         }
       }
     },
+    "Resume sharing" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استئناف المشاركة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen fortsetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar lo compartido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre le partage"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprendi la condivisione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共有を再開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유 재개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar compartilhamento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续共享"
+          }
+        }
+      }
+    },
     "Resume the history" : {
       "localizations" : {
         "ar" : {
@@ -120587,6 +121400,122 @@
         }
       }
     },
+    "Share screen to TV" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة الشاشة على التلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildschirm auf dem TV teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir pantalla en la TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager l’écran sur la TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi lo schermo sulla TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画面を TV で共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV로 화면 공유"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar tela na TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将屏幕共享到电视"
+          }
+        }
+      }
+    },
+    "Sharing to the TV ended" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهت المشاركة على التلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen auf dem TV beendet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se dejó de compartir en la TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le partage sur la TV s’est arrêté"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La condivisione sulla TV è terminata"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV への共有が終了しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV 공유가 끝났습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O compartilhamento na TV terminou"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电视上的共享已结束"
+          }
+        }
+      }
+    },
     "Shell commands, always shown word for word before they run." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -122980,6 +123909,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示监视"
+          }
+        }
+      }
+    },
+    "Shows your Mac's screen, one window or part of it, with its sound, on an Android TV running the Miraya app, over an encrypted direct connection on your network, or plays a video file or link on the TV. The first time, you compare a six-digit code on both screens. No account, no cloud." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعرض شاشة الـ Mac أو نافذة واحدة أو جزءًا منها مع الصوت على تلفاز Android TV يعمل عليه تطبيق Miraya، عبر اتصال مباشر مشفّر على شبكتك، أو تشغّل ملف فيديو أو رابطًا على التلفاز. في المرة الأولى تقارن رمزًا من ست خانات على الشاشتين. لا حساب ولا سحابة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt den Bildschirm deines Mac, ein Fenster oder einen Teil davon, mit Ton auf einem Android TV mit der Miraya-App, über eine verschlüsselte direkte Verbindung in deinem Netzwerk, oder spielt eine Videodatei oder einen Link auf dem TV ab. Beim ersten Mal vergleichst du einen sechsstelligen Code auf beiden Bildschirmen. Kein Konto, keine Cloud."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muestra la pantalla de tu Mac, una ventana o parte de ella, con su sonido, en una Android TV con la app Miraya, por una conexión directa cifrada en tu red, o reproduce un archivo o enlace de vídeo en la TV. La primera vez comparas un código de seis dígitos en ambas pantallas. Sin cuenta, sin nube."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affiche l’écran de votre Mac, une fenêtre ou une partie de l’écran, avec le son, sur une Android TV équipée de l’app Miraya, par une connexion directe chiffrée sur votre réseau, ou lit un fichier ou un lien vidéo sur la TV. La première fois, vous comparez un code à six chiffres sur les deux écrans. Sans compte, sans cloud."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra lo schermo del Mac, una finestra o una sua parte, con l’audio, su una Android TV con l’app Miraya, tramite una connessione diretta cifrata sulla tua rete, oppure riproduce un file o un link video sulla TV. La prima volta confronti un codice di sei cifre sui due schermi. Nessun account, nessun cloud."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac の画面、ウインドウ、またはその一部を音声付きで、Miraya アプリを入れた Android TV に、ネットワーク上の暗号化された直接接続で表示します。ビデオファイルやリンクを TV で再生することもできます。初回は両方の画面で6桁のコードを確認します。アカウントもクラウドも不要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac의 화면, 윈도우 하나 또는 화면 일부를 소리와 함께 Miraya 앱이 있는 Android TV에 네트워크의 암호화된 직접 연결로 보여 주거나, 비디오 파일이나 링크를 TV에서 재생합니다. 처음에는 두 화면에서 여섯 자리 코드를 비교합니다. 계정도 클라우드도 필요 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra a tela do seu Mac, uma janela ou parte dela, com o som, em uma Android TV com o app Miraya, por uma conexão direta criptografada na sua rede, ou reproduz um arquivo ou link de vídeo na TV. Na primeira vez, você compara um código de seis dígitos nas duas telas. Sem conta, sem nuvem."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过你网络中的加密直连，把 Mac 的屏幕、某个窗口或屏幕的一部分连同声音显示在装有 Miraya 应用的 Android TV 上，或在电视上播放视频文件或链接。第一次需要在两块屏幕上核对六位数代码。无需账户，不经云端。"
           }
         }
       }
@@ -126995,6 +127982,64 @@
         }
       }
     },
+    "Skip in the video" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التنقل في الفيديو"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Video springen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saltar en el vídeo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancer ou reculer dans la vidéo"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salta nel video"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ビデオをスキップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "비디오 건너뛰기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pular no vídeo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在视频中跳转"
+          }
+        }
+      }
+    },
     "Skip intro" : {
       "localizations" : {
         "ar" : {
@@ -130260,6 +131305,64 @@
         }
       }
     },
+    "Stop sharing" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف المشاركة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar de compartir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le partage"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompi la condivisione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共有を停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유 중지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de compartilhar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止共享"
+          }
+        }
+      }
+    },
     "Stop showing %@" : {
       "localizations" : {
         "ar" : {
@@ -131943,6 +133046,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "系统语音"
+          }
+        }
+      }
+    },
+    "TV volume" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مستوى الصوت على التلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lautstärke auf dem TV"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumen en la TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume sur la TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume sulla TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV の音量"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV 볼륨"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume na TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电视音量"
+          }
+        }
+      }
+    },
+    "TVs around" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أجهزة التلفاز القريبة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fernseher in der Nähe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Televisores cercanos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV à proximité"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV nelle vicinanze"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近くの TV"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "주변 TV"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TVs por perto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附近的电视"
           }
         }
       }
@@ -161427,6 +162646,64 @@
         }
       }
     },
+    "What's on the TV" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما يُعرض على التلفاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was auf dem TV läuft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué hay en la TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui passe sur la TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa c’è sulla TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV に映っているもの"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TV에 표시 중인 내용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que está na TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电视上正在播放的内容"
+          }
+        }
+      }
+    },
     "What's on today" : {
       "localizations" : {
         "ar" : {
@@ -162893,6 +164170,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "窗口"
+          }
+        }
+      }
+    },
+    "Windows to share" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوافذ للمشاركة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenster zum Teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventanas para compartir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtres à partager"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finestre da condividere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共有できるウインドウ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유할 윈도우"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janelas para compartilhar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可共享的窗口"
           }
         }
       }
@@ -165872,6 +167207,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按你说的时长，让 Mac 保持唤醒、你保持活跃"
+          }
+        }
+      }
+    },
+    "Your Mac's screen and videos on your Android TV" : {
+      "comment" : "Miraya: one line under its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شاشة الـ Mac ومقاطع الفيديو على Android TV"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Bildschirm deines Mac und Videos auf deinem Android TV"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pantalla de tu Mac y tus vídeos en tu Android TV"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’écran de votre Mac et vos vidéos sur votre Android TV"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo schermo del Mac e i tuoi video sulla Android TV"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac の画面とビデオを Android TV に"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Android TV에서 보는 Mac 화면과 비디오"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A tela do seu Mac e vídeos na sua Android TV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Android TV 上看 Mac 屏幕和视频"
           }
         }
       }

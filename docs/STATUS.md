@@ -39,8 +39,12 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
     pictures; debug apps with real data (Keep Awake's power assertion taken and released, Clipboard on a private
     pasteboard, Iris 3D→2D in Settings). *Not yet:* by hand: drags (Calendar, sidebar), right-click menus, ⌘Z, the ⌘↓
     picker, real ⌘V paste with Accessibility, Clipboard's source app end to end; Arabic for extension pages; the install
-    preview doesn't name `background` or palettes (docs/EXTENSIONS.md says it does). *In progress:* Miraya as an
-    extension (team/miraya, D69 reserved). *Next:* the founder tries the merged build, then merge `team/merge` into
+    preview doesn't name `background` or palettes (docs/EXTENSIONS.md says it does). *Miraya (D69):* the Mac side of Miraya as a gallery extension, named and drawn as Miraya;
+    new `permissions.screen`, `udp`, `network_purpose`. Checked against Miraya's TV app in the Android emulator: the
+    code matched on both screens, approval on the TV, reconnecting without a code, a file played with seek, resume
+    and stop; in a sandbox probe, screen → H.264 → UDP → decoded. *Not yet:* a mirrored picture on a real TV (the
+    emulator's network blocks direct UDP): with Sidefolk allowed in Screen Recording and Local Network, say "mirror my
+    screen"; an HTTPS link played; sound on the TV only, a drawn area, Stop on the tile. *Next:* the founder tries the merged build, then merge `team/merge` into
     extension-services and sidefolk-addons' `team/merge` into main, and publish the add-ons (founder).
 - **A release stays beside the next version's snapshots (D65 amended):** once an add-on is released and its next
   version starts snapshots, the gallery lists both (the release first) and Settings › Updates picks:

@@ -1713,3 +1713,34 @@ person's app use); settings as manifest keys (older 0.1.0 snapshots refuse unkno
 
 **Not built:** Maccy's random letter per pin, app icons in rows, highlighted matches, the latest copy in the menu bar
 title, clearing on quit.
+
+### D69 — Extensions that record the screen and stream on the network; Miraya as an extension (2026-10-31)
+**Decision:** three permissions, each named with caution at install:
+- **`permissions.screen`** opens ScreenCaptureKit (`com.apple.replayd`, `com.apple.windowserver.active`) and the video
+  encoder (`com.apple.coremedia.videoencoder`). It raises every tool to medium risk at least, and with the network the
+  sheet warns that what's on screen could be sent elsewhere. macOS attributes the recording to Sidefolk, so the grant in
+  Screen Recording is Sidefolk's and this permission is the gate between extensions.
+- **`permissions.udp`** (only with `network`) allows binding and receiving UDP, which WebRTC needs.
+- **`permissions.network_purpose`** (only with `network`; one line starting "to" or "for", ≤ 120 characters) is added
+  after the network line, never instead of it: "Can use the network, the internet included. It says it uses it to …".
+A process started for one call runs no background work (`SIDEFOLK_ONE_CALL`). Gallery extensions may ship linked
+frameworks in `lib/`, signed by the same team. **Miraya** (gallery, Everyday, named and drawn as Miraya's own app) is
+Miraya's Mac side in the sandbox for its unchanged Android TV app: TVs found by name, pairing by a six-digit code,
+mirroring a display, a window or an area preset with sound over WebRTC, five quality presets, a file or HTTPS link
+played on the TV, a page, a Today tile, tools with instant commands and two heads-ups. A file to play is cloned into
+its data folder by the call's own process (the per-call file grant) and deleted on stop.
+
+**Why:** the founder wants Miraya without installing its Mac app. Measured on macOS 27: ScreenCaptureKit hangs without
+the two services; VideoToolbox encodes nothing without the encoder; `network` alone refuses a UDP bind; the sandbox
+can't be limited to the local network (only `*` or `localhost` compile), so the sheet says "the internet included"
+even though Miraya only talks to the LAN (the founder noticed "uses the internet" and asked that it not mislead);
+macOS 27 adds Sidefolk to Screen Recording switched off instead of asking, and Miraya says where to turn it on.
+
+**Alternatives:** Sidefolk capturing for extensions behind a host API (keeps the grant usable only through Sidefolk;
+a frame and audio pipe across processes, maybe later); an unsandboxed helper (outside the model); a `localNetwork`
+permission (untrue: the sandbox can't enforce it); a fixed `files.read: ~/Movies`; the older media-over-TLS path
+instead of WebRTC (the TV app and Miraya's tests favour WebRTC).
+
+**Not built:** sound on the TV only (CoreAudio's `audiohald` stays closed), a drawn capture area (needs a picker
+Sidefolk draws), keeping the Mac awake while sharing, a Stop button on the Today tile. Pairings live in a 0600 file in
+its data folder (the sandbox has no Keychain). SECURITY T36.
