@@ -476,16 +476,16 @@ struct GameResultView: View {
                     .opacity(shown ? 1 : 0)
                     // Confetti bursts around the trophy, in its own row: never over the words or the buttons.
                     .frame(maxWidth: .infinity, minHeight: 74)
+                    .background { TrophyRays().frame(width: 150, height: 150).opacity(shown ? 1 : 0) }
                     .background { Celebration().clipped() }
             } else {
                 Image(systemName: Self.symbol(verdict)).font(.system(size: 30, weight: .bold)).foregroundStyle(GameColors.color(verdict))
                     .opacity(shown ? 1 : 0)
             }
-            Text(verbatim: result.figure)
+            // "7 / 10" is a score read left to right in every language: isolated so Arabic doesn't turn it round.
+            Text(verbatim: result.figure.contains("/") ? "\u{2066}\(result.figure)\u{2069}" : result.figure)
                 .font(.system(size: 44, weight: .black, design: .rounded))
                 .foregroundStyle(verdict == .draw ? Theme.ink : GameColors.color(verdict))
-                // "7 / 10" is a score read left to right in every language; in Arabic it would otherwise turn round.
-                .environment(\.layoutDirection, result.figure.contains("/") ? .leftToRight : layoutDirection)
                 .scaleEffect(shown ? 1 : 0.6)
                 .opacity(shown ? 1 : 0)
             if let title {

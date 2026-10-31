@@ -158,7 +158,8 @@ extension AppCoordinator {
     #if DEBUG
     /// `game:<extension>/<game>[:level]` opens a game as the AI would, waiting for a click rather than taking the keyboard
     /// (a debug run must never catch the keys of someone typing elsewhere); `move:<json>` sends a move as a click on the
-    /// board would (only one it offers); `key:<k>` presses a key in the panel; `closeGame` puts it away (D75).
+    /// board would (only one it offers); `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu` opens
+    /// the panel's menu of games.
     func devGame(_ command: String) -> Bool {
         if command.hasPrefix("game:") {
             let parts = command.dropFirst(5).split(separator: ":").map(String.init)
@@ -181,6 +182,10 @@ extension AppCoordinator {
         }
         if command == "closeGame" {
             playPanel.hide()
+            return true
+        }
+        if command == "playMenu" {
+            openPlayMenu(focus: false)
             return true
         }
         return false

@@ -20,8 +20,11 @@ final class PlayMenuModel {
     var onClose: (() -> Void)?
 
     init(games: [GameInfo], stats: GameStats, companionName: String, portrait: NSImage?, figure: NSImage?, kept: GameInfo?) {
-        // In the order the menu shows them, so the arrow keys follow the cards: the games against the companion, then puzzles.
-        self.games = games.filter { !($0.look?.solo ?? false) } + games.filter { $0.look?.solo ?? false }
+        // In the order the menu shows them, so the arrow keys follow the cards: the games against the companion, then
+        // puzzles, each in the looks' order (games without a look last).
+        func rank(_ g: GameInfo) -> Int { g.look.flatMap { GameLook.allCases.firstIndex(of: $0) } ?? GameLook.allCases.count }
+        let ordered = games.enumerated().sorted { (rank($0.element), $0.offset) < (rank($1.element), $1.offset) }.map(\.element)
+        self.games = ordered.filter { !($0.look?.solo ?? false) } + ordered.filter { $0.look?.solo ?? false }
         self.stats = stats
         self.companionName = companionName
         self.portrait = portrait

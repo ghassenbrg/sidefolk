@@ -59,7 +59,7 @@ struct Celebration: View {
             TimelineView(.animation(minimumInterval: 1 / 60, paused: fixed != nil)) { t in
                 let elapsed = fixed != nil ? 0.45 : t.date.timeIntervalSince(start)
                 Canvas { context, size in
-                    guard elapsed < 1.8 else { return }
+                    guard elapsed < 2.4 else { return }
                     var rng = SplitMix(seed: UInt64(seed))
                     let origin = CGPoint(x: size.width / 2, y: size.height * 0.5)
                     for i in 0..<36 {
@@ -68,7 +68,7 @@ struct Celebration: View {
                         let spin = Double(rng.next() % 720) - 360
                         let x = origin.x + cos(angle) * speed * elapsed
                         let y = origin.y + sin(angle) * speed * elapsed * 0.3 + 40 * elapsed * elapsed
-                        let fade = max(0, 1 - elapsed / 1.8)
+                        let fade = max(0, 1 - elapsed / 2.4)
                         var piece = context
                         piece.opacity = fade
                         piece.translateBy(x: x, y: y)
@@ -85,6 +85,34 @@ struct Celebration: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
+    }
+}
+
+/// Soft rays of sunlight turning slowly behind the trophy of a win (still with Reduce Motion).
+struct TrophyRays: View {
+    @State private var turned = false
+
+    var body: some View {
+        Canvas { context, size in
+            let c = CGPoint(x: size.width / 2, y: size.height / 2), r = min(size.width, size.height) / 2
+            for i in 0..<12 {
+                let a = Double(i) * .pi / 6
+                var ray = Path()
+                ray.move(to: c)
+                ray.addLine(to: CGPoint(x: c.x + cos(a - 0.11) * r, y: c.y + sin(a - 0.11) * r))
+                ray.addLine(to: CGPoint(x: c.x + cos(a + 0.11) * r, y: c.y + sin(a + 0.11) * r))
+                ray.closeSubpath()
+                context.fill(ray, with: .radialGradient(Gradient(colors: [Theme.sun.opacity(0.55), Theme.sun.opacity(0)]), center: c,
+                                                        startRadius: 0, endRadius: r))
+            }
+        }
+        .rotationEffect(.degrees(turned ? 360 : 0))
+        .onAppear {
+            guard !GameMotion.reduced else { return }
+            withAnimation(.linear(duration: 24).repeatForever(autoreverses: false)) { turned = true }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 

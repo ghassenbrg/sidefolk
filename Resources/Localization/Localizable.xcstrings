@@ -9965,6 +9965,65 @@
         }
       }
     },
+    "%@ wins!" : {
+      "comment" : "A game's end card: the companion (named) won",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ يفوز!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gewinnt!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Gana %@!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gagne !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vince %@!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の勝ち！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 승리!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ venceu!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 赢了！"
+          }
+        }
+      }
+    },
     "%@ · %@" : {
       "comment" : "Who saved a note and when: “Claude Code · 12 min ago”",
       "localizations" : {
@@ -16795,24 +16854,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا شيء ينتظر"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "شيء واحد ينتظر"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "شيئان ينتظران"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -16825,10 +16866,28 @@
                   "value" : "%lld شيئًا ينتظر"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيء واحد ينتظر"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld شيء ينتظر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "شيئان ينتظران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا شيء ينتظر"
                 }
               }
             }
@@ -26407,6 +26466,65 @@
         }
       }
     },
+    "All Games…" : {
+      "comment" : "Play menu: opens the Play panel's menu of games",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل الألعاب…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Spiele…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los juegos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les jeux…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutti i giochi…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのゲーム…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 게임…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os jogos…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部游戏…"
+          }
+        }
+      }
+    },
     "All clear." : {
       "localizations" : {
         "ar" : {
@@ -26519,6 +26637,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全天"
+          }
+        }
+      }
+    },
+    "All games" : {
+      "comment" : "Play panel: back to the menu of games",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل الألعاب"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Spiele"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los juegos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les jeux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutti i giochi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのゲーム"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 게임"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os jogos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部游戏"
           }
         }
       }
@@ -30134,6 +30311,65 @@
         }
       }
     },
+    "Arrows to choose · Return to play · Esc to close" : {
+      "comment" : "Keys on the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأسهم للاختيار · Return للعب · Esc للإغلاق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pfeile zum Wählen · Eingabe zum Spielen · Esc zum Schließen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flechas para elegir · Retorno para jugar · Esc para cerrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flèches pour choisir · Retour pour jouer · Échap pour fermer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frecce per scegliere · Invio per giocare · Esc per chiudere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矢印で選ぶ · Returnで遊ぶ · Escで閉じる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화살표로 선택 · Return으로 시작 · Esc로 닫기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setas para escolher · Return para jogar · Esc para fechar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "方向键选择 · 回车开始 · Esc 关闭"
+          }
+        }
+      }
+    },
     "As the theme" : {
       "comment" : "Settings › General › Icons in Home: follow the theme",
       "localizations" : {
@@ -32404,6 +32640,65 @@
         }
       }
     },
+    "Back to games" : {
+      "comment" : "A game's end card: back to the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العودة إلى الألعاب"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zu den Spielen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a los juegos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour aux jeux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Torna ai giochi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲーム一覧へ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임 목록으로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltar aos jogos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回游戏"
+          }
+        }
+      }
+    },
     "Back to today (T)" : {
       "localizations" : {
         "ar" : {
@@ -33273,6 +33568,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已安装的最佳语音（%@）"
+          }
+        }
+      }
+    },
+    "Best of three, no peeking" : {
+      "comment" : "Rock, Paper, Scissors on the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأفضل من ثلاث، بلا غش"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best of three, ohne Schummeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al mejor de tres, sin mirar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au meilleur des trois, sans tricher"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al meglio di tre, senza sbirciare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3本勝負、のぞき見なし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3판 2선승, 훔쳐보기 없기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melhor de três, sem espiar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "三局两胜，不许偷看"
           }
         }
       }
@@ -62219,6 +62573,7 @@
       }
     },
     "Games" : {
+      "comment" : "The Play panel's menu when no extension brings games",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -108565,6 +108920,65 @@
         }
       }
     },
+    "Pick a game! Can you beat me?" : {
+      "comment" : "The companion on the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر لعبة! هل تستطيع هزيمتي؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Such dir ein Spiel aus! Schlägst du mich?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Elige un juego! ¿Me ganas?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis un jeu ! Tu peux me battre ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli un gioco! Riesci a battermi?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲームを選んで！ わたしに勝てるかな？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임을 골라요! 나를 이길 수 있을까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um jogo! Consegue me vencer?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选个游戏吧！你能赢我吗？"
+          }
+        }
+      }
+    },
     "Pick a model" : {
       "localizations" : {
         "ar" : {
@@ -109670,6 +110084,65 @@
         }
       }
     },
+    "Play against %@" : {
+      "comment" : "Play panel's menu: the games played against the companion",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العب ضد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gegen %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contra %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contre %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contro %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@と対戦"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와 대결"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contra %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %@ 对战"
+          }
+        }
+      }
+    },
     "Play on TV" : {
       "localizations" : {
         "ar" : {
@@ -109841,6 +110314,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "和伙伴一起玩"
+          }
+        }
+      }
+    },
+    "Played" : {
+      "comment" : "Play panel's menu: games played to the end",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لُعبت"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespielt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partidas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giocate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレイ数"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partidas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已玩"
           }
         }
       }
@@ -111034,6 +111566,65 @@
         }
       }
     },
+    "Puzzles" : {
+      "comment" : "Play panel's menu: the games played alone",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rätsel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rompecabezas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Casse-têtes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rompicapi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パズル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "퍼즐"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quebra-cabeças"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "谜题"
+          }
+        }
+      }
+    },
     "QR Codes" : {
       "comment" : "A built-in extension",
       "localizations" : {
@@ -111323,6 +111914,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快速回答电池、磁盘和内存的情况，并在电池或磁盘不足时提醒你。想要带实时图表的页面，请从图库添加“你的 Mac”。"
+          }
+        }
+      }
+    },
+    "Quick games against %@" : {
+      "comment" : "Under the title of the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألعاب سريعة ضد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnelle Spiele gegen %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juegos rápidos contra %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des petits jeux contre %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giochi veloci contro %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@とさくっと遊ぼう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와 짧은 게임"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogos rápidos contra %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %@ 玩些小游戏"
           }
         }
       }
@@ -122304,6 +122954,7 @@
       }
     },
     "Resume" : {
+      "comment" : "Play panel's menu: a game put away, opened where it was",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -133328,6 +133979,65 @@
         }
       }
     },
+    "Shuffling…" : {
+      "comment" : "Which Cup?: the companion shuffles the cups",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخلط…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich mische…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mezclando…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je mélange…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mescolo…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シャッフル中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섞는 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embaralhando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "洗牌中…"
+          }
+        }
+      }
+    },
     "Sidefolk" : {
       "comment" : "Gallery filter: Sidefolk's own companions",
       "localizations" : {
@@ -142586,6 +143296,65 @@
         }
       }
     },
+    "Streak" : {
+      "comment" : "Play panel's menu: wins in a row now",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سلسلة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Racha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Série"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連勝"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연승"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sequência"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连胜"
+          }
+        }
+      }
+    },
     "Strikethrough (⇧⌘X)" : {
       "localizations" : {
         "ar" : {
@@ -143868,7 +144637,7 @@
       }
     },
     "Take %lld" : {
-      "comment" : "Last Stick: a stick, read by VoiceOver (takes it and the ones after it)",
+      "comment" : "Last Stick: a button that takes that many sticks\nLast Stick: a stick, read by VoiceOver (takes it and the ones after it)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -170684,6 +171453,65 @@
         }
       }
     },
+    "VS" : {
+      "comment" : "Between the person and the companion on a game's score bar",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ضد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        }
+      }
+    },
     "Value" : {
       "localizations" : {
         "ar" : {
@@ -171804,24 +172632,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "ينتظرك: %lld"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "ينتظرك: %lld"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "ينتظرك: %lld"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -171834,7 +172644,25 @@
                   "value" : "ينتظرك: %lld"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتظرك: %lld"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتظرك: %lld"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتظرك: %lld"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "ينتظرك: %lld"
@@ -177644,6 +178472,65 @@
         }
       }
     },
+    "Wins" : {
+      "comment" : "Play panel's menu: games the person won",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتصارات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siege"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victorias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victoires"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vittorie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "勝ち"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "승리"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitórias"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "胜利"
+          }
+        }
+      }
+    },
     "With a notification each time" : {
       "localizations" : {
         "ar" : {
@@ -180280,6 +181167,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你赢了这局！"
+          }
+        }
+      }
+    },
+    "You win!" : {
+      "comment" : "A game's end card: the person won",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فزت!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewonnen!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Ganaste!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gagné !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai vinto!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたの勝ち！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "당신의 승리!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você venceu!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你赢了！"
           }
         }
       }
