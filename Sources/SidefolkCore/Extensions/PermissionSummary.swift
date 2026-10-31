@@ -89,6 +89,16 @@ public struct PermissionSummary: Sendable, Hashable {
         public var text: String
         /// Worth drawing attention to on the install sheet.
         public var caution: Bool
+        /// What keeps it in check, said beside it on the install sheet (D71): only guards Sidefolk or macOS
+        /// really enforce, never the extension's own promise.
+        public var note: String?
+
+        public init(kind: Kind, text: String, caution: Bool, note: String? = nil) {
+            self.kind = kind
+            self.text = text
+            self.caution = caution
+            self.note = note
+        }
     }
 
     public var lines: [Line]
@@ -115,12 +125,15 @@ public struct PermissionSummary: Sendable, Hashable {
         for path in p.write {
             lines.append(Line(kind: .write, text: String(localized: "Can read and change files in \(show(path))"), caution: true))
         }
+        // Guard lets a call name only a folder the person shared or allows on a card (extensions and other agents
+        // can't ask: refused), and the call's own process opens just that one (ExtensionTool, SECURITY T15, T27).
+        let perCall = String(localized: "Only a folder you've shared with Sidefolk or allow on a card. Its sandbox opens it for that one request.")
         switch p.folders {
         case .write?:
-            lines.append(Line(kind: .write, text: String(localized: "Can read and change files in a folder you name, for that request only, once you approve it"),
-                              caution: true))
+            lines.append(Line(kind: .write, text: String(localized: "Can read and change files in a folder you name, for that request only"),
+                              caution: true, note: perCall))
         case .read?:
-            lines.append(Line(kind: .read, text: String(localized: "Can read a folder you name, for that request only, once you approve it"), caution: false))
+            lines.append(Line(kind: .read, text: String(localized: "Can read a folder you name, for that request only"), caution: false, note: perCall))
         case nil:
             break
         }
@@ -131,7 +144,9 @@ public struct PermissionSummary: Sendable, Hashable {
                               caution: anything))
         }
         for program in p.programs {
-            lines.append(Line(kind: .exec, text: String(localized: "Can run \(program.name) (\(show(program.path)))"), caution: false))
+            // Resolved by Sidefolk, and the sandbox lets it start only its fixed helpers (ProgramResolver, T13).
+            lines.append(Line(kind: .exec, text: String(localized: "Can run \(program.name) (\(show(program.path)))"), caution: false,
+                              note: String(localized: "Sidefolk found it on this Mac, and it may start only its own helper programs.")))
         }
         if p.media {
             lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's graphics hardware for pictures"), caution: false))
@@ -143,8 +158,10 @@ public struct PermissionSummary: Sendable, Hashable {
             lines.append(Line(kind: .power, text: String(localized: "Can keep your Mac awake and tell macOS you're active"), caution: false))
         }
         if p.screen {
-            lines.append(Line(kind: .screen, text: String(localized: "Can record your screen and the sound your Mac plays, once you allow Sidefolk in Screen Recording"),
-                              caution: true))
+            // macOS attributes the recording to Sidefolk and keeps it off until the person switches Sidefolk on; the
+            // switch is Sidefolk's, not this extension's (SECURITY T36).
+            lines.append(Line(kind: .screen, text: String(localized: "Can record your screen and the sound your Mac plays"), caution: true,
+                              note: String(localized: "Only once you switch Sidefolk on in Screen & System Audio Recording (System Settings › Privacy & Security). That switch covers every extension that records.")))
         }
         if p.udp {
             lines.append(Line(kind: .udp, text: String(localized: "Can receive live audio and video traffic (UDP) from any device that can reach your Mac"),
@@ -152,6 +169,9 @@ public struct PermissionSummary: Sendable, Hashable {
         }
         if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))
+        } else if !p.network {
+            // What it can't do matters as much beside files: the sandbox has no network rule at all (SandboxProfile).
+            lines.append(Line(kind: .none, text: String(localized: "Can't use the internet"), caution: false))
         }
 
         var warnings: [String] = []

@@ -34,7 +34,8 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
 
     /// Made by Sidefolk. Only Sidefolk signs packs and catalogs (D55), and review refuses this prefix to anyone
     /// else, so the id is enough.
-    public var official: Bool { id.hasPrefix("dev.sidefolk.") }
+    public var official: Bool { Self.isOfficial(id: id) }
+    public static func isOfficial(id: String) -> Bool { id.hasPrefix("dev.sidefolk.") }
 
     enum CodingKeys: String, CodingKey {
         case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license, category

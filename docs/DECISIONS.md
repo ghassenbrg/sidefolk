@@ -1798,3 +1798,57 @@ in Activity (it is the audit of tool calls; an update is not one).
 `ExtensionPermissions.widens`, `AddonUpdater`, `AddonUpdateRule`, app `AddonUpdateController` (replaces
 `keepCompanionAddonsUpdated`), `AppServices.companionsUpdated`, `AppCoordinator.installSignals`; dev commands
 `update:ready`, `update:updated`, `addons:review|waiting|clear`, `scroll:<0…1>`. RELEASE.md › Updates.
+
+### D71 — Install sheets and approval cards that are honest without being scary: trust first, tone by source, guards beside each permission (2026-10-31)
+**Decision:** the same facts for every extension, said as loudly as where it comes from calls for.
+- **Where it comes from, first** (`InstallSource`, a row under the title): *From the Sidefolk gallery · Signed by
+  Sidefolk and checked before install* (D55's signature and digest checks), *From a folder on this Mac · Not checked
+  by Sidefolk: install it only if you trust who made it*, *Written by Sidefolk for you · Sidefolk's AI wrote it at your
+  request, and nobody else has read its code*.
+- **Tone by source, never facts** (`InstallReview.tone`): the risky combinations (`PermissionSummary.warnings`, words
+  unchanged) are a red box headed *Read this before installing*, above the permissions, for anything but code Sidefolk
+  signed as its own; for a gallery extension with Sidefolk's id (`AddonEntry.isOfficial`) the same sentences sit in a
+  calm *Good to know* box after the list. A draft stays strong: nobody read the code.
+- **What guards each permission, beside it** (`PermissionSummary.Line.note`), only where the code enforces it: a
+  folder named per call is one the person shared or allows on a card, opened by the sandbox for that request
+  (`ExtensionTool.run`, `PermissionEngine`; extensions and other agents can't ask); recording needs Sidefolk switched
+  on in Screen & System Audio Recording, *and that switch covers every extension that records* (T36); a program
+  Sidefolk found may start only its own helpers. *Can't use the internet* is listed when files are and the network
+  isn't. The network line gets no note: nothing keeps it to the LAN (D69).
+- **After you install** (`InstallReview.next`): it runs in a sandbox limited to the list; a background extension
+  *keeps running and can use all of this by itself, without asking each time* (D63: no card covers that); Guard asks
+  before the AI or another agent uses its tools as often as the person chose, or, when every tool is below the floor,
+  that they can't reach the internet or change files (`ExtensionRisk`); network with UDP: macOS may ask about Local
+  Network; turn off or remove in Settings › Extensions.
+- **Progressive:** what it adds (tools, commands, pages) folds under *It adds*.
+- **Updates** (`InstallReview.Update`): one asking for more is a box of its own, *This update asks for more*, with
+  each *New permission:* in bold, amber for Sidefolk's own and red otherwise; one that doesn't says *No new
+  permissions*; removed ones are listed.
+- **Approval cards** (the founder's Full-access "mirror my screen to the living room TV"): Guard's decision is
+  unchanged (after outside content, Full access never answers a call that could carry it out, T2, T12, T21). The card
+  now says an extension call's arguments in words (`ArgumentWords`: `tv: “living room”`, hidden characters gone, long
+  values clipped, full paths as ~/…) with the exact request under *Exact request*; and why it asks
+  (`ApprovalReason`): what the run read first (`TaintSource`, kept by `BrainToolbox` from the first untrusted result:
+  an extension by name, a web page, a file, or "outside content"), what this call could do with it (from its effect),
+  and, in Full access or Auto (medium risk), that the mode never decides this after outside content. Calm when
+  Sidefolk's own extension acts on Sidefolk's own extension's answer, red otherwise. Another app's request (evaluated
+  as tainted to ask each time, T4) says so instead of claiming something was read. "Always allow" stays not offered.
+
+**Why:** the founder, installing his own Miraya, was scared by two red warnings and unsure what install grants. People
+must know what an extension can do, and Sidefolk's own signed extensions shouldn't read like malware, nor unknown
+folders like Sidefolk's. Severity follows what Sidefolk can vouch for (who wrote and signed the code), and each claim
+names a guard the code enforces. Every claim was checked in the code: per-call grants (`ExtensionTool`,
+`PermissionEngine`), the risk floor (`ExtensionRisk`), page buttons running as the person (no card), background work
+without cards, macOS attributing recording to Sidefolk (T36).
+
+**Alternatives:** dropping the combinations for official extensions (hides a real capability); "records only when you
+start sharing" (Miraya's behaviour, not something Sidefolk enforces: its background process could); a per-call
+mode-aware sentence on the sheet (the mode can change after install); a Miraya-specific sentence in the app for its
+cards (couples the app to a gallery add-on; arguments in words serve every extension).
+
+**Implications:** `InstallSource`, `InstallReview`, `PermissionSummary.Line.note`, `AddonEntry.isOfficial(id:)`,
+`ArgumentWords`, `TaintSource`, `ApprovalReason`, `ApprovalRequest.input/taintedBy/mode/firstParty`,
+`ToolOutcome.source`, `ToolExecutor.execute(taintedBy:)`; app: `ExtensionInstallPreview.review`, `InstallReviewParts`,
+`ApprovalReasonLine`, `ExactRequest`; snapshots `sheet-install-gallery|unknown|update`, `desktop-ask-outside`.
+A future community shelf in the gallery gets the strong tone (only `dev.sidefolk.` ids are calm). MCP servers keep
+their own add sheet, already "only add servers you trust". SECURITY T1, T13, T33.

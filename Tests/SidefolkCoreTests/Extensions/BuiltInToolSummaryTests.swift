@@ -26,18 +26,19 @@ struct BuiltInToolSummaryTests {
                                             input: ["time": "9am", "from": "Paris", "to": ["Tokyo"]]) == "Convert 9am in Paris to the time in Tokyo")
     }
 
-    @Test func aMissingArgumentFallsBackToTheExactArguments() {
+    @Test func aMissingArgumentFallsBackToTheArgumentsInWords() {
         let git = tool("dev.sidefolk.git", "clone", firstParty: true)
         let summary = git.summary(for: ["url": "https://github.com/octocat/Hello-World"])
-        #expect(summary.hasPrefix("Clone a repository (Git) {"), "\(summary)")
+        #expect(summary == "Clone a repository (Git) · url: “https://github.com/octocat/Hello-World”", "\(summary)")
     }
 
-    @Test func otherExtensionsShowTheirArgumentsAsTheyAre() {
+    @Test func otherExtensionsShowTheirArgumentsInWordsNeverAsJSON() {
         // The same id installed by hand isn't the app's copy: no sentence speaks for it.
         let copy = tool("dev.sidefolk.git", "clone", firstParty: false)
-        let summary = copy.summary(for: ["url": "https://example.com/x", "destination": "~/x"])
-        #expect(summary.contains("\"url\":\"https:\\/\\/example.com\\/x\"") || summary.contains("\"url\":\"https://example.com/x\""), "\(summary)")
-        #expect(summary.hasPrefix("Clone a repository (Git) "))
+        let summary = copy.summary(for: ["url": "https://example.com/x", "destination": .string(NSHomeDirectory() + "/x")])
+        #expect(summary == "Clone a repository (Git) · destination: “~/x”, url: “https://example.com/x”", "\(summary)")
+        #expect(!summary.contains("{") && !summary.contains("\\/"))
+        #expect(copy.summary(for: [:]) == "Clone a repository (Git)")
     }
 
     @Test func hiddenCharactersAndLineBreaksDoNotReachTheCard() {

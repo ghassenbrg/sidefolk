@@ -127,7 +127,7 @@ final class FixtureServices: AppServices {
         tagline: "Clone, update and check your repositories",
         kind: .sidefolk, enabled: true, folk: "byte",
         toolNames: ["Clone a repository", "Recent commits", "Pull the latest changes", "Repository status"], watcherNames: [],
-        permissionLines: ["Can use the internet", "Can read and change files in a folder you name, for that request only, once you approve it",
+        permissionLines: ["Can use the internet", "Can read and change files in a folder you name, for that request only",
                           "Can run git (/Applications/Xcode.app/Contents/Developer/usr/bin/git)"],
         warnings: ["It can use the internet while it works in a folder you name, so it could upload what's in that folder."],
         sandboxed: true, lastError: nil, bundled: false, iconPath: addonIcon("git"), fromGallery: true)
@@ -185,23 +185,6 @@ final class FixtureServices: AppServices {
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
         .success(Self.samplePreview)
     }
-
-    static let samplePreview = ExtensionInstallPreview(
-        id: "dev.example.trip-planner", name: "Trip Planner", version: "1.2.0",
-        description: "Day plans and packing lists from the trips in your Travel folder.",
-        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Downloads/trip-planner"),
-        permissionLines: ["Can use the internet", "Can read ~/Documents/Travel"],
-        warnings: ["It can read ~/Documents/Travel and use the internet, so it could upload those files."],
-        toolNames: ["plan_day", "packing_list"], watcherNames: [], isUpdate: false, folk: "scout")
-
-    /// A draft Sidefolk's AI wrote, handed over for review (D39): the one waiting in Drafts. Extensions can't
-    /// hold secrets, so the samples are things that need no account.
-    static let draftPreview = ExtensionInstallPreview(
-        id: "local.pomodoro-log", name: "Pomodoro Log", version: "0.1.0",
-        description: "Logs your focus sessions in its own folder and adds them up by day.",
-        sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Sidefolk/ExtensionDrafts/local.pomodoro-log"),
-        permissionLines: [], warnings: [], toolNames: ["Start a session", "Today's sessions"], watcherNames: [], isUpdate: false,
-        fromDraft: true)
 
     func installExtension(_ preview: ExtensionInstallPreview) async -> UserFacingError? { nil }
     func setExtensionEnabled(_ id: String, _ enabled: Bool) async {}
