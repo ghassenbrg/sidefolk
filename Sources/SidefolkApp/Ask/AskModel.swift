@@ -109,6 +109,8 @@ protocol AskActions: AnyObject {
     func answer(_ request: NoAIRequest, with kind: ProviderKind, replacing entry: AskEntry.ID, in model: AskModel)
     /// Times to tap when Sidefolk asks "When?", from the user's own times of day.
     func reminderTimes() -> [(label: String, date: Date)]
+    /// What reads a typed time, with the person's times of day.
+    var whenParser: WhenParser { get }
     /// Sets the reminder that was waiting for its time.
     func remindPending(at date: Date, in model: AskModel)
     func answer(question: AttentionItem, actionId: String)

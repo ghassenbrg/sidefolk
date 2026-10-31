@@ -201,12 +201,12 @@ final class CalendarModel {
         await move(reminder, from: entry.start, to: target, undo: undo)
     }
 
-    /// A new reminder at a time, the way the one bar or Today's row adds one: `reminders.create` through Guard.
-    func add(_ title: String, at date: Date) async -> UserFacingError? {
+    /// A new reminder, the way the one bar or Today's row adds one: `reminders.create` through Guard, with the when
+    /// field's words (a picked or clicked time is written there as `WhenText.phrase`).
+    func add(_ title: String, when: String) async -> UserFacingError? {
         let words = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !words.isEmpty else { return nil }
-        // An exact time the parser reads as is (ISO 8601, in UTC), whatever the language.
-        let error = await services.createReminder(title: words, when: date.ISO8601Format())
+        let error = await services.createReminder(title: words, when: when.trimmingCharacters(in: .whitespacesAndNewlines))
         if error == nil { await reload() }
         return error
     }

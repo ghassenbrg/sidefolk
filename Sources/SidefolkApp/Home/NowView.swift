@@ -936,15 +936,14 @@ struct NewReminderRow: View {
                         .focused($focus, equals: .title)
                         .onSubmit { focus = .when }
                         .accessibilityLabel("New reminder")
+                        .frame(minWidth: 120)
                     Rectangle().fill(Theme.line).frame(width: 1, height: 18)
-                    TextField("When", text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"))
+                    // Typed first; the calendar beside it for picking (WhenField).
+                    WhenField(text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"), parser: model.whenParser,
+                              focus: $focus, focusValue: .when) { Task { await model.addReminder() } }
                         .textFieldStyle(.plain)
-                        .font(Theme.Font.body)
-                        .frame(minWidth: 120, idealWidth: 200, maxWidth: 240)
+                        .frame(minWidth: 150, idealWidth: 220, maxWidth: 230)
                         .layoutPriority(1)
-                        .focused($focus, equals: .when)
-                        .onSubmit { Task { await model.addReminder() } }
-                        .accessibilityLabel("When")
                 }
                 Button("Add reminder") { Task { await model.addReminder() } }
                     .buttonStyle(.sf(.primary))
@@ -1050,12 +1049,14 @@ struct EditReminderSheet: View {
     @State private var title = ""
     @State private var when = ""
     @State private var error: UserFacingError?
+    @FocusState private var whenFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             Text("Edit reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
             TextField("What", text: $title).textFieldStyle(.roundedBorder)
-            TextField("When — e.g. “tomorrow 9am” or “every 30 minutes”; leave empty to keep \(current)", text: $when)
+            WhenField(text: $when, prompt: Text("When, like “tomorrow 9am” or “every 30 minutes”"), parser: model.whenParser,
+                      focus: $whenFocused, emptyHint: Text("Leave empty to keep \(current)"))
                 .textFieldStyle(.roundedBorder)
             if let error { InlineError(error: error) }
             HStack {

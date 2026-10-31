@@ -303,6 +303,15 @@ enum UISnapshots {
             }
 
             // Sheets.
+            // Where a time is set (WhenField): typed, read back, picked; and the sheets that use it.
+            try await page("panel-when-field", WhenFieldSamples(parser: full.now.whenParser), width: 380)
+            try await page("panel-when-picker", WhenPicker(start: nil, parser: full.now.whenParser) { _ in }, width: 300)
+            if let reminder = full.now.reminders.first(where: { $0.recurrence != nil }) {
+                try await page("sheet-edit-reminder", EditReminderSheet(reminder: reminder, model: full.now), width: 420)
+            }
+            try await page("sheet-remind-at", PickReminderTimeSheet(item: sample.remindedTask, model: full.notebook), width: 360)
+            try await page("sheet-calendar-new-reminder", NewReminderSheet(at: WhenPicker.nextHour(.autoupdatingCurrent), model: full.calendar),
+                           width: 400)
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 420)
             if let edited = full.notebook.collections.first(where: { $0.symbol != nil }) {
                 try await page("sheet-edit-collection", CollectionSheet(mode: .edit(edited), model: full.notebook) { _ in }, width: 420)

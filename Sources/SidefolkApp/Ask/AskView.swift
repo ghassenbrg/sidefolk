@@ -168,7 +168,7 @@ struct AskView: View {
             }
             if model.pendingReminderTitle != nil, !model.busy, let actions = model.actions {
                 // Typing a time works in English; tapping works in every language.
-                WhenChips(times: actions.reminderTimes()) { date in actions.remindPending(at: date, in: model) }
+                WhenChips(times: actions.reminderTimes(), parser: actions.whenParser) { date in actions.remindPending(at: date, in: model) }
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 HStack(spacing: 4) {
@@ -664,9 +664,12 @@ extension AskModel {
 /// One tap for the usual answers to "When?", and a date picker for any other moment.
 private struct WhenChips: View {
     var times: [(label: String, date: Date)]
+    var parser: WhenParser
     var choose: (Date) -> Void
     @State private var picking = false
     @State private var custom = Date().addingTimeInterval(3600)
+    @State private var typed = ""
+    @FocusState private var typing: Bool
 
     var body: some View {
         // One row when it fits; longer languages get two.
@@ -690,6 +693,15 @@ private struct WhenChips: View {
         Button("Pick…") { picking = true }.buttonStyle(.sf(.secondary)).fixedSize()
             .popover(isPresented: $picking, arrowEdge: .bottom) {
                 VStack(alignment: .trailing, spacing: Theme.Space.s) {
+                    // Typing works here too; the picker follows what's typed, and the field what's picked.
+                    WhenField(text: $typed, prompt: Text("When, like “tomorrow 9:00”"), parser: parser, focus: $typing,
+                              showsPicker: false) {
+                        guard custom > Date() else { return }
+                        picking = false
+                        choose(custom)
+                    }
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 280)
                     DatePicker("When", selection: $custom, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                         .datePickerStyle(.graphical)
                         .labelsHidden()
@@ -699,8 +711,19 @@ private struct WhenChips: View {
                     }
                     .buttonStyle(.sf(.primary))
                     .keyboardShortcut(.defaultAction)
+                    .disabled(custom <= Date())
                 }
                 .padding(Theme.Space.m)
+                .onChange(of: typed) {
+                    if let reading = WhenReading(typed, parser: parser), !reading.past, reading.date != custom { custom = reading.date }
+                }
+                .onChange(of: custom) {
+                    if WhenReading(typed, parser: parser)?.date != custom { typed = WhenText.phrase(for: custom, timeZone: parser.calendar.timeZone) }
+                }
+                .onAppear {
+                    typed = WhenText.phrase(for: custom, timeZone: parser.calendar.timeZone)
+                    typing = true
+                }
             }
     }
 }

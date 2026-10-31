@@ -107,17 +107,20 @@ struct NewReminderSheet: View {
     var model: CalendarModel
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
+    @State private var when = ""
     @State private var error: UserFacingError?
     @State private var adding = false
+    @FocusState private var whenFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             Text("New reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            Label { Text(verbatim: at.formatted(.dateTime.weekday(.wide).day().month(.wide).hour().minute())) }
-                icon: { Image(systemName: "alarm") }
-                .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             TextField("What", text: $title, prompt: Text("New reminder")).textFieldStyle(.roundedBorder)
                 .onSubmit(add)
+            // The time clicked on, written as the field writes a picked time; type over it to change it.
+            WhenField(text: $when, prompt: Text("When, like “tomorrow 9:00”"), parser: model.now.whenParser, focus: $whenFocused,
+                      submit: add)
+                .textFieldStyle(.roundedBorder)
             if let error { InlineError(error: error) }
             HStack {
                 Spacer()
@@ -130,13 +133,14 @@ struct NewReminderSheet: View {
         }
         .padding(Theme.Space.xl)
         .frame(width: 400)
+        .onAppear { when = WhenText.phrase(for: at) }
     }
 
     private func add() {
         guard !adding, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         adding = true
         Task {
-            error = await model.add(title, at: at)
+            error = await model.add(title, when: when)
             adding = false
             if error == nil { dismiss() }
         }
