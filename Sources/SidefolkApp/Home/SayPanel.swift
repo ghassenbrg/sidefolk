@@ -115,8 +115,8 @@ struct SayWords {
     /// The sentence: what happens, in plain words, with the parts that matter in bold.
     var sentence: Text {
         guard let plan, let tool = plan.tool else {
-            return Text("\(companion) will ask \(AIName.long(provider)) and answer here.",
-                        comment: "The Say bar: words not understood on the Mac go to the AI, “Mochi will ask Claude, through Claude Code, and answer here.”")
+            return Text("\(companion) will ask the AI and answer here.",
+                        comment: "The Say bar: words not understood on the Mac go to the AI; a chip beside it says which AI")
         }
         let title = Text(verbatim: plan.title).bold()
         switch tool {

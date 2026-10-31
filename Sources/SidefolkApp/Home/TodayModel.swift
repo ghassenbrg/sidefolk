@@ -9,9 +9,7 @@ extension NowModel {
         OnDuty(watchers: watchers + reports, reminders: reminders, sessions: workingSessions + sessionsNeedingYou, jobs: jobs)
     }
 
-    var quiet: Bool { services.runtime.settings.current.isQuiet(at: Date()) }
-
-    var quietUntil: Date? { quiet ? services.runtime.settings.current.quietUntil : nil }
+    var quiet: Bool { quietUntil.map { $0 > Date() } ?? false }
 
     /// The companion's light, as the desktop's rule reads it: quiet first, then what waits on the person, then work.
     var poolState: LightPoolState {

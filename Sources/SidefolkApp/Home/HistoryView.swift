@@ -97,9 +97,18 @@ struct HistoryView: View {
                 }
                 ForEach(hours, id: \.start) { hour in
                     HStack(alignment: .top, spacing: Theme.Space.l) {
-                        Text(verbatim: hourTitle(hour.start)).font(Theme.Font.headline.monospacedDigit()).foregroundStyle(Theme.ink)
-                            .frame(width: 64, alignment: .trailing)
-                            .padding(.top, Theme.Space.l)
+                        VStack(alignment: .trailing, spacing: 0) {
+                            if !Calendar.current.isDateInToday(hour.start) {
+                                Text(verbatim: TimeFormat.day(hour.start, now: Date(), calendar: .current))
+                                    .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                            }
+                            Text(verbatim: TimeFormat.clock(hour.start, calendar: .current)).font(Theme.Font.headline.monospacedDigit())
+                                .foregroundStyle(Theme.ink)
+                        }
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(width: 84, alignment: .trailing)
+                        .padding(.top, Theme.Space.l)
                         RowsCard {
                             ForEach(hour.events) { event in
                                 HistoryRow(event: event, model: model, home: home).id(event.id)
@@ -117,13 +126,6 @@ struct HistoryView: View {
         .onChange(of: model.conversation.selectedId, initial: true) { if let id = model.conversation.selectedId { proxy.scrollTo("c" + id, anchor: .top) } }
         .onChange(of: model.openId, initial: true) { if let id = model.openId { proxy.scrollTo(id, anchor: .top) } }
         }
-    }
-
-    /// "15:00" today; "Yesterday 15:00", "Tue 15:00" further back.
-    private func hourTitle(_ start: Date) -> String {
-        let clock = TimeFormat.clock(start, calendar: .current)
-        if Calendar.current.isDateInToday(start) { return clock }
-        return TimeFormat.day(start, now: Date(), calendar: .current) + "\n" + clock
     }
 }
 

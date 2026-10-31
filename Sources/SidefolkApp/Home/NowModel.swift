@@ -84,6 +84,8 @@ final class NowModel {
     private(set) var noteCollections: [String: NotebookCollection] = [:]
     /// Notes, ideas, tasks and links saved today, newest first, by anyone (Today's "Captured today", D84).
     private(set) var captured: [NotebookItem] = []
+    /// Until when Quiet holds what isn't urgent, while it's on (read at each reload, so Home's views follow it).
+    private(set) var quietUntil: Date?
     /// Things done today: reminders and tasks ticked, and actions Sidefolk ran (Today's "done today", D84).
     private(set) var doneCount = 0
     private(set) var jobs: [Job] = []
@@ -247,6 +249,8 @@ final class NowModel {
         }
         skipped = await rt.executor.skipped.list()
         mode = (try? await rt.permissions.policy())?.mode ?? .askOncePerKind
+        let settings = rt.settings.current
+        quietUntil = settings.isQuiet(at: Date()) ? settings.quietUntil : nil
         let open = await rt.attention.open()
         let live = (try? await rt.sessions.live()) ?? []
         let needing = live.filter { $0.state == .needsYou }

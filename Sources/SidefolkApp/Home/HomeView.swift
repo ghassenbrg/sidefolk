@@ -7,6 +7,7 @@ struct HomeView: View {
     @Bindable var model: HomeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sayFocus = 0
+    @State private var detailWidth: CGFloat = 1000
 
     var body: some View {
         NavigationSplitView {
@@ -16,7 +17,8 @@ struct HomeView: View {
             page
         }
         .toolbar {
-            ToolbarItem(placement: .navigation) { PlaceTitle(model: model) }
+            // In a narrow window the bar keeps the room; the page says where it is.
+            if detailWidth >= 720 { ToolbarItem(placement: .navigation) { PlaceTitle(model: model) } }
             ToolbarItem(placement: .principal) {
                 SayBarField(text: Bindable(model.find).query,
                             prompt: Text("Ask \(model.companionName), or type a reminder, note or watch…"),
@@ -24,7 +26,9 @@ struct HomeView: View {
                             onSubmit: { model.send(.auto) }, focusTrigger: sayFocus,
                             focusChanged: { model.saying = $0 },
                             onEscape: { model.find.query = "" })
-                    .frame(minWidth: 300, idealWidth: Theme.Size.sayBarHomeMaxWidth)
+                    // The toolbar gives its centre item only its least width: the bar takes what the page leaves beside the
+                    // place's title and the New menu, at most 560.
+                    .frame(width: min(Theme.Size.sayBarHomeMaxWidth, max(200, detailWidth - (detailWidth >= 720 ? 420 : 180))))
             }
             ToolbarItem(placement: .primaryAction) {
                 // Everything Home can start, in one place (D58).
@@ -98,6 +102,7 @@ struct HomeView: View {
                 }
             }
             .animation(reduceMotion ? nil : Theme.Motion.micro, value: showsPanel)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
             .environment(model.pages)
     }
 
