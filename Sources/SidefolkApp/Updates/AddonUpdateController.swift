@@ -77,6 +77,12 @@ final class AddonUpdateController: AddonUpdateActions {
         Task { await look(installing: true) }
     }
 
+    /// "Check for Updates…": the gallery's list fetched again now, not the one kept for half an hour, so an add-on
+    /// published minutes ago is found without waiting for the next look.
+    func checkNow() {
+        Task { await look(refresh: true) }
+    }
+
     func review(_ entry: AddonEntry) {
         Task {
             do {
@@ -90,13 +96,14 @@ final class AddonUpdateController: AddonUpdateActions {
 
     // MARK: Looking
 
-    /// One look. `installing` installs what the rule allows even with the switch off (Update All).
-    private func look(installing: Bool = false) async {
+    /// One look. `installing` installs what the rule allows even with the switch off (Update All); `refresh` fetches
+    /// the gallery's list again.
+    private func look(installing: Bool = false, refresh: Bool = false) async {
         guard !model.addonsBusy else { return }
         let s = runtime.settings.current.updates
         followed = (s.effectiveChannel, s.addons)
         model.addonsBusy = true
-        let report = await updater.run(channel: s.effectiveChannel, automatic: s.addons || installing)
+        let report = await updater.run(channel: s.effectiveChannel, automatic: s.addons || installing, refresh: refresh)
         model.addonsBusy = false
         if !report.companions.isEmpty || !report.themes.isEmpty { onUpdated(report) }
         if report.installed > 0 {

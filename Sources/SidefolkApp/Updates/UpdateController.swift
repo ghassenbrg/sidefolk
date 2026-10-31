@@ -265,9 +265,14 @@ final class UpdateController: UpdateActions {
             refKind: updatedKind, refId: installed.page.absoluteString)
     }
 
+    /// Called when the person asks to check now (the add-ons' own check, D70).
+    var onCheckNow: () -> Void = {}
+
     // MARK: UpdateActions
 
     func checkNow() {
+        // Asked by the person: the add-ons are checked now too, whatever Sidefolk's own update is doing.
+        onCheckNow()
         guard !model.busy, staged == nil else { window.show(); return }
         window.show()
         Task { await look(manual: true) }

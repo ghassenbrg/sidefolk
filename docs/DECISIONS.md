@@ -1799,6 +1799,10 @@ in Activity (it is the audit of tool calls; an update is not one).
 `keepCompanionAddonsUpdated`), `AppServices.companionsUpdated`, `AppCoordinator.installSignals`; dev commands
 `update:ready`, `update:updated`, `addons:review|waiting|clear`, `scroll:<0…1>`. RELEASE.md › Updates.
 
+**Amended (2026-10-31): "Check for Updates…" checks the add-ons too.** It fetches the gallery's list again rather than
+the one kept for half an hour, then looks as the timed check does (installs what may install by itself, lists what
+waits). The founder published Miraya minutes after his copy had kept the list, and nothing could make it look sooner.
+
 ### D71 — Install sheets and approval cards that are honest without being scary: trust first, tone by source, guards beside each permission (2026-10-31)
 **Decision:** the same facts for every extension, said as loudly as where it comes from calls for.
 - **Where it comes from, first** (`InstallSource`, a row under the title): *From the Sidefolk gallery · Signed by

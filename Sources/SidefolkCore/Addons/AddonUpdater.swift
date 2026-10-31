@@ -60,10 +60,11 @@ public struct AddonUpdater: Sendable {
     }
 
     /// One look: with `automatic`, installs what the rule allows and leaves the rest for review; without, installs
-    /// nothing and says what waits. A failure leaves the old copy and is tried again at the next look.
-    public func run(channel: UpdateChannel, automatic: Bool) async -> AddonUpdateReport {
+    /// nothing and says what waits. A failure leaves the old copy and is tried again at the next look. `refresh`
+    /// fetches the gallery's list even when the one kept is recent (the person asked to check now).
+    public func run(channel: UpdateChannel, automatic: Bool, refresh: Bool = false) async -> AddonUpdateReport {
         var report = AddonUpdateReport()
-        guard store.source != nil, let catalog = try? await store.catalog() else { return report }
+        guard store.source != nil, let catalog = try? await store.catalog(refresh: refresh) else { return report }
         let companions = await store.companionUpdates(in: catalog, channel: channel)
         let themes = await store.themeUpdates(in: catalog, library: self.themes, channel: channel)
         let extensions = await extensionUpdates(in: catalog, channel: channel)

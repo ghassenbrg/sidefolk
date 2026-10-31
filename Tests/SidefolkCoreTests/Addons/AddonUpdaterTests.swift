@@ -116,6 +116,20 @@ import Testing
         await h.host.shutdown()
     }
 
+    /// The founder's case: the gallery's list was kept minutes before a new version went up. A timed look keeps the
+    /// list for half an hour and doesn't see it; "Check for Updates…" fetches it again and installs it.
+    @Test(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
+    func checkingNowSeesAVersionPublishedSinceTheListWasKept() async throws {
+        let (g, h, updater) = try await Self.scene()
+        try Self.publish(g, "1.1.0", note: "\n# a fix\n")
+        #expect(await updater.run(channel: .releases, automatic: true).extensions.isEmpty, "the kept list is still fresh")
+        #expect(await Self.installed(h)?.version == "1.0.0")
+        let report = await updater.run(channel: .releases, automatic: true, refresh: true)
+        #expect(report.extensions.map(\.version) == ["1.1.0"])
+        #expect(await Self.installed(h)?.version == "1.1.0")
+        await h.host.shutdown()
+    }
+
     @Test(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
     func aDisabledExtensionUpdatesAndStaysOff() async throws {
         let (g, h, updater) = try await Self.scene()

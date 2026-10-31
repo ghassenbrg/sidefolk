@@ -12,6 +12,7 @@ extension AppCoordinator {
         addonUpdater.onUpdated = { [weak self] report in self?.companionsUpdated(report.companions.map(\.companion)) }
         addonUpdater.openReview = { [weak self] folder in self?.settingsWindow.review(folder: folder) }
         addonUpdater.openSettings = { [weak self] in self?.openSettings(tab: .general) }
+        updater.onCheckNow = { [weak self] in self?.addonUpdater.checkNow() }
         Task {
             await updater.start()
             await addonUpdater.start()
