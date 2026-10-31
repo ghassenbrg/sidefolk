@@ -294,7 +294,8 @@ private struct WatchDutyRow: View {
         case .paused: Chip("Paused", tone: .neutral)
         case _ where waiting != nil:
             Chip(text: Text("Changed \(TimeFormat.clock(waiting?.createdAt ?? Date(), calendar: .current))", comment: "A watch noticed a change at a time"),
-                 tone: .warning)
+                 // The same tone as Today's tile and every watch: a change is news (D78), not something waiting on you.
+                 tone: ChipTone(StatusTone.watch(watcher.state, changeWaiting: true)))
         default: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .neutral)
         }
     }
