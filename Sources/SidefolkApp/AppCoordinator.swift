@@ -440,6 +440,11 @@ final class AppCoordinator {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
             return
         }
+        if command.hasPrefix("scroll:"), let fraction = Double(command.dropFirst(7)) {
+            // scroll:<0…1>: the tallest scroll view on screen that far down, so `snap` sees below the fold.
+            DebugSnapshots.scroll(to: fraction)
+            return
+        }
         if command.hasPrefix("page:") {
             // page:<extension id>/<page>: Home on an extension's page (D62).
             home.show(page: String(command.dropFirst(5)))

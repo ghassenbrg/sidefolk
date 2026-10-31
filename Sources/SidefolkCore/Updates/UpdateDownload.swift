@@ -33,13 +33,17 @@ public struct UpdateDownloader: UpdateDownloading {
         defer { session.finishTasksAndInvalidate() }
         var request = URLRequest(url: url)
         request.setValue("Sidefolk/\(SidefolkVersion.current)", forHTTPHeaderField: "User-Agent")
+        // The task exists before anything can cancel it: cancelling invalidated the session once, and a task asked of
+        // an invalidated session throws an Objective-C exception, which ended the app (a Settings page closed while
+        // the gallery's catalog was on its way). A cancelled task still ends through the delegate.
+        let task = session.downloadTask(with: request)
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 delegate.finish = { continuation.resume(with: $0) }
-                session.downloadTask(with: request).resume()
+                task.resume()
             }
         } onCancel: {
-            session.invalidateAndCancel()
+            task.cancel()
         }
     }
 

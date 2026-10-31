@@ -43,5 +43,21 @@ enum DebugSnapshots {
         }
         Log.shared.info("dev", "snapshots written", ["dir": dir.path])
     }
+
+    /// Scrolls the tallest scroll view among Sidefolk's visible windows (Settings, Home) to `fraction` of the way down
+    /// (0 top, 1 bottom), so `snap` sees below the fold.
+    static func scroll(to fraction: Double) {
+        func scrollViews(_ view: NSView) -> [NSScrollView] {
+            if let scroll = view as? NSScrollView { return [scroll] }
+            return view.subviews.flatMap(scrollViews)
+        }
+        let all = NSApp.windows.filter(\.isVisible).compactMap(\.contentView).flatMap(scrollViews)
+        guard let scroll = all.max(by: { ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0) }),
+              let document = scroll.documentView else { return }
+        let room = max(document.frame.height - scroll.contentView.bounds.height, 0)
+        let y = document.isFlipped ? room * fraction : room * (1 - fraction)
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: y))
+        scroll.reflectScrolledClipView(scroll.contentView)
+    }
 }
 #endif
