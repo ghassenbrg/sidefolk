@@ -12,6 +12,19 @@ import Testing
         #expect(s.sandboxed)
     }
 
+    @Test func outputMuteIsExplicitAndWidensAnUpdate() throws {
+        let old = ExtensionPermissions()
+        let newer = ExtensionPermissions(outputMute: true)
+        #expect(newer.widens(old) && !old.widens(newer))
+        #expect(newer.raisesRiskFloor)
+        let line = try #require(PermissionSummary.forExtension(newer).lines.first { $0.kind == .outputMute })
+        #expect(line.caution && line.text.contains("mute") && line.text.contains("other apps"))
+        let legacy = Data(#"{"network":false,"read":[],"write":[],"exec":[]}"#.utf8)
+        #expect(try JSONDecoder().decode(ExtensionPermissions.self, from: legacy).outputMute == false)
+        let parsed = try JSONDecoder().decode(ExtensionManifest.Permissions.self, from: Data(#"{"output_mute":true}"#.utf8))
+        #expect(parsed.outputMute)
+    }
+
     @Test func plainLanguageLines() {
         let p = ExtensionPermissions(network: true, read: [home + "/Documents"], write: [home + "/Notes"], exec: ["/usr/bin/pmset"])
         let s = PermissionSummary.forExtension(p)

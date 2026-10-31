@@ -195,9 +195,18 @@ private struct SectionView: View {
                     HStack(spacing: Theme.Space.s) {
                         Image(systemName: "chevron.forward").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.inkMuted)
                             .rotationEffect(.degrees(open ? 90 : 0))
-                        Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                            if let detail = section.detail {
+                                Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                         Spacer(minLength: 0)
                     }
+                    .padding(Theme.Space.m)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .cardSurface()
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

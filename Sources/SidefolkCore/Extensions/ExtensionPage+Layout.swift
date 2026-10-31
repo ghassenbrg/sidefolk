@@ -5,7 +5,7 @@ import Foundation
 // across it and its small ones side by side; a page of switches stays a readable column.
 
 /// Where a part of the page goes (D74): across the top, in the column beside the main one, or in the main one.
-public enum PageRegion: Equatable, Sendable { case top, side, main }
+public enum PageRegion: Equatable, Sendable { case top, side, main, bottom }
 
 extension ExtensionPage {
     /// Numbers or several cards, a hero, pictures or a column beside the main one: worth a wide window. A page of
@@ -15,15 +15,19 @@ extension ExtensionPage {
     }
 
     /// Some sections go in a column beside the others (D74).
-    public var hasSide: Bool { sections.contains { $0.place == .side } }
+    public var hasSide: Bool { sections.prefix { $0.place != .bottom }.contains { $0.place == .side } }
 
     /// What the page draws, in reading order, each with where it goes (D74): a hero leading the page across it, side
     /// sections one by one, and the main sections in runs (the wide ones alone, small ones between them together).
     public var regions: [(region: PageRegion, sections: [Section])] {
         var out: [(region: PageRegion, sections: [Section])] = []
+        var bottom = false
         for (i, section) in sections.enumerated() {
             if i == 0, hero != nil {
                 out.append((.top, [section]))
+            } else if bottom || section.place == .bottom {
+                bottom = true
+                out.append((.bottom, [section]))
             } else if section.place == .side, hasSide {
                 out.append((.side, [section]))
             } else if !section.isWide, let last = out.last, last.region == .main, let first = last.sections.first, !first.isWide {

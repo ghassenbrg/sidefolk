@@ -74,11 +74,26 @@ struct HeroView: View {
     var model: ExtensionPageModel
 
     var body: some View {
+        if hero.code == nil && hero.facts.isEmpty && hero.image == nil && !hero.busy {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: Theme.Space.xl) {
+                    words(showActions: false).frame(minWidth: 300, maxWidth: .infinity, alignment: .leading)
+                    actions.fixedSize(horizontal: true, vertical: false)
+                }
+                words(showActions: true)
+            }
+            .modifier(HeroSurface(tone: hero.tone))
+        } else {
+            detailed
+        }
+    }
+
+    private var detailed: some View {
         // The picture beside the words when there's room for both; in a narrow window the words alone (the page's own
         // pictures are further down).
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: Theme.Space.xl) {
-                words.frame(minWidth: 300, idealWidth: 300, maxWidth: .infinity, alignment: .leading)
+                words(showActions: true).frame(minWidth: 300, idealWidth: 300, maxWidth: .infinity, alignment: .leading)
                 if let image = hero.image, let folder = model.folder {
                     ExtensionPictureView(name: image, folder: folder, pixels: 640)
                         .frame(width: 256, height: 160)
@@ -87,22 +102,27 @@ struct HeroView: View {
                         .shadow(color: Theme.navy.opacity(0.10), radius: 10, y: 4)
                 }
             }
-            words.frame(maxWidth: .infinity, alignment: .leading)
+            words(showActions: true).frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(Theme.Space.xl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous).fill(Theme.surfaceRaised)
-            // The state's colour as a soft wash from the leading edge, so a glance tells ready from paused from wrong.
-            RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous)
-                .fill(LinearGradient(colors: [hero.tone.soft, hero.tone.soft.opacity(0)], startPoint: .topLeading, endPoint: .bottomTrailing))
-        }
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous).strokeBorder(hero.tone == .neutral ? Theme.line : hero.tone.color.opacity(0.35)))
-        .shadow(color: Theme.navy.opacity(0.06), radius: 12, y: 3)
-        .accessibilityElement(children: .contain)
+        .modifier(HeroSurface(tone: hero.tone))
     }
 
-    private var words: some View {
+    private func words(showActions: Bool) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
+            heading
+            if showActions { actions }
+        }
+    }
+
+    private var actions: some View {
+        FlowRow(spacing: Theme.Space.s) {
+            ForEach(Array(hero.actions.enumerated()), id: \.offset) { _, c in
+                PageButton(control: c, model: model, large: true, leads: !(model.page?.hasPrimary ?? true))
+            }
+        }
+    }
+
+    private var heading: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             HStack(alignment: .top, spacing: Theme.Space.m) {
                 Image(systemName: hero.symbol ?? hero.tone.symbol)
@@ -115,7 +135,6 @@ struct HeroView: View {
                             if hero.busy { ProgressView().controlSize(.small).scaleEffect(0.6).frame(width: 12, height: 12) }
                             else { Circle().fill(hero.tone == .neutral ? Theme.inkFaint : hero.tone.color).frame(width: 7, height: 7) }
                             if let eyebrow = hero.eyebrow {
-                                // Yellow words on a pale wash are hard to read: a warning says it with its dot.
                                 Text(verbatim: eyebrow).font(Theme.Font.captionStrong)
                                     .foregroundStyle(hero.tone == .neutral || hero.tone == .warn ? Theme.inkMuted : hero.tone.color)
                             }
@@ -142,21 +161,31 @@ struct HeroView: View {
                             Text(verbatim: fact.value).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
                                 .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                             Text(verbatim: fact.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
-                        }
-                        .accessibilityElement(children: .combine)
+                        }.accessibilityElement(children: .combine)
                     }
                 }
-            }
-            if !hero.actions.isEmpty {
-                FlowRow(spacing: Theme.Space.s) {
-                    ForEach(Array(hero.actions.enumerated()), id: \.offset) { _, c in
-                        PageButton(control: c, model: model, large: true, leads: !(model.page?.hasPrimary ?? true))
-                    }
-                }
-                .padding(.top, Theme.Space.xs)
             }
         }
     }
+}
+
+private struct HeroSurface: ViewModifier {
+    var tone: ExtensionPage.Tone
+    func body(content: Content) -> some View {
+        content
+        .padding(Theme.Space.xl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous).fill(Theme.surfaceRaised)
+            // The state's colour as a soft wash from the leading edge, so a glance tells ready from paused from wrong.
+            RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous)
+                .fill(LinearGradient(colors: [tone.soft, tone.soft.opacity(0)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        }
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous).strokeBorder(tone == .neutral ? Theme.line : tone.color.opacity(0.35)))
+        .shadow(color: Theme.navy.opacity(0.06), radius: 12, y: 3)
+        .accessibilityElement(children: .contain)
+    }
+
 }
 
 // MARK: Transport

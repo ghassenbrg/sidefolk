@@ -158,7 +158,7 @@ struct ExtensionScreenUDPTests {
     """
 
     /// The gallery's Miraya in this host's sandbox: WebRTC loads from its lib/, it starts and keeps running, its page
-    /// (D74) leads with a hero holding one primary action and lists TVs in a side column, and a link that isn't HTTPS is
+    /// leads with a hero holding one primary action, and a link that isn't HTTPS is
     /// refused before anything is sent.
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func mirayaStartsInItsSandbox() async throws {
@@ -166,8 +166,12 @@ struct ExtensionScreenUDPTests {
         let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"))
         #expect(info.tools.allSatisfy { $0.risk != .low }, "the network raises every tool to medium")
         let page = try await h.host.renderPage(extensionId: info.id, page: "miraya")
-        #expect(page.summary != nil && page.hasSide, "\(String(describing: page.summary))")
+        #expect(page.summary != nil, "\(String(describing: page.summary))")
         let hero = try #require(page.hero)
+        if hero.title == "No TV found yet" {
+            #expect(!page.hasSide, "manual connection uses the full width until a TV is found")
+            #expect(page.sections.flatMap(\.blocks).contains { if case .field = $0 { true } else { false } })
+        }
         #expect(hero.actions.filter { $0.style == .primary }.count == 1, "\(hero)")
         let status = try #require(await h.call("ext.miraya.tv_status").okText)
         #expect(status.hasSuffix("."), "\(status)")

@@ -110,4 +110,18 @@ struct ExtensionPageLayoutTests {
         let plain = try Self.page(#"{"sections": [{"blocks": [{"type": "note", "text": "a"}]}, {"blocks": [{"type": "hero", "title": "Late"}]}]}"#)
         #expect(plain.hero == nil && plain.regions.map(\.region) == [.main, .main] && !plain.hasSide)
     }
+
+    @Test func bottomSectionsFollowBothColumns() throws {
+        let page = try Self.page(#"""
+            {"sections": [
+              {"blocks": [{"type": "hero", "title": "Ready"}]},
+              {"title": "TVs", "place": "side", "blocks": [{"type": "note", "text": "TV"}]},
+              {"title": "Source", "blocks": [{"type": "note", "text": "Screen"}]},
+              {"title": "Settings", "detail": "Balanced · sound on", "place": "bottom", "collapsed": true, "blocks": [{"type": "switch", "label": "Sound", "tool": "sound"}]},
+              {"title": "More", "blocks": [{"type": "note", "text": "More"}]}]}
+            """#)
+        #expect(page.regions.map(\.region) == [.top, .side, .main, .bottom, .bottom])
+        #expect(page.sections[3].detail == "Balanced · sound on")
+        #expect(page.regions.suffix(2).compactMap { $0.sections.first?.title } == ["Settings", "More"])
+    }
 }

@@ -351,7 +351,7 @@ public struct ManifestValidator: Sendable {
     func checkPermissions(_ p: ExtensionManifest.Permissions, folder: String, issues: inout [ValidationIssue],
                           warnings: inout [String]) -> ExtensionPermissions {
         var result = ExtensionPermissions(network: p.network, media: p.media, clipboard: p.clipboard, power: p.power, screen: p.screen,
-                                          udp: p.udp && p.network)
+                                          udp: p.udp && p.network, outputMute: p.outputMute)
         if let purpose = p.networkPurpose {
             let line = ExtensionText.line(purpose, characters: 120)
             if !p.network || line != purpose || !purpose.hasPrefix("for ") && !purpose.hasPrefix("to ") {
@@ -645,6 +645,7 @@ public enum ExtensionValidator {
             try paths.prepare()
             var configuration = ExtensionHost.Configuration()
             configuration.resolver = resolver
+            configuration.allowOutputMute = false
             let host = ExtensionHost(paths: paths, store: ExtensionStore(try AppDatabase.inMemory()), registry: ToolRegistry(),
                                      events: EventBus(), configuration: configuration)
             let info = try await host.install(from: folder)
