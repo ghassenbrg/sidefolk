@@ -216,6 +216,12 @@ public enum Format {
         return f.localizedString(for: date, relativeTo: now)
     }
 
+    /// Sentences one after another as the language writes them: with a space, or with none in Japanese and Chinese.
+    public static func sentences(_ parts: [String]) -> String {
+        let tight = ["ja", "zh"].contains(String(Language.code.prefix { $0 != "-" }))
+        return parts.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: tight ? "" : " ")
+    }
+
     /// "a, b and c" in the language's own words.
     public static func list(_ items: [String], or: Bool = false) -> String {
         items.formatted(.list(type: or ? .or : .and, width: .standard).locale(locale))
