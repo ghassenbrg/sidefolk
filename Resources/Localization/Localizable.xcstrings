@@ -196,6 +196,71 @@
         }
       }
     },
+    "%@ %@ needs a look" : {
+      "comment" : "Settings › Updates: an extension update waiting for review",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج %1$@ %2$@ إلى نظرة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ braucht einen Blick"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@ needs a look"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ necesita un vistazo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ demande un coup d’œil"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ richiede un'occhiata"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@の確認が必要です"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ 확인이 필요해요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ precisa de uma olhada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ 需要你看一下"
+          }
+        }
+      }
+    },
     "%@ (built on this Mac)" : {
       "comment" : "Settings › Updates: a copy that isn't a published release",
       "localizations" : {
@@ -3643,6 +3708,65 @@
         }
       }
     },
+    "%@ has an update to look at" : {
+      "comment" : "An extension's update waits for review: “Git has an update to look at”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لدى %@ تحديث يحتاج إلى مراجعة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat ein Update zum Ansehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tiene una actualización que revisar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a une mise à jour à examiner"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ha un aggiornamento da esaminare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@に確認が必要なアップデートがあります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에 검토할 업데이트가 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tem uma atualização para revisar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 有一个待查看的更新"
+          }
+        }
+      }
+    },
     "%@ has passed." : {
       "localizations" : {
         "ar" : {
@@ -3819,6 +3943,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@的条目太多（最多 %2$lld 个）。"
+          }
+        }
+      }
+    },
+    "%@ have updates to look at" : {
+      "comment" : "Extensions' updates wait for review: “Git and Feeds have updates to look at”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لدى %@ تحديثات تحتاج إلى مراجعة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ haben Updates zum Ansehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tienen actualizaciones que revisar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ont des mises à jour à examiner"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hanno aggiornamenti da esaminare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@に確認が必要なアップデートがあります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에 검토할 업데이트가 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ têm atualizações para revisar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 有待查看的更新"
           }
         }
       }
@@ -10097,6 +10280,197 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@：输出有变化"
+          }
+        }
+      }
+    },
+    "%lld add-on updates are ready" : {
+      "comment" : "Settings › Updates, while add-ons don't update by themselves",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا توجد تحديثات إضافات جاهزة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحديث إضافة واحد جاهز"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحديثا إضافات جاهزان"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تحديثات إضافات جاهزة"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تحديثًا للإضافات جاهزًا"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تحديث إضافات جاهز"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Add-on-Update ist bereit"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Add-on-Updates sind bereit"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld add-on update is ready"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld add-on updates are ready"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld actualización de complemento lista"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld actualizaciones de complementos listas"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mise à jour de module est prête"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mises à jour de modules sont prêtes"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld aggiornamento di componenti aggiuntivi pronto"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld aggiornamenti di componenti aggiuntivi pronti"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "アドオンのアップデートが%lld件あります"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "애드온 업데이트 %lld개가 준비됐어요"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld atualização de complemento pronta"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld atualizações de complementos prontas"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个附加组件更新已就绪"
+                }
+              }
+            }
           }
         }
       }
@@ -21190,6 +21564,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快照版附加组件已隐藏：它们是正式发布前的测试版本。显示它们后，也会提供 Sidefolk 本身的快照版，与“设置 › 通用 › 更新”中相同。"
+          }
+        }
+      }
+    },
+    "Add-ons updated %@" : {
+      "comment" : "Settings › Updates: “Add-ons updated 2 hours ago”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُدِّثت الإضافات %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add-ons aktualisiert %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complementos actualizados %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modules mis à jour %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Componenti aggiuntivi aggiornati %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アドオンを更新しました（%@）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "애드온 업데이트됨 %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complementos atualizados %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加组件已更新 %@"
           }
         }
       }
@@ -33787,6 +34220,7 @@
       }
     },
     "Check for updates automatically" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -40646,6 +41080,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用 Sidefolk 的 companions 文件夹中的数据制作的伙伴。它们会穿戴上面选择的颜色和围巾。"
+          }
+        }
+      }
+    },
+    "Companions, themes and extensions from the gallery. An extension whose new version would be allowed to do more always waits for you to look first." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرفاق والسمات والامتدادات من المعرض. الامتداد الذي سيُسمح لإصداره الجديد بفعل المزيد ينتظر دائمًا أن تلقي نظرة أولًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begleiter, Themes und Erweiterungen aus der Galerie. Eine Erweiterung, deren neue Version mehr dürfte, wartet immer, bis du sie dir angesehen hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compañeros, temas y extensiones de la galería. Una extensión cuya nueva versión podría hacer más siempre espera a que la revises."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compagnons, thèmes et extensions de la galerie. Une extension dont la nouvelle version aurait le droit d’en faire plus attend toujours que vous l’ayez examinée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compagni, temi ed estensioni dalla galleria. Un'estensione la cui nuova versione potrebbe fare di più aspetta sempre che tu la esamini."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーのコンパニオン、テーマ、拡張機能。新しいバージョンでできることが増える拡張機能は、必ずあなたが確認するまで待ちます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리의 컴패니언, 테마, 확장 프로그램. 새 버전에서 할 수 있는 일이 늘어나는 확장 프로그램은 항상 먼저 확인할 때까지 기다려요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Companheiros, temas e extensões da galeria. Uma extensão cuja nova versão poderia fazer mais sempre espera você revisar primeiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自画廊的伙伴、主题和扩展。新版本获准做更多事的扩展，总会等你先看过。"
           }
         }
       }
@@ -47583,6 +48075,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "读取前不询问"
+          }
+        }
+      }
+    },
+    "Don't check" : {
+      "comment" : "Settings › Updates › New versions of Sidefolk",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عدم البحث"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht suchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No comprobar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne pas vérifier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non controllare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認しない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não buscar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不检查"
           }
         }
       }
@@ -69493,6 +70044,65 @@
         }
       }
     },
+    "Install automatically" : {
+      "comment" : "Settings › Updates › New versions of Sidefolk",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التثبيت تلقائيًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch installieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar automáticamente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer automatiquement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installa automaticamente"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動的にインストール"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동으로 설치"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar automaticamente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动安装"
+          }
+        }
+      }
+    },
     "Install from Folder…" : {
       "localizations" : {
         "ar" : {
@@ -71138,6 +71748,64 @@
         }
       }
     },
+    "It installed by itself, as you chose in Settings › Updates." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثُبِّت تلقائيًا كما اخترت في الإعدادات › التحديثات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Update wurde von selbst installiert, wie in Einstellungen › Updates gewählt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La actualización se instaló sola, como elegiste en Ajustes › Actualizaciones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La mise à jour s’est installée toute seule, comme vous l’avez choisi dans Réglages › Mises à jour."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'aggiornamento si è installato da solo, come hai scelto in Impostazioni › Aggiornamenti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」›「アップデート」での選択どおり、自動的にインストールされました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 › 업데이트에서 선택한 대로 자동으로 설치됐어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A atualização se instalou sozinha, como você escolheu em Ajustes › Atualizações."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已按你在“设置 › 更新”中的选择自动安装。"
+          }
+        }
+      }
+    },
     "It kept using more than half a CPU core for a minute." : {
       "localizations" : {
         "ar" : {
@@ -72467,6 +73135,64 @@
         }
       }
     },
+    "It's downloaded and checked. Sidefolk restarts once you've been away for a few minutes, or the next time you quit it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُزِّل وفُحص. يُعاد تشغيل Sidefolk بعد ابتعادك لبضع دقائق، أو في المرة التالية التي تُنهيه فيها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Version ist geladen und geprüft. Sidefolk startet neu, sobald du ein paar Minuten weg warst, oder wenn du es das nächste Mal beendest."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Está descargada y comprobada. Sidefolk se reinicia cuando lleves unos minutos fuera, o la próxima vez que lo cierres."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version est téléchargée et vérifiée. Sidefolk redémarre quand vous vous êtes absenté quelques minutes, ou la prochaine fois que vous le quittez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versione è scaricata e verificata. Sidefolk si riavvia quando sei via da qualche minuto, o la prossima volta che lo chiudi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードと確認は済んでいます。数分間席を外したとき、または次に終了したときに Sidefolk が再起動します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다운로드와 확인이 끝났어요. 몇 분 동안 자리를 비우거나 다음에 종료할 때 Sidefolk가 다시 시작해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Está baixada e verificada. O Sidefolk reinicia quando você ficar alguns minutos ausente, ou na próxima vez que você o encerrar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已下载并检查。你离开几分钟后，或下次退出时，Sidefolk 会重新启动。"
+          }
+        }
+      }
+    },
     "It's empty." : {
       "localizations" : {
         "ar" : {
@@ -73162,6 +73888,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它的说明会被移除。此操作无法撤销。"
+          }
+        }
+      }
+    },
+    "Its new version would be allowed to do more. Review shows what's new." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُسمح لإصداره الجديد بفعل المزيد. تعرض «مراجعة» ما الجديد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre neue Version dürfte mehr. „Prüfen“ zeigt, was neu ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su nueva versión podría hacer más. Revisar muestra qué cambia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sa nouvelle version aurait le droit d’en faire plus. Examiner montre ce qui change."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sua nuova versione potrebbe fare di più. Esamina mostra cosa cambia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいバージョンではできることが増えます。「確認」で変更点を表示します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 버전에서 할 수 있는 일이 늘어나요. 검토를 누르면 바뀐 점을 보여줘요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A nova versão poderia fazer mais. Revisar mostra o que mudou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的新版本获准做更多事。“查看”会显示有哪些变化。"
           }
         }
       }
@@ -79162,6 +79946,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在检查…"
+          }
+        }
+      }
+    },
+    "Looks once a day, downloads and checks a new version, and restarts when you've been away for a few minutes, or when you quit. Never in the middle of something." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبحث مرة في اليوم، وينزّل الإصدار الجديد ويفحصه، ثم يُعيد التشغيل بعد ابتعادك لبضع دقائق أو عند الإنهاء. لا يحدث ذلك أبدًا في منتصف أمر ما."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sucht einmal am Tag, lädt und prüft eine neue Version und startet neu, wenn du ein paar Minuten weg warst oder Sidefolk beendest. Nie mitten in etwas."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprueba una vez al día, descarga y verifica una nueva versión, y se reinicia cuando lleves unos minutos fuera o cuando lo cierres. Nunca en medio de algo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie une fois par jour, télécharge et contrôle une nouvelle version, puis redémarre quand vous vous êtes absenté quelques minutes, ou quand vous quittez. Jamais au milieu de quelque chose."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla una volta al giorno, scarica e verifica una nuova versione e si riavvia quando sei via da qualche minuto o quando lo chiudi. Mai nel mezzo di qualcosa."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1日に1回確認し、新しいバージョンをダウンロードして検証したうえで、数分間席を外したときか終了したときに再起動します。作業の途中には行いません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "하루에 한 번 확인하고, 새 버전을 다운로드해 검증한 뒤 몇 분 동안 자리를 비우거나 종료할 때 다시 시작해요. 작업 중에는 절대 하지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca uma vez por dia, baixa e verifica uma nova versão e reinicia quando você ficar alguns minutos ausente ou quando encerrar. Nunca no meio de algo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天检查一次，下载并验证新版本，在你离开几分钟后或退出时重新启动。绝不会在你做事的中途进行。"
           }
         }
       }
@@ -87203,6 +88045,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已创建新主题“%@”。"
+          }
+        }
+      }
+    },
+    "New versions of Sidefolk" : {
+      "comment" : "Settings › Updates: what Sidefolk does about its own updates",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إصدارات Sidefolk الجديدة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Versionen von Sidefolk"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevas versiones de Sidefolk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelles versions de Sidefolk"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuove versioni di Sidefolk"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk の新しいバージョン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 새 버전"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novas versões do Sidefolk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 的新版本"
           }
         }
       }
@@ -112786,6 +113687,64 @@
         }
       }
     },
+    "Restart Now" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعادة التشغيل الآن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt neu starten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar ahora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redémarrer maintenant"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riavvia ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今すぐ再起動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 재시작"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar Agora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即重新启动"
+          }
+        }
+      }
+    },
     "Restart Sidefolk to try again, or choose another provider in Settings › AI." : {
       "localizations" : {
         "ar" : {
@@ -113886,6 +114845,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已恢复监视 %@"
+          }
+        }
+      }
+    },
+    "Review" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مراجعة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examiner"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esamina"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검토"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看"
           }
         }
       }
@@ -124147,6 +125164,65 @@
         }
       }
     },
+    "Sidefolk %@ will install by itself" : {
+      "comment" : "An update downloaded and checked, waiting to restart Sidefolk",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُثبَّت Sidefolk %@ تلقائيًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@ installiert sich von selbst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@ se instalará solo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@ s’installera tout seul"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@ si installerà da solo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@は自動的にインストールされます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@이(가) 자동으로 설치돼요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk %@ vai se instalar sozinho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@ 将自动安装"
+          }
+        }
+      }
+    },
     "Sidefolk Diagnostics" : {
       "localizations" : {
         "ar" : {
@@ -125535,6 +126611,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 在每次对话中都会记着这些。你可以随意更改或删除。"
+          }
+        }
+      }
+    },
+    "Sidefolk looks only when you choose Check Now, here or in the menu bar." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يبحث Sidefolk إلا عندما تختار «بحث الآن»، هنا أو في شريط القائمة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk sucht nur, wenn du „Jetzt suchen“ wählst, hier oder in der Menüleiste."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk solo comprueba cuando eliges Comprobar ahora, aquí o en la barra de menús."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk ne vérifie que quand vous choisissez Vérifier maintenant, ici ou dans la barre des menus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk controlla solo quando scegli Controlla ora, qui o nella barra dei menu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここかメニューバーで「今すぐ確認」を選んだときだけ確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여기나 메뉴 막대에서 지금 확인을 선택할 때만 확인해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk só busca quando você escolhe Buscar Agora, aqui ou na barra de menus."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅在你于此处或菜单栏中选择“立即检查”时才检查。"
           }
         }
       }
@@ -128508,6 +129642,7 @@
       }
     },
     "Snapshots are test builds that come out before a release." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -128561,6 +129696,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快照版是在正式发布前推出的测试版本。"
+          }
+        }
+      }
+    },
+    "Snapshots are test builds that come out before a release. Add-ons follow this too." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النسخ التجريبية إصدارات اختبار تصدر قبل الإصدار المنشور. تتبع الإضافات هذا الخيار أيضًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snapshots sind Testversionen, die vor einem Release erscheinen. Add-ons richten sich auch danach."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las snapshots son versiones de prueba que salen antes de una versión estable. Los complementos también siguen esta opción."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les snapshots sont des versions de test publiées avant une version stable. Les modules suivent aussi ce choix."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli snapshot sono versioni di prova che escono prima di una versione stabile. Anche i componenti aggiuntivi seguono questa scelta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スナップショットはリリース前に出るテスト版です。アドオンもこの設定に従います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스냅샷은 릴리스 전에 나오는 테스트 빌드예요. 애드온도 이 설정을 따라요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snapshots são versões de teste que saem antes de um lançamento. Os complementos também seguem esta opção."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快照版是正式版之前发布的测试版本。附加组件也遵循此设置。"
           }
         }
       }
@@ -133868,6 +135061,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "任务"
+          }
+        }
+      }
+    },
+    "Tell me" : {
+      "comment" : "Settings › Updates › New versions of Sidefolk: ask before installing",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخبرني"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mir Bescheid geben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avisarme"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Me prévenir"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvisami"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "知らせる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알려 주기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Me avisar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知我"
           }
         }
       }
@@ -143313,6 +144565,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新版本没有经过 Sidefolk 开发者的签名和公证，所以没有安装。"
+          }
+        }
+      }
+    },
+    "The new version would be allowed to do more, so it waits until you've seen what's new." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُسمح للإصدار الجديد بفعل المزيد، لذا ينتظر حتى ترى ما الجديد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die neue Version dürfte mehr, deshalb wartet sie, bis du gesehen hast, was neu ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La nueva versión podría hacer más, así que espera hasta que hayas visto qué cambia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La nouvelle version aurait le droit d’en faire plus, alors elle attend que vous ayez vu ce qui change."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La nuova versione potrebbe fare di più, quindi aspetta finché non hai visto cosa cambia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいバージョンではできることが増えるため、変更点を確認するまで待ちます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 버전에서 할 수 있는 일이 늘어나서, 바뀐 점을 확인할 때까지 기다려요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A nova versão poderia fazer mais, então espera até você ver o que mudou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新版本获准做更多事，所以会等你看过变化后再安装。"
           }
         }
       }
@@ -155544,7 +156854,7 @@
       }
     },
     "Update %@" : {
-      "comment" : "A button in the add-on gallery",
+      "comment" : "A button in the add-on gallery\nThe mark on a companion the gallery has a newer version of",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -155598,6 +156908,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新 %@"
+          }
+        }
+      }
+    },
+    "Update %@ to %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديث %1$@ إلى %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ auf %2$@ aktualisieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update %1$@ to %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar %1$@ a %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour %1$@ vers %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna %1$@ a %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@を%2$@にアップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@을(를) %2$@(으)로 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar %1$@ para %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将 %1$@ 更新到 %2$@"
           }
         }
       }
@@ -155656,6 +157030,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要更新 %@ 吗？"
+          }
+        }
+      }
+    },
+    "Update All" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديث الكل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle aktualisieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout mettre à jour"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna tutto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてアップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar Tudo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部更新"
           }
         }
       }
@@ -155888,6 +157320,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请更新 Sidefolk，然后重试。"
+          }
+        }
+      }
+    },
+    "Update add-ons automatically" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديث الإضافات تلقائيًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add-ons automatisch aktualisieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar complementos automáticamente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour les modules automatiquement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna i componenti aggiuntivi automaticamente"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アドオンを自動的にアップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "애드온 자동으로 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar complementos automaticamente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动更新附加组件"
           }
         }
       }
@@ -156295,6 +157785,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已更新任务"
+          }
+        }
+      }
+    },
+    "Updated to Sidefolk %@" : {
+      "comment" : "After Sidefolk installed an update by itself: “Updated to Sidefolk 0.1.0 snapshot 540”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التحديث إلى Sidefolk %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Sidefolk %@ aktualisiert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizado a Sidefolk %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mis à jour vers Sidefolk %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornato a Sidefolk %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@にアップデートしました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk %@(으)로 업데이트했어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizado para o Sidefolk %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已更新到 Sidefolk %@"
           }
         }
       }
@@ -158104,6 +159653,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本 %@"
+          }
+        }
+      }
+    },
+    "Version %@ installs when you're away or when you quit." : {
+      "comment" : "Settings › Updates",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُثبَّت الإصدار %@ عندما تبتعد أو عند الإنهاء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ wird installiert, wenn du weg bist oder Sidefolk beendest."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ se instala cuando no estés o cuando cierres la app."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ s’installe quand vous êtes absent ou quand vous quittez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versione %@ si installa quando sei via o quando chiudi l'app."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョン%@は、席を外したときか終了したときにインストールされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 %@은(는) 자리를 비우거나 종료할 때 설치돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é instalada quando você estiver ausente ou quando encerrar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 会在你离开或退出时安装。"
           }
         }
       }
@@ -162642,6 +164250,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你在“Sidefolk 可以做的事”下关闭的内容仍保持关闭。"
+          }
+        }
+      }
+    },
+    "What's New" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما الجديد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was ist neu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveautés"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novità"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新機能"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 기능"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novidades"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新功能"
           }
         }
       }
