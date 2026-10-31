@@ -10,6 +10,8 @@ struct NowView: View {
     /// The queue row the keyboard is on (D58).
     @FocusState private var focused: String?
     @State private var editing: Reminder?
+    /// The day card's width: tomorrow sits beside the line only where the line keeps room for its hours.
+    @State private var dayWidth: CGFloat = 800
 
     private var layout: ThemeLayout { ThemeStore.shared.style.tokens.layout }
 
@@ -20,7 +22,7 @@ struct NowView: View {
             }
             ForEach(Array(layout.today.enumerated()), id: \.offset) { _, row in
                 ColumnsLayout(widths: row.map(\.width), spacing: Theme.Space.l,
-                              minimums: row.map { $0.blocks.allSatisfy { $0.kind == .art } ? 150 : 230 }) {
+                              minimums: row.map(Self.leastWidth)) {
                     ForEach(Array(row.enumerated()), id: \.offset) { _, column in
                         let blocks = VStack(alignment: .leading, spacing: Theme.Space.xl) {
                             ForEach(column.blocks.filter(shows), id: \.self) { block($0) }
@@ -31,6 +33,12 @@ struct NowView: View {
             }
         }
         .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: model) }
+    }
+
+    /// A column's least width beside others: a picture's can be narrower than one of words, and a sheet of paper
+    /// counts its margins, so its words still get their least.
+    static func leastWidth(_ column: ThemeLayout.Column) -> CGFloat {
+        (column.blocks.allSatisfy { $0.kind == .art } ? 150 : 230) + (column.page ? 2 * Theme.Space.xl : 0)
     }
 
     /// The Console's filter (D64): agents, your own, or watches, with the header and what needs you always there.
@@ -194,30 +202,32 @@ struct NowView: View {
             }
             // Today as a line (D58), with the calendar beside the reminders once it's shown (D57), and tomorrow beside it.
             RowsCard {
-                HStack(alignment: .top, spacing: 0) {
-                    DayRail(reminders: today, done: model.doneToday, events: model.events(on: .today), now: Date(),
-                            move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) },
-                            menu: { AnyView(ReminderMenu(reminder: $0, model: model) { editing = $0 }) })
-                    if !tomorrow.isEmpty || !later.isEmpty || !model.events(on: .tomorrow).isEmpty {
+                let rail = DayRail(reminders: today, done: model.doneToday, events: model.events(on: .today), now: Date(),
+                                   move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) },
+                                   menu: { AnyView(ReminderMenu(reminder: $0, model: model) { editing = $0 }) })
+                let hasTomorrow = !tomorrow.isEmpty || !later.isEmpty || !model.events(on: .tomorrow).isEmpty
+                let tomorrowColumn = TomorrowColumn(reminders: tomorrow, events: model.events(on: .tomorrow), later: later, model: model) { editing = $0 }
+                // Beside the line it took 180 points of a narrow card, and six hours were drawn in what was left.
+                if hasTomorrow && dayWidth >= 560 {
+                    HStack(alignment: .top, spacing: 0) {
+                        rail
                         Divider()
-                        TomorrowColumn(reminders: tomorrow, events: model.events(on: .tomorrow), later: later, model: model) { editing = $0 }
-                            .frame(width: 180, alignment: .topLeading)
+                        tomorrowColumn.frame(width: 180, alignment: .topLeading)
                     }
+                } else {
+                    rail
+                    if hasTomorrow { tomorrowColumn.frame(maxWidth: .infinity, alignment: .topLeading) }
                 }
                 if !model.calendarOn {
-                    HStack(spacing: Theme.Space.m) {
-                        Image(systemName: "calendar").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)
-                        Text("Your calendar can be here too, beside your reminders.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        Spacer(minLength: Theme.Space.s)
-                        Button("Show my calendar") { Task { await model.showCalendar() } }.buttonStyle(.sf(.secondary)).fixedSize()
-                    }
-                    .nowRow()
+                    InlineEmpty(text: "Your calendar can be here too, beside your reminders.", systemImage: "calendar",
+                                actionTitle: "Show my calendar") { Task { await model.showCalendar() } }
                 }
                 if model.reminders.isEmpty {
                     InlineEmpty(text: "Nothing scheduled. Try “remind me at 5 to stretch”.", systemImage: "alarm")
                     NewReminderRow(model: model)
                 }
             }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { dayWidth = $0 }
         }
     }
 
@@ -309,12 +319,15 @@ struct NowView: View {
                 ForEach(model.recent) { e in
                     HStack(spacing: Theme.Space.m) {
                         IconTile(symbol: e.symbol, folk: e.folk, size: 24)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(e.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
-                            Text(e.detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                        // In a narrow column the time goes under the words rather than cutting them to a few letters.
+                        WrapRow(minimum: 150, spacing: Theme.Space.s) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(e.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
+                                Text(e.detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(TimeText.short(e.date)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).fixedSize()
                         }
-                        Spacer(minLength: Theme.Space.s)
-                        Text(TimeText.short(e.date)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                     }
                     .padding(.horizontal, Theme.Space.l)
                     .padding(.vertical, Theme.Space.s + 2)
@@ -456,7 +469,7 @@ struct FinishedRow: View {
                 let end = session.endedAt ?? session.updatedAt
                 Text(verbatim: ([String(localized: "Finished \(TimeText.relative(end))", comment: "“Finished 12 min ago”")] + [lastCall].compactMap { $0 })
                     .joined(separator: " · "))
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
             }
             Spacer(minLength: 0)
         }
@@ -687,12 +700,12 @@ struct SessionNeedsYouRow: View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
             IconTile(symbol: "hand.raised", folk: "byte")
             VStack(alignment: .leading, spacing: 3) {
-                headline.font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                headline.font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 if let detail = session.detail, !detail.isEmpty {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
                 Text("Waiting since \(TimeText.short(session.updatedAt))").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                Button("Open session", action: open).buttonStyle(.sf(.primary)).padding(.top, 4)
+                Button("Open session", action: open).buttonStyle(.sf(.primary)).fixedSize().padding(.top, 4)
             }
             Spacer(minLength: 0)
         }
@@ -721,7 +734,8 @@ struct AttentionRow: View {
                     Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
                 Text(TimeText.short(item.createdAt)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                HStack(spacing: 6) {
+                // Wrapping, so a narrow column never cuts "Done · 10 min · Tomorrow" to "… 1… T…".
+                ButtonRow(spacing: 6) {
                     ForEach(item.actions, id: \.id) { action in
                         Button { respond(action.id) } label: { Text(verbatim: action.title) }
                             .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
@@ -911,26 +925,31 @@ struct NewReminderRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: Theme.Space.m) {
-                Image(systemName: "plus.circle.fill").font(.system(size: 17)).foregroundStyle(Theme.folkColor("tempo"))
-                    .accessibilityHidden(true)
-                TextField("New reminder", text: $model.newTitle, prompt: Text("New reminder"))
-                    .textFieldStyle(.plain)
-                    .font(Theme.Font.body)
-                    .focused($focus, equals: .title)
-                    .onSubmit { focus = .when }
-                    .accessibilityLabel("New reminder")
-                Rectangle().fill(Theme.line).frame(width: 1, height: 18)
-                TextField("When", text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"))
-                    .textFieldStyle(.plain)
-                    .font(Theme.Font.body)
-                    .frame(minWidth: 190, maxWidth: 240)
-                    .focused($focus, equals: .when)
-                    .onSubmit { Task { await model.addReminder() } }
-                    .accessibilityLabel("When")
+            // In a narrow column the button goes under the two fields rather than squeezing them.
+            WrapRow(minimum: 300, spacing: Theme.Space.m, indent: 29) {
+                HStack(spacing: Theme.Space.m) {
+                    Image(systemName: "plus.circle.fill").font(.system(size: 17)).foregroundStyle(Theme.folkColor("tempo"))
+                        .accessibilityHidden(true)
+                    TextField("New reminder", text: $model.newTitle, prompt: Text("New reminder"))
+                        .textFieldStyle(.plain)
+                        .font(Theme.Font.body)
+                        .focused($focus, equals: .title)
+                        .onSubmit { focus = .when }
+                        .accessibilityLabel("New reminder")
+                    Rectangle().fill(Theme.line).frame(width: 1, height: 18)
+                    TextField("When", text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"))
+                        .textFieldStyle(.plain)
+                        .font(Theme.Font.body)
+                        .frame(minWidth: 120, idealWidth: 200, maxWidth: 240)
+                        .layoutPriority(1)
+                        .focused($focus, equals: .when)
+                        .onSubmit { Task { await model.addReminder() } }
+                        .accessibilityLabel("When")
+                }
                 Button("Add reminder") { Task { await model.addReminder() } }
                     .buttonStyle(.sf(.primary))
                     .disabled(!model.canAddReminder)
+                    .fixedSize()
             }
             if let error = model.newError {
                 InlineError(error: error).padding(.leading, 29)
@@ -994,20 +1013,23 @@ struct RunningRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
             IconTile(symbol: symbol, folk: "byte")
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
-                TimelineView(.periodic(from: .now, by: 30)) { context in
-                    Text(verbatim: ([elapsed(at: context.date)] + [detail].compactMap { $0 }).joined(separator: " · "))
-                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            // In a narrow column the button goes under the words: "Claude Cod…  Open s…" said nothing.
+            WrapRow(minimum: 170, spacing: Theme.Space.s, alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2)
+                    TimelineView(.periodic(from: .now, by: 30)) { context in
+                        Text(verbatim: ([elapsed(at: context.date)] + [detail].compactMap { $0 }).joined(separator: " · "))
+                            .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                    }
+                    if let command {
+                        Text(command).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkFaint)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
                 }
-                if let command {
-                    Text(command).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkFaint)
-                        .lineLimit(1).truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if let actionTitle {
+                    Button(actionTitle, action: action).buttonStyle(.sf(.secondary)).fixedSize()
                 }
-            }
-            Spacer(minLength: Theme.Space.s)
-            if let actionTitle {
-                Button(actionTitle, action: action).buttonStyle(.sf(.secondary))
             }
         }
         .nowRow()

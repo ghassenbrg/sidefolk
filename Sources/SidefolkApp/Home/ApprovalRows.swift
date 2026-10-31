@@ -24,7 +24,7 @@ struct SkippedStepRow: View {
                         .font(Theme.Font.caption).foregroundStyle(Theme.danger)
                 }
                 outcome.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                HStack(spacing: 6) {
+                ButtonRow(spacing: 6) {
                     Button("Run it now", action: run)
                         .buttonStyle(.sf(step.request.risk == .high ? .destructive : .primary))
                         .disabled(!armed)

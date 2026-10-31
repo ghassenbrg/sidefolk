@@ -14,13 +14,15 @@ struct TitledCard<Trailing: View, Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            HStack(spacing: Theme.Space.xs) {
-                if let emoji { Text(verbatim: emoji).accessibilityHidden(true) }
-                Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-                if let count, count > 0 {
-                    Text(count.formatted()).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+            // In a narrow column the link goes under the title rather than squeezing it.
+            WrapRow(minimum: 120, spacing: Theme.Space.s) {
+                HStack(spacing: Theme.Space.xs) {
+                    if let emoji { Text(verbatim: emoji).accessibilityHidden(true) }
+                    Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink).lineLimit(1).accessibilityAddTraits(.isHeader)
+                    if let count, count > 0 {
+                        Text(count.formatted()).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                    }
                 }
-                Spacer(minLength: Theme.Space.s)
                 trailing.font(Theme.Font.caption)
             }
             content
@@ -127,7 +129,7 @@ struct DayList: View {
             .frame(width: 44, alignment: .leading)
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: title).font(Theme.Font.bodyStrong).strikethrough(struck)
-                    .foregroundStyle(struck ? Theme.inkFaint : Theme.ink).lineLimit(1)
+                    .foregroundStyle(struck ? Theme.inkFaint : Theme.ink).lineLimit(2)
                 if let detail { Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(late ? Theme.danger : Theme.inkMuted).lineLimit(1) }
             }
             Spacer(minLength: Theme.Space.xs)
@@ -216,12 +218,15 @@ struct ListRowLabel<Trailing: View>: View {
         HStack(spacing: Theme.Space.m) {
             Image(systemName: symbol).font(.system(size: 12)).foregroundStyle(Theme.inkMuted)
                 .frame(width: 26, height: 26).background(Theme.surfaceSunken, in: Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
-                Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+            // In a narrow column the chip or value goes under the words: "exa…icing  changed" said little.
+            WrapRow(minimum: 130, spacing: Theme.Space.xs) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(verbatim: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
+                    Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                trailing.fixedSize()
             }
-            Spacer(minLength: Theme.Space.xs)
-            trailing
         }
         .padding(.vertical, Theme.Space.s)
         .contentShape(Rectangle())

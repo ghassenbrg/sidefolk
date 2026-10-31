@@ -21,8 +21,9 @@ struct ConsoleTitle: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
+            // The title keeps its line; the note gives way first.
             title.textCase(.uppercase).font(.system(size: 11, weight: .bold, design: .monospaced)).kerning(0.6)
-                .foregroundStyle(Theme.inkMuted).accessibilityAddTraits(.isHeader)
+                .foregroundStyle(Theme.inkMuted).lineLimit(1).layoutPriority(1).accessibilityAddTraits(.isHeader)
             if let count {
                 Text(count.formatted()).font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(Theme.ink).padding(.horizontal, 5).background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 4))
@@ -40,13 +41,15 @@ struct ConsoleHeader: View {
     @Bindable var model: NowModel
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-            Text("Today").font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-            TimelineView(.everyMinute) { context in
-                Text(verbatim: "· " + context.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).hour().minute()))
-                    .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+        // In a narrow window the filters go under the date.
+        WrapRow(minimum: 200, spacing: Theme.Space.s) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
+                Text("Today").font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                TimelineView(.everyMinute) { context in
+                    Text(verbatim: "· " + context.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).hour().minute()))
+                        .font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                }
             }
-            Spacer(minLength: Theme.Space.m)
             HStack(spacing: Theme.Space.xxs) {
                 ForEach(NowModel.Focus.allCases) { focus in
                     Button { model.focus = focus } label: { Text(title(focus)) }

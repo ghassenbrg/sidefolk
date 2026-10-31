@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
 /// and dark, then exits:
-/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>]`. Lets agents (who can't see the screen) review
+/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>] [--only now,calendar]`. Lets agents (who can't see the screen) review
 /// the UI, in any language (SnapshotLanguage) and in any theme (D58), read straight from its folder. Uses an in-memory database, a temp home and fixture services:
 /// no real data is read or touched. The sample notes, reminders and activity are content, so they stay
 /// English in every language.
@@ -27,6 +27,10 @@ enum UISnapshots {
                 exit(1)
             }
             ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
+        }
+        // Only the shots whose names contain one of these words: a page under review in seconds, not minutes.
+        if let i = args.firstIndex(of: "--only"), i + 1 < args.count {
+            only = args[i + 1].split(separator: ",").map(String.init)
         }
         let dir = URL(fileURLWithPath: args[flag + 1], isDirectory: true)
         let app = NSApplication.shared
@@ -148,6 +152,9 @@ enum UISnapshots {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
             }
             try await page("page-now", NowView(model: full.now), width: 870)
+            // The narrowest page that keeps the theme's Today columns side by side (D64), with and without anything in them.
+            try await page("page-now-tight", NowView(model: full.now), width: tightTodayWidth)
+            try await page("page-now-tight-empty", NowView(model: empty.now), width: tightTodayWidth)
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
             // Switches and buttons on a page, and a palette (D63).
@@ -711,6 +718,7 @@ enum UISnapshots {
 
     /// The whole window, titlebar and toolbar included.
     private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, to url: URL) async throws {
+        guard wanted(url) else { return }
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         window.setContentSize(size)
         window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
@@ -723,6 +731,7 @@ enum UISnapshots {
 
     /// A view at its full height in a borderless window.
     private static func capturePage(_ view: some View, width: CGFloat, dark: Bool, to url: URL) async throws {
+        guard wanted(url) else { return }
         let host = NSHostingView(rootView: view
             .environment(\.rendersFullPage, true)
             .frame(width: width)
@@ -739,6 +748,24 @@ enum UISnapshots {
         try await Task.sleep(for: .milliseconds(250))
         try write(host, to: url)
         window.orderOut(nil)
+    }
+
+    private static var only: [String] = []
+
+    /// The narrowest page where every row of the theme's Today stays side by side (ColumnsLayout's rule, with
+    /// NowView's least widths): where its columns are at their slimmest.
+    private static var tightTodayWidth: CGFloat {
+        let content = ThemeStore.shared.style.tokens.layout.today.map { row -> CGFloat in
+            guard row.count > 1 else { return 0 }
+            let total = row.map(\.width).reduce(0, +)
+            let least = row.map { NowView.leastWidth($0) * CGFloat(total / $0.width) }.max() ?? 0
+            return least + Theme.Space.l * CGFloat(row.count - 1)
+        }.max() ?? 0
+        return (max(content, 420) + 2 * Theme.Space.xxl + 2).rounded(.up)
+    }
+
+    private static func wanted(_ url: URL) -> Bool {
+        only.isEmpty || only.contains { url.lastPathComponent.contains($0) }
     }
 
     private static func write(_ view: NSView, to url: URL) throws {

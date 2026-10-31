@@ -333,16 +333,18 @@ struct SectionHeader<Trailing: View>: View {
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        HStack(spacing: Theme.Space.s) {
-            if let folk { FolkBadge(name: folk, size: 26) }
-            Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            if let count, count > 0 {
-                Text(count.formatted()).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-                    .padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Theme.surfaceRaised, in: Capsule())
-                    .overlay(Capsule().strokeBorder(Theme.line))
+        // In a narrow column the controls go under the title rather than squeezing it.
+        WrapRow(minimum: 140, spacing: Theme.Space.s) {
+            HStack(spacing: Theme.Space.s) {
+                if let folk { FolkBadge(name: folk, size: 26) }
+                Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink).lineLimit(1)
+                if let count, count > 0 {
+                    Text(count.formatted()).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
+                        .padding(.horizontal, 6).padding(.vertical, 1)
+                        .background(Theme.surfaceRaised, in: Capsule())
+                        .overlay(Capsule().strokeBorder(Theme.line))
+                }
             }
-            Spacer(minLength: Theme.Space.s)
             trailing
         }
         .accessibilityElement(children: .contain)
@@ -387,7 +389,8 @@ struct RowsCard<Content: View>: View {
 }
 
 /// One line of muted guidance inside a card when a list is empty, with the step that fills it on
-/// the same line (a separate row under it read as a second, unrelated item).
+/// the same line (a separate row under it read as a second, unrelated item); in a narrow column the
+/// step goes under the words rather than squeezing them (WrapRow).
 struct InlineEmpty: View {
     var text: LocalizedStringKey
     var systemImage: String?
@@ -395,11 +398,16 @@ struct InlineEmpty: View {
     var action: () -> Void = {}
 
     var body: some View {
-        HStack(spacing: Theme.Space.s) {
-            if let systemImage { Image(systemName: systemImage).foregroundStyle(Theme.inkFaint) }
-            Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: Theme.Space.s)
+        // The picture stays beside the first line of the words; a button that goes under them lines up with the words.
+        WrapRow(minimum: 200, spacing: Theme.Space.s, indent: systemImage == nil ? 0 : 18 + Theme.Space.s) {
+            HStack(alignment: .top, spacing: Theme.Space.s) {
+                if let systemImage {
+                    Image(systemName: systemImage).font(Theme.Font.body).foregroundStyle(Theme.inkFaint).frame(width: 18)
+                }
+                Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             if let actionTitle {
                 Button(actionTitle, action: action).buttonStyle(.sf(.secondary)).fixedSize()
             }

@@ -27,11 +27,13 @@ extension NowModel {
     }
 }
 
+/// Tiles side by side where there's room; one a line in a narrow column (a 280-point minimum overflowed a Desk's
+/// 230-point column).
 struct ExtensionWidgetsSection: View {
     var model: NowModel
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
                   spacing: Theme.Space.m) {
             ForEach(model.widgets) { w in
                 Button { model.openPage?(w.id) } label: { tile(w) }
