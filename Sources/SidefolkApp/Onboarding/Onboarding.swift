@@ -43,12 +43,10 @@ final class Onboarding {
         case (.notifications, _):
             advance(to: .login)
         case (.agents, "connect"):
-            Task {
-                let status = await coordinator.integrationStatus()
-                if status.claudeCodeFound { _ = await coordinator.connectClaudeCode(hooks: true) }
-                if status.codexFound, !status.codexMCPInstalled { _ = await coordinator.connectCodex(hooks: true) }
-                advance(to: .tryReminder)
-            }
+            // The bubble promises to show exactly what changes: Settings › Connections lists each file for each agent
+            // and connects on the person's click there (D71, D84), rather than changing their agents' files from here.
+            coordinator.openSettings(tab: .connections)
+            advance(to: .tryReminder)
         case (.agents, _):
             advance(to: .tryReminder)
         case (.login, "yes"):

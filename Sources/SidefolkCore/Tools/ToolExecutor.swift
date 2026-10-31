@@ -143,7 +143,7 @@ public final class ToolExecutor: Sendable {
         var scope = tool.scope(for: input)
         // Only where it can change the answer (Sidefolk's agent, after outside content, in a mode that answers for the
         // person) is a program asked where its call goes, and the call is then bound to what it confirmed (D72).
-        if tainted, let policy = try? await permissions.policy(), [.auto, .fullAccess].contains(policy.mode(for: caller)) {
+        if tainted, let policy = try? await permissions.policy(now: clock.now), [.auto, .fullAccess].contains(policy.mode(for: caller)) {
             (scope, input) = await tool.confirmReach(input, scope: scope)
         }
         var decisionTag: ActivityEntry.Decision = .auto
@@ -159,7 +159,7 @@ public final class ToolExecutor: Sendable {
         for _ in 0..<3 {
             // Fail closed: the default policy has nothing switched off, so a failed read (or a stopped task,
             // which GRDB refuses) must never stand in for the person's settings.
-            guard let policy = try? await permissions.policy() else {
+            guard let policy = try? await permissions.policy(now: clock.now) else {
                 let why = Task.isCancelled ? String(localized: "The request was stopped before this ran.")
                     : String(localized: "Sidefolk couldn't read its permission settings, so it didn't do this.")
                 await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)

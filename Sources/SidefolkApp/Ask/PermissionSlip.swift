@@ -3,8 +3,9 @@ import SwiftUI
 
 /// Guard's question as a permission slip (D84, rebuilding D71's card): a strip that says who asks in a calm or firm
 /// tone, Guard's face, one sentence of what would happen, what it touches as chips, and two answers. "Always…" waits
-/// in Allow's menu, the exact request is folded. Firm slips never take Return: ⌘Return or a click (D58, D84). Stays
-/// inert for a moment, so a key pressed as it appears can't answer it.
+/// in Allow's menu, the exact request is folded. Firm slips never take Return: ⌘Return or a click (D58, D84). For a
+/// moment after it appears its buttons ignore what reaches them, so a key or click meant for something else can't answer
+/// it; they look as they are, the main one the deep aqua it will be (phase 3's rule for every approval).
 struct PermissionSlip: View {
     var request: ApprovalRequest
     /// The extension whose tool asks, shown by its icon and name.
@@ -16,6 +17,11 @@ struct PermissionSlip: View {
     var standalone = false
     /// Opens with the exact request unfolded.
     var exactOpen = false
+    /// Whether its buttons take Return, ⌘Return and Escape. Today's queue answers from the keyboard per row instead, so a
+    /// Return typed into a field on the same page can never approve anything.
+    var keys = true
+    /// Today's queue: the row the keyboard is on.
+    var focused = false
     var decide: (ApprovalDecision) -> Void
     var changeMode: () -> Void
     @State private var armed = false
@@ -29,6 +35,10 @@ struct PermissionSlip: View {
             content
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 .cardSurface()
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                        .strokeBorder(focused ? Theme.accent : .clear, lineWidth: 2)
+                }
         }
     }
 
@@ -73,7 +83,7 @@ struct PermissionSlip: View {
                     Text(verbatim: alwaysNote).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(spacing: Theme.Space.s) {
-                    if !request.takesReturn {
+                    if keys, !request.takesReturn {
                         HStack(spacing: 5) {
                             KeyHint("⌘↩")
                             Text("allows", comment: "Beside a ⌘↩ key hint on a permission slip that Return never answers")
@@ -82,9 +92,9 @@ struct PermissionSlip: View {
                         .accessibilityElement(children: .combine)
                     }
                     Spacer(minLength: Theme.Space.s)
-                    Button { decide(.deny) } label: { Text("Not now", comment: "A permission slip's button: say no this time") }
+                    Button { answer(.deny) } label: { Text("Not now", comment: "A permission slip's button: say no this time") }
                         .buttonStyle(.sf(.secondary, size: .sidecard))
-                        .keyboardShortcut(.cancelAction)
+                        .keyboardShortcut(keys ? .cancelAction : nil)
                     allow
                 }
             }
@@ -102,21 +112,22 @@ struct PermissionSlip: View {
     /// Allow, with "Always…" and "for this request" in its menu when the mode permits them (b08).
     private var allow: some View {
         HStack(spacing: 1) {
-            let button = Button { decide(.allowOnce) } label: { Text("Allow", comment: "A permission slip's main button") }
+            let button = Button { answer(.allowOnce) } label: { Text("Allow", comment: "A permission slip's main button") }
                 .buttonStyle(.sf(.primary, size: .sidecard))
-                .disabled(!armed)
-            if request.takesReturn {
+            if !keys {
+                button
+            } else if request.takesReturn {
                 button.keyboardShortcut(.defaultAction)
             } else {
                 button.keyboardShortcut(.return, modifiers: .command)
             }
             if request.canAlways || request.canAllowForRequest {
                 Menu {
-                    Button { decide(.allowOnce) } label: { Text("Allow once") }
+                    Button { answer(.allowOnce) } label: { Text("Allow once") }
                     if request.canAlways {
-                        Button { decide(.allowAlways) } label: { Text(alwaysTitle) }
+                        Button { answer(.allowAlways) } label: { Text(alwaysTitle) }
                     } else if request.canAllowForRequest {
-                        Button { decide(.allowForRequest) } label: { Text("Allow for this request") }
+                        Button { answer(.allowForRequest) } label: { Text("Allow for this request") }
                     }
                     Divider()
                     Button { changeMode() } label: { Text("Change how \(companionName) asks…", comment: "In Allow's menu on a permission slip: opens the approval settings") }
@@ -127,10 +138,14 @@ struct PermissionSlip: View {
                 .menuIndicator(.hidden)
                 .buttonStyle(.sf(.primary, size: .sidecard))
                 .fixedSize()
-                .disabled(!armed)
                 .accessibilityLabel(Text("More ways to allow", comment: "VoiceOver: the menu beside Allow on a permission slip"))
             }
         }
+    }
+
+    /// An answer counts once the slip has been in view for a moment.
+    private func answer(_ decision: ApprovalDecision) {
+        if armed { decide(decision) }
     }
 
     /// Who asks, in the name it gave or ours: another app's name is whatever it sent, so the strip says it is another app.

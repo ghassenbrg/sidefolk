@@ -488,8 +488,9 @@ export class Companion {
         const deep = smooth((pet.t || 0) / 1.6);
         const sway = Math.sin(t * 2.2) * (2 + 6 * deep);
         const L = this.layer();
-        // Leaning into the hand: toward the stroke, or to one side when Sidefolk doesn't say.
-        const side = pet.x || 0.8;
+        // Leaning into the hand: toward the stroke, or to one side when Sidefolk doesn't say. A big head leans
+        // less (`petLean`), or its ears swing out of its window.
+        const side = (pet.x || 0.8) * (this.C.petLean ?? 1);
         add(L, 'head', 6 + 6 * deep, side * 12, -side * (12 + 16 * deep) + sway);
         add(L, 'chest', 3 + 3 * deep, 0, -side * (4 + 6 * deep) + sway * 0.4);
         L.root.rz -= side * 4 * deep;

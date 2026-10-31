@@ -24,7 +24,7 @@ struct CompanionGrid: View {
                     }
                 }
                 AddCompanionTile(model: model)
-                if gallery.available { MoreCompanionsTile(count: chooser.notYetHere) { chooser.page = .gallery } }
+                if gallery.available { MoreCompanionsTile(count: chooser.notYetHere) { model.services.openGallery() } }
             }
             ForEach(owned.compactMap { $0.galleryID.flatMap { gallery.failures[$0] } }, id: \.message) { InlineError(error: $0) }
             if let error = gallery.companionError { InlineError(error: error) }
@@ -58,8 +58,11 @@ struct CompanionGrid: View {
     }
 
     private func look(_ companion: OwnedCompanion) -> CompanionDimension {
-        if case .choice(let choice) = companion.wear { return CompanionArt.threeD(choice, in: model.settings) ? .threeD : .twoD }
-        return companion.looks.first ?? .threeD
+        switch companion.wear {
+        case .choice(let choice): return CompanionArt.threeD(choice, in: model.settings) ? .threeD : .twoD
+        case .local(let name): return CompanionArt.drawn2D(name, in: model.settings) == nil ? .threeD : .twoD
+        case .custom: return companion.looks.first ?? .threeD
+        }
     }
 
     // MARK: Removing

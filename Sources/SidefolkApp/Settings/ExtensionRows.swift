@@ -142,7 +142,7 @@ struct ExtensionRow: View {
     /// A smaller extension resting while a bigger one does its work (D67): on, but quiet, and why.
     private func resting(_ bigger: String) -> some View {
         Label {
-            Text("Resting: \(bigger) does all this while it's on", comment: "Settings › Extensions, under an extension another one includes")
+            Text("Resting: \(bigger) does all this while it's on", comment: "Settings › Add-ons, under an extension another one includes")
         } icon: {
             Image(systemName: "moon.zzz")
         }

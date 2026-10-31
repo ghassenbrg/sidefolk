@@ -211,7 +211,7 @@ public struct ContextBuilder: Sendable {
         let missing = names.contains("extensions.draft")
             ? "say so in one sentence and offer what you can do instead, including building a small extension for it (load the "
                 + "build-extension skill first; never write one before the user agrees)."
-            : "say so in one sentence and offer what you can do instead; an extension or MCP server (Settings › Extensions) could add it."
+            : "say so in one sentence and offer what you can do instead; an extension or MCP server (Settings › Add-ons) could add it."
         lines += [
             "- Nothing else on this Mac unless one of your tools does it: not other apps' content (Mail, Messages, Calendar, Contacts, "
                 + "Photos, browsers), the screen, or online accounts. Extension tools (ext.<extension>.<tool>) are your tools too.",
@@ -220,11 +220,11 @@ public struct ContextBuilder: Sendable {
             "- Big jobs (many notes) go in batches: do a batch, say what's done and what's left, and continue when the user asks.",
         ]
         if !switchedOff.isEmpty {
-            lines.append("- Built-in extensions the user has switched off (Settings › Extensions): " + switchedOff.joined(separator: "; ")
+            lines.append("- Built-in extensions the user has switched off (Settings › Add-ons): " + switchedOff.joined(separator: "; ")
                 + ". When one of them would do what the user asks, say which, and that they can switch it on there; you can't use it until they do.")
         }
         if !inGallery.isEmpty {
-            lines.append("- Sidefolk extensions the user hasn't added (Settings › Extensions › Gallery): " + inGallery.joined(separator: "; ")
+            lines.append("- Sidefolk extensions the user hasn't added (Settings › Add-ons › Gallery): " + inGallery.joined(separator: "; ")
                 + ". When one of them would do what the user asks, say which, and that they can add it there; you can't use it until they do.")
         }
         return lines.joined(separator: "\n")
@@ -259,7 +259,7 @@ public struct ContextBuilder: Sendable {
     static func place(_ location: LocationSettings, now: Date, timeZone: TimeZone) -> String {
         guard let place = location.current else {
             return "- The user's location isn't known. When a request needs a place and they name none, ask which; they can "
-                + "also set it in Settings › Privacy & Permissions › Your location."
+                + "also set it in Settings › Trust › Your location."
         }
         let from = location.source == .mac ? "from their Mac's location" : "the place they chose in Settings"
         var line = "- The user is in \(oneLine(place.fullName).clipped(120)) (\(from)"

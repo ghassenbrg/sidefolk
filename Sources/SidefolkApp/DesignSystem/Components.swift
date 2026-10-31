@@ -141,6 +141,11 @@ struct EmptyState: View {
 /// use the same 24-hour words as hints, cards and notifications (`TimeFormat`), so a reminder reads the
 /// same everywhere.
 enum TimeText {
+    /// "17:00" today, else as `short` ("Tomorrow 08:00"): when something ends.
+    static func clock(_ date: Date, now: Date = Date()) -> String {
+        Calendar.current.isDate(date, inSameDayAs: now) ? TimeFormat.clock(date, calendar: .autoupdatingCurrent) : short(date, now: now)
+    }
+
     /// "Yesterday 18:20", "Today 09:00", "Tue 09:00".
     static func short(_ date: Date, now: Date = Date()) -> String {
         TimeFormat.when(date, now: now, calendar: .autoupdatingCurrent)
@@ -501,16 +506,19 @@ struct PageScroll<Content: View>: View {
 struct SettingsGroup<Content: View>: View {
     var title: Text
     var footer: Text?
+    /// Where Settings' search lands for the whole group (D84).
+    var anchor: SettingKey?
     @ViewBuilder var content: Content
 
-    init(title: Text, footer: Text? = nil, @ViewBuilder content: () -> Content) {
+    init(title: Text, footer: Text? = nil, anchor: SettingKey? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.footer = footer
+        self.anchor = anchor
         self.content = content()
     }
 
-    init(title: LocalizedStringKey, footer: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) {
-        self.init(title: Text(title), footer: footer.map { Text($0) }, content: content)
+    init(title: LocalizedStringKey, footer: LocalizedStringKey? = nil, anchor: SettingKey? = nil, @ViewBuilder content: () -> Content) {
+        self.init(title: Text(title), footer: footer.map { Text($0) }, anchor: anchor, content: content)
     }
 
     var body: some View {
@@ -524,6 +532,7 @@ struct SettingsGroup<Content: View>: View {
                     .padding(.horizontal, Theme.Space.xs)
             }
         }
+        .modifier(OptionalSettingAnchor(key: anchor))
     }
 }
 
@@ -531,11 +540,14 @@ struct SettingsGroup<Content: View>: View {
 struct SettingsRow<Control: View>: View {
     var title: Text
     var detail: Text?
+    /// Where Settings' search lands (D84); set by `SettingsRow(_ key:)`.
+    var anchor: SettingKey?
     @ViewBuilder var control: Control
 
-    init(title: Text, detail: Text? = nil, @ViewBuilder control: () -> Control) {
+    init(title: Text, detail: Text? = nil, anchor: SettingKey? = nil, @ViewBuilder control: () -> Control) {
         self.title = title
         self.detail = detail
+        self.anchor = anchor
         self.control = control()
     }
 
@@ -558,6 +570,7 @@ struct SettingsRow<Control: View>: View {
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m - 1)
         .frame(minHeight: 44)
+        .modifier(OptionalSettingAnchor(key: anchor))
     }
 }
 
@@ -565,6 +578,7 @@ struct SettingsRow<Control: View>: View {
 struct SettingsToggle: View {
     var title: Text
     var detail: Text?
+    var anchor: SettingKey?
     @Binding var isOn: Bool
 
     init(title: Text, detail: Text? = nil, isOn: Binding<Bool>) {
@@ -578,7 +592,7 @@ struct SettingsToggle: View {
     }
 
     var body: some View {
-        SettingsRow(title: title, detail: detail) {
+        SettingsRow(title: title, detail: detail, anchor: anchor) {
             Toggle(isOn: $isOn) { title }.toggleStyle(.switch).labelsHidden().tint(Theme.accent)
         }
     }

@@ -14,14 +14,18 @@ public enum DesktopLight: Sendable, Equatable {
     case alert(Int)
     /// Something just failed: a still red light, for as long as the companion looks sorry about it.
     case failed
+    /// Focus: a dim grey light, Focus's half circle on the shoulder, or how many wait (held whispers too) in grey.
+    case focus(Int)
     /// Quiet mode: no light, a moon on the shoulder; what waits is told when it ends.
     case quiet(Int)
 
     /// - Parameters:
     ///   - waiting: what waits on the person: open notices that need an answer, and approvals.
     ///   - cardOut: a card (not a whisper) is out beside the companion right now.
-    public static func of(pose: CompanionPose, waiting: Int, cardOut: Bool, quiet: Bool) -> DesktopLight {
+    ///   - held: whispers Focus holds until it ends.
+    public static func of(pose: CompanionPose, waiting: Int, cardOut: Bool, quiet: Bool, focus: Bool = false, held: Int = 0) -> DesktopLight {
         if quiet { return .quiet(waiting) }
+        if focus { return .focus(waiting + held) }
         if pose == .error { return .failed }
         if waiting > 0 { return cardOut ? .alert(waiting) : .waiting(waiting) }
         switch pose {
@@ -34,7 +38,7 @@ public enum DesktopLight: Sendable, Equatable {
     /// How many wait, for the shoulder's count (0 when it shows none).
     public var count: Int {
         switch self {
-        case .waiting(let n), .alert(let n), .quiet(let n): n
+        case .waiting(let n), .alert(let n), .focus(let n), .quiet(let n): n
         default: 0
         }
     }

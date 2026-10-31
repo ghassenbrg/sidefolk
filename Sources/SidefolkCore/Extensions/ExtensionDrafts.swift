@@ -68,7 +68,7 @@ public final class ExtensionDrafts: Sendable {
         try Self.check(files)
         // A model writing draft after draft under new names would otherwise fill the folder without end.
         guard exists(name: name) || list().count < Self.maxDrafts else {
-            throw UserFacingError(verbatim: "There are already \(Self.maxDrafts) extension drafts. Reuse one's name, or ask the person to delete some in Settings › Extensions.")
+            throw UserFacingError(verbatim: "There are already \(Self.maxDrafts) extension drafts. Reuse one's name, or ask the person to delete some in Settings › Add-ons.")
         }
 
         try ExtensionFS.makePrivateDirectory(directory)

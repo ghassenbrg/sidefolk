@@ -91,7 +91,7 @@ import Testing
         #expect(!names.contains("notes_update") && !names.contains("notes_trash") && names.contains("notes_save"))
         let refused = try await s.call("notes_update", ["id": .string(id), "status": "open"])
         #expect(refused.isError)
-        #expect(refused.text.contains("Other agents"))
+        #expect(refused.text.contains("What other agents may do"))
         await s.stop()
     }
 

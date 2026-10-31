@@ -494,6 +494,6 @@ import Testing
         #expect(ExtensionContext.inGallery(catalog, installed: [], channel: .snapshots)
                     == ["Currency (Money in 30 currencies at today's rates)", "Feeds (News from sites you follow)"])
         let reach = ContextBuilder.reach([], inGallery: lines)
-        #expect(reach.contains("Sidefolk extensions the user hasn't added (Settings › Extensions › Gallery): Currency"))
+        #expect(reach.contains("Sidefolk extensions the user hasn't added (Settings › Add-ons › Gallery): Currency"))
     }
 }

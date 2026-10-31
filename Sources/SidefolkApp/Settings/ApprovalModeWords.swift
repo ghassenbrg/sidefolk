@@ -1,3 +1,4 @@
+import Foundation
 import SidefolkCore
 
 /// How each approval mode is named and explained wherever it shows (D37): Settings, the chip in the
@@ -33,6 +34,39 @@ extension GuardMode {
         case .askOncePerKind: String(localized: "Asks once", comment: "A small label in the Ask panel: the approval mode")
         case .auto: String(localized: "Auto")
         case .fullAccess: String(localized: "Full access")
+        }
+    }
+
+    /// The Trust page's headline while this mode is on.
+    var headline: String {
+        switch self {
+        case .askEveryTime: String(localized: "Guard asks before every step", comment: "Settings › Trust: the headline in Ask every time")
+        case .askOncePerKind: String(localized: "Guard asks once for each kind of thing", comment: "Settings › Trust: the headline in Ask once per kind")
+        case .auto: String(localized: "Sidefolk acts on its own, and asks before risky steps", comment: "Settings › Trust: the headline in Auto")
+        case .fullAccess: String(localized: "Full access is on", comment: "Settings › Trust: the headline in Full access")
+        }
+    }
+
+    /// What the mode does to one real kind of step, for its card in Trust.
+    var example: AttributedString {
+        let text = switch self {
+        case .askEveryTime: String(localized: "Move 12 PDFs to Invoices: **asks**. The same tomorrow: **asks again**.",
+                                   comment: "Settings › Trust: an example of Ask every time; keep the ** marks around the bold words")
+        case .askOncePerKind: String(localized: "Move 12 PDFs: **asks once**. Choose Always allow, and moving files goes ahead from then on.",
+                                     comment: "Settings › Trust: an example of Ask once per kind; keep the ** marks")
+        case .auto: String(localized: "Renames 3 files **on its own**. After reading a web page, it **asks** before acting.",
+                           comment: "Settings › Trust: an example of Auto; keep the ** marks")
+        case .fullAccess: String(localized: "Runs `npm test` **without asking**. Still asks before your data could leave the Mac.",
+                                 comment: "Settings › Trust: an example of Full access; keep the ** marks and the command as it is")
+        }
+        return (try? AttributedString(markdown: text)) ?? AttributedString(text)
+    }
+
+    var exampleSymbol: String {
+        switch self {
+        case .askEveryTime, .askOncePerKind: "folder"
+        case .auto: "globe"
+        case .fullAccess: "terminal"
         }
     }
 

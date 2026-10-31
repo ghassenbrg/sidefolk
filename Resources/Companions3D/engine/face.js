@@ -6,7 +6,9 @@
 //    `layout.brow: false` paints no brows. `paintRoughness` makes the painted layer matte (felt, linen,
 //    stone), `layout.mouth.cat` a cat's ω whenever it smiles closed, and `twinkle: false` drops the idle
 //    twinkle cross (engine.js) where only round highlights belong.
-//  - screen: everything glows on a dark visor (Spark): eyes, lids and mouth are light, painted.
+//  - screen: everything glows on a dark visor (Spark): eyes, lids and mouth are light, painted;
+//    `mouthGlow` gives the mouth a light of its own (a pink smile under blue-white eyes),
+//    `layout.mouth.scale` sizes it, and `softGlow` blurs the halos smoothly (the stepped passes read as rings up close).
 // Model units, three.js axes: x = the character's left, y up, z toward the viewer.
 import * as THREE from 'three';
 
@@ -370,12 +372,21 @@ export class Face {
 
   /** Light on a dark visor: soft-edged glowing shapes with a wider halo, like the sheet. */
   paintScreen(ctx, f) {
-    const L = this.L, u = this.unit, glow = this.cfg.glow || '57,230,224';
-    const light = (draw, width) => {
-      // Halo, then core: three passes read as light in the glass without a blur filter.
-      for (const [lw, a] of [[width * 3.2, 0.12], [width * 1.8, 0.28], [width, 1]]) {
-        ctx.strokeStyle = ctx.fillStyle = `rgba(${glow},${a})`; ctx.lineWidth = lw; draw();
+    const L = this.L, u = this.unit, glow = this.cfg.glow || '57,230,224', mouthGlow = this.cfg.mouthGlow || glow;
+    const soft = this.cfg.softGlow;
+    // A shape with a halo: three stepped passes, or (softGlow) the core once with a blurred shadow of its own light.
+    const halo = (rgb, passes, blur, draw) => {
+      if (soft) {
+        ctx.save(); ctx.shadowColor = `rgba(${rgb},0.9)`; ctx.shadowBlur = blur;
+        passes.at(-1)[0](); ctx.strokeStyle = ctx.fillStyle = `rgba(${rgb},${passes.at(-1)[1]})`; draw(passes.at(-1)[2]);
+        ctx.restore();
+        return;
       }
+      for (const [set, a, g] of passes) { set(); ctx.strokeStyle = ctx.fillStyle = `rgba(${rgb},${a})`; draw(g); }
+    };
+    const light = (draw, width, rgb = glow) => {
+      // Halo, then core: three passes read as light in the glass without a blur filter.
+      halo(rgb, [[width * 3.2, 0.12], [width * 1.8, 0.28], [width, 1]].map(([lw, a]) => [() => { ctx.lineWidth = lw; }, a]), width * 2.4, draw);
     };
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const side of [1, -1]) {
@@ -413,10 +424,9 @@ export class Face {
       ctx.beginPath();
       ctx.moveTo(cx - w, top + sl); ctx.lineTo(cx + w, top - sl); ctx.lineTo(cx + w, bot); ctx.lineTo(cx - w, bot); ctx.closePath();
       ctx.clip();
-      for (const [grow, a] of [[1.5, 0.12], [1.22, 0.3], [1, 1]]) {
-        ctx.fillStyle = `rgba(${glow},${a})`;
+      halo(glow, [[1.5, 0.12], [1.22, 0.3], [1, 1]].map(([g, a]) => [() => {}, a, g]), w * 0.3, (grow) => {
         ctx.beginPath(); ctx.ellipse(cx, cy, w / 2 * grow, h / 2 * grow, 0, 0, Math.PI * 2); ctx.fill();
-      }
+      });
       // A brighter core and a glint.
       ctx.fillStyle = 'rgba(220,255,252,0.55)';
       ctx.beginPath(); ctx.ellipse(cx - w * 0.12, cy - h * 0.18, w * 0.16, h * 0.14, 0, 0, Math.PI * 2); ctx.fill();
@@ -424,12 +434,12 @@ export class Face {
     }
     // Mouth: a small glowing curve, an "o" or an open smile.
     const [mx, my] = this.at(f.mouthX * 0.03, L.mouth.y);
-    const mw = (0.05 + 0.07 * f.mouthWidth) * u * (1 - 0.35 * f.mouthRound);
+    const ms = L.mouth.scale ?? 1;
+    const mw = (0.05 + 0.07 * f.mouthWidth) * u * (1 - 0.35 * f.mouthRound) * ms;
     const open = Math.max(0, f.mouthOpen);
     if (open > 0.08) {
-      const h = (10 + 60 * open) * (1 + 0.2 * f.mouthRound);
-      for (const [grow, a] of [[1.4, 0.14], [1.18, 0.3], [1, 0.95]]) {
-        ctx.fillStyle = `rgba(${glow},${a})`;
+      const h = (10 + 60 * open) * (1 + 0.2 * f.mouthRound) * ms;
+      halo(mouthGlow, [[1.4, 0.14], [1.18, 0.3], [1, 0.95]].map(([g, a]) => [() => {}, a, g]), mw * 0.25, (grow) => {
         ctx.beginPath();
         if (f.mouthRound > 0.5) ctx.ellipse(mx, my + h * 0.2, mw * 0.4 * grow, h * 0.5 * grow, 0, 0, Math.PI * 2);
         else {
@@ -438,15 +448,15 @@ export class Face {
           ctx.bezierCurveTo(mx + mw / 2 * grow, my + h * grow, mx - mw / 2 * grow, my + h * grow, mx - mw / 2 * grow, my - f.smile * 4);
         }
         ctx.fill();
-      }
+      });
     } else {
       light(() => {
         ctx.beginPath();
         if (f.wavy > 0.3) { ctx.moveTo(mx - mw / 2, my); ctx.bezierCurveTo(mx - mw / 6, my - 14, mx + mw / 6, my + 14, mx + mw / 2, my); }
         else if (f.cat > 0.5) { ctx.moveTo(mx - mw * 0.6, my - 3); ctx.quadraticCurveTo(mx - mw * 0.3, my + 14, mx, my); ctx.quadraticCurveTo(mx + mw * 0.3, my + 14, mx + mw * 0.6, my - 3); }
-        else { ctx.moveTo(mx - mw / 2, my - f.smile * 6); ctx.quadraticCurveTo(mx, my + f.smile * 26, mx + mw / 2, my - f.smile * 6); }
+        else { ctx.moveTo(mx - mw / 2, my - f.smile * 6 * ms); ctx.quadraticCurveTo(mx, my + f.smile * 26 * ms, mx + mw / 2, my - f.smile * 6 * ms); }
         ctx.stroke();
-      }, 10);
+      }, 10 * ms, mouthGlow);
     }
     if (f.tears > 0.05) {
       for (const side of [1, -1]) {

@@ -389,13 +389,14 @@ final class CompanionWindowController {
     }
 
     /// The light and the shoulder's mark, from what is going on.
-    func setLight(_ light: DesktopLight, focus: Bool = false) {
+    func setLight(_ light: DesktopLight) {
         let state: LightPoolState = switch light {
         case .idle: .idle
         case .working: .working
         case .waiting(let n): .waiting(n)
         case .alert: .alert
         case .failed: .failed
+        case .focus: .focus
         case .quiet: .quiet
         }
         guard state != floor.light || light.count != floor.count else { return }
@@ -411,6 +412,7 @@ final class CompanionWindowController {
         case .working: String(localized: "Working", comment: "The companion's state, read by VoiceOver")
         case .waiting(let n), .alert(let n): String(localized: "Waiting for you: \(n)", comment: "The companion's state, read by VoiceOver, with how many things wait")
         case .failed: String(localized: "Something failed", comment: "The companion's state, read by VoiceOver")
+        case .focus: String(localized: "Focus", comment: "The companion's state, read by VoiceOver: only what matters gets through")
         case .quiet: String(localized: "Quiet", comment: "The companion's state, read by VoiceOver: only what's critical gets through")
         }
     }

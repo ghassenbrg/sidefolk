@@ -49,7 +49,7 @@ struct SidecardView: View {
         VStack(alignment: .trailing, spacing: Theme.Space.s) {
             SidecardStack(items: model.stack.suffix(3).map { item in
                 SidecardStack.Item(id: item.id, folk: SidecardItemCard.folk(item), title: Text(verbatim: item.title),
-                                   meta: SidecardItemCard.source(item, companion: model.companionName)
+                                   meta: SidecardItemCard.source(item, companion: model.companionName, sessions: model.sessions)
                                        + Text(verbatim: " · \(TimeFormat.clock(item.shownAt ?? item.createdAt, calendar: .autoupdatingCurrent))"))
             })
             HStack(spacing: Theme.Space.s) {
@@ -84,7 +84,7 @@ struct SidecardItemCard: View {
         let lines = Self.listLines(item)
         let (menu, buttons) = Self.arrange(item.actions)
         SidecardCard(folk: Self.folk(item), face: Self.speaksItself(item) ? model.face : nil,
-                     source: Self.source(item, companion: model.companionName), title: Text(verbatim: item.title),
+                     source: Self.source(item, companion: model.companionName, sessions: model.sessions), title: Text(verbatim: item.title),
                      message: lines == nil ? item.body.map { Text(verbatim: $0) } : nil, tail: tail,
                      close: { model.respond?(item, nil) }) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -128,7 +128,7 @@ struct SidecardItemCard: View {
 
     /// A body made of lines (the brief's day, what waited while away or quiet) reads as rows.
     static func listLines(_ item: AttentionItem) -> [String]? {
-        guard ["brief", "digest"].contains(item.refKind ?? "") || item.source == "summary", let body = item.body else { return nil }
+        guard item.refKind == "brief" || item.source == "summary", let body = item.body else { return nil }
         let lines = body.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         return lines.count > 1 ? lines.map { $0.hasPrefix("• ") ? String($0.dropFirst(2)) : $0 } : nil
     }
@@ -147,8 +147,12 @@ struct SidecardItemCard: View {
     /// The companion itself speaks: introductions, onboarding, what waited, updates.
     static func speaksItself(_ item: AttentionItem) -> Bool { folk(item) == nil }
 
-    /// "Tempo · reminder", "Scout · watch", "Codex · question": who it is from, then what kind of moment.
-    static func source(_ item: AttentionItem, companion: String) -> Text {
+    /// "Tempo · reminder", "Scout · watch", "Codex · question", "Claude Code · sidefolk": who it is from, then what kind
+    /// of moment. An agent session's notice names the agent and its project, from the session it is about.
+    static func source(_ item: AttentionItem, companion: String, sessions: [String: AgentSession] = [:]) -> Text {
+        if item.refKind == "session", let session = item.refId.flatMap({ sessions[$0] }) {
+            return Text(verbatim: ([AgentFacingTools.displayName(session.agent), session.projectName].compactMap { $0 }).joined(separator: " · "))
+        }
         let kind: Text? = switch item.refKind ?? item.source {
         case "reminder": Text("reminder", comment: "A card's source line: “Tempo · reminder”")
         case "brief": Text("today", comment: "A card's source line: the morning brief, “Tempo · today”")
@@ -156,7 +160,8 @@ struct SidecardItemCard: View {
         case "job": Text("command", comment: "A card's source line: a command started with `sidefolk run`")
         case "session": Text("agent session", comment: "A card's source line: a Claude Code or Codex session")
         case "ask": Text("question", comment: "A card's source line: “Codex · question”")
-        case "digest": Text("Quiet ended", comment: "A card's source line when quiet mode ended: “Mochi · Quiet ended”")
+        case "quiet": Text("Quiet ended", comment: "A card's source line when quiet mode ended: “Mochi · Quiet ended”")
+        case "focus": Text("Focus ended", comment: "A card's source line when Focus ended: “Mochi · Focus ended”")
         case "summary": Text("while you were away", comment: "A card's source line: what waited")
         default: nil
         }

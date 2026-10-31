@@ -138,7 +138,7 @@ public struct AnthropicModel: TurnModel {
         switch response.status {
         case 401:
             return UserFacingError("Your Anthropic API key was rejected. Nothing was changed.",
-                                   recovery: "Check the key in Settings › AI, or paste a new one.", detail: detail)
+                                   recovery: "Check the key in Settings › Brain, or paste a new one.", detail: detail)
         case 402:
             return UserFacingError("Anthropic turned the request down for a billing reason. Nothing was changed.",
                                    recovery: "Check your plan and credits in the Anthropic Console.", detail: detail)
@@ -147,7 +147,7 @@ public struct AnthropicModel: TurnModel {
                                    recovery: "Check your workspace access in the Anthropic Console.", detail: detail)
         case 404:
             return UserFacingError("Anthropic doesn't offer the model “\(model)” to your account. Nothing was changed.",
-                                   recovery: "Choose another model in Settings › AI.", detail: detail)
+                                   recovery: "Choose another model in Settings › Brain.", detail: detail)
         case 413:
             return contextTooLong(detail)
         case 400 where lower.contains("prompt is too long") || lower.contains("context window") || lower.contains("too many tokens"):
@@ -162,7 +162,7 @@ public struct AnthropicModel: TurnModel {
                                    detail: detail)
         default:
             return UserFacingError("Anthropic couldn't accept that request. Nothing was changed.",
-                                   recovery: "Try rephrasing it. If it keeps happening, check the model in Settings › AI.", detail: detail)
+                                   recovery: "Try rephrasing it. If it keeps happening, check the model in Settings › Brain.", detail: detail)
         }
     }
 

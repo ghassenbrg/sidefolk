@@ -22,6 +22,9 @@ import Testing
         // Quiet: no light at all, whatever happens; the count is kept for the shoulder and VoiceOver.
         #expect(DesktopLight.of(pose: .alert, waiting: 2, cardOut: true, quiet: true) == .quiet(2))
         #expect(DesktopLight.quiet(2).count == 2 && DesktopLight.working.count == 0)
+        // Focus: dim, and the shoulder counts what waits with the whispers it holds.
+        #expect(DesktopLight.of(pose: .working(.web), waiting: 1, cardOut: false, quiet: false, focus: true, held: 2) == .focus(3))
+        #expect(DesktopLight.of(pose: .idle, waiting: 1, cardOut: false, quiet: true, focus: true) == .quiet(1))
     }
 
     @Test func anAlertWhoseCardFoldedIsNoLongerLit() {

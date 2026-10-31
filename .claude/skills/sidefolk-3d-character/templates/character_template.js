@@ -14,8 +14,11 @@ export default {
   name: 'Name',
   model: 'name.glb',
   floor: 0.952,                 // how far the soles sit below the model's origin
-  pivot: [0, 0.5, 0],           // whole-body turns (lying down, flips) happen about here
-  frame: { sidefolk: 2.3 },     // model units the app's window shows from floor to top (with margin)
+  pivot: [0, 0.5, 0],           // whole-body turns (lying down, flips) go round this, in units above the FLOOR:
+                                // the body's middle (about 0.9 for a 1.9-tall one), never the feet
+  frame: { sidefolk: 2.3 },     // model units the app's square window shows from floor to top (2.5 for a big head)
+  // petLean: 0.55,             // a big head leans less when petted, or its ears leave the window
+  // light: { env: 1.3 },       // this character's own scene light, after matching the sheet's colours (zones.py)
   marks: [0.45, 0.6, 0.15],     // where zZz, ?, ! appear, from the head
   blob: [1.2, 0.8],             // contact shadow size
 
@@ -47,6 +50,16 @@ export default {
       blush: { x: 0.29, y: 0.14, w: 0.09, h: 0.055, alpha: 0.35 },
     },
   },
+
+  // A screen face instead (Spark's): kind 'screen', glow: 'r,g,b', mouthGlow: 'r,g,b', softGlow: true,
+  // layout: { eye: {x, y, w, h}, mouth: { y, scale } }, eyes measured against the visor in the sheet's front view.
+
+  // Logos and letters on the body: a decal drawn here (its own canvas, paths traced on the design image), not
+  // Meshy's texture, which makes them blotchy.
+  // extras(c, THREE) { … },
+
+  // Big heads: lower leaps by wrapping the shared ones and scaling only what they add to P.root.py, and rest
+  // sitting up (postures: { lie, sleep } on POSTURES.sit): lying on its side reads as a dropped toy.
 
   chains: [ear('L', 1), ear('R', -1)],
   pick: { head: { r: 0.5, at: [0, 0.27, 0.1] }, body: { r: 0.3, at: [0, -0.48, 0] }, tips: ['earL2', 'earR2'] },

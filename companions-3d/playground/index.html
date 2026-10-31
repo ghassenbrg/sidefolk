@@ -61,7 +61,9 @@ document.getElementById('title').textContent = `${character.name} 3D`;
 document.getElementById('sayText').value = `Hi! I'm ${character.name}. Want me to remind you of something?`;
 const companion = new Companion(document.getElementById('stage'), character, { frame: q.get('frame') || 'full', liveliness: q.get('live') || 'balanced', capture: q.has('record') || q.has('capture') });
 window.companion = companion;
-await companion.load();
+// Console scripts `await ready`: `companion` exists before its model has loaded.
+window.ready = companion.load();
+await window.ready;
 if (q.has('record')) {
   document.body.classList.add('bare');
   const { record } = await import('./record.js');

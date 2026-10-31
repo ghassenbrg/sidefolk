@@ -187,3 +187,65 @@ export async function restFilm(m, kind, { tag = '', yaws = [0, 90], every = 0.5,
   await fetch(`/frame/restfilm-${m.C.id}-${kind}${tag ? '-' + tag : ''}/1.jpg`, { method: 'POST', body: blob });
   return blob.size;
 }
+
+/** Plays everything the app can play (idle, petting from either side, every move, posture and state) in the app's own
+ *  framing (`?frame=sidefolk&capture`: the window is square and shows `frame.sidefolk` units from 10% under the feet)
+ *  and lists, per cue, how many pixels of each edge the character touched: anything listed is cut off on the desktop.
+ *  A big head that leans, a tall leap or a whole-body turn about a low pivot are what leave it. Returns {} when
+ *  nothing does. */
+export async function edges(m, { size = 400, seconds = 4 } = {}) {
+  const { ACTIONS } = await import('./engine/moves.js');
+  m.pause(); m.nextFidget = 1e9;
+  m.canvas.style.cssText = `position:fixed;left:0;top:0;width:${size}px;height:${size}px`;
+  m.renderer.setPixelRatio(1); m.resize(); m.frame('sidefolk');
+  const W = m.canvas.width, H = m.canvas.height, out = document.createElement('canvas');
+  out.width = W; out.height = H;
+  const g = out.getContext('2d', { willReadFrequently: true }), hits = {};
+  const check = (label) => {
+    g.clearRect(0, 0, W, H); g.drawImage(m.canvas, 0, 0);
+    const d = g.getImageData(0, 0, W, H).data, a = (x, y) => d[(y * W + x) * 4 + 3];
+    const n = { top: 0, left: 0, right: 0, bottom: 0 };
+    // The floor shadow is faint: only something solid counts at the bottom.
+    for (let x = 0; x < W; x++) { if (a(x, 1) > 40) n.top++; if (a(x, H - 2) > 120) n.bottom++; }
+    for (let y = 0; y < H; y++) { if (a(1, y) > 40) n.left++; if (a(W - 2, y) > 40) n.right++; }
+    if (n.top + n.left + n.right + n.bottom === 0) return;
+    const h = hits[label] ||= { top: 0, left: 0, right: 0, bottom: 0 };
+    for (const k in n) h[k] = Math.max(h[k], n[k]);
+  };
+  const reset = () => {
+    m.actions = []; m.pet.active = false; m.setState('idle'); m.setMood('neutral'); m.setPosture('stand');
+    m.speech = null; m.root.rotation.y = 0; m.step(2);
+  };
+  const run = (label, secs) => { for (let t = 0; t < secs; t += 0.05) { m.step(0.05); check(label); } };
+  reset(); run('idle', seconds);
+  for (const x of [1, -1, 0.3]) {
+    reset(); m.pet.active = true; m.pet.x = x; run(`pet ${x}`, seconds + 1);
+    m.pet.active = false; run(`pet ${x}`, 2);
+  }
+  for (const name of new Set([...Object.keys(ACTIONS), ...Object.keys(m.C.actions || {})])) {
+    reset();
+    if (!m.play(name)) continue;
+    run(name, (m.actions.at(-1)?.clip?.dur ?? 3) + 0.6);
+  }
+  for (const p of ['sit', 'lie', 'sleep']) { reset(); m.setPosture(p); run(`posture ${p}`, seconds * 2); }
+  for (const s of ['thinking', 'listening', 'hearing', 'working', 'waiting', 'celebrating', 'success', 'error', 'alert', 'sleeping', 'dragging']) {
+    reset(); m.setState(s); run(`state ${s}`, seconds);
+  }
+  reset();
+  return hits;
+}
+
+/** The character standing, smiling, from the front on a flat `bg` (the sheet's own background), `w` × `h`, in the
+ *  `tight` framing, to compare colours and light with the sheet's front view: `python3 companions-3d/zones.py`.
+ *  Saved as build/companions-3d/front-<id>/00001.png; needs a `capture` page. */
+export async function front(m, { bg = '#f5f3f3', w = 600, h = 800 } = {}) {
+  m.pause(); m.nextFidget = 1e9;
+  m.canvas.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px`;
+  m.renderer.setPixelRatio(1); m.resize(); m.frame('tight');
+  m.actions = []; m.setState('idle'); m.setMood('smile'); m.blink.next = 1e9; m.lookAt(0, 0.1); m.step(3);
+  const out = document.createElement('canvas'); out.width = m.canvas.width; out.height = m.canvas.height;
+  const g = out.getContext('2d'); g.fillStyle = bg; g.fillRect(0, 0, out.width, out.height); g.drawImage(m.canvas, 0, 0);
+  const blob = await new Promise((res) => out.toBlob(res, 'image/png'));
+  await fetch(`/frame/front-${m.C.id}/1.png`, { method: 'POST', body: blob });
+  return blob.size;
+}

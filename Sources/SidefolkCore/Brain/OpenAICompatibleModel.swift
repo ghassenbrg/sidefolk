@@ -56,7 +56,7 @@ public struct OpenAICompatibleModel: TurnModel {
                 let some = Array(ids.prefix(5))
                 // Each recovery is its own String(localized:): a ternary passed to an optional
                 // String.LocalizationValue parameter loses its second literal from the catalog.
-                let recovery = some.isEmpty ? String(localized: "Check the model name in Settings › AI.")
+                let recovery = some.isEmpty ? String(localized: "Check the model name in Settings › Brain.")
                     : String(localized: "Available: \(Wording.list(some)).")
                 return .failure(UserFacingError(verbatim: String(localized: "\(providerName) is reachable, but it doesn't have “\(model)”."),
                                                 recovery: recovery))
@@ -82,7 +82,7 @@ public struct OpenAICompatibleModel: TurnModel {
         while text.hasSuffix("/") { text.removeLast() }
         guard !text.isEmpty else {
             throw UserFacingError("I need the address of your AI service.",
-                                  recovery: "Add it in Settings › AI (for Ollama: http://localhost:11434/v1).")
+                                  recovery: "Add it in Settings › Brain (for Ollama: http://localhost:11434/v1).")
         }
         guard let url = URL(string: text), let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme),
               let host = url.host, !host.isEmpty, url.user == nil, url.password == nil, url.query == nil, url.fragment == nil
@@ -248,30 +248,30 @@ public struct OpenAICompatibleModel: TurnModel {
         switch response.status {
         case 401, 403:
             if apiKey == nil {
-                return UserFacingError("\(name) needs an API key. Nothing was changed.", recovery: "Add one in Settings › AI.", detail: detail)
+                return UserFacingError("\(name) needs an API key. Nothing was changed.", recovery: "Add one in Settings › Brain.", detail: detail)
             }
             return UserFacingError("\(name) rejected your API key. Nothing was changed.",
-                                   recovery: "Check the key in Settings › AI, or paste a new one.", detail: detail)
+                                   recovery: "Check the key in Settings › Brain, or paste a new one.", detail: detail)
         // A provider's own JSON error saying "not found" is about the model; a bare 404 page means a wrong address.
         case 404 where lower.contains("model") || (ProviderHTTP.isJSONError(response.body) && lower.contains("not found")):
-            let recovery = name == "Ollama" ? String(localized: "Run “ollama pull \(model)”, or choose another model in Settings › AI.")
-                : String(localized: "Choose another model in Settings › AI.")
+            let recovery = name == "Ollama" ? String(localized: "Run “ollama pull \(model)”, or choose another model in Settings › Brain.")
+                : String(localized: "Choose another model in Settings › Brain.")
             return UserFacingError(verbatim: String(localized: "\(name) doesn't have the model “\(model)”. Nothing was changed."),
                                    recovery: recovery, detail: detail)
         case 404:
             return UserFacingError("I couldn't find an AI service at that address. Nothing was changed.",
-                                   recovery: "Check the address in Settings › AI (it usually ends in /v1).", detail: detail)
+                                   recovery: "Check the address in Settings › Brain (it usually ends in /v1).", detail: detail)
         case 413:
             return AnthropicModel.contextTooLong(detail)
         case 400 where lower.contains("does not support tools") || lower.contains("tool use is not supported"):
             return UserFacingError("The model “\(model)” can't use tools, so I can't act with it. Nothing was changed.",
-                                   recovery: "Choose a model that supports tool calling in Settings › AI.", detail: detail)
+                                   recovery: "Choose a model that supports tool calling in Settings › Brain.", detail: detail)
         case 400 where lower.contains("context_length") || lower.contains("context length") || lower.contains("maximum context")
             || lower.contains("too many tokens"):
             return AnthropicModel.contextTooLong(detail)
         case 429 where lower.contains("insufficient_quota") || lower.contains("credit"):
             return UserFacingError("Your \(name) account is out of credit. Nothing was changed.",
-                                   recovery: "Check your plan with \(name), or switch provider in Settings › AI.", detail: detail)
+                                   recovery: "Check your plan with \(name), or switch provider in Settings › Brain.", detail: detail)
         case 429:
             return UserFacingError("\(name) is limiting how fast I can ask right now. Nothing was changed.",
                                    recovery: "Wait a minute and try again.", detail: detail)
@@ -280,7 +280,7 @@ public struct OpenAICompatibleModel: TurnModel {
                                    detail: detail)
         default:
             return UserFacingError("\(name) couldn't accept that request. Nothing was changed.",
-                                   recovery: "Check the model and address in Settings › AI.", detail: detail)
+                                   recovery: "Check the model and address in Settings › Brain.", detail: detail)
         }
     }
 }

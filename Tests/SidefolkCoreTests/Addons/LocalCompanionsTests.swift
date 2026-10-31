@@ -129,4 +129,59 @@ import Testing
         s.choose(local: "ghassen", name: "Ghassen")
         #expect(s.companionName == "Little me")
     }
+
+    /// The four files and a 2D form beside them (D85).
+    func withTwoD(_ name: String, _ extra: [String: Data]) -> [String: Data] {
+        let png = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        var files: [String: Data] = [
+            "characters/\(name).js": Data("export default {}".utf8), "assets/\(name).glb": Data("glTF\u{2}\0\0\0".utf8),
+            "portraits/\(name).png": png, "avatars/\(name).png": png,
+            "2d/species.json": Data("{}".utf8), "2d/parts/ear.svg": Data("<svg/>".utf8), "2d/paint/head.png": png,
+        ]
+        files.merge(extra) { $1 }
+        return files
+    }
+
+    @Test func aTwoDFormComesAlongAndIsCheckedByName() async throws {
+        let f = try Fixture()
+        let added = try await f.store.install(companionFolder: try f.folder("otter", files: withTwoD("otter", [:])))
+        #expect(added.twoD == true)
+        let here = f.companions.appendingPathComponent("otter/2d")
+        for path in ["species.json", "parts/ear.svg", "paint/head.png"] {
+            #expect(FileManager.default.fileExists(atPath: here.appendingPathComponent(path).path), "\(path)")
+        }
+        #expect(try AddonStore.readLocalCompanion(f.folder("plain")).twoD == nil)
+        let refused: [String: [String: Data]] = [
+            "2d/notes.txt": ["2d/notes.txt": Data("hi".utf8)],
+            "no species.json": ["2d/species.json": Data()].mapValues { _ in Data() },
+            "a link-like name": ["2d/paint/../x.png": Data([0x89, 0x50, 0x4E, 0x47])],
+            "a PNG that isn't": ["2d/paint/torso.png": Data("nope".utf8)],
+            "too large": ["2d/paint/torso.png": Data([0x89, 0x50, 0x4E, 0x47]) + Data(count: 4 * 1024 * 1024)],
+            "a folder of its own": ["2d/more/x.svg": Data("<svg/>".utf8)],
+        ]
+        for (why, extra) in refused {
+            var files = withTwoD("otter", extra)
+            if why == "no species.json" { files["2d/species.json"] = nil }
+            #expect(throws: UserFacingError.self, "\(why)") { try AddonStore.readLocalCompanion(f.folder("otter", files: files)) }
+        }
+        let many = Dictionary(uniqueKeysWithValues: (0..<9).map { ("2d/paint/p\($0).png", Data([0x89, 0x50, 0x4E, 0x47])) })
+        #expect(throws: UserFacingError.self) { try AddonStore.readLocalCompanion(f.folder("otter", files: withTwoD("otter", many))) }
+    }
+
+    @Test func itsLookIsKeptApartFromEveryBuiltIns() throws {
+        var s = AppSettings()
+        #expect(s.dimension(forLocal: "otter") == .threeD)
+        s.setDimension(.twoD, forLocal: "otter")
+        let round = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
+        #expect(round.dimension(forLocal: "otter") == .twoD && round.dimension(forLocal: "kana") == .threeD)
+        #expect(round.dimension(for: .spark) == AppSettings().dimension(for: .spark))
+        let folder = URL(fileURLWithPath: "/tmp/companions")
+        let otter = InstalledCompanion(id: "local.otter", name: "Otter", companion: "otter", version: "1.0.0", author: "", fromFolder: true,
+                                       twoD: true)
+        var plain = otter
+        plain.companion = "plain"
+        plain.twoD = nil
+        let owned = CompanionLibrary.owned(builtIn: [], installed: [otter, plain], made: [], folder: folder) { _ in "" }
+        #expect(owned.map(\.looks) == [[.threeD, .twoD], [.threeD]])
+    }
 }

@@ -25,7 +25,7 @@ struct CalendarTodayTool: Tool {
         let day = tomorrow ? calendar.date(byAdding: .day, value: 1, to: context.now) ?? context.now : context.now
         guard let events = await reader.events(on: day, calendar: calendar) else {
             throw ToolError.unavailable(
-                "The user's calendar is off. They can show it in Sidefolk's Settings › Privacy › Your calendar, or from Today.")
+                "The user's calendar is off. They can show it in Sidefolk's Settings › Trust › Your calendar, or from Today.")
         }
         let when = tomorrow ? "tomorrow" : "today"
         guard !events.isEmpty else {

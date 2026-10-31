@@ -3,7 +3,8 @@ import SwiftUI
 
 // The parts that move on their own time, Sidefolk's: Copy Me's pads, Which Cup?'s shuffle, Quick Paws' button.
 
-/// Coloured pads with a shape and a key cap each; during the playback they light one by one and take no presses.
+/// Coloured pads with a shape and a key cap each, raised like toy buttons; during the playback they light one by one
+/// (pressed down, glowing, the shape popping) and take no presses.
 struct PadsView: View {
     var pads: GameBoard.Pads
     var model: PlayModel
@@ -14,27 +15,26 @@ struct PadsView: View {
                 let lit = model.parts.lit == i
                 Button { model.pressPad(i) } label: {
                     VStack(spacing: 6) {
-                        // White on the pad's colour; the pad's colour on white while it is lit.
-                        PadShape(shape: pad.shape).fill(lit ? Self.color(pad.hue) : .white.opacity(0.9))
+                        PadShape(shape: pad.shape).fill(.white.opacity(lit ? 1 : 0.92))
+                            .shadow(color: .black.opacity(0.18), radius: 1, y: 1)
                             .frame(width: 30, height: 30)
-                        Text(verbatim: pad.label).font(Theme.Font.captionStrong).foregroundStyle(lit ? Self.color(pad.hue) : .white)
+                            .scaleEffect(lit ? 1.25 : 1)
+                        Text(verbatim: pad.label).font(Theme.Font.captionStrong).foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.18), radius: 1, y: 1)
                             .lineLimit(1).minimumScaleFactor(0.7)
-                        GameKeyCap(text: "\(i + 1)", light: !lit)
+                        GameKeyCap(text: "\(i + 1)", light: true)
                     }
                     .padding(.vertical, 10)
-                    .frame(maxWidth: .infinity, minHeight: 104)
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(lit ? Color.white : Self.color(pad.hue)))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Self.color(pad.hue), lineWidth: lit ? 3 : 0))
-                    .scaleEffect(lit ? 1.06 : 1)
-                    .shadow(color: Self.color(pad.hue).opacity(lit ? 0.6 : 0.15), radius: lit ? 10 : 3, y: 2)
-                    .animation(.easeOut(duration: 0.12), value: lit)
+                    .frame(maxWidth: .infinity, minHeight: 100)
+                    .background(GameBevel(color: Self.color(pad.hue), pressed: lit, glow: lit))
+                    .animation(.spring(duration: 0.18, bounce: 0.5), value: lit)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(GamePressStyle())
                 .allowsHitTesting(!model.parts.playing && !pads.locked)
                 .accessibilityLabel(Text(verbatim: "\(i + 1), \(pad.label)"))
             }
         }
+        .padding(.bottom, 4)
         .opacity(pads.locked ? 0.6 : 1)
         .overlay(alignment: .top) {
             if model.parts.playing {
@@ -111,11 +111,16 @@ struct GameKeyCap: View {
     }
 }
 
-/// Cups and a gem: the gem under its cup, the cups lowered and swapped (by position) at the game's pace, then picked;
-/// lifted once picked to show where the gem was.
+/// Cups and a gem on a little table: the gem under its cup, the cups lowered and swapped (by position) at the game's
+/// pace, then picked; lifted once picked to show where the gem was. The cups and the gem are Sidefolk's pictures
+/// (GameArt), the table, shadows and key caps drawn here.
 struct CupsView: View {
     var cups: GameBoard.Cups
     var model: PlayModel
+
+    /// Where a resting cup's rim meets the table.
+    private static let floor: CGFloat = 112
+    private static let cupHeight: CGFloat = 64
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1 / 60, paused: !model.parts.shuffling)) { t in
@@ -124,35 +129,71 @@ struct CupsView: View {
                 let slot = geo.size.width / CGFloat(cups.count)
                 let layout = Self.layout(cups, elapsed)
                 ZStack(alignment: .topLeading) {
+                    table(width: geo.size.width)
+                    if let spot = cups.picked ?? (cups.locked ? nil : model.parts.cursor) {
+                        // The pick or the arrow keys' pointer: a ring on the table at that place, the app's accent.
+                        Ellipse().strokeBorder(Theme.accent, lineWidth: 3).frame(width: min(slot - 10, 64), height: 18)
+                            .position(x: slot * (CGFloat(spot) + 0.5), y: Self.floor + 1)
+                    }
+                    ForEach(0..<cups.count, id: \.self) { cup in
+                        // Each cup's shadow, smaller and lighter as it rises.
+                        let rise = layout.lift[cup] + CGFloat(layout.hop[cup]) * 0.3
+                        Ellipse().fill(.black.opacity(0.16 * (1 - rise * 0.6)))
+                            .frame(width: min(slot - 14, 58) * (1 - rise * 0.3), height: 9)
+                            .position(x: slot * (CGFloat(layout.x[cup]) + 0.5), y: Self.floor + 1)
+                    }
                     if let gem = layout.gemAt {
-                        Image(systemName: "suit.diamond.fill").font(.system(size: 22)).foregroundStyle(Theme.accent)
-                            .position(x: slot * (CGFloat(gem) + 0.5), y: 88)
-                            .accessibilityHidden(true)
+                        gemView.position(x: slot * (CGFloat(gem) + 0.5), y: Self.floor - 14)
                     }
                     ForEach(0..<cups.count, id: \.self) { cup in
                         let x = layout.x[cup], lift = layout.lift[cup]
-                        cupView(position: Int(x.rounded()), lifted: lift)
-                            .frame(width: min(slot - 10, 70), height: 74)
-                            .position(x: slot * (CGFloat(x) + 0.5), y: 80 - lift * 40 - layout.hop[cup] * 12)
+                        cupView(position: Int(x.rounded()))
+                            .frame(width: min(slot - 8, 72), height: Self.cupHeight)
+                            .position(x: slot * (CGFloat(x) + 0.5), y: Self.floor - Self.cupHeight / 2 + 2 - lift * 46 - layout.hop[cup] * 14)
                             .zIndex(layout.hop[cup])
+                    }
+                    ForEach(0..<cups.count, id: \.self) { position in
+                        GameKeyCap(text: "\(position + 1)").position(x: slot * (CGFloat(position) + 0.5), y: Self.floor + 22)
                     }
                 }
             }
         }
-        .frame(height: 130)
+        .frame(height: 146)
+        .environment(\.layoutDirection, .leftToRight)
         .accessibilityElement(children: .contain)
     }
 
-    @ViewBuilder private func cupView(position: Int, lifted: CGFloat) -> some View {
+    /// A soft felt top for the cups to stand on.
+    private func table(width: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(LinearGradient(colors: [Theme.accentSoft.opacity(0.5), Theme.accentSoft], startPoint: .top, endPoint: .bottom))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.accent.opacity(0.18), lineWidth: 1))
+            .frame(width: width, height: 34)
+            .position(x: width / 2, y: Self.floor + 2)
+    }
+
+    @ViewBuilder private var gemView: some View {
+        if GameArt.gem.image != nil {
+            GameArt.gem.view(height: 26).shadow(color: Theme.sun.opacity(0.6), radius: 6)
+        } else {
+            Image(systemName: "suit.diamond.fill").font(.system(size: 22)).foregroundStyle(Theme.accent).accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder private func cupView(position: Int) -> some View {
         let picked = cups.picked == position
-        let pointed = model.parts.cursor == position && !cups.locked
         Button { model.send(.cell(row: 0, column: position)) } label: {
-            VStack(spacing: 4) {
-                CupShape().fill(LinearGradient(colors: [Theme.coral.opacity(0.85), Theme.coral], startPoint: .top, endPoint: .bottom))
-                    .overlay(CupShape().stroke(picked || pointed ? Theme.ink : .clear, lineWidth: 2.5))
-                    .frame(height: 54)
-                GameKeyCap(text: "\(position + 1)")
+            ZStack(alignment: .bottom) {
+                if GameArt.cup.image != nil {
+                    GameArt.cup.view(height: Self.cupHeight - 4)
+                } else {
+                    CupShape().fill(LinearGradient(colors: [Theme.coral.opacity(0.85), Theme.coral], startPoint: .top, endPoint: .bottom))
+                        .frame(height: 54)
+                }
             }
+            .scaleEffect(picked ? 1.06 : 1, anchor: .bottom)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .allowsHitTesting(!cups.locked && !cups.revealed && !model.parts.shuffling)
@@ -218,8 +259,17 @@ struct ReflexView: View {
         let words = early ? reflex.early : reflex.shows ?? (go ? reflex.go : reflex.armed ? reflex.wait : "…")
         Button { model.boop() } label: {
             ZStack {
-                Circle().fill(go ? Theme.accent : early ? GameColors.lostSoft : Theme.surfaceSunken)
-                Circle().strokeBorder(go ? Theme.accent.opacity(0.4) : Theme.line, lineWidth: go ? 10 : 2)
+                // An arcade button: a rim, a domed face lit from above, rings of light at the signal.
+                Circle().fill(Theme.surfaceSunken).overlay(Circle().strokeBorder(Theme.line, lineWidth: 1)).padding(-8)
+                if go {
+                    Circle().strokeBorder(Theme.accent.opacity(0.35), lineWidth: 6).padding(-18)
+                    Circle().strokeBorder(Theme.accent.opacity(0.15), lineWidth: 5).padding(-28)
+                }
+                Circle().fill(go ? Theme.accent : early ? GameColors.lostSoft : Theme.surfaceRaised).brightness(-0.12).offset(y: 6)
+                Circle().fill(go ? Theme.accent : early ? GameColors.lostSoft : Theme.surfaceRaised)
+                    .overlay(Circle().fill(LinearGradient(colors: [.white.opacity(go ? 0.4 : 0.5), .clear], startPoint: .top, endPoint: .center)))
+                    .overlay(Circle().strokeBorder(go ? .white.opacity(0.5) : Theme.line, lineWidth: go ? 3 : 1))
+                    .shadow(color: go ? Theme.accent.opacity(0.6) : .black.opacity(0.08), radius: go ? 16 : 3)
                 VStack(spacing: 4) {
                     if early { Image(systemName: "xmark.circle.fill").foregroundStyle(GameColors.lost) }
                     Text(verbatim: words)
@@ -232,7 +282,8 @@ struct ReflexView: View {
                 }
                 .padding(12)
             }
-            .frame(width: 160, height: 160)
+            .frame(width: 150, height: 150)
+            .padding(.vertical, 20)
             .scaleEffect(go ? 1.06 : 1)
             .animation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .spring(duration: 0.18, bounce: 0.5), value: go)
         }

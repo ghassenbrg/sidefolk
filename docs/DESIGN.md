@@ -85,10 +85,38 @@ The parts above, placed and wired, in `Sources/SidefolkApp/`. The logic that dec
 | Ask: `AskView` on `SidecardSurface`, `SayBarField(size: .desktop)`, the understanding row, `GlanceView` (resting: Needs you, Next up, Working) | `Ask/` | the Sidecard's Ask size, its tail toward the head; requests as one card each with their words inside |
 | `PermissionSlip` | `Ask/PermissionSlip.swift` | the approval rebuilt: calm or firm strip, Guard's face, one sentence, what it touches, Allow with "Always…" in its menu, exact request folded; firm never takes Return (⌘↩ with a `KeyHint`) |
 
-## Not built yet (phases 2–4)
+Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `StatusItem/`:
 
-On the desktop (phase 2 left these): the stack's arc animation, the choice card for drops, Focus as its own mode
-(only Quiet exists), the evening wrap, voice's level-reactive pool. Home's places (Today rebuilt, On duty, History, You, the Gallery in Home, the Say
-bar in the toolbar), Settings' 8 tabs with search, the menu bar Pocket, Full access with an end time. The 16 text
-fields still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. The theme-specific Today block
-styles (console, planner, stage) keep their own capitals until phase 3 retires them (one layout per place).
+| Component | File | Use |
+|---|---|---|
+| `SettingsRoot` (sidebar, search, page), `SettingsTab` (title, symbol, tile tint) | `SettingsRoot.swift`, `SettingsTab.swift` | the window; tabs are tiles like System Settings |
+| `SettingKey` (tab, section, title, detail), `SettingsNavigation`, `.settingAnchor(_:)`, `SettingsRow(_ key:)`, `SettingsToggle(_ key:)` | `SettingsCatalog.swift` | every searchable row; a new setting gets a key, or search can't find it |
+| `SettingsPage` | `GeneralSettingsView.swift` | a tab's column, 720 at most, leading; scrolls to a jumped-to row |
+| `SettingInlineControl` | `SettingsRoot.swift` | the control itself in a search result (switches, short choices) |
+| `AttentionDial` (cards or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
+| `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as cards with an example each |
+| `PocketView`, `PocketModel`, `PocketContent`, `PocketActions` | `StatusItem/` | the menu bar's popover; content gathered by `AppCoordinator+Pocket` |
+| `InstallPreviewSheet` (steps `.who`, `.touch`), `InstallPermissionRow` | `InstallPreviewSheet.swift`, `InstallReviewParts.swift` | the install passport |
+
+### Home's parts (phase 3)
+
+In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
+
+| Component | File | Use |
+|---|---|---|
+| `HomePage` | `TodayView.swift` | a place's scrolling page: content ≤ `contentMaxWidth`, `contentPadding` (24 under 900) |
+| `.lanternTile(bar:)` | `TodayParts.swift` | a tile's surface with its 3 pt state bar (Today's watch and value tiles) |
+| `NeedsYouCard` | `TodayView.swift` | one thing that waits: folk avatar, "who · time", the card's words, a 3 pt amber bar, the keyboard's ring |
+| `FolkCard` | `OnDutyView.swift` | a folk's group of rows: avatar with its live ring, name, role, count |
+| `SidebarSquircle`, `PageSquircle`, `SidebarNook` | `HomeSidebar.swift`, `ExtensionsSidebar.swift` | 20 pt tinted icons in the sidebar; the companion's nook |
+| `SayPanel`, `SayWords` | `SayPanel.swift` | what typed words will do, from `IntentPlan`: sentence, chips, AI chip, keys |
+| `PersonAvatar`, `CompanionAvatar` | `HistoryView.swift` | who did something, beside a sentence |
+| `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
+
+## Not built yet (phases 2 and 5)
+
+On the desktop (phase 2 left these): the stack's arc animation, the choice card for drops, the evening wrap, voice's
+level-reactive pool, keyboard answering of cards outside Ask. Home is built (phase 3, D84; its theme layouts are
+retired); Settings, the Pocket, Full access with an end and the install passport are phase 4 (above). The 16 text fields
+still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. Reduce Transparency and Contrast versions
+are phase 5.

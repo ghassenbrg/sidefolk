@@ -243,8 +243,18 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var sleepWhenIdle = true
     public var showFolks = true
     public var sounds = true
-    /// Quiet mode end; nil when off.
+    /// Quiet mode end; nil when off, `.distantFuture` until turned off.
     public var quietUntil: Date?
+    /// Focus's end (D84), the same way: only cards that need an answer reach the person; whispers wait.
+    public var focusUntil: Date?
+    /// Quiet every night, off until turned on (D84).
+    public var quietHours = QuietHours()
+    /// The end of the quiet hours the person chose Open or Focus for; they start again the next time.
+    public var quietHoursSetAside: Date?
+    /// What a full-screen app does to interruptions (D84).
+    public var fullScreen: FullScreenRule = .quiet
+    /// Comfortable or compact spacing in every window; nil follows the theme (D84).
+    public var density: ThemeTokens.Density?
     /// Hour (0-23) "morning" means for "tomorrow morning" and the morning brief.
     public var morningHour = 9
     public var afternoonHour = 14
@@ -309,6 +319,11 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.showFolks, &showFolks)
         read(.sounds, &sounds)
         quietUntil = try? c.decodeIfPresent(Date.self, forKey: .quietUntil)
+        focusUntil = try? c.decodeIfPresent(Date.self, forKey: .focusUntil)
+        read(.quietHours, &quietHours)
+        quietHoursSetAside = try? c.decodeIfPresent(Date.self, forKey: .quietHoursSetAside)
+        read(.fullScreen, &fullScreen)
+        density = try? c.decodeIfPresent(ThemeTokens.Density.self, forKey: .density)
         read(.morningHour, &morningHour)
         read(.afternoonHour, &afternoonHour)
         read(.eveningHour, &eveningHour)
@@ -331,7 +346,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.games, &games)
     }
 
-    public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }
 
     /// Switches companion. A name that is still one of the built-in defaults follows the new
     /// companion ("Sidefolk" becomes "Mochi"); a name the user chose stays.
@@ -377,6 +391,16 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public mutating func setDimension(_ dimension: CompanionDimension, for companion: CompanionChoice) {
         guard companion.dimensions.contains(dimension) else { return }
         dimensions[companion.rawValue] = dimension
+    }
+
+    /// How a companion added from a folder (by its folder's name) is drawn: 3D, as it comes, unless the person chose
+    /// its 2D form (D85). Kept under "local.<name>", which no `CompanionChoice` can be.
+    public func dimension(forLocal name: String) -> CompanionDimension {
+        dimensions["local.\(name)"] ?? .threeD
+    }
+
+    public mutating func setDimension(_ dimension: CompanionDimension, forLocal name: String) {
+        dimensions["local.\(name)"] = dimension
     }
 
     /// Whether the user named the companion themselves (anything but a built-in default).

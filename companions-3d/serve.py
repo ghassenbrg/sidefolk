@@ -39,4 +39,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass
 
 os.chdir(HERE)
+# The page fetches its modules all at once: the default backlog of 5 resets some of them.
+http.server.ThreadingHTTPServer.request_queue_size = 128
 http.server.ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1]) if len(sys.argv) > 1 else 8765), Handler).serve_forever()

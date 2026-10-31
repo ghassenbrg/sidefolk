@@ -1,343 +1,6 @@
 import SidefolkCore
 import SwiftUI
 
-/// Home › Today, drawn from the theme's layout (D64): rows of columns of blocks, each one of Today's pieces in one of
-/// its styles. Harbor's is the Desk: decisions and the day on the left; what's watched, who's working and what just
-/// happened on the right. Columns stack when the window is narrow.
-/// Each domain wears its folk's color: Tempo for time, Scout for watching, Byte for agents and jobs.
-struct NowView: View {
-    @Bindable var model: NowModel
-    /// The queue row the keyboard is on (D58).
-    @FocusState private var focused: String?
-    @State private var editing: Reminder?
-    /// The day card's width: tomorrow sits beside the line only where the line keeps room for its hours.
-    @State private var dayWidth: CGFloat = 800
-
-    private var layout: ThemeLayout { ThemeStore.shared.style.tokens.layout }
-
-    var body: some View {
-        PageScroll(maxWidth: 1180) {
-            if model.mode == .fullAccess {
-                FullAccessBanner(settings: { model.services.openSettings(tab: .privacy) }) { Task { await model.turnOffFullAccess() } }
-            }
-            ForEach(Array(layout.today.enumerated()), id: \.offset) { _, row in
-                ColumnsLayout(widths: row.map(\.width), spacing: Theme.Space.l,
-                              minimums: row.map(Self.leastWidth)) {
-                    ForEach(Array(row.enumerated()), id: \.offset) { _, column in
-                        let blocks = VStack(alignment: .leading, spacing: Theme.Space.xl) {
-                            ForEach(column.blocks.filter(shows), id: \.self) { block($0) }
-                        }
-                        if column.page { PaperPage { blocks } } else { blocks }
-                    }
-                }
-            }
-        }
-        .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: model) }
-    }
-
-    /// A column's least width beside others: a picture's can be narrower than one of words, and a sheet of paper
-    /// counts its margins, so its words still get their least.
-    static func leastWidth(_ column: ThemeLayout.Column) -> CGFloat {
-        (column.blocks.allSatisfy { $0.kind == .art } ? 150 : 230) + (column.page ? 2 * Theme.Space.xl : 0)
-    }
-
-    /// The Console's filter (D64): agents, your own, or watches, with the header and what needs you always there.
-    private func shows(_ block: ThemeLayout.Block) -> Bool {
-        switch model.focus {
-        case .all: true
-        case .agents: [.header, .queue, .agents].contains(block.kind)
-        case .mine: [.header, .queue, .day, .notes, .companion].contains(block.kind)
-        case .watches: [.header, .queue, .watching].contains(block.kind)
-        }
-    }
-
-    /// One of Today's pieces in its style. Only styles the theme check lets through reach here.
-    @ViewBuilder private func block(_ block: ThemeLayout.Block) -> some View {
-        switch block.kind {
-        case .header:
-            switch block.style {
-            case "console": ConsoleHeader(model: model)
-            case "page": PageHeader(model: model)
-            default: TodayHeader(greeting: TodayHeader.greeting(), line: model.headline, large: block.style == "large")
-            }
-        case .queue:
-            if model.needsYouCount > 0 || model.skippedRun != nil {
-                needsYou(block.style)
-            } else if block.style == "stack" || block.style == "index" {
-                // A column of its own stays, saying so, rather than leaving a gap.
-                emptyQueue(block.style)
-            }
-        case .day:
-            switch block.style {
-            case "list": DayList(model: model) { editing = $0 }
-            case "compact": DayCompact(model: model) { editing = $0 }
-            case "stickers": DayStickers(model: model) { editing = $0 }
-            case "ruled": RuledDay(model: model) { editing = $0 }
-            default: comingUp
-            }
-        case .watching:
-            // Extensions' tiles (D62) lead what's being watched, in every theme that shows watching.
-            if !model.widgets.isEmpty { ExtensionWidgetsSection(model: model) }
-            switch block.style {
-            case "list": WatchingList(model: model)
-            case "signals": WatchSignals(model: model)
-            case "badges": WatchBadges(model: model)
-            case "margin": MarginWatches(model: model)
-            default: watching
-            }
-        case .agents:
-            switch block.style {
-            case "card": AgentsCard(model: model)
-            case "steps": AgentSteps(model: model)
-            case "helpers": HelpersCard(model: model)
-            default: running
-            }
-        case .recent: if !model.recent.isEmpty { recently }
-        case .notes:
-            if block.style == "chips" { JottedChips(model: model) } else { NotesCards(model: model) }
-        case .art: ArtTile()
-        case .companion:
-            if block.style == "sticker" {
-                CompanionSticker(model: model)
-            } else {
-                TodayStage(model: model) { decision in
-                    QueueRow(decision: decision, model: model, focused: $focused, style: "bubbles") { work in act(on: decision, work) }
-                }
-            }
-        }
-    }
-
-    // MARK: Needs you
-
-    @ViewBuilder private func emptyQueue(_ style: String) -> some View {
-        if style == "index" {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Text("To decide").font(.system(size: 17, design: .serif)).italic().foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-                Text("Nothing to decide.").font(.system(size: 14, design: .serif)).italic().foregroundStyle(Theme.inkMuted)
-            }
-        } else {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                ConsoleTitle(title: "Queue", count: 0, note: nil)
-                Text("Nothing waits on you.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-            }
-        }
-    }
-
-    @ViewBuilder private func needsYou(_ style: String) -> some View {
-        if style == "index" {
-            VStack(alignment: .leading, spacing: Theme.Space.m) {
-                Text("To decide").font(.system(size: 17, design: .serif)).italic().foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-                ForEach(model.focusedQueue) { decision in
-                    QueueRow(decision: decision, model: model, focused: $focused, style: "index") { work in act(on: decision, work) }
-                }
-                if let result = model.skippedRun { RowsCard { SkippedRunResult(result: result) } }
-            }
-        } else if style == "stack" {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                ConsoleTitle(title: "Queue", count: model.focusedQueue.count, note: Text("j/k move · ⏎ allow · ⌫ deny · s snooze"))
-                ForEach(model.focusedQueue) { decision in
-                    QueueRow(decision: decision, model: model, focused: $focused, style: "stack") { work in act(on: decision, work) }
-                }
-                if let result = model.skippedRun { RowsCard { SkippedRunResult(result: result) } }
-            }
-        } else {
-            needsYouList(style)
-        }
-    }
-
-    private func needsYouList(_ style: String) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Needs you", folk: nil, count: model.needsYouCount) {
-                // The keys work on the row the keyboard is on; Tab gets there.
-                Group {
-                    if style == "cards" { Text("← → move · ⏎ answer · ⌫ not now") } else { Text("↑↓ to move · ⏎ to answer") }
-                }
-                .font(Theme.Font.caption).foregroundStyle(Theme.link)
-                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
-            }
-            if style == "cards" {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: Theme.Space.s) {
-                        ForEach(model.focusedQueue) { decision in
-                            QueueRow(decision: decision, model: model, focused: $focused, style: "cards") { work in act(on: decision, work) }
-                        }
-                    }
-                    .padding(2)
-                }
-                if let result = model.skippedRun { RowsCard { SkippedRunResult(result: result) } }
-            } else {
-                RowsCard {
-                    ForEach(model.focusedQueue) { decision in
-                        QueueRow(decision: decision, model: model, focused: $focused) { work in act(on: decision, work) }
-                    }
-                    if let result = model.skippedRun {
-                        SkippedRunResult(result: result)
-                    }
-                }
-            }
-        }
-    }
-
-    /// Runs an answer, then keeps the keyboard where it was in the queue: on the next one, or the last.
-    private func act(on decision: NowModel.Decision, _ work: @escaping () async -> Void) {
-        let index = model.focusedQueue.firstIndex { $0.id == decision.id } ?? 0
-        let hadFocus = focused != nil
-        Task {
-            await work()
-            let queue = model.focusedQueue
-            if hadFocus { focused = queue.isEmpty ? nil : queue[min(index, queue.count - 1)].id }
-        }
-    }
-
-    // MARK: Your day
-
-    private var comingUp: some View {
-        let groups = model.groups()
-        let today = groups.first { $0.day == .today }?.reminders ?? []
-        let tomorrow = groups.first { $0.day == .tomorrow }?.reminders ?? []
-        let later = groups.first { $0.day == .later }?.reminders ?? []
-        return VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Your day", folk: "tempo", count: model.reminders.count) {
-                Text("Drag to move · double-click to add").font(Theme.Font.caption).foregroundStyle(Theme.link)
-            }
-            // Today as a line (D58), with the calendar beside the reminders once it's shown (D57), and tomorrow beside it.
-            RowsCard {
-                let rail = DayRail(reminders: today, done: model.doneToday, events: model.events(on: .today), now: Date(),
-                                   move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) },
-                                   menu: { AnyView(ReminderMenu(reminder: $0, model: model) { editing = $0 }) })
-                let hasTomorrow = !tomorrow.isEmpty || !later.isEmpty || !model.events(on: .tomorrow).isEmpty
-                let tomorrowColumn = TomorrowColumn(reminders: tomorrow, events: model.events(on: .tomorrow), later: later, model: model) { editing = $0 }
-                // Beside the line it took 180 points of a narrow card, and six hours were drawn in what was left.
-                if hasTomorrow && dayWidth >= 560 {
-                    HStack(alignment: .top, spacing: 0) {
-                        rail
-                        Divider()
-                        tomorrowColumn.frame(width: 180, alignment: .topLeading)
-                    }
-                } else {
-                    rail
-                    if hasTomorrow { tomorrowColumn.frame(maxWidth: .infinity, alignment: .topLeading) }
-                }
-                if !model.calendarOn {
-                    InlineEmpty(text: "Your calendar can be here too, beside your reminders.", systemImage: "calendar",
-                                actionTitle: "Show my calendar") { Task { await model.showCalendar() } }
-                }
-                if model.reminders.isEmpty {
-                    InlineEmpty(text: "Nothing scheduled. Try “remind me at 5 to stretch”.", systemImage: "alarm")
-                    NewReminderRow(model: model)
-                }
-            }
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { dayWidth = $0 }
-        }
-    }
-
-    // MARK: Watching
-
-    /// Watches and live values as tiles (D58): what each keeps an eye on, in one big word or number, and what it last
-    /// saw. A click shows the whole watch and what can be done with it.
-    private var watching: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Watching", folk: "scout", count: model.watchers.count + model.reports.count) {
-                if !model.watchers.isEmpty || !model.reports.isEmpty {
-                    Button("All") { model.services.openAsk(prefill: "what are you watching") }
-                        .buttonStyle(.plain).font(Theme.Font.caption).foregroundStyle(Theme.link)
-                }
-            }
-            if model.watchers.isEmpty && model.reports.isEmpty {
-                RowsCard {
-                    InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
-                                systemImage: "binoculars", actionTitle: "Watch something…") {
-                        model.services.openAsk(prefill: "tell me when ")
-                    }
-                }
-            } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: Theme.Space.s, alignment: .top)],
-                          alignment: .leading, spacing: Theme.Space.s) {
-                    ForEach(model.watchers) { w in WatchCard(watcher: w, model: model) }
-                    ForEach(model.reports) { r in ReportCard(report: r, reading: model.readings[r.id], values: model.values[r.id] ?? [], model: model) }
-                }
-            }
-        }
-    }
-
-    // MARK: Agents at work
-
-    private var agentCount: Int {
-        model.workingSessions.count + model.finishedSessions.count + model.jobs.count + (model.ownRun == nil ? 0 : 1)
-    }
-
-    /// Who is working right now (D58): your companion, Claude Code and Codex sessions with the last thing each asked
-    /// of Sidefolk, commands Sidefolk was asked to keep an eye on, and sessions that finished in the last hour.
-    private var running: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Agents at work", folk: "byte", count: agentCount)
-            RowsCard {
-                if agentCount == 0 {
-                    InlineEmpty(text: "Nothing running. Connect Claude Code or Codex to see their sessions here, or start a command with “sidefolk run -- npm test”.",
-                                systemImage: "terminal", actionTitle: "Connect your agents…") {
-                        model.services.openSettings(tab: .agents)
-                    }
-                }
-                if let own = model.ownRun {
-                    RunningRow(symbol: "bubble.left.and.bubble.right", title: own.conversation.map { "\(companion): \($0.title)" } ?? companion,
-                               started: own.run.startedAt, detail: own.step?.summary,
-                               actionTitle: own.conversation == nil ? nil : "Open conversation") {
-                        if let id = own.conversation?.id { model.services.openConversation(id) }
-                    }
-                }
-                ForEach(model.workingSessions) { s in
-                    RunningRow(symbol: "sparkles", title: Describe.session(s), started: s.startedAt, detail: lastCall(s) ?? s.detail,
-                               actionTitle: "Open session") { model.openSession(s) }
-                }
-                ForEach(model.jobs) { j in
-                    RunningRow(symbol: "terminal", title: j.title, started: j.startedAt,
-                               detail: j.cwd.map { String(localized: "in \(FolderAccess.displayPath($0))") }, command: j.command)
-                }
-                ForEach(model.finishedSessions) { s in
-                    FinishedRow(session: s, lastCall: lastCall(s))
-                }
-            }
-        }
-    }
-
-    private var companion: String { model.services.runtime.settings.current.companionName }
-
-    /// The last thing a session's agent asked Sidefolk to do, in Activity's words.
-    private func lastCall(_ session: AgentSession) -> String? {
-        model.lastCalls[session.agent].map { String(localized: "Last: \($0.summary)", comment: "The last thing an agent asked Sidefolk to do") }
-    }
-
-    // MARK: Recently
-
-    private var recently: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            SectionHeader(title: "Recently") {
-                Button("Activity") { model.services.openActivity() }
-                    .buttonStyle(.plain).font(Theme.Font.caption).foregroundStyle(Theme.link)
-            }
-            RowsCard {
-                ForEach(model.recent) { e in
-                    HStack(spacing: Theme.Space.m) {
-                        IconTile(symbol: e.symbol, folk: e.folk, size: 24)
-                        // In a narrow column the time goes under the words rather than cutting them to a few letters.
-                        WrapRow(minimum: 150, spacing: Theme.Space.s) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(e.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
-                                Text(e.detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(TimeText.short(e.date)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).fixedSize()
-                        }
-                    }
-                    .padding(.horizontal, Theme.Space.l)
-                    .padding(.vertical, Theme.Space.s + 2)
-                    .accessibilityElement(children: .combine)
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Rows
 
 /// A watch as a tile: what it keeps an eye on, its state, when it last looked, and what it last saw change, with the
@@ -531,7 +194,7 @@ struct QueueRow: View {
     var decision: NowModel.Decision
     var model: NowModel
     var focused: FocusState<String?>.Binding
-    /// "rows" in a list, or "cards" side by side (D64), where ← → move as ↑ ↓ do.
+    /// "rows" in a list, or "card": Today's card of its own (D84), with who asks above it.
     var style = "rows"
     var act: (@escaping () async -> Void) -> Void
     @State private var armed = false
@@ -539,13 +202,17 @@ struct QueueRow: View {
     var body: some View {
         let isFocused = focused.wrappedValue == decision.id
         Group {
-            if style == "cards" || style == "stack" {
-                QueueCardFrame(label: cardLabel, tint: cardTint, focused: isFocused, width: style == "stack" ? nil : 320,
-                               deadline: deadline) { row }
-            } else if style == "bubbles" {
-                QueueBubbleFrame(label: cardLabel, tint: cardTint, focused: isFocused) { row }
-            } else if style == "index" {
-                IndexCardFrame(label: cardLabel, risk: risk, focused: isFocused) { row }
+            if case .approval(let request) = decision {
+                // Guard's question is a permission slip here too (D84): who asks in the strip, what it touches, Allow.
+                PermissionSlip(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] },
+                               companionName: model.services.runtime.settings.current.companionName, keys: false, focused: isFocused) { answer in
+                    act { await model.answer(request, answer) }
+                } changeMode: {
+                    model.services.openSettings(tab: .trust)
+                }
+                .padding(style == "card" ? 0 : Theme.Space.s)
+            } else if style == "card" {
+                NeedsYouCard(source: cardLabel, folk: folk, at: at, tint: cardTint, focused: isFocused) { cardBody }
             } else {
                 row.background(isFocused ? Theme.accentSoft.opacity(0.6) : .clear)
             }
@@ -601,17 +268,70 @@ struct QueueRow: View {
         }
     }
 
+    /// The folk whose avatar stands beside a card: Guard asks, Byte keeps agents, Scout watches, Tempo keeps time.
+    private var folk: String {
+        switch decision {
+        case .approval, .skipped: "guard"
+        case .session: "byte"
+        case .attention(let item):
+            switch item.refKind {
+            case "watcher": "scout"
+            case "reminder", "brief": "tempo"
+            case "job", "session": "byte"
+            default: "pip"
+            }
+        }
+    }
+
+    private var at: Date {
+        switch decision {
+        case .approval(let request): request.createdAt
+        case .session(let session): session.updatedAt
+        case .attention(let item): item.createdAt
+        case .skipped(let step): step.skippedAt
+        }
+    }
+
+    /// What a card on Today says (D84): the question, the parts as chips, and at most three buttons, the main one last.
+    @ViewBuilder private var cardBody: some View {
+        switch decision {
+        case .approval:
+            EmptyView()
+        case .session(let session):
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                Text(verbatim: session.detail.flatMap { $0.isEmpty ? nil : $0 } ?? Describe.session(session))
+                    .font(Theme.Font.headline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                WrapRow(minimum: 220, spacing: Theme.Space.s) {
+                    Text("Answer in its own window. Sidefolk only lets you know.").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button { model.openSession(session) } label: { Label("Open session", systemImage: "arrow.up.forward") }
+                        .buttonStyle(.sf(.primary, size: .regular)).fixedSize()
+                }
+            }
+        case .attention(let item):
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                Text(item.title).font(Theme.Font.headline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                if let body = item.body, !body.isEmpty {
+                    Text(body).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                }
+                ButtonRow(spacing: Theme.Space.s) {
+                    Button("Dismiss") { act { await model.respond(item, action: nil) } }.buttonStyle(.sf(.quiet, size: .regular))
+                    ForEach(Array(item.actions.sorted { !$0.isPrimary && $1.isPrimary }.prefix(2)), id: \.id) { action in
+                        Button { act { await model.respond(item, action: action.id) } } label: { Text(verbatim: action.title) }
+                            .buttonStyle(.sf(action.isPrimary ? .primary : .secondary, size: .regular))
+                    }
+                }
+            }
+        case .skipped(let step):
+            SkippedStepRow(step: step, run: { act { await model.runSkipped(step) } }, dismiss: { act { await model.dismissSkipped(step) } },
+                           plain: true)
+        }
+    }
+
     @ViewBuilder private var row: some View {
         switch decision {
-        case .approval(let request) where style != "rows":
-            ApprovalCard(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }, framed: false, keys: false) { answer in
-                act { await model.answer(request, answer) }
-            }
-            .padding([.horizontal, .bottom], Theme.Space.m)
-        case .approval(let request):
-            ApprovalQueueRow(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }) { answer in
-                act { await model.answer(request, answer) }
-            }
+        case .approval:
+            EmptyView()
         case .session(let session):
             SessionNeedsYouRow(session: session) { model.openSession(session) }
         case .attention(let item):
@@ -669,22 +389,6 @@ struct QueueRow: View {
         guard case .attention(let item) = decision, let later = item.actions.first(where: { $0.id.hasPrefix("snooze") }) else { return .ignored }
         act { await model.respond(item, action: later.id) }
         return .handled
-    }
-}
-
-/// Guard's question as a row of the queue: the approval card's words and buttons, beside Guard's icon.
-struct ApprovalQueueRow: View {
-    var request: ApprovalRequest
-    var look: ExtensionLook?
-    var decide: (ApprovalDecision) -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Theme.Space.m) {
-            IconTile(symbol: "checkmark.shield", folk: "guard")
-            ApprovalCard(request: request, look: look, framed: false, keys: false, decide: decide)
-            Spacer(minLength: 0)
-        }
-        .nowRow()
     }
 }
 

@@ -1,10 +1,10 @@
 import SidefolkCore
 import SwiftUI
 
-/// Settings › AI: every way Sidefolk can think, grouped by how you pay for it, each with where it
-/// stands and what to do next; the chosen one opens its setup in place. Then exactly what Sidefolk
-/// last sent.
-struct AISettingsView: View {
+/// Settings › Brain › Who answers (D84, was Settings › AI): every way Sidefolk can think, grouped by how you pay for
+/// it, each with where it stands and what to do next; the chosen one opens its setup in place. Then exactly what
+/// Sidefolk last sent.
+struct AISettingsSections: View {
     var model: SettingsModel
     @State private var showPayload: Bool
 
@@ -16,21 +16,10 @@ struct AISettingsView: View {
     private var ai: AISettingsModel { model.ai }
 
     var body: some View {
-        SettingsPage {
-            Label {
-                Text("Notes, reminders and watches work without AI. AI is only used for questions and open-ended requests.")
-                    .fixedSize(horizontal: false, vertical: true)
-            } icon: {
-                Image(systemName: "info.circle.fill").foregroundStyle(Theme.folkColor("byte"))
-            }
-            .font(Theme.Font.body)
-            .foregroundStyle(Theme.ink)
-            .padding(Theme.Space.m)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-
+        VStack(alignment: .leading, spacing: Theme.Space.xl) {
             options("Use a plan you already pay for", [.claudeCode, .codex],
                     footer: "No API key needed. The command's own tools are switched off: it can only act through Sidefolk's.")
+                .settingAnchor(.provider)
             options("Use an API key", [.anthropic] + ProviderPreset.apiKeyPresets.map(AIChoice.preset),
                     footer: "Pay as you go with the provider. Keys stay in your Keychain.")
             options("Run on this Mac", ProviderPreset.localPresets.map(AIChoice.preset),
@@ -39,7 +28,8 @@ struct AISettingsView: View {
             options("Without AI", [.none])
 
             SettingsGroup(title: "What Sidefolk sends",
-                          footer: "Your notes and messages go only to the AI you chose, and only what's needed for the request.") {
+                          footer: "Your notes and messages go only to the AI you chose, and only what's needed for the request.",
+                          anchor: .lastRequest) {
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
                     DisclosureGroup(isExpanded: $showPayload) {
                         payload.padding(.top, Theme.Space.s)

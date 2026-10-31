@@ -144,14 +144,14 @@ public struct ProviderKeys: Sendable {
             bound = try store.get(Self.bindingKey(account))
         } catch {
             throw UserFacingError("I couldn't read your API key from the Keychain. Nothing was changed.",
-                                  recovery: "Open Settings › AI and paste the key again.", detail: String(describing: error))
+                                  recovery: "Open Settings › Brain and paste the key again.", detail: String(describing: error))
         }
         guard let saved, !saved.isEmpty else { return nil }
         // The Anthropic host is fixed, so a key saved without a binding can only be meant for it.
         let boundHost = bound?.reveal() ?? (account == SecretKey.anthropicAPIKey ? Self.anthropicHost : "")
         guard boundHost == host.lowercased() else {
             throw UserFacingError("Your API key was saved for a different address, so I didn't send it. Nothing was changed.",
-                                  recovery: "Paste the key again in Settings › AI to use it with \(host).")
+                                  recovery: "Paste the key again in Settings › Brain to use it with \(host).")
         }
         return saved
     }

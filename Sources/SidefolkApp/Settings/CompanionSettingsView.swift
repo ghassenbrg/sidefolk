@@ -2,39 +2,15 @@ import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Companion: who the companion is, how present it is on the desktop and how it behaves there, on
-/// Yours; and the add-on gallery's companions to browse and download, on Gallery (D77), as
-/// Settings › Extensions keeps Installed and Gallery side by side.
+/// Settings › Companion: who the companion is, where it lives on the desktop and how it behaves there. More companions
+/// are in the Gallery, in Home; its sounds moved to Attention (D84).
 struct CompanionSettingsView: View {
     var model: SettingsModel
-    @FocusState private var focus: CompanionPageFocus?
     private var chooser: CompanionChooserModel { model.chooser }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CompanionPageHeader(model: model, focus: $focus)
-                .frame(maxWidth: 600, alignment: .leading)
-                .padding(.horizontal, Theme.Space.xl)
-                .padding(.top, Theme.Space.l)
-                .frame(maxWidth: .infinity)
-            SettingsPage {
-                if chooser.page == .gallery {
-                    CompanionGalleryView(model: model)
-                } else {
-                    yours
-                }
-            }
-        }
+        SettingsPage { yours }
         .background(Theme.surfaceSunken)
-        // ⌘F searches the gallery, as everywhere on the Mac.
-        .background {
-            Button("Find") {
-                chooser.page = .gallery
-                focus = .search
-            }
-            .keyboardShortcut("f", modifiers: .command).opacity(0).frame(width: 0, height: 0)
-            .accessibilityHidden(true)
-        }
         .task {
             chooser.reload()
             await model.gallery.load()
@@ -47,9 +23,9 @@ struct CompanionSettingsView: View {
     }
 
     @ViewBuilder private var yours: some View {
-        CompanionPicker(model: model)
+        CompanionPicker(model: model).settingAnchor(.chooseCompanion)
 
-        SettingsGroup(title: "Presence") {
+        SettingsGroup(title: Text(verbatim: SettingKey.presence.title), anchor: .presence) {
             ForEach(PresenceMode.allCases, id: \.self) { mode in
                 ChoiceRow(title: title(mode), detail: detail(mode), selected: model.settings.presence == mode) {
                     model.update { $0.presence = mode }
@@ -59,7 +35,7 @@ struct CompanionSettingsView: View {
 
         // Games in the Play panel (D75): how the companion takes a win, and sounds, off until turned on.
         SettingsGroup(title: "Games") {
-            SettingsRow(title: "When it wins", detail: toneDetail) {
+            SettingsRow(title: Text("When it wins"), detail: Text(toneDetail), anchor: .gameTone) {
                 SegmentedPicker("When it wins", selection: Binding(get: { model.settings.games.tone }, set: { tone in model.update { $0.games.tone = tone } }),
                                 segments: [
                     .init(GameTone.gentle, Text(String(localized: "tone.gentle", defaultValue: "Gentle", comment: "How the companion takes a win in games: kindly"))),
@@ -67,27 +43,23 @@ struct CompanionSettingsView: View {
                     .init(GameTone.competitive, Text(String(localized: "tone.competitive", defaultValue: "Competitive", comment: "How the companion takes a win in games: a victory dance"))),
                 ])
             }
-            SettingsToggle(title: "Game sounds", detail: "Soft sounds in games. Each game's speaker button turns its own on or off.",
-                           isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
+            SettingsToggle(.gameSounds, isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
         }
 
         SettingsGroup(title: "Look") {
-            SettingsRow(title: "Size") {
+            SettingsRow(title: Text("Size"), anchor: .size) {
                 SegmentedPicker("Size", selection: Binding(get: { model.settings.size }, set: { size in model.update { $0.size = size } }), segments: [
                     .init(CompanionSize.small, Text(String(localized: "size.small", defaultValue: "Small", comment: "Companion size"))),
                     .init(CompanionSize.medium, Text(String(localized: "size.medium", defaultValue: "Medium", comment: "Companion size, between Small and Large"))),
                     .init(CompanionSize.large, Text(String(localized: "size.large", defaultValue: "Large", comment: "Companion size"))),
                 ])
             }
-            SettingsToggle(title: "Eyes follow the pointer", detail: "A glance now and then, never a stare.",
-                           isOn: setting(\.eyesFollowPointer))
-            SettingsToggle(title: "Show folks on duty",
-                           detail: "Tempo, Scout and Byte sit beside the companion while a reminder, watch or agent is live.",
-                           isOn: setting(\.showFolks))
+            SettingsToggle(.eyesFollow, isOn: setting(\.eyesFollowPointer))
+            SettingsToggle(.folks, isOn: setting(\.showFolks))
         }
 
-        SettingsGroup(title: "Behavior") {
-            SettingsRow(title: "Liveliness", detail: livelinessDetail) {
+        SettingsGroup(title: Text(verbatim: SettingKey.liveliness.section)) {
+            SettingsRow(title: Text("Liveliness"), detail: Text(livelinessDetail), anchor: .liveliness) {
                 // Their own keys: "Minimal" is also a reasoning effort, which other languages word apart.
                 SegmentedPicker("Liveliness", selection: Binding(get: { model.settings.liveliness },
                                                                  set: { level in model.update { $0.liveliness = level } }), segments: [
@@ -96,9 +68,7 @@ struct CompanionSettingsView: View {
                     .init(CompanionLiveliness.lively, Text(String(localized: "liveliness.lively", defaultValue: "Lively", comment: "How lively the companion is: the most moments"))),
                 ])
             }
-            SettingsToggle(title: "Sleep when you're away", detail: "Naps after 10 minutes without input and wakes when you're back.",
-                           isOn: setting(\.sleepWhenIdle))
-            SettingsToggle(title: "Sounds", detail: "A soft chime for reminders and finished jobs.", isOn: setting(\.sounds))
+            SettingsToggle(.sleep, isOn: setting(\.sleepWhenIdle))
         }
     }
 

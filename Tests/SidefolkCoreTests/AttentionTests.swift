@@ -156,26 +156,24 @@ import Testing
 }
 
 extension AttentionCenterTests {
-    /// Quiet ends (D84, "While you were focused"): one card says what waited, instead of a parade of bubbles.
-    @Test func quietEndsWithOneDigest() async throws {
-        let (center, events, store) = try center()
+    /// Quiet ends (D84): what waited comes as one card, as after Focus or being away, instead of a parade of whispers.
+    @Test func quietEndsWithOneCard() async throws {
+        let (center, events, _) = try center()
         await center.update { $0.quiet = true }
-        let gentle = await center.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Saved a note"))
-        await center.post(AttentionRequest(level: .attention, source: "reminder", title: "Stretch", actions: [AttentionAction(id: "done", title: "Done")]))
-        #expect(await center.isHeld(gentle.id))
+        let saved = await center.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Saved a note"))
+        await center.post(AttentionRequest(level: .gentle, source: "external:codex", title: "Finished in pockito"))
+        #expect(await center.isHeld(saved.id))
         let stream = events.stream()
         await center.update { $0.quiet = false }
         for await e in stream {
             if case .attention(.present(let item, _)) = e {
-                #expect(item.source == "summary" && item.refKind == "digest")
+                #expect(item.source == "summary" && item.refKind == "quiet")
                 #expect(item.title.contains("2"))
-                #expect(item.body?.contains("Saved a note") == true && item.body?.contains("Stretch") == true)
+                #expect(item.body?.contains("Saved a note") == true && item.body?.contains("Finished in pockito") == true)
                 break
             }
         }
-        // The gentle notice was told in the digest; it needed nothing, so it no longer waits.
-        #expect(try await store.item(id: gentle.id)?.state == .acknowledged)
-        #expect(!(await center.isHeld(gentle.id)))
+        #expect(!(await center.isHeld(saved.id)))
     }
 }
 

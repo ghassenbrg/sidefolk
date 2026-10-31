@@ -91,7 +91,7 @@ public enum CodexBinary {
         case .found(let path): .success(path)
         case .unusable(let reason):
             .failure(UserFacingError("Sidefolk won't run Codex from there: \(reason)",
-                                     recovery: "Reinstall Codex or choose another provider in Settings › AI."))
+                                     recovery: "Reinstall Codex or choose another provider in Settings › Brain."))
         case .notFound:
             .failure(UserFacingError("I couldn't find Codex on this Mac.",
                                      recovery: "Install it with \(installCommand) (or \(brewCommand)), then run codex login."))

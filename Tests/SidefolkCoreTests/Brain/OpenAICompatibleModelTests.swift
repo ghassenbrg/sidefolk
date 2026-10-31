@@ -141,7 +141,7 @@ import Testing
                                               transport: FakeTransport([.failure(URLError(.cannotConnectToHost))]))
         let error = await #expect(throws: UserFacingError.self) { try await model.respond(to: AnthropicModelTests.simpleRequest) }
         #expect(error?.message == "I couldn't reach Ollama on this Mac. Nothing was changed.")
-        #expect(error?.recovery == "Make sure Ollama is running, and check the address in Settings › AI.")
+        #expect(error?.recovery == "Make sure Ollama is running, and check the address in Settings › Brain.")
     }
 
     @Test func checkListsModels() async throws {

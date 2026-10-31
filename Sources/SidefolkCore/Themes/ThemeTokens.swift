@@ -105,7 +105,7 @@ public struct ThemeTokens: Sendable, Equatable {
     }
 
     /// How much room things get: spacing is scaled by it.
-    public enum Density: String, Sendable, Equatable, CaseIterable {
+    public enum Density: String, Codable, Sendable, Equatable, CaseIterable {
         case compact, regular, relaxed
 
         public var factor: Double {

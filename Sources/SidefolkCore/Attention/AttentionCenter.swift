@@ -45,8 +45,6 @@ public actor AttentionCenter {
     /// Items an answer is being handled for; a second answer (double click, bubble plus notification) is dropped.
     private var answering: Set<String> = []
     private var timers: [String: Task<Void, Never>] = [:]
-    /// When quiet mode began, for the digest of what waited when it ends.
-    private var quietSince: Date?
     private var renudges: [String: Task<Void, Never>] = [:]
 
     public init(store: AttentionStore, events: EventBus, clock: any Clock = SystemClock()) {
@@ -76,14 +74,14 @@ public actor AttentionCenter {
         let before = env
         change(&env)
         guard env != before else { return }
-        if !before.quiet, env.quiet { quietSince = clock.now }
         let returned = before.away && !env.away && !idleAway
-        let calmer = (before.quiet && !env.quiet) || (before.fullscreen && !env.fullscreen)
-        if before.quiet, !env.quiet, let since = quietSince {
-            quietSince = nil
-            Task { await digestQuiet(since: since) }
-        } else if returned || calmer {
-            Task { await reconsiderHeld(summarise: returned) }
+        let calmer = (before.isQuiet && !env.isQuiet) || (before.isFocused && !env.isFocused)
+        // After Focus or Quiet, what waited comes as one card (D84), as it does after being away.
+        let focusEnded = before.isFocused && !env.isFocused && !env.isQuiet
+        let quietEnded = before.isQuiet && !env.isQuiet && !env.isFocused
+        if returned || calmer {
+            let summary: HeldSummary? = returned ? .away : focusEnded ? .focus : quietEnded ? .quiet : nil
+            Task { await reconsiderHeld(summary: summary) }
         }
     }
 
@@ -133,6 +131,9 @@ public actor AttentionCenter {
     /// Whether an item is waiting for its turn (quiet mode, full screen, away, typing or the rate limits).
     public func isHeld(_ id: String) -> Bool { held[id] != nil }
 
+    /// How many items wait for their turn ("Mochi is holding 2 things", D84).
+    public var heldCount: Int { held.count }
+
     /// Retires what is still open about one thing (a repeating reminder's last time) without answering it: no
     /// handler runs, the bubble and notification go away, and it no longer counts as waiting.
     public func withdraw(refKind: String, refId: String) async {
@@ -153,7 +154,7 @@ public actor AttentionCenter {
                 held[item.id] = item
             }
         }
-        await reconsiderHeld(summarise: true)
+        await reconsiderHeld(summary: .away)
         await publishBacklog()
     }
 
@@ -184,7 +185,7 @@ public actor AttentionCenter {
             // Read fresh at every decision: being idle once must not hold everything until a lock/unlock.
             let wasIdle = idleAway
             idleAway = s.secondsSinceInput > 300
-            if wasIdle, !idleAway, !env.away, !held.isEmpty { Task { await reconsiderHeld(summarise: true) } }
+            if wasIdle, !idleAway, !env.away, !held.isEmpty { Task { await reconsiderHeld(summary: .away) } }
         }
         let decision = AttentionPolicy.decide(level: item.level, source: item.source, createdAt: item.createdAt, now: now,
                                               env: environment, recent: recent, gentle: gentle)
@@ -273,59 +274,37 @@ public actor AttentionCenter {
         events.publish(.attention(.withdraw(id: id)))
     }
 
-    private func reconsiderHeld(summarise: Bool) async {
+    /// Where the person comes back from, for the one card that says what waited.
+    private enum HeldSummary { case away, focus, quiet }
+
+    /// Lets held items through again; with `summary`, several of them come as one card.
+    private func reconsiderHeld(summary: HeldSummary?) async {
         let items = held.values.sorted { $0.createdAt < $1.createdAt }
         guard !items.isEmpty else { return }
-        if summarise, items.count > 1 {
+        if let summary, items.count > 1 {
+            let title = switch summary {
+            case .away: String(localized: "While you were away: \(items.count) things")
+            case .focus: String(localized: "While you were focused: \(items.count) things",
+                                comment: "One card after Focus ends: what waited during it")
+            case .quiet: String(localized: "While Quiet was on: \(items.count) things", comment: "A card when quiet mode ends")
+            }
             // Coming back to several things: one summary instead of a parade of bubbles.
             for i in items { held[i.id] = nil }
             let titles = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
-            let summary = AttentionItem(level: .attention, source: "summary",
-                                        title: String(localized: "While you were away: \(items.count) things"),
+            let card = AttentionItem(level: .attention, source: "summary",
+                                        title: title,
                                         body: titles + (items.count > 4 ? "\n…" : ""),
                                         actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)],
+                                        // The Sidecard says which moment ended ("Focus ended").
+                                        refKind: summary == .away ? nil : "\(summary)",
                                         now: clock.now)
             let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
-            reserve(summary.source, presentation, now: clock.now)
-            try? await store.save(summary)
-            await present(summary, presentation)
+            reserve(card.source, presentation, now: clock.now)
+            try? await store.save(card)
+            await present(card, presentation)
             return
         }
         for i in items { await consider(i) }
-    }
-
-    /// Quiet mode ended (D84, "While you were focused"): what arrived meanwhile and still waits, as one card, so the
-    /// moment it ends isn't a parade of bubbles. Gentle notices held in quiet are told there and go; what needs an
-    /// answer stays open in the count as before. One thing alone just comes as itself.
-    private func digestQuiet(since: Date) async {
-        let heldItems = held.values.sorted { $0.createdAt < $1.createdAt }
-        let heldIds = Set(heldItems.map(\.id))
-        let waited = ((try? await store.open()) ?? []).filter {
-            $0.createdAt >= since && $0.level >= .attention && !heldIds.contains($0.id) && $0.source != "summary"
-        }
-        let items = (heldItems + waited).sorted { $0.createdAt < $1.createdAt }
-        guard items.count > 1 else { return await reconsiderHeld(summarise: false) }
-        for i in heldItems { held[i.id] = nil }
-        // Gentle ones are told here; they needed nothing, so they are done.
-        for i in heldItems where i.level == .gentle {
-            if var gone = try? await store.item(id: i.id) {
-                gone.state = .acknowledged
-                gone.acknowledgedAt = clock.now
-                try? await store.save(gone)
-            }
-        }
-        let lines = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
-        let summary = AttentionItem(level: .attention, source: "summary",
-                                    title: String(localized: "While Quiet was on: \(items.count) things", comment: "A card when quiet mode ends"),
-                                    body: lines + (items.count > 4 ? "\n…" : ""),
-                                    actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)],
-                                    refKind: "digest", now: clock.now)
-        let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
-        reserve(summary.source, presentation, now: clock.now)
-        try? await store.save(summary)
-        await present(summary, presentation)
-        // Attention-level ones held (no notifications allowed) still wait for their answer: they stay open, quietly.
-        await publishBacklog()
     }
 
     private func publishBacklog() async {

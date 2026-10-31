@@ -28,6 +28,8 @@ final class SidecardModel {
     var hovering = false
     /// Where the tail meets the card along its bottom edge, 0 to 1 in reading order; nil when it sits below.
     var tailAt: CGFloat? = 0.5
+    /// The agent sessions Sidefolk follows, by id, so a session's notice says whose it is.
+    var sessions: [String: AgentSession] = [:]
     /// The companion speaking for itself: its face and name.
     var face: NSImage?
     var companionName = "Sidefolk"

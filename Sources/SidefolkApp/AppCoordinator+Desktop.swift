@@ -26,22 +26,22 @@ extension AppCoordinator {
     /// What waits on the person: open notices that need an answer, and approvals.
     var waitingCount: Int { backlog + mood.approvals.count }
 
-    /// The light at the companion's feet and the mark on its shoulder, from the pose, what waits and quiet mode.
+    /// The light at the companion's feet and the mark on its shoulder, from the pose, what waits, Focus and Quiet.
+    /// When Focus or Quiet ends by itself, `applyAttention`'s timer reports a settings change, which renders this again.
     func renderLight() {
         let settings = runtime.settings.current
         let now = Date()
-        let quiet = settings.isQuiet(at: now)
-        companion.setLight(DesktopLight.of(pose: mood.pose(at: now), waiting: waitingCount, cardOut: sidecard.cardOut, quiet: quiet))
-        sidecard.setWaiting(waitingCount)
-        ask.waiting = waitingCount
-        // Quiet mode that ends by itself: the light comes back then, and the attention center hears it (its digest).
-        quietEnd?.cancel()
-        guard quiet, let until = settings.quietUntil, until < .distantFuture else { return }
-        quietEnd = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(max(0.5, until.timeIntervalSinceNow + 0.5)))
-            guard !Task.isCancelled, let self else { return }
-            await runtime.attention.update { $0.quiet = false }
-            renderLight()
+        let pose = mood.pose(at: now), waiting = waitingCount, cardOut = sidecard.cardOut
+        let quiet = settings.isQuiet(at: now), focus = settings.isFocused(at: now)
+        sidecard.setWaiting(waiting)
+        ask.waiting = waiting
+        guard focus else {
+            return companion.setLight(DesktopLight.of(pose: pose, waiting: waiting, cardOut: cardOut, quiet: quiet))
+        }
+        // Focus counts what it holds too, in grey on the shoulder.
+        Task {
+            let held = await runtime.attention.heldCount
+            companion.setLight(DesktopLight.of(pose: pose, waiting: waiting, cardOut: cardOut, quiet: quiet, focus: true, held: held))
         }
     }
 

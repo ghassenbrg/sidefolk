@@ -1,17 +1,19 @@
 import SidefolkCore
 import SwiftUI
 
-/// Extensions' pages in Home's sidebar (D62, D67): a group that folds away, each page where the person put it (drag,
-/// or Move Up and Down), out of the sidebar when they'd rather (it stays in All Extensions), and an on/off feature's
-/// switch right on its row.
+/// Extensions' pages in Home's sidebar (D62, D67, D84): a group that folds away, each page where the person put it (drag,
+/// or Move Up and Down), an on/off feature's switch or state right on its row, the pages put out of the sidebar in one
+/// menu, and "Get add-ons", which opens the Gallery. There is no separate All Extensions page any more (D84).
 struct ExtensionsSidebarSection: View {
     var pages: ExtensionPagesModel
+    var getAddOns: () -> Void
 
     var body: some View {
         Section(isExpanded: Binding(get: { !pages.layout.collapsed }, set: { pages.setCollapsed(!$0) })) {
             ForEach(pages.shown) { p in
-                HStack(spacing: Theme.Space.xs) {
-                    Label { Text(verbatim: p.title) } icon: { PageNavIcon(info: p) }
+                HStack(spacing: Theme.Space.s + 2) {
+                    PageSquircle(info: p)
+                    Text(verbatim: p.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
                     Spacer(minLength: Theme.Space.xs)
                     if let control = pages.summaries[p.id]?.control, case .toggle = control.kind {
                         QuickControl(info: p, control: control, pages: pages, small: true)
@@ -26,15 +28,51 @@ struct ExtensionsSidebarSection: View {
                 guard let i = from.first, shown.indices.contains(i) else { return }
                 pages.move(shown[i].id, before: to < shown.count ? shown[to].id : nil)
             }
-            Label {
-                Text("All Extensions", comment: "Home's sidebar: the page listing every extension's page and tile")
-            } icon: {
-                NavIcon(symbol: "square.grid.2x2", color: Theme.inkMuted)
+            if !pages.hidden.isEmpty {
+                Menu {
+                    ForEach(pages.hidden) { p in
+                        Button(String(localized: "Show “\(p.title)” in the Sidebar", comment: "A page put out of Home's sidebar, brought back")) {
+                            pages.setInSidebar(p.id, true)
+                        }
+                    }
+                } label: {
+                    Label { Text("\(pages.hidden.count) more", comment: "Home's sidebar: extension pages put out of it") } icon: {
+                        Image(systemName: "ellipsis").frame(width: 20)
+                    }
+                    .font(Theme.Font.body)
+                }
+                .menuStyle(.borderlessButton)
+                .foregroundStyle(Theme.inkMuted)
+                .selectionDisabled()
             }
-            .tag(HomeSelection.page(ExtensionPagesModel.hub))
-            .help(Text("Every extension's page and tile, and where each one shows", comment: "Home's sidebar: All Extensions"))
+            Button(action: getAddOns) {
+                HStack(spacing: Theme.Space.s + 2) {
+                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).frame(width: 20)
+                    Text("Get add-ons", comment: "Home's sidebar: opens the Gallery of companions, extensions and themes")
+                        .font(Theme.Font.body)
+                }
+                .foregroundStyle(Theme.link)
+            }
+            .buttonStyle(.plain)
+            .tag(HomeSelection.gallery)
+            .help(Text("Companions, extensions and themes in the Gallery"))
         } header: {
             Text("Extensions")
+        }
+    }
+}
+
+/// An extension page's icon in the sidebar: its extension's own, or its symbol on a tinted squircle (03-system).
+struct PageSquircle: View {
+    var info: ExtensionPageInfo
+    var size: CGFloat = 20
+
+    var body: some View {
+        if info.iconPath != nil {
+            ExtensionBadge(look: ExtensionLook(name: info.extensionName, iconPath: info.iconPath, folk: "byte"), size: size,
+                           symbol: info.symbol ?? "puzzlepiece.extension")
+        } else {
+            SidebarSquircle(symbol: info.symbol ?? "puzzlepiece.extension", color: Theme.folkColor("byte"), size: size)
         }
     }
 }

@@ -25,6 +25,12 @@ struct SayBarField<Trailing: View>: View {
     var onSubmit: () -> Void = {}
     /// Return with ⌘ or ⌥ (ask the AI, save as a note): true when the screen used it.
     var onModifiedReturn: ((EventModifiers) -> Bool)?
+    /// Bumped by the screen to give the field the keyboard (Home's ⌘K).
+    var focusTrigger = 0
+    /// Told when the field gets or loses the keyboard, so the screen can show what the words will do.
+    var focusChanged: (Bool) -> Void = { _ in }
+    /// Esc, while the field has the keyboard.
+    var onEscape: (() -> Void)?
     /// At the trailing end: a microphone, Stop while working.
     @ViewBuilder var trailing: Trailing
     @FocusState private var focused: Bool
@@ -50,6 +56,7 @@ struct SayBarField<Trailing: View>: View {
                     guard let onModifiedReturn, !press.modifiers.intersection([.command, .option]).isEmpty else { return .ignored }
                     return onModifiedReturn(press.modifiers) ? .handled : .ignored
                 }
+                .onExitCommand { onEscape?() }
             if let hint, text.isEmpty { KeyHint(hint) }
             trailing
         }
@@ -63,13 +70,17 @@ struct SayBarField<Trailing: View>: View {
                 .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.line, lineWidth: binding.wrappedValue ? 2 : 1)
         }
         .animation(Theme.Motion.micro, value: binding.wrappedValue)
+        .onChange(of: focusTrigger) { binding.wrappedValue = true }
+        .onChange(of: binding.wrappedValue) { focusChanged(binding.wrappedValue) }
     }
 }
 
 extension SayBarField where Trailing == EmptyView {
     init(text: Binding<String>, prompt: Text, size: Size = .home, tint: Color = Theme.link, hint: String? = "⌘K",
-         onSubmit: @escaping () -> Void = {}) {
-        self.init(text: text, prompt: prompt, size: size, tint: tint, hint: hint, onSubmit: onSubmit) { EmptyView() }
+         onSubmit: @escaping () -> Void = {}, focusTrigger: Int = 0, focusChanged: @escaping (Bool) -> Void = { _ in },
+         onEscape: (() -> Void)? = nil) {
+        self.init(text: text, prompt: prompt, size: size, tint: tint, hint: hint, onSubmit: onSubmit, focusTrigger: focusTrigger,
+                  focusChanged: focusChanged, onEscape: onEscape) { EmptyView() }
     }
 }
 

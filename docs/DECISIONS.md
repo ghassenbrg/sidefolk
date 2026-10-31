@@ -83,6 +83,10 @@ complaint about a desktop companion is "it's always there".
 Claude Code hooks (installed only on the user's click, with a backup) let the companion notice
 when a session needs you or finished. **Why:** the founding chat's strongest differentiator
 ("watch this Codex session, tell me when it needs me") and the main daily use for the founder.
+**Amended (2026-11-01):** "needs you" is only a real prompt (a permission, a question). Claude Code's "waiting for
+your input" means finished. A finished session is a gentle notice, never in Needs you: one per session, replaced by the
+next and withdrawn when the session works again. The founder's long session, resumed by its own background
+teammates, stopped dozens of times and each stop sat in Needs you with an Open button and nothing to answer.
 
 ### D13 — Extensions are MCP-speaking executables with a Sidefolk manifest (2026-10-26)
 **Decision:** an extension = folder + `sidefolk-extension.json` (permissions, tool risk, watchers,
@@ -2206,6 +2210,8 @@ Stick, Memory Pairs and Daily Word, beside trivia.
 **Why:** the founder approved all ten games; phase 1 built the platform and left these parts and games to come.
 **Alternatives:** a timer in the extension for the companion's turn (stdin can't keep time, and it would hold a process
 awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
+**Amended (2026-11-01):** some parts are drawn with built-in pictures (`Sources/SidefolkApp/Play/Art`: cup, gem,
+balloon, trophy, made for Sidefolk), picked from the part's data; a board still never carries an image.
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
@@ -2340,6 +2346,37 @@ its day as rows. *Not built:* Focus as its own mode (only Quiet exists, so the h
 the evening wrap, the drop choice card, the stack's arc animation, the level-reactive pool for voice, keyboard
 answering of cards outside Ask. Toss captions and the Play panel stay as they were (games are another teammate's).
 
+**Phase 3, built (Home):** one layout in every theme. The sidebar (232) holds the companion live in its nook (its
+portrait in the desktop's pose on its `LightPool`, a state chip, one line), the five places (Today ⌘1, Calendar ⌘2,
+Notebook ⌘3, On duty ⌘4, History ⌘5), the Notebook (You, the Inbox and collections in tinted squircles, the Trash last as
+a filter), the person's extension pages arranged by dragging (pages put out of the sidebar are one menu row; All
+Extensions is gone) with "Get add-ons", and Quiet at the foot (the menu bar's Quiet; Focus comes with phase 4's
+Attention). The toolbar has the place's title and line, the Say bar in the centre (⌘K, `SayBarField(size: .home)`) whose
+panel says in plain words what Return will do, its parts as chips and whether AI is used, from the same `IntentPlan` that
+runs the words, with ↩ / ⌘↩ / ⌥↩ as buttons and what the words find under it. **Today:** a greeting with the Mac's first
+name and one deterministic sentence (`DayBrief`), three counts (need you, on duty, done today), the day as a line, then
+Needs you (three cards, the rest folded into one line with Show all; held in one card while Quiet is on; all clear says so
+with what's next) beside On duty at a glance (watch and live-value tiles, agents at work, extension tiles), and what was
+captured today; a first day keeps the day and offers three starts that fill the Say bar. **On duty** (new): every watch,
+live value, repeating reminder and routine, agent session, command and extension working in the background (a page whose
+main switch is on), grouped by folk with state and Pause, Resume or Stop through the existing calls (`OnDuty` counts what
+runs, paused ones are listed but not counted). **History**: Activity, the kept conversations, what Sidefolk told the
+person (attention items) and other agents' sessions as one timeline (`HistoryTimeline`) by the hour, a plain sentence
+per row with an outcome chip (said no and skipped are calm), Undo where Activity's undo still exists, the exact record
+folded in each row, conversations opening in place with their reply field, sessions as receipts of their calls; filters,
+a span and search. **You**: the About-you facts as a profile with where each came from, Edit (in place) and Forget (the
+Notebook's Trash with its Undo); facts another agent suggested wait at the top, out of answers, with Keep (new: re-tags
+the fact as the person's, `ProfileFacts.keep`). When a fact was last used isn't kept, so it isn't shown. **Calendar**: the
+Agenda (two weeks as a list, today's now line, a repeating reminder once a day with how many more) comes first, then Week
+and Month. **The Gallery** is in Home on Settings' own models (companions with big pictures and the browser's filters,
+extensions with their passport: what they can touch once added, else that the install preview says it, who signed them,
+amber when Sidefolk didn't check them; themes); Settings' Companion and Extensions tabs lose their Gallery page for a way
+to it. **Retired** (one layout per place): the theme layouts' rail, pills, ribbons and status bar, the Today blocks
+(console, planner, board, stage), the Activity table/log/diary styles and the Markdown editor with tabs; the keys still
+decode, so themes keep working, and `ThemeCheck` still reads them. A reminder's Activity line reads its time as a date,
+not ISO. Not done: the permission slip on Today's cards (phase 2's `ApprovalCard`), the Week view's "read only" note and
+"+1" overlaps, a watch's detail page (A9: no check log or page versions are kept), Focus in the sidebar's pill.
+
 **Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
 disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
 per place and one component set keep the product learnable and let extensions place parts predictably; themes still
@@ -2350,6 +2387,69 @@ tiring, fights extension pages and themes) as the base; themes that keep arrangi
 its own care and extensions can't count on a place); a new `canvas` role (the page already is `surfaceSunken`); new
 roles required (every existing theme would warn).
 
+**Phase 4, built (Settings and the rest):** Settings is a sidebar window (920 × 700, at least 760 × 480) with a search
+and eight tabs: General (a waiting version on top, start, updates, words for times, the welcome), Companion (D77's
+chooser restyled; its Sounds moved to Attention), Attention, Brain (AI and Voice), Trust (was Privacy & Permissions),
+Connections (was Agents), Add-ons (was Extensions; "Get Add-ons" opens the old gallery page until Home has it) and
+Appearance (theme, light or dark, density, Home's icons). Every setting kept a home; the old tab names still open
+the right tab (`SettingsTab.privacy` is Trust, and so on), and every "Settings › AI/Privacy/Extensions…" sentence
+points at the new tab. **Search** reads `SettingKey`, one catalog of every row and group with its tab, section,
+title and detail (`SettingsRow(_ key:)` takes its words from it, so the page and search can't disagree); matching is
+`SettingsSearch` in Core (each word starts a word of the title, detail or section, accents and case ignored, titles
+first; CJK matched anywhere), results grouped by the tab with the best match, the match marked, switches and short
+choices usable in place, ↑↓ and Return or a click to jump: the tab opens, scrolls to the row, and the row glows.
+**Attention** is built on Attention's own rules: Open, Focus and Quiet with an end ("for 1 hour", "until 18:00",
+"until tomorrow morning", "until I turn it off"). Focus is new and real: whispers wait and come back as one "While
+you were focused" card when it ends; cards that need an answer still come (`AttentionEnvironment.focus`,
+`AppSettings.focusUntil`). Quiet hours every night (off until turned on; choosing Open or Focus inside them sets the
+rest of that night aside), what a full-screen app does (Quiet as before, Focus, or nothing), sounds, notifications
+and the morning brief. A timer looks again when an end or a quiet-hours edge passes. The per-source "what may
+interrupt you" table of the mockups was left out: no source has its own level to set. **Full access may end**
+(`GuardPolicy.fullAccessEnds`, `beforeFullAccess`, `choose(_:fullAccessEnds:)`): Guard reads the policy through
+`current(at:)`, so past its end Full access is the mode it replaced even if no timer fired (the Mac asleep, Sidefolk
+quit); the sheet offers in 1 hour, tonight at 22:00 (while more than an hour away) or when turned off, and its button
+is the primary, not red. **Trust** leads with Guard and the four modes as cards, each with what it does to one
+example step. **Appearance › Density** (`AppSettings.density`) overrides the theme's spacing. **The menu bar Pocket**
+replaces the long menu: a popover with the companion and its state, the Open/Focus/Quiet dial with its end, Full
+access with Turn Off, a waiting version, Needs you, Next up, Agents and an Ask field; a right-click (or ⋯) has Open
+Sidefolk, Settings, palettes, Hide/Show Companion, Check for Updates… (or Update to …), About and Quit. The icon's
+corner says the state (amber dot, half circle, moon), fades while the companion is hidden, and stays orange in Full
+access. **Install sheets** are a two-step passport (who made it, then what it can touch), D71's words and tones
+unchanged, Install armed only on the second step. The update window and About are on Lantern. Onboarding stays on the
+desktop (D4) and its bubbles are phase 2's; its "Connect…" now opens Settings › Connections, where each file that
+changes is listed, instead of connecting at once.
+
 **Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
 fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
 snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.
+
+### D85 — A companion added from a folder may bring a 2D form, painted, beside its 3D one (2026-10-31)
+**Decision:** *amends D43 and D60.* A 3D companion added from a folder (D60) may carry a `2d/` folder: `species.json`
+in the custom companion format (D43) with its `parts/*.svg` and, new, `paint/*.png`. When it does, it comes in both
+looks like a gallery companion (Settings › Companion › Look, 3D first; the choice is kept per companion,
+`AppSettings.dimensions["local.<name>"]`), and in 2D it is drawn from that data on the soft rig, its paintings fitted
+over its outlines as the gallery's 2D forms are (D59). The format gained, all optional so every file that loaded still
+does:
+- `paint`: `head`, `torso`, `armL`/`armR`, `footL`/`footR` (arms and feet in pairs), each `{image, nudge?, grow?,
+  widen?}` like `Species.painted`; PNGs of at most 2048 px a side and 4 MiB, eight at most.
+- `body.look` `"flat"` (the 2D cartoon of D59: one fill, one hard shade, an outline, `body.line`) or `"soft"`.
+- `face.screen` `{center, size, radius}`: a dark screen whose eyes and mouth are light (Spark's), in `face.glow`
+  and `face.mouthGlow` instead of the style colour; `face.ink`, `face.iris`, `face.eyeSize`, `face.mouthSize`.
+The `2d/` tree is checked like the rest of the folder (names, kinds, sizes, nothing else in it), and its data is loaded
+and drawn in every state before the companion is added: one whose 2D form doesn't load isn't added. Nothing in it runs;
+it is data, as D43's always was.
+
+**Why:** the founder wanted a private companion in 2D as well as 3D, kept out of the repositories like its 3D files
+(D60). The gallery's 2D forms are Swift rigs and paintings built into the app (D59), which can't hold a private one;
+D43's data couldn't say paintings, a screen face or eye colours, so a robot with a black visor would have had dark ink
+eyes on black. Extending the data keeps one 2D engine and one format, and makes "Made by you" companions better too.
+
+**Alternatives:** a Swift rig on a local branch that is never pushed (fragile, and private code beside the app's);
+shipping 2D rigs as data in gallery packs (later, on this format); a separate 2D companion in "Made by you" (two
+entries for one character, and no Look switch).
+
+**Implications:** `SpeciesFile` (`paint`, `body.look/line`, `face.screen/glow/mouthGlow/ink/iris/eyeSize/mouthSize`),
+`CompanionBody` and `Species(custom)`; `Species.painted(image:)` and `Painted(image:over:)`; `SoftFace.glow`,
+`mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
+companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
+`docs/research/lively-companions.md` documents the keys.

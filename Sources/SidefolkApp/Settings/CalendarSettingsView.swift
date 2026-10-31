@@ -12,7 +12,8 @@ struct CalendarGroup: View {
 
     var body: some View {
         SettingsGroup(title: "Your calendar",
-                      footer: "Sidefolk only reads your calendar, never changes it. Your AI sees it only when it asks and you allow it.") {
+                      footer: "Sidefolk only reads your calendar, never changes it. Your AI sees it only when it asks and you allow it.",
+                      anchor: .calendar) {
             ChoiceRow(title: Text("Off"), detail: Text("Today and the morning brief show reminders only."), selected: !on) {
                 Task { await model.services.showCalendar(false) }
             }

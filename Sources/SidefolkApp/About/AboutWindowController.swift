@@ -6,17 +6,22 @@ import SwiftUI
 /// version and the line the brand stands on (D33). Replaces the standard panel, which could only
 /// show the app icon.
 struct AboutView: View {
+    /// What the last look for updates found, when the app has one (not in a plain preview).
+    var updates: UpdateModel?
+
     var body: some View {
         VStack(spacing: Theme.Space.m) {
             if let family = BrandAsset.familyColor.image {
-                Image(nsImage: family).resizable().scaledToFit().frame(height: 150)
+                Image(nsImage: family).resizable().scaledToFit().frame(height: 156)
+                    .padding(.vertical, Theme.Space.l)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.card + 4, style: .continuous))
                     .accessibilityHidden(true)
             }
-            Wordmark(height: 44)
-                .padding(.top, -Theme.Space.xs)
-            Text("Version \(Self.version)").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+            Wordmark(height: 40)
+                .padding(.top, Theme.Space.xs)
             VStack(spacing: Theme.Space.xs) {
-                Text("A little companion for your day.").font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                Text("A little companion for your day.").font(Theme.Font.headline).foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Sidefolk remembers what matters, reminds you, watches for changes and helps get things done. It works with your AI agents, too.")
@@ -24,21 +29,40 @@ struct AboutView: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.top, Theme.Space.s)
+            HStack(spacing: Theme.Space.s) {
+                Chip(text: Text("Version \(Self.version)"), tone: .neutral)
+                    .environment(\.layoutDirection, .leftToRight)
+                if let status { status }
+            }
+            .padding(.top, Theme.Space.xs)
             Spacer(minLength: Theme.Space.s)
             if let notices = Self.notices {
                 Button("Third-party notices") { NSWorkspace.shared.open(notices) }
                     .buttonStyle(.sf(.plain))
             }
+            Rectangle().fill(Theme.line).frame(height: 1)
             if let copyright = Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as? String {
-                Text(verbatim: copyright).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                Text(verbatim: copyright).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    .multilineTextAlignment(.center)
             }
         }
-        .padding(.horizontal, Theme.Space.xxl)
+        .padding(.horizontal, Theme.Space.xl)
         .padding(.top, Theme.Space.xxl + Theme.Space.s)
         .padding(.bottom, Theme.Space.l)
-        .frame(width: 380, height: 470)
+        .frame(width: 420, height: 520)
         .background(Theme.surface)
+    }
+
+    /// "Up to date" or "0.1.0 snapshot 560 is ready", as the last look found it; nothing before one.
+    private var status: Chip? {
+        guard let updates else { return nil }
+        switch updates.phase {
+        case .upToDate: return Chip(text: Text("Up to date", comment: "About: no newer version"), tone: .success, systemImage: "checkmark.circle")
+        case .available(let o), .ready(let o):
+            return Chip(text: Text("\(o.version.shown) is ready", comment: "Settings › General: a new version, “0.1.0 snapshot 560 is ready”"),
+                        tone: .accent, systemImage: "arrow.down.circle")
+        default: return nil
+        }
     }
 
     /// "0.1.0 (212)": the marketing version and, inside an app bundle, its build.
@@ -58,6 +82,11 @@ struct AboutView: View {
 @MainActor
 final class AboutWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
+    private let updates: UpdateModel?
+
+    init(updates: UpdateModel? = nil) {
+        self.updates = updates
+    }
 
     func show() {
         let window = self.window ?? makeWindow()
@@ -67,15 +96,15 @@ final class AboutWindowController: NSObject, NSWindowDelegate {
 
     private func makeWindow() -> NSWindow {
         let window = NSWindow()
-        Self.configure(window)
+        Self.configure(window, updates: updates)
         window.delegate = self
         window.center()
         return window
     }
 
     /// Everything about the window except where it sits. UISnapshots uses this too.
-    static func configure(_ window: NSWindow) {
-        window.contentViewController = NSHostingController(rootView: AboutView())
+    static func configure(_ window: NSWindow, updates: UpdateModel? = nil) {
+        window.contentViewController = NSHostingController(rootView: AboutView(updates: updates))
         window.styleMask = [.titled, .closable, .fullSizeContentView]
         window.title = String(localized: "About Sidefolk")
         window.titleVisibility = .hidden

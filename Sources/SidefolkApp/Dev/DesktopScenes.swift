@@ -36,6 +36,12 @@ enum DesktopScenes {
             AttentionItem(level: .attention, source: "reminder", title: "Stretch and refill water", refKind: "reminder", now: now.addingTimeInterval(-300)),
             AttentionItem(level: .attention, source: "external:codex", title: "Codex asks: deploy to staging?", refKind: "ask", now: now.addingTimeInterval(-60)),
         ]
+        let needsYou = moment(AttentionItem(level: .attention, source: "session:cc-1", title: "Claude needs you in sidefolk",
+                                            body: "Asks to use Bash: git push origin main",
+                                            actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true),
+                                                      AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))],
+                                            refKind: "session", refId: "cc-1"))
+        needsYou.sessions = ["cc-1": AgentSession(id: "cc-1", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou)]
         return [
             ("whisper", moment(AttentionItem(level: .gentle, source: "external:claude-code", title: "Claude Code saved a note to Ideas",
                                              actions: [AttentionAction(id: SidecardItemCard.undo, title: String(localized: "Undo"))], refKind: "credit"),
@@ -61,11 +67,7 @@ enum DesktopScenes {
                                            actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true),
                                                      AttentionAction(id: "stop", title: String(localized: "Stop watching"))],
                                            refKind: "watcher", refId: "w1"))),
-            ("agent-needs-you", moment(AttentionItem(level: .attention, source: "session:cc-1", title: "Claude needs you in sidefolk",
-                                                     body: "Asks to use Bash: git push origin main",
-                                                     actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true),
-                                                               AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))],
-                                                     refKind: "session", refId: "cc-1"))),
+            ("agent-needs-you", needsYou),
             ("job-failed", moment(AttentionItem(level: .attention, source: "job", title: "npm test failed in pockito (exit 1)",
                                                 body: "billing › team needs three seats\nExpected 36, received 24",
                                                 actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),
@@ -78,9 +80,10 @@ enum DesktopScenes {
                                            body: "10:00 Team standup\n13:00 Lunch with Priya\n16:30 Design review\n17:00 Stretch and refill water\n3 open tasks · 3 watchers on duty",
                                            actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)], refKind: "brief"))),
             ("digest", moment(AttentionItem(level: .attention, source: "summary",
-                                            title: String(localized: "While Quiet was on: \(4) things", comment: "A card when quiet mode ends"),
+                                            title: String(localized: "While you were focused: \(4) things",
+                                                          comment: "One card after Focus ends: what waited during it"),
                                             body: "• Codex asks: deploy to staging now?\n• staging.sidefolk.app is down\n• Stretch and refill water\n• npm test passed in pockito",
-                                            actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)], refKind: "digest"))),
+                                            actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)], refKind: "focus"))),
             ("intro", moment(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
                                            body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
             ("welcome", moment(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),
@@ -150,7 +153,7 @@ enum DesktopScenes {
         // The board's own labels stay English: it is a review sheet, not something people read in the app.
         let cells: [(String, LightPoolState, Int, [String])] = [
             ("Idle", .idle, 0, []), ("Working", .working, 0, ["byte"]), ("Waiting on you", .waiting(3), 3, []),
-            ("Alert", .alert, 1, []), ("Something failed", .failed, 0, []), ("Quiet", .quiet, 0, []),
+            ("Alert", .alert, 1, []), ("Something failed", .failed, 0, []), ("Focus", .focus, 2, []), ("Quiet", .quiet, 0, []),
         ]
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Space.l), count: 3), spacing: Theme.Space.l) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
@@ -185,6 +188,7 @@ enum DesktopScenes {
             ("whisper", Floor(light: .working, folks: ["byte"], agents: [agents[1]], sidecard: sidecards["whisper"]), false),
             ("agents", Floor(light: .alert, count: 1, folks: ["byte", "scout"], agents: agents, sidecard: sidecards["agent-needs-you"]), false),
             ("stack", Floor(light: .waiting(12), folks: ["scout"], sidecard: sidecards["stack"]), false),
+            ("focus", Floor(light: .focus, count: 2, folks: ["scout"], pins: Array(pins.prefix(1))), false),
             ("quiet", Floor(light: .quiet, folks: ["scout"], pins: Array(pins.prefix(1))), false),
         ]
     }

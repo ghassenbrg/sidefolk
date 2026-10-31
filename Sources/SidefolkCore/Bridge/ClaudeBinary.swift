@@ -78,9 +78,9 @@ public enum ClaudeBinary {
         case .found(let path): .success(path)
         case .unusable(let reason):
             .failure(UserFacingError("Sidefolk won't run Claude Code from there: \(reason)",
-                                     recovery: "Reinstall Claude Code or choose another provider in Settings › AI."))
+                                     recovery: "Reinstall Claude Code or choose another provider in Settings › Brain."))
         case .notFound:
-            .failure(UserFacingError("I couldn't find Claude Code on this Mac.", recovery: "Install it, or set its path in Settings › AI."))
+            .failure(UserFacingError("I couldn't find Claude Code on this Mac.", recovery: "Install it, or set its path in Settings › Brain."))
         }
     }
 

@@ -76,7 +76,7 @@ final class ConversationsModel {
         guard let thread = selectedId, !text.isEmpty, !busy else { return }
         guard hasAI else {
             error = UserFacingError("That needs AI, which isn't set up yet.",
-                                    recovery: "Choose Claude Code, Codex, an API key or Ollama in Settings › AI.")
+                                    recovery: "Choose Claude Code, Codex, an API key or Ollama in Settings › Brain.")
             return
         }
         draft = ""

@@ -194,6 +194,7 @@ final class FixtureServices: AppServices {
     func installCommandLineTool() async -> UserFacingError? { nil }
     func openSettings(tab: SettingsTab?) {}
     func showAbout() {}
+    func openGallery() {}
     func openAsk(prefill: String) {}
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? { nil }
     func moveReminder(_ id: String, to date: Date) async -> UserFacingError? {
