@@ -50,6 +50,13 @@ public struct ThemeTokens: Sendable, Equatable {
         public var warningSoft: Pair
         /// Text on a `warning` fill, like the count of what waits on you.
         public var onWarning: Pair
+        /// Wells inside a card: fields, the search, chips, a segmented control's track (Lantern's `sunken`, D84).
+        /// Darker than a card in light, lighter in dark. Optional: a theme without it uses its `surfaceSunken`.
+        public var well: Pair
+        /// The light at the companion's feet while it works or listens (D84). Light, never text. Optional.
+        public var glow: Pair
+        /// The light when something waits on the person, and the count on its shoulder. Light, never text. Optional.
+        public var waitGlow: Pair
 
         /// Every role by its name in a theme file, in this order.
         public static var roles: [(name: String, key: WritableKeyPath<Colors, Pair>)] { [
@@ -59,7 +66,19 @@ public struct ThemeTokens: Sendable, Equatable {
             ("danger", \.danger), ("dangerSoft", \.dangerSoft), ("onDanger", \.onDanger),
             ("success", \.success), ("successSoft", \.successSoft),
             ("warning", \.warning), ("warningSoft", \.warningSoft), ("onWarning", \.onWarning),
+            ("well", \.well), ("glow", \.glow), ("waitGlow", \.waitGlow),
         ] }
+
+        /// Roles a theme may leave out without a warning: themes made before Lantern (D84) didn't have them, and each
+        /// has a fitting stand-in (`fillOptional`).
+        public static let optionalRoles: Set<String> = ["well", "glow", "waitGlow"]
+
+        /// The stand-ins for optional roles a theme left out: its own sunken surface for wells, Harbor's lights.
+        mutating func fillOptional(missing: Set<String>) {
+            if missing.contains("well") { well = surfaceSunken }
+            if missing.contains("glow") { glow = ThemeTokens.harbor.colors.glow }
+            if missing.contains("waitGlow") { waitGlow = ThemeTokens.harbor.colors.waitGlow }
+        }
     }
 
     public struct Space: Sendable, Equatable {
@@ -70,6 +89,8 @@ public struct ThemeTokens: Sendable, Equatable {
         }
     }
 
+    /// Corners (D84): `control` for buttons and fields, `card`, `panel` for the Sidecard, sheets and popovers, `bubble`
+    /// for the companion's speech. Chips and pins are capsules; the inner `xs` follows `control`.
     public struct Radius: Sendable, Equatable {
         public var control, card, panel, bubble: Double
 
@@ -167,36 +188,41 @@ public struct ThemeTokens: Sendable, Equatable {
 }
 
 extension ThemeTokens {
-    /// The default theme: the approved navy and aqua identity, airy and rounded. Faint ink, link text and the danger
-    /// red were deepened in D58 so every text role reads at 4.5:1 or more on every surface, in both appearances.
+    /// The default theme, in the Lantern look (D84): neutral graphite-and-paper surfaces so the companion is the warm
+    /// thing on screen, the brand navy as ink, one deep aqua for actions that reads at 4.5:1 with its label in both
+    /// appearances (the pale brand aqua read as disabled), and the brand aqua and amber kept as light: the pool at the
+    /// companion's feet. Every text role reads at 4.5:1 or more on every surface (03-system's computed ratios).
     public static let harbor = ThemeTokens(
         id: "harbor",
         name: "Harbor",
         colors: Colors(
-            ink: Pair(light: 0x0F2D5B, dark: 0xE8EEF8),
-            inkMuted: Pair(light: 0x5B6B85, dark: 0x9AA8BF),
-            inkFaint: Pair(light: 0x5E718F, dark: 0x8795AC),
-            surface: Pair(light: 0xFFFFFF, dark: 0x15233B),
-            surfaceSunken: Pair(light: 0xF4F7FB, dark: 0x0E1A2E),
-            surfaceRaised: Pair(light: 0xFFFFFF, dark: 0x1B2C49),
-            line: Pair(light: 0xE2E8F0, dark: 0x26385A),
-            accent: Pair(0x2ED4D9),
-            onAccent: Pair(0x0F2D5B),
-            accentSoft: Pair(light: 0xE3F9FA, dark: 0x173F4D),
-            link: Pair(light: 0x137A7F, dark: 0x2ED4D9),
-            danger: Pair(light: 0xC93F33, dark: 0xFF8A7D),
-            dangerSoft: Pair(light: 0xFFEDEA, dark: 0x4A2622),
-            onDanger: Pair(light: 0xFFFFFF, dark: 0x0F2D5B),
-            success: Pair(light: 0x2F9E6D, dark: 0x7DD3A7),
-            successSoft: Pair(light: 0xE6F6EE, dark: 0x1D3D31),
-            // The brand's sun in the dark; deepened to read at 4.5:1 on light surfaces, Harbor's and any theme's
-            // that leaves it out.
-            warning: Pair(light: 0x8A5800, dark: 0xFFC93C),
-            warningSoft: Pair(light: 0xFFF4D6, dark: 0x3D3317),
-            onWarning: Pair(light: 0xFFFFFF, dark: 0x0F2D5B)
+            ink: Pair(light: 0x0F1E36, dark: 0xEEF2F8),
+            inkMuted: Pair(light: 0x465063, dark: 0xB3BDCC),
+            inkFaint: Pair(light: 0x5F697C, dark: 0x8C97AA),
+            surface: Pair(light: 0xFFFFFF, dark: 0x161D2A),
+            // The window's canvas, under the cards.
+            surfaceSunken: Pair(light: 0xF4F5F7, dark: 0x0D121C),
+            // Cards.
+            surfaceRaised: Pair(light: 0xFFFFFF, dark: 0x1A2232),
+            line: Pair(light: 0xE3E6EB, dark: 0x273041),
+            accent: Pair(light: 0x0B7783, dark: 0x3CD6DB),
+            onAccent: Pair(light: 0xFFFFFF, dark: 0x05282C),
+            accentSoft: Pair(light: 0xDDF4F5, dark: 0x153A40),
+            link: Pair(light: 0x0A6F7A, dark: 0x5FE0E4),
+            danger: Pair(light: 0xB42318, dark: 0xFF8A80),
+            dangerSoft: Pair(light: 0xFDECEA, dark: 0x45201D),
+            onDanger: Pair(light: 0xFFFFFF, dark: 0x2A0B08),
+            success: Pair(light: 0x13703F, dark: 0x5FD69A),
+            successSoft: Pair(light: 0xE3F4EA, dark: 0x173A2A),
+            warning: Pair(light: 0x8A4B00, dark: 0xFFC266),
+            warningSoft: Pair(light: 0xFFF3DC, dark: 0x3A2E17),
+            onWarning: Pair(light: 0xFFFFFF, dark: 0x2A1A00),
+            well: Pair(light: 0xECEFF3, dark: 0x1F2737),
+            glow: Pair(0x2ED4D9),
+            waitGlow: Pair(0xF5A524)
         ),
         space: Space(xxs: 2, xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32),
-        radius: Radius(control: 8, card: 12, panel: 18, bubble: 20),
+        radius: Radius(control: 8, card: 12, panel: 18, bubble: 18),
         type: Typography(display: .rounded, scale: 1, density: .regular)
     )
 }
