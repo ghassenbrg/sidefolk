@@ -147,14 +147,15 @@ enum DesktopScenes {
 
     /// One board of every state, as the mockup's B1 board (b01-states): the light says it before a word is read.
     static func statesBoard(portrait: NSImage) -> some View {
-        let cells: [(LocalizedStringKey, LightPoolState, Int, [String])] = [
+        // The board's own labels stay English: it is a review sheet, not something people read in the app.
+        let cells: [(String, LightPoolState, Int, [String])] = [
             ("Idle", .idle, 0, []), ("Working", .working, 0, ["byte"]), ("Waiting on you", .waiting(3), 3, []),
             ("Alert", .alert, 1, []), ("Something failed", .failed, 0, []), ("Quiet", .quiet, 0, []),
         ]
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Space.l), count: 3), spacing: Theme.Space.l) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(cell.0).font(Theme.Font.headline).foregroundStyle(Theme.ink).padding(Theme.Space.l)
+                    Text(verbatim: cell.0).font(Theme.Font.headline).foregroundStyle(Theme.ink).padding(Theme.Space.l)
                     FloorScene(portrait: portrait, floor: Floor(light: cell.1, count: cell.2, folks: cell.3), height: 220)
                 }
                 .background(Wallpaper())
