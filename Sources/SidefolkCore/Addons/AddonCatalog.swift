@@ -61,13 +61,30 @@ public struct AddonCatalog: Sendable, Equatable {
         self.fetched = fetched
     }
 
-    public func entry(_ id: String) -> AddonEntry? { addons.first { $0.id == id } }
+    /// The newest version of `id` that `channel` takes, the newest of all by default. An add-on can be listed twice
+    /// (D65): its latest release, and the snapshot of its next version after it.
+    public func entry(_ id: String, on channel: UpdateChannel = .snapshots) -> AddonEntry? {
+        Self.newest(addons.filter { $0.id == id }, on: channel)
+    }
 
-    public func companion(_ name: String) -> AddonEntry? { addons.first { $0.kind == .companion && $0.companion == name } }
+    public func companion(_ name: String, on channel: UpdateChannel = .snapshots) -> AddonEntry? {
+        Self.newest(addons.filter { $0.kind == .companion && $0.companion == name }, on: channel)
+    }
 
-    /// What the gallery shows on the person's choice in Settings › Updates (D65): snapshots only to those who chose
-    /// them. One catalog serves both choices; what's already installed stays, whatever its version.
-    public func offered(on channel: UpdateChannel) -> [AddonEntry] { addons.filter { channel.includes($0.version) } }
+    /// What the gallery shows on the person's choice in Settings › Updates (D65): one version of each add-on, a
+    /// snapshot only to those who chose them. One catalog serves both choices; what's already installed stays,
+    /// whatever its version.
+    public func offered(on channel: UpdateChannel) -> [AddonEntry] {
+        var seen = Set<String>()
+        return addons.compactMap { seen.insert($0.id).inserted ? entry($0.id, on: channel) : nil }
+    }
+
+    private static func newest(_ entries: [AddonEntry], on channel: UpdateChannel) -> AddonEntry? {
+        entries.filter { channel.includes($0.version) }.max { a, b in
+            guard let x = ReleaseVersion(a.version), let y = ReleaseVersion(b.version) else { return false }
+            return x < y
+        }
+    }
 
     /// The preview's file, if the catalog brought one.
     public func preview(for entry: AddonEntry) -> URL? {
@@ -77,7 +94,8 @@ public struct AddonCatalog: Sendable, Equatable {
     }
 
     /// Reads `catalog.json`: entries that are malformed, or need a newer Sidefolk or engine, are left out, so one bad
-    /// entry never hides the others. A file in another format is refused whole.
+    /// entry never hides the others. A file in another format is refused whole. An id may come twice with different
+    /// versions (a release and a later snapshot, D65); copies from before that keep the first, which is the release.
     public static func parse(_ data: Data, folder: URL, fetched: Date, running: String = SidefolkVersion.current) throws -> AddonCatalog {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let items = root["addons"] as? [Any] else {
             throw UserFacingError("The add-on gallery's list couldn't be read.")
@@ -90,7 +108,7 @@ public struct AddonCatalog: Sendable, Equatable {
         let addons = items.compactMap { item -> AddonEntry? in
             guard let json = try? JSONSerialization.data(withJSONObject: item),
                   let entry = try? decoder.decode(AddonEntry.self, from: json),
-                  valid(entry), fits(entry, running: running), seen.insert(entry.id).inserted else { return nil }
+                  valid(entry), fits(entry, running: running), seen.insert("\(entry.id) \(entry.version)").inserted else { return nil }
             return entry
         }
         return AddonCatalog(addons: addons, folder: folder, fetched: fetched)

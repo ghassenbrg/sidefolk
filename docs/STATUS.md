@@ -12,6 +12,12 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **A release stays beside the next version's snapshots (D65 amended):** once an add-on is released and its next
+  version starts snapshots, the gallery lists both (the release first) and Settings › Updates picks:
+  `AddonCatalog.entry(_:on:)`, `companion(_:on:)`, `offered(on:)`; sidefolk-addons e99c207 keeps the latest release's
+  pack in `build.py` (`latest`, `kept_release`). *Checked:* `aReleaseAndTheSnapshotAfterItAreBothListed`, `make
+  test`, the helpers on made-up versions and keeping a live pack, and a signed build against the live gallery giving
+  exactly its packs (so nothing to republish). *Not yet:* a real release in the gallery; nothing is released.
 - **Every add-on in snapshots; the gallery follows Settings › Updates (D65 amended):** companions and themes are
   `1.0.0-snapshot.<n>` until released, like extensions (sidefolk-addons 17020a4; a theme's packed `theme.json`
   carries the snapshot version). The gallery (a GitHub pre-release now, not "Latest") was published once more with

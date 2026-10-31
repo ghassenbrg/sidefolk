@@ -113,6 +113,26 @@ import Testing
         }
     }
 
+    /// A released version stays listed beside the snapshot of the next one (D65): Releases gets the release, snapshots
+    /// get the snapshot, each once, and a release is never swapped for a snapshot when its pack is fetched again.
+    @Test func aReleaseAndTheSnapshotAfterItAreBothListed() throws {
+        func entry(_ id: String, _ version: String) -> [String: Any] {
+            ["id": id, "kind": "extension", "name": "N", "tagline": "", "description": "", "author": "Sidefolk",
+             "version": version, "file": "n-\(version).zip", "bytes": 10, "sha256": String(repeating: "a", count: 64)]
+        }
+        let data = try JSONSerialization.data(withJSONObject: ["format": 1, "addons": [
+            entry("dev.sidefolk.git", "1.0.0"), entry("dev.sidefolk.git", "1.1.0-snapshot.2"),
+            entry("dev.sidefolk.pdf", "1.0.0-snapshot.4"),
+        ]])
+        let catalog = try AddonCatalog.parse(data, folder: URL(fileURLWithPath: "/tmp"), fetched: Date())
+        #expect(catalog.addons.count == 3)
+        #expect(catalog.offered(on: .releases).map(\.version) == ["1.0.0"])
+        #expect(catalog.offered(on: .snapshots).map(\.version) == ["1.1.0-snapshot.2", "1.0.0-snapshot.4"])
+        #expect(catalog.entry("dev.sidefolk.git")?.version == "1.1.0-snapshot.2")
+        #expect(catalog.entry("dev.sidefolk.git", on: .releases)?.version == "1.0.0")
+        #expect(catalog.entry("dev.sidefolk.pdf", on: .releases) == nil)
+    }
+
     /// Shelves and search (D56): a known shelf, one this copy doesn't know (Other), and words found anywhere in the
     /// entry, ignoring case and accents.
     @Test func entriesAreShelvedAndFoundByTheirWords() throws {

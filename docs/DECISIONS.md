@@ -1627,3 +1627,13 @@ While a gallery list hides snapshots it says so, with **Show Snapshots**, which 
 Updates (Sidefolk's own included, as the note says): on the default, nothing is released yet, and an empty gallery
 would look broken. An add-on already installed stays and runs whatever its version; on Releases it waits for its
 release. A copy that installed a companion or theme as plain 1.0.0 keeps it, as with the extensions above.
+
+**Amended (2026-10-31): a release stays beside the next version's snapshots.** Otherwise the first add-on released
+and then changed would vanish from Releases: the catalog listed one version per id, so `1.1.0-snapshot.1` replaced
+`1.0.0` and publish.sh deleted its pack. `build.py` now keeps an add-on's latest release, its pack byte for byte,
+listed first, while its next version is in snapshots, and stops if the snapshots aren't of a higher version.
+`AddonCatalog` keeps every version of an id (one per version) and picks per choice: `entry(_:on:)`,
+`companion(_:on:)` and `offered(on:)` give the newest version the channel takes, so Releases gets the release and
+snapshots the snapshot. A pack fetched again stays the same kind (a release isn't swapped for a snapshot). A chosen
+companion that comes back by itself is the release on Releases, or the newest when none is released. Copies from
+before this read the first entry of an id, which is the release.

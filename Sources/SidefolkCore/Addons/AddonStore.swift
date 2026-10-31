@@ -131,7 +131,9 @@ public actor AddonStore {
         do {
             return (try await download(entry, progress: progress), entry)
         } catch {
-            guard let newer = try? await catalog(refresh: true).entry(entry.id), newer != entry,
+            // The same kind of version as asked for: a release isn't swapped for a snapshot.
+            let channel: UpdateChannel = ReleaseVersion(entry.version)?.isPrerelease == false ? .releases : .snapshots
+            guard let newer = try? await catalog(refresh: true).entry(entry.id, on: channel), newer != entry,
                   newer.kind == entry.kind, newer.companion == entry.companion else { throw error }
             Log.shared.info("addons", "the gallery changed since its catalog was fetched; trying again", ["id": entry.id])
             return (try await download(newer, progress: progress), newer)
@@ -234,7 +236,7 @@ public actor AddonStore {
     /// a snapshot waits too unless the person chose snapshots (`channel`).
     public func companionUpdates(in catalog: AddonCatalog, channel: UpdateChannel) -> [AddonEntry] {
         installedCompanions().filter { !$0.addedFromFolder }.compactMap { have in
-            guard let entry = catalog.companion(have.companion), entry.id == have.id,
+            guard let entry = catalog.companion(have.companion, on: channel), entry.id == have.id,
                   channel.offers(entry.version, over: have.version) else { return nil }
             return entry
         }
@@ -278,7 +280,7 @@ public actor AddonStore {
     /// The gallery's themes on this Mac that `catalog` has a newer version of, a snapshot only on `channel` snapshots.
     public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary, channel: UpdateChannel) -> [AddonEntry] {
         library.all().compactMap { have in
-            guard have.folder != nil, let entry = catalog.entry(have.id), entry.kind == .theme,
+            guard have.folder != nil, let entry = catalog.entry(have.id, on: channel), entry.kind == .theme,
                   let old = have.version, channel.offers(entry.version, over: old) else { return nil }
             return entry
         }

@@ -211,10 +211,12 @@ final class AppCoordinator {
         let s = runtime.settings.current
         let species = CompanionArt.species(s.companion)
         guard s.customCompanion == nil, s.localCompanion == nil, species.inGallery, !Companion3DStage.has(species) else { return }
-        let addons = runtime.addons, name = s.companion.rawValue
+        let addons = runtime.addons, name = s.companion.rawValue, channel = s.updates.effectiveChannel
         Task {
             do {
-                guard let entry = try await addons.catalog().companion(name) else { return }
+                // A release on Releases when there is one; else the newest: the person chose this companion.
+                let catalog = try await addons.catalog()
+                guard let entry = catalog.companion(name, on: channel) ?? catalog.companion(name) else { return }
                 try await addons.install(companion: entry)
                 CompanionArt.forgetPictures()
                 settingsChanged()
