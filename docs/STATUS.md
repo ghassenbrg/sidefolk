@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-30. Version 0.1.0. Latest: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
+Updated: 2026-10-31. Version 0.1.0. Latest: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
 extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
 published yet: the founder runs scripts/publish.sh there). 1374 core and 34 character tests pass, serially.
 Before that: the founder's list after snapshot 478: other agents change and
@@ -15,23 +15,30 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 - **Extensions that keep running and act; Clipboard and Keep Awake (D63):** `background` extensions, clipboard and
   power permissions, palettes on a shortcut that paste, page switches and buttons, nudges. Clipboard (⇧⌘C, Maccy's
   replacement with secrets masked and forgotten) and Keep Awake (Mouse Jiggler's, with nothing moving) are in
-  sidefolk-addons, minimum 0.2.0, published to the gallery on 2026-10-31 (both packs downloaded back and their
-  digests match the catalog). *Checked:* ExtensionServiceTests (manifest, sandbox lines, palettes and nudges with a
+  sidefolk-addons, minimum 0.1.0 (1.0.1), in the gallery since 2026-10-31. *Checked:* ExtensionServiceTests (manifest, sandbox lines, palettes and nudges with a
   fixture, Keep Awake for real), the add-ons' ClipboardKeepAwakeTests, UI snapshots (`panel-extension-palette`,
   `page-extension-awake`), and the debug app: five copies captured and classified, the palette listing them, "keep my
   Mac awake for 30 minutes" holding `PreventUserIdleDisplaySleep` and "let my mac sleep" releasing it. *Not yet by
   hand:* Return pasting into another app and the nudge (both need Accessibility granted to the debug build); pictures
   in the palette show no thumbnail.
-- **Extensions add pages; System Vitals+ (D62, Sidefolk 0.2.0):** `pages.<name>` in a manifest puts a page in Home's
+- **Extensions add pages; System Vitals+ (D62):** `pages.<name>` in a manifest puts a page in Home's
   sidebar (Extensions) and, with `widget`, a tile on Today; the extension answers `sidefolk/page.render` with
   parts Sidefolk draws itself (gauge, stat, chart, bars, facts, note, ask) and its watchers are switches under the
   page. Sidefolk keeps the charts' past (`PageHistory/`) and reads `history`/`widget` pages once a minute. System
-  Vitals+ is in `sidefolk-addons/extensions/system-vitals-plus` (gallery, minimum 0.2.0): page, 8 tools with commands,
+  Vitals+ is in `sidefolk-addons/extensions/system-vitals-plus` (gallery, minimum 0.1.0): page, 8 tools with commands,
   7 watchers, nothing leaves the Mac. *Checked:* ExtensionPageTests (parsing, history, manifest, System Vitals+ in
   the real sandbox), the add-ons' SystemVitalsPlusTests, `scripts/check.sh`, `make test`, UI snapshots
   (`page-extension-mac`, `page-now-extension-tile`, light and dark), and the debug app with the extension installed
   from a folder (`dev.swift installFolder:` / `page:`). *Not yet:* the page in Arabic looked at; page text is English
-  only. Published in the gallery; v0.2.0-snapshot.513 (from f483f420) is the first build that installs it.
+  only.
+- **Sidefolk stays 0.1.0; one gallery publish with everything (D62 amended):** the founder keeps snapshots on 0.1.0
+  until 0.1.0 ships, so `SidefolkVersion` is back to 0.1.0 and v0.2.0-snapshot.513 was deleted. System Vitals+,
+  Clipboard and Keep Awake are 1.0.1 asking `>=0.1`, and the gallery (a pre-release now) was published once from
+  sidefolk-addons 6a65aa7 with all 23 add-ons, themes included: two sessions publishing apart had deleted each
+  other's packs, since publish.sh removes what its own dist/ lacks. *Checked:* every live pack downloaded and matched
+  against the live catalog; `make test`; AddonStoreTests against the live gallery; the add-ons' tests. *Not yet:* no
+  public build installs the three: 0.1.0-snapshot.489, the newest, predates pages and refuses their manifests.
+  *Next:* release a 0.1.0 snapshot from main (release workflow, channel snapshot).
 - **Gallery companions update by themselves (D55, amended):** a companion from the gallery gets its newer version
   90 s after launch and every six hours after, without asking; the one on the desktop swaps in place. Extensions
   keep their Update button. Launch's tidy no longer deletes a download already under way (a chosen companion coming

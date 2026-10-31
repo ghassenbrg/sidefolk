@@ -524,7 +524,8 @@ ext.page("mac") { args in
   part Sidefolk doesn't know is skipped (so a newer extension still shows on an older Sidefolk), as is a part
   missing what it needs; at most 16 sections, 24 parts a section, 24 items a list. Every text is cleaned of hidden
   characters and clipped. A page is your text: it is never shown to a model.
-- A page needs Sidefolk 0.2: write `"sidefolk": ">=0.2"` in the manifest.
+- Pages came during 0.1.0's snapshots: a snapshot from before them (489 and older) refuses the manifest, because it doesn't
+  know `pages`. Write `"sidefolk": ">=0.1"` as usual.
 
 ## Running in the background, palettes and nudges
 

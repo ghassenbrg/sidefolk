@@ -35,7 +35,7 @@ struct ExtensionServiceTests {
         let folder = try ExtFixtures.tempDir("service").appendingPathComponent("fixture")
         return try ExtFixtures.makeExtension(at: folder, manifest: ExtFixtures.manifest(
             id: "dev.test.service", tools: ["nudge_me": ["risk": "low"]], permissions: ["power": .bool(power)],
-            extra: ["background": .bool(background), "sidefolk": ">=0.2",
+            extra: ["background": .bool(background), "sidefolk": ">=0.1",
                     "palettes": ["history": ["title": "History", "hotkey": "shift+cmd+c", "placeholder": "Search"]]]),
             files: ["server.py": fixture])
     }

@@ -1499,8 +1499,10 @@ chart isn't empty when it opens. Pages with `history` or `widget` are read once 
 install preview says. Under each page the extension's watchers are switches (heads-ups): on, `watch.extension` runs
 through the executor as the person, in repeat mode every five minutes, and the companion tells them. An `ask` part is
 a button that sends a sentence to Ask, so it reaches the extension's commands or the AI through Guard like anything
-typed. Sidefolk becomes 0.2.0; a page needs `"sidefolk": ">=0.2"`, and the gallery's `minimum_sidefolk` now comes
-from each manifest, so older copies skip such an extension instead of failing to install it.
+typed. The gallery's `minimum_sidefolk` comes from each manifest's `sidefolk`. *Amended 2026-10-31:* Sidefolk
+was to become 0.2.0 with pages, but the founder keeps snapshots on 0.1.0 until 0.1.0 ships, so it stays 0.1.0 and
+extensions with pages ask `>=0.1`. A 0.1.0 snapshot from before pages lists them in the gallery and refuses to
+install them (an unknown `pages` key) rather than skipping them; snapshots are for trying, so that is accepted.
 - **Not tools, like watchers:** a page read is not a tool call, so a page open for an hour doesn't write 1,200
   Activity rows. It runs in the same sandbox as the extension's tools and can change nothing; what it says is shown
   only on its page and never reaches a model. Anything that acts goes through a tool (an `ask` button, a heads-up).

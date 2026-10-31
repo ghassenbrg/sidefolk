@@ -117,7 +117,7 @@ public struct AddonCatalog: Sendable, Equatable {
         if let engine = e.engine, engine > Self.engine { return false }
         guard let needed = e.minimumSidefolk else { return true }
         guard let need = ReleaseVersion(needed), let have = ReleaseVersion(running) else { return false }
-        // A snapshot of 0.2.0 counts as 0.2.0 here: snapshots are how a version is tried before it ships.
+        // A snapshot of 0.1.0 counts as 0.1.0 here: snapshots are how a version is tried before it ships.
         return ReleaseVersion(have.numbers.map(String.init).joined(separator: "."))! >= need
     }
 }

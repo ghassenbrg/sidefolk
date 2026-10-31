@@ -354,10 +354,10 @@ import Testing
         #expect(info.origin == .official && info.version == qr.version)
         await store.discard(qr)
 
-        // An extension with a page (D62): offered from 0.2.0 on, skipped by older copies, and it draws its page.
+        // An extension with a page (D62): offered to 0.1.0 and its snapshots, and it draws its page.
         if let vitals = catalog.entry("dev.sidefolk.system-vitals-plus") {
-            #expect(vitals.minimumSidefolk == "0.2.0")
-            #expect(!AddonCatalog.fits(vitals, running: "0.1.0-snapshot.489") && AddonCatalog.fits(vitals, running: "0.2.0"))
+            #expect(vitals.minimumSidefolk == "0.1.0")
+            #expect(AddonCatalog.fits(vitals, running: "0.1.0-snapshot.513") && AddonCatalog.fits(vitals, running: "0.1.0"))
             let folder = try await store.fetch(vitals)
             #expect(await h.host.preview(folder: folder).canInstall)
             let installed = try await h.host.install(from: folder, origin: .official)
