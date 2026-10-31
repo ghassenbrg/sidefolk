@@ -38,10 +38,11 @@ public enum Language {
     /// round itself (it removes any direction marks an extension sends), so this is for word order, not for marks.
     public static var rightToLeft: Bool { Locale.Language(identifier: code).characterDirection == .rightToLeft }
 
-    /// Sets the language for what follows. The Kit calls it with each request's `language`.
+    /// Sets the language for what follows. The Kit calls it with each request's `language`, made one of Sidefolk's ten
+    /// as `Localized` makes it (`pt` is `pt-BR`, any Chinese `zh-Hans`, a language it doesn't speak English).
     public static func use(_ code: String?) {
         guard let code, code.range(of: #"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$"#, options: .regularExpression) != nil else { return }
-        state.withLock { $0.code = code }
+        state.withLock { $0.code = Localized.normalized(code) }
     }
 
     /// Runs `work` in `code`, with the tables in `strings` (an extension's `strings/` folder) when given, without changing
@@ -50,7 +51,7 @@ public enum Language {
         try $scoped.withValue((code, strings.map(read)), operation: work)
     }
 
-    /// The text for `key` in the current language, or in the closest one it has (`pt` for `pt-BR`), nil when none.
+    /// The text for `key` in the current language, nil when the extension's tables don't have it there.
     static func entry(_ key: String) -> Entry? {
         let (code, loaded) = state.withLock { ($0.code, $0.tables) }
         let tables = scoped?.tables ?? loaded ?? {
@@ -58,18 +59,17 @@ public enum Language {
             state.withLock { $0.tables = $0.tables ?? found }
             return found
         }()
-        for candidate in candidates(scoped?.code ?? code) { if let e = tables[candidate]?[key] { return e } }
-        return nil
+        return tables[Localized.normalized(scoped?.code ?? code)]?[key]
     }
 
-    /// `pt-BR`, then `pt`; `zh-Hans-CN`, then `zh-Hans`, then `zh`.
-    static func candidates(_ code: String) -> [String] {
-        var parts = code.split(separator: "-").map(String.init), out: [String] = []
-        while !parts.isEmpty {
-            out.append(parts.joined(separator: "-"))
-            parts.removeLast()
-        }
-        return out
+    /// A plain word through the Kit's `Localized` (the same lookup Playtime's in-code tables use): the extension's
+    /// tables as `Localized` takes them, its English when this language lacks the word, nil when neither has it.
+    static func word(_ key: String) -> String? {
+        let (code, loaded) = state.withLock { ($0.code, $0.tables) }
+        let tables = scoped?.tables ?? loaded ?? [:]
+        let plain = tables.mapValues { $0.compactMapValues { if case .plain(let s) = $0 { s } else { nil } } }
+        let found = Localized(scoped?.code ?? code, plain)[key]
+        return found == key && plain["en"]?[key] == nil && plain[Localized.normalized(scoped?.code ?? code)]?[key] == nil ? nil : found
     }
 
     /// `strings/` beside `bin/`, where Sidefolk installs the program (`<folder>/bin/<program>`).
@@ -119,9 +119,8 @@ public enum Language {
 public func L(_ key: String, _ values: [String: Any] = [:]) -> String {
     let text: String
     switch Language.entry(key) {
-    case .plain(let s)?: text = s
     case .plural(let forms)?: text = forms["other"] ?? key
-    case nil: text = KitWords.text(key, Language.code) ?? key
+    default: text = Language.word(key) ?? KitWords.text(key, Language.code) ?? key
     }
     return fill(text, values)
 }

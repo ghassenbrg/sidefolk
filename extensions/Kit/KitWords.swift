@@ -5,8 +5,7 @@ import Foundation
 enum KitWords {
     static func text(_ key: String, _ code: String) -> String? {
         guard let forms = table[key] else { return nil }
-        for candidate in Language.candidates(code) { if let s = forms[candidate] { return s } }
-        return nil
+        return forms[Localized.normalized(code)]
     }
 
     static let table: [String: [String: String]] = [
