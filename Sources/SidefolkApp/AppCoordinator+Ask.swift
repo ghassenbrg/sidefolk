@@ -313,7 +313,7 @@ extension AppCoordinator: AskActions {
                     }
                     // What the mode answered for the person, and what nobody answered, always show (D37).
                     if ok, activity.actedWithoutAsking {
-                        model.add(.doneWithoutAsking(activity.summary, fullAccess: activity.decision == .fullAccess), caption: caption())
+                        model.add(.doneWithoutAsking(activity.summary, fullAccess: activity.byFullAccess), caption: caption())
                     }
                     if activity.decision == .skipped {
                         model.add(.skipped(activity.summary, why: activity.error ?? ""), caption: caption())

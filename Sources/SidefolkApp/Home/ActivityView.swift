@@ -256,7 +256,7 @@ struct ActivityView: View {
         case .blocked: (String(localized: "blocked", comment: "A log's result: rules don't allow it"), Theme.danger)
         case .failed: (String(localized: "failed", comment: "A log's result"), Theme.danger)
         case .skipped: (String(localized: "skipped", comment: "A log's result: nobody answered in time"), Theme.link)
-        case .auto, .autoMode, .fullAccess, .webSetting: (String(localized: "auto", comment: "A log's result: done without asking"), Theme.inkMuted)
+        case .auto, .autoMode, .fullAccess, .autoModePaired, .fullAccessPaired, .webSetting: (String(localized: "auto", comment: "A log's result: done without asking"), Theme.inkMuted)
         case .allowed, .always: (e.outcome?.clipped(24) ?? String(localized: "allowed", comment: "A log's result"), Theme.success)
         }
         return Text(verbatim: word).foregroundStyle(color).help(e.outcome ?? e.error ?? word)
@@ -282,6 +282,10 @@ struct ActivityView: View {
         // Done without asking: the mode answered for the person (D37), so it never looks like they did.
         case .autoMode: Chip("Auto", tone: .accent, systemImage: "bolt")
         case .fullAccess: Chip("Full access", tone: .warning, systemImage: "bolt.fill")
+        // After outside content, only because the call reached nothing but a device the person paired (D72): the
+        // mode's icon and tone, and the details name the mode.
+        case .autoModePaired: Chip("Paired device", tone: .accent, systemImage: "bolt")
+        case .fullAccessPaired: Chip("Paired device", tone: .warning, systemImage: "bolt.fill")
         case .skipped: Chip("Skipped", tone: .warning, systemImage: "clock.badge.xmark")
         // Read or used without a card because the person chose not to be asked before reading the web (D47).
         case .webSetting: Chip("Web setting", tone: .accent, systemImage: "globe")

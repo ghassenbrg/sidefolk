@@ -99353,6 +99353,64 @@
         }
       }
     },
+    "Paired device" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جهاز مقترن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gekoppeltes Gerät"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositivo vinculado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil jumelé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositivo abbinato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ペアリング済みのデバイス"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페어링한 기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositivo pareado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已配对的设备"
+          }
+        }
+      }
+    },
     "Paper beats rock: I win!" : {
       "comment" : "The companion speaks",
       "localizations" : {
@@ -103965,6 +104023,64 @@
         }
       }
     },
+    "Ran without asking because Auto mode was on and it reached only a device you paired." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُفِّذ دون سؤال لأن الوضع التلقائي كان مفعّلًا ولم يصل إلا إلى جهاز قرنته بنفسك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Nachfrage ausgeführt, weil der Modus „Automatisch“ an war und es nur ein Gerät erreichte, das du gekoppelt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ejecutó sin preguntar porque el modo Auto estaba activado y solo llegaba a un dispositivo que vinculaste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuté sans demander, car le mode Auto était activé et l’action n’atteignait qu’un appareil que vous avez jumelé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseguito senza chiedere perché la modalità Auto era attiva e raggiungeva solo un dispositivo che hai abbinato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「自動」モードがオンで、あなたがペアリングしたデバイスにしか届かないため、確認なしで実行されました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“자동” 모드가 켜져 있었고 직접 페어링한 기기에만 닿아서 묻지 않고 실행되었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executado sem perguntar porque o modo Auto estava ativado e só alcançava um dispositivo que você pareou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "因为“自动”模式已开启，且只会到达你配对过的设备，未经询问就运行了。"
+          }
+        }
+      }
+    },
     "Ran without asking because Auto mode was on." : {
       "localizations" : {
         "ar" : {
@@ -104019,6 +104135,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "因为“自动”模式已开启，未经询问就运行了。"
+          }
+        }
+      }
+    },
+    "Ran without asking because Full access was on and it reached only a device you paired." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُفِّذ دون سؤال لأن الوصول الكامل كان مفعّلًا ولم يصل إلا إلى جهاز قرنته بنفسك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Nachfrage ausgeführt, weil Vollzugriff an war und es nur ein Gerät erreichte, das du gekoppelt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ejecutó sin preguntar porque el Acceso total estaba activado y solo llegaba a un dispositivo que vinculaste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuté sans demander, car l’Accès complet était activé et l’action n’atteignait qu’un appareil que vous avez jumelé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseguito senza chiedere perché l’Accesso completo era attivo e raggiungeva solo un dispositivo che hai abbinato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルアクセスがオンで、あなたがペアリングしたデバイスにしか届かないため、確認なしで実行されました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 접근이 켜져 있었고 직접 페어링한 기기에만 닿아서 묻지 않고 실행되었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executado sem perguntar porque o Acesso total estava ativado e só alcançava um dispositivo que você pareou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "因为“完全访问”已开启，且只会到达你配对过的设备，未经询问就运行了。"
           }
         }
       }

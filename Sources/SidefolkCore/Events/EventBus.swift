@@ -27,7 +27,12 @@ public struct ToolActivity: Sendable, Hashable {
     public var decision: ActivityEntry.Decision?
 
     /// It ran without a question the person would have had to answer in their earlier mode.
-    public var actedWithoutAsking: Bool { decision == .autoMode || decision == .fullAccess }
+    public var actedWithoutAsking: Bool {
+        decision.map { [.autoMode, .fullAccess, .autoModePaired, .fullAccessPaired].contains($0) } ?? false
+    }
+
+    /// Full access, rather than Auto, answered for the person.
+    public var byFullAccess: Bool { decision == .fullAccess || decision == .fullAccessPaired }
 
     public init(id: String, tool: String, title: String, summary: String, category: ToolCategory, caller: Caller,
                 card: ResultCard? = nil, error: String? = nil, undoAvailable: Bool = false, mutates: Bool = false) {

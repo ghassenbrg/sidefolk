@@ -138,6 +138,8 @@ enum Describe {
         case .failed: String(localized: "Allowed, but it didn't work.")
         case .autoMode: String(localized: "Ran without asking because Auto mode was on.")
         case .fullAccess: String(localized: "Ran without asking because Full access was on.")
+        case .autoModePaired: String(localized: "Ran without asking because Auto mode was on and it reached only a device you paired.")
+        case .fullAccessPaired: String(localized: "Ran without asking because Full access was on and it reached only a device you paired.")
         case .skipped: String(localized: "Not run: nobody answered in time.")
         case .webSetting: String(localized: "Ran without asking because of your web setting.")
         }

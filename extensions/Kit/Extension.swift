@@ -31,6 +31,7 @@ public final class Extension {
                                     preview: (@MainActor (_ item: String) async throws -> PalettePreview?)?)] = [:]
     private var backgroundWork: (@MainActor () async -> Void)?
     private var notices: [String: @MainActor (Arguments) -> Void] = [:]
+    private var pairedCheck: (@MainActor (_ tool: String, _ arguments: Arguments) async -> Paired)?
 
     public init(name: String, version: String = "1.0.0") {
         self.name = name
@@ -64,6 +65,15 @@ public final class Extension {
                         choose: @escaping @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice,
                         preview: (@MainActor (_ item: String) async throws -> PalettePreview?)? = nil) {
         palettes[name] = (query, choose, preview)
+    }
+
+    /// Which device a call would reach, for tools whose manifest says `"reach": "paired"`: Sidefolk asks before it
+    /// decides whether to ask the person (`sidefolk/paired.check`, D72), with only the argument the manifest's `device`
+    /// names (none for a tool that acts on the device in use). Find the device exactly as the tool will, and
+    /// answer `.device` only for one the person paired (its key pinned); Sidefolk then puts that id in the parameter the
+    /// manifest's `device` names, so the tool must take it there. Honoured for Sidefolk's own extensions only.
+    public func paired(_ check: @escaping @MainActor (_ tool: String, _ arguments: Arguments) async -> Paired) {
+        pairedCheck = check
     }
 
     /// What to do when Sidefolk tells the program something without asking (`sidefolk/clipboard.source`).
@@ -158,6 +168,13 @@ public final class Extension {
             let name = params["palette"] as? String ?? ""
             guard let palette = palettes[name], let preview = palette.preview else { throw Unknown(what: "No preview in palette: \(name)") }
             return try await preview(params["item"] as? String ?? "")?.json ?? [:]
+        case "sidefolk/paired.check":
+            guard let check = pairedCheck else { return ["paired": false] }
+            switch await check(params["tool"] as? String ?? "", Arguments(params["arguments"] as? [String: Any] ?? [:])) {
+            case .device(let id): return ["paired": true, "device": id]
+            case .nothing: return ["paired": true]
+            case .unpaired: return ["paired": false]
+            }
         default:
             throw Unknown(what: "Method not found: \(method)")
         }
@@ -182,6 +199,14 @@ public final class Extension {
         data.append(0x0A)
         FileHandle.standardOutput.write(data)
     }
+}
+
+/// Where a call would go, as `paired` answers it: a device the person paired (by its id), no device at all (stopping
+/// what isn't running), or anything else: a device not paired, or one the program can't tell.
+public enum Paired: Equatable {
+    case device(String)
+    case nothing
+    case unpaired
 }
 
 /// Something the model should read and can act on, returned as an error result instead of an answer.

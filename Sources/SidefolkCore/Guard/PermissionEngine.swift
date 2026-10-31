@@ -10,11 +10,14 @@ public enum GuardDecision: Sendable, Equatable {
 public struct PermissionEngine: Sendable {
     public init() {}
 
-    /// - Parameter mentions: the links the user typed in the request this call serves (agent runs);
-    ///   nil when there is no such request, so every link counts as model-built.
+    /// - Parameters:
+    ///   - mentions: the links the user typed in the request this call serves (agent runs);
+    ///     nil when there is no such request, so every link counts as model-built.
+    ///   - answeredFolders: folders the person allowed in a card for this very call, whether once or for good.
     public func evaluate(
         spec: ToolSpec, input: JSONValue, summary: String, scope: ToolScope, caller: Caller, tainted: Bool,
-        policy: GuardPolicy, grants: [Grant], folders: [GrantedFolder], mentions: UserMentions? = nil
+        policy: GuardPolicy, grants: [Grant], folders: [GrantedFolder], mentions: UserMentions? = nil,
+        answeredFolders: [String] = []
     ) -> GuardDecision {
         if let off = spec.capabilities.first(where: { policy.disabled.contains($0) }) {
             return .deny(String(localized: "\(Self.capabilityName(off)) is turned off in Sidefolk's Permissions settings."))
@@ -121,8 +124,10 @@ public struct PermissionEngine: Sendable {
         }
         // Auto and Full access answer, themselves, the questions the person chose not to be asked; the internet
         // asks each time when the person said so, whatever the mode (D47).
+        let paired = Self.reachesOnlyPaired(spec: spec, scope: scope, input: input, risk: risk, mentions: mentions,
+                                            answeredFolders: answeredFolders)
         if !askEachTime, let tag = Self.answeredByMode(mode, risk: risk, spec: spec, scope: scope, tainted: tainted,
-                                                       outwardUntyped: outwardUntyped) {
+                                                       outwardUntyped: outwardUntyped, paired: paired) {
             return .allow(tag)
         }
         return decision
@@ -131,17 +136,46 @@ public struct PermissionEngine: Sendable {
     /// The question Auto or Full access answers without the person (D37), with the tag Activity shows,
     /// or nil when the person must answer. Text to read in full (a new skill: instructions for later
     /// runs) always waits for them. Auto acts on medium risk in a clean turn. Full access acts on
-    /// anything, except, in a turn that read outside content, what could carry data out.
+    /// anything, except, in a turn that read outside content, what could carry data out. A call that reaches
+    /// only a device the person paired carries nothing out (D72): after outside content too, Full access
+    /// answers it, and so does Auto (never high risk: such a call isn't one).
     static func answeredByMode(_ mode: GuardMode, risk: Risk, spec: ToolSpec, scope: ToolScope, tainted: Bool,
-                               outwardUntyped: Bool) -> ActivityEntry.Decision? {
+                               outwardUntyped: Bool, paired: Bool = false) -> ActivityEntry.Decision? {
         guard scope.text == nil else { return nil }
         switch mode {
         case .askEveryTime, .askOncePerKind:
             return nil
         case .auto:
-            return !tainted && risk == .medium ? .autoMode : nil
+            if tainted { return paired ? .autoModePaired : nil }
+            return risk == .medium ? .autoMode : nil
         case .fullAccess:
-            return tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped) ? nil : .fullAccess
+            guard tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped) else { return .fullAccess }
+            return paired ? .fullAccessPaired : nil
+        }
+    }
+
+    /// A call whose only destination is a device the person paired (D72): Sidefolk's own extension confirmed it before
+    /// Guard looked, and the call was bound to that device. What a steered model writes into it can then reach only
+    /// the person's own TV. Anything else in it that could go further keeps its card: a link (whoever serves it reads
+    /// its path) unless the person typed it, a file unless the person allowed its folder for this very call (an
+    /// injected instruction could otherwise pick any file in a folder shared for good), a program, a change to
+    /// files, text to read in full, and anything high risk.
+    static func reachesOnlyPaired(spec: ToolSpec, scope: ToolScope, input: JSONValue, risk: Risk, mentions: UserMentions?,
+                                  answeredFolders: [String]) -> Bool {
+        guard case .paired = scope.reach, risk != .high, scope.text == nil, scope.command == nil, scope.url == nil,
+              scope.writePaths.isEmpty, spec.capabilities.isSubset(of: [.network, .extensions, .filesRead]) else { return false }
+        let files = scope.readPaths.allSatisfy { path in answeredFolders.contains { FolderAccess.isInside(path, folder: $0) } }
+        let links = strings(in: input).filter { $0.contains("://") || !UserMentions(text: $0).urls.isEmpty }
+        return files && links.allSatisfy { mentions?.contains(url: $0) == true }
+    }
+
+    /// Every string in a call's input, however deep.
+    static func strings(in value: JSONValue) -> [String] {
+        switch value {
+        case .string(let s): [s]
+        case .array(let items): items.flatMap(strings(in:))
+        case .object(let fields): fields.values.flatMap(strings(in:))
+        default: []
         }
     }
 

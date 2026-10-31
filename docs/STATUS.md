@@ -13,6 +13,24 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **A TV the person paired needs no card after outside content (D72, branch team/paired in both repos):** in Full
+  access or Auto, "mirror my screen to the living room TV" asked every time because the run had read Miraya's TV list.
+  Now, for Sidefolk's own agent after outside content in those modes, a tool of Sidefolk's own extension declaring
+  `"reach": "paired"` (+ `"device"`: the parameter) is checked with the running program (`sidefolk/paired.check`, only
+  the device's words sent, 5 s); when it names a paired TV, the call is bound to that TV's id and runs (Activity chip
+  **Paired device**, `full_access_paired` / `auto_mode_paired`). Unpaired, unconfirmed, third-party or folder-installed
+  copies, "Ask every time", "Ask once per kind", clean turns and typed commands: unchanged. A link not typed by the
+  person, a file not in a folder allowed for that call, programs, file changes, high risk keep the card. Miraya
+  (sidefolk-addons): declares it on share_screen, play_on_tv (`tv`), stop, pause, resume, seek, tv_volume; a paired TV
+  comes before any other device the same words fit (also when no TV is named); a paired id resolves only to that
+  pairing; the pin check is `TVConnection.accepts` (unchanged behaviour: exact SHA-256 of the certificate before the
+  token is sent). Kit: `ext.paired`. Strings in all nine languages.
+  *Verified:* `make test` with `SIDEFOLK_ADDONS_REPO` at the team/paired add-ons (1481+35 pass; `PairedDeviceTests`,
+  `MirayaPairedCheckTests` run the real Miraya program in its sandbox through the executor with a tainted run),
+  sidefolk-addons `swift test` (incl. a name collision and a spoofed id failing the pin), `build.py --unsigned` and
+  `check.sh` against this app, the Activity chip in `--ui-snapshots`. *Not verified:* a real tainted agent run in the
+  debug app (needs a live model) and a real TV (no TV or emulator used). *Next:* the founder tries it with a paired TV;
+  maybe extend D47's "Always" to paired calls in "Ask once per kind".
 - **3D companion lay down while alerting (fix):** the 2D director resets the posture to standing on any non-idle
   state but sends no cue, so a 3D companion that had lain down stayed lying, eyes open, when a bubble or alert
   arrived. `engine.js` `setState` now stands up for every state except idle (and `sleeping`, which lies by design).

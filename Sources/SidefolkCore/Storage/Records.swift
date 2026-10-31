@@ -341,6 +341,10 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         /// Done without asking because the person chose Auto or Full access (D37).
         case autoMode = "auto_mode"
         case fullAccess = "full_access"
+        /// Done without asking after outside content was read, because the call reached only a device the person
+        /// paired (D72): the same modes, told apart so Activity says why.
+        case autoModePaired = "auto_mode_paired"
+        case fullAccessPaired = "full_access_paired"
         /// Nobody answered in time; the step was skipped, or its task stopped (D37).
         case skipped
         /// Read a page or used a built-in service without asking because the person chose so for the internet (D47).

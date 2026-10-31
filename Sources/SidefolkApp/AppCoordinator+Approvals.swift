@@ -39,7 +39,7 @@ extension AppCoordinator {
     /// request's own results say it.
     func announceDoneWithoutAsking(_ activity: ToolActivity, ok: Bool) {
         guard ok, activity.actedWithoutAsking, activity.caller.kind == "agent", !askPanel.isVisible else { return }
-        let mode: GuardMode = activity.decision == .fullAccess ? .fullAccess : .auto
+        let mode: GuardMode = activity.byFullAccess ? .fullAccess : .auto
         let item = AttentionItem(level: .gentle, source: Self.ownVoice,
                                  title: String(localized: "Done without asking: \(activity.summary)",
                                                comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
