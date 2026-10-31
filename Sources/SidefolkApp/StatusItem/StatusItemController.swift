@@ -1,43 +1,37 @@
 import AppKit
 import KeyboardShortcuts
 import SidefolkCore
+import SwiftUI
 
-/// The menu bar icon: Ask, what's live now, how much Sidefolk asks, quiet mode, show/hide, Home,
-/// Settings, About, updates, Quit.
-final class StatusItemController: NSObject, NSMenuDelegate {
-    struct NowEntry {
-        var title: String
-        var detail: String
-        var symbol: String
-        var action: () -> Void
-    }
+/// The menu bar icon (D84): the companion's mark says the state at a glance (an amber dot when something waits, a half
+/// circle in Focus, a moon in Quiet, faded while the companion is hidden, orange in Full access), and a click opens the
+/// Pocket. A right-click or Control-click opens the same ⋯ menu as the Pocket, so Quit and Check for Updates… are
+/// always one step away.
+@MainActor
+final class StatusItemController: NSObject, NSPopoverDelegate {
+    enum Mark: Equatable { case idle, waiting, focus, quiet }
 
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-    private let menu = NSMenu()
+    private let popover = NSPopover()
+    private let badge = StatusMarkBadge()
+    let pocket = PocketModel()
 
-    var onAsk: (() -> Void)?
-    /// Extensions' palettes (D63), so Clipboard is in the menu bar as Maccy is (D68): opened under the icon.
+    /// Gathers what the Pocket shows, each time it opens.
+    var contentProvider: (() async -> PocketContent)?
     var palettes: () -> [ExtensionPaletteInfo] = { [] }
-    var onPalette: ((_ id: String, _ under: NSRect?) -> Void)?
-    var onOpenHome: (() -> Void)?
-    var onOpenSettings: (() -> Void)?
-    var onAbout: (() -> Void)?
-    /// "Check for Updates…", or "Update to Sidefolk …" while `waitingUpdate` names a version (D46).
-    var onUpdates: (() -> Void)?
+    /// The version waiting, for the ⋯ menu's "Update to Sidefolk …" (D46).
     var waitingUpdate: () -> String? = { nil }
-    var onToggleCompanion: (() -> Void)?
-    var onQuiet: ((TimeInterval?) -> Void)?
-    /// Switches the approval mode; Full access goes through `onFullAccess` (its sheet) instead.
-    var onMode: ((GuardMode) -> Void)?
-    var onFullAccess: (() -> Void)?
+    var actions: PocketActions {
+        get { pocket.actions }
+        set { pocket.actions = newValue }
+    }
     private(set) var mode: GuardMode = .askOncePerKind
-    var nowProvider: (() async -> [NowEntry])?
-    var isQuiet: () -> Bool = { false }
-    var companionVisible: () -> Bool = { true }
-    var hotkeyLabel: () -> String = { "" }
-    /// The companion's name, so the menu asks the one on the desktop, as Now's "Ask Mochi…" does.
-    var companionName: () -> String = { "Sidefolk" }
-    private var nowCache: [NowEntry] = []
+    private var fullAccessEnds: Date?
+    private var mark: Mark = .idle
+    private var hidden = false
+    private var readout: String?
+
+    var isPocketShown: Bool { popover.isShown }
 
     func install(image: NSImage?) {
         if let image {
@@ -46,175 +40,158 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         } else {
             item.button?.image = NSImage(systemSymbolName: "face.smiling", accessibilityDescription: "Sidefolk")
         }
-        item.button?.setAccessibilityLabel("Sidefolk")
-        menu.delegate = self
-        item.menu = menu
+        item.button?.target = self
+        item.button?.action = #selector(clicked)
+        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        if let button = item.button {
+            badge.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(badge)
+            NSLayoutConstraint.activate([
+                badge.widthAnchor.constraint(equalToConstant: 10), badge.heightAnchor.constraint(equalToConstant: 10),
+                badge.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -1),
+                badge.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -2),
+            ])
+        }
+        popover.behavior = .transient
+        popover.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        popover.delegate = self
+        popover.contentViewController = NSHostingController(rootView: PocketView(model: pocket))
+        updateLabel()
     }
 
-    private var badge = 0
-    private var readout: String?
-
-    /// In Full access the menu bar icon turns orange, like the Mac's own "in use" dots, so the mode
-    /// is visible even with the companion and the Ask panel hidden (D37).
-    func setMode(_ mode: GuardMode) {
+    /// In Full access the menu bar icon turns orange, like the Mac's own "in use" dots, so the mode is visible even
+    /// with the companion and the Ask panel hidden (D37); VoiceOver says when it ends.
+    func setMode(_ mode: GuardMode, ends: Date? = nil) {
         self.mode = mode
-        let full = mode == .fullAccess
-        item.button?.contentTintColor = full ? .systemOrange : nil
-        item.button?.setAccessibilityLabel(full ? String(localized: "Sidefolk, Full access is on") : "Sidefolk")
+        fullAccessEnds = mode == .fullAccess ? ends : nil
+        item.button?.contentTintColor = mode == .fullAccess ? .systemOrange : nil
+        updateLabel()
+        if popover.isShown { refresh() }
     }
 
-    func setBadge(_ count: Int) {
-        badge = count
-        updateTitle()
+    /// Something waits, Focus or Quiet, from the state the app keeps (D84).
+    func setMark(_ mark: Mark) {
+        guard mark != self.mark else { return }
+        self.mark = mark
+        badge.mark = mark
+        updateLabel()
+    }
+
+    /// The companion is hidden: the mark fades, still clickable (D84).
+    func setCompanionHidden(_ hidden: Bool) {
+        self.hidden = hidden
+        item.button?.appearsDisabled = hidden
     }
 
     /// A live value beside the icon, while the companion is away from the desktop (nil removes it).
     func setReadout(_ text: String?) {
         guard text != readout else { return }
         readout = text
-        updateTitle()
-    }
-
-    private func updateTitle() {
-        let parts = [readout?.clipped(28), badge > 0 ? String(badge) : nil].compactMap { $0 }
-        item.button?.title = parts.isEmpty ? "" : " " + parts.joined(separator: "  ")
-        item.length = parts.isEmpty ? NSStatusItem.squareLength : NSStatusItem.variableLength
+        let title = readout?.clipped(28)
+        item.button?.title = title.map { " " + $0 } ?? ""
+        item.length = title == nil ? NSStatusItem.squareLength : NSStatusItem.variableLength
         item.button?.imagePosition = .imageLeading
     }
 
-    func refreshNow() {
-        guard let nowProvider else { return }
-        Task {
-            nowCache = await nowProvider()
-        }
-    }
-
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        menu.removeAllItems()
-        let ask = menu.addItem(withTitle: String(localized: "Ask \(companionName())…"), action: #selector(ask), keyEquivalent: "")
-        ask.target = self
-        ask.toolTip = hotkeyLabel()
-        for info in palettes() {
-            let mi = menu.addItem(withTitle: "\(info.title)…", action: #selector(openPalette(_:)), keyEquivalent: "")
-            mi.target = self
-            mi.representedObject = info.id
-            mi.setShortcut(for: PaletteController.shortcutName(info))
-        }
+    private func updateLabel() {
+        var parts = ["Sidefolk"]
         if mode == .fullAccess {
-            // First thing in the menu while it lasts, with the way out right under it.
-            let on = menu.addItem(withTitle: "", action: nil, keyEquivalent: "")
-            on.attributedTitle = NSAttributedString(string: String(localized: "Full access is on"), attributes: [
-                .foregroundColor: NSColor.systemOrange, .font: NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold),
-            ])
-            on.image = NSImage(systemSymbolName: GuardMode.fullAccess.symbol, accessibilityDescription: nil)
-            on.isEnabled = false
-            let off = menu.addItem(withTitle: String(localized: "Turn Off Full Access"), action: #selector(chooseMode(_:)), keyEquivalent: "")
-            off.target = self
-            off.representedObject = GuardMode.askOncePerKind.rawValue
+            parts.append(fullAccessEnds.map { String(localized: "Full access is on until \(TimeText.short($0))", comment: "VoiceOver: the menu bar icon") }
+                         ?? String(localized: "Full access is on"))
         }
+        switch mark {
+        case .idle: break
+        case .waiting: parts.append(String(localized: "something waits for you", comment: "VoiceOver: the menu bar icon"))
+        case .focus: parts.append(String(localized: "Focus", comment: "Attention: only cards that need an answer; whispers wait"))
+        case .quiet: parts.append(String(localized: "Quiet", comment: "Attention: only what can't wait"))
+        }
+        item.button?.setAccessibilityLabel(parts.joined(separator: ", "))
+    }
 
-        menu.addItem(.separator())
-        let header = menu.addItem(withTitle: String(localized: "Today"), action: nil, keyEquivalent: "")
-        header.isEnabled = false
-        if nowCache.isEmpty {
-            let none = menu.addItem(withTitle: String(localized: "Nothing running or due soon"), action: nil, keyEquivalent: "")
-            none.isEnabled = false
+    /// Gathers the Pocket's content again while it is open.
+    func refresh() {
+        guard let contentProvider else { return }
+        Task {
+            pocket.content = await contentProvider()
+            pocket.palettes = palettes()
         }
-        for (i, entry) in nowCache.prefix(6).enumerated() {
-            let mi = menu.addItem(withTitle: "\(entry.title) — \(entry.detail)", action: #selector(openNow(_:)), keyEquivalent: "")
-            mi.target = self
-            mi.tag = i
-            mi.image = NSImage(systemSymbolName: entry.symbol, accessibilityDescription: nil)
-        }
+    }
 
-        menu.addItem(.separator())
-        menu.addItem(modesItem())
-        if isQuiet() {
-            let q = menu.addItem(withTitle: String(localized: "Turn Quiet Off"), action: #selector(quietOff), keyEquivalent: "")
-            q.target = self
+    // MARK: Opening
+
+    @objc private func clicked() {
+        let event = NSApp.currentEvent
+        if event?.type == .rightMouseUp || event?.modifierFlags.contains(.control) == true {
+            showMenu()
         } else {
-            let quiet = NSMenuItem(title: String(localized: "Quiet"), action: nil, keyEquivalent: "")
-            let sub = NSMenu()
-            let spans: [(String, Double)] = [(String(localized: "For 30 minutes"), 1800), (String(localized: "For 1 hour"), 3600),
-                                             (String(localized: "For 3 hours"), 10800), (String(localized: "Until tomorrow"), -1)]
-            for (title, seconds) in spans {
-                let mi = sub.addItem(withTitle: title, action: #selector(quietFor(_:)), keyEquivalent: "")
-                mi.target = self
-                mi.representedObject = seconds
+            togglePocket()
+        }
+    }
+
+    func togglePocket() {
+        if popover.isShown { popover.performClose(nil); return }
+        guard let button = item.button else { return }
+        Task {
+            if let contentProvider { pocket.content = await contentProvider() }
+            pocket.palettes = palettes()
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
+        }
+    }
+
+    func closePocket() { if popover.isShown { popover.performClose(nil) } }
+
+    /// The ⋯ menu as a plain menu under the icon.
+    private func showMenu() {
+        let menu = NSMenu()
+        let a = actions
+        func add(_ title: String, key: String = "", _ action: @escaping () -> Void) {
+            let entry = ClosureTarget.item(title, action)
+            entry.keyEquivalent = key
+            menu.addItem(entry)
+        }
+        add(String(localized: "Open Sidefolk"), key: "o", a.openHome)
+        add(String(localized: "Settings…"), key: ",", a.openSettings)
+        let palettes = palettes()
+        if !palettes.isEmpty {
+            menu.addItem(.separator())
+            for info in palettes {
+                let entry = ClosureTarget.item("\(info.title)…") { a.openPalette(info.id) }
+                entry.setShortcut(for: PaletteController.shortcutName(info))
+                menu.addItem(entry)
             }
-            quiet.submenu = sub
-            menu.addItem(quiet)
         }
-        let toggle = menu.addItem(withTitle: companionVisible() ? String(localized: "Hide Companion") : String(localized: "Show Companion"),
-                                  action: #selector(toggleCompanion), keyEquivalent: "")
-        toggle.target = self
-
         menu.addItem(.separator())
-        let home = menu.addItem(withTitle: String(localized: "Open Sidefolk"), action: #selector(openHome), keyEquivalent: "o")
-        home.target = self
-        let settings = menu.addItem(withTitle: String(localized: "Settings…"), action: #selector(openSettings), keyEquivalent: ",")
-        settings.target = self
+        add(hidden ? String(localized: "Show Companion") : String(localized: "Hide Companion"), a.toggleCompanion)
+        add(waitingUpdate().map { String(localized: "Update to Sidefolk \($0)…", comment: "Menu bar: a newer version waits") }
+            ?? String(localized: "Check for Updates…"), a.checkForUpdates)
+        add(String(localized: "About Sidefolk"), a.about)
         menu.addItem(.separator())
-        let about = menu.addItem(withTitle: String(localized: "About Sidefolk"), action: #selector(showAbout), keyEquivalent: "")
-        about.target = self
-        let update = menu.addItem(withTitle: waitingUpdate().map { String(localized: "Update to Sidefolk \($0)…", comment: "Menu bar: a newer version waits") }
-                                      ?? String(localized: "Check for Updates…"),
-                                  action: #selector(updates), keyEquivalent: "")
-        update.target = self
-        menu.addItem(withTitle: String(localized: "Quit Sidefolk"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        refreshNow()
+        add(String(localized: "Quit Sidefolk"), key: "q", a.quit)
+        item.menu = menu
+        item.button?.performClick(nil)
+        item.menu = nil
     }
+}
 
-    /// "Approvals" › the four modes, the current one checked. Full access opens its sheet in Settings
-    /// rather than switching from a menu.
-    private func modesItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: String(localized: "Approvals: \(mode.title)", comment: "Menu bar: the approval mode, “Approvals: Auto”"),
-                                action: nil, keyEquivalent: "")
-        parent.image = NSImage(systemSymbolName: mode.symbol, accessibilityDescription: nil)
-        let sub = NSMenu()
-        for option in GuardMode.allCases {
-            let full = option == .fullAccess
-            let title = full && mode != .fullAccess ? String(localized: "Full access…") : option.title
-            let mi = sub.addItem(withTitle: title, action: #selector(chooseMode(_:)), keyEquivalent: "")
-            mi.target = self
-            mi.representedObject = option.rawValue
-            mi.state = option == mode ? .on : .off
-            mi.toolTip = option.explanation
-        }
-        parent.submenu = sub
-        return parent
-    }
+/// The small mark on the menu bar icon's corner: an amber dot when something waits, Focus's half circle, Quiet's moon.
+final class StatusMarkBadge: NSView {
+    var mark: StatusItemController.Mark = .idle { didSet { needsDisplay = true } }
 
-    @objc private func chooseMode(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String, let chosen = GuardMode(rawValue: raw), chosen != mode else { return }
-        if chosen == .fullAccess { onFullAccess?() } else { onMode?(chosen) }
-    }
-
-    @objc private func ask() { onAsk?() }
-    @objc private func openPalette(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? String else { return }
-        onPalette?(id, item.button?.window?.frame)
-    }
-    @objc private func openHome() { onOpenHome?() }
-    @objc private func openSettings() { onOpenSettings?() }
-    @objc private func showAbout() { onAbout?() }
-    @objc private func updates() { onUpdates?() }
-    @objc private func toggleCompanion() { onToggleCompanion?() }
-    @objc private func quietOff() { onQuiet?(nil) }
-    @objc private func quietFor(_ sender: NSMenuItem) {
-        guard let seconds = sender.representedObject as? Double else { return }
-        if seconds < 0 {
-            let cal = Calendar.current
-            let tomorrow = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: Date()))!
-            let morning = cal.date(bySettingHour: 8, minute: 0, second: 0, of: tomorrow)!
-            onQuiet?(morning.timeIntervalSinceNow)
-        } else {
-            onQuiet?(seconds)
+    override func draw(_ dirtyRect: NSRect) {
+        switch mark {
+        case .idle: return
+        case .waiting:
+            NSColor(Theme.waitGlow).setFill()
+            NSBezierPath(ovalIn: bounds.insetBy(dx: 1.5, dy: 1.5)).fill()
+        case .focus, .quiet:
+            let symbol = mark == .focus ? Theme.Symbol.focus : Theme.Symbol.quiet
+            let config = NSImage.SymbolConfiguration(pointSize: 8, weight: .bold)
+                .applying(.init(paletteColors: [NSColor.labelColor]))
+            NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(config)?
+                .draw(in: bounds.insetBy(dx: 0.5, dy: 0.5))
         }
     }
 
-    @objc private func openNow(_ sender: NSMenuItem) {
-        guard nowCache.indices.contains(sender.tag) else { return }
-        nowCache[sender.tag].action()
-    }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }

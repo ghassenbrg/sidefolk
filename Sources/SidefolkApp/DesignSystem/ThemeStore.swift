@@ -37,10 +37,10 @@ final class ThemeStore: Sendable {
         return folderState.withLock { $0 }
     }
 
-    /// Switches every window to `theme`.
-    func apply(_ theme: InstalledTheme) {
-        guard state.withLock({ $0.theme }) != theme else { return }
-        let style = ThemeStyle(theme)
+    /// Switches every window to `theme`, with the person's density if they chose one (D84).
+    func apply(_ theme: InstalledTheme, density: ThemeTokens.Density? = nil) {
+        guard state.withLock({ $0.theme != theme || $0.density != density }) else { return }
+        let style = ThemeStyle(theme, density: density)
         withMutation(keyPath: \.style) {
             state.withLock { $0 = style }
         }
@@ -60,7 +60,9 @@ struct ThemeStyle: Sendable {
     let ink, inkMuted, inkFaint, surface, surfaceSunken, surfaceRaised, line: Color
     let accent, onAccent, accentSoft, link, danger, dangerSoft, onDanger, success, successSoft, warning, warningSoft, onWarning: Color
     let well, glow, waitGlow: Color
-    /// Spacing after the theme's density.
+    /// The person's density over the theme's, if they chose one (Settings › Appearance).
+    let density: ThemeTokens.Density?
+    /// Spacing after the density.
     let space: ThemeTokens.Space
     let fonts: Fonts
     /// The theme's own pictures, decoded once: paper grain, the nook's backdrop, the empty-page art.
@@ -104,8 +106,9 @@ struct ThemeStyle: Sendable {
         }
     }
 
-    init(_ theme: InstalledTheme) {
+    init(_ theme: InstalledTheme, density: ThemeTokens.Density? = nil) {
         self.theme = theme
+        self.density = density
         let tokens = theme.tokens
         let c = tokens.colors
         ink = Color(c.ink)
@@ -131,7 +134,7 @@ struct ThemeStyle: Sendable {
         glow = Color(c.glow)
         waitGlow = Color(c.waitGlow)
         // Whole and half points, so a compact or relaxed theme still lands on the pixel grid.
-        let f = tokens.type.density.factor, s = tokens.space
+        let f = (density ?? tokens.type.density).factor, s = tokens.space
         func scaled(_ v: Double) -> Double { (v * f * 2).rounded() / 2 }
         space = ThemeTokens.Space(xxs: scaled(s.xxs), xs: scaled(s.xs), s: scaled(s.s), m: scaled(s.m), l: scaled(s.l),
                                   xl: scaled(s.xl), xxl: scaled(s.xxl))

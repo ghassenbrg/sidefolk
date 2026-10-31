@@ -39,7 +39,7 @@ final class AppCoordinator {
     private(set) var onboarding: Onboarding!
     var mood = CompanionMood()
     private var roster = DutyRoster()
-    private var backlog = 0
+    private(set) var backlog = 0
     private var rosterTask: Task<Void, Never>?
     private var nowRefreshTask: Task<Void, Never>?
     let secrets: any SecretStore = KeychainSecretStore()
@@ -74,6 +74,9 @@ final class AppCoordinator {
     /// The Ask shortcut's press silenced the companion; its release doesn't toggle the panel too.
     var askKeySilenced = false
     var talkKeysInstalled = false
+    /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
+    var attentionTimer: Task<Void, Never>?
+    var fullAccessTimer: Task<Void, Never>?
 
     init(runtime: SidefolkRuntime) {
         self.runtime = runtime
@@ -123,22 +126,7 @@ final class AppCoordinator {
             cgImage: CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2),
             size: NSSize(width: 18, height: 18))
         statusItem.install(image: menuBarImage)
-        statusItem.onAsk = { [weak self] in self?.toggleAsk() }
-        statusItem.palettes = { [weak self] in self?.palettes.current ?? [] }
-        statusItem.onPalette = { [weak self] id, under in Task { await self?.palettes.toggle(id, under: under) } }
-        statusItem.onOpenHome = { [weak self] in self?.openHome() }
-        statusItem.onOpenSettings = { [weak self] in self?.openSettings() }
-        statusItem.onAbout = { [weak self] in self?.showAbout() }
-        statusItem.onQuiet = { [weak self] seconds in self?.setQuiet(for: seconds) }
-        statusItem.isQuiet = { [weak self] in self?.runtime.settings.current.isQuiet(at: Date()) ?? false }
-        statusItem.hotkeyLabel = { [weak self] in self?.hotkeyLabel ?? "" }
-        statusItem.companionName = { [weak self] in self?.runtime.settings.current.companionName ?? "Sidefolk" }
-        statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
-        statusItem.onToggleCompanion = { [weak self] in
-            guard let self else { return }
-            self.showCompanion(!self.companion.isVisible)
-        }
-        statusItem.nowProvider = { [weak self] in await self?.nowEntries() ?? [] }
+        installPocket()
         installModeSwitch()
 
         // A debug copy must not take ⌘⇧Space from the Sidefolk the developer actually uses (it once
@@ -159,11 +147,7 @@ final class AppCoordinator {
         monitor.onClockChange = monitor.onWake
         monitor.start()
         await notifier.clearFallback()
-        await runtime.attention.update { env in
-            env.quiet = s.isQuiet(at: Date())
-            env.presence = s.presence
-            env.sounds = s.sounds
-        }
+        applyAttention()
 
         eventTask = Task { [weak self] in
             guard let stream = self?.runtime.events.stream() else { return }
@@ -200,7 +184,7 @@ final class AppCoordinator {
         refreshRoster()
         refreshReadouts()
         locator.resume()
-        statusItem.refreshNow()
+        refreshMark()
         startUpdates()
         Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {
@@ -344,47 +328,10 @@ final class AppCoordinator {
         nowRefreshTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
-            self?.statusItem.refreshNow()
+            self?.refreshMark()
+            if self?.statusItem.isPocketShown == true { self?.statusItem.refresh() }
             self?.refreshGlance()
         }
-    }
-
-    /// The menu bar's "Now" list: what needs you, what's due soon, what's running.
-    func nowEntries() async -> [StatusItemController.NowEntry] {
-        var entries: [StatusItemController.NowEntry] = []
-        let now = Date()
-        for s in ((try? await runtime.sessions.live()) ?? []) where s.state == .needsYou {
-            entries.append(.init(title: String(localized: "\(s.agent == "codex" ? "Codex" : "Claude") needs you"),
-                                 detail: s.projectName ?? String(localized: "a session"),
-                                 symbol: "hand.raised", action: { [weak self] in self?.openSession(s) }))
-        }
-        let open = await runtime.attention.open().filter { $0.level >= .attention }
-        if !open.isEmpty {
-            entries.append(.init(title: String(localized: "Needs you (\(open.count))"), detail: open[0].title.clipped(30), symbol: "tray.full",
-                                 action: { [weak self] in self?.openHome() }))
-        }
-        if let skipped = await skippedNowEntry() { entries.append(skipped) }
-        for r in ((try? await runtime.reminderStore.pending()) ?? []).prefix(3) {
-            guard let due = r.nextDue, due.timeIntervalSince(now) < 6 * 3600 else { continue }
-            entries.append(.init(title: r.title.clipped(40), detail: TimeFormat.when(due, now: now, calendar: .autoupdatingCurrent),
-                                 symbol: "alarm", action: { [weak self] in self?.openHome() }))
-        }
-        for j in ((try? await runtime.jobs.running()) ?? []).prefix(2) {
-            entries.append(.init(title: j.title.clipped(40),
-                                 detail: String(localized: "running \(TimeText.duration(now.timeIntervalSince(j.startedAt)))", comment: "“running 4m 12s”"),
-                                 symbol: "terminal", action: { [weak self] in self?.openHome() }))
-        }
-        for w in reports.prefix(3) {
-            let value = readings[w.id].map { "\($0.label) \($0.value)" } ?? w.title
-            entries.append(.init(title: value.clipped(40), detail: Describe.interval(w.intervalS), symbol: Describe.watcherKind(w.kind).symbol,
-                                 action: { [weak self] in self?.openHome() }))
-        }
-        let watching = ((try? await runtime.watcherStore.active()) ?? []).filter { $0.mode != .report }.count
-        if watching > 0 {
-            entries.append(.init(title: String(localized: "Watching \(watching) things"), detail: String(localized: "Scout is on it"),
-                                 symbol: "binoculars", action: { [weak self] in self?.openHome() }))
-        }
-        return entries
     }
 
     #if DEBUG
@@ -446,9 +393,10 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("settings") {
-            openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            settingsWindow.dev(String(command.dropFirst("settings:".count)))
             return
         }
+        if command == "pocket" { statusItem.togglePocket(); return }
         if command.hasPrefix("scroll:"), let fraction = Double(command.dropFirst(7)) {
             // scroll:<0…1>: the tallest scroll view on screen that far down, so `snap` sees below the fold.
             DebugSnapshots.scroll(to: fraction)
@@ -649,11 +597,7 @@ final class AppCoordinator {
     }
 
     func setQuiet(for seconds: TimeInterval?) {
-        let until = seconds.map { Date().addingTimeInterval($0) }
-        Task {
-            await runtime.settings.update { $0.quietUntil = until }
-            await runtime.attention.update { $0.quiet = until != nil }
-        }
+        setAttention(seconds == nil ? .open : .quiet, until: seconds.map { Date().addingTimeInterval($0) })
     }
 
     // MARK: Events
@@ -680,7 +624,7 @@ final class AppCoordinator {
         case .attention(.backlog(let count)):
             backlog = count
             bubbles.setBacklog(count)
-            statusItem.setBadge(count)
+            refreshMark()
             companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: count)
         case .approvalRequested(let request):
             ask.add(.approval(request))
@@ -729,6 +673,7 @@ final class AppCoordinator {
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {
                 applyCompanionSettings()
+                applyAttention()
                 Task { await runtime.rearm() }
             }
             if domain == .notebook { Task { await refreshCollections() } }
@@ -955,7 +900,7 @@ extension AppCoordinator: CompanionDelegate {
             companion.hide()
             askPanel.hide()
         }
-        statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
+        statusItem.setCompanionHidden(!companion.isVisible)
         // The live values follow: beside the companion, or in the menu bar while it is away.
         renderReadouts()
     }

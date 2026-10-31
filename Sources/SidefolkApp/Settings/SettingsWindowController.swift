@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// The SwiftUI page for one Settings tab.
+/// The page for one Settings tab (D84).
 struct SettingsTabContent: View {
     var tab: SettingsTab
     var model: SettingsModel
@@ -11,25 +11,25 @@ struct SettingsTabContent: View {
         switch tab {
         case .general: GeneralSettingsView(model: model)
         case .companion: CompanionSettingsView(model: model)
-        case .ai: AISettingsView(model: model)
-        case .voice: VoiceSettingsView(model: model)
-        case .agents: SettingsPage { AgentsGroup(model: model) }
-        case .privacy: PrivacySettingsView(model: model)
-        case .extensions: ExtensionsSettingsView(model: model)
+        case .attention: AttentionSettingsView(model: model)
+        case .brain: BrainSettingsView(model: model)
+        case .trust: TrustSettingsView(model: model)
+        case .connections: ConnectionsSettingsView(model: model)
+        case .addons: ExtensionsSettingsView(model: model)
+        case .appearance: AppearanceSettingsView(model: model)
         }
     }
 }
 
-/// Owns the Settings window: Mac-style toolbar tabs, each hosting a SwiftUI page, 640 points wide.
-/// Create one and keep it; `show(tab:)` reuses the window.
+/// Owns the Settings window: a sidebar with search and eight tabs, like System Settings (D84), around the SwiftUI
+/// pages. Create one and keep it; `show(tab:)` reuses the window.
 @MainActor
 final class SettingsWindowController: NSObject, NSWindowDelegate {
     private let model: SettingsModel
     private let reviewWindow = InstallPreviewWindow()
     private var window: NSWindow?
-    private var tabs: NSTabViewController?
 
-    static let width: CGFloat = 640
+    static let size = NSSize(width: 920, height: 700)
 
     init(services: AppServices) {
         model = SettingsModel(services: services)
@@ -37,33 +37,54 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     var isVisible: Bool { window?.isVisible ?? false }
 
-    /// Brings Settings to the front, on `tab` if given (otherwise where the user left it).
-    func show(tab: SettingsTab? = nil) {
+    /// Brings Settings to the front, on `tab` if given (otherwise where the person left it), or at a setting.
+    func show(tab: SettingsTab? = nil, reveal key: SettingKey? = nil) {
         let window = self.window ?? makeWindow()
         self.window = window
-        if let tab, let index = SettingsTab.allCases.firstIndex(of: tab) { tabs?.selectedTabViewItemIndex = index }
+        if let tab { model.navigation.tab = tab }
         model.start()
         Task { await model.refresh() }
         WindowActivation.show(window)
-        // AppKit focuses the first text field (the companion's name, selected); a stray key would replace it.
+        // AppKit focuses the first text field (the search); a stray key would start a search.
         Task { @MainActor in window.makeFirstResponder(nil) }
+        if let key {
+            // After the page is laid out, or there is nothing to scroll to yet.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(120))
+                model.navigation.jump(to: key)
+            }
+        }
     }
 
-    /// Privacy & Permissions, scrolled to Your location (a card that asked which place, D48).
+    /// Trust › Your location (a card that asked which place, D48).
     func showYourLocation() {
-        show(tab: .privacy)
-        model.location.reveal = true
+        show(reveal: .location)
     }
 
-    /// Privacy & Permissions with the sheet that says what Full access means (from the menu bar).
+    /// Trust with the sheet that says what Full access means (from the menu bar).
     func confirmFullAccess() {
-        show(tab: .privacy)
+        show(tab: .trust)
         model.confirmingFullAccess = true
     }
 
     func close() { window?.performClose(nil) }
 
     #if DEBUG
+    /// The debug app's `settings:<tab>`, `settings:search:<words>`, `settings:jump:<setting>` and
+    /// `settings:full-access` (scripts/dev.swift).
+    func dev(_ command: String) {
+        let parts = command.split(separator: ":", maxSplits: 1).map(String.init)
+        switch parts.first ?? "" {
+        case "search":
+            show()
+            model.navigation.query = parts.count > 1 ? parts[1] : ""
+        case "jump":
+            if let key = parts.count > 1 ? SettingKey(rawValue: parts[1]) : nil { show(reveal: key) }
+        case "full-access": confirmFullAccess()
+        default: show(tab: SettingsTab(named: command))
+        }
+    }
+
     /// Settings › Companion in a given state, for the debug app (scripts/dev.swift `chooser:…`).
     func chooser(_ command: String) {
         show(tab: .companion)
@@ -88,56 +109,45 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     #endif
 
     /// The install preview of `folder` in its own window: Sidefolk's AI finished a draft, and the person
-    /// decides there (D39). If it can't be previewed, Settings › Extensions says why.
+    /// decides there (D39). If it can't be previewed, Settings › Add-ons says why.
     func review(folder: URL) {
         Task {
-            guard let preview = await model.preview(folder: folder) else { return show(tab: .extensions) }
+            guard let preview = await model.preview(folder: folder) else { return show(tab: .addons) }
             reviewWindow.show(preview, model: model)
         }
     }
 
     private func makeWindow() -> NSWindow {
         let window = NSWindow()
-        tabs = Self.configure(window, model: model)
+        Self.configure(window, model: model)
         window.delegate = self
         window.center()
-        window.setFrameAutosaveName("SidefolkSettings")
+        // A new name: the old window was 640 wide with a toolbar; its saved frame would squeeze the sidebar.
+        window.setFrameAutosaveName("SidefolkSettingsSidebar")
         return window
     }
 
-    /// Everything about the window except where it sits; returns the tab controller. UISnapshots
-    /// uses this too, so pictures show exactly what people get.
-    @discardableResult
-    static func configure(_ window: NSWindow, model: SettingsModel) -> NSTabViewController {
-        let tabs = NSTabViewController()
-        tabs.tabStyle = .toolbar
-        for tab in SettingsTab.allCases {
-            let host = NSHostingController(rootView: SettingsTabContent(tab: tab, model: model))
-            // No preferred size: switching tabs keeps the window's size instead of jumping.
-            host.sizingOptions = []
-            host.title = tab.title
-            let item = NSTabViewItem(viewController: host)
-            item.label = tab.title
-            item.image = NSImage(systemSymbolName: tab.symbol, accessibilityDescription: tab.title)
-            item.identifier = tab.rawValue
-            tabs.addTabViewItem(item)
-        }
-        window.contentViewController = tabs
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.toolbarStyle = .preference
-        // The tabs sit on the window's own background, so the chrome matches the pages (navy in dark).
+    /// Everything about the window except where it sits. UISnapshots uses this too, so pictures show exactly what
+    /// people get.
+    static func configure(_ window: NSWindow, model: SettingsModel) {
+        let host = NSHostingController(rootView: SettingsRoot(model: model))
+        // No preferred size: switching tabs keeps the window's size instead of jumping.
+        host.sizingOptions = []
+        window.contentViewController = host
+        window.title = String(localized: "Settings")
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.backgroundColor = NSColor(Theme.surfaceSunken)
-        window.setContentSize(NSSize(width: width, height: 620))
-        window.contentMinSize = NSSize(width: width, height: 420)
-        window.contentMaxSize = NSSize(width: width, height: 4000)
+        window.setContentSize(size)
+        window.contentMinSize = NSSize(width: 760, height: 480)
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
-        return tabs
     }
 
     func windowWillClose(_ notification: Notification) {
         model.stop()
+        model.navigation.query = ""
         if let window { WindowActivation.closed(window) }
     }
 }

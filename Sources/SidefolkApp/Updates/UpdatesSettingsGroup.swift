@@ -13,8 +13,7 @@ struct UpdatesSettingsGroup: View {
             SettingsRow(title: Text("Sidefolk \(updates.running)", comment: "Settings › Updates: the version that runs"), detail: Text(status)) {
                 control
             }
-            SettingsRow(title: Text("New versions of Sidefolk", comment: "Settings › Updates: what Sidefolk does about its own updates"),
-                        detail: Text(appDetail)) {
+            SettingsRow(.appUpdates, detail: Text(appDetail)) {
                 Picker("New versions of Sidefolk", selection: Binding(get: { appMode }, set: { m in model.update { $0.updates.app = m } })) {
                     Text("Don't check", comment: "Settings › Updates › New versions of Sidefolk").tag(AppUpdateMode.off)
                     Text("Tell me", comment: "Settings › Updates › New versions of Sidefolk: ask before installing").tag(AppUpdateMode.notify)
@@ -24,17 +23,12 @@ struct UpdatesSettingsGroup: View {
                 .fixedSize()
                 .disabled(!updates.published)
             }
-            SettingsToggle(title: Text("Update add-ons automatically"),
-                           detail: Text("Companions, themes and extensions from the gallery. An extension whose new version would be allowed to do more always waits for you to look first."),
-                           isOn: Binding(get: { model.settings.updates.addons }, set: { on in model.update { $0.updates.addons = on } }))
+            SettingsToggle(.addonUpdates, isOn: Binding(get: { model.settings.updates.addons }, set: { on in model.update { $0.updates.addons = on } }))
             AddonUpdateRows(updates: updates)
-            SettingsRow(title: "Versions to offer", detail: "Snapshots are test builds that come out before a release. Add-ons follow this too.") {
-                Picker("Versions to offer", selection: Binding(get: { channel }, set: { c in model.update { $0.updates.channel = c } })) {
-                    Text("Releases").tag(UpdateChannel.releases)
-                    Text("Releases and snapshots").tag(UpdateChannel.snapshots)
-                }
-                .labelsHidden()
-                .fixedSize()
+            SettingsRow(.channel) {
+                SegmentedPicker("Versions to offer", selection: Binding(get: { channel }, set: { c in model.update { $0.updates.channel = c } }),
+                                segments: [.init(UpdateChannel.releases, Text("Releases")),
+                                           .init(UpdateChannel.snapshots, Text("Snapshots", comment: "Settings › Updates › Versions to offer: releases and snapshots"))])
             }
         }
     }

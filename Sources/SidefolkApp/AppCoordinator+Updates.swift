@@ -7,7 +7,6 @@ extension AppCoordinator {
 
     func startUpdates() {
         statusItem.waitingUpdate = { [weak self] in self?.updater.waitingVersion }
-        statusItem.onUpdates = { [weak self] in self?.updater.showUpdates() }
         updater.signals = { [weak self] in await self?.installSignals() ?? InstallMoment.Signals(conversation: true) }
         addonUpdater.onUpdated = { [weak self] report in self?.companionsUpdated(report.companions.map(\.companion)) }
         addonUpdater.openReview = { [weak self] folder in self?.settingsWindow.review(folder: folder) }

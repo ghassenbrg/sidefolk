@@ -171,14 +171,23 @@ enum UISnapshots {
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-conversations-empty"))
             blank.orderOut(nil)
 
-            // Settings, as a real window, one picture per tab.
+            // Settings, as a real window, one picture per tab, then a search (D84).
             let settingsWindow = SnapshotWindow()
-            let tabs = SettingsWindowController.configure(settingsWindow, model: settings)
-            for (index, tab) in SettingsTab.allCases.enumerated() {
-                tabs.selectedTabViewItemIndex = index
-                try await capture(settingsWindow, size: CGSize(width: SettingsWindowController.width, height: 620), dark: dark,
-                                  to: file("window-settings-\(tab.rawValue)"))
+            SettingsWindowController.configure(settingsWindow, model: settings)
+            let settingsSize = CGSize(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
+            for tab in SettingsTab.allCases {
+                settings.navigation.tab = tab
+                try await capture(settingsWindow, size: settingsSize, dark: dark, to: file("window-settings-\(tab.rawValue)"))
             }
+            settings.navigation.query = String(localized: "quiet", comment: "UI snapshots only: a word searched in Settings")
+            settings.navigation.highlighted = settings.navigation.results.first
+            try await capture(settingsWindow, size: settingsSize, dark: dark, to: file("window-settings-search"))
+            settings.navigation.query = "zzzz"
+            try await capture(settingsWindow, size: settingsSize, dark: dark, to: file("window-settings-search-none"))
+            settings.navigation.query = ""
+            settings.navigation.tab = .general
+            // The narrowest Settings allows, to catch clipping.
+            try await capture(settingsWindow, size: CGSize(width: 760, height: 520), dark: dark, to: file("window-settings-general-small"))
             settingsWindow.orderOut(nil)
 
             let aboutWindow = SnapshotWindow()
@@ -236,7 +245,7 @@ enum UISnapshots {
             try await page("page-now-full-access", NowView(model: full.now), width: 870)
             try await full.services.runtime.permissions.setPolicy(homePolicy)
             await full.now.reload()
-            let width = SettingsWindowController.width
+            let width: CGFloat = 690
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
@@ -254,9 +263,28 @@ enum UISnapshots {
             fixtures.updates.phase = .upToDate
             // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
             let policy = settings.policy
-            await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
-            try await page("page-settings-privacy-full-access", SettingsTabContent(tab: .privacy, model: settings), width: width)
+            let fullAccessEnds = Calendar.current.date(bySettingHour: 22, minute: 0, second: 0, of: Date()) ?? Date()
+            await settings.setPolicy { $0.choose(.fullAccess, fullAccessEnds: fullAccessEnds); $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
+            try await page("page-settings-trust-full-access", SettingsTabContent(tab: .trust, model: settings), width: width)
             await settings.setPolicy { $0 = policy }
+            // What Full access means, and when it ends (D84).
+            try await page("sheet-full-access", FullAccessSheet(model: settings), width: Theme.Size.sheet + 40)
+            // Attention in Focus until five, with two things held, then Quiet for good with quiet hours on (D84).
+            let five = Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: Date()) ?? Date()
+            settings.setAttention(.focus, until: max(five, Date().addingTimeInterval(3500)))
+            await settings.services.runtime.attention.update { $0.focus = true }
+            for title in ["Codex finished in pockito", "Pricing page changed"] {
+                _ = await settings.services.runtime.attention.post(AttentionRequest(level: .gentle, source: "watcher", title: title))
+            }
+            await settings.refreshHeld()
+            try await page("page-settings-attention-focus", SettingsTabContent(tab: .attention, model: settings), width: width)
+            settings.update { $0.quietHours.on = true }
+            settings.setAttention(.quiet, until: nil)
+            await settings.services.runtime.attention.update { $0.focus = false; $0.quiet = true }
+            try await page("page-settings-attention-quiet", SettingsTabContent(tab: .attention, model: settings), width: width)
+            settings.update { $0.quietHours.on = false }
+            settings.setAttention(.open, until: nil)
+            await settings.services.runtime.attention.update { $0.quiet = false }
             // The companion chooser with Spark chosen, then Spark in 2D, coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)
@@ -312,18 +340,18 @@ enum UISnapshots {
                 setUp(fixtures, settings)
                 settings.ai.choose(choice)
                 await settings.ai.refresh()
-                try await page("page-settings-ai-\(name)", AISettingsView(model: settings), width: width)
+                try await page("page-settings-ai-\(name)", SettingsPage { AISettingsSections(model: settings) }, width: width)
             }
             fixtures.detection = FixtureServices.sampleDetection
             settings.ai.choose(.codex)
             await settings.ai.refresh()
             await settings.ai.test()
-            try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
+            try await page("page-settings-ai-sent", SettingsPage { AISettingsSections(model: settings, showPayload: true) }, width: width)
             // Settings › Voice turned on, in the states that need different words (D34).
             for (name, setUp) in voiceStates {
                 setUp(fixtures.voice, settings)
                 await settings.voice.refresh()
-                try await page("page-settings-voice-\(name)", VoiceSettingsView(model: settings), width: width)
+                try await page("page-settings-voice-\(name)", SettingsPage { VoiceSettingsSections(model: settings) }, width: width)
             }
             settings.update { $0.voice = VoiceSettings() }
             // Settings › Privacy › Your location in each state that needs different words (D48).

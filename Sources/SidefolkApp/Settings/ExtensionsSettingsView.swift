@@ -496,10 +496,10 @@ struct AgentsGroup: View {
         SettingsGroup(title: "Connect your agents",
                       footer: "Sidefolk saves a backup next to each file before changing it. Disconnect removes only what it added.") {
             if let status = model.integration {
-                claude(status)
-                codex(status)
-                commandLine(status)
-                OtherAgentsRow(copy: model.copySetupInstructions)
+                claude(status).settingAnchor(.claudeCode)
+                codex(status).settingAnchor(.codex)
+                commandLine(status).settingAnchor(.commandLine)
+                OtherAgentsRow(copy: model.copySetupInstructions).settingAnchor(.otherApps)
             } else {
                 InlineEmpty(text: "Checking your agents…")
             }

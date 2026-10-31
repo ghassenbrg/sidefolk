@@ -132,7 +132,7 @@ struct UpdateView: View {
 
 /// A release's notes as GitHub shows the simple Markdown they're written in: headings, bullet lists and inline
 /// marks (bold, code, links). Anything fancier reads as plain lines.
-private struct ReleaseNotesView: View {
+struct ReleaseNotesView: View {
     var notes: String
 
     var body: some View {
@@ -158,6 +158,14 @@ private struct ReleaseNotesView: View {
         .foregroundStyle(Theme.ink)
         .frame(maxWidth: .infinity, alignment: .leading)
         .textSelection(.enabled)
+    }
+
+    /// The first few bullet lines of the notes, for a short "what's new" (Settings › General, the update window).
+    static func highlights(_ notes: String, limit: Int) -> [AttributedString] {
+        notes.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix("- ") || $0.hasPrefix("* ") }
+            .prefix(limit)
+            .map { inline(String($0.dropFirst(2))) }
     }
 
     static func inline(_ text: String) -> AttributedString {

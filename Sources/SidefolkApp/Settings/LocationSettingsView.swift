@@ -9,7 +9,8 @@ struct LocationGroup: View {
     private var settings: LocationSettings { model.settings }
 
     var body: some View {
-        SettingsGroup(title: "Your location", footer: "Only the town or city goes to your AI, never an address or coordinates. Weather lookups send the place to Open-Meteo, as for any place you ask about.") {
+        SettingsGroup(title: "Your location", footer: "Only the town or city goes to your AI, never an address or coordinates. Weather lookups send the place to Open-Meteo, as for any place you ask about.",
+                      anchor: .location) {
             ChoiceRow(title: "Off", detail: "Name a place when you ask about the weather.", selected: settings.source == .off) {
                 model.choose(.off)
             }

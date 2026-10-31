@@ -3,9 +3,10 @@ import SidefolkCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Settings › Privacy & Permissions: how much Sidefolk asks and what it may do, where you are (D48), what is stored,
-/// your calendar (D57), which folders Sidefolk may use, what is always allowed, and the user's data (export, delete).
-struct PrivacySettingsView: View {
+/// Settings › Trust (D84, was Privacy & Permissions): how much Sidefolk asks, Full access with an end, the internet,
+/// folders, what is always allowed and what may happen at all; what other agents may do; what Sidefolk can see (where
+/// you are, D48, and your calendar, D57); and what it keeps, with the person's data (export, delete).
+struct TrustSettingsView: View {
     var model: SettingsModel
     @State private var confirmingDelete = false
     @State private var confirmingHistory = false
@@ -22,29 +23,21 @@ struct PrivacySettingsView: View {
     ]
 
     var body: some View {
-        ScrollViewReader { scroll in
-            page
-                .task(id: model.location.reveal) {
-                    guard model.location.reveal else { return }
-                    // After the first layout, or there is nothing to scroll to yet.
-                    try? await Task.sleep(for: .milliseconds(150))
-                    withAnimation { scroll.scrollTo(Self.locationAnchor, anchor: .top) }
-                    model.location.reveal = false
-                }
-        }
-        .sheet(isPresented: $confirmingDelete) { DeleteAllSheet(model: model) }
+        page.sheet(isPresented: $confirmingDelete) { DeleteAllSheet(model: model) }
     }
-
-    private static let locationAnchor = "location"
 
     private var page: some View {
         SettingsPage {
+            TrustHero(model: model)
             guardSettings
-            LocationGroup(model: model.location).id(Self.locationAnchor)
+            AgentAccessGroup(model: model)
+            Eyebrow(Text(verbatim: SettingKey.location.section)).padding(.leading, Theme.Space.xs).padding(.bottom, -Theme.Space.m)
+            LocationGroup(model: model.location)
             CalendarGroup(model: model)
             keeps
             SettingsGroup(title: "History",
-                          footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Conversations, in Sidefolk's window. Then they're deleted.") {
+                          footer: "Conversations with the AI let you follow up (“and tomorrow too”) and read them again in Conversations, in Sidefolk's window. Then they're deleted.",
+                          anchor: .history) {
                 SettingsRow(title: "Keep conversations for") {
                     Picker("Keep conversations for", selection: Binding(
                         get: { model.settings.historyDays }, set: { days in model.update { $0.historyDays = days } }
@@ -69,8 +62,6 @@ struct PrivacySettingsView: View {
             } message: {
                 Text(DeleteHistoryWords.message)
             }
-            folders
-            grants
             data
         }
     }
@@ -78,7 +69,8 @@ struct PrivacySettingsView: View {
     // MARK: What Sidefolk keeps
 
     private var keeps: some View {
-        SettingsGroup(title: "What Sidefolk keeps", footer: "Everything stays on this Mac. It's encrypted at rest by FileVault when FileVault is on.") {
+        SettingsGroup(title: "What Sidefolk keeps", footer: "Everything stays on this Mac. It's encrypted at rest by FileVault when FileVault is on.",
+                      anchor: .keeps) {
             if let s = model.storage {
                 HStack(spacing: 0) {
                     count(s.notes, "Notes")
@@ -112,7 +104,7 @@ struct PrivacySettingsView: View {
 
     private var folders: some View {
         SettingsGroup(title: "Folders Sidefolk can use",
-                      footer: "Sidefolk only touches files inside these folders. Anything it deletes goes to the Trash.") {
+                      footer: "Sidefolk only touches files inside these folders. Anything it deletes goes to the Trash.", anchor: .folders) {
             if model.folders.isEmpty {
                 InlineEmpty(text: "No folders yet. Add one here, or allow one when Sidefolk asks.", systemImage: "folder")
             }
@@ -166,7 +158,7 @@ struct PrivacySettingsView: View {
     private var grants: some View {
         // Sites and built-in services are listed under "Using the internet" (D47).
         let others = model.grants.filter { !InternetGrants.isInternet($0) }
-        return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.") {
+        return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.", anchor: .alwaysAllowed) {
             if others.isEmpty {
                 InlineEmpty(text: "Nothing yet. When you choose “Always allow”, it's listed here.", systemImage: "checkmark.shield")
             }
@@ -207,14 +199,16 @@ struct PrivacySettingsView: View {
 
     // MARK: Guard
 
-    /// How much Sidefolk asks comes first: it is the choice people come here to make (D37).
+    /// What Sidefolk may do, after how much it asks (the hero): the internet, folders, what is always allowed, what
+    /// happens when nobody answers, and what may happen at all.
     private var guardSettings: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
-            ApprovalModeGroup(model: model)
             InternetGroup(model: model)
-            AgentAccessGroup(model: model)
+            folders
+            grants
             UnansweredGroup(model: model)
-            SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.") {
+            SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.",
+                          anchor: .capabilities) {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in
                     SettingsToggle(title: title, detail: detail, isOn: Binding(
                         get: { !model.policy.disabled.contains(capability) },
@@ -231,18 +225,17 @@ struct PrivacySettingsView: View {
 
     private var data: some View {
         SettingsGroup(title: "Your data") {
-            SettingsRow(title: "Export data", detail: "Notes, reminders, watches and settings as one JSON file. No keys.") {
+            SettingsRow(.exportData) {
                 Button("Export Data…") { save(name: String(localized: "Sidefolk Export"), type: .json) { await model.exportData(to: $0) } }
                     .buttonStyle(.sf(.secondary))
             }
-            SettingsRow(title: "Diagnostics", detail: "Logs and versions for a bug report, without your notes or messages.") {
+            SettingsRow(.diagnostics) {
                 Button("Export Diagnostics…") {
                     save(name: String(localized: "Sidefolk Diagnostics"), type: .zip) { await model.exportDiagnostics(to: $0) }
                 }
                     .buttonStyle(.sf(.secondary))
             }
-            SettingsToggle(title: "Debug logging", detail: "More detail in the local log. Turn it off when you're done.",
-                           isOn: Binding(get: { model.settings.debugLogging }, set: { model.setDebugLogging($0) }))
+            SettingsToggle(.debugLogging, isOn: Binding(get: { model.settings.debugLogging }, set: { model.setDebugLogging($0) }))
             if let message = model.dataMessage {
                 Group {
                     switch message {
@@ -255,7 +248,7 @@ struct PrivacySettingsView: View {
                 .padding(.horizontal, Theme.Space.l)
                 .padding(.vertical, Theme.Space.m)
             }
-            SettingsRow(title: "Delete all Sidefolk data", detail: "Notes, reminders, watches, history, logs and saved keys. This can't be undone.") {
+            SettingsRow(.deleteAll) {
                 Button("Delete All Data…") { confirmingDelete = true }.buttonStyle(.sf(.destructive))
             }
         }

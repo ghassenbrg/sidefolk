@@ -314,13 +314,7 @@ extension AppCoordinator: AppServices {
     func settingsChanged() {
         let s = runtime.settings.current
         Log.shared.setDebug(s.debugLogging)
-        Task {
-            await runtime.attention.update { env in
-                env.quiet = s.isQuiet(at: Date())
-                env.presence = s.presence
-                env.sounds = s.sounds
-            }
-        }
+        applyAttention()
         applyCompanionSettings()
         applyAppearance()
         applyTheme()

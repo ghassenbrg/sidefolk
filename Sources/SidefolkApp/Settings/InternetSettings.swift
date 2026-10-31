@@ -13,7 +13,8 @@ struct InternetGroup: View {
 
     var body: some View {
         SettingsGroup(title: "Using the internet",
-                      footer: "For pages and online services Sidefolk picks itself; addresses you type never ask. Other agents and the extensions you added keep their own rules.") {
+                      footer: "For pages and online services Sidefolk picks itself; addresses you type never ask. Other agents and the extensions you added keep their own rules.",
+                      anchor: .internet) {
             ChoiceRow(title: "Ask each time",
                       detail: "Sidefolk asks every time it would read a page or use an online service you didn't name, and doesn't remember your answers.",
                       selected: rule == .askEachTime) { set(.askEachTime) }

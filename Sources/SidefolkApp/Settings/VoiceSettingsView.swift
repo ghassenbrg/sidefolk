@@ -2,9 +2,9 @@ import KeyboardShortcuts
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Voice (D34): talking instead of typing, when the companion answers aloud, and the
+/// Settings › Brain › Voice (D34, D84): talking instead of typing, when the companion answers aloud, and the
 /// voice it answers in, each engine saying plainly what it sends and where.
-struct VoiceSettingsView: View {
+struct VoiceSettingsSections: View {
     var model: SettingsModel
 
     private var voice: VoiceSettingsModel { model.voice }
@@ -12,10 +12,9 @@ struct VoiceSettingsView: View {
     private var name: String { voice.companionName }
 
     var body: some View {
-        SettingsPage {
+        VStack(alignment: .leading, spacing: Theme.Space.xl) {
             SettingsGroup(title: "Talking", footer: "The microphone is on only while you hold the shortcut, and what you say is understood on this Mac. The recording is never kept; the words join your requests like typed ones.") {
-                SettingsToggle(title: "Voice input", detail: "Hold the shortcut and talk, release to send. Esc cancels.",
-                               isOn: Binding(get: { settings.input }, set: { voice.setInput($0) }))
+                SettingsToggle(.voiceInput, isOn: Binding(get: { settings.input }, set: { voice.setInput($0) }))
                 if settings.input {
                     talkRows
                     MicrophoneRow(voice: voice)
@@ -23,7 +22,8 @@ struct VoiceSettingsView: View {
                 }
             }
 
-            SettingsGroup(title: "Spoken replies", footer: "What \(name) says is always shown on screen too. Quiet mode keeps \(name) silent, and so does a call or typing again.") {
+            SettingsGroup(title: "Spoken replies", footer: "What \(name) says is always shown on screen too. Quiet mode keeps \(name) silent, and so does a call or typing again.",
+                          anchor: .spokenReplies) {
                 ChoiceRow(title: "Off", detail: "Replies stay on screen.", selected: settings.replies == .off) { voice.update { $0.replies = .off } }
                 ChoiceRow(title: "Only when I spoke", detail: "A short spoken answer to what you said aloud. Typed requests get text.",
                           selected: settings.replies == .whenSpoken) { voice.update { $0.replies = .whenSpoken } }
@@ -42,7 +42,7 @@ struct VoiceSettingsView: View {
                 .disabled(settings.replies == .off)
             }
 
-            SettingsGroup(title: "Voice", footer: "An AI voice. \(name) never reads out links, file paths or code.") {
+            SettingsGroup(title: "Voice", footer: "An AI voice. \(name) never reads out links, file paths or code.", anchor: .voice) {
                 EngineOption(engine: .apple, voice: voice)
                 EngineOption(engine: .elevenLabs, voice: voice)
                 SettingsRow(title: Text("Speed"), detail: Text(verbatim: settings.rate.formatted(.number.precision(.fractionLength(2))) + "×")) {
@@ -122,7 +122,7 @@ private struct LanguageRow: View {
             .labelsHidden()
             .frame(maxWidth: 220)
         }
-        SettingsRow(title: Text("Speech model"), detail: modelDetail) { modelControl }
+        SettingsRow(title: Text("Speech model"), detail: modelDetail, anchor: .speechModel) { modelControl }
         if let error = voice.downloadError {
             InlineError(error: error).padding(.horizontal, Theme.Space.l).padding(.bottom, Theme.Space.s)
         }
