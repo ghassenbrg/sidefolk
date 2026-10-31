@@ -17,11 +17,13 @@
   count, fold into the stack, fan), a folder watch firing, Claude Code and Codex sessions through `sidefolk hook`
   (faces, "needs you" card), another app's approval over MCP (firm slip alone, ⌘↩ hint, deny), folder access (calm
   slip, Allow's menu), `ask:` with the understanding row, Quiet's moon, a CPU and a memory pin with their tips.
-  *Half done / not built:* Focus as its own mode (only Quiet exists), the evening wrap, the drop choice card, the
-  stack's arc animation, voice's level-reactive pool, keyboard answering of cards outside Ask; the 3D companion's own
-  reactions (phase 5). `ApprovalCard` stays for Home's queue until phase 3 moves it to the slip. Other teammates' debug
-  apps receive `scripts/dev.swift` commands sent without SIDEFOLK_HOME: set it, or a stray `approve` reaches yours.
-  *Next:* phase 3 (Home) can reuse `PermissionSlip` in Today's queue and `UnderstandingRow` in the toolbar Say bar.
+  *Merged with phase 3 and 4 (`team/lantern-4`):* Focus on the desktop (grey light, half circle or a grey count of what
+  waits and is held), held whispers back as phase 4's one card when Focus or Quiet ends, Today's approvals as permission
+  slips (`ApprovalCard` retired, slips ignore answers for 0.8 s instead of looking disabled), an agent's notice signed
+  "Claude Code · sidefolk". *Half done / not built:* the evening wrap, the drop choice card, the stack's arc animation,
+  voice's level-reactive pool, keyboard answering of cards outside Ask; the 3D companion's own reactions (phase 5).
+  Other teammates' debug apps receive `scripts/dev.swift` commands sent without SIDEFOLK_HOME: set it, or a stray
+  `approve` reaches yours. *Next:* phase 5 (polish), or the items above.
 - **The Lantern revamp, phase 4: Settings, the menu bar Pocket, sheets (D84, branch `team/lantern-4`, not merged):**
   Settings is a sidebar window with search and eight tabs (General, Companion, Attention, Brain, Trust, Connections,
   Add-ons, Appearance); every setting kept a home and the old tab names still open the right place; every

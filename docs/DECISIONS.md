@@ -2339,12 +2339,15 @@ Pins and the agents lane (`AgentLane`: a face per working or waiting Claude Code
 the founder's request during the phase: the companion's corner is no bigger than before (281 × 159 pt at the medium
 size in 3D, with three folks, two pins and two agents), pins show their number, agents a face with a status dot,
 details only in a tip on hover, and the extras fade and shrink while the person types in a window under them or passes
-the pointer through (the senses the companion's life already reads, no permission). Quiet shows a moon and no light;
-when it ends, what arrived meanwhile comes as one card (`AttentionCenter` digest; gentle notices held in Quiet are told
-there and done). A Quiet that ends by its time now tells the attention center too. The morning brief is a card with
-its day as rows. *Not built:* Focus as its own mode (only Quiet exists, so the half circle is unused on the desktop),
-the evening wrap, the drop choice card, the stack's arc animation, the level-reactive pool for voice, keyboard
-answering of cards outside Ask. Toss captions and the Play panel stay as they were (games are another teammate's).
+the pointer through (the senses the companion's life already reads, no permission). With phase 4 merged, Focus
+dims the light to grey with its half circle on the shoulder (or, in grey, how many wait, the whispers it holds
+included) and Quiet puts the light out with a moon; when either ends, what was held comes back as phase 4's one card
+("While you were focused", and the same card with Quiet's words; `HeldSummary.quiet`), signed "Mochi · Focus ended".
+The morning brief is a card with its day as rows; toss captions are whispers. Today's Needs you shows approvals as the
+same permission slip (`ApprovalCard` is retired; a slip ignores answers for its first 0.8 s rather than looking
+disabled). An agent session's notice names the agent and its project ("Claude Code · sidefolk"). *Not built:* the
+evening wrap, the drop choice card, the stack's arc animation, the level-reactive pool for voice, keyboard answering of
+cards outside Ask. The Play panel stays as it was (games are another teammate's).
 
 **Phase 3, built (Home):** one layout in every theme. The sidebar (232) holds the companion live in its nook (its
 portrait in the desktop's pose on its `LightPool`, a state chip, one line), the five places (Today ⌘1, Calendar ⌘2,
