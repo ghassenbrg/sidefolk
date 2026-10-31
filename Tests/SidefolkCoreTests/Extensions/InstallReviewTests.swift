@@ -70,15 +70,22 @@ struct InstallReviewTests {
     }
 
     @Test func anUpdateAskingForMoreStaysProminentEvenWhenSigned() {
-        let diff = ExtensionUpdateDiff(fromVersion: "1.0.0", toVersion: "1.1.0", addedPermissions: ["Can use the internet"],
-                                       removedPermissions: [], addedTools: [], removedTools: [])
+        func side(_ version: String, _ p: ExtensionPermissions = ExtensionPermissions(), lines: [String] = [],
+                  tools: [String: Risk] = ["make": .low], background: Bool = false) -> ExtensionUpdateDiff.Side {
+            .init(version: version, permissions: p, lines: lines, tools: tools, background: background)
+        }
+        let diff = ExtensionUpdateDiff(from: side("1.0.0"), to: side("1.1.0", ExtensionPermissions(network: true), lines: ["Can use the internet"]))
         let r = review("dev.sidefolk.qr-codes", ExtensionPermissions(network: true), .gallery, update: diff)
         #expect(r.tone == .goodToKnow)
         #expect(r.update?.widens == true && r.update?.added == ["Can use the internet"])
         #expect(r.update?.line == "Updates 1.0.0 to 1.1.0.")
-        let same = ExtensionUpdateDiff(fromVersion: "1.0.0", toVersion: "1.0.0", addedPermissions: [], removedPermissions: [],
-                                       addedTools: [], removedTools: [])
-        let again = review("dev.sidefolk.qr-codes", ExtensionPermissions(), .gallery, update: same).update
+        let again = review("dev.sidefolk.qr-codes", ExtensionPermissions(), .gallery,
+                           update: ExtensionUpdateDiff(from: side("1.0.0"), to: side("1.0.0"))).update
         #expect(again?.widens == false && again?.line == "Installs 1.0.0 again.")
+        // What the auto-updater holds back for review (D70) is what the sheet shows as asking for more.
+        let more = ExtensionUpdateDiff(from: side("1.0.0"), to: side("1.1.0", tools: ["make": .high], background: true))
+        let held = review("dev.sidefolk.qr-codes", ExtensionPermissions(), .gallery, update: more).update
+        #expect(more.widens && held?.widens == true)
+        #expect(held?.added == ["Riskier now: make", "Keeps running in the background now"])
     }
 }

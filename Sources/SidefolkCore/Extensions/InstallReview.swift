@@ -37,10 +37,15 @@ public struct InstallReview: Sendable, Hashable {
 
         public init(_ diff: ExtensionUpdateDiff) {
             // The same version again (a folder being worked on, or a pack fetched again) isn't an update.
+            // What asks for more is what the auto-updater holds back for review (D70): a riskier tool or running in
+            // the background asks for more too, though no permission line changes.
             self.init(line: diff.fromVersion == diff.toVersion
                           ? String(localized: "Installs \(diff.toVersion) again.", comment: "A version number")
                           : String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"),
-                      added: diff.addedPermissions, removed: diff.removedPermissions)
+                      added: diff.addedPermissions
+                          + diff.riskierTools.map { String(localized: "Riskier now: \($0)", comment: "A tool's name") }
+                          + (diff.startsInBackground ? [String(localized: "Keeps running in the background now")] : []),
+                      removed: diff.removedPermissions)
         }
     }
 
