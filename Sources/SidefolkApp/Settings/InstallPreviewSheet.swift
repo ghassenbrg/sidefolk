@@ -14,9 +14,35 @@ struct InstallPreviewSheet: View {
     @State private var installing = false
     @State private var showsAdds = false
     @State private var error: UserFacingError?
+    /// How tall the details may be before they scroll, taken once as the sheet opens.
+    @State private var room = InstallPreviewSheet.roomForDetails
+    /// The details at their full height, measured; until then, as much room as there is.
+    @State private var detailsHeight: CGFloat = InstallPreviewSheet.roomForDetails
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        // The details scroll inside a height the screen has room for; the buttons stay below them. A sheet can't be
+        // moved, and a big extension's sheet grew past the bottom of the screen with its buttons out of reach.
+        VStack(spacing: 0) {
+            ScrollView {
+                details.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { detailsHeight = $0 }
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(height: min(detailsHeight, room))
+            if detailsHeight > room { Divider() }
+            footer
+        }
+        .frame(width: 480)
+        .background(Theme.surface)
+        .task {
+            // Like approval cards: inert for a moment so a stray Return can't install it.
+            try? await Task.sleep(for: .milliseconds(800))
+            armed = true
+        }
+    }
+
+    /// Everything the person reads before deciding.
+    private var details: some View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
             HStack(alignment: .top, spacing: Theme.Space.m) {
                 // The extension's own icon, with Guard on duty: this is a permission question.
@@ -61,6 +87,14 @@ struct InstallPreviewSheet: View {
                     Eyebrow(text: "It adds")
                 }
             }
+        }
+        .padding(Theme.Space.xl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// What went wrong, if anything, and the choice: always in sight, whatever the sheet holds.
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
             if let error { InlineError(error: error) }
             HStack {
                 Button("Show Files") { NSWorkspace.shared.activateFileViewerSelecting([preview.sourceFolder]) }
@@ -79,14 +113,16 @@ struct InstallPreviewSheet: View {
                 .disabled(!armed || installing)
             }
         }
-        .padding(Theme.Space.xl)
-        .frame(width: 480)
-        .background(Theme.surface)
-        .task {
-            // Like approval cards: inert for a moment so a stray Return can't install it.
-            try? await Task.sleep(for: .milliseconds(800))
-            armed = true
-        }
+        .padding(.horizontal, Theme.Space.xl)
+        .padding(.vertical, Theme.Space.l)
+    }
+
+    /// The details' height before they scroll. A sheet hangs from just under its window's toolbar, so its room is
+    /// from there down to the Dock, less the buttons and a margin; a window of its own gets the screen's height.
+    private static var roomForDetails: CGFloat {
+        let screen = (NSApp.keyWindow?.screen ?? NSScreen.main)?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1200, height: 800)
+        let top = NSApp.keyWindow.map { min($0.frame.maxY, screen.maxY) - 90 } ?? screen.maxY
+        return max(280, top - screen.minY - 150)
     }
 
     private var review: InstallReview { preview.review }
