@@ -53,6 +53,16 @@ struct BoardView: View {
             TimerBar(clock: model.clock, id: t.id)
         }
         case .score, .button: EmptyView()
+        case .pads(let p): PadsView(pads: p, model: model)
+        case .cups(let c): CupsView(cups: c, model: model)
+        case .reflex(let r): ReflexView(reflex: r, model: model)
+        case .meter(let m): MeterView(meter: m)
+        case .number(let n): NumberFieldView(field: n, model: model)
+        case .letters(let l): LettersView(letters: l, model: model)
+        case .keys(let k): KeyboardView(keys: k, model: model)
+        case .entry(let e): GameEntryView(entry: e, model: model).id(e.name)
+        case .sticks(let s): SticksView(sticks: s, model: model)
+        case .lives(let l): LivesView(lives: l)
         }
     }
 }
@@ -463,19 +473,31 @@ struct GameGridView: View {
     }
 
     private func cell(_ cell: GameBoard.Grid.Cell, _ r: Int, _ c: Int, _ side: CGFloat) -> some View {
-        Button { model.send(.cell(row: r, column: c)) } label: {
-            ZStack {
+        let index = r * grid.columns + c
+        let open = !grid.locked && cell.state != .disabled && (cell.mark == .empty || cell.mark == .cardBack)
+        return Button { model.send(.cell(row: r, column: c)) } label: {
+            ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     // A winning line is the person's win or loss by whose marks it holds.
                     .fill(cell.state == .win ? GameColors.fill(cell.companion ? .loss : .win).opacity(cell.companion ? 1 : 0.35)
                           : cell.state == .hint ? Theme.sun.opacity(0.25) : Theme.surfaceSunken)
-                mark(cell, side)
+                mark(cell, side).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .modifier(CellArrival(animate: cell.animate, key: "\(index)\(cell.mark.rawValue)\(cell.value ?? "")"))
+                if grid.numpad, open {
+                    // The digit that plays here, as on a number pad (7 8 9 on top).
+                    GameKeyCap(text: "\((2 - r) * 3 + c + 1)").padding(5)
+                }
+                if model.parts.cursor == index, !grid.locked {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.accent, lineWidth: 2.5)
+                }
             }
             .frame(width: side, height: side)
             .opacity(cell.state == .disabled ? 0.4 : 1)
         }
         .buttonStyle(.plain)
-        .disabled(grid.locked || cell.state == .disabled || cell.mark != .empty && cell.mark != .cardBack)
+        // Not `disabled`, which would fade every mark while it is the companion's turn.
+        .allowsHitTesting(open)
+        .accessibilityAddTraits(open ? [] : .isStaticText)
         .accessibilityLabel(Text(verbatim: cell.label ?? "\(r + 1), \(c + 1)"))
     }
 
@@ -487,7 +509,11 @@ struct GameGridView: View {
         case .disc: Circle().fill(cell.value.flatMap(Self.hex) ?? color).padding(side * 0.14)
         case .letter: Text(verbatim: cell.value ?? "").font(.system(size: side * 0.45, weight: .bold, design: .rounded)).foregroundStyle(color)
         case .symbol: Image(systemName: cell.value ?? "questionmark").font(.system(size: side * 0.4, weight: .semibold)).foregroundStyle(color)
-        case .cardBack: RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.accent.opacity(0.8)).padding(side * 0.1)
+        case .cardBack:
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(LinearGradient(colors: [Theme.accent.opacity(0.7), Theme.accent], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(Image(systemName: "sparkle").font(.system(size: side * 0.22)).foregroundStyle(.white.opacity(0.6)))
+                .padding(side * 0.08)
         case .stick: Capsule().fill(Theme.coral).frame(width: side * 0.16).padding(.vertical, side * 0.12)
         case .cup: Image(systemName: "cup.and.saucer.fill").font(.system(size: side * 0.42)).foregroundStyle(color)
         case .empty: EmptyView()
@@ -497,5 +523,27 @@ struct GameGridView: View {
     static func hex(_ s: String) -> Color? {
         guard s.count == 7, s.hasPrefix("#"), let v = UInt32(s.dropFirst(), radix: 16) else { return nil }
         return Color(hex: v)
+    }
+}
+
+/// How a mark arrives: stamped (an X or O squashing in), flipped (a card turning over), dropped or popped in.
+struct CellArrival: ViewModifier {
+    var animate: GameBoard.Grid.Animate?
+    /// What the cell shows, so the animation plays when it changes and not on every board.
+    var key: String
+    @State private var done = true
+    @Environment(\.revealProgress) private var fixed
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(done ? 1 : animate == .stamp ? 1.5 : animate == .pop ? 0.4 : 1)
+            .rotation3DEffect(.degrees(done || animate != .flip ? 0 : 90), axis: (x: 0, y: 1, z: 0))
+            .offset(y: done || animate != .drop ? 0 : -30)
+            .opacity(done ? 1 : 0.2)
+            .onChange(of: key, initial: true) { _, _ in
+                guard animate != nil, fixed == nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+                done = false
+                withAnimation(.spring(duration: 0.32, bounce: 0.4)) { done = true }
+            }
     }
 }

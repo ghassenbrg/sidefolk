@@ -45,6 +45,13 @@ final class PlayModel {
     var onOver: ((GameBoard) -> Void)?
     var onClose: (() -> Void)?
     private var timerTask: Task<Void, Never>?
+    /// Sidefolk's own timing of the later parts (PlayModel+Parts): what is typed, where the arrow keys point, the pads'
+    /// playback, the cups' shuffle, the reflex signal and a board's `after`.
+    var parts = PartsState()
+    var partsTask: Task<Void, Never>?
+    var afterTask: Task<Void, Never>?
+    /// A pad lit during the playback: the companion does its move, its note plays.
+    var onPadStep: ((GameBoard.Pads.Pad) -> Void)?
 
     init(info: GameInfo, provider: any GameProvider, companionName: String, portrait: NSImage?, soundsOn: Bool) {
         self.info = info
@@ -65,12 +72,13 @@ final class PlayModel {
 
     /// The person's move: sent when this board offered it and nothing is waiting.
     func send(_ move: GameMove) {
-        guard failure == nil, pending == nil, let board, move.offered(by: board) else { return }
+        guard failure == nil, pending == nil, let board, move.offered(by: board), ready(for: move) else { return }
+        afterTask?.cancel()
         pending = move
         if case .answer(let i) = move { lastPick = i } else { lastPick = nil }
         lastActive = Date()
-        if move != .timeout { played = true }
-        if soundsOn, move != .timeout { GameSounds.shared.play(.tap) }
+        if move != .timeout, move != .next { played = true }
+        if soundsOn, ![.timeout, .next].contains(move) { GameSounds.shared.play(.tap) }
         Task {
             do {
                 // `pending` stays until the verdict shows, so nothing is pressed twice during the build-up.
@@ -94,6 +102,7 @@ final class PlayModel {
         }
         board = build
         turn += 1
+        shown(build, verdict: false)
         if let reveal = next.reveal {
             revealStart = Date()
             onReveal?(reveal)
@@ -125,6 +134,7 @@ final class PlayModel {
             recorded = false
         }
         runClock(next.timer)
+        shown(next, verdict: true)
     }
 
     /// VoiceOver hears the verdict when it shows: the hands' sentence, or whether the pick was right.
@@ -161,6 +171,8 @@ final class PlayModel {
     private func fail(_ error: Error) {
         staging?.cancel()
         timerTask?.cancel()
+        partsTask?.cancel()
+        afterTask?.cancel()
         clock = nil
         failure = (error as? UserFacingError)?.message ?? String(localized: "The game stopped.", comment: "A game in the Play panel ended by itself")
     }
@@ -168,11 +180,27 @@ final class PlayModel {
     #if DEBUG
     /// Keeps the build-up on screen, for the UI snapshots that show it.
     func holdBuildUp() { staging?.cancel() }
+
+    /// Shows `next` as it would come after `previous` (its build-up held when `buildUp`), with the parts' own time
+    /// stopped at rest: for the UI snapshots of a game's real boards.
+    func stage(after previous: GameBoard?, _ next: GameBoard, buildUp: Bool) {
+        latest = previous
+        board = previous
+        show(next)
+        if buildUp { staging?.cancel() } else if staging != nil { staging?.cancel(); verdict(next) }
+        partsTask?.cancel()
+        afterTask?.cancel()
+        parts.playing = false
+        parts.shuffling = false
+        parts.waiting = false
+    }
     #endif
 
     func stop() {
         staging?.cancel()
         timerTask?.cancel()
+        partsTask?.cancel()
+        afterTask?.cancel()
         clock = nil
     }
 
@@ -180,9 +208,11 @@ final class PlayModel {
 
     /// A key the panel heard: a tile's letter or number, a button's letter, Return or Space for the main button.
     /// True when the board used it.
-    func press(_ key: String) -> Bool {
+    /// - Parameter time: when the key went down (the event's timestamp), so a reflex press is timed from the key itself.
+    func press(_ key: String, at time: TimeInterval? = nil) -> Bool {
         guard let board, failure == nil else { return false }
         let k = key.lowercased()
+        if pressPart(k, at: time) { return true }
         if let answers = board.answers, !answers.locked {
             let letters = Self.keyCaps(answers)
             if let i = letters.firstIndex(where: { $0.lowercased() == k }) ?? Int(k).map({ $0 - 1 }), answers.tiles.indices.contains(i) {
@@ -211,7 +241,8 @@ final class PlayModel {
     /// The letter on each tile's key cap: R, P and S for hands, A to D otherwise.
     static func keyCaps(_ answers: GameBoard.Answers) -> [String] {
         answers.tiles.enumerated().map { i, tile in
-            switch tile.art {
+            if let key = tile.key { return key }
+            return switch tile.art {
             case .rock: "R"
             case .paper: "P"
             case .scissors: "S"
@@ -225,10 +256,11 @@ final class PlayModel {
         var parts: [String] = []
         if let answers = board?.answers, !answers.locked {
             let caps = Self.keyCaps(answers)
-            parts.append(answers.tiles.first?.art != nil
+            parts.append(answers.tiles.contains(where: { $0.art != nil || $0.key != nil })
                 ? String(localized: "\(caps.joined(separator: " ")) to play", comment: "Keys in the Play panel: “R P S to play”")
                 : String(localized: "1–\(answers.tiles.count) to answer", comment: "Keys in the Play panel: “1–4 to answer”"))
         }
+        if let hint = partsFooter { parts.append(hint) }
         if let primary = board?.primary {
             parts.append(String(localized: "Return: \(primary.label)", comment: "Keys in the Play panel: what Return does, “Return: Next”"))
         }

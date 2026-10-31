@@ -59,6 +59,10 @@ public enum Move: Equatable {
     case pad(Int)
     case press(milliseconds: Int)
     case early
+    /// The board's `afterMs` passed: answer with the next board (the companion's move once it has thought).
+    case next
+    /// What was typed in a text `entry`.
+    case text(name: String, value: String)
     case unknown
 
     public init(_ json: [String: Any]) {
@@ -73,6 +77,8 @@ public enum Move: Equatable {
         else if let p = json["pad"] as? Int { self = .pad(p) }
         else if let p = json["press"] as? [String: Any], let ms = p["ms"] as? Int { self = .press(milliseconds: ms) }
         else if json["early"] as? Bool == true { self = .early }
+        else if json["next"] as? Bool == true { self = .next }
+        else if let t = json["text"] as? [String: Any], let n = t["name"] as? String, let v = t["value"] as? String { self = .text(name: n, value: v) }
         else { self = .unknown }
     }
 }
@@ -83,16 +89,21 @@ public struct Board {
     public var companion: Cue?
     /// The game has ended: Sidefolk stops its clock and writes one Activity row.
     public var over: Bool
+    /// Sidefolk shows this board so long (100–6000 ms), then asks for the next with `.next`: the companion thinking
+    /// before its move, two cards left face up a moment. The game keeps no clock.
+    public var afterMs: Int?
 
-    public init(_ parts: [BoardPart], companion: Cue? = nil, over: Bool = false) {
+    public init(_ parts: [BoardPart], companion: Cue? = nil, over: Bool = false, afterMs: Int? = nil) {
         self.parts = parts
         self.companion = companion
         self.over = over
+        self.afterMs = afterMs
     }
 
     public var json: [String: Any] {
         var out: [String: Any] = ["parts": parts.map(\.json), "over": over]
         if let companion { out["companion"] = companion.json }
+        if let afterMs { out["after_ms"] = afterMs }
         return out
     }
 }
@@ -102,8 +113,9 @@ public enum BoardPart {
     case prompt(_ text: String, eyebrow: String? = nil, chip: String? = nil)
     /// 2–4 big tiles; a pick is `.answer(index)`.
     case answers(_ tiles: [Tile], layout: TileLayout = .grid, locked: Bool = false)
-    /// Cells up to 8 × 8, row by row; a click is `.cell(row:column:)`.
-    case board(rows: Int, columns: Int, cells: [Cell], locked: Bool = false)
+    /// Cells up to 8 × 8, row by row; a click is `.cell(row:column:)`. `numpad`: a 3 × 3 board's cells take the digits
+    /// as on a number pad (7 8 9 on top).
+    case board(rows: Int, columns: Int, cells: [Cell], locked: Bool = false, numpad: Bool = false)
     /// The header's pills: you against the companion, a streak, round pips (`rounds` to win), its sealed pick.
     case score(you: Int, companion: Int, streak: Int? = nil, best: Int? = nil, rounds: Int? = nil, companionPicked: Bool = false)
     /// The end card: a big figure, a line, a ribbon, up to four facts and three buttons.
@@ -119,6 +131,9 @@ public enum BoardPart {
     case button(GameButton)
     /// One of a few options, as cards (topics) or segments (lengths); a pick is `.choice(name:value:)`.
     case choice(name: String, label: String? = nil, style: ChoiceStyle = .cards, options: [ChoiceOption], selected: String? = nil)
+    /// The parts of the later games (GameParts.swift): pads, cups, a reflex button, a meter, a number field, letter
+    /// tiles, a keyboard, a text field, sticks and lives.
+    case play(PlayPart)
 
     var json: [String: Any] {
         switch self {
@@ -126,8 +141,9 @@ public enum BoardPart {
             return drop(["type": "prompt", "text": text, "eyebrow": eyebrow, "chip": chip])
         case .answers(let tiles, let layout, let locked):
             return ["type": "answers", "items": tiles.map(\.json), "layout": layout.rawValue, "locked": locked]
-        case .board(let rows, let columns, let cells, let locked):
-            return ["type": "board", "rows": rows, "columns": columns, "cells": cells.map(\.json), "locked": locked]
+        case .board(let rows, let columns, let cells, let locked, let numpad):
+            return drop(["type": "board", "rows": rows, "columns": columns, "cells": cells.map(\.json), "locked": locked,
+                         "keys": numpad ? "numpad" : nil])
         case .score(let you, let companion, let streak, let best, let rounds, let picked):
             return drop(["type": "score", "you": you, "companion": companion, "streak": streak, "best": best, "rounds": rounds,
                          "companion_picked": picked ? true : nil])
@@ -146,6 +162,8 @@ public enum BoardPart {
             return button.json
         case .choice(let name, let label, let style, let options, let selected):
             return drop(["type": "choice", "name": name, "label": label, "style": style.rawValue, "options": options.map(\.json), "selected": selected])
+        case .play(let part):
+            return part.json
         }
     }
 }
@@ -161,15 +179,18 @@ public struct Tile {
     public var companion: Bool
     /// One of Sidefolk's pictures instead of words: `rock`, `paper`, `scissors`.
     public var art: String?
+    /// Its key cap when it isn't A–D: a letter, a digit or `?`.
+    public var key: String?
 
-    public init(_ label: String, state: TileState = .none, companion: Bool = false, art: String? = nil) {
+    public init(_ label: String, state: TileState = .none, companion: Bool = false, art: String? = nil, key: String? = nil) {
         self.label = label
         self.state = state
         self.companion = companion
         self.art = art
+        self.key = key
     }
 
-    var json: [String: Any] { drop(["label": label, "state": state.rawValue, "companion": companion ? true : nil, "art": art]) }
+    var json: [String: Any] { drop(["label": label, "state": state.rawValue, "companion": companion ? true : nil, "art": art, "key": key]) }
 }
 
 public struct Cell {
@@ -285,7 +306,7 @@ public struct Cue {
     var json: [String: Any] { drop(["move": move, "effect": effect, "prop": prop, "line": line, "sound": sound, "look": look]) }
 }
 
-private func drop(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
+func drop(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
 
 extension Extension {
     /// A game the manifest declares (`games.<name>`): `start` makes a session and its first board, `move` answers each

@@ -37,7 +37,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.weather": String(localized: "Today's weather and the week ahead", comment: "Weather: one line under its name")
         case "dev.sidefolk.calculator": String(localized: "Exact sums, units and dates", comment: "Calculator: one line under its name")
         case "dev.sidefolk.currency": String(localized: "Money in 30 currencies at today's rates", comment: "Currency: one line under its name")
-        case "dev.sidefolk.playtime": String(localized: "Trivia and random picks for a break", comment: "Playtime: one line under its name")
+        case "dev.sidefolk.playtime": String(localized: "Eleven games with your companion, and random picks", comment: "Playtime: one line under its name")
         case "dev.sidefolk.images": String(localized: "Photo details and converted copies", comment: "Images: one line under its name")
         case "dev.sidefolk.pdf": String(localized: "Read, combine and split PDFs", comment: "PDF Tools: one line under its name")
         case "dev.sidefolk.qr-codes": String(localized: "Make and read QR codes", comment: "QR Codes: one line under its name")
@@ -67,7 +67,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.currency":
             String(localized: "Converts money between the euro and 30 major currencies with the European Central Bank's daily reference rates, and tells you when a rate crosses a line. Nothing about you is sent.")
         case "dev.sidefolk.playtime":
-            String(localized: "A break with your companion: a trivia quiz you play against it beside it on the desktop, with your scores and streaks kept, and chance to pick a number or choose from a list.")
+            String(localized: "A break with your companion: eleven games you play against it beside it on the desktop (Daily Word, trivia, tic-tac-toe, Copy Me and more), with your scores and streaks kept, and chance to pick a number or choose from a list.")
         case "dev.sidefolk.images":
             String(localized: "A photo's details, and copies of pictures converted to JPEG, PNG or HEIC, made smaller, or without their location. Your originals stay as they are.")
         case "dev.sidefolk.pdf":

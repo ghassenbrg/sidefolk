@@ -770,6 +770,12 @@ have (D44). Mitigations:
   cue can't move the companion's window, open a bubble or a notification, take focus or speak free text.
 - *Fair play:* the companion's throw in Sidefolk's own match is drawn by core with the system's generator before the
   person picks and never reads their hand (tested for independence and distribution).
+- *The later parts (D?? games phase 2):* Sidefolk keeps every clock (a board's `after_ms` at most 6 s, a reflex window
+  at most 5 s, a sequence at most 64 steps of at least 0.25 s, at most 40 swaps), so a game can't hold the panel or the
+  companion busy; Copy Me's playback moves the companion with each pad (Sidefolk's own choreography of a bounded
+  sequence, like a reveal). A typed `text` move is cleaned (bidi, control characters), one line, at most 120 characters,
+  sent only to the game's own entry and never to a model; the panel's keys go to that field only while it is being
+  typed in.
 *Residual:* a game decides its own outcomes and could make the companion react unkindly within the fixed moods;
 the panel can take the keyboard when the person opened it, like the Ask panel, so keys typed meanwhile go to the game.
 

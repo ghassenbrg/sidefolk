@@ -45,9 +45,11 @@ final class PlayPanelController {
         if keyMonitor == nil {
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 guard let self, event.window === self.hosted.panel, let model = self.holder.model else { return event }
+                // A text field being typed in (an idiom through the input method, an animal's name) keeps its keys.
+                if self.hosted.panel.firstResponder is NSTextView { return event }
                 guard !event.modifierFlags.contains(.command), let key = Self.key(event) else { return event }
                 // Return and Space are the board's alone: never a press of whichever header button has the focus.
-                return model.press(key) || key == "return" || key == "space" ? nil : event
+                return model.press(key, at: event.timestamp) || key == "return" || key == "space" ? nil : event
             }
         }
         onVisibilityChange?(true)
@@ -85,8 +87,15 @@ final class PlayPanelController {
         switch event.keyCode {
         case 36, 76: return "return"
         case 49: return "space"
+        case 51: return "delete"
+        case 123: return "left"
+        case 124: return "right"
+        case 125: return "down"
+        case 126: return "up"
         default:
-            guard let c = event.charactersIgnoringModifiers?.lowercased(), c.count == 1, c.first!.isLetter || c.first!.isNumber else { return nil }
+            // The character the key types in the person's layout (é, ñ, an Arabic letter), not the one printed on it.
+            guard let c = (event.characters ?? event.charactersIgnoringModifiers)?.lowercased(), c.count == 1,
+                  c.first!.isLetter || c.first!.isNumber || c == "?" else { return nil }
             return c
         }
     }

@@ -16,6 +16,10 @@ public enum GameMove: Sendable, Hashable {
     /// A reflex press, timed by Sidefolk (stdin can't time a screen).
     case press(milliseconds: Int)
     case early
+    /// The board's `after` time passed: the game's next board (the companion's move after it thought).
+    case next
+    /// What was typed in an `entry` of kind `text` (an animal's name, a question).
+    case text(name: String, value: String)
 
     public var json: JSONValue {
         switch self {
@@ -30,6 +34,8 @@ public enum GameMove: Sendable, Hashable {
         case .pad(let p): ["pad": .number(Double(p))]
         case .press(let ms): ["press": ["ms": .number(Double(ms))]]
         case .early: ["early": true]
+        case .next: ["next": true]
+        case .text(let name, let value): ["text": ["name": .string(name), "value": .string(value)]]
         }
     }
 
@@ -57,6 +63,11 @@ public enum GameMove: Sendable, Hashable {
         case "pad": return value.intValue.flatMap { (0..<8).contains($0) ? .pad($0) : nil }
         case "press": return value["ms"]?.intValue.flatMap { (0...60_000).contains($0) ? .press(milliseconds: $0) : nil }
         case "early": return value.boolValue == true ? .early : nil
+        case "next": return value.boolValue == true ? .next : nil
+        case "text":
+            guard let name = GameBoard.token(value["name"]), let raw = value["value"]?.stringValue else { return nil }
+            let text = ExtensionText.clean(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+            return (1...120).contains(text.count) && !text.contains(where: \.isNewline) ? .text(name: name, value: text) : nil
         default: return nil
         }
     }
@@ -68,6 +79,7 @@ public enum GameMove: Sendable, Hashable {
             guard let a = board.answers, !a.locked else { return false }
             return a.tiles.indices.contains(i) && a.tiles[i].state != .faded
         case .cell(let r, let c):
+            if let cups = board.cups { return r == 0 && c < cups.count && !cups.locked && !cups.revealed }
             guard let g = board.grid, !g.locked, r < g.rows, c < g.columns else { return false }
             let cell = g.cells[r * g.columns + c]
             return cell.state != .disabled
@@ -77,9 +89,22 @@ public enum GameMove: Sendable, Hashable {
                 if case .choice(let ch) = part { return ch.name == name && ch.options.contains { $0.value == value } }
                 return false
             }
-        case .timeout: return board.timer != nil
-        // Parts later games bring (keys, pads, reflex); this version draws none of them, so it never sends them.
-        case .letter, .word, .number, .pad, .press, .early: return false
+        case .timeout: return board.timer != nil || board.reflex?.armed == true
+        case .letter: return board.keys.map { $0.mode == .letter && !$0.locked } ?? false
+        case .word(let w):
+            if let keys = board.keys, keys.mode == .spell, !keys.locked { return true }
+            if let entry = board.entry, entry.kind == .word, !entry.locked { return w.count <= entry.max }
+            return false
+        case .number(let n):
+            if let field = board.numberField, !field.locked { return (field.min...field.max).contains(n) }
+            if let sticks = board.sticks, !sticks.locked { return (1...min(sticks.take, sticks.left)).contains(n) }
+            return false
+        case .pad(let i): return board.pads.map { !$0.locked && $0.pads.indices.contains(i) } ?? false
+        case .press, .early: return board.reflex?.armed == true
+        case .next: return board.after != nil
+        case .text(let name, let value):
+            guard let entry = board.entry, entry.kind == .text, !entry.locked else { return false }
+            return entry.name == name && value.count <= entry.max
         }
     }
 }

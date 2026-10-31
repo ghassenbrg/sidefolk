@@ -704,11 +704,11 @@ public actor ExtensionHost {
         runtimes.keys.sorted().flatMap { id -> [GameInfo] in
             guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
             let firstParty = rt.pin.origin?.firstParty == true
-            let name = (firstParty ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name
+            let name = self.name(rt)
             return m.games.keys.sorted().compactMap { game -> GameInfo? in
                 guard let g = m.games[game] else { return nil }
                 return GameInfo(extensionId: id, extensionName: name, game: game,
-                                title: (firstParty ? BuiltInExtensionWords.game(id, game) : nil) ?? g.title, symbol: g.symbol,
+                                title: words(rt)?.games[game] ?? (firstParty ? BuiltInExtensionWords.game(id, game) : nil) ?? g.title, symbol: g.symbol,
                                 levels: g.levels, ai: g.ai ?? true, say: g.say, iconPath: rt.iconPath)
             }
         }

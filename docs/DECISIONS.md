@@ -2062,3 +2062,50 @@ extension, every key, every language), add-ons `LanguagesTests`. An extension's 
 now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
 Commands and `ask` sentences stay English (GLOSSARY rule 1). Not done: `zh-Hant` falls back to the manifest in Sidefolk
 but to `zh-Hans` in `Localized` (D75 normalizes any Chinese), a difference to settle when merging.
+
+### D?? — Games, phases 2 and 3: the ten new games in the Play panel, their parts, one trivia, one way to speak (2026-10-31)
+*(Number for the lead to give; amends D75.)*
+**Decision:** all ten approved games are played in the Play panel from Playtime, on the engines written for them, with
+no AI: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower (both ways), Guess My Animal, Balloon Words, Last
+Stick, Memory Pairs and Daily Word, beside trivia.
+- **New board parts, drawn, timed and fed by Sidefolk** (`GameBoardParts`): `pads` (Sidefolk plays the sequence: each
+  pad lit with its note and the companion's short move, then takes presses), `cups` (the gem shown, the game's swaps
+  animated, a pick after), `reflex` (Sidefolk shows the signal and times the press from the key's own timestamp; an
+  early press says "Too soon!" at once), `meter`, `number` (with a digit pad and the guesses so far), `letters` (rows
+  that flip, or slots), `keys` (a keyboard per script, letter by letter or spelling a word; Korean jamo drawn as the
+  syllables they make), `entry` (a text field, for input methods: Chinese idioms, an animal's name), `sticks`, `lives`;
+  a tile's own key cap (Y, N, ?) and a number-pad grid. Each value is checked and capped (64 steps, 40 swaps, 8 × 24
+  tiles, 120 characters), every move only for a part on the board.
+- **The companion's turn is the game's, the clock Sidefolk's:** a board's `after_ms` (0.1–6 s) has Sidefolk wait
+  (the companion thinking, two cards left up) and ask for the next board with `{next: true}`; nothing else is taken
+  meanwhile. The engines' `think(ms)` becomes that wait.
+- **No verdict before its build-up, for every game** (`GameSuspense`): besides a reveal and a judged answer, a board
+  that scores a point, draws a winning line, lifts the cups, times a reflex, judges a guess, turns a card with a
+  reaction or shows the end card comes after a beat with the previous score, words, keyboard and lives, the cups down
+  and the pick pressed; a Daily Word row flips tile by tile before its keys, cue and card. Colours stay GameVerdict's:
+  letters right in success green with ●, elsewhere yellow with ◐, absent faded; a missed key the calm loss tone, struck
+  through; the thermometer cold blue to warm orange, never red.
+- **Fairness:** every chance is `Games.Random.fresh()` in play (seeded in tests), and what the companion hides is drawn
+  before the person moves: the gem's cup with the shuffle, the reflex time with the round, the number at the start,
+  trivia's pick with the question; tested to be the same whatever the person does.
+- **One event table:** the engines' `Games.Event` becomes the companion's reaction through `EventCues` (the weightiest
+  event first: an ended match before a point, a point before a turn); a screen only adds its own props (balloons held,
+  a magnifier, the gem). Records in Playtime's folder: tallies and bests, the last ten games, Daily Word's day, streak
+  and Today tile (the page's summary, `widget`), what it learned about animals (per language, capped), Last Stick's
+  lesson after three losses.
+- **One trivia:** phase 1's round (set-up, pace, levels, records, Home) is kept, with the engines' 400 questions in all
+  ten languages as one `TriviaPack` per language and the Quiz engine's idea folded in: each companion has its own
+  strong and weak topics, drawn from its name. The Quiz engine is gone. The bank has no "Did you know?" lines, so none
+  shows.
+- **One way to speak (D76 over D75):** Playtime's words and the engines' phrases are its `strings/<language>.json`,
+  read with `L()`; `Localized` is the layer `L` reads through. `zh-Hant` is `zh-Hans` in both layers (the nearest
+  language Sidefolk speaks); numbers through `Format`; placeholders named. A game's title is translated in `strings/`
+  (`games.<name>.title`), and a game's `say` holds up to 24 sentences so each opens in all ten languages (an exception to
+  D76's "commands stay English", only for a sentence that just opens a game).
+
+**Why:** the founder approved all ten games; phase 1 built the platform and left these parts and games to come.
+**Alternatives:** a timer in the extension for the companion's turn (stdin can't keep time, and it would hold a process
+awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
+**Implications:** older Playtime boards still open (unknown parts are skipped); a 0.1.0 snapshot still refuses Playtime
+2.0's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
+clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.

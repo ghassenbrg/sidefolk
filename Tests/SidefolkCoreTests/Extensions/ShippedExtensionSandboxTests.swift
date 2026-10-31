@@ -109,7 +109,7 @@ struct ShippedExtensionSandboxTests {
     func playtimeTriviaIsPlayedOverTheGameChannel() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
-        #expect(h.host.gameShelf.all.map(\.id) == ["\(info.id)/trivia"])
+        #expect(h.host.gameShelf.all.map(\.id).contains("\(info.id)/trivia") && h.host.gameShelf.all.count == 11)
         let (session, setup) = try await h.host.startGame(extensionId: info.id, game: "trivia",
                                                           setup: GameSetup(language: "de", options: ["companion": "Nori"]))
         guard case .prompt(let p) = setup.parts.first else { Issue.record("\(setup.parts)"); return }
@@ -120,7 +120,7 @@ struct ShippedExtensionSandboxTests {
         #expect(answered.answers?.locked == true && answered.answers?.tiles.filter(\.companion).count == 1 && answered.primary?.move == "next")
         await h.host.endGame(extensionId: info.id, game: "trivia", session: session, reason: .closed)
         let page = try await h.host.renderPage(extensionId: info.id, page: "playtime", language: "fr")
-        #expect(page.hero?.eyebrow == "Quiz")
+        #expect(page.hero?.eyebrow == "Récré", "Playtime's page in French")
         await h.host.shutdown()
     }
 

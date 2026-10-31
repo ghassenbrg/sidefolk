@@ -21,18 +21,34 @@ final class GameSounds {
     }
 
     func play(_ sound: GameSound) {
-        guard Self.interfaceSoundsOn else { return }
+        guard start() else { return }
+        let buffer = made[sound] ?? make(notes(sound))
+        made[sound] = buffer
+        player.scheduleBuffer(buffer, at: nil, options: [])
+    }
+
+    /// A pad's note in Copy Me: a pentatonic step each (C, E, G, A, high C), so any sequence sounds like a tune.
+    func note(_ pad: Int) {
+        guard start() else { return }
+        let hz = [523.25, 659.25, 783.99, 880.0, 1_046.5][min(max(pad, 0), 4)]
+        let buffer = pads[pad] ?? make([Note(at: 0, hz: hz, length: 0.32, decay: 9), Note(at: 0, hz: hz * 2, length: 0.2, decay: 16, level: 0.25)])
+        pads[pad] = buffer
+        player.scheduleBuffer(buffer, at: nil, options: [])
+    }
+
+    private var pads: [Int: AVAudioPCMBuffer] = [:]
+
+    private func start() -> Bool {
+        guard Self.interfaceSoundsOn else { return false }
         if !started {
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: format)
             engine.mainMixerNode.outputVolume = Self.volume
-            guard (try? engine.start()) != nil else { return }
+            guard (try? engine.start()) != nil else { return false }
             player.play()
             started = true
         }
-        let buffer = made[sound] ?? make(sound)
-        made[sound] = buffer
-        player.scheduleBuffer(buffer, at: nil, options: [])
+        return true
     }
 
     /// A note: its pitch (Hz, gliding to `to`), length, how hard it starts and how fast it fades, with a little noise.
@@ -67,8 +83,7 @@ final class GameSounds {
         }
     }
 
-    private func make(_ sound: GameSound) -> AVAudioPCMBuffer {
-        let notes = notes(sound)
+    private func make(_ notes: [Note]) -> AVAudioPCMBuffer {
         let rate = format.sampleRate
         let total = (notes.map { $0.at + $0.length }.max() ?? 0.1) + 0.02
         let frames = AVAudioFrameCount(total * rate)

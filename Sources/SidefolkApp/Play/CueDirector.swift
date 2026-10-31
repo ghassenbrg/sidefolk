@@ -45,6 +45,13 @@ final class CueDirector {
         if sounds, soundsAllowed() { GameSounds.shared.play(Self.revealSound(reveal)) }
     }
 
+    /// A pad lit in Copy Me's playback: the companion does that pad's move with it. Sidefolk's own choreography of
+    /// the sequence the game sent (at most 64 steps, each at least 0.25 s), like a reveal, so not paced as cues are.
+    func padStep(_ pad: GameBoard.Pads.Pad) {
+        guard let move = pad.move, let antic = Self.moment(move) else { return }
+        companion.character.perform(antic, toward: panelFrame().map { NSPoint(x: $0.midX, y: $0.midY) })
+    }
+
     /// The beat between an answer and its verdict: the companion's "…" and a soft tick.
     func beat(sounds: Bool) {
         caption.flash(.question)

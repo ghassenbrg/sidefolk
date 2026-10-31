@@ -14,11 +14,15 @@ public struct GameBoard: Sendable, Hashable {
     /// Words the companion says for one of Sidefolk's own games (its bluff in rock, paper, scissors). Never read from
     /// an extension's board, which can only name a line key.
     public var said: String?
+    /// Show this board for so many seconds, then ask the game for its next one (`{next: true}`): the companion thinking
+    /// before its move, two cards left face up a moment. The game never keeps time itself.
+    public var after: Double?
 
-    public init(parts: [Part] = [], cue: GameCue? = nil, over: Bool = false) {
+    public init(parts: [Part] = [], cue: GameCue? = nil, over: Bool = false, after: Double? = nil) {
         self.parts = parts
         self.cue = cue
         self.over = over
+        self.after = after
     }
 
     public static let maxBytes = 64 * 1024
@@ -36,6 +40,17 @@ public struct GameBoard: Sendable, Hashable {
         case facts([Fact])
         case button(Button)
         case choice(Choice)
+        // Phase 2 and 3 (GameBoardParts.swift).
+        case pads(Pads)
+        case cups(Cups)
+        case reflex(Reflex)
+        case meter(Meter)
+        case number(NumberField)
+        case letters(Letters)
+        case keys(Keys)
+        case entry(Entry)
+        case sticks(Sticks)
+        case lives(Lives)
     }
 
     public enum Tone: String, Sendable, Hashable { case good, warn, bad, info, neutral }
@@ -58,6 +73,8 @@ public struct GameBoard: Sendable, Hashable {
             public var companion: Bool
             /// One of Sidefolk's own pictures (`GameArt`) instead of words: rock, paper and scissors.
             public var art: GameArt?
+            /// Its key cap when it isn't A–D: a letter, a digit or `?` (Y, N, ? for yes, no and not sure).
+            public var key: String? = nil
         }
 
         public var tiles: [Tile]
@@ -87,6 +104,8 @@ public struct GameBoard: Sendable, Hashable {
         public var columns: Int
         public var cells: [Cell]
         public var locked: Bool
+        /// `numpad`: the digits 1–9 pick the cells of a 3 × 3 board laid out as on a number pad (7 8 9 on top).
+        public var numpad: Bool = false
     }
 
     /// The header's pills: you against the companion, a streak, round pips.
@@ -179,7 +198,8 @@ extension GameBoard {
         guard json.jsonString.utf8.count <= maxBytes else { throw UserFacingError("The game's board is larger than 64 KB.") }
         guard let object = json.objectValue, let raw = object["parts"]?.arrayValue else { throw UserFacingError("That isn't a game board.") }
         var board = GameBoard(parts: raw.prefix(maxParts).compactMap(part), cue: object["companion"].flatMap(GameCue.parse),
-                              over: object["over"]?.boolValue ?? false)
+                              over: object["over"]?.boolValue ?? false,
+                              after: object["after_ms"]?.doubleValue.flatMap { (100...6000).contains($0) ? $0 / 1000 : nil })
         board.keepOnePrimary()
         return board
     }
@@ -220,6 +240,15 @@ extension GameBoard {
     public var timer: Timer? { parts.lazy.compactMap { if case .timer(let t) = $0 { t } else { nil } }.first }
     public var result: Result? { parts.lazy.compactMap { if case .result(let r) = $0 { r } else { nil } }.first }
     public var reveal: Reveal? { parts.lazy.compactMap { if case .reveal(let r) = $0 { r } else { nil } }.first }
+    public var pads: Pads? { parts.lazy.compactMap { if case .pads(let p) = $0 { p } else { nil } }.first }
+    public var cups: Cups? { parts.lazy.compactMap { if case .cups(let c) = $0 { c } else { nil } }.first }
+    public var reflex: Reflex? { parts.lazy.compactMap { if case .reflex(let r) = $0 { r } else { nil } }.first }
+    public var numberField: NumberField? { parts.lazy.compactMap { if case .number(let n) = $0 { n } else { nil } }.first }
+    public var letters: Letters? { parts.lazy.compactMap { if case .letters(let l) = $0 { l } else { nil } }.first }
+    public var keys: Keys? { parts.lazy.compactMap { if case .keys(let k) = $0 { k } else { nil } }.first }
+    public var entry: Entry? { parts.lazy.compactMap { if case .entry(let e) = $0 { e } else { nil } }.first }
+    public var sticks: Sticks? { parts.lazy.compactMap { if case .sticks(let s) = $0 { s } else { nil } }.first }
+    public var lives: Lives? { parts.lazy.compactMap { if case .lives(let l) = $0 { l } else { nil } }.first }
 
     /// Every button, the end card's included, for the keys that press them.
     public var buttons: [Button] {
@@ -241,8 +270,9 @@ extension GameBoard {
             let tiles = (j["items"]?.arrayValue ?? []).prefix(4).compactMap { t -> Answers.Tile? in
                 let art = t["art"]?.stringValue.flatMap(GameArt.init(rawValue:))
                 guard let label = line(t["label"], 80) ?? art.map({ _ in "" }) else { return nil }
+                let key = t["key"]?.stringValue.flatMap { $0.count == 1 && ($0.first!.isLetter || $0.first!.isNumber || $0 == "?") ? $0.uppercased() : nil }
                 return Answers.Tile(label: label, state: t["state"]?.stringValue.flatMap(Answers.State.init) ?? .none,
-                                    companion: t["companion"]?.boolValue ?? false, art: art)
+                                    companion: t["companion"]?.boolValue ?? false, art: art, key: key)
             }
             guard tiles.count >= 2 else { return nil }
             return .answers(Answers(tiles: tiles, layout: j["layout"]?.stringValue.flatMap(Answers.Layout.init) ?? .grid,
@@ -255,7 +285,8 @@ extension GameBoard {
                           companion: c["companion"]?.boolValue ?? false, state: c["state"]?.stringValue.flatMap(Grid.State.init) ?? .none,
                           label: line(c["label"], 60), animate: c["animate"]?.stringValue.flatMap(Grid.Animate.init))
             }
-            return .board(Grid(rows: rows, columns: columns, cells: cells, locked: j["locked"]?.boolValue ?? false))
+            return .board(Grid(rows: rows, columns: columns, cells: cells, locked: j["locked"]?.boolValue ?? false,
+                               numpad: rows == 3 && columns == 3 && j["keys"]?.stringValue == "numpad"))
         case "score":
             return .score(Score(you: count(j["you"]) ?? 0, companion: count(j["companion"]) ?? 0, streak: count(j["streak"]),
                                 best: count(j["best"]), rounds: count(j["rounds"]).flatMap { (1...9).contains($0) ? $0 : nil },
@@ -287,7 +318,7 @@ extension GameBoard {
             return .choice(Choice(name: name, label: line(j["label"], 40), style: j["style"]?.stringValue.flatMap(Choice.Style.init) ?? .cards,
                                   options: options, selected: token(j["selected"])))
         default:
-            return nil
+            return phaseTwo(j)
         }
     }
 

@@ -28,6 +28,10 @@ enum UISnapshots {
             }
             ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
         }
+        // Boards a game wrote (Playtime's `writeSampleBoards`), drawn as `play-<game>-<moment>`.
+        if let i = args.firstIndex(of: "--game-boards"), i + 1 < args.count {
+            gameBoards = URL(fileURLWithPath: args[i + 1], isDirectory: true)
+        }
         // Only the shots whose names contain one of these words: a page under review in seconds, not minutes.
         if let i = args.firstIndex(of: "--only"), i + 1 < args.count {
             only = args[i + 1].split(separator: ",").map(String.init)
@@ -349,6 +353,12 @@ enum UISnapshots {
             // The Play panel in each state, and the moment a clash is halfway (D75).
             for (name, model, at) in await SamplePlayBoards.models(portrait: portrait) where wantedName("game-\(name)") {
                 try await page("game-\(name)", PlayView(model: model).environment(\.revealProgress, at), width: PlayView.width)
+            }
+            // Playtime's real boards, every game and moment, when a folder of them is given (`--game-boards`).
+            if let boards = gameBoards {
+                for (name, model) in await SamplePlayBoards.real(from: boards, portrait: portrait) where wantedName("play-\(name)") {
+                    try await page("play-\(name)", PlayView(model: model).environment(\.revealProgress, 1), width: PlayView.width)
+                }
             }
 
             // Sheets.
@@ -880,6 +890,7 @@ enum UISnapshots {
     }
 
     private static var only: [String] = []
+    private static var gameBoards: URL?
 
     /// The narrowest page where every row of the theme's Today stays side by side (ColumnsLayout's rule, with
     /// NowView's least widths): where its columns are at their slimmest.

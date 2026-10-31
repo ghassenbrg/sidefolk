@@ -557,6 +557,10 @@ extension ManifestValidator {
         }
     }
 
+    /// A game's sentences: twice a command's, so it can be opened by two or so sentences in each of the ten languages
+    /// ("let's play tic-tac-toe", "jouons au morpion"); each still only opens it.
+    static let maxGameSentences = 24
+
     /// Games (D75): a title, a symbol, levels, and sentences that follow the command rules (D50) with no slots, since
     /// a sentence only opens the game.
     func checkGames(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
@@ -578,8 +582,8 @@ extension ManifestValidator {
                 || g.levels.contains(where: { $0.range(of: #"^[a-z][a-z0-9_]{0,19}$"#, options: .regularExpression) == nil }) {
                 issues.append(ValidationIssue(field: "\(field).levels", message: "must be at most 5 different names of lowercase letters, digits and _."))
             }
-            if g.say.count > ExtensionCommandRules.maxSentencesPerCommand {
-                issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(ExtensionCommandRules.maxSentencesPerCommand) sentences."))
+            if g.say.count > Self.maxGameSentences {
+                issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(Self.maxGameSentences) sentences."))
             }
             for (i, sentence) in g.say.enumerated() {
                 let sf = "\(field).say[\(i)]"

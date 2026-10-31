@@ -64,6 +64,31 @@ enum SamplePlayBoards {
         return out
     }
 
+    /// Playtime's real boards (its test `writeSampleBoards` writes them, in the language asked): each as the panel shows
+    /// it, and, when it decides something, its build-up too.
+    static func real(from dir: URL, portrait: NSImage?) async -> [(String, PlayModel)] {
+        let files = ((try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [])
+            .filter { $0.pathExtension == "json" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+        var out: [(String, PlayModel)] = []
+        for file in files {
+            guard let data = try? Data(contentsOf: file), let json = try? JSONDecoder().decode(JSONValue.self, from: data),
+                  let raw = json["board"], let board = try? GameBoard.parse(raw) else { continue }
+            let previous = json["previous"].flatMap { try? GameBoard.parse($0) }
+            let info = GameInfo(extensionId: "dev.sidefolk.playtime", extensionName: "Playtime", game: json["game"]?.stringValue ?? "game",
+                                title: json["title"]?.stringValue ?? "Game", symbol: json["symbol"]?.stringValue,
+                                iconPath: FixtureServices.addonIcon("playtime"))
+            let name = file.deletingPathExtension().lastPathComponent
+            var stages = [(name, false)]
+            if let previous, GameSuspense.buildUp(from: previous, to: board, picked: nil) != nil { stages.insert((name + "-buildup", true), at: 0) }
+            for (shot, held) in stages {
+                let model = PlayModel(info: info, provider: Fixed(info, board), companionName: "Mochi", portrait: portrait, soundsOn: false)
+                model.stage(after: previous, board, buildUp: held)
+                out.append((shot, model))
+            }
+        }
+        return out
+    }
+
     private static func json(_ text: String) -> GameBoard { try! GameBoard.parse(try! JSONValue.parse(text)) }
 
     static func boards() -> [(String, GameInfo, GameBoard?)] {

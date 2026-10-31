@@ -525,7 +525,8 @@ struct ResultCardView<Actions: View>: View {
         case .watcher, .reading: Theme.folkColor("scout")
         case .file, .web, .info: Theme.aqua
         case .extensionResult: Theme.folkColor("byte")
-        case .chance: Theme.folkColor("play")
+        // Not Play's red: the card's result has its own verdict colour (GameVerdict), and red reads as a loss.
+        case .chance: GameColors.chance
         }
     }
 

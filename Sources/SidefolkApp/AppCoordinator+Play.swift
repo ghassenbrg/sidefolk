@@ -63,6 +63,10 @@ extension AppCoordinator {
             guard let self, let model, showing(model) else { return }
             self.cues.reveal(reveal, sounds: model.soundsOn)
         }
+        model.onPadStep = { [weak self, weak model] pad in
+            guard let self, let model, showing(model) else { return }
+            self.cues.padStep(pad)
+        }
         model.onBeat = { [weak self, weak model] in
             guard let self, let model, showing(model) else { return }
             self.cues.beat(sounds: model.soundsOn)

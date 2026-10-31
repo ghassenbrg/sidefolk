@@ -9,6 +9,8 @@ enum GameColors {
     /// The games' loss tone: warm and quiet, readable as "not this time" rather than "error".
     static let lost = Color(light: 0xB07A52, dark: 0xD9A982)
     static let lostSoft = Color(light: 0xF3E4D6, dark: 0x4A3A2F)
+    /// Chance itself (a card about a coin or dice), the d20's violet: never Play's red, which would read as a result.
+    static let chance = Color(hex: 0x7C5CE0)
 
     static func color(_ verdict: GameVerdict) -> Color {
         switch verdict.role {
