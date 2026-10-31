@@ -83,6 +83,10 @@ complaint about a desktop companion is "it's always there".
 Claude Code hooks (installed only on the user's click, with a backup) let the companion notice
 when a session needs you or finished. **Why:** the founding chat's strongest differentiator
 ("watch this Codex session, tell me when it needs me") and the main daily use for the founder.
+**Amended (2026-11-01):** "needs you" is only a real prompt (a permission, a question). Claude Code's "waiting for
+your input" means finished. A finished session is a gentle notice, never in Needs you: one per session, replaced by the
+next and withdrawn when the session works again. The founder's long session, resumed by its own background
+teammates, stopped dozens of times and each stop sat in Needs you with an Open button and nothing to answer.
 
 ### D13 — Extensions are MCP-speaking executables with a Sidefolk manifest (2026-10-26)
 **Decision:** an extension = folder + `sidefolk-extension.json` (permissions, tool risk, watchers,

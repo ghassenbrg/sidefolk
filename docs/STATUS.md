@@ -71,6 +71,9 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Agent sessions: "needs you" only when they ask (D12 amended):** finished notices are gentle, one per session,
+  withdrawn on resume; "waiting for your input" counts as finished. *Checked:* `TrackerTests` (new
+  `waitingForInputIsFinishedNotNeedsYou`), full `make test`.
 - **Games: switching who guesses, more words, and toy-like art (D75, D79):** the founder couldn't switch Higher or
   Lower's mode (a closed game reopens its session; Play again kept the mode) and wanted more than one Daily Word a day.
   Playtime 1.0.0-snapshot.3 (published): both modes on the start board each time (last one preselected), a Switch
