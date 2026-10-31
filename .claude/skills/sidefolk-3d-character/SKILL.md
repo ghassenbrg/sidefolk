@@ -238,7 +238,8 @@ see how the six were cut) as `avatars/<id>.png` in its add-on folder. The Ask pa
 
 ## 7. Wire it into the app (a gallery companion)
 
-Every companion also gets a 2D form (D59): make it after the 3D one, following `companions-2d/README.md`.
+Every companion also gets a 2D form (D59): make it after the 3D one with the `sidefolk-2d-character` skill
+(`companions-2d/README.md`).
 
 **A private companion** (a real person's likeness, or anything the user wants only on their Mac): keep every file
 outside the repos (e.g. `~/git/sidefolk-private/companions/<id>/` with the pipeline beside it), give `addon.json`

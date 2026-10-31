@@ -18,6 +18,9 @@ expressions and talking work. Mochi is a flat vector drawing in the same look.
 
 ## How one is made
 
+The `sidefolk-2d-character` skill walks through it, with templates for a folder companion and the checks that
+caught mistakes before.
+
 From a 3D companion, from reference images, or from a description:
 
 1. **Style target.** The character in the look of `lineup-2d.webp`: Codex image gen (`codex-imagegen` skill) with its
