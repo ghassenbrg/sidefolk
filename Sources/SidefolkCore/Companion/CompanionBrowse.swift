@@ -1,7 +1,7 @@
 import Foundation
 
-/// What the gallery's companions are narrowed to and ordered by in Settings › Companion › Gallery (D77)
-///: words, a look, who made them, whether to leave out those already here, and an order. Built for a
+/// What the gallery's companions are narrowed to and ordered by in Settings › Companion › Gallery (D77):
+/// words, a look, who made them, whether to leave out those already here, and an order. Built for a
 /// gallery of hundreds; each choice is offered only when the catalog has what it needs (Newest needs dates).
 public struct CompanionBrowse: Equatable, Sendable {
     public enum Look: String, CaseIterable, Sendable { case any, threeD, twoD }
