@@ -12,6 +12,36 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **The founder's review of snapshot 515, on branch team/merge (D66, D67, D68):** five team branches merged into
+  `team/merge` (from extension-services; sidefolk-addons `team/merge` has its side), with strings in all nine languages.
+  - *Fixes:* a gallery pack is named by its bundle, not "Resources" (no "did you copy a template" warning; the install
+    sheet says "from the Sidefolk gallery"); a gallery companion turned from 3D to 2D gets its painted rig, not its
+    undrawn 3D stand-in made visible (`CharacterLook.identity`).
+  - *Today and Calendar (D66):* `WrapRow` keeps words their room in narrow columns (Watching's empty state read "Not /
+    watchi / ng"; Agents at work, Recently, headers, queue rows, Planner and Stage too); Your day (`DayLine`) puts every
+    chip at its time (they were slid left to fit) with labels that never touch; Home › Calendar (⌘5): month, week and a
+    14-day list of reminders (repeats expanded), their notes, what was done and the Mac calendar's events, moved,
+    added and edited through Today's paths; `WhenField` everywhere a time is set: typing first, a picker beside it.
+    `WhenParser` read ISO years in the person's calendar; now Gregorian.
+  - *Extension pages (D67):* pages fill the window (Your Mac used half of it); the Extensions group folds and is
+    arranged by the person; All Extensions; a page's main switch on its tile and sidebar row (Keep Awake); System
+    Vitals+ is Your Mac with its own icon, and System Vitals rests while it's on; icons in Home simple or colourful
+    (theme `layout.icons`, Settings › General); one rounded `ExtensionBadge` everywhere.
+  - *Clipboard (D68):* pictures and screenshots with thumbnails, a preview beside the list, Maccy's keys, pins in their
+    own section, 100–5,000 copies, four search modes, ignore rules, skip next, paste or only copy, the palette in the
+    menu bar menu; the source app answered once per copy. Not built: pin letters, app icons in rows, match highlights.
+  - *Skill:* `.claude/skills/sidefolk-extension/` (mirrored in `.agents/skills/`) takes an agent from "is it an
+    extension?" to a shipped one, with Water Tally, a template verified from a copy outside the repo (built, tested,
+    `sidefolk ext validate`, installed in a debug app). The older public `skills/sidefolk-extension` has the same name
+    and is stale (says clipboard is impossible, no gallery): refresh it.
+  - *Checked:* each branch's own tests and `make test`; on the merge, `make test` with the merged add-ons (1460 core, 35 character, all pass); UI snapshots of Today
+    at each theme's tightest width, the Calendar in all themes, Your Mac wide and narrow, the Clipboard palette with
+    pictures; debug apps with real data (Keep Awake's power assertion taken and released, Clipboard on a private
+    pasteboard, Iris 3D→2D in Settings). *Not yet:* by hand: drags (Calendar, sidebar), right-click menus, ⌘Z, the ⌘↓
+    picker, real ⌘V paste with Accessibility, Clipboard's source app end to end; Arabic for extension pages; the install
+    preview doesn't name `background` or palettes (docs/EXTENSIONS.md says it does). *In progress:* Miraya as an
+    extension (team/miraya, D69 reserved). *Next:* the founder tries the merged build, then merge `team/merge` into
+    extension-services and sidefolk-addons' `team/merge` into main, and publish the add-ons (founder).
 - **A release stays beside the next version's snapshots (D65 amended):** once an add-on is released and its next
   version starts snapshots, the gallery lists both (the release first) and Settings › Updates picks:
   `AddonCatalog.entry(_:on:)`, `companion(_:on:)`, `offered(on:)`; sidefolk-addons e99c207 keeps the latest release's

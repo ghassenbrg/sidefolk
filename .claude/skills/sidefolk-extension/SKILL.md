@@ -267,9 +267,27 @@ definitions are held until approved.
 - [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;
       `docs/EXTENSIONS.md` when the platform changed. Commit in a coherent milestone, no Co-Authored-By trailer.
 
-## Newer features (to document after they merge)
+## Newer features (D67, D68)
 
-Being added on other branches; check `git log` and fill these in from the merged code:
-- A quick on/off control for extensions such as Keep Awake, and managing extension pages.
-- Palette images and previews (Clipboard).
-- New permissions such as screen capture and the local network (a Miraya extension).
+- **A main switch where people are (D67).** An extension that is mostly on/off puts its switch on the page summary:
+  `Summary("Awake until 18:00", detail: "25 min left", tone: .good, control: .toggle(...))` (extensions/Kit/Page.swift),
+  with `"widget": true` on the page. Sidefolk shows it on the page, its Today tile and its sidebar row, runs the
+  extension's own tool as the person through Guard, then reads the page again. Keep Awake is the example
+  (sidefolk-addons `extensions/keep-awake/Sources/AwakePage.swift`). The tile and row use the last background read,
+  so it needs `widget`.
+- **Pages are the person's to arrange (D67).** They can hide a page (it stays in All Extensions), reorder it or take its
+  tile off Today (`AppSettings.homePages`). Don't rely on a page being in the sidebar: put the quick action on the
+  summary, and keep the page for choices and detail. Layout is automatic (`Home/ExtensionPageLayout.swift`): sections
+  with gauges or stats, two or more cards, notes alone or buttons alone run across; others sit 2–3 to a row.
+- **Pictures, previews and sections in palettes (D68).** A `PaletteItem` may name `image` (a PNG or JPEG the program
+  wrote in its own data folder, `Paths.data`, named relative to it, e.g. `thumbs/<id>.png`), a `color` swatch and a
+  `section` ("Pinned"). Make thumbnails once at about 256 px; Sidefolk reads them without following links, at most 4 MB
+  per row (`Sources/SidefolkCore/Extensions/ExtensionDataFile.swift`). Answer `sidefolk/palette.preview` with a
+  `PalettePreview` for the picked item in full; list actions `clear` / `clear_all` are asked twice. Maccy's keys
+  (⌘1–9, ⌥↩, ⇧↩, ⌥P, ⌥⌫) are Sidefolk's (`PaletteKeys.swift`); the extension only sees the action. Clipboard
+  (sidefolk-addons `extensions/clipboard`) is the example.
+- **Page parts `choice`, `field`, `list` (D68)** run the extension's own tools as the person: a setting picked from a
+  few values, a text setting, and rows with a picture and a button each.
+- **Notices (`ext.on`, D68).** `ext.on("sidefolk/clipboard.source") { … }` hears what Sidefolk tells the program
+  without a request; Sidefolk answers the clipboard source only with `permissions.clipboard`, once per copy.
+- **Still to document:** the permissions a Miraya extension needs (screen capture, the local network), once it merges.

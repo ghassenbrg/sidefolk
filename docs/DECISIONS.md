@@ -1637,3 +1637,79 @@ listed first, while its next version is in snapshots, and stops if the snapshots
 snapshots the snapshot. A pack fetched again stays the same kind (a release isn't swapped for a snapshot). A chosen
 companion that comes back by itself is the release on Releases, or the newest when none is released. Copies from
 before this read the first entry of an id, which is the release.
+
+### D66 — A Calendar of everything with a time, and a time is typed or picked (2026-10-31)
+**Decision:** Home gets a Calendar page (⌘5, under Today in the sidebar, last in the rail, pills and ribbons so ⌘1–4
+keep their places): a month, a week (an hour grid placed by the clock, overlaps side by side, an all-day row) or a list
+of 14 days. It shows pending reminders, a repeating one at every time it will fire (`ReminderScheduler.occurrences`,
+capped per reminder), the notes and tasks those reminders belong to (D49), what was done or told on past days, and the
+Mac calendar's events while they're shown (D57, read-only). Every change goes through Today's paths: moving is
+`moveReminder` (with ⌘Z), adding is `reminders.create` through `ToolExecutor`, editing, ticking, snoozing and opening are
+NowModel's. Wherever a time is set, `WhenField` keeps typing first with a picker beside it (⌘↓; a month, a time, quick
+times); picking writes an ISO date and time on the person's clock, which the existing `WhenParser` reads in every
+language, and the reading is said back under the field ("Tomorrow, 9:00"). Places that only had a picker (the
+Notebook's reminder sheet, Ask's Pick…) gained the field.
+
+**Why:** the founder asked for one screen with everything that has a due date, and for the classic date and time
+picker beside typing, for people who prefer to click. Reusing the scheduler, models and executor means the Calendar
+can't show or do anything the rest of the app wouldn't.
+
+**Alternatives:** writing to the Mac calendar (D57 keeps it read-only); a due date of its own on notes
+(`NotebookItem.dueAt` exists but nothing sets it; reminders carry a note's time); localized words in the field (the
+parser reads English and ISO, and a second parser would disagree with the one that sets the reminder).
+
+**Implications:** found on the way: `WhenParser` read an ISO date's year in the person's calendar (a Buddhist or
+Japanese calendar put "2026-11-03" centuries away, the Notebook's ISO times too); ISO years are now Gregorian. Your day
+(`DayLine` in Core) now starts every chip at its time instead of sliding it left inside the line, keeps an hour after
+the last thing and labels hours so none touch; `WrapRow` puts a row's button under its words in a narrow column.
+
+### D67 — Extension pages fill the window and are the person's to arrange; a main switch where people are; Your Mac; icons simple or colourful (2026-10-31)
+**Decision:**
+- **Layout:** an extension page lays out by what it holds: numbers, several cards, notes alone or buttons alone run
+  across; other sections sit 2–3 to a row; cards share their row's size. Rich pages grow to 1320 pt, centred; pages of
+  switches stay 860 pt.
+- **Arranging:** Home's Extensions group folds; its pages are dragged or moved, hidden from the sidebar (they stay in
+  All Extensions) or have their tile taken off Today (`AppSettings.homePages`, so it follows `SIDEFOLK_HOME`). **All
+  Extensions** (`.page("/")`) lists every page with its state, main switch and where it shows. Rails show the arranged
+  pages; pills show them as icons; ribbons one All Extensions ribbon.
+- **Main switch:** a page summary may carry the extension's main switch or button (`summary.control`, Kit
+  `Summary(control:)`), shown on the page, its Today tile and its sidebar row, and run as the person through Guard.
+  An on/off feature uses that with `widget` rather than relying on a page; Keep Awake does.
+- **Your Mac:** System Vitals+ is named Your Mac (same id, its own icon). While Sidefolk's own Your Mac is on,
+  Sidefolk's own System Vitals rests (`ExtensionOverlap`): its tools and commands aren't registered, it offers no new
+  heads-ups, Settings says why, and it comes back by itself. Only between first-party extensions.
+- **Icons:** themes say `layout.icons: simple | colorful` (Marshmallow colourful); Settings › General › Icons in Home
+  overrides. Colourful draws the places as white glyphs on rounded tiles and extension pages with their own icon.
+  `ExtensionBadge` is the one extension icon everywhere: continuous corners (22.5%), a hairline, a soft shadow from 24 pt.
+
+**Why:** the founder found Your Mac using half a wide window, asked how to manage many extension pages and why Keep
+Awake couldn't be turned on from Home, found the "+" didn't say System Vitals+ was the bigger one, and asked for real,
+rounded icons as an option.
+
+**Alternatives:** a manifest `quick` control (a second place for state the page reports); a manifest `includes` key
+(any extension could silence another); turning System Vitals off at install (saved state, a surprise on removal); a
+theme token or a setting alone for icons (one side couldn't choose); separate icon code per screen (drift).
+
+### D68 — Clipboard replaces Maccy: pictures, a preview, Maccy's keys and settings; palettes and pages grow for any extension (2026-10-31)
+**Decision:** palette items may name a picture: a PNG or JPEG the extension wrote in its own data folder, named
+relative to it. Sidefolk reads it without following links (`ExtensionDataFile`: the opened file must be inside that
+folder, one link, at most 4 MB for a row and 25 MB for a preview) and only draws it. A palette may offer
+`sidefolk/palette.preview` (the picked item in full beside the list) and list actions (`clear`, `clear_all`, asked
+twice); items may carry `color` and `section` and an `alternate` action. Maccy's keys work beside Sidefolk's (⌘1–9,
+⌥↩, ⇧↩, ⌥P, ⌥⌫). A palette opens at the top, the pointer or the middle, or under the menu bar icon from its menu.
+Pages get `choice`, `field` and `list` parts, run as the person through Guard. With the clipboard permission an
+extension may ask which app was in front for the copy just made (`sidefolk/clipboard.source`), answered once per
+clipboard change. Clipboard uses it all: pictures and screenshots with thumbnails made once, formatting in files,
+duplicates by digest, 100–5,000 copies, three orders, pins top or bottom, four ways to search, ignore apps, patterns
+and types, skip the next copy, paste or only copy. D63's protections stay (concealed copies never kept, secrets masked
+in memory and forgotten after two minutes).
+
+**Why:** the founder wanted to uninstall Maccy; Clipboard had no pictures, no preview and almost no settings.
+
+**Alternatives:** pictures inlined in replies (megabytes per keystroke for 200 rows); Sidefolk making Quick Look
+thumbnails of paths an extension names (it would read any file an extension points at); Launch Services for the
+source app (it also opens apps and links, D63); pushing every app switch to the extension (it would learn the
+person's app use); settings as manifest keys (older 0.1.0 snapshots refuse unknown keys).
+
+**Not built:** Maccy's random letter per pin, app icons in rows, highlighted matches, the latest copy in the menu bar
+title, clearing on quit.
