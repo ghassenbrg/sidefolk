@@ -58,8 +58,11 @@ struct CompanionGrid: View {
     }
 
     private func look(_ companion: OwnedCompanion) -> CompanionDimension {
-        if case .choice(let choice) = companion.wear { return CompanionArt.threeD(choice, in: model.settings) ? .threeD : .twoD }
-        return companion.looks.first ?? .threeD
+        switch companion.wear {
+        case .choice(let choice): return CompanionArt.threeD(choice, in: model.settings) ? .threeD : .twoD
+        case .local(let name): return CompanionArt.drawn2D(name, in: model.settings) == nil ? .threeD : .twoD
+        case .custom: return companion.looks.first ?? .threeD
+        }
     }
 
     // MARK: Removing

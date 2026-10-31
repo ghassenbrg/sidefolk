@@ -19,6 +19,12 @@ struct Painted {
     @MainActor init?(_ name: String, over outline: CGPath, nudge: CGPoint = .zero, grow: CGFloat = 1, widen: CGFloat = 1,
                      turn: CGFloat = 0, mirrored: Bool = false) {
         guard let image = Art.image(name) else { return nil }
+        self.init(image: image, over: outline, nudge: nudge, grow: grow, widen: widen, turn: turn, mirrored: mirrored)
+    }
+
+    /// `image` fitted over `outline` the same way: a painting that isn't in this module (a companion's own, D79).
+    init(image: CGImage, over outline: CGPath, nudge: CGPoint = .zero, grow: CGFloat = 1, widen: CGFloat = 1,
+         turn: CGFloat = 0, mirrored: Bool = false) {
         let box = outline.boundingBoxOfPath
         let size = CGSize(width: image.width, height: image.height)
         let scale = (box.width * box.height / (size.width * size.height)).squareRoot() * grow
@@ -75,10 +81,15 @@ extension Species {
     /// neck between head and shoulders (painted bodies start slim at the top).
     func painted(_ name: String, head: CGPath? = nil, torso: CGPath? = nil, nudge: [String: CGPoint] = [:],
                  grow: [String: CGFloat] = [:], widen: [String: CGFloat] = [:]) -> Species {
+        painted(image: { Art.image("\(name)/\($0)") }, head: head, torso: torso, nudge: nudge, grow: grow, widen: widen)
+    }
+
+    /// The same with each part's painting from `image` (by part name): a companion's own, read from its folder (D79).
+    func painted(image: (String) -> CGImage?, head: CGPath? = nil, torso: CGPath? = nil, nudge: [String: CGPoint] = [:],
+                 grow: [String: CGFloat] = [:], widen: [String: CGFloat] = [:]) -> Species {
         func part(_ part: String, _ outline: CGPath?) -> Painted? {
-            outline.flatMap {
-                Painted("\(name)/\(part)", over: $0, nudge: nudge[part] ?? .zero, grow: grow[part] ?? 1, widen: widen[part] ?? 1)
-            }
+            guard let outline, let picture = image(part) else { return nil }
+            return Painted(image: picture, over: outline, nudge: nudge[part] ?? .zero, grow: grow[part] ?? 1, widen: widen[part] ?? 1)
         }
         let arm = arm.hand.map { arm.shape.union($0.path) } ?? arm.shape
         let mirror = CGAffineTransform(scaleX: self.arm.outward ? -1 : 1, y: 1)

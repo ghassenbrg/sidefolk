@@ -2097,3 +2097,34 @@ convention); a separate "late" or "changed" token (warning and the accent alread
 games' own verdicts (toss, rock-paper-scissors, dice, trivia) are fixed on their own branch; Play's folk colour is red,
 so it must never mark a win or a draw. Community themes made before this get Harbor's amber and a warning naming the
 roles; gallery themes pass as they are.
+
+### D79 — A companion added from a folder may bring a 2D form, painted, beside its 3D one (2026-10-31)
+**Decision:** *amends D43 and D60.* A 3D companion added from a folder (D60) may carry a `2d/` folder: `species.json`
+in the custom companion format (D43) with its `parts/*.svg` and, new, `paint/*.png`. When it does, it comes in both
+looks like a gallery companion (Settings › Companion › Look, 3D first; the choice is kept per companion,
+`AppSettings.dimensions["local.<name>"]`), and in 2D it is drawn from that data on the soft rig, its paintings fitted
+over its outlines as the gallery's 2D forms are (D59). The format gained, all optional so every file that loaded still
+does:
+- `paint`: `head`, `torso`, `armL`/`armR`, `footL`/`footR` (arms and feet in pairs), each `{image, nudge?, grow?,
+  widen?}` like `Species.painted`; PNGs of at most 2048 px a side and 4 MiB, eight at most.
+- `body.look` `"flat"` (the 2D cartoon of D59: one fill, one hard shade, an outline, `body.line`) or `"soft"`.
+- `face.screen` `{center, size, radius}`: a dark screen whose eyes and mouth are light (Spark's), in `face.glow`
+  and `face.mouthGlow` instead of the style colour; `face.ink`, `face.iris`, `face.eyeSize`, `face.mouthSize`.
+The `2d/` tree is checked like the rest of the folder (names, kinds, sizes, nothing else in it), and its data is loaded
+and drawn in every state before the companion is added: one whose 2D form doesn't load isn't added. Nothing in it runs;
+it is data, as D43's always was.
+
+**Why:** the founder wanted a private companion in 2D as well as 3D, kept out of the repositories like its 3D files
+(D60). The gallery's 2D forms are Swift rigs and paintings built into the app (D59), which can't hold a private one;
+D43's data couldn't say paintings, a screen face or eye colours, so a robot with a black visor would have had dark ink
+eyes on black. Extending the data keeps one 2D engine and one format, and makes "Made by you" companions better too.
+
+**Alternatives:** a Swift rig on a local branch that is never pushed (fragile, and private code beside the app's);
+shipping 2D rigs as data in gallery packs (later, on this format); a separate 2D companion in "Made by you" (two
+entries for one character, and no Look switch).
+
+**Implications:** `SpeciesFile` (`paint`, `body.look/line`, `face.screen/glow/mouthGlow/ink/iris/eyeSize/mouthSize`),
+`CompanionBody` and `Species(custom)`; `Species.painted(image:)` and `Painted(image:over:)`; `SoftFace.glow`,
+`mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
+companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
+`docs/research/lively-companions.md` documents the keys.

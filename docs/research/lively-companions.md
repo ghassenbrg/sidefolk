@@ -263,7 +263,7 @@ and a RealityKit pipeline exist.
 ## Custom companions
 
 People can make their own companion as **data**: a folder with `species.json` and optional
-`parts/*.svg`, drawn on the soft rig with every state, prop, moment, posture, style and scarf the
+`parts/*.svg` and `paint/*.png` (D79), drawn on the soft rig with every state, prop, moment, posture, style and scarf the
 built-in ones have. Built: `CustomCompanion.swift`, `SpeciesFile.swift`, `SVGParts.swift`;
 template in `companions/template/`, example **Miso** (a cream cat with a bell and a tail) in
 `companions/miso/`, made by copying the template.
@@ -276,6 +276,8 @@ template in `companions/template/`, example **Miso** (a cream cat with a bell an
   an optional `"companion": "companion"` key so the install sheet shows "Adds a companion: Miso".
 - Settings › Companion shows them under **Made by you** with a Use button (or why one can't load);
   chosen, it wears the colour and scarf set above. On this branch they are read at launch.
+- A 3D companion added from a folder (D60) may bring its 2D form in `2d/` (D79): this format, read and drawn
+  before it is added, and offered beside its 3D self as Settings › Companion › Look.
 
 ### The format (`species.json`, format 1)
 
@@ -294,11 +296,16 @@ are `[x, y]`. Every key not listed is an error (like extension manifests).
 | `body.torso`, `body.head` | torso yes | a shape (below); no head = a one-piece body like the folks |
 | `body.neck` | yes | where the head turns |
 | `body.scale` | no | 0.6–1.1: draw smaller so tall ears stay in the window |
+| `body.look`, `body.line` | no | `"flat"`: the 2D cartoon of the gallery's 2D forms (D59), the first colour filling and the last the hard shade, `line` the outline; or `"soft"` (the default) |
 | `feet.at`, `feet.size`, `feet.colors` | at, size | two feet; `colors` like `body.colors` |
 | `arms.shoulders`, `arms.shape` | yes | two shoulders; the arm hangs from the origin, hand down |
 | `face.eyes`, `face.mouth` | yes | two eyes and the mouth, on the head |
 | `face.nose` | no | `{center, size, color?}` |
 | `face.scale`, `face.cheeks`, `face.temper` | no | stroke size (0.6–1.8), blush, resting face: calm, smiling, cheerful, beaming, content, giddy, stern, winking |
+| `face.screen` | no | `{center, size, radius?}`: a dark screen whose eyes and mouth are light (Spark's); not drawn under a painted head, whose painting has it |
+| `face.glow`, `face.mouthGlow` | no | a screen face's eyes and mouth in these lights instead of the style colour |
+| `face.ink`, `face.iris`, `face.eyeSize`, `face.mouthSize` | no | ink eyes in these colours (the iris fades the ink to it, with two catchlights); sizes 0.5–3 |
+| `paint` | no | paintings over the parts (D79): `head`, `torso`, `armL`/`armR`, `footL`/`footR` (arms and feet in pairs), each `{image: "paint/<name>.png", nudge?, grow?, widen?}`, fitted over the part's outline as the gallery's 2D forms are (`companions-2d/README.md`) |
 | `ears[]` | no | ≤ 4: `{part, base, angle (−1.2…1.2), side: left/right, floppiness 0–1}` |
 | `gear[]` | no | ≤ 8: `{part, mount: head/face/body/back}` worn pieces (a tail goes on back) |
 | `collar` | no | where the scarf wraps: `{center, halfWidth, sag?, height?, tail?}` (else from the torso) |
@@ -315,8 +322,9 @@ down); worn pieces on a 200 × 200 artboard with the floor at y = 180.
 
 ### Validation (`sidefolk-render --check-companion <folder>`)
 
-1. Files: `species.json` ≤ 64 KiB; parts are `parts/<name>.svg`, ≤ 256 KiB, ≤ 16 files; regular
-   files inside the folder only (links, `..` and anything outside refused).
+1. Files: `species.json` ≤ 64 KiB; parts are `parts/<name>.svg`, ≤ 256 KiB, ≤ 16 files; paintings are
+   `paint/<name>.png`, PNGs that decode, ≤ 4 MiB and 2048 px a side, ≤ 8; regular files inside the folder only
+   (links, `..` and anything outside refused).
 2. Strict keys, types and ranges, with the key path in every error ("body.scale: 0.6 to 1.1").
 3. SVG: no scripts, images, links, `use`, styles, filters, masks, text, animation, event handlers,
    transforms (flatten them) or arcs (convert to curves); external entities never resolved; at most

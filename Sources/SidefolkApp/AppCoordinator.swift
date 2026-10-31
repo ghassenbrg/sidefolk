@@ -492,6 +492,7 @@ final class AppCoordinator {
             let folder = URL(fileURLWithPath: String(command.dropFirst("addCompanion:".count)))
             Task {
                 do {
+                    try CompanionArt.checkForm(try AddonStore.readLocalCompanion(folder), in: folder)
                     let added = try await runtime.addons.install(companionFolder: folder)
                     CompanionArt.reloadMade()
                     CompanionArt.forgetPictures()
@@ -517,10 +518,15 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("companion:local:") {
-            // companion:local:<name>: wears a companion added from a folder (D60).
-            guard let local = CompanionArt.local(String(command.dropFirst("companion:local:".count))) else { return }
+            // companion:local:<name>[:2d|3d]: wears a companion added from a folder (D60), in one of its looks (D79).
+            let parts = command.dropFirst("companion:local:".count).split(separator: ":").map(String.init)
+            guard let name = parts.first, let local = CompanionArt.local(name) else { return }
+            let look = parts.dropFirst().first.flatMap(CompanionDimension.init(rawValue:))
             Task {
-                await runtime.settings.update { $0.choose(local: local.companion, name: local.name) }
+                await runtime.settings.update { s in
+                    s.choose(local: local.companion, name: local.name)
+                    if let look { s.setDimension(look, forLocal: local.companion) }
+                }
                 settingsChanged()
             }
             return

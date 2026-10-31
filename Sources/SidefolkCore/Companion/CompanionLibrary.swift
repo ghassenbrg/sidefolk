@@ -126,7 +126,7 @@ public enum CompanionLibrary {
             let files = folder.appendingPathComponent(have.companion, isDirectory: true)
             if have.addedFromFolder {
                 return OwnedCompanion(wear: .local(have.companion), name: have.name, tagline: have.tagline ?? "", origin: .folder,
-                                      looks: [.threeD], version: have.version, author: have.author.isEmpty ? nil : have.author,
+                                      looks: have.twoD == true ? [.threeD, .twoD] : [.threeD], version: have.version, author: have.author.isEmpty ? nil : have.author,
                                       folder: files)
             }
             if let choice = CompanionChoice(rawValue: have.companion) {

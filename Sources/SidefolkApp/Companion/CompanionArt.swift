@@ -27,6 +27,9 @@ enum CompanionArt {
     /// that loads is worn in the chosen companion's style; one added from a folder stands on the rig its body borrows.
     static func look(for settings: AppSettings) -> CharacterLook {
         if let local = local(settings.localCompanion) {
+            if let form = drawn2D(local.companion, in: settings) {
+                return CharacterLook(custom: form, style: CharacterStyle(color: .aqua, accessory: .none))
+            }
             var look = CharacterLook(standIn(local.body), threeD: true)
             look.character3D = local.companion
             return look
@@ -53,6 +56,7 @@ enum CompanionArt {
     static func reloadMade() {
         made = CustomCompanions.loadAll(home: SidefolkPaths.standard().home)
         locals = loadLocals()
+        localForms = loadLocalForms()
         previews = previews.filter { !$0.key.hasPrefix("custom:") }
     }
 
@@ -74,6 +78,34 @@ enum CompanionArt {
     static func local(_ name: String?) -> InstalledCompanion? {
         guard let name else { return nil }
         return locals.first { $0.companion == name }
+    }
+
+    /// The 2D forms companions added from a folder brought (D79), by folder name, as last read: data, never run.
+    private(set) static var localForms: [String: CompanionReport] = loadLocalForms()
+
+    private static func loadLocalForms() -> [String: CompanionReport] {
+        var forms: [String: CompanionReport] = [:]
+        for local in locals where local.twoD == true {
+            let folder = CompanionAddons.folder.appendingPathComponent(local.companion, isDirectory: true).appendingPathComponent("2d")
+            forms[local.companion] = CustomCompanions.load(folder: folder)
+        }
+        return forms
+    }
+
+    static func localForm(_ name: String) -> CustomCompanion? { localForms[name]?.companion }
+
+    /// A folder about to be added whose `2d/` form doesn't load or leaves its window isn't added (D79): says why.
+    static func checkForm(_ companion: InstalledCompanion, in folder: URL) throws {
+        guard companion.twoD == true else { return }
+        let report = CustomCompanions.load(folder: folder.appendingPathComponent("2d", isDirectory: true))
+        if let why = report.errors.first {
+            throw UserFacingError("\(companion.name)'s 2D form can't be drawn.", detail: why)
+        }
+    }
+
+    /// A companion added from a folder in its 2D form, when that is the look chosen for it and the form loads.
+    static func drawn2D(_ name: String, in settings: AppSettings) -> CustomCompanion? {
+        settings.dimension(forLocal: name) == .twoD ? localForm(name) : nil
     }
 
     /// The rig a companion added from a folder stands on, undrawn: a gallery companion's of the same build.
@@ -114,7 +146,10 @@ enum CompanionArt {
 
     /// The companion the settings choose, still in `state`, as Home and the Ask panel show it.
     static func portrait(for settings: AppSettings, state: CharacterState = .idle, side: CGFloat) -> NSImage {
-        if let local = local(settings.localCompanion), let still = localPicture(local, side: side) { return still }
+        if let local = local(settings.localCompanion) {
+            if let form = drawn2D(local.companion, in: settings) { return drawing(form, state: state, side: side) }
+            if let still = localPicture(local, side: side) { return still }
+        }
         let choice = offered.contains(settings.companion) ? settings.companion : .mochi
         if let custom = custom(settings.customCompanion) {
             let look = look(for: settings), size = CGSize(width: side, height: side)
@@ -165,15 +200,9 @@ enum CompanionArt {
         case .choice(let choice):
             return preview(choice, style: settings.style(for: choice), threeD: threeD(choice, in: settings), side: side)
         case .custom(let id):
-            guard let made = custom(id) else { return nil }
-            let key = "custom:\(id).still.\(side)"
-            if let cached = previews[key] { return cached }
-            let size = CGSize(width: side, height: side)
-            let look = CharacterLook(custom: made, style: CharacterStyle(color: .aqua, accessory: .none))
-            let image = NSImage(cgImage: CharacterRenderer.image(state: .idle, size: size, scale: 2, look: look), size: size)
-            previews[key] = image
-            return image
+            return custom(id).map { drawing($0, state: .idle, side: side) }
         case .local(let name):
+            if let form = drawn2D(name, in: settings) { return drawing(form, state: .idle, side: side) }
             let key = "local.\(name).\(side)"
             if let cached = previews[key] { return cached }
             guard let still = Companion3DStage.portrait(name) else { return nil }
@@ -181,6 +210,17 @@ enum CompanionArt {
             previews[key] = still
             return still
         }
+    }
+
+    /// A companion made from data, or a folder companion's 2D form, drawn in `state` with nothing to wear, `side` across.
+    private static func drawing(_ companion: CustomCompanion, state: CharacterState, side: CGFloat) -> NSImage {
+        let key = "custom:\(companion.id).\(state.name).\(side)"
+        if let cached = previews[key] { return cached }
+        let size = CGSize(width: side, height: side)
+        let look = CharacterLook(custom: companion, style: CharacterStyle(color: .aqua, accessory: .none))
+        let image = NSImage(cgImage: CharacterRenderer.image(state: state, size: size, scale: 2, look: look), size: size)
+        previews[key] = image
+        return image
     }
 
     /// A companion added from a folder as it stands at rest: its own still, `side` across.

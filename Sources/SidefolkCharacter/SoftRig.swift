@@ -316,7 +316,9 @@ final class SoftRig: Figure {
         if style.accessory == .scarf { wardrobe.addSublayer(Wardrobe.scarf(species.collar, material, flat: species.flat)) }
         self.style = style.accessory
         if case .screen = species.face.kind {
-            (eyeMarks + browMarks + [mouthMark]).forEach { $0.tint(style.color.light) }
+            let light = species.face.glow ?? style.color.light
+            (eyeMarks + browMarks).forEach { $0.tint(light) }
+            mouthMark.tint(species.face.mouthGlow ?? light)
         }
     }
 

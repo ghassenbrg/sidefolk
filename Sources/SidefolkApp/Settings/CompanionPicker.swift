@@ -18,7 +18,10 @@ struct CompanionPicker: View {
     private var style: CompanionStyle { settings.style(for: chosen) }
     /// Shown in 3D (D51): its 3D character is fixed as designed, so colour and what it wears are
     /// for the 2D rig only.
-    private var threeD: Bool { local != nil || custom == nil && CompanionArt.threeD(chosen, in: settings) }
+    private var threeD: Bool {
+        if let local { return CompanionArt.drawn2D(local.companion, in: settings) == nil }
+        return custom == nil && CompanionArt.threeD(chosen, in: settings)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -91,28 +94,40 @@ struct CompanionPicker: View {
                     model.update { $0.companionName = clean }
                 }
             }
-            if custom == nil, local == nil, chosen.dimensions.count > 1, Companion3DStage.folder != nil {
+            if let look = lookChoice {
                 labelled("Look") {
                     VStack(alignment: .leading, spacing: 4) {
-                        Picker("Look", selection: Binding(get: { settings.dimension(for: chosen) }, set: { next in
-                            let choice = chosen
-                            model.update { $0.setDimension(next, for: choice) }
-                        })) {
+                        Picker("Look", selection: look) {
                             Text(verbatim: "3D").tag(CompanionDimension.threeD)
                             Text(verbatim: "2D").tag(CompanionDimension.twoD)
                         }
                         .pickerStyle(.segmented)
                         .labelsHidden()
                         .fixedSize()
-                        Text(threeD ? "Livelier, and uses a little more of your Mac." : "Lightest on your Mac, with a color and a scarf to choose.")
+                        Text(threeD ? "Livelier, and uses a little more of your Mac."
+                             : local == nil ? "Lightest on your Mac, with a color and a scarf to choose." : "Lightest on your Mac.")
                             .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
-            if !threeD { wardrobe }
+            // A folder companion's 2D form comes dressed as it was made.
+            if !threeD, local == nil { wardrobe }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 3D or 2D, for a companion that comes in both: Sidefolk's and the gallery's, or one added from a folder that
+    /// brought a 2D form (D79).
+    private var lookChoice: Binding<CompanionDimension>? {
+        if let local {
+            guard CompanionArt.localForm(local.companion) != nil else { return nil }
+            let name = local.companion
+            return Binding(get: { settings.dimension(forLocal: name) }, set: { next in model.update { $0.setDimension(next, forLocal: name) } })
+        }
+        guard custom == nil, chosen.dimensions.count > 1, Companion3DStage.folder != nil else { return nil }
+        let choice = chosen
+        return Binding(get: { settings.dimension(for: choice) }, set: { next in model.update { $0.setDimension(next, for: choice) } })
     }
 
     /// Colour and what it wears, for a companion drawn in 2D.

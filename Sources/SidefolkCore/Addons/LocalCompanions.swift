@@ -8,10 +8,14 @@ import Foundation
 extension AddonStore {
     /// Largest each file may be: a character file is a few kilobytes, a model a few megabytes.
     static let localLimits: [String: Int64] = ["js": 512 * 1024, "glb": 64 * 1024 * 1024, "png": 8 * 1024 * 1024]
+    /// A 2D form's files (D79), in `2d/`: its data, its SVG parts and its paintings, as many and as large as the custom
+    /// companion format reads.
+    static let twoDLimits: [String: (count: Int, bytes: Int64)] = ["json": (1, 64 * 1024), "svg": (16, 256 * 1024), "png": (8, 4 * 1024 * 1024)]
 
     /// What `folder` would add, read and checked, nothing copied: its `addon.json` (as the gallery's add-ons write
     /// it: `name`, `companion`, and optionally `tagline`, `author`, `version`, `engine`, `body`) and exactly
-    /// `characters/<companion>.js`, `assets/<companion>.glb`, `portraits/<companion>.png` and `avatars/<companion>.png`.
+    /// `characters/<companion>.js`, `assets/<companion>.glb`, `portraits/<companion>.png` and `avatars/<companion>.png`;
+    /// optionally a 2D form in `2d/` (D79), whose data the app reads and draws before adding it.
     public nonisolated static func readLocalCompanion(_ folder: URL) throws -> InstalledCompanion {
         let manifestFile = folder.appendingPathComponent("addon.json")
         guard let data = FileManager.default.contents(atPath: manifestFile.path) else {
@@ -42,20 +46,26 @@ extension AddonStore {
             }
             body = known
         }
-        try checkLocalFiles(folder, name: id)
+        let twoD = try checkLocalFiles(folder, name: id)
         return InstalledCompanion(id: "local.\(id)", name: name, companion: id, version: manifest.version ?? "1.0.0",
-                                  author: manifest.author ?? "", tagline: manifest.tagline, body: body, fromFolder: true)
+                                  author: manifest.author ?? "", tagline: manifest.tagline, body: body, fromFolder: true,
+                                  twoD: twoD ? true : nil)
     }
 
     /// Exactly the four files a 3D companion needs beside its `addon.json`, each no larger than it should be and of
-    /// its kind (a glTF binary, PNGs): no links, no other files (Finder's litter aside).
-    nonisolated static func checkLocalFiles(_ folder: URL, name: String) throws {
+    /// its kind (a glTF binary, PNGs): no links, no other files (Finder's litter aside). A `2d/` folder may hold a 2D
+    /// form (D79): `species.json`, `parts/*.svg` and `paint/*.png`, nothing else. Says whether it has one.
+    @discardableResult
+    nonisolated static func checkLocalFiles(_ folder: URL, name: String) throws -> Bool {
         let entries = try ExtensionFiles.walk(folder.path, skipping: ExtensionFiles.skippedNames)
         let expected = ["characters/\(name).js", "assets/\(name).glb", "portraits/\(name).png", "avatars/\(name).png"]
-        let files = Set(entries.filter { !$0.isDirectory }.map(\.path))
+        let all = Set(entries.filter { !$0.isDirectory }.map(\.path))
+        let twoD = all.filter { $0.hasPrefix("2d/") }
+        let files = all.subtracting(twoD)
         let folders = Set(entries.filter(\.isDirectory).map(\.path))
         let missing = expected.filter { !files.contains($0) }
-        let extra = files.subtracting(expected + ["addon.json"]).union(folders.subtracting(["characters", "assets", "portraits", "avatars"]))
+        let extra = files.subtracting(expected + ["addon.json"])
+            .union(folders.subtracting(["characters", "assets", "portraits", "avatars", "2d", "2d/parts", "2d/paint"]))
         guard missing.isEmpty else {
             throw UserFacingError("The companion is missing \(missing.joined(separator: ", ")).")
         }
@@ -63,9 +73,11 @@ extension AddonStore {
             throw UserFacingError("The companion's folder holds more than it should: \(extra.sorted().joined(separator: ", ")).",
                                   recovery: "Keep only addon.json and the four files it needs.")
         }
+        try checkTwoD(twoD)
         for entry in entries where !entry.isDirectory && entry.path != "addon.json" {
             let ext = (entry.path as NSString).pathExtension
-            guard Int64(entry.st.st_size) <= localLimits[ext, default: 0] else {
+            let limit = entry.path.hasPrefix("2d/") ? twoDLimits[ext]?.bytes : localLimits[ext]
+            guard Int64(entry.st.st_size) <= limit ?? 0 else {
                 throw UserFacingError("\(entry.path) is too large for a companion.")
             }
             let head = FileHandle(forReadingAtPath: folder.appendingPathComponent(entry.path).path).flatMap { try? $0.read(upToCount: 8) } ?? Data()
@@ -73,6 +85,21 @@ extension AddonStore {
             if let magic, !head.starts(with: magic) {
                 throw UserFacingError("\(entry.path) isn't the kind of file its name says.")
             }
+        }
+        return !twoD.isEmpty
+    }
+
+    /// The 2D form's files by name and number: `2d/species.json`, then parts and paintings in their folders.
+    private nonisolated static func checkTwoD(_ files: Set<String>) throws {
+        guard !files.isEmpty else { return }
+        guard files.contains("2d/species.json") else { throw UserFacingError("The companion's 2d folder has no species.json.") }
+        let named = #"^2d/(species\.json|parts/[A-Za-z0-9._-]{1,64}\.svg|paint/[A-Za-z0-9._-]{1,64}\.png)$"#
+        if let stray = files.sorted().first(where: { $0.range(of: named, options: .regularExpression) == nil }) {
+            throw UserFacingError("The companion's 2d folder holds more than it should: \(stray).",
+                                  recovery: "Keep only species.json, parts/*.svg and paint/*.png in it.")
+        }
+        for (ext, limit) in twoDLimits where files.filter({ $0.hasSuffix(".\(ext)") }).count > limit.count {
+            throw UserFacingError("The companion's 2d folder has too many .\(ext) files.", detail: "at most \(limit.count)")
         }
     }
 

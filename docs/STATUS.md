@@ -1,5 +1,15 @@
 # Status
 
+- **2D forms for companions added from a folder (D79, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
+  in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen
+  face in lights of its own (`face.screen`, `glow`, `mouthGlow`) and face colours and sizes. Settings › Companion
+  shows its Look switch (3D first, kept per companion), its tile says 2D or 3D, and a form that doesn't load or leaves
+  its window keeps the folder from being added. All new strings are in the ten languages. *Checked:*
+  `CustomCompanionTests`, `LocalCompanionsTests`, `CompanionLibraryTests`; `sidefolk-render --check-companion` on a
+  draft form; a debug app (build 582) switching a folder companion between 3D and 2D on the desktop and in Settings,
+  with placeholder paintings. *Next:* paint a real 2D form with image generation (`companions-2d/README.md`); no
+  companion in the repositories has one yet.
+
 - **3D engine options for big-headed and screen-faced companions (2026-10-31):** the screen face gained `mouthGlow`
   (the mouth in a light of its own), `layout.mouth.scale` and `softGlow` (halos blurred with a shadow instead of
   three stepped passes that read as rings up close); petting leans by `petLean` (a big head leaned out of its

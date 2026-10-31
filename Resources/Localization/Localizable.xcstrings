@@ -9853,6 +9853,64 @@
         }
       }
     },
+    "%@'s 2D form can't be drawn." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن رسم شكل %@ ثنائي الأبعاد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die 2D-Form von %@ kann nicht gezeichnet werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La forma 2D de %@ no se puede dibujar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La forme 2D de %@ ne peut pas être dessinée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La forma 2D di %@ non può essere disegnata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の2D版を描けません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 2D 모습을 그릴 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A forma 2D de %@ não pode ser desenhada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法绘制 %@ 的 2D 形象。"
+          }
+        }
+      }
+    },
     "%@'s files are removed from this Mac. It isn't in the gallery now, so you may not be able to download it again." : {
       "comment" : "Removing a companion the gallery no longer offers",
       "localizations" : {
@@ -11536,24 +11594,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا رفاق"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "رفيق واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "رفيقان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -11566,10 +11606,28 @@
                   "value" : "%lld رفيقًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رفيق واحد"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld رفيق"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رفيقان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا رفاق"
                 }
               }
             }
@@ -78240,6 +78298,64 @@
         }
       }
     },
+    "Keep only species.json, parts/*.svg and paint/*.png in it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبقِ فيه species.json وparts/*.svg وpaint/*.png فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behalte darin nur species.json, parts/*.svg und paint/*.png."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deja solo species.json, parts/*.svg y paint/*.png."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "N’y gardez que species.json, parts/*.svg et paint/*.png."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia solo species.json, parts/*.svg e paint/*.png."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "species.json、parts/*.svg、paint/*.png だけを入れてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "species.json, parts/*.svg, paint/*.png만 남겨 두세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe nela só species.json, parts/*.svg e paint/*.png."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中只保留 species.json、parts/*.svg 和 paint/*.png。"
+          }
+        }
+      }
+    },
     "Keep recent requests for" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -80287,6 +80403,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "对 Mac 最轻量，还可以选颜色和围巾。"
+          }
+        }
+      }
+    },
+    "Lightest on your Mac." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأخف على جهاز Mac."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am schonendsten für deinen Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo más ligero para tu Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le plus léger pour votre Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il più leggero per il tuo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macへの負荷がいちばん軽い表示です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac에 가장 가볍습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O mais leve para o seu Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对 Mac 最轻量。"
           }
         }
       }
@@ -146829,6 +147003,180 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "伙伴会待在你的桌面上，陪在你工作的旁边。"
+          }
+        }
+      }
+    },
+    "The companion's 2d folder has no species.json." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجلد 2d الخاص بالرفيق لا يحتوي على species.json."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im 2d-Ordner des Begleiters fehlt species.json."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carpeta 2d del compañero no tiene species.json."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier 2d du compagnon n’a pas de species.json."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cartella 2d del compagno non ha species.json."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンの2dフォルダに species.json がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언의 2d 폴더에 species.json이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pasta 2d do companheiro não tem species.json."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的 2d 文件夹里没有 species.json。"
+          }
+        }
+      }
+    },
+    "The companion's 2d folder has too many .%@ files." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في مجلد 2d الخاص بالرفيق ملفات .%@ كثيرة جدًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der 2d-Ordner des Begleiters hat zu viele .%@-Dateien."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carpeta 2d del compañero tiene demasiados archivos .%@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier 2d du compagnon contient trop de fichiers .%@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cartella 2d del compagno ha troppi file .%@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンの2dフォルダに .%@ ファイルが多すぎます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언의 2d 폴더에 .%@ 파일이 너무 많습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pasta 2d do companheiro tem arquivos .%@ demais."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的 2d 文件夹里 .%@ 文件太多。"
+          }
+        }
+      }
+    },
+    "The companion's 2d folder holds more than it should: %@." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في مجلد 2d الخاص بالرفيق أكثر مما ينبغي: %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der 2d-Ordner des Begleiters enthält mehr, als er sollte: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carpeta 2d del compañero tiene más de lo que debería: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier 2d du compagnon contient plus qu’il ne devrait : %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cartella 2d del compagno contiene più del dovuto: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンの2dフォルダに余分なものがあります：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언의 2d 폴더에 있어서는 안 될 것이 있습니다: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pasta 2d do companheiro tem mais do que deveria: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴的 2d 文件夹里多了不该有的内容：%@。"
           }
         }
       }

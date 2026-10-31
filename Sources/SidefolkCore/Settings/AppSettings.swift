@@ -376,6 +376,16 @@ public struct AppSettings: Codable, Sendable, Equatable {
         dimensions[companion.rawValue] = dimension
     }
 
+    /// How a companion added from a folder (by its folder's name) is drawn: 3D, as it comes, unless the person chose
+    /// its 2D form (D79). Kept under "local.<name>", which no `CompanionChoice` can be.
+    public func dimension(forLocal name: String) -> CompanionDimension {
+        dimensions["local.\(name)"] ?? .threeD
+    }
+
+    public mutating func setDimension(_ dimension: CompanionDimension, forLocal name: String) {
+        dimensions["local.\(name)"] = dimension
+    }
+
     /// Whether the user named the companion themselves (anything but a built-in default).
     public var hasCustomName: Bool {
         let name = companionName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
