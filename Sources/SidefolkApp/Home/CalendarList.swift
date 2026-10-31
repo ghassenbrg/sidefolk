@@ -173,7 +173,7 @@ struct CalendarList: View {
     /// on; how a past one ended.
     private func detail(_ entry: CalendarModel.Entry, item: NotebookItem?, more: Int) -> String? {
         var parts: [String] = []
-        if more > 0 { parts.append(String(localized: "^[\(more) more time](inflect: true) this day", comment: "The Agenda: a reminder that repeats within the day")) }
+        if more > 0 { parts.append(String(localized: "\(more) more times this day", comment: "The Agenda: a reminder that repeats within the day")) }
         switch entry {
         case .reminder(let o):
             if o.at < Date() { parts.append(String(localized: "Overdue since \(TimeText.short(o.at))")) }

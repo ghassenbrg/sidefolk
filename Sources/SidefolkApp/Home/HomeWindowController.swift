@@ -6,7 +6,7 @@ import SwiftUI
 @MainActor
 final class HomeWindowController: NSObject, NSWindowDelegate {
     enum Section {
-        case now, calendar, notebook, history, gallery
+        case now, calendar, notebook, onDuty, history, gallery
     }
 
     private let model: HomeModel
@@ -23,6 +23,7 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         switch section {
         case .now: model.selection = .now
         case .calendar: model.selection = .calendar
+        case .onDuty: model.selection = .onDuty
         case .history: model.selection = .history
         case .gallery: model.selection = .gallery
         case .notebook: Task { await model.showNotebook() }

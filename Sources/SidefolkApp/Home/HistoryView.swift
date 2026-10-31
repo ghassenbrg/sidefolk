@@ -247,7 +247,7 @@ private struct HistoryRow: View {
             return a.body.map { $0.clipped(120) }
         case .session(let s, let calls):
             let took = TimeText.span((s.endedAt ?? (s.state == .finished ? s.updatedAt : Date())).timeIntervalSince(s.startedAt))
-            return String(localized: "^[\(calls.count) call](inflect: true) · \(took)", comment: "History: an agent's session, “9 calls · 14 min”")
+            return String(localized: "\(calls.count) calls · \(took)", comment: "History: an agent's session, “9 calls · 14 min”")
         }
     }
 
