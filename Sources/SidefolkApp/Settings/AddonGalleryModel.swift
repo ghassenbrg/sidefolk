@@ -70,6 +70,12 @@ final class AddonGalleryModel {
         case working(Double)
     }
 
+    /// The gallery's newer version of an installed companion, while add-ons don't update by themselves (D70).
+    func update(forCompanion name: String) -> AddonEntry? {
+        guard let entry = entries(.companion).first(where: { $0.companion == name }), case .update = state(entry) else { return nil }
+        return entry
+    }
+
     func state(_ entry: AddonEntry) -> State {
         if let p = progress[entry.id] { return .working(p) }
         guard let version = installedVersion(entry) else { return .get }
@@ -97,9 +103,15 @@ final class AddonGalleryModel {
             try await store.install(companion: entry) { [weak self] p in
                 Task { @MainActor in if self?.progress[entry.id] != nil { self?.progress[entry.id] = p } }
             }
+            let updating = companions.contains { $0.id == entry.id }
             companions = await store.installedCompanions()
-            CompanionArt.forgetPictures()
-            if choose { parent.update { $0.choose(choice) } } else { parent.services.settingsChanged() }
+            if choose {
+                CompanionArt.forgetPictures()
+                parent.update { $0.choose(choice) }
+            } else {
+                // An update (D70): the one on the desktop, if it is this one, reloads in place.
+                parent.services.companionsUpdated(updating ? [name] : [])
+            }
         } catch {
             failures[entry.id] = error as? UserFacingError ?? UserFacingError("\(entry.name) couldn't be installed.")
         }

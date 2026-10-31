@@ -265,6 +265,8 @@ protocol AppServices: AnyObject {
     func notificationsAuthorized() async -> Bool
     func requestNotifications() async
     func settingsChanged()
+    /// Gallery companions were updated on disk: their pictures are drawn again, and the one on the desktop reloads.
+    func companionsUpdated(_ names: [String])
     func showCompanion(_ visible: Bool)
     func replayOnboarding()
     /// Opens Settings, on `tab` if given (Agents: connect Claude Code / Codex, install the sidefolk command).

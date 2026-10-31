@@ -356,6 +356,7 @@ final class FixtureServices: AppServices {
     func notificationsAuthorized() async -> Bool { false }
     func requestNotifications() async {}
     func settingsChanged() {}
+    func companionsUpdated(_ names: [String]) {}
     func showCompanion(_ visible: Bool) {}
     func replayOnboarding() {}
 }

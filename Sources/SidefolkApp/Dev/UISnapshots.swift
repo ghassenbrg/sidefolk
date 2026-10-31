@@ -227,6 +227,14 @@ enum UISnapshots {
             // Settings › General with a version waiting (D46).
             fixtures.updates.phase = .available(UpdateController.sampleOffer)
             try await page("page-settings-general-update", SettingsTabContent(tab: .general, model: settings), width: width)
+            // Installing by itself, a version ready, an extension update to look at, and add-ons waiting (D70).
+            settings.update { $0.updates.app = .install }
+            fixtures.updates.phase = .ready(UpdateController.sampleOffer)
+            fixtures.updates.addonReview = Self.sampleAddons.filter { $0.kind == .extension }.prefix(1).map { $0 }
+            fixtures.updates.addonWaiting = Self.sampleAddons
+            try await page("page-settings-general-auto-update", SettingsTabContent(tab: .general, model: settings), width: width)
+            settings.update { $0.updates = UpdateSettings() }
+            (fixtures.updates.addonReview, fixtures.updates.addonWaiting) = ([], [])
             fixtures.updates.phase = .upToDate
             // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
             let policy = settings.policy
@@ -748,11 +756,21 @@ enum UISnapshots {
     }
 
     /// The update window's states (D46): file name, phase, and how this copy would install it.
+    /// Gallery entries for Settings › Updates' add-on rows (D70).
+    private static var sampleAddons: [AddonEntry] {
+        [("dev.sidefolk.git", "Git", "extension"), ("dev.sidefolk.companions.kiko", "Kiko", "companion")].compactMap { id, name, kind in
+            let json: [String: Any] = ["id": id, "kind": kind, "name": name, "tagline": "", "description": "", "author": "Sidefolk",
+                                       "version": "1.0.0-snapshot.3", "file": "x.zip", "bytes": 1, "sha256": String(repeating: "0", count: 64)]
+            return (try? JSONSerialization.data(withJSONObject: json)).flatMap { try? JSONDecoder().decode(AddonEntry.self, from: $0) }
+        }
+    }
+
     private static var updatePhases: [(String, UpdateModel.Phase, InstallPlan)] {
         let offer = UpdateController.sampleOffer
         return [
             ("available", .available(offer), .replace),
             ("available-download", .available(offer), .download(.notWritable)),
+            ("ready", .ready(offer), .replace),
             ("downloading", .downloading(offer, received: 9_400_000, total: offer.image.size), .replace),
             ("verifying", .verifying(offer), .replace),
             ("downloaded", .downloaded(offer, URL(fileURLWithPath: "/Users/you/Downloads/Sidefolk-0.1.0-snapshot.430.dmg"), .translocated), .replace),

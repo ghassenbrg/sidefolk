@@ -23,6 +23,10 @@
 //   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
 //   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed
 //                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
+//   swift scripts/dev.swift update:ready | update:updated   (D70: installing by itself: the window waiting for a calm
+//                           moment, and the note the new copy gives)
+//   swift scripts/dev.swift addons:review | addons:waiting | addons:clear   (D70: Settings › Updates and the heads-up
+//                           with made-up add-on updates)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

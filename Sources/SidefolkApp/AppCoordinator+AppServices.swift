@@ -323,6 +323,7 @@ extension AppCoordinator: AppServices {
         applyAppearance()
         applyTheme()
         updater.settingsChanged()
+        addonUpdater.settingsChanged()
     }
 
     /// Light or dark for every window, or nil to follow the Mac. Theme's colours follow it.

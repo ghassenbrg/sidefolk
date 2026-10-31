@@ -27,8 +27,9 @@ public actor UpdateInstaller {
     private let place: @Sendable (URL) -> InstallPlan.Place
     private let relaunch: Relauncher
 
-    /// Opens `app` once process `pid` has quit and removes `leftover` (`BundleSwap.relaunch`).
-    public typealias Relauncher = @Sendable (_ pid: Int32, _ app: URL, _ leftover: URL, _ environment: [String: String]) throws -> Void
+    /// Opens `app` once process `pid` has quit and removes `leftover` (`BundleSwap.relaunch`); with no `app`, only
+    /// removes it.
+    public typealias Relauncher = @Sendable (_ pid: Int32, _ app: URL?, _ leftover: URL, _ environment: [String: String]) throws -> Void
 
     /// - Parameters:
     ///   - workFolder: where downloads and mounts go while they are needed (`SidefolkPaths.updates`).
@@ -93,6 +94,14 @@ public actor UpdateInstaller {
             try? BundleSwap.swap(staged, app.bundle)
             throw UserFacingError("Sidefolk couldn't arrange to reopen, so the update was put back.", detail: String(describing: error))
         }
+    }
+
+    /// Exchanges the staged copy with the running one as Sidefolk quits, without opening it (D70): the person
+    /// asked to quit, and the next launch is the new version. The old copy goes once this process has; if that
+    /// can't be arranged, the next launch's `removeLeftovers` takes it.
+    public nonisolated func installAtQuit(_ staged: URL) throws {
+        try BundleSwap.swap(staged, app.bundle)
+        try? relaunch(app.pid, nil, staged, [:])
     }
 
     /// Clears what an earlier update left: downloads and mounts in the work folder, staged copies beside the app.
