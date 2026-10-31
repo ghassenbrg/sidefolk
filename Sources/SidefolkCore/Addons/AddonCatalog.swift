@@ -120,7 +120,7 @@ public struct AddonCatalog: Sendable, Equatable {
     /// Reads `catalog.json`: entries that are malformed, or need a newer Sidefolk or engine, are left out, so one bad
     /// entry never hides the others. A file in another format is refused whole. An id may come twice with different
     /// versions (a release and a later snapshot, D65); copies from before that keep the first, which is the release.
-    public static func parse(_ data: Data, folder: URL, fetched: Date, running: String = SidefolkVersion.current) throws -> AddonCatalog {
+    public static func parse(_ data: Data, folder: URL, fetched: Date, running: String = SidefolkVersion.running) throws -> AddonCatalog {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let items = root["addons"] as? [Any] else {
             throw UserFacingError("The add-on gallery's list couldn't be read.")
         }
@@ -164,7 +164,10 @@ public struct AddonCatalog: Sendable, Equatable {
         if let engine = e.engine, engine > Self.engine { return false }
         guard let needed = e.minimumSidefolk else { return true }
         guard let need = ReleaseVersion(needed), let have = ReleaseVersion(running) else { return false }
-        // A snapshot of 0.1.0 counts as 0.1.0 here: snapshots are how a version is tried before it ships.
+        // A minimum naming a snapshot ("0.1.0-snapshot.593") wants that snapshot or later (D83): an add-on using
+        // something only that snapshot reads. Otherwise a snapshot of 0.1.0 counts as 0.1.0: snapshots are how a
+        // version is tried before it ships.
+        if need.isPrerelease { return have >= need }
         return ReleaseVersion(have.numbers.map(String.init).joined(separator: "."))! >= need
     }
 }

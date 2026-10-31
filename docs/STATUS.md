@@ -30,6 +30,11 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **An add-on version can need a Sidefolk snapshot (D83):** the founder's 590 showed Miraya snapshot.4's update failing
+  on `output_mute`. Catalog minimums may name a snapshot (`AddonCatalog.fits`, `SidefolkVersion.running`); the validator
+  reads `>=0.1.0-snapshot.N`; an install blocked only by unknown keys or the minimum says to update Sidefolk. Gallery:
+  `addon.json` `minimum_sidefolk` (Miraya: 593). *Checked:* `make test` on a clean add-ons checkout; new tests
+  `aSnapshotMinimumLeavesOlderSnapshotsOut`, `keysFromANewerSidefolkAskForAnUpdate`, snapshot requirements.
 - **Copies from before the renumbering get the gallery's version (D80):** the founder's Mac kept Playtime 1.2.0
   (and git, currency, dev-toolbox, qr-codes 1.1.0, archives, feeds, images, pdf 1.0.0) from before D65, never offered
   `1.0.0-snapshot.<n>`, so snapshot 588's games never arrived. `AddonCatalog.offers(_:over:on:)` offers the gallery's

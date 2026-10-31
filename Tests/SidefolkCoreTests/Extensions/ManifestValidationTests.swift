@@ -234,6 +234,21 @@ import Testing
         #expect(fields(try validate(ExtFixtures.manifest(extra: ["sidefolk": "~1.0"]), folder: "v3")) == ["sidefolk"])
         #expect(ManifestValidator.satisfies(">=1.0.1", current: "1.0.0") == false)
         #expect(ManifestValidator.satisfies(">= 1", current: "1.0.0") == true)
+        // A snapshot minimum (D83): that snapshot or later, a release above all its snapshots, a build on this Mac
+        // (plain 0.1.0) included; a plain minimum ignores the snapshot number.
+        #expect(ManifestValidator.satisfies(">=0.1.0-snapshot.593", current: "0.1.0-snapshot.590") == false)
+        #expect(ManifestValidator.satisfies(">=0.1.0-snapshot.593", current: "0.1.0-snapshot.593") == true)
+        #expect(ManifestValidator.satisfies(">=0.1.0-snapshot.593", current: "0.1.0") == true)
+        #expect(ManifestValidator.satisfies(">=0.1", current: "0.1.0-snapshot.12") == true)
+    }
+
+    /// The founder's Miraya: snapshot.4 asked for `output_mute`, which 590 didn't know. The sheet says to update
+    /// Sidefolk instead of listing the validator's words (D83).
+    @Test func keysFromANewerSidefolkAskForAnUpdate() throws {
+        let r = try validate(ExtFixtures.manifest(extra: ["future_key": true]), folder: "future")
+        #expect(r.needsNewerSidefolk)
+        #expect(!(try validate(ExtFixtures.manifest(extra: ["sidefolk": "~1.0"]), folder: "bad")).needsNewerSidefolk)
+        #expect(try validate(ExtFixtures.manifest(extra: ["sidefolk": ">=99.0"]), folder: "newer").needsNewerSidefolk)
     }
 
     @Test func riskFloorsCanBeRaisedNeverLowered() {

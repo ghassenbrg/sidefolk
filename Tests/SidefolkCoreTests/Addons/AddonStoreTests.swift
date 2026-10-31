@@ -133,6 +133,25 @@ import Testing
         #expect(catalog.entry("dev.sidefolk.pdf", on: .releases) == nil)
     }
 
+    /// A minimum naming a snapshot (D83): Miraya's `1.0.0-snapshot.4` needs 593's `output_mute`, so 590 doesn't see
+    /// it; 593, later snapshots and a build on this Mac do. A plain minimum still ignores the snapshot number.
+    @Test func aSnapshotMinimumLeavesOlderSnapshotsOut() throws {
+        let data = try JSONSerialization.data(withJSONObject: ["format": 1, "addons": [
+            ["id": "dev.sidefolk.miraya", "kind": "extension", "name": "Miraya", "tagline": "", "description": "", "author": "Sidefolk",
+             "version": "1.0.0-snapshot.4", "file": "m.zip", "bytes": 10, "sha256": String(repeating: "a", count: 64),
+             "minimum_sidefolk": "0.1.0-snapshot.593"],
+            ["id": "dev.sidefolk.pdf", "kind": "extension", "name": "PDF", "tagline": "", "description": "", "author": "Sidefolk",
+             "version": "1.0.0-snapshot.2", "file": "p.zip", "bytes": 10, "sha256": String(repeating: "a", count: 64),
+             "minimum_sidefolk": "0.1.0"],
+        ]])
+        func ids(_ running: String) throws -> [String] {
+            try AddonCatalog.parse(data, folder: URL(fileURLWithPath: "/tmp"), fetched: Date(), running: running).addons.map(\.id)
+        }
+        #expect(try ids("0.1.0-snapshot.590") == ["dev.sidefolk.pdf"])
+        #expect(try ids("0.1.0-snapshot.593") == ["dev.sidefolk.miraya", "dev.sidefolk.pdf"])
+        #expect(try ids("0.1.0") == ["dev.sidefolk.miraya", "dev.sidefolk.pdf"])
+    }
+
     /// A copy from before D65's renumbering (D80): a release the gallery never listed at or above it gets the
     /// gallery's version, a lower snapshot included; a release the gallery lists keeps waiting for a newer one.
     @Test func aReleaseTheGalleryNeverListedIsOfferedItsVersion() throws {

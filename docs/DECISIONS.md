@@ -2251,3 +2251,25 @@ on stop, crash or watchdog. The host-owned helper keeps that boundary and the re
 **Verification:** fake-device and helper-process tests cover ownership, changes, timeouts and recovery. On the Mac's
 actual default output, the helper muted and restored the original state both normally and after its parent was killed.
 An isolated Android TV emulator confirmed pairing. Live screen and sound playback on a physical TV remains to be checked.
+
+### D83 — An add-on version can need a Sidefolk snapshot, and an add-on Sidefolk can't read yet says to update (2026-11-01)
+**Decision:** *amends D55 and D65.* A gallery entry's `minimum_sidefolk` may name a snapshot (`0.1.0-snapshot.593`):
+copies of Sidefolk then compare their own published snapshot (`SidefolkVersion.running`, from the `SidefolkRelease`
+stamp; a build on this Mac counts as its plain version) and leave the version out until they're that snapshot or later.
+A plain minimum (`0.1.0`) still counts every 0.1.0 snapshot as 0.1.0. The gallery sets it in an extension's
+`addon.json` (`build.py`), not its manifest, because a copy before this would refuse a manifest's
+`"sidefolk": ">=0.1.0-snapshot.593"` (the validator now reads that form too). When an extension can't be installed only
+because of keys this copy doesn't know or its `sidefolk` minimum (`ValidationReport.needsNewerSidefolk`), the sheet
+says "This version needs a newer Sidefolk. Choose Check for Updates… in Sidefolk's menu, then try again." with the
+validator's words folded in the detail.
+
+**Why:** the founder's Mac on snapshot 590 was offered Miraya `1.0.0-snapshot.4`, which needs 593's `output_mute`, and
+the Update button showed "That folder isn't a Sidefolk extension … permissions.output_mute isn't a known key". D75 and
+D81 had accepted that refusal for snapshots; it reads as broken.
+
+**Alternatives:** raising Sidefolk's version for each such snapshot (the founder keeps 0.1.0 until release); holding
+the add-on back until everyone updates (no way to know).
+
+**Implications:** copies before this snapshot still see such versions and get the old error; from this snapshot on
+they don't. Miraya's `addon.json` names 593.
+
