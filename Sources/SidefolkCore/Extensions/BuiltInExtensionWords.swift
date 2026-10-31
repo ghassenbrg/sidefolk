@@ -23,6 +23,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.system-vitals-plus": String(localized: "System Vitals+", comment: "A built-in extension: the whole Mac with live charts")
         case "dev.sidefolk.clipboard": String(localized: "Clipboard", comment: "A built-in extension: everything you copy")
         case "dev.sidefolk.keep-awake": String(localized: "Keep Awake", comment: "A built-in extension: keeps the Mac awake")
+        case "dev.sidefolk.miraya": "Miraya"
         default: nil
         }
     }
@@ -46,6 +47,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.system-vitals-plus": String(localized: "Your whole Mac at a glance, with live charts", comment: "System Vitals+: one line under its name")
         case "dev.sidefolk.clipboard": String(localized: "Everything you copy, a shortcut away", comment: "Clipboard: one line under its name")
         case "dev.sidefolk.keep-awake": String(localized: "Your Mac awake and you active, for as long as you say", comment: "Keep Awake: one line under its name")
+        case "dev.sidefolk.miraya": String(localized: "Your Mac's screen and videos on your Android TV", comment: "Miraya: one line under its name")
         default: nil
         }
     }
@@ -84,6 +86,8 @@ enum BuiltInExtensionWords {
             String(localized: "Keeps your Mac awake, and chat apps from marking you away, for as long as you say, until a time, while an app like Zoom is open, or until you stop it. Nothing moves on screen, and it lets go on battery or when the battery runs low.")
         case "dev.sidefolk.feeds":
             String(localized: "The latest posts of blogs, news sites and podcasts from their RSS or Atom feeds, and a heads-up when a new one appears.")
+        case "dev.sidefolk.miraya":
+            String(localized: "Shows your Mac's screen, one window or part of it, with its sound, on an Android TV running the Miraya app, over an encrypted direct connection on your network, or plays a video file or link on the TV. The first time, you compare a six-digit code on both screens. No account, no cloud.")
         default: nil
         }
     }
@@ -143,6 +147,21 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.keep-awake", "awake_status"): String(localized: "Keep Awake status")
         case ("dev.sidefolk.keep-awake", "extend"): String(localized: "Keep awake longer")
         case ("dev.sidefolk.keep-awake", "set_option"): String(localized: "Keep Awake setting")
+        case ("dev.sidefolk.miraya", "find_tvs"): String(localized: "TVs around")
+        case ("dev.sidefolk.miraya", "share_screen"): String(localized: "Share screen to TV")
+        case ("dev.sidefolk.miraya", "play_on_tv"): String(localized: "Play on TV")
+        case ("dev.sidefolk.miraya", "stop"): String(localized: "Stop sharing")
+        case ("dev.sidefolk.miraya", "pause"): String(localized: "Pause sharing")
+        case ("dev.sidefolk.miraya", "resume"): String(localized: "Resume sharing")
+        case ("dev.sidefolk.miraya", "seek"): String(localized: "Skip in the video")
+        case ("dev.sidefolk.miraya", "tv_volume"): String(localized: "TV volume")
+        case ("dev.sidefolk.miraya", "pair_tv"): String(localized: "Pair with a TV")
+        case ("dev.sidefolk.miraya", "confirm_pairing"): String(localized: "Codes match · Pair")
+        case ("dev.sidefolk.miraya", "forget_tv"): String(localized: "Forget a TV")
+        case ("dev.sidefolk.miraya", "choose_tv"): String(localized: "Choose a TV")
+        case ("dev.sidefolk.miraya", "list_windows"): String(localized: "Windows to share")
+        case ("dev.sidefolk.miraya", "set_option"): String(localized: "Miraya setting")
+        case ("dev.sidefolk.miraya", "tv_status"): String(localized: "What's on the TV")
         default: nil
         }
     }
@@ -162,6 +181,8 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.system-vitals-plus", "battery_low"): String(localized: "Battery low")
         case ("dev.sidefolk.system-vitals-plus", "battery_health"): String(localized: "Battery worn")
         case ("dev.sidefolk.keep-awake", "ended"): String(localized: "Keep Awake ended")
+        case ("dev.sidefolk.miraya", "tv_on"): String(localized: "A paired TV is on")
+        case ("dev.sidefolk.miraya", "ended"): String(localized: "Sharing to the TV ended")
         default: nil
         }
     }
@@ -172,6 +193,7 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.system-vitals-plus", "mac"): String(localized: "Your Mac", comment: "System Vitals+: its page in Home's sidebar")
         case ("dev.sidefolk.clipboard", "clipboard"): String(localized: "Clipboard", comment: "Clipboard: its page in Home's sidebar")
         case ("dev.sidefolk.keep-awake", "awake"): String(localized: "Keep Awake", comment: "Keep Awake: its page in Home's sidebar")
+        case ("dev.sidefolk.miraya", "miraya"): "Miraya"
         default: nil
         }
     }

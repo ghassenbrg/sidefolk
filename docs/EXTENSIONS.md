@@ -117,6 +117,9 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `permissions.clipboard` | no | `true` lets it read and change the clipboard (D63). Its tools can't be below medium risk: what someone copies is theirs. |
 | `permissions.power` | no | `true` lets it keep the Mac awake (macOS power assertions) and ask Sidefolk to keep the person active (`sidefolk/nudge`, D63). |
 | `permissions.media` | no | `true` opens the Mac's graphics hardware and media decoders, which image code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo). No files or network come with it. |
+| `permissions.network_purpose` | no | With `network`: what you use it for, one line starting with "to" or "for" (≤ 120 characters), e.g. "to find TVs on your local network and stream to them". The sheet adds it to "Can use the network, the internet included": the sandbox can't keep you to the local network (D69). |
+| `permissions.udp` | no | With `network`: a UDP port of your own and the packets that come back to it, which live audio and video (WebRTC) needs; `network` alone refuses the bind. No listening TCP server. |
+| `permissions.screen` | no | `true` lets it record the screen and the sound the Mac plays (ScreenCaptureKit) and compress it with the hardware video encoder (D69). macOS asks the person to allow **Sidefolk** in Screen Recording: an extension runs as Sidefolk's child, so the permission is Sidefolk's, and this line is what keeps other extensions from using it. Pictures in IOSurfaces need `media` too. Its tools can't be below medium risk. |
 | `tools.<name>` | no | Sidefolk's metadata for a tool your program lists: `title`, `risk` (`low`, `medium`, `high`), `category` (`notes`, `memory`, `time`, `watch`, `files`, `web`, `system`, `agents`, `extensions`) and `mutates` (`false` if it only reads). Tool names: `^[a-z0-9_]{1,64}$`. |
 | `tools.<name>.paths` | no | Parameters that name a folder or file the person chooses, each `"read"` or `"write"` (at most 4). See [Folders named per call](#folders-named-per-call). |
 | `tools.<name>.timeout` | no | Seconds one call may take, 1–300; 30 if missing. For slow work like cloning. |
@@ -242,6 +245,9 @@ For a call with such a parameter:
    them. Each such call starts your program afresh (`initialize`, `tools/list`, the call), so keep start-up
    quick.
 4. A relative path is refused before any card.
+5. That process runs no background work (`SIDEFOLK_ONE_CALL=1`; the Kit skips `ext.background`). Work that must
+   outlive the call, like playing a film, can clone the file into the data folder (`clonefile`, no extra space on
+   the same disk) and hand it to the main process there, deleting the clone when done; Miraya does (D69).
 
 The install sheet says "Can read and change files in a folder you name, for that request only, once you
 approve it". A `"write"` parameter raises every tool to at least medium risk, like a fixed write folder.

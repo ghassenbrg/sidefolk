@@ -706,6 +706,24 @@ questions) always has a place, so no theme can hide a waiting approval. Ids unde
 taken only from the app's Resources and the signed gallery (T33), so a theme from a folder can't pass as Sidefolk's.
 A followed theme folder is read once a second and only checked and copied; a broken save leaves the last good theme.
 
+**T36 Extensions that record the screen and stream on the network (M/H), D69.** `permissions.screen` opens
+ScreenCaptureKit (`com.apple.replayd`, `com.apple.windowserver.active`) and the video encoder
+(`com.apple.coremedia.videoencoder`); `permissions.udp` (only with `network`) adds `network-bind` and `network-inbound`
+for UDP. Measured on macOS 27: without them ScreenCaptureKit hangs and UDP's bind is refused (EPERM); with them a
+display, a window, a picture and the Mac's sound are captured and H.264 goes out over WebRTC. macOS attributes the
+recording to the responsible process, Sidefolk (tccd: `responsible=app.sidefolk.Sidefolk…`), and on macOS 27 doesn't
+prompt: it lists Sidefolk, off, in Screen & System Audio Recording, and the extension says where to turn it on.
+- *Shared grant:* once the person allows Sidefolk, every extension whose manifest has `screen` can record. The
+  install sheet names it (with caution), raises every tool to medium, and warns when it comes with the network;
+  nothing else opens those services.
+- *Not the local network only:* SBPL accepts only `*` or `localhost` as a host (a private range doesn't compile,
+  `theSandboxCantFenceOffTheInternet`), so an extension that means the LAN can reach the internet; the sheet says so,
+  adding the author's `network_purpose` after it, never instead. UDP inbound is from any host that can reach the Mac.
+- *Files named per call that must outlive the call* (a film on the TV): the call's own process clones the file into
+  the data folder and hands it over; the clone is deleted at stop, and at the next start if Sidefolk quit first.
+*Residual:* a screen-recording extension with the network could send the screen anywhere; the sheet says it in those
+words. The TCC grant isn't per extension.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
@@ -789,6 +807,12 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 ;; only with exec entries (or for sh): children inherit this sandbox
 (allow process-fork)
+
+;; screen=true adds (ScreenCaptureKit and the encoder, measured on macOS 27, D69):
+;; (allow mach-lookup (global-name "com.apple.replayd") (global-name "com.apple.windowserver.active")
+;;   (global-name "com.apple.coremedia.videoencoder"))
+;; udp=true, only with network=true, adds:
+;; (allow network-bind (local udp "*:*")) (allow network-inbound (local udp "*:*"))
 
 ;; media=true adds (pictures on Apple silicon, measured on macOS 27; a VM's GPU is not among them):
 ;; (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))

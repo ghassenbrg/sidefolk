@@ -70,7 +70,7 @@ public final class Extension {
 
     /// Answers every message that has an id until Sidefolk closes stdin. Nothing else may reach stdout.
     public func serve() async {
-        if let work = backgroundWork { Task { await work() } }
+        if let work = backgroundWork, !Self.isOneCall { Task { await work() } }
         // Read without blocking the main actor, so background work runs between requests.
         for await line in Self.lines() {
             guard let message = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
@@ -87,6 +87,10 @@ public final class Extension {
             Self.write(reply)
         }
     }
+
+    /// Started for one call that works in a file or folder the person named (`tools.<name>.paths`): it answers that
+    /// call and ends, so it runs no background work; the extension's main process does that.
+    public static var isOneCall: Bool { ProcessInfo.processInfo.environment["SIDEFOLK_ONE_CALL"] == "1" }
 
     /// stdin's lines until Sidefolk closes it.
     private static func lines() -> AsyncStream<String> {
