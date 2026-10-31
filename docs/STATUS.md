@@ -51,7 +51,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   companion by clicking it in Which Cup? (a "Check its paw" button does it); AI trivia packs; the bank has no
   "Did you know?" lines; new companion moves still borrow the nearest moment (D75); sounds and VoiceOver not heard;
   on a shared Mac, clicks on the panel from someone else reach the game (it never takes keys unless opened by the
-  person). Playtime stays 2.0.0 (snapshots, D65).
+  person). Playtime stays 1.0.0, shipped as its next snapshot (founder's call, D65).
 - **Games beside the companion, phase 1 (D75), merged into main with D79 (both repos):** the Play panel (board parts,
   keys, focus rules, kept 10 minutes, one of Ask or Play at a time), `games` in the manifest and its validator, the
   game channel with its limits, `games.open`, companion cues from fixed lists with their pacing and Sidefolk's own
@@ -62,7 +62,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   best of three in the panel, its hand drawn and sealed before the person picks; both RPS bugs the founder found are fixed (the
   pumping fists looked like rocks; "paper wraps rock" drew paper over the person's rock). Coin with the companion's
   face, called or not; dice on a felt tray with real shapes; hands that clash; result chips and an Again pill; the
-  companion reacts. Playtime 2.0 (sidefolk-addons): trivia in the panel with no AI (topics, 5/10/endless, relaxed or
+  companion reacts. Playtime with games (sidefolk-addons): trivia in the panel with no AI (topics, 5/10/endless, relaxed or
   15 s, the companion's sealed pick by how well it knows the question, a lifeline, facts, records, a Home page), words
   in ten languages through the Kit's new `Localized`, rules as engines under `Sources/GameKit` (`GameEngine`,
   `GameScreen`, `TriviaPack`) for the engines and content branch to drop into. *Checked:* `make test` with
@@ -72,8 +72,8 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   an answer and a called coin. *Half done / next:* the new companion moves (sulk, shrug, tease, ready, accents) borrow
   the nearest existing moment until made and filmed for every 3D companion; trivia's questions stay the 52 English
   ones until the content packs merge (they implement `TriviaPack`); Sneaky's switch shows once a game offers it;
-  phase 2 parts and the new games (done in D79). A Sidefolk without games refuses Playtime 2.0 at install, so the app
-  ships before Playtime 2.0 is published.
+  phase 2 parts and the new games (done in D79). A Sidefolk without games refuses Playtime's games snapshots at install, so
+  the app ships before they are published.
 - **Resting poses that suit each 3D companion (sit, lie, sleep), on branch team/poses in both repos:** the founder
   found Spark lying in the shared lie (rolled onto its side, a Mochi pose) looking broken: big helmet upright over a
   sideways body, legs sticking out. All ten were reviewed in the playground (front, ¾, side, head close up, and the way

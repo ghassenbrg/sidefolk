@@ -1987,7 +1987,7 @@ as the opponent next to it (the approved plan, phase 1):
   default, with a speaker button per game (sounds are made in code, follow Quiet, a fullscreen app and macOS's
   interface-sounds setting). Lines are spoken only for someone who hears every reply (Settings › Voice) with the
   game's sound on. Sneaky is a setting passed to games (off), shown when a game offers it.
-- **Playtime 2.0** plays trivia in the panel with no AI: a topic, 5, 10 or endless questions, relaxed or 15 s each,
+- **Playtime** (still 1.0.0, in snapshots; first planned as 2.0) plays trivia in the panel with no AI: a topic, 5, 10 or endless questions, relaxed or 15 s each,
   the companion's sealed pick (right as often as it knows the question: by difficulty, its favourite and weak
   topics, the level), "Ask Mochi" once a round (unsure in a weak topic, it can fade the right one), a fact after
   each answer, an end card with a new best, records in its data folder, and a page in Home. Its words come in all ten
@@ -2005,7 +2005,7 @@ for draws and wins, and the companion seeming to mirror rock; these rules come f
 Sidefolk's cards, ignores themes); extension text spoken by the companion (an extension could make it say anything);
 modelling props per companion (twelve companions); shipping sound files (synthesized ones cost nothing to bundle).
 
-**Implications:** a 0.1.0 snapshot from before games refuses Playtime 2.0 at install (an unknown `games` key), as with
+**Implications:** a 0.1.0 snapshot from before games refuses Playtime's games snapshots at install (an unknown `games` key), as with
 pages (D62); accepted for snapshots. New companion moves (sulk, shrug, tease, ready and the short accents) borrow the
 nearest existing moment until each is made and filmed for every 3D companion; trivia's questions stay the 52 English
 ones until the content packs land (`TriviaPack`). **Not built:** the `pads`, `shuffle`, `reflex`, `meter`, `number`,
@@ -2206,6 +2206,6 @@ Stick, Memory Pairs and Daily Word, beside trivia.
 **Why:** the founder approved all ten games; phase 1 built the platform and left these parts and games to come.
 **Alternatives:** a timer in the extension for the companion's turn (stdin can't keep time, and it would hold a process
 awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
-**Implications:** older Playtime boards still open (unknown parts are skipped); a 0.1.0 snapshot still refuses Playtime
-2.0's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
+**Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
+Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
