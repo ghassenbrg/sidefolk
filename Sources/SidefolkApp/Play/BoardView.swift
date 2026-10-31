@@ -511,7 +511,7 @@ struct GameResultView: View {
         .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.surface.opacity(0.96))
             .shadow(color: .black.opacity(0.1), radius: 8, y: 3))
         .onAppear {
-            withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .spring(duration: 0.5, bounce: 0.45)) { shown = true }
+            withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .spring(duration: 0.4, bounce: 0.25)) { shown = true }
         }
         .accessibilityElement(children: .contain)
     }

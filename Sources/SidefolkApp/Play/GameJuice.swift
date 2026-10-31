@@ -48,6 +48,8 @@ struct GamePressStyle: ButtonStyle {
 struct Celebration: View {
     var seed: Int = 7
     @State private var start = Date()
+    /// The burst has landed: its clock stops, so an end card left open draws nothing.
+    @State private var done = false
     @Environment(\.revealProgress) private var fixed
 
     private static let colors: [Color] = [Theme.sun, Theme.coral, Color(hex: 0x3E7BFA), Color(hex: 0x2FA36B), Color(hex: 0x8B5CF6), Color(hex: 0x5AC8D8)]
@@ -56,7 +58,7 @@ struct Celebration: View {
         if GameMotion.reduced {
             EmptyView()
         } else {
-            TimelineView(.animation(minimumInterval: 1 / 60, paused: fixed != nil)) { t in
+            TimelineView(.animation(minimumInterval: 1 / 60, paused: fixed != nil || done)) { t in
                 let elapsed = fixed != nil ? 0.45 : t.date.timeIntervalSince(start)
                 Canvas { context, size in
                     guard elapsed < 2.4 else { return }
@@ -82,15 +84,20 @@ struct Celebration: View {
                     }
                 }
             }
+            .task {
+                try? await Task.sleep(for: .seconds(2.5))
+                done = true
+            }
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
     }
 }
 
-/// Soft rays of sunlight turning slowly behind the trophy of a win (still with Reduce Motion).
+/// Soft rays of sunlight behind the trophy of a win: they open once with it (scaling up and fading in, 400 ms), then
+/// stay still. Nothing turns for ever.
 struct TrophyRays: View {
-    @State private var turned = false
+    @State private var open = false
 
     var body: some View {
         Canvas { context, size in
@@ -102,14 +109,15 @@ struct TrophyRays: View {
                 ray.addLine(to: CGPoint(x: c.x + cos(a - 0.11) * r, y: c.y + sin(a - 0.11) * r))
                 ray.addLine(to: CGPoint(x: c.x + cos(a + 0.11) * r, y: c.y + sin(a + 0.11) * r))
                 ray.closeSubpath()
-                context.fill(ray, with: .radialGradient(Gradient(colors: [Theme.sun.opacity(0.55), Theme.sun.opacity(0)]), center: c,
+                context.fill(ray, with: .radialGradient(Gradient(colors: [Theme.sun.opacity(0.45), Theme.sun.opacity(0)]), center: c,
                                                         startRadius: 0, endRadius: r))
             }
         }
-        .rotationEffect(.degrees(turned ? 360 : 0))
+        .scaleEffect(open ? 1 : 0.6)
+        .rotationEffect(.degrees(open ? 0 : -15))
+        .opacity(open ? 1 : 0)
         .onAppear {
-            guard !GameMotion.reduced else { return }
-            withAnimation(.linear(duration: 24).repeatForever(autoreverses: false)) { turned = true }
+            withAnimation(GameMotion.reduced ? nil : .easeOut(duration: 0.4)) { open = true }
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)

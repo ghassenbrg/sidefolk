@@ -87,22 +87,27 @@ struct PlayerAvatar: View {
 
 /// The companion in the scene, peeking over what stands in front of it: drawn `width` across from the top, `share`
 /// of its height showing (its head and shoulders, whatever its shape), the rest left to the table drawn after it.
+/// Still art only (its portrait or a pose still), never a live render: when `beat` changes (a new board, a reaction) it
+/// hops once, 300 ms, with cheap transforms; nothing loops, so an idle game draws nothing.
 struct CompanionPeek: View {
     var picture: NSImage?
     var width: CGFloat
     var share: CGFloat = 0.62
-    @State private var bob = false
+    var beat: Int = 0
+    @State private var hop: CGFloat = 0
 
     var body: some View {
         if let picture = GameFigures.trim(picture) {
             let height = width * picture.size.height / max(picture.size.width, 1)
             Image(nsImage: picture).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                 .frame(width: width, height: height)
-                .offset(y: bob ? -2 : 1)
+                .scaleEffect(x: 1 - hop * 0.03, y: 1 + hop * 0.04, anchor: .bottom)
+                .offset(y: -hop * 6)
                 .frame(width: width, height: height * share, alignment: .top)
-                .onAppear {
+                .onChange(of: beat) { _, _ in
                     guard !GameMotion.reduced else { return }
-                    withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { bob = true }
+                    withAnimation(.easeOut(duration: 0.14)) { hop = 1 }
+                    withAnimation(.easeIn(duration: 0.16).delay(0.14)) { hop = 0 }
                 }
                 .accessibilityHidden(true)
         }

@@ -2227,8 +2227,16 @@ Sidefolk's own Activity rows (`GameStats`; each `games.play` row now records `re
 - **What is drawn where:** `GameStyle.of(look)` (Play/GameLooks.swift) holds each look's colours, scene and icon;
   `GameArt` (Play/GameArt.swift) the pictures; Play/GameStage.swift the companion and its bubble; Play/PlayMenu.swift the
   menu. A look's colour is identity only (D78): verdicts keep GameVerdict's colours, primary buttons the app's accent.
-- **The art budget:** about 1 MB of the 6–8 MB allowed, in one warm, glossy, toy-like style made with Codex image
-  generation: 11 scenes (HEIC, 768 × 1024, 40–100 KB; the table a prop stands on is the scene's own bottom), 12 menu
+- **Restraint and motion (the founder, on review):** like a game, not a busy one. The scene sits softly behind the
+  board (the room blurred and lowered in contrast in the picture itself, the table the props stand on left sharp; dimmed
+  further in dark mode), one focal point a screen, effects only for a win or a new best. The companion is still art
+  only (its portrait or 2D pose stills, never a live 3D view in the panel) and hops once (300 ms) when a board arrives;
+  nothing loops: the confetti's and a reveal's clocks stop once they land, the trophy's rays open once and stay. Swapped
+  cups slide along the table, one passing in front of the other (lower and larger), never through it. Measured in a
+  debug app: the app's process at about 3.7 % CPU with the panel closed (the desktop companion), about 4–4.5 % with a
+  game, the menu or an end card sitting idle in it.
+- **The art budget:** about 0.8 MB of the 6–8 MB allowed, in one warm, glossy, toy-like style made with Codex image
+  generation: 11 scenes (HEIC, 768 × 1024, 29–67 KB; the table a prop stands on is the scene's own bottom), 12 menu
   icons, 5 pad moves, 12 card faces, 10 topics, the Boop button, a bulb, a card back and a magnifier (WebP with alpha),
   beside the earlier cup, gem, balloon and trophy. The companion is never generated.
 - **A new game's look:** a `GameLook` case (and `solo` for a puzzle), its row in `GameStyle.of`, `game-bg-<look>.heic`

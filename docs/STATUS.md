@@ -7,13 +7,15 @@
   pads picturing their moves (a pad's `art`), memory faces and trivia topics drawn as the things, the Boop button,
   Take 1/2/3, and an end card with trophy, rays and confetti. The panel's home is a menu of game cards ("Play against
   Mochi", "Puzzles"), with Resume and Wins/Streak/Played from Activity (`GameStats`): Play menu › All Games… or a game's
-  back button. Art: about 1 MB in Play/Art (Codex image generation, one style). Playtime (still 1.0.0) names the looks
+  back button. Restrained on review: soft scenes, still companion art with a one-shot hop, nothing looping (idle CPU
+  about 4–4.5 % against 3.7 % with the panel closed), cups that pass in front of each other. Art: about 0.8 MB in
+  Play/Art (Codex image generation, one style). Playtime (still 1.0.0) names the looks
   and taglines in all ten languages. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on the add-ons branch (1585 core
   and 38 character tests), add-ons `swift test` (100), `build.py --unsigned` + `check.sh` against this app (all ok),
   `extension-strings.py check` (complete); UI snapshots of every game's start, turn, build-up, verdict and end, light and
   dark, in English, Arabic and Japanese, plus the menu, read as contact sheets against the direction; a debug app
   (build 614, SIDEFOLK_HOME build/qg-1) with Playtime installed from the branch: the menu, the cups' shuffle, Copy Me's
-  playback and a win filmed frame by frame. *Next:* the founder looks; a new game plugs in with a `GameLook` case, a
+  playback, a shuffle after the restraint pass and an end card filmed frame by frame. *Next:* the founder looks; a new game plugs in with a `GameLook` case, a
   `GameStyle.of` row and two pictures (D79 amended). A Sidefolk before this refuses the new Playtime (unknown keys).
 
 - **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form

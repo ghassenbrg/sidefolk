@@ -146,21 +146,24 @@ struct CupsView: View {
                             .position(x: slot * (CGFloat(spot) + 0.5), y: Self.floor + 1)
                     }
                     ForEach(0..<cups.count, id: \.self) { cup in
-                        // Each cup's shadow, smaller and lighter as it rises.
-                        let rise = layout.lift[cup] + CGFloat(layout.hop[cup]) * 0.3
+                        // Each cup's shadow on the table under it: smaller and lighter as it rises, nearer as it comes forward.
+                        let rise = layout.lift[cup], depth = CGFloat(layout.depth[cup])
                         Ellipse().fill(.black.opacity(0.16 * (1 - rise * 0.6)))
-                            .frame(width: min(slot - 14, 58) * (1 - rise * 0.3), height: 9)
-                            .position(x: slot * (CGFloat(layout.x[cup]) + 0.5), y: Self.floor + 1)
+                            .frame(width: min(slot - 14, 58) * (1 - rise * 0.3) * (1 + depth * 0.1), height: 9)
+                            .position(x: slot * (CGFloat(layout.x[cup]) + 0.5), y: Self.floor + 1 + depth * 9)
                     }
                     if let gem = layout.gemAt {
                         gemView.position(x: slot * (CGFloat(gem) + 0.5), y: Self.floor - 14)
                     }
                     ForEach(0..<cups.count, id: \.self) { cup in
-                        let x = layout.x[cup], lift = layout.lift[cup]
+                        // A swap slides the two cups along the table, one passing in front of the other (lower and a
+                        // little larger, as nearer), never through it.
+                        let x = layout.x[cup], lift = layout.lift[cup], depth = CGFloat(layout.depth[cup])
                         cupView(position: Int(x.rounded()))
                             .frame(width: min(slot - 8, 72), height: Self.cupHeight)
-                            .position(x: slot * (CGFloat(x) + 0.5), y: Self.floor - Self.cupHeight / 2 + 2 - lift * 46 - layout.hop[cup] * 14)
-                            .zIndex(layout.hop[cup])
+                            .scaleEffect(1 + depth * 0.1, anchor: .bottom)
+                            .position(x: slot * (CGFloat(x) + 0.5), y: Self.floor - Self.cupHeight / 2 + 2 - lift * 46 + depth * 9)
+                            .zIndex(Double(depth))
                     }
                     ForEach(0..<cups.count, id: \.self) { position in
                         Text(verbatim: "\(position + 1)").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Color(hex: 0x6B4A2B))
@@ -206,21 +209,23 @@ struct CupsView: View {
         .accessibilityLabel(String(localized: "Cup \(position + 1)", comment: "Which Cup?: a cup, read by VoiceOver"))
     }
 
-    /// Where each cup is at `elapsed` seconds: its position (fractional mid-swap), how far it is lifted, and the gem.
-    static func layout(_ c: GameBoard.Cups, _ elapsed: TimeInterval) -> (x: [Double], lift: [CGFloat], hop: [Double], gemAt: Int?) {
+    /// Where each cup is at `elapsed` seconds: its position (fractional mid-swap), how far it is lifted, how far toward
+    /// the viewer (+1) or away (−1) it is passing, and the gem.
+    static func layout(_ c: GameBoard.Cups, _ elapsed: TimeInterval) -> (x: [Double], lift: [CGFloat], depth: [Double], gemAt: Int?) {
         var at = Array(0..<c.count)
         var x = at.map(Double.init)
         var lift = [CGFloat](repeating: 0, count: c.count)
-        var hop = [Double](repeating: 0, count: c.count)
+        var depth = [Double](repeating: 0, count: c.count)
         if c.revealed {
             // Every cup up: the gem where it lay, or nowhere.
-            return (x, lift.map { _ in 1 }, hop, c.gem)
+            return (x, lift.map { _ in 1 }, depth, c.gem)
         }
-        guard !c.swaps.isEmpty, elapsed.isFinite else { return (x, lift, hop, nil) }
+        guard !c.swaps.isEmpty, elapsed.isFinite else { return (x, lift, depth, nil) }
         if elapsed < 1.4, let hide = c.hide {
-            // The gem shown under its cup, then the cup lowered over it.
-            lift[hide] = elapsed < 1.0 ? 1 : CGFloat(max(0, 1 - (elapsed - 1.0) / 0.4))
-            return (x, lift, hop, hide)
+            // The gem shown under its cup, then the cup lowered over it, easing onto the table.
+            let down = max(0, min(1, (elapsed - 1.0) / 0.4))
+            lift[hide] = elapsed < 1.0 ? 1 : CGFloat(1 - down * down * (3 - 2 * down))
+            return (x, lift, depth, hide)
         }
         let step = (elapsed - 1.4) / c.swapSeconds
         for (k, swap) in c.swaps.enumerated() where Double(k) < step {
@@ -230,14 +235,14 @@ struct CupsView: View {
             let eased = p < 1 ? (1 - cos(p * .pi)) / 2 : 1
             x[ca] = Double(a) + Double(b - a) * eased
             x[cb] = Double(b) + Double(a - b) * eased
-            hop[ca] = sin(p * .pi)
+            depth[ca] = p < 1 ? sin(p * .pi) : 0
+            depth[cb] = p < 1 ? -sin(p * .pi) : 0
             if p >= 1 {
                 at[ca] = b
                 at[cb] = a
-                hop[ca] = 0
             }
         }
-        return (x, lift, hop, nil)
+        return (x, lift, depth, nil)
     }
 }
 

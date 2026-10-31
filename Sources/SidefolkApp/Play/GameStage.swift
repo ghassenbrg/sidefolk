@@ -34,11 +34,11 @@ struct GameStage: View {
             if peeking {
                 VStack(spacing: 2) {
                     if let words { SpeechBubble(text: words, chip: prompt?.chip, clock: model.clock, tail: .bottom) }
-                    CompanionPeek(picture: pose, width: 96, share: 0.74)
+                    CompanionPeek(picture: pose, width: 96, share: 0.74, beat: model.turn)
                 }
             } else {
                 HStack(alignment: .bottom, spacing: 4) {
-                    CompanionPeek(picture: pose, width: 66, share: 0.8)
+                    CompanionPeek(picture: pose, width: 66, share: 0.8, beat: model.turn)
                         .clipped()
                     if let words { SpeechBubble(text: words, chip: prompt?.chip, clock: model.clock, tail: .leading) }
                     else { Spacer(minLength: 0) }
