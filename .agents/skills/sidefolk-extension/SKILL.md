@@ -1,0 +1,275 @@
+---
+name: sidefolk-extension
+description: Create, test, install and ship a Sidefolk extension end to end, inside this repository and the sidefolk-addons gallery - choosing its shape (tools, commands, watchers, a page in Home, a Today tile, switches and buttons, a palette, background work), the manifest and its validator rules, a Swift program on the Kit, unit and sandbox tests, a check in the debug app with snapshots, and shipping it to the gallery (addon.json, icon, translated words, build.py snapshots) or as a local folder. Use when asked to make a new Sidefolk extension, add a tool, command, watcher, page, tile, switch or palette to one, port another app's features into one ("replace Maccy with an extension"), or fix one the validator rejects. Not for companions (sidefolk-3d-character), themes (D58, `sidefolk theme new`), features that belong in the app itself (D38 built-in tools), or plain MCP servers.
+---
+
+# Sidefolk extension
+
+An extension (D13) is a folder: `sidefolk-extension.json` plus a program that speaks MCP over stdin/stdout. Sidefolk
+runs the program under `sandbox-exec` with a profile built from the manifest's permissions, shows those permissions in
+plain words before install, and sends every tool call through `ToolExecutor` (Guard, approvals, audit). The program
+never decides what it may do.
+
+| Where | What |
+|---|---|
+| `docs/EXTENSIONS.md` | The author's reference: every key, the protocol, sandbox, commands, pages, palettes, limits. Read the sections you need. |
+| `Sources/SidefolkCore/Extensions/` | `ExtensionManifest.swift` (strict decoding), `ManifestValidator.swift` (every rule below), `ExtensionCommandRules.swift`, `ExtensionPage.swift` (what a page may hold), `SandboxProfile.swift`, `PermissionSummary.swift` (the install sheet's lines), `ExtensionHost.swift` (lifecycle, pages, palettes), `ExtensionDrafts.swift` |
+| `extensions/` | The four built-ins (world-clock, system-vitals, weather, calculator; `catalog.json`), the `Kit/`, and the Python sample `hello-folk` |
+| `../sidefolk-addons/` (read its AGENTS.md) | The gallery (D55): `extensions/<name>/`, `Kit/` (a copy), `Tests/`, `scripts/build.py`, `check.sh`, `publish.sh` |
+| `skills/sidefolk-extension/` | The public skill for outside developers, with Python, Node and sh templates (no pages) |
+| This skill's `templates/swift/` | Water Tally: a Kit program with four tools, commands, a page with a Today tile, buttons, a switch, a chart and a watcher; `build.sh`; unit tests |
+
+Copy what a working extension does before inventing. Closest examples: a page and switches, `keep-awake`; a palette
+and background work, `clipboard`; a page with charts and many watchers, `system-vitals-plus`; folders named per call
+and a program by name, `git`; the internet and a watcher that fires once per crossing, `currency` (all in
+`../sidefolk-addons/extensions/`); commands, `extensions/calculator` and `world-clock`.
+
+## 0. Is it an extension?
+
+Yes when the job fits a sandbox: compute, read this Mac's own state (processes, memory, battery: what System Vitals+
+reads needs no permission, D62), call a web API, work in a folder the person names, run a known program, keep a small
+state, check something every few minutes, show a page, keep running (clipboard history, a power assertion).
+
+No when it needs:
+- other apps' content through Apple Events (Mail, Notes, Calendar): a built-in tool in the app (D38);
+- an account, API key or token: extensions can't hold secrets (D39); a plain MCP server can (Settings › Extensions ›
+  Add MCP Server, unsandboxed, at least medium risk);
+- to know which app is in front, open apps or links: Launch Services stays closed (D63);
+- to draw its own UI: pages are data Sidefolk draws (D62). A companion or a theme has its own path.
+
+Where it will live:
+- **Gallery** (Sidefolk's own, ids `dev.sidefolk.<name>`): `../sidefolk-addons/extensions/<name>/`, built and signed by
+  `scripts/build.py`. `build.py` asserts the `dev.sidefolk.` prefix and `run.command == "bin/ext-<name>"`; there is no
+  path for third-party packs yet.
+- **Built-in** (ships inside the app, can't be removed): only for what everyone needs; D55 cut these to four. Ask the
+  founder first.
+- **Local** (one Mac, anyone's id like `com.example.thing`): a folder installed with Settings › Extensions › Install
+  from Folder… (or dropped on the companion). No signing, no gallery, no updates but reinstalling.
+- **Draft**: Sidefolk's own AI writes text-only drafts (`.py .js .mjs .cjs .sh .json .txt .md .csv`, at most 20 files,
+  1 MB, id `local.<name>`, author "Sidefolk, for you") with `extensions.draft`, starts them once with every permission
+  removed, and opens the install preview with `extensions.review` (`Resources/Skills/build-extension/SKILL.md`,
+  `ExtensionDrafts.swift`, D39). You don't write drafts by hand; `swift scripts/dev.swift review:<name>` opens one.
+
+## 1. Decide the shape, then the least reach
+
+Write it down before any code: each feature, which part carries it, and what that part needs.
+
+| Part | When | Manifest | Program (Kit) |
+|---|---|---|---|
+| Tool | Anything the AI or a person asks for | `tools.<name>` | `ext.tool(name, title, description, input:) { args in … }` |
+| Command | A request with a clear shape answered at once, no AI, no tokens (D50) | `tools.<name>.commands`, `words` | (the tool) |
+| Commands only | The AI gains nothing (a coin flip, a page's setting) | `"ai": false` plus at least one command | (the tool) |
+| Watcher | "Tell me when…", checked every 5 min at the soonest; on a page it is a heads-up switch | `watchers.<name>` | `ext.watcher(name) { settings, state in Check(…) }` |
+| Page | A feature someone looks at: a page in Home's sidebar under Extensions | `pages.<name>` | `ext.page(name) { args in Page(…) }` |
+| Today tile | The page's summary on Today | `pages.<name>.widget: true` | (the page's `Summary`) |
+| Switch, button | Act from the page: runs one of its own tools as the person, through Guard (D63) | the tool | `.toggle(…, tool:, input:)`, `.button(…, tool:, input:, style:)` |
+| Ask button | Send a sentence to Ask, as if typed | none | `.ask(label, sentence)` |
+| Palette | A list on a keyboard shortcut over any app (D63) | `palettes.<name>` | `ext.palette(name, query:, choose:)` |
+| Background | Must watch all the time (each copy, a held assertion) | `"background": true` | `ext.background { … }` (await, never spin) |
+| Nudge | Keep the person "active" for chat apps | `permissions.power` | `ext.send("sidefolk/nudge")` (Sidefolk honours one per 20 s) |
+
+Permissions (`permissions`, all optional; nothing is the goal). Every name below is checked in
+`ManifestValidator.checkPermissions` and opened by `SandboxProfile.swift`:
+- none: reads its own folder, writes its data folder (`SIDEFOLK_DATA_DIR`, also `HOME` and `TMPDIR`), may read the
+  process list and the I/O Registry (D62 notes this needs no permission);
+- `network: true`: any host, the LAN and localhost too;
+- `files.read` / `files.write`: fixed folders, absolute or `~/`, never `~`, `~/Library`, hidden or system folders,
+  nor Sidefolk's own data; prefer **folders named per call**, `tools.<name>.paths: {"<param>": "read"|"write"}`
+  (at most 4; Guard checks each against the person's shared folders, and that call runs in a process of its own);
+- `exec`: absolute paths of real, root- or user-owned programs, or `git` by name (`ProgramResolver.known`). Shells,
+  interpreters, `osascript`, `open`, `curl`… are flagged "can run anything" (`ExtensionPermissions.anythingRunners` in `PermissionSummary.swift`);
+- `media`: the GPU and video decoders that Core Image and ImageIO need; `clipboard`: `com.apple.pasteboard.1`;
+  `power`: `com.apple.PowerManagement.control` and nudges.
+
+Risk per tool: `low` runs, `medium` asks once (Always allow possible), `high` asks every time. Missing means medium.
+The floor is medium for every tool when the extension has `network`, any `files.write`, a `"write"` folder
+parameter, a "can run anything" program, or `clipboard` (`ExtensionPermissions.raisesRiskFloor`, `PermissionSummary.swift`); a manifest can raise
+a risk, never lower it. Mark read-only tools `"mutates": false`.
+
+## 2. The manifest
+
+Strict (`ExtensionManifest.swift`): an unknown key anywhere is an error, at most 64 KiB. Top level:
+
+| Key | Meaning and rule (`ManifestValidator.checkIdentity` unless noted) |
+|---|---|
+| `id` | Required. `^[a-z0-9]+(\.[a-z0-9-]+)+$`, at most 64. Its last part names the tools (`ext.<last>.<tool>`) and should name the folder (another folder name is a warning; installed copies must match exactly). Stable forever. |
+| `name` | Required. 1–60 characters of plain text. |
+| `version` | Required. `^\d+\.\d+(\.\d+)?([-+][0-9A-Za-z.-]+)?$`. Gallery: the version it's heading for (`1.0.0`); `build.py` publishes `1.0.0-snapshot.<n>` until `addon.json` says `"released"` (D65). Never write `-snapshot.N` yourself. |
+| `sidefolk` | `>=0.1`: refused if this copy is older (`satisfies`). Becomes the catalog's `minimum_sidefolk`. Sidefolk stays 0.1.0 until the founder ships it, so write `>=0.1` (D62 amended). |
+| `description` | At most 300 characters; the install preview shows it whole, Settings under Details. |
+| `tagline` | One line, 1–60 characters, under the name in Settings. |
+| `folk` | `^[a-z0-9-]{1,32}$`; one of `pip byte seed melody scout tempo play guard nova brew` (`Sources/SidefolkCharacter/Folks.swift`). |
+| `author` | At most 100 characters. Gallery: "Sidefolk". |
+| `icon` | `icon.pdf` (one square page) or `icon.png` (64–1024 px square), at most 256 KiB, inside the folder; SVG refused (`ExtensionIcon`). |
+| `run` | `{"command": "bin/ext-<name>"}` for a Kit program (a Mach-O file, executable, inside the folder), or `python3`/`node`/`sh` with the script as `args[0]` (`InterpreterResolver.supported`). At most 32 args. |
+| `permissions` | Above. Keys: `network files exec media clipboard power`. |
+| `tools.<name>` | `^[a-z0-9_]{1,64}$`, full name ≤ 64. `title` 1–80 plain text, `risk`, `category` (`notes memory time watch files web system agents extensions`), `mutates`, `paths`, `timeout` 1–300 s (30 default), `ai`, `commands`. At most 128 tools. |
+| `words.<list>` | Word lists a slot can take (`{from:unit}`): at most 16 lists, 2,000 words. |
+| `watchers.<name>` | `title` 1–60, `description` ≤ 300, `config.<key>`: `type` (`integer number string boolean`), `description`, `default` (must fit the type), `required`, `minimum` ≤ `maximum`. At most 32 watchers, 32 settings each. |
+| `pages.<name>` | `title` 1–40, `symbol` an SF Symbol name (`^[a-z0-9]+(\.[a-z0-9]+)*$`), `refresh` 2–3600 s while open (5 default), `history` and `widget` (also read once a minute while Sidefolk runs; the install preview says so). At most 4 (`checkPages`). |
+| `palettes.<name>` | `title` 1–40, `hotkey` like `shift+cmd+c` (cmd, ctrl or option, then one key), `placeholder` ≤ 60. At most 2 (`checkPalettes`). |
+| `background` | `true`: starts with Sidefolk, no idle stop, back after a crash until 3 in 5 minutes turn it off. |
+
+Commands (`ExtensionCommandRules.swift`, docs/EXTENSIONS.md › Answering without the AI): `{"say": [...], "input": {...}}`,
+slots `{name}` (any words) or `{name:kind}` with kinds `text word number integer expression place url date list` or a
+`words` list. A sentence needs a word of its own, can't start with a slot that takes any words, has at most 3 slots and
+80 characters; no common replies ("yes", "thanks", "stop"); every sentence of a command has the same slots; at most 12
+sentences a command, 8 commands a tool, 64 sentences an extension; `"ai": false` needs commands. English only (D28).
+Without `input`, slots fill the arguments of the same name. Return an error (`Problem`) for input you don't understand:
+the sentence then goes to the AI.
+
+A real manifest with a page, a tile, commands and a watcher is `templates/swift/sidefolk-extension.json`. Others:
+Keep Awake (background, `power`, a page with buttons and switches, `"ai": false` on `set_option`) and Clipboard
+(`clipboard`, a palette on `shift+cmd+c`, a page), in `../sidefolk-addons/extensions/`.
+
+## 3. The program on the Kit
+
+`extensions/Kit/` (`Extension.swift`, `Page.swift`, `Schema.swift`, `System.swift`), copied unchanged to
+`../sidefolk-addons/Kit/` (change it here first; `check.sh` warns when they differ). One `Extension(name:)`, register
+handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit answers `initialize`, `ping`,
+`tools/list`, `tools/call`, `sidefolk/watch.check`, `sidefolk/page.render`, `sidefolk/palette.query` and
+`sidefolk/palette.choose`, one JSON-RPC line each way; stdout carries nothing else (log to stderr).
+
+- **Tools**: `Schema.object([...], required:)` with `Schema.string/integer/number/boolean/array/path`; every object
+  refuses unknown keys, so bound everything. Read with `args.string/int/double/bool/strings/required`. Throw
+  `Problem("…")` for what the person or model can fix: it becomes an `isError` result. Third-party descriptions never
+  reach the model (D24); first-party ones (built-in and gallery, `ExtensionOrigin.firstParty`) do (D39, D55), so write
+  them like prompts.
+- **Watchers**: return `Check(triggered:, state:, summary:)`. Trigger on change, not level, keeping what you need in
+  `state` (≤ 64 KB); `summary` ≤ 200 characters. A page shows each watcher as a heads-up switch that runs
+  `watch.extension` as the person, every 5 minutes, in `repeat` mode (`Sources/SidefolkApp/Home/ExtensionPageModel.swift`).
+- **Pages**: `Page(summary: Summary(title, detail:, tone:, symbol:), sections: [Section(title, [Block])])`. Blocks:
+  `.gauge`, `.stat`, `.chart(id:…, series: [Series(key, label, value, display:)])`, `.bars`, `.facts`, `.note`, `.ask`,
+  `.toggle`, `.button`; tones `good warn bad info neutral`. Sidefolk drops what doesn't fit (`ExtensionPage.parse`):
+  a page over 128 KB fails; at most 16 sections, 24 blocks a section, 24 items a list, 4 series a chart; chart `id` and
+  series `key` must match `^[a-z0-9_]{1,40}$` and stay stable (they name the kept history); a switch or button must
+  name a tool of this extension (`^[a-z0-9_]{1,64}$`), its `input` ≤ 4 KB, and a switch adds `on`. Text is clipped
+  (summary title 80, detail 160, labels 30–60, notes 400) and never reaches a model.
+- **Language**: `args.string("language")` in a page render is the person's (`en`, `fr`, `ar`). Page text is English
+  for now (D62). A gallery extension's name, tagline, description, tool, watcher, page and palette titles are
+  translated by the app instead (`BuiltInExtensionWords.swift`, step 7).
+- **Palettes**: `query` returns `PaletteList([PaletteItem(id:, title:, detail:, kind:, pinned:, actions:)], note:)`
+  (kinds `text link image file color code`, actions `plain pin delete`; at most 200 items, 10 s a call); `choose`
+  gets the item id and `choose|plain|pin|delete` and returns `PaletteChoice(close:, paste:, message:)`. With `paste`,
+  put the content on the clipboard first (needs `permissions.clipboard`); Sidefolk presses ⌘V once the person allowed
+  Accessibility.
+- **Background**: `ext.background { await … }` shares the main actor with requests (stdin is read off it).
+- **Files**: `Paths.data` is the data folder (kept across updates, removed with the extension). `Paths.home` is the
+  person's real home (HOME is the data folder in the sandbox). `run(program, args)` runs an `exec` program;
+  `Web.json(url)` needs `network`.
+- **Python, Node, sh** work too (`run.command` `python3`/`node`/`sh`; Python is the developer tools' 3.9 under `-I -B`),
+  but every shipped extension is Swift so it needs nothing installed (D39 addendum). The protocol is the same: see
+  `extensions/hello-folk/main.py` and `skills/sidefolk-extension/templates/`, and add `sidefolk/page.render` yourself.
+
+## 4. Start from the template
+
+```sh
+cp -R .claude/skills/sidefolk-extension/templates/swift ~/scratch/<name>   # outside any repository
+```
+
+Then rename everywhere: the id (`com.example.water-tally`), `run.command` and the product `ext-<name>` (Package.swift,
+`build.sh` reads the id), `Extension(name:)`, the test's `@testable import ext_<name>`. Replace Water Tally's logic,
+keeping its split: pure logic in its own file (tested), the page in another, `main.swift` only wiring.
+
+- **Local**: `./build.sh <sidefolk checkout> <out>` copies the Kit, builds release, and assembles `<out>/<name>/` with
+  only the manifest, the icon and `bin/ext-<name>` (Install from Folder copies everything in a folder, so never install
+  the source folder).
+- **Gallery**: make `../sidefolk-addons/extensions/<name>/` with `sidefolk-extension.json`, `icon.pdf`, `addon.json`
+  and `Sources/` (the template's `Sources/*.swift`), add `<name>` to `extensions` in that repo's `Package.swift`, and put
+  its logic tests in `Tests/` (`@testable import ext_<name>`, see `Tests/ClipboardKeepAwakeTests.swift`).
+
+## 5. Test
+
+1. **Logic**: `swift test` (template, after `build.sh` copied `Kit/`), or in sidefolk-addons `swift test`.
+2. **Protocol by hand**, from a scratch folder:
+   ```sh
+   cd "$(mktemp -d)" && printf '%s\n' \
+     '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
+     '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"log_water","arguments":{"glasses":2}}}' \
+     '{"jsonrpc":"2.0","id":3,"method":"sidefolk/page.render","params":{"page":"water","language":"en"}}' \
+     '{"jsonrpc":"2.0","id":4,"method":"sidefolk/watch.check","params":{"watcher":"behind","config":{"after_hour":6},"state":null}}' \
+     | SIDEFOLK_DATA_DIR=$PWD <out>/<name>/bin/ext-<name>
+   ```
+3. **Validator and a start in the real sandbox** (`ExtensionValidator.validate`, then `.trial`, which installs a copy
+   into a throwaway home):
+   ```sh
+   swift build --product sidefolk
+   SIDEFOLK_HOME="$(mktemp -d)" .build/debug/sidefolk ext validate <out>/<name>
+   ```
+   It must end `Valid.` and "It started in its sandbox and offers N tools", with no `Warnings:`. Read the
+   `Permissions:` lines and warnings as a stranger would: they are the install preview's lines
+   (`PermissionSummary.forExtension`), and the preview adds "Pages in Home: …, read once a minute in the background"
+   for `history`/`widget` (`ExtensionWords.pages`). Each line must be true and nothing the extension does may be
+   missing from them. Note: the preview has no line for `background: true` or for palettes yet; the CLI prints
+   "Keeps running while it's on" and "Palettes:". Gallery: `python3 scripts/build.py --unsigned` then
+   `SIDEFOLK_APP=../sidefolk scripts/check.sh` validates every staged pack.
+4. **Sandbox tests in the app** for a gallery extension: add a test to
+   `Tests/SidefolkCoreTests/Extensions/ShippedExtensionSandboxTests.swift` (or `ExtensionPageTests.swift` for a page)
+   gated on `ExtFixtures.hasAddons`: `HostEnv()`, `h.host.install(from: ExtFixtures.builtIn("<name>"))`,
+   `h.call("ext.<name>.<tool>")`, `h.host.checkWatcher(…)`, `h.host.renderPage(extensionId:page:)`. They run against a
+   built `../sidefolk-addons` (`swift build` there; `SIDEFOLK_ADDONS_REPO` moves it); `ExtFixtures.builtIns` copies each
+   add-on's manifest, `icon.pdf` and program, so it needs an `icon.pdf`. `make test` (serial, D18).
+5. **In the debug app**, with a fresh short home (the socket path must stay under 104 bytes):
+   ```sh
+   scripts/build-app.sh debug        # or make dev, which uses build/dev-home
+   QA=$PWD/build/qa-$(date +%H%M); mkdir -p $QA
+   SIDEFOLK_HOME=$QA build/Sidefolk-dev.app/Contents/MacOS/Sidefolk > $QA.log 2>&1 &
+   SIDEFOLK_HOME=$QA swift scripts/dev.swift installFolder:<out>/<name>    # installs as if the preview was approved
+   SIDEFOLK_HOME=$QA swift scripts/dev.swift page:<id>/<page>              # Home on the page
+   SIDEFOLK_HOME=$QA swift scripts/dev.swift "ask:log 2 glasses of water"  # a command, or anything for the AI
+   SIDEFOLK_HOME=$QA swift scripts/dev.swift palette:<id>/<palette>        # as if its shortcut were pressed
+   SIDEFOLK_HOME=$QA swift scripts/dev.swift snap                          # PNGs in $QA/snapshots
+   ```
+   Read the PNGs (Home is the `NSWindow-…` one, Ask a `FloatingPanel-…`). A page re-reads every `refresh` seconds, so
+   a change made from Ask shows on the next read. Logs: `$QA/Logs/` (category `extensions`); the profile:
+   `$QA/Sandbox/<id>.sb`; its data: `$QA/ExtensionData/<id>/`. Stop only your app:
+   `pkill -f "$PWD/build/Sidefolk-dev.app/Contents/MacOS/Sidefolk"` (teammates run theirs). No live model calls:
+   test commands and pages, not the AI.
+
+## 6. Ship it
+
+**Local**: hand over `<out>/<name>/`; the person uses Settings › Extensions › Install from Folder… and reads the
+preview. A new version is installed the same way; the sheet shows permissions gained and lost; changed tool
+definitions are held until approved.
+
+**Gallery** (`../sidefolk-addons`, never push or publish unless the founder asks):
+- `addon.json` beside the manifest: `{ "category": "everyday" }` (or `files`, `developer`, `fun`: the shelf, D56).
+  Add `"released": "1.0.0"` only when the founder releases that version (D65).
+- `icon.pdf`: add a drawing function to `scripts/extension-icons.swift` (full-bleed, a folk's colours, 512 pt) and
+  its entry in `icons`. The script writes `extensions/<name>/icon.pdf` in this repo, so for a gallery extension make
+  that folder, run `swift scripts/extension-icons.swift --png /tmp/icons <name>`, look at the PNG, move the PDF to the
+  add-on folder and remove the folder. Name only the icon you changed: a PDF records when it was written.
+- Translated words: add the extension's name, tagline, description, every tool, watcher, page and palette title and
+  placeholder to `Sources/SidefolkCore/Extensions/BuiltInExtensionWords.swift`, word for word as in the manifest
+  (`BuiltInExtensionWordsTests` compares them); then `bash scripts/strings.sh` and translate the new strings into the
+  nine other languages in `Resources/Localization/Localizable.xcstrings` (say so if your task forbids touching it).
+- `swift test`, `python3 scripts/build.py --unsigned`, `scripts/check.sh` there; `make test` here.
+- `python3 scripts/build.py` (Developer ID) and `scripts/publish.sh` are the founder's. `build.py` numbers snapshots
+  itself, keeps a published pack byte for byte, and stops when a released version's files changed. Never raise a
+  version by hand to make a snapshot; never release a version yourself. To try a signed build in a debug app before
+  publishing: `SIDEFOLK_ADDONS=<sidefolk-addons>/dist` (non-release copies only, `AddonCatalog.swift`).
+
+## 7. Checklist
+
+- [ ] It does what its words say; nothing on the page or in an answer is made up (no fake features).
+- [ ] Every action goes through a tool, so `ToolExecutor` and Guard see it; pages, palettes and watchers only read
+      and report. Switches and buttons call its own tools.
+- [ ] The least permissions that work; each preview line and warning is true and complete; risks are honest.
+- [ ] Titles and parameter names say what they do; inputs bounded; failures are `Problem`s that say what to do.
+- [ ] Commands cover the common shapes, read right in the validator's "Answers without AI", and `"ai": false` is used
+      where the AI gains nothing.
+- [ ] Watchers trigger on change; the page's chart ids and series keys are stable.
+- [ ] `sidefolk ext validate` says `Valid.` with no warning; logic tests pass; gallery: `check.sh`, sandbox tests,
+      `make test`.
+- [ ] Snapshots of the page (and palette, Ask answers) read and compared with what was meant, light and dark if the
+      layout is new.
+- [ ] Icon, tagline ≤ 60, description ≤ 300, author; gallery: `addon.json`, `BuiltInExtensionWords`, strings.
+- [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;
+      `docs/EXTENSIONS.md` when the platform changed. Commit in a coherent milestone, no Co-Authored-By trailer.
+
+## Newer features (to document after they merge)
+
+Being added on other branches; check `git log` and fill these in from the merged code:
+- A quick on/off control for extensions such as Keep Awake, and managing extension pages.
+- Palette images and previews (Clipboard).
+- New permissions such as screen capture and the local network (a Miraya extension).

@@ -1,0 +1,51 @@
+{
+  "id": "com.example.water-tally",
+  "name": "Water Tally",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "Counts the glasses of water you drink today against a goal, as a page in Home with a tile on Today, answers without the AI, and a heads-up in the afternoon when you're behind. Nothing leaves your Mac.",
+  "tagline": "Glasses of water today, against your goal",
+  "folk": "seed",
+  "author": "Example",
+  "run": { "command": "bin/ext-water-tally" },
+  "pages": {
+    "water": { "title": "Water", "symbol": "drop", "refresh": 10, "history": true, "widget": true }
+  },
+  "tools": {
+    "log_water": {
+      "title": "Log glasses of water", "risk": "low", "category": "memory", "mutates": true,
+      "commands": [
+        { "say": ["log a glass of water", "add a glass of water", "i drank a glass of water", "i had a glass of water"] },
+        { "say": ["log {glasses:integer} glasses of water", "drank {glasses:integer} glasses of water"] }
+      ]
+    },
+    "water_today": {
+      "title": "Water drunk today", "risk": "low", "category": "memory", "mutates": false,
+      "commands": [
+        { "say": ["how much water today", "how much water have i had today", "water today", "water tally"] }
+      ]
+    },
+    "set_goal": {
+      "title": "Set the daily water goal", "risk": "low", "category": "memory", "mutates": true,
+      "commands": [
+        { "say": ["set my water goal to {goal:integer}", "set my water goal to {goal:integer} glasses", "water goal {goal:integer}"] }
+      ]
+    },
+    "set_option": {
+      "title": "Water Tally setting", "risk": "low", "category": "memory", "mutates": true, "ai": false,
+      "commands": [
+        { "say": ["count water in large glasses"], "input": { "option": "large_glasses", "on": true } },
+        { "say": ["count water in small glasses"], "input": { "option": "large_glasses", "on": false } }
+      ]
+    }
+  },
+  "watchers": {
+    "behind": {
+      "title": "Behind on water",
+      "description": "Tells you once a day when it's past the hour you choose and you've had less than half your goal.",
+      "config": {
+        "after_hour": { "type": "integer", "description": "From this hour of the day (24-hour clock).", "default": 15, "minimum": 6, "maximum": 22 }
+      }
+    }
+  }
+}
