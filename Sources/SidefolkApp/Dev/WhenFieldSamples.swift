@@ -14,8 +14,8 @@ struct WhenFieldSamples: View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             ForEach(texts.indices, id: \.self) { i in
                 WhenField(text: $texts[i], prompt: Text("When, like “tomorrow 9:00”"), parser: parser, focus: $focus, focusValue: i,
-                          emptyHint: i == 0 ? Text("Leave empty to keep \(TimeFormat.when(Date(), now: Date(), calendar: .current))") : nil)
-                    .textFieldStyle(.roundedBorder)
+                          emptyHint: i == 0 ? Text("Leave empty to keep \(TimeFormat.when(Date(), now: Date(), calendar: .current))") : nil,
+                          boxed: true)
             }
         }
         .padding(Theme.Space.l)

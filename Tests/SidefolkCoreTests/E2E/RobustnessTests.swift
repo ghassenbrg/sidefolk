@@ -12,7 +12,7 @@ import Testing
         ])
         let events = await world.ask("save buy oat milk and tell me what else I need this week")
         let failure = try #require(events.compactMap(\.failure).first)
-        #expect(failure.message.contains("Some of it was already done; Activity shows what."), "\(failure.message)")
+        #expect(failure.message.contains("Some of it was already done; History shows what."), "\(failure.message)")
         #expect(!failure.changedNothing)
         #expect(try await world.notebook.items().map(\.title) == ["Buy oat milk"])
         #expect(try await AgentRunStore(world.env.db).recent().first?.outcome == "failed")

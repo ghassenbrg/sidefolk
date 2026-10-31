@@ -60,8 +60,9 @@ public struct PermissionStore: Sendable {
         _ = try await db.writer.write { db in try GrantedFolder.deleteOne(db, key: path) }
     }
 
-    public func policy() async throws -> GuardPolicy {
-        try await KVStore(db).get(Self.policyKey, as: GuardPolicy.self) ?? GuardPolicy()
+    /// The policy as it holds at `now`: Full access that has ended reads as the mode it replaced (D84).
+    public func policy(now: Date = Date()) async throws -> GuardPolicy {
+        (try await KVStore(db).get(Self.policyKey, as: GuardPolicy.self) ?? GuardPolicy()).current(at: now)
     }
 
     public func setPolicy(_ p: GuardPolicy) async throws { try await KVStore(db).set(Self.policyKey, p) }
@@ -70,7 +71,8 @@ public struct PermissionStore: Sendable {
     /// failed would switch back on every capability the person had turned off; this throws instead.
     public func updatePolicy(_ change: @escaping @Sendable (inout GuardPolicy) -> Void) async throws {
         try await db.writer.write { db in
-            var policy = try KeyValue.fetchOne(db, key: Self.policyKey)?.value.decode(GuardPolicy.self) ?? GuardPolicy()
+            // An ended Full access is changed as what it became, so the change can't bring it back.
+            var policy = (try KeyValue.fetchOne(db, key: Self.policyKey)?.value.decode(GuardPolicy.self) ?? GuardPolicy()).current(at: Date())
             change(&policy)
             try KeyValue(key: Self.policyKey, value: try JSONValue.from(policy)).save(db)
         }

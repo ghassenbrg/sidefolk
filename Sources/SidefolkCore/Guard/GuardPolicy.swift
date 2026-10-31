@@ -86,6 +86,10 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     public var disabled: Set<Capability> = []
     public var unanswered = UnansweredRule()
     public var internet: InternetRule = .oncePerSite
+    /// When Full access ends by itself (D84): "for 1 hour", "until tonight". nil lasts until the person turns it off.
+    public var fullAccessEnds: Date?
+    /// The mode Full access hands back to when it ends; never Full access itself.
+    public var beforeFullAccess: GuardMode = .askOncePerKind
 
     public init(mode: GuardMode = .askOncePerKind, disabled: Set<Capability> = [], unanswered: UnansweredRule = UnansweredRule(),
                 internet: InternetRule = .oncePerSite) {
@@ -104,6 +108,31 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         disabled = Set(((try? c.decode([String].self, forKey: .disabled)) ?? []).compactMap(Capability.init(rawValue:)))
         unanswered = (try? c.decode(UnansweredRule.self, forKey: .unanswered)) ?? UnansweredRule()
         internet = (try? c.decode(InternetRule.self, forKey: .internet)) ?? .oncePerSite
+        fullAccessEnds = try? c.decodeIfPresent(Date.self, forKey: .fullAccessEnds)
+        let before = (try? c.decode(GuardMode.self, forKey: .beforeFullAccess)) ?? .askOncePerKind
+        beforeFullAccess = before == .fullAccess ? .askOncePerKind : before
+    }
+
+    /// The policy as it holds at `now`: Full access past its end is the mode it replaced (D84). Guard reads the policy
+    /// through this, so an end can't be missed by a timer that didn't fire (a Mac asleep, Sidefolk quit).
+    public func current(at now: Date) -> GuardPolicy {
+        guard mode == .fullAccess, let ends = fullAccessEnds, ends <= now else { return self }
+        var policy = self
+        policy.mode = beforeFullAccess
+        policy.fullAccessEnds = nil
+        return policy
+    }
+
+    /// Switches to `mode`. Full access remembers what it replaced and ends at `ends` (nil: when turned off); any other
+    /// mode forgets an end.
+    public mutating func choose(_ mode: GuardMode, fullAccessEnds ends: Date? = nil) {
+        if mode == .fullAccess {
+            if self.mode != .fullAccess { beforeFullAccess = self.mode }
+            fullAccessEnds = ends
+        } else {
+            fullAccessEnds = nil
+        }
+        self.mode = mode
     }
 
     /// The mode Guard applies to `caller`. Only Sidefolk's own agent, which acts on the person's own

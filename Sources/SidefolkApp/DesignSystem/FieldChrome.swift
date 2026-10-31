@@ -14,6 +14,44 @@ extension View {
                     shape.strokeBorder(Theme.danger, lineWidth: 1)
                 }
             }
+            .contrastEdge(radius: Theme.Radius.control)
             .animation(Theme.Motion.micro, value: focused)
     }
+
+    /// Under Increase Contrast, a filled shape without a border of its own gets one (a well, a soft card, a tile), so
+    /// its edge doesn't rest on a difference of fills alone. Nothing changes otherwise.
+    func contrastEdge(radius: CGFloat) -> some View { modifier(ContrastEdge(radius: radius)) }
+}
+
+private struct ContrastEdge: ViewModifier {
+    var radius: CGFloat
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if contrast == .increased {
+                RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.controlBorder, lineWidth: 1)
+            }
+        }
+    }
+}
+
+/// A text or secure field dressed as Lantern's well (D84) that keeps its own focus for the ring, for a field that
+/// doesn't move the keyboard itself: `.lanternField()` in place of `.textFieldStyle(.roundedBorder)`.
+struct LanternField: ViewModifier {
+    var problem = false
+    @FocusState private var focused: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .textFieldStyle(.plain)
+            .focused($focused)
+            .padding(.horizontal, Theme.Space.s)
+            .frame(minHeight: Theme.Size.field)
+            .fieldChrome(focused: focused, problem: problem)
+    }
+}
+
+extension View {
+    func lanternField(problem: Bool = false) -> some View { modifier(LanternField(problem: problem)) }
 }

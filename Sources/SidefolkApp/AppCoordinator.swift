@@ -16,7 +16,8 @@ final class AppCoordinator {
     let runtime: SidefolkRuntime
     let ask = AskModel()
     private(set) var askPanel: AskPanelController!
-    let bubbles = BubbleController()
+    /// Whispers, cards and the stack above the companion (D84).
+    let sidecard = SidecardController()
     let statusItem = StatusItemController()
     /// Extensions' palettes on their shortcuts (D63).
     private(set) lazy var palettes = PaletteController(host: runtime.extensions)
@@ -39,7 +40,10 @@ final class AppCoordinator {
     private(set) var onboarding: Onboarding!
     var mood = CompanionMood()
     private var roster = DutyRoster()
-    private var backlog = 0
+    /// Open notices that need an answer (the attention center's count).
+    var backlog = 0
+    /// Live values' recent numbers, for their pins' small lines; in memory only.
+    var sparks: [String: [Double]] = [:]
     private var rosterTask: Task<Void, Never>?
     private var nowRefreshTask: Task<Void, Never>?
     let secrets: any SecretStore = KeychainSecretStore()
@@ -47,7 +51,7 @@ final class AppCoordinator {
     var currentRun: String?
     private(set) lazy var home = HomeWindowController(services: self)
     private(set) lazy var settingsWindow = SettingsWindowController(services: self)
-    private lazy var about = AboutWindowController()
+    private lazy var about = AboutWindowController(updates: updater.model)
     /// Looking for a newer Sidefolk and installing it when asked (D46).
     private(set) lazy var updater = UpdateController(runtime: runtime)
     private(set) lazy var addonUpdater = AddonUpdateController(runtime: runtime, model: updater.model, themes: .app(runtime.paths))
@@ -74,6 +78,9 @@ final class AppCoordinator {
     /// The Ask shortcut's press silenced the companion; its release doesn't toggle the panel too.
     var askKeySilenced = false
     var talkKeysInstalled = false
+    /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
+    var attentionTimer: Task<Void, Never>?
+    var fullAccessTimer: Task<Void, Never>?
 
     init(runtime: SidefolkRuntime) {
         self.runtime = runtime
@@ -92,7 +99,10 @@ final class AppCoordinator {
         askPanel.onEscape = { [weak self] in self?.voice.cancel() ?? false }
         askPanel.onVisibilityChange = { [weak self] visible in
             self?.mood.panelOpen = visible
-            if !visible { self?.companion.keepRaised(false) }
+            if !visible {
+                self?.companion.keepRaised(false)
+                self?.sidecard.askClosed()
+            }
             self?.renderMood()
         }
 
@@ -112,33 +122,13 @@ final class AppCoordinator {
             MainActor.assumeIsolated { self?.companion.restorePosition() }
         }
 
-        bubbles.anchorProvider = { [weak self] in self?.anchor() }
-        bubbles.onRespond = { [weak self] item, action in self?.respond(to: item, action: action) }
-        bubbles.onAutoDismiss = { [weak self] item in
-            guard let self, item.source != Onboarding.source, item.source != Self.ownVoice else { return }
-            Task { await self.runtime.attention.respond(id: item.id, actionId: nil) }
-        }
+        installSidecard()
 
         let menuBarImage = BrandAsset.menuBar.image ?? NSImage(
             cgImage: CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2),
             size: NSSize(width: 18, height: 18))
         statusItem.install(image: menuBarImage)
-        statusItem.onAsk = { [weak self] in self?.toggleAsk() }
-        statusItem.palettes = { [weak self] in self?.palettes.current ?? [] }
-        statusItem.onPalette = { [weak self] id, under in Task { await self?.palettes.toggle(id, under: under) } }
-        statusItem.onOpenHome = { [weak self] in self?.openHome() }
-        statusItem.onOpenSettings = { [weak self] in self?.openSettings() }
-        statusItem.onAbout = { [weak self] in self?.showAbout() }
-        statusItem.onQuiet = { [weak self] seconds in self?.setQuiet(for: seconds) }
-        statusItem.isQuiet = { [weak self] in self?.runtime.settings.current.isQuiet(at: Date()) ?? false }
-        statusItem.hotkeyLabel = { [weak self] in self?.hotkeyLabel ?? "" }
-        statusItem.companionName = { [weak self] in self?.runtime.settings.current.companionName ?? "Sidefolk" }
-        statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
-        statusItem.onToggleCompanion = { [weak self] in
-            guard let self else { return }
-            self.showCompanion(!self.companion.isVisible)
-        }
-        statusItem.nowProvider = { [weak self] in await self?.nowEntries() ?? [] }
+        installPocket()
         installModeSwitch()
 
         // A debug copy must not take ⌘⇧Space from the Sidefolk the developer actually uses (it once
@@ -159,11 +149,7 @@ final class AppCoordinator {
         monitor.onClockChange = monitor.onWake
         monitor.start()
         await notifier.clearFallback()
-        await runtime.attention.update { env in
-            env.quiet = s.isQuiet(at: Date())
-            env.presence = s.presence
-            env.sounds = s.sounds
-        }
+        applyAttention()
 
         eventTask = Task { [weak self] in
             guard let stream = self?.runtime.events.stream() else { return }
@@ -200,7 +186,7 @@ final class AppCoordinator {
         refreshRoster()
         refreshReadouts()
         locator.resume()
-        statusItem.refreshNow()
+        refreshMark()
         startUpdates()
         Log.shared.info("app", "ready")
         if !runtime.settings.current.onboardingDone {
@@ -243,7 +229,9 @@ final class AppCoordinator {
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
-        companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
+        companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0)
+        sidecard.model.companionName = s.companionName
+        sidecard.model.face = CompanionArt.avatar(for: s, side: 48)
         askPanel?.update(companionName: s.companionName, portrait: CompanionArt.avatar(for: s, side: 26), hotkey: hotkeyLabel)
         applyVoiceKeys()
         renderMood()
@@ -273,7 +261,9 @@ final class AppCoordinator {
             roster = DutyRoster(reminderDueSoon: reminders.contains { ($0.nextDue ?? .distantFuture) <= soon },
                                 activeWatchers: watchers.count, liveAgentWork: jobs.count + working)
             companion.setFolks(roster.onDuty, visible: runtime.settings.current.showFolks)
-            companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: backlog)
+            companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0)
+            companion.setAgents(AgentLane.chips(sessions))
+            sidecard.model.sessions = Dictionary(sessions.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
             // Only folks standing beside the companion: a folk that is the companion needs no introduction.
             introduceNewFolks(companion.folksShown)
         }
@@ -289,7 +279,7 @@ final class AppCoordinator {
         UserDefaults.standard.set(met.sorted(), forKey: key)
         let (title, body) = Self.introduction(folk)
         let item = AttentionItem(level: .gentle, source: Self.ownVoice, title: title, body: body, refKind: "intro")
-        bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+        sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
     }
 
     static func introduction(_ folk: DutyFolk) -> (String, String) {
@@ -306,7 +296,7 @@ final class AppCoordinator {
     /// Shows a bubble that doesn't go through the attention center (onboarding).
     func presentLocal(_ item: AttentionItem) {
         companion.stepForward()
-        bubbles.present(item, .attention(expandFor: 600))
+        sidecard.present(item, .attention(expandFor: 600))
     }
 
     /// Stops the engines and covers the next week of reminders with system notifications.
@@ -344,53 +334,16 @@ final class AppCoordinator {
         nowRefreshTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
-            self?.statusItem.refreshNow()
+            self?.refreshMark()
+            if self?.statusItem.isPocketShown == true { self?.statusItem.refresh() }
             self?.refreshGlance()
         }
-    }
-
-    /// The menu bar's "Now" list: what needs you, what's due soon, what's running.
-    func nowEntries() async -> [StatusItemController.NowEntry] {
-        var entries: [StatusItemController.NowEntry] = []
-        let now = Date()
-        for s in ((try? await runtime.sessions.live()) ?? []) where s.state == .needsYou {
-            entries.append(.init(title: String(localized: "\(s.agent == "codex" ? "Codex" : "Claude") needs you"),
-                                 detail: s.projectName ?? String(localized: "a session"),
-                                 symbol: "hand.raised", action: { [weak self] in self?.openSession(s) }))
-        }
-        let open = await runtime.attention.open().filter { $0.level >= .attention }
-        if !open.isEmpty {
-            entries.append(.init(title: String(localized: "Needs you (\(open.count))"), detail: open[0].title.clipped(30), symbol: "tray.full",
-                                 action: { [weak self] in self?.openHome() }))
-        }
-        if let skipped = await skippedNowEntry() { entries.append(skipped) }
-        for r in ((try? await runtime.reminderStore.pending()) ?? []).prefix(3) {
-            guard let due = r.nextDue, due.timeIntervalSince(now) < 6 * 3600 else { continue }
-            entries.append(.init(title: r.title.clipped(40), detail: TimeFormat.when(due, now: now, calendar: .autoupdatingCurrent),
-                                 symbol: "alarm", action: { [weak self] in self?.openHome() }))
-        }
-        for j in ((try? await runtime.jobs.running()) ?? []).prefix(2) {
-            entries.append(.init(title: j.title.clipped(40),
-                                 detail: String(localized: "running \(TimeText.duration(now.timeIntervalSince(j.startedAt)))", comment: "“running 4m 12s”"),
-                                 symbol: "terminal", action: { [weak self] in self?.openHome() }))
-        }
-        for w in reports.prefix(3) {
-            let value = readings[w.id].map { "\($0.label) \($0.value)" } ?? w.title
-            entries.append(.init(title: value.clipped(40), detail: Describe.interval(w.intervalS), symbol: Describe.watcherKind(w.kind).symbol,
-                                 action: { [weak self] in self?.openHome() }))
-        }
-        let watching = ((try? await runtime.watcherStore.active()) ?? []).filter { $0.mode != .report }.count
-        if watching > 0 {
-            entries.append(.init(title: String(localized: "Watching \(watching) things"), detail: String(localized: "Scout is on it"),
-                                 symbol: "binoculars", action: { [weak self] in self?.openHome() }))
-        }
-        return entries
     }
 
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
-        if command == "home:today" { home.show(section: .now); return }
+        if command.hasPrefix("home:") { home.showPlace(String(command.dropFirst(5))); return }
         if command.hasPrefix("flip:") {
             // flip:<extension id>/<page>:on|off: the page's main switch, as from its sidebar row (D67).
             let rest = command.dropFirst(5)
@@ -422,6 +375,7 @@ final class AppCoordinator {
         if command == "voice:stop" { _ = voice.cancel(); return }
         if command.hasPrefix("play:"), let act = CompanionAct(rawValue: String(command.dropFirst(5))) { runtime.events.publish(.companion(act)); return }
         if command == "click" { companionClicked(); return }
+        if command.hasPrefix("tip:") || command.hasPrefix("recede:") { companion.devFloor(command); return }
         if command.hasPrefix("toss:") { devToss(command.dropFirst(5).split(separator: ":").map(String.init)); return }
         if devGame(command) { return }
         if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }
@@ -442,11 +396,23 @@ final class AppCoordinator {
         }
         if command.hasPrefix("chooser:") {
             // chooser:yours|gallery|search:<words>|detail:<name>|get:<name>|remove:<id>|add|close (D77).
-            settingsWindow.chooser(String(command.dropFirst("chooser:".count)))
+            let sub = String(command.dropFirst("chooser:".count))
+            // The Gallery lives in Home now (D84): its page and search open there.
+            if sub == "gallery" || sub.hasPrefix("search:") { home.show(section: .gallery); return }
+            settingsWindow.chooser(sub)
             return
         }
         if command.hasPrefix("settings") {
-            openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            settingsWindow.dev(String(command.dropFirst("settings:".count)))
+            return
+        }
+        if command == "pocket" { statusItem.togglePocket(); return }
+        if command.hasPrefix("attention:") {
+            // attention:open | attention:focus[:minutes] | attention:quiet[:minutes], as the Pocket's dial (D84).
+            let parts = command.split(separator: ":").map(String.init)
+            if parts.count > 1, let mode = AttentionMode(rawValue: parts[1]) {
+                setAttention(mode, until: parts.count > 2 ? Double(parts[2]).map { Date().addingTimeInterval($0 * 60) } : nil)
+            }
             return
         }
         if command.hasPrefix("scroll:"), let fraction = Double(command.dropFirst(7)) {
@@ -565,12 +531,22 @@ final class AppCoordinator {
             // Typed but not sent: the hint under the field says what Enter would do.
             showAsk()
             ask.text = String(command.dropFirst(5))
-        } else if command.hasPrefix("respond:"), let item = bubbles.model.item {
-            respond(to: item, action: String(command.dropFirst(8)))
-            bubbles.withdraw(id: item.id)
-        } else if command == "dismiss", let item = bubbles.model.item {
+        } else if command.hasPrefix("respond:") {
+            // The card in view, or else the oldest one waiting in the stack (as Ask on top of it would answer).
+            let action = String(command.dropFirst(8))
+            if let item = sidecard.model.item {
+                respond(to: item, action: action)
+                sidecard.withdraw(id: item.id)
+            } else {
+                Task { if let held = await runtime.attention.open().filter({ $0.level >= .attention }).first { respond(to: held, action: action) } }
+            }
+        } else if command == "dismiss", let item = sidecard.model.item {
             respond(to: item, action: nil)
-            bubbles.withdraw(id: item.id)
+            sidecard.withdraw(id: item.id)
+        } else if command == "grow" {
+            sidecard.model.grow?()
+        } else if command.hasPrefix("stack:") {
+            sidecard.fanStack(command == "stack:on")
         } else if command == "hideAsk" {
             askPanel.hide()
         } else if command.hasPrefix("approve") || command == "deny" {
@@ -608,18 +584,21 @@ final class AppCoordinator {
     }
 
     func toggleAsk() {
-        if askPanel.isVisible { askPanel.hide(); return }
+        // A slip standing alone opens into Ask, on top of what waits (D84); open Ask closes.
+        if askPanel.isVisible, !ask.compact { askPanel.hide(); return }
         showAsk()
     }
 
-    func showAsk(prefill: String? = nil, focus: Bool = true) {
+    /// `slipsOnly`: a permission slip arrived while Ask was closed; it stands alone above the companion.
+    func showAsk(prefill: String? = nil, focus: Bool = true, slipsOnly: Bool = false) {
         if let prefill { ask.text = prefill }
-        // One panel at a time: the game is kept and comes back as it was (D75).
+        // One panel at a time: the game is kept and comes back as it was (D75); a card folds into what Ask shows.
         playPanel.hide()
+        if !slipsOnly { sidecard.yieldToAsk() }
         refreshGlance()
         companion.keepRaised(true)
         guard let (frame, screen) = anchor() else { return }
-        askPanel.show(beside: frame, on: screen, focus: focus)
+        askPanel.show(beside: frame, on: screen, focus: focus, slipsOnly: slipsOnly)
     }
 
     /// An agent saved or set something through Sidefolk: say so, briefly, and credit it.
@@ -629,9 +608,12 @@ final class AppCoordinator {
         let item = AttentionItem(level: .gentle, source: "external:\(client)",
                                  title: String(localized: "\(name): \(card.title)",
                                                comment: "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””"),
-                                 body: card.subtitle, refKind: "credit")
+                                 body: card.subtitle,
+                                 // Undo on the whisper itself when what it did can be taken back (D84).
+                                 actions: activity.undoAvailable ? [AttentionAction(id: SidecardItemCard.undo, title: String(localized: "Undo"))] : [],
+                                 refKind: "credit", refId: activity.id)
         companion.character.play(.nod)
-        bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+        sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
     }
 
     func openHome() {
@@ -649,17 +631,15 @@ final class AppCoordinator {
         settingsWindow.show(tab: tab)
     }
 
+    func openGallery() { home.show(section: .gallery) }
+
     func showAbout() {
         askPanel.hide()
         about.show()
     }
 
     func setQuiet(for seconds: TimeInterval?) {
-        let until = seconds.map { Date().addingTimeInterval($0) }
-        Task {
-            await runtime.settings.update { $0.quietUntil = until }
-            await runtime.attention.update { $0.quiet = until != nil }
-        }
+        setAttention(seconds == nil ? .open : .quiet, until: seconds.map { Date().addingTimeInterval($0) })
     }
 
     // MARK: Events
@@ -680,19 +660,18 @@ final class AppCoordinator {
         case .attention(.present(let item, let presentation)):
             present(item, presentation)
         case .attention(.withdraw(let id)):
-            bubbles.withdraw(id: id)
+            sidecard.withdraw(id: id)
             notifier.withdraw(id: id)
             ask.removeQuestion(id: id)
         case .attention(.backlog(let count)):
             backlog = count
-            bubbles.setBacklog(count)
-            statusItem.setBadge(count)
-            companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0, waiting: count)
+            refreshMark()
+            renderLight()
         case .approvalRequested(let request):
             ask.add(.approval(request))
             // Other apps' requests appear without taking the keyboard, so a stray Return can't approve them.
             let trusted = ["user", "agent", "command"].contains(request.caller.kind)
-            if !askPanel.isVisible { showAsk(focus: trusted) }
+            if !askPanel.isVisible || ask.compact { showAsk(focus: trusted, slipsOnly: true) }
         case .toolFinished(let activity, let ok):
             creditExternal(activity, ok: ok)
             announceDoneWithoutAsking(activity, ok: ok)
@@ -735,6 +714,7 @@ final class AppCoordinator {
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {
                 applyCompanionSettings()
+                applyAttention()
                 Task { await runtime.rearm() }
             }
             if domain == .notebook { Task { await refreshCollections() } }
@@ -750,6 +730,18 @@ final class AppCoordinator {
     }
 
     private func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+        // An agent session's notice names its agent and project: know the session before it shows.
+        if item.refKind == "session", let id = item.refId, sidecard.model.sessions[id] == nil {
+            Task {
+                if let session = try? await runtime.sessions.live().first(where: { $0.id == id }) { sidecard.model.sessions[id] = session }
+                presentKnown(item, presentation)
+            }
+            return
+        }
+        presentKnown(item, presentation)
+    }
+
+    private func presentKnown(_ item: AttentionItem, _ presentation: AttentionPresentation) {
         // Questions that want a typed answer (and all of Sidefolk's own) go in the panel, where the user can type.
         if item.refKind == "ask", item.source == "agent" || item.actions.isEmpty {
             ask.add(.question(item))
@@ -762,15 +754,15 @@ final class AppCoordinator {
         case .ambient:
             break
         case .gentle:
-            bubbles.present(item, presentation)
+            sidecard.present(item, presentation)
         case .attention:
             companion.stepForward()
-            bubbles.present(item, presentation)
+            sidecard.present(item, presentation)
         case .system(let sound, let alsoOnDesktop):
             notifier.show(item, sound: sound && runtime.settings.current.sounds)
             if alsoOnDesktop, companion.isVisible {
                 companion.stepForward()
-                bubbles.present(item, .attention(expandFor: AttentionPolicy.expandSeconds))
+                sidecard.present(item, .attention(expandFor: AttentionPolicy.expandSeconds))
             }
         }
     }
@@ -781,6 +773,7 @@ final class AppCoordinator {
             return
         }
         if item.source == Self.ownVoice { return }
+        if action == SidecardItemCard.undo, item.refKind == "credit", let id = item.refId { return undoFromWhisper(id) }
         if action == "open", item.source == "summary" { openHome() }
         if action == ReminderScheduler.ActionID.open, item.refKind == "reminder", let id = item.refId { openReminderItem(id) }
         Task { await runtime.attention.respond(id: item.id, actionId: action) }
@@ -805,6 +798,7 @@ final class AppCoordinator {
 
     func renderMood() {
         companion.render(mood.pose(at: Date()))
+        renderLight()
         moodTimer?.cancel()
         if let next = mood.nextChange(after: Date()) {
             moodTimer = Task { [weak self] in
@@ -936,7 +930,7 @@ extension AppCoordinator: CompanionDelegate {
     }
 
     func companionMoved() {
-        bubbles.reposition()
+        sidecard.reposition()
         if let (frame, screen) = anchor() { playPanel.reposition(beside: frame, on: screen) }
     }
 
@@ -952,8 +946,6 @@ extension AppCoordinator: CompanionDelegate {
 
     func companionFolkClicked(_ folk: DutyFolk) { openHome() }
 
-    func companionReadoutClicked() { openHome() }
-
     func showCompanion(_ visible: Bool) {
         if visible {
             companion.show(presence: runtime.settings.current.presence == .menuBarOnly ? .always : runtime.settings.current.presence)
@@ -961,7 +953,7 @@ extension AppCoordinator: CompanionDelegate {
             companion.hide()
             askPanel.hide()
         }
-        statusItem.companionVisible = { [weak self] in self?.companion.isVisible ?? false }
+        statusItem.setCompanionHidden(!companion.isVisible)
         // The live values follow: beside the companion, or in the menu bar while it is away.
         renderReadouts()
     }

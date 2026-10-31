@@ -3,36 +3,6 @@ import Foundation
 import Observation
 import SidefolkCore
 
-/// The Settings window's tabs.
-enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, companion, ai, voice, agents, privacy, extensions
-    var id: Self { self }
-
-    var title: String {
-        switch self {
-        case .general: String(localized: "General")
-        case .companion: String(localized: "Companion")
-        case .ai: String(localized: "AI")
-        case .voice: String(localized: "Voice", comment: "A Settings tab: talking to the companion and its spoken replies. Seven tabs share one toolbar: keep it short")
-        case .agents: String(localized: "Agents")
-        case .privacy: String(localized: "Privacy & Permissions", comment: "A Settings tab. Six tabs share one toolbar, so keep it short (“Privacy” will do)")
-        case .extensions: String(localized: "Extensions")
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .general: "gearshape"
-        case .companion: "face.smiling"
-        case .ai: "sparkles"
-        case .voice: "waveform"
-        case .agents: "terminal"
-        case .privacy: "hand.raised"
-        case .extensions: "puzzlepiece.extension"
-        }
-    }
-}
-
 /// Everything the Settings window shows and changes. Settings go through `runtime.settings`,
 /// Guard state through `runtime.permissions`, the rest through the facade. Nothing here is a
 /// placeholder: every control changes something real.
@@ -42,11 +12,16 @@ final class SettingsModel {
     var runtime: SidefolkRuntime { services.runtime }
 
     private(set) var settings: AppSettings
+    /// The open tab, the search and where a jump lands (D84).
+    @ObservationIgnored let navigation = SettingsNavigation()
 
     // General
     private(set) var notificationsAllowed: Bool?
     private(set) var openAtLogin = false
     private(set) var loginError: UserFacingError?
+
+    // Attention
+    private(set) var heldCount = 0
 
     // AI
     @ObservationIgnored private(set) lazy var ai = AISettingsModel(parent: self)
@@ -106,6 +81,7 @@ final class SettingsModel {
                     settings = runtime.settings.current
                     integration = await services.integrationStatus()
                 case .permissions: await loadPermissions()
+                case .attention: await refreshHeld()
                 case .extensions:
                     await loadExtensions()
                 case .skills: skills = await services.skills()
@@ -133,6 +109,7 @@ final class SettingsModel {
         await ai.refresh()
         await voice.refresh()
         location.refresh()
+        await refreshHeld()
     }
 
     func loadPermissions() async {
@@ -166,18 +143,15 @@ final class SettingsModel {
         notificationsAllowed = await services.notificationsAuthorized()
     }
 
-    /// Quiet mode lives in settings (so it survives a relaunch) and in Attention (which holds bubbles).
-    func setQuiet(until date: Date?) {
-        update { $0.quietUntil = date }
-        let quiet = date != nil
-        let attention = runtime.attention
-        Task { await attention.update { $0.quiet = quiet } }
+    /// Open, Focus or Quiet until `until` (D84). The settings keep it across a relaunch; the app tells Attention.
+    func setAttention(_ mode: AttentionMode, until: Date?) {
+        update { $0.setAttention(mode, until: until, now: Date()) }
+        Task { await refreshHeld() }
     }
 
-    func tomorrowMorning(now: Date = Date()) -> Date {
-        let cal = Calendar.current
-        let tomorrow = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: now)) ?? now
-        return cal.date(bySettingHour: settings.morningHour, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+    /// How many things wait for Focus or Quiet to end.
+    func refreshHeld() async {
+        heldCount = await runtime.attention.heldCount
     }
 
     func setDebugLogging(_ on: Bool) {
@@ -242,9 +216,9 @@ final class SettingsModel {
         runtime.events.changed(.permissions)
     }
 
-    /// Full access only after its sheet (`FullAccessSheet`); every other mode at once.
-    func setMode(_ mode: GuardMode) async {
-        await setPolicy { $0.mode = mode }
+    /// Full access only after its sheet (`FullAccessSheet`), with its end; every other mode at once.
+    func setMode(_ mode: GuardMode, fullAccessEnds: Date? = nil) async {
+        await setPolicy { $0.choose(mode, fullAccessEnds: fullAccessEnds) }
     }
 
     func toolTitle(_ name: String) -> String {

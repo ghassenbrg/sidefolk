@@ -121,7 +121,7 @@ struct CollectionLookPicker: View {
                 CollectionTile(collection: preview, size: 30)
                 TextField("Emoji", text: Binding(get: { emoji }, set: { emoji = String($0.trimmingCharacters(in: .whitespaces).prefix(2)) }),
                           prompt: Text("Or an emoji"))
-                    .textFieldStyle(.roundedBorder)
+                    .lanternField()
                     .frame(width: 120)
                 Spacer()
                 if symbol != nil || color != nil || !emoji.isEmpty {

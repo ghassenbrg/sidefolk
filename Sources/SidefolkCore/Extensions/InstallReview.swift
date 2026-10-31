@@ -91,9 +91,9 @@ public struct InstallReview: Sendable, Hashable {
         }
         let asking = toolRisks.filter { $0 >= .medium }.count
         if asking == toolRisks.count, asking > 0 {
-            out.append(String(localized: "Guard asks you before Sidefolk's AI or another agent uses its tools, as often as you chose in Settings › Privacy & Permissions."))
+            out.append(String(localized: "Guard asks you before Sidefolk's AI or another agent uses its tools, as often as you chose in Settings › Trust."))
         } else if asking > 0 {
-            out.append(String(localized: "Guard asks before some of its tools are used, as often as you chose in Settings › Privacy & Permissions; the rest can't reach the internet or change your files."))
+            out.append(String(localized: "Guard asks before some of its tools are used, as often as you chose in Settings › Trust; the rest can't reach the internet or change your files."))
         } else if !toolRisks.isEmpty {
             // Low risk is possible only below the floor: no network, no writing, nothing that runs anything (ExtensionRisk).
             out.append(String(localized: "Its tools can't reach the internet or change your files, so Sidefolk's AI may use them without asking."))
@@ -102,7 +102,7 @@ public struct InstallReview: Sendable, Hashable {
             // Live traffic with devices nearby: macOS asks about the local network for Sidefolk, the responsible app.
             out.append(String(localized: "macOS may ask you to allow Sidefolk in Local Network the first time it looks for devices nearby."))
         }
-        out.append(String(localized: "You can turn it off or remove it any time in Settings › Extensions."))
+        out.append(String(localized: "You can turn it off or remove it any time in Settings › Add-ons."))
         return out
     }
 }

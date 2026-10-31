@@ -142,7 +142,7 @@ struct ExtensionRow: View {
     /// A smaller extension resting while a bigger one does its work (D67): on, but quiet, and why.
     private func resting(_ bigger: String) -> some View {
         Label {
-            Text("Resting: \(bigger) does all this while it's on", comment: "Settings › Extensions, under an extension another one includes")
+            Text("Resting: \(bigger) does all this while it's on", comment: "Settings › Add-ons, under an extension another one includes")
         } icon: {
             Image(systemName: "moon.zzz")
         }
@@ -258,7 +258,7 @@ struct UnavailableExtensionRow: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: Theme.Space.s)
-            Button("Try Again", action: retry).buttonStyle(.sf(.secondary)).fixedSize()
+            Button("Try again", action: retry).buttonStyle(.sf(.secondary)).fixedSize()
                 .accessibilityLabel("Try \(item.name) again")
         }
         .padding(.horizontal, Theme.Space.l)

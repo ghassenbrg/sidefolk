@@ -28,7 +28,7 @@ public struct UpdateState: Codable, Sendable, Equatable {
 
 /// Asks GitHub for Sidefolk's releases (D46). The request carries Sidefolk's version in its User-Agent, as GitHub
 /// asks of every client, and nothing about the person; no account, no key. Unauthenticated, so GitHub allows
-/// 60 an hour from one address: a look a day and the odd "Check Now" stay far below it.
+/// 60 an hour from one address: a look a day and the odd "Check now" stay far below it.
 public actor UpdateChecker {
     /// Automatic looks come this far apart.
     public static let interval: TimeInterval = 86_400

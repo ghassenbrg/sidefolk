@@ -34,7 +34,7 @@ public struct PermissionEngine: Sendable {
                 return .deny(String(localized: "That folder hasn't been shared with Sidefolk."))
             }
             guard let folder = FolderAccess.suggestedFolder(for: (unwritable + unreadable)[0]) else {
-                return .deny(String(localized: "That location is too broad to share. Add a specific folder in Settings › Privacy & Permissions."))
+                return .deny(String(localized: "That location is too broad to share. Add a specific folder in Settings › Trust."))
             }
             return .ask(ApprovalRequest(
                 tool: spec.name, title: String(localized: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?"),

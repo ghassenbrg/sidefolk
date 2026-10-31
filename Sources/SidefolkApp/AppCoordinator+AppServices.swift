@@ -31,7 +31,7 @@ extension AppCoordinator: AppServices {
     }
 
     func openCalendarSettings() { MacCalendar.openSettings() }
-    func openActivity() { home.show(section: .activity) }
+    func openActivity() { home.show(section: .history) }
     func cancelReminder(_ id: String) async { _ = try? await runtime.scheduler.cancel(id: id) }
 
     func createReminder(title: String, when: String) async -> UserFacingError? {
@@ -85,7 +85,7 @@ extension AppCoordinator: AppServices {
             let item = AttentionItem(level: .gentle, source: Self.ownVoice,
                                      title: String(localized: "I can't bring that session to the front."),
                                      body: [String(localized: "Its window may be closed."), place].filter { !$0.isEmpty }.joined(separator: " "))
-            bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+            sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
         }
     }
 
@@ -314,13 +314,7 @@ extension AppCoordinator: AppServices {
     func settingsChanged() {
         let s = runtime.settings.current
         Log.shared.setDebug(s.debugLogging)
-        Task {
-            await runtime.attention.update { env in
-                env.quiet = s.isQuiet(at: Date())
-                env.presence = s.presence
-                env.sounds = s.sounds
-            }
-        }
+        applyAttention()
         applyCompanionSettings()
         applyAppearance()
         applyTheme()

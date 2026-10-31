@@ -9,8 +9,9 @@ struct AgentAccessGroup: View {
     private var access: AgentAccess { model.settings.agentAccess }
 
     var body: some View {
-        SettingsGroup(title: "Other agents",
-                      footer: "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in Activity, and you can undo it there. They never reach your files, commands, the web or Settings.") {
+        SettingsGroup(title: Text(verbatim: SettingKey.agentAccess.title),
+                      footer: Text("For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings."),
+                      anchor: .agentAccess) {
             row("Save notes, reminders and watches",
                 detail: "Add to your notebook, remind you, and watch pages or this Mac for you. Their notes are tagged with their name.",
                 value: access.save) { p in model.update { $0.agentAccess.save = p } }

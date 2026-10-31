@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Settings › General › Theme (D58): the themes on this Mac as small previews, and a theme of your own, made in a
+/// Settings › Appearance › Theme (D58, D84): the themes on this Mac as small previews, and a theme of your own, made in a
 /// folder Sidefolk follows: each save repaints every window, and what's wrong is said here, in words.
 struct ThemeSettingsGroup: View {
     var model: SettingsModel
@@ -14,7 +14,7 @@ struct ThemeSettingsGroup: View {
     private var shown: ThemeTokens { ThemeStore.shared.style.tokens }
 
     var body: some View {
-        SettingsGroup(title: "Theme", footer: "A theme changes colours, type, spacing and corners. It can't run anything.") {
+        SettingsGroup(title: "Theme", footer: "A theme changes colours, type, spacing and corners. It can't run anything.", anchor: .theme) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: Theme.Space.m)], spacing: Theme.Space.m) {
                 ForEach(themes, id: \.id) { theme in
                     ThemeCard(tokens: theme.tokens, selected: theme.id == shown.id) { use(theme) }
@@ -30,8 +30,7 @@ struct ThemeSettingsGroup: View {
             gallery
             suggestion
             following
-            SettingsRow(title: "Make your own",
-                        detail: "Start from a copy of Harbor in a folder, or use a theme folder you have. Sidefolk repaints each time you save.") {
+            SettingsRow(.makeTheme) {
                 // Side by side where they fit; stacked in longer languages and larger theme type.
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: Theme.Space.s) { makeButtons }
@@ -77,8 +76,8 @@ struct ThemeSettingsGroup: View {
     }
 
     @ViewBuilder private var makeButtons: some View {
-        Button("Start a Theme…", action: startTheme).buttonStyle(.sf(.secondary)).fixedSize()
-        Button("Load from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary)).fixedSize()
+        Button("Start a theme…", action: startTheme).buttonStyle(.sf(.secondary)).fixedSize()
+        Button("Load from folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary)).fixedSize()
     }
 
     /// The theme was drawn with a companion in mind: offered, never chosen for the person.
@@ -111,7 +110,7 @@ struct ThemeSettingsGroup: View {
                         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path).appendingPathComponent("theme.json")])
                     }
                     .buttonStyle(.sf(.plain))
-                    Button("Stop Following") { model.update { $0.themeFolder = nil } }.buttonStyle(.sf(.secondary))
+                    Button("Stop following") { model.update { $0.themeFolder = nil } }.buttonStyle(.sf(.secondary))
                 }
             }
             if let report = ThemeStore.shared.folderReport, !report.problems.isEmpty {

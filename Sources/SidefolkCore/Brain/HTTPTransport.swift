@@ -146,7 +146,7 @@ struct ProviderHTTP: Sendable {
     static func networkError(_ error: Error, provider: String, local: Bool) -> UserFacingError {
         let detail = String(describing: error)
         let offline = UserFacingError("I couldn't reach \(provider). Nothing was changed.",
-                                      recovery: "Check your internet connection, or switch provider in Settings › AI.", detail: detail)
+                                      recovery: "Check your internet connection, or switch provider in Settings › Brain.", detail: detail)
         guard let code = (error as? URLError)?.code else { return offline }
         switch code {
         case .timedOut:
@@ -155,11 +155,11 @@ struct ProviderHTTP: Sendable {
         case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed:
             guard local else { return offline }
             return UserFacingError("I couldn't reach \(provider) on this Mac. Nothing was changed.",
-                                   recovery: "Make sure \(provider) is running, and check the address in Settings › AI.", detail: detail)
+                                   recovery: "Make sure \(provider) is running, and check the address in Settings › Brain.", detail: detail)
         case .secureConnectionFailed, .serverCertificateUntrusted, .serverCertificateHasBadDate, .serverCertificateNotYetValid,
              .serverCertificateHasUnknownRoot, .clientCertificateRejected:
             return UserFacingError("I couldn't make a secure connection to \(provider). Nothing was changed.",
-                                   recovery: "Check the address in Settings › AI, or try another network.", detail: detail)
+                                   recovery: "Check the address in Settings › Brain, or try another network.", detail: detail)
         default:
             return offline
         }

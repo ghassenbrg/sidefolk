@@ -203,7 +203,11 @@ public enum ReminderTools {
         }
 
         func summary(for input: JSONValue) -> String {
-            String(localized: "Remind you “\((input.string("title") ?? "…").clipped(80))” \(input.string("when") ?? "")")
+            // A time the parse wrote as ISO 8601 reads as a date and a clock, as History and the approval card show it.
+            let when = input.string("when").map { text in
+                (try? Date(text, strategy: .iso8601)).map { $0.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).hour().minute()) } ?? text
+            } ?? ""
+            return String(localized: "Remind you “\((input.string("title") ?? "…").clipped(80))” \(when)")
                 .trimmingCharacters(in: .whitespaces)
         }
 

@@ -3,6 +3,10 @@ import Foundation
 /// What the user is doing right now, as far as interruptions are concerned. The app keeps it current.
 public struct AttentionEnvironment: Sendable, Equatable {
     public var quiet = false
+    /// Focus (D84): cards that need an answer still come; whispers wait.
+    public var focus = false
+    /// What a full-screen app does (D84): Quiet, as before, unless the person chose otherwise.
+    public var fullScreenRule: FullScreenRule = .quiet
     public var presence: PresenceMode = .always
     /// The frontmost app is fullscreen (video, presentation, game).
     public var fullscreen = false
@@ -14,6 +18,13 @@ public struct AttentionEnvironment: Sendable, Equatable {
     public var systemNotificationsAllowed = true
     public var sounds = true
     public init() {}
+}
+
+extension AttentionEnvironment {
+    /// Quiet, or a full-screen app that keeps things quiet.
+    public var isQuiet: Bool { quiet || (fullscreen && fullScreenRule == .quiet) }
+    /// Focus, or a full-screen app that asks for it; never while Quiet.
+    public var isFocused: Bool { !isQuiet && (focus || (fullscreen && fullScreenRule == .focus)) }
 }
 
 public enum AttentionDecision: Sendable, Equatable {
@@ -67,11 +78,14 @@ public enum AttentionPolicy {
         // Away: queue, a summary is shown on return.
         if env.away { return .hold(until: nil) }
 
-        if env.quiet || env.fullscreen {
+        if env.isQuiet {
             // Gentle things wait; explicit reminders and watches still reach you quietly.
             if level == .gentle { return .hold(until: nil) }
             return canSystem ? .present(.system(sound: false, alsoOnDesktop: false)) : .hold(until: nil)
         }
+
+        // Focus: whispers wait for the end, where one card says what waited.
+        if env.isFocused, level == .gentle { return .hold(until: nil) }
 
         if env.presence == .menuBarOnly {
             if level == .gentle { return .present(.ambient) }

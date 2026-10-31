@@ -228,6 +228,6 @@ struct ExtensionBuilderTests {
                              capabilities: [], category: .extensions, mutates: true)
         #expect(ContextBuilder.reach([draft]).contains("load the build-extension skill first"))
         #expect(!ContextBuilder.reach([]).contains("build-extension"))
-        #expect(ContextBuilder.reach([]).contains("an extension or MCP server (Settings › Extensions) could add it"))
+        #expect(ContextBuilder.reach([]).contains("an extension or MCP server (Settings › Add-ons) could add it"))
     }
 }

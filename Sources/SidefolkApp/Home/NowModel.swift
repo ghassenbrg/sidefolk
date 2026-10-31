@@ -82,6 +82,12 @@ final class NowModel {
     /// The newest notes and tasks (pinned first), for layouts that show the notebook on Today (D64).
     private(set) var recentNotes: [NotebookItem] = []
     private(set) var noteCollections: [String: NotebookCollection] = [:]
+    /// Notes, ideas, tasks and links saved today, newest first, by anyone (Today's "Captured today", D84).
+    private(set) var captured: [NotebookItem] = []
+    /// Until when Quiet holds what isn't urgent, while it's on (read at each reload, so Home's views follow it).
+    private(set) var quietUntil: Date?
+    /// Things done today: reminders and tasks ticked, and actions Sidefolk ran (Today's "done today", D84).
+    private(set) var doneCount = 0
     private(set) var jobs: [Job] = []
     private(set) var workingSessions: [AgentSession] = []
     /// Sessions that finished in the last hour, so Agents at work says how they ended (D58).
@@ -243,6 +249,8 @@ final class NowModel {
         }
         skipped = await rt.executor.skipped.list()
         mode = (try? await rt.permissions.policy())?.mode ?? .askOncePerKind
+        let settings = rt.settings.current
+        quietUntil = settings.isQuiet(at: Date()) ? settings.quietUntil : nil
         let open = await rt.attention.open()
         let live = (try? await rt.sessions.live()) ?? []
         let needing = live.filter { $0.state == .needsYou }
@@ -295,7 +303,11 @@ final class NowModel {
         let collections = (try? await rt.notebook.collections()) ?? []
         noteCollections = Dictionary(collections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let shown = Set(collections.filter { $0.kind != .profile }.map(\.id))
-        recentNotes = ((try? await rt.notebook.items(limit: 12)) ?? []).filter { shown.contains($0.collectionId) }.prefix(3).map { $0 }
+        let latest = ((try? await rt.notebook.items(limit: 40)) ?? []).filter { shown.contains($0.collectionId) }
+        recentNotes = latest.prefix(3).map { $0 }
+        captured = latest.filter { Calendar.current.isDateInToday($0.createdAt) }.sorted { $0.createdAt > $1.createdAt }.prefix(6).map { $0 }
+        let ran: Set<ActivityEntry.Decision> = [.denied, .blocked, .failed, .skipped]
+        doneCount = doneToday.count + calls.filter { Calendar.current.isDateInToday($0.at) && !ran.contains($0.decision) && $0.tool != "notes.search" }.count
     }
 
     private func loadRecent() async -> [RecentEntry] {

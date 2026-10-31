@@ -1,8 +1,10 @@
 import SidefolkCore
 import SwiftUI
 
-/// The panel beside the companion: one input, a hint line, and the results, newest first. Each can be swiped
-/// away with two fingers like a notification, "Clear all" empties them, and notices that need nothing fade.
+/// Ask, the Sidecard at its largest (D84): beside the companion with its tail toward the head, the Say field, what
+/// Return will do in plain words (the understanding row), what needs you while nothing is typed, and the results
+/// under the words that asked for them, newest first. Each can be swiped away with two fingers like a notification,
+/// "Clear all" empties them, and notices that need nothing fade. Opened by a permission slip alone, it is only the slip.
 struct AskView: View {
     @Bindable var model: AskModel
     var companionName: String
@@ -14,21 +16,34 @@ struct AskView: View {
     /// How tall the results are, so the scroll area is as tall as them until it reaches its limit.
     @State private var resultsHeight: CGFloat = 0
 
+    /// Room around the glass for its shadow (e3), so the window doesn't cut it.
+    static let margin = EdgeInsets(top: 12, leading: 24, bottom: 34, trailing: 24)
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            input
-            if !model.entries.isEmpty || model.busy {
-                Divider().overlay(Theme.line)
-                if clearable { clearAll }
-                results
+        Group {
+            if model.showsSlipsOnly {
+                // Opened by what waits for an answer: only that, above the companion, until the person opens Ask.
+                VStack(spacing: Theme.Space.s) {
+                    ForEach(model.pinnedEntries) { entry in
+                        EntryView(entry: entry, model: model, standalone: true,
+                                  tail: entry.id == model.pinnedEntries.last?.id ? model.tail : nil)
+                    }
+                }
+            } else {
+                SidecardSurface(tail: model.tail, padding: 0) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        header
+                        input
+                        if !model.entries.isEmpty || model.busy {
+                            if clearable { clearAll }
+                            results
+                        }
+                    }
+                    .frame(width: Theme.Size.sidecardAsk)
+                }
             }
         }
-        .frame(width: 380)
-        .background(.regularMaterial)
-        .background(Theme.surface.opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous).strokeBorder(Theme.line.opacity(0.8)))
+        .padding(Self.margin)
         .onAppear { inputFocused = true }
         .onChange(of: model.focusRequest) { inputFocused = true }
         .onHover { model.hovering = $0 }
@@ -48,26 +63,21 @@ struct AskView: View {
         HStack(spacing: Theme.Space.xs) {
             if let portrait {
                 // Already round: a profile picture, or the drawn face on its disc (CompanionArt.avatar).
-                Image(nsImage: portrait).resizable().frame(width: 26, height: 26)
+                Image(nsImage: portrait).resizable().frame(width: 28, height: 28)
                     .accessibilityHidden(true)
                     .padding(.trailing, Theme.Space.xs)
             }
-            Text(companionName).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(1)
+            Text(companionName).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
                 .layoutPriority(1)
             ModeChip(mode: model.mode) { model.actions?.openSettings(tab: .privacy) }
                 .padding(.leading, Theme.Space.xs)
             Spacer(minLength: Theme.Space.xs)
             headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
             headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
-            // The companion's name and the mode chip need the room: the shortcut shows while there is nothing to clear.
-            if !clearable {
-                Text(verbatim: hotkey).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                    .fixedSize()
-                    .padding(.leading, Theme.Space.xs)
-            }
+            headerButton("xmark", help: "Close") { model.onClose?() }
         }
         .padding(.horizontal, Theme.Space.l)
-        .padding(.top, Theme.Space.m)
+        .padding(.top, Theme.Space.l)
     }
 
     private var clearable: Bool { model.hasResults && !model.busy }
@@ -99,45 +109,32 @@ struct AskView: View {
     }
 
     private var input: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-                if model.voice != nil {
-                    // The microphone is on (or the words are settling): the words below are what was heard.
-                    Image(systemName: "waveform")
-                        .foregroundStyle(Theme.accent)
-                        .symbolEffect(.variableColor.iterative, isActive: isListening)
-                        .accessibilityLabel("Listening")
-                }
-                TextField(placeholder, text: $model.text, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .font(Theme.Font.input)
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1...5)
-                    .focused($inputFocused)
-                    .onSubmit { model.submit() }
-                    // ⌘Return asks the AI even what Sidefolk understands alone; ⌥Return keeps the words as a note (D58).
-                    // Only with words typed, so an approval card's ⌘Return still reaches the card.
-                    .onKeyPress(.return, phases: .down) { press in
-                        let words = model.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !words.isEmpty, model.pendingQuestion == nil, model.voice == nil else { return .ignored }
-                        if press.modifiers.contains(.command) {
-                            model.submit(askAI: true)
-                        } else if press.modifiers.contains(.option) {
-                            model.text = ""
-                            model.actions?.saveAsNote(words, in: model)
-                        } else {
-                            return .ignored
-                        }
-                        return .handled
-                    }
-                    .disabled((model.busy && model.pendingQuestion == nil) || model.voice != nil)
-                    .accessibilityLabel("Ask \(companionName)")
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            // The Say field (D84): the microphone's waveform while it listens, Stop while it works.
+            SayBarField(text: $model.text, prompt: Text(placeholder), size: .desktop, hint: nil,
+                        symbol: model.voice != nil ? "waveform" : Theme.Symbol.say, active: isListening, multiline: true,
+                        disabled: (model.busy && model.pendingQuestion == nil) || model.voice != nil,
+                        focus: $inputFocused, onSubmit: { model.submit() },
+                        // ⌘Return asks the AI even what Sidefolk understands alone; ⌥Return keeps the words as a note (D58).
+                        // Only with words typed, so a permission slip's ⌘Return still reaches the slip.
+                        onModifiedReturn: { modifiers in
+                            let words = model.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !words.isEmpty, model.pendingQuestion == nil, model.voice == nil else { return false }
+                            if modifiers.contains(.command) {
+                                model.submit(askAI: true)
+                            } else {
+                                model.text = ""
+                                model.actions?.saveAsNote(words, in: model)
+                            }
+                            return true
+                        }) {
                 if model.busy {
                     Button("Stop") { model.actions?.stop() }
-                        .buttonStyle(.sf(.secondary))
+                        .buttonStyle(.sf(.secondary, size: .small))
                         .keyboardShortcut(".", modifiers: .command)
                 }
             }
+            .accessibilityLabel(Text("Ask \(companionName)"))
             if let attachment = model.attachment {
                 HStack(spacing: 6) {
                     Chip(verbatim: attachment.label, tone: .accent, systemImage: icon(for: attachment))
@@ -170,6 +167,9 @@ struct AskView: View {
                 // Typing a time works in English; tapping works in every language.
                 WhenChips(times: actions.reminderTimes(), parser: actions.whenParser) { date in actions.remindPending(at: date, in: model) }
             }
+            if let understanding = model.understanding {
+                UnderstoodRow(understanding: understanding, ai: model.actions?.aiName)
+            } else {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 HStack(spacing: 4) {
                     Image(systemName: model.voice == nil ? "return" : "mic").imageScale(.small)
@@ -191,13 +191,14 @@ struct AskView: View {
                 }
             }
             .font(Theme.Font.hint)
+            }
             if model.voice == nil, model.pendingQuestion == nil, !model.found.results.isEmpty {
                 FoundList(results: model.found.results, each: 2) { model.actions?.open($0) }
                     .padding(.top, Theme.Space.xs)
             }
             // Nothing typed: Today at a glance (D58).
             if model.text.isEmpty, model.attachment == nil, model.voice == nil, model.pendingQuestion == nil, !model.glance.isEmpty {
-                GlanceView(glance: model.glance,
+                GlanceView(glance: model.glance, waiting: model.waiting,
                            answer: { item, action in
                                if let action { model.actions?.answer(question: item, actionId: action) } else { model.actions?.dismissAttention(item) }
                            },
@@ -322,7 +323,11 @@ private struct RequestView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(spacing: 4) {
-                Text(verbatim: request.caption ?? "").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
+                // The words that asked, as a quiet line inside the card, not above it (03-system › Sidecard).
+                if let caption = request.caption {
+                    Label { Text(verbatim: "“\(caption)”").lineLimit(1) } icon: { Image(systemName: "arrow.turn.down.left").imageScale(.small) }
+                        .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                }
                 Spacer(minLength: 0)
                 // A target the size of a fingertip, not of the glyph.
                 Button { model.dismiss(request.id, toward: 1) } label: {
@@ -341,6 +346,11 @@ private struct RequestView: View {
                 EntryView(entry: entry, model: model, request: request.caption, retry: request.caption == nil ? nil : { model.retry(request) })
             }
         }
+        // One card per request: what came of it sits inside, without cards of its own.
+        .environment(\.flatCards, true)
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface()
         .contentShape(Rectangle())
         .offset(x: offset)
         .opacity(1 - min(abs(offset) / 360, 0.8))
@@ -357,6 +367,9 @@ private struct RequestView: View {
 private struct EntryView: View {
     var entry: AskEntry
     var model: AskModel
+    /// On its own above the companion (a slip that opened the panel), with the tail when it is the last.
+    var standalone = false
+    var tail: SidecardTail? = nil
     /// The words of the request this came from, if any.
     var request: String? = nil
     /// Sends the request again, replacing these cards (failed requests only).
@@ -372,7 +385,7 @@ private struct EntryView: View {
                 if PrivacyPane.isKnown(card.url) {
                     Button("Open System Settings") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
                 } else if SettingsLink.isKnown(card.url) {
-                    Button("Set Your Location…") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
+                    Button("Set your location…") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
                 } else if card.kind != .extensionResult, card.refId != nil || card.url != nil {
                     Button("Open") { model.actions?.open(card: card) }.buttonStyle(.sf(.secondary))
                 }
@@ -400,8 +413,11 @@ private struct EntryView: View {
         case .answer(let text, let canThinkHarder, let tainted, let thread):
             AnswerCard(entry: entry.id, text: text, canThinkHarder: canThinkHarder, tainted: tainted, thread: thread, request: request, model: model)
         case .approval(let request):
-            ApprovalCard(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }) { decision in
+            PermissionSlip(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }, companionName: model.companionName,
+                           tail: tail, standalone: standalone) { decision in
                 model.actions?.answer(approval: request, decision: decision)
+            } changeMode: {
+                model.actions?.openSettings(tab: .privacy)
             }
         case .error(let error, let retryable):
             SFCard(accent: Theme.danger) {
@@ -513,7 +529,8 @@ struct ResultCardView<Actions: View>: View {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                ButtonRow { actions }
+                // At the trailing end, as every card's answers are (b07).
+                ButtonRow { actions }.frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .accessibilityElement(children: .contain)
@@ -628,28 +645,31 @@ private struct QuestionCard: View {
     var answer: (String) -> Void
 
     var body: some View {
-        SFCard(accent: Theme.aqua) {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Image(systemName: "questionmark.bubble").foregroundStyle(Theme.aqua)
-                    Text(item.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
-                }
-                if let body = item.body {
-                    Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                }
-                if !item.actions.isEmpty {
-                    ButtonRow { options }
-                }
-                Text(item.actions.isEmpty ? "Type your answer above and press Return." : "Or type a different answer above.")
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Label { Text("Asks you", comment: "Above a question in Ask: Sidefolk's own agent asks the person something") } icon: {
+                Image(systemName: "questionmark.bubble")
             }
+            .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+            Text(item.title).font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+            if let body = item.body {
+                Text(body).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+            }
+            // Choices as buttons, never answered by a bare Return (D84): a click, or typed words.
+            if !item.actions.isEmpty {
+                ButtonRow { options }
+            }
+            Text(item.actions.isEmpty ? "Type your answer above and press Return." : "Or type a different answer above.")
+                .font(Theme.Font.callout).foregroundStyle(Theme.inkFaint)
         }
+        .padding(Theme.Space.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface()
     }
 
     private var options: some View {
         ForEach(item.actions, id: \.id) { action in
             Button { answer(action.id) } label: { Text(verbatim: action.title) }
-                .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
+                .buttonStyle(.sf(action.isPrimary ? .primary : .secondary, size: .sidecard))
         }
     }
 }
@@ -697,12 +717,11 @@ private struct WhenChips: View {
                 VStack(alignment: .trailing, spacing: Theme.Space.s) {
                     // Typing works here too; the picker follows what's typed, and the field what's picked.
                     WhenField(text: $typed, prompt: Text("When, like “tomorrow 9:00”"), parser: parser, focus: $typing,
-                              showsPicker: false) {
+                              showsPicker: false, boxed: true) {
                         guard custom > Date() else { return }
                         picking = false
                         choose(custom)
                     }
-                    .textFieldStyle(.roundedBorder)
                     .frame(width: 280)
                     DatePicker("When", selection: $custom, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                         .datePickerStyle(.graphical)
@@ -727,5 +746,42 @@ private struct WhenChips: View {
                     typing = true
                 }
             }
+    }
+}
+
+/// What Return will do with the words typed so far (D84, principle 4): the sentence, its parts as chips, and the keys,
+/// from the same parse that runs them. ⌘Return asks the AI only when one is set up.
+private struct UnderstoodRow: View {
+    var understanding: Understanding
+    var ai: String?
+
+    var body: some View {
+        UnderstandingRow(symbol: understanding.local ? "checkmark.circle" : "sparkles", sentence: Text(verbatim: understanding.sentence), keys: keys) {
+            ForEach(Array(understanding.chips.enumerated()), id: \.offset) { _, chip in
+                Chip(text: Text(verbatim: chip.text), tone: tone(chip.role), systemImage: chip.symbol)
+            }
+        }
+        .padding(.horizontal, Theme.Space.xs)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func tone(_ role: Understanding.Chip.Role) -> ChipTone {
+        switch role {
+        case .kind: .accent
+        case .detail, .ai: .neutral
+        case .local: .success
+        }
+    }
+
+    private var keys: [UnderstandingKey] {
+        var keys: [UnderstandingKey] = []
+        if understanding.local {
+            keys.append(.init(keys: "↩", title: Text("Do it", comment: "A key hint under the Say bar: Return does what it understood, on this Mac")))
+            if let ai { keys.append(.init(keys: "⌘↩", title: Text("Ask \(ai)", comment: "A key hint under the Say bar: ⌘Return asks the AI (“Ask Claude”)"))) }
+        } else if let ai {
+            keys.append(.init(keys: "↩", title: Text("Ask \(ai)", comment: "A key hint under the Say bar: ⌘Return asks the AI (“Ask Claude”)")))
+        }
+        keys.append(.init(keys: "⌥↩", title: Text("Save as note", comment: "A key hint under the Say bar: ⌥Return keeps the words as a note")))
+        return keys
     }
 }

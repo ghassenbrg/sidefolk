@@ -121,7 +121,7 @@ import Testing
             return
         }
         #expect(result.isError)
-        #expect(result.text.contains("Settings › Privacy & Permissions › Your location"))
+        #expect(result.text.contains("Settings › Trust › Your location"))
         #expect(result.card?.url == SettingsLink.yourLocation.rawValue)
         #expect(await f.engine.list().isEmpty)
         #expect(f.env.fetcher.requests.isEmpty)

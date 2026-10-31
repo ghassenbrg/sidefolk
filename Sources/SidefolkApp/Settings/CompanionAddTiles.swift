@@ -11,7 +11,7 @@ struct AddCompanionTile: View {
     var body: some View {
         @Bindable var chooser = model.chooser
         Button { chooser.adding = true } label: {
-            ActionTileLabel(systemImage: "plus", title: Text("Add Your Own", comment: "The tile after the companions in Settings: add one you made"),
+            ActionTileLabel(systemImage: "plus", title: Text("Add your own", comment: "The tile after the companions in Settings: add one you made"),
                             detail: Text("3D or 2D", comment: "Under Add Your Own: the kinds of companion you can add"))
         }
         .buttonStyle(.plain)
@@ -87,7 +87,7 @@ struct MoreCompanionsTile: View {
     var body: some View {
         Button(action: action) {
             ActionTileLabel(systemImage: "square.grid.2x2",
-                            title: Text("Get More", comment: "The tile after the companions in Settings: browse the gallery"),
+                            title: Text("Get more", comment: "The tile after the companions in Settings: browse the gallery"),
                             detail: count > 0 ? Text("\(count) in the gallery", comment: "Under Get More: how many companions the gallery has that aren't here")
                                               : Text("Browse the gallery", comment: "Under Get More, when nothing new is known yet"))
         }

@@ -1,5 +1,98 @@
 # Status
 
+- **The Lantern revamp, phase 5: polish (D84, branch `team/lantern-2`, not merged, not pushed):** the whole app walked
+  in the debug app (`build/qp-1`, `qm-*`) and fixed: the Calendar pushed Home's whole window under its toolbar (its
+  least height), Today's reminder card lost Done, a card replacing a shorter one was cut at the top, onboarding made an
+  "All clear", the Say field's ring had flat bars, empty On duty and You had two primaries, History/Today named another
+  app's notice "Mochi" with Pip's face, an old Settings search hid the tab asked for, Title Case buttons, "Activity" in
+  Trust, "10 min" (now "In 10 min"). Leftovers done: held whispers settled after "While you were…" (`AttentionCenter`,
+  test `whatTheCardToldNeverComesBack`), `ThemeCheck` reads only `layout.icons` (old keys still decode), no
+  `.roundedBorder` left (`.lanternField()`, `WhenField(boxed:)`), pins at rest show number and unit (`PinValue`, test),
+  Reduce Transparency and Increase Contrast versions (`\.solidSurfaces`, `Theme.line` in high contrast,
+  `.contrastEdge`), VoiceOver hears cards arrive. *CPU* (top, 12 × 5 s, debug apps on fresh homes, companion resting
+  with 2 pins and 2 agents): origin/main 1.4% at rest, 1.4% with Home open; this branch before the fix 1.6% / 4.1%
+  (the nook's breathing light redrew Home every frame), after 1.4% / 1.5%. *Checked:* `make test` with
+  SIDEFOLK_ADDONS_REPO on the clean add-ons checkout (1612 core and 38 character tests pass; new `whatTheCardToldNeverComesBack`, `aPinAtRestKeepsItsNumberAndUnit`, the layout tests rewritten as `anOlderLayoutLoadsAndOnlyItsIconsAreRead`); `make strings`, all ten languages complete; UI
+  snapshots of every place in light, dark, German and Arabic (`window-home-*`, `window-settings-*`, `desktop-*`, `panel-pocket-*`) and `--only a11y`, read against the a-home, b-desktop and c-settings mockups; Playtime built from the add-ons checkout
+  and installed from a folder to see a game open. *Not done:* the per-source interruption table (no such levels),
+  Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card; "done today" counts
+  other agents' reads; the greeting says "Good evening" after midnight. *Next:* merge `team/lantern-2` to main and
+  release a snapshot (the lead's call).
+- **The Lantern revamp, phase 2: the desktop (D84, branch `team/lantern-2`, not merged):** the companion stands on
+  its light pool (idle, working, waiting with the count on its shoulder, alert while a card is out, failed, Quiet's moon)
+  driven by `DesktopLight`; bubbles became the Sidecard (`Sidecard/`: whisper with its 6 s line, Undo for an agent's
+  undoable change, click to grow; cards with ≤ 3 answers and ⋯; cards fold into the shoulder's count after 30 s; hover
+  the count to fan the stack, click it or the companion for Ask on top of it; "All clear"); Ask is the Sidecard's Ask
+  size (Say field, understanding row from `ParsedIntent.understanding()`, ⌘↩ AI, ⌥↩ note, Glance as its resting state,
+  requests as cards); approvals are permission slips (`Ask/PermissionSlip.swift`, `slipTone`/`takesReturn`: firm never
+  takes Return), alone above the head when Ask was closed; pins and the agents lane kept to the founder's small-corner
+  rule (icon + number, round agent faces with a status dot, tips on hover, the extras step back while you type under
+  them; 281 × 159 pt with three folks, two pins and two agents, the same corner as before); Quiet's digest when it ends;
+  the brief as a card; toss captions as whispers. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons
+  clone (1591 core, 36 character; new `DesktopTests`, `quietEndsWithOneDigest`); UI snapshots `--only desktop` in
+  English, German and Arabic, light and dark (sidecards, slips, Ask, the states board, the floor at rest, hovered and
+  stepping back, measured); the debug app (`build/qa3`–`qa6`) with real events: a reminder firing (card, amber light,
+  count, fold into the stack, fan), a folder watch firing, Claude Code and Codex sessions through `sidefolk hook`
+  (faces, "needs you" card), another app's approval over MCP (firm slip alone, ⌘↩ hint, deny), folder access (calm
+  slip, Allow's menu), `ask:` with the understanding row, Quiet's moon, a CPU and a memory pin with their tips.
+  *Merged with phase 3 and 4 (`team/lantern-4`):* Focus on the desktop (grey light, half circle or a grey count of what
+  waits and is held), held whispers back as phase 4's one card when Focus or Quiet ends, Today's approvals as permission
+  slips (`ApprovalCard` retired, slips ignore answers for 0.8 s instead of looking disabled), an agent's notice signed
+  "Claude Code · sidefolk". *Half done / not built:* the evening wrap, the drop choice card, the stack's arc animation,
+  voice's level-reactive pool, keyboard answering of cards outside Ask; the 3D companion's own reactions (phase 5).
+  Other teammates' debug apps receive `scripts/dev.swift` commands sent without SIDEFOLK_HOME: set it, or a stray
+  `approve` reaches yours. *Next:* phase 5 (polish), or the items above.
+- **The Lantern revamp, phase 4: Settings, the menu bar Pocket, sheets (D84, branch `team/lantern-4`, not merged):**
+  Settings is a sidebar window with search and eight tabs (General, Companion, Attention, Brain, Trust, Connections,
+  Add-ons, Appearance); every setting kept a home and the old tab names still open the right place; every
+  "Settings › AI/Privacy/Extensions/Voice/Agents" sentence (errors, notices, the install sheet, the AI's context)
+  now names the new tab, translations moved along. Search (`SettingKey` catalog + Core's `SettingsSearch`) finds
+  rows by title, detail and section, shows switches and short choices in place, and jumps to the row (the tab opens,
+  scrolls, the row glows). New and real: **Focus** (whispers wait and come back as one "While you were focused" card,
+  `AttentionEnvironment.focus`, `AppSettings.focusUntil`), **ends** for Focus and Quiet, **quiet hours**, what a
+  **full-screen app** does, **density**, and **Full access with an end** (`GuardPolicy.fullAccessEnds`, read through
+  `current(at:)` by Guard, the store and the executor's clock). Trust leads with the four modes as cards with an
+  example each; the Full access sheet asks when it ends. The **menu bar Pocket** (a popover: state, the
+  Open/Focus/Quiet dial with its end, Full access with Turn Off, a waiting version, Needs you, Next up, Agents, Ask; ⋯
+  or right-click for Settings, Check for Updates…, About, Quit) replaces the long menu; the icon's corner shows a
+  waiting dot, Focus or Quiet, fades while the companion hides. **Install sheets** are a two-step passport (D71's
+  words and tones kept, Install armed on step 2); the update window and About are on Lantern; onboarding's Connect…
+  opens Settings › Connections instead of editing agents' files at once. Strings in all ten languages, counts with
+  plural forms. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons checkout (1595 core and 36 character tests; the one external-agents test that read the old "Other agents" words updated and rerun alone), new tests
+  `AttentionModeTests`, `FullAccessEndTests` (Guard asks again once the hour is over), `SettingsSearchTests`; UI
+  snapshots `window-settings-*` (every tab, search, no results, the smallest window), `page-settings-attention-*`,
+  `sheet-full-access`, `sheet-install-*` and `*-touch`, `panel-pocket-*`, `window-update-*`, `window-about`, light and
+  dark, English, German and Arabic, read against the c-settings mockups; the debug app (`build/qa4`): `settings:<tab>`,
+  `settings:jump:debugLogging` (scrolled to it), `settings:full-access`, `attention:focus:60` then `pocket` (Focus
+  until …, the dial and the corner mark), the About window. *Half done / not done:* the mockups' per-source "what may
+  interrupt you" table (no source has its own level; left out as not real); the Pocket's dial and Full
+  access's Turn Off were not clicked in the debug app (no clicks from here; covered by the same paths the dev commands
+  use); the skill file's note still says "Settings › Agents" (changing it would mark every installed skill outdated);
+  Reduce Transparency/Contrast versions are phase 5. Merged with phase 3 (`team/lantern-merge`): "Get Add-ons" and the
+  Companion tab's "Get more" open Home's Gallery (`AppServices.openGallery()`); Home's sidebar pill offers Open, Focus
+  and Quiet with their ends. *Next:* merge phase 2, then the phase 5 polish.
+- **The Lantern revamp, phase 3: Home (D84, branch `team/lantern-3`, not merged):** one layout in every theme. A new
+  sidebar (the companion live in its nook on its light, in the desktop's state and pose; Today ⌘1, Calendar ⌘2, Notebook
+  ⌘3, On duty ⌘4, History ⌘5; You, collections and the Trash in the Notebook; extension pages arranged by drag with "Get
+  add-ons"; Quiet at the foot), the Say bar (⌘K) in the toolbar with its panel (plain sentence, chips, AI or not, ↩ ⌘↩ ⌥↩,
+  what it finds). Today rebuilt with the day first (`DayBrief` sentence, counts, day line, Needs you capped at three with
+  the rest folded, held while Quiet is on, all clear and first day states; On duty glance; captured today). New On duty
+  (`OnDuty`: watches, live values, repeating reminders and routines, agent sessions, commands, background extensions, with
+  Pause/Resume/Stop), History (`HistoryTimeline`: Activity, conversations, alerts and agent receipts in one timeline with
+  filters, span, search, Undo, the record folded, conversations in place), You (facts with their origin, Edit, Forget,
+  suggestions with Keep: `ProfileFacts.keep`/`write`), the Agenda first in the Calendar, the Gallery in Home on Settings'
+  models (Settings' Companion and Extensions tabs lost their Gallery page). Retired: theme navigation/Today/Activity/editor
+  layouts (keys still decode), All Extensions, Conversations and Activity pages. Reminder lines in History read their time
+  as a date. 177 new strings in all ten languages. *Checked:* UI snapshots `window-home-*` (today, wide, narrow, small,
+  quiet, colorful, extensions, say, say-ai, say-search, every place, history record/conversation/agents, gallery, every
+  empty state) read in light and dark, and today/say/onduty/history/you/gallery/agenda in German and Arabic (RTL mirrors,
+  the day line runs right to left); the debug app (build/qa-1) driven with `respond:skip`, `ask:` reminders and a fact,
+  `home:history|you|onduty|history:agents`, `find:` (the panel says "On this Mac, no AI"), `snap`; new core tests
+  `HomePlacesTests` (6); `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons clone (1587 core and 36 character tests pass). *Half done / next:* Today's
+  approval cards are phase 2's `ApprovalCard` until the permission slip lands; Focus in the sidebar's pill waits for phase
+  4's Attention; the Week view's "read only" note and "+1" overlaps; a watch's detail page (A9) needs a check log that
+  isn't kept. The Trash shows days left (amber in the last three).
+
 - **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
   in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen
   face in lights of its own (`face.screen`, `glow`, `mouthGlow`) and face colours and sizes. Settings › Companion
@@ -54,7 +147,7 @@
   notarized release and has no `SidefolkRelease` stamp, so its built-in updater will not replace it. *Next:*
   choose whether to replace the installed snapshot with the local build or ship a normal snapshot first.
 
-Updated: 2026-10-31. Version 0.1.0. Latest: add-ons installed before the renumbering get the gallery's version (D80); snapshot 588 and the
+Updated: 2026-11-01. Version 0.1.0. Latest: add-ons installed before the renumbering get the gallery's version (D80); snapshot 588 and the
 gallery with the ten new games in the Play panel (D79, Playtime 1.0.0-snapshot.2); before that snapshot 581 with translations (D76), the companion chooser
 (D77), colour meaning (D78) and new resting poses; before that Sidefolk and add-on updates chosen apart (D70), honest install sheets and
 approval cards (D71), paired TVs without a card (D72), the helper folks redesigned (D73), extension pages that read

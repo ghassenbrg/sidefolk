@@ -63,6 +63,24 @@ enum SampleCompanions {
             items.append(entry(id: id, name: m.name, companion: slug, tagline: m.tagline, author: author, index: n, version: version))
             try picture(rigs[n % rigs.count], index: n, to: folder.appendingPathComponent("previews/\(slug).png"))
         }
+        // A few extensions and themes beside them, for Home's Gallery (D84).
+        let others: [(id: String, kind: String, name: String, tagline: String, author: String, category: String?)] = [
+            ("dev.sidefolk.feeds", "extension", "Feeds", "Follow blogs and news; hear what's new once a day", "Sidefolk", "everyday"),
+            ("dev.sidefolk.git", "extension", "Git", "Your repos at a glance, and a tile on Today", "Sidefolk", "developer"),
+            ("dev.sidefolk.clipboard", "extension", "Clipboard", "Everything you copied, searchable with ⇧⌘C", "Sidefolk", "everyday"),
+            ("io.github.studiokumo.pomodoro", "extension", "Pomodoro", "Focus in 25-minute rounds with a soft bell", "Studio Kumo", "everyday"),
+            ("dev.sidefolk.themes.field-journal", "theme", "Field Journal", "Paper, ink and a pencil's warmth", "Sidefolk", nil),
+            ("dev.sidefolk.themes.playroom", "theme", "Playroom", "Bright, round and toy-like", "Sidefolk", nil),
+            ("dev.sidefolk.themes.night-shift", "theme", "Night Shift", "Deep blue for late hours", "Sidefolk", nil),
+        ]
+        for (i, o) in others.enumerated() {
+            var item: [String: Any] = ["id": o.id, "kind": o.kind, "name": o.name, "tagline": o.tagline, "author": o.author, "version": "1.0.0",
+                                       "description": o.tagline + ".", "file": "\(o.name.lowercased().replacingOccurrences(of: " ", with: "-"))-1.0.0.zip",
+                                       "bytes": 160_000 + i * 41_000, "sha256": String(repeating: "0", count: 64),
+                                       "published": String(format: "2026-10-%02d", 3 + i)]
+            if let category = o.category { item["category"] = category }
+            items.append(item)
+        }
         let data = try JSONSerialization.data(withJSONObject: ["format": AddonCatalog.format, "addons": items])
         return try AddonCatalog.parse(data, folder: folder, fetched: Date())
     }

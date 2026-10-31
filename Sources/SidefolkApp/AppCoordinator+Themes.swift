@@ -8,7 +8,7 @@ extension AppCoordinator {
 
     func applyTheme() {
         let s = runtime.settings.current
-        ThemeStore.shared.apply(themes.theme(id: s.theme))
+        ThemeStore.shared.apply(themes.theme(id: s.theme), density: s.density)
         ThemeStore.shared.setIcons(s.sidebarIcons)
         let folder = s.themeFolder.map { URL(fileURLWithPath: $0, isDirectory: true) }
         if folder == nil { ThemeStore.shared.setFolderReport(nil) }
@@ -24,7 +24,7 @@ extension AppCoordinator {
         do {
             let (theme, report) = try themes.install(from: folder)
             ThemeStore.shared.setFolderReport(report)
-            ThemeStore.shared.apply(theme)
+            ThemeStore.shared.apply(theme, density: runtime.settings.current.density)
             if runtime.settings.current.theme != theme.id {
                 Task { await runtime.settings.update { $0.theme = theme.id } }
             }
