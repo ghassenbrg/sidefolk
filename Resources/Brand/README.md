@@ -33,6 +33,7 @@ app icon and its preparation prompt are listed below.
 | Wordmarks | `exports/wordmark-{color,reversed,navy,white}.png` | Flat lettering, 4096 px wide; no bevel, glow or shadow. `color` is navy "Side" + aqua "folk" for light surfaces, `reversed` white "Side" + aqua "folk" for dark ones; the app uses only these two (D33). |
 | Vector wordmarks | `exports/wordmark-{color,reversed,navy,white}.{svg,pdf}` | One filled outline per letter built from strokes (below), canonical flat colors, no fonts, clipping masks, filters or embedded raster. The app draws the PDFs. |
 | Family art | `exports/family-color.png` | Mochi with Byte, Seed and Pip, without lettering: the first hello bubble and the About window. |
+| Family art master | `masters/family-current.png` | Approved 2026-10-31 family portrait, following the current Mochi and helper references; used to rebuild the family art export. |
 
 `scripts/build-app.sh` copies the production exports to `Contents/Resources/Brand/` and the templates
 to `Contents/Resources/MenuBar/`. `BrandAsset` provides typed AppKit loading in the app, and SwiftUI

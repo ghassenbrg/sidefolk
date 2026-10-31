@@ -134,6 +134,7 @@ for (name, side, folk) in [("color", navy, aqua), ("reversed", white, aqua), ("n
 let wordmark = wordmarks["color"]!
 let mark = normalized(read("Resources/Brand/masters/rabbit-portrait.png"))
 let primaryMark = normalized(read("Resources/Brand/masters/rabbit-family.png"))
+let familyArt = normalized(read("Resources/Brand/masters/family-current.png"))
 let mono = normalized(read("Resources/Brand/exports/mascot-navy.png"))
 try save(normalized(read("Resources/Brand/masters/mascot-mochi.png")), exports.appendingPathComponent("mascot-color.png"))
 func tint(_ image: CGImage, _ ink: (Double, Double, Double)) -> CGImage {
@@ -164,7 +165,7 @@ func lockup(horizontal: Bool, mark: CGImage, word: CGImage) -> CGImage {
 }
 for (name, image) in wordmarks { try save(image, exports.appendingPathComponent("wordmark-\(name).png")) }
 // The family on its own, for the first hello and the About window.
-try save(primaryMark, exports.appendingPathComponent("family-color.png"))
+try save(familyArt, exports.appendingPathComponent("family-color.png"))
 try save(mark, exports.appendingPathComponent("mark-color.png"))
 try save(mono, exports.appendingPathComponent("mark-navy.png"))
 try save(tint(mono, (1,1,1)), exports.appendingPathComponent("mark-white.png"))

@@ -1,6 +1,122 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "A little companion for your day." : {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رفيق صغير ليومك."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein kleiner Begleiter für deinen Tag."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un pequeño compañero para tu día."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un petit compagnon pour votre journée."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un piccolo compagno per la tua giornata."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日をともにする、小さな相棒。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루를 함께하는 작은 동반자."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um pequeno companheiro para o seu dia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "陪伴你每一天的小伙伴。"
+          }
+        }
+      }
+    },
+    "Sidefolk remembers what matters, reminds you, watches for changes and helps get things done. It works with your AI agents, too." : {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتذكّر Sidefolk ما يهمك، ويذكّرك، ويراقب التغييرات ويساعدك على إنجاز الأمور. ويعمل مع وكلاء الذكاء الاصطناعي لديك أيضًا."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk merkt sich, was wichtig ist, erinnert dich, behält Änderungen im Blick und hilft dir, Dinge zu erledigen. Auch mit deinen KI-Agenten arbeitet es zusammen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk recuerda lo importante, te avisa, vigila los cambios y te ayuda a hacer las cosas. También trabaja con tus agentes de IA."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk retient ce qui compte, vous rappelle les choses, surveille les changements et vous aide à avancer. Il travaille aussi avec vos agents IA."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk ricorda ciò che conta, ti avvisa, controlla i cambiamenti e ti aiuta a fare le cose. Lavora anche con i tuoi agenti IA."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolkは大切なことを覚え、リマインドし、変化を見守り、やることを手伝います。AIエージェントとも連携できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk는 중요한 것을 기억하고, 알려 주고, 변화를 살피며, 할 일을 돕습니다. AI 에이전트와도 함께 일합니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk lembra o que importa, avisa você, acompanha mudanças e ajuda a fazer as coisas. Ele também trabalha com seus agentes de IA."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sidefolk 记住重要的事，提醒你、留意变化并帮你完成任务。它也能与你的 AI 智能体协作。"
+          }
+        }
+      }
+    },
     "%@ %@" : {
       "comment" : "Why I stopped, then what was done: two sentences",
       "localizations" : {

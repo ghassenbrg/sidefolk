@@ -16,10 +16,10 @@ struct AboutView: View {
                 .padding(.top, -Theme.Space.xs)
             Text("Version \(Self.version)").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
             VStack(spacing: Theme.Space.xs) {
-                Text("Your AI sidekicks, always here.").font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                Text("A little companion for your day.").font(Theme.Font.heading).foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("A companion that remembers, reminds, watches, and works with your agents.")
+                Text("Sidefolk remembers what matters, reminds you, watches for changes and helps get things done. It works with your AI agents, too.")
                     .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
