@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// Settings › Companion's chooser (D?? companion chooser): every source in one list, what each companion's menu
+/// Settings › Companion's chooser (D77): every source in one list, what each companion's menu
 /// offers, who takes the place of one removed while worn, and the gallery's search, filters and order.
 @Suite struct CompanionLibraryTests {
     static let folder = URL(fileURLWithPath: "/tmp/Addons/Companions", isDirectory: true)

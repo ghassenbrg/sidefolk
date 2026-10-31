@@ -222,7 +222,7 @@ through `EventBus` streams consumed by `@MainActor @Observable` presenters. No l
 - Ask panel: non-activating `NSPanel` that can become key so typing never steals app activation.
 - Bubbles: child panels of the companion, positioned to stay on screen.
 
-## Colour meaning (D?? colour meaning)
+## Colour meaning (D78)
 
 Colours say what happened, the same way on every screen and in every theme. The meaning lives in Core's
 `StatusTone` (decision, risk, watch, session, reminder, an extension's tone → a tone); the app paints a tone with

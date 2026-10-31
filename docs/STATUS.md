@@ -66,7 +66,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   name on each branch to merge into one; `zh-Hant` is matched differently (D76 shows the manifest, `Localized` uses
   `zh-Hans`). The app's install sheet subtitle wraps a folder path oddly in Arabic (the app's own text, not D76's).
   Packs change, so each official extension goes out as its next snapshot (versions unchanged, D65).
-- **The companion chooser (D?? companion chooser, branch team/chooser):** Settings › Companion has Yours and Gallery at
+- **The companion chooser (D77):** Settings › Companion has Yours and Gallery at
   the top, as Extensions has Installed and Gallery. Yours is one grid of every companion the person can wear (built in,
   from the gallery, made by you, from a folder), each with a 3D/2D chip, where it came from, and a visible "…" menu
   (also Control-click): Wear, Update to …, Show in Finder, Remove… or Move to Trash… with a confirmation that says what
@@ -95,7 +95,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   for, downloaded and worn for real (the published gallery has none; the store test and the sample cover it); keyboard
   and VoiceOver by hand. *Next:* review on team/chooser, number the decision; in sidefolk-addons, `build.py` could write
   `published` so Newest appears.
-- **Colours have meanings (D?? colour meaning), on branch team/colors:** red is now only for an error, a failure, a
+- **Colours have meanings (D78):** red is now only for an error, a failure, a
   destructive action or real risk; amber for what waits (late reminders, "needs you" counts and chips, the badge on the
   companion, a countdown running out, medium risk, what the rules stopped); green for good outcomes; the accent for
   news (a page that changed is no longer red) and the now line on every time line (no longer red); calm ink for "no",

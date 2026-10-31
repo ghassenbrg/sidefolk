@@ -437,7 +437,7 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("chooser:") {
-            // chooser:yours|gallery|search:<words>|detail:<name>|get:<name>|remove:<id>|add|close (D?? companion chooser).
+            // chooser:yours|gallery|search:<words>|detail:<name>|get:<name>|remove:<id>|add|close (D77).
             settingsWindow.chooser(String(command.dropFirst("chooser:".count)))
             return
         }

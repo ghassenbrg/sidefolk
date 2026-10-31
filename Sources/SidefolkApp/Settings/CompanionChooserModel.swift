@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCharacter
 import SidefolkCore
 
-/// Settings › Companion's chooser (D?? companion chooser): every companion the person can wear in one list, what each
+/// Settings › Companion's chooser (D77): every companion the person can wear in one list, what each
 /// one's menu offers, and the gallery to browse for more, with what is narrowed, open or waiting for a yes. State
 /// lives here rather than in the views, so the debug app and the snapshots can show any of it.
 @MainActor @Observable

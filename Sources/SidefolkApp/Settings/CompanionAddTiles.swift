@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-// The tiles after the person's companions (D?? companion chooser): their own to add, and the gallery's to get.
+// The tiles after the person's companions (D77): their own to add, and the gallery's to get.
 
 /// The tile that adds one's own: a popover with each way and one line about it.
 struct AddCompanionTile: View {

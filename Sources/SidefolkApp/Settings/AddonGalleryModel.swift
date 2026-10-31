@@ -230,7 +230,7 @@ final class AddonGalleryModel {
     }
 
     #if DEBUG
-    /// A gallery to look at (UISnapshots, D?? companion chooser): this catalog and these companions on the Mac.
+    /// A gallery to look at (UISnapshots, D77): this catalog and these companions on the Mac.
     func showSample(catalog: AddonCatalog, companions: [InstalledCompanion], progress: [String: Double] = [:]) {
         sampled = true
         self.catalog = catalog

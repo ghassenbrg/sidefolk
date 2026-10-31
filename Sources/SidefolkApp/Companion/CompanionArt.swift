@@ -62,7 +62,7 @@ enum CompanionArt {
     }
 
     /// 3D companions worn by their folder's name, as last read, those whose files are all here: added from a folder
-    /// (D60), or from the gallery without a case in this copy (D?? companion chooser), standing on the rig their body names.
+    /// (D60), or from the gallery without a case in this copy (D77), standing on the rig their body names.
     private(set) static var locals: [InstalledCompanion] = loadLocals()
 
     private static func loadLocals() -> [InstalledCompanion] {

@@ -3,7 +3,7 @@ import SidefolkCore
 import SwiftUI
 
 /// Settings › Companion: who the companion is, how present it is on the desktop and how it behaves there, on
-/// Yours; and the add-on gallery's companions to browse and download, on Gallery (D?? companion chooser), as
+/// Yours; and the add-on gallery's companions to browse and download, on Gallery (D77), as
 /// Settings › Extensions keeps Installed and Gallery side by side.
 struct CompanionSettingsView: View {
     var model: SettingsModel

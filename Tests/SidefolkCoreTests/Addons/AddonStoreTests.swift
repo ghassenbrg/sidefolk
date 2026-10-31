@@ -194,8 +194,8 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: folder.path))
     }
 
-    /// A gallery companion this copy has no case for keeps its tagline and body, to be worn by its folder's name (D??
-    /// companion chooser); the person's own companion of that name, added from a folder, is never replaced; a retired
+    /// A gallery companion this copy has no case for keeps its tagline and body, to be worn by its folder's name (D77)
+    ///; the person's own companion of that name, added from a folder, is never replaced; a retired
     /// character's name is never installed.
     @Test func aCompanionWornByNameKeepsItsWordsAndNeverReplacesTheOwnersOwn() async throws {
         let g = try Gallery()

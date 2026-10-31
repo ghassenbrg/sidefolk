@@ -1,6 +1,6 @@
 import Foundation
 
-/// One companion the person can wear now, wherever it came from (D?? companion chooser): Sidefolk's own, one the
+/// One companion the person can wear now, wherever it came from (D77): Sidefolk's own, one the
 /// gallery downloaded, one made from data (D43) or a 3D one added from a folder (D60). Settings › Companion shows
 /// them in one grid, each with where it came from, so the person's own sit beside the others instead of in a
 /// separate list.

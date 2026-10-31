@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Every companion the person can wear, in one grid (D?? companion chooser): Sidefolk's own, the gallery's, those made
+/// Every companion the person can wear, in one grid (D77): Sidefolk's own, the gallery's, those made
 /// from data and those added from a folder, each saying where it came from and in which look it is worn, with a
 /// visible "…" menu (also its context menu) for what applies to it. After them, Add your own and the way to the
 /// gallery. A click wears one, at once on the desktop.

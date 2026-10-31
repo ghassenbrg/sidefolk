@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// A gallery companion up close (D?? companion chooser): its picture large, who made it, its version, size and looks,
+/// A gallery companion up close (D77): its picture large, who made it, its version, size and looks,
 /// what it is like, where it comes from, and Get or Wear, with the download's progress in place.
 struct CompanionGalleryDetail: View {
     var entry: AddonEntry

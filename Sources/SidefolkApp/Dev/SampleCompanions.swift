@@ -4,7 +4,7 @@ import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
-/// A gallery of sixty companions for UISnapshots (D?? companion chooser): Sidefolk's eight and fifty-two made up, by
+/// A gallery of sixty companions for UISnapshots (D77): Sidefolk's eight and fifty-two made up, by
 /// Sidefolk and by others, with sizes, dates and a few snapshots, to see the browser at the scale it is built for.
 /// Their pictures are the 2D rigs drawn on coloured discs, written to a temporary folder; nothing is downloaded.
 enum SampleCompanions {

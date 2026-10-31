@@ -76,7 +76,7 @@ struct CompanionPageHeader: View {
     }
 }
 
-/// Settings › Companion › Gallery (D?? companion chooser): the gallery's companions as a grid that loads its pictures
+/// Settings › Companion › Gallery (D77): the gallery's companions as a grid that loads its pictures
 /// as they scroll into sight, narrowed by the header. A card's button downloads (or wears what is here); the card
 /// itself opens the details.
 struct CompanionGalleryView: View {

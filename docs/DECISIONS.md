@@ -2001,7 +2001,7 @@ now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no
 Commands and `ask` sentences stay English (GLOSSARY rule 1). Not done: `zh-Hant` falls back to the manifest in Sidefolk
 but to `zh-Hans` in `Localized` (D75 normalizes any Chinese), a difference to settle when merging.
 
-### D?? — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
+### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
 **Decision:** *amends D43, D55, D56 and D60 for companions.* Settings › Companion has two pages at the top, outside the
 scroll, as Settings › Extensions has: **Yours** and **Gallery**.
 - **Yours, in one place.** Every companion the person can wear now is in one grid under the live stage
@@ -2067,7 +2067,7 @@ name too), `AddonGalleryModel.remove(companion:wearing:)`, `readInstalled`, `com
 `-menus`, `-remove` (sixty sample companions, `SampleCompanions`); debug `chooser:…` (scripts/dev.swift). For
 sidefolk-addons: `build.py` may write `published` (and `body` for a companion this app has no case for) into the catalog.
 
-### D?? — Colour meaning: red only for errors and real risk, amber for waiting, green for good outcomes (2026-10-31)
+### D78 — Colour meaning: red only for errors and real risk, amber for waiting, green for good outcomes (2026-10-31)
 **Decision:** every status colour means one thing, in every screen and theme (ARCHITECTURE › Colour meaning):
 - **danger/red:** an error, a failure, a destructive action, or real risk to the person's data or privacy. Nothing else.
 - **warning/amber:** needs a look or is waiting (late reminders, what waits on you, a countdown running out, a step

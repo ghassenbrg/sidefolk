@@ -260,7 +260,7 @@ enum UISnapshots {
                 try await page("page-settings-companion-made", SettingsTabContent(tab: .companion, model: settings), width: width)
                 settings.update { $0.choose(.mochi) }
             }
-            // The chooser (D?? companion chooser): every companion here in one grid (the made-by-you and folder ones
+            // The chooser (D77): every companion here in one grid (the made-by-you and folder ones
             // when SIDEFOLK_HOME has them), the gallery of sixty with filters, a download under way, and the details.
             let chooser = settings.chooser
             // Worn: the one added from a folder, when SIDEFOLK_HOME has it (its files are real), else Spark.
@@ -470,7 +470,7 @@ enum UISnapshots {
         _ = try await SampleData.fill(rt, notebook: NotebookModel(services: services))
         let model = SettingsModel(services: services)
         await model.refresh()
-        // A gallery of sixty companions (D?? companion chooser), and those added from a folder in SIDEFOLK_HOME, read only.
+        // A gallery of sixty companions (D77), and those added from a folder in SIDEFOLK_HOME, read only.
         model.gallery.showSample(catalog: try SampleCompanions.catalog(), companions: SampleCompanions.installed + localCompanions)
         return (model, services)
     }
