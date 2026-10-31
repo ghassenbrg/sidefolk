@@ -14,15 +14,22 @@ struct ExtensionPageView: View {
         PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
             header
             if let page = model.page {
-                if let summary = page.summary { SummaryBanner(summary: summary, model: model) }
+                // A hero leading the page says what the summary would, larger and with its actions (D73).
+                if let summary = page.summary, page.hero == nil { SummaryBanner(summary: summary, model: model) }
                 if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
-                ForEach(Array(page.runs.enumerated()), id: \.offset) { _, run in
-                    if run.count == 1, let section = run.first, section.isWide {
-                        SectionView(section: section, model: model)
-                    } else {
-                        SectionColumns(minWidth: 340, maxColumns: 3, spacing: Theme.Space.xl) {
-                            ForEach(Array(run.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
+                PageRegions(spacing: Theme.Space.xl) {
+                    ForEach(Array(page.regions.enumerated()), id: \.offset) { _, part in
+                        Group {
+                            if part.sections.count == 1, let section = part.sections.first, section.isWide || part.region != .main {
+                                SectionView(section: section, model: model)
+                            } else {
+                                // Beside a side column the main one is narrower: two small sections to a row at most.
+                                SectionColumns(minWidth: 340, maxColumns: page.hasSide ? 2 : 3, spacing: Theme.Space.xl) {
+                                    ForEach(Array(part.sections.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
+                                }
+                            }
                         }
+                        .pageRegion(part.region)
                     }
                 }
                 if !model.alerts.isEmpty { HeadsUps(model: model) }
@@ -138,7 +145,7 @@ private struct SummaryBanner: View {
                         .disabled(pending != nil)
                         .help(Text(verbatim: control.detail ?? control.label))
                 case .button:
-                    ControlButton(control: control, model: model)
+                    PageButton(control: control, model: model)
                 }
             }
         }
@@ -161,6 +168,7 @@ private struct SectionView: View {
         case switches([ExtensionPage.Control]), buttons([ExtensionPage.Control])
         /// Choices, fields and lists (D68), drawn in ExtensionPageInputs.swift.
         case inputs([ExtensionPage.Block])
+        case hero(ExtensionPage.Hero), transport(ExtensionPage.Transport)
         var id: String {
             switch self {
             case .gauges(let b): "g\(b.count)\(b.hashValue)"
@@ -171,49 +179,83 @@ private struct SectionView: View {
             case .switches(let c): "s\(c.count)\(c.hashValue)"
             case .buttons(let c): "b\(c.count)\(c.hashValue)"
             case .inputs(let b): "i\(b.count)\(b.hashValue)"
+            case .hero(let h): "h\(h.hashValue)"
+            case .transport(let t): "t\(t.hashValue)"
             }
         }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            if section.title != nil || hasCharts {
+            if let title = section.title, section.collapsed != nil {
+                // Folded under its title until opened (D73): settings most people never change.
+                Button {
+                    withAnimation(Theme.Motion.ease(0.18)) { model.toggleOpen(title) }
+                } label: {
+                    HStack(spacing: Theme.Space.s) {
+                        Image(systemName: "chevron.forward").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.inkMuted)
+                            .rotationEffect(.degrees(open ? 90 : 0))
+                        Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityValue(open ? Text("Unfolded", comment: "Spoken state of a section of an extension page that folds: open now")
+                                         : Text("Folded", comment: "Spoken state of a section of an extension page that folds: closed now"))
+            } else if section.title != nil || hasCharts {
                 HStack {
-                    if let title = section.title { Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink) }
+                    if let title = section.title { Text(verbatim: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
                     Spacer(minLength: Theme.Space.s)
                     if hasCharts { windowPicker }
                 }
             }
-            ForEach(groups) { group in
-                switch group {
-                // Rings in one row and numbers in the next, each row filling the width (D67).
-                case .gauges(let blocks), .stats(let blocks):
-                    CardGrid(minWidth: 150, maxColumns: 6, spacing: Theme.Space.m) {
-                        ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
-                    }
-                case .cards(let blocks):
-                    CardGrid(minWidth: 340, maxColumns: 3, spacing: Theme.Space.m) {
-                        ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
-                    }
-                case .notes(let notes):
-                    VStack(alignment: .leading, spacing: Theme.Space.s) { ForEach(Array(notes.enumerated()), id: \.offset) { _, n in NoteView(note: n) } }
-                case .switches(let controls):
-                    RowsCard {
-                        ForEach(Array(controls.enumerated()), id: \.offset) { _, c in SwitchRow(control: c, model: model) }
-                    }
-                case .buttons(let controls):
-                    FlowRow(spacing: Theme.Space.s) {
-                        ForEach(Array(controls.enumerated()), id: \.offset) { _, c in ControlButton(control: c, model: model) }
-                    }
-                case .inputs(let blocks):
-                    ExtensionPageInputs(blocks: blocks, model: model)
-                case .asks(let asks):
-                    FlowRow(spacing: Theme.Space.s) {
-                        ForEach(Array(asks.enumerated()), id: \.offset) { _, a in
-                            Button { model.ask(a.ask) } label: { Label { Text(verbatim: a.label) } icon: { Image(systemName: "sparkles") } }
-                                .buttonStyle(.sf(.secondary))
-                                .help(Text(verbatim: a.ask))
-                        }
+            if open { content }
+        }
+    }
+
+    /// A section that folds is open once the person opened it, or when the extension doesn't fold it.
+    private var open: Bool {
+        guard let title = section.title, let collapsed = section.collapsed else { return true }
+        // The person's click turns the extension's default over.
+        return model.opened.contains(title) == collapsed
+    }
+
+    @ViewBuilder private var content: some View {
+        ForEach(groups) { group in
+            switch group {
+            // Rings in one row and numbers in the next, each row filling the width (D67).
+            case .gauges(let blocks), .stats(let blocks):
+                CardGrid(minWidth: 150, maxColumns: 6, spacing: Theme.Space.m) {
+                    ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
+                }
+            case .cards(let blocks):
+                CardGrid(minWidth: 340, maxColumns: 3, spacing: Theme.Space.m) {
+                    ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
+                }
+            case .notes(let notes):
+                VStack(alignment: .leading, spacing: Theme.Space.s) { ForEach(Array(notes.enumerated()), id: \.offset) { _, n in NoteView(note: n) } }
+            case .switches(let controls):
+                RowsCard {
+                    ForEach(Array(controls.enumerated()), id: \.offset) { _, c in SwitchRow(control: c, model: model) }
+                }
+            case .buttons(let controls):
+                FlowRow(spacing: Theme.Space.s) {
+                    ForEach(Array(controls.enumerated()), id: \.offset) { _, c in PageButton(control: c, model: model) }
+                }
+            case .inputs(let blocks):
+                ExtensionPageInputs(blocks: blocks, model: model)
+            case .hero(let h):
+                HeroView(hero: h, model: model)
+            case .transport(let t):
+                TransportView(transport: t, model: model)
+            case .asks(let asks):
+                FlowRow(spacing: Theme.Space.s) {
+                    ForEach(Array(asks.enumerated()), id: \.offset) { _, a in
+                        Button { model.ask(a.ask) } label: { Label { Text(verbatim: a.label) } icon: { Image(systemName: "sparkles") } }
+                            .buttonStyle(.sf(.secondary))
+                            .help(Text(verbatim: a.ask))
                     }
                 }
             }
@@ -250,6 +292,10 @@ private struct SectionView: View {
                 if case .asks(let as_) = out.last { out[out.count - 1] = .asks(as_ + [a]) } else { out.append(.asks([a])) }
             case .choice, .field, .list:
                 if case .inputs(let b) = out.last { out[out.count - 1] = .inputs(b + [block]) } else { out.append(.inputs([block])) }
+            case .hero(let h):
+                out.append(.hero(h))
+            case .transport(let t):
+                out.append(.transport(t))
             case .control(let c):
                 if case .toggle = c.kind {
                     if case .switches(let cs) = out.last { out[out.count - 1] = .switches(cs + [c]) } else { out.append(.switches([c])) }
@@ -276,7 +322,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport: EmptyView()
         }
     }
 }
@@ -548,40 +594,6 @@ private struct SwitchRow: View {
     }
 
     private var isOn: Bool { if case .toggle(let on) = control.kind { on } else { false } }
-}
-
-private struct ControlButton: View {
-    var control: ExtensionPage.Control
-    var model: ExtensionPageModel
-    @State private var running = false
-
-    var body: some View {
-        Button {
-            running = true
-            Task {
-                await model.run(control, on: nil)
-                running = false
-            }
-        } label: {
-            if let symbol = control.symbol {
-                Label { Text(verbatim: control.label) } icon: { Image(systemName: symbol) }
-            } else {
-                Text(verbatim: control.label)
-            }
-        }
-        .buttonStyle(.sf(style))
-        .disabled(running)
-        .help(control.detail.map { Text(verbatim: $0) } ?? Text(verbatim: control.label))
-    }
-
-    private var style: SFButtonStyle.Kind {
-        guard case .button(let s) = control.kind else { return .secondary }
-        return switch s {
-        case .primary: .primary
-        case .secondary: .secondary
-        case .destructive: .destructive
-        }
-    }
 }
 
 // MARK: What Sidefolk does for it

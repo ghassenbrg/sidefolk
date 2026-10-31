@@ -56,17 +56,29 @@ public struct Summary {
 }
 
 public struct Section {
+    /// `side`: in a wide window, in a column beside the main sections at the start edge (a list of devices to pick
+    /// from); narrower, in the page's order.
+    public enum Place: String { case main, side }
+
     public var title: String?
     public var blocks: [Block]
+    public var place: Place
+    /// Folded under its title (`true`) or open (`false`) until the person opens or folds it: settings most people never
+    /// change. nil: always open.
+    public var collapsed: Bool?
 
-    public init(_ title: String? = nil, _ blocks: [Block]) {
+    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil) {
         self.title = title
         self.blocks = blocks
+        self.place = place
+        self.collapsed = collapsed
     }
 
     var json: [String: Any] {
         var out: [String: Any] = ["blocks": blocks.map(\.json)]
         if let title { out["title"] = title }
+        if place != .main { out["place"] = place.rawValue }
+        if let collapsed { out["collapsed"] = collapsed }
         return out
     }
 }
@@ -123,6 +135,17 @@ public enum Block {
                key: String = "text")
     /// Rows with a picture, a colour or a symbol, a line under each, and a button each (Copy, Remove).
     case list(_ title: String? = nil, caption: String? = nil, _ rows: [Row])
+    /// One of a list of things, drawn as what it chooses between: `.cards` (presets, a line each), `.tiles` (pictures:
+    /// displays, windows), `.rows` (devices or accounts with a badge each). Picking one runs one of this extension's
+    /// tools with the option's value merged into `input` as `key`. An older Sidefolk draws it as a plain choice.
+    case picker(_ label: String, detail: String? = nil, style: PickerStyle = .rows, _ options: [Option], selected: String, tool: String,
+                input: [String: Any] = [:], key: String = "value", disabled: Bool = false)
+    /// What the page is about right now, large, with its main actions; leading the page, it replaces the summary.
+    case hero(Hero)
+    /// Where something playing is, with its buttons (play or pause as the primary one).
+    case transport(Transport)
+    /// A button with all its options: a line on hover, dimmed when it can't run yet.
+    case action(Action)
 
     var json: [String: Any] {
         switch self {
@@ -154,14 +177,175 @@ public enum Block {
                                  "input": input, "key": key])
         case .list(let title, let caption, let rows):
             return Self.dropNil(["type": "list", "title": title, "caption": caption, "items": rows.map(\.json)])
+        case .picker(let label, let detail, let style, let options, let selected, let tool, let input, let key, let disabled):
+            return Self.dropNil(["type": "choice", "style": style.rawValue, "label": label, "detail": detail, "selected": selected, "tool": tool,
+                                 "input": input, "key": key, "disabled": disabled ? true : nil, "options": options.map(\.json)])
+        case .hero(let hero):
+            return hero.json
+        case .transport(let transport):
+            return transport.json
+        case .action(let action):
+            return action.json
         }
     }
 
     private static func dropNil(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
 }
 
+/// `primary` is the page's one main action (Sidefolk keeps only the first filled); `plain` is quiet text for what's
+/// rarely needed ("Look again", "Forget").
 public enum ButtonStyle: String {
-    case primary, secondary, destructive
+    case primary, secondary, destructive, plain
+}
+
+public enum PickerStyle: String {
+    case segmented, cards, tiles, rows
+}
+
+/// A button: runs one of this extension's tools with `input`. `detail` is shown on hover; `disabled` dims it, its
+/// detail saying why ("Choose a TV first").
+public struct Action {
+    public var label: String
+    public var tool: String
+    public var input: [String: Any]
+    public var style: ButtonStyle
+    public var symbol: String?
+    public var detail: String?
+    public var disabled: Bool
+
+    public init(_ label: String, tool: String, input: [String: Any] = [:], style: ButtonStyle = .secondary, symbol: String? = nil,
+                detail: String? = nil, disabled: Bool = false) {
+        self.label = label
+        self.tool = tool
+        self.input = input
+        self.style = style
+        self.symbol = symbol
+        self.detail = detail
+        self.disabled = disabled
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["type": "button", "label": label, "tool": tool, "input": input, "style": style.rawValue]
+        if let symbol { out["symbol"] = symbol }
+        if let detail { out["detail"] = detail }
+        if disabled { out["disabled"] = true }
+        return out
+    }
+}
+
+/// A small label beside an option: "Paired", "New".
+public struct Badge {
+    public var text: String
+    public var tone: Tone
+
+    public init(_ text: String, tone: Tone = .neutral) {
+        self.text = text
+        self.tone = tone
+    }
+}
+
+/// One option of a `picker`: a picture (a file in the data folder, as for list rows) or a symbol, a line under its
+/// label, a badge, and a small button of its own.
+public struct Option {
+    public var value: String
+    public var label: String
+    public var detail: String?
+    public var image: String?
+    public var symbol: String?
+    public var badge: Badge?
+    public var action: Action?
+
+    public init(_ value: String, _ label: String, detail: String? = nil, image: String? = nil, symbol: String? = nil, badge: Badge? = nil,
+                action: Action? = nil) {
+        self.value = value
+        self.label = label
+        self.detail = detail
+        self.image = image
+        self.symbol = symbol
+        self.badge = badge
+        self.action = action
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["value": value, "label": label]
+        if let detail { out["detail"] = detail }
+        if let image { out["image"] = image }
+        if let symbol { out["symbol"] = symbol }
+        if let badge { out["badge"] = ["text": badge.text, "tone": badge.tone.rawValue] }
+        if let action { out["action"] = action.json }
+        return out
+    }
+}
+
+/// What the page is about now: `eyebrow` the state in a few words, a large `title`, `code` a short code to compare
+/// (drawn very large), `image` a picture in the data folder, `busy` a spinner, up to four `facts` (live numbers) and
+/// three `actions` drawn large.
+public struct Hero {
+    public var title: String
+    public var eyebrow: String?
+    public var detail: String?
+    public var tone: Tone
+    public var symbol: String?
+    public var code: String?
+    public var image: String?
+    public var busy: Bool
+    public var facts: [(String, String)]
+    public var actions: [Action]
+
+    public init(_ title: String, eyebrow: String? = nil, detail: String? = nil, tone: Tone = .neutral, symbol: String? = nil, code: String? = nil,
+                image: String? = nil, busy: Bool = false, facts: [(String, String)] = [], actions: [Action] = []) {
+        self.title = title
+        self.eyebrow = eyebrow
+        self.detail = detail
+        self.tone = tone
+        self.symbol = symbol
+        self.code = code
+        self.image = image
+        self.busy = busy
+        self.facts = facts
+        self.actions = actions
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["type": "hero", "title": title, "tone": tone.rawValue, "busy": busy,
+                                  "facts": facts.map { ["label": $0.0, "value": $0.1] }, "actions": actions.map(\.json)]
+        if let eyebrow { out["eyebrow"] = eyebrow }
+        if let detail { out["detail"] = detail }
+        if let symbol { out["symbol"] = symbol }
+        if let code { out["code"] = code }
+        if let image { out["image"] = image }
+        return out
+    }
+}
+
+/// Something playing: `position` and `duration` in seconds, its state, and up to five buttons, each with a symbol.
+public struct Transport {
+    public enum State: String { case playing, paused, buffering, stopped }
+
+    public var title: String?
+    public var detail: String?
+    public var position: Double?
+    public var duration: Double?
+    public var state: State
+    public var buttons: [Action]
+
+    public init(title: String? = nil, detail: String? = nil, position: Double? = nil, duration: Double? = nil, state: State, buttons: [Action]) {
+        self.title = title
+        self.detail = detail
+        self.position = position
+        self.duration = duration
+        self.state = state
+        self.buttons = buttons
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["type": "transport", "state": state.rawValue, "buttons": buttons.map(\.json)]
+        if let title { out["title"] = title }
+        if let detail { out["detail"] = detail }
+        if let position { out["position"] = position }
+        if let duration { out["duration"] = duration }
+        return out
+    }
 }
 
 /// One row of a `list`: `image` is a picture file in the extension's data folder (`Paths.data`), named relative to it,

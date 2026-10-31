@@ -157,17 +157,20 @@ struct ExtensionScreenUDPTests {
     }
     """
 
-    /// The gallery's Miraya in this host's sandbox, with no TV around: WebRTC loads from its lib/, it starts and keeps
-    /// running, its page says only what is true, and a link that isn't HTTPS is refused before anything is sent.
+    /// The gallery's Miraya in this host's sandbox: WebRTC loads from its lib/, it starts and keeps running, its page
+    /// (D73) leads with a hero holding one primary action and lists TVs in a side column, and a link that isn't HTTPS is
+    /// refused before anything is sent.
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func mirayaStartsInItsSandbox() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"))
         #expect(info.tools.allSatisfy { $0.risk != .low }, "the network raises every tool to medium")
         let page = try await h.host.renderPage(extensionId: info.id, page: "miraya")
-        #expect(page.summary?.title.hasPrefix("Miraya") == true, "\(String(describing: page.summary))")
+        #expect(page.summary != nil && page.hasSide, "\(String(describing: page.summary))")
+        let hero = try #require(page.hero)
+        #expect(hero.actions.filter { $0.style == .primary }.count == 1, "\(hero)")
         let status = try #require(await h.call("ext.miraya.tv_status").okText)
-        #expect(status.hasPrefix("Miraya"), "\(status)")
+        #expect(status.hasSuffix("."), "\(status)")
         let plain = await h.call("ext.miraya.play_on_tv", ["url": "http://example.com/film.mp4"])
         guard case .ok(let refused) = plain.status else { Issue.record("\(plain.status)"); return }
         #expect(refused.isError && refused.text.contains("https://"), "\(refused.text)")

@@ -89,6 +89,31 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   `check.sh` against this app, the Activity chip in `--ui-snapshots`. *Not verified:* a real tainted agent run in the
   debug app (needs a live model) and a real TV (no TV or emulator used). *Next:* the founder tries it with a paired TV;
   maybe extend D47's "Always" to paired calls in "Ask once per kind".
+- **Extension pages read like app screens; Miraya's page rebuilt (D73, branch team/miraya-page in both repos):** the
+  founder found Miraya's page confusing (every button alike, nothing highlighted, "Show windows" only revealed more
+  buttons). *Platform, for any extension:* a `hero` leading the page (state, large title, a large code, a picture, live
+  facts, up to three large actions; it takes the banner's place), one primary button a page (`ExtensionPage.parse`
+  demotes later ones), `plain` and `disabled` buttons, destructive filled red when nothing is primary, `choice` styles
+  `cards` / `tiles` / `rows` with badges, per-row actions and `key`, a `transport`, sections in a side column
+  (`place: side`) or folded (`collapsed`). Layout rules moved to SidefolkCore (`ExtensionPage+Layout.swift`); drawing in
+  `Home/ExtensionPageHero.swift`, `ExtensionPageChoices.swift`, `PageRegions`; the Kit (both copies) has `Hero`,
+  `Transport`, `Action`, `Option`, `Badge`, `.picker`, `Section(place:collapsed:)`; docs/EXTENSIONS.md and the
+  extension skill (both copies) say how. Today's tile button keeps its style (Start filled, Stop red).
+  *Miraya (sidefolk-addons):* `MirayaPage` builds a page per state from a `Now` snapshot (no TV, ready, new TV, problem,
+  pairing, authorizing, connecting, sharing, paused, playing); `Shots.swift` takes 480 × 300 stills of displays and
+  windows (and dimmed parts of a screen) with ScreenCaptureKit only while the page is open, every 20 s at most, never
+  while sharing, and only if recording is already allowed; `set_option` also takes `kind`, `display`, `window`, `area`
+  (main.swift; no manifest or Tools.swift change); `choices.json` gains optional keys.
+  *Checked:* UI snapshots of all ten Miraya states (made from Miraya's own `MirayaPage.make` output,
+  `Dev/SampleMirayaPages.swift`), light and dark, narrow (640) and wide (1560), German and Arabic (the side column and
+  hero mirror right to left); Your Mac, Keep Awake and Clipboard pages unchanged; the debug app with Miraya built from
+  the branch (unsigned, outside the repo): the real page in the sandbox (no TV here: the no-TV state) and a setting
+  changed through Guard (asked, approved, saved). New tests: `ExtensionPageLayoutTests` (five), Miraya's sandbox test,
+  sidefolk-addons `MirayaTests` (each state's JSON, one primary everywhere, limits, the dimmed part). *Not yet:* any
+  state with a real TV (pairing, sharing, a video) in the running app, only through fixtures; window and display stills
+  in the running app (the debug app isn't allowed to record here); clicks by hand on tiles, rows and folding; Arabic
+  extension text with numbers ("3024 × 1964" reads reversed in RTL: extension text has no direction of its own, an
+  older issue of every page). *Next:* the founder looks at the page with a TV and Screen Recording on; then merge.
 - **3D companion lay down while alerting (fix):** the 2D director resets the posture to standing on any non-idle
   state but sends no cue, so a 3D companion that had lain down stayed lying, eyes open, when a bubble or alert
   arrived. `engine.js` `setState` now stands up for every state except idle (and `sleeping`, which lies by design).

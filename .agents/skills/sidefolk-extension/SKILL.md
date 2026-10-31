@@ -267,7 +267,7 @@ definitions are held until approved.
 - [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;
       `docs/EXTENSIONS.md` when the platform changed. Commit in a coherent milestone, no Co-Authored-By trailer.
 
-## Newer features (D67, D68)
+## Newer features (D67, D68, D69, D73)
 
 - **A main switch where people are (D67).** An extension that is mostly on/off puts its switch on the page summary:
   `Summary("Awake until 18:00", detail: "25 min left", tone: .good, control: .toggle(...))` (extensions/Kit/Page.swift),
@@ -298,3 +298,21 @@ definitions are held until approved.
   never claim it. Linked frameworks ship in `lib/` (plain files, no symlinks), signed by the same team. A process
   started for one call (a file grant) gets `SIDEFOLK_ONE_CALL=1` and the Kit skips background work there. Miraya
   (sidefolk-addons `extensions/miraya`) is the example.
+- **A page that reads like an app screen (D73).** For a feature with a main action and states (connect, share, play),
+  lead the page with a `.hero(Hero(...))`: the state in a few words (`eyebrow`), a large title, a line, a `code` to
+  compare, a picture, up to four live `facts`, and up to three `actions` drawn large. It replaces the summary banner on
+  the page (the summary still feeds the tile and sidebar). Build the page per state, so each state is its own clear
+  screen (Miraya: no TV, ready, pairing with the code, sharing with live numbers, paused, playing). Give every button
+  its emphasis: `.primary` for the ONE thing to do (Sidefolk keeps only the first primary on a page filled), `.secondary`,
+  `.destructive` (filled red when the page has no primary: "Stop sharing"), `.plain` for rarely needed ("Look again",
+  "Forget"); `Action(..., detail:, disabled: true)` shows a step that can't run yet and says why.
+- **Choosing visually (D73).** `.picker(label, style:, options, selected:, tool:, key:)` is a `choice` drawn as
+  `.cards` (presets with a line each), `.tiles` (pictures: displays, windows, photos; up to 24) or `.rows` (devices or
+  accounts with a `Badge` each and a small per-row `action`, up to 24). Picking runs your tool with the option's value
+  under `key`. Tile pictures are files in `Paths.data` like list pictures: give each new picture a new name (Sidefolk
+  caches by name) and delete old ones. Never let choosing reveal more buttons: pick inline, act with the hero's button.
+- **Layout from the extension (D73).** `Section(..., place: .side)` puts a section in a column beside the main ones in a
+  wide window (a device list, like an app's sidebar); `collapsed: true` folds it under its title (advanced settings,
+  connection details). `.transport(Transport(...))` shows something playing: position, duration, round symbol buttons
+  with play or pause as the primary. An older Sidefolk skips hero and transport and draws pickers as plain choices,
+  so keep the summary meaningful (with its `control`) for those copies.

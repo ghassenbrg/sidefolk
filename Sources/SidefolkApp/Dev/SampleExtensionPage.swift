@@ -170,6 +170,88 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: pictureFolder())
     }
 
+    /// Miraya's page in one of its states (D73), with made-up pictures of two displays, three windows and the parts of
+    /// a screen, as Miraya keeps them in its data folder.
+    @MainActor static func miraya(_ state: String, now: Date = Date()) -> ExtensionPageModel {
+        let page = SampleMirayaPages.json[state].flatMap { try? JSONDecoder().decode(JSONValue.self, from: Data($0.utf8)) }
+            .flatMap { try? ExtensionPage.parse($0) } ?? ExtensionPage()
+        let info = ExtensionPageInfo(extensionId: "dev.sidefolk.miraya", extensionName: "Miraya", page: "miraya", title: "Miraya", symbol: "tv",
+                                     refresh: 2, widget: true, iconPath: FixtureServices.addonIcon("miraya"))
+        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: mirayaFolder())
+    }
+
+    /// Screens and windows drawn as small pictures: a desktop with windows on it, a page in a browser, slides, a player.
+    @MainActor static func mirayaFolder() -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-miraya", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder.appendingPathComponent("shots"), withIntermediateDirectories: true)
+        func save(_ name: String, width: CGFloat = 480, height: CGFloat = 300, _ draw: @escaping (NSRect) -> Void) {
+            let image = NSImage(size: NSSize(width: width, height: height), flipped: true) { rect in draw(rect); return true }
+            if let tiff = image.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+                try? png.write(to: folder.appendingPathComponent("shots/\(name).png"))
+            }
+        }
+        func window(_ r: NSRect, _ body: NSColor, bar: NSColor = NSColor(white: 0.93, alpha: 1)) {
+            NSColor.black.withAlphaComponent(0.18).setFill()
+            NSBezierPath(roundedRect: r.offsetBy(dx: 0, dy: 3), xRadius: 8, yRadius: 8).fill()
+            body.setFill()
+            NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8).fill()
+            bar.setFill()
+            NSBezierPath(roundedRect: NSRect(x: r.minX, y: r.minY, width: r.width, height: 16), xRadius: 8, yRadius: 8).fill()
+            for (i, c) in [NSColor.systemRed, .systemYellow, .systemGreen].enumerated() {
+                c.setFill()
+                NSBezierPath(ovalIn: NSRect(x: r.minX + 7 + CGFloat(i) * 9, y: r.minY + 5, width: 6, height: 6)).fill()
+            }
+        }
+        func desktop(_ r: NSRect, _ a: NSColor, _ b: NSColor, windows: Bool) {
+            NSGradient(starting: a, ending: b)?.draw(in: r, angle: 60)
+            NSColor.white.withAlphaComponent(0.35).setFill()
+            NSRect(x: 0, y: 0, width: r.width, height: 10).fill()
+            if windows {
+                window(NSRect(x: 40, y: 46, width: 250, height: 170), .white)
+                window(NSRect(x: 210, y: 92, width: 230, height: 150), NSColor(red: 0.13, green: 0.13, blue: 0.16, alpha: 1))
+            }
+        }
+        let built: (NSRect) -> Void = { desktop($0, NSColor(red: 0.95, green: 0.55, blue: 0.35, alpha: 1), NSColor(red: 0.35, green: 0.18, blue: 0.45, alpha: 1), windows: true) }
+        save("display-1", built)
+        save("display-2", height: 270) { desktop($0, NSColor(red: 0.20, green: 0.55, blue: 0.85, alpha: 1), NSColor(red: 0.05, green: 0.15, blue: 0.35, alpha: 1), windows: false) }
+        save("window-42") { r in
+            window(r, .white)
+            NSColor(red: 0.2, green: 0.45, blue: 0.95, alpha: 1).setFill()
+            NSRect(x: 30, y: 50, width: 260, height: 18).fill()
+            NSColor(white: 0.85, alpha: 1).setFill()
+            for i in 0..<6 { NSRect(x: 30, y: 90 + CGFloat(i) * 22, width: CGFloat([380, 340, 400, 300, 360, 220][i]), height: 9).fill() }
+        }
+        save("window-43") { r in
+            window(r, NSColor(white: 0.2, alpha: 1))
+            NSGradient(starting: NSColor(red: 0.98, green: 0.78, blue: 0.3, alpha: 1), ending: NSColor(red: 0.9, green: 0.35, blue: 0.3, alpha: 1))?
+                .draw(in: NSRect(x: 70, y: 50, width: 340, height: 200), angle: -30)
+            NSColor.white.setFill()
+            NSRect(x: 100, y: 120, width: 200, height: 20).fill()
+            NSRect(x: 100, y: 150, width: 140, height: 10).fill()
+        }
+        save("window-44") { r in
+            window(r, NSColor(red: 0.98, green: 0.96, blue: 0.97, alpha: 1))
+            NSGradient(starting: .systemPink, ending: .systemPurple)?.draw(in: NSRect(x: 30, y: 50, width: 150, height: 150), angle: -45)
+            NSColor(white: 0.8, alpha: 1).setFill()
+            for i in 0..<5 { NSRect(x: 200, y: 60 + CGFloat(i) * 26, width: 230, height: 10).fill() }
+        }
+        for (name, part) in [("left", NSRect(x: 0, y: 0, width: 240, height: 300)), ("right", NSRect(x: 240, y: 0, width: 240, height: 300)),
+                             ("center", NSRect(x: 80, y: 60, width: 320, height: 180))] {
+            save("area-\(name)") { r in
+                built(r)
+                let dim = NSBezierPath(rect: r)
+                dim.append(NSBezierPath(rect: part).reversed)
+                NSColor.black.withAlphaComponent(0.62).setFill()
+                dim.fill()
+                NSColor.white.setStroke()
+                let edge = NSBezierPath(rect: part.insetBy(dx: 1.5, dy: 1.5))
+                edge.lineWidth = 3
+                edge.stroke()
+            }
+        }
+        return folder
+    }
+
     /// A made-up screenshot's thumbnail in a temporary folder, as Clipboard keeps one in its data folder.
     @MainActor static func pictureFolder() -> URL {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-clipboard", isDirectory: true)
