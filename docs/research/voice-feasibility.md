@@ -1,5 +1,8 @@
 # Give Mochi ears first, then a voice
 
+> **Historical (2026-11-01):** phase 1 was built as D34 (hold to talk, Apple's on-device recognition, one spoken
+> line, ElevenLabs as an option). Kept for what wasn't built: wake words, lip-sync, local voices.
+
 > **Status:** study only, nothing built yet (26 October 2026). Written from four research notes on
 > Apple's on-device speech, cloud voice APIs, local models and wake words, and voice UX; the raw
 > notes stay in the local `research_notes/` folder.

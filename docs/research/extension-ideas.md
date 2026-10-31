@@ -1,11 +1,15 @@
 # A library of extensions: ideas to approve (2026-10-28)
 
+> **Historical, kept as the backlog (2026-11-01):** written before the add-on gallery (D55). Since then Clipboard,
+> Keep Awake, Your Mac (System Vitals+), Miraya and Playtime's games were built (D62–D79) and the gallery replaced
+> the library plan. The ideas not built are still open for the founder to pick.
+
 The founder asked for a good library of extensions: for different people and different uses, useful and fun.
 These are seventy ideas to choose from. Nothing here is built. Reply with the numbers you approve (see
 [Approving](#approving) at the end); each approved idea then gets built, tested in its sandbox, and either
 shipped with the app or put in the GitHub catalog.
 
-This builds on [extensions-catalog.md](extensions-catalog.md) (what ships and why) and doesn't repeat it.
+This built on a catalog of what ships and why (now D39 and D55).
 
 ## What every idea here can rely on
 

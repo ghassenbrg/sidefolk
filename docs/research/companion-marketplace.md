@@ -4,7 +4,7 @@ A brainstorm for the founder (2026-10-30), not a decision. Two asks: anyone can 
 or one someone else made (an extension could bring one); and Sidefolk ships only a few companions built in and
 downloads the rest, so nobody carries models they never use.
 
-*Update (2026-10-30): step 2 is built ahead of step 1 (D55).* The gallery lives in `sidefolk-addons` with Sidefolk's
+*Historical (2026-11-01): kept for step 1, community companions, which isn't built.* *Update (2026-10-30): step 2 is built ahead of step 1 (D55).* The gallery lives in `sidefolk-addons` with Sidefolk's
 own companions (Ember, Kiko, Nimbo, Folio) and nine extensions. Packs and the catalog are signed with the Developer
 ID rather than a new Ed25519 key. Our 3D characters still carry code, so community 3D companions wait for step 1.
 
@@ -72,7 +72,7 @@ Settings › Companion gains **Get more**: a gallery read from a signed catalog,
   first launch. **In the gallery:** Ember, Kiko, Nimbo, Folio and every community pack. That makes the app about
   18 MB smaller, and each extra companion costs only the person who picks it.
 - **Extensions:** an extension's manifest can list companion packs (2D already works); they go through the same
-  validation and show the extension's trust level (docs/research/extensions-catalog.md).
+  validation and show the extension's trust level (D71).
 
 ## 5. Community: trust and safety
 

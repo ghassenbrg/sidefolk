@@ -1,9 +1,9 @@
 # From doll to companion: making the companions feel alive
 
-> **Status:** exploration and proof of concept on the branch `poc/lively-companions`, waiting for
-> the founder's decision (26 October 2026). Nothing here is merged into `rework`. Everything named
-> "built" below runs on that branch; everything else is a proposal. Pictures, GIFs, films and CPU
-> logs are in `build/lively-poc/` (regenerate them with the commands at the end).
+> **Status (2026-11-01):** built and merged (D43), so the proof of concept below is how the companions' life
+> works today; the custom companion format ("Custom companions") is the current reference, extended by D85.
+> Written on 26 October 2026 as a proposal on the branch `poc/lively-companions`, now merged: "the branch" below
+> means main. Pictures, films and CPU logs are regenerated with the commands at the end into `build/lively-poc/`.
 
 The founder's verdict on today's companions: the animation is basic and they feel like a doll. That
 is fair. Since D20 they breathe for 20 seconds after something happens and then hold perfectly still,
@@ -438,7 +438,6 @@ Re-run on a quiet Mac before quoting the WindowServer figures outside the team.
 ## Trying it
 
 ```sh
-git checkout poc/lively-companions
 swift build -c release --product sidefolk-render
 R=.build/release/sidefolk-render
 
