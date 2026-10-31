@@ -17,7 +17,7 @@
   empty state) read in light and dark, and today/say/onduty/history/you/gallery/agenda in German and Arabic (RTL mirrors,
   the day line runs right to left); the debug app (build/qa-1) driven with `respond:skip`, `ask:` reminders and a fact,
   `home:history|you|onduty|history:agents`, `find:` (the panel says "On this Mac, no AI"), `snap`; new core tests
-  `HomePlacesTests` (6); `make test` with SIDEFOLK_ADDONS_REPO (see the report for counts). *Half done / next:* Today's
+  `HomePlacesTests` (6); `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons clone (1587 core and 36 character tests pass). *Half done / next:* Today's
   approval cards are phase 2's `ApprovalCard` until the permission slip lands; Focus in the sidebar's pill waits for phase
   4's Attention; the Week view's "read only" note and "+1" overlaps; a watch's detail page (A9) needs a check log that
   isn't kept. The Trash shows days left (amber in the last three).
