@@ -1598,3 +1598,20 @@ couldn't be mixed); themes shipping their own views (code from strangers).
 `docs/research/themes-fidelity.md` lists each board's elements against the app. Older copies of Sidefolk skip the
 gallery's theme entries (entries decode one by one). Not built: chips you can edit with Tab in the one bar, a progress
 bar for runs (no run reports progress yet), and blocks from extensions.
+
+### D65 — Extensions have snapshots until they're released, as Sidefolk does (2026-10-31)
+**Decision:** a gallery extension is in snapshots until the founder releases it. Its manifest names the version it's
+heading for (`1.0.0`), and sidefolk-addons' `build.py` publishes it as `1.0.0-snapshot.<n>`: n rises each time its
+files change, and the published pack stays while they don't. Writing `"released": "1.0.0"` in its `addon.json`
+releases it: the next build publishes plain `1.0.0`. From then on 1.0.0 is fixed (files changed means raise the
+version, as before), and the next version (`1.1.0`) starts its own snapshots. All twelve extensions began at
+`1.0.0-snapshot.1`, including those already published as 1.1.0 or 1.2.0. Companions and themes keep plain versions.
+
+**Why:** the founder treats extensions like the app, which is still in 0.1.0 snapshots: no extension is released
+yet, so it shouldn't need a new version number for every change while it's being made.
+
+**Implications:** Sidefolk needs no change: `ReleaseVersion` already reads `1.0.0-snapshot.3`, orders snapshots by
+number and a release above them, and offers each as an update; 0.1.0-snapshot.489 does too. The pack's manifest
+carries the snapshot version, so what's installed compares with the gallery. A copy that installed currency 1.1.0,
+dev-toolbox 1.1.0, git 1.1.0, playtime 1.2.0 or qr-codes 1.1.0 keeps it and isn't offered the 1.0.0 snapshots
+(they're lower), until it removes and reinstalls it.
