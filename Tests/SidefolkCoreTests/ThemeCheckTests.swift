@@ -173,6 +173,20 @@ import UniformTypeIdentifiers
         #expect(empty.tokens.layout == .desk)
     }
 
+    /// Simple or colourful icons in Home (D67): Marshmallow's stage is colourful, the rest simple; anything else is said.
+    @Test func iconsAreSimpleOrColorful() throws {
+        #expect(ThemeLayout.desk.icons == .simple && ThemeLayout.stage.icons == .colorful)
+        var file = ThemeFile(.harbor, id: "com.you.icons", name: "Icons")
+        file.layout?.icons = "colorful"
+        try write(file)
+        #expect(ThemeCheck.check(folder: folder).tokens.layout.icons == .colorful)
+        file.layout?.icons = "glossy"
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(report.tokens.layout.icons == .simple)
+        #expect(messages(report).contains("layout.icons “glossy” isn't one of simple, colorful; simple is used."))
+    }
+
     /// Every preset is a layout a theme could have written: written out and read back, it is the same, with no problem.
     @Test func everyPresetReadsBackAsItself() throws {
         for (name, preset) in ThemeLayout.presets {

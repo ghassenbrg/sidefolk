@@ -38,6 +38,8 @@ struct ExtensionInfo: Identifiable, Hashable {
     var hiddenSearchTexts: [String] = []
     /// Sentences it answers without the AI, as "time in …" (D50).
     var commands: [String] = []
+    /// The extension that does all this one does and is on, so this one rests (D67).
+    var restingFor: String?
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }

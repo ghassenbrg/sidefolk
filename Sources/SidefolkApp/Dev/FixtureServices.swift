@@ -113,7 +113,10 @@ final class FixtureServices: AppServices {
 
     /// An icon in a sidefolk-addons checkout beside this one, for the gallery's extensions (D55).
     static func addonIcon(_ folder: String) -> String {
-        URL(fileURLWithPath: icon(folder)).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        if let repo = ProcessInfo.processInfo.environment["SIDEFOLK_ADDONS_REPO"] {
+            return URL(fileURLWithPath: repo).appendingPathComponent("extensions/\(folder)/icon.pdf").path
+        }
+        return URL(fileURLWithPath: icon(folder)).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("sidefolk-addons/extensions/\(folder)/icon.pdf").path
     }
 
@@ -139,8 +142,8 @@ final class FixtureServices: AppServices {
                           warnings: [], sandboxed: true, lastError: nil, bundled: true, iconPath: Self.icon("world-clock"),
                           commands: ["time in …", "what time is it in …", "what's the time in …", "current time in …"]),
             ExtensionInfo(id: "dev.sidefolk.system-vitals", name: "System Vitals", version: "1.0.0",
-                          description: "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
-                          tagline: "Battery, disk and memory at a glance",
+                          description: "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low. For a page with live charts, add Your Mac from the gallery.",
+                          tagline: "Quick answers on battery, disk and memory",
                           kind: .sidefolk, enabled: true, folk: "byte", toolNames: ["Battery status", "Disk space", "Memory use"],
                           watcherNames: ["Battery low", "Disk space low"],
                           permissionLines: ["Can run /usr/bin/pmset", "Can run /usr/bin/vm_stat", "Can run /usr/sbin/sysctl",

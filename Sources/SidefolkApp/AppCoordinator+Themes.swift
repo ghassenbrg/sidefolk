@@ -9,6 +9,7 @@ extension AppCoordinator {
     func applyTheme() {
         let s = runtime.settings.current
         ThemeStore.shared.apply(themes.theme(id: s.theme))
+        ThemeStore.shared.setIcons(s.sidebarIcons)
         let folder = s.themeFolder.map { URL(fileURLWithPath: $0, isDirectory: true) }
         if folder == nil { ThemeStore.shared.setFolderReport(nil) }
         // Edits made while Sidefolk was closed count too, so a folder newly followed is read at once.

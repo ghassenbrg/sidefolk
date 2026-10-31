@@ -29,23 +29,28 @@ public enum Tone: String {
     case good, warn, bad, info, neutral
 }
 
-/// The page in one line: on top of the page, and the Today tile when the manifest asks for one.
+/// The page in one line: on top of the page, and the Today tile when the manifest asks for one. `control`, a `.toggle`
+/// or a `.button`, is the extension's main switch: Sidefolk shows it with the summary, on the Today tile and beside
+/// the page in Home's sidebar (anything else there is ignored).
 public struct Summary {
     public var title: String
     public var detail: String
     public var tone: Tone
     public var symbol: String?
+    public var control: Block?
 
-    public init(_ title: String, detail: String = "", tone: Tone = .neutral, symbol: String? = nil) {
+    public init(_ title: String, detail: String = "", tone: Tone = .neutral, symbol: String? = nil, control: Block? = nil) {
         self.title = title
         self.detail = detail
         self.tone = tone
         self.symbol = symbol
+        self.control = control
     }
 
     var json: [String: Any] {
         var out: [String: Any] = ["title": title, "detail": detail, "tone": tone.rawValue]
         if let symbol { out["symbol"] = symbol }
+        if let control { out["control"] = control.json }
         return out
     }
 }

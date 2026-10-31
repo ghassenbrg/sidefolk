@@ -175,6 +175,7 @@ public enum ThemeCheck {
         }
         layout.navigation = pick(section.navigation, "navigation", ThemeLayout.drawnNavigation, layout.navigation)
         layout.nook = pick(section.nook, "nook", ThemeLayout.drawnNook, layout.nook)
+        layout.icons = pick(section.icons, "icons", ThemeLayout.drawnIcons, layout.icons)
         layout.activity = pick(section.activity, "activity", ThemeLayout.drawnActivity, layout.activity)
         layout.editor = pick(section.editor, "editor", ThemeLayout.drawnEditor, layout.editor)
         guard let rows = section.today else { return layout }

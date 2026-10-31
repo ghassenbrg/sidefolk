@@ -395,17 +395,63 @@ struct InlineEmpty: View {
     var action: () -> Void = {}
 
     var body: some View {
-        HStack(spacing: Theme.Space.s) {
-            if let systemImage { Image(systemName: systemImage).foregroundStyle(Theme.inkFaint) }
-            Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: Theme.Space.s)
+        // In a narrow column the step goes under the words, rather than squeezing them a word per line.
+        BesideOrBelow(spacing: Theme.Space.s, minLead: 220) {
+            HStack(spacing: Theme.Space.s) {
+                if let systemImage { Image(systemName: systemImage).foregroundStyle(Theme.inkFaint) }
+                Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
             if let actionTitle {
                 Button(actionTitle, action: action).buttonStyle(.sf(.secondary)).fixedSize()
             }
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m + 2)
+    }
+}
+
+/// Two views: the second beside the first at the trailing edge while the first keeps at least `minLead` points, else
+/// under it at the leading edge.
+struct BesideOrBelow: Layout {
+    var spacing: CGFloat
+    var minLead: CGFloat
+
+    private func beside(_ width: CGFloat, _ subviews: Subviews) -> Bool {
+        guard subviews.count > 1 else { return true }
+        return width - subviews[1].sizeThatFits(.unspecified).width - spacing >= minLead
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let first = subviews.first else { return .zero }
+        let width = proposal.width ?? first.sizeThatFits(.unspecified).width
+        guard subviews.count > 1 else { return CGSize(width: width, height: first.sizeThatFits(ProposedViewSize(width: width, height: nil)).height) }
+        let action = subviews[1].sizeThatFits(.unspecified)
+        if beside(width, subviews) {
+            let lead = first.sizeThatFits(ProposedViewSize(width: width - action.width - spacing, height: nil))
+            return CGSize(width: width, height: max(lead.height, action.height))
+        }
+        return CGSize(width: width, height: first.sizeThatFits(ProposedViewSize(width: width, height: nil)).height + spacing + action.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard let first = subviews.first else { return }
+        guard subviews.count > 1 else {
+            first.place(at: bounds.origin, proposal: ProposedViewSize(width: bounds.width, height: bounds.height))
+            return
+        }
+        let action = subviews[1].sizeThatFits(.unspecified)
+        if beside(bounds.width, subviews) {
+            let leadWidth = bounds.width - action.width - spacing
+            let lead = first.sizeThatFits(ProposedViewSize(width: leadWidth, height: nil))
+            first.place(at: CGPoint(x: bounds.minX, y: bounds.midY - lead.height / 2), proposal: ProposedViewSize(width: leadWidth, height: lead.height))
+            subviews[1].place(at: CGPoint(x: bounds.maxX - action.width, y: bounds.midY - action.height / 2), proposal: ProposedViewSize(action))
+        } else {
+            let lead = first.sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+            first.place(at: bounds.origin, proposal: ProposedViewSize(width: bounds.width, height: lead.height))
+            subviews[1].place(at: CGPoint(x: bounds.minX, y: bounds.minY + lead.height + spacing), proposal: ProposedViewSize(action))
+        }
     }
 }
 

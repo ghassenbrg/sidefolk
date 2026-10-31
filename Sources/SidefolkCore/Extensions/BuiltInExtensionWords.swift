@@ -20,7 +20,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.archives": String(localized: "Archives", comment: "A built-in extension: zip files")
         case "dev.sidefolk.dev-toolbox": String(localized: "Dev Toolbox", comment: "A built-in extension for software developers")
         case "dev.sidefolk.feeds": String(localized: "Feeds", comment: "A built-in extension: RSS and Atom feeds")
-        case "dev.sidefolk.system-vitals-plus": String(localized: "System Vitals+", comment: "A built-in extension: the whole Mac with live charts")
+        case "dev.sidefolk.system-vitals-plus": String(localized: "Your Mac", comment: "An extension of Sidefolk's: everything about this Mac, live, on a page with charts (once System Vitals+)")
         case "dev.sidefolk.clipboard": String(localized: "Clipboard", comment: "A built-in extension: everything you copy")
         case "dev.sidefolk.keep-awake": String(localized: "Keep Awake", comment: "A built-in extension: keeps the Mac awake")
         default: nil
@@ -32,7 +32,7 @@ enum BuiltInExtensionWords {
         switch id {
         case "dev.sidefolk.git": String(localized: "Clone, update and check your repositories", comment: "Git: one line under its name")
         case "dev.sidefolk.world-clock": String(localized: "The time anywhere, and times between places", comment: "World Clock: one line under its name")
-        case "dev.sidefolk.system-vitals": String(localized: "Battery, disk and memory at a glance", comment: "System Vitals: one line under its name")
+        case "dev.sidefolk.system-vitals": String(localized: "Quick answers on battery, disk and memory", comment: "System Vitals: one line under its name")
         case "dev.sidefolk.weather": String(localized: "Today's weather and the week ahead", comment: "Weather: one line under its name")
         case "dev.sidefolk.calculator": String(localized: "Exact sums, units and dates", comment: "Calculator: one line under its name")
         case "dev.sidefolk.currency": String(localized: "Money in 30 currencies at today's rates", comment: "Currency: one line under its name")
@@ -43,7 +43,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.archives": String(localized: "Zip and unzip files", comment: "Archives: one line under its name")
         case "dev.sidefolk.dev-toolbox": String(localized: "JSON, base64, JWTs, UUIDs and more", comment: "Dev Toolbox: one line under its name")
         case "dev.sidefolk.feeds": String(localized: "New posts from blogs, news and podcasts", comment: "Feeds: one line under its name")
-        case "dev.sidefolk.system-vitals-plus": String(localized: "Your whole Mac at a glance, with live charts", comment: "System Vitals+: one line under its name")
+        case "dev.sidefolk.system-vitals-plus": String(localized: "This Mac, live: charts, a Today tile and heads-ups", comment: "Your Mac (the extension): one line under its name")
         case "dev.sidefolk.clipboard": String(localized: "Everything you copy, a shortcut away", comment: "Clipboard: one line under its name")
         case "dev.sidefolk.keep-awake": String(localized: "Your Mac awake and you active, for as long as you say", comment: "Keep Awake: one line under its name")
         default: nil
@@ -57,7 +57,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.world-clock":
             String(localized: "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.")
         case "dev.sidefolk.system-vitals":
-            String(localized: "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.")
+            String(localized: "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low. For a page with live charts, add Your Mac from the gallery.")
         case "dev.sidefolk.weather":
             String(localized: "Today's weather and the week ahead for any place, and a heads-up before rain, from Open-Meteo. Only the place you ask about leaves your Mac.")
         case "dev.sidefolk.calculator":
@@ -77,7 +77,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.dev-toolbox":
             String(localized: "For developers: format JSON, encode and decode base64, URLs and hex, decode JWTs, convert timestamps, make UUIDs, and check a file's checksum.")
         case "dev.sidefolk.system-vitals-plus":
-            String(localized: "The whole Mac in plain words: processor, graphics, memory, apps, disks, battery health, heat and network, as a page with live charts, a tile on Today, instant answers and a heads-up when something needs you. Nothing leaves your Mac.")
+            String(localized: "Everything about this Mac, live and in plain words: processor, graphics, memory, apps, disks, battery health, heat and network, on a page with charts, a Today tile, instant answers and heads-ups. It does all System Vitals does, which rests while this is on. Nothing leaves your Mac.")
         case "dev.sidefolk.clipboard":
             String(localized: "Everything you copy, a shortcut away from any app: text with its formatting, links, pictures, files and code, searchable and pinnable. Copies from password managers are never kept; keys and card numbers are hidden and forgotten in two minutes. Nothing leaves your Mac.")
         case "dev.sidefolk.keep-awake":
@@ -169,7 +169,7 @@ enum BuiltInExtensionWords {
     /// A page's title in the sidebar (D62).
     static func page(_ id: String, _ page: String) -> String? {
         switch (id, page) {
-        case ("dev.sidefolk.system-vitals-plus", "mac"): String(localized: "Your Mac", comment: "System Vitals+: its page in Home's sidebar")
+        case ("dev.sidefolk.system-vitals-plus", "mac"): String(localized: "Your Mac", comment: "Your Mac (the extension): its page in Home's sidebar")
         case ("dev.sidefolk.clipboard", "clipboard"): String(localized: "Clipboard", comment: "Clipboard: its page in Home's sidebar")
         case ("dev.sidefolk.keep-awake", "awake"): String(localized: "Keep Awake", comment: "Keep Awake: its page in Home's sidebar")
         default: nil

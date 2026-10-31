@@ -50,6 +50,8 @@ public struct ThemeFile: Codable, Sendable, Equatable {
         public var preset: String?
         public var navigation: String?
         public var nook: String?
+        /// `simple` or `colorful` (D67).
+        public var icons: String?
         /// Rows, each a list of columns; a column is a block ("queue:cards") or {"width": 2, "blocks": [...]}.
         public var today: [[ColumnSection]]?
         public var activity: String?
@@ -143,7 +145,7 @@ extension ThemeFile {
 extension ThemeFile.LayoutSection {
     /// A layout written out in full, so whoever starts from it sees every block and can move it.
     public init(_ layout: ThemeLayout) {
-        self.init(preset: nil, navigation: layout.navigation.rawValue, nook: layout.nook.rawValue,
+        self.init(preset: nil, navigation: layout.navigation.rawValue, nook: layout.nook.rawValue, icons: layout.icons.rawValue,
                   today: layout.today.map { row in
                       row.map { column in
                           column.width == 1 && column.blocks.count == 1 && !column.page

@@ -45,6 +45,9 @@ struct NotebookEditor: View {
                 .padding(.horizontal, Theme.Space.xl + 4)
                 .padding(.top, Theme.Space.xl)
                 .padding(.bottom, Theme.Space.l)
+                // Lines a reader can follow in a wide window: the page keeps a book's measure, centred (D67).
+                .frame(maxWidth: 860, maxHeight: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .background(Theme.surface)
             .id(item.id)

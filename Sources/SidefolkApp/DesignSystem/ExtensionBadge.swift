@@ -10,15 +10,20 @@ struct ExtensionLook: Hashable {
     var folk: String?
 }
 
-/// An extension's icon in a rounded tile. Without an icon of its own (MCP servers, drafts, extensions
-/// that don't ship one) it gets a tile in its folk's colour with its initial; extensions without a folk
-/// get a folk picked from their name, so two of them rarely look alike.
+/// An extension's icon, everywhere one is drawn (the gallery, Settings, install previews, pages, Today's tiles, the
+/// sidebar): a continuous rounded square like a Mac app's (corners at 22.5% of the side), a hairline edge so a pale
+/// icon doesn't melt into a pale card, and a soft shadow once it's big enough to sit on the page (D67). Without an
+/// icon of its own (MCP servers, drafts, extensions that don't ship one) it gets a tile in its folk's colour with
+/// its page's symbol or its initial; extensions without a folk get a folk picked from their name, so two of them
+/// rarely look alike.
 struct ExtensionBadge: View {
     var look: ExtensionLook
     var size: CGFloat = 32
+    /// Drawn instead of the initial when there's no icon file: a page's own symbol.
+    var symbol: String?
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: size * 0.24, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: size * 0.225, style: .continuous)
         Group {
             if let image = ExtensionIconCache.image(at: look.iconPath) {
                 Image(nsImage: image).resizable().interpolation(.high).scaledToFill()
@@ -26,15 +31,20 @@ struct ExtensionBadge: View {
                 let color = Theme.folkColor(Self.folk(for: look))
                 ZStack {
                     LinearGradient(colors: [color.opacity(0.55), color], startPoint: .top, endPoint: .bottom)
-                    Text(verbatim: Self.initial(look.name))
-                        .font(.system(size: size * 0.5, weight: .bold, design: .rounded))
-                        .foregroundStyle(Theme.navy)
+                    if let symbol {
+                        Image(systemName: symbol).font(.system(size: size * 0.5, weight: .semibold)).foregroundStyle(Theme.navy)
+                    } else {
+                        Text(verbatim: Self.initial(look.name))
+                            .font(.system(size: size * 0.5, weight: .bold, design: .rounded))
+                            .foregroundStyle(Theme.navy)
+                    }
                 }
             }
         }
         .frame(width: size, height: size)
         .clipShape(shape)
-        .overlay(shape.strokeBorder(Theme.line, lineWidth: 0.5))
+        .overlay(shape.strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+        .shadow(color: .black.opacity(size >= 24 ? 0.16 : 0), radius: size * 0.05, y: size * 0.025)
         .accessibilityHidden(true)
     }
 
