@@ -2,9 +2,9 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Extensions: the extensions that come with Sidefolk, the ones the person added (folders and
+/// Settings › Add-ons (was Extensions): the extensions that come with Sidefolk, the ones the person added (folders and
 /// MCP servers), drafts Sidefolk's AI wrote for them, and skills. Each is one line until clicked, under a search and
-/// an All / On / Off filter (D39). Beside "Installed", the add-on gallery (D55).
+/// an All / On / Off filter (D39). The add-on gallery is in Home (D84).
 struct ExtensionsSettingsView: View {
     var model: SettingsModel
     @State private var addingServer = false
@@ -13,10 +13,6 @@ struct ExtensionsSettingsView: View {
     @State private var deletingDraft: ExtensionDraftInfo?
     @State private var search: String
     @State private var show: ExtensionListQuery.Show
-    @State private var page: Page
-    @State private var gallerySearch = ""
-
-    enum Page: String, Hashable { case installed, gallery }
     @State private var expanded: Set<String>
     /// Rows that need the person (changed tools) open by themselves; these are the ones they closed anyway.
     @State private var closed: Set<String> = []
@@ -30,9 +26,8 @@ struct ExtensionsSettingsView: View {
 
     /// `query` and `expanded` show the page in a given state (UISnapshots); otherwise it opens on the filter the
     /// person left it on.
-    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = [], page: Page? = nil) {
+    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = []) {
         self.model = model
-        _page = State(initialValue: page ?? .installed)
         let start = query ?? ExtensionListQuery(show: Self.savedShow)
         _search = State(initialValue: start.text)
         _show = State(initialValue: start.show)
@@ -49,16 +44,12 @@ struct ExtensionsSettingsView: View {
                 .padding(.bottom, Theme.Space.m)
                 .frame(maxWidth: .infinity, alignment: .leading)
             SettingsPage {
-                if page == .gallery {
-                    GalleryExtensionsView(model: model, search: gallerySearch)
-                } else {
-                    ScrollViewReader { proxy in
-                        VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
-                            .onChange(of: focus) {
-                                guard case .row(let id) = focus else { return }
-                                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
-                            }
-                    }
+                ScrollViewReader { proxy in
+                    VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
+                        .onChange(of: focus) {
+                            guard case .row(let id) = focus else { return }
+                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
+                        }
                 }
             }
         }
@@ -161,58 +152,46 @@ struct ExtensionsSettingsView: View {
 
     // MARK: Header
 
-    /// Your add-ons with what they are, the way to get more, what needs a look, then the search and the filter (D84).
-    /// The gallery is reached from "Get add-ons" until it lives in Home.
-    @ViewBuilder private var header: some View {
+    /// Your add-ons with what they are, the way to get more (the Gallery, in Home), what needs a look, then the search,
+    /// the filter and the other ways to add one (D84).
+    private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
-            if page == .gallery {
-                HStack(spacing: Theme.Space.m) {
-                    Button { page = .installed } label: {
-                        Label { Text(verbatim: SettingKey.addons.title) } icon: {
-                            Image(systemName: "chevron.backward").flipsForRightToLeftLayoutDirection(true)
-                        }
-                    }
-                    .buttonStyle(.sf(.secondary))
-                    Spacer(minLength: Theme.Space.s)
+            HStack(alignment: .top, spacing: Theme.Space.m) {
+                VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                    Text(verbatim: SettingKey.addons.title).font(Theme.Font.title1).foregroundStyle(Theme.ink)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(verbatim: summary).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                SearchBox(text: $gallerySearch, prompt: Text("Search the gallery"), focus: $focus, focusValue: .search, submit: {})
-            } else {
-                HStack(alignment: .top, spacing: Theme.Space.m) {
-                    VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                        Text(verbatim: SettingKey.addons.title).font(Theme.Font.title1).foregroundStyle(Theme.ink)
-                            .accessibilityAddTraits(.isHeader)
-                        Text(verbatim: summary).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: Theme.Space.s)
-                    Button { page = .gallery } label: {
-                        Label { Text("Get Add-ons", comment: "Settings › Add-ons: opens the add-on gallery") } icon: { Image(systemName: "sparkles") }
-                    }
-                    .buttonStyle(.sf(.secondary, size: .large))
+                Spacer(minLength: Theme.Space.s)
+                Button { model.services.openGallery() } label: {
+                    Label { Text("Get Add-ons", comment: "Settings › Add-ons: opens the add-on gallery") } icon: { Image(systemName: "sparkles") }
                 }
-                AddonsNeedYou(model: model)
-                HStack(alignment: .center, spacing: Theme.Space.m) {
-                    SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
-                              submit: focusFirstRow)
-                    SegmentedPicker("Show", selection: $show, segments: [
-                        .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Add-ons with how many it shows: “All 15”")),
-                        .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Add-ons: the extensions switched on, “On 9”")),
-                        .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Add-ons: the extensions switched off, “Off 6”")),
-                    ])
-                    .help("Show every extension, or only those switched on or off")
-                    Menu {
-                        Button("Install from Folder…", systemImage: "folder", action: chooseFolder)
-                        Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .menuStyle(.button)
-                    .buttonStyle(.sf(.secondary))
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                    .help("Install an extension from a folder, or add an MCP server you already use")
-                    .accessibilityLabel(Text("Add an extension", comment: "Settings › Add-ons: the + menu"))
+                .buttonStyle(.sf(.secondary, size: .large))
+                .help("Extensions, companions and themes to add, in Home")
+            }
+            AddonsNeedYou(model: model)
+            HStack(alignment: .center, spacing: Theme.Space.m) {
+                SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
+                          submit: focusFirstRow)
+                SegmentedPicker("Show", selection: $show, segments: [
+                    .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Add-ons with how many it shows: “All 15”")),
+                    .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Add-ons: the extensions switched on, “On 9”")),
+                    .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Add-ons: the extensions switched off, “Off 6”")),
+                ])
+                .help("Show every extension, or only those switched on or off")
+                Menu {
+                    Button("Install from Folder…", systemImage: "folder", action: chooseFolder)
+                    Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .menuStyle(.button)
+                .buttonStyle(.sf(.secondary))
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help("Install an extension from a folder, or add an MCP server you already use")
+                .accessibilityLabel(Text("Add an extension", comment: "Settings › Add-ons: the + menu"))
             }
             if let error = model.extensionError { InlineError(error: error) }
         }

@@ -110,7 +110,7 @@ struct InstallPreviewSheet: View {
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
                     Text("It adds", comment: "Install sheet: what the extension adds to Sidefolk").font(Theme.Font.headline).foregroundStyle(Theme.ink)
                         .accessibilityAddTraits(.isHeader)
-                    FlowLayout(spacing: Theme.Space.s) {
+                    FlowRow(spacing: Theme.Space.s) {
                         ForEach(adds, id: \.text) { chip in Chip(verbatim: chip.text, tone: .neutral, systemImage: chip.symbol) }
                     }
                 }

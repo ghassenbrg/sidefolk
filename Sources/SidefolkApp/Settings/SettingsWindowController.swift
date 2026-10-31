@@ -93,9 +93,6 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         let parts = command.split(separator: ":", maxSplits: 1).map(String.init)
         let value = parts.count > 1 ? parts[1] : ""
         switch parts.first ?? "" {
-        case "yours": chooser.page = .yours
-        case "gallery": chooser.page = .gallery
-        case "search": chooser.page = .gallery; chooser.browse.text = value
         case "detail": chooser.detail = chooser.galleryEntries.first { $0.companion == value }
         case "get": chooser.galleryEntries.first { $0.companion == value }.map { chooser.get($0, wear: false) }
         case "remove": chooser.removing = chooser.owned.first { $0.id == value }

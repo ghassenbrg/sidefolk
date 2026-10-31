@@ -68,7 +68,7 @@ struct TrackerEnv {
         items = try await t.items()
         #expect(items.count == 2)
         #expect(items[1].title == "Claude finished in sidefolk")
-        #expect(items[1].level == .attention)
+        #expect(items[1].level == .gentle, "finishing is news, never in Needs you")
 
         // A repeated Stop and the later "waiting for your input" don't tap again.
         await t.sessions.apply(t.event("Stop"))
@@ -79,6 +79,30 @@ struct TrackerEnv {
         #expect(s?.state == .finished)
         #expect(s?.endedAt != nil)
         #expect(try await SessionStore(t.env.db).live().isEmpty)
+    }
+
+    /// The founder's case: a session resumed by its own background work (no Stop) and then idle got "needs you". Idle
+    /// is finished; only a real prompt (permission, a question) is needs you.
+    @Test func waitingForInputIsFinishedNotNeedsYou() async throws {
+        let t = try await TrackerEnv()
+        await t.sessions.apply(t.event("PreToolUse") { $0.toolName = "Bash" })
+        t.env.clock.advance(30)
+        let s = await t.sessions.apply(t.event("Notification") { $0.notificationType = "idle_prompt"; $0.message = "Claude is waiting for your input" })
+        #expect(s?.state == .idle)
+        let items = try await t.items()
+        #expect(items.count == 1 && items[0].title == "Claude finished in sidefolk")
+
+        // Working again withdraws the notice; the next stop replaces it rather than adding one.
+        await t.sessions.apply(t.event("PreToolUse") { $0.toolName = "Read" })
+        #expect(try await t.items().first?.state == .acknowledged)
+        await t.sessions.apply(t.event("Stop"))
+        #expect(try await t.items().filter { $0.state != .acknowledged }.count == 1)
+
+        // Idle again: nothing more. A real question still needs you.
+        await t.sessions.apply(t.event("Notification") { $0.notificationType = "idle_prompt" })
+        #expect(try await t.items().count == 2)
+        let asked = await t.sessions.apply(t.event("Notification") { $0.notificationType = "elicitation_dialog" })
+        #expect(asked?.state == .needsYou)
     }
 
     @Test func shortWorkEndsGently() async throws {

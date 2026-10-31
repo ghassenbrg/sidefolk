@@ -15,6 +15,8 @@ public struct InstalledCompanion: Codable, Sendable, Hashable {
     public var body: CompanionBody?
     /// Added from a folder on this Mac (D60), not from the gallery: unsigned, shown under "Made by you".
     public var fromFolder: Bool?
+    /// Brought a 2D form in its `2d/` folder (D85), so it comes in both looks.
+    public var twoD: Bool?
 
     public var addedFromFolder: Bool { fromFolder == true }
 }

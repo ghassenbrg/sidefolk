@@ -23,13 +23,51 @@
   dark, English, German and Arabic, read against the c-settings mockups; the debug app (`build/qa4`): `settings:<tab>`,
   `settings:jump:debugLogging` (scrolled to it), `settings:full-access`, `attention:focus:60` then `pocket` (Focus
   until …, the dial and the corner mark), the About window. *Half done / not done:* the mockups' per-source "what may
-  interrupt you" table (no source has its own level; left out as not real); Settings › Add-ons' "Get Add-ons" opens
-  the old gallery page until the Home teammate's Gallery lands (then point it there); the Pocket's dial and Full
+  interrupt you" table (no source has its own level; left out as not real); the Pocket's dial and Full
   access's Turn Off were not clicked in the debug app (no clicks from here; covered by the same paths the dev commands
   use); the skill file's note still says "Settings › Agents" (changing it would mark every installed skill outdated);
-  Reduce Transparency/Contrast versions are phase 5. *Next:* merge with phases 2 and 3 (shared files: AppCoordinator,
-  UISnapshots, Localizable.xcstrings, ExtensionsSettingsView's gallery page), point "Get Add-ons" at Home's Gallery,
-  then the phase 5 polish.
+  Reduce Transparency/Contrast versions are phase 5. Merged with phase 3 (`team/lantern-merge`): "Get Add-ons" and the
+  Companion tab's "Get more" open Home's Gallery (`AppServices.openGallery()`); Home's sidebar pill offers Open, Focus
+  and Quiet with their ends. *Next:* merge phase 2, then the phase 5 polish.
+- **The Lantern revamp, phase 3: Home (D84, branch `team/lantern-3`, not merged):** one layout in every theme. A new
+  sidebar (the companion live in its nook on its light, in the desktop's state and pose; Today ⌘1, Calendar ⌘2, Notebook
+  ⌘3, On duty ⌘4, History ⌘5; You, collections and the Trash in the Notebook; extension pages arranged by drag with "Get
+  add-ons"; Quiet at the foot), the Say bar (⌘K) in the toolbar with its panel (plain sentence, chips, AI or not, ↩ ⌘↩ ⌥↩,
+  what it finds). Today rebuilt with the day first (`DayBrief` sentence, counts, day line, Needs you capped at three with
+  the rest folded, held while Quiet is on, all clear and first day states; On duty glance; captured today). New On duty
+  (`OnDuty`: watches, live values, repeating reminders and routines, agent sessions, commands, background extensions, with
+  Pause/Resume/Stop), History (`HistoryTimeline`: Activity, conversations, alerts and agent receipts in one timeline with
+  filters, span, search, Undo, the record folded, conversations in place), You (facts with their origin, Edit, Forget,
+  suggestions with Keep: `ProfileFacts.keep`/`write`), the Agenda first in the Calendar, the Gallery in Home on Settings'
+  models (Settings' Companion and Extensions tabs lost their Gallery page). Retired: theme navigation/Today/Activity/editor
+  layouts (keys still decode), All Extensions, Conversations and Activity pages. Reminder lines in History read their time
+  as a date. 177 new strings in all ten languages. *Checked:* UI snapshots `window-home-*` (today, wide, narrow, small,
+  quiet, colorful, extensions, say, say-ai, say-search, every place, history record/conversation/agents, gallery, every
+  empty state) read in light and dark, and today/say/onduty/history/you/gallery/agenda in German and Arabic (RTL mirrors,
+  the day line runs right to left); the debug app (build/qa-1) driven with `respond:skip`, `ask:` reminders and a fact,
+  `home:history|you|onduty|history:agents`, `find:` (the panel says "On this Mac, no AI"), `snap`; new core tests
+  `HomePlacesTests` (6); `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons clone (1587 core and 36 character tests pass). *Half done / next:* Today's
+  approval cards are phase 2's `ApprovalCard` until the permission slip lands; Focus in the sidebar's pill waits for phase
+  4's Attention; the Week view's "read only" note and "+1" overlaps; a watch's detail page (A9) needs a check log that
+  isn't kept. The Trash shows days left (amber in the last three).
+
+- **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
+  in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen
+  face in lights of its own (`face.screen`, `glow`, `mouthGlow`) and face colours and sizes. Settings › Companion
+  shows its Look switch (3D first, kept per companion), its tile says 2D or 3D, and a form that doesn't load or leaves
+  its window keeps the folder from being added. All new strings are in the ten languages. *Checked:*
+  `CustomCompanionTests`, `LocalCompanionsTests`, `CompanionLibraryTests`; `sidefolk-render --check-companion` on a
+  draft form; a debug app (build 582) switching a folder companion between 3D and 2D on the desktop and in Settings,
+  with placeholder paintings, then with a real painted form (2026-11-01: a private companion's, made by
+  `companions-2d/README.md`'s steps outside the repositories; filmed, and live in the app). *Next:* none in the
+  repositories has one yet; the founder decides whether the gallery's companions get folder-style 2D forms too.
+
+- **3D engine options for big-headed and screen-faced companions (2026-10-31):** the screen face gained `mouthGlow`
+  (the mouth in a light of its own), `layout.mouth.scale` and `softGlow` (halos blurred with a shadow instead of
+  three stepped passes that read as rings up close); petting leans by `petLean` (a big head leaned out of its
+  window). All default to the old behaviour: Spark is unchanged (checked in the playground). `companions-3d/serve.py`
+  queues 128 connections (the default 5 reset module fetches). *Checked:* a companion added from a folder using
+  them, in the playground and a debug app; every move, posture and state kept inside the app's square framing.
 
 - **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
   revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
@@ -84,6 +122,19 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Agent sessions: "needs you" only when they ask (D12 amended):** finished notices are gentle, one per session,
+  withdrawn on resume; "waiting for your input" counts as finished. *Checked:* `TrackerTests` (new
+  `waitingForInputIsFinishedNotNeedsYou`), full `make test`.
+- **Games: switching who guesses, more words, and toy-like art (D75, D79):** the founder couldn't switch Higher or
+  Lower's mode (a closed game reopens its session; Play again kept the mode) and wanted more than one Daily Word a day.
+  Playtime 1.0.0-snapshot.3 (published): both modes on the start board each time (last one preselected), a Switch
+  button (S) in a game and on the end card; after today's word, "Play another word" practice rounds (random, no repeat
+  until the list runs out, never in the streak, tallied apart). App: generated art for the cup, gem, balloon and trophy
+  (`Play/Art`, 36 KB, chosen by the board parts' existing data; extensions still send no images), raised pads, keys and
+  tiles with a press squash, an arcade reflex button, candy sticks, a felt cup table, confetti and a "New best!" sticker
+  with the verdict only (Reduce Motion: none). *Checked:* add-ons `swift test` (100), `build.py` and check.sh; app
+  `make test`; before/after snapshots of every game in light and dark, the thermometer in Arabic. *Not checked live:*
+  the pads' playback, the cups' shuffle with pictures and confetti timing in motion.
 - **An add-on version can need a Sidefolk snapshot (D83):** the founder's 590 showed Miraya snapshot.4's update failing
   on `output_mute`. Catalog minimums may name a snapshot (`AddonCatalog.fits`, `SidefolkVersion.running`); the validator
   reads `>=0.1.0-snapshot.N`; an install blocked only by unknown keys or the minimum says to update Sidefolk. Gallery:

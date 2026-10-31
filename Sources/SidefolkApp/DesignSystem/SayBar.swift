@@ -14,6 +14,12 @@ struct SayBarField: View {
     /// The key that brings it up, shown while it's empty ("⌘K").
     var hint: String? = "⌘K"
     var onSubmit: () -> Void = {}
+    /// Bumped by the screen to give the field the keyboard (Home's ⌘K).
+    var focusTrigger = 0
+    /// Told when the field gets or loses the keyboard, so the screen can show what the words will do.
+    var focusChanged: (Bool) -> Void = { _ in }
+    /// Esc, while the field has the keyboard.
+    var onEscape: (() -> Void)?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -27,6 +33,7 @@ struct SayBarField: View {
                 .foregroundStyle(Theme.ink)
                 .focused($focused)
                 .onSubmit(onSubmit)
+                .onExitCommand { onEscape?() }
             if let hint, text.isEmpty { KeyHint(hint) }
         }
         .padding(.horizontal, size == .home ? Theme.Space.l : Theme.Space.l + 2)
@@ -37,6 +44,8 @@ struct SayBarField: View {
             Capsule().strokeBorder(focused ? Theme.accent : Theme.line, lineWidth: focused ? 2 : 1)
         }
         .animation(Theme.Motion.micro, value: focused)
+        .onChange(of: focusTrigger) { focused = true }
+        .onChange(of: focused) { focusChanged(focused) }
     }
 }
 

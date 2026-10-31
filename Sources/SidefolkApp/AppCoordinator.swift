@@ -337,7 +337,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
-        if command == "home:today" { home.show(section: .now); return }
+        if command.hasPrefix("home:") { home.showPlace(String(command.dropFirst(5))); return }
         if command.hasPrefix("flip:") {
             // flip:<extension id>/<page>:on|off: the page's main switch, as from its sidebar row (D67).
             let rest = command.dropFirst(5)
@@ -389,7 +389,10 @@ final class AppCoordinator {
         }
         if command.hasPrefix("chooser:") {
             // chooser:yours|gallery|search:<words>|detail:<name>|get:<name>|remove:<id>|add|close (D77).
-            settingsWindow.chooser(String(command.dropFirst("chooser:".count)))
+            let sub = String(command.dropFirst("chooser:".count))
+            // The Gallery lives in Home now (D84): its page and search open there.
+            if sub == "gallery" || sub.hasPrefix("search:") { home.show(section: .gallery); return }
+            settingsWindow.chooser(sub)
             return
         }
         if command.hasPrefix("settings") {
@@ -452,6 +455,7 @@ final class AppCoordinator {
             let folder = URL(fileURLWithPath: String(command.dropFirst("addCompanion:".count)))
             Task {
                 do {
+                    try CompanionArt.checkForm(try AddonStore.readLocalCompanion(folder), in: folder)
                     let added = try await runtime.addons.install(companionFolder: folder)
                     CompanionArt.reloadMade()
                     CompanionArt.forgetPictures()
@@ -477,10 +481,15 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("companion:local:") {
-            // companion:local:<name>: wears a companion added from a folder (D60).
-            guard let local = CompanionArt.local(String(command.dropFirst("companion:local:".count))) else { return }
+            // companion:local:<name>[:2d|3d]: wears a companion added from a folder (D60), in one of its looks (D85).
+            let parts = command.dropFirst("companion:local:".count).split(separator: ":").map(String.init)
+            guard let name = parts.first, let local = CompanionArt.local(name) else { return }
+            let look = parts.dropFirst().first.flatMap(CompanionDimension.init(rawValue:))
             Task {
-                await runtime.settings.update { $0.choose(local: local.companion, name: local.name) }
+                await runtime.settings.update { s in
+                    s.choose(local: local.companion, name: local.name)
+                    if let look { s.setDimension(look, forLocal: local.companion) }
+                }
                 settingsChanged()
             }
             return
@@ -598,6 +607,8 @@ final class AppCoordinator {
         askPanel.hide()
         settingsWindow.show(tab: tab)
     }
+
+    func openGallery() { home.show(section: .gallery) }
 
     func showAbout() {
         askPanel.hide()

@@ -48,10 +48,13 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
    3D eyes with shader lids and a painted decal cut from the head; screen: light on Spark's visor),
    springy chains (ears, antenna, tail), its stand pose, and postures for bodies that need their own
    (Nimbo floats; Folio, a flat card, rests sitting). `limbScale` keeps limbs that are one piece with
-   the body (Nimbo's puffs) from tearing away from it. A likeness (a person's face in the model's own texture)
+   the body (Nimbo's puffs) from tearing away from it. A screen face can light its mouth in a colour of its own
+   (`mouthGlow`), size it (`layout.mouth.scale`) and blur its halos smoothly (`softGlow`); a big head leans less
+   when petted (`petLean`), so it stays in its window. A likeness (a person's face in the model's own texture)
    keeps its eyes, brows and lips: `layout.lids` paints only lids over its eyes and `layout.mouth.lips` parts the
    lips only while the mouth opens (see `face.js`). A companion that should stay on one Mac only (a person's
-   likeness) isn't published: its add-on folder is added in Settings › Companion › Made by you (D60).
+   likeness) isn't published: its add-on folder is added in Settings › Companion (D60), and may bring its 2D form
+   in `2d/` (D85, `companions-2d/README.md`).
 6. **Portrait.** In the playground, `(await import('./sheet.js')).portrait(companion)` saves the
    still Settings shows; copy it to `Resources/Companions3D/portraits/<name>.png`.
 
@@ -79,7 +82,11 @@ python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (moch
 lays 16 feelings, moves and postures out in one grid, and `turnaround(companion)` saves front, ¾,
 side and back views to compare with the sheet's turnaround. Stills hide what motion shows:
 `filmstrip(companion, 'flip', { yaw: 120 })` lays one move out frame by frame from any side, and
-`closeups(companion, name, [[yaw, height, size], …])` renders the surface close up. Resting:
+`closeups(companion, name, [[yaw, height, size], …])` renders the surface close up. `edges(companion)` (in a
+`?frame=sidefolk&capture` page) plays everything the app can play in its square window and names whatever touches an
+edge; `front(companion)` saves a front view to compare colours and light with the sheet's
+(`python3 companions-3d/zones.py <sheet> x0,y0,x1,y1 build/companions-3d/front-<id>/00001.png`). Console scripts
+start with `await ready`. Resting:
 `restSheet(companion)` lays out stand, sit, lie and sleep from the front, ¾ and side with the head close up, and
 `restFilm(companion, 'lie' | 'sleep')` films the way in and out (stand › sit › lie › stand, idle › sleeping › idle),
 front and side, as Sidefolk's idle life plays them. Probes in Blender read

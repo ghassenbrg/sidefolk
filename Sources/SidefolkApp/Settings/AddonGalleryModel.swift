@@ -172,6 +172,7 @@ final class AddonGalleryModel {
         companionError = nil
         do {
             let companion = try AddonStore.readLocalCompanion(folder)
+            try CompanionArt.checkForm(companion, in: folder)
             let alert = NSAlert()
             alert.messageText = String(localized: "Add “\(companion.name)” as your companion?")
             alert.informativeText = String(localized: """

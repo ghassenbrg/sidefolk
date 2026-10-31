@@ -107,6 +107,10 @@ struct SoftFace {
     /// Where the cheeks sit and their half size, when not under the eyes as the folks' do.
     var blushAt: (CGPoint, CGPoint)?
     var blushSize = CGSize(width: 5.5, height: 3.4)
+    /// A screen face's eyes (and mouth) in a light of their own rather than the style colour, and its mouth in
+    /// another (a pink smile under blue-white eyes, D85).
+    var glow: Light?
+    var mouthGlow: Light?
 }
 
 /// Resting expressions, from the folks' personalities.
