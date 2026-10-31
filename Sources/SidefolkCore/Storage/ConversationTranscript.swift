@@ -9,8 +9,9 @@ public struct ConversationLine: Sendable, Hashable, Identifiable {
         case reply(tainted: Bool)
         /// A tool step in Activity's words; `done` is false when it was refused, skipped or failed.
         case step(done: Bool)
-        /// How a run ended without an answer ("Stopped. Nothing was changed.").
-        case note
+        /// How a run ended without an answer ("Stopped. Nothing was changed."). `failed` when it broke rather than
+        /// was stopped, so only a failure is drawn as one.
+        case note(failed: Bool)
     }
 
     public var id: String
@@ -58,7 +59,8 @@ public enum ConversationTranscript {
                                               at: e.createdAt))
             case .event:
                 stepsOf(e.meta?["runId"]?.stringValue)
-                lines.append(ConversationLine(id: e.id, kind: .note, text: e.content, at: e.createdAt))
+                lines.append(ConversationLine(id: e.id, kind: .note(failed: e.meta?["outcome"]?.stringValue == "failed"), text: e.content,
+                                              at: e.createdAt))
             case .tool:
                 continue
             }

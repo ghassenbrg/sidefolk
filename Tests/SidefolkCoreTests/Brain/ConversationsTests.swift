@@ -157,6 +157,7 @@ import Testing
                      meta: ExchangeMeta.user(attachment: AgentAttachment(text: "…", source: "Invoices", untrusted: true), tainted: false), now: t0),
             Exchange(id: "2", threadId: "t", role: .event, content: "Stopped. Nothing was changed.", meta: ["runId": "r1"], now: t0 + 5),
             Exchange(id: "3", threadId: "t", role: .user, content: "Try again", meta: ExchangeMeta.user(attachment: nil, tainted: false), now: t0 + 9),
+            Exchange(id: "4", threadId: "t", role: .event, content: "The AI didn't answer.", meta: ["runId": "r2", "outcome": "failed"], now: t0 + 12),
         ]
         let steps = [
             ActivityEntry(at: t0 + 2, caller: "agent", tool: "files.rename", risk: "medium", decision: .denied, summary: "Rename 3 files",
@@ -166,10 +167,12 @@ import Testing
 
         let lines = ConversationTranscript.lines(exchanges, steps: steps)
 
-        #expect(lines.map(\.text) == ["Rename the invoices", "Rename 3 files", "Stopped. Nothing was changed.", "Try again", "List Invoices"])
-        #expect(lines.map(\.kind) == [.request(spoken: false, attachment: "Invoices"), .step(done: false), .note,
-                                      .request(spoken: false, attachment: nil), .step(done: true)])
-        #expect(lines.map(\.detail) == [nil, "You said not now.", nil, nil, nil])
+        #expect(lines.map(\.text) == ["Rename the invoices", "Rename 3 files", "Stopped. Nothing was changed.", "Try again", "List Invoices",
+                                      "The AI didn't answer."])
+        // Only a run that broke is a failure; a stopped one is drawn calm.
+        #expect(lines.map(\.kind) == [.request(spoken: false, attachment: "Invoices"), .step(done: false), .note(failed: false),
+                                      .request(spoken: false, attachment: nil), .step(done: true), .note(failed: true)])
+        #expect(lines.map(\.detail) == [nil, "You said not now.", nil, nil, nil, nil])
     }
 
     @Test(arguments: ["new conversation", "New chat", "start fresh", "let's start over", "start a new conversation", "Forget this conversation",

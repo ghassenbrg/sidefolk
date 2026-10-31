@@ -92,10 +92,11 @@ struct DayList: View {
         switch line {
         case .now:
             HStack(spacing: 4) {
-                Rectangle().fill(Theme.danger).frame(height: 1.5)
+                // The present is a marker, not an alarm.
+                Rectangle().fill(Theme.accent).frame(height: 1.5)
                 Text(verbatim: TimeFormat.clock(Date(), calendar: .current)).font(Theme.Font.captionStrong).monospacedDigit()
-                    .foregroundStyle(Theme.onDanger).padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Theme.danger, in: Capsule())
+                    .foregroundStyle(Theme.onAccent).padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Theme.accent, in: Capsule())
             }
             .padding(.vertical, 2)
             .accessibilityLabel(Text("Now"))
@@ -125,12 +126,12 @@ struct DayList: View {
             Group {
                 if let time { Text(verbatim: TimeFormat.clock(time, calendar: .current)) } else { Text("Tmrw", comment: "Short for tomorrow, in a narrow time column") }
             }
-            .font(.system(size: 11.5, design: .monospaced)).foregroundStyle(late ? Theme.danger : Theme.inkMuted)
+            .font(.system(size: 11.5, design: .monospaced)).foregroundStyle(late ? Theme.warning : Theme.inkMuted)
             .frame(width: 44, alignment: .leading)
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: title).font(Theme.Font.bodyStrong).strikethrough(struck)
                     .foregroundStyle(struck ? Theme.inkFaint : Theme.ink).lineLimit(2)
-                if let detail { Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(late ? Theme.danger : Theme.inkMuted).lineLimit(1) }
+                if let detail { Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(late ? Theme.warning : Theme.inkMuted).lineLimit(1) }
             }
             Spacer(minLength: Theme.Space.xs)
             trailing()
@@ -172,14 +173,15 @@ private struct WatchListRow: View {
         Button { open = true } label: {
             ListRowLabel(symbol: Describe.watcherKind(watcher.kind).symbol, title: Describe.watcherTarget(watcher) ?? watcher.title,
                          detail: Describe.interval(watcher.intervalS)) {
-                if waiting {
-                    Chip(verbatim: String(localized: "changed", comment: "A small chip on a watch whose page changed"), tone: .danger)
-                } else if watcher.state == .error {
-                    Chip("Having trouble", tone: .danger)
+                let tone = ChipTone(StatusTone.watch(watcher.state, changeWaiting: waiting))
+                if watcher.state == .error {
+                    Chip("Having trouble", tone: tone)
+                } else if waiting {
+                    Chip(verbatim: String(localized: "changed", comment: "A small chip on a watch whose page changed"), tone: tone)
                 } else if watcher.state == .paused {
-                    Chip("Paused", tone: .neutral)
+                    Chip("Paused", tone: tone)
                 } else if watcher.state == .triggered {
-                    Chip("Spotted", tone: .success)
+                    Chip("Spotted", tone: tone)
                 }
             }
         }
@@ -255,9 +257,9 @@ struct AgentsCard: View {
                     ListRowLabel(symbol: "sparkles", title: Describe.agentName(s.agent),
                                  detail: [s.projectName, s.detail].compactMap { $0 }.joined(separator: " · ")) {
                         if s.state == .needsYou {
-                            Chip(verbatim: String(localized: "needs you", comment: "A chip on an agent waiting for an answer"), tone: .danger)
+                            Chip(verbatim: String(localized: "needs you", comment: "A chip on an agent waiting for an answer"), tone: ChipTone(.session(s.state)))
                         } else {
-                            Chip(verbatim: String(localized: "working", comment: "A chip on an agent at work"), tone: .accent)
+                            Chip(verbatim: String(localized: "working", comment: "A chip on an agent at work"), tone: ChipTone(.session(s.state)))
                         }
                     }
                 }
@@ -265,7 +267,7 @@ struct AgentsCard: View {
             }
             ForEach(model.jobs) { j in
                 ListRowLabel(symbol: "terminal", title: j.title, detail: String(localized: "Running for \(TimeText.duration(Date().timeIntervalSince(j.startedAt)))")) {
-                    Chip(verbatim: String(localized: "working", comment: "A chip on an agent at work"), tone: .accent)
+                    Chip(verbatim: String(localized: "working", comment: "A chip on an agent at work"), tone: ChipTone(.session(.working)))
                 }
             }
             if !model.recent.isEmpty {

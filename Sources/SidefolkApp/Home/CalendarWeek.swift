@@ -116,7 +116,8 @@ struct CalendarWeek: View {
                         .offset(x: CGFloat(columns[i].column) * width + 1, y: y(entry.start, from: start))
                 }
                 if model.calendar.isDateInToday(day) {
-                    Rectangle().fill(Theme.danger).frame(height: 2)
+                    // The present is a time marker, not an alarm.
+                    Rectangle().fill(Theme.accent).frame(height: 2)
                         .offset(y: y(Date(), from: start) - 1)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)

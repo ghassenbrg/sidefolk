@@ -404,7 +404,7 @@ private struct EntryView: View {
                 model.actions?.answer(approval: request, decision: decision)
             }
         case .error(let error, let retryable):
-            SFCard(accent: Theme.coral) {
+            SFCard(accent: Theme.danger) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(error.message).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
@@ -443,7 +443,8 @@ private struct EntryView: View {
             }
             .accessibilityElement(children: .combine)
         case .skipped(let summary, let why):
-            SFCard(accent: Theme.sun) {
+            // Nobody answered, so nothing happened: calm, not a warning.
+            SFCard(accent: Theme.inkFaint) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Image(systemName: "clock.badge.xmark").foregroundStyle(Theme.inkMuted).accessibilityHidden(true)

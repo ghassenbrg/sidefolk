@@ -199,6 +199,37 @@ import UniformTypeIdentifiers
         }
     }
 
+    /// Colours have meanings: a theme can't paint a win red, an error green or a warning grey.
+    @Test func aStatusColourKeepsItsMeaning() throws {
+        var file = ThemeFile(.harbor, id: "com.you.upside", name: "Upside")
+        file.colors?["light"]?["success"] = "#C93F33"
+        file.colors?["dark"]?["danger"] = "#7DD3A7"
+        file.colors?["light"]?["warning"] = "#6B6B6B"
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(!report.isUsable)
+        let text = messages(report)
+        #expect(text.contains("success in light must look green"), "\(text)")
+        #expect(text.contains("danger in dark must look red"), "\(text)")
+        #expect(text.contains("warning in light must look amber"), "\(text)")
+        // Rust reds, ochres and sage greens are still the right families.
+        #expect(ThemeCheck.meaningProblems(ThemeTokens.harbor.colors).isEmpty)
+    }
+
+    /// A theme made before the warning roles still works: Harbor's amber stands in (it reads on every gallery theme's
+    /// surfaces too), and the check says so.
+    @Test func aThemeWithoutTheWarningRolesStillWorks() throws {
+        var file = ThemeFile(.harbor, id: "com.you.older", name: "Older")
+        for appearance in ["light", "dark"] {
+            for role in ["warning", "warningSoft", "onWarning"] { file.colors?[appearance]?[role] = nil }
+        }
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(report.isUsable, "\(messages(report))")
+        #expect(report.tokens.colors.warning == ThemeTokens.harbor.colors.warning)
+        #expect(messages(report).contains("light.warning"))
+    }
+
     /// The themes Sidefolk ships (Resources/Themes) all pass their own check, contrast included, and come in order.
     @Test func theBuiltInsPassTheirCheck() throws {
         let resources = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

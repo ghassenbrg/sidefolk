@@ -21,7 +21,8 @@ public struct ThemeTokens: Sendable, Equatable {
         }
     }
 
-    /// Colours by role, not by hue, so a theme can't make an error look like a success.
+    /// Colours by role, not by hue, so a theme can't make an error look like a success. What each status role means
+    /// is `StatusTone`'s, and the check holds danger to red, warning to amber and success to green.
     public struct Colors: Sendable, Equatable {
         public var ink: Pair
         public var inkMuted: Pair
@@ -37,12 +38,18 @@ public struct ThemeTokens: Sendable, Equatable {
         public var accentSoft: Pair
         /// The accent as text (links, "Open Today"): readable on every surface, unlike a bright fill colour.
         public var link: Pair
+        /// An error, a failure, a destructive action or real risk; readable as text.
         public var danger: Pair
         public var dangerSoft: Pair
         /// Text on a `danger` fill.
         public var onDanger: Pair
         public var success: Pair
         public var successSoft: Pair
+        /// Needs a look or is waiting (late, waiting on you): amber, readable as text, never an error.
+        public var warning: Pair
+        public var warningSoft: Pair
+        /// Text on a `warning` fill, like the count of what waits on you.
+        public var onWarning: Pair
 
         /// Every role by its name in a theme file, in this order.
         public static var roles: [(name: String, key: WritableKeyPath<Colors, Pair>)] { [
@@ -51,6 +58,7 @@ public struct ThemeTokens: Sendable, Equatable {
             ("accent", \.accent), ("onAccent", \.onAccent), ("accentSoft", \.accentSoft), ("link", \.link),
             ("danger", \.danger), ("dangerSoft", \.dangerSoft), ("onDanger", \.onDanger),
             ("success", \.success), ("successSoft", \.successSoft),
+            ("warning", \.warning), ("warningSoft", \.warningSoft), ("onWarning", \.onWarning),
         ] }
     }
 
@@ -180,7 +188,12 @@ extension ThemeTokens {
             dangerSoft: Pair(light: 0xFFEDEA, dark: 0x4A2622),
             onDanger: Pair(light: 0xFFFFFF, dark: 0x0F2D5B),
             success: Pair(light: 0x2F9E6D, dark: 0x7DD3A7),
-            successSoft: Pair(light: 0xE6F6EE, dark: 0x1D3D31)
+            successSoft: Pair(light: 0xE6F6EE, dark: 0x1D3D31),
+            // The brand's sun in the dark; deepened to read at 4.5:1 on light surfaces, Harbor's and any theme's
+            // that leaves it out.
+            warning: Pair(light: 0x8A5800, dark: 0xFFC93C),
+            warningSoft: Pair(light: 0xFFF4D6, dark: 0x3D3317),
+            onWarning: Pair(light: 0xFFFFFF, dark: 0x0F2D5B)
         ),
         space: Space(xxs: 2, xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32),
         radius: Radius(control: 8, card: 12, panel: 18, bubble: 20),

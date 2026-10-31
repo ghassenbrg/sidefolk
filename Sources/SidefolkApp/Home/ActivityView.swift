@@ -251,50 +251,56 @@ struct ActivityView: View {
     }
 
     private func result(_ e: ActivityEntry) -> some View {
-        let (word, color): (String, Color) = switch e.decision {
-        case .denied: (String(localized: "denied", comment: "A log's result: you said no"), Theme.danger)
-        case .blocked: (String(localized: "blocked", comment: "A log's result: rules don't allow it"), Theme.danger)
-        case .failed: (String(localized: "failed", comment: "A log's result"), Theme.danger)
-        case .skipped: (String(localized: "skipped", comment: "A log's result: nobody answered in time"), Theme.link)
-        case .auto, .autoMode, .fullAccess, .autoModePaired, .fullAccessPaired, .webSetting: (String(localized: "auto", comment: "A log's result: done without asking"), Theme.inkMuted)
-        case .allowed, .always: (e.outcome?.clipped(24) ?? String(localized: "allowed", comment: "A log's result"), Theme.success)
+        let word: String = switch e.decision {
+        case .denied: String(localized: "denied", comment: "A log's result: you said no")
+        case .blocked: String(localized: "blocked", comment: "A log's result: rules don't allow it")
+        case .failed: String(localized: "failed", comment: "A log's result")
+        case .skipped: String(localized: "skipped", comment: "A log's result: nobody answered in time")
+        case .auto, .autoMode, .fullAccess, .autoModePaired, .fullAccessPaired, .webSetting: String(localized: "auto", comment: "A log's result: done without asking")
+        case .allowed, .always: e.outcome?.clipped(24) ?? String(localized: "allowed", comment: "A log's result")
         }
-        return Text(verbatim: word).foregroundStyle(color).help(e.outcome ?? e.error ?? word)
+        return Text(verbatim: word).foregroundStyle(Theme.color(.decision(e.decision))).help(e.outcome ?? e.error ?? word)
     }
 
     @ViewBuilder private func riskChip(_ risk: String) -> some View {
+        let tone = ChipTone(.risk(Risk(rawValue: risk)))
         switch Risk(rawValue: risk) {
-        case .low: Chip("Low", tone: .neutral)
-        case .medium: Chip("Medium", tone: .warning)
-        case .high: Chip("High", tone: .danger)
-        case nil: Chip(verbatim: risk.capitalized, tone: .neutral)
+        case .low: Chip("Low", tone: tone)
+        case .medium: Chip("Medium", tone: tone)
+        case .high: Chip("High", tone: tone)
+        case nil: Chip(verbatim: risk.capitalized, tone: tone)
         }
     }
 
+    /// Each decision's tone is StatusTone's: green when allowed, red only when it failed, amber for what the rules
+    /// stopped and for Full access, calm for "no" and for steps nobody answered.
     @ViewBuilder private func decisionChip(_ d: ActivityEntry.Decision) -> some View {
+        let tone = ChipTone(.decision(d))
         switch d {
-        case .auto: Chip("Automatic", tone: .neutral)
-        case .allowed: Chip("Allowed", tone: .accent, systemImage: "checkmark")
-        case .always: Chip("Always", tone: .accent, systemImage: "checkmark.circle")
-        case .denied: Chip("Denied", tone: .danger, systemImage: "hand.raised")
-        case .blocked: Chip("Blocked", tone: .danger, systemImage: "nosign")
-        case .failed: Chip("Failed", tone: .danger, systemImage: "exclamationmark.triangle")
-        // Done without asking: the mode answered for the person (D37), so it never looks like they did.
-        case .autoMode: Chip("Auto", tone: .accent, systemImage: "bolt")
-        case .fullAccess: Chip("Full access", tone: .warning, systemImage: "bolt.fill")
+        case .auto: Chip("Automatic", tone: tone)
+        case .allowed: Chip("Allowed", tone: tone, systemImage: "checkmark")
+        case .always: Chip("Always", tone: tone, systemImage: "checkmark.circle")
+        case .denied: Chip("Denied", tone: tone, systemImage: "hand.raised")
+        case .blocked: Chip("Blocked", tone: tone, systemImage: "nosign")
+        case .failed: Chip("Failed", tone: tone, systemImage: "exclamationmark.triangle")
+        // Done without asking: the mode answered for the person (D37), so it never looks like they did: its icon,
+        // never the green of "Allowed".
+        case .autoMode: Chip("Auto", tone: tone, systemImage: "bolt")
+        case .fullAccess: Chip("Full access", tone: tone, systemImage: "bolt.fill")
         // After outside content, only because the call reached nothing but a device the person paired (D72): the
         // mode's icon and tone, and the details name the mode.
-        case .autoModePaired: Chip("Paired device", tone: .accent, systemImage: "bolt")
-        case .fullAccessPaired: Chip("Paired device", tone: .warning, systemImage: "bolt.fill")
-        case .skipped: Chip("Skipped", tone: .warning, systemImage: "clock.badge.xmark")
+        case .autoModePaired: Chip("Paired device", tone: tone, systemImage: "bolt")
+        case .fullAccessPaired: Chip("Paired device", tone: tone, systemImage: "bolt.fill")
+        case .skipped: Chip("Skipped", tone: tone, systemImage: "clock.badge.xmark")
         // Read or used without a card because the person chose not to be asked before reading the web (D47).
-        case .webSetting: Chip("Web setting", tone: .accent, systemImage: "globe")
+        case .webSetting: Chip("Web setting", tone: tone, systemImage: "globe")
         }
     }
 
     @ViewBuilder private func outcome(_ e: ActivityEntry) -> some View {
         if let error = e.error {
-            Text(error).font(Theme.Font.caption).foregroundStyle(Theme.danger).help(error)
+            // "You said not now" isn't a failure: the words take the decision's tone, red only when it broke.
+            Text(error).font(Theme.Font.caption).foregroundStyle(e.decision == .failed ? Theme.danger : Theme.inkMuted).help(error)
         } else if let outcome = e.outcome {
             Text(outcome).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).help(outcome)
         } else {
@@ -329,7 +335,7 @@ private struct ActivityDetails: View {
                 }
             }
             if let error = entry.error {
-                line("Outcome") { Text(error).foregroundStyle(Theme.danger) }
+                line("Outcome") { Text(error).foregroundStyle(entry.decision == .failed ? Theme.danger : Theme.ink) }
             } else if let outcome = entry.outcome {
                 line("Outcome") { Text(outcome) }
             }
@@ -460,7 +466,7 @@ struct Stamp: View {
     var risk: Risk
 
     var body: some View {
-        let color = risk == .high ? Theme.danger : risk == .medium ? Theme.link : Theme.success
+        let color = risk == .low ? Theme.inkMuted : Theme.color(.risk(risk))
         Text(verbatim: risk == .high ? String(localized: "risk.high", defaultValue: "high", comment: "High risk, in a narrow column")
              : risk == .medium ? String(localized: "medium", comment: "A risk stamp") : String(localized: "risk.low", defaultValue: "low", comment: "Low risk, in a narrow column"))
             .textCase(.uppercase).font(.system(size: 9.5, weight: .heavy)).kerning(0.6)

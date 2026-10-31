@@ -174,13 +174,8 @@ struct ApprovalCard: View {
         }
     }
 
-    private var riskTint: Color {
-        switch request.risk {
-        case .low: Theme.accentSoft
-        case .medium: Theme.surfaceSunken
-        case .high: Theme.dangerSoft
-        }
-    }
+    /// The risk's own tone (StatusTone): calm when low, amber when medium, red only when high.
+    private var riskTint: Color { Theme.soft(.risk(request.risk)) }
 }
 
 /// Why a card asks after outside content (D71), in the tone the install sheet uses: calm when Sidefolk's own extension

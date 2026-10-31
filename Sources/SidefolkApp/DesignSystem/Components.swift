@@ -309,16 +309,27 @@ struct LogoTile: View {
     }
 }
 
-/// Tones for status chips; each maps to a soft background token.
+/// Tones for chips; each maps to a soft background token. `accent` marks a thing's kind or origin ("Written for you"),
+/// never a status; statuses come from `StatusTone`.
 enum ChipTone {
     case neutral, accent, success, warning, danger
+
+    init(_ status: StatusTone) {
+        switch status {
+        case .success: self = .success
+        case .warning: self = .warning
+        case .danger: self = .danger
+        case .news: self = .accent
+        case .neutral: self = .neutral
+        }
+    }
 
     var tint: Color {
         switch self {
         case .neutral: Theme.surfaceSunken
         case .accent: Theme.accentSoft
         case .success: Theme.successSoft
-        case .warning: Theme.sun.opacity(0.28)
+        case .warning: Theme.warningSoft
         case .danger: Theme.dangerSoft
         }
     }

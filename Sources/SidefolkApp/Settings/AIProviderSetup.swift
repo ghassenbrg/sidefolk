@@ -145,7 +145,7 @@ private struct StatusLine: View {
     private var color: Color {
         switch status.tone {
         case .ready: Theme.success
-        case .attention: Theme.folkColor("scout")
+        case .attention: Theme.warning
         case .problem: Theme.danger
         case .info: Theme.inkMuted
         }

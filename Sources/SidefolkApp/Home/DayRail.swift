@@ -149,8 +149,9 @@ struct DayRail: View {
         .accessibilityHidden(true)
     }
 
+    /// A time marker, not an alarm: the accent, as on every page's now line.
     private func nowLine(_ span: ClosedRange<Date>, width: CGFloat, height: CGFloat) -> some View {
-        Rectangle().fill(Theme.danger).frame(width: 2, height: height + 6)
+        Rectangle().fill(Theme.accent).frame(width: 2, height: height + 6)
             .offset(x: CGFloat(DayLine.x(now, in: span, width: Double(width))) - 1, y: -3)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
@@ -263,11 +264,12 @@ private struct ReminderChip: View {
                             : TimeFormat.clock(due, calendar: .current))
                 .font(Theme.Font.caption).monospacedDigit().lineLimit(1)
         }
-        .foregroundStyle(late ? Theme.danger : Theme.ink)
+        // Late still waits to be done: amber, with "late" in words.
+        .foregroundStyle(late ? Theme.warning : Theme.ink)
         .padding(.horizontal, 8)
         .frame(width: width, height: 38, alignment: .leading)
-        .background(late ? Theme.dangerSoft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(alignment: endsAtTime ? .trailing : .leading) { TimeEdge(color: late ? Theme.danger : Theme.accent) }
+        .background(late ? Theme.warningSoft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(alignment: endsAtTime ? .trailing : .leading) { TimeEdge(color: late ? Theme.warning : Theme.accent) }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(focused ? Theme.accent : Theme.accent.opacity(0.45), lineWidth: focused ? 2 : 1))
         .shadow(color: .black.opacity(drag == 0 ? 0 : 0.15), radius: 6, y: 2)

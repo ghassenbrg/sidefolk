@@ -381,11 +381,12 @@ private struct LineView: View {
             .foregroundStyle(Theme.inkMuted)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(done ? Text("Done: \(line.text)") : Text("Not done: \(line.text). \(line.detail ?? "")"))
-        case .note:
+        case .note(let failed):
+            // Red only when the run broke; a stopped or unanswered one is plain information.
             Label {
                 Text(verbatim: line.text).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             } icon: {
-                Image(systemName: "exclamationmark.circle").foregroundStyle(Theme.coral)
+                Image(systemName: failed ? "exclamationmark.circle" : "stop.circle").foregroundStyle(failed ? Theme.danger : Theme.inkMuted)
             }
             .font(Theme.Font.caption)
         }

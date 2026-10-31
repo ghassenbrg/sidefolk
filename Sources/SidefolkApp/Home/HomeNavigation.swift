@@ -30,9 +30,10 @@ struct HomeRail: View {
                         .foregroundStyle(selected ? Theme.ink : Theme.inkMuted)
                         .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
                         .overlay(alignment: .topTrailing) {
+                            // What waits on you is amber: a question, not an error.
                             if place == .now, model.now.needsYouCount > 0 {
-                                Text(model.now.needsYouCount.formatted()).font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.onDanger)
-                                    .padding(.horizontal, 4).background(Theme.danger, in: Capsule()).offset(x: 4, y: -4)
+                                Text(model.now.needsYouCount.formatted()).font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.onWarning)
+                                    .padding(.horizontal, 4).background(Theme.warning, in: Capsule()).offset(x: 4, y: -4)
                             }
                         }
                 }
@@ -110,7 +111,7 @@ struct HomeStatusBar: View {
             Text("guard: \(now.mode.title.lowercased())", comment: "The status bar: Sidefolk's approval mode")
             Text("model: \(AIName.short(settings.provider.kind))", comment: "The status bar: which AI answers")
             if now.needsYouCount > 0 {
-                Text("\(now.needsYouCount) waiting on you").foregroundStyle(Theme.link)
+                Text("\(now.needsYouCount) waiting on you").foregroundStyle(Theme.warning)
             }
             if running > 0 { Text("\(running) running") }
             Spacer(minLength: Theme.Space.s)
@@ -222,8 +223,8 @@ struct PillTabs: View {
                         }
                         Text(place.title)
                         if place == .now, model.now.needsYouCount > 0 {
-                            Text(model.now.needsYouCount.formatted()).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.onDanger)
-                                .padding(.horizontal, 5).background(Theme.danger, in: Capsule())
+                            Text(model.now.needsYouCount.formatted()).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.onWarning)
+                                .padding(.horizontal, 5).background(Theme.warning, in: Capsule())
                         }
                     }
                     .font(Theme.Font.captionStrong)

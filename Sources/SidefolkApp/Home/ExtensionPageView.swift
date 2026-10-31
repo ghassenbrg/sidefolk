@@ -81,25 +81,11 @@ struct PageIcon: View {
 // MARK: Tones
 
 extension ExtensionPage.Tone {
-    var color: Color {
-        switch self {
-        case .good: Theme.success
-        case .warn: Theme.sun
-        case .bad: Theme.danger
-        case .info: Theme.accent
-        case .neutral: Theme.inkMuted
-        }
-    }
+    /// Readable as text as well as on icons, gauges and dots: an extension's "info" is the link colour, not the
+    /// accent fill, which can be too light to read.
+    var color: Color { Theme.color(.page(self)) }
 
-    var soft: Color {
-        switch self {
-        case .good: Theme.successSoft
-        case .warn: Theme.sun.opacity(0.22)
-        case .bad: Theme.dangerSoft
-        case .info: Theme.accentSoft
-        case .neutral: Theme.surfaceSunken
-        }
-    }
+    var soft: Color { Theme.soft(.page(self)) }
 
     var symbol: String {
         switch self {
@@ -613,7 +599,7 @@ private struct HostControls: View {
             }
             if model.info.needsAccessibility, !trusted {
                 HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-                    Image(systemName: "hand.raised.fill").foregroundStyle(Theme.sun)
+                    Image(systemName: "hand.raised.fill").foregroundStyle(Theme.warning)
                     Group {
                         if model.palettes.isEmpty {
                             Text("To keep you active in other apps, Sidefolk needs Accessibility.", comment: "On an extension page that keeps the person active")
@@ -634,7 +620,7 @@ private struct HostControls: View {
                 }
                 .padding(.horizontal, Theme.Space.m)
                 .padding(.vertical, Theme.Space.s + 2)
-                .background(Theme.sun.opacity(0.18), in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+                .background(Theme.warningSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
                 .task {
                     // Picks up the switch in System Settings without reopening the page.
                     while !Task.isCancelled, !trusted {
