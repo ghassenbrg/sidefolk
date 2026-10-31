@@ -8,10 +8,8 @@ import SwiftUI
 struct NoteBodyEditor: NSViewRepresentable {
     @Binding var text: String
     var controller: NoteEditorController
-    /// Markdown as written (D64): every mark shows, in a mono face; the layout still draws boxes and bars.
-    var showsMarks = false
 
-    func makeCoordinator() -> Coordinator { Coordinator(text: $text, showsMarks: showsMarks) }
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
 
     func makeNSView(context: Context) -> NSScrollView {
         let storage = NSTextStorage()
@@ -39,7 +37,7 @@ struct NoteBodyEditor: NSViewRepresentable {
         view.delegate = context.coordinator
         view.setAccessibilityLabel(String(localized: "Text"))
         view.string = text
-        NoteStyler.style(storage, caretLine: nil, showsMarks: showsMarks)
+        NoteStyler.style(storage, caretLine: nil)
         context.coordinator.view = view
         controller.view = view
 
@@ -58,7 +56,7 @@ struct NoteBodyEditor: NSViewRepresentable {
         // Only a change from outside (another item, an agent's edit) replaces what is shown.
         if view.string != text, !context.coordinator.editing {
             view.string = text
-            NoteStyler.style(view.textStorage!, caretLine: nil, showsMarks: showsMarks)
+            NoteStyler.style(view.textStorage!, caretLine: nil)
         }
     }
 
@@ -66,12 +64,10 @@ struct NoteBodyEditor: NSViewRepresentable {
         var text: Binding<String>
         weak var view: NoteTextView?
         var editing = false
-        let showsMarks: Bool
         private var caretLine: NSRange?
 
-        init(text: Binding<String>, showsMarks: Bool) {
+        init(text: Binding<String>) {
             self.text = text
-            self.showsMarks = showsMarks
         }
 
         func textDidChange(_ notification: Notification) {
@@ -94,7 +90,7 @@ struct NoteBodyEditor: NSViewRepresentable {
             guard let storage = view.textStorage else { return }
             let ns = view.string as NSString
             let line = ns.lineRange(for: NSRange(location: min(view.selectedRange().location, ns.length), length: 0))
-            NoteStyler.style(storage, caretLine: line, showsMarks: showsMarks)
+            NoteStyler.style(storage, caretLine: line)
             caretLine = line
         }
     }
@@ -126,8 +122,8 @@ enum NoteStyler {
         [.font: NSFont.systemFont(ofSize: size), .foregroundColor: NSColor(Theme.ink), .paragraphStyle: paragraph]
     }
 
-    /// Restyles every line; `caretLine` keeps its marks visible, and `showsMarks` every line's, in a mono face.
-    static func style(_ storage: NSTextStorage, caretLine: NSRange?, showsMarks: Bool = false) {
+    /// Restyles every line; `caretLine` keeps its marks visible.
+    static func style(_ storage: NSTextStorage, caretLine: NSRange?) {
         let ns = storage.string as NSString
         storage.beginEditing()
         storage.setAttributes(base, range: NSRange(location: 0, length: ns.length))
@@ -135,22 +131,10 @@ enum NoteStyler {
         while at < ns.length {
             let range = ns.lineRange(for: NSRange(location: at, length: 0))
             let onCaret = caretLine.map { NSIntersectionRange($0, range).length > 0 || $0.location == range.location } ?? false
-            styleLine(storage, range, text: ns.substring(with: range), editing: showsMarks || onCaret)
+            styleLine(storage, range, text: ns.substring(with: range), editing: onCaret)
             at = range.location + range.length
         }
-        if showsMarks { mono(storage) }
         storage.endEditing()
-    }
-
-    /// Every run in the mono face at its own size and weight; headings in the link colour, as a Markdown editor shows them.
-    private static func mono(_ storage: NSTextStorage) {
-        let all = NSRange(location: 0, length: storage.length)
-        storage.enumerateAttribute(.font, in: all) { value, range, _ in
-            guard let font = value as? NSFont else { return }
-            let bold = font.fontDescriptor.symbolicTraits.contains(.bold)
-            storage.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: max(font.pointSize - 1, 11), weight: bold ? .semibold : .regular), range: range)
-            if font.pointSize > size + 1 { storage.addAttribute(.foregroundColor, value: NSColor(Theme.link), range: range) }
-        }
     }
 
     private static func styleLine(_ storage: NSTextStorage, _ range: NSRange, text: String, editing: Bool) {

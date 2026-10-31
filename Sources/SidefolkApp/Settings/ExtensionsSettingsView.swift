@@ -4,7 +4,7 @@ import SwiftUI
 
 /// Settings › Extensions: the extensions that come with Sidefolk, the ones the person added (folders and
 /// MCP servers), drafts Sidefolk's AI wrote for them, and skills. Each is one line until clicked, under a search and
-/// an All / On / Off filter (D39). Beside "Installed", the add-on gallery (D55).
+/// an All / On / Off filter (D39). The add-on gallery is in Home (D84).
 struct ExtensionsSettingsView: View {
     var model: SettingsModel
     @State private var addingServer = false
@@ -13,10 +13,6 @@ struct ExtensionsSettingsView: View {
     @State private var deletingDraft: ExtensionDraftInfo?
     @State private var search: String
     @State private var show: ExtensionListQuery.Show
-    @State private var page: Page
-    @State private var gallerySearch = ""
-
-    enum Page: String, Hashable { case installed, gallery }
     @State private var expanded: Set<String>
     /// Rows that need the person (changed tools) open by themselves; these are the ones they closed anyway.
     @State private var closed: Set<String> = []
@@ -30,9 +26,8 @@ struct ExtensionsSettingsView: View {
 
     /// `query` and `expanded` show the page in a given state (UISnapshots); otherwise it opens on the filter the
     /// person left it on.
-    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = [], page: Page? = nil) {
+    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = []) {
         self.model = model
-        _page = State(initialValue: page ?? (query == nil ? Self.savedPage : .installed))
         let start = query ?? ExtensionListQuery(show: Self.savedShow)
         _search = State(initialValue: start.text)
         _show = State(initialValue: start.show)
@@ -48,16 +43,12 @@ struct ExtensionsSettingsView: View {
                 .padding(.top, Theme.Space.l)
                 .frame(maxWidth: .infinity)
             SettingsPage {
-                if page == .gallery {
-                    GalleryExtensionsView(model: model, search: gallerySearch)
-                } else {
-                    ScrollViewReader { proxy in
-                        VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
-                            .onChange(of: focus) {
-                                guard case .row(let id) = focus else { return }
-                                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
-                            }
-                    }
+                ScrollViewReader { proxy in
+                    VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
+                        .onChange(of: focus) {
+                            guard case .row(let id) = focus else { return }
+                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
+                        }
                 }
             }
         }
@@ -72,7 +63,6 @@ struct ExtensionsSettingsView: View {
             kept = []
             if remembers { Self.savedShow = show }
         }
-        .onChange(of: page) { if remembers { Self.savedPage = page } }
         .onDisappear { kept = [] }
         .sheet(item: Binding(get: { model.installPreview }, set: { model.installPreview = $0 })) { p in
             InstallPreviewSheet(preview: p, model: model)
@@ -161,22 +151,19 @@ struct ExtensionsSettingsView: View {
 
     // MARK: Header
 
-    /// The two pages, the other ways to add an extension (always in sight), then the page's search.
+    /// The ways to add an extension (always in sight; the Gallery is in Home, D84), then the search.
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(alignment: .center, spacing: Theme.Space.m) {
-                SegmentedPicker("Page", selection: $page, segments: [
-                    .init(Page.installed, Text("Installed", comment: "Settings › Extensions: the title over the extensions and skills on this Mac")),
-                    .init(Page.gallery, Text("Gallery", comment: "Settings › Extensions: extensions to add from the add-on gallery")),
-                ])
+                Button("Get More in the Gallery", systemImage: "sparkles") { model.services.openGallery() }.buttonStyle(.sf(.secondary))
+                    .help("Extensions, companions and themes to add, in Home")
                 Spacer(minLength: Theme.Space.s)
                 Button("Install from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary))
                     .help("Review and install an extension from a folder on this Mac")
                 Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }.buttonStyle(.sf(.secondary))
                     .help("Add an MCP server you already use; it runs with your full permissions")
             }
-            if page == .installed {
-                HStack(alignment: .center, spacing: Theme.Space.m) {
+            HStack(alignment: .center, spacing: Theme.Space.m) {
                     SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
                               submit: focusFirstRow)
                     SegmentedPicker("Show", selection: $show, segments: [
@@ -185,9 +172,6 @@ struct ExtensionsSettingsView: View {
                         .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Extensions: the extensions switched off, “Off 6”")),
                     ])
                     .help("Show every extension, or only those switched on or off")
-                }
-            } else {
-                SearchBox(text: $gallerySearch, prompt: Text("Search the gallery"), focus: $focus, focusValue: .search, submit: {})
             }
             if let error = model.extensionError { InlineError(error: error) }
         }
@@ -353,12 +337,6 @@ struct ExtensionsSettingsView: View {
     private static let showKey = "settings.extensions.show"
 
     /// The filter the person left the list on: a convenience of theirs, so it lives in their defaults, not the store.
-    /// Installed or Gallery, as the person left it.
-    private static var savedPage: Page {
-        get { UserDefaults.standard.string(forKey: "settings.extensions.page").flatMap(Page.init(rawValue:)) ?? .installed }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "settings.extensions.page") }
-    }
-
     private static var savedShow: ExtensionListQuery.Show {
         get { UserDefaults.standard.string(forKey: showKey).flatMap(ExtensionListQuery.Show.init(rawValue:)) ?? .all }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: showKey) }

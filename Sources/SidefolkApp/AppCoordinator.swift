@@ -390,7 +390,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
-        if command == "home:today" { home.show(section: .now); return }
+        if command.hasPrefix("home:") { home.showPlace(String(command.dropFirst(5))); return }
         if command.hasPrefix("flip:") {
             // flip:<extension id>/<page>:on|off: the page's main switch, as from its sidebar row (D67).
             let rest = command.dropFirst(5)
@@ -442,7 +442,10 @@ final class AppCoordinator {
         }
         if command.hasPrefix("chooser:") {
             // chooser:yours|gallery|search:<words>|detail:<name>|get:<name>|remove:<id>|add|close (D77).
-            settingsWindow.chooser(String(command.dropFirst("chooser:".count)))
+            let sub = String(command.dropFirst("chooser:".count))
+            // The Gallery lives in Home now (D84): its page and search open there.
+            if sub == "gallery" || sub.hasPrefix("search:") { home.show(section: .gallery); return }
+            settingsWindow.chooser(sub)
             return
         }
         if command.hasPrefix("settings") {
@@ -642,6 +645,8 @@ final class AppCoordinator {
         askPanel.hide()
         settingsWindow.show(tab: tab)
     }
+
+    func openGallery() { home.show(section: .gallery) }
 
     func showAbout() {
         askPanel.hide()

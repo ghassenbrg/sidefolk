@@ -7,12 +7,14 @@ struct SkippedStepRow: View {
     var step: SkippedStep
     var run: () -> Void
     var dismiss: () -> Void
+    /// Inside a card that already shows who asked (Today, D84): no icon of its own, no padding.
+    var plain = false
     /// Inert for a moment, like the card it stands in for.
     @State private var armed = false
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
-            IconTile(symbol: "clock.badge.xmark", folk: "guard")
+            if !plain { IconTile(symbol: "clock.badge.xmark", folk: "guard") }
             VStack(alignment: .leading, spacing: 3) {
                 Text(step.request.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -32,8 +34,8 @@ struct SkippedStepRow: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, Theme.Space.m)
+        .padding(.horizontal, plain ? 0 : Theme.Space.l)
+        .padding(.vertical, plain ? 0 : Theme.Space.m)
         .accessibilityElement(children: .contain)
         .task {
             try? await Task.sleep(for: .milliseconds(800))

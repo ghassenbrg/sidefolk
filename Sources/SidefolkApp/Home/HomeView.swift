@@ -1,47 +1,31 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Home window: the theme's navigation (D64; a sidebar with Today, Conversations, the Notebook's collections and
-/// Activity, or a rail with a status bar) and the selected page.
+/// The Home window (D84): the sidebar with the companion's nook, the places and the Notebook; the Say bar in the
+/// toolbar's centre (⌘K); and the selected place. One layout in every theme: themes dress it, they don't arrange it.
 struct HomeView: View {
     @Bindable var model: HomeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @FocusState private var searching: Bool
-
-    private var navigation: ThemeLayout.Navigation { ThemeStore.shared.style.tokens.layout.navigation }
+    @State private var sayFocus = 0
 
     var body: some View {
-        Group {
-            switch navigation {
-            case .rail:
-                HStack(spacing: 0) {
-                    HomeRail(model: model)
-                    Divider()
-                    page
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) { HomeStatusBar(model: model) }
-            case .pills:
-                page.toolbar {
-                    ToolbarItem(placement: .principal) { PillTabs(model: model) }
-                }
-            case .ribbons:
-                HStack(spacing: 0) {
-                    page
-                    RibbonTabs(model: model)
-                }
-            default:
-                NavigationSplitView {
-                    HomeSidebar(model: model)
-                        .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
-                } detail: {
-                    page
-                }
-            }
+        NavigationSplitView {
+            HomeSidebar(model: model)
+                .navigationSplitViewColumnWidth(min: Theme.Size.sidebarMin, ideal: Theme.Size.sidebar, max: 320)
+        } detail: {
+            page
         }
-        // The one bar (D58): search everything, or type what to do. Return does it, as in the Ask panel.
-        .searchable(text: Bindable(model.find).query, placement: .toolbar,
-                    prompt: Text("Search, write a note, set a reminder or ask \(model.services.runtime.settings.current.companionName)…"))
         .toolbar {
+            ToolbarItem(placement: .navigation) { PlaceTitle(model: model) }
+            ToolbarItem(placement: .principal) {
+                SayBarField(text: Bindable(model.find).query,
+                            prompt: Text("Ask \(model.companionName), or type a reminder, note or watch…"),
+                            tint: Theme.link,
+                            onSubmit: { model.send(.auto) }, focusTrigger: sayFocus,
+                            focusChanged: { model.saying = $0 },
+                            onEscape: { model.find.query = "" })
+                    .frame(minWidth: 300, idealWidth: Theme.Size.sayBarHomeMaxWidth)
+            }
             ToolbarItem(placement: .primaryAction) {
                 // Everything Home can start, in one place (D58).
                 Menu {
@@ -50,20 +34,22 @@ struct HomeView: View {
                     Button("Watch…") { model.services.openAsk(prefill: "tell me when ") }
                     Divider()
                     Button("Collection…") { model.collectionSheet = .create }
+                    Button("Fact about you…") {
+                        model.selection = .you
+                        model.you.adding = true
+                    }
                 } label: {
                     Label("New", systemImage: "plus")
                 }
                 .help("New note, reminder, watch or collection")
             }
         }
-        .searchFocused($searching)
-        .onSubmit(of: .search) { model.send(.auto) }
         .background {
-            Button("Search") { searching = true }
+            Button("Say") { sayFocus += 1 }
                 .keyboardShortcut("k", modifiers: .command)
                 .opacity(0)
                 .accessibilityHidden(true)
-            // ⌘1–5 go to the places in every navigation (D64, D66).
+            // ⌘1–5 go to the places (D84).
             ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
                 Button(place.title) { model.go(to: place) }
                     .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
@@ -91,53 +77,48 @@ struct HomeView: View {
         .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
     }
 
-    /// The selected page, or what the one bar found while it has words.
+    /// The selected place, with the Say bar's panel over it while the bar has words.
     private var page: some View {
-        Group {
-            if model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                detail
-            } else {
-                SearchPage(find: model.find, services: model.services) { model.send($0) }
+        detail
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay { ThemeGrain() }
+            .overlay(alignment: .top) {
+                if showsPanel {
+                    ZStack(alignment: .top) {
+                        // A light scrim over the page only: the sidebar's companion stays in view, listening.
+                        Theme.ink.opacity(0.06).ignoresSafeArea().onTapGesture { model.find.query = "" }
+                        SayPanel(find: model.find, services: model.services, send: { model.send($0) }) { found in
+                            model.find.query = ""
+                            model.services.open(found)
+                        }
+                        .padding(.horizontal, Theme.Space.xl)
+                        .padding(.top, Theme.Space.s)
+                    }
+                    .transition(.opacity)
+                }
             }
-        }
-        .overlay { ThemeGrain() }
-        .environment(model.pages)
+            .animation(reduceMotion ? nil : Theme.Motion.micro, value: showsPanel)
+            .environment(model.pages)
     }
 
-    /// Without a sidebar, the Notebook's pages bring their collections along (D64).
-    @ViewBuilder private func withCollections<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        switch navigation {
-        case .sidebar:
-            content()
-        case .rail:
-            HStack(spacing: 0) {
-                CollectionColumn(model: model).frame(width: 200)
-                Divider()
-                content()
-            }
-        case .pills, .ribbons:
-            VStack(spacing: 0) {
-                CollectionStrip(model: model, washi: navigation == .ribbons)
-                Divider()
-                content()
-            }
-        }
-    }
+    private var showsPanel: Bool { !model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     @ViewBuilder private var detail: some View {
         switch model.selection ?? .now {
         case .now:
-            NowView(model: model.now)
+            TodayView(model: model)
         case .calendar:
             CalendarView(model: model.calendar)
-        case .conversations:
-            ConversationsView(model: model.conversations)
-        case .activity:
-            ActivityView(model: model.activity)
+        case .onDuty:
+            OnDutyView(model: model)
+        case .history:
+            HistoryView(model: model.history, home: model)
+        case .you:
+            YouView(model: model.you)
         case .trash:
-            withCollections { TrashView(model: model.notebook) }
-        case .page(ExtensionPagesModel.hub):
-            ExtensionsHubView(pages: model.pages) { model.selection = .page($0) }
+            TrashView(model: model.notebook)
+        case .gallery:
+            HomeGalleryView(settings: model.settingsHost)
         case .page(let id):
             if let info = model.pages.info(id) {
                 ExtensionPageView(model: model.pages.model(info))
@@ -146,7 +127,7 @@ struct HomeView: View {
             }
         case .collection(let id):
             if let collection = model.notebook.collection(id: id) {
-                withCollections { NotebookView(model: model.notebook, collection: collection) }
+                NotebookView(model: model.notebook, collection: collection)
             } else {
                 Theme.surfaceSunken
             }
@@ -154,154 +135,68 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Sidebar
-
-private struct HomeSidebar: View {
-    @Bindable var model: HomeModel
-    private var layout: ThemeLayout { ThemeStore.shared.style.tokens.layout }
-    @State private var deleting: NotebookCollection?
-
-    private var notebook: NotebookModel { model.notebook }
+/// The place's name and one line under it, at the toolbar's leading edge (A1): "Today / Saturday, 31 October",
+/// "On duty / 8 running · 1 paused".
+private struct PlaceTitle: View {
+    var model: HomeModel
 
     var body: some View {
-        List(selection: $model.selection) {
-            // The app's name at a size that reads as one; it opens About.
-            Button { model.services.showAbout() } label: { Wordmark(height: 30) }
-                .buttonStyle(.plain)
-                .help("About Sidefolk")
-                .selectionDisabled()
-                .listRowSeparator(.hidden)
-                .padding(.leading, Theme.Space.xs)
-                .padding(.bottom, Theme.Space.s)
-            // The companion's nook (D58): who keeps track of all this, and what it's on now. A click goes to Today.
-            // The theme's layout may put it at the foot instead (D64).
-            if layout.nook == .top {
-                Button { model.selection = .now } label: {
-                    CompanionNook(settings: model.services.runtime.settings.current, line: model.now.nookLine)
-                }
-                .buttonStyle(.plain)
-                .selectionDisabled()
-                .listRowSeparator(.hidden)
-                .padding(.bottom, Theme.Space.s)
-            }
-            Section {
-                Label { Text("Today") } icon: { icon("sun.max.fill", Theme.sun) }
-                    .badge(model.now.needsYouCount)
-                    .tag(HomeSelection.now)
-                // Everything with a time, a month or a week at once (D66).
-                Label { Text("Calendar") } icon: { icon("calendar", Theme.folkColor("tempo")) }
-                    .tag(HomeSelection.calendar)
-                Label { Text("Conversations") } icon: { icon("bubble.left.and.bubble.right.fill", Theme.aqua) }
-                    .tag(HomeSelection.conversations)
-            }
-            Section("Notebook") {
-                ForEach(notebook.collections) { c in collectionRow(c) }
-            }
-            // Pages extensions add (D62), under the extension's own name for the page, as the person arranged them (D67).
-            if !model.pages.list.isEmpty {
-                ExtensionsSidebarSection(pages: model.pages)
-            }
-            Section {
-                // The audit trail matters, but your notes come first.
-                Label { Text("Activity") } icon: { icon("list.bullet.rectangle.fill", Theme.folkColor("guard")) }
-                    .tag(HomeSelection.activity)
-            }
-            if !notebook.archived.isEmpty {
-                Section("Archived") {
-                    ForEach(notebook.archived) { c in
-                        Label { Text(NotebookCollections.shownName(c)) } icon: { icon("archivebox", Theme.inkMuted) }
-                            .badge(notebook.counts[c.id] ?? 0)
-                            .tag(HomeSelection.collection(c.id))
-                            .contextMenu {
-                                Button("Unarchive") { Task { await notebook.setArchived(c, false) } }
-                                Button("Delete…") { deleting = c }
-                            }
-                    }
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            Text(verbatim: title).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
+            if let subtitle {
+                Text(verbatim: subtitle).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
-        // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
-        .background(ThemeStore.shared.style.tokens.material.sidebar == .solid ? Theme.surface : .clear)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                if layout.nook == .foot {
-                    Button { model.selection = .now } label: {
-                        NookBubble(settings: model.services.runtime.settings.current, greeting: model.now.nookGreeting, line: model.now.nookLine)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, Theme.Space.s)
-                }
-                HStack {
-                    // The Trash at the foot, out of the way of the collections (D58); a new collection is in the New menu.
-                    Button { model.selection = .trash } label: {
-                        Label { Text("Trash") + Text(verbatim: notebook.trashCount > 0 ? " · \(notebook.trashCount)" : "") }
-                            icon: { Image(systemName: "trash") }
-                            .fixedSize()
-                    }
-                    .buttonStyle(.sfPlain)
-                    .foregroundStyle(model.selection == .trash ? Theme.ink : Theme.inkMuted)
-                    Spacer()
-                    // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window
-                    // is in front; Settings is also one click from wherever Home is.
-                    Button { model.services.openSettings(tab: nil) } label: {
-                        // The word where it fits; a roomy theme or a long language keeps the gear alone.
-                        ViewThatFits(in: .horizontal) {
-                            Label("Settings", systemImage: "gearshape").fixedSize()
-                            Image(systemName: "gearshape").accessibilityLabel(Text("Settings"))
-                        }
-                    }
-                    .buttonStyle(.sfPlain)
-                    .foregroundStyle(Theme.inkMuted)
-                    .help("Settings (⌘,)")
-                }
-                .padding(.horizontal, Theme.Space.s)
-                .padding(.vertical, Theme.Space.s)
-            }
-        }
-        .alert("Delete “\(deleting?.name ?? "")”?", isPresented: Binding(
-            get: { deleting != nil }, set: { if !$0 { deleting = nil } }
-        ), presenting: deleting) { c in
-            Button("Delete collection", role: .destructive) {
-                if model.selection == .collection(c.id) { model.selection = .now }
-                Task { await notebook.delete(c) }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { c in
-            let n = notebook.counts[c.id] ?? 0
-            if n == 0 {
-                Text("It's empty.")
-            } else {
-                Text("\(n) items in it move to the Trash for 30 days. Restored items go to the Inbox.")
-            }
+        .fixedSize()
+        .padding(.leading, Theme.Space.s)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    private var title: String {
+        switch model.selection ?? .now {
+        case .now: String(localized: "Today")
+        case .calendar: String(localized: "Calendar")
+        case .onDuty: String(localized: "On duty")
+        case .history: String(localized: "History")
+        case .you: String(localized: "You", comment: "Notebook › You: what Sidefolk knows about the person")
+        case .trash: String(localized: "Trash")
+        case .gallery: String(localized: "Gallery")
+        case .page(let id): model.pages.info(id)?.title ?? String(localized: "Extensions")
+        case .collection(let id): model.notebook.collection(id: id).map(NotebookCollections.shownName) ?? String(localized: "Notebook")
         }
     }
 
-    private func collectionRow(_ c: NotebookCollection) -> some View {
-        Label { Text(NotebookCollections.shownName(c)) } icon: { CollectionIcon(collection: c, nav: true) }
-            .badge(notebook.counts[c.id] ?? 0)
-            .tag(HomeSelection.collection(c.id))
-            .help(c.kind == .profile ? Text("Sidefolk keeps these in mind in every conversation.") : Text(verbatim: c.name))
-            .contextMenu {
-                if c.kind != .profile {
-                    Button("Edit…") { model.collectionSheet = .edit(c) }
-                }
-                if c.kind != .inbox && c.kind != .profile {
-                    Button("Archive") {
-                        if model.selection == .collection(c.id) { model.selection = .now }
-                        Task { await notebook.setArchived(c, true) }
-                    }
-                    Divider()
-                    Button("Delete…") { deleting = c }
-                }
+    private var subtitle: String? {
+        switch model.selection ?? .now {
+        case .now:
+            return Date().formatted(.dateTime.weekday(.wide).day().month(.wide))
+        case .calendar:
+            return String(localized: "Next \(CalendarModel.listDays) days", comment: "Under the Calendar's title")
+        case .onDuty:
+            let duty = model.now.onDuty
+            let running = String(localized: "\(duty.running(extra: model.pages.backgroundCount)) running", comment: "Under On duty's title")
+            return duty.paused > 0 ? running + " · " + String(localized: "\(duty.paused) paused", comment: "Under On duty's title") : running
+        case .history:
+            let span = switch model.history.span {
+            case .today: String(localized: "Today")
+            case .week: String(localized: "Last 7 days")
+            case .all: String(localized: "Everything kept")
             }
+            return span + " · " + String(localized: "\(model.history.spanCount) things happened", comment: "Under History's title")
+        case .you:
+            return String(localized: "Notebook · \(model.you.count) things \(model.companionName) knows", comment: "Under You's title")
+        case .trash:
+            return String(localized: "Notebook · kept 30 days", comment: "Under the Trash's title")
+        case .gallery:
+            return String(localized: "Companions, extensions and themes", comment: "Under the Gallery's title")
+        case .page(let id):
+            return model.pages.info(id).map(\.extensionName)
+        case .collection(let id):
+            let n = model.notebook.counts[id] ?? 0
+            return String(localized: "Notebook · \(n) items", comment: "Under a collection's title")
+        }
     }
-
-    private func icon(_ name: String, _ color: Color) -> some View {
-        NavIcon(symbol: name, color: color)
-    }
-
 }
 
 // MARK: - New and edit collection
@@ -328,6 +223,7 @@ struct CollectionSheet: View {
     @State private var color: String?
     @State private var emoji = ""
     @State private var error: UserFacingError?
+    @FocusState private var nameFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
     private static let kinds: [(NotebookCollection.Kind, LocalizedStringResource, LocalizedStringResource)] = [
@@ -341,8 +237,12 @@ struct CollectionSheet: View {
             Text(isCreate ? "New collection" : "Edit collection").font(Theme.Font.heading).foregroundStyle(Theme.ink)
             if namable {
                 TextField("Name", text: $name, prompt: Text("Name"))
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .focused($nameFocused)
                     .onSubmit(save)
+                    .padding(.horizontal, Theme.Space.s)
+                    .frame(height: Theme.Size.field)
+                    .fieldChrome(focused: nameFocused)
             }
             if isCreate {
                 VStack(alignment: .leading, spacing: 6) {

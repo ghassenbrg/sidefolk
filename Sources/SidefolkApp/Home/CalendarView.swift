@@ -26,7 +26,7 @@ struct CalendarView: View {
             switch model.mode {
             case .month: CalendarMonth(model: model, open: open, edit: { editing = $0 }) { adding = NewReminderTime(at: $0) }
             case .week: CalendarWeek(model: model, open: open, edit: { editing = $0 }) { adding = NewReminderTime(at: $0) }
-            case .day: CalendarList(model: model, open: open, edit: { editing = $0 }) { adding = NewReminderTime(at: $0) }
+            case .agenda: CalendarList(model: model, open: open, edit: { editing = $0 }) { adding = NewReminderTime(at: $0) }
             }
         }
         .padding(.horizontal, Theme.Space.xl)
@@ -70,9 +70,9 @@ struct CalendarView: View {
                 }
                 .buttonStyle(.sf(.plain))
                 SegmentedPicker("View", selection: $model.mode, segments: [
-                    .init(CalendarModel.Mode.month, "Month"),
+                    .init(CalendarModel.Mode.agenda, Text("Agenda", comment: "The Calendar's list of the next two weeks")),
                     .init(CalendarModel.Mode.week, "Week"),
-                    .init(CalendarModel.Mode.day, Text("Day", comment: "The Calendar's list of days, from one day")),
+                    .init(CalendarModel.Mode.month, "Month"),
                 ])
             }
             .fixedSize()
@@ -83,7 +83,7 @@ struct CalendarView: View {
         switch model.mode {
         case .month: "Show the previous month"
         case .week: "Show the previous week"
-        case .day: "Show the previous day"
+        case .agenda: "Show the previous two weeks"
         }
     }
 
@@ -91,7 +91,7 @@ struct CalendarView: View {
         switch model.mode {
         case .month: "Show the next month"
         case .week: "Show the next week"
-        case .day: "Show the next day"
+        case .agenda: "Show the next two weeks"
         }
     }
 

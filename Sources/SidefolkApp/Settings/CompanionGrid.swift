@@ -24,7 +24,7 @@ struct CompanionGrid: View {
                     }
                 }
                 AddCompanionTile(model: model)
-                if gallery.available { MoreCompanionsTile(count: chooser.notYetHere) { chooser.page = .gallery } }
+                if gallery.available { MoreCompanionsTile(count: chooser.notYetHere) { model.services.openGallery() } }
             }
             ForEach(owned.compactMap { $0.galleryID.flatMap { gallery.failures[$0] } }, id: \.message) { InlineError(error: $0) }
             if let error = gallery.companionError { InlineError(error: error) }
