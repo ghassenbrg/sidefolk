@@ -350,7 +350,20 @@ public struct ManifestValidator: Sendable {
 
     func checkPermissions(_ p: ExtensionManifest.Permissions, folder: String, issues: inout [ValidationIssue],
                           warnings: inout [String]) -> ExtensionPermissions {
-        var result = ExtensionPermissions(network: p.network, media: p.media, clipboard: p.clipboard, power: p.power)
+        var result = ExtensionPermissions(network: p.network, media: p.media, clipboard: p.clipboard, power: p.power, screen: p.screen,
+                                          udp: p.udp && p.network)
+        if let purpose = p.networkPurpose {
+            let line = ExtensionText.line(purpose, characters: 120)
+            if !p.network || line != purpose || !purpose.hasPrefix("for ") && !purpose.hasPrefix("to ") {
+                issues.append(ValidationIssue(field: "permissions.network_purpose",
+                                              message: "must come with permissions.network and be one plain line of at most 120 characters starting with “to” or “for”."))
+            } else {
+                result.networkPurpose = purpose
+            }
+        }
+        if p.udp && !p.network {
+            issues.append(ValidationIssue(field: "permissions.udp", message: "needs permissions.network: UDP is part of using the network."))
+        }
         for (field, list) in [("read", p.files.read), ("write", p.files.write), ("exec", p.exec)] where list.count > 32 {
             issues.append(ValidationIssue(field: "permissions.\(field)", message: "can list at most 32 entries."))
         }

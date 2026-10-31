@@ -16,10 +16,16 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var clipboard: Bool
     /// Power assertions: the Mac kept awake, the person kept active (`permissions.power`, D63).
     public var power: Bool
+    /// The screen and the Mac's sound, recorded and compressed to video (`permissions.screen`, D69).
+    public var screen: Bool
+    /// UDP received from anyone who can reach the Mac, for live audio and video (`permissions.udp`, D69).
+    public var udp: Bool
+    /// What the extension says it uses the network for (`permissions.network_purpose`, D69): one cleaned line.
+    public var networkPurpose: String?
 
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
-                clipboard: Bool = false, power: Bool = false) {
+                clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil) {
         self.network = network
         self.read = read
         self.write = write
@@ -29,9 +35,12 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         self.media = media
         self.clipboard = clipboard
         self.power = power
+        self.screen = screen
+        self.udp = udp
+        self.networkPurpose = networkPurpose
     }
 
-    /// Pins saved before programs, per-call folders, media, clipboard and power existed have none of them.
+    /// Pins saved before programs, per-call folders, media, clipboard, power, screen and UDP existed have none of them.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         network = try c.decode(Bool.self, forKey: .network)
@@ -43,6 +52,9 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         media = try c.decodeIfPresent(Bool.self, forKey: .media) ?? false
         clipboard = try c.decodeIfPresent(Bool.self, forKey: .clipboard) ?? false
         power = try c.decodeIfPresent(Bool.self, forKey: .power) ?? false
+        screen = try c.decodeIfPresent(Bool.self, forKey: .screen) ?? false
+        udp = try c.decodeIfPresent(Bool.self, forKey: .udp) ?? false
+        networkPurpose = try c.decodeIfPresent(String.self, forKey: .networkPurpose)
     }
 
     /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …). Programs named
@@ -50,8 +62,8 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var dangerousExec: [String] { exec.filter(Self.canRunAnything) }
 
     /// Raises every tool to at least medium risk: it can reach the internet, change files or run anything.
-    /// The clipboard counts: what someone copied (a password, an address) is theirs alone.
-    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty || clipboard }
+    /// The clipboard counts: what someone copied (a password, an address) is theirs alone. So does the screen.
+    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty || clipboard || screen }
 
     static let anythingRunners: Set<String> = [
         "sh", "bash", "zsh", "dash", "ksh", "csh", "tcsh", "fish", "env", "xargs", "nohup", "sudo", "su", "login",
@@ -72,7 +84,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 /// (SECURITY T13, T16). Deterministic: built from the manifest, never from model text.
 public struct PermissionSummary: Sendable, Hashable {
     public struct Line: Sendable, Hashable {
-        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, none, unsandboxed }
+        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, udp, none, unsandboxed }
         public var kind: Kind
         public var text: String
         /// Worth drawing attention to on the install sheet.
@@ -88,7 +100,15 @@ public struct PermissionSummary: Sendable, Hashable {
     public static func forExtension(_ p: ExtensionPermissions) -> PermissionSummary {
         var lines: [Line] = []
         let show = FolderAccess.displayPath
-        if p.network { lines.append(Line(kind: .network, text: String(localized: "Can use the internet"), caution: true)) }
+        if p.network {
+            // The sandbox knows only "network or not" (an address can be any host or localhost, measured), so an extension
+            // that means the local network still can reach the internet: say both, the reach first (D69).
+            if let purpose = p.networkPurpose {
+                lines.append(Line(kind: .network, text: String(localized: "Can use the network, the internet included. It says it uses it \(purpose)."), caution: true))
+            } else {
+                lines.append(Line(kind: .network, text: String(localized: "Can use the internet"), caution: true))
+            }
+        }
         for path in p.read where !p.write.contains(path) {
             lines.append(Line(kind: .read, text: String(localized: "Can read \(show(path))"), caution: false))
         }
@@ -122,6 +142,14 @@ public struct PermissionSummary: Sendable, Hashable {
         if p.power {
             lines.append(Line(kind: .power, text: String(localized: "Can keep your Mac awake and tell macOS you're active"), caution: false))
         }
+        if p.screen {
+            lines.append(Line(kind: .screen, text: String(localized: "Can record your screen and the sound your Mac plays, once you allow Sidefolk in Screen Recording"),
+                              caution: true))
+        }
+        if p.udp {
+            lines.append(Line(kind: .udp, text: String(localized: "Can receive live audio and video traffic (UDP) from any device that can reach your Mac"),
+                              caution: true))
+        }
         if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))
         }
@@ -141,6 +169,9 @@ public struct PermissionSummary: Sendable, Hashable {
         }
         if p.network, p.clipboard {
             warnings.append(String(localized: "It can read what you copy and use the internet, so it could send what you copy elsewhere."))
+        }
+        if p.network, p.screen {
+            warnings.append(String(localized: "It can record your screen and use the internet, so it could send what's on your screen elsewhere."))
         }
         if p.network, !p.write.isEmpty {
             warnings.append(String(localized: "It can save what it downloads into \(list(p.write.map(show)))."))

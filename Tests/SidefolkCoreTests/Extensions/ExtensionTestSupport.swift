@@ -74,11 +74,24 @@ enum ExtFixtures {
             }
             let built = builtInFolders.contains(folder) ? products : addonProducts
             try! fm.copyItem(at: built.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
+            // Frameworks it links (Miraya's WebRTC) go to lib/, one plain file each, as sidefolk-addons' build.py packs them.
+            for name in linkedFrameworks(built.appendingPathComponent("ext-\(folder)")) {
+                let lib = to.appendingPathComponent("lib/\(name).framework", isDirectory: true)
+                try! fm.createDirectory(at: lib, withIntermediateDirectories: true)
+                try! fm.copyItem(at: built.appendingPathComponent("\(name).framework/\(name)").resolvingSymlinksInPath(), to: lib.appendingPathComponent(name))
+            }
         }
         return dir
     }()
 
     static func builtIn(_ folder: String) -> URL { builtIns.appendingPathComponent(folder, isDirectory: true) }
+
+    /// `@rpath/<Name>.framework/<Name>` load commands in a program, by name.
+    static func linkedFrameworks(_ program: URL) -> [String] {
+        let text = String(decoding: (try? Data(contentsOf: program)) ?? Data(), as: UTF8.self)
+        let found = text.matches(of: /@rpath\/([A-Za-z0-9_]+)\.framework\/([A-Za-z0-9_]+)/).filter { $0.1 == $0.2 }.map { String($0.1) }
+        return Array(Set(found)).sorted()
+    }
 
     static let python = InterpreterResolver.system.resolve("python3")
     static let hasPython = python != nil

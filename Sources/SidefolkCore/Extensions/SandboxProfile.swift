@@ -121,6 +121,12 @@ public struct SandboxProfile: Sendable, Hashable {
         if inputs.permissions.media {
             sb += mediaRules
         }
+        if inputs.permissions.screen {
+            sb += screenRules
+        }
+        if inputs.permissions.network && inputs.permissions.udp {
+            sb += udpRules
+        }
         return SandboxProfile(text: sb, parameters: params)
     }
 
@@ -169,6 +175,28 @@ public struct SandboxProfile: Sendable, Hashable {
     ;; media (granted at install): the GPU and the decoders, nothing else
     (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
     (allow mach-lookup (global-name "com.apple.coremedia.videodecoder"))
+
+    """
+
+    /// ScreenCaptureKit and the hardware encoder, measured on macOS 27 (displays and windows listed, a picture taken,
+    /// the screen and the Mac's sound streamed, then H.264 from VideoToolbox): replayd, the window server, and the
+    /// encoder service. Nothing more: no Launch Services, no pasteboard, no Dock. macOS still asks the person, for
+    /// Sidefolk, since the extension runs as Sidefolk's child (D69). Pictures in IOSurfaces need `media` too.
+    static let screenRules = """
+
+    ;; screen (granted at install): ScreenCaptureKit, and the video encoder for what it records
+    (allow mach-lookup (global-name "com.apple.replayd") (global-name "com.apple.windowserver.active")
+      (global-name "com.apple.coremedia.videoencoder"))
+
+    """
+
+    /// What WebRTC's media needs beyond going out: a UDP port of its own and the packets that come back to it,
+    /// measured on macOS 27 (`network` alone refuses the bind). TCP stays outbound only: no listening server.
+    static let udpRules = """
+
+    ;; udp (granted at install, with network): live audio and video
+    (allow network-bind (local udp "*:*"))
+    (allow network-inbound (local udp "*:*"))
 
     """
 

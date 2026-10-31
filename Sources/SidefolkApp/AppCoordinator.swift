@@ -481,6 +481,11 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("reviewFolder:") {
+            // reviewFolder:<folder>: the install preview of an extension folder, as Settings shows it once one is chosen.
+            settingsWindow.review(folder: URL(fileURLWithPath: String(command.dropFirst("reviewFolder:".count))))
+            return
+        }
         if command.hasPrefix("review:") {
             // The same tool Sidefolk's AI calls when a draft is ready: the install preview opens over Settings.
             let name = String(command.dropFirst("review:".count))

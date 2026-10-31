@@ -322,6 +322,12 @@ non-activating `FloatingPanel`, and posts ⌘V when told to paste. A `sidefolk/n
 `MCPClientEvent.nudge`, then `AppEvent.nudge` if the extension has power (20 s apart), and the app posts a zero-move
 mouse event. Page `switch`/`button` parts run `ext.<short>.<tool>` through the executor as `Caller.user`.
 
+Screen and UDP (D69): `permissions.screen` and `permissions.udp` add their Mach services and UDP rules
+(`SandboxProfile.screenRules`, `udpRules`); `permissions.network_purpose` is shown after the network line. A process
+started for one call with folders gets `SIDEFOLK_ONE_CALL=1`, and the Kit skips background work there. A gallery
+extension may ship frameworks it links in `lib/<Name>.framework/<Name>` (sidefolk-addons' build.py), loaded through the
+program's `@executable_path/../lib` rpath: the sandbox already reads the extension's folder.
+
 ## Build and release
 
 - `make dev` / `scripts/run.sh` — debug build, assemble `build/Sidefolk-dev.app`, launch with

@@ -945,6 +945,9 @@ public actor ExtensionHost {
             "LANG": "en_US.UTF-8", "SIDEFOLK_EXTENSION_ID": id, "SIDEFOLK_DATA_DIR": data,
         ]
         for program in permissions.programs { env[program.environmentKey] = program.path }
+        // A process for one call answers that call and ends; it must not also start the work a background extension
+        // does (D69: Miraya's would look for TVs and reconnect beside the running one). The Kit skips it.
+        if !folders.isEmpty { env["SIDEFOLK_ONE_CALL"] = "1" }
         return ExtensionProcessSpec(executable: "/usr/bin/sandbox-exec", arguments: args, environment: env, workingDirectory: data)
     }
 
