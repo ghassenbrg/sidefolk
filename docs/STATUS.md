@@ -8,7 +8,9 @@
   `make test` (1502 core and 36 character tests), and Tempo beside Mochi in an isolated debug app with a real
   reminder. *Next:* founder reviews the new helpers in everyday use.
 
-Updated: 2026-10-31. Version 0.1.0. Latest (team/updates): Sidefolk and add-on updates chosen apart (D70). Before that: snapshot 538 and the gallery: the Calendar, extension pages
+Updated: 2026-10-31. Version 0.1.0. Latest: Sidefolk and add-on updates chosen apart (D70), honest install sheets and
+approval cards (D71), paired TVs without a card (D72), the helper folks redesigned (D73), extension pages that read
+like app screens with Miraya's rebuilt (D74), and a crash fix (a download cancelled before it started). Before that: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
 extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
 published yet: the founder runs scripts/publish.sh there). 1374 core and 34 character tests pass, serially.
