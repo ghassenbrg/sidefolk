@@ -1744,3 +1744,46 @@ instead of WebRTC (the TV app and Miraya's tests favour WebRTC).
 **Not built:** sound on the TV only (CoreAudio's `audiohald` stays closed), a drawn capture area (needs a picker
 Sidefolk draws), keeping the Mac awake while sharing, a Stop button on the Today tile. Pairings live in a 0600 file in
 its data folder (the sandbox has no Keychain). SECURITY T36.
+
+### D73 — Extension pages read like app screens: a hero, one primary action, choices as pictures, cards and rows; Miraya rebuilt on them (2026-10-31)
+**Decision:** pages get what a well-organised app screen needs, for any extension, still drawn by Sidefolk from data
+(D62):
+- **`hero`**: what the page is about now (an eyebrow with the state, a large title, a line, a large `code` to compare, a
+  picture from the data folder, a spinner, up to four live facts, up to three actions drawn large). First on the page,
+  it takes the summary banner's place there; the summary still makes the Today tile and sidebar row.
+- **Emphasis**: one primary button a page. `ExtensionPage.parse` keeps the first primary in reading order (the summary's
+  control first when the banner shows it) and turns later ones `secondary`. Primary is filled and larger; destructive is
+  filled red when nothing on the page is primary; new `plain` is quiet accent text; any button may be `disabled` with a
+  `detail` saying why.
+- **`choice` styles**: `cards` (2–6 presets with a line each), `tiles` (1–24 pictures: displays, windows) and `rows`
+  (1–24 devices or accounts with a badge and a small action each), plus `key` (where the value goes) and `disabled`.
+- **`transport`** for something playing (position, duration, state, up to five round symbol buttons).
+- **Sections** may go in a side column at the start edge in a wide window (`place: side`) and fold under their title
+  (`collapsed`). The rules of what goes where moved to SidefolkCore (`ExtensionPage+Layout.swift`), tested there.
+- **Miraya** is rebuilt on them, a page per state like its Mac app: no TV (Look again and an address field), ready (the
+  hero names what goes where with Start sharing; TVs as rows, paired, new or off, the one chosen ticked; what to share as
+  a screen, a window or part of a screen, each a picture; quality as five cards; sound a switch; more settings and
+  playing a link folded), pairing (the code large, Codes match the primary), waiting for Allow, connecting, sharing
+  (what's shared, its picture, fps, delay and size, Pause and a red Stop), paused (Resume primary), a video (a
+  transport). Stills come from ScreenCaptureKit inside the sandbox (`SCScreenshotManager`, 480 × 300 JPEGs in its data
+  folder) only while the page is open, at most every 20 seconds, never while sharing, and only when macOS already lets
+  Sidefolk record (`CGPreflightScreenCaptureAccess`: picking Window or sharing is what asks). The summary's control is
+  Start sharing, or Stop, on the Today tile and the sidebar row: D69's "Stop on the tile" is built.
+
+**Why:** the founder found Miraya's page confusing: every button looked the same, nothing was highlighted, it read like
+text, and "Show windows" only revealed more buttons. Miraya's own Mac app shows the bar: a TV list with states, a
+visual choice of what to share, quality as cards, one prominent Start or Stop. He asked that extensions be able to do
+this well, for any feature, not by special-casing Miraya.
+
+**Alternatives:** a web view or custom drawing per extension (D62: it could imitate Sidefolk's approval cards and ignore
+themes); Miraya drawn by Sidefolk itself (not extensible, and Miraya is an extension); a `layout` key naming fixed page
+templates (too rigid: a hero, pictures and a side column cover the screens we know and combine); letting extensions mark
+several primaries (the founder's complaint is exactly that nothing stands out); a new part type for each choice look
+(older copies would drop them; a `style` on `choice` degrades to a plain choice).
+
+**Implications:** older 0.1.0 snapshots skip `hero` and `transport` and draw styled choices plainly, so pages keep a
+meaningful summary with its control; manifests still ask `"sidefolk": ">=0.1"` (the version stays 0.1.0). `set_option`
+in Miraya also takes `kind`, `display`, `window` and `area` (the page's picks, kept in `choices.json` as optional keys
+so an older file still reads); no new tool and no manifest change. Window stills show any app's window inside Sidefolk's
+own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
+**Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.

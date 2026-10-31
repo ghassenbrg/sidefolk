@@ -534,26 +534,61 @@ ext.page("mac") { args in
 - **When it runs.** While the page is open, every `refresh` seconds. With `history` or `widget`, also once a minute
   while Sidefolk runs, and the install preview says so. Keep a render quick: it is a 30-second call like any other.
 - **Switches and buttons** (D63): `switch` (`label`, `detail`, `on`, `tool`, `input`) and `button` (`label`, `tool`,
-  `input`, `style`: `primary`, `secondary` or `destructive`, `symbol`) run one of your own tools as the person, through
-  Guard, then read the page again. A switch adds `on` (its new state) to `input`. `tool` is your tool's own name
-  (`set_option`), never another extension's. A tool only switches and buttons use can be `"ai": false`.
+  `input`, `style`, `symbol`, `detail`, `disabled`) run one of your own tools as the person, through Guard, then read
+  the page again. A switch adds `on` (its new state) to `input`. `tool` is your tool's own name (`set_option`), never
+  another extension's. A tool only switches and buttons use can be `"ai": false`. **Emphasis** (D73): `primary` is the
+  one thing to do here, filled in the accent colour and larger; Sidefolk keeps only the first primary of a page (the
+  summary's control first, when the banner shows it) and draws any later one as `secondary`, so a page always has one
+  answer to "what do I do?". `secondary` is framed, `destructive` red (filled when nothing on the page is primary:
+  "Stop sharing" while sharing), `plain` quiet accent text for what's rarely needed ("Look again", "Forget"; an older
+  Sidefolk draws it `secondary`). `disabled: true` dims a button that can't run yet, its `detail` saying why.
 - **Choices, fields and lists** (D68): `choice` (`label`, `detail`, `options` of `{value, label}`, 2–8, `selected`, `tool`,
-  `input`; drawn side by side up to four, a menu above) runs your tool with the picked option's `value` added to `input`;
+  `input`, `key`, `disabled`; drawn side by side up to four, a menu above) runs your tool with the picked option's
+  value added to `input` under `key` (`value` by default, never `on`);
   `field` (`label`, `detail`, `placeholder`, `button`, `tool`, `input`, `key`) runs it with what was typed added under
   `key` (`text` by default, never `on`); `list` (`title`, `caption`, `items` of `{title, detail, image, color, symbol,
   button: {label, tool, input, symbol}}`) shows rows with a picture, a `#RRGGBB` swatch or a symbol, each with a button
   that runs one of your tools. Like switches, all of these go through Guard as the person, then the page is read again.
-- **Pictures** (D68) on list rows and palettes are files your program wrote in its own data folder (`Paths.data`), named
-  relative to it: `thumbs/ab12.png`, a PNG or JPEG, up to four folders deep, no part starting with a dot. Sidefolk opens
-  the file without following links, checks that what it opened is inside that folder with one link, and reads at most
+- **A page that reads like an app screen** (D73). For a feature with states and a main action, build the page per state
+  and lead it with a **`hero`**: `eyebrow` (the state in a few words, ≤ 30 characters), `title` (≤ 80), `detail`
+  (≤ 300), `tone`, `symbol`, `code` (a pairing code or PIN, drawn very large: ≤ 12 of `0-9 A-Z`, spaces and dashes),
+  `image` (a picture, as below), `busy` (a spinner), `facts` (up to four `{label, value}` live numbers) and `actions`
+  (up to three buttons, drawn large). A hero first on the page takes the summary banner's place there (the summary still
+  makes the Today tile and the sidebar row). Anywhere else it is drawn where it is, across the page.
+  - **`choice` with a `style`**: `segmented` (as above), `cards` (2–6 equal cards, each option's `detail` as a line under
+    it: quality presets), `tiles` (1–24 pictures in a grid, each option's `image`, or its `symbol` while there's none:
+    displays, windows, photos) or `rows` (1–24 rows with a `symbol` or `image`, a `badge` `{text, tone}` and a small
+    `action` button each: devices, accounts). Options of `tiles` and `rows` take labels up to 60 characters, and
+    `detail` up to 60. The picked one is marked in the accent colour; picking another runs your tool. Pick inline: don't
+    make choosing reveal more buttons. An older Sidefolk draws a styled choice as a plain one (first 8 options, 2 at least).
+  - **`transport`**: something playing. `title`, `detail`, `position` and `duration` in seconds (Sidefolk writes the
+    times), `state` (`playing`, `paused`, `buffering`, `stopped`) and up to five `buttons`, each with a `symbol` (one
+    without is left out), drawn round, the primary one (play or pause) larger.
+  - **Section `place` and `collapsed`**: `"place": "side"` puts a section in a column at the start edge beside the
+    main ones when the window is wide enough (a list of devices, as in an app's sidebar); narrower, sections keep the
+    page's order. `"collapsed": true` folds a titled section under its title until the person opens it (`false`: open,
+    but foldable): advanced settings, connection details.
+  - An older Sidefolk skips `hero` and `transport` and ignores `place`, `collapsed`, `plain` and `disabled`, so keep the
+    summary meaningful (with its `control`) for those copies.
+  - In the Kit: `.hero(Hero("Share your screen to Living Room", eyebrow: "Ready", image: "shots/1/display.jpg",
+    actions: [Action("Start sharing", tool: "share_screen", style: .primary, symbol: "play.fill")]))`,
+    `.picker("Share to", style: .rows, [Option(id, "Living Room", badge: Badge("Paired", tone: .good))], selected: id,
+    tool: "choose_tv", key: "tv")`, `Section("TVs", blocks, place: .side)`, `Section("More", blocks, collapsed: true)`.
+    Miraya (sidefolk-addons `extensions/miraya/Sources/MirayaPage.swift`) builds a page per state this way.
+- **Pictures** (D68) on list rows, palettes, heroes and tiles (D73) are files your program wrote in its own data
+  folder (`Paths.data`), named relative to it: `thumbs/ab12.png`, a PNG or JPEG, up to four folders deep, no part
+  starting with a dot. Sidefolk opens the file without following links, checks that what it opened is inside that
+  folder with one link, and reads at most
   4 MB for a row (25 MB for a palette preview); anything else shows a placeholder. Make thumbnails once, small (a few
   hundred pixels), rather than pointing at big originals: a palette lists up to 200 rows as the person types.
+  Sidefolk keeps a picture by its name while it runs, so a picture that changes (a window's still) needs a new name;
+  delete the old file once a newer one is on the page.
 - **Heads-ups.** Under the page, each of your watchers is a switch: on, it checks every five minutes in `repeat`
   mode and the companion tells the person when it triggers. So a watcher should trigger on change (see Watchers).
 - **What Sidefolk refuses or drops.** A page over 128 KB, or one without `sections` or `summary`, fails. Within it, a
   part Sidefolk doesn't know is skipped (so a newer extension still shows on an older Sidefolk), as is a part
-  missing what it needs; at most 16 sections, 24 parts a section, 24 items a list. Every text is cleaned of hidden
-  characters and clipped. A page is your text: it is never shown to a model.
+  missing what it needs; at most 16 sections, 24 parts a section, 24 items a list or a list-like choice. Every text is
+  cleaned of hidden characters and clipped. A page is your text: it is never shown to a model.
 - Pages came during 0.1.0's snapshots: a snapshot from before them (489 and older) refuses the manifest, because it doesn't
   know `pages`. Write `"sidefolk": ">=0.1"` as usual.
 
@@ -778,9 +813,9 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Processes running at once | 32, the program included |
 | Watcher interval | at least 5 minutes, 15 by default |
 | Palettes | 2 per extension; 200 items a list; 10 s per query, choice or preview; preview text 20,000 characters |
-| Pictures (palettes, list rows) | a PNG or JPEG in the data folder: 4 MB a row, 25 MB a preview |
+| Pictures (palettes, list rows, heroes, tiles) | a PNG or JPEG in the data folder: 4 MB a row, 25 MB a preview |
 | Nudges | one every 20 seconds, with `permissions.power` |
-| Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart |
+| Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart; one primary button; a hero's 4 facts and 3 actions; a transport's 5 buttons; 6 cards, 24 tiles or rows a choice |
 | Watcher summary / state | 200 characters / 64 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |
 | Idle stop | 5 minutes |

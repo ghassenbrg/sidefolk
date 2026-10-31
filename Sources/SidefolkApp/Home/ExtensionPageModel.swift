@@ -190,6 +190,9 @@ final class ExtensionPageModel {
     private(set) var palettes: [ExtensionPaletteInfo] = []
     /// Home hears when a switch on the page ran, so the sidebar and Today's tile show the new state.
     var onControl: (() -> Void)?
+    /// Folding sections the person opened or closed (D73), by title, while Home is open.
+    private(set) var opened: Set<String> = []
+    func toggleOpen(_ title: String) { if opened.contains(title) { opened.remove(title) } else { opened.insert(title) } }
     var window: Window = .tenMinutes {
         didSet { if window != oldValue { Task { await loadHistory() } } }
     }

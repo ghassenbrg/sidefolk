@@ -118,10 +118,19 @@ struct QuickControl: View {
                     Text(verbatim: control.label)
                 }
             }
-            .buttonStyle(.sf(.secondary))
+            .buttonStyle(.sf(style))
             .controlSize(small ? .mini : .small)
-            .disabled(pages == nil || running)
+            .disabled(pages == nil || running || control.disabled)
             .help(Text(verbatim: control.detail ?? control.label))
+        }
+    }
+
+    /// The page's own emphasis (D73): "Start sharing" filled, "Stop sharing" red.
+    private var style: SFButtonStyle.Kind {
+        switch control.style ?? .secondary {
+        case .primary: .primary
+        case .destructive: .destructive
+        case .secondary, .plain: .secondary
         }
     }
 }
