@@ -38,6 +38,32 @@ enum Theme {
     static var onDanger: Color { style.onDanger }
     static var success: Color { style.success }
     static var successSoft: Color { style.successSoft }
+    /// Waiting or needing a look (late, waiting on you): amber, readable as text. Not an error.
+    static var warning: Color { style.warning }
+    static var warningSoft: Color { style.warningSoft }
+    static var onWarning: Color { style.onWarning }
+
+    /// A status's colour for text and icons, and its soft fill (StatusTone, docs/ARCHITECTURE.md › Colour meaning).
+    /// Pair it with a word or an icon: colour is never the only signal.
+    static func color(_ tone: StatusTone) -> Color {
+        switch tone {
+        case .success: success
+        case .warning: warning
+        case .danger: danger
+        case .news: link
+        case .neutral: inkMuted
+        }
+    }
+
+    static func soft(_ tone: StatusTone) -> Color {
+        switch tone {
+        case .success: successSoft
+        case .warning: warningSoft
+        case .danger: dangerSoft
+        case .news: accentSoft
+        case .neutral: surfaceSunken
+        }
+    }
 
     // MARK: Metrics
     enum Space {
@@ -103,7 +129,8 @@ enum Theme {
         static var tile: CGImage? { style.artTile }
     }
 
-    /// Accent color for each folk, used on cards of its domain.
+    /// Accent color for each folk, used on cards of its domain. Identity, never status: a folk's colour never says
+    /// that something went well or badly, even when it happens to be green or red.
     static func folkColor(_ name: String) -> Color {
         switch name {
         case "pip": coral

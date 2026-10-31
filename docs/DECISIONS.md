@@ -1944,3 +1944,34 @@ in Miraya also takes `kind`, `display`, `window` and `area` (the page's picks, k
 so an older file still reads); no new tool and no manifest change. Window stills show any app's window inside Sidefolk's
 own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
+
+### D?? — Colour meaning: red only for errors and real risk, amber for waiting, green for good outcomes (2026-10-31)
+**Decision:** every status colour means one thing, in every screen and theme (ARCHITECTURE › Colour meaning):
+- **danger/red:** an error, a failure, a destructive action, or real risk to the person's data or privacy. Nothing else.
+- **warning/amber:** needs a look or is waiting (late reminders, what waits on you, a countdown running out, a step
+  the rules stopped, Full access in Activity). New theme roles `warning`, `warningSoft` and `onWarning`, readable as
+  text (4.5:1) like `danger`; Harbor's is the brand sun, deepened in light (#8A5800).
+- **success/green:** done, healthy, allowed, won, a settled good state. Not "busy": working and watching are neutral.
+- **news/accent:** something new to look at, like an unread dot: a page that changed is news, not an error.
+- **neutral ink:** information, off, paused, "no", nothing happened, a draw.
+- The now line on every time line is the accent: a time marker, not an alarm.
+- Folk colours are identity, never status, and never the only signal; every status colour comes with a word or icon.
+- Core's `StatusTone` holds the mapping (Activity decisions, risk, watches, agent sessions, late reminders, an
+  extension's tones), tested; the app paints it with `Theme.color`/`Theme.soft`/`ChipTone(_:)`.
+- The theme check refuses a theme whose danger doesn't look red, warning amber or success green (hue and saturation,
+  in both appearances). A theme without the warning roles gets Harbor's amber, which reads on any surface.
+
+**Why:** the founder: "Colours have meanings. When it's a draw it shows me red, which gives the impression I lost, and
+when I win something is red too." The audit found red for late reminders, a page that changed, "needs you", the now
+line, a denied or skipped step, a removed line in a page's change, a stopped run and "Not available"; green for
+"working" and low risk; the accent for "Allowed"; and a folk's colour as a status. Amber had no theme role (the brand
+sun, unreadable as text), so a theme couldn't say "waiting" at all.
+
+**Alternatives:** keeping red for "needs you" counts, as Mail's unread badge does (the founder asked for meanings over
+convention); a separate "late" or "changed" token (warning and the accent already say them); hue rules as warnings only
+(a theme mapping success to red would mislead every screen).
+
+**Implications:** the install sheet's tones (D71) and Full access's red chip and orange menu bar icon (D37) stay. The
+games' own verdicts (toss, rock-paper-scissors, dice, trivia) are fixed on their own branch; Play's folk colour is red,
+so it must never mark a win or a draw. Community themes made before this get Harbor's amber and a warning naming the
+roles; gallery themes pass as they are.

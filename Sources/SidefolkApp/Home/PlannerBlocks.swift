@@ -142,10 +142,11 @@ struct RuledDay: View {
         switch line {
         case .now:
             HStack(spacing: 4) {
-                Rectangle().fill(Theme.danger).frame(height: 1.5)
+                // The present is a marker, not an alarm.
+                Rectangle().fill(Theme.accent).frame(height: 1.5)
                 Text("now \(TimeFormat.clock(Date(), calendar: .current))", comment: "The present on the day's ruled lines")
-                    .font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.onDanger)
-                    .padding(.horizontal, 5).background(Theme.danger, in: Capsule())
+                    .font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.onAccent)
+                    .padding(.horizontal, 5).background(Theme.accent, in: Capsule())
             }
             .padding(.vertical, 2)
         case .done(let r):
@@ -159,7 +160,7 @@ struct RuledDay: View {
             row(at: line.at, title: r.title, struck: false, ticked: false, tick: { Task { await model.complete(r) } }) {
                 if late {
                     HStack(spacing: 4) {
-                        Label(TimeText.relative(line.at), systemImage: "alarm").foregroundStyle(Theme.danger)
+                        Label(TimeText.relative(line.at), systemImage: "alarm").foregroundStyle(Theme.warning)
                         Menu("snooze") {
                             ForEach(NowModel.Snooze.allCases, id: \.self) { option in
                                 Button { Task { await model.snooze(r, option) } } label: { Text(verbatim: model.title(for: option)) }
@@ -242,9 +243,9 @@ struct IndexCardFrame<Content: View>: View {
                     if let risk, risk != .low {
                         Text(verbatim: risk == .high ? String(localized: "High risk") : String(localized: "Medium risk"))
                             .textCase(.uppercase).font(.system(size: 9.5, weight: .heavy)).kerning(0.6)
-                            .foregroundStyle(risk == .high ? Theme.danger : Theme.link)
+                            .foregroundStyle(Theme.color(.risk(risk)))
                             .padding(.horizontal, 5).padding(.vertical, 1)
-                            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(risk == .high ? Theme.danger : Theme.link, lineWidth: 1.2))
+                            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.color(.risk(risk)), lineWidth: 1.2))
                             .fixedSize()
                             .rotationEffect(.degrees(-2))
                     }
@@ -292,9 +293,9 @@ struct MarginWatches: View {
                     Spacer(minLength: Theme.Space.s)
                     if waiting {
                         Text("Changed", comment: "A stamp on a watch whose page changed").textCase(.uppercase)
-                            .font(.system(size: 9.5, weight: .heavy)).kerning(0.6).foregroundStyle(Theme.danger)
+                            .font(.system(size: 9.5, weight: .heavy)).kerning(0.6).foregroundStyle(Theme.color(.news))
                             .padding(.horizontal, 5).padding(.vertical, 1)
-                            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.danger, lineWidth: 1.2))
+                            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.color(.news), lineWidth: 1.2))
                             .rotationEffect(.degrees(-3))
                     }
                 }

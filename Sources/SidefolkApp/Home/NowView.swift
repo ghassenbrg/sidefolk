@@ -368,7 +368,7 @@ struct WatchTile: View {
                 Button { showingChange = true } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Changed \(TimeText.short(change.at))").font(Theme.Font.captionStrong)
-                            .foregroundStyle(waiting ? Theme.danger : Theme.inkMuted)
+                            .foregroundStyle(waiting ? Theme.link : Theme.inkMuted)
                         if let line = change.added.first ?? change.removed.first {
                             Text(verbatim: line).font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(2)
                         }
@@ -409,7 +409,7 @@ struct WatchTile: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .cardSurface()
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-            .strokeBorder(waiting ? Theme.danger.opacity(0.6) : .clear, lineWidth: 1.5))
+            .strokeBorder(waiting ? Theme.accent.opacity(0.7) : .clear, lineWidth: 1.5))
         .onChange(of: showingChange) { _, open in if open { Task { await model.seen(watcher) } } }
         .accessibilityElement(children: .contain)
     }
@@ -425,12 +425,13 @@ struct WatchTile: View {
     }
 
     @ViewBuilder private var state: some View {
+        let tone = ChipTone(StatusTone.watch(watcher.state, changeWaiting: false))
         switch watcher.state {
-        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .accent)
-        case .paused: Chip("Paused", tone: .neutral)
-        case .error: Chip("Having trouble", tone: .danger)
-        case .triggered: Chip("Spotted", tone: .success)
-        case .expired: Chip("Expired", tone: .neutral)
+        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: tone)
+        case .paused: Chip("Paused", tone: tone)
+        case .error: Chip("Having trouble", tone: tone)
+        case .triggered: Chip("Spotted", tone: tone)
+        case .expired: Chip("Expired", tone: tone)
         }
     }
 }
@@ -442,11 +443,12 @@ struct ChangeLines: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             Text("Changed \(TimeText.short(change.at))").font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
+            // A change is news, not a verdict: the − and + say which way, so neither line is red or green.
             ForEach(Array(change.removed.enumerated()), id: \.offset) { _, line in
-                Text(verbatim: "− " + line).foregroundStyle(Theme.danger)
+                Text(verbatim: "− " + line).foregroundStyle(Theme.inkMuted).strikethrough(color: Theme.inkFaint)
             }
             ForEach(Array(change.added.enumerated()), id: \.offset) { _, line in
-                Text(verbatim: "+ " + line).foregroundStyle(Theme.success)
+                Text(verbatim: "+ " + line).foregroundStyle(Theme.ink)
             }
         }
         .font(.system(size: 12, design: .monospaced))
@@ -591,8 +593,9 @@ struct QueueRow: View {
 
     private var cardTint: Color {
         switch decision {
-        case .approval(let request): request.risk == .high ? Theme.danger : Theme.sun
-        case .session: Theme.danger
+        // Waiting on you is amber; only a high-risk step is red (StatusTone).
+        case .approval(let request): request.risk == .high ? Theme.danger : Theme.warning
+        case .session: Theme.warning
         case .attention: Theme.link
         case .skipped: Theme.inkMuted
         }
@@ -812,7 +815,7 @@ struct ReminderRow: View {
                 Text(reminder.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(2)
                 if let item = model.item(of: reminder) { ItemLink(item: item, reminder: reminder) { model.open(item) } }
                 HStack(spacing: Theme.Space.s) {
-                    Text(when).foregroundStyle(overdue ? Theme.danger : Theme.inkMuted)
+                    Text(when).foregroundStyle(overdue ? Theme.warning : Theme.inkMuted)
                     if let rule = reminder.recurrence {
                         Label { Text(verbatim: Describe.recurrence(rule)) } icon: { Image(systemName: "repeat") }
                             .labelStyle(.titleAndIcon)

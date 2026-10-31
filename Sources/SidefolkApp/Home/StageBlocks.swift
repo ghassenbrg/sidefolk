@@ -247,14 +247,15 @@ private struct StickerCard: View {
         }
         .padding(Theme.Space.s)
         .frame(maxWidth: .infinity, minHeight: 78, alignment: .topLeading)
-        .background(late ? Theme.dangerSoft : Theme.accentSoft.opacity(done ? 0.4 : 0.8),
+        // Late is amber with "late" on it: it waits to be done, it didn't fail.
+        .background(late ? Theme.warningSoft : Theme.accentSoft.opacity(done ? 0.4 : 0.8),
                     in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(late ? Theme.danger : .clear, lineWidth: 2))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(late ? Theme.warning : .clear, lineWidth: 2))
         .overlay(alignment: .top) {
             if late {
                 Text("late · \(TimeText.relative(time))", comment: "On a sticker whose time passed").font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Theme.onDanger).padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Theme.danger, in: Capsule()).offset(y: -8)
+                    .foregroundStyle(Theme.onWarning).padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Theme.warning, in: Capsule()).offset(y: -8)
             }
         }
         .opacity(done ? 0.7 : 1)
@@ -333,7 +334,8 @@ private struct BadgeLabel<Inside: View>: View {
                 .frame(width: 62, height: 62)
                 .background(Theme.accentSoft, in: Circle())
                 .overlay(alignment: .topTrailing) {
-                    if dot { Circle().fill(Theme.danger).frame(width: 12, height: 12).overlay(Circle().strokeBorder(Theme.surfaceRaised, lineWidth: 2)) }
+                    // New to look at, like an unread dot; the detail says "changed" in words.
+                    if dot { Circle().fill(Theme.accent).frame(width: 12, height: 12).overlay(Circle().strokeBorder(Theme.surfaceRaised, lineWidth: 2)) }
                 }
             Text(verbatim: title).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(1)
             Text(verbatim: detail).font(.system(size: 10.5)).foregroundStyle(Theme.inkMuted).lineLimit(1)
@@ -364,14 +366,14 @@ struct HelpersCard: View {
                                  detail: [s.projectName, s.detail].compactMap { $0 }.joined(separator: " · ")) {
                         Chip(verbatim: s.state == .needsYou ? String(localized: "needs you", comment: "A chip on an agent waiting for an answer")
                                                             : String(localized: "working", comment: "A chip on an agent at work"),
-                             tone: s.state == .needsYou ? .danger : .success)
+                             tone: ChipTone(.session(s.state)))
                     }
                 }
                 .buttonStyle(.plain)
             }
             ForEach(model.jobs) { j in
                 ListRowLabel(symbol: "terminal", title: j.title, detail: String(localized: "Running for \(TimeText.duration(Date().timeIntervalSince(j.startedAt)))")) {
-                    Chip(verbatim: String(localized: "working", comment: "A chip on an agent at work"), tone: .success)
+                    Chip(verbatim: String(localized: "working", comment: "A chip on an agent at work"), tone: ChipTone(.session(.working)))
                 }
             }
         }

@@ -148,7 +148,8 @@ private struct LanguageRow: View {
             case .ready(.basic): Chip("Basic", tone: .warning, systemImage: "waveform")
             case .ready: Chip("Ready", tone: .success, systemImage: "checkmark")
             case .needsDownload: Button("Download") { Task { await voice.download() } }.buttonStyle(.sf(.primary))
-            case .unsupported: Chip("Not available", tone: .danger, systemImage: "xmark")
+            // This Mac can't, which isn't anything failing: plain information.
+            case .unsupported: Chip("Not available", tone: .neutral, systemImage: "xmark")
             case nil: ProgressView().controlSize(.small)
             }
         }

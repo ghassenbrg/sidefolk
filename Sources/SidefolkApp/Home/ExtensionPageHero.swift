@@ -115,9 +115,8 @@ struct HeroView: View {
                             if hero.busy { ProgressView().controlSize(.small).scaleEffect(0.6).frame(width: 12, height: 12) }
                             else { Circle().fill(hero.tone == .neutral ? Theme.inkFaint : hero.tone.color).frame(width: 7, height: 7) }
                             if let eyebrow = hero.eyebrow {
-                                // Yellow words on a pale wash are hard to read: a warning says it with its dot.
                                 Text(verbatim: eyebrow).font(Theme.Font.captionStrong)
-                                    .foregroundStyle(hero.tone == .neutral || hero.tone == .warn ? Theme.inkMuted : hero.tone.color)
+                                    .foregroundStyle(hero.tone.color)
                             }
                         }
                     }

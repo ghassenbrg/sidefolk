@@ -549,6 +549,9 @@ ext.page("mac") { args in
   (`title`, `caption`, `items` of `{label, value, fraction}`), `facts` (`title`, `items` of `{label, value}`), `note`
   (`text`), and `ask` (`label`, `ask`: a button that asks Sidefolk the sentence, as if typed in Ask, so it reaches
   your commands, or the AI, through Guard). Most take a `tone`: `good`, `warn`, `bad`, `info` or `neutral`.
+  Tones have meanings (ARCHITECTURE › Colour meaning): `good` green for done, healthy, on; `warn` amber for waiting or
+  needs a look; `bad` red only for an error, a failure or a real risk; `info` the accent, for news; `neutral` for
+  off, paused, nothing happened. Paused or off is `neutral`, not `warn`; a tone always comes with words.
 - **Charts say only the value now.** Sidefolk keeps the past: every value for 15 minutes, then one a minute (the
   minute's highest) for a day, under `PageHistory/`, removed with the extension. The person picks 10 minutes, an
   hour or a day. Keep a chart's `id` and its series' `key`s stable, or its past is lost.

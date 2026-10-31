@@ -58,7 +58,7 @@ struct ThemeStyle: Sendable {
     let theme: InstalledTheme
     var tokens: ThemeTokens { theme.tokens }
     let ink, inkMuted, inkFaint, surface, surfaceSunken, surfaceRaised, line: Color
-    let accent, onAccent, accentSoft, link, danger, dangerSoft, onDanger, success, successSoft: Color
+    let accent, onAccent, accentSoft, link, danger, dangerSoft, onDanger, success, successSoft, warning, warningSoft, onWarning: Color
     /// Spacing after the theme's density.
     let space: ThemeTokens.Space
     let fonts: Fonts
@@ -110,6 +110,9 @@ struct ThemeStyle: Sendable {
         onDanger = Color(c.onDanger)
         success = Color(c.success)
         successSoft = Color(c.successSoft)
+        warning = Color(c.warning)
+        warningSoft = Color(c.warningSoft)
+        onWarning = Color(c.onWarning)
         // Whole and half points, so a compact or relaxed theme still lands on the pixel grid.
         let f = tokens.type.density.factor, s = tokens.space
         func scaled(_ v: Double) -> Double { (v * f * 2).rounded() / 2 }

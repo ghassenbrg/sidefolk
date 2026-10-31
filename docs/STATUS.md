@@ -26,6 +26,23 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Colours have meanings (D?? colour meaning), on branch team/colors:** red is now only for an error, a failure, a
+  destructive action or real risk; amber for what waits (late reminders, "needs you" counts and chips, the badge on the
+  companion, a countdown running out, medium risk, what the rules stopped); green for good outcomes; the accent for
+  news (a page that changed is no longer red) and the now line on every time line (no longer red); calm ink for "no",
+  skipped, paused, "Not available", working, watching and a stopped run. New theme roles `warning`, `warningSoft`,
+  `onWarning` (Harbor: the brand sun, deepened to #8A5800 in light; Night Shift, Marshmallow and Field Notes their own),
+  Core's `StatusTone` for the mapping, `Theme.color/soft` and `ChipTone(_:)` to paint it, and a theme check that
+  refuses danger that doesn't look red, warning amber or success green. Rules in ARCHITECTURE › Colour meaning; tone
+  meanings for extension authors in EXTENSIONS. *Checked:* UI snapshots before and after in Harbor, Field Notes and
+  Night Shift, light and dark (pairs in the session scratchpad `colors/pairs/`), the character sheet's amber count,
+  `sidefolk theme check` on the gallery's Daylight, Night Studio and Paper Garden (usable, with Harbor's amber and a
+  warning naming the roles), StatusTone, ThemeCheck and transcript tests; `make strings` unchanged (no new words).
+  `make test`: everything of mine passes; Miraya/gallery tests fail on the shared sidefolk-addons copy being edited
+  (`permissions.output_mute`), unrelated. *Not built:* a late reminder in the snapshot sample data (late visuals are
+  checked in code and tests only); the games' own verdicts (team/play); Field Notes' link is rust, close to its danger,
+  so news reads reddish there (a theme decision for the founder). *Next:* the gallery themes may add their own
+  warning roles (sidefolk-addons).
 - **Updates for Sidefolk and for add-ons, chosen apart (D70), on branch team/updates:** Settings › General › Updates
   now has "New versions of Sidefolk" (Don't check / Tell me, the default / Install automatically) and "Update add-ons
   automatically" (on by default); Versions to offer covers both. Install automatically downloads and checks exactly

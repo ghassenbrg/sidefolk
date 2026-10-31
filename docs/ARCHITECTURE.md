@@ -222,6 +222,29 @@ through `EventBus` streams consumed by `@MainActor @Observable` presenters. No l
 - Ask panel: non-activating `NSPanel` that can become key so typing never steals app activation.
 - Bubbles: child panels of the companion, positioned to stay on screen.
 
+## Colour meaning (D?? colour meaning)
+
+Colours say what happened, the same way on every screen and in every theme. The meaning lives in Core's
+`StatusTone` (decision, risk, watch, session, reminder, an extension's tone → a tone); the app paints a tone with
+`Theme.color(_:)` and `Theme.soft(_:)`, and chips with `ChipTone(_:)`.
+
+| Tone | Colour (theme role) | Means | Never for |
+|---|---|---|---|
+| danger | red (`danger`) | an error, something failed, a destructive action, real risk to the person's data or privacy | off, paused, "no", not yet, late, a change, a draw, a loss in a game |
+| warning | amber (`warning`, `warningSoft`, `onWarning`) | needs a look or is waiting: late, waiting on you, a time running out, what the rules stopped | errors |
+| success | green (`success`) | done, healthy, allowed, won, a settled good state (signed in, ready) | "busy" (working, watching) |
+| news | accent (`link` text, `accent` fills) | new to look at, like an unread dot: a page that changed, an extension's `info` | statuses that are good or bad |
+| neutral | ink (`inkMuted`, `inkFaint`) | information, off, paused, nothing happened, "no", a draw | — |
+
+- The accent is otherwise for the primary action, links, selection and focus, and for the present on a time line
+  (the now line is a time marker, not an alarm).
+- Folk colours (`Theme.folkColor`) are identity, never status, and never the only signal: Play's red says "a game",
+  not "you lost".
+- Every status colour comes with a word or an icon ("late", "Having trouble", ✓); colour is never the only signal.
+- The theme check holds the roles to their meaning: danger must look red, warning amber, success green (hue and
+  saturation, both appearances), and `warning` must read at 4.5:1 on every surface like `danger`. A theme without the
+  warning roles gets Harbor's amber, which reads on any surface.
+
 ## AI providers
 
 Settings › AI groups them by how the user pays (D26): a plan they already have, an API key, this

@@ -128,9 +128,10 @@ private struct StepsCard: View {
                     Spacer(minLength: Theme.Space.xs)
                     if let state {
                         Text(verbatim: state).textCase(.uppercase).font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundStyle(urgent ? Theme.danger : Theme.success)
+                            // Waiting on you is amber; busy is plain information.
+                            .foregroundStyle(urgent ? Theme.warning : Theme.inkMuted)
                             .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(urgent ? Theme.dangerSoft : Theme.successSoft, in: RoundedRectangle(cornerRadius: 4))
+                            .background(urgent ? Theme.warningSoft : Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 4))
                     }
                 }
                 .padding(Theme.Space.m)
@@ -157,11 +158,13 @@ private struct StepsCard: View {
     }
 
     private func mark(_ step: ActivityEntry) -> (symbol: String, color: Color) {
-        switch step.decision {
-        case .denied, .blocked: ("xmark", Theme.danger)
-        case .failed: ("exclamationmark.triangle", Theme.danger)
-        case .skipped: ("forward", Theme.inkMuted)
-        default: ("checkmark", Theme.success)
+        let color = Theme.color(.decision(step.decision))
+        return switch step.decision {
+        case .denied: ("xmark", color)
+        case .blocked: ("nosign", color)
+        case .failed: ("exclamationmark.triangle", color)
+        case .skipped: ("forward", color)
+        default: ("checkmark", color)
         }
     }
 }
@@ -171,11 +174,8 @@ struct RiskTag: View {
     var risk: String
 
     var body: some View {
-        let tone: (Color, Color) = switch risk {
-        case "high": (Theme.danger, Theme.dangerSoft)
-        case "medium": (Theme.ink, Theme.surfaceSunken)
-        default: (Theme.success, Theme.successSoft)
-        }
+        let status = StatusTone.risk(Risk(rawValue: risk))
+        let tone = (status == .neutral ? Theme.inkMuted : Theme.color(status), Theme.soft(status))
         Text(verbatim: risk == "medium" ? String(localized: "risk.med", defaultValue: "med", comment: "Short for medium risk, in a narrow column") : risk == "high"
              ? String(localized: "risk.high", defaultValue: "high", comment: "High risk, in a narrow column") : String(localized: "risk.low", defaultValue: "low", comment: "Low risk, in a narrow column"))
             .font(.system(size: 10, weight: .semibold, design: .monospaced))
@@ -204,10 +204,10 @@ struct WatchSignals: View {
                     signal(title: Describe.watcherTarget(w) ?? w.title,
                            detail: [Describe.interval(w.intervalS), w.lastPageChange.map { String(localized: "changed \(TimeFormat.clock($0.at, calendar: .current))", comment: "When a watch last saw a change: “changed 17:37”") }]
                                .compactMap { $0 }.joined(separator: " · ")) {
-                        if waiting {
-                            Text(verbatim: "Δ 1").foregroundStyle(Theme.danger)
-                        } else if w.state == .error {
+                        if w.state == .error {
                             Image(systemName: "exclamationmark.triangle").foregroundStyle(Theme.danger)
+                        } else if waiting {
+                            Text(verbatim: "Δ 1").foregroundStyle(Theme.color(.news))
                         } else if w.state == .paused {
                             Image(systemName: "pause").foregroundStyle(Theme.inkFaint)
                         } else {
@@ -271,7 +271,7 @@ struct DayCompact: View {
                         let due = r.nextDue ?? r.fireAt
                         line(due, r.title, late: due < Date()) {
                             if due < Date() {
-                                Text("late").foregroundStyle(Theme.danger)
+                                Text("late").foregroundStyle(Theme.warning)
                             } else if let who = Describe.source(r.source) {
                                 Text(verbatim: who).foregroundStyle(Theme.inkFaint)
                             }
@@ -288,7 +288,7 @@ struct DayCompact: View {
     private func line<T: View>(_ at: Date, _ title: String, late: Bool = false, @ViewBuilder trailing: () -> T) -> some View {
         HStack(spacing: Theme.Space.m) {
             Text(verbatim: TimeFormat.clock(at, calendar: .current)).font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(late ? Theme.danger : Theme.inkMuted)
+                .foregroundStyle(late ? Theme.warning : Theme.inkMuted)
             Text(verbatim: title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
             Spacer(minLength: Theme.Space.xs)
             trailing().font(Theme.Font.caption)

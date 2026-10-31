@@ -47,7 +47,10 @@
       "dangerSoft": "#FFE3EB",
       "onDanger": "#FFFFFF",
       "success": "#2E9E73",
-      "successSoft": "#DFF7EC"
+      "successSoft": "#DFF7EC",
+      "warning": "#94570A",
+      "warningSoft": "#FFF0D9",
+      "onWarning": "#FFFFFF"
     },
     "dark": {
       "ink": "#F4ECFF",
@@ -65,7 +68,10 @@
       "dangerSoft": "#552A45",
       "onDanger": "#2A1020",
       "success": "#7FD8B4",
-      "successSoft": "#26443F"
+      "successSoft": "#26443F",
+      "warning": "#FFD08A",
+      "warningSoft": "#4A3A2E",
+      "onWarning": "#2E2347"
     }
   }
 }

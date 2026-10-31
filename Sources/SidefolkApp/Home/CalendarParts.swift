@@ -14,11 +14,11 @@ extension CalendarModel.Entry {
         }
     }
 
-    /// Its colour: Tempo's for what's to come, red once late, green when done, faint when it already told you, the
-    /// theme's accent for the calendar's events (as on Today's line).
+    /// Its colour: Tempo's for what's to come, amber once late (it waits, it didn't fail), green when done, faint when
+    /// it already told you, the theme's accent for the calendar's events (as on Today's line).
     var tint: Color {
         switch self {
-        case .reminder(let o): o.at < Date() ? Theme.danger : Theme.folkColor("tempo")
+        case .reminder(let o): o.at < Date() ? Theme.warning : Theme.folkColor("tempo")
         case .finished(let r, _): r.state == .done ? Theme.success : Theme.inkFaint
         case .event: Theme.accent
         }

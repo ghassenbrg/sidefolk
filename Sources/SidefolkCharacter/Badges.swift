@@ -1,6 +1,7 @@
 import QuartzCore
 
-/// Ambient markers: small white chips stacked by the left ear, and a coral count by the right.
+/// Ambient markers: small white chips stacked by the left ear, and an amber count by the right: what waits on you
+/// is a question, not an error, so it is the app's warning amber (its sun), never red.
 /// They stay still while the body moves, like labels pinned beside it.
 @MainActor
 final class Badges {
@@ -81,10 +82,10 @@ final class Badges {
         let width: CGFloat = label.count > 1 ? 30 : 24
         let holder = Layers.canvas()
         let pill = Layers.shape(Paths.roundedRect(CGRect(x: center.x - width / 2, y: center.y - 12, width: width, height: 24), 12),
-                                fill: Palette.coral.cg(), stroke: RGB.white.cg(), lineWidth: 2)
+                                fill: Palette.yellow.cg(), stroke: RGB.white.cg(), lineWidth: 2)
         Layers.dropShadow(pill, path: nil, radius: 2.5, opacity: 0.22, offset: CGSize(width: 0, height: -1))
         holder.addSublayer(pill)
-        let text = Layers.text(label, size: 15, weight: .heavy, color: .white)
+        let text = Layers.text(label, size: 15, weight: .heavy, color: Palette.navy)
         text.frame = CGRect(x: center.x - 20, y: center.y - 10, width: 40, height: 20)
         holder.addSublayer(text)
         return holder

@@ -110,6 +110,7 @@ public enum ThemeCheck {
         for row in contrastRows(t.colors) where !row.passes {
             problem(.error, "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1.")
         }
+        for message in meaningProblems(t.colors) { problem(.error, message) }
 
         // Type, shape, motion, material, nook and layouts: from the app's own sets, within its limits.
         func pick<E: RawRepresentable & CaseIterable>(_ text: String?, _ key: String, _ fallback: E, level: ThemeReport.Problem.Level = .warning) -> E
@@ -255,7 +256,8 @@ public enum ThemeCheck {
         func add(_ label: String, _ text: ThemeTokens.Pair, on back: ThemeTokens.Pair) {
             rows.append(ContrastRow(label: label, light: contrast(text.light, back.light), dark: contrast(text.dark, back.dark)))
         }
-        for (name, text) in [("ink", c.ink), ("inkMuted", c.inkMuted), ("inkFaint", c.inkFaint), ("link", c.link), ("danger", c.danger)] {
+        for (name, text) in [("ink", c.ink), ("inkMuted", c.inkMuted), ("inkFaint", c.inkFaint), ("link", c.link), ("danger", c.danger),
+                             ("warning", c.warning)] {
             for (surface, back) in [("surface", c.surface), ("surfaceSunken", c.surfaceSunken), ("surfaceRaised", c.surfaceRaised)] {
                 add("\(name) on \(surface)", text, on: back)
             }
@@ -263,7 +265,55 @@ public enum ThemeCheck {
         add("ink on accentSoft", c.ink, on: c.accentSoft)
         add("onAccent on accent", c.onAccent, on: c.accent)
         add("onDanger on danger", c.onDanger, on: c.danger)
+        add("ink on warningSoft", c.ink, on: c.warningSoft)
+        add("onWarning on warning", c.onWarning, on: c.warning)
         return rows
+    }
+
+    // MARK: Meaning
+
+    /// The hues each status role must keep, in degrees, so a theme can't paint a win red or an error green
+    /// (StatusTone). Wide enough for rust reds, ochres and sage or teal greens.
+    static var meaningHues: [(role: String, key: KeyPath<ThemeTokens.Colors, ThemeTokens.Pair>, looks: String, hues: [ClosedRange<Double>])] { [
+        ("danger", \.danger, "red", [0...30, 330...360]),
+        ("warning", \.warning, "amber", [30...65]),
+        ("success", \.success, "green", [70...200]),
+    ] }
+
+    /// Each status role whose colour doesn't look like what it means, in plain words.
+    public static func meaningProblems(_ c: ThemeTokens.Colors) -> [String] {
+        var problems: [String] = []
+        for rule in meaningHues {
+            let pair = c[keyPath: rule.key]
+            for (appearance, value) in [("light", pair.light), ("dark", pair.dark)] {
+                let (hue, saturation) = hueAndSaturation(value)
+                if saturation < 0.1 || !rule.hues.contains(where: { $0.contains(hue) }) {
+                    problems.append("\(rule.role) in \(appearance) must look \(rule.looks): it means \(meaning(rule.role)) everywhere in Sidefolk.")
+                }
+            }
+        }
+        return problems
+    }
+
+    private static func meaning(_ role: String) -> String {
+        switch role {
+        case "danger": "an error or a real risk"
+        case "warning": "something waiting or needing a look"
+        default: "done, allowed or won"
+        }
+    }
+
+    /// The HSL hue (0–360) and saturation (0–1) of a 0xRRGGBB colour.
+    static func hueAndSaturation(_ hex: UInt32) -> (hue: Double, saturation: Double) {
+        let r = Double((hex >> 16) & 0xFF) / 255, g = Double((hex >> 8) & 0xFF) / 255, b = Double(hex & 0xFF) / 255
+        let hi = max(r, g, b), lo = min(r, g, b), d = hi - lo
+        guard d > 0 else { return (0, 0) }
+        let l = (hi + lo) / 2
+        let saturation = d / (1 - abs(2 * l - 1))
+        var hue: Double
+        if hi == r { hue = ((g - b) / d).truncatingRemainder(dividingBy: 6) } else if hi == g { hue = (b - r) / d + 2 } else { hue = (r - g) / d + 4 }
+        hue *= 60
+        return (hue < 0 ? hue + 360 : hue, saturation)
     }
 
     /// WCAG 2 contrast ratio between two 0xRRGGBB colours.

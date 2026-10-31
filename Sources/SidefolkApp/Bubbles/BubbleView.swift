@@ -115,7 +115,8 @@ struct BubbleView: View {
         case "reminder", "brief": Theme.folkColor("tempo")
         case "watcher": Theme.folkColor("scout")
         case "job", "session": Theme.folkColor("byte")
-        default: item.level == .critical ? Theme.coral : Theme.aqua
+        // Critical means "now", not "broken": amber, like everything that waits on you.
+        default: item.level == .critical ? Theme.warning : Theme.aqua
         }
     }
 }

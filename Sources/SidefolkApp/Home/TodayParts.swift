@@ -25,10 +25,10 @@ struct WatchCard: View {
             }
             .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
             .padding(Theme.Space.m)
-            .background(waiting ? Theme.dangerSoft.opacity(0.6) : Theme.surfaceRaised,
+            .background(waiting ? Theme.accentSoft.opacity(0.6) : Theme.surfaceRaised,
                         in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(waiting ? Theme.danger.opacity(0.5) : Theme.line))
+                .strokeBorder(waiting ? Theme.accent.opacity(0.6) : Theme.line))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -51,7 +51,7 @@ struct WatchCard: View {
     }
 
     private func word(waiting: Bool) -> String {
-        if waiting { return String(localized: "Changed", comment: "A watch tile: what it watches changed") }
+        if waiting, watcher.state != .error { return String(localized: "Changed", comment: "A watch tile: what it watches changed") }
         switch watcher.state {
         case .error: return String(localized: "Having trouble")
         case .paused: return String(localized: "Paused")
@@ -61,12 +61,11 @@ struct WatchCard: View {
         }
     }
 
+    /// A change is news, not trouble (StatusTone.watch); a watch that's simply watching keeps the ink.
     private func tone(waiting: Bool) -> Color {
-        if waiting || watcher.state == .error { return Theme.danger }
-        switch watcher.state {
-        case .triggered: return Theme.success
-        case .paused, .expired: return Theme.inkFaint
-        default: return Theme.ink
+        switch StatusTone.watch(watcher.state, changeWaiting: waiting) {
+        case .neutral: watcher.state == .active ? Theme.ink : Theme.inkFaint
+        case let tone: Theme.color(tone)
         }
     }
 
@@ -291,7 +290,7 @@ struct QueueCardFrame<Content: View>: View {
                         Label(String(localized: "\(Duration.seconds(left).formatted(.time(pattern: .minuteSecond))) left", comment: "A countdown on a decision: “07:42 left”"),
                               systemImage: "timer")
                             .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(left < 120 ? Theme.danger : Theme.link)
+                            .foregroundStyle(left < 120 ? Theme.warning : Theme.link)
                     }
                 }
             }
