@@ -26,6 +26,24 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Resting poses that suit each 3D companion (sit, lie, sleep), on branch team/poses in both repos:** the founder
+  found Spark lying in the shared lie (rolled onto its side, a Mochi pose) looking broken: big helmet upright over a
+  sideways body, legs sticking out. All ten were reviewed in the playground (front, ¾, side, head close up, and the way
+  in and out filmed). Shared (engine): `POSTURES.lie` is now on the tummy, chin up to watch you, legs swinging behind,
+  long tails laid down, the character's `stand` applied first (T- and A-pose arms came out sideways), and a small rise
+  on the way down and up (blended with sitting, feet went through the floor); postures get `(t, P, C, w)`. Mochi keeps
+  its sheet's side lie (`lieOnSide`). Spark: lie = kicked back on its hands, legs out; sleep = standby, sitting slumped,
+  antenna drooping, face dimmed to a faint pulse (decal colour) and the headphone glow down. Add-ons: Ember sits
+  higher with thighs and hips eased so the fur under the tail no longer goes through the floor, arms down (sit, doze);
+  its right ear tip was weighted to tail.3 (rig_ember.py measured the tail's endless line: now `seg_dist`), fixed in
+  ember.glb in place (599 vertices to ear/head, above the tail tip only). Kiko sits 0.08 lower (sit and doze floated).
+  Purl flops back with its head lolled (lie) and slumps over its lap (sleep); Rune settles heavily, hands on the ground,
+  and sleeps head sunk with the gem dimmed; Iris rests on its base tipped to one side and nods forward asleep, lens cap
+  shut (rolled over, its lens warped). Nori, Ember and Kiko lie with the new shared lie. Folio and Nimbo: fine as they
+  were. Older apps keep the old shared lie for Ember/Kiko/Nori (add-ons import no new exports). Tools:
+  `restSheet`/`restFilm` in playground/sheet.js. Verified: before/after sheets and films for all ten; the debug app
+  with Spark and Kiko (from the worktree), sit and lie by themselves and asleep, snapped (thresholds lowered only in a
+  local build, not committed). Not checked live: the other eight in the app; Liveliness Lively's timings.
 - **Extensions in all ten languages (D76), on branch team/i18n (app and sidefolk-addons):** an extension's words live in
   `strings/<language>.json` beside its manifest (manifest words people see, and its program's sentences under `text`),
   checked by the validator (known languages, strict keys, the manifest's limits or half as long again, placeholders,

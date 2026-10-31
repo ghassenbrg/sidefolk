@@ -2,7 +2,7 @@
 // hanging tag, a pompom tail. Rig: mochi-3d/blender/rig.py.
 import { bodyMaterial } from '../engine/materials.js';
 import { Spring, win } from '../engine/motion.js';
-import { add, raise, ears, face, hopY } from '../engine/moves.js';
+import { add, raise, ears, face, hopY, lieOnSide } from '../engine/moves.js';
 
 const ear = (s, side) => ({ bones: [`ear${s}1`, `ear${s}2`, `ear${s}3`], side, twitch: true });
 
@@ -109,6 +109,9 @@ export default {
     const ts = T.s.step(1, dt); T.s.kick(-lin.y * 0.6 * dt);
     c.tailMesh.scale.set(1 / Math.sqrt(ts), ts, 1 / Math.sqrt(ts));
   },
+
+  // Lies on its side, as on its sheet: its small body and long ears suit it (the shared lie is on the tummy).
+  postures: { lie: lieOnSide },
 
   // Relaxed: arms down from the modelled A-pose, a hint of forward lean, feet slightly turned out.
   stand(t, P) {

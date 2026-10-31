@@ -640,7 +640,9 @@ export const LOOPS = {
   },
 };
 
-/** Whole-body postures: where the body rests. Blended by springs, so changes are gradual. */
+/** Whole-body postures: where the body rests. Blended by springs, so changes are gradual. Each is
+ *  `(t, P, C, w)`: C the character (its `stand` brings modelled A- or T-pose arms down), w the
+ *  posture's weight now (1 once it has settled; less on the way in or out). */
 export const POSTURES = {
   stand: () => {},
 
@@ -654,19 +656,23 @@ export const POSTURES = {
     add(P, 'hips', -6); add(P, 'spine', 2); add(P, 'chest', 2); add(P, 'head', 2);
   },
 
-  // Lying on its side facing you (the sheet's "Lie Down (Side)"): from the front the whole body
-  // reads, where lying on the tummy would hide it behind the head. Head lifted to watch you,
-  // a foot swinging lazily.
-  lie: (t, P) => {
-    Object.assign(P.root, { rz: P.root.rz + 90, py: P.root.py - 0.17, px: P.root.px + 0.32 });
-    add(P, 'head', 0, 0, -32);
-    add(P, 'chest', 0, 0, -6);
+  // Lying on its tummy, chin up to watch you, legs swinging lazily behind: the face stays upright
+  // and in front, and the body reads behind it whatever its shape (on its side, as Mochi lies, a big
+  // head stayed upright over a sideways body and the legs stuck out like a toppled toy's). The
+  // character's own `stand` first: it brings arms modelled in an A or a T down to the sides.
+  lie: (t, P, C, w = 1) => {
+    C?.stand?.(t, P);
+    // On the way down and back up the body rises a little (as onto its knees), or blended with
+    // sitting its feet and knees went through the floor.
+    Object.assign(P.root, { rx: P.root.rx + 70, py: P.root.py - 0.24 + 0.6 * Math.max(0, 1 - w), pz: P.root.pz + 0.1 });
+    add(P, 'head', -62, 0, 8); add(P, 'chest', -8);
     for (const s of ['L', 'R']) {
-      add(P, 'arm' + s, 0, -S[s] * 60, S[s] * -20);
-      add(P, 'thigh' + s, -50, 0, 0); add(P, 'foot' + s, 35);
+      fwd(P, s, 80); add(P, 'arm' + s, 0, 0, -S[s] * 10); handBend(P, s, -20);
+      add(P, 'thigh' + s, 22, 0, S[s] * 6); add(P, 'foot' + s, 40);
     }
-    add(P, 'thighL', 14 * Math.sin(t * 1.3), 0, 0); add(P, 'footL', 18 * Math.sin(t * 1.3 - 0.7));
-    for (const s of ['L', 'R']) for (const i of [1, 2, 3]) add(P, `ear${s}${i}`, 0, 0, 14);
+    // A long tail would stand up behind the head: it lies along the floor.
+    add(P, 'tail1', -40); add(P, 'tail2', -10); add(P, 'tail3', -10);
+    add(P, 'thighL', 12 * Math.sin(t * 1.4)); add(P, 'thighR', 12 * Math.sin(t * 1.4 + 2.2));
   },
 
   // Asleep on its tummy facing you, chin resting on its paws, ears flopped to the sides: the face
@@ -695,6 +701,20 @@ export const doze = (t, P) => {
   }
   const br = Math.sin(t * Math.PI * 2 * 0.2);
   add(P, 'chest', br * 3); add(P, 'head', br * 2); P.squash *= 1 + br * 0.014;
+};
+
+/** Lying on its side facing you, head lifted to watch you, a foot swinging lazily: the sheet's
+ *  "Lie Down (Side)" for Mochi, whose small body and long ears suit it. */
+export const lieOnSide = (t, P) => {
+  Object.assign(P.root, { rz: P.root.rz + 90, py: P.root.py - 0.17, px: P.root.px + 0.32 });
+  add(P, 'head', 0, 0, -32);
+  add(P, 'chest', 0, 0, -6);
+  for (const s of ['L', 'R']) {
+    add(P, 'arm' + s, 0, -S[s] * 60, S[s] * -20);
+    add(P, 'thigh' + s, -50, 0, 0); add(P, 'foot' + s, 35);
+  }
+  add(P, 'thighL', 14 * Math.sin(t * 1.3), 0, 0); add(P, 'footL', 18 * Math.sin(t * 1.3 - 0.7));
+  for (const s of ['L', 'R']) for (const i of [1, 2, 3]) add(P, `ear${s}${i}`, 0, 0, 14);
 };
 
 export { HAPPY };
