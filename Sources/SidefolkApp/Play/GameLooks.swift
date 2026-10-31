@@ -32,6 +32,10 @@ struct GameStyle {
         case .sticks: GameStyle(top: Color(hex: 0x9B6BFA), bottom: Color(hex: 0x7342E0), onColor: .white, scene: .sceneSticks, icon: .iconSticks)
         case .cards: GameStyle(top: Color(hex: 0xF0619D), bottom: Color(hex: 0xCC3A7A), onColor: .white, scene: .sceneCards, icon: .iconCards)
         case .words: GameStyle(top: Color(hex: 0xFFD25C), bottom: Color(hex: 0xF2B21B), onColor: Color(hex: 0x3B2A05), scene: .sceneWords, icon: .iconWords)
+        case .plots: GameStyle(top: Color(hex: 0xB98455), bottom: Color(hex: 0x92603A), onColor: .white, scene: .scenePlots, icon: .iconPlots)
+        case .seesaw: GameStyle(top: Color(hex: 0xB06AB3), bottom: Color(hex: 0x8A4590), onColor: .white, scene: .sceneSeesaw, icon: .iconSeesaw)
+        case .sudoku: GameStyle(top: Color(hex: 0x6F8BAB), bottom: Color(hex: 0x4A6585), onColor: .white, scene: .sceneSudoku, icon: .iconSudoku)
+        case .blossoms: GameStyle(top: Color(hex: 0xFF9580), bottom: Color(hex: 0xEC6A55), onColor: .white, scene: .sceneBlossoms, icon: .iconBlossoms)
         case .hands: GameStyle(top: Color(hex: 0xFFAE48), bottom: Color(hex: 0xEE8A1E), onColor: .white, scene: .sceneCups, icon: .iconHands)
         case nil: GameStyle(top: Theme.accent.opacity(0.85), bottom: Theme.accent, onColor: Theme.onAccent, scene: .sceneDance, icon: nil)
         }

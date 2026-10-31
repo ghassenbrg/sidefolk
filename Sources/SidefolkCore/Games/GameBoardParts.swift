@@ -232,6 +232,7 @@ extension GameBoard {
                                   groups: (j["groups"]?.arrayValue ?? []).prefix(10).map(indexes), hint: indexes(j["hint"]),
                                   taken: min(max(j["taken"]?.intValue ?? 0, 0), total - left),
                                   takenByCompanion: j["taken_by"]?.stringValue == "companion", locked: j["locked"]?.boolValue ?? false))
+        case "puzzle": return puzzle(j).map(Part.puzzle)
         case "lives":
             guard let total = j["total"]?.intValue, (1...10).contains(total), let left = j["left"]?.intValue else { return nil }
             return .lives(Lives(total: total, left: min(max(left, 0), total), symbol: j["symbol"]?.stringValue.flatMap(Lives.Symbol.init) ?? .heart))

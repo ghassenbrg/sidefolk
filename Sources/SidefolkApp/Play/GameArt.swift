@@ -14,11 +14,13 @@ enum GameArt: String, CaseIterable {
     case sceneQuiz = "game-bg-quiz", sceneGrid = "game-bg-grid", sceneDance = "game-bg-dance", sceneArcade = "game-bg-arcade"
     case sceneCups = "game-bg-cups", sceneNumbers = "game-bg-numbers", sceneAnimals = "game-bg-animals"
     case sceneBalloons = "game-bg-balloons", sceneSticks = "game-bg-sticks", sceneCards = "game-bg-cards", sceneWords = "game-bg-words"
+    case scenePlots = "game-bg-plots", sceneSeesaw = "game-bg-seesaw", sceneSudoku = "game-bg-sudoku", sceneBlossoms = "game-bg-blossoms"
 
     case iconQuiz = "game-icon-quiz", iconGrid = "game-icon-grid", iconDance = "game-icon-dance", iconArcade = "game-icon-arcade"
     case iconCups = "game-icon-cups", iconNumbers = "game-icon-numbers", iconAnimals = "game-icon-animals"
     case iconBalloons = "game-icon-balloons", iconSticks = "game-icon-sticks", iconCards = "game-icon-cards", iconWords = "game-icon-words"
     case iconHands = "game-icon-hands"
+    case iconPlots = "game-icon-plots", iconSeesaw = "game-icon-seesaw", iconSudoku = "game-icon-sudoku", iconBlossoms = "game-icon-blossoms"
 
     case padWave = "game-pad-wave", padHop = "game-pad-hop", padSpin = "game-pad-spin", padBow = "game-pad-bow"
     case padWaveBoth = "game-pad-wave-both"

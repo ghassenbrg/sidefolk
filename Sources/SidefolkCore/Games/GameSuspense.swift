@@ -97,6 +97,11 @@ public enum GameSuspense {
                 p.play = []
                 p.locked = true
                 return .pads(p)
+            case .puzzle(var p):
+                // The last mark settles on a still board: the clock stopped, nothing to press yet.
+                p.locked = true
+                p.running = false
+                return .puzzle(p)
             default: return part
             }
         }

@@ -33,6 +33,13 @@ public enum PlayPart {
                 locked: Bool = false)
     /// Lives left, as `balloon`s or `heart`s.
     case lives(total: Int, left: Int, symbol: String = "heart")
+    /// A logic puzzle's grid, 2–10 cells a side: cells with a symbol (`heart`, `star`, `blossom`, `dot`) or a number,
+    /// givens drawn fixed, pencil `notes`, coloured `region`s (0–11), thick lines around boxes of `box` (Sudoku's 2 × 3 or
+    /// 3 × 3), `=` and `×` clues between cells (`edges`) and rectangles (`plots`). `input` is what the person does on it:
+    /// `tap` a cell (`.cell`), `drag` a rectangle (`.area`; a click alone is `.cell`), or `digits` from 1 to `digits` into
+    /// the cell they pick (`.place`). `seconds` is the time so far, counting on while `running`.
+    case puzzle(rows: Int, columns: Int, cells: [PuzzleCell], input: String = "tap", digits: Int? = nil, box: (rows: Int, columns: Int)? = nil,
+                edges: [PuzzleEdge] = [], plots: [PuzzlePlot] = [], seconds: Double? = nil, running: Bool = false, locked: Bool = false)
 
     var json: [String: Any] {
         switch self {
@@ -63,6 +70,11 @@ public enum PlayPart {
                          "taken_by": by, "locked": locked])
         case .lives(let total, let left, let symbol):
             return ["type": "lives", "total": total, "left": left, "symbol": symbol]
+        case .puzzle(let rows, let columns, let cells, let input, let digits, let box, let edges, let plots, let seconds, let running, let locked):
+            return drop(["type": "puzzle", "rows": rows, "columns": columns, "cells": cells.map(\.json), "input": input, "digits": digits,
+                         "box": box.map { [$0.rows, $0.columns] }, "edges": edges.isEmpty ? nil : edges.map(\.json),
+                         "plots": plots.isEmpty ? nil : plots.map(\.json),
+                         "clock": seconds.map { ["seconds": $0, "running": running] as [String: Any] }, "locked": locked])
         }
     }
 }
@@ -116,4 +128,73 @@ public struct KeyPage {
     }
 
     var json: [String: Any] { ["label": label, "rows": rows.map { $0.map { ["key": $0.key, "mark": $0.mark] } }] }
+}
+
+/// A puzzle cell: a `symbol` (`heart`, `star`, `blossom`, `dot`) or `text` (a number, up to two characters), `given`
+/// when it can't change, pencil `notes` (1–9), its `region` (0–11, drawn in that region's colour), a `state`
+/// (`conflict` where a rule breaks, `hint` for what a hint rests on, `target` where it says to play, its mark shown
+/// faintly), and `fresh` for the mark just played.
+public struct PuzzleCell {
+    public var symbol: String?
+    public var text: String?
+    public var given: Bool
+    public var notes: [Int]
+    public var region: Int?
+    public var state: String?
+    public var fresh: Bool
+    /// What VoiceOver reads.
+    public var label: String?
+
+    public init(symbol: String? = nil, text: String? = nil, given: Bool = false, notes: [Int] = [], region: Int? = nil, state: String? = nil,
+                fresh: Bool = false, label: String? = nil) {
+        self.symbol = symbol
+        self.text = text
+        self.given = given
+        self.notes = notes
+        self.region = region
+        self.state = state
+        self.fresh = fresh
+        self.label = label
+    }
+
+    var json: [String: Any] {
+        drop(["symbol": symbol, "text": text, "given": given ? true : nil, "notes": notes.isEmpty ? nil : notes, "region": region, "state": state,
+              "fresh": fresh ? true : nil, "label": label])
+    }
+}
+
+/// A clue between `cell` and the cell right of it (or below it, `down`): `same` (=) or `different` (×).
+public struct PuzzleEdge {
+    public var cell: Int
+    public var down: Bool
+    public var clue: String
+
+    public init(cell: Int, down: Bool, clue: String) {
+        self.cell = cell
+        self.down = down
+        self.clue = clue
+    }
+
+    var json: [String: Any] { ["cell": cell, "down": down, "clue": clue] }
+}
+
+/// A rectangle on the grid (a plot): its top-left cell, size, a `state` (`conflict`, `hint`) and its colour (0–11).
+public struct PuzzlePlot {
+    public var row: Int
+    public var column: Int
+    public var height: Int
+    public var width: Int
+    public var state: String?
+    public var tint: Int?
+
+    public init(row: Int, column: Int, height: Int, width: Int, state: String? = nil, tint: Int? = nil) {
+        self.row = row
+        self.column = column
+        self.height = height
+        self.width = width
+        self.state = state
+        self.tint = tint
+    }
+
+    var json: [String: Any] { drop(["row": row, "column": column, "height": height, "width": width, "state": state, "tint": tint]) }
 }

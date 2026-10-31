@@ -32,7 +32,15 @@ public enum GameLook: String, Sendable, Hashable, CaseIterable {
     case hands
     /// A word a day: a breakfast nook, sunny yellow.
     case words
+    /// Garden Plots, rectangles over numbers: a vegetable garden at morning, soil brown.
+    case plots
+    /// Seesaw, hearts and stars in balance: a playground at golden hour, plum.
+    case seesaw
+    /// Sudoku: a quiet reading desk by a window, slate blue.
+    case sudoku
+    /// Blossoms, one flower per row, column and bed: a flower garden, coral.
+    case blossoms
 
     /// Played alone, a puzzle (the menu's "Puzzles"), rather than against the companion.
-    public var solo: Bool { self == .words }
+    public var solo: Bool { [.words, .plots, .seesaw, .sudoku, .blossoms].contains(self) }
 }

@@ -27,8 +27,11 @@ struct PlayView: View {
             ZStack(alignment: .top) {
                 GameSceneBackground(style: style)
                 VStack(spacing: 8) {
-                    ScoreBar(score: model.board?.score, companionName: model.companionName, portrait: model.portrait, you: model.you, style: style)
-                        .padding(.horizontal, Self.pad)
+                    // A puzzle is played alone against the clock: no "You vs" bar, so a 9 × 9 Sudoku keeps its room.
+                    if model.board?.puzzle == nil {
+                        ScoreBar(score: model.board?.score, companionName: model.companionName, portrait: model.portrait, you: model.you, style: style)
+                            .padding(.horizontal, Self.pad)
+                    }
                     Group {
                         if let failure = model.failure {
                             failed(failure).padding(.horizontal, Self.pad)

@@ -51,6 +51,8 @@ public struct GameBoard: Sendable, Hashable {
         case entry(Entry)
         case sticks(Sticks)
         case lives(Lives)
+        /// The logic puzzles' grid (GamePuzzle.swift).
+        case puzzle(Puzzle)
     }
 
     public enum Tone: String, Sendable, Hashable { case good, warn, bad, info, neutral }

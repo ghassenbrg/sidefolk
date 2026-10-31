@@ -20,6 +20,10 @@ public enum GameMove: Sendable, Hashable {
     case next
     /// What was typed in an `entry` of kind `text` (an animal's name, a question).
     case text(name: String, value: String)
+    /// A rectangle dragged on a puzzle, from the cell it started on to the one it ended on.
+    case area(row: Int, column: Int, toRow: Int, toColumn: Int)
+    /// A number put in a puzzle's cell (0 clears it), or toggled as a pencil note.
+    case place(row: Int, column: Int, value: Int, note: Bool)
 
     public var json: JSONValue {
         switch self {
@@ -36,6 +40,9 @@ public enum GameMove: Sendable, Hashable {
         case .early: ["early": true]
         case .next: ["next": true]
         case .text(let name, let value): ["text": ["name": .string(name), "value": .string(value)]]
+        case .area(let r, let c, let r2, let c2): ["area": [.number(Double(r)), .number(Double(c)), .number(Double(r2)), .number(Double(c2))]]
+        case .place(let r, let c, let v, let note):
+            ["place": ["cell": [.number(Double(r)), .number(Double(c))], "value": .number(Double(v)), "note": .bool(note)]]
         }
     }
 
@@ -45,9 +52,16 @@ public enum GameMove: Sendable, Hashable {
         switch key {
         case "answer": return value.intValue.flatMap { (0..<4).contains($0) ? .answer($0) : nil }
         case "cell":
-            guard let a = value.arrayValue, a.count == 2, let r = a[0].intValue, let c = a[1].intValue, (0..<8).contains(r), (0..<8).contains(c)
+            guard let a = value.arrayValue, a.count == 2, let r = a[0].intValue, let c = a[1].intValue, (0..<10).contains(r), (0..<10).contains(c)
             else { return nil }
             return .cell(row: r, column: c)
+        case "area":
+            guard let a = value.arrayValue?.compactMap(\.intValue), a.count == 4, a.allSatisfy({ (0..<10).contains($0) }) else { return nil }
+            return .area(row: a[0], column: a[1], toRow: a[2], toColumn: a[3])
+        case "place":
+            guard let a = value["cell"]?.arrayValue?.compactMap(\.intValue), a.count == 2, a.allSatisfy({ (0..<10).contains($0) }),
+                  let v = value["value"]?.intValue, (0...9).contains(v) else { return nil }
+            return .place(row: a[0], column: a[1], value: v, note: value["note"]?.boolValue ?? false)
         case "button": return GameBoard.token(value).map(GameMove.button)
         case "choice":
             guard let name = GameBoard.token(value["name"]), let v = GameBoard.token(value["value"]) else { return nil }
@@ -80,6 +94,11 @@ public enum GameMove: Sendable, Hashable {
             return a.tiles.indices.contains(i) && a.tiles[i].state != .faded
         case .cell(let r, let c):
             if let cups = board.cups { return r == 0 && c < cups.count && !cups.locked && !cups.revealed }
+            if let p = board.puzzle {
+                guard !p.locked, p.input != .digits, let cell = p.cell(row: r, column: c) else { return false }
+                // A click on a drag board takes a plot away (or draws one cell); a tap board's givens never change.
+                return p.input == .drag || !cell.given
+            }
             guard let g = board.grid, !g.locked, r < g.rows, c < g.columns else { return false }
             let cell = g.cells[r * g.columns + c]
             return cell.state != .disabled
@@ -105,6 +124,12 @@ public enum GameMove: Sendable, Hashable {
         case .text(let name, let value):
             guard let entry = board.entry, entry.kind == .text, !entry.locked else { return false }
             return entry.name == name && value.count <= entry.max
+        case .area(let r, let c, let r2, let c2):
+            guard let p = board.puzzle, !p.locked, p.input == .drag else { return false }
+            return p.cell(row: r, column: c) != nil && p.cell(row: r2, column: c2) != nil
+        case .place(let r, let c, let v, _):
+            guard let p = board.puzzle, !p.locked, p.input == .digits, let cell = p.cell(row: r, column: c), !cell.given else { return false }
+            return (0...(p.digits ?? 0)).contains(v)
         }
     }
 }

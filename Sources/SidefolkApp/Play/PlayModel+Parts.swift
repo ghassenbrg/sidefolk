@@ -25,6 +25,10 @@ struct PartsState {
     /// Rows and guesses on the last board, so a new one (a word or number accepted) clears the draft.
     var rowsSeen = 0
     var guessesSeen: Int?
+    /// Sudoku: numbers go in as pencil notes.
+    var notes = false
+    /// When the puzzle's board showed, for its clock to count on from the time it says.
+    var puzzleShown = Date()
 }
 
 extension PlayModel {
@@ -57,6 +61,7 @@ extension PlayModel {
         if board.numberField?.history.count != parts.guessesSeen { parts.draft = "" }
         parts.guessesSeen = board.numberField?.history.count
         if let cursor = parts.cursor, cursor >= cells(board) { parts.cursor = nil }
+        if board.puzzle != nil { parts.puzzleShown = Date() }
         if let pads = board.pads, !pads.play.isEmpty, !pads.locked { play(pads) }
         if let cups = board.cups, cups.shuffleSeconds > 0 { shuffle(cups) }
         if let reflex = board.reflex, reflex.armed, let after = reflex.after { arm(after, window: reflex.window) }
@@ -71,7 +76,15 @@ extension PlayModel {
         }
     }
 
-    private func cells(_ board: GameBoard) -> Int { board.grid.map { $0.rows * $0.columns } ?? board.cups?.count ?? 0 }
+    private func cells(_ board: GameBoard) -> Int {
+        board.grid.map { $0.rows * $0.columns } ?? board.puzzle.map { $0.rows * $0.columns } ?? board.cups?.count ?? 0
+    }
+
+    /// A number from Sudoku's pad or keys into the cell picked (0 clears it), as a note while notes are on.
+    func placeDigit(_ value: Int) {
+        guard let p = board?.puzzle, p.input == .digits, let c = parts.cursor else { return }
+        send(.place(row: c / p.columns, column: c % p.columns, value: value, note: parts.notes && value > 0))
+    }
 
     /// Sidefolk plays the sequence: each pad lit with its note, the companion doing its move, then the person's turn.
     private func play(_ pads: GameBoard.Pads) {
@@ -189,6 +202,21 @@ extension PlayModel {
             send(.number(n))
             return true
         }
+        if let p = board.puzzle, !p.locked {
+            // A puzzle is the same picture in every language: the arrows move as they point.
+            if moveCursor(k, columns: p.columns, count: p.rows * p.columns, mirrored: false) { return true }
+            switch p.input {
+            case .digits:
+                if let d = Int(k), (0...(p.digits ?? 0)).contains(d) { placeDigit(d); return true }
+                if k == "delete" { placeDigit(0); return true }
+                if k == "n" { parts.notes.toggle(); return true }
+            case .tap, .drag:
+                if k == "return" || k == "space", let c = parts.cursor {
+                    send(.cell(row: c / p.columns, column: c % p.columns))
+                    return true
+                }
+            }
+        }
         if let grid = board.grid, !grid.locked {
             if grid.numpad, let n = Int(k), (1...9).contains(n) {
                 let cell = (2 - (n - 1) / 3) * 3 + (n - 1) % 3
@@ -229,7 +257,7 @@ extension PlayModel {
     }
 
     /// The arrow keys move the pointer over cells or cups, starting at the first.
-    private func moveCursor(_ k: String, columns: Int, count: Int) -> Bool {
+    private func moveCursor(_ k: String, columns: Int, count: Int, mirrored: Bool = true) -> Bool {
         let step = switch k {
         case "left": -1
         case "right": 1
@@ -239,7 +267,7 @@ extension PlayModel {
         }
         guard step != 0 else { return false }
         // Left and right follow the reading direction: in Arabic the next cell is to the left.
-        let rtl = NSApp.userInterfaceLayoutDirection == .rightToLeft && abs(step) == 1 ? -1 : 1
+        let rtl = mirrored && NSApp.userInterfaceLayoutDirection == .rightToLeft && abs(step) == 1 ? -1 : 1
         let next = (parts.cursor ?? -step * rtl) + step * rtl
         parts.cursor = min(max(next, 0), count - 1)
         return true
@@ -256,6 +284,14 @@ extension PlayModel {
         }
         if let s = board.sticks, !s.locked {
             return String(localized: "1–\(min(s.take, s.left)) to take", comment: "Keys in the Play panel: how many sticks to take")
+        }
+        if let p = board.puzzle, !p.locked {
+            switch p.input {
+            case .tap: return String(localized: "Click a cell to change it", comment: "Keys in the Play panel: a puzzle whose cells change with a click")
+            case .drag: return String(localized: "Drag from corner to corner, click a plot to clear it",
+                                      comment: "Keys in the Play panel: Garden Plots, drawing rectangles")
+            case .digits: return String(localized: "Pick a cell, then a number · N for notes", comment: "Keys in the Play panel: Sudoku")
+            }
         }
         if let g = board.grid, !g.locked {
             return g.numpad ? String(localized: "1–9 to play", comment: "Keys in the Play panel: the number pad picks a cell")

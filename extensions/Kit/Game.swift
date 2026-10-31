@@ -63,6 +63,10 @@ public enum Move: Equatable {
     case next
     /// What was typed in a text `entry`.
     case text(name: String, value: String)
+    /// A rectangle dragged on a `puzzle` from one corner cell to the other, in the order dragged.
+    case area(row: Int, column: Int, toRow: Int, toColumn: Int)
+    /// A number put in a `puzzle` cell (0 clears it), or as a pencil note.
+    case place(row: Int, column: Int, value: Int, note: Bool)
     case unknown
 
     public init(_ json: [String: Any]) {
@@ -79,6 +83,10 @@ public enum Move: Equatable {
         else if json["early"] as? Bool == true { self = .early }
         else if json["next"] as? Bool == true { self = .next }
         else if let t = json["text"] as? [String: Any], let n = t["name"] as? String, let v = t["value"] as? String { self = .text(name: n, value: v) }
+        else if let a = json["area"] as? [Int], a.count == 4 { self = .area(row: a[0], column: a[1], toRow: a[2], toColumn: a[3]) }
+        else if let p = json["place"] as? [String: Any], let c = p["cell"] as? [Int], c.count == 2, let v = p["value"] as? Int {
+            self = .place(row: c[0], column: c[1], value: v, note: p["note"] as? Bool ?? false)
+        }
         else { self = .unknown }
     }
 }

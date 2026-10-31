@@ -67,7 +67,7 @@ struct GameBoardTests {
         #expect(!GameMove.timeout.offered(by: b) && !GameMove.cell(row: 0, column: 0).offered(by: b))
 
         #expect(GameMove.parse(["answer": 2]) == .answer(2) && GameMove.parse(["answer": 7]) == nil)
-        #expect(GameMove.parse(["cell": [1, 2]]) == .cell(row: 1, column: 2) && GameMove.parse(["cell": [9, 0]]) == nil)
+        #expect(GameMove.parse(["cell": [1, 2]]) == .cell(row: 1, column: 2) && GameMove.parse(["cell": [10, 0]]) == nil)
         #expect(GameMove.parse(["choice": ["name": "topic", "value": "space"]]) == .choice(name: "topic", value: "space"))
         #expect(GameMove.parse(["button": "rm -rf"]) == nil && GameMove.parse(["answer": 1, "button": "x"]) == nil)
         #expect(GameMove.cell(row: 1, column: 2).json == ["cell": [1, 2]] && GameMove.timeout.json == ["timeout": true])

@@ -23,7 +23,7 @@ struct BoardView: View {
 
     private static func isPlay(_ part: GameBoard.Part) -> Bool {
         switch part {
-        case .answers, .board, .cups, .pads, .reflex, .meter, .number, .letters, .keys, .entry, .sticks, .lives, .timer: true
+        case .answers, .board, .cups, .pads, .reflex, .meter, .number, .letters, .keys, .entry, .sticks, .lives, .timer, .puzzle: true
         default: false
         }
     }
@@ -103,6 +103,7 @@ struct BoardView: View {
         case .entry(let e): GameEntryView(entry: e, model: model).id(e.name)
         case .sticks(let s): SticksView(sticks: s, model: model).modifier(OnTable(style: style))
         case .lives(let l): LivesView(lives: l)
+        case .puzzle(let p): PuzzleView(puzzle: p, model: model)
         }
     }
 }
