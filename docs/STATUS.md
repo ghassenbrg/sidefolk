@@ -12,8 +12,8 @@
   `.contrastEdge`), VoiceOver hears cards arrive. *CPU* (top, 12 × 5 s, debug apps on fresh homes, companion resting
   with 2 pins and 2 agents): origin/main 1.4% at rest, 1.4% with Home open; this branch before the fix 1.6% / 4.1%
   (the nook's breathing light redrew Home every frame), after 1.4% / 1.5%. *Checked:* `make test` with
-  SIDEFOLK_ADDONS_REPO on the clean add-ons checkout (TESTCOUNTS); `make strings`, all ten languages complete; UI
-  snapshots in light, dark, German and Arabic (SNAPDIRS) and `--only a11y`; Playtime built from the add-ons checkout
+  SIDEFOLK_ADDONS_REPO on the clean add-ons checkout (1612 core and 38 character tests pass; new `whatTheCardToldNeverComesBack`, `aPinAtRestKeepsItsNumberAndUnit`, the layout tests rewritten as `anOlderLayoutLoadsAndOnlyItsIconsAreRead`); `make strings`, all ten languages complete; UI
+  snapshots of every place in light, dark, German and Arabic (`window-home-*`, `window-settings-*`, `desktop-*`, `panel-pocket-*`) and `--only a11y`, read against the a-home, b-desktop and c-settings mockups; Playtime built from the add-ons checkout
   and installed from a folder to see a game open. *Not done:* the per-source interruption table (no such levels),
   Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card; "done today" counts
   other agents' reads; the greeting says "Good evening" after midnight. *Next:* merge `team/lantern-2` to main and
@@ -147,7 +147,7 @@
   notarized release and has no `SidefolkRelease` stamp, so its built-in updater will not replace it. *Next:*
   choose whether to replace the installed snapshot with the local build or ship a normal snapshot first.
 
-Updated: 2026-10-31. Version 0.1.0. Latest: add-ons installed before the renumbering get the gallery's version (D80); snapshot 588 and the
+Updated: 2026-11-01. Version 0.1.0. Latest: add-ons installed before the renumbering get the gallery's version (D80); snapshot 588 and the
 gallery with the ten new games in the Play panel (D79, Playtime 1.0.0-snapshot.2); before that snapshot 581 with translations (D76), the companion chooser
 (D77), colour meaning (D78) and new resting poses; before that Sidefolk and add-on updates chosen apart (D70), honest install sheets and
 approval cards (D71), paired TVs without a card (D72), the helper folks redesigned (D73), extension pages that read
