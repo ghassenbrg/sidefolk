@@ -56,14 +56,11 @@ struct ActivityView: View {
 
     private var filters: some View {
         HStack(spacing: Theme.Space.m) {
-            Picker("Show", selection: $model.show) {
-                Text("All").tag(ActivityModel.Show.all)
-                Text(model.attentionCount > 0 ? "Needs attention (\(model.attentionCount))" : "Needs attention")
-                    .tag(ActivityModel.Show.needsAttention)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
+            SegmentedPicker("Show", selection: $model.show, segments: [
+                .init(ActivityModel.Show.all, "All"),
+                .init(ActivityModel.Show.needsAttention,
+                      model.attentionCount > 0 ? Text("Needs attention (\(model.attentionCount))") : Text("Needs attention")),
+            ])
             Spacer()
             Picker("From", selection: $model.callerKind) {
                 Text("Everyone").tag(String?.none)

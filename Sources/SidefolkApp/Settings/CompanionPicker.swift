@@ -94,16 +94,10 @@ struct CompanionPicker: View {
             if custom == nil, local == nil, chosen.dimensions.count > 1, Companion3DStage.folder != nil {
                 labelled("Look") {
                     VStack(alignment: .leading, spacing: 4) {
-                        Picker("Look", selection: Binding(get: { settings.dimension(for: chosen) }, set: { next in
+                        SegmentedPicker("Look", selection: Binding(get: { settings.dimension(for: chosen) }, set: { next in
                             let choice = chosen
                             model.update { $0.setDimension(next, for: choice) }
-                        })) {
-                            Text(verbatim: "3D").tag(CompanionDimension.threeD)
-                            Text(verbatim: "2D").tag(CompanionDimension.twoD)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        .fixedSize()
+                        }), segments: [.init(CompanionDimension.threeD, verbatim: "3D"), .init(CompanionDimension.twoD, verbatim: "2D")])
                         Text(threeD ? "Livelier, and uses a little more of your Mac." : "Lightest on your Mac, with a color and a scarf to choose.")
                             .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                             .fixedSize(horizontal: false, vertical: true)
@@ -118,12 +112,8 @@ struct CompanionPicker: View {
     /// Colour and what it wears, for a companion drawn in 2D.
     @ViewBuilder private var wardrobe: some View {
         labelled("Wears") {
-            Picker("Wears", selection: Binding(get: { style.accessory }, set: { wear in restyle { $0.accessory = wear } })) {
-                ForEach(CompanionAccessory.allCases, id: \.self) { Text(Self.title($0)).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
+            SegmentedPicker("Wears", selection: Binding(get: { style.accessory }, set: { wear in restyle { $0.accessory = wear } }),
+                            segments: CompanionAccessory.allCases.map { .init($0, Text(Self.title($0))) })
         }
         labelled("Color") {
             VStack(alignment: .leading, spacing: 4) {

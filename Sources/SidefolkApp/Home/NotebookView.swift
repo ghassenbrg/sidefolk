@@ -108,12 +108,8 @@ private struct ItemList: View {
                     .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
             if collection.kind != .profile {
-                Picker("Show", selection: $model.filter) {
-                    ForEach(NotebookModel.KindFilter.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .controlSize(.small)
+                SegmentedPicker("Show", selection: $model.filter, segments: NotebookModel.KindFilter.allCases.map { .init($0, Text($0.title)) },
+                                small: true, equalWidths: true)
             }
             searchField
         }
@@ -131,13 +127,8 @@ private struct ItemList: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             searchBox
             if searching {
-                Picker("Search in", selection: $model.everywhere) {
-                    Text(name).tag(false)
-                    Text("Everywhere").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .controlSize(.small)
+                SegmentedPicker("Search in", selection: $model.everywhere, segments: [.init(false, verbatim: name), .init(true, "Everywhere")],
+                                small: true, equalWidths: true)
             }
         }
         // ⌘F, as everywhere on the Mac.

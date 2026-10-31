@@ -51,15 +51,11 @@ struct GalleryExtensionsView: View {
 
     /// All, then each shelf that has something, with how many the words find on it.
     private func shelves(_ found: [AddonEntry]) -> some View {
-        Picker("Category", selection: $shelf) {
-            Text("All \(found.count)", comment: "The gallery's shelves: every extension, with how many: “All 9”").tag(Shelf.all)
-            ForEach(Self.order(gallery.entries(.extension)), id: \.self) { category in
-                Text(verbatim: "\(Self.title(category)) \(found.filter { $0.shelf == category }.count)").tag(Shelf.one(category))
-            }
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .fixedSize()
+        SegmentedPicker("Category", selection: $shelf, segments: [
+            .init(Shelf.all, Text("All \(found.count)", comment: "The gallery's shelves: every extension, with how many: “All 9”")),
+        ] + Self.order(gallery.entries(.extension)).map { category in
+            .init(Shelf.one(category), verbatim: "\(Self.title(category)) \(found.filter { $0.shelf == category }.count)")
+        })
     }
 
     /// The shelves `entries` are on, in their usual order, Other last.

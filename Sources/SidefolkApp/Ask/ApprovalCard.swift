@@ -40,10 +40,9 @@ struct ApprovalCard: View {
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
             }
-            Text(riskLabel).font(Theme.Font.eyebrow).textCase(.uppercase)
-                .padding(.horizontal, 6).padding(.vertical, 2)
-                .background(riskTint, in: Capsule())
-                .foregroundStyle(Theme.ink)
+            // What it touches, as Lantern's chip (D84): sentence case, the risk's tone, the effect's symbol.
+            Chip(text: Text(riskLabel), tone: ChipTone(.risk(request.risk)),
+                 systemImage: request.risk == .medium ? Touch(request.effect).symbol : nil)
             Text(request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
             details
@@ -154,7 +153,6 @@ struct ApprovalCard: View {
         return request.risk == .high ? "Allow ⌘⏎" : "Allow"
     }
 
-    /// Shown in capitals (`textCase`), so each language capitalizes its own words.
     private var riskLabel: LocalizedStringKey {
         if case .folderAccess(_, let write) = request.details { return write ? "Folder access · can change files" : "Folder access · read only" }
         return switch request.risk {
@@ -173,9 +171,6 @@ struct ApprovalCard: View {
         case .high: "High risk"
         }
     }
-
-    /// The risk's own tone (StatusTone): calm when low, amber when medium, red only when high.
-    private var riskTint: Color { Theme.soft(.risk(request.risk)) }
 }
 
 /// Why a card asks after outside content (D71), in the tone the install sheet uses: calm when Sidefolk's own extension
