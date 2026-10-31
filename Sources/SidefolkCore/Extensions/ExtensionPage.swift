@@ -37,12 +37,22 @@ public struct ExtensionPage: Sendable, Hashable {
     }
 
     public struct Section: Sendable, Hashable {
+        /// Where a section goes in a wide window (D74): with the page's main sections, or in a column beside them at
+        /// the start edge (a list of devices or accounts to pick from). A narrow window keeps the page's order.
+        public enum Place: String, Sendable, Hashable { case main, side }
+
         public var title: String?
         public var blocks: [Block]
+        public var place: Place
+        /// Folded under its title until the person opens it (advanced settings, connection details); nil is always open.
+        /// Needs a title to fold under.
+        public var collapsed: Bool?
 
-        public init(title: String? = nil, blocks: [Block]) {
+        public init(title: String? = nil, blocks: [Block], place: Place = .main, collapsed: Bool? = nil) {
             self.title = title
             self.blocks = blocks
+            self.place = place
+            self.collapsed = collapsed
         }
     }
 
@@ -70,12 +80,67 @@ public struct ExtensionPage: Sendable, Hashable {
         case field(Field)
         /// Rows with a picture, a swatch or a symbol, each with an optional button.
         case list(List)
+        /// What the page is about right now, large, with its main actions (D74): "Ready to share", a pairing code to
+        /// compare, "Sharing to the TV" and its live numbers. It leads the page in place of the summary.
+        case hero(Hero)
+        /// Where a playing video or song is, and its play, pause and skip buttons (D74).
+        case transport(Transport)
+    }
+
+    /// A small label beside an option: "Paired", "New", "Off".
+    public struct Badge: Sendable, Hashable {
+        public var text: String
+        public var tone: Tone
+    }
+
+    public struct Hero: Sendable, Hashable {
+        /// A few words above the title: the state ("Ready", "Verify TV", "Sharing · live").
+        public var eyebrow: String?
+        public var title: String
+        public var detail: String?
+        public var tone: Tone
+        public var symbol: String?
+        /// A short code to compare, drawn very large: a pairing code, a PIN.
+        public var code: String?
+        /// A picture in the extension's data folder (`ExtensionDataFile`): what is being shared, a cover.
+        public var image: String?
+        /// Something is under way: a spinner beside the eyebrow.
+        public var busy: Bool
+        /// Up to four live numbers under the title: "29 fps", "18 ms".
+        public var facts: [Fact]
+        /// Up to three buttons; Sidefolk draws them large, the primary one filled.
+        public var actions: [Control]
+    }
+
+    public struct Transport: Sendable, Hashable {
+        public enum State: String, Sendable, Hashable { case playing, paused, buffering, stopped }
+
+        public var title: String?
+        public var detail: String?
+        /// Seconds, as Sidefolk writes the times under the bar.
+        public var position: Double?
+        public var duration: Double?
+        public var state: State
+        /// Up to five buttons, each with a symbol; the primary one (play or pause) is drawn larger, in the middle.
+        public var buttons: [Control]
     }
 
     public struct Choice: Sendable, Hashable {
+        /// How the options are drawn (D74): `segmented` side by side (a menu above four), `cards` as equal cards with a
+        /// line each (presets), `tiles` as pictures in a grid (displays, windows), `rows` as a list with a badge each
+        /// (devices, accounts). An older Sidefolk draws them all as `segmented`.
+        public enum Style: String, Sendable, Hashable { case segmented, cards, tiles, rows }
+
         public struct Option: Sendable, Hashable {
             public var value: String
             public var label: String
+            public var detail: String?
+            /// A picture in the extension's data folder, for `tiles` and `rows`.
+            public var image: String?
+            public var symbol: String?
+            public var badge: Badge?
+            /// A small button of its own on a tile or row ("Forget").
+            public var action: Control?
         }
 
         public var label: String
@@ -84,9 +149,14 @@ public struct ExtensionPage: Sendable, Hashable {
         public var selected: String
         public var tool: String
         public var input: JSONValue
+        public var style: Style = .segmented
+        /// The name the picked option's value goes under in `input`.
+        public var key: String = "value"
+        /// Shown but not changeable now (while sharing, say).
+        public var disabled = false
 
         /// What runs when `value` is picked.
-        public func input(picking value: String) -> JSONValue { input.setting("value", .string(value)) }
+        public func input(picking value: String) -> JSONValue { input.setting(key, .string(value)) }
     }
 
     public struct Field: Sendable, Hashable {
@@ -129,7 +199,9 @@ public struct ExtensionPage: Sendable, Hashable {
             case button(Style)
         }
 
-        public enum Style: String, Sendable, Hashable { case primary, secondary, destructive }
+        /// `plain` (D74) is a quiet text button for what's rarely needed ("Look again", "Forget"); an older Sidefolk
+        /// draws it as `secondary`.
+        public enum Style: String, Sendable, Hashable { case primary, secondary, destructive, plain }
 
         public var kind: Kind
         public var label: String
@@ -138,6 +210,10 @@ public struct ExtensionPage: Sendable, Hashable {
         public var tool: String
         public var input: JSONValue
         public var symbol: String?
+        /// Shown dimmed, `detail` saying why: a step that can't be taken yet ("Choose a TV first").
+        public var disabled = false
+
+        public var style: Style? { if case .button(let s) = kind { s } else { nil } }
 
         /// What runs when it is clicked, or switched to `on`.
         public func input(switchedTo on: Bool? = nil) -> JSONValue {
@@ -234,9 +310,44 @@ public struct ExtensionPage: Sendable, Hashable {
         }
         let sections = (object["sections"]?.arrayValue ?? []).prefix(maxSections).compactMap { s -> Section? in
             let blocks = (s["blocks"]?.arrayValue ?? []).prefix(maxBlocks).compactMap(block)
-            return blocks.isEmpty ? nil : Section(title: text(s["title"], 60), blocks: blocks)
+            let title = text(s["title"], 60)
+            return blocks.isEmpty ? nil : Section(title: title, blocks: blocks, place: s["place"]?.stringValue.flatMap(Section.Place.init) ?? .main,
+                                                  collapsed: title == nil ? nil : s["collapsed"]?.boolValue)
         }
-        return ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections)
+        var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections)
+        page.keepOnePrimary()
+        return page
+    }
+
+    /// The hero leading the page, when its first section starts with one: drawn instead of the summary banner.
+    public var hero: Hero? {
+        if case .hero(let h)? = sections.first?.blocks.first { return h }
+        return nil
+    }
+
+    /// One primary action a page (D74): the first in reading order stays filled, any later one is drawn as secondary,
+    /// so "what do I do here" has one answer. The summary's control counts first when the banner shows it.
+    mutating func keepOnePrimary() {
+        var seen = false
+        func keep(_ c: inout Control) {
+            guard c.style == .primary else { return }
+            if seen { c.kind = .button(.secondary) }
+            seen = true
+        }
+        if hero == nil, var control = summary?.control {
+            keep(&control)
+            summary?.control = control
+        }
+        for s in sections.indices {
+            for b in sections[s].blocks.indices {
+                switch sections[s].blocks[b] {
+                case .control(var c): keep(&c); sections[s].blocks[b] = .control(c)
+                case .hero(var h): for i in h.actions.indices { keep(&h.actions[i]) }; sections[s].blocks[b] = .hero(h)
+                case .transport(var t): for i in t.buttons.indices { keep(&t.buttons[i]) }; sections[s].blocks[b] = .transport(t)
+                default: break
+                }
+            }
+        }
     }
 
     static func summary(_ j: JSONValue) -> Summary? {
@@ -283,24 +394,49 @@ public struct ExtensionPage: Sendable, Hashable {
         case "ask":
             guard let label = text(j["label"], 40), let ask = text(j["ask"], 200) else { return nil }
             return .ask(Ask(label: label, ask: ask))
-        case "switch", "button":
-            guard let label = text(j["label"], 60), let tool = j["tool"]?.stringValue,
-                  tool.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil else { return nil }
-            let input = j["input"]?.objectValue.map(JSONValue.object) ?? .object([:])
-            guard input.jsonString.utf8.count <= 4096 else { return nil }
-            let kind: Control.Kind = j["type"]?.stringValue == "switch" ? .toggle(on: j["on"]?.boolValue ?? false)
-                : .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary)
-            return .control(Control(kind: kind, label: label, detail: text(j["detail"], 160), tool: tool, input: input, symbol: symbol(j["symbol"])))
+        case "switch":
+            guard let label = text(j["label"], 60), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
+            return .control(Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 160), tool: tool,
+                                    input: input, symbol: symbol(j["symbol"])))
+        case "button":
+            return button(j, characters: 60).map { .control($0) }
         case "choice":
             guard let label = text(j["label"], 60), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
-            let options = (j["options"]?.arrayValue ?? []).prefix(8).compactMap { o -> Choice.Option? in
-                guard let value = o["value"]?.stringValue, (1...40).contains(value.count), let label = text(o["label"], 30) else { return nil }
-                return Choice.Option(value: value, label: label)
+            let style = j["style"]?.stringValue.flatMap(Choice.Style.init(rawValue:)) ?? .segmented
+            // Pictures and rows hold a list of things (windows, devices); side by side, a few options read best.
+            let many = style == .tiles || style == .rows
+            let options = (j["options"]?.arrayValue ?? []).prefix(many ? maxItems : (style == .cards ? 6 : 8)).compactMap { o -> Choice.Option? in
+                guard let value = o["value"]?.stringValue, (1...40).contains(value.count), let label = text(o["label"], many ? 60 : 30) else { return nil }
+                var badge: Badge?
+                if let b = o["badge"], let t = text(b["text"], 20) { badge = Badge(text: t, tone: tone(b["tone"])) }
+                return Choice.Option(value: value, label: label, detail: text(o["detail"], 60), image: many ? dataFile(o["image"]) : nil,
+                                     symbol: symbol(o["symbol"]), badge: badge, action: many ? o["action"].flatMap { button($0, characters: 24) } : nil)
             }
-            guard options.count >= 2 else { return nil }
+            guard options.count >= (many ? 1 : 2) else { return nil }
+            let key = j["key"]?.stringValue ?? "value"
+            guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
             let selected = j["selected"]?.stringValue ?? ""
             return .choice(Choice(label: label, detail: text(j["detail"], 160), options: options,
-                                  selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input))
+                                  selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input,
+                                  style: style, key: key, disabled: j["disabled"]?.boolValue ?? false))
+        case "hero":
+            guard let title = text(j["title"], 80) else { return nil }
+            let facts = (j["facts"]?.arrayValue ?? []).prefix(4).compactMap { f -> Fact? in
+                guard let label = text(f["label"], 24), let value = text(f["value"], 30) else { return nil }
+                return Fact(label: label, value: value)
+            }
+            let code = j["code"]?.stringValue.flatMap { $0.range(of: #"^[0-9A-Z][0-9A-Z \-]{0,11}$"#, options: .regularExpression) != nil ? $0 : nil }
+            return .hero(Hero(eyebrow: text(j["eyebrow"], 30), title: title, detail: text(j["detail"], 300), tone: tone(j["tone"]),
+                              symbol: symbol(j["symbol"]), code: code, image: dataFile(j["image"]), busy: j["busy"]?.boolValue ?? false,
+                              facts: facts, actions: (j["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) }))
+        case "transport":
+            // Every button is drawn as its symbol, its label read aloud and shown on hover.
+            let buttons = (j["buttons"]?.arrayValue ?? []).prefix(5).compactMap { button($0, characters: 30) }.filter { $0.symbol != nil }
+            guard !buttons.isEmpty else { return nil }
+            func seconds(_ v: JSONValue?) -> Double? { v?.doubleValue.flatMap { $0.isFinite && $0 >= 0 && $0 < 1_000_000 ? $0 : nil } }
+            return .transport(Transport(title: text(j["title"], 80), detail: text(j["detail"], 120), position: seconds(j["position"]),
+                                        duration: seconds(j["duration"]).flatMap { $0 > 0 ? $0 : nil },
+                                        state: j["state"]?.stringValue.flatMap(Transport.State.init) ?? .stopped, buttons: buttons))
         case "field":
             guard let label = text(j["label"], 60), let button = text(j["button"], 24), let tool = toolName(j["tool"]),
                   let input = smallInput(j["input"]) else { return nil }
@@ -323,6 +459,14 @@ public struct ExtensionPage: Sendable, Hashable {
         default:
             return nil
         }
+    }
+
+    /// A button: its label (at most `characters`), the extension's own tool and a small input, a style, a symbol, and
+    /// whether it can be clicked now.
+    static func button(_ j: JSONValue, characters: Int) -> Control? {
+        guard let label = text(j["label"], characters), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
+        return Control(kind: .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary), label: label,
+                       detail: text(j["detail"], 160), tool: tool, input: input, symbol: symbol(j["symbol"]), disabled: j["disabled"]?.boolValue ?? false)
     }
 
     /// The extension's own tool's name, never another's (`ext.other.tool`).

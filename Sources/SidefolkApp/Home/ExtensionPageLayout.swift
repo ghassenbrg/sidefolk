@@ -1,56 +1,72 @@
 import SidefolkCore
 import SwiftUI
 
-// How an extension's page uses the window's width (D62, D67): a page that shows a lot (numbers, charts) grows to a
-// wide centred column, its big sections across it and its small ones side by side; a page of switches stays a
-// readable column. Cards in a row share the row's width and height, so nothing is left hanging at one side.
+// How an extension's page uses the window's width (D62, D67, D74): the rules of what goes where are
+// ExtensionPage+Layout in SidefolkCore; these are the layouts that place it. Cards in a row share the row's width and
+// height, so nothing is left hanging at one side.
 
-extension ExtensionPage {
-    /// Numbers or several cards: worth a wide window. A page of switches and buttons reads better narrow.
-    var isRich: Bool { sections.contains { $0.isWide && $0.blocks.contains { $0.isCard || $0.isMetric } } }
 
-    /// Sections in reading order, the wide ones alone and the runs of small ones between them together.
-    var runs: [[Section]] {
-        var out: [[Section]] = []
-        for section in sections {
-            if !section.isWide, let last = out.last, let first = last.first, !first.isWide {
-                out[out.count - 1].append(section)
+nonisolated private struct RegionKey: LayoutValueKey { static let defaultValue = PageRegion.main }
+
+extension View {
+    func pageRegion(_ region: PageRegion) -> some View { layoutValue(key: RegionKey.self, value: region) }
+}
+
+/// A page with a side column (D74): in a window wide enough, the top parts across, then the side parts in a column at
+/// the start edge (as a list of devices sits in an app's sidebar) beside the main ones; narrower, everything in one
+/// column in the page's order. Each column stacks its parts; the page is as tall as the longer one.
+struct PageRegions: Layout {
+    var spacing: CGFloat
+    /// Below this, one column.
+    var minimumWide: CGFloat = 780
+
+    func sideWidth(_ width: CGFloat) -> CGFloat { min(360, max(280, (width - spacing) * 0.32)) }
+
+    private func frames(_ width: CGFloat, _ subviews: Subviews) -> (frames: [CGRect], height: CGFloat) {
+        func height(_ view: LayoutSubview, _ w: CGFloat) -> CGFloat { view.sizeThatFits(ProposedViewSize(width: w, height: nil)).height }
+        var frames = Array(repeating: CGRect.zero, count: subviews.count)
+        // One column when narrow, or when nothing goes beside the main parts.
+        guard width >= minimumWide, subviews.contains(where: { $0[RegionKey.self] == .side }) else {
+            var y: CGFloat = 0
+            for (i, view) in subviews.enumerated() {
+                let h = height(view, width)
+                frames[i] = CGRect(x: 0, y: y, width: width, height: h)
+                y += h + spacing
+            }
+            return (frames, max(0, y - spacing))
+        }
+        let side = sideWidth(width), main = width - side - spacing
+        var top: CGFloat = 0
+        for (i, view) in subviews.enumerated() where view[RegionKey.self] == .top {
+            let h = height(view, width)
+            frames[i] = CGRect(x: 0, y: top, width: width, height: h)
+            top += h + spacing
+        }
+        // Laid out start to end; SwiftUI mirrors it right to left.
+        var sideY = top, mainY = top
+        for (i, view) in subviews.enumerated() where view[RegionKey.self] != .top {
+            if view[RegionKey.self] == .side {
+                let h = height(view, side)
+                frames[i] = CGRect(x: 0, y: sideY, width: side, height: h)
+                sideY += h + spacing
             } else {
-                out.append([section])
+                let h = height(view, main)
+                frames[i] = CGRect(x: side + spacing, y: mainY, width: main, height: h)
+                mainY += h + spacing
             }
         }
-        return out
+        return (frames, max(0, max(sideY, mainY) - spacing))
     }
-}
 
-extension ExtensionPage.Section {
-    /// Across the page: numbers, two or more cards, a row of buttons or questions, or notes alone (heads-ups that
-    /// read as one line). Anything else (one card with its note, a few switches) takes a column beside its neighbours.
-    var isWide: Bool {
-        if blocks.contains(where: \.isMetric) { return true }
-        if blocks.filter(\.isCard).count >= 2 { return true }
-        let kinds = Set(blocks.map(\.kind))
-        return kinds == ["note"] || kinds.isSubset(of: ["ask", "button"])
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 900
+        return CGSize(width: width, height: frames(width, subviews).height)
     }
-}
 
-extension ExtensionPage.Block {
-    var isMetric: Bool { kind == "gauge" || kind == "stat" }
-    var isCard: Bool { kind == "chart" || kind == "bars" || kind == "facts" || kind == "list" }
-
-    var kind: String {
-        switch self {
-        case .gauge: "gauge"
-        case .stat: "stat"
-        case .chart: "chart"
-        case .bars: "bars"
-        case .facts: "facts"
-        case .note: "note"
-        case .ask: "ask"
-        case .control(let c): if case .toggle = c.kind { "switch" } else { "button" }
-        case .choice: "choice"
-        case .field: "field"
-        case .list: "list"
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (view, frame) in zip(subviews, frames(bounds.width, subviews).frames) {
+            view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                       proposal: ProposedViewSize(width: frame.width, height: frame.height))
         }
     }
 }
@@ -61,10 +77,14 @@ struct CardGrid: Layout {
     var minWidth: CGFloat
     var maxColumns: Int
     var spacing: CGFloat
+    /// Off: as many columns as fit even when there are fewer cards, so two pictures stay picture-sized (D74).
+    var stretch = true
 
     func columns(_ width: CGFloat, count: Int) -> Int {
         guard count > 0 else { return 1 }
-        let fit = max(1, min(maxColumns, Int((width + spacing) / (minWidth + spacing)), count))
+        let room = max(1, min(maxColumns, Int((width + spacing) / (minWidth + spacing))))
+        if !stretch { return room }
+        let fit = min(room, count)
         let rows = (count + fit - 1) / fit
         return (count + rows - 1) / rows
     }

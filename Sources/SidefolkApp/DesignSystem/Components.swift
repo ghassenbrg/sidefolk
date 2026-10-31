@@ -4,9 +4,13 @@ import SwiftUI
 
 /// Primary action: aqua with navy text. Secondary: quiet surface. Destructive: coral tint.
 struct SFButtonStyle: ButtonStyle {
-    enum Kind { case primary, secondary, destructive, plain }
+    /// `quiet`: accent text without a frame, for what's rarely needed. `danger`: filled red, for a page whose main
+    /// action is stopping something (D74).
+    enum Kind { case primary, secondary, destructive, plain, quiet, danger }
     var kind: Kind = .secondary
     var compact = false
+    /// The one main action of a page or a hero (D74): taller and wider, so it is found at a glance.
+    var large = false
 
     func makeBody(configuration: Configuration) -> some View {
         StyledLabel(style: self, configuration: configuration)
@@ -27,8 +31,8 @@ struct SFButtonStyle: ButtonStyle {
         configuration.label
             .font(compact ? Theme.Font.captionStrong : Theme.Font.bodyStrong)
             .lineLimit(1)
-            .padding(.horizontal, compact ? Theme.Space.s + 2 : Theme.Space.m)
-            .padding(.vertical, compact ? 4 : 7)
+            .padding(.horizontal, large ? Theme.Space.l + 2 : compact ? Theme.Space.s + 2 : Theme.Space.m)
+            .padding(.vertical, large ? 10 : compact ? 4 : 7)
             .foregroundStyle(foreground)
             .background(background(pressed: configuration.isPressed), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .overlay {
@@ -45,6 +49,8 @@ struct SFButtonStyle: ButtonStyle {
         case .primary: Theme.onAccent
         case .secondary, .plain: Theme.ink
         case .destructive: Theme.danger
+        case .quiet: Theme.accent
+        case .danger: .white
         }
     }
 
@@ -53,7 +59,8 @@ struct SFButtonStyle: ButtonStyle {
         case .primary: Theme.accent.opacity(pressed ? 0.8 : 1)
         case .secondary: (pressed ? Theme.surfaceSunken : Theme.surfaceRaised)
         case .destructive: Theme.dangerSoft.opacity(pressed ? 0.7 : 1)
-        case .plain: pressed ? Theme.surfaceSunken : .clear
+        case .plain, .quiet: pressed ? Theme.surfaceSunken : .clear
+        case .danger: Theme.danger.opacity(pressed ? 0.8 : 1)
         }
     }
 }
@@ -63,7 +70,9 @@ extension ButtonStyle where Self == SFButtonStyle {
     static var sfSecondary: SFButtonStyle { SFButtonStyle(kind: .secondary) }
     static var sfDestructive: SFButtonStyle { SFButtonStyle(kind: .destructive) }
     static var sfPlain: SFButtonStyle { SFButtonStyle(kind: .plain) }
-    static func sf(_ kind: SFButtonStyle.Kind, compact: Bool = true) -> SFButtonStyle { SFButtonStyle(kind: kind, compact: compact) }
+    static func sf(_ kind: SFButtonStyle.Kind, compact: Bool = true, large: Bool = false) -> SFButtonStyle {
+        SFButtonStyle(kind: kind, compact: compact && !large, large: large)
+    }
 }
 
 /// A rounded content card with an optional accent stripe in the folk's color.

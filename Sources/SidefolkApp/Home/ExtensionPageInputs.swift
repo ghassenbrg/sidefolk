@@ -24,21 +24,26 @@ struct ExtensionPageInputs: View {
                     }
                 case .list(let list):
                     PageListCard(list: list, model: model)
+                case .styled(let choice):
+                    PageChoiceView(choice: choice, model: model)
                 }
             }
         }
     }
 
     private enum Run {
-        case rows([ExtensionPage.Block]), list(ExtensionPage.List)
+        case rows([ExtensionPage.Block]), list(ExtensionPage.List), styled(ExtensionPage.Choice)
     }
 
-    /// Choices and fields next to each other share a card, as switches do; a list is a card of its own.
+    /// Choices and fields next to each other share a card, as switches do; a list, and a choice drawn as cards, tiles
+    /// or rows (D74), stand on their own.
     private var runs: [Run] {
         var out: [Run] = []
         for block in blocks {
             if case .list(let l) = block {
                 out.append(.list(l))
+            } else if case .choice(let c) = block, c.style != .segmented {
+                out.append(.styled(c))
             } else if case .rows(let r) = out.last {
                 out[out.count - 1] = .rows(r + [block])
             } else {
@@ -105,7 +110,7 @@ private struct PageChoiceRow: View {
         }
         .labelsHidden()
         .fixedSize()
-        .disabled(pending != nil)
+        .disabled(pending != nil || choice.disabled)
     }
 }
 
