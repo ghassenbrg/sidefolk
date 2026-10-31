@@ -8,9 +8,15 @@ import SidefolkCore
 /// moving is `moveReminder`, adding is `reminders.create` through ToolExecutor, the rest is NowModel's.
 @MainActor @Observable
 final class CalendarModel {
+    /// Agenda first (D84): the next two weeks as a list; then a week to plan by dragging, and a month.
     enum Mode: String, CaseIterable, Identifiable {
-        case month, week, day
+        case agenda, week, month
         var id: Self { self }
+
+        /// The dev channel's and older words for a mode ("day" was the Agenda's name before D84).
+        init?(word: String) {
+            self.init(rawValue: word == "day" || word == "list" ? "agenda" : word)
+        }
     }
 
     /// One thing on the calendar.
@@ -59,7 +65,7 @@ final class CalendarModel {
         var movable: Bool { if case .reminder(let o) = self { o.isNext } else { false } }
     }
 
-    var mode: Mode = .month {
+    var mode: Mode = .agenda {
         didSet { if mode != oldValue { Task { await reload() } } }
     }
     /// The day in view: the month or week it's in, or the first day of the list.
@@ -92,7 +98,7 @@ final class CalendarModel {
         switch mode {
         case .month: CalendarGrid.monthDays(of: anchor, calendar: calendar)
         case .week: CalendarGrid.weekDays(of: anchor, calendar: calendar)
-        case .day:
+        case .agenda:
             (0..<Self.listDays).compactMap { calendar.date(byAdding: .day, value: $0, to: calendar.startOfDay(for: anchor)) }
         }
     }
@@ -101,21 +107,21 @@ final class CalendarModel {
     var title: String {
         switch mode {
         case .month: return anchor.formatted(.dateTime.month(.wide).year())
-        case .week, .day:
+        case .week, .agenda:
             let days = self.days
             guard let first = days.first, let last = days.last else { return "" }
             return (first..<last).formatted(.interval.day().month(.abbreviated).year())
         }
     }
 
-    /// One step back or ahead: a month, a week or a day.
+    /// One step back or ahead: a month, a week, or the Agenda's two weeks.
     func go(_ step: Int) {
-        let unit: Calendar.Component = switch mode {
-        case .month: .month
-        case .week: .weekOfYear
-        case .day: .day
+        let (unit, count): (Calendar.Component, Int) = switch mode {
+        case .month: (.month, step)
+        case .week: (.weekOfYear, step)
+        case .agenda: (.day, step * Self.listDays)
         }
-        anchor = calendar.date(byAdding: unit, value: step, to: anchor) ?? anchor
+        anchor = calendar.date(byAdding: unit, value: count, to: anchor) ?? anchor
         Task { await reload() }
     }
 
@@ -130,7 +136,7 @@ final class CalendarModel {
     /// A day's own view: the list from that day.
     func show(day: Date) {
         anchor = day
-        if mode == .day { Task { await reload() } } else { mode = .day }
+        if mode == .agenda { Task { await reload() } } else { mode = .agenda }
     }
 
     /// What's on a day, all-day events first, then by time.

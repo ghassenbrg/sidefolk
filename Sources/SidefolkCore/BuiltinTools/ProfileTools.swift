@@ -18,6 +18,50 @@ public enum ProfileFacts {
     }
 }
 
+extension ProfileFacts {
+    /// A fact another agent, an extension or a routine wrote (or Sidefolk's agent while outside content steered it):
+    /// Home's You page shows it as a suggestion, and it stays out of answers until the person keeps it (D84).
+    public static func isSuggestion(_ item: NotebookItem) -> Bool { ItemProvenance.isForeign(item.source) }
+
+    /// The fact as one line of text.
+    public static func text(_ item: NotebookItem) -> String { factText(item) }
+
+    /// The person keeps a suggested fact: it becomes theirs, so it goes into answers like one they said.
+    public static func keep(_ item: NotebookItem, notebook: NotebookStore, events: EventBus, now: Date = Date()) async throws {
+        guard var stored = try await notebook.item(id: item.id), stored.deletedAt == nil else { return }
+        stored.source = "user"
+        stored.updatedAt = now
+        try await notebook.update(stored)
+        events.changed(.notebook)
+        events.changed(.memories)
+    }
+
+    /// The person's own words as a fact: a new one, or `editing` rewritten (its origin becomes theirs).
+    @discardableResult
+    public static func write(_ text: String, editing: NotebookItem? = nil, notebook: NotebookStore, events: EventBus,
+                             now: Date = Date()) async throws -> NotebookItem? {
+        let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !words.isEmpty, words.count <= ProfileLimits.maxFactLength else { return nil }
+        let (title, body) = NoteText.split(words)
+        var item: NotebookItem
+        if let editing, var stored = try await notebook.item(id: editing.id), stored.deletedAt == nil {
+            stored.title = title
+            stored.body = body
+            stored.source = "user"
+            stored.updatedAt = now
+            item = stored
+            try await notebook.update(item)
+        } else {
+            guard let profile = try await NotebookCollections.profile(notebook, create: true, now: now) else { return nil }
+            item = NotebookItem(collectionId: profile.id, kind: .note, title: title, body: body, source: "user", now: now)
+            try await notebook.add(item)
+        }
+        events.changed(.notebook)
+        events.changed(.memories)
+        return item
+    }
+}
+
 enum ProfileLimits {
     static let maxFacts = 200
     static let maxFactLength = 500

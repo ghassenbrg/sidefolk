@@ -15,20 +15,17 @@ struct WatchCard: View {
         let kind = Describe.watcherKind(watcher.kind)
         let waiting = model.changeWaiting(for: watcher) != nil
         Button { open = true } label: {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
                 Label { Text(verbatim: Describe.watcherTarget(watcher) ?? watcher.title).lineLimit(1).truncationMode(.middle) }
                     icon: { Image(systemName: kind.symbol) }
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                Text(word(waiting: waiting)).font(Theme.Font.title).foregroundStyle(tone(waiting: waiting))
-                    .lineLimit(1).minimumScaleFactor(0.7)
-                Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                    .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                Text(word(waiting: waiting)).font(Theme.Font.stateWord).foregroundStyle(tone(waiting: waiting))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Text(verbatim: detail).font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(2)
             }
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
-            .padding(Theme.Space.m)
-            .background(waiting ? Theme.accentSoft.opacity(0.6) : Theme.surfaceRaised,
-                        in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(waiting ? Theme.accent.opacity(0.6) : Theme.line))
+            .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
+            .padding(Theme.Space.l)
+            .lanternTile(bar: bar(waiting: waiting))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -58,6 +55,14 @@ struct WatchCard: View {
         case .triggered: return String(localized: "Spotted")
         case .expired: return String(localized: "Expired")
         case .active: return String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running")
+        }
+    }
+
+    /// The tile's top bar: the state's colour, only when the state says something (03-system › Tiles).
+    private func bar(waiting: Bool) -> Color? {
+        switch StatusTone.watch(watcher.state, changeWaiting: waiting) {
+        case .neutral: nil
+        case let tone: Theme.color(tone)
         }
     }
 
@@ -91,23 +96,23 @@ struct ReportCard: View {
 
     var body: some View {
         Button { open = true } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                Label { Text(verbatim: reading?.label ?? report.title).lineLimit(1) }
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                Label { Text(verbatim: "\(reading?.label ?? report.title) · \(Describe.interval(report.intervalS))").lineLimit(1) }
                     icon: { Image(systemName: Describe.watcherKind(report.kind).symbol) }
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                Text(verbatim: reading?.value ?? "…").font(Theme.Font.title).monospacedDigit()
-                    .foregroundStyle(report.state == .paused ? Theme.inkFaint : Theme.ink)
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                if values.count > 1 {
-                    Sparkline(values: values).frame(height: 18)
-                } else {
-                    Text(verbatim: Describe.reportSchedule(report)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                    .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                HStack(alignment: .lastTextBaseline, spacing: Theme.Space.s) {
+                    Text(verbatim: reading?.value ?? "…").font(Theme.Font.number).monospacedDigit()
+                        .foregroundStyle(report.state == .paused ? Theme.inkFaint : Theme.ink)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                    Spacer(minLength: 0)
+                    if values.count > 1 { Sparkline(values: values, color: Theme.glow).frame(width: 64, height: 20) }
                 }
+                Text(verbatim: report.expiresAt == nil ? String(localized: "until you stop it") : Describe.reportSchedule(report))
+                    .font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(1)
             }
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
-            .padding(Theme.Space.m)
-            .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.line))
+            .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
+            .padding(Theme.Space.l)
+            .lanternTile(bar: nil)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -304,5 +309,15 @@ struct QueueCardFrame<Content: View>: View {
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
             .strokeBorder(focused ? Theme.accent : Theme.line, lineWidth: focused ? 2 : 1))
+    }
+}
+
+extension View {
+    /// Lantern's tile (03-system › Tiles): the card surface, e1, and a 3 pt bar along the top in the state's colour.
+    func lanternTile(bar: Color?) -> some View {
+        background(Theme.surfaceRaised)
+            .overlay(alignment: .top) { if let bar { Rectangle().fill(bar).frame(height: 3) } }
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .elevation(.e1, radius: Theme.Radius.card)
     }
 }

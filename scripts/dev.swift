@@ -8,15 +8,16 @@
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:extensions | find:milk | drop:https://example.com
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
-//   swift scripts/dev.swift calendar | calendar:month | calendar:week:2026-11-03 | calendar:day   (D66)
+//   swift scripts/dev.swift calendar | calendar:agenda | calendar:week:2026-11-03 | calendar:month   (D66, D84)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
-//   swift scripts/dev.swift home:today | page:/ (All Extensions) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
+//   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
+//                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>[:2d|3d]   (a companion from a folder, D60, D85)
-//   swift scripts/dev.swift chooser:gallery | chooser:yours | chooser:search:cat | chooser:detail:rune | chooser:get:rune
+//   swift scripts/dev.swift chooser:gallery | chooser:search:cat (Home's Gallery, D84) | chooser:detail:rune | chooser:get:rune
 //                           | chooser:remove:local:cumulus | chooser:confirm (its Remove) | chooser:add | chooser:snapshots (Show Snapshots) | chooser:close
 //                           (Settings › Companion's chooser)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)

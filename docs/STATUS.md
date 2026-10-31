@@ -1,5 +1,27 @@
 # Status
 
+- **The Lantern revamp, phase 3: Home (D84, branch `team/lantern-3`, not merged):** one layout in every theme. A new
+  sidebar (the companion live in its nook on its light, in the desktop's state and pose; Today ⌘1, Calendar ⌘2, Notebook
+  ⌘3, On duty ⌘4, History ⌘5; You, collections and the Trash in the Notebook; extension pages arranged by drag with "Get
+  add-ons"; Quiet at the foot), the Say bar (⌘K) in the toolbar with its panel (plain sentence, chips, AI or not, ↩ ⌘↩ ⌥↩,
+  what it finds). Today rebuilt with the day first (`DayBrief` sentence, counts, day line, Needs you capped at three with
+  the rest folded, held while Quiet is on, all clear and first day states; On duty glance; captured today). New On duty
+  (`OnDuty`: watches, live values, repeating reminders and routines, agent sessions, commands, background extensions, with
+  Pause/Resume/Stop), History (`HistoryTimeline`: Activity, conversations, alerts and agent receipts in one timeline with
+  filters, span, search, Undo, the record folded, conversations in place), You (facts with their origin, Edit, Forget,
+  suggestions with Keep: `ProfileFacts.keep`/`write`), the Agenda first in the Calendar, the Gallery in Home on Settings'
+  models (Settings' Companion and Extensions tabs lost their Gallery page). Retired: theme navigation/Today/Activity/editor
+  layouts (keys still decode), All Extensions, Conversations and Activity pages. Reminder lines in History read their time
+  as a date. 177 new strings in all ten languages. *Checked:* UI snapshots `window-home-*` (today, wide, narrow, small,
+  quiet, colorful, extensions, say, say-ai, say-search, every place, history record/conversation/agents, gallery, every
+  empty state) read in light and dark, and today/say/onduty/history/you/gallery/agenda in German and Arabic (RTL mirrors,
+  the day line runs right to left); the debug app (build/qa-1) driven with `respond:skip`, `ask:` reminders and a fact,
+  `home:history|you|onduty|history:agents`, `find:` (the panel says "On this Mac, no AI"), `snap`; new core tests
+  `HomePlacesTests` (6); `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons clone (1587 core and 36 character tests pass). *Half done / next:* Today's
+  approval cards are phase 2's `ApprovalCard` until the permission slip lands; Focus in the sidebar's pill waits for phase
+  4's Attention; the Week view's "read only" note and "+1" overlaps; a watch's detail page (A9) needs a check log that
+  isn't kept. The Trash shows days left (amber in the last three).
+
 - **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
   in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen
   face in lights of its own (`face.screen`, `glow`, `mouthGlow`) and face colours and sizes. Settings › Companion

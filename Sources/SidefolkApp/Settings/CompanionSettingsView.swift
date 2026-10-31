@@ -2,39 +2,15 @@ import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Companion: who the companion is, how present it is on the desktop and how it behaves there, on
-/// Yours; and the add-on gallery's companions to browse and download, on Gallery (D77), as
-/// Settings › Extensions keeps Installed and Gallery side by side.
+/// Settings › Companion: who the companion is, how present it is on the desktop and how it behaves there. More
+/// companions are in the Gallery, in Home (D84).
 struct CompanionSettingsView: View {
     var model: SettingsModel
-    @FocusState private var focus: CompanionPageFocus?
     private var chooser: CompanionChooserModel { model.chooser }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CompanionPageHeader(model: model, focus: $focus)
-                .frame(maxWidth: 600, alignment: .leading)
-                .padding(.horizontal, Theme.Space.xl)
-                .padding(.top, Theme.Space.l)
-                .frame(maxWidth: .infinity)
-            SettingsPage {
-                if chooser.page == .gallery {
-                    CompanionGalleryView(model: model)
-                } else {
-                    yours
-                }
-            }
-        }
+        SettingsPage { yours }
         .background(Theme.surfaceSunken)
-        // ⌘F searches the gallery, as everywhere on the Mac.
-        .background {
-            Button("Find") {
-                chooser.page = .gallery
-                focus = .search
-            }
-            .keyboardShortcut("f", modifiers: .command).opacity(0).frame(width: 0, height: 0)
-            .accessibilityHidden(true)
-        }
         .task {
             chooser.reload()
             await model.gallery.load()
