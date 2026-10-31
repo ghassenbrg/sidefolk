@@ -333,7 +333,9 @@ final class CompanionWindowController {
             let column = extras.dropFirst().reduce(first.rect) { $0.union($1.rect) }
             beside = NSRect(x: column.minX, y: rect.minY, width: column.width, height: rect.height)
         }
-        let onScreen = panel.convertToScreen(container.convert(beside, to: nil))
+        var onScreen = panel.convertToScreen(container.convert(beside, to: nil))
+        // Centred on the item: placing beside puts the panel's foot at 35% of the anchor's height.
+        onScreen.origin.y = onScreen.midY - tip.panel.frame.height / 2 - onScreen.height * 0.35
         tip.place(beside: onScreen, on: screen, gap: -8)
         if !tip.panel.isVisible { tip.panel.orderFrontRegardless() }
     }
