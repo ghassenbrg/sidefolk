@@ -27,8 +27,6 @@ struct SettingsRoot: View {
             }
         }
         .background(Theme.surfaceSunken)
-        // The sidebar holds the window's buttons and the title sits level with them, as in System Settings.
-        .ignoresSafeArea(.container, edges: .top)
         .environment(\.settingsNavigation, navigation)
         .background {
             Button("Search Settings") { searchFocused = true }

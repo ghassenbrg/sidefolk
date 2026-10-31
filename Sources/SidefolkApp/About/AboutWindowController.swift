@@ -49,7 +49,7 @@ struct AboutView: View {
         .padding(.horizontal, Theme.Space.xl)
         .padding(.top, Theme.Space.xxl + Theme.Space.s)
         .padding(.bottom, Theme.Space.l)
-        .frame(width: 420, height: 560)
+        .frame(width: 420, height: 520)
         .background(Theme.surface)
     }
 

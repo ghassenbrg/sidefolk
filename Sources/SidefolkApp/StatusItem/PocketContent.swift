@@ -48,10 +48,10 @@ struct PocketContent {
             parts.append(needsYou.isEmpty ? String(localized: "All clear", comment: "The Pocket: nothing waits")
                          : String(localized: "Waiting on you · \(needsYou.count)", comment: "The Pocket: things wait, “Waiting on you · 3”"))
         case .focus:
-            parts.append(attentionEnds.map { String(localized: "Focus until \(TimeText.short($0))", comment: "Settings › Attention: “Focus until 17:00”") }
+            parts.append(attentionEnds.map { String(localized: "Focus until \(TimeText.clock($0))", comment: "Settings › Attention: “Focus until 17:00”") }
                          ?? String(localized: "Focus", comment: "Attention: only cards that need an answer; whispers wait"))
         case .quiet:
-            parts.append(attentionEnds.map { String(localized: "Quiet until \(TimeText.short($0))") }
+            parts.append(attentionEnds.map { String(localized: "Quiet until \(TimeText.clock($0))") }
                          ?? String(localized: "Quiet", comment: "Attention: only what can't wait"))
         }
         if attention != .open, held > 0 {

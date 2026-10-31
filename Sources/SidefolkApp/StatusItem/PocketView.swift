@@ -113,7 +113,7 @@ struct PocketView: View {
             Image(systemName: GuardMode.fullAccess.symbol).foregroundStyle(Theme.warning).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Full access is on").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                Text(verbatim: content.fullAccessEnds.map { String(localized: "Ends \(TimeText.short($0))", comment: "Full access: “Ends 22:00”") }
+                Text(verbatim: content.fullAccessEnds.map { String(localized: "Ends \(TimeText.clock($0))", comment: "Full access: “Ends 22:00”") }
                      ?? String(localized: "On until you turn it off", comment: "Full access without an end"))
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
@@ -155,10 +155,11 @@ struct PocketView: View {
                             Button(span.title) { actions.setAttention(content.attention, span.until) }
                         }
                     } label: {
-                        Text(verbatim: content.attentionEnds.map { String(localized: "Until \(TimeText.short($0))", comment: "When Focus or Quiet ends: “Until 17:00”") }
+                        Text(verbatim: content.attentionEnds.map { String(localized: "Until \(TimeText.clock($0))", comment: "When Focus or Quiet ends: “Until 17:00”") }
                              ?? String(localized: "Until I turn it off", comment: "When Focus or Quiet ends"))
                     }
                     .menuStyle(.borderlessButton)
+                    .font(Theme.Font.caption)
                     .fixedSize()
                     Spacer()
                     Button { actions.openAttentionSettings() } label: { Text("Attention Settings…", comment: "The Pocket: opens Settings › Attention") }

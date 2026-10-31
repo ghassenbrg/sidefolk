@@ -97,18 +97,18 @@ extension AppCoordinator {
         for session in sessions where session.state == .needsYou {
             c.needsYou.append(.init(id: "session-\(session.id)", title: String(localized: "\(Self.agentName(session.agent)) needs you"),
                                     detail: [session.projectName, session.detail].compactMap { $0 }.joined(separator: " · "),
-                                    trailing: TimeText.short(session.updatedAt), symbol: "hand.raised", folk: "byte",
+                                    trailing: TimeText.clock(session.updatedAt), symbol: "hand.raised", folk: "byte",
                                     open: { [weak self] in self?.pocketClosing { $0.openSession(session) } }))
         }
         for item in await runtime.attention.open().filter({ $0.level >= .attention }) {
             c.needsYou.append(.init(id: "attention-\(item.id)", title: item.title, detail: item.body?.clipped(60),
-                                    trailing: TimeText.short(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.source),
+                                    trailing: TimeText.clock(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.source),
                                     open: { [weak self] in self?.pocketClosing { $0.openNow() } }))
         }
         let skipped = await runtime.executor.skipped.list()
         if let newest = skipped.first {
             c.needsYou.append(.init(id: "skipped", title: String(localized: "Skipped while you were away (\(skipped.count))"),
-                                    detail: newest.request.summary.clipped(60), trailing: TimeText.short(newest.skippedAt),
+                                    detail: newest.request.summary.clipped(60), trailing: TimeText.clock(newest.skippedAt),
                                     symbol: "clock.badge.xmark", folk: "guard",
                                     open: { [weak self] in self?.pocketClosing { $0.openNow() } }))
         }

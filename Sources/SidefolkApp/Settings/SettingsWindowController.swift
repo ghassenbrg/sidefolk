@@ -133,6 +133,9 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         let host = NSHostingController(rootView: SettingsRoot(model: model))
         // No preferred size: switching tabs keeps the window's size instead of jumping.
         host.sizingOptions = []
+        // The sidebar holds the window's buttons and the title sits level with them, as in System Settings: nothing
+        // is pushed under the title bar, so the pages' scroll views start at their top.
+        host.safeAreaRegions = []
         window.contentViewController = host
         window.title = String(localized: "Settings")
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]

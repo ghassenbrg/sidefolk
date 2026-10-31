@@ -6,7 +6,11 @@
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
-//   swift scripts/dev.swift home | about | settings:extensions | find:milk | drop:https://example.com
+//   swift scripts/dev.swift home | about | settings:trust | find:milk | drop:https://example.com
+//   swift scripts/dev.swift settings:search:quiet | settings:jump:quietHours | settings:full-access   (D84: Settings' search,
+//                           a jump to a setting by its SettingKey, the Full access sheet)
+//   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
+//   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:month | calendar:week:2026-11-03 | calendar:day   (D66)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)

@@ -194,7 +194,7 @@ enum UISnapshots {
             let aboutUpdates = UpdateModel()
             aboutUpdates.phase = .upToDate
             AboutWindowController.configure(aboutWindow, updates: aboutUpdates)
-            try await capture(aboutWindow, size: CGSize(width: 420, height: 560), dark: dark, to: file("window-about"))
+            try await capture(aboutWindow, size: CGSize(width: 420, height: 520), dark: dark, to: file("window-about"))
             aboutWindow.orderOut(nil)
 
             // The update window in each state it has words for (D46).

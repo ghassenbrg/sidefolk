@@ -96,7 +96,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private func updateLabel() {
         var parts = ["Sidefolk"]
         if mode == .fullAccess {
-            parts.append(fullAccessEnds.map { String(localized: "Full access is on until \(TimeText.short($0))", comment: "VoiceOver: the menu bar icon") }
+            parts.append(fullAccessEnds.map { String(localized: "Full access is on until \(TimeText.clock($0))", comment: "VoiceOver: the menu bar icon") }
                          ?? String(localized: "Full access is on"))
         }
         switch mark {
@@ -134,6 +134,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         Task {
             if let contentProvider { pocket.content = await contentProvider() }
             pocket.palettes = palettes()
+            // The Pocket takes the keyboard (its Ask field, the dial's keys), so Sidefolk comes forward while it's open.
+            NSApp.activate()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }

@@ -70,7 +70,7 @@ private struct ModeCard: View {
                         Chip(text: Text("Suggested", comment: "Settings › Trust: the mode Sidefolk suggests"), tone: .accent)
                     }
                     if selected, mode == .fullAccess {
-                        Chip(verbatim: ends.map { String(localized: "Ends \(TimeText.short($0))", comment: "Full access: “Ends 22:00”") }
+                        Chip(verbatim: ends.map { String(localized: "Ends \(TimeText.clock($0))", comment: "Full access: “Ends 22:00”") }
                                 ?? String(localized: "On until you turn it off", comment: "Full access without an end"),
                              tone: .warning)
                     }
@@ -267,7 +267,7 @@ enum FullAccessEnd: Hashable {
     var title: String {
         switch self {
         case .inAnHour: String(localized: "In 1 hour", comment: "Full access ends")
-        case .tonight(let at): String(localized: "Tonight at \(TimeText.short(at))", comment: "Full access ends: “Tonight at 22:00”")
+        case .tonight(let at): String(localized: "Tonight at \(TimeText.clock(at))", comment: "Full access ends: “Tonight at 22:00”")
         case .never: String(localized: "When I turn it off", comment: "Full access ends")
         }
     }

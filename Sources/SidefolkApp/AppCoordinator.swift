@@ -397,6 +397,14 @@ final class AppCoordinator {
             return
         }
         if command == "pocket" { statusItem.togglePocket(); return }
+        if command.hasPrefix("attention:") {
+            // attention:open | attention:focus[:minutes] | attention:quiet[:minutes], as the Pocket's dial (D84).
+            let parts = command.split(separator: ":").map(String.init)
+            if parts.count > 1, let mode = AttentionMode(rawValue: parts[1]) {
+                setAttention(mode, until: parts.count > 2 ? Double(parts[2]).map { Date().addingTimeInterval($0 * 60) } : nil)
+            }
+            return
+        }
         if command.hasPrefix("scroll:"), let fraction = Double(command.dropFirst(7)) {
             // scroll:<0…1>: the tallest scroll view on screen that far down, so `snap` sees below the fold.
             DebugSnapshots.scroll(to: fraction)

@@ -131,6 +131,11 @@ struct EmptyState: View {
 /// use the same 24-hour words as hints, cards and notifications (`TimeFormat`), so a reminder reads the
 /// same everywhere.
 enum TimeText {
+    /// "17:00" today, else as `short` ("Tomorrow 08:00"): when something ends.
+    static func clock(_ date: Date, now: Date = Date()) -> String {
+        Calendar.current.isDate(date, inSameDayAs: now) ? TimeFormat.clock(date, calendar: .autoupdatingCurrent) : short(date, now: now)
+    }
+
     /// "Yesterday 18:20", "Today 09:00", "Tue 09:00".
     static func short(_ date: Date, now: Date = Date()) -> String {
         TimeFormat.when(date, now: now, calendar: .autoupdatingCurrent)

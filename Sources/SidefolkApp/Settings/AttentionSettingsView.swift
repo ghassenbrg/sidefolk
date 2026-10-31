@@ -117,15 +117,15 @@ private struct AttentionHero: View {
     static func title(_ mode: AttentionMode, ends: Date?) -> String {
         switch mode {
         case .open: String(localized: "Open: everything arrives as you set below", comment: "Settings › Attention: the title while Open")
-        case .focus: ends.map { String(localized: "Focus until \(TimeText.short($0))", comment: "Settings › Attention: “Focus until 17:00”") }
+        case .focus: ends.map { String(localized: "Focus until \(TimeText.clock($0))", comment: "Settings › Attention: “Focus until 17:00”") }
             ?? String(localized: "Focus until you turn it off", comment: "Settings › Attention")
-        case .quiet: ends.map { String(localized: "Quiet until \(TimeText.short($0))") }
+        case .quiet: ends.map { String(localized: "Quiet until \(TimeText.clock($0))") }
             ?? String(localized: "Quiet until you turn it off", comment: "Settings › Attention")
         }
     }
 
     static func left(until: Date, now: Date) -> String {
-        String(localized: "\(TimeText.duration(max(60, until.timeIntervalSince(now)))) left", comment: "Settings › Attention: “58 min left”")
+        String(localized: "\(TimeText.span(max(60, until.timeIntervalSince(now)))) left", comment: "Settings › Attention: “58 min left”")
     }
 
     static func holding(_ count: Int, name: String, mode: AttentionMode) -> String {
@@ -205,7 +205,7 @@ struct AttentionUntilMenu: View {
                 Button(span.title) { model.setAttention(mode, until: span.until) }
             }
         } label: {
-            Text(verbatim: ends.map { String(localized: "Until \(TimeText.short($0))", comment: "When Focus or Quiet ends: “Until 17:00”") }
+            Text(verbatim: ends.map { String(localized: "Until \(TimeText.clock($0))", comment: "When Focus or Quiet ends: “Until 17:00”") }
                 ?? String(localized: "Until I turn it off", comment: "When Focus or Quiet ends"))
         }
         .menuStyle(.button)
@@ -227,7 +227,7 @@ struct AttentionSpan {
             AttentionSpan(title: String(localized: "For 3 hours"), until: now.addingTimeInterval(3 * 3600)),
         ]
         if let evening = calendar.date(bySettingHour: settings.eveningHour, minute: 0, second: 0, of: now), evening > now.addingTimeInterval(3600) {
-            spans.append(AttentionSpan(title: String(localized: "Until \(TimeText.short(evening))", comment: "When Focus or Quiet ends: “Until 17:00”"),
+            spans.append(AttentionSpan(title: String(localized: "Until \(TimeText.clock(evening))", comment: "When Focus or Quiet ends: “Until 17:00”"),
                                        until: evening))
         }
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
