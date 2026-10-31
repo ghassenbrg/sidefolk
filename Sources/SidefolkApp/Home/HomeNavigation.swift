@@ -44,7 +44,8 @@ struct HomeRail: View {
             // Extensions' pages (D62), under the places, by their own symbols.
             if !model.pages.list.isEmpty {
                 Divider().frame(width: 24)
-                ForEach(model.pages.list) { p in
+                // As the person arranged them; the rest are in All Extensions (D67).
+                ForEach(model.pages.shown + [ExtensionPagesModel.hubInfo]) { p in
                     let selected = model.selection == .page(p.id)
                     Button { model.selection = .page(p.id) } label: {
                         Image(systemName: p.symbol ?? "puzzlepiece.extension").font(.system(size: 15, weight: .medium))
@@ -211,8 +212,8 @@ struct PillTabs: View {
                 .help(Text("\(Text(place.title)) (⌘\(i + 1))", comment: "A place, then its shortcut"))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
-            // Extensions' pages (D62) after the places.
-            ForEach(model.pages.list) { p in
+            // Extensions' pages (D62) after the places, as the person arranged them, then All Extensions (D67).
+            ForEach(model.pages.list.isEmpty ? [] : model.pages.shown + [ExtensionPagesModel.hubInfo]) { p in
                 let selected = model.selection == .page(p.id)
                 Button { model.selection = .page(p.id) } label: {
                     HStack(spacing: 5) {
@@ -316,8 +317,8 @@ struct RibbonTabs: View {
                 .accessibilityLabel(Text(place.title))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
-            // Extensions' pages (D62), a ribbon each, after the places.
-            ForEach(model.pages.list) { p in
+            // Extensions' pages (D62), a ribbon each, after the places, as arranged, then All Extensions (D67).
+            ForEach(model.pages.list.isEmpty ? [] : model.pages.shown + [ExtensionPagesModel.hubInfo]) { p in
                 let selected = model.selection == .page(p.id)
                 Button { model.selection = .page(p.id) } label: {
                     Text(verbatim: p.title)

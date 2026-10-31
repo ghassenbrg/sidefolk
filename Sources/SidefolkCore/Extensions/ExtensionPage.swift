@@ -23,12 +23,16 @@ public struct ExtensionPage: Sendable, Hashable {
         public var detail: String
         public var tone: Tone
         public var symbol: String?
+        /// The extension's main switch or button (D67), shown wherever the summary is: on top of the page, on its Today
+        /// tile and beside its row in Home's sidebar, so an on/off feature is one click from where people are.
+        public var control: Control?
 
-        public init(title: String, detail: String = "", tone: Tone = .neutral, symbol: String? = nil) {
+        public init(title: String, detail: String = "", tone: Tone = .neutral, symbol: String? = nil, control: Control? = nil) {
             self.title = title
             self.detail = detail
             self.tone = tone
             self.symbol = symbol
+            self.control = control
         }
     }
 
@@ -176,7 +180,9 @@ public struct ExtensionPage: Sendable, Hashable {
 
     static func summary(_ j: JSONValue) -> Summary? {
         guard let title = text(j["title"], 80) else { return nil }
-        return Summary(title: title, detail: text(j["detail"], 160) ?? "", tone: tone(j["tone"]), symbol: symbol(j["symbol"]))
+        var control: Control?
+        if let c = j["control"], case .control(let parsed)? = block(c) { control = parsed }
+        return Summary(title: title, detail: text(j["detail"], 160) ?? "", tone: tone(j["tone"]), symbol: symbol(j["symbol"]), control: control)
     }
 
     static func block(_ j: JSONValue) -> Block? {

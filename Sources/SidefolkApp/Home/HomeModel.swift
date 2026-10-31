@@ -65,6 +65,7 @@ final class HomeModel {
 
     private var eventTask: Task<Void, Never>?
     private var reloadTask: Task<Void, Never>?
+    private var pagesTask: Task<Void, Never>?
     private var pending: Set<DataDomain> = []
 
     init(services: AppServices) {
@@ -76,6 +77,8 @@ final class HomeModel {
         pages = ExtensionPagesModel(services: services)
         find = FindModel { query in (try? await services.runtime.find(query)) ?? SearchResults() }
         now.openPage = { [weak self] id in self?.selection = .page(id) }
+        // A switch flipped or a page arranged on one side shows on the other (D67).
+        pages.changed = { [weak self] in Task { await self?.now.reloadWidgets() } }
     }
 
     /// Sends the one bar's words on, and empties it.
@@ -103,6 +106,7 @@ final class HomeModel {
             }
         }
         Task { await reloadAll() }
+        pagesTask = Task { [pages] in await pages.follow() }
     }
 
     /// Stops following changes and saves any edit in progress.
@@ -110,6 +114,8 @@ final class HomeModel {
         eventTask?.cancel()
         eventTask = nil
         reloadTask?.cancel()
+        pagesTask?.cancel()
+        pagesTask = nil
         Task { await notebook.flush() }
     }
 
@@ -183,7 +189,7 @@ final class HomeModel {
             if domains.contains(.conversations) || domains.contains(.settings) { await conversations.reload() }
             if domains.contains(.extensions) {
                 await pages.reload()
-                if case .page(let id) = selection, pages.info(id) == nil { selection = .now }
+                if case .page(let id) = selection, id != ExtensionPagesModel.hub, pages.info(id) == nil { selection = .now }
             }
         }
     }

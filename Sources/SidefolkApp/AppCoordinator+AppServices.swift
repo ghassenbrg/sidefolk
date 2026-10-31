@@ -392,7 +392,7 @@ extension AppCoordinator: AppServices {
             sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
             iconPath: e.iconPath, fromDraft: e.origin == .draft, fromGallery: e.origin == .official, command: e.command, author: e.author,
-            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands))
+            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor)
     }
 
     /// The manifest of an extension folder shipped inside the app, or nil.

@@ -101,6 +101,7 @@ struct HomeView: View {
             }
         }
         .overlay { ThemeGrain() }
+        .environment(model.pages)
     }
 
     /// Without a sidebar, the Notebook's pages bring their collections along (D64).
@@ -133,6 +134,8 @@ struct HomeView: View {
             ActivityView(model: model.activity)
         case .trash:
             withCollections { TrashView(model: model.notebook) }
+        case .page(ExtensionPagesModel.hub):
+            ExtensionsHubView(pages: model.pages) { model.selection = .page($0) }
         case .page(let id):
             if let info = model.pages.info(id) {
                 ExtensionPageView(model: model.pages.model(info))
@@ -189,15 +192,9 @@ private struct HomeSidebar: View {
             Section("Notebook") {
                 ForEach(notebook.collections) { c in collectionRow(c) }
             }
-            // Pages extensions add (D62), under the extension's own name for the page.
+            // Pages extensions add (D62), under the extension's own name for the page, as the person arranged them (D67).
             if !model.pages.list.isEmpty {
-                Section("Extensions") {
-                    ForEach(model.pages.list) { p in
-                        Label { Text(verbatim: p.title) } icon: { icon(p.symbol ?? "puzzlepiece.extension", Theme.folkColor("byte")) }
-                            .tag(HomeSelection.page(p.id))
-                            .help(Text("Added by \(p.extensionName)", comment: "Under an extension page's title: the extension it comes from"))
-                    }
-                }
+                ExtensionsSidebarSection(pages: model.pages)
             }
             Section {
                 // The audit trail matters, but your notes come first.

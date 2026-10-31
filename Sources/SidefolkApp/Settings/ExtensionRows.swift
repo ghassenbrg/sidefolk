@@ -124,6 +124,8 @@ struct ExtensionRow: View {
         if let error = ext.lastError, !expanded {
             Label(error, systemImage: "exclamationmark.circle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(1)
+        } else if let bigger = ext.restingFor, ext.enabled, !expanded {
+            resting(bigger).lineLimit(1)
         } else if let hit, !expanded {
             Label { Text(verbatim: hit) } icon: { Image(systemName: "magnifyingglass") }
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
@@ -137,6 +139,16 @@ struct ExtensionRow: View {
         }
     }
 
+    /// A smaller extension resting while a bigger one does its work (D67): on, but quiet, and why.
+    private func resting(_ bigger: String) -> some View {
+        Label {
+            Text("Resting: \(bigger) does all this while it's on", comment: "Settings › Extensions, under an extension another one includes")
+        } icon: {
+            Image(systemName: "moon.zzz")
+        }
+        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+    }
+
     @ViewBuilder private var details: some View {
         // The whole description, when the line above is only its tagline or its first sentence.
         if !ext.description.isEmpty, ext.description != ext.shortLine {
@@ -145,6 +157,7 @@ struct ExtensionRow: View {
         }
         Text(verbatim: origin).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
             .fixedSize(horizontal: false, vertical: true)
+        if let bigger = ext.restingFor, ext.enabled { resting(bigger).fixedSize(horizontal: false, vertical: true) }
         if ext.kind == .mcpServer, let command = ext.command, !ext.description.isEmpty {
             Text(verbatim: command).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkMuted)
                 .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)

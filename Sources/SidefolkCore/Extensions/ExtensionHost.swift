@@ -82,6 +82,8 @@ public actor ExtensionHost {
         installer.removeStaleStaging()
         let records = (try? await store.all()) ?? []
         for record in records { await load(record) }
+        // A smaller extension loaded before the one that includes it registered its tools; it rests now (D67).
+        reconsiderResting()
         events.changed(.extensions)
     }
 
@@ -205,7 +207,21 @@ public actor ExtensionHost {
                              tagline: (builtIn ? BuiltInExtensionWords.tagline(id) : nil) ?? rt.pin.tagline, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
-                             toolWarnings: rt.toolWarnings)
+                             toolWarnings: rt.toolWarnings, restingFor: restingFor(id))
+    }
+
+    // MARK: Resting (D67)
+
+    /// The name of the extension that includes this one and is on, if any: then this one rests.
+    func restingFor(_ id: String) -> String? {
+        guard let bigger = ExtensionOverlap.includedIn[id], let small = runtimes[id], let big = runtimes[bigger],
+              small.pin.origin?.firstParty == true, big.pin.origin?.firstParty == true, big.record.enabled else { return nil }
+        return (BuiltInExtensionWords.name(bigger)) ?? big.pin.name
+    }
+
+    /// After an extension came, went, or was switched: the ones it includes register their tools again, or rest.
+    private func reconsiderResting() {
+        for small in ExtensionOverlap.includedIn.keys where runtimes[small]?.record.enabled == true { registerTools(small) }
     }
 
     /// What installing `folder` would do. Never runs the extension.
@@ -294,6 +310,7 @@ public actor ExtensionHost {
             try await store.save(saved)
             installer.finish(committed)
             registerTools(id)
+            reconsiderResting()
             if enabled { touch(id) }
             Log.shared.info("extensions", "installed", ["id": id, "version": manifest.version])
             events.changed(.extensions)
@@ -335,6 +352,7 @@ public actor ExtensionHost {
         integrity.forget(id)
         await pageHistory.forget(extensionId: id)
         try await store.delete(id: id)
+        reconsiderResting()
         Log.shared.info("extensions", "uninstalled", ["id": id])
         events.changed(.extensions)
     }
@@ -363,6 +381,7 @@ public actor ExtensionHost {
             registry.unregister(owner: id)
             try await store.save(rt.record)
         }
+        reconsiderResting()
         events.changed(.extensions)
     }
 
@@ -468,7 +487,7 @@ public actor ExtensionHost {
     /// Watcher kinds of every enabled extension.
     public func watcherKinds() -> [ExtensionWatcherKind] {
         runtimes.keys.sorted().flatMap { id -> [ExtensionWatcherKind] in
-            guard let rt = runtimes[id], rt.record.enabled else { return [] }
+            guard let rt = runtimes[id], rt.record.enabled, restingFor(id) == nil else { return [] }
             return watcherKinds(of: rt)
         }
     }
@@ -515,7 +534,8 @@ public actor ExtensionHost {
                 return ExtensionPageInfo(extensionId: id, extensionName: rt.pin.name, page: name, title: words ?? p.title,
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
                                          history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
-                                         needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true)
+                                         needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true,
+                                         tagline: (rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.tagline(id) : nil) ?? rt.pin.tagline)
             }
         }
     }
@@ -1038,6 +1058,7 @@ public actor ExtensionHost {
         runtimes[id] = rt
         registry.unregister(owner: id)
         try? await store.save(rt.record)
+        reconsiderResting()
         Log.shared.warning("extensions", "turned off", ["id": id, "why": reason])
         if let notice { events.publish(.notice(notice)) }
         events.changed(.extensions)
@@ -1085,7 +1106,7 @@ public actor ExtensionHost {
 
     private func registerTools(_ id: String) {
         registry.unregister(owner: id)
-        guard let rt = runtimes[id], rt.record.enabled else { return }
+        guard let rt = runtimes[id], rt.record.enabled, restingFor(id) == nil else { return }
         for name in rt.pin.tools.keys.sorted() where rt.pin.pending[name] == nil && (rt.live?.contains(name) ?? true) {
             guard let def = rt.pin.tools[name], let local = localName(rt, name) else { continue }
             let registryName = ExtensionTool.registryName(short: shortName(rt), tool: local)

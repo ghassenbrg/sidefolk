@@ -10,13 +10,21 @@ struct ExtensionPageView: View {
     var model: ExtensionPageModel
 
     var body: some View {
-        PageScroll(maxWidth: 940) {
+        // A page of numbers and charts may use a wide window; a page of switches stays a readable column. Either is
+        // centred, so a wide window never leaves the page on one side.
+        PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
             header
             if let page = model.page {
-                if let summary = page.summary { SummaryBanner(summary: summary) }
+                if let summary = page.summary { SummaryBanner(summary: summary, model: model) }
                 if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
-                ForEach(Array(page.sections.enumerated()), id: \.offset) { _, section in
-                    SectionView(section: section, model: model)
+                ForEach(Array(page.runs.enumerated()), id: \.offset) { _, run in
+                    if run.count == 1, let section = run.first, section.isWide {
+                        SectionView(section: section, model: model)
+                    } else {
+                        SectionColumns(minWidth: 340, maxColumns: 3, spacing: Theme.Space.xl) {
+                            ForEach(Array(run.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
+                        }
+                    }
                 }
                 if !model.alerts.isEmpty { HeadsUps(model: model) }
             } else if let problem = model.problem {
@@ -40,13 +48,16 @@ struct ExtensionPageView: View {
     }
 
     private var subtitle: String {
-        let from = String(localized: "Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
-        guard let updated = model.updated else { return from }
+        // "Your Mac, added by Your Mac" says nothing: the extension is named only when the page has another name.
+        let from = model.info.extensionName == model.info.title ? nil
+            : String(localized: "Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
+        var parts = [from].compactMap { $0 }
         if let problem = model.problem, model.page != nil {
-            return "\(from) · \(problem)"
+            parts.append(problem)
+        } else if let updated = model.updated {
+            parts.append(String(localized: "updated \(updated.formatted(date: .omitted, time: .standard))", comment: "When an extension page last refreshed"))
         }
-        return "\(from) · " + String(localized: "updated \(updated.formatted(date: .omitted, time: .standard))",
-                                     comment: "When an extension page last refreshed")
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -102,6 +113,8 @@ extension ExtensionPage.Tone {
 
 private struct SummaryBanner: View {
     var summary: ExtensionPage.Summary
+    var model: ExtensionPageModel
+    @State private var pending: Bool?
 
     var body: some View {
         HStack(spacing: Theme.Space.m) {
@@ -114,11 +127,29 @@ private struct SummaryBanner: View {
                 }
             }
             Spacer(minLength: 0)
+            // The extension's main switch, as on its Today tile and sidebar row (D67).
+            if let control = summary.control {
+                switch control.kind {
+                case .toggle(let on):
+                    Toggle(isOn: Binding(get: { pending ?? on }, set: { new in
+                        pending = new
+                        Task {
+                            await model.run(control, on: new)
+                            pending = nil
+                        }
+                    })) { Text(verbatim: control.label) }
+                        .toggleStyle(.switch).labelsHidden()
+                        .disabled(pending != nil)
+                        .help(Text(verbatim: control.detail ?? control.label))
+                case .button:
+                    ControlButton(control: control, model: model)
+                }
+            }
         }
         .padding(Theme.Space.l)
         .background(summary.tone.soft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(summary.tone.color.opacity(0.35)))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: summary.control == nil ? .combine : .contain)
     }
 }
 
@@ -130,11 +161,12 @@ private struct SectionView: View {
     var model: ExtensionPageModel
 
     private enum Group: Identifiable {
-        case metrics([ExtensionPage.Block]), cards([ExtensionPage.Block]), notes([ExtensionPage.Note]), asks([ExtensionPage.Ask])
+        case gauges([ExtensionPage.Block]), stats([ExtensionPage.Block]), cards([ExtensionPage.Block]), notes([ExtensionPage.Note]), asks([ExtensionPage.Ask])
         case switches([ExtensionPage.Control]), buttons([ExtensionPage.Control])
         var id: String {
             switch self {
-            case .metrics(let b): "m\(b.count)\(b.hashValue)"
+            case .gauges(let b): "g\(b.count)\(b.hashValue)"
+            case .stats(let b): "m\(b.count)\(b.hashValue)"
             case .cards(let b): "c\(b.count)\(b.hashValue)"
             case .notes(let n): "n\(n.count)\(n.hashValue)"
             case .asks(let a): "a\(a.count)\(a.hashValue)"
@@ -155,14 +187,13 @@ private struct SectionView: View {
             }
             ForEach(groups) { group in
                 switch group {
-                case .metrics(let blocks):
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
-                              spacing: Theme.Space.m) {
+                // Rings in one row and numbers in the next, each row filling the width (D67).
+                case .gauges(let blocks), .stats(let blocks):
+                    CardGrid(minWidth: 150, maxColumns: 6, spacing: Theme.Space.m) {
                         ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
                     }
                 case .cards(let blocks):
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
-                              spacing: Theme.Space.m) {
+                    CardGrid(minWidth: 340, maxColumns: 3, spacing: Theme.Space.m) {
                         ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
                     }
                 case .notes(let notes):
@@ -206,8 +237,10 @@ private struct SectionView: View {
         var out: [Group] = []
         for block in section.blocks {
             switch block {
-            case .gauge, .stat:
-                if case .metrics(let b) = out.last { out[out.count - 1] = .metrics(b + [block]) } else { out.append(.metrics([block])) }
+            case .gauge:
+                if case .gauges(let b) = out.last { out[out.count - 1] = .gauges(b + [block]) } else { out.append(.gauges([block])) }
+            case .stat:
+                if case .stats(let b) = out.last { out[out.count - 1] = .stats(b + [block]) } else { out.append(.stats([block])) }
             case .chart, .bars, .facts:
                 if case .cards(let b) = out.last { out[out.count - 1] = .cards(b + [block]) } else { out.append(.cards([block])) }
             case .note(let n):
@@ -269,7 +302,7 @@ private struct GaugeView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(Theme.Space.m)
         .cardSurface()
         .accessibilityElement(children: .ignore)
@@ -292,7 +325,7 @@ private struct StatView: View {
                 Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(Theme.Space.m)
         .cardSurface()
         .accessibilityElement(children: .combine)
@@ -401,6 +434,7 @@ private struct ChartCard: View {
                 Text(verbatim: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             }
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .padding(Theme.Space.m)
         .cardSurface()
     }
@@ -444,7 +478,7 @@ private struct BarsCard: View {
                 .accessibilityElement(children: .combine)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(Theme.Space.m)
         .cardSurface()
     }
@@ -471,7 +505,7 @@ private struct FactsCard: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(Theme.Space.m)
         .cardSurface()
     }
@@ -643,41 +677,5 @@ private struct HeadsUps: View {
                 Text(verbatim: problem).font(Theme.Font.caption).foregroundStyle(Theme.danger)
             }
         }
-    }
-}
-
-/// Buttons in rows that wrap, in reading order.
-private struct FlowRow: Layout {
-    var spacing: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = arrange(width: proposal.width ?? .infinity, subviews)
-        return CGSize(width: proposal.width ?? rows.map(\.width).max() ?? 0, height: rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1)))
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var y = bounds.minY
-        for row in arrange(width: bounds.width, subviews) {
-            var x = bounds.minX
-            for i in row.items {
-                let size = subviews[i].sizeThatFits(.unspecified)
-                subviews[i].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-            y += row.height + spacing
-        }
-    }
-
-    private func arrange(width: CGFloat, _ subviews: Subviews) -> [(items: [Int], width: CGFloat, height: CGFloat)] {
-        var rows: [(items: [Int], width: CGFloat, height: CGFloat)] = []
-        for i in subviews.indices {
-            let size = subviews[i].sizeThatFits(.unspecified)
-            if let last = rows.last, last.width + spacing + size.width <= width {
-                rows[rows.count - 1] = (last.items + [i], last.width + spacing + size.width, max(last.height, size.height))
-            } else {
-                rows.append(([i], size.width, size.height))
-            }
-        }
-        return rows
     }
 }

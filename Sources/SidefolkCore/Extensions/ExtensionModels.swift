@@ -80,11 +80,14 @@ public struct ExtensionPageInfo: Sendable, Hashable, Identifiable {
     public var iconPath: String?
     /// Its extension pastes or keeps the person active, which needs Accessibility for Sidefolk (D63).
     public var needsAccessibility: Bool
+    /// The extension's one line, for its card in All Extensions (D67).
+    public var tagline: String?
 
     public var id: String { "\(extensionId)/\(page)" }
 
     public init(extensionId: String, extensionName: String, page: String, title: String, symbol: String? = nil, refresh: Int = 5,
-                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false) {
+                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false, tagline: String? = nil) {
+        self.tagline = tagline
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.page = page
@@ -235,6 +238,8 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var watchers: [ExtensionWatcherKind]
     /// Where the manifest's `tools` and the program's `tools/list` disagree (a typo, a forgotten entry).
     public var toolWarnings: [String] = []
+    /// The extension that does all this one does and is on, so this one rests (D67): its name.
+    public var restingFor: String? = nil
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

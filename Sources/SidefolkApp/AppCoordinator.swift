@@ -400,6 +400,14 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command == "home:today" { home.show(section: .now); return }
+        if command.hasPrefix("flip:") {
+            // flip:<extension id>/<page>:on|off: the page's main switch, as from its sidebar row (D67).
+            let rest = command.dropFirst(5)
+            guard let colon = rest.lastIndex(of: ":") else { return }
+            home.flip(page: String(rest[..<colon]), on: rest[rest.index(after: colon)...] == "on")
+            return
+        }
         if command == "about" { showAbout(); return }
         if command.hasPrefix("update:") { updater.dev(String(command.dropFirst(7))); return }
         if command.hasPrefix("language:") {

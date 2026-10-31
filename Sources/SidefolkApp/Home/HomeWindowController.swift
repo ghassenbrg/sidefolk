@@ -41,6 +41,20 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         present()
     }
 
+    #if DEBUG
+    /// `flip:<page id>:on|off` (dev.swift): a page's main switch as if clicked on its sidebar row (D67).
+    func flip(page id: String, on: Bool) {
+        Task {
+            await model.pages.reload()
+            guard let info = model.pages.info(id), let control = model.pages.summaries[id]?.control else {
+                Log.shared.warning("dev", "no main switch", ["page": id])
+                return
+            }
+            await model.pages.flip(info, control, on: on)
+        }
+    }
+    #endif
+
     /// Opens an extension's page (D62), by `extension id/page`.
     func show(page id: String) {
         Task {

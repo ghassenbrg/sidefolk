@@ -271,6 +271,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var location = LocationSettings()
     /// What other agents may do through `sidefolk mcp` (D52).
     public var agentAccess = AgentAccess()
+    /// Extensions' pages in Home as the person arranged them (D67).
+    public var homePages = HomePages()
 
     public init() {}
 
@@ -320,6 +322,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.updates, &updates)
         read(.location, &location)
         read(.agentAccess, &agentAccess)
+        read(.homePages, &homePages)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

@@ -1,5 +1,6 @@
 #!/usr/bin/env swift
-// Draws the icons of the extensions Sidefolk ships, as one-page square PDFs (vector, a few KB each):
+// Draws the icons of Sidefolk's own extensions, built in and in the add-on gallery (sidefolk-addons beside this
+// checkout, or $SIDEFOLK_ADDONS_REPO), as one-page square PDFs (vector, a few KB each):
 //   swift scripts/extension-icons.swift [--png <folder>] [extension folder names…]
 // Name the ones you changed: a PDF records when it was written, so redrawing the others would change
 // their files, and every Mac would reinstall them with the next app (BundledExtensions).
@@ -293,25 +294,55 @@ func keepAwake(_ c: CGContext) {
     }
 }
 
+/// Your Mac (System Vitals+, D67): a Mac's screen with a gauge on it, on Byte's indigo, so it never reads as the
+/// built-in System Vitals' mint pulse.
+func yourMac(_ c: CGContext) {
+    background(c, top: 0x8C97FF, bottom: 0x3F48C9)
+    let screen = CGPath(roundedRect: CGRect(x: 88, y: 168, width: 336, height: 244), cornerWidth: 36, cornerHeight: 36, transform: nil)
+    c.addPath(screen)
+    c.setFillColor(white)
+    c.fillPath()
+    fill(c, rgb(0xFFFFFF, 0.85)) { p in p.addRect(CGRect(x: 228, y: 116, width: 56, height: 56)) }
+    fill(c, white) { p in p.addRoundedRect(in: CGRect(x: 168, y: 92, width: 176, height: 34), cornerWidth: 17, cornerHeight: 17) }
+    let center = CGPoint(x: 256, y: 222), r: CGFloat = 104
+    stroke(c, rgb(0xDCE0FF), width: 30) { p in p.addArc(center: center, radius: r, startAngle: .pi, endAngle: 0, clockwise: true) }
+    stroke(c, rgb(0x2EBFC4), width: 30) { p in p.addArc(center: center, radius: r, startAngle: .pi, endAngle: .pi * 0.38, clockwise: true) }
+    let needle = CGFloat.pi * 0.62
+    stroke(c, navy, width: 18) { p in
+        p.move(to: center)
+        p.addLine(to: CGPoint(x: center.x + cos(needle) * 80, y: center.y + sin(needle) * 80))
+    }
+    dot(c, center, radius: 20, fill: navy)
+}
+
 let icons: [(folder: String, draw: (CGContext) -> Void)] = [
     ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk), ("weather", weather),
     ("calculator", calculator), ("currency", currency), ("playtime", playtime), ("images", images), ("pdf", pdf), ("qr-codes", qrCodes),
     ("archives", archives), ("dev-toolbox", devToolbox), ("feeds", feeds), ("clipboard", clipboard), ("keep-awake", keepAwake),
+    ("system-vitals-plus", yourMac),
 ]
+
+/// The extensions in the add-on gallery (D55) live in sidefolk-addons, beside this checkout or at $SIDEFOLK_ADDONS_REPO.
+let addons = ProcessInfo.processInfo.environment["SIDEFOLK_ADDONS_REPO"].map { URL(fileURLWithPath: $0, isDirectory: true) }
+    ?? root.deletingLastPathComponent().appendingPathComponent("sidefolk-addons", isDirectory: true)
+func folder(_ name: String) -> URL {
+    let own = root.appendingPathComponent("extensions/\(name)", isDirectory: true)
+    return FileManager.default.fileExists(atPath: own.path) ? own : addons.appendingPathComponent("extensions/\(name)", isDirectory: true)
+}
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 let pngIndex = arguments.firstIndex(of: "--png")
 let pngFolder = pngIndex.map { URL(fileURLWithPath: arguments[$0 + 1]) }
 let named = Set(arguments.enumerated().filter { pngIndex == nil || ($0.offset != pngIndex! && $0.offset != pngIndex! + 1) }.map(\.element))
 for icon in icons where named.isEmpty || named.contains(icon.folder) {
-    let url = root.appendingPathComponent("extensions/\(icon.folder)/icon.pdf")
+    let url = folder(icon.folder).appendingPathComponent("icon.pdf")
     var box = CGRect(x: 0, y: 0, width: side, height: side)
     let pdf = CGContext(url as CFURL, mediaBox: &box, [kCGPDFContextCreator: "Sidefolk extension-icons.swift"] as CFDictionary)!
     pdf.beginPDFPage(nil)
     icon.draw(pdf)
     pdf.endPDFPage()
     pdf.closePDF()
-    print("wrote extensions/\(icon.folder)/icon.pdf")
+    print("wrote \(url.path)")
     if let pngFolder, let image = NSImage(contentsOf: url) {
         try? FileManager.default.createDirectory(at: pngFolder, withIntermediateDirectories: true)
         let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 256, pixelsHigh: 256, bitsPerSample: 8, samplesPerPixel: 4,

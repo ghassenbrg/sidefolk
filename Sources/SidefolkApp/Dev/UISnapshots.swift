@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
 /// and dark, then exits:
-/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>]`. Lets agents (who can't see the screen) review
+/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>] [--only <part of a name>]`. Lets agents (who can't see the screen) review
 /// the UI, in any language (SnapshotLanguage) and in any theme (D58), read straight from its folder. Uses an in-memory database, a temp home and fixture services:
 /// no real data is read or touched. The sample notes, reminders and activity are content, so they stay
 /// English in every language.
@@ -150,10 +150,13 @@ enum UISnapshots {
             try await page("page-now", NowView(model: full.now), width: 870)
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
+            // A wide window and a narrow one: the page fills the width it has, centred (D67).
+            try await page("page-extension-mac-wide", ExtensionPageView(model: SampleExtensionPage.model()), width: 1560)
+            try await page("page-extension-mac-narrow", ExtensionPageView(model: SampleExtensionPage.model()), width: 640)
             // Switches and buttons on a page, and a palette (D63).
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 600)
-            full.now.widgets = [SampleExtensionPage.widget()]
+            full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
             try await page("page-now-extension-tile", NowView(model: full.now), width: 870)
             full.now.widgets = []
             // With Full access on, Now leads with it (D37).
@@ -711,6 +714,7 @@ enum UISnapshots {
 
     /// The whole window, titlebar and toolbar included.
     private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, to url: URL) async throws {
+        if let only, !url.lastPathComponent.contains(only) { return }
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         window.setContentSize(size)
         window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
@@ -723,6 +727,7 @@ enum UISnapshots {
 
     /// A view at its full height in a borderless window.
     private static func capturePage(_ view: some View, width: CGFloat, dark: Bool, to url: URL) async throws {
+        if let only, !url.lastPathComponent.contains(only) { return }
         let host = NSHostingView(rootView: view
             .environment(\.rendersFullPage, true)
             .frame(width: width)
@@ -740,6 +745,12 @@ enum UISnapshots {
         try write(host, to: url)
         window.orderOut(nil)
     }
+
+    /// `--only <text>`: only the pictures whose names contain it, for a quick look at one page.
+    private static let only: String? = {
+        let args = CommandLine.arguments
+        return args.firstIndex(of: "--only").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
+    }()
 
     private static func write(_ view: NSView, to url: URL) throws {
         view.layoutSubtreeIfNeeded()
