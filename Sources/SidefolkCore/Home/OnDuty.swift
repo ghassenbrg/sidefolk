@@ -24,8 +24,12 @@ public struct OnDuty: Sendable, Equatable {
     /// Running now: watches still checking (one having trouble keeps trying, so it counts), live values, repeating
     /// reminders and routines, live agent sessions and commands.
     public func running(extra: Int = 0) -> Int {
-        (watches + reports).filter { $0.state != .paused }.count + repeating.count + sessions.count + jobs.count + extra
+        runningWatches + runningReports + repeating.count + sessions.count + jobs.count + extra
     }
+
+    /// Watches and live values still checking (one having trouble keeps trying), each group's count as `running` counts it.
+    public var runningWatches: Int { watches.filter { $0.state != .paused }.count }
+    public var runningReports: Int { reports.filter { $0.state != .paused }.count }
 
     /// Paused by the person: listed, not counted.
     public var paused: Int { (watches + reports).filter { $0.state == .paused }.count }

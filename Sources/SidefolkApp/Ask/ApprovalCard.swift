@@ -76,13 +76,11 @@ struct ApprovalCard: View {
                     .buttonStyle(.sf(.secondary))
                     .keyboardShortcut(keys ? .cancelAction : nil)
                 if request.canAlways {
-                    Button(alwaysTitle) { decide(.allowAlways) }
+                    Button(alwaysTitle) { if armed { decide(.allowAlways) } }
                         .buttonStyle(.sf(.secondary))
-                        .disabled(!armed)
                 } else if request.canAllowForRequest {
-                    Button("Allow for this request") { decide(.allowForRequest) }
+                    Button("Allow for this request") { if armed { decide(.allowForRequest) } }
                         .buttonStyle(.sf(.secondary))
-                        .disabled(!armed)
                         .help("Until this request is done, Sidefolk does this again without asking. Offered only for steps that send nothing anywhere but to your AI.")
                 }
                 allowButton
@@ -97,9 +95,10 @@ struct ApprovalCard: View {
     }
 
     @ViewBuilder private var allowButton: some View {
-        let button = Button(allowTitle) { decide(.allowOnce) }
+        // Inert for its first moment, so a stray click or key can't approve it; it still looks like what it is (D84:
+        // a primary never looks disabled), the click is only not taken yet.
+        let button = Button(allowTitle) { if armed { decide(.allowOnce) } }
             .buttonStyle(.sf(request.risk == .high ? .destructive : .primary))
-            .disabled(!armed)
         // Keys approve only your own and Sidefolk's requests (Return, or ⌘⏎ for high risk). Other apps and
         // extensions always need a click: they may ask while you are typing somewhere else.
         if !keys {

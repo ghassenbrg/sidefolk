@@ -73,6 +73,10 @@ enum UISnapshots {
             try await homeShot("today")
             try await homeShot("today-wide", size: CGSize(width: 1600, height: 1000))
             try await homeShot("today-narrow", size: CGSize(width: 900, height: 720))
+            // On duty in the same state as Today, so their counts can be read side by side.
+            full.selection = .onDuty
+            try await homeShot("onduty")
+            full.selection = .now
             // The Say bar (⌘K) with words in it: what Return does, in plain words, with or without AI, and what they find.
             for (name, words) in [("say", "remind me tomorrow at 9 to send the deck to Acme"), ("say-ai", "plan my afternoon around the design review"),
                                   ("say-search", "invoice")] {
@@ -86,7 +90,7 @@ enum UISnapshots {
             full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
             try await homeShot("today-extensions", size: CGSize(width: 1280, height: 1000))
             full.selection = .onDuty
-            try await homeShot("onduty")
+            try await homeShot("onduty-extensions")
             ThemeStore.shared.setIcons(.colorful)
             full.selection = .now
             try await homeShot("today-colorful")

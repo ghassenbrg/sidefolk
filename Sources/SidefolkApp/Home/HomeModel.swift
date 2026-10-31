@@ -114,6 +114,10 @@ final class HomeModel {
 
     var companionName: String { services.runtime.settings.current.companionName }
 
+    /// What's on duty now, the one count Home shows everywhere (the sidebar, Today, On duty's title and line): `OnDuty`'s
+    /// running things plus extensions working in the background.
+    var onDutyRunning: Int { now.onDuty.running(extra: pages.backgroundCount) }
+
     /// Starts following changes (idempotent) and refreshes everything once.
     func start() {
         guard eventTask == nil else { return }

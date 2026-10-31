@@ -25,9 +25,9 @@ struct SkippedStepRow: View {
                 if let reason = ApprovalReason(step.request) { ApprovalReasonLine(reason: reason) }
                 outcome.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 ButtonRow(spacing: 6) {
-                    Button("Run it now", action: run)
+                    // Inert for its first moment, without looking disabled (D84): the click is only not taken yet.
+                    Button("Run it now") { if armed { run() } }
                         .buttonStyle(.sf(step.request.risk == .high ? .destructive : .primary))
-                        .disabled(!armed)
                     Button("Dismiss", action: dismiss).buttonStyle(.sf(.plain))
                 }
                 .padding(.top, 4)

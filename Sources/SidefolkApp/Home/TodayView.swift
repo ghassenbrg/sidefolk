@@ -63,7 +63,7 @@ struct TodayView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: Theme.Space.s) {
                 CountTile(count: now.needsYouCount, label: Text("need you", comment: "Today's count: things that wait on the person"), dot: Theme.waitGlow)
-                CountTile(count: now.onDuty.running(extra: model.pages.backgroundCount),
+                CountTile(count: model.onDutyRunning,
                           label: Text("on duty", comment: "Today's count: things working for the person"), dot: Theme.glow) {
                     model.selection = .onDuty
                 }

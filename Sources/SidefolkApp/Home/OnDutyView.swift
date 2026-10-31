@@ -14,7 +14,7 @@ struct OnDutyView: View {
     var body: some View {
         let duty = now.onDuty
         let background = model.pages.background
-        let running = duty.running(extra: background.count)
+        let running = model.onDutyRunning
         HomePage {
             hero(duty, running: running)
             if duty.isEmpty && background.isEmpty {
@@ -75,11 +75,12 @@ struct OnDutyView: View {
     /// "Scout watches 3, Byte follows 2 agents, Tempo repeats a reminder, and 2 live values are pinned."
     private func summary(_ duty: OnDuty) -> String {
         var parts: [String] = []
-        if !duty.watches.isEmpty { parts.append(String(localized: "Scout watches \(duty.watches.count)", comment: "On duty's line: how many watches")) }
+        // The same counts as the title (`OnDuty.running`): what's paused is listed below, not counted.
+        if duty.runningWatches > 0 { parts.append(String(localized: "Scout watches \(duty.runningWatches)", comment: "On duty's line: how many watches")) }
         let agents = duty.sessions.count + duty.jobs.count + model.pages.backgroundCount
         if agents > 0 { parts.append(String(localized: "Byte follows \(agents)", comment: "On duty's line: agent sessions, commands and extensions working")) }
         if !duty.repeating.isEmpty { parts.append(String(localized: "Tempo repeats \(duty.repeating.count)", comment: "On duty's line: repeating reminders and routines")) }
-        if !duty.reports.isEmpty { parts.append(String(localized: "\(duty.reports.count) live values", comment: "On duty's line: values told every few seconds or minutes")) }
+        if duty.runningReports > 0 { parts.append(String(localized: "\(duty.runningReports) live values", comment: "On duty's line: values told every few seconds or minutes")) }
         guard !parts.isEmpty else {
             return String(localized: "Ask \(model.companionName) to watch a page, a site or a file, repeat a reminder, or follow an agent.")
         }
@@ -98,7 +99,7 @@ struct OnDutyView: View {
     // MARK: The folks' cards
 
     private func scout(_ duty: OnDuty) -> some View {
-        FolkCard(folk: "scout", title: Text(verbatim: "Scout"), role: Text("Watching pages, sites and files"), count: duty.watches.count) {
+        FolkCard(folk: "scout", title: Text(verbatim: "Scout"), role: Text("Watching pages, sites and files"), count: duty.runningWatches) {
             ForEach(duty.watches) { w in WatchDutyRow(watcher: w, model: now) }
         }
     }
@@ -170,7 +171,7 @@ struct OnDutyView: View {
 
     private func liveValues(_ duty: OnDuty) -> some View {
         FolkCard(folk: nil, title: Text("Live values"), role: Text("Read every few seconds or minutes, beside \(model.companionName)"),
-                 count: duty.reports.count) {
+                 count: duty.runningReports) {
             ForEach(duty.reports) { r in
                 let reading = now.readings[r.id]
                 ListRow(title: Text(verbatim: reading?.label ?? r.title), meta: Text(verbatim: Describe.reportSchedule(r))) {
@@ -305,7 +306,7 @@ struct OnDutyGlance: View {
     var body: some View {
         let duty = now.onDuty
         VStack(alignment: .leading, spacing: Theme.Space.m) {
-            SectionHeader(title: Text("On duty"), count: duty.running(extra: model.pages.backgroundCount)) {
+            SectionHeader(title: Text("On duty"), count: model.onDutyRunning) {
                 Button { model.selection = .onDuty } label: { Label("Open", systemImage: "chevron.forward").labelStyle(.titleAndIcon) }
                     .buttonStyle(.sf(.quiet))
             }

@@ -73,6 +73,9 @@ struct HomePlacesTests {
         #expect(duty.running() == 6, "pricing, staging (still trying), CPU, two repeating, one session")
         #expect(duty.running(extra: 1) == 7)
         #expect(duty.paused == 1)
+        // Each group's own count adds up to the title's, so the line under it never disagrees.
+        #expect(duty.runningWatches == 2 && duty.runningReports == 1)
+        #expect(duty.runningWatches + duty.runningReports + duty.repeating.count + duty.sessions.count + duty.jobs.count == duty.running())
         #expect(duty.pausable.map(\.title).sorted() == ["CPU", "pricing", "staging"])
     }
 

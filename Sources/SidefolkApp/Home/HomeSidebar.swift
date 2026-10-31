@@ -105,7 +105,7 @@ struct HomeSidebar: View {
     @ViewBuilder private func placeRow(_ place: HomeSelection, index: Int) -> some View {
         let count: Int = switch place {
         case .now: now.needsYouCount
-        case .onDuty: now.onDuty.running(extra: model.pages.backgroundCount)
+        case .onDuty: model.onDutyRunning
         default: 0
         }
         let selected = (model.selection ?? .now).isPlace(place) && !(place == .collection("") && model.selection == .you)

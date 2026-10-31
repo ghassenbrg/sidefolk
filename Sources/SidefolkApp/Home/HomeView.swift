@@ -180,7 +180,7 @@ private struct PlaceTitle: View {
             return String(localized: "Next \(CalendarModel.listDays) days", comment: "Under the Calendar's title")
         case .onDuty:
             let duty = model.now.onDuty
-            let running = String(localized: "\(duty.running(extra: model.pages.backgroundCount)) running", comment: "Under On duty's title")
+            let running = String(localized: "\(model.onDutyRunning) running", comment: "Under On duty's title")
             return duty.paused > 0 ? running + " · " + String(localized: "\(duty.paused) paused", comment: "Under On duty's title") : running
         case .history:
             let span = switch model.history.span {
