@@ -287,6 +287,8 @@ struct GameButtonRow: View {
                     .frame(maxWidth: b.style == .plain ? nil : .infinity)
                 }
                 .buttonStyle(style)
+                // A plain button's words are measured first; the wide buttons beside it take the room left.
+                .layoutPriority(b.style == .plain ? 1 : 0)
                 .disabled(b.disabled || model.pending != nil)
             }
         }
@@ -375,6 +377,9 @@ struct GameResultView: View {
                     .scaleEffect(shown ? 1 : 0.3, anchor: .bottom)
                     .rotationEffect(.degrees(shown ? 0 : -12))
                     .opacity(shown ? 1 : 0)
+                    // Confetti bursts around the trophy, in its own row: never over the words or the buttons.
+                    .frame(maxWidth: .infinity, minHeight: 84)
+                    .background { Celebration().clipped() }
             } else {
                 Image(systemName: Self.symbol(verdict)).font(.system(size: 26, weight: .bold)).foregroundStyle(GameColors.color(verdict))
                     .opacity(shown ? 1 : 0)
@@ -394,8 +399,6 @@ struct GameResultView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(14)
-        // The confetti flies behind the words, so they stay readable.
-        .background { if verdict == .win { Celebration() } }
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surfaceSunken.opacity(0.6)))
         .onAppear {
             withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .spring(duration: 0.5, bounce: 0.45)) { shown = true }

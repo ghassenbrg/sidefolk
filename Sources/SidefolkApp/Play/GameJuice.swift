@@ -42,8 +42,9 @@ struct GamePressStyle: ButtonStyle {
     }
 }
 
-/// Confetti and stars bursting from the middle once, for the person's win: shown only with its verdict (D75), never
-/// with Reduce Motion, and in the snapshots drawn mid-flight.
+/// Confetti and stars bursting sideways from the middle once, for the person's win, inside the frame it is given (the
+/// trophy's row, so it never covers words or buttons): shown only with its verdict (D75), never with Reduce Motion, and
+/// in the snapshots drawn mid-flight.
 struct Celebration: View {
     var seed: Int = 7
     @State private var start = Date()
@@ -60,13 +61,13 @@ struct Celebration: View {
                 Canvas { context, size in
                     guard elapsed < 1.8 else { return }
                     var rng = SplitMix(seed: UInt64(seed))
-                    let origin = CGPoint(x: size.width / 2, y: size.height * 0.35)
+                    let origin = CGPoint(x: size.width / 2, y: size.height * 0.5)
                     for i in 0..<36 {
                         let angle = Double(rng.next() % 360) * .pi / 180
                         let speed = 120 + Double(rng.next() % 160)
                         let spin = Double(rng.next() % 720) - 360
                         let x = origin.x + cos(angle) * speed * elapsed
-                        let y = origin.y + sin(angle) * speed * elapsed * 0.8 + 260 * elapsed * elapsed
+                        let y = origin.y + sin(angle) * speed * elapsed * 0.3 + 40 * elapsed * elapsed
                         let fade = max(0, 1 - elapsed / 1.8)
                         var piece = context
                         piece.opacity = fade

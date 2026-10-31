@@ -151,7 +151,8 @@ struct SticksView: View {
                         .frame(width: 11, height: 70)
                         .offset(y: would ? -10 : lifting ? -30 : 0)
                         .opacity(gone ? (lifting ? 0.25 : 0) : 1)
-                        .frame(maxWidth: .infinity, minHeight: 80, alignment: .bottom)
+                        // Room above for the sticks just taken to rise and fade, inside the part, never over the prompt.
+                        .frame(maxWidth: .infinity, minHeight: 104, alignment: .bottom)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
