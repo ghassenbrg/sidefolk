@@ -80,17 +80,15 @@ public actor SessionTracker {
     /// Brings the session's host app (Terminal, iTerm2, VS Code…) to the front.
     public typealias OpenHandler = @Sendable (AgentSession) async -> Void
 
-    /// Work shorter than this ends with a gentle notice instead of an attention tap.
-    public static let longWork: TimeInterval = 120
-
     private let store: SessionStore
     private let attention: AttentionCenter
     private let events: EventBus
     private let clock: any Clock
     private var open: OpenHandler?
-    private var workingSince: [String: Date] = [:]
     /// The open "needs you" item per session, withdrawn as soon as the session moves on.
     private var needsYouItem: [String: String] = [:]
+    /// The last "finished" notice per session: replaced by the next, withdrawn when the session works again.
+    private var finishedItem: [String: String] = [:]
 
     public init(store: SessionStore, attention: AttentionCenter, events: EventBus, clock: any Clock = SystemClock(),
                 open: OpenHandler? = nil) {
@@ -131,16 +129,22 @@ public actor SessionTracker {
         switch e.event {
         case "UserPromptSubmit", "PreToolUse":
             if session.title == nil, let prompt = e.prompt, !prompt.isEmpty { session.title = prompt }
-            if before != .working { workingSince[session.id] = now }
+            await withdrawFinished(session.id)
             session.state = .working
             session.detail = e.toolName.map { String(localized: "Using \($0)") }
             session.endedAt = nil
             await withdrawNeedsYou(session.id)
+        case "Notification" where e.notificationType == "idle_prompt":
+            // "Waiting for your input" means it stopped, not that it asks for anything: a minute after a Stop
+            // (already covered), or without one when a turn began from its own background work (the founder's
+            // session showed "needs you" while only its teammates were busy). Finished, never needs you.
+            guard before == .working else { break }
+            session.state = .idle
+            session.detail = String(localized: "Finished")
+            await withdrawNeedsYou(session.id)
+            await tapFinished(session)
         case "Notification", "PermissionRequest":
             if e.notificationType == "auth_success" { break }
-            // Claude Code repeats "waiting for your input" a minute after it stopped; the
-            // finished tap already covered that.
-            if e.notificationType == "idle_prompt", before == .idle { break }
             session.state = .needsYou
             // Codex has no Notification hook: its PermissionRequest is the moment it waits for an approval.
             session.detail = e.message ?? e.toolName.map { String(localized: "Asks to use \($0)") } ?? String(localized: "Waiting for you")
@@ -150,13 +154,11 @@ public actor SessionTracker {
             session.state = .idle
             session.detail = String(localized: "Finished")
             await withdrawNeedsYou(session.id)
-            let started = workingSince.removeValue(forKey: session.id) ?? (before == .working ? session.startedAt : now)
-            await tapFinished(session, worked: now.timeIntervalSince(started))
+            await tapFinished(session)
         case "SessionEnd":
             session.state = .finished
             session.detail = String(localized: "Ended")
             session.endedAt = now
-            workingSince[session.id] = nil
             await withdrawNeedsYou(session.id)
         case "SessionStart":
             session.endedAt = nil
@@ -177,12 +179,22 @@ public actor SessionTracker {
         needsYouItem[s.id] = item.id
     }
 
-    private func tapFinished(_ s: AgentSession, worked: TimeInterval) async {
-        await attention.post(AttentionRequest(
-            level: worked >= Self.longWork ? .attention : .gentle, source: "session:\(s.id)",
+    /// Finishing is news, never a request: a gentle notice, kept out of Needs you whatever the work's length. A
+    /// session that resumes by itself (its own background work, the founder's case) stopped many times an hour and
+    /// each stop read as something to answer.
+    private func tapFinished(_ s: AgentSession) async {
+        await withdrawFinished(s.id)
+        let item = await attention.post(AttentionRequest(
+            level: .gentle, source: "session:\(s.id)",
             title: String(localized: "\(Self.agentName(s.agent)) finished in \(Self.project(s))", comment: "An agent, then its project: “Claude finished in sidefolk”"), body: s.title,
             actions: Self.actions,
             refKind: "session", refId: s.id))
+        finishedItem[s.id] = item.id
+    }
+
+    private func withdrawFinished(_ sessionId: String) async {
+        guard let id = finishedItem.removeValue(forKey: sessionId) else { return }
+        await attention.respond(id: id, actionId: nil)
     }
 
     private static var actions: [AttentionAction] {

@@ -13,8 +13,7 @@ struct UpdatesSettingsGroup: View {
             SettingsRow(title: Text("Sidefolk \(updates.running)", comment: "Settings › Updates: the version that runs"), detail: Text(status)) {
                 control
             }
-            SettingsRow(title: Text("New versions of Sidefolk", comment: "Settings › Updates: what Sidefolk does about its own updates"),
-                        detail: Text(appDetail)) {
+            SettingsRow(.appUpdates, detail: Text(appDetail)) {
                 Picker("New versions of Sidefolk", selection: Binding(get: { appMode }, set: { m in model.update { $0.updates.app = m } })) {
                     Text("Don't check", comment: "Settings › Updates › New versions of Sidefolk").tag(AppUpdateMode.off)
                     Text("Tell me", comment: "Settings › Updates › New versions of Sidefolk: ask before installing").tag(AppUpdateMode.notify)
@@ -24,17 +23,12 @@ struct UpdatesSettingsGroup: View {
                 .fixedSize()
                 .disabled(!updates.published)
             }
-            SettingsToggle(title: Text("Update add-ons automatically"),
-                           detail: Text("Companions, themes and extensions from the gallery. An extension whose new version would be allowed to do more always waits for you to look first."),
-                           isOn: Binding(get: { model.settings.updates.addons }, set: { on in model.update { $0.updates.addons = on } }))
+            SettingsToggle(.addonUpdates, isOn: Binding(get: { model.settings.updates.addons }, set: { on in model.update { $0.updates.addons = on } }))
             AddonUpdateRows(updates: updates)
-            SettingsRow(title: "Versions to offer", detail: "Snapshots are test builds that come out before a release. Add-ons follow this too.") {
-                Picker("Versions to offer", selection: Binding(get: { channel }, set: { c in model.update { $0.updates.channel = c } })) {
-                    Text("Releases").tag(UpdateChannel.releases)
-                    Text("Releases and snapshots").tag(UpdateChannel.snapshots)
-                }
-                .labelsHidden()
-                .fixedSize()
+            SettingsRow(.channel) {
+                SegmentedPicker("Versions to offer", selection: Binding(get: { channel }, set: { c in model.update { $0.updates.channel = c } }),
+                                segments: [.init(UpdateChannel.releases, Text("Releases")),
+                                           .init(UpdateChannel.snapshots, Text("Snapshots", comment: "Settings › Updates › Versions to offer: releases and snapshots"))])
             }
         }
     }
@@ -82,11 +76,11 @@ struct UpdatesSettingsGroup: View {
         case .available:
             Button("Update…") { updates.actions?.showUpdates() }.buttonStyle(.sf(.primary))
         case .ready:
-            Button("Restart Now") { updates.actions?.restartNow() }.buttonStyle(.sf(.secondary))
+            Button("Restart now") { updates.actions?.restartNow() }.buttonStyle(.sf(.secondary))
         case .downloading, .verifying, .installing, .restarting:
             Button("Show") { updates.actions?.showUpdates() }.buttonStyle(.sf(.secondary))
         default:
-            Button("Check Now") { updates.actions?.checkNow() }.buttonStyle(.sf(.secondary)).disabled(updates.busy)
+            Button("Check now") { updates.actions?.checkNow() }.buttonStyle(.sf(.secondary)).disabled(updates.busy)
         }
     }
 }
@@ -105,7 +99,7 @@ private struct AddonUpdateRows: View {
         }
         if !updates.addonWaiting.isEmpty {
             SettingsRow(title: Text(waitingTitle), detail: Text(verbatim: Wording.list(updates.addonWaiting.map(\.shownName)))) {
-                Button("Update All") { updates.addonActions?.updateAddonsNow() }.buttonStyle(.sf(.secondary)).disabled(updates.addonsBusy)
+                Button("Update all") { updates.addonActions?.updateAddonsNow() }.buttonStyle(.sf(.secondary)).disabled(updates.addonsBusy)
             }
         } else if let at = updates.addonsUpdatedAt, !updates.addonsUpdated.isEmpty {
             SettingsRow(title: Text("Add-ons updated \(TimeText.relative(at))", comment: "Settings › Updates: “Add-ons updated 2 hours ago”"),

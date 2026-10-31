@@ -122,7 +122,7 @@ public enum ThemeCheck {
         }
         for message in meaningProblems(t.colors) { problem(.error, message) }
 
-        // Type, shape, motion, material, nook and layouts: from the app's own sets, within its limits.
+        // Type, shape, motion, material, nook and icons: from the app's own sets, within its limits.
         func pick<E: RawRepresentable & CaseIterable>(_ text: String?, _ key: String, _ fallback: E, level: ThemeReport.Problem.Level = .warning) -> E
             where E.RawValue == String {
             guard let text else { return fallback }
@@ -167,88 +167,18 @@ public enum ThemeCheck {
 
     // MARK: Layout
 
-    /// The theme's layout (D64): a preset, then its own choices, each from what the app draws, within limits.
+    /// The icons a theme chose, by name or through a D64 preset; every other layout key is retired (D84) and passes
+    /// unread and unsaid, so older themes load without a warning.
     static func layout(_ section: ThemeFile.LayoutSection?, _ problem: (ThemeReport.Problem.Level, String) -> Void) -> ThemeLayout {
-        var layout = ThemeLayout.desk
-        guard let section else { return layout }
-        if let name = section.preset {
-            if let preset = ThemeLayout.presets[name] {
-                layout = preset
-            } else {
-                problem(.warning, "layout.preset “\(name)” isn't one of \(ThemeLayout.presets.keys.sorted().joined(separator: ", ")); desk is used.")
-            }
+        var layout = section?.preset.flatMap { ThemeLayout.presets[$0] } ?? .desk
+        guard let text = section?.icons else { return layout }
+        if let icons = ThemeLayout.Icons(rawValue: text) {
+            layout.icons = icons
+        } else {
+            let names = ThemeLayout.Icons.allCases.map(\.rawValue).joined(separator: ", ")
+            problem(.warning, "layout.icons “\(text)” isn't one of \(names); \(layout.icons.rawValue) is used.")
         }
-        func pick<E: RawRepresentable>(_ text: String?, _ key: String, _ drawn: [E], _ fallback: E) -> E where E.RawValue == String {
-            guard let text else { return fallback }
-            if let value = E(rawValue: text), drawn.contains(where: { $0.rawValue == value.rawValue }) { return value }
-            problem(.warning, "layout.\(key) “\(text)” isn't one of \(drawn.map(\.rawValue).joined(separator: ", ")); \(fallback.rawValue) is used.")
-            return fallback
-        }
-        layout.navigation = pick(section.navigation, "navigation", ThemeLayout.drawnNavigation, layout.navigation)
-        layout.nook = pick(section.nook, "nook", ThemeLayout.drawnNook, layout.nook)
-        layout.icons = pick(section.icons, "icons", ThemeLayout.drawnIcons, layout.icons)
-        layout.activity = pick(section.activity, "activity", ThemeLayout.drawnActivity, layout.activity)
-        layout.editor = pick(section.editor, "editor", ThemeLayout.drawnEditor, layout.editor)
-        guard let rows = section.today else { return layout }
-
-        typealias Block = ThemeLayout.Block
-        var seen: Set<Block.Kind> = []
-        var today: [[ThemeLayout.Column]] = []
-        if rows.count > ThemeLayout.maxRows { problem(.warning, "layout.today has \(rows.count) rows; the first \(ThemeLayout.maxRows) are used.") }
-        for row in rows.prefix(ThemeLayout.maxRows) {
-            if row.count > ThemeLayout.maxColumns {
-                problem(.warning, "A row of layout.today has \(row.count) columns; the first \(ThemeLayout.maxColumns) are used.")
-            }
-            var columns: [ThemeLayout.Column] = []
-            for column in row.prefix(ThemeLayout.maxColumns) {
-                var blocks: [Block] = []
-                for name in column.blocks {
-                    guard let block = Self.block(name, problem) else { continue }
-                    guard seen.insert(block.kind).inserted else {
-                        problem(.warning, "layout.today has \(block.kind.rawValue) twice; the second is left out.")
-                        continue
-                    }
-                    blocks.append(block)
-                }
-                guard !blocks.isEmpty else { continue }
-                var width = column.width ?? 1
-                if blocks.contains(where: { $0.kind == .companion && $0.style == "stage" }) { seen.insert(.queue) }
-                if !(0.5...4).contains(width) {
-                    problem(.warning, "A column's width \(width) is kept between 0.5 and 4.")
-                    width = min(max(width, 0.5), 4)
-                }
-                columns.append(ThemeLayout.Column(width: width, page: column.page ?? false, blocks))
-            }
-            if !columns.isEmpty { today.append(columns) }
-        }
-        if today.isEmpty {
-            problem(.warning, "layout.today has no block Sidefolk can draw; \(section.preset ?? "desk")'s is used.")
-            return layout
-        }
-        // What needs you must always have a place: it holds Guard's questions.
-        if !seen.contains(.queue) {
-            problem(.warning, "layout.today has no queue, so what needs you would have nowhere to go; it's added at the top.")
-            today.insert([ThemeLayout.Column([Block(.queue)])], at: seen.contains(.header) ? 1 : 0)
-        }
-        layout.today = today
         return layout
-    }
-
-    /// "kind" or "kind:style", from what the app draws.
-    static func block(_ name: String, _ problem: (ThemeReport.Problem.Level, String) -> Void) -> ThemeLayout.Block? {
-        if name.hasPrefix("extension:") {
-            problem(.warning, "“\(name)”: blocks from extensions aren't supported yet; it's left out.")
-            return nil
-        }
-        let parts = name.split(separator: ":", maxSplits: 1).map(String.init)
-        guard let kind = parts.first.flatMap(ThemeLayout.Block.Kind.init(rawValue:)), ThemeLayout.Block.Kind.available.contains(kind) else {
-            problem(.warning, "“\(name)” isn't one of \(ThemeLayout.Block.Kind.available.map(\.rawValue).joined(separator: ", ")); it's left out.")
-            return nil
-        }
-        guard parts.count == 2 else { return ThemeLayout.Block(kind) }
-        if kind.styles.contains(parts[1]) { return ThemeLayout.Block(kind, parts[1]) }
-        problem(.warning, "“\(name)”: \(kind.rawValue) comes as \(kind.styles.joined(separator: ", ")); \(kind.styles[0]) is used.")
-        return ThemeLayout.Block(kind)
     }
 
     // MARK: Contrast

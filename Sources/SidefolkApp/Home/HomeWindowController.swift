@@ -2,11 +2,11 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Owns the Home window (Now, Conversations, Notebook, Activity). Create one and keep it; `show` reuses the window.
+/// Owns the Home window (Today, Calendar, Notebook, On duty, History, the Gallery). Create one and keep it; `show` reuses the window.
 @MainActor
 final class HomeWindowController: NSObject, NSWindowDelegate {
     enum Section {
-        case now, calendar, notebook, activity
+        case now, calendar, notebook, onDuty, history, gallery
     }
 
     private let model: HomeModel
@@ -23,14 +23,16 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         switch section {
         case .now: model.selection = .now
         case .calendar: model.selection = .calendar
-        case .activity: model.selection = .activity
+        case .onDuty: model.selection = .onDuty
+        case .history: model.selection = .history
+        case .gallery: model.selection = .gallery
         case .notebook: Task { await model.showNotebook() }
         case nil: break
         }
         present()
     }
 
-    /// Opens Conversations at `thread`, or where it was (D45).
+    /// Opens History with the conversation `thread` open in place (D45, D84).
     func show(conversation thread: String?) {
         Task { await model.showConversation(thread) }
         present()
@@ -67,23 +69,46 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
 
     func close() { window?.performClose(nil) }
 
-    /// Activity, with this row's details open.
+    /// History, with this Activity row's record open (D84).
     func show(activityRow id: Int64?) {
-        model.selection = .activity
-        model.activity.openId = id
+        model.selection = .history
+        Task {
+            await model.history.reload()
+            model.history.open(activityRow: id)
+        }
         present()
     }
 
     #if DEBUG
     /// Dev channel: the Calendar in a mode (D66), at a day when given ("calendar:week:2026-11-03").
     func showCalendar(_ mode: String?, day: Date?) {
-        if let mode = mode.flatMap(CalendarModel.Mode.init(rawValue:)) { model.calendar.mode = mode }
+        if let mode = mode.flatMap(CalendarModel.Mode.init(word:)) { model.calendar.mode = mode }
         if let day { model.calendar.jump(to: day) }
         model.selection = .calendar
         present()
     }
 
-    /// Dev channel: the one bar's search (D58).
+    /// Dev channel: `home:<place>` (today, calendar, notebook, onduty, history, you, trash, gallery), and History's filter
+    /// as `home:history:agents` (D84).
+    func showPlace(_ place: String) {
+        let parts = place.split(separator: ":").map(String.init)
+        switch parts.first {
+        case "today": model.selection = .now
+        case "calendar": model.selection = .calendar
+        case "notebook": Task { await model.showNotebook() }
+        case "onduty": model.selection = .onDuty
+        case "history":
+            model.selection = .history
+            if let filter = parts.dropFirst().first.flatMap(HistoryFilter.init(rawValue:)) { model.history.filter = filter }
+        case "you": model.selection = .you
+        case "trash": model.selection = .trash
+        case "gallery": model.selection = .gallery
+        default: Log.shared.warning("dev", "no such place", ["place": place])
+        }
+        present()
+    }
+
+    /// Dev channel: the Say bar's words (D58, D84).
     func showSearch(_ query: String) {
         model.find.query = query
         Task { await model.find.searchNow() }

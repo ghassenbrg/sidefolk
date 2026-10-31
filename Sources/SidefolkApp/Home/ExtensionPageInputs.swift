@@ -126,7 +126,7 @@ private struct PageFieldRow: View {
             PageRowLabel(label: field.label, detail: field.detail)
             HStack(spacing: Theme.Space.s) {
                 TextField(text: $text) { Text(ext: field.placeholder ?? field.label) }
-                    .textFieldStyle(.roundedBorder)
+                    .lanternField()
                     .onSubmit(send)
                 Button(action: send) { Text(ext: field.button) }
                     .buttonStyle(.sf(.secondary))

@@ -830,7 +830,7 @@ public actor ExtensionHost {
         guard let rt = runtimes[id] else { throw ToolError.unavailable(String(localized: "That extension is no longer installed.")) }
         if rt.pin.pending[remote] != nil || rt.pin.tools[remote] == nil {
             throw UserFacingError("“\(title)” changed since you approved it, so it is on hold.",
-                                  recovery: "Review it in Settings › Extensions › \(rt.pin.name).")
+                                  recovery: "Review it in Settings › Add-ons › \(rt.pin.name).")
         }
         if let live = rt.live, !live.contains(remote) {
             throw UserFacingError("\(rt.pin.name) no longer offers “\(title)”.")
@@ -966,7 +966,7 @@ public actor ExtensionHost {
         guard let problem = integrity.verify(id: id, folder: installer.installedFolder(id), pins: rt.pin.files) else { return }
         await disable(id, reason: String(localized: "Its files changed since you installed it (\(problem)). Install it again to use it."),
                       notice: String(localized: "\(rt.pin.name) was changed on disk, so I turned it off. Install it again to use it."))
-        throw UserFacingError("\(rt.pin.name) was turned off because its files changed.", recovery: "Install it again from Settings › Extensions.")
+        throw UserFacingError("\(rt.pin.name) was turned off because its files changed.", recovery: "Install it again from Settings › Add-ons.")
     }
 
     /// - Parameter folders: folders Guard allowed for one call, added to what the manifest grants.
@@ -1112,8 +1112,8 @@ public actor ExtensionHost {
             Log.shared.warning("extensions", "changed tools", ["id": id, "tools": quarantined.joined(separator: ",")])
             let changed = Wording.list(titles)
             events.publish(.notice(quarantined.count == 1
-                ? String(localized: "\(rt.pin.name) changed \(changed). I put it on hold until you review the change in Settings › Extensions.")
-                : String(localized: "\(rt.pin.name) changed \(changed). I put them on hold until you review the change in Settings › Extensions.")))
+                ? String(localized: "\(rt.pin.name) changed \(changed). I put it on hold until you review the change in Settings › Add-ons.")
+                : String(localized: "\(rt.pin.name) changed \(changed). I put them on hold until you review the change in Settings › Add-ons.")))
             events.changed(.extensions)
         }
     }
@@ -1218,7 +1218,7 @@ public actor ExtensionHost {
         var why = String(localized: "It stopped unexpectedly too often (\(crashes.count)× in \(minutes) min), so Sidefolk turned it off.")
         if let reason { why += " " + String(localized: "Last time: \(reason)") }
         await disable(id, reason: why,
-                      notice: String(localized: "\(rt.pin.name) kept crashing, so I turned it off. You can turn it back on in Settings › Extensions."))
+                      notice: String(localized: "\(rt.pin.name) kept crashing, so I turned it off. You can turn it back on in Settings › Add-ons."))
     }
 
     private func disable(_ id: String, reason: String, notice: String?) async {

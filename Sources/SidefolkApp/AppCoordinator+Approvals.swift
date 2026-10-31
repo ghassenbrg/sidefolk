@@ -5,11 +5,6 @@ import SidefolkCore
 /// what was done without asking.
 extension AppCoordinator {
     func installModeSwitch() {
-        statusItem.onMode = { [weak self] mode in self?.setMode(mode) }
-        statusItem.onFullAccess = { [weak self] in
-            self?.askPanel.hide()
-            self?.settingsWindow.confirmFullAccess()
-        }
         refreshMode()
     }
 
@@ -17,9 +12,10 @@ extension AppCoordinator {
     func refreshMode() {
         let permissions = runtime.permissions
         Task {
-            let mode = (try? await permissions.policy())?.mode ?? .askOncePerKind
-            ask.mode = mode
-            statusItem.setMode(mode)
+            let policy = (try? await permissions.policy()) ?? GuardPolicy()
+            ask.mode = policy.mode
+            statusItem.setMode(policy.mode, ends: policy.fullAccessEnds)
+            scheduleFullAccessEnd(policy)
         }
     }
 
@@ -29,7 +25,7 @@ extension AppCoordinator {
         let permissions = runtime.permissions
         let events = runtime.events
         Task {
-            try? await permissions.updatePolicy { $0.mode = mode }
+            try? await permissions.updatePolicy { $0.choose(mode) }
             events.changed(.permissions)
         }
     }
@@ -44,15 +40,7 @@ extension AppCoordinator {
                                  title: String(localized: "Done without asking: \(activity.summary)",
                                                comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
                                  body: mode.title, refKind: "unasked")
-        bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
-    }
-
-    /// The menu bar's Now line for steps skipped while nobody answered.
-    func skippedNowEntry() async -> StatusItemController.NowEntry? {
-        let steps = await runtime.executor.skipped.list()
-        guard let newest = steps.first else { return nil }
-        return .init(title: String(localized: "Skipped while you were away (\(steps.count))"), detail: newest.request.summary.clipped(30),
-                     symbol: "clock.badge.xmark", action: { [weak self] in self?.openNow() })
+        sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
     }
 
     /// Home › Now, where skipped steps wait with "Run it now".

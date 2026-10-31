@@ -18,7 +18,7 @@ public enum PlaceNeeded {
 
     static var result: ToolResult {
         ToolResult(text: "No place was given and the user's location isn't known, so nothing was started. Ask which place; they can "
-                   + "also set their location in Settings › Privacy & Permissions › Your location (a button for it is shown to them).",
+                   + "also set their location in Settings › Trust › Your location (a button for it is shown to them).",
                    card: card, isError: true)
     }
 }

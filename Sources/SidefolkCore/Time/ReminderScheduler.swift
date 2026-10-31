@@ -364,18 +364,18 @@ public actor ReminderScheduler {
         return nil
     }
 
-    /// Done, 10 min, Tomorrow; a reminder that comes back within the hour offers Stop instead of Tomorrow, and drops
-    /// "10 min" when it repeats that often anyway. One that belongs to a note or task (D49) offers Open as its third
+    /// Done, In 10 min, Tomorrow; a reminder that comes back within the hour offers Stop instead of Tomorrow, and drops
+    /// "In 10 min" when it repeats that often anyway. One that belongs to a note or task (D49) offers Open as its third
     /// button (a bubble shows three), and for an open task its first button marks the task done.
     static func actions(for r: Reminder, item: NotebookItem? = nil) -> [AttentionAction] {
         var actions = [AttentionAction(id: ActionID.done, title: String(localized: "Done"), isPrimary: true)]
         if let rule = r.recurrence, rule.frequency.isElapsed {
             if rule.frequency == .hourly || rule.interval > 10 {
-                actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
+                actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "In 10 min", comment: "A reminder card's snooze button: remind again in ten minutes")))
             }
             actions.append(AttentionAction(id: ActionID.stop, title: String(localized: "Stop repeating")))
         } else {
-            actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "10 min")))
+            actions.append(AttentionAction(id: ActionID.snooze10, title: String(localized: "In 10 min", comment: "A reminder card's snooze button: remind again in ten minutes")))
             actions.append(AttentionAction(id: ActionID.tomorrow, title: String(localized: "Tomorrow")))
         }
         guard let item else { return actions }

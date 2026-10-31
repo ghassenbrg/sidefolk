@@ -8,24 +8,30 @@ struct UpdateView: View {
     var model: UpdateModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.m) {
-            HStack(alignment: .top, spacing: Theme.Space.m) {
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                    Text(headline).font(Theme.Font.heading).foregroundStyle(Theme.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(subline).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Theme.Space.l) {
+                HStack(alignment: .center, spacing: Theme.Space.l) {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 64, height: 64).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                        Text(headline).font(Theme.Font.title1).foregroundStyle(Theme.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityAddTraits(.isHeader)
+                        Text(subline).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                content
             }
-            content
-            Spacer(minLength: 0)
+            .padding(.horizontal, Theme.Space.xl)
+            .padding(.top, Theme.Space.xxl)
+            Spacer(minLength: Theme.Space.m)
             buttons
+                .padding(.horizontal, Theme.Space.xl)
+                .padding(.bottom, Theme.Space.l)
         }
-        .padding(Theme.Space.xl)
-        .frame(width: 460, height: 380, alignment: .topLeading)
-        .background(Theme.surface)
+        .frame(width: 560, height: 460, alignment: .topLeading)
+        .background(Theme.surfaceSunken)
     }
 
     private var headline: String {
@@ -69,6 +75,11 @@ struct UpdateView: View {
             notes(offer)
         case .available(let offer):
             notes(offer)
+            if model.plan == .replace {
+                Label { Text("Sidefolk restarts and opens again. Your notes, reminders and settings stay.", comment: "The update window, before installing") }
+                    icon: { Image(systemName: "info.circle") }
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
             if case .download(let reason) = model.plan {
                 Label { Text(verbatim: Wording.sentences([reason.explanation, String(localized: "Its disk image goes to your Downloads folder.")])) }
                     icon: { Image(systemName: "arrow.down.circle") }
@@ -86,11 +97,21 @@ struct UpdateView: View {
     }
 
     private func notes(_ offer: UpdateOffer) -> some View {
-        ScrollView {
-            ReleaseNotesView(notes: offer.notes).padding(Theme.Space.m)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("What's new", comment: "The update window: the release notes' heading").font(Theme.Font.headline).foregroundStyle(Theme.ink)
+                Spacer()
+                Button { model.actions?.openPage(offer) } label: { Text("All changes", comment: "The update window: opens the release page") }
+                    .buttonStyle(.sf(.plain))
+            }
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.top, Theme.Space.m)
+            ScrollView {
+                ReleaseNotesView(notes: offer.notes).padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s)
+            }
+            .frame(maxHeight: 170)
         }
-        .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
-        .frame(maxHeight: 170)
+        .cardSurface()
     }
 
     @ViewBuilder private var buttons: some View {
@@ -98,15 +119,15 @@ struct UpdateView: View {
         HStack(spacing: Theme.Space.s) {
             switch model.phase {
             case .available(let offer):
-                Button("Skip This Version") { actions?.skip(offer) }.buttonStyle(.sf(.plain))
+                Button("Skip this version") { actions?.skip(offer) }.buttonStyle(.sf(.plain))
                 Spacer()
-                Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
+                Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary, size: .large)).keyboardShortcut(.cancelAction)
                 Button(model.plan == .replace ? "Update and Restart" : "Download") { actions?.install(offer) }
-                    .buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
+                    .buttonStyle(.sf(.primary, size: .large)).keyboardShortcut(.defaultAction)
             case .ready:
                 Spacer()
-                Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
-                Button("Restart Now") { actions?.restartNow() }.buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
+                Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary, size: .large)).keyboardShortcut(.cancelAction)
+                Button("Restart now") { actions?.restartNow() }.buttonStyle(.sf(.primary, size: .large)).keyboardShortcut(.defaultAction)
             case .checking, .downloading, .verifying:
                 Spacer()
                 Button("Cancel") { actions?.cancel() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
@@ -120,10 +141,10 @@ struct UpdateView: View {
                 Spacer()
                 Button("OK") { actions?.later() }.buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
             case .failed(let offer, _):
-                if let offer { Button("Release Page") { actions?.openPage(offer) }.buttonStyle(.sf(.plain)) }
+                if let offer { Button("Release page") { actions?.openPage(offer) }.buttonStyle(.sf(.plain)) }
                 Spacer()
                 Button("Close") { actions?.later() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
-                Button("Try Again") { if let offer { actions?.install(offer) } else { actions?.checkNow() } }
+                Button("Try again") { if let offer { actions?.install(offer) } else { actions?.checkNow() } }
                     .buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
             }
         }
@@ -132,7 +153,7 @@ struct UpdateView: View {
 
 /// A release's notes as GitHub shows the simple Markdown they're written in: headings, bullet lists and inline
 /// marks (bold, code, links). Anything fancier reads as plain lines.
-private struct ReleaseNotesView: View {
+struct ReleaseNotesView: View {
     var notes: String
 
     var body: some View {
@@ -158,6 +179,14 @@ private struct ReleaseNotesView: View {
         .foregroundStyle(Theme.ink)
         .frame(maxWidth: .infinity, alignment: .leading)
         .textSelection(.enabled)
+    }
+
+    /// The first few bullet lines of the notes, for a short "what's new" (Settings › General, the update window).
+    static func highlights(_ notes: String, limit: Int) -> [AttributedString] {
+        notes.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix("- ") || $0.hasPrefix("* ") }
+            .prefix(limit)
+            .map { inline(String($0.dropFirst(2))) }
     }
 
     static func inline(_ text: String) -> AttributedString {
@@ -208,7 +237,7 @@ final class UpdateWindowController: NSObject, NSWindowDelegate {
         window.title = String(localized: "Software Update")
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
-        window.backgroundColor = NSColor(Theme.surface)
+        window.backgroundColor = NSColor(Theme.surfaceSunken)
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
     }

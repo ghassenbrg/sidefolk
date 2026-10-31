@@ -30,7 +30,7 @@ import Testing
         #expect(item.level == .attention)
         #expect(item.body?.hasPrefix("You asked") == true)
         #expect(item.actions.map(\.id) == ["done", "snooze10", "tomorrow"])
-        #expect(item.actions.map(\.title) == ["Done", "10 min", "Tomorrow"])
+        #expect(item.actions.map(\.title) == ["Done", "In 10 min", "Tomorrow"])
         #expect(item.actions.first?.isPrimary == true)
 
         let fired = try #require(await t.reminder(r.id))

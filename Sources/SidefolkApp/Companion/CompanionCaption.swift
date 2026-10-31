@@ -121,16 +121,10 @@ struct CaptionView: View {
         // The words on top; the objects nearest the companion, whom they fly up from; a held prop right above its head.
         VStack(spacing: 6) {
             if !model.text.isEmpty {
-                Text(verbatim: model.text)
-                    .font(Theme.Font.bubbleTitle)
-                    .foregroundStyle(Theme.ink)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.surface)
-                            .strokeBorder(Theme.line, lineWidth: 1)
-                            .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
-                    }
+                // A whisper of the Sidecard (D84): the same glass as everything else beside the companion; its tail
+                // only when nothing stands between it and the head.
+                Whisper(text: Text(verbatim: model.text), tail: model.stage == nil && model.prop == nil ? SidecardTail(edge: .bottom) : nil)
+                    .padding(.horizontal, 12).padding(.bottom, 14)
                     .accessibilityHidden(true)
             }
             if let effect = model.effect { EffectMark(effect: effect.0, start: effect.1).accessibilityHidden(true) }

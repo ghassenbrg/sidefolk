@@ -114,7 +114,7 @@ import Testing
         let error = await #expect(throws: UserFacingError.self) { try await model.respond(to: Self.simpleRequest) }
 
         #expect(error?.message == "Your Anthropic API key was rejected. Nothing was changed.")
-        #expect(error?.recovery == "Check the key in Settings › AI, or paste a new one.")
+        #expect(error?.recovery == "Check the key in Settings › Brain, or paste a new one.")
         #expect(error?.changedNothing == true)
         #expect(error?.detail?.contains("authentication_error") == true)
         #expect(transport.requests.count == 1)
@@ -168,7 +168,7 @@ import Testing
         let error = await #expect(throws: UserFacingError.self) { try await model.respond(to: Self.simpleRequest) }
 
         #expect(error?.message == "I couldn't reach Anthropic. Nothing was changed.")
-        #expect(error?.recovery == "Check your internet connection, or switch provider in Settings › AI.")
+        #expect(error?.recovery == "Check your internet connection, or switch provider in Settings › Brain.")
     }
 
     @Test func contextTooLong() async throws {

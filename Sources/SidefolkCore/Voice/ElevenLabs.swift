@@ -210,20 +210,20 @@ public struct ElevenLabs: Sendable {
         switch status {
         case 401:
             return UserFacingError("ElevenLabs didn't accept your key. Nothing was said.",
-                                   recovery: "Check the key in Settings › Voice.", detail: info)
+                                   recovery: "Check the key in Settings › Brain.", detail: info)
         case 402:
             return UserFacingError("Your ElevenLabs plan is out of characters. Nothing was said.",
-                                   recovery: "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Voice.", detail: info)
+                                   recovery: "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Brain.", detail: info)
         case 429:
             return UserFacingError("ElevenLabs is busy right now. Nothing was said.", recovery: "Try again in a moment.", detail: info)
         default:
             if code.contains("quota") {
                 return UserFacingError("Your ElevenLabs plan is out of characters. Nothing was said.",
-                                       recovery: "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Voice.", detail: info)
+                                       recovery: "Add characters on elevenlabs.io, or choose Apple's voice in Settings › Brain.", detail: info)
             }
             if code.contains("voice_not_found") || status == 404 {
                 return UserFacingError("ElevenLabs couldn't find that voice. Nothing was said.",
-                                       recovery: "Pick another voice in Settings › Voice.", detail: info)
+                                       recovery: "Pick another voice in Settings › Brain.", detail: info)
             }
             return UserFacingError("ElevenLabs couldn't make the voice. Nothing was said.", recovery: "Try again in a moment.", detail: info)
         }

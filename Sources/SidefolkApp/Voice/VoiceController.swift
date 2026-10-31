@@ -202,7 +202,7 @@ final class VoiceController {
         } catch Recognition.Failure.needsDownload {
             await download(language)
         } catch Recognition.Failure.unsupported {
-            fail(UserFacingError("I can't listen in that language on this Mac. Nothing was sent.", recovery: "Pick another one in Settings › Voice."))
+            fail(UserFacingError("I can't listen in that language on this Mac. Nothing was sent.", recovery: "Pick another one in Settings › Brain."))
         } catch Recognition.Failure.notAllowed {
             fail(UserFacingError("Speech recognition isn't allowed for Sidefolk. Nothing was sent.",
                                  recovery: "Allow it in System Settings › Privacy & Security › Speech Recognition."))
@@ -340,7 +340,7 @@ final class VoiceController {
 
     func say(_ line: String, with settings: VoiceSettings, done: (@MainActor (Error?) -> Void)? = nil) {
         guard let engine = engine(for: settings) else {
-            done?(UserFacingError("Spoken replies need your ElevenLabs key and a voice.", recovery: "Add them in Settings › Voice."))
+            done?(UserFacingError("Spoken replies need your ElevenLabs key and a voice.", recovery: "Add them in Settings › Brain."))
             return
         }
         let voice = settings.engine == .apple ? settings.appleVoice : settings.elevenLabsVoice

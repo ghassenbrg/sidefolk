@@ -51,25 +51,25 @@ public struct BrainFactory: Sendable {
             switch provider.kind {
             case .none:
                 throw UserFacingError("That needs AI, which isn't set up yet.",
-                                      recovery: "Choose Claude Code, Codex, an API key or Ollama in Settings › AI.")
+                                      recovery: "Choose Claude Code, Codex, an API key or Ollama in Settings › Brain.")
 
             case .claudeCode:
                 guard let backend = claudeCodeBackend?(provider) else {
                     throw UserFacingError("Claude Code isn't ready to help yet. Nothing was changed.",
-                                          recovery: "Check Claude Code in Settings › AI, or choose another provider.")
+                                          recovery: "Check Claude Code in Settings › Brain, or choose another provider.")
                 }
                 return BrainChoice(backend: backend, model: name, effort: requested)
 
             case .codex:
                 guard let backend = codexBackend?(provider) else {
                     throw UserFacingError("Codex isn't ready to help yet. Nothing was changed.",
-                                          recovery: "Check Codex in Settings › AI, or choose another provider.")
+                                          recovery: "Check Codex in Settings › Brain, or choose another provider.")
                 }
                 return BrainChoice(backend: backend, model: name, effort: requested)
 
             case .anthropic:
                 guard let key = try keys.key(account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost) else {
-                    throw UserFacingError("I need your Anthropic API key for that.", recovery: "Add it in Settings › AI.")
+                    throw UserFacingError("I need your Anthropic API key for that.", recovery: "Add it in Settings › Brain.")
                 }
                 let model = AnthropicModel(apiKey: key, transport: transport, retry: retry)
                 return BrainChoice(backend: LoopBackend(model: model, checkModel: name, limits: loopLimits, clock: clock), model: name,
@@ -81,7 +81,7 @@ public struct BrainFactory: Sendable {
                 let key = try keys.key(for: preset, host: ProviderKeys.host(of: url))
                 if preset.keyNeed == .required, key == nil {
                     throw UserFacingError("I need your \(preset.name) API key for that. Nothing was changed.",
-                                          recovery: "Add it in Settings › AI.")
+                                          recovery: "Add it in Settings › Brain.")
                 }
                 let model = try OpenAICompatibleModel(baseURL: provider.resolvedBaseURL, apiKey: key,
                                                       name: preset == .custom ? nil : preset.name,
@@ -89,7 +89,7 @@ public struct BrainFactory: Sendable {
                                                       transport: transport, retry: retry)
                 // No model chosen yet: `modelName` took the preset's first suggestion, as Settings shows it.
                 guard !name.isEmpty else {
-                    throw UserFacingError("I need to know which \(model.providerName) model to use.", recovery: "Choose one in Settings › AI.")
+                    throw UserFacingError("I need to know which \(model.providerName) model to use.", recovery: "Choose one in Settings › Brain.")
                 }
                 return BrainChoice(backend: LoopBackend(model: model, checkModel: name, limits: loopLimits, clock: clock), model: name,
                                    effort: effort)

@@ -160,7 +160,7 @@ final class UpdateController: UpdateActions {
             body: offer.summary(),
             actions: [AttentionAction(id: "update", title: String(localized: "Update"), isPrimary: true),
                       AttentionAction(id: "later", title: String(localized: "Later")),
-                      AttentionAction(id: "skip", title: String(localized: "Skip This Version"))],
+                      AttentionAction(id: "skip", title: String(localized: "Skip this version"))],
             refKind: source, refId: offer.tag)
     }
 

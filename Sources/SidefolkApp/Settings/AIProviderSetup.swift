@@ -267,7 +267,7 @@ private struct KeyRow: View {
             SetupRow(title: "API key", detail: target == .preset(.custom) ? "Only if the server needs one." : nil) {
                 HStack(spacing: Theme.Space.s) {
                     SecureField("API key", text: $draft, prompt: prompt)
-                        .textFieldStyle(.roundedBorder)
+                        .lanternField()
                         .frame(width: 170)
                         .onSubmit(save)
                     Button("Save key", action: save)

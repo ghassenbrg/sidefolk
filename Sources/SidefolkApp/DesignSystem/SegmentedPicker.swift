@@ -78,6 +78,7 @@ struct SegmentedPicker<Value: Hashable>: View {
         }
         .padding(2)
         .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+        .contrastEdge(radius: Theme.Radius.control)
         .fixedSize(horizontal: !equalWidths, vertical: true)
         .opacity(isEnabled ? 1 : 0.4)
         .animation(Theme.Motion.micro, value: selection)

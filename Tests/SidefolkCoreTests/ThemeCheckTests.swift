@@ -66,7 +66,7 @@ import UniformTypeIdentifiers
         #expect(said.contains("Harbor's colour is used for dark.link."))
         #expect(said.contains("type.scale 2.0 is kept between 0.9 and 1.15.") && report.tokens.type.scale == 1.15)
         #expect(said.contains("shape.card 60.0 is kept between 0.0 and 28.0.") && report.tokens.radius.card == 28)
-        #expect(said.contains("layout.navigation “carousel” isn't one of sidebar, ") && said.contains("; sidebar is used."))
+        #expect(!said.contains("navigation"), "a retired layout key passes unsaid (D84)")
         #expect(said.contains("motion “wobbly”") && report.tokens.motion == .calm)
         #expect(said.contains("companion.suggests “dragon”") && report.tokens.nook.suggests == nil)
     }
@@ -120,62 +120,31 @@ import UniformTypeIdentifiers
         #expect(library.theme(id: "com.you.paper").id == "harbor")
     }
 
-    // MARK: Layout (D64)
+    // MARK: Layout (D64, retired by D84 but for the icons)
 
-    func layout(_ today: [[ThemeFile.ColumnSection]]?, preset: String? = nil) throws -> ThemeReport {
+    /// A theme made for D64 still loads with every layout key it wrote, and none of them is a problem: only its icons
+    /// (said, or its preset's) are read.
+    @Test func anOlderLayoutLoadsAndOnlyItsIconsAreRead() throws {
         var file = ThemeFile(.harbor, id: "com.you.layout", name: "Layout")
-        file.layout = ThemeFile.LayoutSection(preset: preset, today: today)
+        file.layout = ThemeFile.LayoutSection(preset: "stage", navigation: "pills", nook: "none",
+                                              today: [[.block("queue:cards"), .column(width: 9, blocks: ["weather"])]],
+                                              activity: "diary", editor: "markdown")
         try write(file)
-        return ThemeCheck.check(folder: folder)
-    }
-
-    @Test func aStarterWritesHarborsLayoutOutInFull() throws {
-        let section = try #require(ThemeFile(.harbor, id: "com.you.a", name: "A").layout)
-        #expect(section.today?.count == 2)
-        #expect(section.today?[1].first == .column(width: 2, blocks: ["queue:rows", "day:rail"]))
-        let encoded = String(decoding: try JSONEncoder().encode(section), as: UTF8.self)
-        #expect(encoded.contains("\"header:line\""), "a lone block is written as its name")
-    }
-
-    @Test func blocksArrangeAsWritten() throws {
-        let report = try layout([[.block("header")], [.column(width: 3, blocks: ["queue:rows"]), .block("watching")]])
+        let report = ThemeCheck.check(folder: folder)
         #expect(report.problems.isEmpty, "\(messages(report))")
-        let today = report.tokens.layout.today
-        #expect(today.count == 2 && today[1].count == 2 && today[1][0].width == 3)
-        #expect(today[1][1].blocks == [ThemeLayout.Block(.watching, "tiles")], "a bare name gets the first style")
+        #expect(report.tokens.layout.icons == .colorful, "the stage preset chose colourful icons")
+        file.layout?.preset = "cockpit"
+        try write(file)
+        #expect(ThemeCheck.check(folder: folder).tokens.layout == .desk)
     }
 
-    @Test func whatCantBeDrawnIsLeftOutAndSaid() throws {
-        let report = try layout([[.block("queue"), .block("queue:rows"), .block("weather"),
-                                  .column(width: nil, blocks: ["day:sticky", "extension:com.x/clock"]),
-                                  .column(width: 9, blocks: ["recent"])]])
-        let said = messages(report)
-        #expect(said.contains("layout.today has queue twice; the second is left out."))
-        #expect(said.contains("“weather” isn't one of"))
-        #expect(said.contains("“day:sticky”: day comes as rail, list,") && said.contains("; rail is used."))
-        #expect(said.contains("blocks from extensions aren't supported yet"))
-        #expect(said.contains("A row of layout.today has 5 columns; the first 4 are used."))
-        #expect(report.tokens.layout.today[0].map { $0.blocks.map(\.kind) } == [[.queue], [.day]])
+    @Test func aStarterWritesOnlyItsIcons() throws {
+        let section = try #require(ThemeFile(.harbor, id: "com.you.a", name: "A").layout)
+        #expect(section == ThemeFile.LayoutSection(icons: "simple"))
     }
 
-    @Test func whatNeedsYouAlwaysHasAPlace() throws {
-        let report = try layout([[.block("header")], [.block("watching")]])
-        #expect(messages(report).contains("it's added at the top"))
-        #expect(report.tokens.layout.today.map { $0.flatMap(\.blocks).map(\.kind) } == [[.header], [.queue], [.watching]])
-    }
-
-    @Test func anUnknownPresetOrAnEmptyLayoutFallsBackToHarbors() throws {
-        let unknown = try layout(nil, preset: "cockpit")
-        #expect(messages(unknown).contains("layout.preset “cockpit” isn't one of board, console, desk, planner, stage; desk is used."))
-        #expect(unknown.tokens.layout == .desk)
-        let empty = try layout([[.block("weather")]])
-        #expect(messages(empty).contains("has no block Sidefolk can draw"))
-        #expect(empty.tokens.layout == .desk)
-    }
-
-    /// Simple or colourful icons in Home (D67): Marshmallow's stage is colourful, the rest simple; anything else is said.
+    /// Simple or colourful icons in Home (D67); anything else is said.
     @Test func iconsAreSimpleOrColorful() throws {
-        #expect(ThemeLayout.desk.icons == .simple && ThemeLayout.stage.icons == .colorful)
         var file = ThemeFile(.harbor, id: "com.you.icons", name: "Icons")
         file.layout?.icons = "colorful"
         try write(file)
@@ -185,18 +154,6 @@ import UniformTypeIdentifiers
         let report = ThemeCheck.check(folder: folder)
         #expect(report.tokens.layout.icons == .simple)
         #expect(messages(report).contains("layout.icons “glossy” isn't one of simple, colorful; simple is used."))
-    }
-
-    /// Every preset is a layout a theme could have written: written out and read back, it is the same, with no problem.
-    @Test func everyPresetReadsBackAsItself() throws {
-        for (name, preset) in ThemeLayout.presets {
-            var tokens = ThemeTokens.harbor
-            tokens.layout = preset
-            try write(ThemeFile(tokens, id: "com.you.\(name)", name: name))
-            let report = ThemeCheck.check(folder: folder)
-            #expect(report.problems.isEmpty, "\(name): \(messages(report))")
-            #expect(report.tokens.layout == preset, "\(name)")
-        }
     }
 
     /// Colours have meanings: a theme can't paint a win red, an error green or a warning grey.

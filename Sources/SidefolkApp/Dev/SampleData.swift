@@ -214,7 +214,7 @@ enum SampleData {
             level: .attention, source: "reminder", title: "Send the invoice to Acme.", body: "You asked yesterday, 18:20.",
             // The buttons in the app's words, as the reminder and watch notices word them.
             actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
-                      AttentionAction(id: "snooze10", title: String(localized: "10 min")),
+                      AttentionAction(id: "snooze10", title: String(localized: "In 10 min", comment: "A reminder card's snooze button: remind again in ten minutes")),
                       AttentionAction(id: "tomorrow", title: String(localized: "Tomorrow"))],
             refKind: "reminder", refId: "r-acme", now: ago(8)))
         try await attention.save(AttentionItem(

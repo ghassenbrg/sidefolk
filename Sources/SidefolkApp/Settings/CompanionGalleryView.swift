@@ -3,33 +3,16 @@ import ImageIO
 import SidefolkCore
 import SwiftUI
 
-enum CompanionPageFocus: Hashable { case search }
+/// The Gallery's companion filters (D77), for a gallery of hundreds: the look, who made it, hiding the ones here, and the
+/// order. Each filter only shows when the gallery has something it would tell apart. Home's Gallery shows them (D84).
+struct CompanionFilters: View {
+    var chooser: CompanionChooserModel
 
-/// The top of Settings › Companion, outside the scroll: Yours or Gallery, and on Gallery its search, filters and order,
-/// so they stay in reach however far the person scrolls through hundreds.
-struct CompanionPageHeader: View {
-    var model: SettingsModel
-    var focus: FocusState<CompanionPageFocus?>.Binding
-    private var chooser: CompanionChooserModel { model.chooser }
-
-    var body: some View {
-        @Bindable var chooser = model.chooser
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            SegmentedPicker("Page", selection: $chooser.page, segments: [
-                .init(CompanionChooserModel.Page.yours, Text(String(localized: "companions.yours", defaultValue: "Yours",
-                                                                    comment: "Settings › Companion: the page of companions on this Mac, to wear (several companions)"))),
-                .init(CompanionChooserModel.Page.gallery, Text("Gallery", comment: "Settings › Companion: companions to download from the add-on gallery")),
-            ])
-            if chooser.page == .gallery, model.gallery.available, !chooser.galleryEntries.isEmpty {
-                SearchBox(text: $chooser.browse.text, prompt: Text("Search companions in the gallery"), focus: focus, focusValue: .search)
-                filters
-            }
-        }
-    }
+    var body: some View { filters }
 
     /// Each filter only when the gallery has something it would tell apart; the order always.
     private var filters: some View {
-        @Bindable var chooser = model.chooser
+        @Bindable var chooser = chooser
         let entries = chooser.galleryEntries
         return HStack(spacing: Theme.Space.m) {
             if CompanionBrowse.offersLooks(entries) {
@@ -66,128 +49,6 @@ struct CompanionPageHeader: View {
             .fixedSize()
         }
         .font(Theme.Font.body)
-    }
-}
-
-/// Settings › Companion › Gallery (D77): the gallery's companions as a grid that loads its pictures
-/// as they scroll into sight, narrowed by the header. A card's button downloads (or wears what is here); the card
-/// itself opens the details.
-struct CompanionGalleryView: View {
-    var model: SettingsModel
-    private var chooser: CompanionChooserModel { model.chooser }
-    private var gallery: AddonGalleryModel { model.gallery }
-
-    var body: some View {
-        let entries = chooser.galleryEntries
-        let found = chooser.found
-        VStack(alignment: .leading, spacing: Theme.Space.m) {
-            if entries.isEmpty || !gallery.available {
-                GalleryStatus(gallery: gallery, kind: .companion)
-            } else {
-                HStack {
-                    (found.count == entries.count
-                         ? Text("\(entries.count) companions", comment: "Over the companion gallery: how many it has")
-                         : Text("Showing \(found.count) of \(entries.count)", comment: "Over the companion gallery, narrowed: how many companions are shown of how many"))
-                        .font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-                    Spacer()
-                    if chooser.browse.isNarrowed {
-                        Button("Clear Filters") { chooser.browse = CompanionBrowse(sort: chooser.browse.sort) }.buttonStyle(.sf(.quiet))
-                    }
-                }
-                .padding(.horizontal, Theme.Space.xs)
-                if found.isEmpty {
-                    RowsCard { InlineEmpty(text: "No companion in the gallery matches these filters.", systemImage: "magnifyingglass") }
-                }
-                ForEach(found.compactMap { gallery.failures[$0.id] }, id: \.message) { InlineError(error: $0) }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 128), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
-                    ForEach(found) { entry in
-                        GalleryCompanionCard(entry: entry, picture: chooser.preview(entry), state: chooser.state(entry),
-                                             failed: gallery.failures[entry.id] != nil,
-                                             open: { chooser.detail = entry },
-                                             get: { chooser.get(entry, wear: false) },
-                                             wear: { chooser.get(entry, wear: true) },
-                                             update: { chooser.update(entry) })
-                    }
-                }
-                if gallery.hidesSnapshots(.companion) { RowsCard { SnapshotsHiddenNote(gallery: gallery) } }
-                Text("Every companion here is signed by Sidefolk and checked before it's installed. Sidefolk's own carry its seal.")
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, Theme.Space.xs)
-                GalleryLastSeen(gallery: gallery)
-            }
-        }
-    }
-}
-
-/// One companion in the gallery: its picture, name (a seal on Sidefolk's own), one line, its size and looks or that
-/// it is here already, and the one thing to do with it.
-private struct GalleryCompanionCard: View {
-    var entry: AddonEntry
-    var picture: URL?
-    var state: CompanionChooserModel.EntryState
-    var failed: Bool
-    var open: () -> Void
-    var get: () -> Void
-    var wear: () -> Void
-    var update: () -> Void
-
-    var body: some View {
-        VStack(spacing: Theme.Space.xs) {
-            Button(action: open) {
-                VStack(spacing: 3) {
-                    GalleryPicture(url: picture, side: 88)
-                        .overlay(alignment: .topTrailing) { if entry.official { OfficialSeal(size: 13) } }
-                    Text(verbatim: entry.name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
-                    Text(verbatim: CompanionChooserModel.tagline(entry)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                        .multilineTextAlignment(.center).lineLimit(2, reservesSpace: true)
-                    meta
-                }
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help(Text("Details of \(entry.name)", comment: "A companion card in the gallery: open its details"))
-            action.frame(height: 24)
-        }
-        .padding(Theme.Space.s)
-        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-            .strokeBorder(failed ? Theme.danger : Theme.line))
-        .accessibilityElement(children: .contain)
-    }
-
-    /// Here already, or its size; and its looks.
-    private var meta: some View {
-        let looks = entry.looks.contains(.twoD) ? "3D · 2D" : "3D"
-        return Group {
-            switch state {
-            case .owned, .wearing, .update:
-                Label { Text("On this Mac", comment: "A gallery companion already downloaded") } icon: { Image(systemName: "checkmark") }
-            default:
-                Text(verbatim: "\(ByteCountFormatter.string(fromByteCount: entry.bytes, countStyle: .file)) · \(looks)")
-            }
-        }
-        .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
-    }
-
-    @ViewBuilder private var action: some View {
-        switch state {
-        case .get:
-            Button("Get", action: get).buttonStyle(.sf(.secondary))
-                .accessibilityLabel(Text("Get \(entry.name)", comment: "A button in the add-on gallery: download and add this"))
-        case .working(let p):
-            ProgressView(value: max(p, 0.02)).progressViewStyle(.linear).frame(width: 80)
-                .accessibilityLabel(Text("Downloading \(entry.name)", comment: "The add-on gallery, while a download runs"))
-        case .owned:
-            Button("Wear", action: wear).buttonStyle(.sf(.secondary))
-                .accessibilityLabel(Text("Wear \(entry.name)", comment: "A companion's menu or the gallery: make it the companion"))
-        case .update:
-            Button("Update", action: update).buttonStyle(.sf(.secondary))
-                .accessibilityLabel(Text("Update \(entry.name)", comment: "A button in the add-on gallery"))
-        case .wearing:
-            Label("Wearing", systemImage: "checkmark.circle.fill").font(Theme.Font.captionStrong).foregroundStyle(Theme.accent)
-        }
     }
 }
 

@@ -40,6 +40,9 @@ enum DebugSnapshots {
             view.cacheDisplay(in: view.bounds, to: rep)
             let name = "\(stamp)-\(i)-\(type(of: window))-\(Int(window.frame.minX))x\(Int(window.frame.minY)).png"
             try? rep.representation(using: .png, properties: [:])?.write(to: dir.appendingPathComponent(name))
+            // Content that outgrew its window shows as cut at the top; the sizes say so without a picture.
+            Log.shared.info("dev", "window", ["name": name, "frame": "\(window.frame)", "content": "\(view.frame)",
+                                               "minimum": "\(window.contentMinSize)"])
         }
         Log.shared.info("dev", "snapshots written", ["dir": dir.path])
     }

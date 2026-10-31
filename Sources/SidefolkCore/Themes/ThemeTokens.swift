@@ -1,7 +1,7 @@
 import Foundation
 
 /// What a theme sets, as plain values (D58): colours as light and dark pairs, spacing and density, type, corner radii,
-/// motion, the sidebar's material, the companion's nook and where the app's pieces go (`ThemeLayout`). The app turns
+/// motion, the sidebar's material, the companion's nook and Home's icons (`ThemeLayout`). The app turns
 /// them into SwiftUI values; keeping them here lets theme files be read and checked without a window. Harbor is the
 /// default.
 public struct ThemeTokens: Sendable, Equatable {
@@ -105,7 +105,7 @@ public struct ThemeTokens: Sendable, Equatable {
     }
 
     /// How much room things get: spacing is scaled by it.
-    public enum Density: String, Sendable, Equatable, CaseIterable {
+    public enum Density: String, Codable, Sendable, Equatable, CaseIterable {
         case compact, regular, relaxed
 
         public var factor: Double {
@@ -168,7 +168,7 @@ public struct ThemeTokens: Sendable, Equatable {
     public var motion: Motion
     public var material: Material
     public var nook: Nook
-    /// Where things go and how they look (D64).
+    /// Home's icons: what D84 left of D64's layouts.
     public var layout: ThemeLayout
 
     public init(id: String, name: String, colors: Colors, space: Space, radius: Radius, type: Typography,

@@ -7,8 +7,6 @@ import SidefolkCore
 /// lives here rather than in the views, so the debug app and the snapshots can show any of it.
 @MainActor @Observable
 final class CompanionChooserModel {
-    enum Page: Hashable { case yours, gallery }
-
     /// What a gallery companion is here: to get, on its way, here, worn, or here with a newer version.
     enum EntryState: Equatable {
         case get
@@ -19,7 +17,6 @@ final class CompanionChooserModel {
     }
 
     private unowned let parent: SettingsModel
-    var page = Page.yours
     var browse = CompanionBrowse()
     /// The gallery companion whose details are open.
     var detail: AddonEntry?

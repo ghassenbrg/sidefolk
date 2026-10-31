@@ -2,9 +2,9 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Extensions: the extensions that come with Sidefolk, the ones the person added (folders and
+/// Settings › Add-ons (was Extensions): the extensions that come with Sidefolk, the ones the person added (folders and
 /// MCP servers), drafts Sidefolk's AI wrote for them, and skills. Each is one line until clicked, under a search and
-/// an All / On / Off filter (D39). Beside "Installed", the add-on gallery (D55).
+/// an All / On / Off filter (D39). The add-on gallery is in Home (D84).
 struct ExtensionsSettingsView: View {
     var model: SettingsModel
     @State private var addingServer = false
@@ -13,10 +13,6 @@ struct ExtensionsSettingsView: View {
     @State private var deletingDraft: ExtensionDraftInfo?
     @State private var search: String
     @State private var show: ExtensionListQuery.Show
-    @State private var page: Page
-    @State private var gallerySearch = ""
-
-    enum Page: String, Hashable { case installed, gallery }
     @State private var expanded: Set<String>
     /// Rows that need the person (changed tools) open by themselves; these are the ones they closed anyway.
     @State private var closed: Set<String> = []
@@ -30,9 +26,8 @@ struct ExtensionsSettingsView: View {
 
     /// `query` and `expanded` show the page in a given state (UISnapshots); otherwise it opens on the filter the
     /// person left it on.
-    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = [], page: Page? = nil) {
+    init(model: SettingsModel, query: ExtensionListQuery? = nil, expanded: Set<String> = []) {
         self.model = model
-        _page = State(initialValue: page ?? (query == nil ? Self.savedPage : .installed))
         let start = query ?? ExtensionListQuery(show: Self.savedShow)
         _search = State(initialValue: start.text)
         _show = State(initialValue: start.show)
@@ -43,21 +38,18 @@ struct ExtensionsSettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-                .frame(maxWidth: 600, alignment: .leading)
+                .frame(maxWidth: 720, alignment: .leading)
                 .padding(.horizontal, Theme.Space.xl)
-                .padding(.top, Theme.Space.l)
-                .frame(maxWidth: .infinity)
+                .padding(.top, Theme.Space.xs)
+                .padding(.bottom, Theme.Space.m)
+                .frame(maxWidth: .infinity, alignment: .leading)
             SettingsPage {
-                if page == .gallery {
-                    GalleryExtensionsView(model: model, search: gallerySearch)
-                } else {
-                    ScrollViewReader { proxy in
-                        VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
-                            .onChange(of: focus) {
-                                guard case .row(let id) = focus else { return }
-                                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
-                            }
-                    }
+                ScrollViewReader { proxy in
+                    VStack(alignment: .leading, spacing: Theme.Space.xl) { groups }
+                        .onChange(of: focus) {
+                            guard case .row(let id) = focus else { return }
+                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { proxy.scrollTo(id) }
+                        }
                 }
             }
         }
@@ -72,7 +64,6 @@ struct ExtensionsSettingsView: View {
             kept = []
             if remembers { Self.savedShow = show }
         }
-        .onChange(of: page) { if remembers { Self.savedPage = page } }
         .onDisappear { kept = [] }
         .sheet(item: Binding(get: { model.installPreview }, set: { model.installPreview = $0 })) { p in
             InstallPreviewSheet(preview: p, model: model)
@@ -161,36 +152,57 @@ struct ExtensionsSettingsView: View {
 
     // MARK: Header
 
-    /// The two pages, the other ways to add an extension (always in sight), then the page's search.
+    /// Your add-ons with what they are, the way to get more (the Gallery, in Home), what needs a look, then the search,
+    /// the filter and the other ways to add one (D84).
     private var header: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            HStack(alignment: .center, spacing: Theme.Space.m) {
-                SegmentedPicker("Page", selection: $page, segments: [
-                    .init(Page.installed, Text("Installed", comment: "Settings › Extensions: the title over the extensions and skills on this Mac")),
-                    .init(Page.gallery, Text("Gallery", comment: "Settings › Extensions: extensions to add from the add-on gallery")),
-                ])
-                Spacer(minLength: Theme.Space.s)
-                Button("Install from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary))
-                    .help("Review and install an extension from a folder on this Mac")
-                Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }.buttonStyle(.sf(.secondary))
-                    .help("Add an MCP server you already use; it runs with your full permissions")
-            }
-            if page == .installed {
-                HStack(alignment: .center, spacing: Theme.Space.m) {
-                    SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
-                              submit: focusFirstRow)
-                    SegmentedPicker("Show", selection: $show, segments: [
-                        .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Extensions with how many it shows: “All 15”")),
-                        .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Extensions: the extensions switched on, “On 9”")),
-                        .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Extensions: the extensions switched off, “Off 6”")),
-                    ])
-                    .help("Show every extension, or only those switched on or off")
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
+            HStack(alignment: .top, spacing: Theme.Space.m) {
+                VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                    Text(verbatim: SettingKey.addons.title).font(Theme.Font.title1).foregroundStyle(Theme.ink)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(verbatim: summary).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } else {
-                SearchBox(text: $gallerySearch, prompt: Text("Search the gallery"), focus: $focus, focusValue: .search, submit: {})
+                Spacer(minLength: Theme.Space.s)
+                Button { model.services.openGallery() } label: {
+                    Label { Text("Get add-ons", comment: "Settings › Add-ons: opens the add-on gallery") } icon: { Image(systemName: "sparkles") }
+                }
+                .buttonStyle(.sf(.secondary, size: .large))
+                .help("Extensions, companions and themes to add, in Home")
+            }
+            AddonsNeedYou(model: model)
+            HStack(alignment: .center, spacing: Theme.Space.m) {
+                SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
+                          submit: focusFirstRow)
+                SegmentedPicker("Show", selection: $show, segments: [
+                    .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Add-ons with how many it shows: “All 15”")),
+                    .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Add-ons: the extensions switched on, “On 9”")),
+                    .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Add-ons: the extensions switched off, “Off 6”")),
+                ])
+                .help("Show every extension, or only those switched on or off")
+                Menu {
+                    Button("Install from folder…", systemImage: "folder", action: chooseFolder)
+                    Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .menuStyle(.button)
+                .buttonStyle(.sf(.secondary))
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help("Install an extension from a folder, or add an MCP server you already use")
+                .accessibilityLabel(Text("Add an extension", comment: "Settings › Add-ons: the + menu"))
             }
             if let error = model.extensionError { InlineError(error: error) }
         }
+    }
+
+    /// "Extensions: 8 · Tool servers: 2 · Skills: 3."
+    private var summary: String {
+        let servers = model.extensions.filter { $0.kind == .mcpServer }.count
+        let extensions = model.extensions.count - servers
+        return String(localized: "Extensions: \(extensions) · Tool servers: \(servers) · Skills: \(model.skills.count). Each runs only with what its passport says.",
+                      comment: "Settings › Add-ons: under the title")
     }
 
     // MARK: Groups
@@ -214,8 +226,8 @@ struct ExtensionsSettingsView: View {
                 Text(verbatim: noMatchText).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: Theme.Space.s) {
-                    if query.isSearching { Button("Clear Search") { search = "" }.buttonStyle(.sf(.secondary)) }
-                    if show != .all { Button("Show All") { show = .all }.buttonStyle(.sf(.secondary)) }
+                    if query.isSearching { Button("Clear search") { search = "" }.buttonStyle(.sf(.secondary)) }
+                    if show != .all { Button("Show all") { show = .all }.buttonStyle(.sf(.secondary)) }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -227,11 +239,11 @@ struct ExtensionsSettingsView: View {
     private var noMatchText: String {
         let words = search.trimmingCharacters(in: .whitespacesAndNewlines)
         return switch (query.isSearching, show) {
-        case (true, .all): String(localized: "Nothing installed matches “\(words)”.", comment: "Settings › Extensions, a search that found nothing")
-        case (true, .on): String(localized: "No extension that is on matches “\(words)”.", comment: "Settings › Extensions, a search among those switched on")
-        case (true, .off): String(localized: "No extension that is off matches “\(words)”.", comment: "Settings › Extensions, a search among those switched off")
-        case (false, .on): String(localized: "No extension is on.", comment: "Settings › Extensions, the On filter with nothing in it")
-        case (false, _): String(localized: "Every extension is on.", comment: "Settings › Extensions, the Off filter with nothing in it")
+        case (true, .all): String(localized: "Nothing installed matches “\(words)”.", comment: "Settings › Add-ons, a search that found nothing")
+        case (true, .on): String(localized: "No extension that is on matches “\(words)”.", comment: "Settings › Add-ons, a search among those switched on")
+        case (true, .off): String(localized: "No extension that is off matches “\(words)”.", comment: "Settings › Add-ons, a search among those switched off")
+        case (false, .on): String(localized: "No extension is on.", comment: "Settings › Add-ons, the On filter with nothing in it")
+        case (false, _): String(localized: "Every extension is on.", comment: "Settings › Add-ons, the Off filter with nothing in it")
         }
     }
 
@@ -248,7 +260,7 @@ struct ExtensionsSettingsView: View {
     /// Extensions answer requests in your own words, so without an AI they have nothing to answer.
     private var builtInFooter: LocalizedStringKey {
         if model.settings.provider.kind == .none {
-            return "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › AI first."
+            return "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › Brain first."
         }
         return "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want."
     }
@@ -353,12 +365,6 @@ struct ExtensionsSettingsView: View {
     private static let showKey = "settings.extensions.show"
 
     /// The filter the person left the list on: a convenience of theirs, so it lives in their defaults, not the store.
-    /// Installed or Gallery, as the person left it.
-    private static var savedPage: Page {
-        get { UserDefaults.standard.string(forKey: "settings.extensions.page").flatMap(Page.init(rawValue:)) ?? .installed }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "settings.extensions.page") }
-    }
-
     private static var savedShow: ExtensionListQuery.Show {
         get { UserDefaults.standard.string(forKey: showKey).flatMap(ExtensionListQuery.Show.init(rawValue:)) ?? .all }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: showKey) }
@@ -438,7 +444,7 @@ struct AddServerSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
             TextField(label, text: text, prompt: Text(verbatim: prompt))
-                .textFieldStyle(.roundedBorder)
+                .lanternField()
                 .font(monospaced ? .system(size: 12, design: .monospaced) : Theme.Font.body)
                 .accessibilityLabel(label)
         }
@@ -496,10 +502,10 @@ struct AgentsGroup: View {
         SettingsGroup(title: "Connect your agents",
                       footer: "Sidefolk saves a backup next to each file before changing it. Disconnect removes only what it added.") {
             if let status = model.integration {
-                claude(status)
-                codex(status)
-                commandLine(status)
-                OtherAgentsRow(copy: model.copySetupInstructions)
+                claude(status).settingAnchor(.claudeCode)
+                codex(status).settingAnchor(.codex)
+                commandLine(status).settingAnchor(.commandLine)
+                OtherAgentsRow(copy: model.copySetupInstructions).settingAnchor(.otherApps)
             } else {
                 InlineEmpty(text: "Checking your agents…")
             }
@@ -622,7 +628,7 @@ private struct OtherAgentsRow: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: Theme.Space.s)
-            Button(copied ? "Copied" : "Copy Setup Instructions") {
+            Button(copied ? "Copied" : "Copy setup instructions") {
                 copy()
                 copied = true
             }
@@ -679,5 +685,53 @@ private struct AgentCard<Extra: View>: View {
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.m)
+    }
+}
+
+/// What needs the person in Add-ons (D70, D84): an extension's update that would let it do more, and tools that changed
+/// since it was installed. Each says what happened and has its one step; nothing shows while nothing waits.
+private struct AddonsNeedYou: View {
+    var model: SettingsModel
+    private var updates: UpdateModel { model.services.updates }
+
+    var body: some View {
+        let changed = model.extensions.filter { !$0.pendingTools.isEmpty }
+        if !updates.addonReview.isEmpty || !changed.isEmpty {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: Theme.Space.m, alignment: .top)], spacing: Theme.Space.m) {
+                ForEach(updates.addonReview, id: \.id) { entry in
+                    card(title: Text("\(entry.shownName) \(ReleaseVersion(entry.version)?.shown ?? entry.version) needs a look",
+                                     comment: "Settings › Updates: an extension update waiting for review"),
+                         detail: Text("Its new version would be allowed to do more. Review shows what's new."),
+                         action: Text("Review update", comment: "Settings › Add-ons: opens an extension update's install sheet")) {
+                        updates.addonActions?.review(entry)
+                    }
+                }
+                ForEach(changed) { ext in
+                    card(title: Text("\(ext.name)'s tools changed", comment: "Settings › Add-ons: an extension whose tools changed since it was installed"),
+                         detail: Text("Some tools changed since you installed it; they're on hold until you approve the change."),
+                         action: Text("Review changed tools…")) {
+                        Task { await model.reviewToolChanges(ext) }
+                    }
+                }
+            }
+        }
+    }
+
+    private func card(title: Text, detail: Text, action: Text, perform: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            title.font(Theme.Font.headline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+            detail.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Spacer()
+                Button(action: perform) { action }.buttonStyle(.sf(.primary))
+            }
+        }
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface()
+        .overlay(alignment: .leading) {
+            UnevenRoundedRectangle(topLeadingRadius: Theme.Radius.card, bottomLeadingRadius: Theme.Radius.card, style: .continuous)
+                .fill(Theme.waitGlow).frame(width: 3)
+        }
     }
 }

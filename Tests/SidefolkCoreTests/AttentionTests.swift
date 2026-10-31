@@ -155,6 +155,28 @@ import Testing
     }
 }
 
+extension AttentionCenterTests {
+    /// Quiet ends (D84): what waited comes as one card, as after Focus or being away, instead of a parade of whispers.
+    @Test func quietEndsWithOneCard() async throws {
+        let (center, events, _) = try center()
+        await center.update { $0.quiet = true }
+        let saved = await center.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Saved a note"))
+        await center.post(AttentionRequest(level: .gentle, source: "external:codex", title: "Finished in pockito"))
+        #expect(await center.isHeld(saved.id))
+        let stream = events.stream()
+        await center.update { $0.quiet = false }
+        for await e in stream {
+            if case .attention(.present(let item, _)) = e {
+                #expect(item.source == "summary" && item.refKind == "quiet")
+                #expect(item.title.contains("2"))
+                #expect(item.body?.contains("Saved a note") == true && item.body?.contains("Finished in pockito") == true)
+                break
+            }
+        }
+        #expect(!(await center.isHeld(saved.id)))
+    }
+}
+
 final class Box<T: Sendable>: @unchecked Sendable {
     private let lock = NSLock()
     private var stored: T

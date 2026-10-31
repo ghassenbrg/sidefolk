@@ -165,7 +165,7 @@ import Testing
         await t.scheduler.tick()
         let bubble = try #require(await t.posted().first)
         #expect(bubble.actions.map(\.id) == ["taskDone", "snooze10", "open"])
-        #expect(bubble.actions.map(\.title) == ["Mark done", "10 min", "Open"])
+        #expect(bubble.actions.map(\.title) == ["Mark done", "In 10 min", "Open"])
         #expect(bubble.actions.first?.isPrimary == true)
         #expect(bubble.body?.contains("Task: Prepare the report") == true)
     }

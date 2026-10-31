@@ -15,12 +15,14 @@ struct WhenField<Focus: Hashable>: View {
     var emptyHint: Text?
     /// Off where a picker is already on show beside the field.
     var showsPicker = true
+    /// In Lantern's well with its focus ring (sheets and forms); bare where a row already frames it (Today's day).
+    var boxed = false
     var submit: () -> Void = {}
     @State private var picking = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: Theme.Space.xs) {
+            let row = HStack(spacing: Theme.Space.xs) {
                 TextField("When", text: $text, prompt: prompt)
                     .font(Theme.Font.body)
                     .focused(focus, equals: focusValue)
@@ -28,6 +30,14 @@ struct WhenField<Focus: Hashable>: View {
                     .accessibilityLabel(Text("When"))
                     .accessibilityValue(Text(verbatim: reading.map(\.words) ?? text))
                 if showsPicker { pickerButton }
+            }
+            if boxed {
+                row.textFieldStyle(.plain)
+                    .padding(.horizontal, Theme.Space.s)
+                    .frame(minHeight: Theme.Size.field)
+                    .fieldChrome(focused: focus.wrappedValue == focusValue, problem: reading?.past == true)
+            } else {
+                row
             }
             hint
         }
@@ -70,9 +80,9 @@ struct WhenField<Focus: Hashable>: View {
 extension WhenField where Focus == Bool {
     /// A field nothing else moves the keyboard to.
     init(text: Binding<String>, prompt: Text, parser: WhenParser, focus: FocusState<Bool>.Binding, emptyHint: Text? = nil,
-         showsPicker: Bool = true, submit: @escaping () -> Void = {}) {
+         showsPicker: Bool = true, boxed: Bool = false, submit: @escaping () -> Void = {}) {
         self.init(text: text, prompt: prompt, parser: parser, focus: focus, focusValue: true, emptyHint: emptyHint,
-                  showsPicker: showsPicker, submit: submit)
+                  showsPicker: showsPicker, boxed: boxed, submit: submit)
     }
 }
 

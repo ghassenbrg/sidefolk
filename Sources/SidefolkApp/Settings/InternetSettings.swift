@@ -13,7 +13,8 @@ struct InternetGroup: View {
 
     var body: some View {
         SettingsGroup(title: "Using the internet",
-                      footer: "For pages and online services Sidefolk picks itself; addresses you type never ask. Other agents and the extensions you added keep their own rules.") {
+                      footer: "For pages and online services Sidefolk picks itself; addresses you type never ask. Other agents and the extensions you added keep their own rules.",
+                      anchor: .internet) {
             ChoiceRow(title: "Ask each time",
                       detail: "Sidefolk asks every time it would read a page or use an online service you didn't name, and doesn't remember your answers.",
                       selected: rule == .askEachTime) { set(.askEachTime) }
@@ -42,11 +43,11 @@ struct InternetGroup: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     TextField("Site", text: $newSite, prompt: Text(verbatim: "example.com"))
-                        .textFieldStyle(.roundedBorder)
+                        .lanternField()
                         .frame(maxWidth: 260)
                         .onSubmit(addSite)
                         .accessibilityLabel("Site to allow")
-                    Button("Allow Site", action: addSite)
+                    Button("Allow site", action: addSite)
                         .buttonStyle(.sf(.secondary))
                         .disabled(newSite.trimmingCharacters(in: .whitespaces).isEmpty)
                 }

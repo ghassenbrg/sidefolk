@@ -115,12 +115,11 @@ struct NewReminderSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             Text("New reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            TextField("What", text: $title, prompt: Text("New reminder")).textFieldStyle(.roundedBorder)
+            TextField("What", text: $title, prompt: Text("New reminder")).lanternField()
                 .onSubmit(add)
             // The time clicked on, written as the field writes a picked time; type over it to change it.
             WhenField(text: $when, prompt: Text("When, like “tomorrow 9:00”"), parser: model.now.whenParser, focus: $whenFocused,
-                      submit: add)
-                .textFieldStyle(.roundedBorder)
+                      boxed: true, submit: add)
             if let error { InlineError(error: error) }
             HStack {
                 Spacer()

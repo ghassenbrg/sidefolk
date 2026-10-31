@@ -6,15 +6,6 @@ import SidefolkCore
 /// model per page while it is shown.
 @MainActor @Observable
 final class ExtensionPagesModel {
-    /// All Extensions (D67), every extension's page and tile in one place: `.page(hub)`. A page's own id is
-    /// `<extension id>/<page>`, never a slash alone, so this one can't be taken; it is `hubInfo`'s id.
-    static let hub = "/"
-    /// All Extensions standing in a list of pages, where a navigation shows pages by their title and symbol.
-    static var hubInfo: ExtensionPageInfo {
-        ExtensionPageInfo(extensionId: "", extensionName: "", page: "", title: String(localized: "All Extensions",
-                          comment: "Home's sidebar: the page listing every extension's page and tile"), symbol: "square.grid.2x2")
-    }
-
     let services: AppServices
     private(set) var list: [ExtensionPageInfo] = []
     /// What each page said last, by page, for pages Sidefolk reads in the background (`widget`, `history`).
@@ -36,6 +27,13 @@ final class ExtensionPagesModel {
         let byId = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         return layout.shown(list.map(\.id)).compactMap { byId[$0] }
     }
+
+    /// Pages the person put out of the sidebar (D67): one menu row lists them, with the way back.
+    var hidden: [ExtensionPageInfo] { all.filter { !layout.inSidebar($0.id) } }
+
+    /// Extensions working in the background now: a page whose main switch is on (Keep Awake), for On duty (D84).
+    var background: [ExtensionPageInfo] { all.filter { isOn($0.id) == true } }
+    var backgroundCount: Int { background.count }
 
     /// Every page, in the person's order, the hidden ones too.
     var all: [ExtensionPageInfo] {

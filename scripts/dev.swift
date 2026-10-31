@@ -6,23 +6,30 @@
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
-//   swift scripts/dev.swift home | about | settings:extensions | find:milk | drop:https://example.com
+//   swift scripts/dev.swift home | about | settings:trust | find:milk | drop:https://example.com
+//   swift scripts/dev.swift settings:search:quiet | settings:jump:quietHours | settings:full-access   (D84: Settings' search,
+//                           a jump to a setting by its SettingKey, the Full access sheet)
+//   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
+//   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
-//   swift scripts/dev.swift calendar | calendar:month | calendar:week:2026-11-03 | calendar:day   (D66)
+//   swift scripts/dev.swift calendar | calendar:agenda | calendar:week:2026-11-03 | calendar:month   (D66, D84)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
-//   swift scripts/dev.swift home:today | page:/ (All Extensions) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
+//   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
+//                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>[:2d|3d]   (a companion from a folder, D60, D85)
-//   swift scripts/dev.swift chooser:gallery | chooser:yours | chooser:search:cat | chooser:detail:rune | chooser:get:rune
+//   swift scripts/dev.swift chooser:gallery | chooser:search:cat (Home's Gallery, D84) | chooser:detail:rune | chooser:get:rune
 //                           | chooser:remove:local:cumulus | chooser:confirm (its Remove) | chooser:add | chooser:snapshots (Show Snapshots) | chooser:close
 //                           (Settings › Companion's chooser)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
 //   swift scripts/dev.swift theme:harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
+//   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
+//                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
 //   swift scripts/dev.swift game:dev.sidefolk.playtime/which_cup | move:{"cell":[0,1]} | key:1 | closeGame | playMenu   (D75, D79)
 //   swift scripts/dev.swift drag:0,0,1,2   (a puzzle's plot dragged corner to corner, cell by cell, then let go)

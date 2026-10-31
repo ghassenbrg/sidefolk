@@ -141,7 +141,7 @@ final class ElevenLabsStub: URLProtocol, @unchecked Sendable {
             Issue.record("a refused key must fail")
         } catch let error as UserFacingError {
             #expect(error.message.contains("didn't accept your key"))
-            #expect(error.recovery?.contains("Settings › Voice") == true)
+            #expect(error.recovery?.contains("Settings › Brain") == true)
         }
         #expect(ElevenLabs.failure(status: 402, body: Data()).message.contains("out of characters"))
         #expect(ElevenLabs.failure(status: 400, body: json(#"{"detail": {"status": "quota_exceeded"}}"#)).message.contains("out of characters"))

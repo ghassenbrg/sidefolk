@@ -74,8 +74,10 @@ extension View {
 
     /// The Sidecard's and the Pocket's glass: the wallpaper's colour through a blur, a hairline and e3. With Reduce
     /// Transparency it is the card surface, opaque.
-    func lanternGlass(radius: CGFloat = Theme.Radius.panel) -> some View {
-        modifier(GlassModifier(radius: radius))
+    /// `elevation`: e3 for the Sidecard and the Pocket; e2 for small glass on the desktop (pins), whose shadow
+    /// would otherwise reach further than the pin.
+    func lanternGlass(radius: CGFloat = Theme.Radius.panel, elevation: Theme.Elevation = .e3) -> some View {
+        modifier(GlassModifier(radius: radius, elevation: elevation))
     }
 }
 
@@ -109,9 +111,18 @@ private struct ElevationModifier: ViewModifier {
     }
 }
 
+extension EnvironmentValues {
+    /// Glass drawn as solid surfaces, as Reduce Transparency has it; for snapshots of that setting, which a view can't
+    /// set. The system's own setting is read beside it.
+    @Entry var solidSurfaces = false
+}
+
 private struct GlassModifier: ViewModifier {
     var radius: CGFloat
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    var elevation: Theme.Elevation
+    @Environment(\.accessibilityReduceTransparency) private var systemSolid
+    @Environment(\.solidSurfaces) private var solid
+    private var reduceTransparency: Bool { systemSolid || solid }
     @Environment(\.colorScheme) private var scheme
 
     func body(content: Content) -> some View {
@@ -126,6 +137,6 @@ private struct GlassModifier: ViewModifier {
                         .overlay(shape.fill(scheme == .dark ? Color(hex: 0x181E2B, opacity: 0.7) : Color(hex: 0xFAFBFD, opacity: 0.72)))
                 }
             }
-            .elevation(.e3, radius: radius)
+            .elevation(elevation, radius: radius)
     }
 }

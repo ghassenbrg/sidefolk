@@ -3,7 +3,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
+/// Renders the Home and Settings windows, the Ask panel and the Sidecard with sample data to PNGs, in light
 /// and dark, then exits:
 /// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>] [--only now,calendar]`. Lets agents (who can't see the screen) review
 /// the UI, in any language (SnapshotLanguage) and in any theme (D58), read straight from its folder. Uses an in-memory database, a temp home and fixture services:
@@ -13,7 +13,7 @@ import SwiftUI
 /// - `window-*`: the real windows, titlebar and toolbar included, as the controllers build them.
 /// - `page-*`: a page at its full height, to review everything below the fold.
 /// - `sheet-*`: sheets on their own.
-/// - `desktop-*`: the Ask panel and bubbles (on a plain background, without the desktop behind them).
+/// - `desktop-*`: the Ask panel, the Sidecard and the companion's floor (on a plain wallpaper, without the desktop behind them).
 enum UISnapshots {
     static func runIfRequested() {
         let args = CommandLine.arguments
@@ -63,127 +63,166 @@ enum UISnapshots {
             let suffix = dark ? "dark" : "light"
             func file(_ name: String) -> URL { dir.appendingPathComponent("\(name)-\(suffix).png") }
 
-            // Home, as a real window.
+            // Home, as a real window (D84): every place, at the mockups' 1280 × 800, in a wide and a narrow window, and empty.
             let home = SnapshotWindow()
             HomeWindowController.configure(home, model: full)
-            func homeShot(_ name: String, size: CGSize = CGSize(width: 1100, height: 720)) async throws {
+            func homeShot(_ name: String, size: CGSize = CGSize(width: 1280, height: 800)) async throws {
                 try await capture(home, size: size, dark: dark, to: file("window-home-\(name)"))
             }
             full.selection = .now
-            try await homeShot("now")
-            // The one bar with words in it: what Return does, and what they match (D58).
-            full.find.query = "invoice"
-            await full.find.searchNow()
-            try await homeShot("search")
-            // Words Sidefolk does without AI: Return does them, ⌘Return asks instead.
-            full.find.query = "remind me at 5 to stretch"
-            await full.find.searchNow()
-            try await homeShot("search-command")
+            try await homeShot("today")
+            try await homeShot("today-wide", size: CGSize(width: 1600, height: 1000))
+            try await homeShot("today-narrow", size: CGSize(width: 900, height: 720))
+            // On duty in the same state as Today, so their counts can be read side by side.
+            full.selection = .onDuty
+            try await homeShot("onduty")
+            full.selection = .now
+            // The Say bar (⌘K) with words in it: what Return does, in plain words, with or without AI, and what they find.
+            for (name, words) in [("say", "remind me tomorrow at 9 to send the deck to Acme"), ("say-ai", "plan my afternoon around the design review"),
+                                  ("say-search", "invoice")] {
+                full.find.query = words
+                await full.find.searchNow()
+                try await homeShot(name)
+            }
             full.find.query = ""
-            await full.reveal(sample.selectedItem)
-            try await homeShot("notebook")
-            await full.reveal(sample.remindedTask)
-            try await homeShot("notebook-reminder")
-            await full.reveal(sample.savedInConversation)
-            try await homeShot("notebook-connected")
-            await full.reveal(sample.profileItem)
-            try await homeShot("about-you")
-            full.selection = .trash
-            try await homeShot("trash")
-            await full.showConversation("c-plan")
-            try await homeShot("conversations")
-            await full.showConversation("c-rename")
-            try await homeShot("conversations-stopped")
-            full.selection = .activity
-            try await homeShot("activity")
-            // A row opened in place: the rule that allowed it and what it was called with.
-            full.activity.openId = full.activity.entries.first { $0.decision == .always }?.id
-            try await homeShot("activity-open")
-            full.activity.openId = nil
-            // The Calendar (D66): the month, the week and the list, with the sample's reminders and events.
+            // Extensions' pages in the sidebar with Keep Awake's switch, their tiles on Today (D67), and On duty with them.
+            SampleExtensionPage.showPages(in: full.pages)
+            full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
+            try await homeShot("today-extensions", size: CGSize(width: 1280, height: 1000))
+            full.selection = .onDuty
+            try await homeShot("onduty-extensions")
+            ThemeStore.shared.setIcons(.colorful)
+            full.selection = .now
+            try await homeShot("today-colorful")
+            ThemeStore.shared.setIcons(nil)
+            full.pages.showSample([], summaries: [:])
+            full.now.widgets = []
+            // Quiet on: the queue held in one card, the moon at the sidebar's foot.
+            await full.services.runtime.settings.update { $0.quietUntil = Date().addingTimeInterval(3 * 3600) }
+            await full.now.reload()
+            try await homeShot("today-quiet")
+            await full.services.runtime.settings.update { $0.quietUntil = nil }
+            await full.now.reload()
+            // The Calendar (D66, D84): Agenda first, then the week and the month.
             full.selection = .calendar
             for mode in CalendarModel.Mode.allCases {
                 full.calendar.mode = mode
                 await full.calendar.reload()
                 try await homeShot("calendar-\(mode.rawValue)")
             }
-            full.calendar.mode = .month
+            full.calendar.mode = .agenda
             await full.calendar.reload()
-            // A wide window, to catch pages left on one side (D67).
-            let wide = CGSize(width: 1600, height: 900)
-            try await homeShot("activity-wide", size: wide)
-            await full.showConversation("c-plan")
-            try await homeShot("conversations-wide", size: wide)
             await full.reveal(sample.selectedItem)
-            try await homeShot("notebook-wide", size: wide)
+            try await homeShot("notebook")
+            await full.reveal(sample.remindedTask)
+            try await homeShot("notebook-reminder")
+            await full.reveal(sample.savedInConversation)
+            try await homeShot("notebook-connected")
+            full.selection = .you
+            await full.you.reload()
+            try await homeShot("you")
+            full.you.editing = full.you.facts.first?.id
+            try await homeShot("you-editing")
+            full.you.editing = nil
             full.selection = .trash
-            try await homeShot("trash-wide", size: wide)
-            full.selection = .now
-            try await homeShot("now-wide", size: wide)
-            // Extensions' pages in the sidebar with Keep Awake's switch, their tiles, and All Extensions, in simple and
-            // colorful icons (D67).
-            SampleExtensionPage.showPages(in: full.pages)
-            full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
-            try await homeShot("now-extensions")
-            full.selection = .page(ExtensionPagesModel.hub)
-            try await homeShot("extensions-hub")
-            ThemeStore.shared.setIcons(.colorful)
-            try await homeShot("extensions-hub-colorful")
-            full.selection = .now
-            try await homeShot("now-extensions-colorful")
-            ThemeStore.shared.setIcons(nil)
-            full.pages.showSample([], summaries: [:])
-            full.now.widgets = []
-            full.selection = .activity
+            try await homeShot("trash")
+            full.selection = .onDuty
+            try await homeShot("onduty-wide", size: CGSize(width: 1600, height: 1000))
+            // History (D84): everything kept, an action's record open, a conversation open in place, the agents' receipts.
+            full.selection = .history
+            full.history.span = .all
+            await full.history.reload()
+            try await homeShot("history")
+            let allowedBefore = full.history.events.lazy.compactMap { event -> Int64? in
+                if case .action(let e) = event.kind, e.decision == .always { return e.id }
+                return nil
+            }.first
+            full.history.open(activityRow: allowedBefore)
+            try await homeShot("history-record")
+            full.history.openId = nil
+            full.history.open(conversation: "c-plan")
+            await full.history.conversation.loadTranscript()
+            try await homeShot("history-conversation")
+            full.history.conversation.selectedId = nil
+            full.history.filter = .agents
+            try await homeShot("history-agents")
+            full.history.filter = .all
+            // The Gallery in Home (D84), with Settings' sample catalog.
+            full.selection = .gallery
+            full.settingsHost.gallery.showSample(catalog: try SampleCompanions.catalog(), companions: SampleCompanions.installed)
+            try await homeShot("gallery")
+            try await homeShot("gallery-wide", size: CGSize(width: 1600, height: 1000))
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
-            try await homeShot("activity-small", size: small)
-            await full.showConversation("c-plan")
-            try await homeShot("conversations-small", size: small)
             full.selection = .now
-            try await homeShot("now-small", size: small)
+            try await homeShot("today-small", size: small)
+            full.selection = .history
+            try await homeShot("history-small", size: small)
+            full.selection = .onDuty
+            try await homeShot("onduty-small", size: small)
             full.selection = .calendar
             for mode in CalendarModel.Mode.allCases {
                 full.calendar.mode = mode
                 await full.calendar.reload()
                 try await homeShot("calendar-\(mode.rawValue)-small", size: small)
             }
-            full.calendar.mode = .month
+            full.calendar.mode = .agenda
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook-small", size: small)
             home.orderOut(nil)
 
+            // Every place empty: what fills it, with its one action.
             let blank = SnapshotWindow()
             HomeWindowController.configure(blank, model: empty)
+            func emptyShot(_ name: String) async throws {
+                try await capture(blank, size: CGSize(width: 1280, height: 800), dark: dark, to: file("window-home-\(name)-empty"))
+            }
             empty.selection = .now
-            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-now-empty"))
+            try await emptyShot("today")
             if let inbox = empty.notebook.inboxId {
                 empty.selection = .collection(inbox)
                 await empty.notebook.show(collectionId: inbox)
             }
-            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-notebook-empty"))
+            try await emptyShot("notebook")
             empty.selection = .calendar
             await empty.calendar.reload()
-            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-calendar-empty"))
-            empty.selection = .activity
-            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-activity-empty"))
-            await empty.showConversation(nil)
-            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-conversations-empty"))
+            try await emptyShot("calendar")
+            empty.selection = .onDuty
+            try await emptyShot("onduty")
+            empty.selection = .history
+            await empty.history.reload()
+            try await emptyShot("history")
+            empty.selection = .you
+            await empty.you.reload()
+            try await emptyShot("you")
+            empty.selection = .trash
+            try await emptyShot("trash")
             blank.orderOut(nil)
 
-            // Settings, as a real window, one picture per tab.
+            // Settings, as a real window, one picture per tab, then a search (D84).
             let settingsWindow = SnapshotWindow()
-            let tabs = SettingsWindowController.configure(settingsWindow, model: settings)
-            for (index, tab) in SettingsTab.allCases.enumerated() {
-                tabs.selectedTabViewItemIndex = index
-                try await capture(settingsWindow, size: CGSize(width: SettingsWindowController.width, height: 620), dark: dark,
-                                  to: file("window-settings-\(tab.rawValue)"))
+            SettingsWindowController.configure(settingsWindow, model: settings)
+            let settingsSize = CGSize(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
+            for tab in SettingsTab.allCases {
+                settings.navigation.tab = tab
+                try await capture(settingsWindow, size: settingsSize, dark: dark, to: file("window-settings-\(tab.rawValue)"))
             }
+            settings.navigation.query = String(localized: "quiet", comment: "UI snapshots only: a word searched in Settings")
+            settings.navigation.highlighted = settings.navigation.results.first
+            try await capture(settingsWindow, size: settingsSize, dark: dark, to: file("window-settings-search"))
+            settings.navigation.query = "zzzz"
+            try await capture(settingsWindow, size: settingsSize, dark: dark, to: file("window-settings-search-none"))
+            settings.navigation.query = ""
+            settings.navigation.tab = .general
+            // The narrowest Settings allows, to catch clipping.
+            try await capture(settingsWindow, size: CGSize(width: 760, height: 520), dark: dark, to: file("window-settings-general-small"))
             settingsWindow.orderOut(nil)
 
             let aboutWindow = SnapshotWindow()
-            AboutWindowController.configure(aboutWindow)
-            try await capture(aboutWindow, size: CGSize(width: 380, height: 470), dark: dark, to: file("window-about"))
+            let aboutUpdates = UpdateModel()
+            aboutUpdates.phase = .upToDate
+            AboutWindowController.configure(aboutWindow, updates: aboutUpdates)
+            try await capture(aboutWindow, size: CGSize(width: 420, height: 520), dark: dark, to: file("window-about"))
             aboutWindow.orderOut(nil)
 
             // The update window in each state it has words for (D46).
@@ -192,7 +231,7 @@ enum UISnapshots {
                 (model.running, model.lastCheck, model.phase, model.plan) = ("0.1.0 snapshot 411", Date().addingTimeInterval(-120), phase, plan)
                 let window = SnapshotWindow()
                 UpdateWindowController.configure(window, model: model)
-                try await capture(window, size: CGSize(width: 460, height: 380), dark: dark, to: file("window-update-\(name)"))
+                try await capture(window, size: CGSize(width: 560, height: 460), dark: dark, to: file("window-update-\(name)"))
                 window.orderOut(nil)
             }
 
@@ -200,10 +239,9 @@ enum UISnapshots {
             func page(_ name: String, _ view: some View, width: CGFloat) async throws {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
             }
-            try await page("page-now", NowView(model: full.now), width: 870)
-            // The narrowest page that keeps the theme's Today columns side by side (D64), with and without anything in them.
-            try await page("page-now-tight", NowView(model: full.now), width: tightTodayWidth)
-            try await page("page-now-tight-empty", NowView(model: empty.now), width: tightTodayWidth)
+            full.selection = .now
+            try await page("page-today", TodayView(model: full), width: 1100)
+            try await page("page-today-empty", TodayView(model: empty), width: 1100)
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
             // A wide window and a narrow one: the page fills the width it has, centred (D67).
@@ -226,17 +264,14 @@ enum UISnapshots {
             let audioPage = SampleExtensionPage.miraya("ready")
             audioPage.toggleOpen("Picture & sound")
             try await page("page-extension-miraya-audio-narrow", ExtensionPageView(model: audioPage), width: 640)
-            full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
-            try await page("page-now-extension-tile", NowView(model: full.now), width: 870)
-            full.now.widgets = []
-            // With Full access on, Now leads with it (D37).
+            // With Full access on, Today leads with it (D37).
             let homePolicy = try await full.services.runtime.permissions.policy()
             try await full.services.runtime.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
             await full.now.reload()
-            try await page("page-now-full-access", NowView(model: full.now), width: 870)
+            try await page("page-today-full-access", TodayView(model: full), width: 1100)
             try await full.services.runtime.permissions.setPolicy(homePolicy)
             await full.now.reload()
-            let width = SettingsWindowController.width
+            let width: CGFloat = 690
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
@@ -254,9 +289,34 @@ enum UISnapshots {
             fixtures.updates.phase = .upToDate
             // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
             let policy = settings.policy
-            await settings.setPolicy { $0.mode = .fullAccess; $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
-            try await page("page-settings-privacy-full-access", SettingsTabContent(tab: .privacy, model: settings), width: width)
+            let fullAccessEnds = Calendar.current.date(bySettingHour: 22, minute: 0, second: 0, of: Date()) ?? Date()
+            await settings.setPolicy { $0.choose(.fullAccess, fullAccessEnds: fullAccessEnds); $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
+            try await page("page-settings-trust-full-access", SettingsTabContent(tab: .trust, model: settings), width: width)
             await settings.setPolicy { $0 = policy }
+            // What Full access means, and when it ends (D84).
+            try await page("sheet-full-access", FullAccessSheet(model: settings), width: Theme.Size.sheet + 40)
+            // The menu bar's Pocket in the states that read differently (D84).
+            for (name, content) in SamplePocket.states(name: settings.settings.companionName) {
+                let pocket = PocketModel()
+                pocket.content = content
+                try await page("panel-pocket-\(name)", PocketView(model: pocket), width: 340)
+            }
+            // Attention in Focus until five, with two things held, then Quiet for good with quiet hours on (D84).
+            let five = Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: Date()) ?? Date()
+            settings.setAttention(.focus, until: max(five, Date().addingTimeInterval(3500)))
+            await settings.services.runtime.attention.update { $0.focus = true }
+            for title in ["Codex finished in pockito", "Pricing page changed"] {
+                _ = await settings.services.runtime.attention.post(AttentionRequest(level: .gentle, source: "watcher", title: title))
+            }
+            await settings.refreshHeld()
+            try await page("page-settings-attention-focus", SettingsTabContent(tab: .attention, model: settings), width: width)
+            settings.update { $0.quietHours.on = true }
+            settings.setAttention(.quiet, until: nil)
+            await settings.services.runtime.attention.update { $0.focus = false; $0.quiet = true }
+            try await page("page-settings-attention-quiet", SettingsTabContent(tab: .attention, model: settings), width: width)
+            settings.update { $0.quietHours.on = false }
+            settings.setAttention(.open, until: nil)
+            await settings.services.runtime.attention.update { $0.quiet = false }
             // The companion chooser with Spark chosen, then Spark in 2D, coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)
@@ -281,19 +341,10 @@ enum UISnapshots {
             }
             try await page("page-settings-companion-yours", SettingsTabContent(tab: .companion, model: settings), width: width)
             settings.update { $0.choose(.mochi) }
-            chooser.page = .gallery
-            try await page("page-settings-companion-gallery", SettingsTabContent(tab: .companion, model: settings), width: width)
-            chooser.browse = CompanionBrowse(text: "cat", look: .twoD)
-            try await page("page-settings-companion-gallery-search", SettingsTabContent(tab: .companion, model: settings), width: width)
-            chooser.browse = CompanionBrowse(look: .threeD, maker: .others, hideOwned: true, sort: .newest)
-            try await page("page-settings-companion-gallery-filters", SettingsTabContent(tab: .companion, model: settings), width: width)
-            chooser.browse = CompanionBrowse(text: "spreadsheet")
-            try await page("page-settings-companion-gallery-none", SettingsTabContent(tab: .companion, model: settings), width: width)
-            chooser.browse = CompanionBrowse()
             if let catalog = settings.gallery.catalog {
                 settings.gallery.showSample(catalog: catalog, companions: SampleCompanions.installed + localCompanions,
                                             progress: ["dev.sidefolk.companions.nori": 0.45, "dev.sidefolk.companions.acorn": 0.8])
-                try await page("page-settings-companion-gallery-downloading", SettingsTabContent(tab: .companion, model: settings), width: width)
+                try await page("page-home-gallery-downloading", HomeGalleryView(settings: settings), width: 1100)
                 for (name, id) in [("get", "dev.sidefolk.companions.rune"), ("owned", "io.github.lenak.pebble"),
                                    ("downloading", "dev.sidefolk.companions.nori"), ("update", "dev.sidefolk.companions.ember")] {
                     if let entry = catalog.entry(id) {
@@ -302,7 +353,6 @@ enum UISnapshots {
                 }
                 settings.gallery.showSample(catalog: catalog, companions: SampleCompanions.installed + localCompanions)
             }
-            chooser.page = .yours
             try await page("sheet-companion-add", AddCompanionOptions(model: settings).background(Theme.surfaceRaised), width: 380)
             // The menus can't be drawn open; their items for each kind of companion, as a list.
             try await page("sheet-companion-menus", SampleCompanions.menus(chooser), width: 600)
@@ -312,18 +362,18 @@ enum UISnapshots {
                 setUp(fixtures, settings)
                 settings.ai.choose(choice)
                 await settings.ai.refresh()
-                try await page("page-settings-ai-\(name)", AISettingsView(model: settings), width: width)
+                try await page("page-settings-ai-\(name)", SettingsPage { AISettingsSections(model: settings) }, width: width)
             }
             fixtures.detection = FixtureServices.sampleDetection
             settings.ai.choose(.codex)
             await settings.ai.refresh()
             await settings.ai.test()
-            try await page("page-settings-ai-sent", AISettingsView(model: settings, showPayload: true), width: width)
+            try await page("page-settings-ai-sent", SettingsPage { AISettingsSections(model: settings, showPayload: true) }, width: width)
             // Settings › Voice turned on, in the states that need different words (D34).
             for (name, setUp) in voiceStates {
                 setUp(fixtures.voice, settings)
                 await settings.voice.refresh()
-                try await page("page-settings-voice-\(name)", VoiceSettingsView(model: settings), width: width)
+                try await page("page-settings-voice-\(name)", SettingsPage { VoiceSettingsSections(model: settings) }, width: width)
             }
             settings.update { $0.voice = VoiceSettings() }
             // Settings › Privacy › Your location in each state that needs different words (D48).
@@ -384,12 +434,31 @@ enum UISnapshots {
                           ("desktop-ask-now", sampleAskNow())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
-                try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
+                ask.companionName = "Mochi"
+                ask.tail = SidecardTail(edge: .trailing, at: 0.85)
+                try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space").background(Wallpaper()),
+                               width: Theme.Size.sidecardAsk + 48)
             }
-            for (name, bubble) in sampleBubbles() {
-                try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
+            // Permission slips alone above the companion (D84): calm from your own words, firm from another app or
+            // after outside content, with the exact request unfolded.
+            for (name, request, exact) in DesktopScenes.slips() {
+                let slip = PermissionSlip(request: request, look: request.extensionId.map { ExtensionLook(name: $0.hasSuffix("miraya") ? "Miraya" : $0) },
+                                          companionName: "Mochi", tail: SidecardTail(edge: .bottom, at: 0.8), standalone: true, exactOpen: exact,
+                                          decide: { _ in }, changeMode: {})
+                try await page("desktop-slip-\(name)", slip.padding(AskView.margin).frame(maxWidth: .infinity).background(Wallpaper()),
+                               width: Theme.Size.sidecardMax + 48)
             }
-            try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
+            // The desktop of D84: the Sidecard's moments, every state of the light, and the companion on its floor.
+            let face = CompanionArt.avatar(for: AppSettings(), side: 48)
+            let still = CompanionArt.portrait(for: AppSettings(), side: 300)
+            for (name, moment) in DesktopScenes.sidecards(face: face) {
+                try await page("desktop-sidecard-\(name)", SidecardView(model: moment).frame(maxWidth: .infinity).background(Wallpaper()), width: 470)
+            }
+            try await page("desktop-states", DesktopScenes.statesBoard(portrait: still), width: 1100)
+            for (name, floor, measure) in DesktopScenes.scenes(portrait: still, face: face) {
+                try await page("desktop-floor-\(name)", FloorScene(portrait: still, floor: floor, height: floor.sidecard == nil ? 300 : 520,
+                                                                   measure: measure), width: 760)
+            }
             for (name, caption) in sampleTosses(face: portrait) {
                 try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 300)
             }
@@ -412,6 +481,20 @@ enum UISnapshots {
             for sheet in DesignSystemSheet.Page.allCases {
                 try await page("design-system-\(sheet.rawValue)", DesignSystemSheet(page: sheet), width: 1600)
             }
+            // Reduce Transparency with Increase Contrast (D84 phase 5): solid surfaces and edges at a control's strength.
+            func accessible(_ name: String, _ view: some View, width: CGFloat) async throws {
+                // A view can't turn the system settings on; these stand in for them (the hairline colour itself follows
+                // the high-contrast appearance, which a snapshot window can't take).
+                try await capturePage(view.environment(\.solidSurfaces, true).environment(\._colorSchemeContrast, .increased),
+                                      width: width, dark: dark, to: file("a11y-\(name)"))
+            }
+            try await accessible("design-system-sidecard", DesignSystemSheet(page: .sidecard), width: 1600)
+            try await accessible("page-today", TodayView(model: full), width: 1100)
+            if let (_, content) = SamplePocket.states(name: full.companionName).first {
+                let pocket = PocketModel()
+                pocket.content = content
+                try await accessible("panel-pocket", PocketView(model: pocket), width: 340)
+            }
 
             // Sheets.
             // Where a time is set (WhenField): typed, read back, picked; and the sheets that use it.
@@ -427,15 +510,20 @@ enum UISnapshots {
             if let edited = full.notebook.collections.first(where: { $0.symbol != nil }) {
                 try await page("sheet-edit-collection", CollectionSheet(mode: .edit(edited), model: full.notebook) { _ in }, width: 420)
             }
-            try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
-            try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 480)
+            try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 600)
+            try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 600)
             // One per source (D71): Sidefolk's own from the gallery, the same permissions from a folder, an update asking for more.
-            try await page("sheet-install-gallery", InstallPreviewSheet(preview: FixtureServices.galleryPreview, model: settings), width: 480)
-            try await page("sheet-install-unknown", InstallPreviewSheet(preview: FixtureServices.unknownMirrorPreview, model: settings), width: 480)
-            try await page("sheet-install-update", InstallPreviewSheet(preview: FixtureServices.updatePreview, model: settings), width: 480)
+            try await page("sheet-install-gallery", InstallPreviewSheet(preview: FixtureServices.galleryPreview, model: settings), width: 600)
+            try await page("sheet-install-unknown", InstallPreviewSheet(preview: FixtureServices.unknownMirrorPreview, model: settings), width: 600)
+            try await page("sheet-install-update", InstallPreviewSheet(preview: FixtureServices.updatePreview, model: settings), width: 600)
+            // The passport's second step: what it can touch (D84).
+            for (name, preview) in [("extension", FixtureServices.samplePreview), ("draft", FixtureServices.draftPreview),
+                                    ("gallery", FixtureServices.galleryPreview), ("unknown", FixtureServices.unknownMirrorPreview),
+                                    ("update", FixtureServices.updatePreview)] {
+                try await page("sheet-install-\(name)-touch", InstallPreviewSheet(preview: preview, model: settings, step: .touch), width: 600)
+            }
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
-            try await page("sheet-full-access", FullAccessSheet(model: settings), width: 460)
         }
         print("ui-snapshots: wrote \(dir.path) (\(Bundle.main.preferredLocalizations.first ?? "en"))")
     }
@@ -671,15 +759,6 @@ enum UISnapshots {
         return ask
     }
 
-    /// The live values beside the companion: two running, one paused.
-    private static func sampleReadouts() -> ReadoutPillsModel {
-        let model = ReadoutPillsModel()
-        model.items = [Readout(id: "1", label: String(localized: "CPU"), value: "23%"),
-                       Readout(id: "2", label: "Fukuoka", value: "18.4 °C"),
-                       Readout(id: "3", label: String(localized: "Network"), value: "↓ 1.2 MB/s ↑ 40 kB/s", paused: true)]
-        return model
-    }
-
     /// A panel in Auto or Full access after a request that went on while nobody answered: what was
     /// done without asking, and the step that was skipped (D37).
     private static func awayAsk(_ mode: GuardMode) -> AskModel {
@@ -831,50 +910,6 @@ enum UISnapshots {
         return ask
     }
 
-    private static func sampleBubbles() -> [(String, BubbleModel)] {
-        func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
-            let model = BubbleModel()
-            model.item = item
-            model.tail = tail
-            return model
-        }
-        return [
-            ("reminder", bubble(AttentionItem(level: .attention, source: "reminder", title: "Stretch", body: "You asked at 16:40.",
-                                              actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
-                                                        AttentionAction(id: "snooze", title: String(localized: "10 min"))],
-                                              refKind: "reminder", refId: "r1"))),
-            ("reminder-repeating", bubble(AttentionItem(level: .attention, source: "reminder", title: "Drink some water",
-                                                        body: "Every 30 minutes until 18:00",
-                                                        actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
-                                                                  AttentionAction(id: "snooze10", title: String(localized: "10 min")),
-                                                                  AttentionAction(id: "stop", title: String(localized: "Stop repeating"))],
-                                                        refKind: "reminder", refId: "r2"))),
-            ("job-failed", bubble(AttentionItem(level: .attention, source: "job", title: "npm test failed (exit 1)",
-                                                body: "FAIL src/app.test.ts\nExpected 2, received 3\nAfter 4m 12s in sidefolk",
-                                                actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),
-                                                          AttentionAction(id: "open", title: String(localized: "Open folder"))],
-                                                refKind: "job", refId: "j1"))),
-            ("question", bubble(AttentionItem(level: .attention, source: "external:codex", title: "Codex asks",
-                                              body: "Deploy to staging now?",
-                                              actions: [AttentionAction(id: "yes", title: "Yes", isPrimary: true),
-                                                        AttentionAction(id: "no", title: "No")],
-                                              refKind: "ask"),
-                                tail: .init(onTop: true, x: 60))),
-            ("done-without-asking", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
-                                                         title: String(localized: "Done without asking: \("Rename 3 files in ~/Documents/Invoices")",
-                                                                       comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
-                                                         body: GuardMode.auto.title, refKind: "unasked"))),
-            ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
-                                           body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
-            ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),
-            ("update", bubble({
-                let n = UpdateController.notice(UpdateController.sampleOffer)
-                return AttentionItem(level: n.level, source: n.source, title: n.title, body: n.body, actions: n.actions,
-                                     refKind: n.refKind, refId: n.refId)
-            }())),
-        ]
-    }
-
     /// The update window's states (D46): file name, phase, and how this copy would install it.
     /// Gallery entries for Settings › Updates' add-on rows (D70).
     private static var sampleAddons: [AddonEntry] {
@@ -949,18 +984,6 @@ enum UISnapshots {
 
     private static var only: [String] = []
     private static var gameBoards: URL?
-
-    /// The narrowest page where every row of the theme's Today stays side by side (ColumnsLayout's rule, with
-    /// NowView's least widths): where its columns are at their slimmest.
-    private static var tightTodayWidth: CGFloat {
-        let content = ThemeStore.shared.style.tokens.layout.today.map { row -> CGFloat in
-            guard row.count > 1 else { return 0 }
-            let total = row.map(\.width).reduce(0, +)
-            let least = row.map { NowView.leastWidth($0) * CGFloat(total / $0.width) }.max() ?? 0
-            return least + Theme.Space.l * CGFloat(row.count - 1)
-        }.max() ?? 0
-        return (max(content, 420) + 2 * Theme.Space.xxl + 2).rounded(.up)
-    }
 
     private static func wantedName(_ name: String) -> Bool { only.isEmpty || only.contains { name.contains($0) } }
 

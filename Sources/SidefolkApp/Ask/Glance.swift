@@ -25,50 +25,72 @@ struct Glance: Equatable {
 
 struct GlanceView: View {
     var glance: Glance
+    /// How many wait in all, for "Needs you · 3".
+    var waiting: Int
     var answer: (AttentionItem, String?) -> Void
     var openSession: (AgentSession) -> Void
     var openToday: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(glance.sessions.prefix(Glance.decisionsShown)) { session in
-                row("hand.raised", Text(Describe.session(session))) {
-                    Button("Open session") { openSession(session) }.buttonStyle(.sf(.secondary, compact: true)).fixedSize()
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            if !glance.sessions.isEmpty || !glance.decisions.isEmpty {
+                HStack {
+                    Eyebrow(Text("Needs you · \(max(waiting, glance.sessions.count + glance.decisions.count))",
+                                 comment: "Ask's resting state: how many things wait on the person"))
+                    Spacer()
+                    Button(action: openToday) { Text("Open Today") }.buttonStyle(.sf(.quiet, size: .small))
                 }
-            }
-            ForEach(glance.decisions.prefix(max(0, Glance.decisionsShown - glance.sessions.count))) { item in
-                row("bell", Text(verbatim: item.title)) {
-                    if let primary = item.actions.first(where: \.isPrimary) {
-                        Button { answer(item, primary.id) } label: { Text(verbatim: primary.title) }
-                            .buttonStyle(.sf(.primary, compact: true)).fixedSize()
+                ForEach(glance.sessions.prefix(Glance.decisionsShown)) { session in
+                    row(Text(Describe.session(session)), avatar: "byte") {
+                        Button("Open session") { openSession(session) }.buttonStyle(.sf(.secondary, size: .small)).fixedSize()
                     }
-                    Button { answer(item, nil) } label: { Image(systemName: "xmark") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
-                        .accessibilityLabel("Dismiss")
+                }
+                ForEach(glance.decisions.prefix(max(0, Glance.decisionsShown - glance.sessions.count))) { item in
+                    row(Text(verbatim: item.title), avatar: SidecardItemCard.folk(item)) {
+                        if let primary = item.actions.first(where: \.isPrimary) {
+                            Button { answer(item, primary.id) } label: { Text(verbatim: primary.title) }
+                                .buttonStyle(.sf(.primary, size: .small)).fixedSize()
+                        }
+                        Button { answer(item, nil) } label: { Image(systemName: "xmark") }
+                            .buttonStyle(.sf(.plain, size: .small)).foregroundStyle(Theme.inkFaint)
+                            .accessibilityLabel("Dismiss")
+                    }
                 }
             }
-            ForEach(Array(glance.next.prefix(Glance.nextShown).enumerated()), id: \.offset) { _, next in
-                row(next.event ? "calendar" : "alarm",
-                    Text(verbatim: "\(TimeFormat.clock(next.at, calendar: .current))  \(next.title)")) { EmptyView() }
+            if !glance.next.isEmpty {
+                Eyebrow(Text("Next up", comment: "Ask's resting state: what comes next in the day")).padding(.top, Theme.Space.s)
+                ForEach(Array(glance.next.prefix(Glance.nextShown).enumerated()), id: \.offset) { _, next in
+                    row(Text(verbatim: next.title), symbol: next.event ? "calendar" : "alarm") {
+                        Text(verbatim: "\(TimeFormat.clock(next.at, calendar: .current)) · \(TimeText.relative(next.at))")
+                            .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).monospacedDigit()
+                    }
+                }
             }
-            ForEach(glance.working, id: \.self) { title in
-                row("sparkles", Text(verbatim: title)) { EmptyView() }
+            if !glance.working.isEmpty {
+                Eyebrow(Text("Working", comment: "Ask's resting state: agents and commands running now")).padding(.top, Theme.Space.s)
+                ForEach(glance.working, id: \.self) { title in
+                    row(Text(verbatim: title), avatar: "byte") { EmptyView() }
+                }
             }
-            Button(action: openToday) { Label("Open Today", systemImage: "sun.max") }
-                .buttonStyle(.plain)
-                .foregroundStyle(Theme.link)
-                .font(Theme.Font.caption)
         }
         .padding(.top, Theme.Space.xs)
         .accessibilityElement(children: .contain)
     }
 
-    private func row(_ symbol: String, _ title: Text, @ViewBuilder trailing: () -> some View) -> some View {
+    private func row(_ title: Text, avatar: String? = nil, symbol: String? = nil, @ViewBuilder trailing: () -> some View) -> some View {
         HStack(spacing: Theme.Space.s) {
-            Image(systemName: symbol).foregroundStyle(Theme.inkMuted).frame(width: 16).accessibilityHidden(true)
-            title.font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(1)
+            if let avatar {
+                FolkAvatar(name: avatar, size: Theme.Size.avatarSmall)
+            } else {
+                Image(systemName: symbol ?? "bell").font(.system(size: 12)).foregroundStyle(Theme.inkMuted)
+                    .frame(width: Theme.Size.avatarSmall, height: Theme.Size.avatarSmall)
+                    .background(Theme.well, in: Circle())
+                    .accessibilityHidden(true)
+            }
+            title.font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
             Spacer(minLength: Theme.Space.xs)
             trailing()
         }
+        .frame(minHeight: Theme.Size.compactRow)
     }
 }

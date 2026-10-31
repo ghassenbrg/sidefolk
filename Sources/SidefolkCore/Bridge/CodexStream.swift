@@ -104,11 +104,11 @@ public enum CodexStream {
         }
         if ["usage limit", "rate limit", "429", "too many requests", "quota"].contains(where: text.contains) {
             return UserFacingError("Your ChatGPT plan's Codex limit is reached for now.",
-                                   recovery: "Try again later or switch provider in Settings › AI.", detail: detail)
+                                   recovery: "Try again later or switch provider in Settings › Brain.", detail: detail)
         }
         if !model.isEmpty, text.contains("model"), ["not supported", "does not exist", "not found", "unknown model", "invalid model"].contains(where: text.contains) {
             return UserFacingError("Codex can't use the model “\(model)”.",
-                                   recovery: "Pick another model in Settings › AI, or leave it empty for Codex's default.", detail: detail)
+                                   recovery: "Pick another model in Settings › Brain, or leave it empty for Codex's default.", detail: detail)
         }
         if ["error sending request", "dns", "connection refused", "connection reset", "network", "timed out", "stream disconnected"].contains(where: text.contains) {
             return UserFacingError("I couldn't reach OpenAI.", recovery: "Check your connection or switch provider.", detail: detail)
