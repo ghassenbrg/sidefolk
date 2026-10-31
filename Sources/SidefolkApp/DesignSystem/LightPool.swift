@@ -37,6 +37,9 @@ enum LightPoolState: Equatable {
 struct LightPool: View {
     var state: LightPoolState
     var width: CGFloat = 140
+    /// A still colour, as Reduce Motion has it: for copies of the light (Home's nook), where a breath forever would
+    /// redraw a whole window every frame for something the desktop already shows.
+    var still = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var breathing = false
@@ -66,13 +69,13 @@ struct LightPool: View {
 
     private func light() {
         if breathes { withAnimation(Theme.Motion.breath) { breathing = true } }
-        guard state == .alert, !reduceMotion else { return }
+        guard state == .alert, !reduceMotion, !still else { return }
         withAnimation(.easeOut(duration: 0.3)) { pulse = true } completion: {
             withAnimation(.easeIn(duration: 0.3)) { pulse = false }
         }
     }
 
-    private var breathes: Bool { state == .working && !reduceMotion }
+    private var breathes: Bool { state == .working && !reduceMotion && !still }
 }
 
 /// The mark on the companion's shoulder: how many wait (amber), how many Focus holds (grey), or Focus's half circle and

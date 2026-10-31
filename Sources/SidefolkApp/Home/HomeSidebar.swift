@@ -177,7 +177,7 @@ struct SidebarNook: View {
         let settings = model.services.runtime.settings.current
         HStack(alignment: .top, spacing: Theme.Space.s + 2) {
             ZStack(alignment: .bottom) {
-                LightPool(state: model.poolState, width: 60).offset(y: 6)
+                LightPool(state: model.poolState, width: 60, still: true).offset(y: 6)
                 CompanionPortrait(settings: settings, state: pose, side: 46)
             }
             .overlay(alignment: .topTrailing) { ShoulderBadge(state: shoulder).scaleEffect(0.7).offset(x: 6, y: -4) }

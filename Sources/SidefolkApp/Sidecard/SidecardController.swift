@@ -119,6 +119,13 @@ final class SidecardController {
             break
         }
         appear()
+        // The panel never takes the keyboard, so VoiceOver hears a new moment rather than finding it: what it is, and
+        // for a card that it waits for an answer.
+        let words = card ? String(localized: "\(item.title). It waits for your answer beside \(model.companionName).",
+                                  comment: "VoiceOver, when a card appears beside the companion: its title, then that it waits")
+                         : item.title
+        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
+                             userInfo: [.announcement: words, .priority: (card ? NSAccessibilityPriorityLevel.high : .medium).rawValue])
         onChange?()
     }
 

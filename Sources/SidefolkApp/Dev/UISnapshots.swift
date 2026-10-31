@@ -479,8 +479,10 @@ enum UISnapshots {
             }
             // Reduce Transparency with Increase Contrast (D84 phase 5): solid surfaces and edges at a control's strength.
             func accessible(_ name: String, _ view: some View, width: CGFloat) async throws {
-                try await capturePage(view.environment(\.solidSurfaces, true), width: width, dark: dark, to: file("a11y-\(name)"),
-                                      highContrast: true)
+                // A view can't turn the system settings on; these stand in for them (the hairline colour itself follows
+                // the high-contrast appearance, which a snapshot window can't take).
+                try await capturePage(view.environment(\.solidSurfaces, true).environment(\._colorSchemeContrast, .increased),
+                                      width: width, dark: dark, to: file("a11y-\(name)"))
             }
             try await accessible("design-system-sidecard", DesignSystemSheet(page: .sidecard), width: 1600)
             try await accessible("page-today", TodayView(model: full), width: 1100)
@@ -956,7 +958,7 @@ enum UISnapshots {
     }
 
     /// A view at its full height in a borderless window.
-    private static func capturePage(_ view: some View, width: CGFloat, dark: Bool, to url: URL, highContrast: Bool = false) async throws {
+    private static func capturePage(_ view: some View, width: CGFloat, dark: Bool, to url: URL) async throws {
         guard wanted(url) else { return }
         let host = NSHostingView(rootView: view
             .environment(\.rendersFullPage, true)
@@ -965,8 +967,7 @@ enum UISnapshots {
             .background(Theme.surface))
         let window = SnapshotWindow(contentRect: NSRect(x: -20000, y: -20000, width: width, height: 200),
                                     styleMask: [.borderless], backing: .buffered, defer: false)
-        window.appearance = NSAppearance(named: highContrast ? (dark ? .accessibilityHighContrastDarkAqua : .accessibilityHighContrastAqua)
-                                                : dark ? .darkAqua : .aqua)
+        window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         window.isReleasedWhenClosed = false
         window.contentView = host
         window.orderFrontRegardless()
