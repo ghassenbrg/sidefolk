@@ -125,6 +125,51 @@ enum SampleExtensionPage {
         return model
     }
 
+    /// Clipboard's page (D68): its switches, the latest copies with their pictures, and Maccy's settings as choices,
+    /// switches, fields and a list, as the extension sends them.
+    @MainActor static func clipboard(now: Date = Date()) -> ExtensionPageModel {
+        let json = #"""
+        {"summary": {"title": "Keeping your copies", "detail": "312 kept · 41 today · open them from any app with the shortcut below", "tone": "good", "symbol": "doc.on.clipboard.fill"},
+         "sections": [
+          {"blocks": [
+            {"type": "switch", "label": "Keep a history of what I copy", "detail": "Passwords from password managers are never kept.", "on": true, "tool": "set_option"},
+            {"type": "switch", "label": "Hide passwords, keys and card numbers", "detail": "They show as dots, stay in memory only and are forgotten after two minutes.", "on": true, "tool": "set_option"},
+            {"type": "button", "label": "Pause 10 minutes", "tool": "pause", "symbol": "pause"},
+            {"type": "button", "label": "Skip my next copy", "tool": "skip_next", "symbol": "forward"},
+            {"type": "button", "label": "Clear history", "tool": "clear_history", "style": "destructive", "symbol": "trash"}]},
+          {"title": "Latest", "blocks": [{"type": "list", "caption": "In the order the palette shows them. Copy puts one back on the clipboard.", "items": [
+            {"title": "Screenshot 1440 × 900", "detail": "Safari · 2 min ago", "image": "thumbs/sample.png", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}},
+            {"title": "https://github.com/ghassenbrg/sidefolk/pull/2", "detail": "Safari · 3 min ago · copied 2×", "symbol": "pin.fill", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}},
+            {"title": "#2ED4D9", "detail": "Figma · 1 h ago", "color": "#2ED4D9", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}},
+            {"title": "func hello() {", "detail": "Xcode · 2 h ago · 3 lines", "symbol": "chevron.left.forwardslash.chevron.right", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}}]}]},
+          {"title": "Choosing a copy", "blocks": [
+            {"type": "choice", "label": "Return", "detail": "What choosing a copy does. Option-Return does the other; Shift-Return pastes plain text.", "tool": "set_option",
+             "options": [{"value": "paste", "label": "Pastes it"}, {"value": "copy", "label": "Only copies it"}], "selected": "paste"},
+            {"type": "choice", "label": "Formatting", "detail": "Fonts, colours and links that came with copied text.", "tool": "set_option",
+             "options": [{"value": "keep", "label": "Keep it"}, {"value": "remove", "label": "Remove it"}], "selected": "keep"}]},
+          {"title": "History", "blocks": [
+            {"type": "choice", "label": "Keep up to", "detail": "Copies, pinned ones aside. The oldest go first.", "tool": "set_option", "selected": "500",
+             "options": [{"value": "100", "label": "100 copies"}, {"value": "200", "label": "200 copies"}, {"value": "500", "label": "500 copies"},
+                         {"value": "1000", "label": "1,000 copies"}, {"value": "2000", "label": "2,000 copies"}, {"value": "5000", "label": "5,000 copies"}]},
+            {"type": "choice", "label": "Order", "tool": "set_option", "selected": "recent",
+             "options": [{"value": "recent", "label": "Last copied"}, {"value": "first", "label": "First copied"}, {"value": "count", "label": "Most copied"}]},
+            {"type": "choice", "label": "Pinned copies", "tool": "set_option", "selected": "top", "options": [{"value": "top", "label": "On top"}, {"value": "bottom", "label": "At the bottom"}]},
+            {"type": "switch", "label": "Keep pictures", "detail": "Screenshots and copied images, 300 at most.", "on": true, "tool": "set_option"}]},
+          {"title": "Leave out", "blocks": [
+            {"type": "switch", "label": "Ignore Safari", "detail": "com.apple.Safari", "on": false, "tool": "ignore"},
+            {"type": "switch", "label": "Ignore 1Password", "detail": "com.1password.1password", "on": true, "tool": "ignore"},
+            {"type": "list", "title": "Also left out", "items": [
+              {"title": "^\\d{6}$", "detail": "Text matching", "symbol": "textformat", "button": {"label": "Remove", "tool": "ignore"}}]},
+            {"type": "field", "label": "Ignore an app", "detail": "Its name or bundle id, like 1Password or com.apple.keychainaccess.", "placeholder": "App name or bundle id",
+             "button": "Ignore", "tool": "ignore", "key": "app"}]}
+         ]}
+        """#
+        let page = (try? JSONDecoder().decode(JSONValue.self, from: Data(json.utf8))).flatMap { try? ExtensionPage.parse($0) } ?? ExtensionPage()
+        let info = ExtensionPageInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", page: "clipboard", title: "Clipboard",
+                                     symbol: "doc.on.clipboard", refresh: 3, needsAccessibility: true)
+        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: pictureFolder())
+    }
+
     /// A made-up screenshot's thumbnail in a temporary folder, as Clipboard keeps one in its data folder.
     @MainActor static func pictureFolder() -> URL {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-clipboard", isDirectory: true)

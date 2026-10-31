@@ -98,6 +98,23 @@ final class PaletteController {
         if paste { Self.paste() }
     }
 
+    #if DEBUG
+    /// A key in the open palette, for scripts/dev.swift: `down`, `up`, or a key code with `cmd`, `opt`, `shift`.
+    func press(_ spec: String) {
+        guard let model else { return }
+        let parts = spec.split(separator: ":").map(String.init)
+        switch parts.first {
+        case "down": model.move(1)
+        case "up": model.move(-1)
+        default:
+            guard let code = parts.first.flatMap(UInt16.init),
+                  let command = PaletteKeys.command(keyCode: code, command: parts.contains("cmd"), option: parts.contains("opt"),
+                                                    shift: parts.contains("shift"), control: false) else { return }
+            model.handle(command)
+        }
+    }
+    #endif
+
     /// ⌘V into the app in front, which never lost focus to the panel. Posting keys needs Accessibility; without it the
     /// item is on the clipboard and macOS asks once.
     static func paste() {

@@ -152,7 +152,9 @@ enum UISnapshots {
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
             // Switches and buttons on a page, and a palette (D63).
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
-            try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 600)
+            try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
+            // Choices, fields and lists with pictures on a page (D68).
+            try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
             full.now.widgets = [SampleExtensionPage.widget()]
             try await page("page-now-extension-tile", NowView(model: full.now), width: 870)
             full.now.widgets = []

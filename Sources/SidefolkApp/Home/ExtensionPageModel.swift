@@ -67,9 +67,11 @@ final class ExtensionPageModel {
     }
 
     /// A page with nothing behind it, for UI snapshots.
-    init(info: ExtensionPageInfo, page: ExtensionPage, history: [String: [ExtensionPageHistory.Point]], alerts: [Alert], updated: Date) {
+    init(info: ExtensionPageInfo, page: ExtensionPage, history: [String: [ExtensionPageHistory.Point]], alerts: [Alert], updated: Date,
+         folder: URL? = nil) {
         self.info = info
         services = nil
+        sampleFolder = folder
         self.page = page
         self.history = history
         self.alerts = alerts
@@ -158,8 +160,9 @@ final class ExtensionPageModel {
         return outcome.problem == nil
     }
 
-    /// Where the extension's pictures are (`ExtensionDataFile`); nil in UI snapshots.
-    var folder: URL? { services?.runtime.extensions.dataFolder(extensionId: info.extensionId) }
+    /// Where the extension's pictures are (`ExtensionDataFile`); a sample folder in UI snapshots.
+    var folder: URL? { services?.runtime.extensions.dataFolder(extensionId: info.extensionId) ?? sampleFolder }
+    private var sampleFolder: URL?
 
     static var language: String { Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en" }
 }

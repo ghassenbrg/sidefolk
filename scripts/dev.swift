@@ -9,6 +9,7 @@
 //   swift scripts/dev.swift home | about | settings:extensions | find:milk | drop:https://example.com
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
+//   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>   (a 3D companion from a folder, D60)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)

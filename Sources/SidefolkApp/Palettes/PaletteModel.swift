@@ -84,7 +84,8 @@ final class PaletteModel {
     /// The picked row in full, a moment after the pick settles, so holding ↓ doesn't ask for every row on the way.
     private func schedulePreview(after delay: Duration = .milliseconds(90)) {
         previewTask?.cancel()
-        guard hasPreview, let host, let item = picked else {
+        guard let host else { return }
+        guard hasPreview, let item = picked else {
             preview = nil
             return
         }
@@ -130,8 +131,13 @@ final class PaletteModel {
         guard let host else { return }
         do {
             let choice = try await host.choosePalette(extensionId: info.extensionId, palette: info.palette, item: item, action: action)
-            message = choice.message
-            if choice.close { onClose?(choice.paste) } else { await reload() }
+            if choice.close {
+                onClose?(choice.paste)
+            } else {
+                await reload()
+                // After the read, which clears the line: what the extension said about this stays in sight.
+                message = choice.message
+            }
         } catch {
             message = (error as? UserFacingError)?.message ?? String(localized: "That didn't work.")
         }

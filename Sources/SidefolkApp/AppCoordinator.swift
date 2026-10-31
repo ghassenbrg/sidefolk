@@ -452,6 +452,11 @@ final class AppCoordinator {
             Task { await palettes.toggle(String(command.dropFirst(8))) }
             return
         }
+        if command.hasPrefix("paletteKey:") {
+            // paletteKey:down | up | <key code>[:cmd][:opt][:shift]: a key in the open palette, as PaletteKeys reads it (D68).
+            palettes.press(String(command.dropFirst("paletteKey:".count)))
+            return
+        }
         if command.hasPrefix("installFolder:") {
             // installFolder:<folder>: installs an extension as Settings does once the person approved its preview.
             let folder = URL(fileURLWithPath: String(command.dropFirst("installFolder:".count)))

@@ -1,6 +1,5 @@
 import ApplicationServices
 import Charts
-import KeyboardShortcuts
 import SidefolkCore
 import SwiftUI
 
