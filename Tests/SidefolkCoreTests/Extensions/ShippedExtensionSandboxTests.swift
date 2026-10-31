@@ -103,6 +103,27 @@ struct ShippedExtensionSandboxTests {
         await h.host.shutdown()
     }
 
+    /// Trivia in the Play panel (D75), played over the game channel inside the sandbox: German words, the companion's
+    /// sealed pick, an answer, and its page in Home.
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func playtimeTriviaIsPlayedOverTheGameChannel() async throws {
+        let h = try HostEnv()
+        let info = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
+        #expect(h.host.gameShelf.all.map(\.id) == ["\(info.id)/trivia"])
+        let (session, setup) = try await h.host.startGame(extensionId: info.id, game: "trivia",
+                                                          setup: GameSetup(language: "de", options: ["companion": "Nori"]))
+        guard case .prompt(let p) = setup.parts.first else { Issue.record("\(setup.parts)"); return }
+        #expect(p.eyebrow == "Ein Quiz mit Nori" && setup.primary?.label == "Starten" && setup.cue?.line == .hello)
+        let question = try await h.host.moveGame(extensionId: info.id, game: "trivia", session: session, move: .button("start"))
+        #expect(question.score?.companionPicked == true && question.answers?.tiles.count == 4 && question.answers?.locked == false)
+        let answered = try await h.host.moveGame(extensionId: info.id, game: "trivia", session: session, move: .answer(1))
+        #expect(answered.answers?.locked == true && answered.answers?.tiles.filter(\.companion).count == 1 && answered.primary?.move == "next")
+        await h.host.endGame(extensionId: info.id, game: "trivia", session: session, reason: .closed)
+        let page = try await h.host.renderPage(extensionId: info.id, page: "playtime", language: "fr")
+        #expect(page.hero?.eyebrow == "Quiz")
+        await h.host.shutdown()
+    }
+
     @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
     func imagesConvertIntoTheFolderNamedOnly() async throws {
         let h = try HostEnv()

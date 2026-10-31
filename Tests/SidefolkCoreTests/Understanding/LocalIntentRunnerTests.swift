@@ -35,14 +35,12 @@ import Testing
         #expect(await runtime.watchers.list().isEmpty, "nothing to stop afterwards")
     }
 
-    @Test func chanceIsPlayedAndRockPaperScissorsWaitsForYourHand() async throws {
+    @Test func chanceIsPlayedAndRockPaperScissorsIsAMatchUntilYouNameAHand() async throws {
         let coin = try card(try await run("flip a coin"))
         #expect(coin.kind == .chance && ["Heads!", "Tails!"].contains(coin.title))
-        guard case .info(let ask) = try await run("let's play rock paper scissors") else {
-            Issue.record("the companion shows its hand only after yours")
-            return
-        }
-        #expect(ask == "Rock, paper or scissors? Say yours.")
+        // Without a hand, the best of three opens in the Play panel (D75).
+        let match = try card(try await run("let's play rock paper scissors"))
+        #expect(match.title == "Play Rock, Paper, Scissors", "\(match)")
         let round = try card(try await run("paper"))
         #expect(round.kind == .chance && round.subtitle?.hasPrefix("You ") == true, "\(round)")
     }

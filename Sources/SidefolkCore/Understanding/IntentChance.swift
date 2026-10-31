@@ -11,9 +11,11 @@ extension IntentParser {
     /// "I choose rock", "I'll go with paper", "my hand is scissors".
     private static let playing = #"(?:(?:i\s+(?:choose|pick|play|throw|go\s+with)|i'?ll\s+(?:play|pick|throw|go\s+with)|my\s+hand\s+is)\s+)?"#
 
+    /// ", I call heads", ": tails": the person's call, after a coin flip asked for (D75).
+    private static let call = #"(?:\s*[,:;\-–—]?\s*(?:(?:and\s+)?i\s+(?:call|say|pick|choose|go\s+with|bet(?:\s+on)?)\s+)?(?<call>heads|tails))?"#
     private static let coins = IntentPattern(
-        #"(?:let'?s\s+)?(?:flip|toss)\s+(?:(?:a|one|the)\s+)?coin"# + forMe + #"|heads\s+or\s+tails|(?:do\s+a\s+)?coin\s+(?:flip|toss)"# + forMe
-            + #"|(?:flip|toss)\s+"# + count + #"\s+coins"# + forMe)
+        #"(?:(?:let'?s\s+)?(?:flip|toss)\s+(?:(?:a|one|the)\s+)?coin"# + forMe + #"|heads\s+or\s+tails\??|(?:do\s+a\s+)?coin\s+(?:flip|toss)"# + forMe
+            + #"|(?:flip|toss)\s+"# + count + #"\s+coins"# + forMe + ")" + call)
     /// "roll a die", "roll a dice", "roll the die"; "roll dice" and "roll the dice" are two, as in most board games.
     private static let oneDie = IntentPattern(#"(?:let'?s\s+)?(?:roll|throw)\s+(?:(?:a|one)\s+(?:die|dice|d6)|the\s+(?:die|d6))"# + forMe)
     private static let twoDice = IntentPattern(#"(?:let'?s\s+)?(?:roll|throw)\s+(?:the\s+)?dice"# + forMe)
@@ -31,7 +33,9 @@ extension IntentParser {
         let text = command.replacingOccurrences(of: "’", with: "'").trimmingCharacters(in: CharacterSet(charactersIn: " !.?"))
         let found: ChanceIntent
         if let c = Self.coins.match(text) {
-            found = ChanceIntent(.coin, count: c["n"].flatMap(Self.number) ?? 1)
+            let n = c["n"].flatMap(Self.number) ?? 1
+            // A call is for one coin: "flip three coins, heads" isn't a game anyone plays.
+            found = ChanceIntent(.coin, count: n, call: n == 1 ? c["call"].map { $0.lowercased() == "heads" } : nil)
         } else if Self.oneDie.match(text) != nil {
             found = ChanceIntent(.dice)
         } else if Self.twoDice.match(text) != nil {

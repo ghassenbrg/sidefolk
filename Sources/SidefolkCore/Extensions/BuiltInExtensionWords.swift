@@ -67,7 +67,7 @@ enum BuiltInExtensionWords {
         case "dev.sidefolk.currency":
             String(localized: "Converts money between the euro and 30 major currencies with the European Central Bank's daily reference rates, and tells you when a rate crosses a line. Nothing about you is sent.")
         case "dev.sidefolk.playtime":
-            String(localized: "A break with your companion: a trivia quiz that keeps your score, and chance to pick a number or choose from a list.")
+            String(localized: "A break with your companion: a trivia quiz you play against it beside it on the desktop, with your scores and streaks kept, and chance to pick a number or choose from a list.")
         case "dev.sidefolk.images":
             String(localized: "A photo's details, and copies of pictures converted to JPEG, PNG or HEIC, made smaller, or without their location. Your originals stay as they are.")
         case "dev.sidefolk.pdf":
@@ -88,6 +88,14 @@ enum BuiltInExtensionWords {
             String(localized: "The latest posts of blogs, news sites and podcasts from their RSS or Atom feeds, and a heads-up when a new one appears.")
         case "dev.sidefolk.miraya":
             String(localized: "Shows your Mac's screen, one window or part of it, with its sound, on an Android TV running the Miraya app, over an encrypted direct connection on your network, or plays a video file or link on the TV. The first time, you compare a six-digit code on both screens. No account, no cloud.")
+        default: nil
+        }
+    }
+
+    /// A game's name in the Play menu and the panel (D75).
+    static func game(_ id: String, _ game: String) -> String? {
+        switch (id, game) {
+        case ("dev.sidefolk.playtime", "trivia"): String(localized: "game.trivia", defaultValue: "Trivia", comment: "Playtime's quiz, played in the Play panel against the companion")
         default: nil
         }
     }
@@ -196,6 +204,7 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.clipboard", "clipboard"): String(localized: "Clipboard", comment: "Clipboard: its page in Home's sidebar")
         case ("dev.sidefolk.keep-awake", "awake"): String(localized: "Keep Awake", comment: "Keep Awake: its page in Home's sidebar")
         case ("dev.sidefolk.miraya", "miraya"): "Miraya"
+        case ("dev.sidefolk.playtime", "playtime"): String(localized: "page.playtime", defaultValue: "Playtime", comment: "Playtime: its page in Home's sidebar, with its games and scores")
         default: nil
         }
     }

@@ -74,6 +74,7 @@ public struct ValidationReport: Sendable {
             out.append("Palettes: " + m.palettes.keys.sorted().compactMap { k in m.palettes[k].map { "\($0.title)\($0.hotkey.map { " (\($0))" } ?? "")" } }
                 .joined(separator: ", "))
         }
+        if let m = manifest, !m.games.isEmpty { out.append("Games: " + m.games.keys.sorted().compactMap { m.games[$0]?.title }.joined(separator: ", ")) }
         if manifest?.background == true { out.append("Keeps running while it's on") }
         let commands = commandLines
         if !commands.isEmpty {
@@ -167,6 +168,7 @@ public struct ManifestValidator: Sendable {
         checkWatchers(manifest, issues: &issues)
         checkPages(manifest, issues: &issues)
         checkPalettes(manifest, issues: &issues)
+        checkGames(manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report
@@ -545,6 +547,48 @@ extension ManifestValidator {
             }
             if let ph = p.placeholder, ph.count > 60 || ExtensionText.clean(ph) != ph {
                 issues.append(ValidationIssue(field: "\(field).placeholder", message: "must be at most 60 characters of plain text."))
+            }
+        }
+    }
+
+    /// Games (D75): a title, a symbol, levels, and sentences that follow the command rules (D50) with no slots, since
+    /// a sentence only opens the game.
+    func checkGames(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
+        if m.games.count > 16 { issues.append(ValidationIssue(field: "games", message: "can declare at most 16 games.")) }
+        var seen: [String: String] = [:]
+        for name in m.games.keys.sorted() {
+            let field = "games.\(name)"
+            guard let g = m.games[name] else { continue }
+            if name.range(of: Self.namePattern, options: .regularExpression) == nil || name.count > 32 {
+                issues.append(ValidationIssue(field: field, message: "isn't a valid game name (lowercase letters, digits and _, at most 32)."))
+            }
+            if g.title.isEmpty || g.title.count > 40 || ExtensionText.clean(g.title) != g.title {
+                issues.append(ValidationIssue(field: "\(field).title", message: "must be 1–40 characters of plain text."))
+            }
+            if let s = g.symbol, s.count > 64 || s.range(of: Self.symbolPattern, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: "\(field).symbol", message: "must be an SF Symbol name, like gamecontroller."))
+            }
+            if g.levels.count > 5 || Set(g.levels).count != g.levels.count
+                || g.levels.contains(where: { $0.range(of: #"^[a-z][a-z0-9_]{0,19}$"#, options: .regularExpression) == nil }) {
+                issues.append(ValidationIssue(field: "\(field).levels", message: "must be at most 5 different names of lowercase letters, digits and _."))
+            }
+            if g.say.count > ExtensionCommandRules.maxSentencesPerCommand {
+                issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(ExtensionCommandRules.maxSentencesPerCommand) sentences."))
+            }
+            for (i, sentence) in g.say.enumerated() {
+                let sf = "\(field).say[\(i)]"
+                do {
+                    let compiled = try CommandSentence(sentence)
+                    if !compiled.slots.isEmpty {
+                        issues.append(ValidationIssue(field: sf, message: "can't have slots: a game's sentence only opens it."))
+                    } else if let other = seen[compiled.shape] {
+                        issues.append(ValidationIssue(field: sf, message: "says the same as \(other)."))
+                    } else {
+                        seen[compiled.shape] = sf
+                    }
+                } catch {
+                    issues.append(ValidationIssue(field: sf, message: error.message))
+                }
             }
         }
     }
