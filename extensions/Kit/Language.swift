@@ -177,7 +177,7 @@ public enum Format {
 
     /// A file or disk size: "1.2 GB", "1,2 Go".
     public static func bytes(_ n: Int64, style: ByteCountFormatStyle.Style = .file) -> String {
-        n.formatted(.byteCount(style: style).locale(locale))
+        n.formatted(.byteCount(style: style, spellsOutZero: false).locale(locale))
     }
 
     /// "1 h 5 min", "3 min", "45 s": the largest two units, abbreviated.
