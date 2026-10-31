@@ -12,6 +12,7 @@ Native panels give correct focus/Spaces/fullscreen behaviour, Keychain, notifica
 **Implications:** no Windows/Linux; UI work happens in Swift.
 
 ### D2 — Vector character rig on Core Animation, not sprites or 3D (2026-10-26)
+*Amended by D51 and D59:* companions also come in 3D (three.js), and their 2D forms are painted.
 **Decision:** the approved character is rebuilt as layered vector shapes (gradients, shadows as
 glow) with pose-to-pose spring transitions and morphing eyes.
 **Why:** smooth state transitions instead of swapping GIFs, crisp at every size, reduced-motion
@@ -20,6 +21,7 @@ consistent animation frames; a Blender pipeline is slower to iterate.
 **Implications:** the look approximates the soft-3D renders; a pre-rendered body is a later upgrade path.
 
 ### D3 — The robot keeps the name "Sidefolk"; Pip is the coral folk (2026-10-26)
+*Superseded by D56:* the robot is retired as a companion.
 **Why:** the founder's approved identity sheet labels the main character "Sidefolk" and Pip as the
 Ideas & Notes folk. The legacy app (where Pip was the main character) was intentionally wiped.
 The name is editable in Settings; onboarding does not ask for it.
@@ -33,6 +35,7 @@ speed (CLI brains take seconds to start), offline use. **Alternatives:** slash c
 (too rigid), everything through the model (slow, costly).
 
 ### D5 — The Ask panel shows results, not a transcript (2026-10-26)
+*Amended by D45 and D84:* Ask is now the Sidecard's largest size; kept conversations are in History.
 **Decision:** every request ends in a card (saved note, reminder, watch, answer, approval). Short
 history is kept for follow-ups (10-minute thread window) but not displayed as a chat log.
 **Why:** product review: a transcript makes Sidefolk "a chat app with a mascot".
@@ -103,6 +106,7 @@ command grants for shell, approvals answered only by the user. Founding chat's "
 never decide its own permission" taken literally.
 
 ### D15 — No auto-update in V1 (2026-10-26)
+*Superseded by D46 and D70:* Sidefolk updates itself from GitHub Releases.
 Sparkle needs a signing identity, EdDSA keys and a hosted feed, none of which exist yet. Shipping a
 "Check for updates" that cannot work would be a fake feature. Data migrations are versioned so a
 later update path is safe.
@@ -147,6 +151,7 @@ directly. **Why:** the developer persona's main watch target is a local server; 
 about model-built URLs, not the user's own words.
 
 ### D22 — Agents' questions are answered in the Ask panel; bubbles keep their buttons (2026-10-26)
+*Amended by D84:* questions are Sidecard cards and permission slips; firm ones never take Return.
 **Decision:** Sidefolk's own agent (and external questions without options) asks inside the Ask panel,
 where the user can pick an option or type an answer; `ask.user` accepts free-text answers. Bubbles
 never lose their action buttons when they shrink, and questions never shrink. **Why:** the UX review
@@ -263,6 +268,7 @@ fuzz-tested over 600k inputs), so it is deferred rather than done badly.
 languages now (high effort, uneven quality).
 
 ### D29 — Mochi becomes the brand mascot; the original robot remains a companion (2026-10-26)
+*Superseded by D56* for the robot, which is no longer a companion.
 **Decision:** adopt the founder's Mochi rabbit brand guide: white rabbit, navy ear tips and eyes,
 mint/aqua scarf, unchanged wordmark and palette, rabbit family logos, blue app icon and a native
 rabbit-ear/face/scarf menu template. Fresh settings and missing/unknown appearance values default
@@ -286,6 +292,7 @@ and the legacy macOS mask/iconset/ICNS from it; the transparent logo mark remain
 The icon's 3D character lighting is intentional; no tile rim, bevel or shadow is baked into the source.
 
 ### D30 — Every companion is a live rig on one engine; thirteen to choose from; one style for all (2026-10-26)
+*Amended by D54 and D56:* the folks are helpers only and the robot is retired; D51 and D55 changed the list.
 **Decision:** Mochi, Spark and the ten folks are vector rigs on the robot's engine: `Director` drives
 a `Figure` (the robot's own `RobotRig`, or a `SoftRig` built from a `Species` description), so every
 companion has every state, gesture, prop, blink, gaze, the D20 settling, the frame cap, the occlusion
@@ -1020,6 +1027,7 @@ scissors", then "rock") and the Play menu reach it without AI. Playtime keeps tr
 so the model has one way to do each. *Why:* the founder wanted these shown, not written, and instant.
 
 ### D45 — Conversations you can come back to, start fresh, or forget (2026-10-28)
+*Amended by D84:* Conversations and Activity are one place, History.
 **Decision:** *amends D5.* The panel stays the quick place: a long answer opens on 8 lines with Show all (measured,
 so nothing hides); every answer offers Reply (the main button when it asks something), Save, Think harder, Copy
 and Open in Conversations; Reply continues that answer's own conversation however long ago, and a chip above the
@@ -1227,6 +1235,7 @@ same picture as its 3D self, unless a picture was made for the 2D look (`avatars
 only a companion with no picture at all (a custom one) shows its drawn face on a disc.
 
 ### D55 — The add-on gallery: Ember, Kiko, Nimbo, Folio and nine extensions download on demand (2026-10-30)
+*Amended by D84:* the Gallery is in Home, not Settings; D61 added Iris, Nori, Purl and Rune, D62–D69 more extensions.
 **Decision:** Sidefolk keeps built in only what it needs: Mochi and Spark (3D and 2D), the robot, the folks (helpers,
 D54), and four extensions (World Clock, Calculator, System Vitals, Weather). Everything else is an **add-on** in
 the public repository `ghassenbrg/sidefolk-addons`: the companions Ember, Kiko, Nimbo and Folio, and the extensions
@@ -1322,6 +1331,7 @@ is shown; the morning brief lists events and reminders in time order. Info.plist
 events come with Glance (plan step 7).
 
 ### D58 — Themes: a theme is data, the app owns the layouts (2026-10-30)
+*Narrowed by D84:* themes dress the app (colours, faces, density, materials); each place has one layout.
 **Decision:**
 - **What a theme is.** A theme is a `theme.json`, plus optional PNGs, that sets colour roles in light and dark,
   the heading face (system, rounded or serif), density, radii, motion, the sidebar material, the companion's nook
@@ -1568,6 +1578,7 @@ like); a jiggler that really moves the pointer (visible, fights the person); pal
 (an audit row per keystroke); keeping secrets on disk briefly (a crash would leave them).
 
 ### D64 — A theme arranges the app's own pieces: Today as blocks in rows and columns (2026-10-31)
+*Superseded by D84:* themes no longer arrange Today; the layout keys still decode, and only `layout.icons` is read.
 **Decision:** a theme no longer picks one of a few fixed screens ("recipes"). Today is rows of columns of **blocks**,
 each one of the app's own pieces in one of its styles, and a theme's `layout` says where each goes and how it looks:
 - **Blocks and styles:** header (line, large, console, page), queue (rows, cards, stack, index), day (rail, list,
@@ -1668,6 +1679,7 @@ Japanese calendar put "2026-11-03" centuries away, the Notebook's ISO times too)
 the last thing and labels hours so none touch; `WrapRow` puts a row's button under its words in a narrow column.
 
 ### D67 — Extension pages fill the window and are the person's to arrange; a main switch where people are; Your Mac; icons simple or colourful (2026-10-31)
+*Amended by D84:* the All Extensions page is gone; pages put out of the sidebar are one menu row.
 **Decision:**
 - **Layout:** an extension page lays out by what it holds: numbers, several cards, notes alone or buttons alone run
   across; other sections sit 2–3 to a row; cards share their row's size. Rich pages grow to 1320 pt, centred; pages of
@@ -1950,6 +1962,7 @@ own Home, as they would in Miraya's app; they stay in Miraya's data folder, roun
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
 
 ### D75 — Games beside the companion: the Play panel, a game channel, companion cues; trivia without AI; the four redesigned (2026-10-31)
+*Amended by D79:* ten more games, one trivia, and Playtime's words in `strings/`.
 **Decision:** games are played in a **Play panel** beside the companion, drawn by Sidefolk from data, with the companion
 as the opponent next to it (the approved plan, phase 1):
 - **`games` in the manifest** (`title`, `symbol`, `say`, `levels`, `ai`): `say` sentences follow the command rules
@@ -2072,6 +2085,7 @@ Commands and `ask` sentences stay English (GLOSSARY rule 1), except a sentence t
 reads `zh-Hans` in both layers since D79.
 
 ### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
+*Amended by D84:* the chooser's Gallery page moved to Home's Gallery.
 **Decision:** *amends D43, D55, D56 and D60 for companions.* Settings › Companion has two pages at the top, outside the
 scroll, as Settings › Extensions has: **Yours** and **Gallery**.
 - **Yours, in one place.** Every companion the person can wear now is in one grid under the live stage
