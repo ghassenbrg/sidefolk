@@ -334,7 +334,9 @@ export class Companion {
     this.state = name;
     this.setLoop(s.loop);
     if (s.mood) this.setMood(s.mood); else if (['happy', 'asleep'].includes(this.mood)) this.setMood('neutral');
-    this.setPosture(s.posture || (this.posture === 'sleep' ? 'stand' : this.posture));
+    // Sitting and lying down are for idling: any other state stands up (the host's posture is reset
+    // the same way and sends no cue for it), so an alert never arrives lying down with open eyes.
+    this.setPosture(s.posture || (name === 'idle' && this.posture !== 'sleep' ? this.posture : 'stand'));
     if (REACTIONS[name]) this.react(name);
   }
 

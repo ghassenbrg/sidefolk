@@ -12,6 +12,14 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **3D companion lay down while alerting (fix):** the 2D director resets the posture to standing on any non-idle
+  state but sends no cue, so a 3D companion that had lain down stayed lying, eyes open, when a bubble or alert
+  arrived. `engine.js` `setState` now stands up for every state except idle (and `sleeping`, which lies by design).
+  *Not yet checked in the running app:* lying down needs minutes of quiet; the next step is `make dev`, wait (or
+  set `lieAfter` low), then `swift scripts/dev.swift ask:` / trigger a bubble and snap.
+- **Home design brainstorm (sandbox only):** explored a connected Now, Notebook and Activity experience and three
+  theme directions; see `sandbox/home-design-themes/PROPOSAL.md` and concept boards (local, not in git). *Next:* review
+  the concepts with the founder before changing the app.
 - **The founder's review of snapshot 515, on branch team/merge (D66, D67, D68):** five team branches merged into
   `team/merge` (from extension-services; sidefolk-addons `team/merge` has its side), with strings in all nine languages.
   - *Fixes:* a gallery pack is named by its bundle, not "Resources" (no "did you copy a template" warning; the install
