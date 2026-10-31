@@ -25,7 +25,7 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         center.delegate = self
         let actions = [
             UNNotificationAction(identifier: "done", title: String(localized: "Done")),
-            UNNotificationAction(identifier: "snooze10", title: String(localized: "10 min")),
+            UNNotificationAction(identifier: "snooze10", title: String(localized: "In 10 min", comment: "A reminder card's snooze button: remind again in ten minutes")),
             UNNotificationAction(identifier: "tomorrow", title: String(localized: "Tomorrow")),
         ]
         let reminder = UNNotificationCategory(identifier: "reminder", actions: actions, intentIdentifiers: [])
@@ -37,7 +37,7 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         // A reminder that belongs to an open task (D49): its first button finishes the task.
         let task = UNNotificationCategory(identifier: "reminderTask", actions: [
             UNNotificationAction(identifier: ReminderScheduler.ActionID.taskDone, title: String(localized: "Mark done")),
-            UNNotificationAction(identifier: "snooze10", title: String(localized: "10 min")),
+            UNNotificationAction(identifier: "snooze10", title: String(localized: "In 10 min", comment: "A reminder card's snooze button: remind again in ten minutes")),
             UNNotificationAction(identifier: "tomorrow", title: String(localized: "Tomorrow")),
         ], intentIdentifiers: [])
         let taskRepeating = UNNotificationCategory(identifier: "reminderTaskRepeat", actions: [

@@ -132,6 +132,9 @@ final class SidecardController {
         // Sized to this moment first: a visible panel keeps its size when placed.
         hosted.panel.setContentSize(hosted.fittingSize)
         place(anchor, screen)
+        // SwiftUI lays the new moment out on its next pass: measured now, a taller card replacing a shorter one is
+        // cut at the top (onboarding's last card), so it is measured again then.
+        DispatchQueue.main.async { [weak self] in self?.refit() }
         guard !hosted.panel.isVisible else { return }
         let still = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         hosted.panel.alphaValue = 0
@@ -140,6 +143,14 @@ final class SidecardController {
             ctx.duration = still ? 0.15 : 0.2
             hosted.panel.animator().alphaValue = 1
         }
+    }
+
+    private func refit() {
+        guard hosted.panel.isVisible, let (anchor, screen) = anchorProvider?() else { return }
+        let size = hosted.fittingSize
+        guard size != hosted.panel.frame.size else { return }
+        hosted.panel.setContentSize(size)
+        place(anchor, screen)
     }
 
     private func place(_ anchor: NSRect, _ screen: NSScreen) {
@@ -203,6 +214,8 @@ final class SidecardController {
     }
 
     private func fold(_ item: AttentionItem) {
+        // The companion's own lines (onboarding) wait nowhere: they give way, and never make an "All clear".
+        guard Self.folds(item) else { return }
         folded.insert(item.id)
         onFold?(item)
     }

@@ -16,7 +16,7 @@ struct OnDutyView: View {
         let background = model.pages.background
         let running = model.onDutyRunning
         HomePage {
-            hero(duty, running: running)
+            hero(duty, running: running, empty: duty.isEmpty && background.isEmpty)
             if duty.isEmpty && background.isEmpty {
                 EmptyState(title: Text("Nothing is on duty"),
                            message: Text("When \(model.companionName) watches a page, repeats a reminder or follows an agent, it shows here with a way to pause or stop it."),
@@ -43,7 +43,7 @@ struct OnDutyView: View {
 
     // MARK: The hero
 
-    private func hero(_ duty: OnDuty, running: Int) -> some View {
+    private func hero(_ duty: OnDuty, running: Int, empty: Bool) -> some View {
         WrapRow(minimum: 380, spacing: Theme.Space.l, alignment: .bottom) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 Group {
@@ -65,8 +65,11 @@ struct OnDutyView: View {
                         .buttonStyle(.sf(.secondary, size: .large, working: pausing))
                         .help(Text("Pauses every watch and live value; reminders, agents and extensions go on."))
                 }
-                Button { model.services.openAsk(prefill: "tell me when ") } label: { Label("Watch something", systemImage: "plus") }
-                    .buttonStyle(.sf(.primary, size: .large))
+                // Empty, the page's one primary is the empty state's own.
+                if !empty {
+                    Button { model.services.openAsk(prefill: "tell me when ") } label: { Label("Watch something", systemImage: "plus") }
+                        .buttonStyle(.sf(.primary, size: .large))
+                }
             }
             .fixedSize()
         }

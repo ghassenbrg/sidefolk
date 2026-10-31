@@ -15,7 +15,7 @@ struct YouView: View {
             if let problem = model.problem { InlineError(error: problem) }
             if model.adding { addField }
             ForEach(model.suggestions) { item in SuggestionCard(item: item, model: model) }
-            if model.loaded && model.facts.isEmpty && model.suggestions.isEmpty && !model.adding {
+            if empty {
                 EmptyState(title: Text("\(model.companionName) doesn't know you yet"),
                            message: Text("Tell it something worth keeping in mind, like “I prefer short answers” or “I work in Swift”. Say it in the Say bar (“remember that…”) or add it here."),
                            systemImage: "person.crop.circle", folk: "pip", actionTitle: Text("Add a fact")) {
@@ -33,6 +33,8 @@ struct YouView: View {
         .onChange(of: model.adding) { if model.adding { addFocused = true } }
     }
 
+    private var empty: Bool { model.loaded && model.facts.isEmpty && model.suggestions.isEmpty && !model.adding }
+
     private var header: some View {
         WrapRow(minimum: 380, spacing: Theme.Space.l, alignment: .top) {
             HStack(alignment: .top, spacing: Theme.Space.l) {
@@ -48,9 +50,12 @@ struct YouView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Button { model.adding = true } label: { Label("Add a fact", systemImage: "plus") }
-                .buttonStyle(.sf(.primary, size: .large))
-                .fixedSize()
+            // Empty, the page's one primary is the empty state's own.
+            if !empty {
+                Button { model.adding = true } label: { Label("Add a fact", systemImage: "plus") }
+                    .buttonStyle(.sf(.primary, size: .large))
+                    .fixedSize()
+            }
         }
     }
 

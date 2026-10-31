@@ -32,7 +32,9 @@ struct CalendarView: View {
         .padding(.horizontal, Theme.Space.xl)
         .padding(.top, Theme.Space.xl)
         .padding(.bottom, Theme.Space.l)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // No minimum of its own: Home's window takes its least size from its pages, and the week's or the agenda's
+        // asked for more than the window had, which pushed the whole window's content up under the toolbar.
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceSunken)
         // The page takes the keyboard, so ← → and T work without stealing them from the one bar's field.
         .focusable()

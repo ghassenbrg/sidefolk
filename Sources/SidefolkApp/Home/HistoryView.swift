@@ -181,6 +181,8 @@ private struct HistoryRow: View {
         switch event.kind {
         case .action(let e): Describe.caller(e.caller, companion: companion)
         case .conversation: String(localized: "You and \(companion)", comment: "History: a conversation between the person and the companion")
+        // Another app's notice names the app, as its card did ("Claude Code told you: …").
+        case .alert(let a) where a.source.hasPrefix("external:"): AgentFacingTools.displayName(String(a.source.dropFirst("external:".count)))
         case .alert(let a): folkName(alertFolk(a))
         case .session(let s, _): Describe.agentName(s.agent)
         }
@@ -331,21 +333,23 @@ private struct HistoryRow: View {
             default: FolkAvatar(name: "byte", size: Theme.Size.avatar)
             }
         case .conversation: CompanionAvatar(settings: home.services.runtime.settings.current)
-        case .alert(let a): FolkAvatar(name: alertFolk(a), size: Theme.Size.avatar)
+        case .alert(let a):
+            // What isn't a helper's (a summary, another app's notice) is the companion's own word: its face, as named.
+            if let folk = alertFolk(a) { FolkAvatar(name: folk, size: Theme.Size.avatar) } else { CompanionAvatar(settings: home.services.runtime.settings.current) }
         case .session: FolkAvatar(name: "byte", size: Theme.Size.avatar)
         }
     }
 
-    private func alertFolk(_ a: AttentionItem) -> String {
+    private func alertFolk(_ a: AttentionItem) -> String? {
         switch a.refKind ?? String(a.source.split(separator: ":").first ?? "") {
         case "watcher": "scout"
         case "reminder", "brief": "tempo"
         case "job", "session", "external": "byte"
-        default: "pip"
+        default: a.source.hasPrefix("external:") ? "byte" : nil
         }
     }
 
-    private func folkName(_ folk: String) -> String {
+    private func folkName(_ folk: String?) -> String {
         switch folk {
         case "scout": "Scout"
         case "tempo": "Tempo"

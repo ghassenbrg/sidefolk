@@ -316,7 +316,7 @@ struct QueueRow: View {
                 }
                 ButtonRow(spacing: Theme.Space.s) {
                     Button("Dismiss") { act { await model.respond(item, action: nil) } }.buttonStyle(.sf(.quiet, size: .regular))
-                    ForEach(Array(item.actions.sorted { !$0.isPrimary && $1.isPrimary }.prefix(2)), id: \.id) { action in
+                    ForEach(Self.cardActions(item), id: \.id) { action in
                         Button { act { await model.respond(item, action: action.id) } } label: { Text(verbatim: action.title) }
                             .buttonStyle(.sf(action.isPrimary ? .primary : .secondary, size: .regular))
                     }
@@ -326,6 +326,14 @@ struct QueueRow: View {
             SkippedStepRow(step: step, run: { act { await model.runSkipped(step) } }, dismiss: { act { await model.dismissSkipped(step) } },
                            plain: true)
         }
+    }
+
+    /// Beside Dismiss, two answers with the main one last: sorting the main one last and keeping the first two had
+    /// left a reminder without Done.
+    static func cardActions(_ item: AttentionItem) -> [AttentionAction] {
+        let main = item.actions.first(where: \.isPrimary)
+        let others = item.actions.filter { !$0.isPrimary }.prefix(main == nil ? 2 : 1)
+        return Array(others) + (main.map { [$0] } ?? [])
     }
 
     @ViewBuilder private var row: some View {
