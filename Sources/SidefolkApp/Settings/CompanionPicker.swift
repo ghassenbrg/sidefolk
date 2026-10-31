@@ -3,7 +3,7 @@ import SidefolkCore
 import SwiftUI
 
 /// Settings › Companion's chooser (D30): the chosen companion live, with its name, colour and what
-/// it wears and a few states to try, above a gallery of every companion on offer. Changes apply
+/// it wears and a few states to try, above every companion the person can wear (`CompanionGrid`). Changes apply
 /// to the desktop at once.
 struct CompanionPicker: View {
     var model: SettingsModel
@@ -31,7 +31,7 @@ struct CompanionPicker: View {
                 }
                 .padding(Theme.Space.l)
                 Rectangle().fill(Theme.line).frame(height: 1)
-                gallery.padding(Theme.Space.m)
+                CompanionGrid(model: model).padding(Theme.Space.m)
             }
             .cardSurface()
         }
@@ -79,6 +79,10 @@ struct CompanionPicker: View {
                 Text(verbatim: local?.name ?? custom?.name ?? chosen.defaultName).font(Theme.Font.title).foregroundStyle(Theme.ink)
                 Text(verbatim: local.map { $0.tagline ?? "" } ?? custom.map { $0.summary ?? "" } ?? CompanionArt.role(chosen))
                     .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                if let worn = model.chooser.wornCompanion {
+                    Text(verbatim: CompanionWords.provenance(worn)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                        .padding(.top, 2)
+                }
             }
             labelled("Name") {
                 let standard = local?.name ?? chosen.defaultName
@@ -158,51 +162,6 @@ struct CompanionPicker: View {
             change(&next)
             s.setStyle(next, for: choice)
         }
-    }
-
-    // MARK: Everyone
-
-    /// Everyone on this Mac, then those in the add-on gallery not downloaded yet (D55): a click on one fetches it.
-    private var gallery: some View {
-        let offered = CompanionArt.offered
-        let more = model.gallery.entries(.companion).filter { entry in
-            entry.companion.flatMap(CompanionChoice.init(rawValue:)).map { !offered.contains($0) } ?? false
-        }
-        let failures = model.gallery.entries(.companion).compactMap { model.gallery.failures[$0.id] }
-        return VStack(alignment: .leading, spacing: Theme.Space.s) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
-                ForEach(offered, id: \.self) { choice in
-                    let update = model.gallery.update(forCompanion: choice.rawValue)
-                    CompanionCard(choice: choice,
-                                  image: CompanionArt.preview(choice, style: settings.style(for: choice),
-                                                              threeD: CompanionArt.threeD(choice, in: settings), side: 84),
-                                  selected: custom == nil && local == nil && choice == chosen,
-                                  update: update.map { entry in { Task { await model.gallery.get(companion: entry, choose: false) } } }) {
-                        model.update { $0.choose(choice) }
-                    }
-                    .contextMenu {
-                        if let update {
-                            Button("Update \(choice.defaultName) to \(update.version)") {
-                                Task { await model.gallery.get(companion: update, choose: false) }
-                            }
-                        }
-                        if model.gallery.companions.contains(where: { $0.companion == choice.rawValue }) {
-                            Button("Remove \(choice.defaultName)") { Task { await model.gallery.remove(companion: choice.rawValue) } }
-                        }
-                    }
-                }
-                ForEach(more) { entry in GalleryCompanionCard(entry: entry, model: model) }
-            }
-            ForEach(failures, id: \.message) { InlineError(error: $0) }
-            if model.gallery.hidesSnapshots(.companion) { RowsCard { SnapshotsHiddenNote(gallery: model.gallery) } }
-            if !more.isEmpty || !model.gallery.companions.isEmpty {
-                Text("Companions from the add-on gallery download when you pick them. To remove one, Control-click it.")
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, Theme.Space.xs)
-            }
-        }
-        .task { await model.gallery.load() }
     }
 
     static func title(_ accessory: CompanionAccessory) -> LocalizedStringKey {
@@ -315,49 +274,6 @@ private struct CompanionStage: NSViewRepresentable {
             stage = nil
             character.onCue = nil
             character.drawsRig = true
-        }
-    }
-}
-
-/// One companion in the gallery: as it looks at rest, its name and what it does.
-private struct CompanionCard: View {
-    var choice: CompanionChoice
-    var image: NSImage
-    var selected: Bool
-    /// The gallery has a newer version and add-ons don't update by themselves (D70): a mark that installs it.
-    var update: (() -> Void)?
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 2) {
-                Image(nsImage: image).resizable().scaledToFit().frame(width: 84, height: 84)
-                Text(choice.defaultName).font(selected ? Theme.Font.bodyStrong : Theme.Font.body).foregroundStyle(Theme.ink)
-                Text(CompanionArt.role(choice)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .multilineTextAlignment(.center).lineLimit(2, reservesSpace: true).minimumScaleFactor(0.85)
-            }
-            .padding(.horizontal, Theme.Space.xs)
-            .padding(.vertical, Theme.Space.s)
-            .frame(maxWidth: .infinity)
-            .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(selected ? Theme.accent : Theme.line, lineWidth: selected ? 2 : 1))
-            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(choice.defaultName), \(CompanionArt.role(choice))")
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-        .overlay(alignment: .topTrailing) {
-            if let update {
-                Button(action: update) {
-                    Image(systemName: "arrow.down.circle.fill").font(.system(size: 15)).foregroundStyle(Theme.accent)
-                }
-                .buttonStyle(.plain)
-                .padding(Theme.Space.xs)
-                .help(Text("Update \(choice.defaultName)", comment: "The mark on a companion the gallery has a newer version of"))
-                .accessibilityLabel(Text("Update \(choice.defaultName)", comment: "The mark on a companion the gallery has a newer version of"))
-            }
         }
     }
 }

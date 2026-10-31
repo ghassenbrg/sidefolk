@@ -194,6 +194,31 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: folder.path))
     }
 
+    /// A gallery companion this copy has no case for keeps its tagline and body, to be worn by its folder's name (D??
+    /// companion chooser); the person's own companion of that name, added from a folder, is never replaced; a retired
+    /// character's name is never installed.
+    @Test func aCompanionWornByNameKeepsItsWordsAndNeverReplacesTheOwnersOwn() async throws {
+        let g = try Gallery()
+        try g.companion("otter")
+        try g.companion("pip")
+        g.entries[0]["body"] = "floating"
+        try g.publish()
+        let catalog = try await g.store.catalog()
+        let otter = try #require(catalog.companion("otter"))
+        let installed = try await g.store.install(companion: otter)
+        #expect(installed.tagline == "A test companion" && installed.body == .floating && !installed.addedFromFolder)
+
+        await #expect(throws: UserFacingError.self) { try await g.store.install(companion: try #require(catalog.companion("pip"))) }
+
+        try await g.store.remove(companion: "otter")
+        let own = g.paths.addons.appendingPathComponent("Companions/otter", isDirectory: true)
+        try FileManager.default.createDirectory(at: own, withIntermediateDirectories: true)
+        let mine = InstalledCompanion(id: "local.otter", name: "My Otter", companion: "otter", version: "1.0.0", author: "", fromFolder: true)
+        try JSONEncoder().encode(mine).write(to: own.appendingPathComponent("addon.json"))
+        await #expect(throws: UserFacingError.self) { try await g.store.install(companion: otter) }
+        #expect(await g.store.installedCompanions() == [mine])
+    }
+
     /// A theme from the gallery (D58, D64) installs like one from a folder, checked again, under its own id; the
     /// gallery may use Sidefolk's ids, and a newer version shows as an update.
     @Test func aThemeFromTheGalleryIsInstalledAndUpdated() async throws {

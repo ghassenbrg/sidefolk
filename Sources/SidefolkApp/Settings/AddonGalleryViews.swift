@@ -22,25 +22,8 @@ struct GalleryExtensionsView: View {
         let entries = gallery.entries(.extension)
         let found = entries.filter { $0.matches(search, extra: [Self.title($0.shelf)]) }
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
-            if !gallery.available {
-                RowsCard { InlineEmpty(text: "This copy of Sidefolk has no add-on gallery.", systemImage: "shippingbox") }
-            } else if entries.isEmpty, gallery.hidesSnapshots(.extension) {
-                RowsCard { SnapshotsHiddenNote(gallery: gallery) }
-            } else if entries.isEmpty {
-                RowsCard {
-                    if gallery.loading {
-                        HStack(spacing: Theme.Space.s) {
-                            ProgressView().controlSize(.small)
-                            Text("Looking in the gallery…").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
-                        }
-                        .padding(.horizontal, Theme.Space.l)
-                        .padding(.vertical, Theme.Space.m)
-                    } else {
-                        InlineEmpty(text: "The gallery couldn't be reached.", systemImage: "wifi.slash", actionTitle: "Try Again") {
-                            Task { await gallery.load(refresh: true) }
-                        }
-                    }
-                }
+            if entries.isEmpty || !gallery.available {
+                GalleryStatus(gallery: gallery, kind: .extension)
             } else {
                 shelves(found)
                 let shown = found.filter { shelf == .all || shelf == .one($0.shelf) }
@@ -61,10 +44,7 @@ struct GalleryExtensionsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, Theme.Space.xs)
             }
-            if let error = gallery.error, !entries.isEmpty {
-                Text("Showing the gallery as last seen: \(error.message)").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .padding(.horizontal, Theme.Space.xs)
-            }
+            if !entries.isEmpty { GalleryLastSeen(gallery: gallery) }
         }
         .task { await gallery.load() }
     }
@@ -176,58 +156,44 @@ enum AddonWords {
     }
 }
 
-// MARK: Companions
+// MARK: Shared by the gallery's pages
 
-/// A companion in the gallery that isn't on this Mac yet: its profile picture, name and what it is, and a download
-/// mark; a click downloads it and makes it the companion.
-struct GalleryCompanionCard: View {
-    var entry: AddonEntry
-    var model: SettingsModel
-    private var gallery: AddonGalleryModel { model.gallery }
+/// What a gallery page shows instead of its list (D55, D65), the same for extensions and companions: no gallery in
+/// this copy, snapshots hidden on Releases, still looking, or not reached.
+struct GalleryStatus: View {
+    var gallery: AddonGalleryModel
+    var kind: AddonEntry.Kind
 
     var body: some View {
-        let choice = entry.companion.flatMap(CompanionChoice.init(rawValue:))
-        let role = choice.map(CompanionArt.role) ?? entry.tagline
-        let state = gallery.state(entry)
-        Button { Task { await gallery.get(companion: entry, choose: true) } } label: {
-            VStack(spacing: 2) {
-                ZStack(alignment: .topTrailing) {
-                    picture.frame(width: 84, height: 84)
-                    if entry.official { OfficialSeal(size: 13).padding(2) }
+        RowsCard {
+            if !gallery.available {
+                InlineEmpty(text: "This copy of Sidefolk has no add-on gallery.", systemImage: "shippingbox")
+            } else if gallery.hidesSnapshots(kind) {
+                SnapshotsHiddenNote(gallery: gallery)
+            } else if gallery.loading {
+                HStack(spacing: Theme.Space.s) {
+                    ProgressView().controlSize(.small)
+                    Text("Looking in the gallery…").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 }
-                Text(verbatim: entry.name).font(Theme.Font.body).foregroundStyle(Theme.ink)
-                Text(verbatim: role).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .multilineTextAlignment(.center).lineLimit(2, reservesSpace: true).minimumScaleFactor(0.85)
-                Group {
-                    if case .working(let p) = state {
-                        ProgressView(value: max(p, 0.02)).progressViewStyle(.linear).frame(width: 64)
-                    } else {
-                        Label(ByteCountFormatter.string(fromByteCount: entry.bytes, countStyle: .file), systemImage: "arrow.down.circle")
-                            .font(Theme.Font.caption).foregroundStyle(Theme.link)
-                    }
+                .padding(.horizontal, Theme.Space.l)
+                .padding(.vertical, Theme.Space.m)
+            } else {
+                InlineEmpty(text: "The gallery couldn't be reached.", systemImage: "wifi.slash", actionTitle: "Try Again") {
+                    Task { await gallery.load(refresh: true) }
                 }
-                .frame(height: 14)
             }
-            .padding(.horizontal, Theme.Space.xs)
-            .padding(.vertical, Theme.Space.s)
-            .frame(maxWidth: .infinity)
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.line, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
-            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         }
-        .buttonStyle(.plain)
-        .disabled(state != .get)
-        .help(entry.description)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("\(entry.name), \(role). Downloads when chosen.", comment: "A companion in the gallery, not on this Mac yet"))
-        .accessibilityAddTraits(.isButton)
     }
+}
 
-    @ViewBuilder private var picture: some View {
-        if let url = gallery.preview(entry), let image = NSImage(contentsOf: url) {
-            Image(nsImage: image).resizable().scaledToFit().clipShape(Circle()).padding(6).opacity(0.85)
-        } else {
-            Circle().fill(Theme.surfaceSunken).padding(6)
+/// Under a gallery list that came from this Mac's copy because the gallery couldn't be reached.
+struct GalleryLastSeen: View {
+    var gallery: AddonGalleryModel
+
+    var body: some View {
+        if let error = gallery.error {
+            Text("Showing the gallery as last seen: \(error.message)").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                .padding(.horizontal, Theme.Space.xs)
         }
     }
 }

@@ -26,6 +26,35 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **The companion chooser (D?? companion chooser, branch team/chooser):** Settings › Companion has Yours and Gallery at
+  the top, as Extensions has Installed and Gallery. Yours is one grid of every companion the person can wear (built in,
+  from the gallery, made by you, from a folder), each with a 3D/2D chip, where it came from, and a visible "…" menu
+  (also Control-click): Wear, Update to …, Show in Finder, Remove… or Move to Trash… with a confirmation that says what
+  goes, whether it can come back and who takes its place; built-ins and extension-made ones say why they can't be
+  removed. Add Your Own (3D from a folder, D60's warning kept; 2D in the companions folder) and Get More (how many the
+  gallery has) are tiles in the same grid; "Made by you" and "Control-click" are gone. Gallery: search, 3D/2D, maker,
+  Hide yours, Name/Smallest/Newest (Newest only when the catalog dates entries), lazy pictures, details with Get and
+  Get and Wear, progress in place, Settings › Updates' channel with Show Snapshots. Gallery companions this copy has no
+  case for are worn by name on their `body`'s rig; the catalog may carry `published` and `body`; a gallery install never
+  replaces the person's own folder companion of that name. Shared with Extensions › Gallery: `GalleryStatus`,
+  `GalleryLastSeen`.
+  *Checked:* `CompanionLibraryTests` (one list from four sources and its order, retired names left out, the worn one
+  found, each menu's actions and why Remove is missing, the replacement when removing the worn one, search incl. words in
+  the person's language, filters, orders offered only with data, bad `published`/`body` dropping an entry) and
+  `AddonStoreTests.aCompanionWornByNameKeeps…`; UI snapshots with sixty sample gallery companions, a made-by-you and a
+  folder companion (`page-settings-companion-yours|gallery|-search|-filters|-none|-downloading`,
+  `sheet-companion-detail-get|owned|downloading|update`, `-add`, `-menus`, `-remove`) light and dark, English, German
+  and Arabic; strings in all nine languages; the debug app (build/qa-ch, `SIDEFOLK_ADDONS` at a copy of the dist): a
+  folder companion added and worn, Show Snapshots, Rune and Nori downloaded through the gallery's path from the real
+  signed packs, the details sheet, the folder one removed through its confirmation (Mochi took its place) and Miso moved
+  to the Trash. `make test`: 1518 core tests with 7 failures, all from the sibling sidefolk-addons checkout another
+  teammate is changing (Miraya's manifest asks for `permissions.output_mute`, unknown on this branch; its staged
+  qr-codes isn't signed), and 36 character tests pass.
+  *Not yet:* the open "…" menu and the remove alert as drawn by macOS (snap can't draw an open menu or the alert's words:
+  `sheet-companion-menus` and `-remove` show their items and words instead); a gallery companion this copy has no case
+  for, downloaded and worn for real (the published gallery has none; the store test and the sample cover it); keyboard
+  and VoiceOver by hand. *Next:* review on team/chooser, number the decision; in sidefolk-addons, `build.py` could write
+  `published` so Newest appears.
 - **Updates for Sidefolk and for add-ons, chosen apart (D70), on branch team/updates:** Settings › General › Updates
   now has "New versions of Sidefolk" (Don't check / Tell me, the default / Install automatically) and "Update add-ons
   automatically" (on by default); Versions to offer covers both. Install automatically downloads and checks exactly

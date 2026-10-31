@@ -260,6 +260,43 @@ enum UISnapshots {
                 try await page("page-settings-companion-made", SettingsTabContent(tab: .companion, model: settings), width: width)
                 settings.update { $0.choose(.mochi) }
             }
+            // The chooser (D?? companion chooser): every companion here in one grid (the made-by-you and folder ones
+            // when SIDEFOLK_HOME has them), the gallery of sixty with filters, a download under way, and the details.
+            let chooser = settings.chooser
+            // Worn: the one added from a folder, when SIDEFOLK_HOME has it (its files are real), else Spark.
+            if let local = CompanionArt.locals.first {
+                settings.update { $0.choose(local: local.companion, name: local.name) }
+            } else {
+                settings.update { $0.choose(.spark) }
+            }
+            try await page("page-settings-companion-yours", SettingsTabContent(tab: .companion, model: settings), width: width)
+            settings.update { $0.choose(.mochi) }
+            chooser.page = .gallery
+            try await page("page-settings-companion-gallery", SettingsTabContent(tab: .companion, model: settings), width: width)
+            chooser.browse = CompanionBrowse(text: "cat", look: .twoD)
+            try await page("page-settings-companion-gallery-search", SettingsTabContent(tab: .companion, model: settings), width: width)
+            chooser.browse = CompanionBrowse(look: .threeD, maker: .others, hideOwned: true, sort: .newest)
+            try await page("page-settings-companion-gallery-filters", SettingsTabContent(tab: .companion, model: settings), width: width)
+            chooser.browse = CompanionBrowse(text: "spreadsheet")
+            try await page("page-settings-companion-gallery-none", SettingsTabContent(tab: .companion, model: settings), width: width)
+            chooser.browse = CompanionBrowse()
+            if let catalog = settings.gallery.catalog {
+                settings.gallery.showSample(catalog: catalog, companions: SampleCompanions.installed + localCompanions,
+                                            progress: ["dev.sidefolk.companions.nori": 0.45, "dev.sidefolk.companions.acorn": 0.8])
+                try await page("page-settings-companion-gallery-downloading", SettingsTabContent(tab: .companion, model: settings), width: width)
+                for (name, id) in [("get", "dev.sidefolk.companions.rune"), ("owned", "io.github.lenak.pebble"),
+                                   ("downloading", "dev.sidefolk.companions.nori"), ("update", "dev.sidefolk.companions.ember")] {
+                    if let entry = catalog.entry(id) {
+                        try await page("sheet-companion-detail-\(name)", CompanionGalleryDetail(entry: entry, model: settings), width: 520)
+                    }
+                }
+                settings.gallery.showSample(catalog: catalog, companions: SampleCompanions.installed + localCompanions)
+            }
+            chooser.page = .yours
+            try await page("sheet-companion-add", AddCompanionOptions(model: settings).background(Theme.surfaceRaised), width: 380)
+            // The menus can't be drawn open; their items for each kind of companion, as a list.
+            try await page("sheet-companion-menus", SampleCompanions.menus(chooser), width: 600)
+            try await page("sheet-companion-remove", SampleCompanions.removals(chooser, settings: settings.settings), width: 480)
             // Settings › AI with each provider chosen, in the states that need different words.
             for (name, choice, setUp) in aiStates {
                 setUp(fixtures, settings)
@@ -433,7 +470,13 @@ enum UISnapshots {
         _ = try await SampleData.fill(rt, notebook: NotebookModel(services: services))
         let model = SettingsModel(services: services)
         await model.refresh()
+        // A gallery of sixty companions (D?? companion chooser), and those added from a folder in SIDEFOLK_HOME, read only.
+        model.gallery.showSample(catalog: try SampleCompanions.catalog(), companions: SampleCompanions.installed + localCompanions)
         return (model, services)
+    }
+
+    private static var localCompanions: [InstalledCompanion] {
+        AddonStore.installedCompanions(in: CompanionAddons.folder).filter(\.addedFromFolder)
     }
 
     /// Settings › AI pages: file name, the option chosen, and the fixture state it's shown in.

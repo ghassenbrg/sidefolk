@@ -63,6 +63,30 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     func close() { window?.performClose(nil) }
 
+    #if DEBUG
+    /// Settings › Companion in a given state, for the debug app (scripts/dev.swift `chooser:…`).
+    func chooser(_ command: String) {
+        show(tab: .companion)
+        let chooser = model.chooser
+        chooser.reload()
+        let parts = command.split(separator: ":", maxSplits: 1).map(String.init)
+        let value = parts.count > 1 ? parts[1] : ""
+        switch parts.first ?? "" {
+        case "yours": chooser.page = .yours
+        case "gallery": chooser.page = .gallery
+        case "search": chooser.page = .gallery; chooser.browse.text = value
+        case "detail": chooser.detail = chooser.galleryEntries.first { $0.companion == value }
+        case "get": chooser.galleryEntries.first { $0.companion == value }.map { chooser.get($0, wear: false) }
+        case "remove": chooser.removing = chooser.owned.first { $0.id == value }
+        case "confirm": chooser.removing.map { companion in Task { await chooser.remove(companion) } }
+        case "add": chooser.adding = true
+        case "snapshots": model.gallery.showSnapshots()
+        case "close": (chooser.detail, chooser.removing, chooser.adding) = (nil, nil, false)
+        default: break
+        }
+    }
+    #endif
+
     /// The install preview of `folder` in its own window: Sidefolk's AI finished a draft, and the person
     /// decides there (D39). If it can't be previewed, Settings › Extensions says why.
     func review(folder: URL) {

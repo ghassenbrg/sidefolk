@@ -436,6 +436,11 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("chooser:") {
+            // chooser:yours|gallery|search:<words>|detail:<name>|get:<name>|remove:<id>|add|close (D?? companion chooser).
+            settingsWindow.chooser(String(command.dropFirst("chooser:".count)))
+            return
+        }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
             return

@@ -1944,3 +1944,69 @@ in Miraya also takes `kind`, `display`, `window` and `area` (the page's picks, k
 so an older file still reads); no new tool and no manifest change. Window stills show any app's window inside Sidefolk's
 own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
+
+### D?? — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
+**Decision:** *amends D43, D55, D56 and D60 for companions.* Settings › Companion has two pages at the top, outside the
+scroll, as Settings › Extensions has: **Yours** and **Gallery**.
+- **Yours, in one place.** Every companion the person can wear now is in one grid under the live stage
+  (`CompanionLibrary.owned`): Sidefolk's own first, then everything else by name, wherever it came from. Each tile is its
+  still in the look it is worn in, a small 3D or 2D chip on the picture, its name, and one quiet line saying where it
+  came from (*Built in*, *From the gallery*, *Made by you*, *From a folder*). The one worn is the accent tile; under the
+  stage's name a line says where it came from, with its version and maker when known. A click wears one, at once on the
+  desktop, as before. The "Made by you" group and its rows are gone.
+- **Visible actions.** Each tile has a "…" button, and the same menu on Control-click and in VoiceOver's actions
+  (`CompanionLibrary.actions`): *Wear* (unless worn), *Update to …* (a gallery companion with a newer version, while
+  add-ons wait to be updated by hand, D70; the tile keeps its update mark too), *Show in Finder* (made by you, or added
+  from a folder), and *Remove…*, *Move to Trash…* for one made from data (the person's own work goes to the Trash,
+  never deleted). Where Remove can't be, the menu says why in its place, disabled: *Comes with Sidefolk: can't be
+  removed*, *Comes with an extension: remove the extension instead*. Removing asks first and says what goes and whether
+  it can come back (the gallery still has it, or may not; a folder's copy goes but the folder isn't touched; the Trash
+  can give it back), and who takes the place of the one worn (`CompanionLibrary.replacement`: Mochi for a gallery
+  companion, the one chosen before for one worn by name or made from data). "To remove one, Control-click it" is gone.
+  There is no Edit: nothing in Sidefolk edits a companion.
+- **Add your own, where you look.** After the companions, an *Add Your Own* tile opens the two ways with a line each: a
+  3D companion from a folder (D60; Choose Folder…, then the same warning that its character file runs as code, D71), and
+  a 2D companion (D43): Open Companions Folder makes and opens `<home>/companions/`; what is saved there shows up when
+  Sidefolk comes back to the front. Beside it a *Get More* tile says how many the gallery has that aren't here and opens
+  Gallery.
+- **The gallery as a browser.** Gallery has a search (name, line, description and maker, and Sidefolk's own lines in
+  the person's language), filters shown only when they tell something apart (3D/2D when some come in 2D and some don't;
+  *Made by* Anyone/Sidefolk/Others when both are there; *Hide yours*), and an order: Name, Smallest, and Newest when the
+  catalog dates its entries (`CompanionBrowse`). Cards say the size and looks, or *On this Mac*, with one button: Get,
+  the download's progress in place, Wear, Update, or *Wearing*. Pictures are read and scaled off the main thread as
+  cards come into sight and kept (`GalleryPicture`), so hundreds cost only what is on screen. A card opens its details:
+  the picture large, maker, version, size, looks, description, *From the Sidefolk gallery · Signed by Sidefolk and
+  checked before install*, and Get or Get and Wear. Get only downloads; Get and Wear also wears it. Snapshots follow
+  Settings › Updates as before, with Show Snapshots when they are hidden.
+- **Gallery companions worn by name.** A gallery companion this copy has no `CompanionChoice` for is worn as one from a
+  folder is (`AppSettings.localCompanion`), standing on the rig its body names: the catalog may give `body` (D60's) and
+  `published` (a date, for Newest); both are optional and checked. Installing one keeps its tagline and body
+  (`InstalledCompanion`), never replaces the person's own companion of that name added from a folder, and never takes a
+  retired character's name. Sidefolk-signed packs only, as before (D55, T33): nothing about trust changes.
+- **Shared with the extensions gallery:** only what a gallery page shows instead of its list (`GalleryStatus`: no
+  gallery, snapshots hidden, looking, not reached) and the "as last seen" line (`GalleryLastSeen`).
+
+**Why:** the founder found two lists (on this Mac, then the gallery's) that won't scale to hundreds, his own companions
+in another place, so it took him a while to see how to add one and what he could choose, and no way to delete one until
+he noticed "Control-click". One grid makes the person's own companions first-class; a visible "…" puts every action in
+sight, each said with its consequence; Add Your Own sits where the person looks; and a separate Gallery page with search
+and filters keeps the grid about what you have. *A page beside Yours rather than a sheet* because Settings › Extensions
+already works that way (one way to learn both), Presence and Behavior stay on Yours, and a page scrolls through hundreds
+in the full height of the window. *Click wears, the menu does the rest* because wearing is what people come for and is
+undone with another click, while Remove is destructive and must be asked. *Get only downloads* from a card, so a click
+in a grid of hundreds doesn't change the desktop; the details have Get and Wear.
+
+**Alternatives:** the gallery as a sheet over Settings (narrower than the window, and modal over a long browse); a
+master-detail beside the grid (the window is 640 points wide); badges as icons only (ambiguous, the founder's problem
+was not seeing); a size filter (the gallery's companions are 2 to 4 MB; Smallest orders instead); Popular (no download
+counts exist); delete outright for made-by-you (their own work: the Trash gives it back).
+
+**Implications:** Core: `OwnedCompanion`, `CompanionAction`, `CompanionRemoval`, `CompanionKeep`, `CompanionLibrary`,
+`CompanionBrowse`, `AddonEntry.wearable/looks/published/body`, `AddonStore.install(companion:)` guards; app:
+`CompanionChooserModel` (`SettingsModel.chooser`), `CompanionGrid`, `CompanionMenuItems`, `AddCompanionOptions`,
+`CompanionWords`, `CompanionRemovalWords`, `CompanionPageHeader`, `CompanionGalleryView`, `CompanionGalleryDetail`,
+`GalleryPicture`, `GalleryStatus`, `GalleryLastSeen`, `CompanionArt.still` and `locals` (gallery companions worn by
+name too), `AddonGalleryModel.remove(companion:wearing:)`, `readInstalled`, `companionError`; snapshots
+`page-settings-companion-yours|gallery[-search|-filters|-none|-downloading]`, `sheet-companion-detail-*`, `-add`,
+`-menus`, `-remove` (sixty sample companions, `SampleCompanions`); debug `chooser:…` (scripts/dev.swift). For
+sidefolk-addons: `build.py` may write `published` (and `body` for a companion this app has no case for) into the catalog.

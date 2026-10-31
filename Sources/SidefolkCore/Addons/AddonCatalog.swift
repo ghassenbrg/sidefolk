@@ -31,6 +31,10 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
     public var license: String?
     /// Where an extension sits in the gallery (`AddonCategory`); one this copy doesn't know shows under Other.
     public var category: String?
+    /// The day this version was published (`2026-10-30`), for the gallery's Newest order; optional.
+    public var published: String?
+    /// The undrawn rig under a companion this copy has no case for (D60's `body`): Kiko's when not said.
+    public var body: CompanionBody?
 
     /// Made by Sidefolk. Only Sidefolk signs packs and catalogs (D55), and review refuses this prefix to anyone
     /// else, so the id is enough.
@@ -39,6 +43,7 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license, category
+        case published, body
         case minimumSidefolk = "minimum_sidefolk"
     }
 }
@@ -124,6 +129,7 @@ public struct AddonCatalog: Sendable, Equatable {
               ReleaseVersion(e.version) != nil,
               !e.name.isEmpty, e.name.count <= 40, e.tagline.count <= 60, e.description.count <= 1000, e.author.count <= 60 else { return false }
         if let category = e.category, !matches(category, #"^[a-z][a-z-]{0,23}$"#) { return false }
+        if let published = e.published, !matches(published, #"^\d{4}-\d{2}-\d{2}$"#) { return false }
         if let preview = e.preview, !matches(preview, #"^previews/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.(png|pdf)$"#) || preview.contains("..") {
             return false
         }

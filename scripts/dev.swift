@@ -16,6 +16,9 @@
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
 //   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>   (a 3D companion from a folder, D60)
+//   swift scripts/dev.swift chooser:gallery | chooser:yours | chooser:search:cat | chooser:detail:rune | chooser:get:rune
+//                           | chooser:remove:local:cumulus | chooser:confirm (its Remove) | chooser:add | chooser:snapshots (Show Snapshots) | chooser:close
+//                           (Settings › Companion's chooser)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
 //   swift scripts/dev.swift theme:harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
