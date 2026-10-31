@@ -84,17 +84,17 @@ struct CalendarView: View {
 
     private var previousHelp: LocalizedStringKey {
         switch model.mode {
-        case .month: "Previous month"
-        case .week: "Previous week"
-        case .day: "Previous day"
+        case .month: "Show the previous month"
+        case .week: "Show the previous week"
+        case .day: "Show the previous day"
         }
     }
 
     private var nextHelp: LocalizedStringKey {
         switch model.mode {
-        case .month: "Next month"
-        case .week: "Next week"
-        case .day: "Next day"
+        case .month: "Show the next month"
+        case .week: "Show the next week"
+        case .day: "Show the next day"
         }
     }
 
