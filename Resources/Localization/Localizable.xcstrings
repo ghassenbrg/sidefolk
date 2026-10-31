@@ -38866,6 +38866,64 @@
         }
       }
     },
+    "Choose Check for Updates… in Sidefolk's menu, then try again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر «البحث عن تحديثات…» من قائمة Sidefolk، ثم حاول مرة أخرى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle „Nach Updates suchen …“ im Sidefolk-Menü und versuche es dann erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige Buscar actualizaciones… en el menú de Sidefolk y vuelve a intentarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez Rechercher des mises à jour… dans le menu de Sidefolk, puis réessayez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli Controlla aggiornamenti… nel menu di Sidefolk, poi riprova."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkのメニューで「アップデートを確認…」を選んでから、もう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 메뉴에서 업데이트 확인…을 선택한 다음 다시 시도하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha Buscar Atualizações… no menu do Sidefolk e tente de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 Sidefolk 菜单中选择“检查更新…”，然后重试。"
+          }
+        }
+      }
+    },
     "Choose Claude Code, Codex, an API key or Ollama in Settings › AI." : {
       "localizations" : {
         "ar" : {
@@ -160504,6 +160562,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此更新需要更多权限"
+          }
+        }
+      }
+    },
+    "This version needs a newer Sidefolk." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج هذا الإصدار إلى إصدار أحدث من Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version braucht ein neueres Sidefolk."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versión necesita un Sidefolk más reciente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version nécessite un Sidefolk plus récent."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa versione richiede un Sidefolk più recente."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このバージョンには新しいSidefolkが必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 버전에는 최신 Sidefolk가 필요해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versão precisa de um Sidefolk mais recente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本需要更新的 Sidefolk。"
           }
         }
       }
