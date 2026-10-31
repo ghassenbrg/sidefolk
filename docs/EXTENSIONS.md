@@ -34,13 +34,14 @@ Claude Code or Codex. You can also add any existing MCP server (see
 7. [Answering without the AI: commands](#answering-without-the-ai-commands)
 8. [Watchers](#watchers)
 9. [Pages](#pages)
-10. [Testing locally](#testing-locally)
-11. [Installing, updating, removing](#installing-updating-removing)
-12. [Built-in extensions](#built-in-extensions)
-13. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
-14. [Plain MCP servers](#plain-mcp-servers)
-15. [Troubleshooting](#troubleshooting)
-16. [Limits](#limits)
+10. [Speaking the person's language](#speaking-the-persons-language)
+11. [Testing locally](#testing-locally)
+12. [Installing, updating, removing](#installing-updating-removing)
+13. [Built-in extensions](#built-in-extensions)
+14. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+15. [Plain MCP servers](#plain-mcp-servers)
+16. [Troubleshooting](#troubleshooting)
+17. [Limits](#limits)
 
 ## Quick start
 
@@ -133,6 +134,10 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `background` | no | `true` keeps it running while it is on: it starts with Sidefolk, never stops for being idle, and comes back after a crash (up to the crash limit). For work that must watch all the time (the clipboard, a power assertion). The install preview says so. |
 | `palettes.<name>` | no | A pop-up list on a keyboard shortcut (D63): `title` (≤ 40), `hotkey` (`shift+cmd+c`: cmd, ctrl or option, then one key; the person can change it) and `placeholder`. At most 2. See [Palettes](#palettes). |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
+
+**Other languages.** The manifest is English; its words in other languages are files of their own,
+`strings/<language>.json` beside it (see [Speaking the person's language](#speaking-the-persons-language)). A copy of
+Sidefolk from before them ignores the folder; a key in the manifest itself would make it refuse the manifest.
 
 **Folder name.** When you validate a folder, its name should be the id or the id's last part
 (`system-vitals`); otherwise you get a warning (usually a copied template with an old id).
@@ -519,8 +524,9 @@ own controls (an approval card, say), and it works the same in every theme.
 }
 ```
 
-Sidefolk asks for it with `sidefolk/page.render {page, language}` (`language` is the person's, `en`, `fr`, `ar`,
-for an extension that speaks it) and expects `{page: {summary, sections}}`. In the Kit:
+Sidefolk asks for it with `sidefolk/page.render {page, language}` (`language` is the person's: `en`, `fr`, `pt-BR`,
+`zh-Hans`, `ar`…, see [Speaking the person's language](#speaking-the-persons-language)) and expects
+`{page: {summary, sections}}`. In the Kit:
 
 ```swift
 ext.page("mac") { args in
@@ -658,6 +664,77 @@ only way to know.
 where it is, which resets macOS's idle time (what chat and meeting apps watch) without anything moving on screen.
 Only with `permissions.power`, at most one every 20 seconds whatever you send, and only once the person allowed
 Accessibility. (macOS's own "user is active" call doesn't reset the idle time those apps read.)
+
+## Speaking the person's language
+
+Sidefolk speaks ten languages (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`), and so can your
+extension (D76). Two parts:
+
+**What the manifest shows people**, before your program ever runs (Settings, the install sheet, the gallery, Home's
+sidebar, heads-ups): put each language's words in `strings/<language>.json` beside the manifest.
+
+```json
+{
+  "name": "Wach halten",
+  "tagline": "Dein Mac wach und du aktiv, so lange du willst",
+  "description": "…",
+  "network_purpose": "um Fernseher im lokalen Netzwerk zu finden und dorthin zu streamen",
+  "tools": { "keep_awake": { "title": "Den Mac wach halten" } },
+  "watchers": { "ended": { "title": "Wach halten beendet", "description": "…" } },
+  "pages": { "awake": { "title": "Wach halten" } },
+  "palettes": { "history": { "title": "Zwischenablage", "placeholder": "Kopiertes durchsuchen" } },
+  "text": { "Keep awake": "Wach halten", "{count} apps": { "one": "{count} App", "other": "{count} Apps" } }
+}
+```
+
+Every field is optional and translates the manifest's own: a key the manifest doesn't have (a tool it doesn't list, a
+tagline it lacks) is an error, and so is any other key. Each must be plain text within the manifest's limit, or half as
+long again (languages run longer than English): a name up to 90 characters, a tagline 90, a description 450. Sidefolk
+shows the person's language, the closest one you have (`pt` finds `pt-BR`, `zh-CN` finds `zh-Hans`), else the
+manifest. Commands (`say`) stay English: Sidefolk's understanding without AI is English. Tool descriptions from
+`tools/list` stay as they are too (they're pinned at install; a description that changed with the language would put
+the tool on hold).
+
+**What your program says** (answers, errors, page parts, palette rows, watcher summaries): Sidefolk sends `language`
+with every `tools/call`, `sidefolk/watch.check`, `sidefolk/page.render` and `sidefolk/palette.*` request (as a param
+beside the others; a plain MCP server gets requests as MCP has them). Keep your sentences under `text` in the same
+files, keyed by their English, with `strings/en.json` listing the English of every one (`{"text": {...}}` and nothing
+else: the manifest is the English of the rest):
+
+- **Placeholders** are named, `{app}`, `{count}`: each translation keeps the same ones (Sidefolk's check refuses a file
+  that drops or adds one), in whatever order the language wants.
+- **Counts** take the language's plural forms (CLDR): `one` and `other` for most, `other` alone in Japanese, Korean and
+  Chinese, `zero`, `one`, `two`, `few`, `many` and `other` in Arabic; `one`, `two` and `zero` may leave the number out
+  ("تطبيقان"). `other` is required; a form the language doesn't have is refused.
+- **Numbers, sizes, durations, dates** are formatted with the person's language, never by hand; times on a 24-hour
+  clock, as Sidefolk writes them.
+- **No direction marks.** Sidefolk removes them (they can disguise a name or a path). When it lays out right to left, it
+  keeps a value that is only numbers and signs ("3024 × 1964", "12 %") and paths, addresses and sizes inside a sentence
+  ("~/Desktop/qr.png") left to right itself.
+- **Sentences people type stay English**: an `ask` button's sentence, an example in a note (“keep me active for an
+  hour”). Its label is translated.
+
+In the Kit (`Language.swift`):
+
+```swift
+L("Keep awake")                                                 // "Wach halten"
+L("{app} is using {cpu}", ["app": name, "cpu": Format.percent(0.4)])
+L(one: "{count} app", other: "{count} apps", count: n)           // the language's own form, its digits
+Format.bytes(n)  Format.duration(seconds)  Format.time(date)  Format.date(date, weekday: true)  Format.list(names)
+Format.sentences([a, b])                                        // with a space, or none in Japanese and Chinese
+Language.with("ar", strings: "extensions/x/strings") { … }      // a test in one language, beside others
+```
+
+The Kit reads `strings/` beside its program (`<folder>/bin/<program>`), keeps each request's `language` for that
+request (and for background work after it), and falls back to English, then to the key. It also carries
+`Localized(language, tables)` (D75) for words kept in code, as Playtime does; `L` looks plain words up through it.
+From Python or Node, read the same files: `params.get("language")`, then `json.load(open("strings/%s.json" % lang))`.
+
+`scripts/extension-strings.py sync <folder>` writes `strings/en.json` from your `L("…")` calls (and drops texts no
+longer used from every language); `extension-strings.py check <folder>` lists what each language still needs.
+`sidefolk ext validate` checks the rest and prints `Languages: en, fr, …`. The gallery's `build.py` packs `strings/`
+and copies the name, tagline and description per language into the catalog (`localized`), so the gallery speaks the
+person's language before anything is installed; an older Sidefolk ignores the key.
 
 ## Testing locally
 
@@ -836,6 +913,7 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Palettes | 2 per extension; 200 items a list; 10 s per query, choice or preview; preview text 20,000 characters |
 | Pictures (palettes, list rows, heroes, tiles) | a PNG or JPEG in the data folder: 4 MB a row, 25 MB a preview |
 | Nudges | one every 20 seconds, with `permissions.power` |
+| Languages | `strings/<language>.json`: 256 KiB each, 2,000 texts; translated words up to half as long again as the manifest's |
 | Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart; one primary button; a hero's 4 facts and 3 actions; a transport's 5 buttons; 6 cards, 24 tiles or rows a choice |
 | Watcher summary / state | 200 characters / 64 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |

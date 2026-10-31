@@ -1940,3 +1940,59 @@ in Miraya also takes `kind`, `display`, `window` and `area` (the page's picks, k
 so an older file still reads); no new tool and no manifest change. Window stills show any app's window inside Sidefolk's
 own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
+
+### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
+**Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.
+- **What the manifest shows people** (name, tagline, description, tool, watcher, page and palette titles, watcher
+  descriptions, a palette's placeholder, `network_purpose`) is translated in `strings/<language>.json` beside the
+  manifest, one file per language, never in the manifest itself. `ManifestValidator` reads the folder
+  (`ExtensionStrings`): file names only the ten languages, strict keys, each field only where the manifest has one, plain
+  text within the manifest's limit or half as long again (languages run longer than English), `en.json` holding only
+  `text`. `ExtensionHost` shows the person's language (`Configuration.language`, the app's translation), the closest the
+  extension has (`pt` finds `pt-BR`, `zh-CN` `zh-Hans`, `zh-Hant` nothing), then, for Sidefolk's own copies from before
+  this, the app's catalog (`BuiltInExtensionWords`), then the manifest: in Settings, Home, palettes, heads-ups, tool
+  titles everywhere (the AI's included), the install sheet (`ValidationReport.shownWords`, `shownPermissions`) and
+  update diffs (both sides worded alike). What is granted never changes with the language.
+- **The gallery** carries the same per language: `build.py` copies name, tagline and description from `strings/` into
+  each catalog entry's `localized` (`AddonWords`, read leniently: a bad field or language is left out, never the entry).
+- **What the program says**: `MCPClient` adds `language` to every `tools/call` and `sidefolk/` request of a Sidefolk
+  extension (`page.render` had it, D62); a plain MCP server gets requests unchanged. The program keeps its sentences
+  under `text` in the same files, keyed by their English, `en.json` listing every one; named placeholders kept, CLDR
+  plural forms per language. The Kit reads them (`Language.swift`: `L`, `L(one:other:count:)`, `Format` for numbers,
+  sizes, durations, 24-hour times, dates, lists and sentence joining, `Language.with` for tests), carries its own few
+  sentences in ten languages (`KitWords`), and looks plain words up through `Localized` (D75's helper, the same file).
+  `scripts/extension-strings.py` keeps `en.json` in step with the `L(…)` calls and lists what each language lacks.
+- **Right to left**: extension text stays stripped of direction marks (T13). Sidefolk adds its own when drawing in
+  Arabic (`BidiText`, `Text(ext:)` on pages, tiles and palettes): a value of numbers and signs alone is isolated left to
+  right ("3024 × 1964" read reversed before), and so are paths, addresses and number runs inside an Arabic sentence.
+- **Page details** (switches, choices, rows, the summary) are clipped at 240 characters instead of 160, so a German
+  sentence fits (an older Sidefolk still clips at 160).
+- Every official extension but Playtime (rebuilt on team/play, which localizes itself with D75's tables) speaks all ten:
+  World Clock, Calculator, Weather and System Vitals in the app; Your Mac, Clipboard, Keep Awake, Miraya, Git, Currency,
+  Images, PDF Tools, QR Codes, Archives, Dev Toolbox and Feeds in the gallery. Miraya's sources copied from its Mac app
+  (`Miraya/`) stay as they are: what they say passes through `Said.shown` on its way to the person.
+
+**Why:** the founder asked that extensions, Sidefolk's own first, work in every language Sidefolk speaks; pages, answers
+and the install sheet were English (D62's "English only for now"), and only a few manifest words were translated, in
+the app's catalog, which no one else's extension can use. *Files beside the manifest rather than a `localized` key*
+because 0.1.0 snapshots refuse a manifest with a key they don't know (T13) and ignore a folder they don't read, so a pack
+with translations still installs on them. *Text keyed by its English* so the code reads as English, a missing
+translation shows English, and `en.json` can be written from the code. *Named placeholders and CLDR plurals* because
+word order and counts differ (Arabic has six forms). *Sidefolk draws the direction*, not the extension: it knows the
+layout, and direction marks stay a way to disguise text.
+
+**Alternatives:** a `localized` object in the manifest (older copies refuse it); tables compiled into each program
+(D75's `Localized`: fine for a few words, but invisible to the validator and the gallery, and a third party writing
+Python would need its own; both work, and `L` uses `Localized` underneath); translating tool descriptions from
+`tools/list` (they are pinned at install: a language change would hold every tool); letting extensions send isolates
+(the same characters that reorder a name); the install sheet trusting `BuiltInExtensionWords` alone (only Sidefolk's own,
+and only the app's copy of them).
+
+**Implications:** `ExtensionStrings`, `ExtensionShownWords`, `ValidationReport.strings/shownWords/shownPermissions`,
+`ExtensionHost.Configuration.language`, `MCPClient(language:)`, `AddonEntry.localized`/`AddonWords`, `BidiText`, app
+`Text(ext:)`; Kit `Language.swift`, `KitWords.swift`, `Localized.swift`; `scripts/extension-strings.py`; build-app.sh and
+build.py copy `strings/`; tests `ExtensionStringsTests`, `BidiTextTests`, `ExtensionLanguagesTests` (every official
+extension, every key, every language), add-ons `LanguagesTests`. An extension's English output changed where Foundation
+now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
+Commands and `ask` sentences stay English (GLOSSARY rule 1). Not done: `zh-Hant` falls back to the manifest in Sidefolk
+but to `zh-Hans` in `Localized` (D75 normalizes any Chinese), a difference to settle when merging.
