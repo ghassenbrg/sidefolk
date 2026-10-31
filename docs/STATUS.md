@@ -1,10 +1,12 @@
 # Status
 
-- **Folk redesign reference (2026-10-31):** `folk-family/redesign-2026-10-31/folk-redesign-reference.png`
-  explores new silhouettes for the ten on-duty helper folks, preserving their roles and identifying cues.
-  Generated with the built-in image generator from `folk-family/folk-family-sheet.png`; visually checked that
-  all ten named helpers appear. This is concept artwork only; the app and companions are unchanged.
-  *Next:* founder reviews the direction before any individual character sheets or implementation.
+- **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved
+  `folk-family/redesign-2026-10-31/folk-redesign-reference.png` in the desktop and app windows. Their roles,
+  placement, accessibility and whole-body pop/breath/settle remain; the original vector rig is a fallback.
+  `scripts/cut-folk-redesign.py` rebuilds the paintings; the companions are unchanged. *Checked:* all ten
+  bundled artwork cases and the rendered contact sheet against the reference, a dark-background cutout review,
+  `make test` (1502 core and 36 character tests), and Tempo beside Mochi in an isolated debug app with a real
+  reminder. *Next:* founder reviews the new helpers in everyday use.
 
 Updated: 2026-10-31. Version 0.1.0. Latest (team/updates): Sidefolk and add-on updates chosen apart (D70). Before that: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine

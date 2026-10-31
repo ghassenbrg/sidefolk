@@ -90,6 +90,18 @@ final class FolkRig {
         ground.endPoint = CGPoint(x: 1, y: 1)
         root.insertSublayer(ground, at: 0)
 
+        // The approved helper designs are painted as a whole. The existing body layer
+        // still gives them the same entrance, breathing and settling as the vector rig.
+        if !plain, let image = Art.image("folks/\(folk.rawValue)") {
+            let painting = CALayer()
+            painting.frame = CGRect(origin: .zero, size: FolkCanvas.size)
+            painting.contents = image
+            painting.contentsGravity = .resize
+            painting.minificationFilter = .trilinear
+            body.addSublayer(painting)
+            return
+        }
+
         let shade = folk.tint.darker(0.12)
         for x in [41.0, 59.0] {
             let foot = SoftShape(Paths.ellipse(pt(x, 13.5), 7.5, 5), shading: .tinted(shade))

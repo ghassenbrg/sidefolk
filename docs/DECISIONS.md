@@ -1889,3 +1889,11 @@ refuses the manifest, as with D69's permissions), the Kit's `ext.paired`. *Resid
 injected instruction can show the screen, a window or a video the person allowed on their own paired TV, or stop,
 pause or seek it there. If an official program lied about pairing it could stream anywhere anyway (it records the
 screen and has the network), so its word adds no reach. SECURITY T2, T21, T36; EXTENSIONS › A device the person paired.
+
+### D73 — The helper folks follow the approved redesign (2026-10-31)
+**Decision:** the ten on-duty helper folks use paintings cut from the founder-approved reference in
+`folk-family/redesign-2026-10-31/`. Their existing helper roles, accessibility labels, placement, and
+whole-body entrance, exit and breathing remain. The vector drawing is retained as a fallback and for
+the resource-free plain version; the selectable companions are unchanged. `scripts/cut-folk-redesign.py`
+rebuilds the bundled paintings from the reference.
+**Why:** the founder approved the new silhouettes and asked for the current helpers to match them.
