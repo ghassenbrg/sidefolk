@@ -32,8 +32,8 @@ state, check something every few minutes, show a page, keep running (clipboard h
 
 No when it needs:
 - other apps' content through Apple Events (Mail, Notes, Calendar): a built-in tool in the app (D38);
-- an account, API key or token: extensions can't hold secrets (D39); a plain MCP server can (Settings › Extensions ›
-  Add MCP Server, unsandboxed, at least medium risk);
+- an account, API key or token: extensions can't hold secrets (D39); a plain MCP server can (Settings › Add-ons ›
+  Add MCP Server…, unsandboxed, at least medium risk);
 - to know which app is in front, open apps or links: Launch Services stays closed (D63);
 - to draw its own UI: pages are data Sidefolk draws (D62). A companion or a theme has its own path.
 
@@ -43,8 +43,8 @@ Where it will live:
   path for third-party packs yet.
 - **Built-in** (ships inside the app, can't be removed): only for what everyone needs; D55 cut these to four. Ask the
   founder first.
-- **Local** (one Mac, anyone's id like `com.example.thing`): a folder installed with Settings › Extensions › Install
-  from Folder… (or dropped on the companion). No signing, no gallery, no updates but reinstalling.
+- **Local** (one Mac, anyone's id like `com.example.thing`): a folder installed with Settings › Add-ons › Install
+  from folder… (or dropped on the companion). No signing, no gallery, no updates but reinstalling.
 - **Draft**: Sidefolk's own AI writes text-only drafts (`.py .js .mjs .cjs .sh .json .txt .md .csv`, at most 20 files,
   1 MB, id `local.<name>`, author "Sidefolk, for you") with `extensions.draft`, starts them once with every permission
   removed, and opens the install preview with `extensions.review` (`Resources/Skills/build-extension/SKILL.md`,
@@ -238,7 +238,7 @@ keeping its split: pure logic in its own file (tested), the page in another, `ma
 
 ## 6. Ship it
 
-**Local**: hand over `<out>/<name>/`; the person uses Settings › Extensions › Install from Folder… and reads the
+**Local**: hand over `<out>/<name>/`; the person uses Settings › Add-ons › Install from folder… and reads the
 preview. A new version is installed the same way; the sheet shows permissions gained and lost; changed tool
 definitions are held until approved.
 
@@ -294,7 +294,7 @@ definitions are held until approved.
   sound and look from Sidefolk's fixed lists. Send the verdict in the board: Sidefolk shows the build-up first (the old
   score, words and keyboard, the cups down, the row flipping) and colours right/wrong/draw itself. Playtime
   (sidefolk-addons `extensions/playtime`: `Sources/GameKit` with `EventCues`, `Sources/Screens`, `Sources/Trivia`) is
-  the example, eleven games; docs/EXTENSIONS.md › Games.
+  the example: eleven games and four puzzles (`Sources/Games/Puzzles`, the `puzzle` part); docs/EXTENSIONS.md › Games.
 - **The person's language (D76 over D75).** One way: `strings/<language>.json` and `L("English {name}", [...])`,
   `L(one:other:count:)`, `Format`. The Kit's `Localized(language, tables)` (D75) is the lower layer `L` reads through
   (normalization: `zh-Hant` is `zh-Hans`, the nearest Sidefolk speaks; English fallback); use it directly only for a
@@ -305,7 +305,7 @@ definitions are held until approved.
   extension's own tool as the person through Guard, then reads the page again. Keep Awake is the example
   (sidefolk-addons `extensions/keep-awake/Sources/AwakePage.swift`). The tile and row use the last background read,
   so it needs `widget`.
-- **Pages are the person's to arrange (D67).** They can hide a page (it stays in All Extensions), reorder it or take its
+- **Pages are the person's to arrange (D67).** They can hide a page (it stays in one menu row at the sidebar's foot), reorder it or take its
   tile off Today (`AppSettings.homePages`). Don't rely on a page being in the sidebar: put the quick action on the
   summary, and keep the page for choices and detail. Layout is automatic (`Home/ExtensionPageLayout.swift`): sections
   with gauges or stats, two or more cards, notes alone or buttons alone run across; others sit 2–3 to a row.

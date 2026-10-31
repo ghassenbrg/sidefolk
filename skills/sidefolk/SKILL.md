@@ -6,13 +6,13 @@ description: Reach the user through Sidefolk, their macOS desktop companion, wit
 # Sidefolk
 
 Sidefolk is a small companion that lives on the user's Mac desktop. It remembers (a notebook of notes, tasks
-and links, sorted into the user's projects, topics and lists), reminds (bubbles at a time, kept across
+and links, sorted into the user's projects, topics and lists), reminds (cards beside the companion at a time, kept across
 restarts), watches (web pages, sites, files, programs) and taps the user on the shoulder when something needs
 them. Its MCP server, `sidefolk`, lets you do those things for the user from your own session, so they hear
 from you even when they are not looking at your chat.
 
 Your client may show the tools with a prefix (Claude Code: `mcp__sidefolk__reminders_create`). If no
-`sidefolk` tools are listed, Sidefolk isn't connected: tell the user to open Sidefolk › Settings › Agents and
+`sidefolk` tools are listed, Sidefolk isn't connected: tell the user to open Sidefolk › Settings › Connections and
 click Connect. If a call says "Sidefolk isn't running", ask them to open Sidefolk; don't retry in a loop.
 
 Everything you do through Sidefolk is checked by Sidefolk's own rules and listed in its Activity, labelled with
@@ -53,7 +53,7 @@ read their notes or reminders unless the task needs them.
 {"title": "Stretch", "when": "every 30 minutes until 6pm", "level": "gentle"}
 ```
 
-Write the title as the user would want to read it in a bubble ("Check the deploy", not "Reminder: user wants
+Write the title as the user would want to read it on a card ("Check the deploy", not "Reminder: user wants
 to check deploy"). Tell the user the time from the result ("Set for 14:32"). If the time is unclear ("later",
 "after lunch" with no hour you can read), ask before setting it. Keep the id from the result:
 `reminders_cancel {"id": "…"}` takes it, and you can cancel only reminders you set. Levels: `attention`
@@ -126,9 +126,9 @@ after a day, unless `until` is sooner. `watch_list` shows the watches and report
 {"title": "Deploy failed: migration 0042", "body": "Rolled back. Logs in deploy.log.", "level": "attention"}
 ```
 
-One notice per event, with the outcome in the title. `gentle` (default) is a short bubble for news;
+One notice per event, with the outcome in the title. `gentle` (default) is a short whisper for news;
 `attention` is for something the user should look at now (a failure, a decision). If the result says the
-notice is held (the user is busy, away or in quiet mode), it will reach them later: don't send it again.
+notice is held (the user is busy, away, in Focus or in Quiet), it will reach them later: don't send it again.
 
 ### ask_user
 
@@ -161,26 +161,26 @@ Counts only (sessions, jobs, reminders, watches): a cheap way to check that Side
   "3 tests failed in AuthTests").
 - **It runs elsewhere** (the user's terminal, a build already going): `watch_create` with `kind:
   process_exits` and the program's name or process number.
-- **The user wants Sidefolk to track a command**: if the `sidefolk` command is installed (Settings › Agents),
+- **The user wants Sidefolk to track a command**: if the `sidefolk` command is installed (Settings › Connections),
   `sidefolk run --title "Tests" -- npm test` runs it as usual (same output and exit code) and Sidefolk shows it
-  on its Now page and taps the user when it ends, with the last error lines if it failed. If Sidefolk can't be
+  on On duty and taps the user when it ends, with the last error lines if it failed. If Sidefolk can't be
   reached from your sandbox, the command still runs and says it won't send a notice.
 
-If the user turned on session updates for your client in Sidefolk (Settings › Agents), Sidefolk already
-notices when your session needs them or finishes a long piece of work, and shows it on its Now page. Don't
+If the user turned on session updates for your client in Sidefolk (Settings › Connections), Sidefolk already
+notices when your session needs them or finishes a long piece of work, and shows it beside the companion and on On duty. Don't
 add a `notify_user` that only says "done"; send one when it carries news (the outcome, a failure, a link), or
 when the user asked for it.
 
 ## Approvals and what is off limits
 
-- The user chooses in Sidefolk (Settings › Privacy › Other agents) what you may do: saving, changing and
+- The user chooses in Sidefolk (Settings › Trust › What other agents may do) what you may do: saving, changing and
   deleting notes, and reading their data, can each be allowed, ask each time, or be off. By default saving,
   setting and cancelling your reminders, watching, reports, changing notes and moving them to the Trash run at
   once; notices, questions and `status` always do.
 - Reading the user's data asks every time by default, on their desktop. A card waits two minutes, then counts
   as a no. While one of your cards waits, your next call that asks is refused at once: wait for the first.
 - A result saying the user turned something off is final: tell them they can do it in Sidefolk, or change it
-  in Settings › Privacy › Other agents. Don't retry.
+  in Settings › Trust › What other agents may do. Don't retry.
 - You can't answer Sidefolk's approvals, and you never need to: don't ask the user to approve things in
   Sidefolk "so you can continue" unless a result says a card is waiting.
 - Not available to other agents, by design: creating collections, critical alerts, watches that run
@@ -193,7 +193,7 @@ when the user asked for it.
 
 - **Don't spam.** One notice per event; never for progress ("still working…"). Sidefolk spaces notices out
   and holds them when there are too many, so extra ones only delay the important one.
-- **Respect quiet mode.** When the user is in quiet mode, full screen or away, gentle notices wait and others
+- **Respect Focus and Quiet.** When the user is in Focus or Quiet, full screen or away, gentle notices wait and others
   arrive silently. Don't work around it: no `ask_user` just to get attention, no repeating, no louder level.
 - **Never store secrets.** No passwords, API keys, tokens, private keys, session cookies or `.env` contents in
   notes, reminder titles, watch titles or notices. They are kept in plain text on the Mac and shown on screen.

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- The body and its short legs, y down: a wide round torso, the legs ending behind the feet. -->
+  <ellipse cx="100" cy="142" rx="45" ry="24"/>
+  <rect x="74" y="150" width="22" height="24" rx="8"/>
+  <rect x="104" y="150" width="22" height="24" rx="8"/>
+</svg>

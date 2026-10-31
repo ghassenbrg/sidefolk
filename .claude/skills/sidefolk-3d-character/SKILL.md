@@ -21,8 +21,7 @@ Read `companions-3d/README.md` and one finished character close to the new one f
 face: `spark`). Copy what fits rather than inventing.
 
 The founder's bar: movie-quality, cute, alive; it really sits, lies, sleeps, bows and waves; it
-looks like its sheet. Mouth and nose never touch. Never touch Codex's `sandbox/` folder (read only,
-if the user points at a file there).
+looks like its sheet. Mouth and nose never touch.
 
 **What the founder catches on the desktop**, so check each before showing anything (§6 has the tools): a part cut
 off by the window's edge while it is petted, hops or lies down; a neck that bends oddly; a rest that looks like a doll
@@ -40,7 +39,7 @@ character is consent; a remake of an approved one is too.
 
 **Where to work.** Look at `git status` and `git worktree list` first. If someone else's changes are in the main
 checkout, work in a worktree of your own (`git worktree add -b team/<name> ../sf-team-<name> <base>`, based on the
-newest integration branch, e.g. `team/merge5`, when one is ahead of `main`): two agents building in one `.build`
+newest integration branch when one is ahead of `main`): two agents building in one `.build`
 collide, and your commit must not sweep up their work. Engine changes (`Resources/Companions3D/engine/`) are shared
 by every companion: make them options that default to the old behaviour, and check Spark still looks the same.
 
@@ -200,7 +199,8 @@ Only a companion meant to ship inside the app goes in `Resources/Companions3D/`.
 python3 companions-3d/serve.py 8765   # http://localhost:8765/?c=<id>&bare&frame=tight
 ```
 
-(The preview needs a `.claude/launch.json` entry in the session's working folder; remove it after. A private
+(The preview needs a `launch.json` entry in the session's working folder, `.claude/launch.json` for Claude Code;
+remove it after. A private
 companion: `SIDEFOLK_ADDONS_REPO=$HOME/git/sidefolk-private python3 companions-3d/serve.py 8765`.) Start every
 console script with `await ready` (`companion` exists before its model has loaded). The built-in browser pane runs
 no animation frames while hidden: use `companion.step(seconds)` (renders), not waiting; when the pane is collapsed
@@ -234,7 +234,7 @@ image generation of real people: then a render, cut round by `sidefolk-private/p
 `companions-3d/references/avatars/mochi-avatar.webp` (framing and finish only), and the avatar style sentence
 and a backdrop colour of its own from `prompts.json` › avatars. Keep the source as
 `references/avatars/<id>-avatar.webp`, and save a round 256 px crop on the face (the face must read at 26 points;
-see how the six were cut) as `avatars/<id>.png` in its add-on folder. The Ask panel and Conversations show it.
+see how the six were cut) as `avatars/<id>.png` in its add-on folder. Ask, the Sidecard's cards, Today, History, the Pocket and the Play panel show it.
 
 ## 7. Wire it into the app (a gallery companion)
 

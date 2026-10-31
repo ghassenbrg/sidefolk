@@ -32,7 +32,7 @@ names, run a well-known command-line program, check something every few minutes.
 | Needs | Use instead |
 |---|---|
 | Other apps' content through Apple Events (Mail, Notes, Calendar, Music) | Sidefolk built-in tools, proposed to the Sidefolk team |
-| The person's account or API token | An MCP server (Settings › Extensions › Add MCP Server): extensions can't hold secrets yet |
+| The person's account or API token | An MCP server (Settings › Add-ons › Add MCP Server…): extensions can't hold secrets yet |
 | A Unix socket or a long-running background job | An MCP server, for now |
 
 Sidefolk's own AI can also write small extensions for its person (the `build-extension` skill in the
@@ -125,8 +125,8 @@ result cards. Without one, Sidefolk draws a tile in your folk's colour (`"folk"`
    permission sheet, each tool's risk, warnings, errors, then installs a throwaway copy, starts it and
    lists its tools (or why it didn't start). Fix until it says `Valid.` and lists your tools with no
    warning. The `sidefolk` helper is in `Sidefolk.app/Contents/Helpers/` and, once installed from
-   Settings › Agents, in `~/.local/bin`.
-3. **In Sidefolk**: Settings › Extensions › Install from Folder…, read the sheet, install, then ask for
+   Settings › Connections, in `~/.local/bin`.
+3. **In Sidefolk**: Settings › Add-ons › Install from folder…, read the sheet, install, then ask for
    something only your tools can do. Sidefolk's log (`~/Library/Logs/Sidefolk/`, category `extensions`)
    shows start-up errors and your stderr; sandbox denials appear in Console.app (filter `Sandbox`).
 
@@ -137,9 +137,9 @@ job truly needs it.
 
 - Bump `version` for every change. Installing a new version shows the person what it gains and loses;
   a tool whose description or schema changes without a reinstall is held until they approve it.
-- Distribute the folder (a zip or a git repository). Tell people to unzip it and use Install from Folder…
-  There is no directory, signing or automatic update yet; docs/research/extensions-catalog.md describes
-  the plan (signed packages, a directory of verified publishers, trust levels).
+- Distribute the folder (a zip or a git repository). Tell people to unzip it and use Install from folder…
+  Sidefolk's add-on gallery (signed packs that update themselves) holds only Sidefolk's own extensions for
+  now; community ones are installed from a folder.
 - Keep the id stable forever: it names the installed copy, its data folder and its tools
   (`ext.<last part of id>.<tool>`).
 
