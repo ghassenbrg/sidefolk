@@ -4,7 +4,7 @@ import SwiftUI
 /// Said wherever all history can be deleted (here and Settings › Privacy), so both promise the same thing.
 enum DeleteHistoryWords {
     static let message: LocalizedStringKey =
-        "Every conversation with the AI is deleted from this Mac. Your notes, reminders and Activity stay. This can't be undone."
+        "Every conversation with the AI is deleted from this Mac. Your notes, reminders and History stay. This can't be undone."
 }
 
 /// One line of a conversation: the person's words on the trailing side, the answers as text to read, the steps in

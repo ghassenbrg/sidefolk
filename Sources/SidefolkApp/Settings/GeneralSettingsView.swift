@@ -111,7 +111,7 @@ struct UpdateHero: View {
                     HStack(spacing: Theme.Space.s) {
                         Button("What's new") { updates.actions?.showUpdates() }.buttonStyle(.sf(.plain))
                         if updates.readyOffer != nil {
-                            Button("Restart Now") { updates.actions?.restartNow() }.buttonStyle(.sf(.primary))
+                            Button("Restart now") { updates.actions?.restartNow() }.buttonStyle(.sf(.primary))
                         } else {
                             Button(updates.plan == .replace ? "Update and Restart" : "Download") { updates.actions?.install(offer) }
                                 .buttonStyle(.sf(.primary))

@@ -118,10 +118,11 @@ struct PocketView: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: Theme.Space.s)
-            Button("Turn Off", action: actions.turnOffFullAccess).buttonStyle(.sf(.secondary))
+            Button("Turn off", action: actions.turnOffFullAccess).buttonStyle(.sf(.secondary))
         }
         .padding(Theme.Space.s + 2)
         .background(Theme.warningSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contrastEdge(radius: Theme.Radius.card)
         .accessibilityElement(children: .contain)
     }
 
@@ -136,6 +137,7 @@ struct PocketView: View {
         }
         .padding(Theme.Space.s + 2)
         .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contrastEdge(radius: Theme.Radius.card)
     }
 
     private var dial: some View {
@@ -162,7 +164,7 @@ struct PocketView: View {
                     .font(Theme.Font.caption)
                     .fixedSize()
                     Spacer()
-                    Button { actions.openAttentionSettings() } label: { Text("Attention Settings…", comment: "The Pocket: opens Settings › Attention") }
+                    Button { actions.openAttentionSettings() } label: { Text("Attention settings…", comment: "The Pocket: opens Settings › Attention") }
                         .buttonStyle(.plain).foregroundStyle(Theme.link)
                 }
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
@@ -188,10 +190,11 @@ struct PocketView: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: Theme.Space.s)
-            Button(content.updateReady ? "Restart Now" : "Update…", action: actions.update).buttonStyle(.sf(.primary))
+            Button(content.updateReady ? "Restart now" : "Update…", action: actions.update).buttonStyle(.sf(.primary))
         }
         .padding(Theme.Space.s + 2)
         .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contrastEdge(radius: Theme.Radius.card)
     }
 
     @ViewBuilder

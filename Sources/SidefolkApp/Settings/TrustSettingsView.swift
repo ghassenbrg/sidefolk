@@ -51,13 +51,13 @@ struct TrustSettingsView: View {
                     .fixedSize()
                 }
                 SettingsRow(title: "Conversation history") {
-                    Button("Delete All History…") { confirmingHistory = true }
+                    Button("Delete all history…") { confirmingHistory = true }
                         .buttonStyle(.sf(.secondary))
                         .disabled(model.storage?.exchanges == 0)
                 }
             }
             .alert("Delete all conversation history?", isPresented: $confirmingHistory) {
-                Button("Delete All History", role: .destructive) { Task { await model.deleteConversationHistory() } }
+                Button("Delete all history", role: .destructive) { Task { await model.deleteConversationHistory() } }
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text(DeleteHistoryWords.message)
@@ -129,7 +129,7 @@ struct TrustSettingsView: View {
                 .padding(.vertical, Theme.Space.s + 2)
             }
             VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Button("Add Folder…", action: addFolder).buttonStyle(.sf(.secondary))
+                Button("Add folder…", action: addFolder).buttonStyle(.sf(.secondary))
                 if let error = model.folderError { InlineError(error: error) }
             }
             .padding(.horizontal, Theme.Space.l)
@@ -226,11 +226,11 @@ struct TrustSettingsView: View {
     private var data: some View {
         SettingsGroup(title: "Your data") {
             SettingsRow(.exportData) {
-                Button("Export Data…") { save(name: String(localized: "Sidefolk Export"), type: .json) { await model.exportData(to: $0) } }
+                Button("Export data…") { save(name: String(localized: "Sidefolk Export"), type: .json) { await model.exportData(to: $0) } }
                     .buttonStyle(.sf(.secondary))
             }
             SettingsRow(.diagnostics) {
-                Button("Export Diagnostics…") {
+                Button("Export diagnostics…") {
                     save(name: String(localized: "Sidefolk Diagnostics"), type: .zip) { await model.exportDiagnostics(to: $0) }
                 }
                     .buttonStyle(.sf(.secondary))
@@ -249,7 +249,7 @@ struct TrustSettingsView: View {
                 .padding(.vertical, Theme.Space.m)
             }
             SettingsRow(.deleteAll) {
-                Button("Delete All Data…") { confirmingDelete = true }.buttonStyle(.sf(.destructive))
+                Button("Delete all data…") { confirmingDelete = true }.buttonStyle(.sf(.destructive))
             }
         }
     }
@@ -289,7 +289,7 @@ struct DeleteAllSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Type “\(Self.word)” to confirm.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 TextField("Confirmation", text: $typed, prompt: Text(verbatim: Self.word))
-                    .textFieldStyle(.roundedBorder)
+                    .lanternField()
                     .accessibilityLabel(Text("Type “\(Self.word)” to confirm."))
             }
             if let error { InlineError(error: error) }

@@ -19,7 +19,7 @@ public struct UpdateSettings: Codable, Sendable, Equatable {
     public var addons = true
     /// nil means releases only, whatever build runs: snapshots are for people who choose them.
     public var channel: UpdateChannel?
-    /// "Skip This Version": never offered again; a newer one is.
+    /// "Skip this version": never offered again; a newer one is.
     public var skipped: ReleaseVersion?
 
     public init() {}

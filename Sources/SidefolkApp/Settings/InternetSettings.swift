@@ -43,11 +43,11 @@ struct InternetGroup: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     TextField("Site", text: $newSite, prompt: Text(verbatim: "example.com"))
-                        .textFieldStyle(.roundedBorder)
+                        .lanternField()
                         .frame(maxWidth: 260)
                         .onSubmit(addSite)
                         .accessibilityLabel("Site to allow")
-                    Button("Allow Site", action: addSite)
+                    Button("Allow site", action: addSite)
                         .buttonStyle(.sf(.secondary))
                         .disabled(newSite.trimmingCharacters(in: .whitespaces).isEmpty)
                 }

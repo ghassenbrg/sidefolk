@@ -66,9 +66,11 @@ struct SidecardSurface<Content: View>: View {
     var padding: CGFloat = Theme.Space.l
     @ViewBuilder var content: Content
     @Environment(\.layoutDirection) private var direction
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityReduceTransparency) private var systemSolid
+    @Environment(\.solidSurfaces) private var solid
     @Environment(\.colorScheme) private var scheme
     @Environment(\.colorSchemeContrast) private var contrast
+    private var reduceTransparency: Bool { systemSolid || solid }
 
     var body: some View {
         let shape = SidecardShape(radius: radius, tail: tail, rightToLeft: direction == .rightToLeft)

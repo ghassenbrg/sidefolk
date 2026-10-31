@@ -385,7 +385,7 @@ private struct EntryView: View {
                 if PrivacyPane.isKnown(card.url) {
                     Button("Open System Settings") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
                 } else if SettingsLink.isKnown(card.url) {
-                    Button("Set Your Location…") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
+                    Button("Set your location…") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
                 } else if card.kind != .extensionResult, card.refId != nil || card.url != nil {
                     Button("Open") { model.actions?.open(card: card) }.buttonStyle(.sf(.secondary))
                 }
@@ -716,12 +716,11 @@ private struct WhenChips: View {
                 VStack(alignment: .trailing, spacing: Theme.Space.s) {
                     // Typing works here too; the picker follows what's typed, and the field what's picked.
                     WhenField(text: $typed, prompt: Text("When, like “tomorrow 9:00”"), parser: parser, focus: $typing,
-                              showsPicker: false) {
+                              showsPicker: false, boxed: true) {
                         guard custom > Date() else { return }
                         picking = false
                         choose(custom)
                     }
-                    .textFieldStyle(.roundedBorder)
                     .frame(width: 280)
                     DatePicker("When", selection: $custom, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                         .datePickerStyle(.graphical)

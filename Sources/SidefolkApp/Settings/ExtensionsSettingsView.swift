@@ -165,7 +165,7 @@ struct ExtensionsSettingsView: View {
                 }
                 Spacer(minLength: Theme.Space.s)
                 Button { model.services.openGallery() } label: {
-                    Label { Text("Get Add-ons", comment: "Settings › Add-ons: opens the add-on gallery") } icon: { Image(systemName: "sparkles") }
+                    Label { Text("Get add-ons", comment: "Settings › Add-ons: opens the add-on gallery") } icon: { Image(systemName: "sparkles") }
                 }
                 .buttonStyle(.sf(.secondary, size: .large))
                 .help("Extensions, companions and themes to add, in Home")
@@ -181,7 +181,7 @@ struct ExtensionsSettingsView: View {
                 ])
                 .help("Show every extension, or only those switched on or off")
                 Menu {
-                    Button("Install from Folder…", systemImage: "folder", action: chooseFolder)
+                    Button("Install from folder…", systemImage: "folder", action: chooseFolder)
                     Button("Add MCP Server…", systemImage: "server.rack") { addingServer = true }
                 } label: {
                     Image(systemName: "plus")
@@ -226,8 +226,8 @@ struct ExtensionsSettingsView: View {
                 Text(verbatim: noMatchText).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: Theme.Space.s) {
-                    if query.isSearching { Button("Clear Search") { search = "" }.buttonStyle(.sf(.secondary)) }
-                    if show != .all { Button("Show All") { show = .all }.buttonStyle(.sf(.secondary)) }
+                    if query.isSearching { Button("Clear search") { search = "" }.buttonStyle(.sf(.secondary)) }
+                    if show != .all { Button("Show all") { show = .all }.buttonStyle(.sf(.secondary)) }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -444,7 +444,7 @@ struct AddServerSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
             TextField(label, text: text, prompt: Text(verbatim: prompt))
-                .textFieldStyle(.roundedBorder)
+                .lanternField()
                 .font(monospaced ? .system(size: 12, design: .monospaced) : Theme.Font.body)
                 .accessibilityLabel(label)
         }
@@ -628,7 +628,7 @@ private struct OtherAgentsRow: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: Theme.Space.s)
-            Button(copied ? "Copied" : "Copy Setup Instructions") {
+            Button(copied ? "Copied" : "Copy setup instructions") {
                 copy()
                 copied = true
             }
@@ -702,7 +702,7 @@ private struct AddonsNeedYou: View {
                     card(title: Text("\(entry.shownName) \(ReleaseVersion(entry.version)?.shown ?? entry.version) needs a look",
                                      comment: "Settings › Updates: an extension update waiting for review"),
                          detail: Text("Its new version would be allowed to do more. Review shows what's new."),
-                         action: Text("Review Update", comment: "Settings › Add-ons: opens an extension update's install sheet")) {
+                         action: Text("Review update", comment: "Settings › Add-ons: opens an extension update's install sheet")) {
                         updates.addonActions?.review(entry)
                     }
                 }

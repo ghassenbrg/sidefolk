@@ -258,7 +258,7 @@ struct UnavailableExtensionRow: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: Theme.Space.s)
-            Button("Try Again", action: retry).buttonStyle(.sf(.secondary)).fixedSize()
+            Button("Try again", action: retry).buttonStyle(.sf(.secondary)).fixedSize()
                 .accessibilityLabel("Try \(item.name) again")
         }
         .padding(.horizontal, Theme.Space.l)

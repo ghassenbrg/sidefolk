@@ -247,7 +247,7 @@ private struct ElevenLabsSetup: View {
             SetupLine(title: "API key") {
                 HStack(spacing: Theme.Space.s) {
                     SecureField("API key", text: $draft, prompt: Text("Paste key"))
-                        .textFieldStyle(.roundedBorder)
+                        .lanternField()
                         .frame(width: 170)
                         .onSubmit(save)
                     Button("Save key", action: save)

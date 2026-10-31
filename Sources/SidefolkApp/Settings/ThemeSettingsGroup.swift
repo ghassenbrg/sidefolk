@@ -76,8 +76,8 @@ struct ThemeSettingsGroup: View {
     }
 
     @ViewBuilder private var makeButtons: some View {
-        Button("Start a Theme…", action: startTheme).buttonStyle(.sf(.secondary)).fixedSize()
-        Button("Load from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary)).fixedSize()
+        Button("Start a theme…", action: startTheme).buttonStyle(.sf(.secondary)).fixedSize()
+        Button("Load from folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary)).fixedSize()
     }
 
     /// The theme was drawn with a companion in mind: offered, never chosen for the person.
@@ -110,7 +110,7 @@ struct ThemeSettingsGroup: View {
                         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path).appendingPathComponent("theme.json")])
                     }
                     .buttonStyle(.sf(.plain))
-                    Button("Stop Following") { model.update { $0.themeFolder = nil } }.buttonStyle(.sf(.secondary))
+                    Button("Stop following") { model.update { $0.themeFolder = nil } }.buttonStyle(.sf(.secondary))
                 }
             }
             if let report = ThemeStore.shared.folderReport, !report.problems.isEmpty {

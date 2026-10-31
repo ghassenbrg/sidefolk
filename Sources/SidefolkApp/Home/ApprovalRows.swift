@@ -89,7 +89,7 @@ struct FullAccessBanner: View {
             }
             Spacer(minLength: Theme.Space.s)
             Button("Settings…", action: settings).buttonStyle(.sf(.secondary)).fixedSize()
-            Button("Turn Off", action: turnOff).buttonStyle(.sf(.primary)).fixedSize()
+            Button("Turn off", action: turnOff).buttonStyle(.sf(.primary)).fixedSize()
         }
         .padding(Theme.Space.m)
         .background(Theme.dangerSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))

@@ -76,11 +76,11 @@ struct UpdatesSettingsGroup: View {
         case .available:
             Button("Update…") { updates.actions?.showUpdates() }.buttonStyle(.sf(.primary))
         case .ready:
-            Button("Restart Now") { updates.actions?.restartNow() }.buttonStyle(.sf(.secondary))
+            Button("Restart now") { updates.actions?.restartNow() }.buttonStyle(.sf(.secondary))
         case .downloading, .verifying, .installing, .restarting:
             Button("Show") { updates.actions?.showUpdates() }.buttonStyle(.sf(.secondary))
         default:
-            Button("Check Now") { updates.actions?.checkNow() }.buttonStyle(.sf(.secondary)).disabled(updates.busy)
+            Button("Check now") { updates.actions?.checkNow() }.buttonStyle(.sf(.secondary)).disabled(updates.busy)
         }
     }
 }
@@ -99,7 +99,7 @@ private struct AddonUpdateRows: View {
         }
         if !updates.addonWaiting.isEmpty {
             SettingsRow(title: Text(waitingTitle), detail: Text(verbatim: Wording.list(updates.addonWaiting.map(\.shownName)))) {
-                Button("Update All") { updates.addonActions?.updateAddonsNow() }.buttonStyle(.sf(.secondary)).disabled(updates.addonsBusy)
+                Button("Update all") { updates.addonActions?.updateAddonsNow() }.buttonStyle(.sf(.secondary)).disabled(updates.addonsBusy)
             }
         } else if let at = updates.addonsUpdatedAt, !updates.addonsUpdated.isEmpty {
             SettingsRow(title: Text("Add-ons updated \(TimeText.relative(at))", comment: "Settings › Updates: “Add-ons updated 2 hours ago”"),

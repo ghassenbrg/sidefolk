@@ -14,7 +14,7 @@ struct TrustHero: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: mode.headline).font(Theme.Font.title2).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("Whatever you pick, Guard checks every step outside the AI, and every step shows in Activity.",
+                    Text("Whatever you pick, Guard checks every step outside the AI, and every step shows in History.",
                          comment: "Settings › Trust: under the mode's headline")
                         .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -30,7 +30,7 @@ struct TrustHero: View {
                     ModeCard(mode: .fullAccess, current: mode, ends: model.policy.fullAccessEnds) { choose(.fullAccess) }
                 }
             }
-            Text("For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in Activity.")
+            Text("For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History.")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, Theme.Space.xs)
@@ -184,7 +184,7 @@ struct FullAccessSheet: View {
                     }
                 }
                 section(Text("What changes", comment: "The Full access sheet: what it does without asking")) {
-                    line("terminal", Text("Runs commands without asking"), Text("You still see each one in Activity, word for word.", comment: "The Full access sheet"))
+                    line("terminal", Text("Runs commands without asking"), Text("You still see each one in History, word for word.", comment: "The Full access sheet"))
                     line("folder", Text("Moves, renames and trashes files in the folders you shared", comment: "The Full access sheet"),
                          Text("Anything deleted goes to the Trash.", comment: "The Full access sheet"))
                     line("arrow.up.right", Text("Opens apps and links, reads pages and your Apple Notes, uses extensions", comment: "The Full access sheet"), nil)

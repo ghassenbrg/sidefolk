@@ -212,7 +212,8 @@ struct QueueRow: View {
                 }
                 .padding(style == "card" ? 0 : Theme.Space.s)
             } else if style == "card" {
-                NeedsYouCard(source: cardLabel, folk: folk, at: at, tint: cardTint, focused: isFocused) { cardBody }
+                NeedsYouCard(source: cardLabel, folk: folk, settings: model.services.runtime.settings.current, at: at, tint: cardTint,
+                             focused: isFocused) { cardBody }
             } else {
                 row.background(isFocused ? Theme.accentSoft.opacity(0.6) : .clear)
             }
@@ -252,6 +253,9 @@ struct QueueRow: View {
             switch item.refKind {
             case "watcher": return String(localized: "Watch changed")
             case "reminder": return String(localized: "Reminder")
+            // Another app's notice is signed by the app, as its card was.
+            case _ where item.source.hasPrefix("external:"):
+                return Describe.caller(item.source, companion: model.services.runtime.settings.current.companionName)
             default: return String(localized: "\(model.services.runtime.settings.current.companionName) noticed")
             }
         case .skipped: return String(localized: "Skipped", comment: "Above a decision card: a step nobody answered in time")
@@ -269,17 +273,12 @@ struct QueueRow: View {
     }
 
     /// The folk whose avatar stands beside a card: Guard asks, Byte keeps agents, Scout watches, Tempo keeps time.
-    private var folk: String {
+    private var folk: String? {
         switch decision {
         case .approval, .skipped: "guard"
         case .session: "byte"
-        case .attention(let item):
-            switch item.refKind {
-            case "watcher": "scout"
-            case "reminder", "brief": "tempo"
-            case "job", "session": "byte"
-            default: "pip"
-            }
+        // The same helper the Sidecard's card showed; the companion's own words come with its face.
+        case .attention(let item): SidecardItemCard.folk(item)
         }
     }
 
@@ -769,10 +768,9 @@ struct EditReminderSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             Text("Edit reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            TextField("What", text: $title).textFieldStyle(.roundedBorder)
+            TextField("What", text: $title).lanternField()
             WhenField(text: $when, prompt: Text("When, like “tomorrow 9am” or “every 30 minutes”"), parser: model.whenParser,
-                      focus: $whenFocused, emptyHint: Text("Leave empty to keep \(current)"))
-                .textFieldStyle(.roundedBorder)
+                      focus: $whenFocused, emptyHint: Text("Leave empty to keep \(current)"), boxed: true)
             if let error { InlineError(error: error) }
             HStack {
                 Spacer()

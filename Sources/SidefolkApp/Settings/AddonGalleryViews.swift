@@ -67,7 +67,7 @@ struct GalleryStatus: View {
                 .padding(.horizontal, Theme.Space.l)
                 .padding(.vertical, Theme.Space.m)
             } else {
-                InlineEmpty(text: "The gallery couldn't be reached.", systemImage: "wifi.slash", actionTitle: "Try Again") {
+                InlineEmpty(text: "The gallery couldn't be reached.", systemImage: "wifi.slash", actionTitle: "Try again") {
                     Task { await gallery.load(refresh: true) }
                 }
             }
@@ -94,6 +94,6 @@ struct SnapshotsHiddenNote: View {
 
     var body: some View {
         InlineEmpty(text: "Add-ons in snapshots are hidden: test versions, before their release. Showing them offers Sidefolk's own snapshots too, as in Settings › General › Updates.",
-                    systemImage: "testtube.2", actionTitle: "Show Snapshots") { gallery.showSnapshots() }
+                    systemImage: "testtube.2", actionTitle: "Show snapshots") { gallery.showSnapshots() }
     }
 }

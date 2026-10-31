@@ -129,7 +129,7 @@ struct MiniPin: View {
         let dim = pin.paused || pin.stale(at: now)
         HStack(spacing: 5) {
             Image(systemName: pin.paused ? "pause.fill" : pin.symbol).font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.inkMuted)
-            Text(verbatim: pin.value).font(.system(size: 12, weight: .semibold).monospacedDigit())
+            Text(verbatim: PinValue.atRest(pin.value)).font(.system(size: 12, weight: .semibold).monospacedDigit())
                 .foregroundStyle(dim ? Theme.inkFaint : Theme.ink).lineLimit(1)
         }
         .padding(.horizontal, Theme.Space.s + 1)

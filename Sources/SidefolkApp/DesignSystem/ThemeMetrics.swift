@@ -111,10 +111,18 @@ private struct ElevationModifier: ViewModifier {
     }
 }
 
+extension EnvironmentValues {
+    /// Glass drawn as solid surfaces, as Reduce Transparency has it; for snapshots of that setting, which a view can't
+    /// set. The system's own setting is read beside it.
+    @Entry var solidSurfaces = false
+}
+
 private struct GlassModifier: ViewModifier {
     var radius: CGFloat
     var elevation: Theme.Elevation
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityReduceTransparency) private var systemSolid
+    @Environment(\.solidSurfaces) private var solid
+    private var reduceTransparency: Bool { systemSolid || solid }
     @Environment(\.colorScheme) private var scheme
 
     func body(content: Content) -> some View {

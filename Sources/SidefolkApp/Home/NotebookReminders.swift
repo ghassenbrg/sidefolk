@@ -88,8 +88,7 @@ struct PickReminderTimeSheet: View {
             Text("Remind me about “\(item.title.clipped(60))”").font(Theme.Font.heading).foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
             WhenField(text: $text, prompt: Text("When, like “tomorrow 9:00”"), parser: parser, focus: $typing, showsPicker: false,
-                      submit: set)
-                .textFieldStyle(.roundedBorder)
+                      boxed: true, submit: set)
             DatePicker("When", selection: $date, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                 .datePickerStyle(.graphical)
                 .labelsHidden()

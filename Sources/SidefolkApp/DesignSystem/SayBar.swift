@@ -64,13 +64,11 @@ struct SayBarField<Trailing: View>: View {
         .padding(.vertical, multiline ? (height - 22) / 2 : 0)
         .frame(minHeight: height)
         .frame(maxWidth: size == .home ? Theme.Size.sayBarHomeMaxWidth : .infinity)
-        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: height / 2, style: .continuous))
+        // Circular ends: a continuous corner as large as half the height draws flat bars beside the round ends.
+        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: height / 2, style: .circular))
         .overlay {
-            // strokeBorder insets the shape by half the line; a radius past half the inset height draws flat ends
-            // beside the round ones, so the radius shrinks with it.
-            let ring: CGFloat = binding.wrappedValue ? 2 : 1
-            RoundedRectangle(cornerRadius: height / 2 - ring / 2, style: .continuous)
-                .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.line, lineWidth: ring)
+            RoundedRectangle(cornerRadius: height / 2, style: .circular)
+                .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.line, lineWidth: binding.wrappedValue ? 2 : 1)
         }
         .animation(Theme.Motion.micro, value: binding.wrappedValue)
         .onChange(of: focusTrigger) { binding.wrappedValue = true }

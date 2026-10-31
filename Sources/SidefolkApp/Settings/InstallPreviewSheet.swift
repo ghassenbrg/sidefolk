@@ -236,7 +236,7 @@ struct InstallPreviewSheet: View {
             HStack(spacing: Theme.Space.s) {
                 switch step {
                 case .who:
-                    Button("Show Files") { NSWorkspace.shared.activateFileViewerSelecting([preview.sourceFolder]) }
+                    Button("Show files") { NSWorkspace.shared.activateFileViewerSelecting([preview.sourceFolder]) }
                         .buttonStyle(.sf(.plain))
                 case .touch:
                     Button { go(.who) } label: {

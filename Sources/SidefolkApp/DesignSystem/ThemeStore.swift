@@ -117,7 +117,7 @@ struct ThemeStyle: Sendable {
         surface = Color(c.surface)
         surfaceSunken = Color(c.surfaceSunken)
         surfaceRaised = Color(c.surfaceRaised)
-        line = Color(c.line)
+        line = Color(hairline: c.line, strong: c.inkFaint)
         accent = Color(c.accent)
         onAccent = Color(c.onAccent)
         accentSoft = Color(c.accentSoft)
@@ -155,6 +155,19 @@ struct ThemeStyle: Sendable {
 }
 
 extension Color {
+    /// A hairline (D84): the theme's `line`, and under Increase Contrast (the high-contrast appearances) the faint ink
+    /// at a control border's strength, so every card, row, field and Sidecard edge shows without a change per screen.
+    init(hairline line: ThemeTokens.Pair, strong ink: ThemeTokens.Pair) {
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            let match = appearance.bestMatch(from: [.aqua, .darkAqua, .accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua])
+            let dark = match == .darkAqua || match == .accessibilityHighContrastDarkAqua
+            guard match == .accessibilityHighContrastAqua || match == .accessibilityHighContrastDarkAqua else {
+                return NSColor(hex: dark ? line.dark : line.light)
+            }
+            return NSColor(hex: dark ? ink.dark : ink.light).withAlphaComponent(0.6)
+        })
+    }
+
     /// A theme colour: fixed when both appearances agree, otherwise following the window's appearance.
     init(_ pair: ThemeTokens.Pair) {
         if pair.light == pair.dark {

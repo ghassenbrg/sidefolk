@@ -235,7 +235,9 @@ struct DayCard: View {
 /// then the card's own words and buttons; the keyboard's ring while it has the keyboard.
 struct NeedsYouCard<Content: View>: View {
     var source: String
-    var folk: String
+    /// The helper who brings it; nil when the companion says it itself (what waited, its own notices).
+    var folk: String?
+    var settings: AppSettings?
     var at: Date
     var tint: Color
     var focused: Bool
@@ -243,7 +245,7 @@ struct NeedsYouCard<Content: View>: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
-            FolkAvatar(name: folk, size: Theme.Size.avatar)
+            if let folk { FolkAvatar(name: folk, size: Theme.Size.avatar) } else if let settings { CompanionAvatar(settings: settings) }
             VStack(alignment: .leading, spacing: Theme.Space.xs) {
                 Text(verbatim: "\(source) · \(TimeFormat.clock(at, calendar: .current))")
                     .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
@@ -256,6 +258,7 @@ struct NeedsYouCard<Content: View>: View {
         .background(Theme.surfaceRaised)
         .overlay(alignment: .leading) { Rectangle().fill(tint).frame(width: 3) }
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contrastEdge(radius: Theme.Radius.card)
         .overlay {
             RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
                 .strokeBorder(focused ? Theme.accent : .clear, lineWidth: 2)

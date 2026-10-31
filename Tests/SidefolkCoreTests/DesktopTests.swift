@@ -108,4 +108,15 @@ import Testing
         let own = request(.extension(id: "dev.sidefolk.weather"))
         #expect(own.slipTone == .calm && !own.takesReturn)
     }
+
+    /// A pin at rest shows its number and unit, never a value cut short (the tip has the rest).
+    @Test func aPinAtRestKeepsItsNumberAndUnit() {
+        #expect(PinValue.atRest("17.15 GB of 24 GB") == "17.15 GB")
+        #expect(PinValue.atRest("19%") == "19%")
+        #expect(PinValue.atRest("18.1° and cloudy") == "18.1°")
+        #expect(PinValue.atRest("-3 °C") == "-3 °C")
+        #expect(PinValue.atRest("1,204 km/h winds") == "1,204 km/h")
+        #expect(PinValue.atRest("Partly cloudy") == "Partly cloudy")
+        #expect(PinValue.atRest("2 things waiting") == "2", "a word isn't a unit")
+    }
 }

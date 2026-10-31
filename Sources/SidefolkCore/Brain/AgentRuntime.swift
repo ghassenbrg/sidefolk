@@ -415,7 +415,7 @@ public actor AgentRuntime {
             // glossary keeps its translation identical everywhere, and CatalogTests checks that).
             e.message = Wording.sentences([
                 Wording.droppingNothingChanged(from: e.message),
-                String(localized: "Some of it was already done; Activity shows what."),
+                String(localized: "Some of it was already done; History shows what."),
             ])
         }
         return e

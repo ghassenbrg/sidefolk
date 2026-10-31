@@ -1,6 +1,6 @@
 import Foundation
 
-/// "Copy Setup Instructions" in Settings › Agents: how to add Sidefolk to an MCP client it doesn't connect by
+/// "Copy setup instructions" in Settings › Agents: how to add Sidefolk to an MCP client it doesn't connect by
 /// itself (Cursor, VS Code, Zed, any other), with the exact command and a config snippet for each, ready to
 /// paste. Sidefolk changes nothing for these: the person pastes what they want where they want it. The text
 /// stays English, like the `sidefolk` command's own output: it goes into other tools' config files.

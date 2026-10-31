@@ -119,7 +119,7 @@ struct UpdateView: View {
         HStack(spacing: Theme.Space.s) {
             switch model.phase {
             case .available(let offer):
-                Button("Skip This Version") { actions?.skip(offer) }.buttonStyle(.sf(.plain))
+                Button("Skip this version") { actions?.skip(offer) }.buttonStyle(.sf(.plain))
                 Spacer()
                 Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary, size: .large)).keyboardShortcut(.cancelAction)
                 Button(model.plan == .replace ? "Update and Restart" : "Download") { actions?.install(offer) }
@@ -127,7 +127,7 @@ struct UpdateView: View {
             case .ready:
                 Spacer()
                 Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary, size: .large)).keyboardShortcut(.cancelAction)
-                Button("Restart Now") { actions?.restartNow() }.buttonStyle(.sf(.primary, size: .large)).keyboardShortcut(.defaultAction)
+                Button("Restart now") { actions?.restartNow() }.buttonStyle(.sf(.primary, size: .large)).keyboardShortcut(.defaultAction)
             case .checking, .downloading, .verifying:
                 Spacer()
                 Button("Cancel") { actions?.cancel() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
@@ -141,10 +141,10 @@ struct UpdateView: View {
                 Spacer()
                 Button("OK") { actions?.later() }.buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
             case .failed(let offer, _):
-                if let offer { Button("Release Page") { actions?.openPage(offer) }.buttonStyle(.sf(.plain)) }
+                if let offer { Button("Release page") { actions?.openPage(offer) }.buttonStyle(.sf(.plain)) }
                 Spacer()
                 Button("Close") { actions?.later() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
-                Button("Try Again") { if let offer { actions?.install(offer) } else { actions?.checkNow() } }
+                Button("Try again") { if let offer { actions?.install(offer) } else { actions?.checkNow() } }
                     .buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
             }
         }

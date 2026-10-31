@@ -41,7 +41,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     func show(tab: SettingsTab? = nil, reveal key: SettingKey? = nil) {
         let window = self.window ?? makeWindow()
         self.window = window
-        if let tab { model.navigation.tab = tab }
+        // Asked for a tab (a "Settings › Brain" link, Get Add-ons): it shows, not a search left from before.
+        if let tab {
+            model.navigation.query = ""
+            model.navigation.tab = tab
+        }
         model.start()
         Task { await model.refresh() }
         WindowActivation.show(window)

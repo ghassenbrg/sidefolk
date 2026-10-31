@@ -182,7 +182,7 @@ private struct HistoryRow: View {
         case .action(let e): Describe.caller(e.caller, companion: companion)
         case .conversation: String(localized: "You and \(companion)", comment: "History: a conversation between the person and the companion")
         // Another app's notice names the app, as its card did ("Claude Code told you: …").
-        case .alert(let a) where a.source.hasPrefix("external:"): AgentFacingTools.displayName(String(a.source.dropFirst("external:".count)))
+        case .alert(let a) where a.source.hasPrefix("external:"): Describe.caller(a.source, companion: companion)
         case .alert(let a): folkName(alertFolk(a))
         case .session(let s, _): Describe.agentName(s.agent)
         }
@@ -417,7 +417,7 @@ private struct InlineConversation: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.surfaceSunken.opacity(0.6))
         .alert("Delete this conversation?", isPresented: $deleting, presenting: model.selected) { conversation in
-            Button("Delete Conversation", role: .destructive) { Task { await model.delete(conversation) } }
+            Button("Delete conversation", role: .destructive) { Task { await model.delete(conversation) } }
             Button("Cancel", role: .cancel) {}
         } message: { conversation in
             Text("“\(conversation.title.clipped(60))” and its answers are deleted from this Mac. History keeps its record of what was done.")

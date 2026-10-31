@@ -10,7 +10,7 @@ struct AgentAccessGroup: View {
 
     var body: some View {
         SettingsGroup(title: Text(verbatim: SettingKey.agentAccess.title),
-                      footer: Text("For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in Activity, and you can undo it there. They never reach your files, commands, the web or Settings."),
+                      footer: Text("For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings."),
                       anchor: .agentAccess) {
             row("Save notes, reminders and watches",
                 detail: "Add to your notebook, remind you, and watch pages or this Mac for you. Their notes are tagged with their name.",
