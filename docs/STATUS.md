@@ -92,6 +92,23 @@
   approval cards are phase 2's `ApprovalCard` until the permission slip lands; Focus in the sidebar's pill waits for phase
   4's Attention; the Week view's "read only" note and "+1" overlaps; a watch's detail page (A9) needs a check log that
   isn't kept. The Trash shows days left (amber in the last three).
+- **The games look like games (D79 amended, branch `team/games-look` in both repositories, not merged):** after the
+  founder's two direction boards, every game in the Play panel has its own colour, illustrated scene and icon (a
+  manifest `look`, with a translated `tagline`), "You vs <companion>" with both faces (the Mac account's picture when it
+  has one), the person's own companion standing whole in the scene saying the prompt, chunky toy buttons and tiles, Copy Me's
+  pads picturing their moves (a pad's `art`), memory faces and trivia topics drawn as the things, the Boop button,
+  Take 1/2/3, and an end card with trophy, rays and confetti that holds the level picker. The panel stays under 720 pt. The panel's home is a menu of game cards ("Play against
+  Mochi", "Puzzles"), with Resume and Wins/Streak/Played from Activity (`GameStats`): Play menu › All Games… or a game's
+  back button. Restrained on review: soft scenes, still companion art with a one-shot hop, nothing looping (idle CPU
+  about 4–4.5 % against 3.7 % with the panel closed), cups that pass in front of each other. Art: about 0.8 MB in
+  Play/Art (Codex image generation, one style). Playtime (still 1.0.0) names the looks
+  and taglines in all ten languages. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on the add-ons branch (1585 core
+  and 38 character tests), add-ons `swift test` (100), `build.py --unsigned` + `check.sh` against this app (all ok),
+  `extension-strings.py check` (complete); UI snapshots of every game's start, turn, build-up, verdict and end, light and
+  dark, in English, Arabic and Japanese, plus the menu, read as contact sheets against the direction; a debug app
+  (build 614, SIDEFOLK_HOME build/qg-1) with Playtime installed from the branch: the menu, the cups' shuffle, Copy Me's
+  playback, a shuffle after the restraint pass and an end card filmed frame by frame. *Next:* the founder looks; a new game plugs in with a `GameLook` case, a
+  `GameStyle.of` row and two pictures (D79 amended). A Sidefolk before this refuses the new Playtime (unknown keys).
 
 - **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
   in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen

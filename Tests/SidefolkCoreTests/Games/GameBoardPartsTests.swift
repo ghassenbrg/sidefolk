@@ -11,8 +11,8 @@ struct GameBoardPartsTests {
         let swaps = (0..<60).map { _ in "[0, 2]" }.joined(separator: ",")
         let b = try Self.board("""
             {"parts": [
-              {"type": "pads", "items": [{"shape": "circle", "color": "blue", "label": "Wave", "move": "accent:wave"},
-                                         {"shape": "star", "color": "yellow", "label": "Spin", "move": "fly"},
+              {"type": "pads", "items": [{"shape": "circle", "color": "blue", "label": "Wave", "move": "accent:wave", "art": "wave_both"},
+                                         {"shape": "star", "color": "yellow", "label": "Spin", "move": "fly", "art": "moonwalk"},
                                          {"shape": "hexagon", "color": "blue", "label": "Odd"}], "play": [0, 1, 0], "step_ms": 50},
               {"type": "cups", "count": 4, "hide": 1, "swaps": [\(swaps), [1, 1], [0, 9]], "swap_ms": 300},
               {"type": "reflex", "after_ms": 2500, "window_ms": 99999, "wait": "Steady…", "go": "Boop!", "early": "Too soon!"},
@@ -27,6 +27,7 @@ struct GameBoardPartsTests {
             """)
         let pads = try #require(b.pads)
         #expect(pads.pads.count == 2 && pads.pads[0].move == .accentWave && pads.pads[1].move == nil, "an unknown shape or move is dropped")
+        #expect(pads.pads[0].art == .waveBoth && pads.pads[1].art == nil, "a pad's picture is one Sidefolk knows, else its shape is drawn")
         #expect(pads.play == [0, 1, 0] && pads.stepSeconds == 0.25, "at least a quarter second a step")
         let cups = try #require(b.cups)
         #expect(cups.swaps.count == GameBoard.Cups.maxSwaps && cups.hide == 1 && !cups.revealed, "swaps capped, a bad swap dropped")

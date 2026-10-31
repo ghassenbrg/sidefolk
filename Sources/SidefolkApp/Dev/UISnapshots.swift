@@ -466,6 +466,10 @@ enum UISnapshots {
             for (name, model, at) in await SamplePlayBoards.models(portrait: portrait) where wantedName("game-\(name)") {
                 try await page("game-\(name)", PlayView(model: model).environment(\.revealProgress, at), width: PlayView.width)
             }
+            // The panel's menu of games, its home (D79 amended).
+            if wantedName("game-menu") {
+                try await page("game-menu", PlayMenuView(menu: SamplePlayBoards.menu(from: gameBoards, portrait: portrait)), width: PlayView.width)
+            }
             // Playtime's real boards, every game and moment, when a folder of them is given (`--game-boards`).
             if let boards = gameBoards {
                 for (name, model) in await SamplePlayBoards.real(from: boards, portrait: portrait) where wantedName("play-\(name)") {

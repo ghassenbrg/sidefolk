@@ -11,12 +11,27 @@ extension GameBoard {
     public struct Pads: Sendable, Hashable {
         public enum Shape: String, Sendable, Hashable, CaseIterable { case circle, triangle, star, square, diamond }
         public enum Hue: String, Sendable, Hashable, CaseIterable { case blue, green, yellow, red, purple }
+        /// Sidefolk's picture of what the pad means, drawn on it instead of its shape (D79 amended): a waving hand, a
+        /// hopping bunny, arrows spinning, a little bow, two hands waving. A value Sidefolk doesn't know keeps the shape.
+        public enum Art: String, Sendable, Hashable, CaseIterable {
+            case wave, hop, spin, bow
+            case waveBoth = "wave_both"
+        }
         public struct Pad: Sendable, Hashable {
             public var shape: Shape
             public var hue: Hue
             public var label: String
             /// The companion's move as the pad lights (`accent:wave`…).
             public var move: GameCue.Move?
+            public var art: Art?
+
+            public init(shape: Shape, hue: Hue, label: String, move: GameCue.Move? = nil, art: Art? = nil) {
+                self.shape = shape
+                self.hue = hue
+                self.label = label
+                self.move = move
+                self.art = art
+            }
         }
 
         public var pads: [Pad]
@@ -228,7 +243,8 @@ extension GameBoard {
         let pads = (j["items"]?.arrayValue ?? []).prefix(5).compactMap { p -> Pads.Pad? in
             guard let shape = p["shape"]?.stringValue.flatMap(Pads.Shape.init), let hue = p["color"]?.stringValue.flatMap(Pads.Hue.init),
                   let label = line(p["label"], 24) else { return nil }
-            return Pads.Pad(shape: shape, hue: hue, label: label, move: p["move"]?.stringValue.flatMap(GameCue.Move.init(rawValue:)))
+            return Pads.Pad(shape: shape, hue: hue, label: label, move: p["move"]?.stringValue.flatMap(GameCue.Move.init(rawValue:)),
+                              art: p["art"]?.stringValue.flatMap(Pads.Art.init(rawValue:)))
         }
         guard pads.count >= 2 else { return nil }
         let play = (j["play"]?.arrayValue ?? []).prefix(Pads.maxSteps).compactMap(\.intValue)

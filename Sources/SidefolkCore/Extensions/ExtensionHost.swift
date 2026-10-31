@@ -721,7 +721,8 @@ public actor ExtensionHost {
                 guard let g = m.games[game] else { return nil }
                 return GameInfo(extensionId: id, extensionName: name, game: game,
                                 title: words(rt)?.games[game] ?? (firstParty ? BuiltInExtensionWords.game(id, game) : nil) ?? g.title, symbol: g.symbol,
-                                levels: g.levels, ai: g.ai ?? true, say: g.say, iconPath: rt.iconPath)
+                                levels: g.levels, ai: g.ai ?? true, say: g.say, iconPath: rt.iconPath,
+                                tagline: words(rt)?.gameTaglines[game] ?? g.tagline, look: g.look.flatMap(GameLook.init(rawValue:)))
             }
         }
     }

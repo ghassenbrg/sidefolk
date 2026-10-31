@@ -74,15 +74,19 @@ public struct Pad {
     public var color: String
     public var label: String
     public var move: String?
+    /// Sidefolk's picture of the move, drawn instead of the shape: `wave`, `hop`, `spin`, `bow`, `wave_both`. A Sidefolk
+    /// that doesn't know it draws the shape.
+    public var art: String?
 
-    public init(_ label: String, shape: String, color: String, move: String? = nil) {
+    public init(_ label: String, shape: String, color: String, move: String? = nil, art: String? = nil) {
         self.label = label
         self.shape = shape
         self.color = color
         self.move = move
+        self.art = art
     }
 
-    var json: [String: Any] { drop(["shape": shape, "color": color, "label": label, "move": move]) }
+    var json: [String: Any] { drop(["shape": shape, "color": color, "label": label, "move": move, "art": art]) }
 }
 
 /// One letter tile: its text, a mark (`none`, `right`, `elsewhere`, `absent`, `hidden`) and the syllable it belongs to.

@@ -8,23 +8,28 @@ import SwiftUI
 struct LettersView: View {
     var letters: GameBoard.Letters
     var model: PlayModel
+    /// The largest a tile may be: smaller beside a tall keyboard (kana, hangul), so the board fits the panel.
+    var largest: CGFloat = 37
 
     var body: some View {
-        let side = Self.side(letters)
+        let side = min(largest, Self.side(letters))
         VStack(spacing: 6) {
             ForEach(0..<(letters.style == .slots ? 1 : letters.tries), id: \.self) { r in
                 row(r, side: side)
             }
         }
+        .padding(6)
         .frame(maxWidth: .infinity)
+        // A card behind the tiles, so they read on any scene.
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.88)))
         .accessibilityElement(children: .contain)
     }
 
-    /// Tiles as large as the row allows: up to 46 pt, smaller for long words.
+    /// Tiles as large as the row allows: up to 37 pt, smaller for long words.
     static func side(_ l: GameBoard.Letters) -> CGFloat {
         let widest = max(l.length, l.rows.map(\.count).max() ?? 0)
-        let room = PlayView.width - 32 - CGFloat(max(0, widest - 1)) * 5
-        return min(l.style == .slots ? 34 : 46, room / CGFloat(max(widest, 1)))
+        let room = PlayView.inner - 16 - CGFloat(max(0, widest - 1)) * 5
+        return min(l.style == .slots ? 34 : 37, room / CGFloat(max(widest, 1)))
     }
 
     @ViewBuilder private func row(_ r: Int, side: CGFloat) -> some View {
@@ -144,6 +149,8 @@ struct KeyboardView: View {
     var keys: GameBoard.Keys
     var model: PlayModel
     @State private var page = 0
+    /// A keyboard of many rows (kana, hangul) has slimmer keys, so the board fits the panel.
+    private var keyHeight: CGFloat { (keys.pages.map(\.rows.count).max() ?? 0) > 3 ? 26 : 30 }
 
     var body: some View {
         let shown = keys.pages[min(page, keys.pages.count - 1)]
@@ -185,7 +192,7 @@ struct KeyboardView: View {
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundStyle(ink)
                 .strikethrough(key.mark == .miss || key.mark == .absent, color: ink.opacity(0.7))
-                .frame(maxWidth: 30, minHeight: 32)
+                .frame(maxWidth: 30, minHeight: keyHeight)
                 .frame(maxWidth: .infinity)
                 .background(KeyFace(fill: fill, plain: key.mark == .none))
         }
@@ -198,7 +205,7 @@ struct KeyboardView: View {
     private func special(_ name: String, symbol: String, wide: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                .frame(minWidth: 40, minHeight: 32)
+                .frame(minWidth: 40, minHeight: keyHeight)
                 .background(KeyFace(fill: Theme.surfaceRaised, plain: true))
         }
         .buttonStyle(GamePressStyle())
@@ -238,10 +245,13 @@ struct GameEntryView: View {
                     .onSubmit(submit)
                     .onChange(of: text) { _, new in if new.count > entry.max { text = String(new.prefix(entry.max)) } }
                 Button(entry.button ?? String(localized: "OK", comment: "Sends what was typed in a game")) { submit() }
-                    .buttonStyle(.sf(.primary))
+                    .buttonStyle(ChunkyButtonStyle(kind: .primary))
+                    .fixedSize()
                     .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.94)))
         .disabled(entry.locked)
     }
 

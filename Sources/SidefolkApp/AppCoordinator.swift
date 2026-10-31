@@ -868,8 +868,11 @@ extension AppCoordinator: CompanionDelegate {
                     self?.player.play(act)
                 })
             }
-            // Games in the Play panel (D75): the companion's own match, then the extensions'.
+            // Games in the Play panel (D75): its menu, the companion's own match, then the extensions'.
             play.addItem(.separator())
+            play.addItem(ClosureTarget.item(String(localized: "All Games…", comment: "Play menu: opens the Play panel's menu of games")) { [weak self] in
+                self?.openPlayMenu(focus: true)
+            })
             for info in [GameInfo.handsMatch] + runtime.extensions.gameShelf.all {
                 play.addItem(ClosureTarget.item(info.title) { [weak self] in self?.openGameFromMenu(info) })
             }

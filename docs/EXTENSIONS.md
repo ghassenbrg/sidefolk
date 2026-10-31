@@ -681,7 +681,7 @@ Activity row when the game ends.
 ```json
 "games": {
   "trivia": { "title": "Trivia", "symbol": "questionmark.bubble.fill", "levels": ["easy", "fair", "hard"],
-              "say": ["let's play trivia", "quiz me"], "ai": true }
+              "say": ["let's play trivia", "quiz me"], "ai": true, "look": "quiz", "tagline": "Questions on every topic" }
 }
 ```
 
@@ -689,7 +689,10 @@ Activity row when the game ends.
   in the companion's Play menu and in `games.open`, the tool Sidefolk's AI uses to offer a round (`"ai": false` keeps
   it from the AI). Up to 24 sentences, so a game can be opened in each of Sidefolk's ten languages ("let's play
   tic-tac-toe", "jouons au morpion", "来玩井字棋"); the game's title is translated in `strings/` (`games.<name>.title`).
-  `levels`: up to five names, easiest first.
+  `levels`: up to five names, easiest first. `look` dresses the game in one of Sidefolk's looks (D79 amended: its
+  colour, illustrated scene and menu icon; `cups`, `dance`, `arcade`, `sticks`, `quiz`, `grid`, `numbers`, `animals`,
+  `balloons`, `cards`, `hands`, `words`; a game without one gets the plain look); `tagline` is one line (60 characters)
+  under its title on the Play panel's menu, translated as `games.<name>.tagline`. A game never sends a picture.
 - **The channel:** `sidefolk/game.start {game, level, language, options}` answers `{session, board}`;
   `sidefolk/game.move {game, session, move}` answers `{board}`; `sidefolk/game.end {game, session, reason}` (`closed`,
   `timeout`, `finished`) needs no answer. `options` holds `tone` (gentle, cheeky, competitive), `sneaky` and
@@ -709,7 +712,8 @@ Activity row when the game ends.
   A tile may carry its own `key` (a letter, a digit or `?`); a 3 × 3 `board` with `"keys": "numpad"` takes the digits
   as a number pad does.
 - **Parts for the later games** (Sidefolk draws, times and takes the input; the Kit's `.play(...)`, GameParts.swift):
-  `pads` (2–5 `items` of `shape`, `color`, `label`, the companion's `move`; `play` a sequence of up to 64 that Sidefolk
+  `pads` (2–5 `items` of `shape`, `color`, `label`, the companion's `move`, `art` Sidefolk's picture of the move: `wave`,
+  `hop`, `spin`, `bow`, `wave_both`, drawn instead of the shape; `play` a sequence of up to 64 that Sidefolk
   shows first at `step_ms` 250–2000, a pad lit with its note and the companion's move, then `{pad: i}`), `cups` (2–5:
   the gem under `hide`, then `swaps` of positions, up to 40, at `swap_ms`; a pick is `{cell: [0, i]}`; `gem` (or `null`
   for none) lifts them), `reflex` (`wait`, `go`, `early` words, `after_ms` 300–10000, `window_ms`; Sidefolk shows the

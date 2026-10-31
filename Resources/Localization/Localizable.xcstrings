@@ -11376,6 +11376,65 @@
         }
       }
     },
+    "%@ wins!" : {
+      "comment" : "A game's end card: the companion (named) won",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ يفوز!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gewinnt!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Gana %@!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gagne !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vince %@!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の勝ち！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 승리!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ venceu!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 赢了！"
+          }
+        }
+      }
+    },
     "%@ worked in %@" : {
       "comment" : "History: another agent's session, “Codex worked in pockito”",
       "localizations" : {
@@ -29150,16 +29209,10 @@
     },
     "Add folder…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ajouter un dossier…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir carpeta…"
+            "value" : "إضافة مجلد…"
           }
         },
         "de" : {
@@ -29168,16 +29221,22 @@
             "value" : "Ordner hinzufügen …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir carpeta…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un dossier…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aggiungi cartella…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionar Pasta…"
           }
         },
         "ja" : {
@@ -29192,16 +29251,16 @@
             "value" : "폴더 추가…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar Pasta…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加文件夹…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إضافة مجلد…"
           }
         }
       }
@@ -29968,16 +30027,10 @@
     "Add your own" : {
       "comment" : "The tile after the companions in Settings: add one you made",
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ajouter le vôtre"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir el tuyo"
+            "value" : "إضافة رفيقك"
           }
         },
         "de" : {
@@ -29986,16 +30039,22 @@
             "value" : "Eigenen hinzufügen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir el tuyo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter le vôtre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aggiungi il tuo"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionar o Seu"
           }
         },
         "ja" : {
@@ -30010,16 +30069,16 @@
             "value" : "직접 추가"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar o Seu"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加你自己的"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إضافة رفيقك"
           }
         }
       }
@@ -33003,6 +33062,65 @@
         }
       }
     },
+    "All Games…" : {
+      "comment" : "Play menu: opens the Play panel's menu of games",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل الألعاب…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Spiele…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los juegos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les jeux…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutti i giochi…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのゲーム…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 게임…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os jogos…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部游戏…"
+          }
+        }
+      }
+    },
     "All changes" : {
       "comment" : "The update window: opens the release page",
       "localizations" : {
@@ -33351,6 +33469,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全天"
+          }
+        }
+      }
+    },
+    "All games" : {
+      "comment" : "Play panel: back to the menu of games",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل الألعاب"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Spiele"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los juegos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les jeux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutti i giochi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのゲーム"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 게임"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os jogos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部游戏"
           }
         }
       }
@@ -33765,16 +33942,10 @@
     },
     "Allow site" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Autoriser le site"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitir sitio"
+            "value" : "السماح بالموقع"
           }
         },
         "de" : {
@@ -33783,16 +33954,22 @@
             "value" : "Website erlauben"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir sitio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser le site"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Consenti sito"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitir Site"
           }
         },
         "ja" : {
@@ -33807,16 +33984,16 @@
             "value" : "사이트 허용"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir Site"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许网站"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "السماح بالموقع"
           }
         }
       }
@@ -37556,6 +37733,65 @@
         }
       }
     },
+    "Arrows to choose · Return to play · Esc to close" : {
+      "comment" : "Keys on the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأسهم للاختيار · Return للعب · Esc للإغلاق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pfeile zum Wählen · Eingabe zum Spielen · Esc zum Schließen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flechas para elegir · Retorno para jugar · Esc para cerrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flèches pour choisir · Retour pour jouer · Échap pour fermer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frecce per scegliere · Invio per giocare · Esc per chiudere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矢印で選ぶ · Returnで遊ぶ · Escで閉じる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화살표로 선택 · Return으로 시작 · Esc로 닫기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setas para escolher · Return para jogar · Esc para fechar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "方向键选择 · 回车开始 · Esc 关闭"
+          }
+        }
+      }
+    },
     "As the theme" : {
       "comment" : "Settings › General › Icons in Home: follow the theme",
       "localizations" : {
@@ -40192,16 +40428,10 @@
     "Attention settings…" : {
       "comment" : "The Pocket: opens Settings › Attention",
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Réglages Attention…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajustes de Atención…"
+            "value" : "إعدادات الانتباه…"
           }
         },
         "de" : {
@@ -40210,16 +40440,22 @@
             "value" : "Aufmerksamkeit-Einstellungen …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de Atención…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Attention…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impostazioni Attenzione…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajustes de Atenção…"
           }
         },
         "ja" : {
@@ -40234,16 +40470,16 @@
             "value" : "집중과 알림 설정…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de Atenção…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "专注与通知设置…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إعدادات الانتباه…"
           }
         }
       }
@@ -40535,6 +40771,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
+          }
+        }
+      }
+    },
+    "Back to games" : {
+      "comment" : "A game's end card: back to the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العودة إلى الألعاب"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zu den Spielen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a los juegos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour aux jeux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Torna ai giochi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲーム一覧へ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임 목록으로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltar aos jogos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回游戏"
           }
         }
       }
@@ -41470,6 +41765,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已安装的最佳语音（%@）"
+          }
+        }
+      }
+    },
+    "Best of three, no peeking" : {
+      "comment" : "Rock, Paper, Scissors on the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأفضل من ثلاث، بلا غش"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best of three, ohne Schummeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al mejor de tres, sin mirar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au meilleur des trois, sans tricher"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al meglio di tre, senza sbirciare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3本勝負、のぞき見なし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3판 2선승, 훔쳐보기 없기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melhor de três, sem espiar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "三局两胜，不许偷看"
           }
         }
       }
@@ -58009,16 +58363,10 @@
     },
     "Copy setup instructions" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copier les instructions de configuration"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copiar instrucciones de configuración"
+            "value" : "نسخ تعليمات الإعداد"
           }
         },
         "de" : {
@@ -58027,16 +58375,22 @@
             "value" : "Einrichtungsanleitung kopieren"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar instrucciones de configuración"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier les instructions de configuration"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copia le istruzioni di configurazione"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copiar Instruções de Configuração"
           }
         },
         "ja" : {
@@ -58051,16 +58405,16 @@
             "value" : "설정 방법 복사"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar Instruções de Configuração"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝设置说明"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "نسخ تعليمات الإعداد"
           }
         }
       }
@@ -61000,16 +61354,10 @@
     },
     "Delete all data…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer toutes les données…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eliminar todos los datos…"
+            "value" : "حذف كل البيانات…"
           }
         },
         "de" : {
@@ -61018,16 +61366,22 @@
             "value" : "Alle Daten löschen …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar todos los datos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer toutes les données…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elimina tutti i dati…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apagar Todos os Dados…"
           }
         },
         "ja" : {
@@ -61042,32 +61396,26 @@
             "value" : "모든 데이터 삭제…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Todos os Dados…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除所有数据…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حذف كل البيانات…"
           }
         }
       }
     },
     "Delete all history" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer tout l’historique"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eliminar todo el historial"
+            "value" : "حذف السجل بالكامل"
           }
         },
         "de" : {
@@ -61076,16 +61424,22 @@
             "value" : "Gesamten Verlauf löschen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar todo el historial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer tout l’historique"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elimina tutta la cronologia"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apagar Todo o Histórico"
           }
         },
         "ja" : {
@@ -61100,32 +61454,26 @@
             "value" : "모든 기록 삭제"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Todo o Histórico"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除所有历史记录"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حذف السجل بالكامل"
           }
         }
       }
     },
     "Delete all history…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer tout l’historique…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eliminar todo el historial…"
+            "value" : "حذف السجل بالكامل…"
           }
         },
         "de" : {
@@ -61134,16 +61482,22 @@
             "value" : "Gesamten Verlauf löschen …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar todo el historial…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer tout l’historique…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elimina tutta la cronologia…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apagar Todo o Histórico…"
           }
         },
         "ja" : {
@@ -61158,16 +61512,16 @@
             "value" : "모든 기록 삭제…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Todo o Histórico…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除所有历史记录…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حذف السجل بالكامل…"
           }
         }
       }
@@ -61232,16 +61586,10 @@
     },
     "Delete conversation" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer la conversation"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eliminar conversación"
+            "value" : "حذف المحادثة"
           }
         },
         "de" : {
@@ -61250,16 +61598,22 @@
             "value" : "Gespräch löschen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar conversación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la conversation"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elimina conversazione"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apagar Conversa"
           }
         },
         "ja" : {
@@ -61274,16 +61628,16 @@
             "value" : "대화 삭제"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Conversa"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除对话"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حذف المحادثة"
           }
         }
       }
@@ -67093,16 +67447,10 @@
     },
     "Every conversation with the AI is deleted from this Mac. Your notes, reminders and History stay. This can't be undone." : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toutes les conversations avec l’IA sont supprimées de ce Mac. Vos notes, vos rappels et Historique sont conservés. Cette action est irréversible."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las conversaciones con la IA se eliminan de este Mac. Tus notas, recordatorios y Historial se conservan. Esta acción no se puede deshacer."
+            "value" : "تُحذف كل المحادثات مع الذكاء الاصطناعي من هذا الـ Mac. تبقى ملاحظاتك وتذكيراتك والسجل. لا يمكن التراجع عن ذلك."
           }
         },
         "de" : {
@@ -67111,16 +67459,22 @@
             "value" : "Jedes Gespräch mit der KI wird von diesem Mac gelöscht. Deine Notizen, Erinnerungen und die Verlauf bleiben. Das lässt sich nicht widerrufen."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las conversaciones con la IA se eliminan de este Mac. Tus notas, recordatorios y Historial se conservan. Esta acción no se puede deshacer."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les conversations avec l’IA sont supprimées de ce Mac. Vos notes, vos rappels et Historique sont conservés. Cette action est irréversible."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tutte le conversazioni con l'IA vengono eliminate da questo Mac. Le tue note, i promemoria e il Cronologia restano. L'operazione non può essere annullata."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as conversas com a IA são apagadas deste Mac. Suas notas, lembretes e a Histórico continuam. Isso não pode ser desfeito."
           }
         },
         "ja" : {
@@ -67135,16 +67489,16 @@
             "value" : "AI와 나눈 모든 대화가 이 Mac에서 삭제돼요. 메모, 미리 알림, 기록은 그대로 남아요. 이 작업은 실행 취소할 수 없어요."
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as conversas com a IA são apagadas deste Mac. Suas notas, lembretes e a Histórico continuam. Isso não pode ser desfeito."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "与 AI 的所有对话都会从这台 Mac 上删除。你的笔记、提醒和历史记录会保留。此操作无法撤销。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تُحذف كل المحادثات مع الذكاء الاصطناعي من هذا الـ Mac. تبقى ملاحظاتك وتذكيراتك والسجل. لا يمكن التراجع عن ذلك."
           }
         }
       }
@@ -68734,16 +69088,10 @@
     },
     "Export data…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exporter les données…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exportar datos…"
+            "value" : "تصدير البيانات…"
           }
         },
         "de" : {
@@ -68752,16 +69100,22 @@
             "value" : "Daten exportieren …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar datos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter les données…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esporta dati…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exportar Dados…"
           }
         },
         "ja" : {
@@ -68776,32 +69130,26 @@
             "value" : "데이터 내보내기…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar Dados…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出数据…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تصدير البيانات…"
           }
         }
       }
     },
     "Export diagnostics…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exporter les diagnostics…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exportar diagnóstico…"
+            "value" : "تصدير التشخيص…"
           }
         },
         "de" : {
@@ -68810,16 +69158,22 @@
             "value" : "Diagnosedaten exportieren …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar diagnóstico…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter les diagnostics…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esporta diagnostica…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exportar Diagnóstico…"
           }
         },
         "ja" : {
@@ -68834,16 +69188,16 @@
             "value" : "진단 정보 내보내기…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar Diagnóstico…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出诊断信息…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تصدير التشخيص…"
           }
         }
       }
@@ -72440,16 +72794,10 @@
     },
     "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings." : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour Claude Code, Codex et les autres apps connectées à Sidefolk. Tout ce qu’ils font apparaît dans Historique, où vous pouvez l’annuler. Ils n’accèdent jamais à vos fichiers, commandes, au web ni aux Réglages."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para Claude Code, Codex y otras apps conectadas a Sidefolk. Todo lo que hacen aparece en Historial, donde puedes deshacerlo. Nunca acceden a tus archivos, comandos, la web ni Ajustes."
+            "value" : "لـ Claude Code وCodex والتطبيقات الأخرى المتصلة بـ Sidefolk. يظهر كل ما تفعله في السجل، ويمكنك التراجع عنه هناك. لا تصل أبدًا إلى ملفاتك أو أوامرك أو الويب أو الإعدادات."
           }
         },
         "de" : {
@@ -72458,16 +72806,22 @@
             "value" : "Für Claude Code, Codex und andere mit Sidefolk verbundene Apps. Alles, was sie tun, erscheint unter Verlauf, wo du es widerrufen kannst. Deine Dateien, Befehle, das Web und die Einstellungen erreichen sie nie."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para Claude Code, Codex y otras apps conectadas a Sidefolk. Todo lo que hacen aparece en Historial, donde puedes deshacerlo. Nunca acceden a tus archivos, comandos, la web ni Ajustes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour Claude Code, Codex et les autres apps connectées à Sidefolk. Tout ce qu’ils font apparaît dans Historique, où vous pouvez l’annuler. Ils n’accèdent jamais à vos fichiers, commandes, au web ni aux Réglages."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Per Claude Code, Codex e le altre app collegate a Sidefolk. Tutto ciò che fanno compare nel Cronologia, dove puoi annullarlo. Non raggiungono mai i tuoi file, i comandi, il web o le Impostazioni."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para o Claude Code, o Codex e outros apps conectados ao Sidefolk. Tudo o que eles fazem aparece em Histórico, onde você pode desfazer. Eles nunca acessam seus arquivos, comandos, a web ou os Ajustes."
           }
         },
         "ja" : {
@@ -72482,16 +72836,16 @@
             "value" : "Claude Code, Codex 등 Sidefolk에 연결된 앱에 적용됩니다. 하는 일은 모두 기록에 표시되며 거기서 되돌릴 수 있습니다. 파일, 명령, 웹, 설정에는 절대 접근하지 않습니다."
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para o Claude Code, o Codex e outros apps conectados ao Sidefolk. Tudo o que eles fazem aparece em Histórico, onde você pode desfazer. Eles nunca acessam seus arquivos, comandos, a web ou os Ajustes."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "适用于 Claude Code、Codex 以及其他连接到 Sidefolk 的应用。它们做的每件事都显示在“历史记录”中，你可以在那里撤销。它们永远无法访问你的文件、命令、网络或设置。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لـ Claude Code وCodex والتطبيقات الأخرى المتصلة بـ Sidefolk. يظهر كل ما تفعله في السجل، ويمكنك التراجع عنه هناك. لا تصل أبدًا إلى ملفاتك أو أوامرك أو الويب أو الإعدادات."
           }
         }
       }
@@ -72673,16 +73027,10 @@
     },
     "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History." : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour ce que vous demandez à Sidefolk de faire. Les autres agents et extensions gardent leurs propres règles, et tout apparaît dans Historique."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para lo que le pides hacer a Sidefolk. Los demás agentes y extensiones mantienen sus propias reglas, y todo aparece en Historial."
+            "value" : "يسري هذا على ما تطلب من Sidefolk فعله. للوكلاء والملحقات الأخرى قواعدها الخاصة، ويظهر كل شيء في «السجل»."
           }
         },
         "de" : {
@@ -72691,16 +73039,22 @@
             "value" : "Gilt für das, worum du Sidefolk bittest. Andere Agenten und Erweiterungen behalten ihre eigenen Regeln, und alles erscheint in „Verlauf“."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para lo que le pides hacer a Sidefolk. Los demás agentes y extensiones mantienen sus propias reglas, y todo aparece en Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour ce que vous demandez à Sidefolk de faire. Les autres agents et extensions gardent leurs propres règles, et tout apparaît dans Historique."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vale per ciò che chiedi a Sidefolk di fare. Gli altri agenti e le estensioni seguono le loro regole, e tutto compare nel Cronologia."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vale para o que você pede ao Sidefolk. Outros agentes e extensões seguem suas próprias regras, e tudo aparece na Histórico."
           }
         },
         "ja" : {
@@ -72715,16 +73069,16 @@
             "value" : "Sidefolk에게 시킨 일에 적용돼요. 다른 에이전트와 확장 프로그램은 각자의 규칙을 따르고, 모든 내용은 기록에 표시돼요."
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale para o que você pede ao Sidefolk. Outros agentes e extensões seguem suas próprias regras, e tudo aparece na Histórico."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "适用于你让 Sidefolk 做的事。其他智能体和扩展仍遵循各自的规则，所有操作都会显示在“历史记录”中。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يسري هذا على ما تطلب من Sidefolk فعله. للوكلاء والملحقات الأخرى قواعدها الخاصة، ويظهر كل شيء في «السجل»."
           }
         }
       }
@@ -75221,6 +75575,7 @@
       }
     },
     "Games" : {
+      "comment" : "The Play panel's menu when no extension brings games",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -75926,16 +76281,10 @@
     "Get more" : {
       "comment" : "The tile after the companions in Settings: browse the gallery",
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En obtenir d'autres"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conseguir más"
+            "value" : "المزيد"
           }
         },
         "de" : {
@@ -75944,16 +76293,22 @@
             "value" : "Mehr holen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conseguir más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En obtenir d'autres"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trovane altri"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Obter Mais"
           }
         },
         "ja" : {
@@ -75968,16 +76323,16 @@
             "value" : "더 받기"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obter Mais"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "获取更多"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المزيد"
           }
         }
       }
@@ -91456,16 +91811,10 @@
     },
     "Install from folder…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Installer depuis un dossier…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Instalar desde carpeta…"
+            "value" : "التثبيت من مجلد…"
           }
         },
         "de" : {
@@ -91474,16 +91823,22 @@
             "value" : "Aus Ordner installieren …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar desde carpeta…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer depuis un dossier…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installa da cartella…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Instalar de uma Pasta…"
           }
         },
         "ja" : {
@@ -91498,16 +91853,16 @@
             "value" : "폴더에서 설치…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar de uma Pasta…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "从文件夹安装…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "التثبيت من مجلد…"
           }
         }
       }
@@ -101790,16 +102145,10 @@
     },
     "Load from folder…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Charger depuis un dossier…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cargar desde carpeta…"
+            "value" : "التحميل من مجلد…"
           }
         },
         "de" : {
@@ -101808,16 +102157,22 @@
             "value" : "Aus Ordner laden …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargar desde carpeta…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger depuis un dossier…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Carica da cartella…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Carregar de uma Pasta…"
           }
         },
         "ja" : {
@@ -101832,16 +102187,16 @@
             "value" : "폴더에서 불러오기…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregar de uma Pasta…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "从文件夹载入…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "التحميل من مجلد…"
           }
         }
       }
@@ -129481,6 +129836,65 @@
         }
       }
     },
+    "Pick a game! Can you beat me?" : {
+      "comment" : "The companion on the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر لعبة! هل تستطيع هزيمتي؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Such dir ein Spiel aus! Schlägst du mich?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Elige un juego! ¿Me ganas?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis un jeu ! Tu peux me battre ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli un gioco! Riesci a battermi?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲームを選んで！ わたしに勝てるかな？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임을 골라요! 나를 이길 수 있을까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um jogo! Consegue me vencer?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选个游戏吧！你能赢我吗？"
+          }
+        }
+      }
+    },
     "Pick a model" : {
       "localizations" : {
         "ar" : {
@@ -130763,6 +131177,65 @@
         }
       }
     },
+    "Play against %@" : {
+      "comment" : "Play panel's menu: the games played against the companion",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العب ضد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gegen %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contra %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contre %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contro %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@と対戦"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와 대결"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contra %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %@ 对战"
+          }
+        }
+      }
+    },
     "Play on TV" : {
       "localizations" : {
         "ar" : {
@@ -130934,6 +131407,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "和伙伴一起玩"
+          }
+        }
+      }
+    },
+    "Played" : {
+      "comment" : "Play panel's menu: games played to the end",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لُعبت"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespielt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partidas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giocate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレイ数"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partidas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已玩"
           }
         }
       }
@@ -132188,6 +132720,65 @@
         }
       }
     },
+    "Puzzles" : {
+      "comment" : "Play panel's menu: the games played alone",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغاز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rätsel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rompecabezas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Casse-têtes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rompicapi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パズル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "퍼즐"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quebra-cabeças"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "谜题"
+          }
+        }
+      }
+    },
     "QR Codes" : {
       "comment" : "A built-in extension",
       "localizations" : {
@@ -132596,6 +133187,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快速回答电池、磁盘和内存的情况，并在电池或磁盘不足时提醒你。想要带实时图表的页面，请从图库添加“你的 Mac”。"
+          }
+        }
+      }
+    },
+    "Quick games against %@" : {
+      "comment" : "Under the title of the Play panel's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألعاب سريعة ضد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnelle Spiele gegen %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juegos rápidos contra %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des petits jeux contre %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giochi veloci contro %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@とさくっと遊ぼう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와 짧은 게임"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogos rápidos contra %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %@ 玩些小游戏"
           }
         }
       }
@@ -138859,16 +139509,10 @@
     },
     "Release page" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Page de la version"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Página de la versión"
+            "value" : "صفحة الإصدار"
           }
         },
         "de" : {
@@ -138877,16 +139521,22 @@
             "value" : "Release-Seite"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Página de la versión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page de la version"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pagina della versione"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Página do Lançamento"
           }
         },
         "ja" : {
@@ -138901,16 +139551,16 @@
             "value" : "릴리스 페이지"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Página do Lançamento"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "发布页面"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "صفحة الإصدار"
           }
         }
       }
@@ -144650,6 +145300,7 @@
       }
     },
     "Resume" : {
+      "comment" : "Play panel's menu: a game put away, opened where it was",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -145643,16 +146294,10 @@
     "Review update" : {
       "comment" : "Settings › Add-ons: opens an extension update's install sheet",
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Examiner la mise à jour"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revisar actualización"
+            "value" : "راجع التحديث"
           }
         },
         "de" : {
@@ -145661,16 +146306,22 @@
             "value" : "Update prüfen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar actualización"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examiner la mise à jour"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rivedi aggiornamento"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revisar atualização"
           }
         },
         "ja" : {
@@ -145685,16 +146336,16 @@
             "value" : "업데이트 검토"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar atualização"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看更新"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "راجع التحديث"
           }
         }
       }
@@ -153641,16 +154292,10 @@
     },
     "Set your location…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Définir votre position…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Establecer tu ubicación…"
+            "value" : "تحديد موقعك…"
           }
         },
         "de" : {
@@ -153659,16 +154304,22 @@
             "value" : "Standort festlegen …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer tu ubicación…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir votre position…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imposta la tua posizione…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Definir Sua Localização…"
           }
         },
         "ja" : {
@@ -153683,16 +154334,16 @@
             "value" : "내 위치 설정…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir Sua Localização…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置你的位置…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تحديد موقعك…"
           }
         }
       }
@@ -155393,16 +156044,10 @@
     },
     "Show files" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Afficher les fichiers"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar archivos"
+            "value" : "إظهار الملفات"
           }
         },
         "de" : {
@@ -155411,16 +156056,22 @@
             "value" : "Dateien zeigen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar archivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les fichiers"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostra file"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar Arquivos"
           }
         },
         "ja" : {
@@ -155435,16 +156086,16 @@
             "value" : "파일 보기"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar Arquivos"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示文件"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إظهار الملفات"
           }
         }
       }
@@ -155799,16 +156450,10 @@
     },
     "Show snapshots" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Afficher les snapshots"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar snapshots"
+            "value" : "إظهار النسخ التجريبية"
           }
         },
         "de" : {
@@ -155817,16 +156462,22 @@
             "value" : "Snapshots zeigen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar snapshots"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les snapshots"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostra snapshot"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar snapshots"
           }
         },
         "ja" : {
@@ -155841,16 +156492,16 @@
             "value" : "스냅샷 표시"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar snapshots"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示快照版"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إظهار النسخ التجريبية"
           }
         }
       }
@@ -157501,6 +158152,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通过你网络中的加密直连，把 Mac 的屏幕、某个窗口或屏幕的一部分连同声音显示在装有 Miraya 应用的 Android TV 上，或在电视上播放视频文件或链接。第一次需要在两块屏幕上核对六位数代码。无需账户，不经云端。"
+          }
+        }
+      }
+    },
+    "Shuffling…" : {
+      "comment" : "Which Cup?: the companion shuffles the cups",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخلط…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich mische…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mezclando…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je mélange…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mescolo…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シャッフル中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섞는 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embaralhando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "洗牌中…"
           }
         }
       }
@@ -162691,16 +163401,10 @@
     },
     "Skip this version" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ignorer cette version"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Omitir esta versión"
+            "value" : "تخطي هذا الإصدار"
           }
         },
         "de" : {
@@ -162709,16 +163413,22 @@
             "value" : "Diese Version überspringen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir esta versión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer cette version"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salta questa versione"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignorar Esta Versão"
           }
         },
         "ja" : {
@@ -162733,16 +163443,16 @@
             "value" : "이 버전 건너뛰기"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar Esta Versão"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳过此版本"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تخطي هذا الإصدار"
           }
         }
       }
@@ -164207,16 +164917,10 @@
     },
     "Some of it was already done; History shows what." : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une partie était déjà faite ; Historique indique laquelle."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una parte ya estaba hecha; Historial muestra cuál."
+            "value" : "أُنجز بعضه بالفعل؛ يعرض «السجل» ما أُنجز."
           }
         },
         "de" : {
@@ -164225,16 +164929,22 @@
             "value" : "Ein Teil war schon erledigt; „Verlauf“ zeigt, welcher."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una parte ya estaba hecha; Historial muestra cuál."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une partie était déjà faite ; Historique indique laquelle."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una parte era già stata fatta; il Cronologia mostra cosa."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uma parte já foi feita; a Histórico mostra o quê."
           }
         },
         "ja" : {
@@ -164249,16 +164959,16 @@
             "value" : "일부는 이미 처리했어요. 무엇을 했는지는 기록에서 볼 수 있어요."
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma parte já foi feita; a Histórico mostra o quê."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分操作已经完成；可以在“历史记录”中查看具体内容。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أُنجز بعضه بالفعل؛ يعرض «السجل» ما أُنجز."
           }
         }
       }
@@ -165843,16 +166553,10 @@
     },
     "Start a theme…" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Créer un thème…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crear un tema…"
+            "value" : "إنشاء سمة…"
           }
         },
         "de" : {
@@ -165861,16 +166565,22 @@
             "value" : "Theme erstellen …"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear un tema…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer un thème…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crea un tema…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Criar um Tema…"
           }
         },
         "ja" : {
@@ -165885,16 +166595,16 @@
             "value" : "테마 만들기…"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar um Tema…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "创建主题…"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إنشاء سمة…"
           }
         }
       }
@@ -166957,16 +167667,10 @@
     },
     "Stop following" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Arrêter le suivi"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dejar de seguir"
+            "value" : "إيقاف المتابعة"
           }
         },
         "de" : {
@@ -166975,16 +167679,22 @@
             "value" : "Nicht mehr verfolgen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar de seguir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le suivi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Smetti di seguire"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Parar de Acompanhar"
           }
         },
         "ja" : {
@@ -166999,16 +167709,16 @@
             "value" : "따라가기 중단"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de Acompanhar"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止跟随"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إيقاف المتابعة"
           }
         }
       }
@@ -167822,6 +168532,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "储存空间"
+          }
+        }
+      }
+    },
+    "Streak" : {
+      "comment" : "Play panel's menu: wins in a row now",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سلسلة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Racha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Série"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連勝"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연승"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sequência"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连胜"
           }
         }
       }
@@ -169225,7 +169994,7 @@
       }
     },
     "Take %lld" : {
-      "comment" : "Last Stick: a stick, read by VoiceOver (takes it and the ones after it)",
+      "comment" : "Last Stick: a button that takes that many sticks\nLast Stick: a stick, read by VoiceOver (takes it and the ones after it)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -195425,16 +196194,10 @@
     },
     "Update all" : {
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tout mettre à jour"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actualizar todo"
+            "value" : "تحديث الكل"
           }
         },
         "de" : {
@@ -195443,16 +196206,22 @@
             "value" : "Alle aktualisieren"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout mettre à jour"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aggiorna tutto"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Atualizar Tudo"
           }
         },
         "ja" : {
@@ -195467,16 +196236,16 @@
             "value" : "모두 업데이트"
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar Tudo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部更新"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تحديث الكل"
           }
         }
       }
@@ -197754,6 +198523,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用互联网"
+          }
+        }
+      }
+    },
+    "VS" : {
+      "comment" : "Between the person and the companion on a game's score bar",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ضد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VS"
           }
         }
       }
@@ -204436,16 +205264,10 @@
     "Whatever you pick, Guard checks every step outside the AI, and every step shows in History." : {
       "comment" : "Settings › Trust: under the mode's headline",
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quel que soit votre choix, Guard vérifie chaque étape hors de l'IA, et chaque étape apparaît dans Historique."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elijas lo que elijas, Guard revisa cada paso fuera de la IA y cada paso aparece en Historial."
+            "value" : "أيًّا كان اختيارك، يتحقق Guard من كل خطوة خارج الذكاء الاصطناعي، وتظهر كل خطوة في السجل."
           }
         },
         "de" : {
@@ -204454,16 +205276,22 @@
             "value" : "Was du auch wählst: Guard prüft jeden Schritt außerhalb der KI, und jeder Schritt erscheint im Verlauf."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elijas lo que elijas, Guard revisa cada paso fuera de la IA y cada paso aparece en Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quel que soit votre choix, Guard vérifie chaque étape hors de l'IA, et chaque étape apparaît dans Historique."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Qualunque cosa tu scelga, Guard controlla ogni passaggio fuori dall'IA, e ogni passaggio compare nel Cronologia."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seja o que você escolher, o Guard confere cada passo fora da IA, e cada passo aparece em Histórico."
           }
         },
         "ja" : {
@@ -204478,16 +205306,16 @@
             "value" : "무엇을 고르든 Guard가 AI 바깥의 모든 단계를 확인하고, 모든 단계가 기록에 남아요."
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seja o que você escolher, o Guard confere cada passo fora da IA, e cada passo aparece em Histórico."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "无论选哪个，Guard 都会检查 AI 之外的每一步，每一步都会显示在“历史记录”中。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أيًّا كان اختيارك، يتحقق Guard من كل خطوة خارج الذكاء الاصطناعي، وتظهر كل خطوة في السجل."
           }
         }
       }
@@ -206813,6 +207641,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可共享的窗口"
+          }
+        }
+      }
+    },
+    "Wins" : {
+      "comment" : "Play panel's menu: games the person won",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتصارات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siege"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victorias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victoires"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vittorie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "勝ち"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "승리"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitórias"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "胜利"
           }
         }
       }
@@ -209934,16 +210821,10 @@
     "You still see each one in History, word for word." : {
       "comment" : "The Full access sheet",
       "localizations" : {
-        "fr" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous les voyez toujours dans Historique, mot pour mot."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sigues viendo cada uno en Historial, palabra por palabra."
+            "value" : "تظل ترى كلًّا منها في السجل، حرفيًّا."
           }
         },
         "de" : {
@@ -209952,16 +210833,22 @@
             "value" : "Du siehst jeden weiterhin im Verlauf, Wort für Wort."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigues viendo cada uno en Historial, palabra por palabra."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous les voyez toujours dans Historique, mot pour mot."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Li vedi comunque nel Cronologia, parola per parola."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Você continua vendo cada um em Histórico, palavra por palavra."
           }
         },
         "ja" : {
@@ -209976,16 +210863,16 @@
             "value" : "각 명령은 기록에 그대로 남아요."
           }
         },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você continua vendo cada um em Histórico, palavra por palavra."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "每一条仍会逐字显示在“历史记录”中。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تظل ترى كلًّا منها في السجل، حرفيًّا."
           }
         }
       }
@@ -210045,6 +210932,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你赢了这局！"
+          }
+        }
+      }
+    },
+    "You win!" : {
+      "comment" : "A game's end card: the person won",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فزت!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewonnen!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Ganaste!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gagné !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai vinto!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたの勝ち！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "당신의 승리!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você venceu!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你赢了！"
           }
         }
       }

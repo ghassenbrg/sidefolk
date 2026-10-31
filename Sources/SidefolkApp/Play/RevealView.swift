@@ -10,8 +10,10 @@ struct RevealView: View {
     var start: Date
     /// A fixed moment of it, for the UI snapshots.
     @Environment(\.revealProgress) private var fixed
+    /// It has landed: its clock stops, so a board left open draws nothing.
+    @State private var landed = false
 
-    private var still: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion || fixed != nil }
+    private var still: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion || fixed != nil || landed }
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1 / 60, paused: still)) { t in
@@ -30,6 +32,12 @@ struct RevealView: View {
             }
         }
         .frame(height: 118)
+        .task(id: start) {
+            landed = false
+            let left = GameSuspense.revealSeconds - Date().timeIntervalSince(start)
+            if left > 0 { try? await Task.sleep(for: .seconds(left + 0.05)) }
+            landed = true
+        }
         // VoiceOver hears the result with the verdict, not while it plays.
         .accessibilityHidden(true)
     }

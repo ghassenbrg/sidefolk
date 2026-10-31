@@ -1,4 +1,5 @@
 import AppKit
+import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
@@ -32,6 +33,12 @@ final class PlayModel {
 
     let companionName: String
     let portrait: NSImage?
+    /// The companion standing in the game's scene: its picture in a state (a 2D companion's own poses; a 3D one's still).
+    var figure: ((CharacterState) -> NSImage?)?
+    /// The person's picture on the score bar: the Mac account's, or nil for a friendly stand-in.
+    var you: NSImage?
+    /// Back to the panel's menu of games, keeping this one (nil: no menu, as in the snapshots of a lone board).
+    var onBack: (() -> Void)?
     /// A new board's cue, once its verdict shows.
     var onCue: ((GameBoard) -> Void)?
     /// A reveal began: the companion pumps its fist, flicks the coin or throws the dice meanwhile.
