@@ -11,7 +11,7 @@
   notarized release and has no `SidefolkRelease` stamp, so its built-in updater will not replace it. *Next:*
   choose whether to replace the installed snapshot with the local build or ship a normal snapshot first.
 
-Updated: 2026-10-31. Version 0.1.0. Latest: Sidefolk and add-on updates chosen apart (D70), honest install sheets and
+Updated: 2026-10-31. Version 0.1.0. Latest: the ten new games in the Play panel (D?? games phase 2), Sidefolk and add-on updates chosen apart (D70), honest install sheets and
 approval cards (D71), paired TVs without a card (D72), the helper folks redesigned (D73), extension pages that read
 like app screens with Miraya's rebuilt (D74), and a crash fix (a download cancelled before it started). Before that: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
@@ -26,6 +26,31 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Games, phases 2 and 3 (D?? games phase 2, amends D75), on branch team/games2 (both repos):** all ten new games
+  play in the Play panel from Playtime, beside trivia: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower
+  (both ways), Guess My Animal (it learns), Balloon Words, Last Stick (it teaches), Memory Pairs and Daily Word (one
+  word a day per language, its streak on Playtime's Today tile). App: new board parts drawn, timed and fed by Sidefolk
+  (`GameBoardParts`: pads with playback, cups with the shuffle, a reflex timed from the key's timestamp, meter, number
+  pad, letter rows that flip, keyboards per script with Korean syllable grouping, a text field for input methods,
+  sticks, lives), a board's `after_ms` for the companion's turn, a build-up before every verdict (`GameSuspense`
+  extended: points, winning lines, cups, reflex times, guesses, flipped cards, end cards, with the previous words and
+  keys), game titles from `strings/`, 24 sentences a game (ten languages), `zh-Hant` → `zh-Hans` in both language
+  layers, the chance card's stripe no longer Play's red. Playtime: an engine adapter and a screen per game over the
+  `Games.*` engines, one `EventCues` table, records in its folder, `Games.Random.fresh()`, Home listing every game
+  with its best; trivia kept from phase 1 with the 400 questions × 10 languages as `TriviaPack`s and per-companion
+  strengths (the Quiz engine removed); all words, the engines' phrases included, in `strings/` through `L()`
+  (team/i18n merged in both repos first). *Checked:* `make test` with SIDEFOLK_ADDONS_REPO (1543 tests, among them a
+  bot playing every game to its end over the channel in the sandbox in English, Japanese and Arabic, checking each
+  build-up hides its verdict, and each game opening from its sentences in several languages); add-ons `swift test`
+  (93); `build.py --unsigned` and `check.sh` (all ok; dist/ removed after); UI snapshots of Playtime's real boards
+  (`--game-boards`, written by its `writeSampleBoards` test) for every game and moment, light and dark, in English,
+  German, Japanese, Korean, Chinese and Arabic, read; the debug app (`build/qg1`) with Playtime from that build: a
+  round of each game through dev commands with frames read (the companion thinking, Copy Me's playback, the cups'
+  shuffle, a reflex timed, a Daily Word row flipping, trivia's beat and verdict). *Not done / next:* catching the
+  companion by clicking it in Which Cup? (a "Check its paw" button does it); AI trivia packs; the bank has no
+  "Did you know?" lines; new companion moves still borrow the nearest moment (D75); sounds and VoiceOver not heard;
+  on a shared Mac, clicks on the panel from someone else reach the game (it never takes keys unless opened by the
+  person). Playtime stays 2.0.0 (snapshots, D65).
 - **Games beside the companion, phase 1 (D75), on branch team/play (both repos):** the Play panel (board parts,
   keys, focus rules, kept 10 minutes, one of Ask or Play at a time), `games` in the manifest and its validator, the
   game channel with its limits, `games.open`, companion cues from fixed lists with their pacing and Sidefolk's own

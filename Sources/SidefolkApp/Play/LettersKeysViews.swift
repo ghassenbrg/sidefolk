@@ -104,7 +104,8 @@ struct LetterTileView: View {
             }
         }
         .frame(width: side, height: side)
-        .rotation3DEffect(.degrees(turned ? 0 : 90), axis: (x: 1, y: 0, z: 0))
+        // A flip drawn flat (a 3D rotation inside the panel drew the turning tile at the panel's corner).
+        .scaleEffect(x: 1, y: turned ? 1 : 0.02)
         .onAppear {
             guard let delay, fixed == nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
             turned = false

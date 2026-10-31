@@ -148,7 +148,8 @@ extension AppCoordinator {
             return true
         }
         if command.hasPrefix("key:") {
-            _ = playPanel.model?.press(String(command.dropFirst(4)))
+            // Timed now, as a key's own timestamp would be (a reflex press).
+            _ = playPanel.model?.press(String(command.dropFirst(4)), at: ProcessInfo.processInfo.systemUptime)
             return true
         }
         if command == "closeGame" {

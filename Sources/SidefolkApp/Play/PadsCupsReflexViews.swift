@@ -14,7 +14,8 @@ struct PadsView: View {
                 let lit = model.parts.lit == i
                 Button { model.pressPad(i) } label: {
                     VStack(spacing: 6) {
-                        PadShape(shape: pad.shape).fill(lit ? .white : Self.color(pad.hue).opacity(0.95))
+                        // White on the pad's colour; the pad's colour on white while it is lit.
+                        PadShape(shape: pad.shape).fill(lit ? Self.color(pad.hue) : .white.opacity(0.9))
                             .frame(width: 30, height: 30)
                         Text(verbatim: pad.label).font(Theme.Font.captionStrong).foregroundStyle(lit ? Self.color(pad.hue) : .white)
                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -23,7 +24,7 @@ struct PadsView: View {
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 104)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(lit ? Self.color(pad.hue).opacity(0.25) : Self.color(pad.hue)))
+                        .fill(lit ? Color.white : Self.color(pad.hue)))
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Self.color(pad.hue), lineWidth: lit ? 3 : 0))
                     .scaleEffect(lit ? 1.06 : 1)
                     .shadow(color: Self.color(pad.hue).opacity(lit ? 0.6 : 0.15), radius: lit ? 10 : 3, y: 2)

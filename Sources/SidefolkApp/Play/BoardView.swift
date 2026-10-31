@@ -537,7 +537,8 @@ struct CellArrival: ViewModifier {
     func body(content: Content) -> some View {
         content
             .scaleEffect(done ? 1 : animate == .stamp ? 1.5 : animate == .pop ? 0.4 : 1)
-            .rotation3DEffect(.degrees(done || animate != .flip ? 0 : 90), axis: (x: 0, y: 1, z: 0))
+            // A card turned drawn flat: a 3D rotation inside the panel drew it at the panel's corner.
+            .scaleEffect(x: done || animate != .flip ? 1 : 0.02, y: 1)
             .offset(y: done || animate != .drop ? 0 : -30)
             .opacity(done ? 1 : 0.2)
             .onChange(of: key, initial: true) { _, _ in
