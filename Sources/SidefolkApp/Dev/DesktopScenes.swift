@@ -127,6 +127,10 @@ enum DesktopScenes {
         var pins: [Readout] = []
         var agents: [AgentChip] = []
         var sidecard: SidecardModel?
+        /// The short card the pointer brings up on an extra.
+        var tip: FloorTip.Content?
+        /// The person works under the corner: the extras step back.
+        var receded = false
     }
 
     static var pins: [Readout] {
@@ -161,16 +165,26 @@ enum DesktopScenes {
         .background(Theme.surfaceSunken)
     }
 
-    static func scenes(portrait: NSImage, face: NSImage) -> [(String, Floor)] {
+    static func scenes(portrait: NSImage, face: NSImage) -> [(String, Floor, Bool)] {
         let sidecards = Dictionary(uniqueKeysWithValues: Self.sidecards(face: face))
+        let busy = Floor(folks: ["tempo", "scout", "byte"], pins: Array(pins.prefix(2)), agents: agents)
+        var hoverPin = busy
+        hoverPin.tip = .pin(pins[0])
+        var hoverAgent = busy
+        hoverAgent.tip = .agent(agents[0])
+        var receded = busy
+        receded.receded = true
         return [
-            ("rest", Floor(folks: ["scout", "byte"], pins: Array(pins.prefix(2)), agents: [agents[1]])),
-            ("reminder", Floor(light: .alert, count: 1, folks: ["tempo"], pins: Array(pins.prefix(2)), sidecard: sidecards["reminder"])),
-            ("whisper", Floor(light: .working, folks: ["byte"], sidecard: sidecards["whisper"])),
-            ("agents", Floor(light: .alert, count: 1, folks: ["byte", "scout"], agents: agents, sidecard: sidecards["agent-needs-you"])),
-            ("stack", Floor(light: .waiting(12), folks: ["scout"], sidecard: sidecards["stack"])),
-            ("pins", Floor(folks: ["scout", "byte"], pins: pins, agents: [agents[1]])),
-            ("quiet", Floor(light: .quiet, folks: ["scout"])),
+            // The founder's busy day, measured: two agents, two pins, three folks, in the corner it had before D84.
+            ("busy", busy, true),
+            ("busy-hover-pin", hoverPin, true),
+            ("busy-hover-agent", hoverAgent, true),
+            ("busy-receded", receded, true),
+            ("reminder", Floor(light: .alert, count: 1, folks: ["tempo"], pins: Array(pins.prefix(1)), sidecard: sidecards["reminder"]), false),
+            ("whisper", Floor(light: .working, folks: ["byte"], agents: [agents[1]], sidecard: sidecards["whisper"]), false),
+            ("agents", Floor(light: .alert, count: 1, folks: ["byte", "scout"], agents: agents, sidecard: sidecards["agent-needs-you"]), false),
+            ("stack", Floor(light: .waiting(12), folks: ["scout"], sidecard: sidecards["stack"]), false),
+            ("quiet", Floor(light: .quiet, folks: ["scout"], pins: Array(pins.prefix(1))), false),
         ]
     }
 }
@@ -186,41 +200,69 @@ struct Wallpaper: View {
     }
 }
 
-/// The companion at the bottom of a wallpaper with what stands around it: the pool under its feet, the mark on its
-/// shoulder, its folks, the pins above them, the agents lane beyond them, and the Sidecard above its head.
+/// The companion at the bottom of a wallpaper, at its real size (medium, in 3D) with its real corner: the pool under
+/// its feet, the mark on its shoulder, its folks, the extras above them, an optional tip, and the Sidecard above its
+/// head. `measure` outlines the corner it takes (its window) and says how big it is.
 struct FloorScene: View {
     var portrait: NSImage
     var floor: DesktopScenes.Floor
-    var height: CGFloat = 520
+    var height: CGFloat = 420
+    var measure = false
+    /// As the window lays them out (CompanionWindowController): medium is 76 pt, a 3D box is 1.3 × that over 0.62.
+    static let box: CGFloat = (76 / 0.62 * 1.3).rounded()
+    static var folk: CGFloat { (76 * 0.62).rounded() }
+    static var feet: CGFloat { box * 0.1 }
+    static var reach: CGFloat { box * 0.17 }
+    static var body: CGFloat { box * 0.62 }
+
     var body: some View {
-        let side = min(150, height * 0.62)
-        VStack(alignment: .trailing, spacing: 0) {
-            Spacer(minLength: 0)
-            if let sidecard = floor.sidecard {
-                SidecardView(model: sidecard)
-                    .padding(.trailing, max(0, side / 2 - 150))
-            }
-            HStack(alignment: .bottom, spacing: Theme.Space.s) {
-                Spacer(minLength: 0)
-                if !floor.agents.isEmpty { AgentsColumn(chips: floor.agents, alignment: .trailing).padding(.bottom, 6) }
-                VStack(alignment: .trailing, spacing: Theme.Space.m) {
-                    if !floor.pins.isEmpty { PinsColumn(pins: floor.pins, alignment: .trailing) }
-                    HStack(alignment: .bottom, spacing: 2) {
-                        ForEach(floor.folks, id: \.self) { folk in
-                            FolkArt.image(folk, size: side * 0.5).map { Image(nsImage: $0).resizable().frame(width: side * 0.5, height: side * 0.5) }
+        let extras = floor.pins.isEmpty && floor.agents.isEmpty ? .zero
+            : NSHostingView(rootView: FloorExtras(pins: floor.pins, agents: floor.agents)).fittingSize
+        let area = CompanionWindowController.area(box: Self.box, folk: Self.folk, extras: extras)
+        let bodyInset = (Self.box - Self.body) / 2
+        ZStack(alignment: .bottomTrailing) {
+            Color.clear
+            ZStack(alignment: .bottomTrailing) {
+                if measure {
+                    Rectangle().strokeBorder(Theme.inkFaint, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        .frame(width: area.width, height: area.height)
+                        .overlay(alignment: .topLeading) {
+                            Text(verbatim: "\(Int(area.width)) × \(Int(area.height)) pt").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                                .padding(4)
                         }
+                }
+                LightPool(state: floor.light, width: min(max(Self.body * 1.9, 90), 240))
+                    .offset(x: -(Self.box / 2) + min(max(Self.body * 1.9, 90), 240) / 2, y: min(max(Self.body * 1.9, 90), 240) * 0.14 - Self.feet - 2)
+                    .frame(width: Self.box, alignment: .center)
+                Image(nsImage: portrait).resizable().scaledToFit().frame(width: Self.box * 0.92, height: Self.box * 0.92)
+                    .frame(width: Self.box, height: Self.box)
+                    .overlay(alignment: .topTrailing) {
+                        ShoulderBadge(state: floor.light, count: floor.count).offset(x: -bodyInset - Self.body * 0.1 + 14, y: bodyInset + 4)
+                    }
+                HStack(alignment: .bottom, spacing: Self.folk * 0.8 - Self.folk) {
+                    ForEach(floor.folks, id: \.self) { folk in
+                        FolkArt.image(folk, size: Self.folk).map { Image(nsImage: $0).resizable().frame(width: Self.folk, height: Self.folk) }
                     }
                 }
-                ZStack(alignment: .bottom) {
-                    LightPool(state: floor.light, width: side * 1.3).offset(y: side * 0.1)
-                    Image(nsImage: portrait).resizable().scaledToFit().frame(width: side, height: side)
-                        .opacity(floor.light == .quiet ? 0.92 : 1)
+                .padding(.trailing, Self.box - bodyInset + Self.reach - Self.folk * 0.15)
+                .padding(.bottom, Self.feet - Self.folk * 0.1)
+                VStack(alignment: .trailing, spacing: 0) {
+                    if let tip = floor.tip { FloorTip(content: tip).padding(.bottom, -14) }
+                    FloorExtras(pins: floor.pins, agents: floor.agents, alignment: .trailing)
+                        .opacity(floor.receded ? 0.28 : 1)
+                        .scaleEffect(floor.receded ? 0.86 : 1, anchor: .bottomTrailing)
                 }
-                .overlay(alignment: .topTrailing) { ShoulderBadge(state: floor.light, count: floor.count).offset(x: -side * 0.12, y: side * 0.08) }
-                .padding(.trailing, Theme.Space.l)
+                .padding(.trailing, Self.box - bodyInset + Self.reach * 0.4)
+                .padding(.bottom, Self.feet + Self.folk * 0.95)
             }
+            .overlay(alignment: .bottomTrailing) {
+                if let sidecard = floor.sidecard {
+                    SidecardView(model: sidecard).fixedSize().offset(x: SidecardView.margin.trailing + 30, y: -Self.box + 14)
+                }
+            }
+            .padding(.trailing, Theme.Space.xxl)
+            .padding(.bottom, Theme.Space.l)
         }
-        .padding(.bottom, Theme.Space.m)
         .frame(height: height)
         .frame(maxWidth: .infinity)
         .background(Wallpaper())

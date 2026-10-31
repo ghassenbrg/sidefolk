@@ -429,6 +429,7 @@ final class AppCoordinator {
         if command == "voice:stop" { _ = voice.cancel(); return }
         if command.hasPrefix("play:"), let act = CompanionAct(rawValue: String(command.dropFirst(5))) { runtime.events.publish(.companion(act)); return }
         if command == "click" { companionClicked(); return }
+        if command.hasPrefix("tip:") || command.hasPrefix("recede:") { companion.devFloor(command); return }
         if command.hasPrefix("toss:") { devToss(command.dropFirst(5).split(separator: ":").map(String.init)); return }
         if devGame(command) { return }
         if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }

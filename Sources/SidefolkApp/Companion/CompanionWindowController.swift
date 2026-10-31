@@ -67,9 +67,23 @@ final class CompanionWindowController {
     let floor = FloorModel()
     private let underlay: FloorHostView<FloorUnderlay>
     private let overlay: FloorHostView<FloorOverlay>
-    private var pinsSize = NSSize.zero
-    private var agentsSize = NSSize.zero
+    /// The extras' column (pins and agents) as measured, and where each one stands in the window.
+    private var extrasSize = NSSize.zero
+    private var extras: [(item: FloorItem, rect: NSRect)] = []
     private var badgeHovered = false
+    /// The item the pointer rests on, whose tip shows.
+    private var tipFor: FloorItem?
+    private lazy var tip: HostedPanel<FloorTip> = {
+        let tip = HostedPanel(rootView: FloorTip(content: .words("")), allowsKey: false)
+        tip.panel.ignoresMouseEvents = true
+        tip.panel.hasShadow = false
+        return tip
+    }()
+    /// Looks every second and a half whether the person works under the companion's corner (only while extras show).
+    private var recedeTimer: Timer?
+    private var typingUnder = false
+    /// The pointer crosses the corner without resting on anything in it.
+    private var pointerPassing = false
 
     init() {
         character = CharacterView(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
@@ -95,26 +109,20 @@ final class CompanionWindowController {
     /// The feet stand 10% above the view's bottom edge.
     private var feetInset: CGFloat { characterBox.height * 0.1 }
     private var folkSize: CGFloat { (size * 0.62).rounded() }
-    /// The pins stand above the folks' heads, and above the agents lane when it is taller.
-    private var readoutBase: CGFloat {
-        max(feetInset + folkSize * 0.95, agentsSize.height == 0 ? 0 : feetInset + agentsSize.height + Theme.Space.s)
-    }
+    /// The extras stand above the folks' heads, close to the companion.
+    private var readoutBase: CGFloat { feetInset + folkSize * 0.95 }
     /// How far the robot's body frame sits inside its view, where folks always stood.
     private var reach: CGFloat { characterBox.width * 0.17 }
-    /// From the body's edge to the outer edge of the folks standing beside it.
-    private var folksSpan: CGFloat {
-        folkOrder.isEmpty ? reach * 0.4 : reach + CGFloat(folkOrder.count) * folkSize * 0.8 + folkSize * 0.05
-    }
-    /// From the body's edge to the far end of the agents lane, which stands beyond the folks on the floor line.
-    private var agentsSpan: CGFloat { agentsSize.width == 0 ? 0 : folksSpan + Theme.Space.s + agentsSize.width }
-    /// Room beside the companion for the folks, the widest pin and the agents lane; tall enough for every pin and
-    /// chip. The light and the pins' glass need a little room around them too.
-    private var windowSize: NSSize {
-        let inset = characterBox.width * 0.19
-        let beside = max(folkSize * 2.6, reach * 0.4 + pinsSize.width + 28 - inset, agentsSpan + 28 - inset)
-        let pins = pinsSize.height == 0 ? 0 : readoutBase + pinsSize.height + 24
-        let agents = agentsSize.height == 0 ? 0 : feetInset + agentsSize.height + 24
-        return NSSize(width: characterBox.width + beside, height: max(characterBox.height, pins, agents))
+    /// Room beside the companion for its folks (no more than before D84: the extras fit in the same corner, the
+    /// founder's rule that it never sprawls over people's work); tall enough for the extras above the folks.
+    private var windowSize: NSSize { Self.area(box: characterBox.width, folk: folkSize, extras: extrasSize) }
+
+    /// The corner the companion takes: its box, room for three folks beside it, and the extras above them.
+    static func area(box: CGFloat, folk: CGFloat, extras: NSSize) -> NSSize {
+        let inset = box * 0.19, reach = box * 0.17, feet = box * 0.1
+        let beside = max(folk * 2.6, reach * 0.4 + extras.width + 12 - inset)
+        let tall = extras.height == 0 ? 0 : feet + folk * 0.95 + extras.height + 10
+        return NSSize(width: box + beside, height: max(box, tall))
     }
 
     func apply(size: CompanionSize, reducedMotion: Bool) {
@@ -236,8 +244,8 @@ final class CompanionWindowController {
         layoutFloor(body: body, folksOnLeft: folksOnLeft)
     }
 
-    /// The pool under the feet, the mark on the outer shoulder, the pins above the folks and the agents lane beyond
-    /// them, all in the floor's top-left coordinates.
+    /// The pool under the feet, the mark on the outer shoulder and the extras above the folks, all in the floor's
+    /// top-left coordinates.
     private func layoutFloor(body: NSRect, folksOnLeft: Bool) {
         let bounds = container.bounds
         underlay.frame = bounds
@@ -250,11 +258,35 @@ final class CompanionWindowController {
         let shoulder = folksOnLeft ? body.maxX - body.width * 0.1 : body.minX + body.width * 0.1
         floor.badgeCenter = CGPoint(x: shoulder, y: bounds.height - (body.maxY - body.height * 0.08))
         let inner = folksOnLeft ? body.minX - reach * 0.4 : body.maxX + reach * 0.4
-        floor.pinsFrame = flipped(NSRect(x: folksOnLeft ? inner - pinsSize.width : inner, y: readoutBase,
-                                         width: pinsSize.width, height: pinsSize.height))
-        let lane = folksSpan + Theme.Space.s
-        floor.agentsFrame = flipped(NSRect(x: folksOnLeft ? body.minX - lane - agentsSize.width : body.maxX + lane, y: feetInset,
-                                           width: agentsSize.width, height: agentsSize.height))
+        let column = NSRect(x: folksOnLeft ? inner - extrasSize.width : inner, y: readoutBase, width: extrasSize.width, height: extrasSize.height)
+        floor.extrasFrame = flipped(column)
+        // Where each extra stands, for clicks and tips: the agents' row at the bottom, the pins above, all aligned
+        // toward the companion.
+        extras = []
+        var y = column.minY
+        if !floor.agents.isEmpty {
+            for (i, chip) in floor.agents.enumerated() {
+                let step = CGFloat(i) * (FloorModel.dot + FloorModel.gap)
+                let x = folksOnLeft ? column.maxX - FloorModel.dot - step : column.minX + step
+                extras.append((.agent(chip.id), NSRect(x: x, y: y, width: FloorModel.dot, height: FloorModel.dot)))
+            }
+            y += FloorModel.dot + FloorModel.gap
+        }
+        for pin in floor.pins.prefix(FloorModel.pinsShown).reversed() {
+            extras.append((.pin(pin.id), NSRect(x: column.minX, y: y, width: column.width, height: FloorModel.pinHeight)))
+            y += FloorModel.pinHeight + FloorModel.gap
+        }
+    }
+
+    /// Measures the extras again when they come or go, or a value outgrows its room: a value changing every few
+    /// seconds doesn't move the window.
+    private func measureExtras(force: Bool) {
+        let measured = floor.pins.isEmpty && floor.agents.isEmpty ? .zero
+            : NSHostingView(rootView: FloorExtras(pins: floor.pins, agents: floor.agents)).fittingSize
+        guard force || measured.width > extrasSize.width || measured.height != extrasSize.height else { return layoutContent() }
+        extrasSize = measured
+        fitWindow()
+        watchForWork(!extras.isEmpty)
     }
 
     /// Shows these live values beside the companion (none hides them). The window grows to hold them while the
@@ -263,21 +295,90 @@ final class CompanionWindowController {
         guard items != floor.pins else { return }
         let ids = floor.pins.map(\.id)
         floor.pins = items
-        // Measured again when pins come or go, or a value outgrows its room: a value changing every few seconds
-        // doesn't move the window.
-        let measured = items.isEmpty ? .zero : NSHostingView(rootView: PinsColumn(pins: items)).fittingSize
-        if ids != items.map(\.id) || measured.width > pinsSize.width || measured.height != pinsSize.height {
-            pinsSize = measured
-            fitWindow()
-        }
+        measureExtras(force: ids != items.map(\.id))
+        if case .pin(let id)? = tipFor { showTip(.pin(id)) }
     }
 
-    /// The agents lane: a chip per live Claude Code or Codex session (D84).
+    /// The agents lane: a small face per live Claude Code or Codex session (D84).
     func setAgents(_ chips: [AgentChip]) {
         guard chips != floor.agents else { return }
         floor.agents = chips
-        agentsSize = chips.isEmpty ? .zero : NSHostingView(rootView: AgentsColumn(chips: chips)).fittingSize
-        fitWindow()
+        measureExtras(force: true)
+    }
+
+    // MARK: Tips and stepping back
+
+    func extra(at point: NSPoint) -> FloorItem? {
+        extras.first { $0.rect.insetBy(dx: -2, dy: -2).contains(point) }?.item
+    }
+
+    /// The pointer rests on an extra or a folk: its short card shows beside it, until the pointer leaves.
+    private func showTip(_ item: FloorItem?) {
+        tipFor = item
+        let content: FloorTip.Content? = switch item {
+        case .pin(let id)?: floor.pins.first { $0.id == id }.map { .pin($0) }
+        case .agent(let id)?: floor.agents.first { $0.id == id }.map { .agent($0) }
+        case .folk(let folk)?: .words(Self.folkLabel(folk))
+        case nil: nil
+        }
+        guard let content, let item, let rect = rect(of: item) else {
+            tip.panel.orderOut(nil)
+            return
+        }
+        tip.host.rootView = FloorTip(content: content)
+        tip.panel.setContentSize(tip.fittingSize)
+        let onScreen = panel.convertToScreen(container.convert(rect, to: nil))
+        // On the far side from the companion, level with it: above, it would cover the extras over it.
+        tip.place(beside: onScreen, on: screen, gap: -8)
+        if !tip.panel.isVisible { tip.panel.orderFrontRegardless() }
+    }
+
+    #if DEBUG
+    /// Dev (`tip:<n>`, `tip:off`): the tip of the n-th extra, as if the pointer rested on it; `recede:on|off` too.
+    func devFloor(_ command: String) {
+        if command.hasPrefix("recede:") {
+            pointerPassing = command == "recede:on"
+            return recede()
+        }
+        guard let n = Int(command.dropFirst(4)), extras.indices.contains(n) else { return showTip(nil) }
+        showTip(extras[n].item)
+    }
+    #endif
+
+    private func rect(of item: FloorItem) -> NSRect? {
+        if case .folk(let folk) = item { return folkViews[folk]?.frame }
+        return extras.first { $0.item == item }?.rect
+    }
+
+    /// The extras step back (fade and shrink toward the companion) while the person works under the companion's
+    /// corner: typing in a window that reaches under them, or passing the pointer through. Read without any
+    /// permission (`Desktop`, the same senses the companion's life uses).
+    private func watchForWork(_ on: Bool) {
+        guard on != (recedeTimer != nil) else { return }
+        recedeTimer?.invalidate()
+        recedeTimer = nil
+        guard on else {
+            typingUnder = false
+            return recede()
+        }
+        let timer = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.lookForWork() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        recedeTimer = timer
+    }
+
+    private func lookForWork() {
+        guard panel.isVisible, !extras.isEmpty else { return }
+        let desk = Desktop()
+        let corner = panel.convertToScreen(container.convert(extras.map(\.rect).reduce(extras[0].rect) { $0.union($1) }, to: nil))
+        typingUnder = desk.secondsSinceKey < 6 && (desk.activeWindow?.intersects(corner) ?? false)
+        recede()
+    }
+
+    private func recede() {
+        let receded = (typingUnder || pointerPassing) && tipFor == nil
+        if floor.receded != receded { floor.receded = receded }
     }
 
     /// The light and the shoulder's mark, from what is going on.
@@ -307,13 +408,14 @@ final class CompanionWindowController {
         }
     }
 
-    /// The pin under `point`, by its row in the column.
     func readout(at point: NSPoint) -> String? {
-        row(at: point, in: floor.pinsFrame, height: Theme.Size.pin, gap: FloorModel.pinGap, ids: floor.pins.map(\.id))
+        if case .pin(let id)? = extra(at: point) { return id }
+        return nil
     }
 
     func agent(at point: NSPoint) -> String? {
-        row(at: point, in: floor.agentsFrame, height: FloorModel.chipHeight, gap: FloorModel.chipGap, ids: floor.agents.map(\.id))
+        if case .agent(let id)? = extra(at: point) { return id }
+        return nil
     }
 
     /// A pin, an agent chip, a folk or the count: what a press there means is theirs, not the companion's.
@@ -326,16 +428,6 @@ final class CompanionWindowController {
         guard floor.count > 0 else { return false }
         let center = NSPoint(x: floor.badgeCenter.x, y: container.bounds.height - floor.badgeCenter.y)
         return hypot(point.x - center.x, point.y - center.y) <= Theme.Size.stackBadge * 0.7
-    }
-
-    /// Rows stack from the top of their column; `frame` is in the floor's top-left coordinates.
-    private func row(at point: NSPoint, in frame: CGRect, height: CGFloat, gap: CGFloat, ids: [String]) -> String? {
-        let y = container.bounds.height - point.y
-        guard !ids.isEmpty, frame.insetBy(dx: 0, dy: -2).contains(CGPoint(x: point.x, y: y)) else { return nil }
-        // The column is bottom-aligned in its frame: count rows up from the bottom edge.
-        let fromBottom = frame.maxY - y
-        let index = ids.count - 1 - Int(fromBottom / (height + gap))
-        return ids.indices.contains(index) ? ids[index] : nil
     }
 
     /// Folks sit on whichever side of the companion has more room on screen.
@@ -448,8 +540,7 @@ final class CompanionWindowController {
             layoutContent()
             v.popIn()
         }
-        // The agents lane stands beyond the folks: one more or fewer moves it.
-        if agentsSize != .zero { fitWindow() } else { layoutContent() }
+        layoutContent()
     }
 
     /// The folks standing beside the companion now.
@@ -642,14 +733,26 @@ final class CompanionWindowController {
                 badgeHovered = onBadge
                 delegate?.companionBadgeHovered(onBadge)
             }
-            if folk(at: local) != nil || readout(at: local) != nil || agent(at: local) != nil || onBadge {
+            let item = extra(at: local) ?? folk(at: local).map(FloorItem.folk)
+            if item != tipFor { showTip(item) }
+            if item != nil || onBadge {
                 ignore = false
             } else if character.frame.contains(local) {
                 ignore = ignore && !character.characterPath.contains(character.convert(local, from: container))
             }
-        } else if badgeHovered {
-            badgeHovered = false
-            delegate?.companionBadgeHovered(false)
+            // Passing through the corner on the way to something under it: the extras step back at once.
+            pointerPassing = item == nil && !onBadge && !character.frame.contains(local) && !extras.isEmpty
+            recede()
+        } else {
+            if pointerPassing {
+                pointerPassing = false
+                recede()
+            }
+            if badgeHovered {
+                badgeHovered = false
+                delegate?.companionBadgeHovered(false)
+            }
+            if tipFor != nil { showTip(nil) }
         }
         if panel.ignoresMouseEvents != ignore { panel.ignoresMouseEvents = ignore }
         // Stroking it with the pointer pets it.

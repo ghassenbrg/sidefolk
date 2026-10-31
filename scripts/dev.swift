@@ -23,6 +23,8 @@
 //   swift scripts/dev.swift theme:harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
+//   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
+//                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
 //   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
 //   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed

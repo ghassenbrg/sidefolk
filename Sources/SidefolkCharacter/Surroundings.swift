@@ -4,7 +4,7 @@ import AppKit
 /// was pressed, the frame of the window being worked in, the pointer and the clock. Read only when
 /// a moment is being chosen (every half minute or so), never polled.
 @MainActor
-protocol Surroundings {
+public protocol Surroundings {
     /// Seconds since a key was pressed anywhere (CGEventSource; no Input Monitoring needed).
     var secondsSinceKey: TimeInterval { get }
     /// The frontmost other app's front window, in AppKit screen coordinates (y up). Only its
@@ -15,12 +15,14 @@ protocol Surroundings {
 }
 
 @MainActor
-struct Desktop: Surroundings {
-    var secondsSinceKey: TimeInterval {
+public struct Desktop: Surroundings {
+    public init() {}
+
+    public var secondsSinceKey: TimeInterval {
         CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .keyDown)
     }
 
-    var activeWindow: CGRect? {
+    public var activeWindow: CGRect? {
         guard let app = NSWorkspace.shared.frontmostApplication, app.processIdentifier != getpid(),
               let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
                 as? [[String: Any]] else { return nil }
@@ -38,6 +40,6 @@ struct Desktop: Surroundings {
         return nil
     }
 
-    var pointer: CGPoint { NSEvent.mouseLocation }
-    var now: Date { Date() }
+    public var pointer: CGPoint { NSEvent.mouseLocation }
+    public var now: Date { Date() }
 }

@@ -405,8 +405,9 @@ enum UISnapshots {
                 try await page("desktop-sidecard-\(name)", SidecardView(model: moment).frame(maxWidth: .infinity).background(Wallpaper()), width: 470)
             }
             try await page("desktop-states", DesktopScenes.statesBoard(portrait: still), width: 1100)
-            for (name, floor) in DesktopScenes.scenes(portrait: still, face: face) {
-                try await page("desktop-floor-\(name)", FloorScene(portrait: still, floor: floor), width: 860)
+            for (name, floor, measure) in DesktopScenes.scenes(portrait: still, face: face) {
+                try await page("desktop-floor-\(name)", FloorScene(portrait: still, floor: floor, height: floor.sidecard == nil ? 300 : 520,
+                                                                   measure: measure), width: 760)
             }
             for (name, caption) in sampleTosses(face: portrait) {
                 try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 300)
