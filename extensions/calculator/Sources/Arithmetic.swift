@@ -24,8 +24,8 @@ struct Arithmetic {
     static func evaluate(_ text: String) throws -> Double {
         var parser = Arithmetic(tokens: try tokenize(text))
         let value = try parser.sum()
-        guard parser.at == parser.tokens.count else { throw Problem("I couldn't read “\(text)” as a calculation.") }
-        guard value.isFinite else { throw Problem("That has no finite answer (dividing by zero, or a number too big).") }
+        guard parser.at == parser.tokens.count else { throw Problem(L("I couldn't read “{text}” as a calculation.", ["text": text])) }
+        guard value.isFinite else { throw Problem(L("That has no finite answer (dividing by zero, or a number too big).")) }
         return value
     }
 
@@ -44,7 +44,7 @@ struct Arithmetic {
                 // "1,000,000.5": a comma is a thousands separator only before exactly three digits.
                 while j < chars.count, chars[j].isNumber || chars[j] == "." || chars[j] == "," && digits(from: j + 1) == 3 { j += 1 }
                 let number = String(chars[i..<j]).replacingOccurrences(of: ",", with: "")
-                guard let value = Double(number) else { throw Problem("“\(number)” isn't a number.") }
+                guard let value = Double(number) else { throw Problem(L("“{text}” isn't a number.", ["text": number])) }
                 tokens.append(.number(value))
                 i = j
             } else if c == "x", i + 1 == chars.count || !chars[i + 1].isLetter {
@@ -60,7 +60,7 @@ struct Arithmetic {
                 tokens.append(.symbol(c))
                 i += 1
             } else {
-                throw Problem(c == "," ? "Write decimals with a dot, like 1.5." : "I can't use “\(c)” in a calculation.")
+                throw Problem(c == "," ? L("Write decimals with a dot, like 1.5.") : L("I can't use “{text}” in a calculation.", ["text": String(c)]))
             }
         }
         return tokens
@@ -144,16 +144,16 @@ struct Arithmetic {
         case .symbol("(")?:
             at += 1
             let value = try sum()
-            guard next == .symbol(")") else { throw Problem("A parenthesis isn't closed.") }
+            guard next == .symbol(")") else { throw Problem(L("A parenthesis isn't closed.")) }
             at += 1
             return value
         case .word(let w)?:
             at += 1
             if let constant = Self.constants[w] { return constant }
-            guard let function = Self.functions[w] else { throw Problem("I don't know “\(w)”. I know \(Self.functions.keys.sorted().joined(separator: ", ")), pi and e.") }
+            guard let function = Self.functions[w] else { throw Problem(L("I don't know “{text}”. I know {names}, pi and e.", ["text": w, "names": Self.functions.keys.sorted().joined(separator: ", ")])) }
             return function(try percent())
         default:
-            throw Problem("The calculation ends too early or has an operator in the wrong place.")
+            throw Problem(L("The calculation ends too early or has an operator in the wrong place."))
         }
     }
 

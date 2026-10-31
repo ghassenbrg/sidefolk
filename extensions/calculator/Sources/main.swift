@@ -21,7 +21,7 @@ ext.tool("convert_units", "Convert units",
              "from": Schema.string("The unit it is in, like km, °F, cups, GB.", maxLength: 40),
              "to": Schema.string("The unit wanted.", maxLength: 40),
          ], required: ["value", "from", "to"])) { args in
-    guard let value = args.double("value") else { throw Problem("“value” must be a number.") }
+    guard let value = args.double("value") else { throw Problem(L("“{key}” must be a number.", ["key": "value"])) }
     return try Units.convert(value, from: try args.required("from"), to: try args.required("to"))
 }
 
@@ -37,9 +37,10 @@ ext.tool("date_math", "Date maths",
     if let to = args.string("to") { return Dates.between(date, try Dates.parse(to)) }
     if let amount = args.string("add") {
         let result = try Dates.add(amount, to: date)
-        let worded = amount.hasPrefix("-") ? "minus " + amount.dropFirst().trimmingCharacters(in: .whitespaces)
-            : "plus " + amount.trimmingCharacters(in: CharacterSet(charactersIn: "+ "))
-        return "\(Dates.show(date)) \(worded) is \(Dates.show(result))."
+        // The amount as the person wrote it, without its sign.
+        let values = ["date": Dates.show(date), "result": Dates.show(result),
+                      "amount": amount.trimmingCharacters(in: CharacterSet(charactersIn: "+- "))]
+        return amount.hasPrefix("-") ? L("{date} minus {amount} is {result}.", values) : L("{date} plus {amount} is {result}.", values)
     }
     return Dates.describe(date)
 }

@@ -1,0 +1,61 @@
+{
+  "name": "システムの状態",
+  "tagline": "バッテリー、ディスク、メモリーにすばやく答えます",
+  "description": "バッテリー、ディスク、メモリーにすばやく答え、バッテリーやディスクが少なくなるとお知らせします。ライブのグラフがあるページが欲しければ、ギャラリーから「あなたのMac」を追加してください。",
+  "tools": {
+    "about": {
+      "title": "このMacについて"
+    },
+    "battery": {
+      "title": "バッテリーの状態"
+    },
+    "disk": {
+      "title": "ディスク容量"
+    },
+    "memory": {
+      "title": "メモリ使用量"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "バッテリー残量が少ない",
+      "description": "充電していないときにバッテリーが一定の残量を下回ったら、一度だけ知らせます。"
+    },
+    "disk_low": {
+      "title": "ディスクの空き容量が少ない",
+      "description": "起動ディスクの空き容量が一定のサイズを下回ったら、一度だけ知らせます。"
+    }
+  },
+  "text": {
+    ", ": "、",
+    "Battery at {percent}, {state} ({time} left).": "バッテリー{percent}、{state}（残り{time}）。",
+    "Battery at {percent}, {state}.": "バッテリー{percent}、{state}。",
+    "Home": "ホーム",
+    "Only {free} free on the startup disk.": "起動ディスクの空きは{free}だけです。",
+    "Startup disk": "起動ディスク",
+    "The Mac didn't report its memory.": "Macからメモリの情報が得られませんでした。",
+    "The startup disk didn't report its space.": "起動ディスクから容量の情報が得られませんでした。",
+    "This Mac has no battery; it runs on {source}.": "このMacにはバッテリーがありません。{source}で動作しています。",
+    "This Mac: {chip}": "このMac：{chip}",
+    "an unknown processor": "不明なプロセッサ",
+    "an unknown time": "不明な時間",
+    "charged": "充電済み",
+    "charging": "充電中",
+    "critical": "危険",
+    "discharging": "放電中",
+    "finishing charge": "充電完了間近",
+    "model {model}": "モデル {model}",
+    "normal": "正常",
+    "plugged in, not charging": "電源接続中、充電なし",
+    "power": "電源",
+    "unknown": "不明",
+    "warning": "警告",
+    "{about}; on for {time}.": "{about}。起動から{time}。",
+    "{count} cores": {
+      "other": "{count}コア"
+    },
+    "{disk}: {free} free of {total}.": "{disk}：{total}中{free}の空き。",
+    "{memory} of memory": "メモリ{memory}",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{total}中{used}を使用中。メモリプレッシャーは{pressure}です。"
+  }
+}

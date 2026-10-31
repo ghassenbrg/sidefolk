@@ -1,0 +1,33 @@
+{
+  "name": "世界時計",
+  "tagline": "世界中の時刻と、場所間の時刻変換",
+  "description": "世界中どこの時刻でも確認でき、場所間の時刻変換も、夏時間まで正確に計算します。",
+  "tools": {
+    "convert_time": {
+      "title": "場所間で時刻を変換"
+    },
+    "current_time": {
+      "title": "世界の時刻"
+    }
+  },
+  "text": {
+    "I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.": "「{time}」を時刻として読み取れませんでした。HH:MM、9am、noon、または YYYY-MM-DD HH:MM を使ってください。",
+    "I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.": "「{place}」がどこかわかりません。近くの大都市、時間帯が1つの国、または Europe/Paris のような IANA タイムゾーンを試してください。",
+    "It is {time}, {difference}.": "{time}です。{difference}。",
+    "It is {time}.": "{time}です。",
+    "the same time as you": "こちらと同じ時刻です",
+    "{date} at {offset} ({zone})": "{offset}で {date}（{zone}）",
+    "{date} here ({zone})": "こちらは {date}（{zone}）",
+    "{date} here in {place} ({zone})": "こちら{place}は {date}（{zone}）",
+    "{date} in UTC ({zone})": "UTCで {date}（{zone}）",
+    "{date} in {place} ({zone})": "{place}は {date}（{zone}）",
+    "{offset} isn't a real UTC offset.": "{offset} は実在する UTC オフセットではありません。",
+    "{span} ahead of you": "こちらより{span}進んでいます",
+    "{span} behind you": "こちらより{span}遅れています",
+    "{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.": "その日に {time} はありません。時計がその1時間を飛ばします。1時間後で試してください。",
+    "{time} is:": "{time}は次のとおりです：",
+    "“{time}” isn't a real date.": "「{time}」は実在する日付ではありません。",
+    "“{time}” isn't a time of day.": "「{time}」は1日の時刻ではありません。",
+    "“{time}” isn't a time on a 12-hour clock.": "「{time}」は12時間制の時刻ではありません。"
+  }
+}

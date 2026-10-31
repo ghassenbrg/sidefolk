@@ -1,0 +1,22 @@
+{
+  "text": {
+    "I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.": "I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.",
+    "I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.": "I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.",
+    "It is {time}, {difference}.": "It is {time}, {difference}.",
+    "It is {time}.": "It is {time}.",
+    "the same time as you": "the same time as you",
+    "{date} at {offset} ({zone})": "{date} at {offset} ({zone})",
+    "{date} here ({zone})": "{date} here ({zone})",
+    "{date} here in {place} ({zone})": "{date} here in {place} ({zone})",
+    "{date} in UTC ({zone})": "{date} in UTC ({zone})",
+    "{date} in {place} ({zone})": "{date} in {place} ({zone})",
+    "{offset} isn't a real UTC offset.": "{offset} isn't a real UTC offset.",
+    "{span} ahead of you": "{span} ahead of you",
+    "{span} behind you": "{span} behind you",
+    "{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.": "{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.",
+    "{time} is:": "{time} is:",
+    "“{time}” isn't a real date.": "“{time}” isn't a real date.",
+    "“{time}” isn't a time of day.": "“{time}” isn't a time of day.",
+    "“{time}” isn't a time on a 12-hour clock.": "“{time}” isn't a time on a 12-hour clock."
+  }
+}

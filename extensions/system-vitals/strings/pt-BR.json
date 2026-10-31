@@ -1,0 +1,62 @@
+{
+  "name": "Saúde do Sistema",
+  "tagline": "Respostas rápidas sobre bateria, disco e memória",
+  "description": "Respostas rápidas sobre bateria, disco e memória, e um aviso quando a bateria ou o disco estão acabando. Para uma página com gráficos ao vivo, adicione Seu Mac pela galeria.",
+  "tools": {
+    "about": {
+      "title": "Sobre este Mac"
+    },
+    "battery": {
+      "title": "Status da bateria"
+    },
+    "disk": {
+      "title": "Espaço em disco"
+    },
+    "memory": {
+      "title": "Uso de memória"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "Bateria fraca",
+      "description": "Avisa uma vez quando a bateria cai abaixo de um nível enquanto não está carregando."
+    },
+    "disk_low": {
+      "title": "Pouco espaço em disco",
+      "description": "Avisa uma vez quando o espaço livre no disco de inicialização cai abaixo de um tamanho."
+    }
+  },
+  "text": {
+    ", ": ", ",
+    "Battery at {percent}, {state} ({time} left).": "Bateria em {percent}, {state} (faltam {time}).",
+    "Battery at {percent}, {state}.": "Bateria em {percent}, {state}.",
+    "Home": "Pasta pessoal",
+    "Only {free} free on the startup disk.": "Apenas {free} livres no disco de inicialização.",
+    "Startup disk": "Disco de inicialização",
+    "The Mac didn't report its memory.": "O Mac não informou a memória.",
+    "The startup disk didn't report its space.": "O disco de inicialização não informou o espaço.",
+    "This Mac has no battery; it runs on {source}.": "Este Mac não tem bateria; funciona com {source}.",
+    "This Mac: {chip}": "Este Mac: {chip}",
+    "an unknown processor": "um processador desconhecido",
+    "an unknown time": "um tempo desconhecido",
+    "charged": "carregada",
+    "charging": "carregando",
+    "critical": "crítica",
+    "discharging": "descarregando",
+    "finishing charge": "terminando a carga",
+    "model {model}": "modelo {model}",
+    "normal": "normal",
+    "plugged in, not charging": "conectada, sem carregar",
+    "power": "energia",
+    "unknown": "desconhecida",
+    "warning": "alerta",
+    "{about}; on for {time}.": "{about}; ligado há {time}.",
+    "{count} cores": {
+      "one": "{count} núcleo",
+      "other": "{count} núcleos"
+    },
+    "{disk}: {free} free of {total}.": "{disk}: {free} livres de {total}.",
+    "{memory} of memory": "{memory} de memória",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{used} de {total} em uso; pressão de memória {pressure}."
+  }
+}

@@ -68,14 +68,15 @@ enum Units {
     }
 
     static func convert(_ value: Double, from: String, to: String) throws -> String {
-        guard let a = find(from) else { throw Problem("I don't know the unit “\(from)”.") }
-        guard let b = find(to) else { throw Problem("I don't know the unit “\(to)”.") }
-        guard a.kind == b.kind else { throw Problem("\(a.symbol) is a \(a.kind) and \(b.symbol) is a \(b.kind): they don't convert.") }
+        guard let a = find(from) else { throw Problem(L("I don't know the unit “{unit}”.", ["unit": from])) }
+        guard let b = find(to) else { throw Problem(L("I don't know the unit “{unit}”.", ["unit": to])) }
+        guard a.kind == b.kind else { throw Problem(L("{a} and {b} measure different things: they don't convert.", ["a": a.symbol, "b": b.symbol])) }
         let result = a.kind == "temperature" ? kelvinTo(b.symbol, kelvin(value, a.symbol)) : value * a.factor / b.factor
-        guard result.isFinite else { throw Problem("That's too big to convert.") }
+        guard result.isFinite else { throw Problem(L("That's too big to convert.")) }
         let note = a.kind == "time" && [a.symbol, b.symbol].contains(where: { $0 == "month" || $0 == "yr" })
-            ? " (an average month or year)" : a.kind == "volume" && [a.symbol, b.symbol].contains(where: { ["gal", "qt", "pt", "cup", "fl oz"].contains($0) })
-            ? " (US measures)" : ""
+            ? " (" + L("an average month or year") + ")"
+            : a.kind == "volume" && [a.symbol, b.symbol].contains(where: { ["gal", "qt", "pt", "cup", "fl oz"].contains($0) })
+            ? " (" + L("US measures") + ")" : ""
         // The person's own words for the units ("2 cups"), the symbol only for temperatures (°C, not C).
         func shown(_ raw: String, _ unit: Unit) -> String { unit.kind == "temperature" ? unit.symbol : raw.trimmingCharacters(in: .whitespaces) }
         return "\(show(value)) \(shown(from, a)) = \(show(result)) \(shown(to, b))\(note)"
@@ -99,6 +100,9 @@ enum Units {
 
     /// Six significant digits are plenty for a conversion; big whole amounts (bytes in a GiB) are shown in full.
     static func show(_ value: Double) -> String {
-        abs(value) >= 1e6 && abs(value) < 1e15 ? String(format: "%.0f", value) : String(format: "%.6g", value)
+        let plain = abs(value) >= 1e6 && abs(value) < 1e15 ? String(format: "%.0f", value) : String(format: "%.6g", value)
+        // Other languages write the decimal mark their own way ("3,10686"); a "%g" exponent stays as it is.
+        guard Language.code != "en", !plain.contains("e"), let n = Double(plain) else { return plain }
+        return n.formatted(.number.grouping(.never).precision(.fractionLength(0...10)).locale(Language.locale))
     }
 }
