@@ -45,13 +45,14 @@ public struct ExtensionTool: Tool {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    /// A built-in's call as a sentence (BuiltInToolSummary); anyone else's as its title and its exact arguments (T1).
+    /// A built-in's call as a sentence (BuiltInToolSummary); anyone else's as its title and its exact arguments in
+    /// words (T1, D71), the whole request a click away on the card.
     public func summary(for input: JSONValue) -> String {
         if firstParty, let sentence = BuiltInToolSummary.sentence(extensionId: extensionId, tool: remoteName, input: input) {
             return sentence
         }
-        let args = (input.objectValue?.isEmpty ?? true) ? "" : " " + input.jsonString
-        return "\(spec.title) (\(extensionName))\(args)"
+        let args = ArgumentWords.line(input, schema: spec.inputSchema)
+        return args.isEmpty ? "\(spec.title) (\(extensionName))" : "\(spec.title) (\(extensionName)) · \(args)"
     }
 
     public func scope(for input: JSONValue) -> ToolScope {

@@ -33,6 +33,7 @@ struct UpdateView: View {
         case .idle, .checking: String(localized: "Looking for a newer Sidefolk…")
         case .upToDate: String(localized: "Sidefolk is up to date")
         case .available(let o): String(localized: "Sidefolk \(o.version.shown) is ready", comment: "An update: “Sidefolk 0.1.0 snapshot 430 is ready”")
+        case .ready(let o): String(localized: "Sidefolk \(o.version.shown) will install by itself", comment: "An update downloaded and checked, waiting to restart Sidefolk")
         case .downloading(let o, _, _), .verifying(let o), .installing(let o):
             String(localized: "Updating to Sidefolk \(o.version.shown)", comment: "An update in progress")
         case .restarting: String(localized: "Restarting Sidefolk…")
@@ -45,6 +46,8 @@ struct UpdateView: View {
         switch model.phase {
         case .idle, .checking, .upToDate, .available:
             String(localized: "You have Sidefolk \(model.running).", comment: "The version that runs now")
+        case .ready:
+            String(localized: "It's downloaded and checked. Sidefolk restarts once you've been away for a few minutes, or the next time you quit it.")
         case .downloading(_, let received, let total):
             String(localized: "Downloading \(ByteCountFormatter.string(fromByteCount: received, countStyle: .file)) of \(ByteCountFormatter.string(fromByteCount: total, countStyle: .file))…",
                    comment: "Download progress: “Downloading 12 MB of 24 MB…”")
@@ -62,6 +65,8 @@ struct UpdateView: View {
             ProgressView().progressViewStyle(.linear).tint(Theme.accent)
         case .downloading(_, let received, let total):
             ProgressView(value: Double(received), total: Double(max(total, 1))).progressViewStyle(.linear).tint(Theme.accent)
+        case .ready(let offer):
+            notes(offer)
         case .available(let offer):
             notes(offer)
             if case .download(let reason) = model.plan {
@@ -98,6 +103,10 @@ struct UpdateView: View {
                 Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
                 Button(model.plan == .replace ? "Update and Restart" : "Download") { actions?.install(offer) }
                     .buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
+            case .ready:
+                Spacer()
+                Button("Later") { actions?.later() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
+                Button("Restart Now") { actions?.restartNow() }.buttonStyle(.sf(.primary)).keyboardShortcut(.defaultAction)
             case .checking, .downloading, .verifying:
                 Spacer()
                 Button("Cancel") { actions?.cancel() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)

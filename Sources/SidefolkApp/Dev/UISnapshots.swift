@@ -227,6 +227,14 @@ enum UISnapshots {
             // Settings › General with a version waiting (D46).
             fixtures.updates.phase = .available(UpdateController.sampleOffer)
             try await page("page-settings-general-update", SettingsTabContent(tab: .general, model: settings), width: width)
+            // Installing by itself, a version ready, an extension update to look at, and add-ons waiting (D70).
+            settings.update { $0.updates.app = .install }
+            fixtures.updates.phase = .ready(UpdateController.sampleOffer)
+            fixtures.updates.addonReview = Self.sampleAddons.filter { $0.kind == .extension }.prefix(1).map { $0 }
+            fixtures.updates.addonWaiting = Self.sampleAddons
+            try await page("page-settings-general-auto-update", SettingsTabContent(tab: .general, model: settings), width: width)
+            settings.update { $0.updates = UpdateSettings() }
+            (fixtures.updates.addonReview, fixtures.updates.addonWaiting) = ([], [])
             fixtures.updates.phase = .upToDate
             // How much Sidefolk asks, set to Full access and to stopping after 30 minutes (D37).
             let policy = settings.policy
@@ -316,7 +324,7 @@ enum UISnapshots {
             let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
                           ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
-                          ("desktop-ask-internet", sampleAskInternet()),
+                          ("desktop-ask-internet", sampleAskInternet()), ("desktop-ask-outside", sampleAskOutside()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
                           ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
@@ -349,6 +357,10 @@ enum UISnapshots {
             }
             try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
             try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 480)
+            // One per source (D71): Sidefolk's own from the gallery, the same permissions from a folder, an update asking for more.
+            try await page("sheet-install-gallery", InstallPreviewSheet(preview: FixtureServices.galleryPreview, model: settings), width: 480)
+            try await page("sheet-install-unknown", InstallPreviewSheet(preview: FixtureServices.unknownMirrorPreview, model: settings), width: 480)
+            try await page("sheet-install-update", InstallPreviewSheet(preview: FixtureServices.updatePreview, model: settings), width: 480)
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
             try await page("sheet-full-access", FullAccessSheet(model: settings), width: 460)
@@ -703,6 +715,33 @@ enum UISnapshots {
         return ask
     }
 
+    /// Cards after outside content (D71): the founder's "mirror my screen to the living room TV" in Full access, after
+    /// Miraya's own list of TVs (calm), and someone else's extension after a web page (strong). Arguments in words.
+    private static func sampleAskOutside() -> AskModel {
+        let ask = AskModel()
+        ask.extensionLooks = ["dev.sidefolk.miraya": ExtensionLook(name: "Miraya", iconPath: nil, folk: "byte"),
+                              "com.example.uploader": ExtensionLook(name: "Uploader", iconPath: nil, folk: nil)]
+        var mirror = ApprovalRequest(tool: "ext.miraya.share_screen", title: "Share screen to TV",
+                                     summary: "Share screen to TV (Miraya) · " + ArgumentWords.line(["tv": "living room"], schema: .object([:])),
+                                     risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: false, tainted: true,
+                                     effect: .usesInternet, extensionId: "dev.sidefolk.miraya")
+        mirror.input = JSONValue.object(["tv": "living room"]).prettyString
+        mirror.taintedBy = .extension(name: "Miraya", official: true)
+        mirror.mode = .fullAccess
+        ask.add(.approval(mirror), caption: "mirror my screen to the living room TV")
+        let input: JSONValue = ["file": .string(NSHomeDirectory() + "/Documents/Taxes 2025.pdf"), "public": true]
+        var upload = ApprovalRequest(tool: "ext.uploader.send", title: "Send a file",
+                                     summary: "Send a file (Uploader) · " + ArgumentWords.line(input, schema: .object([:])),
+                                     risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/Documents/Taxes 2025.pdf"]),
+                                     canAlways: false, tainted: true, effect: .usesInternet, extensionId: "com.example.uploader")
+        upload.input = input.prettyString
+        upload.taintedBy = .web
+        upload.firstParty = false
+        upload.mode = .askOncePerKind
+        ask.add(.approval(upload), caption: "summarize that page and share my notes")
+        return ask
+    }
+
     private static func sampleBubbles() -> [(String, BubbleModel)] {
         func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
             let model = BubbleModel()
@@ -748,11 +787,21 @@ enum UISnapshots {
     }
 
     /// The update window's states (D46): file name, phase, and how this copy would install it.
+    /// Gallery entries for Settings › Updates' add-on rows (D70).
+    private static var sampleAddons: [AddonEntry] {
+        [("dev.sidefolk.git", "Git", "extension"), ("dev.sidefolk.companions.kiko", "Kiko", "companion")].compactMap { id, name, kind in
+            let json: [String: Any] = ["id": id, "kind": kind, "name": name, "tagline": "", "description": "", "author": "Sidefolk",
+                                       "version": "1.0.0-snapshot.3", "file": "x.zip", "bytes": 1, "sha256": String(repeating: "0", count: 64)]
+            return (try? JSONSerialization.data(withJSONObject: json)).flatMap { try? JSONDecoder().decode(AddonEntry.self, from: $0) }
+        }
+    }
+
     private static var updatePhases: [(String, UpdateModel.Phase, InstallPlan)] {
         let offer = UpdateController.sampleOffer
         return [
             ("available", .available(offer), .replace),
             ("available-download", .available(offer), .download(.notWritable)),
+            ("ready", .ready(offer), .replace),
             ("downloading", .downloading(offer, received: 9_400_000, total: offer.image.size), .replace),
             ("verifying", .verifying(offer), .replace),
             ("downloaded", .downloaded(offer, URL(fileURLWithPath: "/Users/you/Downloads/Sidefolk-0.1.0-snapshot.430.dmg"), .translocated), .replace),

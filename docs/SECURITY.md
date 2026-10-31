@@ -28,7 +28,9 @@ file writes, custom-scheme open and network to a model-built URL = at least medi
 as user-given only when it, or for opening a link its site, appears in the user's own message:
 `UserMentions`); manifest risk can raise but never lower them.
 Approval cards render the tool's deterministic `summary(input)` and raw args (full URL, absolute
-path, verbatim command), never model prose. A medium card's label says what the call can do
+path, verbatim command), never model prose. An extension's arguments are said in words (`ArgumentWords`: each value
+the call's own, cleaned and clipped), with the exact request one click away (D71); a card after outside content says
+what was read first and why it asks (`ApprovalReason`), never changing what Guard decided. A medium card's label says what the call can do
 (`ApprovalRequest.Effect`: reads private data, reads files, uses the internet, opens a link or app, uses an
 extension, changes files, runs a program, changes things), from what Sidefolk lets it do: for an extension
 its sandbox's permissions, never the manifest's word that a tool changes nothing. Approval is bound to `SHA-256(tool, canonical args)`
@@ -404,7 +406,9 @@ means false, ≤ 64 KiB.
   IHDR must say square 64–1024 px; a PDF must parse with CoreGraphics as one unencrypted, square page.
   Never SVG. Nothing in it is executed or fetched; the app draws the pinned, installed copy.
 - The install screen names dangerous combinations, e.g. read ~/Documents + network = can upload
-  them.
+  them: as a red warning before the permissions, except for Sidefolk's own signed gallery extensions, where the
+  same sentences are a calm "Good to know" (D71). Where it comes from is said first; an update that adds a
+  permission is shown prominently whoever signed it.
 
 **T14 Tamper and update (M/H).**
 - Install copies the folder into `Extensions/<id>/`, read-only.
@@ -667,8 +671,8 @@ so updates carry on.
 of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed about a download but its signature:
 - *Where from.* Only `github.com` and GitHub's file hosts over https, redirects included, in an ephemeral session;
   a file larger than the catalog says is cut off. The request carries Sidefolk's version and nothing about the
-  person; the catalog is fetched when the person opens a gallery, or at launch when their chosen companion is
-  missing.
+  person; the catalog is fetched when the person opens a gallery, at launch when their chosen companion is
+  missing, and for updates 90 s after launch and every six hours (D70).
 - *The catalog* is itself a signed bundle (`dev.sidefolk.addons.catalog`). Every pack must be signed, strictly and
   over every file, with a Developer ID Application certificate of the team in the app's own Info.plist, and carry
   the exact identifier the catalog lists; its size and SHA-256 must match the catalog, and its Info.plist the id and
@@ -680,7 +684,10 @@ of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed a
   Anyone else's 3D companion waits for a data-only format.
 - *Extensions* go through the install preview like any extension, with its permissions and warnings; origin
   `official` makes them first-party (T2's rule doesn't apply to Sidefolk's own words, D39) and drops the download
-  mark after the checks, as for built-ins. They are never installed or updated without the person's click.
+  mark after the checks, as for built-ins. They are never installed without the person's click. An update installs
+  by itself only while "Update add-ons automatically" is on and only if it widens nothing the person agreed to
+  (D70: no new permission, judged on the permissions themselves, no tool riskier than before, no `background`);
+  otherwise it waits for the same install sheet. Its pack is fetched and checked exactly as a click would.
 - *A stolen GitHub account* can replace files in the release but can't sign them. A stolen Developer ID key is
   answered by Apple's revocation, as for the app. Downgrades: an older signed pack the catalog lists would install
   only if the person chose it; the gallery offers Update only for a newer version.

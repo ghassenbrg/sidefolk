@@ -48,6 +48,8 @@ public final class BrainToolbox: Sendable {
     public let mentions: UserMentions
     private let executor: ToolExecutor
     private let tainted = Mutex(false)
+    /// The first untrusted result's source, for the cards that follow (D71).
+    private let taintSource = Mutex<TaintSource?>(nil)
     private let closed = Mutex(false)
     private let emit: @Sendable (AgentEvent) -> Void
     private let results = Mutex<[ToolOutcome]>([])
@@ -133,7 +135,7 @@ public final class BrainToolbox: Sendable {
         // One call may wait twice (folder access, then the action); the pause covers both.
         let waited = Mutex(false)
         let outcome = await executor.execute(name: spec.name, input: input, caller: .agent(runId: runId), tainted: isTainted,
-                                             mentions: mentions, onWaiting: { [self] _ in
+                                             taintedBy: taintSource.withLock { $0 }, mentions: mentions, onWaiting: { [self] _ in
             let first = waited.withLock { w in
                 defer { w = true }
                 return !w
@@ -142,7 +144,10 @@ public final class BrainToolbox: Sendable {
             emit(.phase(.waitingForApproval))
         })
         if waited.withLock({ $0 }) { endWait() }
-        if outcome.untrusted { tainted.withLock { $0 = true } }
+        if outcome.untrusted {
+            tainted.withLock { $0 = true }
+            taintSource.withLock { if $0 == nil { $0 = outcome.source } }
+        }
         if case .unanswered(stop: true) = outcome.status {
             let action = stop.withLock { s -> (@Sendable () -> Void)? in
                 s.requested = true

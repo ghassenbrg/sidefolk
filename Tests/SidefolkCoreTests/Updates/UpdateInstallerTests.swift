@@ -67,7 +67,7 @@ import Testing
                                     images: images, code: code, place: { _ in place },
                                     relaunch: { pid, app, leftover, _ in
                                         if relaunchFails { throw POSIXError(.EAGAIN) }
-                                        relaunched.add("\(pid) \(app.lastPathComponent) \(leftover.lastPathComponent)")
+                                        relaunched.add("\(pid) \(app?.lastPathComponent ?? "-") \(leftover.lastPathComponent)")
                                     }), images)
         }
     }
@@ -115,6 +115,26 @@ import Testing
         #expect(throws: UserFacingError.self) { try installer.install(staged) }
         #expect(scene.marker(scene.running) == "old")
         #expect(scene.marker(staged) == "new")
+    }
+
+    /// An update ready when the person quits (D70) goes in place without opening anything: the next launch is the
+    /// new version, and only the old copy is left for the shell to remove.
+    @Test func atQuitTheCopyGoesInWithoutReopening() throws {
+        let scene = try Scene()
+        let staged = BundleSwap.stagingURL(beside: scene.running, version: ReleaseVersion("0.1.0-snapshot.430")!)
+        try Scene.bundle(at: staged, id: Self.id, release: "0.1.0-snapshot.430", marker: "new")
+        let relaunched = Recorder<String>()
+        let (installer, _) = scene.installer(relaunched: relaunched)
+        try installer.installAtQuit(staged)
+        #expect(scene.marker(scene.running) == "new")
+        #expect(scene.marker(staged) == "old")
+        #expect(relaunched.all == ["4242 - .Sidefolk-update-0.1.0-snapshot.430.app"])
+        // Nothing to arrange the removal with: the copy stays in place, and the next launch tidies the old one.
+        let (stuck, _) = scene.installer(relaunchFails: true)
+        try FileManager.default.removeItem(at: staged)
+        try Scene.bundle(at: staged, id: Self.id, release: "0.1.0-snapshot.431", marker: "newer")
+        try stuck.installAtQuit(staged)
+        #expect(scene.marker(scene.running) == "newer")
     }
 
     /// The waiting shell itself, pointed at a process that has already exited and at a bundle `open` can't

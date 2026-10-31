@@ -51,8 +51,8 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var version: String
     var description: String
     var sourceFolder: URL
-    var permissionLines: [String]
-    var warnings: [String]
+    /// Where it comes from, what it may do and what guards it, and how loudly to say it (D71).
+    var review: InstallReview
     var toolNames: [String]
     var watcherNames: [String]
     /// Sentences it will answer without the AI, as "time in …" (D50).
@@ -60,14 +60,14 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     /// Pages it adds to Home, and whether any is read in the background (D62).
     var pageNames: [String] = []
     var pagesInBackground = false
-    var isUpdate: Bool
     var folk: String?
     var iconPath: String?
-    /// A draft Sidefolk's AI wrote at the person's request (D39), not a folder from elsewhere.
-    var fromDraft = false
-    /// Sidefolk's own, from the add-on gallery, its signature checked (D55).
-    var fromGallery = false
 
+    var isUpdate: Bool { review.update != nil }
+    /// A draft Sidefolk's AI wrote at the person's request (D39), not a folder from elsewhere.
+    var fromDraft: Bool { review.source == .draft }
+    /// From the add-on gallery, its signature checked (D55).
+    var fromGallery: Bool { review.source == .gallery }
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }
 
@@ -265,6 +265,8 @@ protocol AppServices: AnyObject {
     func notificationsAuthorized() async -> Bool
     func requestNotifications() async
     func settingsChanged()
+    /// Gallery companions were updated on disk: their pictures are drawn again, and the one on the desktop reloads.
+    func companionsUpdated(_ names: [String])
     func showCompanion(_ visible: Bool)
     func replayOnboarding()
     /// Opens Settings, on `tab` if given (Agents: connect Claude Code / Codex, install the sidefolk command).

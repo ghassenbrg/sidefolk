@@ -49,16 +49,17 @@ public enum BundleSwap {
     }
 
     /// Once process `pid` has quit, opens `app` and removes `leftover` (the old copy, now under the staging name).
+    /// With no `app` it only removes: an update put in place as Sidefolk quits (D70) waits for the next launch.
     /// The waiting shell gets only its arguments: no paths are pasted into the script.
-    public static func relaunch(after pid: Int32, open app: URL, removing leftover: URL, environment: [String: String] = [:]) throws {
+    public static func relaunch(after pid: Int32, open app: URL?, removing leftover: URL, environment: [String: String] = [:]) throws {
         let env = environment.sorted { $0.key < $1.key }.flatMap { ["--env", "\($0.key)=\($0.value)"] }
         let script = """
             pid=$1; app=$2; old=$3; shift 3
             while kill -0 "$pid" 2>/dev/null; do sleep 0.2; done
-            /usr/bin/open "$@" "$app"
+            [ -n "$app" ] && /usr/bin/open "$@" "$app"
             case "$old" in */\(prefix)*.app) /bin/rm -rf "$old" ;; esac
             """
-        _ = try PosixSpawn.run("/bin/sh", arguments: ["-c", script, "sh", String(pid), app.path, leftover.path] + env,
+        _ = try PosixSpawn.run("/bin/sh", arguments: ["-c", script, "sh", String(pid), app?.path ?? "", leftover.path] + env,
                                environment: nil, searchPath: false,
                                options: PosixSpawn.Options(newProcessGroup: true, closeOtherDescriptors: true))
     }

@@ -40,8 +40,8 @@ import Testing
         #expect(vitals.text.contains("Valid."))
         guard ExtFixtures.hasAddons else { return }
         let images = ExtensionValidator.validate(at: ExtFixtures.builtIn("images"), paths: paths, resolver: Self.resolver)
-        #expect(images.summary?.texts == ["Can read and change files in a folder you name, for that request only, once you approve it",
-                                          "Can use the Mac's graphics hardware for pictures"])
+        #expect(images.summary?.texts == ["Can read and change files in a folder you name, for that request only",
+                                          "Can use the Mac's graphics hardware for pictures", "Can't use the internet"])
     }
 
     @Test func unknownKeysAreRejectedAnywhere() throws {

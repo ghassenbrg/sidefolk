@@ -268,7 +268,7 @@ core; the app holds the audio and speech frameworks.
   `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
   plays a file into a running debug app as if the talk key were held.
 
-## Updates (D46)
+## Updates (D46, D70)
 
 Core (`Sources/SidefolkCore/Updates/`), no UI: `ReleaseVersion` (semver order: snapshot 9 < snapshot 411 <
 the release), `ReleaseFeed` (GitHub's release list into `UpdateOffer`s; drafts, odd tags and releases without
@@ -277,9 +277,14 @@ ask again, kept under the database's `updates` key), `UpdateInstaller` (download
 stage, swap; every outside step behind a protocol so tests run on folders), `SigningCheck` (`SigningFacts` of
 the running app and the requirement a replacement must meet), `InstallPlan` (replace itself, or leave the
 image in Downloads, and why), `BundleSwap` (staging, quarantine, `renamex_np` swap, the reopening shell).
-`AppSettings.updates` holds the switch, the channel and a skipped version. The app's `UpdateController`
-schedules the looks, brings an offer up as a gentle bubble (`source` "update", which waits through quiet mode),
-keeps `UpdateModel` for Settings › General, the menu bar and the update window, and quits for the swap.
+`AppSettings.updates` holds what to do about Sidefolk's own versions (`AppUpdateMode`: off, tell, install), whether
+add-ons update by themselves, the channel and a skipped version (D70). The app's `UpdateController` schedules the
+looks, brings an offer up as a gentle bubble (`source` "update", which waits through quiet mode) or, on Install
+automatically, prepares it out of sight and waits for `InstallMoment` (the coordinator's `installSignals`) or the
+quit (`installAtQuit`); it keeps `UpdateModel` for Settings › General, the menu bar and the update window, and quits
+for the swap. Add-ons: Core's `AddonUpdater` runs one look (`AddonUpdateRule`: companions and themes by themselves,
+an extension only when `ExtensionUpdateDiff.widens` is false), and the app's `AddonUpdateController` schedules it,
+keeps the add-on rows of `UpdateModel` and posts the heads-up for updates to review.
 A published app knows its release from Info.plist's `SidefolkRelease`; without it the app never replaces
 itself. Release side: docs/RELEASE.md › Updates.
 

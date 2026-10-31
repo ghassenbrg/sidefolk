@@ -19,10 +19,8 @@ struct SkippedStepRow: View {
                 Text(step.request.summary).font(Theme.Font.body).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 ApprovalDetails(details: step.request.details)
-                if step.request.tainted {
-                    Label("This came up while reading outside content. Check it carefully.", systemImage: "exclamationmark.triangle")
-                        .font(Theme.Font.caption).foregroundStyle(Theme.danger)
-                }
+                if let input = step.request.input { ExactRequest(input: input) }
+                if let reason = ApprovalReason(step.request) { ApprovalReasonLine(reason: reason) }
                 outcome.font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 ButtonRow(spacing: 6) {
                     Button("Run it now", action: run)

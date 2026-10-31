@@ -1,10 +1,12 @@
 import AppKit
 import SidefolkCore
 
-/// Looks for a newer Sidefolk and asks before installing it (D46). A published copy looks a minute after launch
-/// (unless it looked within the hour) and once a day while "Check for updates automatically" is on; a copy built
-/// on this Mac only when asked. A version found by itself is brought up in a gentle bubble, which waits through
-/// quiet mode and full screen and isn't repeated for three days; Settings and the menu bar keep it in reach.
+/// Looks for a newer Sidefolk and asks before installing it (D46), or installs it by itself (D70). A published copy
+/// looks a minute after launch (unless it looked within the hour) and once a day unless Settings › Updates says
+/// "Don't check"; a copy built on this Mac only when asked. On "Tell me", a version found by itself is brought up in
+/// a gentle bubble, which waits through quiet mode and full screen and isn't repeated for three days; Settings and
+/// the menu bar keep it in reach. On "Install automatically", it is downloaded and checked as Update does, then put
+/// in place at a calm moment (`InstallMoment`) or as Sidefolk quits; when that can't be done, it tells instead.
 @MainActor
 final class UpdateController: UpdateActions {
     let model = UpdateModel()
@@ -19,10 +21,22 @@ final class UpdateController: UpdateActions {
     }()
     private var loop: Task<Void, Never>?
     private var work: Task<Void, Never>?
+    /// The checked copy beside the app, waiting for a calm moment (D70).
+    private var staged: URL?
+    private var calm: Task<Void, Never>?
+    /// A version that couldn't be installed by itself in this run: it's told about, not tried again until relaunch
+    /// (Update still tries).
+    private var gaveUp: ReleaseVersion?
+    /// What is going on around the app, read when an automatic install considers restarting (the coordinator's).
+    var signals: () async -> InstallMoment.Signals = { InstallMoment.Signals() }
     /// Quits so the new copy can open: the app's own quit, which tidies up first.
     var quit: () -> Void = { AppDelegate.quit() }
 
     static let source = "update"
+    /// The note after an automatic install: "Updated to …", with What's New.
+    static let updatedKind = "updated"
+    /// How often a ready update looks for its calm moment.
+    static let calmCheck: Duration = .seconds(30)
 
     init(runtime: SidefolkRuntime, app: RunningApp = .current()) {
         self.runtime = runtime
@@ -42,9 +56,21 @@ final class UpdateController: UpdateActions {
         await installer.removeLeftovers()
         let state = await checker.state()
         model.lastCheck = state.lastCheck
-        if let offer = newest(in: state.offers) { model.phase = .available(offer) }
+        if let offer = newest(in: state.offers) {
+            model.phase = .available(offer)
+            // Found by an earlier run, on "Install automatically": prepared now rather than at tomorrow's look.
+            if app.release != nil, installsByItself { prepareByItself(offer) }
+        }
         await runtime.attention.onAction(kind: Self.source) { [weak self] item, action in
             await MainActor.run { self?.answer(item, action) }
+        }
+        await runtime.attention.onAction(kind: Self.updatedKind) { item, action in
+            guard action == "notes", let page = item.refId.flatMap(URL.init(string:)), page.scheme == "https" else { return }
+            await MainActor.run { _ = NSWorkspace.shared.open(page) }
+        }
+        if let installed = await checker.takeInstalled(), installed.version == app.version {
+            Log.shared.info("updates", "opened after installing by itself", ["version": installed.version.description])
+            _ = await runtime.attention.post(Self.updatedNotice(installed))
         }
         loop = Task { [weak self] in
             try? await Task.sleep(for: .seconds(60))
@@ -60,12 +86,14 @@ final class UpdateController: UpdateActions {
 
     /// The channel or the skipped version changed: what's on offer may have too.
     func settingsChanged() {
-        guard !model.busy else { return }
+        guard !model.busy, staged == nil else { return }
         Task {
             let offers = await checker.state().offers
             guard !model.busy else { return }
             if let offer = newest(in: offers) {
                 model.phase = .available(offer)
+                // Just switched to "Install automatically" with a version on offer: it goes ahead.
+                if app.release != nil, installsByItself { prepareByItself(offer) }
             } else if model.offer != nil, case .available = model.phase {
                 model.phase = .upToDate
             }
@@ -74,14 +102,16 @@ final class UpdateController: UpdateActions {
 
     /// The version the menu bar offers, if one is waiting.
     var waitingVersion: String? {
-        if case .available(let offer) = model.phase { return offer.version.shown }
-        return nil
+        switch model.phase {
+        case .available(let offer), .ready(let offer): offer.version.shown
+        default: nil
+        }
     }
 
     // MARK: Looking
 
     private func lookIfDue(gap: TimeInterval) async {
-        guard app.release != nil, runtime.settings.current.updates.automatic, !model.busy,
+        guard app.release != nil, runtime.settings.current.updates.automatic, !model.busy, staged == nil,
               await checker.isDue(after: gap) else { return }
         await look(manual: false)
     }
@@ -97,7 +127,11 @@ final class UpdateController: UpdateActions {
                 return
             }
             if manual || !model.busy { model.phase = .available(offer) }
-            if !manual, await checker.shouldAsk(about: offer) { await bringUp(offer) }
+            if !manual, installsByItself {
+                prepareByItself(offer)
+            } else if !manual, await checker.shouldAsk(about: offer) {
+                await bringUp(offer)
+            }
             Log.shared.info("updates", "looked", ["newest": offer.version.description, "manual": String(manual)])
         } catch {
             let e = AppCoordinator.userFacing(error, fallback: String(localized: "Sidefolk couldn't look for updates."))
@@ -139,10 +173,102 @@ final class UpdateController: UpdateActions {
         }
     }
 
+    // MARK: Installing by itself (D70)
+
+    /// "Install automatically", and this copy can replace itself (D46's cases: otherwise it tells, as on "Tell me").
+    private var installsByItself: Bool {
+        runtime.settings.current.updates.app == .install && installer.plan == .replace
+    }
+
+    /// Downloads and checks `offer` exactly as Update does, out of sight, then waits for a calm moment. If anything
+    /// fails, it tells the person instead, as on "Tell me".
+    private func prepareByItself(_ offer: UpdateOffer) {
+        guard work == nil, staged == nil, gaveUp != offer.version else { return }
+        model.plan = installer.plan
+        model.phase = .downloading(offer, received: 0, total: offer.image.size)
+        let installer = self.installer
+        let progress: @Sendable (UpdateInstaller.Step) -> Void = { [weak self] step in
+            let owner = self
+            Task { @MainActor in owner?.show(step, of: offer) }
+        }
+        Log.shared.info("updates", "installing by itself", ["version": offer.version.description])
+        work = Task { [weak self] in
+            do {
+                let prepared = try await installer.prepare(offer, step: progress)
+                try Task.checkCancellation()
+                guard case .staged(let staged) = prepared else { throw UserFacingError("This copy of Sidefolk can't update itself.") }
+                self?.wait(with: staged, offer)
+            } catch {
+                await self?.tell(offer, after: error)
+            }
+            self?.work = nil
+        }
+    }
+
+    /// Something went wrong on the way: the person hears of the version as on "Tell me", and Update tries again.
+    private func tell(_ offer: UpdateOffer, after error: Error) async {
+        let cancelled = error is CancellationError
+        if !cancelled {
+            gaveUp = offer.version
+            Log.shared.warning("updates", "couldn't install by itself; telling instead",
+                               ["version": offer.version.description, "error": String(describing: error)])
+        }
+        model.phase = .available(offer)
+        if !cancelled, await checker.shouldAsk(about: offer) { await bringUp(offer) }
+    }
+
+    /// Holds the checked copy and looks for a calm moment every half minute; quitting puts it in place too.
+    private func wait(with staged: URL, _ offer: UpdateOffer) {
+        self.staged = staged
+        model.phase = .ready(offer)
+        calm?.cancel()
+        calm = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: Self.calmCheck)
+                guard let self, !Task.isCancelled, self.staged == staged else { return }
+                // The person may have changed their mind: then it waits for Restart Now or the quit.
+                guard runtime.settings.current.updates.app == .install else { continue }
+                let decision = InstallMoment.decide(await signals())
+                guard decision == .now, self.staged == staged else { continue }
+                Log.shared.info("updates", "calm moment: installing", ["version": offer.version.description])
+                put(staged, offer, byItself: true)
+                return
+            }
+        }
+    }
+
+    /// Sidefolk is quitting with a checked copy waiting: it goes in place now, without reopening, so the next
+    /// launch is the new version. Called while the app quits; a failure leaves the old copy, which the next launch
+    /// tidies.
+    func installAtQuit() async {
+        guard let staged, let offer = model.readyOffer else { return }
+        self.staged = nil
+        calm?.cancel()
+        await checker.markInstalling(offer)
+        do {
+            try installer.installAtQuit(staged)
+            Log.shared.info("updates", "installed at quit", ["version": offer.version.description])
+        } catch {
+            _ = await checker.takeInstalled()
+            Log.shared.warning("updates", "couldn't install at quit", ["version": offer.version.description, "error": String(describing: error)])
+        }
+    }
+
+    /// "Updated to Sidefolk 0.1.0 snapshot 540", once, the first time the new copy opens.
+    static func updatedNotice(_ installed: UpdateState.Installed) -> AttentionRequest {
+        AttentionRequest(
+            level: .gentle, source: source,
+            title: String(localized: "Updated to Sidefolk \(installed.version.shown)", comment: "After Sidefolk installed an update by itself: “Updated to Sidefolk 0.1.0 snapshot 540”"),
+            body: String(localized: "It installed by itself, as you chose in Settings › Updates."),
+            actions: [AttentionAction(id: "notes", title: String(localized: "What's New"), isPrimary: true),
+                      AttentionAction(id: "ok", title: String(localized: "OK"))],
+            refKind: updatedKind, refId: installed.page.absoluteString)
+    }
+
     // MARK: UpdateActions
 
     func checkNow() {
-        guard !model.busy else { window.show(); return }
+        guard !model.busy, staged == nil else { window.show(); return }
         window.show()
         Task { await look(manual: true) }
     }
@@ -153,6 +279,8 @@ final class UpdateController: UpdateActions {
 
     func install(_ offer: UpdateOffer) {
         window.show()
+        // Ready already: Update and Restart restarts now.
+        if staged != nil { return restartNow() }
         guard work == nil else { return }
         Task { await runtime.attention.withdraw(refKind: Self.source, refId: offer.tag) }
         model.plan = installer.plan
@@ -172,6 +300,14 @@ final class UpdateController: UpdateActions {
             }
             self?.work = nil
         }
+    }
+
+    /// Puts the waiting copy in place now, whatever is going on: the person asked.
+    func restartNow() {
+        guard let staged, let offer = model.readyOffer else { return }
+        window.show()
+        calm?.cancel()
+        put(staged, offer, byItself: false)
     }
 
     func skip(_ offer: UpdateOffer) {
@@ -210,23 +346,33 @@ final class UpdateController: UpdateActions {
     private func finish(_ prepared: UpdateInstaller.Prepared, _ offer: UpdateOffer) {
         switch prepared {
         case .staged(let staged):
-            do {
-                // The developer's own data folder (SIDEFOLK_HOME) travels with a dev copy, as with a language change.
-                try installer.install(staged, environment: ProcessInfo.processInfo.environment.filter { $0.key.hasPrefix("SIDEFOLK_") })
-            } catch {
-                failed(offer, error)
-                return
-            }
-            model.phase = .restarting(offer)
-            Log.shared.info("updates", "installed, restarting", ["version": offer.version.description])
-            Task { [weak self] in
-                try? await Task.sleep(for: .seconds(0.8))   // long enough to read "Restarting"
-                self?.quit()
-            }
+            put(staged, offer, byItself: false)
         case .downloaded(let file, let reason):
             model.phase = .downloaded(offer, file, reason)
             Log.shared.info("updates", "downloaded", ["version": offer.version.description, "reason": reason.rawValue])
             reveal(file)
+        }
+    }
+
+    /// Swaps the checked copy in and quits so it opens. On failure nothing has changed and the window says why.
+    private func put(_ staged: URL, _ offer: UpdateOffer, byItself: Bool) {
+        self.staged = nil
+        Task { [weak self] in
+            guard let self else { return }
+            // Written first: the copy that opens says "Updated to …" once.
+            if byItself { await checker.markInstalling(offer) }
+            do {
+                // The developer's own data folder (SIDEFOLK_HOME) travels with a dev copy, as with a language change.
+                try installer.install(staged, environment: ProcessInfo.processInfo.environment.filter { $0.key.hasPrefix("SIDEFOLK_") })
+            } catch {
+                if byItself { _ = await checker.takeInstalled() }
+                failed(offer, error)
+                return
+            }
+            model.phase = .restarting(offer)
+            Log.shared.info("updates", "installed, restarting", ["version": offer.version.description, "byItself": String(byItself)])
+            try? await Task.sleep(for: .seconds(0.8))   // long enough to read "Restarting"
+            quit()
         }
     }
 
@@ -266,6 +412,9 @@ final class UpdateController: UpdateActions {
                                                          recovery: "Try again; if it happens again, download it from the release page."))
             window.show()
         case "uptodate": model.phase = .upToDate; window.show()
+        case "ready": model.phase = .ready(offer); window.show()
+        case "updated":
+            Task { _ = await runtime.attention.post(Self.updatedNotice(UpdateState.Installed(version: offer.version, page: offer.page))) }
         case "check": checkNow()
         default: break
         }

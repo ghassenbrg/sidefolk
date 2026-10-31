@@ -12,6 +12,8 @@ public struct ToolOutcome: Sendable {
 
     public var activity: ToolActivity
     public var status: Status
+    /// What an untrusted result counts as, so a card later in the run can say what was read (D71).
+    public var source: TaintSource?
 
     public var isOK: Bool { if case .ok(let r) = status { return !r.isError } else { return false } }
     public var untrusted: Bool { if case .ok(let r) = status { return r.untrusted } else { return false } }
@@ -85,11 +87,11 @@ public final class ToolExecutor: Sendable {
     ///     means "no", whoever the caller is.
     ///   - onWaiting: called when the call is parked waiting for the user's approval.
     public func execute(
-        name: String, input: JSONValue, caller: Caller, tainted: Bool = false, mentions: UserMentions? = nil,
+        name: String, input: JSONValue, caller: Caller, tainted: Bool = false, taintedBy: TaintSource? = nil, mentions: UserMentions? = nil,
         timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil,
         onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil
     ) async -> ToolOutcome {
-        await perform(name: name, input: input, caller: caller, tainted: tainted, mentions: mentions, timeout: timeout,
+        await perform(name: name, input: input, caller: caller, tainted: tainted, taintedBy: taintedBy, mentions: mentions, timeout: timeout,
                       approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil)
     }
 
@@ -100,13 +102,14 @@ public final class ToolExecutor: Sendable {
     public func runSkipped(id: String) async -> ToolOutcome? {
         guard let step = await skipped.take(id) else { return nil }
         let call = step.call
-        return await perform(name: call.tool, input: call.input, caller: call.caller, tainted: call.tainted, mentions: call.mentions,
+        return await perform(name: call.tool, input: call.input, caller: call.caller, tainted: call.tainted, taintedBy: step.request.taintedBy,
+                             mentions: call.mentions,
                              timeout: 90, approvalTimeout: nil, onWaiting: nil, answered: step.request)
     }
 
     /// - Parameter answered: a question the person already said "Allow" to, outside a card.
     private func perform(
-        name: String, input: JSONValue, caller: Caller, tainted: Bool, mentions: UserMentions?, timeout: TimeInterval,
+        name: String, input: JSONValue, caller: Caller, tainted: Bool, taintedBy: TaintSource?, mentions: UserMentions?, timeout: TimeInterval,
         approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?
     ) async -> ToolOutcome {
         let callId = Identifier.make()
@@ -178,7 +181,13 @@ public final class ToolExecutor: Sendable {
                 await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
                 act.error = why
                 return ToolOutcome(activity: act, status: .denied(why))
-            case .ask(let request):
+            case .ask(var request):
+                // What the card needs to explain itself (D71); Guard's question is the same without it.
+                let ext = ((tool as? ExternalFacade)?.base ?? tool) as? ExtensionTool
+                if ext != nil, input.objectValue?.isEmpty == false { request.input = input.prettyString }
+                request.firstParty = ext?.firstParty ?? true
+                request.mode = policy.mode(for: caller)
+                if tainted { request.taintedBy = taintedBy }
                 let wait = approvalTimeout.map { (seconds: min($0, Self.approvalTimeout), whenTimeIsUp: UnansweredRule.Action?.none) }
                     ?? Self.wait(for: caller, policy: policy, present: present, minute: minute)
                 let answer: ApprovalDecision
@@ -287,7 +296,7 @@ public final class ToolExecutor: Sendable {
                           error: nil, undoable: act.undoAvailable)
             }
             events.publish(.toolFinished(act, ok: !result.isError))
-            return ToolOutcome(activity: act, status: .ok(result))
+            return ToolOutcome(activity: act, status: .ok(result), source: result.untrusted ? TaintSource.of(tool) : nil)
         } catch {
             let ufe = Self.userFacing(error, tool: tool.spec)
             act.error = ufe.message

@@ -146,7 +146,7 @@ import Testing
     @Test func networkAndFoldersNamedPerCallAreWarnedAbout() {
         let summary = PermissionSummary.forExtension(ExtensionPermissions(network: true, folders: .write))
         #expect(summary.texts == ["Can use the internet",
-                                  "Can read and change files in a folder you name, for that request only, once you approve it"])
+                                  "Can read and change files in a folder you name, for that request only"])
         #expect(summary.warnings.contains { $0.contains("upload what's in that folder") })
     }
 

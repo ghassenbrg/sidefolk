@@ -172,13 +172,20 @@ struct CompanionPicker: View {
         return VStack(alignment: .leading, spacing: Theme.Space.s) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
                 ForEach(offered, id: \.self) { choice in
+                    let update = model.gallery.update(forCompanion: choice.rawValue)
                     CompanionCard(choice: choice,
                                   image: CompanionArt.preview(choice, style: settings.style(for: choice),
                                                               threeD: CompanionArt.threeD(choice, in: settings), side: 84),
-                                  selected: custom == nil && local == nil && choice == chosen) {
+                                  selected: custom == nil && local == nil && choice == chosen,
+                                  update: update.map { entry in { Task { await model.gallery.get(companion: entry, choose: false) } } }) {
                         model.update { $0.choose(choice) }
                     }
                     .contextMenu {
+                        if let update {
+                            Button("Update \(choice.defaultName) to \(update.version)") {
+                                Task { await model.gallery.get(companion: update, choose: false) }
+                            }
+                        }
                         if model.gallery.companions.contains(where: { $0.companion == choice.rawValue }) {
                             Button("Remove \(choice.defaultName)") { Task { await model.gallery.remove(companion: choice.rawValue) } }
                         }
@@ -317,6 +324,8 @@ private struct CompanionCard: View {
     var choice: CompanionChoice
     var image: NSImage
     var selected: Bool
+    /// The gallery has a newer version and add-ons don't update by themselves (D70): a mark that installs it.
+    var update: (() -> Void)?
     var action: () -> Void
 
     var body: some View {
@@ -339,6 +348,17 @@ private struct CompanionCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(choice.defaultName), \(CompanionArt.role(choice))")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .overlay(alignment: .topTrailing) {
+            if let update {
+                Button(action: update) {
+                    Image(systemName: "arrow.down.circle.fill").font(.system(size: 15)).foregroundStyle(Theme.accent)
+                }
+                .buttonStyle(.plain)
+                .padding(Theme.Space.xs)
+                .help(Text("Update \(choice.defaultName)", comment: "The mark on a companion the gallery has a newer version of"))
+                .accessibilityLabel(Text("Update \(choice.defaultName)", comment: "The mark on a companion the gallery has a newer version of"))
+            }
+        }
     }
 }
 
