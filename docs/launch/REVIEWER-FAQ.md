@@ -19,15 +19,15 @@ an API key, or Ollama or LM Studio. Voice works best on macOS 26 or later.
 
 1. Open it. Mochi says hello and sets a real reminder two minutes out, without AI.
 2. Press ⌘⇧Space and try: `remind me tomorrow at 9 to send the deck`, `add oat milk to my groceries list`,
-   `watch example.com/pricing`, `tell me the CPU every 10 seconds`. Watch the hint line: it says what Enter will
-   do and "no AI".
-3. Double-click Mochi for Home: Now, the Notebook, Activity.
-4. Settings › AI: pick Claude Code, Codex, an API key or a local model, then ask a real question.
-5. Ask it to tidy something in a folder you choose. Read the approval card, then look at Activity and
+   `watch example.com/pricing`, `tell me the CPU every 10 seconds`. Watch the line under the field: it says what Return
+   will do and "no AI".
+3. Double-click Mochi for Home: Today, the Notebook, On duty, History.
+4. Settings › Brain: pick Claude Code, Codex, an API key or a local model, then ask a real question.
+5. Ask it to tidy something in a folder you choose. Read the permission slip, then look at History and
    try Undo.
 6. Settings › Companion: try another companion and watch it think, work and sleep.
-7. Optional: Settings › Voice, turn on voice input, hold ⌘⇧Space and talk.
-8. Optional, for developers: Settings › Agents › Connect Claude Code, then ask Claude Code to "leave me a
+7. Optional: Settings › Brain › Voice, turn on voice input, hold ⌘⇧Space and talk.
+8. Optional, for developers: Settings › Connections › Connect Claude Code, then ask Claude Code to "leave me a
    note in Sidefolk", or run `sidefolk run -- sleep 5` in Terminal.
 
 ## What it is and isn't
@@ -38,7 +38,7 @@ kept for follow-ups and never shown as a chat log.
 
 **What does it do without AI?**
 Notes, ideas, tasks, lists, "About you" facts, reminders with repeats, watches on pages, sites, files,
-folders and programs, live values, quiet mode and search, from plain English. The drop buttons (Save,
+folders and programs, live values, Focus and Quiet, and search, from plain English. The drop buttons (Save,
 Remind me…, Watch) work in every language.
 
 **What needs AI?**
@@ -56,7 +56,7 @@ No. AI runs only when you send a request that needs it. Watches, reminders and l
 ## Privacy and safety
 
 **What leaves the Mac?**
-Only requests to the AI you chose (Settings › AI shows exactly what was last sent), pages you asked it to
+Only requests to the AI you chose (Settings › Brain shows exactly what was last sent), pages you asked it to
 read or watch, place names to Open-Meteo when you ask for the weather, the words it speaks if you chose an
 ElevenLabs voice, and traffic from extensions you allowed online. No account, no telemetry, no analytics,
 no crash reporter. The full table is in the README's Privacy section.
@@ -99,7 +99,7 @@ The complete list is in [../RELEASE-NOTES.md](../RELEASE-NOTES.md).
 
 **Who made it?** `[FOUNDER: one paragraph]`
 
-**Why a rabbit?** Mochi is the mascot. There are twelve other companions, including the original robot.
+**Why a rabbit?** Mochi is the mascot. Spark is built in too, and eight more companions are in the add-on gallery.
 
 **How is it built?** Native Swift 6: AppKit, SwiftUI, and Core Animation for the characters; SQLite for
 data. Extensions are MCP servers run in a macOS sandbox. Details in docs/ARCHITECTURE.md.

@@ -22,7 +22,7 @@ Three short columns, each with a small picture.
 
 1. **Tell it in plain words.** "remind me tomorrow at 9 to send the deck." Set in a moment, on your
    Mac: no AI, no account. (`screenshots/ask-panel-light.png`)
-2. **It comes to you.** Reminders, a page that changed, a build that failed: a small bubble with the
+2. **It comes to you.** Reminders, a page that changed, a build that failed: a small card with the
    buttons you need, and quiet when you need quiet. (`screenshots/bubble-reminder-light.png`)
 3. **It shows what it's doing.** Thinking, working, waiting for your OK, asleep. You can tell at a
    glance, without opening anything. (`Resources/Character/companion-mochi-small.png`, cropped to a row)
@@ -67,7 +67,7 @@ Three short columns, each with a small picture.
 ## 8. You stay in control
 
 - **Copy:** A fixed set of rules decides what runs, not the AI. It works only in folders you share.
-  Deleting means the Trash. Everything it did is listed in Activity, and most of it can be undone.
+  Deleting means the Trash. Everything it did is listed in History, and most of it can be undone.
 - **Pictures:** `screenshots/settings-approvals-light.png`, `screenshots/home-activity-light.png`
 
 ## 9. Private by default
@@ -87,7 +87,7 @@ Three short columns, each with a small picture.
 
 ## 11. Meet the family
 
-- **Copy:** Mochi, the original robot, Spark and ten folks. Pick one, name it, give it a colour.
+- **Copy:** Mochi, Spark and eight more from the gallery, in 3D or 2D, with ten folks to help. Pick one and name it.
 - **Picture:** `Resources/Character/companions.png` or `screenshots/settings-companion-light.png`
 
 ## 12. Ten languages

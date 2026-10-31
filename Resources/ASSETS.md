@@ -13,7 +13,7 @@ sets; reference sheets and archived generations stay in the repository.
 | App icons | [Icon](Icon/) | Full-bleed 3D Mochi sources from [the approved master](Brand/masters/mochi-app-icon.png), macOS PNG sizes, `.iconset`, `.icns` and Xcode asset catalog; the transparent logo portrait stays separate. |
 | Menu bar icons | [MenuBar](MenuBar/) | Shared rabbit design in vector PDF/SVG and 1x/2x/3x PNGs. |
 | AI service logos (third party) | [Brand/third-party](Brand/third-party/README.md) | LobeHub Icons SVGs as downloaded, their vector PDF exports, source, version, licence and trademark notes. Not Sidefolk's brand. |
-| Animated companion poses | [Companions](Companions/README.md) | Named Mochi/Spark pose folders; `masters/mochi-legacy/` preserves all 16 original Mochi poses before palette grading. |
+| 2D companion forms (D59) | [companions-2d](../companions-2d/README.md) | Style targets, painted parts sheets and the cut parts the 2D rigs draw (the old Mochi/Spark pose sprites were replaced by live rigs, D30). |
 | 3D companions (D51) | [companions-3d](../companions-3d/README.md), runtime in [Companions3D](Companions3D/) | Supplied and generated character sheets, Meshy front designs, every prompt and Meshy task id, Blender rig scripts, fabric photos; the app's rigged models (Meshy 7.1), relief maps and rendered portraits. |
 | Character review sheets | [Character](Character/) | Mochi poses, character states, icon sizes and menu-bar review images. |
 

@@ -53,7 +53,7 @@ ask, and it asks you each time.
 
 **7/** [`Resources/Character/companions.png`]
 
-Mochi is the default. There are twelve others, from the original robot to Brew and its cup of coffee.
+Mochi is the default. Spark is built in, and eight more wait in the add-on gallery, from a fox to a stone golem.
 
 It speaks ten languages and holds still when nothing is happening.
 

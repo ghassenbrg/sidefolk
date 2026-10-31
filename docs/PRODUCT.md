@@ -20,14 +20,14 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 
 1. **Presence over chat.** The body is an interface. State is visible without opening anything.
    Conversations are short exchanges that end in *results* (a saved note, a scheduled reminder),
-   not an endless transcript. Home › Conversations is where you come back to one, not where you start.
+   not an endless transcript. History is where you come back to one, not where you start.
 2. **It works when you are not looking.** Reminders, watchers and routines are deterministic,
    persistent and survive restarts. AI wakes only when reasoning is needed.
 3. **You stay in control.** A deterministic Guard (never the model) decides what may run. Risky
-   actions are confirmed in plain language. Everything is logged in Activity and most things can be
+   actions are confirmed in plain language. Everything is logged (History) and most things can be
    undone.
-4. **Respect attention.** Interruptions are rare, graded and grouped. Quiet mode, fullscreen
-   awareness, snooze and one-time re-nudges, never nagging.
+4. **Respect attention.** Interruptions are rare, graded and grouped. Focus and Quiet (with an end),
+   quiet hours, fullscreen awareness, snooze and one-time re-nudges, never nagging.
 5. **Memory you can see.** The Notebook (including "About you") is explicit, editable and deletable. No hidden
    profile. Implicit context expires.
 6. **Local first.** Everything lives on the Mac in one folder. The only network traffic is the AI
@@ -50,19 +50,20 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 
 | # | Experience | Example |
 |---|------------|---------|
-| E1 | Talk to it anywhere | Click the companion or press ⌘⇧Space, type, Enter. The panel opens beside the character. |
+| E1 | Talk to it anywhere | Click the companion or press ⌘⇧Space, type, Enter. Ask opens beside the character (or ⌘K in Home). |
 | E2 | Capture | "Save this idea to Sidefolk: extensions could have their own folk" → Pip pops up, *Saved to Sidefolk › Ideas*, Undo. |
 | E3 | Recall | "What ideas did I save for Sidefolk?" → answered from the Notebook with links to the notes. |
 | E4 | Remind | "Remind me tomorrow morning to send the document" → persists, fires at 09:00 (configurable "morning"), even after relaunch; Done / Snooze / Open. |
 | E5 | Watch | "Tell me when example.com/pricing changes", "when report.pdf lands in Downloads", "when pid 4312 exits", "when the server is back up". |
-| E5b | Report | "Every 10 seconds tell me the CPU usage", "temperature in Fukuoka every minute", "show my battery every 5 minutes" → a live value beside the companion, updated in place, with Pause/Stop on Now; "stop telling me the CPU" (D35). |
+| E5b | Report | "Every 10 seconds tell me the CPU usage", "temperature in Fukuoka every minute", "show my battery every 5 minutes" → a live value beside the companion, updated in place, with Pause/Stop on On duty; "stop telling me the CPU" (D35). |
 | E6 | Act | Open apps/URLs, list/move/rename files in folders you granted, read/write clipboard, fetch a page, run a confirmed command. |
 | E7 | Routines | "Every weekday at 9, give me my open tasks" → a scheduled prompt the companion runs and presents. |
 | E8 | Glanceable state | Sleeping, listening, thinking, working (with a prop that says *what*), waiting for approval, success, error, alert. |
 | E9 | Agents talk to it | In Claude Code: "tell Sidefolk to ping me when tests pass" → MCP tool call → companion watches and notifies. Also notes/reminders/ask_user from any MCP client. |
 | E10 | Extend it | Install an extension folder (manifest + MCP-speaking executable), see its permissions, its tools and watchers become available; or ask the companion to write a skill. |
 | E11 | Drop things on it | Drag a file, URL or text onto the character → choose Save, Ask, Remind, Watch. |
-| E12 | Trust | Activity log of every action, Permissions page, Privacy page that shows what is stored and what was last sent to the AI. |
+| E12 | Trust | History of every action, Settings › Trust for approvals and permissions, and Brain showing what was last sent to the AI. |
+| E13 | Play | Games and puzzles against the companion in the Play panel, without AI (Playtime, D75, D79). |
 
 ## 5. V1 scope
 
@@ -75,14 +76,18 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P0 Character engine: layered vector rig on Core Animation, pose-based states with smooth
   transitions, blink/breathe idle, props per activity, reduced motion, near-zero idle CPU.
 - P0 Presence modes: Always / Only when needed (peek) / Menu bar only.
-- P0 Companion choices: Mochi rabbit by default, original Sidefolk robot with its four light colors,
-  and Spark. Switching is live; existing saved choices and custom names are preserved (D27, D29).
-- P0 Ask panel beside the companion: input with a hint line (what Enter does, whether it uses AI),
-  result cards (max 3 visible), approval cards, Undo; quick intents close it 1 s after the card.
-- P0 Speech bubbles for proactive events, with actions; a count badge when several wait.
+- P0 Companion choices: Mochi by default and Spark, in 3D or 2D, built in; more from the add-on gallery (D51,
+  D55, D59); your own from a folder (D43, D60). Switching is live; saved choices and custom names are preserved.
+  (The original robot was retired, D56.)
+- P0 The Sidecard (D84) is everything on the desktop: whispers for news, cards with at most three answers that
+  fold into a count on the companion's shoulder, the light pool under its feet for its state, and permission slips
+  for approvals. Ask is its largest size: the Say field with an understanding row (what Return does, whether it
+  uses AI), requests as cards, Undo.
 - P0 Drag and drop onto the companion: Save · Remind me · Watch (URLs/files) · Ask.
-- P0 Menu bar item with a "Now" list; global hotkey ⌘⇧Space (configurable, registration checked).
-- P0 Home window: Now (reminders, watchers, sessions, jobs, waiting items), Notebook, Activity.
+- P0 The menu bar's Pocket (state, Open/Focus/Quiet, Needs you, Next up, Agents, Ask); global hotkey ⌘⇧Space
+  (configurable, registration checked).
+- P0 Home window: Today, Calendar, Notebook (with You and the Trash), On duty, History, extension pages and the
+  Gallery, with the Say bar (⌘K). One layout per place in every theme (D84; docs/DESIGN.md).
 - P1 Folks on duty: Tempo, Scout, Byte beside the companion while their job is live (max 3).
 - P2 Voice input (push-to-talk, on-device speech recognition).
 
@@ -101,11 +106,11 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 ### Memory and data
 - P0 Notebook: Inbox, About you (profile), projects/topics/lists with notes, ideas, tasks, links;
   full-text search; Trash with restore (30 days); Undo for recent changes.
-- P0 Short-term exchange history with retention (default 7 days). The Ask panel shows results, not a
-  transcript; Home › Conversations (D45) lists the kept conversations to read again, follow up in (even
+- P0 Short-term exchange history with retention (default 7 days). Ask shows results, not a
+  transcript; History (D45, D84) holds the kept conversations to read again, follow up in (even
   after the 10-minute window), or delete, one or all. "New conversation" / "start fresh", Clear all and ⌘N
-  in the panel make the next request start fresh; every answer offers Reply and Show all.
-- P0 Activity log (audit) of every tool execution and decision.
+  in Ask make the next request start fresh; every answer offers Reply and Show all.
+- P0 Activity log (audit) of every tool execution and decision, shown in History with Undo where it exists.
 - P1 Export all data (JSON) and delete all data.
 
 ### Time, watching and agents
@@ -147,14 +152,15 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P1 Skills: markdown instructions loaded on demand; the companion can propose a skill (user approves).
 
 ### Attention
-- P0 Levels and defaults in §11, quiet mode, fullscreen/away deferral, typing guard, rate limits,
+- P0 Levels and defaults in §11, Focus and Quiet with an end, quiet hours, fullscreen/away deferral, typing guard, rate limits,
   grouping, one re-nudge, snooze.
 
 ### Onboarding and settings
 - P0 First run happens on the desktop through the companion (no wizard): hello, connect Claude Code
   and Codex if found, a real reminder in 2 minutes without AI, notifications asked in context, open
   at login. AI setup is offered when first needed. Each folk introduces itself the first time it appears.
-- P0 Settings that all work: General, Companion & Attention, AI, Agents, Privacy & Permissions, Extensions.
+- P0 Settings that all work, with search (D84): General, Companion, Attention, Brain, Trust, Connections,
+  Add-ons, Appearance.
 
 ### Quality
 - P0 Structured local logs with redaction, diagnostics export, agent run records.
@@ -171,16 +177,18 @@ the person chose to let it install at a calm moment, D70.)
 ## 7. Interaction map
 
 ```
-Companion (click) ─────────────► Ask panel ──► exchange ──► result cards / approvals
+Companion (click) ─────────────► Ask (over what waits) ──► exchange ──► result cards / permission slips
 Companion (drag) ──────────────► move, settle on floor
-Companion (drop file/url/text) ► Ask panel with attachment + quick actions
-Companion (right-click) ───────► menu: Ask, Today, Notebook, Quiet 1h, Hide, Settings
+Companion (drop file/url/text) ► Ask with attachment + quick actions
+Companion (right-click) ───────► menu: Ask, Open Sidefolk, Quiet for 1 hour, Play, Hide, Settings
 Companion (double-click) ──────► Home window
-⌘⇧Space ──────────────────────► Ask panel (from anywhere)
-Menu bar icon ─────────────────► Ask, Open Sidefolk, Quiet, Show/Hide companion, Settings, Quit
-Bubble ────────────────────────► action buttons (Done, Snooze, Open, Allow/Deny, Dismiss)
+⌘⇧Space ──────────────────────► Ask (from anywhere)
+The count on its shoulder ─────► the held cards, fanned; click for Ask on top of them
+Menu bar icon ─────────────────► the Pocket (right-click: Open Sidefolk, Settings, palettes, Hide, Updates, Quit)
+Whisper or card ───────────────► answers (Done, Snooze, Open, Allow/Deny, Dismiss; ⋯ for more)
+Play menu or a game's command ─► the Play panel
 System notification ───────────► same actions when the companion is hidden/away
-External agent (MCP) ──────────► tools → Guard → companion reacts (cameo + bubble)
+External agent (MCP) ──────────► tools → Guard → companion reacts (cameo + whisper or card)
 ```
 
 ## 8. Companion states
@@ -195,7 +203,7 @@ External agent (MCP) ──────────► tools → Guard → compa
 | waiting | approval needed | holds a card, Guard beside |
 | success | action completed | happy eyes, small hop, sparkle |
 | error | action failed | worried eyes, sweat drop |
-| alert | reminder/watch fired | wave, exclamation, bubble |
+| alert | reminder/watch fired | wave, exclamation, a card |
 | dragging | being moved | dangling, surprised |
 | watching (badge) | active watchers | small binoculars badge (ambient) |
 
@@ -227,23 +235,24 @@ external MCP agent, extension. Rules:
 - How much Sidefolk asks before its own agent acts is the person's choice (D37): Ask every time,
   Ask once per kind (default), Auto, or Full access (only after a sheet that says what it means).
   No mode lifts the rules above for content-steered actions that could send data out, for other
-  agents or for extensions; the mode is always visible (Ask panel chip, menu bar, Now).
+  agents or for extensions; the mode is always visible (Ask's chip, the Pocket, Today). Full access may end at
+  a time the person picks (D84).
 - If the person doesn't answer, a card of Sidefolk's own agent never holds the task: by default the
-  step is skipped after 10 minutes and the task carries on; the step waits in Now with "Run it now".
+  step is skipped after 10 minutes and the task carries on; the step waits on Today with "Run it now".
 
 ## 11. Attention model
 
 | Level | Presentation | Example |
 |-------|--------------|---------|
-| ambient | pose/badge/folk only | watcher active, job running |
-| gentle | small bubble, 6 s, paused on hover, one at a time | Claude saved a note |
-| attention | companion steps forward; bubble expanded 30 s then collapses to a held card + badge | reminder, watcher fired, command finished |
+| ambient | pose, light, folk or pin only | watcher active, job running |
+| gentle | a whisper, 6 s, waits under the pointer, one at a time; held during Focus | Claude saved a note |
+| attention | companion steps forward; a card for 30 s, then it folds into the count on its shoulder | reminder, watcher fired, command finished |
 | critical | attention + system notification + sound | reminder marked important |
 
 Defaults: typing guard (wait for 1.5 s without keys, defer at most 20 s); at most 1 attention event
 per 90 s and 3 per source per 10 min, the rest fold into "+N"; external agents capped at attention
-level without sound; quiet mode and fullscreen-frontmost hold everything but critical (which
-becomes a system notification); away (5 min idle or locked) queues and shows one summary on return;
+level without sound; Quiet and fullscreen-frontmost hold everything but critical (which
+becomes a system notification), Focus holds whispers; what was held comes back as one "While you were…" card; away (5 min idle or locked) queues and shows one summary on return;
 one re-nudge after 10 minutes, then it waits in the badge; celebrate only waits longer than 2 min.
 
 ## 12. Failure model
@@ -256,8 +265,7 @@ it is disabled with a notice. Detailed diagnostics go to the local log.
 
 ## 13. Post-V1 backlog (not unfinished V1)
 
-Scheduled prompts and workers, calendar awareness (EventKit), app-usage timeline and "what was I doing" recap, voice wake word,
-Apple on-device model provider, embeddings for semantic recall, an extension directory with signed
-packages (docs/research/extensions-catalog.md; built-in extensions and AI-written ones exist, D39),
-delta updates, cross-device sync, community
-characters and personalities, Claude Code/Codex hook-based passive session monitoring.
+Scheduled prompts and workers, app-usage timeline and "what was I doing" recap, voice wake word,
+Apple on-device model provider, embeddings for semantic recall, community extensions in the gallery,
+delta updates, cross-device sync, community 3D characters and personalities. (Built since: the calendar,
+D57 and D66; the add-on gallery of signed packs, D55; session monitoring through hooks, D42.)

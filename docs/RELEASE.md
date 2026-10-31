@@ -103,9 +103,9 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
   team's Developer ID (a new certificate of the same team is fine) and notarized. Snapshots are prereleases.
 - **Who gets what.** A copy looks a minute after launch (unless it looked within the hour) and once a day, unless
   Settings › General › Updates › New versions of Sidefolk is Don't check; "Check for Updates…" is in the menu
-  bar. On Tell me (the default) it asks; on Install automatically it downloads and checks the version as Update
+  bar icon's right-click menu. On Tell me (the default) it asks; on Install automatically it downloads and checks the version as Update
   does, then swaps it in once the person has been away five minutes with nothing running (no conversation,
-  approval, voice, Ask panel or job), or as they quit, and the new copy says "Updated to …" once. Every copy
+  approval, voice, Ask or job), or as they quit, and the new copy says "Updated to …" once. Every copy
   offers releases only unless Versions to offer says snapshots too (D52). Versions sort as
   semver: every snapshot of 0.1.0 comes before 0.1.0, so **raise `Version.swift` right after a production
   release**, or the next snapshots sort below it and nobody is offered them.
@@ -156,11 +156,12 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
 - [ ] Prompts appear only when used, each with its text: notifications (onboarding), microphone (first hold of
       the talk key), Automation for Notes and Reminders (first read), local network (a LAN watcher or a model on
       another computer).
-- [ ] Login item from /Applications; `sidefolk` installs on PATH from Settings › Agents and answers
+- [ ] Login item from /Applications; `sidefolk` installs on PATH from Settings › Connections and answers
       `sidefolk status`.
-- [ ] Built-in extensions run in their sandbox (World Clock, Calculator, Images on a photo). On a Mac **without**
-      Apple's developer tools: no "install the command line developer tools" dialog appears at launch, every
-      built-in but Git works, and Settings › Extensions says Git needs Git and how to get it.
+- [ ] Built-in extensions run in their sandbox (World Clock, Calculator, Weather, System Vitals), and one from
+      the gallery installs (Images on a photo). On a Mac **without** Apple's developer tools: no "install the
+      command line developer tools" dialog appears at launch, and Git from the gallery says it needs git and how
+      to get it.
 - [ ] Quit and relaunch: reminders and watchers survive; the fallback notifications fire while it is quit.
 - [ ] The update path from the previous release ("Updates" above): it offers this one, installs it and reopens.
 - [ ] Idle: `top -l 1 -pid $(pgrep -x Sidefolk)` shows ~0 % CPU after the companion settles (see D41 for the

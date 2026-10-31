@@ -144,7 +144,7 @@ result names the item by kind and id only.
 Reading user data (notes, reminders, `agenda.today`) asks every time; an external caller never gets
 "Always". `notes.update` and `notes.trash` change or trash one note by id (never in "About you",
 never into a new collection, never deleting for good: only the person empties the Trash), each undoable
-from Activity (D52). Settings › Privacy › Other agents (`AgentAccess`) sets each group (saving,
+from Activity (D52). Settings › Trust › What other agents may do (`AgentAccess`) sets each group (saving,
 changing, reading) to Allow, Ask each time or Off; defaults: saving and changing allowed, reading asks.
 "Allow" on reads is the person's explicit choice, shown with what it means; Off hides the tools and
 refuses calls with a message that names the setting. The closed list itself never changes from Settings. Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,
@@ -356,7 +356,7 @@ name that was swapped in after the check is still read through `O_NOFOLLOW_ANY` 
   response. The redirect delegate re-checks every hop (max 5, no https→http).
 - `.ephemeral` session with no cookies or credentials, auth challenges cancelled, 15 s timeout,
   2 MiB streamed cap, text, HTML, JSON or XML only.
-- Watchers the user asks for themselves (typed in the Ask panel or made with a button: caller
+- Watchers the user asks for themselves (typed in Ask or the Say bar, or made with a button: caller
   `user`, untainted) may target localhost, the LAN and `.local` hosts with no further question
   (DECISIONS D21). The `allow_local` flag is set by the tool from the caller, never read from tool
   input; agents (Sidefolk's own in a clean turn, `user:agent`, too), external clients, extensions
@@ -547,8 +547,8 @@ in grants get an explicit 0644. `PRAGMA secure_delete=ON`. Delete-all also remov
 ExtensionData, the read-only installed extensions (unlocked first), run state and Keychain items:
 provider keys with their host bindings and each MCP server's `mcp.<id>` item, collected before the
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
-not ignored. Conversation history can also be deleted on its own, one conversation or all of it (Home ›
-Conversations, Settings › Privacy, D45): the thread's runs stop first, then its exchanges go and the "last sent"
+not ignored. Conversation history can also be deleted on its own, one conversation or all of it (History,
+Settings › Trust, D45): the thread's runs stop first, then its exchanges go and the "last sent"
 preview with them; Activity keeps its audit record. Retention is applied at launch and then daily while Sidefolk
 runs: conversation history (7 days by default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
 (14), the notebook's Trash (30); log files after 7 days, at most 16 MB a day. Bound parameters only; FTS5 terms quoted. Encryption at rest
@@ -599,15 +599,15 @@ binary targets or build plugins from dependencies.
 
 **T24 Attention spam and runaway watchers (M/M).**
 - Attention: at most 3 items per source per 10 min, and 6 for all sources of one self-named kind
-  together (every external agent, every session, every extension), then held; gentle bubbles 6 per
-  source (or kind) and 12 in all per 10 min, then badge only. A slot is reserved in the same actor
+  together (every external agent, every session, every extension), then held; whispers 6 per
+  source (or kind) and 12 in all per 10 min, then the count only. A slot is reserved in the same actor
   step as the decision, so concurrent posts can't all pass. `critical` only from reminders,
   watchers and the user's own actions (`AttentionPolicy.criticalSources`; callers never post under
   those names), and only user-created reminders and watchers are stored as critical (for reminders,
   `user` and `user:agent`, enforced in `ReminderScheduler.create` whatever the caller asked). Only
   the user's own reminders fire as `reminder`, which skips spacing so they arrive on time; anyone
   else's fire as `reminder:<kind>` (`reminder:external`, `reminder:agent`…), wait their turn and
-  never say "You asked" (the bubble keys on `refKind`, which stays `reminder`). A second answer to
+  never say "You asked" (the card keys on `refKind`, which stays `reminder`). A second answer to
   the same item is dropped. The `com.apple.screenIsLocked`/`Unlocked` notifications are only a
   hint, since any process can post them: the app must confirm with `ScreenLock.isLocked`
   (`CGSessionCopyCurrentDictionary`) before holding or releasing items. Identical titles within
@@ -629,11 +629,11 @@ word. Recognition runs on the Mac (SpeechAnalyzer, or the older recognizer force
 is never written anywhere, and the words go through the normal Ask pipeline as the user's own
 request, so Guard, approvals and Undo apply unchanged and voice is never the confirmation for
 anything. Spoken replies with ElevenLabs send the words being said, including reminder and note
-titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Voice, which says so. Its
+titles read back, to api.elevenlabs.io: chosen explicitly in Settings › Brain › Voice, which says so. Its
 key lives in the Keychain bound to that host (as T18), requests are never redirected, and the key is
-removed with everything else. Replies stay silent while another app records and in quiet mode.
+removed with everything else. Replies stay silent while another app records and in Quiet.
 
-**T30 Where the person is (M/M), D48.** Off until the person chooses in Settings › Privacy › Your location;
+**T30 Where the person is (M/M), D48.** Off until the person chooses in Settings › Trust › Your location;
 until then nothing about where they are leaves the Mac, and the AI is only told the place isn't known.
 - *The Mac's location.* Location Services at a city's accuracy (3 km), significant changes only. macOS asks
   once, when the person picks it (`NSLocationUsageDescription`, and the hardened runtime's
@@ -710,7 +710,7 @@ of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed a
 *Residual:* the catalog's text (names, taglines, descriptions) is shown in Settings; only official entries' words
 reach the model, as one line each.
 
-**T34 The person's calendar (M/M), D57.** Off until the person chooses "Show my calendar" (Settings › Privacy ›
+**T34 The person's calendar (M/M), D57.** Off until the person chooses "Show my calendar" (Settings › Trust ›
 Your calendar, or Today); until then nothing is read, the AI isn't offered `calendar.today`, and macOS is never
 asked. Choosing it asks macOS once for full access (`NSCalendarsFullAccessUsageDescription`, and the hardened
 runtime's `com.apple.security.personal-information.calendars`); reading the state never asks.
@@ -722,10 +722,10 @@ runtime's `com.apple.security.personal-information.calendars`); reading the stat
   invitation's title is written by whoever sent it. Other agents get no tool that reads it (`external: false`).
 *Residual:* once allowed for good, the AI may read the day's events in any later clean turn.
 
-**T35 Themes (L/M), D58, D64.** A theme is data: `theme.json` (64 KB at most) and PNGs (2 MB and 2048 px at most,
+**T35 Themes (L/M), D58, D64, D84.** A theme is data: `theme.json` (64 KB at most) and PNGs (2 MB and 2048 px at most,
 inside its folder, decoded and written again by Sidefolk before use), never code, never words shown as the app's.
-Its layout names only blocks the app draws; anything else is left out and said, and what needs you (Guard's
-questions) always has a place, so no theme can hide a waiting approval. Ids under `dev.sidefolk.` and `harbor` are
+Since D84 a theme only dresses the app: each place has one layout, so what needs you (Guard's questions) is always
+in the same place and no theme can hide a waiting approval; older layout keys are decoded and ignored. Ids under `dev.sidefolk.` and `harbor` are
 taken only from the app's Resources and the signed gallery (T33), so a theme from a folder can't pass as Sidefolk's.
 A followed theme folder is read once a second and only checked and copied; a broken save leaves the last good theme.
 
@@ -767,7 +767,7 @@ have (D44). Mitigations:
 - *Cues are names from fixed lists* (`GameCue`): a move, an effect, a prop, a line key, a sound, a look. The companion
   only ever says Sidefolk's own lines for a key, in the person's language, so a game can't make it say "type your
   password here". Moves every 0.8 s, a line every 2 s, four sounds a second, only while the panel shows that game. A
-  cue can't move the companion's window, open a bubble or a notification, take focus or speak free text.
+  cue can't move the companion's window, open a card or a notification, take focus or speak free text.
 - *Fair play:* the companion's throw in Sidefolk's own match is drawn by core with the system's generator before the
   person picks and never reads their hand (tested for independence and distribution).
 - *The later parts (D79):* Sidefolk keeps every clock (a board's `after_ms` at most 6 s, a reflex window
@@ -777,7 +777,7 @@ have (D44). Mitigations:
   sent only to the game's own entry and never to a model; the panel's keys go to that field only while it is being
   typed in.
 *Residual:* a game decides its own outcomes and could make the companion react unkindly within the fixed moods;
-the panel can take the keyboard when the person opened it, like the Ask panel, so keys typed meanwhile go to the game.
+the panel can take the keyboard when the person opened it, like Ask, so keys typed meanwhile go to the game.
 
 **T38 Temporary output mute (M), D81.** An extension can request Sidefolk's device-wide output mute only when its
 pinned install permission `output_mute` is true; the install sheet names the effect on other apps and an update adding

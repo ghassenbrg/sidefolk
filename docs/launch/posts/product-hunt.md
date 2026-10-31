@@ -26,7 +26,7 @@ hunter, the first comment and the gallery the day before.
 5. `screenshots/ask-apple-notes-light.png`: "Your Apple Notes, organised"
 6. `screenshots/settings-ai-light.png`: "Bring the AI you already use, or none"
 7. `screenshots/settings-approvals-light.png`: "You decide how much it asks"
-8. `Resources/Character/companions.png`: "Thirteen companions"
+8. `Resources/Character/companions.png`: "Ten companions"
 9. The 60-second demo video (DEMO-VIDEO.md), when recorded
 
 Product Hunt crops to 1270 × 760; export the gallery pictures at that size with the subject centred.

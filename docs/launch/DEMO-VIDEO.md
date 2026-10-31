@@ -42,6 +42,6 @@ optional and says the same thing.
 
 - Shot 7 needs the AI to list and move files; rehearse it on the recording setup. If Downloads isn't
   shared, a second card asks for it, which is honest but slower.
-- Don't linger on Settings › AI or Agents: they show other companies' logos (see CHECKLIST.md).
+- Don't linger on Settings › Brain or Connections: they show other companies' logos (see CHECKLIST.md).
 - Show the "no AI" hint clearly in shot 2; it's the point people remember.
 - Export a version without captions for Product Hunt, and a square 1080 × 1080 one for social posts.

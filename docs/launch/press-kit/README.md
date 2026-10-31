@@ -92,7 +92,7 @@ unless the name says dark; most have a dark twin.
 | `about-light.png` | The About window |
 | `home-now-fr-light.png`, `home-now-ja-light.png`, `home-now-ar-light.png` | Now in French, Japanese and Arabic (right to left). Sample notes stay in English |
 
-**Characters:** `Resources/Character/companions.png` (all thirteen companions) and
+**Characters:** `Resources/Character/companions.png` (the 2D companions and folks, drawn before the 3D companions and the gallery; refresh before launch) and
 `Resources/Character/companion-mochi-small.png` (Mochi in every state), drawn by the app's own renderer.
 
 `[FOUNDER: add a real desktop screenshot and the demo video when they exist; the kit has no picture of
@@ -100,7 +100,7 @@ the companion on an actual desktop yet.]`
 
 ## Third-party names and logos
 
-Settings › AI and Settings › Agents show the logos of Anthropic (Claude), OpenAI (Codex), Google
+Settings › Brain and Settings › Connections show the logos of Anthropic (Claude), OpenAI (Codex), Google
 (Gemini), Mistral and others, to say which service each option connects to. They belong to their
 owners. Sidefolk isn't affiliated with or endorsed by any of them. Please don't use those logos to
 illustrate Sidefolk on their own. `[FOUNDER: until the owners' permission is settled (CHECKLIST.md),

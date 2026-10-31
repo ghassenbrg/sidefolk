@@ -2,7 +2,8 @@
 
 Environment: macOS 27.0.1 (26A434), Xcode 27.0, Swift 6.4, MacOSX27 SDK, Apple Silicon.
 VERIFIED means I compiled it with `swiftc -swift-version 6` (strict concurrency) and, where it says "ran", executed it on this Mac. UNVERIFIED means it comes from headers, docs or experience and was not run.
-All probes are in `/private/tmp/claude-501/-Users-ghassenbrg-git-sidefolk/239fdc6a-d479-485e-89ed-4bb71bcd41f6/scratchpad/macos-review/` (`panel_test.swift`, `anim_cpu.swift`, `render_test.swift`, `system_test.swift`, `socket_test.swift`, `main.swift` (spawn), `sqlite_test.swift`, `menu_test.swift`, `child_test.swift`, `bundle/`).
+The probes (`panel_test.swift`, `anim_cpu.swift`, `child_test.swift` and others) were scratch files of the 2026-10-26 review and are not kept.
+The names are of their day: the Ask panel and the bubbles became the Sidecard (D84), whose panels still rely on these findings.
 
 ---
 

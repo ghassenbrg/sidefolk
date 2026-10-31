@@ -62,15 +62,15 @@ Add sandboxed extensions, or let Sidefolk write a small one for you to review an
 
 YOU STAY IN CONTROL
 Files are touched only in folders you share. Deleting means the Trash. You choose how often it asks
-before acting, every action is listed in Activity, and most can be undone.
+before acting, every action is listed in History, and most can be undone.
 
 PRIVATE BY DEFAULT
 Everything stays in one folder on your Mac. No account, no tracking, no analytics. Sidefolk only
 contacts what you chose: your AI, the pages you asked about, the weather service when you ask for the
 weather, and extensions you allowed online. Settings shows what was last sent to the AI.
 
-THIRTEEN COMPANIONS, TEN LANGUAGES
-Choose Mochi, the original robot, Spark or one of the Folk Family. Sidefolk speaks English, French,
+TEN COMPANIONS, TEN LANGUAGES
+Choose Mochi, Spark or one of eight more from the add-on gallery, in 3D or 2D. Sidefolk speaks English, French,
 Spanish, German, Italian, Portuguese, Japanese, Korean, Chinese and Arabic.
 
 Requires a Mac with Apple silicon and macOS 15 or later. AI features need Claude Code, Codex, an API key,

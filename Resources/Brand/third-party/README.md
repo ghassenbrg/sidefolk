@@ -1,6 +1,6 @@
 # Third-party logos
 
-The logos Settings › AI and Settings › Agents show beside each AI service (D36). They are not
+The logos Settings › Brain and Settings › Connections show beside each AI service (D36). They are not
 Sidefolk's brand.
 
 ## Source and licence
@@ -19,9 +19,9 @@ Sidefolk's brand.
 
 | Service in Sidefolk | File in `lobehub-icons/` | Title in the file | Drawn in | Owner's page |
 |---|---|---|---|---|
-| Claude Code (plan, and Settings › Agents); Anthropic (API key) | `claude-color.svg` | Claude | colour, Claude orange `#D97757` | https://claude.com |
+| Claude Code (plan, and Settings › Connections); Anthropic (API key) | `claude-color.svg` | Claude | colour, Claude orange `#D97757` | https://claude.com |
 | OpenAI | `openai.svg` | OpenAI | black or white | https://openai.com |
-| Codex (plan, and Settings › Agents) | `codex.svg` | Codex | black or white | https://openai.com/codex |
+| Codex (plan, and Settings › Connections) | `codex.svg` | Codex | black or white | https://openai.com/codex |
 | Google Gemini | `gemini-color.svg` | Gemini | colour, its blue, red, yellow and green gradients | https://gemini.google.com |
 | Mistral | `mistral-color.svg` | Mistral | colour, its gold-to-red stripes | https://mistral.ai |
 | Groq | `groq.svg` | Groq | black or white | https://groq.com |

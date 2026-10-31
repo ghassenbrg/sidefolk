@@ -9,9 +9,10 @@ pt-BR, ja, ko, zh-Hans, ar). Text written for the AI model is not in the catalog
 
 | Name | What it is |
 |---|---|
-| Sidefolk | The app, and the default name of the robot companion. |
+| Sidefolk | The app. |
 | Mochi | The white rabbit companion, the brand mascot. |
 | Spark | The little robot companion with headphones. |
+| Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl, Rune | The gallery's companions. Companion names stay in Latin letters in every language, Arabic included (D84). |
 | Pip, Byte, Seed, Melody, Scout, Tempo, Play, Guard, Nova, Brew | The folks, small characters with a job each (Pip: ideas and notes; Tempo: reminders; Scout: watching; Byte: agents and extensions; Guard: security and approvals …). Guard is a name here, not the word "guard". |
 | Claude, Claude Code, Codex, Anthropic, Ollama, OpenAI | Other companies' products. |
 | MCP, MCP server | A technical standard; keep the abbreviation. |
@@ -32,15 +33,24 @@ Translate these once and use the same word everywhere, including in Settings and
 | About you | The notebook collection of facts and preferences Sidefolk keeps in mind. Shown in quotes inside sentences: “About you”. |
 | collection, project, topic, list | Places in the notebook. A list is a shopping or to-do list. |
 | note, idea, task, link | The four kinds of notebook item. |
-| Today | The Home page that shows what is live: the questions waiting for you, reminders, watches, agent sessions. Called Now before D58; use the same word as for "today" in dates. |
-| Activity | The log of every action Sidefolk or an agent took. |
+| Home | The main window. Its places: Today, Calendar, Notebook, On duty, History, and the Gallery. |
+| Today | The Home place for the day: what needs you, what is on duty, what was captured. Use the same word as for "today" in dates. |
+| On duty | The Home place listing everything working in the background: watches, live values, repeating reminders, agent sessions, extensions. |
+| History | The Home place with everything that happened: every action (once called Activity), conversations, what Sidefolk told you. |
+| You | The Notebook's page of facts Sidefolk keeps about the person (the "About you" collection). |
+| Gallery | Where companions, extensions and themes are downloaded (the add-on gallery). |
+| Needs you | What waits for the person's answer. |
 | Trash | Use your language's name for the macOS Trash (Corbeille, Papelera, Papierkorb, Cestino, Lixo, ゴミ箱, 휴지통, 废纸篓, سلة المهملات). Things stay there 30 days. |
 | watch, watcher, watching | Sidefolk keeping an eye on something (a page, a site, a file, a folder, a program, a command) and saying when it happens. "A watch" and "a watcher" are the same thing. |
 | reminder | Something Sidefolk tells you at a time. Done, Snooze ("10 min", "Tomorrow"). |
-| quiet mode, Quiet | While it is on, only urgent things interrupt. |
-| the Ask panel | The small window beside the companion where you type a request. |
-| hint line | The line under the input that says what Enter will do, ending in "no AI" when no AI model is used. |
-| approval, Allow once, Always allow | Sidefolk asking before it does something. |
+| Open, Focus, Quiet | How things reach the person. Focus: small news waits until it ends. Quiet: only urgent things interrupt. Use the same word for each in Settings, the Pocket and Home. |
+| Ask | Where you type a request beside the companion (⌘⇧Space); also the verb. |
+| Say bar | The field at the top of Home where you type (⌘K). |
+| the understanding row | The line under the field that says what Return will do, with "no AI" when no AI model is used. |
+| whisper, card | What the companion says on the desktop: a whisper is short news that fades; a card waits for an answer. |
+| approval, permission slip, Allow once, Always allow | Sidefolk asking before it does something. |
+| Pocket | The menu bar's popover. |
+| Play panel, game, puzzle | Where games and puzzles are played beside the companion. |
 | extension, skill | Add-ons: an extension brings tools and watchers; a skill is written instructions. |
 | folk, on duty | A folk is "on duty" while its job is live (a reminder is near, a watch is running). |
 
@@ -93,15 +103,15 @@ Do the same for the person.
    Translate them so the whole sentence reads well, and keep the case.
 6. **Punctuation.** The English text uses “curly quotes”; use your language's own (« » in French,
    „ “ in German, 「」 in Japanese). Keep " · " between parts of a line and "›" between menu levels
-   (Settings › AI), and translate the menu names to match the app's own translation of them.
+   (Settings › Brain), and translate the menu names to match the app's own translation of them.
 7. **Dates and times** are never written into strings: the app formats them in the person's language
    and always uses a 24-hour clock. "Today", "Tomorrow" and "Yesterday" are their own keys.
 8. **Left in English on purpose:** what the AI model reads (tool results, tool descriptions,
    prompts), the `sidefolk` command-line tool's output, the extension manifest checks shown to
    extension authors, and logs.
-9. **Room.** Some words sit in tight places: the six Settings tab names share one toolbar; the
-   Activity table's chips (Low, Medium, High, Automatic, Allowed, Always, Denied, Blocked, Failed)
-   and the segmented choices (All, Notes, Ideas, Tasks, Links; Idle, Thinking, Working, Sleeping;
+9. **Room.** Some words sit in tight places: the eight Settings tab names (General, Companion,
+   Attention, Brain, Trust, Connections, Add-ons, Appearance) share a narrow sidebar; History's outcome
+   chips and the segmented choices (All, Notes, Ideas, Tasks, Links; Idle, Thinking, Working, Sleeping;
    Small, Medium, Large) are short labels. Choose short words there. Sentences can run longer:
    buttons stack and lines wrap.
 10. **The confirmation word.** Deleting everything asks the person to type a word ("delete", lower

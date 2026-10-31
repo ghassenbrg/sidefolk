@@ -7,7 +7,7 @@ the MCP bridge, and one process per running extension.
 
 ```
 ┌──────────────────────────── Sidefolk.app (SidefolkApp) ─────────────────────────────┐
-│ AppKit shell: CompanionWindow · AskPanel · Bubbles · HomeWindow · Settings · StatusItem │
+│ AppKit shell: CompanionWindow · Sidecard (Ask) · Play · HomeWindow · Settings · Pocket  │
 │ SidefolkCharacter: Rig (CALayers) · Pose · Choreographer · Folks                        │
 │            ▲ CompanionPresenter (MainActor, @Observable) ◄── AppEvents                  │
 ├────────────┼────────────────────────── SidefolkCore ────────────────────────────────────┤
@@ -32,7 +32,7 @@ the MCP bridge, and one process per running extension.
 | `SidefolkCore` | library | GRDB | Everything that is not UI. No AppKit. Fully unit tested. |
 | `SidefolkCharacter` | library | — (AppKit, QuartzCore) | Character rig, poses, choreography, folks, icon rendering. |
 | `SidefolkApp` | executable | Core, Character, KeyboardShortcuts | App delegate, windows, SwiftUI views, platform services. |
-| `sidefolk` | executable | Core (protocol types only) | CLI: `sidefolk mcp` bridge, `sidefolk status`, `sidefolk ext validate`. |
+| `sidefolk` | executable | Core (protocol types only) | CLI: `sidefolk mcp` bridge, `run`, `hook`, `status`, `ext validate`, `theme new/check`. |
 | `sidefolk-render` | executable (dev) | Character | Renders every pose and folk to PNG contact sheets for visual review. |
 | `SidefolkCoreTests` | tests | Core | Swift Testing. |
 
@@ -85,7 +85,7 @@ user folders or agent configs.
 - `AgentRuntime` — handles a user turn: builds context (`ContextBuilder`, token budget), picks a
   model (`ModelRouter`), runs a backend, streams `AgentEvent`s, records an `AgentRun`.
   - Conversations (D45): a request with no thread continues the current one while it was active in the
-    last 10 minutes; one that names a thread (an answer's Reply, Home › Conversations) continues it for as
+    last 10 minutes; one that names a thread (an answer's Reply, a conversation in History) continues it for as
     long as its exchanges are kept (`historyDays`). `endThread()` starts fresh ("new conversation", Clear all,
     ⌘N); `deleteConversation`/`deleteAllConversations` stop the thread's runs first, then delete its
     exchanges and publish `.dataChanged(.conversations)`. `ExchangeStore.conversations(matching:)` lists them
@@ -114,19 +114,21 @@ user folders or agent configs.
   (a task done or an item trashed ends the waiting ones and records why in `ended_with_item`; the
   task opened again or the item restored brings back the ones still ahead), `fire` checks the item
   once more in its transaction, and a renamed item carries reminders with its own title along
-  (`NotebookStore.update`). Its bubble offers Mark done (the task) and Open (the app shows it).
+  (`NotebookStore.update`). Its card offers Mark done (the task) and Open (the app shows it).
 - `WatcherEngine` (actor) — runs `WatcherProbe`s: polling kinds share one scheduler loop keyed by
   next-check time (a timer with tolerance; checks due within half a second share a wake-up); event
   kinds use DispatchSource (vnode/proc). Interval floors, exponential backoff on error, expiry,
   once/repeat/report. Material changes are saved at once, routine checks at most every 5 minutes.
   Reports (D35) publish each value as `AppEvent.watchReading` instead of a notice or a list reload;
-  the app shows it as a pill beside the companion and a live row on Now. `watch.read` takes one value now
+  the app shows it as a pin beside the companion and a live row on On duty. `watch.read` takes one value now
   (`WatcherEngine.readNow`): the kind's probe looks once at a watcher that is never added, rates over a fresh
   half second (`WatchContext.isReadingNow`); "what's my CPU usage" reaches it from the parser without AI.
 - `Companion/` — play (D44): `companion.play` publishes `AppEvent.companion` for a trick or a game;
   `companion.toss` draws coins, dice or a rock-paper-scissors hand with the system's generator (the score in
   `kv`) and publishes `AppEvent.toss`. The app's `CompanionPlayer` plays both: a moment (`flick`, `roll`,
-  `pump`), then `TossStage` draws the objects in the caption panel above the companion, landing on the result.
+  `pump`), then `TossStage` draws the objects in the caption panel above the companion, landing on the result. Games (D75, D79)
+  are extensions with `games` in their manifest; the app's Play panel (`Sources/SidefolkApp/Play/`) draws their boards
+  from fixed parts and plays the companion's cues (docs/EXTENSIONS.md › Games).
 - `Location/` (D48) — where the person is, when they share it: `LocationSettings` (off, the Mac's location,
   a place chosen by name) and `KnownPlace` (town, region, country, time zone, coordinates rounded to 0.01°)
   in `AppSettings`; `PlaceKeeper` (actor) names Location Services positions through a `ReverseGeocoding`
@@ -134,11 +136,12 @@ user folders or agent configs.
   searches Open-Meteo's geocoder by name. `ContextBuilder` says the town (never coordinates) under "# Now";
   `IntentParser(here:)` and `watch.report` use it for weather with no place named (with its coordinates, so
   no lookup by name), and otherwise ask which (`LocalIntent.needsPlace`, `PlaceNeeded`, a `SettingsLink`
-  card the Ask panel opens in Settings). The app's `MacLocator` holds the `CLLocationManager` (made only
+  card Ask opens in Settings). The app's `MacLocator` holds the `CLLocationManager` (made only
   when needed; at launch it resumes only what macOS already allowed).
 - `AttentionCenter` (actor) — receives `AttentionRequest`s (level, source, title, body, actions),
-  applies policy (quiet mode, fullscreen, away, grouping, re-nudge, rate limits) and emits
-  presentation directives for the app. Pure policy core (`AttentionPolicy`) is unit tested.
+  applies policy (Open, Focus or Quiet with their ends, quiet hours, fullscreen, away, grouping, re-nudge, rate
+  limits; D84) and emits presentation directives for the app: a whisper, a card, or held for one "While you were…"
+  card. Pure policy core (`AttentionPolicy`) is unit tested.
 - `EventBus` — typed broadcast (`AppEvent`) via `AsyncStream`s; UI subscribes on MainActor.
 - `ExtensionHost` (actor) — discovers manifests, validates, computes sandbox profiles, spawns
   processes, speaks MCP (`initialize`, `tools/list`, `tools/call`) plus Sidefolk watcher methods
@@ -168,7 +171,7 @@ user folders or agent configs.
   descriptions and schemas for what other agents may do). `AgentIntegrations` (Connect, after a
   confirmation and backups) writes the MCP entry, the Sidefolk skill and session hooks into Claude Code
   and Codex (`codexHooks`: `$CODEX_HOME/hooks.json`, `sidefolk hook <Event> --agent codex`), and
-  `setupInstructions` gives other MCP apps the command. Hook events feed `SessionTracker` (Now page,
+  `setupInstructions` gives other MCP apps the command. Hook events feed `SessionTracker` (the agents lane, On duty,
   "needs you" and "finished" taps; `HostTrust` decides what "Open" brings forward).
 - `Diagnostics` — `os.Logger` categories + JSONL file sink with `Redactor` (keys, tokens, long
   content trimmed); `DiagnosticsExporter` writes a zip without user content by default.
@@ -219,14 +222,24 @@ through `EventBus` streams consumed by `@MainActor @Observable` presenters. No l
 - Companion: borderless `NSPanel` (non-activating), level `.floating`, collection behavior
   `.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle`; mouse events only on the
   character's hit shape.
-- Ask panel: non-activating `NSPanel` that can become key so typing never steals app activation.
-- Bubbles: child panels of the companion, positioned to stay on screen.
+- The Sidecard (D84): whispers, cards, the stack and permission slips in child panels of the companion, positioned
+  to stay on screen. Ask is its largest size: a non-activating `NSPanel` that can become key so typing never steals
+  app activation.
+- The Play panel: a game's board beside the companion (400 pt wide, under about 720 pt tall), keys while it is open.
+- The menu bar's Pocket: an `NSPopover` from the status item; right-click for the short menu.
+- Home (Today, Calendar, Notebook with You and the Trash, On duty, History, extension pages, the Gallery) and
+  Settings (eight tabs with search) are ordinary windows.
 
 ## Design system (D84)
 
 The app's look is Lantern: tokens in `ThemeTokens` (Core) and `Theme` (app), shared components in
 `Sources/SidefolkApp/DesignSystem/`, listed with their files in [DESIGN.md](DESIGN.md). Themes dress the app (colours,
 faces, density, radii, materials, the light pool, the nook); each place has one layout.
+
+A theme is a `theme.json` with optional PNGs (D58), read by `ThemeCheck` (contrast, roles, images) and installed
+into `<home>/Themes/<id>/` with every image re-encoded. `sidefolk theme new "Name"` starts one from Harbor and
+`sidefolk theme check <folder>` says what fails; a folder chosen in Settings › Appearance is followed as it is saved.
+Of the layout keys D64 added, only `layout.icons` is read now; the others still decode so older themes load (D84).
 
 ## Colour meaning (D78)
 
@@ -253,7 +266,7 @@ Colours say what happened, the same way on every screen and in every theme. The 
 
 ## AI providers
 
-Settings › AI groups them by how the user pays (D26): a plan they already have, an API key, this
+Settings › Brain groups them by how the user pays (D26): a plan they already have, an API key, this
 Mac, a custom endpoint, or no AI. Status comes from local reads only (`ClaudeBinary.status`,
 `CodexBinary.status`, `LocalServers.probe`, the Keychain, `ModelCatalog.list`); "Test" is the one
 action that sends a prompt.
@@ -287,7 +300,7 @@ core; the app holds the audio and speech frameworks.
 - **App** (`Sources/SidefolkApp/Voice/`): `VoiceController` runs a turn: the talk key or a held
   companion → `MicrophoneCapture` (AVAudioEngine tap on the default input, rebuilt on hardware
   changes or when no buffer comes within a second) → a `SpeechRecognizer` (`AnalyzerRecognizer` on macOS 26+, `BasicRecognizer`
-  before) whose partial words fill the Ask box → release → `AskModel.submit(spoken:)`, the normal
+  before) whose partial words fill Ask's Say field → release → `AskModel.submit(spoken:)`, the normal
   pipeline. Replies come back through `VoiceController.reply`, which applies `VoicePolicy` and plays
   through `AudioPlayer` (an `AudioSink`) with `AppleVoice` or `ElevenLabsVoice`. The companion's pose
   follows `CompanionMood.hearing`/`transcribing`, its mouth the player's levels.
@@ -308,9 +321,9 @@ the running app and the requirement a replacement must meet), `InstallPlan` (rep
 image in Downloads, and why), `BundleSwap` (staging, quarantine, `renamex_np` swap, the reopening shell).
 `AppSettings.updates` holds what to do about Sidefolk's own versions (`AppUpdateMode`: off, tell, install), whether
 add-ons update by themselves, the channel and a skipped version (D70). The app's `UpdateController` schedules the
-looks, brings an offer up as a gentle bubble (`source` "update", which waits through quiet mode) or, on Install
+looks, brings an offer up as a whisper (`source` "update", which waits through Quiet) or, on Install
 automatically, prepares it out of sight and waits for `InstallMoment` (the coordinator's `installSignals`) or the
-quit (`installAtQuit`); it keeps `UpdateModel` for Settings › General, the menu bar and the update window, and quits
+quit (`installAtQuit`); it keeps `UpdateModel` for Settings › General, the Pocket and the update window, and quits
 for the swap. Add-ons: Core's `AddonUpdater` runs one look (`AddonUpdateRule`: companions and themes by themselves,
 an extension only when `ExtensionUpdateDiff.widens` is false), and the app's `AddonUpdateController` schedules it,
 keeps the add-on rows of `UpdateModel` and posts the heads-up for updates to review.
@@ -364,9 +377,9 @@ program's `@executable_path/../lib` rpath: the sandbox already reads the extensi
 
 ## Build and release
 
-- `make dev` / `scripts/run.sh` — debug build, assemble `build/Sidefolk-dev.app`, launch with
-  `SIDEFOLK_HOME` pointing at `build/dev-home`.
-- `make test` — `swift test`.
+- `make dev` — debug build, assemble `build/Sidefolk-dev.app`, launch with `SIDEFOLK_HOME` pointing at
+  `build/dev-home`.
+- `make test` — `swift test --no-parallel` (D18).
 - `make app` — release build, `build/Sidefolk.app` (Apple Development identity if present, else ad hoc),
   assembled beside the old bundle and swapped in, so a running copy keeps working.
 - `scripts/release.sh` — sign with Developer ID (hardened runtime, entitlements), notarize and staple the app,

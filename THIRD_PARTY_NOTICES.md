@@ -30,7 +30,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## LobeHub Icons (MIT)
 
-The service logos in Settings › AI and Settings › Agents (Claude, OpenAI, Codex, Gemini, Mistral,
+The service logos in Settings › Brain and Settings › Connections (Claude, OpenAI, Codex, Gemini, Mistral,
 Groq, xAI, DeepSeek, OpenRouter, Ollama, LM Studio) are drawings from LobeHub Icons
 (https://github.com/lobehub/lobe-icons), npm package @lobehub/icons-static-svg 1.101.0, converted
 to vector PDF. The licence covers LobeHub's files only. Each logo is a trademark of its owner,

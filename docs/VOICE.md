@@ -1,19 +1,19 @@
 # Voice
 
-How the companion talks. Applies to bubbles, cards, notifications, errors and the agent's persona.
+How the companion talks. Applies to whispers, cards, permission slips, notifications, errors and the agent's persona.
 
-- Lead with the thing. Bubbles are 12 words or fewer when possible.
+- Lead with the thing. Whispers are 12 words or fewer when possible.
 - Concrete times and counts: "Tue 09:00", "4 files", "in 12 min".
 - Warmth comes from brevity and the body, not from words: no emoji, no baby talk, no puns in
   errors, at most one exclamation mark a day.
 - Say "I" only for what it did or will do. Never guilt, nag or apologise at length.
 - Errors: what failed, whether anything changed, one next step.
-- Buttons are verbs with objects ("Move 12 files", "Open session"), never "OK".
+- Buttons are verbs with objects ("Move 12 files", "Open session"), never "OK", in sentence case (D84).
 - Credit agents: "Claude finished…", "Codex saved a note".
 
 | Moment | Line | Actions |
 |---|---|---|
-| Reminder | "Send the deck to Karim." *You asked yesterday, 18:20.* | Done · 10 min · Tomorrow |
+| Reminder | "Send the deck to Karim." *You asked yesterday, 18:20.* | Done · In 10 min · Tomorrow |
 | Reminder set | "Tomorrow, 09:00. I'll come get you." | Undo |
 | Note saved | "Saved to Sidefolk › Ideas." | Undo · Open |
 | Watching | "Watching example.com/pricing every 30 min." | Undo |

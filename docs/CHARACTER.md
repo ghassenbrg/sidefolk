@@ -1,9 +1,13 @@
 # Character
 
 `SidefolkCharacter` draws the companions and the Folk Family on Core Animation (AppKit + QuartzCore
-only). Thirteen companions can live on the desktop (D30): Mochi, the white rabbit with navy ear
-tips and a scarf (the default and brand mascot, D29), the original Sidefolk robot (D2), Spark, and
-the ten folks. All are live vector rigs on one engine. Contact sheets live in `Resources/Character/`,
+only): the 2D forms of the companions and the ten helper folks, all live vector rigs on one engine (D30).
+Mochi, the white rabbit with navy ear tips and a scarf (the default and brand mascot, D29), and Spark are
+built in; the gallery's companions have 2D forms too (D59), and a companion added from a folder may bring one
+as data (D43, D85). The folks are helpers only (D54). The original Sidefolk robot (D2) is retired as a
+companion (D56); its rig stays in the code, so the robot named below is the engine's first body. 3D
+companions are drawn by the three.js engine in `Resources/Companions3D/` (D51, `companions-3d/README.md`)
+over an undrawn 2D stand-in. Contact sheets live in `Resources/Character/`,
 the app icon in `Resources/Icon/`.
 
 ## Using it
@@ -36,7 +40,7 @@ finished to the full bar; the app offers only those.
   pieces, posed arms and any held prop, in view coordinates), so the rest of the view is
   click-through. Use the same path for the window's mouse region.
 - **Anchor.** `characterFrame` is the body at rest in view coordinates (the robot: feet to fin, 17% in
-  from each side; the others: their own body). Bubbles and panels attach to it and folks stand beside
+  from each side; the others: their own body). The Sidecard and panels attach to it and folks stand beside
   it, so a slim companion keeps them close.
 - **Folks.** `FolkView(folk:frame:)` is the small on-duty folk: a 100×100 canvas (body ≈ 62% of the
   width), standing 10% above the bottom. `popIn()` / `popOut(completion:)` spring from the floor point.
@@ -131,9 +135,9 @@ Reduced motion: no breathing, sways, ear trails, hops or loops; state changes cr
 quick fade; `wave` and `lookAround` become discrete pose changes; `hop`, `nod` and `shake` do nothing;
 a speaking mouth holds half open instead of moving.
 
-## Life: moments, postures, liveliness (proposed)
+## Life: moments, postures, liveliness (D43)
 
-On the branch `poc/lively-companions`, waiting for the founder (research and numbers:
+Built and merged (D43; research, numbers and the custom companion format:
 [docs/research/lively-companions.md](research/lively-companions.md)).
 
 ```swift
@@ -189,7 +193,7 @@ copy refreshed ones from the output. The full-size sheets are 36 MB together and
 
 Run it from the repository: `compare-<id>.png` puts the founder's reference render
 (`Resources/Brand/masters/mascot-mochi.png`, `folk-family/<id>/<id>.png`) beside the live rig. The
-hit sheets draw the click outline (pink) and the anchor frame bubbles attach to (blue).
+hit sheets draw the click outline (pink) and the anchor frame the Sidecard attaches to (blue).
 
 `CALayer.render(in:)` ignores filters and sizes shadows in context pixels, so the renderer scales a
 holder layer instead of the context, and the rigs avoid filters entirely. That keeps the offscreen

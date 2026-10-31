@@ -1,7 +1,12 @@
 # Launch kit for Sidefolk 0.1.0
 
-Everything needed to release and announce 0.1.0, written to match the app as it is. Start with
-[CHECKLIST.md](CHECKLIST.md): it lists what still blocks a public release and who owns each step.
+Everything needed to release and announce 0.1.0. Start with [CHECKLIST.md](CHECKLIST.md): it lists what still blocks a public release and who owns each step.
+
+> **Refresh before launch (2026-11-01):** the kit was written around snapshot 466. Settings' tab names and the
+> companion line-up are corrected, but the copy, the demo script and `screenshots/` still show the app before the 3D
+> companions, the add-on gallery, the Lantern revamp (the Sidecard instead of bubbles and the Ask panel; Today, On
+> duty and History instead of Now and Activity; the Pocket) and the games (D51–D85). Rebuild the screenshots once
+> `scripts/launch-screenshots.swift` picks the new snapshot names, and reread every page against README.md.
 
 | File | What it's for |
 |---|---|

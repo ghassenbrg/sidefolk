@@ -12,13 +12,14 @@ Examples live in this repository:
 |---|---|
 | [`extensions/hello-folk`](../extensions/hello-folk) | The smallest working extension: one tool, one watcher, ~50 lines of Python. Copy it to start. |
 | [`extensions/system-vitals`](../extensions/system-vitals) | Battery, disk, memory and "about this Mac", `battery_low` and `disk_low` watchers, one program in `exec`. |
-| [`extensions/git`](../extensions/git) | Folders named per call (`paths`), `git` found by name, the internet, a long `timeout`. |
-| [`extensions/images`](../extensions/images) | A file read and a folder written per call, and `media` for the graphics hardware. |
-| [`extensions/currency`](../extensions/currency) | The internet only, a cache in its data folder, and a watcher that fires once per crossing. |
+| sidefolk-addons [`extensions/git`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/git) | Folders named per call (`paths`), `git` found by name, the internet, a long `timeout`. |
+| sidefolk-addons [`extensions/images`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/images) | A file read and a folder written per call, and `media` for the graphics hardware. |
+| sidefolk-addons [`extensions/currency`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/currency) | The internet only, a cache in its data folder, and a watcher that fires once per crossing. |
+| sidefolk-addons `extensions/playtime`, `keep-awake`, `clipboard`, `miraya` | Games, pages, palettes and background work ([Pages](#pages), [Games](#games)). |
 | [`skills/sidefolk-extension/templates`](../skills/sidefolk-extension/templates) | Starting points in Python, Node and sh. |
 
-Every folder with a `Sources/` ships with Sidefolk ([Built-in extensions](#built-in-extensions)): those are
-Swift programs built on [`extensions/Kit`](../extensions/Kit), so they need nothing installed on the Mac. For a guided path
+Every folder here with a `Sources/` ships with Sidefolk ([Built-in extensions](#built-in-extensions-and-the-gallery)):
+those are Swift programs built on [`extensions/Kit`](../extensions/Kit), so they need nothing installed on the Mac. For a guided path
 through this page, install the [`sidefolk-extension` skill](../skills/sidefolk-extension/SKILL.md) in
 Claude Code or Codex. You can also add any existing MCP server (see
 [Plain MCP servers](#plain-mcp-servers)); it runs without a sandbox and is labelled that way.
@@ -38,7 +39,7 @@ Claude Code or Codex. You can also add any existing MCP server (see
 11. [Speaking the person's language](#speaking-the-persons-language)
 12. [Testing locally](#testing-locally)
 13. [Installing, updating, removing](#installing-updating-removing)
-14. [Built-in extensions](#built-in-extensions)
+14. [Built-in extensions and the gallery](#built-in-extensions-and-the-gallery)
 15. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
 16. [Plain MCP servers](#plain-mcp-servers)
 17. [Troubleshooting](#troubleshooting)
@@ -61,7 +62,7 @@ sidefolk ext validate ~/my-folk
 The `sidefolk` helper is built with `swift build --product sidefolk` (then `.build/debug/sidefolk`);
 the app also installs it in `~/.local/bin`.
 
-Then install it from **Settings › Extensions › Install from folder…** (or drop the folder on the
+Then install it from **Settings › Add-ons › Install from folder…** (or drop the folder on the
 companion), read the permission sheet, and click Install. Ask Sidefolk to use it: "say hello to Ada".
 
 ## The manifest
@@ -106,7 +107,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `version` | yes | `1.0` or `1.0.0`, optionally with `-beta.1`. |
 | `sidefolk` | no | Minimum Sidefolk version, written `>=0.1`. |
 | `description` | no | At most 300 characters. What it does, in full: Settings shows it under Details, and the install preview shows it whole. |
-| `tagline` | no | One line of at most 60 characters, shown under the name in Settings › Extensions (and later in the library). Without one, the description's first sentence is shown. |
+| `tagline` | no | One line of at most 60 characters, shown under the name in Settings › Add-ons and the Gallery. Without one, the description's first sentence is shown. |
 | `folk` | no | The folk that appears while it works, e.g. `byte`. |
 | `author` | no | At most 100 characters. |
 | `icon` | no | A square PNG (64–1024 px) or one-page square PDF in the folder, at most 256 KiB. See [Icons](#icons). |
@@ -158,7 +159,7 @@ list meaningless.
 ## Icons
 
 `"icon": "icon.png"` (or `"icon.pdf"`) names a file in the extension's folder. Sidefolk shows it in
-Settings › Extensions, on the install sheet, and on the approval and result cards of the extension's
+Settings › Add-ons, the Gallery, the install sheet, and the permission slips and result cards of the extension's
 tools.
 
 - **PNG:** square, 64 to 1024 pixels on a side (512 is best).
@@ -243,7 +244,7 @@ you write the manifest. Most tools work on a folder the person names instead ("c
 For a call with such a parameter:
 
 1. Guard treats the path like a built-in file tool's: it must be inside a folder the person shared with
-   Sidefolk (Settings › Privacy & Permissions), with write access for `"write"`. If it isn't, Sidefolk's
+   Sidefolk (Settings › Trust › Folders Sidefolk can use), with write access for `"write"`. If it isn't, Sidefolk's
    agent gets the card "Let Sidefolk work in ~/git?" (other agents and extensions are refused).
    Protected places (system folders, `~/Library`, hidden folders, Sidefolk's own data) are refused
    whatever was shared. Then the tool's own risk decides whether it asks.
@@ -314,7 +315,7 @@ a tool from the extension “System Vitals”", plus your input schema with its 
 (`description`, `title`, `examples`, `default`) removed. Give tools clear titles (the manifest's
 `tools.<name>.title`, else the program's `title`) and parameters self-explanatory names
 (`below_percent`, not `n`); types, `enum`, `minimum`/`maximum` and `maxLength` stay and are enforced.
-The one exception is Sidefolk's own [built-in extensions](#built-in-extensions): their descriptions
+The one exception is Sidefolk's own [built-in extensions](#built-in-extensions-and-the-gallery): their descriptions
 ship inside the signed app, so the model reads them (D39).
 
 **Inputs are checked against your schema** before the call reaches you: wrong types, values outside
@@ -399,7 +400,7 @@ characters are stripped and results are capped at 20 KB, descriptions at 1 KB an
 
 **Tool changes are held.** At install Sidefolk pins a hash of each tool's name, title, description
 and schema. If a later run reports something different (or a new tool), that tool is put on hold
-until you approve the change in Settings › Extensions. This stops an extension from changing what
+until you approve the change in Settings › Add-ons. This stops an extension from changing what
 a tool claims to do after you installed it.
 
 ## Answering without the AI: commands
@@ -472,7 +473,7 @@ people say:
 **When a sentence is yours.** Sidefolk's own understanding goes first (reminders, notes, watches, quiet,
 "new conversation"…): a command never replaces them. Then the commands of switched-on extensions. If two
 extensions both claim a sentence, the AI gets it. While the person types, the line under the field says
-which extension answers ("World Clock · The time in Tokyo · no AI"). The answer appears in the Ask panel as a
+which extension answers ("World Clock · The time in Tokyo · no AI"). The answer appears in Ask as a
 card and is read aloud for a spoken request.
 
 **Guard still decides.** A command is the person's words, but your manifest chose the tool and its input, so
@@ -510,7 +511,7 @@ watcher engine decides when to check and what to do when a check says `triggered
 - **Trigger on change, not on level.** Keep what you need in `state` (at most 64 KB of JSON) and
   return `triggered: true` only when something new happened: `battery_low` fires once when the
   battery crosses the line, not on every check while it stays low.
-- `summary` is one line for the bubble (at most 200 characters; longer is cut). It is shown as
+- `summary` is one line for the card (at most 200 characters; longer is cut). It is shown as
   outside content.
 - Extension watchers can ask for the user's attention, but never at the "critical" level.
 
@@ -550,8 +551,8 @@ ext.page("mac") { args in
   switches) sits beside its neighbours, two or three to a row in a wide window. Cards in a row share its width and
   height. A page with numbers or cards may grow wide (centred); a page of switches stays a readable column. So group
   what belongs together into one section, and give a long detail its own section.
-- **A page is optional.** The person can take a page out of the sidebar (it stays in **All Extensions**) and a tile off
-  Today. Give an extension a page when it has something to look at or several choices; a feature that is mostly an
+- **A page is optional.** The person can take a page out of the sidebar (it stays in one menu row at the sidebar's foot) and a
+  tile off Today. Give an extension a page when it has something to look at or several choices; a feature that is mostly an
   on/off switch needs a `widget` with a summary `control` more than a page of its own.
 - **Parts** (`type`): `gauge` (a ring: `label`, `value`, `fraction` 0–1, `caption`), `stat` (`label`, `value`, `caption`),
   `chart` (`id`, `title`, `unit`, `max`, `caption`, `series` of `{key, label, value, display}`, at most 4), `bars`
@@ -640,7 +641,7 @@ Shift-Return, ⌘P and ⌘⌫ send `sidefolk/palette.choose {palette, item, acti
 Sidefolk closes the palette and presses ⌘V in the app in front: put what to paste on the clipboard first (that needs
 `permissions.clipboard`). Pasting needs Accessibility for Sidefolk; until the person allows it, what they chose is on
 the clipboard. Your page shows the shortcut, and the person can change it there, with where the palette opens (the
-top of the screen, the pointer or the middle); the menu bar icon's menu lists every palette too, opening it under the icon.
+top of the screen, the pointer or the middle); the menu bar icon's right-click menu (or the Pocket's ⋯) lists every palette too, opening it under the icon.
 
 Palettes do more since D68, all optional (an older Sidefolk ignores them):
 - **Items** can carry `image` (a picture in your data folder, see Pictures under Pages), `color` (`#RRGGBB`, drawn as a
@@ -868,7 +869,7 @@ person's language before anything is installed; an older Sidefolk ignores the ke
 
 ## Installing, updating, removing
 
-**Install:** Settings › Extensions › Install from folder…, or drop the folder on the companion.
+**Install:** Settings › Add-ons › Install from folder…, or drop the folder on the companion.
 The sheet shows the name, what it can do in plain words ("Can run /usr/bin/pmset", "No access to
 your files or the internet"), warnings about dangerous combinations ("It can read ~/Documents and
 use the internet, so it could upload those files"), its tools and watchers. Installing then:
@@ -886,10 +887,10 @@ Before every start Sidefolk checks the files against those hashes. If anything c
 **Update:** install the new version's folder the same way. The sheet shows what changes:
 permissions gained and lost, tools added and removed. The data folder is kept.
 
-**Turn off / on:** the switch in Settings › Extensions. **Uninstall** (under the extension's details)
+**Turn off / on:** the switch in Settings › Add-ons. **Uninstall** (under the extension's details)
 removes the extension, its data folder and its settings.
 
-**Finding one:** Settings › Extensions lists what is installed one line each (name, what it does, its
+**Finding one:** Settings › Add-ons lists what is installed one line each (name, what it does, its
 switch); a click, Space or Return opens the details (where it came from, what it may do, its tools,
 the request to try, Review and Uninstall). One whose tools changed opens by itself. The search reads
 names, descriptions, tool titles and names, what each may do ("internet" finds those that can reach
@@ -902,43 +903,48 @@ neither on nor off, are under All. ⌘F searches; ↑ and ↓ move between rows,
 after 5 minutes without use. If it stops unexpectedly 3 times within 5 minutes, Sidefolk turns it
 off and tells you.
 
-## Built-in extensions
+## Built-in extensions and the gallery
 
-These ship with Sidefolk (`extensions/catalog.json`). Each is a small Swift program built with the app on
-[`extensions/Kit`](../extensions/Kit) and signed inside it (`Contents/Resources/Extensions/<folder>/bin/`),
-so none needs Python, Node or anything else installed; Git needs git, which it exists to use.
+Four ship with Sidefolk (`extensions/catalog.json`): World Clock, System Vitals, Weather and Calculator. Each is a
+small Swift program built with the app on [`extensions/Kit`](../extensions/Kit) and signed inside it
+(`Contents/Resources/Extensions/<folder>/bin/`), so none needs Python, Node or anything else installed. The others
+Sidefolk makes are in the add-on gallery (D55, [sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons)):
+signed packs Home's Gallery downloads only when the person picks one, then installed through the same sheet.
 
 Several answer common sentences at once, without the AI (D50): Calculator ("what's 12*7", "15% of 80", "convert
-5 km to miles", "days until 25 December"), World Clock ("time in Tokyo"), Currency ("100 usd in eur", "usd to
-eur"), Playtime ("pick a number between 1 and 6", "pick one: tea, coffee or juice"), Dev Toolbox ("new uuid",
-"3 uuids", "timestamp 1730000000"), QR Codes ("qr code for example.com", saved on the Desktop) and System
-Vitals ("about this mac"). Settings › Extensions lists each one's sentences under Details. Text transforms and
-checksums have none on purpose: Sidefolk tidies a typed sentence (quotes, final punctuation, spaces), and a
-hash of tidied text would be the wrong answer.
+5 km to miles", "days until 25 December"), World Clock ("time in Tokyo"), System Vitals ("about this mac"), and from
+the gallery Currency ("100 usd in eur"), Playtime ("pick a number between 1 and 6", "pick one: tea, coffee or
+juice", and a sentence that opens each game), Dev Toolbox ("new uuid", "timestamp 1730000000") and QR Codes ("qr code
+for example.com"). Settings › Add-ons lists each one's sentences under Details. Text transforms and checksums have
+none on purpose: Sidefolk tidies a typed sentence (quotes, final punctuation, spaces), and a hash of tidied text
+would be the wrong answer.
 
-| Extension | Starts | Permissions | What it does |
+| Extension | Where | Permissions | What it does |
 |---|---|---|---|
-| Git | On | The internet, `git`, a folder named per call | Clone, status, pull, log |
-| World Clock | On | None | The time anywhere, conversions with daylight saving |
-| System Vitals | On | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers. Rests while Your Mac (gallery) is on, which does all of it (D67) |
-| Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
-| Calculator | On | None | Exact sums and percentages, units, date maths |
-| Currency | On | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
-| Playtime | On | None | A trivia quiz with a score, a random number or pick from a list (coins, dice and rock, paper, scissors are the companion's own `companion.toss`) |
-| Images | On | A folder named per call, `media` | Photo details; copies converted, smaller or without location |
-| PDF Tools | Off | A folder named per call | Details, text, combine, take pages out |
-| QR Codes | Off | A folder named per call, `media` | Make a QR code picture, read one |
-| Archives | Off | `zip`, `ditto`, a folder named per call | Zip files and folders, open zip files |
-| Dev Toolbox | Off | A file named per call | JSON, base64, URL and hex, JWTs, timestamps, UUIDs, checksums |
-| Feeds | Off | The internet | Latest posts from RSS and Atom; a new-post watcher |
+| World Clock | Built in, on | None | The time anywhere, conversions with daylight saving |
+| System Vitals | Built in, on | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers. Rests while Your Mac is on, which does all of it (D67) |
+| Weather | Built in, on | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
+| Calculator | Built in, on | None | Exact sums and percentages, units, date maths |
+| Git | Gallery | The internet, `git`, a folder named per call | Clone, status, pull, log |
+| Currency | Gallery | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
+| Playtime | Gallery | None | Eleven games and four puzzles in the Play panel, trivia, a random number or pick (D75, D79) |
+| Images | Gallery | A folder named per call, `media` | Photo details; copies converted, smaller or without location |
+| PDF Tools | Gallery | A folder named per call | Details, text, combine, take pages out |
+| QR Codes | Gallery | A folder named per call, `media` | Make a QR code picture, read one |
+| Archives | Gallery | `zip`, `ditto`, a folder named per call | Zip files and folders, open zip files |
+| Dev Toolbox | Gallery | A file named per call | JSON, base64, URL and hex, JWTs, timestamps, UUIDs, checksums |
+| Feeds | Gallery | The internet | Latest posts from RSS and Atom; a new-post watcher |
+| Your Mac | Gallery | None | A page in Home with live gauges and charts of this Mac (System Vitals+, D62) |
+| Clipboard | Gallery | `clipboard`, `background` | Clipboard history in a palette (⌥P), pictures included (D63, D68) |
+| Keep Awake | Gallery | `power`, `background` | Keeps the Mac awake, a switch on its page and Today's tile (D63) |
+| Miraya | Gallery | The network, `udp`, `screen`, `media`, `output_mute` | Shares the screen to a TV the person paired (D69, D81) |
 
-Every tool of an extension that is on reaches the model with each request, so only the everyday ones start
-on. The ones that are off cost one line: the model is told their names and what they do, and suggests
-switching one on in Settings › Extensions when it would help. Nothing writes over an original: pictures,
-PDFs and zips are always new files.
+Every tool of an extension that is on reaches the model with each request. The ones that are off cost one line:
+the model is told their names and what they do, and suggests switching one on in Settings › Add-ons when it would
+help. Nothing writes over an original: pictures, PDFs and zips are always new files.
 
-They are installed at launch like any extension (validated, copied, locked, pinned, started once), with
-three differences:
+The built-in ones are installed at launch like any extension (validated, copied, locked, pinned, started once),
+with three differences:
 
 - **They can be switched off, not uninstalled**: they would come back with the next launch.
 - **They follow the app.** At every launch Sidefolk compares the shipped files with the installed copy
@@ -947,9 +953,9 @@ three differences:
 - **Their tool descriptions reach the model**: first-party text from the app, not a stranger's.
 
 If you install your own copy of a built-in extension (same id) from a folder, Sidefolk keeps it until the
-app brings a strictly newer version, then replaces it and says so. A built-in extension this Mac can't run
-(no git) is listed in Settings with the reason and a Try Again button. There is no locked "core" tier:
-see docs/research/extensions-catalog.md.
+app brings a strictly newer version, then replaces it and says so. A gallery extension updates from the gallery
+(D65, D70: by itself when the new version asks for nothing more, else after a look) and may need a newer Sidefolk
+snapshot (`minimum_sidefolk` in its `addon.json`, D83).
 
 ## Extensions Sidefolk writes for you
 
@@ -965,14 +971,14 @@ When a request needs something no tool does, Sidefolk's AI can offer to build an
    it may do and installs it, or doesn't. Nothing is installed any other way.
 
 Only Sidefolk's own agent (or the person) can use these tools, never in a request that read outside
-content, and they are never offered to other agents. Drafts are listed under Settings › Extensions ›
+content, and they are never offered to other agents. Drafts are listed under Settings › Add-ons ›
 Drafts (Review…, Show in Finder, Move to Trash). An installed draft is "Written for you"; like any
 extension not shipped with the app, its descriptions don't reach the model, so its tools are known by
 their titles and parameter names, from the person's next request.
 
 ## Plain MCP servers
 
-Settings › Extensions › Add MCP server takes a name, a command and its arguments, for example
+Settings › Add-ons › Add MCP Server… takes a name, a command and its arguments, for example
 `npx -y some-mcp-server@1.2.3`. Such servers:
 
 - run **without a sandbox, with your full permissions** (and Sidefolk's), which the sheet says;
@@ -994,7 +1000,7 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | A program in `exec` runs but returns nothing useful | It may need a system service the sandbox doesn't open; tell us which program. |
 | "… didn't start (it exited with status 1)" | The program crashed or printed something that isn't JSON before answering `initialize`. The message shows the last line it wrote to stderr; `sidefolk ext validate <folder>` starts it in the same sandbox and prints the rest. |
 | `OSError: [Errno 1]` from `fork` or `subprocess` | Only extensions that list programs in `exec` may start processes. |
-| "… changed since you approved it, so it is on hold" | The tool's description or schema changed. Review and approve in Settings › Extensions. |
+| "… changed since you approved it, so it is on hold" | The tool's description or schema changed. Review and approve in Settings › Add-ons. |
 | "… was changed on disk, so I turned it off" | Files in the installed copy changed. Install the extension again. |
 | "… kept crashing, so I turned it off" | It exited 3 times in 5 minutes, used too much memory or CPU, or wrote a line over 1 MiB. Check the log, fix, turn it back on. |
 | "… took too long" | A call ran past 30 seconds. |
