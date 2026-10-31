@@ -33,10 +33,8 @@ private struct BrainHero: View {
                 Spacer(minLength: 0)
             }
             if choice != .none {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Theme.Space.s) { steps(choice) }
-                    VStack(alignment: .leading, spacing: Theme.Space.s) { steps(choice) }
-                }
+                HStack(spacing: Theme.Space.s) { steps(choice) }
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Label {
                 Text("Notes, reminders and watches work without AI. AI is only used for questions and open-ended requests.")
@@ -72,13 +70,14 @@ private struct BrainHero: View {
                 .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                title.font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
-                detail.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                title.font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                detail.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(Theme.Space.s)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
         .accessibilityElement(children: .combine)
     }

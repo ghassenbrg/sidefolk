@@ -27,6 +27,8 @@ struct SettingsRoot: View {
             }
         }
         .background(Theme.surfaceSunken)
+        // The sidebar holds the window's buttons and the title sits level with them, as in System Settings.
+        .ignoresSafeArea(.container, edges: .top)
         .environment(\.settingsNavigation, navigation)
         .background {
             Button("Search Settings") { searchFocused = true }
@@ -74,7 +76,7 @@ private struct SettingsSidebar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xxs) {
             // Room for the window's buttons.
-            Color.clear.frame(height: 36)
+            Color.clear.frame(height: 30)
             SettingsSearchField(navigation: navigation, focused: searchFocused)
                 .padding(.bottom, Theme.Space.s)
             ForEach(SettingsTab.allCases) { tab in
@@ -228,7 +230,8 @@ struct SettingsSearchResults: View {
                              comment: "Settings search: under the title")
                             .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     }
-                    ForEach(SettingsTab.allCases.filter { tab in results.contains { $0.tab == tab } }) { tab in
+                    // The tab with the best match first.
+                    ForEach(results.map(\.tab).reduce(into: [SettingsTab]()) { tabs, tab in if !tabs.contains(tab) { tabs.append(tab) } }) { tab in
                         group(tab, keys: results.filter { $0.tab == tab })
                     }
                 }

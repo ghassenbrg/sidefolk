@@ -73,8 +73,8 @@ private struct AttentionHero: View {
         HStack(spacing: 0) {
             ZStack(alignment: .bottom) {
                 LightPool(state: mode == .focus ? .focus : .idle, width: 120).offset(y: 6)
-                Image(nsImage: CompanionArt.avatar(for: model.settings, side: 112))
-                    .resizable().interpolation(.high).frame(width: 112, height: 112)
+                Image(nsImage: CompanionArt.portrait(for: model.settings, side: 128))
+                    .resizable().interpolation(.high).frame(width: 128, height: 128)
                     .overlay(alignment: .topTrailing) {
                         ShoulderBadge(state: mode == .focus ? .focus : mode == .quiet ? .quiet : .idle).offset(x: 4, y: -2)
                     }

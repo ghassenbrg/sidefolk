@@ -145,23 +145,40 @@ struct UpdateHero: View {
     }
 }
 
-/// The scrolling body of a Settings tab, which scrolls to a setting search jumped to (D84).
+/// The scrolling body of a Settings tab, which scrolls to a setting search jumped to (D84). Left-aligned under the
+/// tab's title, at most 720 wide.
 struct SettingsPage<Content: View>: View {
     @ViewBuilder var content: Content
     @Environment(\.settingsNavigation) private var navigation
+    @Environment(\.rendersFullPage) private var fullPage
 
     var body: some View {
-        ScrollViewReader { proxy in
-            PageScroll(maxWidth: 720, padding: Theme.Space.xl) { content }
-                .task(id: navigation?.revealed) {
-                    guard let key = navigation?.revealed else { return }
-                    // After the first layout, or there is nothing to scroll to yet.
-                    try? await Task.sleep(for: .milliseconds(80))
-                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(key, anchor: .center) }
-                    try? await Task.sleep(for: .seconds(2.4))
-                    if navigation?.revealed == key { navigation?.revealed = nil }
-                }
+        if fullPage {
+            column.background { PageBackground() }
+        } else {
+            ScrollViewReader { proxy in
+                ScrollView { column }
+                    .scrollContentBackground(.hidden)
+                    .background { PageBackground() }
+                    .task(id: navigation?.revealed) {
+                        guard let key = navigation?.revealed else { return }
+                        // After the first layout, or there is nothing to scroll to yet.
+                        try? await Task.sleep(for: .milliseconds(80))
+                        withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(key, anchor: .center) }
+                        try? await Task.sleep(for: .seconds(2.4))
+                        if navigation?.revealed == key { navigation?.revealed = nil }
+                    }
+            }
         }
+    }
+
+    private var column: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xl) { content }
+            .frame(maxWidth: 720, alignment: .leading)
+            .padding(.horizontal, Theme.Space.xl)
+            .padding(.top, Theme.Space.xs)
+            .padding(.bottom, Theme.Space.xl)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

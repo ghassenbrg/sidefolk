@@ -217,7 +217,13 @@ final class SettingsNavigation {
     var highlighted: SettingKey?
 
     var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
-    var results: [SettingKey] { SettingKey.find(query) }
+    /// What the search found, grouped by tab as the results show them (the tab with the best match first), so the
+    /// arrow keys go down the page.
+    var results: [SettingKey] {
+        let found = SettingKey.find(query)
+        let tabs = found.map(\.tab).reduce(into: [SettingsTab]()) { tabs, tab in if !tabs.contains(tab) { tabs.append(tab) } }
+        return tabs.flatMap { tab in found.filter { $0.tab == tab } }
+    }
 
     /// Opens the tab the setting lives in and scrolls to it; the search is cleared.
     func jump(to key: SettingKey) {
