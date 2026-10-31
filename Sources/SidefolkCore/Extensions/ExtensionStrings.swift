@@ -2,7 +2,7 @@ import Foundation
 
 /// An extension's words in the languages Sidefolk speaks (D76): `strings/<language>.json` beside the manifest. A
 /// language's file may translate what the manifest shows people (name, tagline, description, tool, watcher, page and
-/// palette titles, the network's purpose) and carries the program's own sentences under `text`, which `strings/en.json`
+/// palette and game titles, the network's purpose) and carries the program's own sentences under `text`, which `strings/en.json`
 /// lists in English. Files of their own rather than a manifest key, because older copies of Sidefolk refuse a manifest
 /// with a key they don't know (T13), and ignore a folder they don't read.
 public struct ExtensionStrings: Sendable, Hashable {
@@ -22,6 +22,8 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var watchers: [String: Watcher] = [:]
         public var pages: [String: String] = [:]
         public var palettes: [String: Palette] = [:]
+        /// Game titles (D75), shown in the Play menu, the panel's header and `games.open`.
+        public var games: [String: String] = [:]
         /// The program's sentences by their English key: one text, or forms by count (`one`, `other`…).
         public var text: [String: Text] = [:]
 
@@ -70,17 +72,13 @@ public struct ExtensionStrings: Sendable, Hashable {
         return tables[code]
     }
 
-    /// The best of `available` for `language`: the same code, else the same language (`pt` → `pt-BR`, `zh-Hans-CN` →
-    /// `zh-Hans`). `zh-Hant` is not `zh-Hans`: script counts.
+    /// The best of `available` for `language`: the same code, else the same language (`pt` → `pt-BR`, `zh-Hans-CN` and
+    /// `zh-Hant` → `zh-Hans`). One rule with the Kit's `Localized.normalized`: the nearest language Sidefolk speaks, so a
+    /// Traditional-script reader gets Simplified Chinese from the extension rather than its English.
     static func match(_ language: String, in available: Set<String>) -> String? {
         if available.contains(language) { return language }
         let wanted = Locale.Language(identifier: language)
-        return available.sorted().first { code in
-            let have = Locale.Language(identifier: code)
-            guard have.languageCode == wanted.languageCode else { return false }
-            if let a = have.script, let b = wanted.script ?? wanted.maximalIdentifierScript { return a == b }
-            return true
-        }
+        return available.sorted().first { Locale.Language(identifier: $0).languageCode == wanted.languageCode }
     }
 
     /// Forms a count may take in each language (CLDR); every language has `other`, which stands in for a missing one.
@@ -97,11 +95,6 @@ public struct ExtensionStrings: Sendable, Hashable {
     static func placeholders(_ text: String) -> Set<String> {
         Set(text.matches(of: /\{([a-z_][a-z0-9_]{0,31})\}/).map { String($0.1) })
     }
-}
-
-private extension Locale.Language {
-    /// The script a language is usually written in, so `zh-CN` finds `zh-Hans`.
-    var maximalIdentifierScript: Locale.Script? { Locale.Language(identifier: maximalIdentifier).script }
 }
 
 // MARK: Reading and checking
@@ -159,7 +152,7 @@ extension ExtensionStrings {
         var w = Words()
         guard let o = any as? [String: Any] else { return w }
         let english = code == "en"
-        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "text"]
+        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "text"]
         for key in o.keys.sorted() where !allowed.contains(key) {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
             issues.append(ValidationIssue(field: "\(file).\(key)", message: why))
@@ -222,6 +215,10 @@ extension ExtensionStrings {
             w.palettes[name] = Palette(title: line(f["title"], "\(file).palettes.\(name).title", max: 40, base: m.palettes[name]?.title),
                                        placeholder: line(f["placeholder"], "\(file).palettes.\(name).placeholder", max: 60,
                                                          base: m.palettes[name]?.placeholder))
+        }
+        for (name, value) in object("games", names: Set(m.games.keys)) {
+            let f = fields(value, "\(file).games.\(name)", ["title"])
+            w.games[name] = line(f["title"], "\(file).games.\(name).title", max: 40, base: m.games[name]?.title)
         }
         w.text = texts(o["text"], file: file, code: code, base: base, issues: &issues)
         return w

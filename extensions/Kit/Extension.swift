@@ -32,6 +32,9 @@ public final class Extension {
     private var backgroundWork: (@MainActor () async -> Void)?
     private var notices: [String: @MainActor (Arguments) -> Void] = [:]
     private var pairedCheck: (@MainActor (_ tool: String, _ arguments: Arguments) async -> Paired)?
+    /// Games the manifest declares (Game.swift).
+    var games: [String: (start: @MainActor (GameRequest) async throws -> GameReply, move: @MainActor (GameRequest) async throws -> Board,
+                         end: @MainActor (GameRequest) async -> Void)] = [:]
 
     public init(name: String, version: String = "1.0.0") {
         self.name = name
@@ -170,6 +173,20 @@ public final class Extension {
             let name = params["palette"] as? String ?? ""
             guard let palette = palettes[name], let preview = palette.preview else { throw Unknown(what: "No preview in palette: \(name)") }
             return try await preview(params["item"] as? String ?? "")?.json ?? [:]
+        case "sidefolk/game.start", "sidefolk/game.move", "sidefolk/game.end":
+            let name = params["game"] as? String ?? ""
+            guard let game = games[name] else { throw Unknown(what: "Unknown game: \(name)") }
+            let request = GameRequest(params)
+            switch method {
+            case "sidefolk/game.start":
+                let reply = try await game.start(request)
+                return ["session": reply.session, "board": reply.board.json]
+            case "sidefolk/game.move":
+                return ["board": try await game.move(request).json]
+            default:
+                await game.end(request)
+                return [:]
+            }
         case "sidefolk/paired.check":
             guard let check = pairedCheck else { return ["paired": false] }
             switch await check(params["tool"] as? String ?? "", Arguments(params["arguments"] as? [String: Any] ?? [:])) {

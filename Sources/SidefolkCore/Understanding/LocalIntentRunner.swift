@@ -137,14 +137,19 @@ public struct LocalIntentRunner: Sendable {
             return await command(call)
         case .read(let source):
             return await execute("watch.read", .object(Self.input(for: source)))
+        case .game(let id, let game):
+            return await execute("games.open", ["extension": .string(id), "game": .string(game)])
         case .chance(let c):
             var input: [String: JSONValue] = ["kind": .string(c.kind.rawValue), "count": .number(Double(c.count))]
             if c.kind == .dice { input["sides"] = .number(Double(c.sides)); input["modifier"] = .number(Double(c.modifier)) }
             if c.kind == .rockPaperScissors {
-                // The companion shows its hand only once the person has chosen theirs: then "rock" alone plays it.
-                guard let hand = c.hand else { return .info(String(localized: "Rock, paper or scissors? Say yours.")) }
+                // Without a hand it is a match, the best of three in the Play panel (D75); with one, a quick throw.
+                guard let hand = c.hand else {
+                    return await execute("games.open", ["extension": .string(GameInfo.sidefolk), "game": .string(GameInfo.handsMatch.game)])
+                }
                 input["hand"] = .string(hand.rawValue)
             }
+            if let call = c.call { input["call"] = .string(call ? "heads" : "tails") }
             return await execute("companion.toss", .object(input))
         }
     }

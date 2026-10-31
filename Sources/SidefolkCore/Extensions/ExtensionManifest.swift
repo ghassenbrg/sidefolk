@@ -32,6 +32,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var background: Bool
     /// Pop-up lists on a keyboard shortcut, filled by `sidefolk/palette.query` (D63).
     public var palettes: [String: PaletteMeta]
+    /// Games played in the Play panel beside the companion, over `sidefolk/game.*` (D75).
+    public var games: [String: GameMeta]
 
     public struct Run: Sendable, Hashable, Decodable {
         /// `python3`, `node`, `sh`, or a program inside the folder (`bin/server`).
@@ -259,6 +261,37 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
     }
 
+    /// A game in the Play panel (D75): Sidefolk draws its boards from what `sidefolk/game.start` and `game.move` return.
+    public struct GameMeta: Sendable, Hashable, Decodable {
+        public var title: String
+        /// An SF Symbol for the Play menu and the panel's header.
+        public var symbol: String?
+        /// Whole sentences that open it at once, without the AI ("let's play trivia").
+        public var say: [String]
+        /// Levels the game offers, easiest first; the person picks one on its page or in its set-up.
+        public var levels: [String]
+        /// Offered to Sidefolk's AI through `games.open`; missing means yes.
+        public var ai: Bool?
+
+        public init(title: String, symbol: String? = nil, say: [String] = [], levels: [String] = [], ai: Bool? = nil) {
+            self.title = title
+            self.symbol = symbol
+            self.say = say
+            self.levels = levels
+            self.ai = ai
+        }
+
+        public init(from decoder: Decoder) throws {
+            try decoder.rejectUnknownKeys(["title", "symbol", "say", "levels", "ai"])
+            let c = try decoder.container(keyedBy: AnyKey.self)
+            title = try c.decode(String.self, forKey: "title")
+            symbol = try c.decodeIfPresent(String.self, forKey: "symbol")
+            say = try c.decodeIfPresent([String].self, forKey: "say") ?? []
+            levels = try c.decodeIfPresent([String].self, forKey: "levels") ?? []
+            ai = try c.decodeIfPresent(Bool.self, forKey: "ai")
+        }
+    }
+
     /// One setting of a watcher, filled in by whoever creates the watcher.
     public struct ConfigField: Sendable, Hashable, Codable {
         public enum FieldType: String, Sendable, Hashable, Codable { case integer, number, string, boolean }
@@ -294,7 +327,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public init(id: String, name: String, version: String, sidefolk: String? = nil, description: String? = nil,
                 tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
-                pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:]) {
+                pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:],
+                games: [String: GameMeta] = [:]) {
         self.id = id
         self.name = name
         self.version = version
@@ -312,11 +346,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.pages = pages
         self.background = background
         self.palettes = palettes
+        self.games = games
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes"])
+                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -335,6 +370,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         pages = try c.decodeIfPresent([String: PageMeta].self, forKey: "pages") ?? [:]
         background = try c.decodeIfPresent(Bool.self, forKey: "background") ?? false
         palettes = try c.decodeIfPresent([String: PaletteMeta].self, forKey: "palettes") ?? [:]
+        games = try c.decodeIfPresent([String: GameMeta].self, forKey: "games") ?? [:]
     }
 
     /// The last part of the id (`dev.sidefolk.system-vitals` → `system-vitals`), used in tool names.

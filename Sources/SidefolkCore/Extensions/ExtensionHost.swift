@@ -62,6 +62,11 @@ public actor ExtensionHost {
     private var sampling: Task<Void, Never>?
     /// What each page said last, for Today's tiles: by `extension/page`.
     private var latest: [String: (at: Date, page: ExtensionPage)] = [:]
+    /// The games of enabled extensions, readable without waiting on the actor: the sentences that open them are
+    /// matched as the person types (D75).
+    public nonisolated let gameShelf = GameShelf()
+    /// The one game open in the Play panel, with its recent moves for the rate limit (ExtensionHost+Games).
+    var openGame: OpenGame?
 
     /// - Parameter secrets: environment values for an MCP server, by server id (from the Keychain).
     ///   Only the keys the server was added with are used.
@@ -311,6 +316,7 @@ public actor ExtensionHost {
         let previous = runtimes[id]
         if previous != nil { await stop(id) }
         registry.unregister(owner: id)
+        shelveGames()
         let staged = try installer.stage(source: folder, id: id, quarantine: origin?.firstParty == true ? .none : .original)
         let committed = try installer.commit(staged)
         do {
@@ -350,6 +356,7 @@ public actor ExtensionHost {
         } catch {
             if let client = runtimes[id]?.client { await client.shutdown() }
             registry.unregister(owner: id)
+            shelveGames()
             installer.rollback(committed)
             integrity.forget(id)
             runtimes[id] = previous.map { var p = $0; p.client = nil; p.live = nil; return p }
@@ -379,6 +386,7 @@ public actor ExtensionHost {
         await stop(id)
         runtimes[id] = nil
         registry.unregister(owner: id)
+        shelveGames()
         installer.remove(id: id)
         integrity.forget(id)
         await pageHistory.forget(extensionId: id)
@@ -410,6 +418,7 @@ public actor ExtensionHost {
             rt.record.enabled = false
             runtimes[id] = rt
             registry.unregister(owner: id)
+            shelveGames()
             try await store.save(rt.record)
         }
         reconsiderResting()
@@ -688,6 +697,33 @@ public actor ExtensionHost {
         return (try await ensureRunning(id), meta.title)
     }
 
+    // MARK: Games (D75)
+
+    /// The games of every enabled extension, for the Play menu, `games.open` and the sentences that open them.
+    public func games() -> [GameInfo] {
+        runtimes.keys.sorted().flatMap { id -> [GameInfo] in
+            guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
+            let firstParty = rt.pin.origin?.firstParty == true
+            let name = self.name(rt)
+            return m.games.keys.sorted().compactMap { game -> GameInfo? in
+                guard let g = m.games[game] else { return nil }
+                return GameInfo(extensionId: id, extensionName: name, game: game,
+                                title: words(rt)?.games[game] ?? (firstParty ? BuiltInExtensionWords.game(id, game) : nil) ?? g.title, symbol: g.symbol,
+                                levels: g.levels, ai: g.ai ?? true, say: g.say, iconPath: rt.iconPath)
+            }
+        }
+    }
+
+    func shelveGames() { gameShelf.set(games()) }
+
+    /// The running process of an extension that declares `game`, and the extension's name for messages.
+    func gameClient(_ id: String, _ game: String) async throws -> (MCPClient, String) {
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
+        guard rt.manifest?.games[game] != nil else { throw ToolError.notFound(String(localized: "the game \(game) in \(rt.pin.name)")) }
+        let name = (rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name
+        return (try await ensureRunning(id), name)
+    }
+
     // MARK: Tool calls
 
     /// - Parameters:
@@ -789,7 +825,7 @@ public actor ExtensionHost {
     }
 
     /// `action` is what was asked of it: a quoted tool title, or "checking “Disk space”".
-    private func userFacing(_ error: MCPError, action: String, name: String) -> UserFacingError {
+    func userFacing(_ error: MCPError, action: String, name: String) -> UserFacingError {
         switch error {
         case .server(_, let message), .toolFailed(let message):
             return UserFacingError("\(name) reported a problem with \(action).", changedNothing: false, detail: message)
@@ -803,9 +839,9 @@ public actor ExtensionHost {
         }
     }
 
-    private func begin(_ id: String) { runtimes[id]?.inFlight += 1 }
+    func begin(_ id: String) { runtimes[id]?.inFlight += 1 }
 
-    private func end(_ id: String) {
+    func end(_ id: String) {
         runtimes[id]?.inFlight -= 1
         touch(id)
     }
@@ -1133,6 +1169,7 @@ public actor ExtensionHost {
         rt.idleTask?.cancel()
         runtimes[id] = rt
         registry.unregister(owner: id)
+        shelveGames()
         try? await store.save(rt.record)
         reconsiderResting()
         Log.shared.warning("extensions", "turned off", ["id": id, "why": reason])
@@ -1182,6 +1219,7 @@ public actor ExtensionHost {
 
     private func registerTools(_ id: String) {
         registry.unregister(owner: id)
+        shelveGames()
         guard let rt = runtimes[id], rt.record.enabled, restingFor(id) == nil else { return }
         for name in rt.pin.tools.keys.sorted() where rt.pin.pending[name] == nil && (rt.live?.contains(name) ?? true) {
             guard let def = rt.pin.tools[name], let local = localName(rt, name) else { continue }

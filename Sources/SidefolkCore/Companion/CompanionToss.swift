@@ -26,8 +26,8 @@ public enum Hand: String, CaseIterable, Sendable, Codable {
 /// What came up when the companion flipped, rolled or played a hand (D44, amended): drawn in core with the system's
 /// generator, so the result is real and the model can only repeat it, then played on the desktop by the app.
 public enum Toss: Sendable, Equatable {
-    /// One entry per coin: true is heads.
-    case coins([Bool])
+    /// One entry per coin: true is heads. `call` is what the person called for a single coin, if they did (D75).
+    case coins([Bool], call: Bool? = nil)
     /// Each die's face, and what is added to their sum (the +1 of 2d6+1).
     case dice(sides: Int, rolls: [Int], modifier: Int)
     /// The person's hand, and the companion's.
@@ -41,7 +41,7 @@ public enum Toss: Sendable, Equatable {
     /// What the caption and the card say: "Heads!", "It's 4!", "4 + 2 = 6", "Paper beats rock: you win!".
     public var result: String {
         switch self {
-        case .coins(let flips):
+        case .coins(let flips, _):
             guard flips.count > 1 else {
                 return flips.first == true ? String(localized: "Heads!", comment: "A coin landed on heads")
                     : String(localized: "Tails!", comment: "A coin landed on tails")
@@ -58,12 +58,21 @@ public enum Toss: Sendable, Equatable {
         }
     }
 
+    /// Whether the person's call was right, when they called one coin.
+    public var called: Bool? {
+        guard case .coins(let flips, let call?) = self, flips.count == 1 else { return nil }
+        return call == flips[0]
+    }
+
     /// The same, in English for the model.
     var forModel: String {
         switch self {
-        case .coins(let flips):
+        case .coins(let flips, let call):
             let faces = flips.map { $0 ? "heads" : "tails" }
-            guard flips.count > 1 else { return faces[0] }
+            guard flips.count > 1 else {
+                guard let call else { return faces[0] }
+                return "\(faces[0]); the user called \(call ? "heads" : "tails") and was \(call == flips[0] ? "right" : "wrong")"
+            }
             let heads = flips.filter { $0 }.count
             return "\(faces.joined(separator: ", ")) (\(heads) heads, \(flips.count - heads) tails)"
         case .dice(let sides, let rolls, let modifier):
@@ -81,7 +90,7 @@ public enum Toss: Sendable, Equatable {
     }
 
     /// "4 + 2 + 1 = 7", "4 + 2 − 1 = 5".
-    static func sum(_ rolls: [Int], _ modifier: Int, _ format: (Int) -> String) -> String {
+    public static func sum(_ rolls: [Int], _ modifier: Int, _ format: (Int) -> String) -> String {
         var parts = rolls.map(format).joined(separator: " + ")
         if modifier != 0 { parts += modifier > 0 ? " + \(format(modifier))" : " − \(format(-modifier))" }
         return parts + " = " + format(rolls.reduce(0, +) + modifier)
@@ -160,6 +169,7 @@ struct CompanionTossTool: Tool {
             "sides": Schema.integer("dice: sides on each die; 6 if not given, 20 for a d20.", minimum: 2, maximum: 100),
             "modifier": Schema.integer("dice: added to the sum, like the +1 of 2d6+1.", minimum: -100, maximum: 100),
             "hand": Schema.string("rock_paper_scissors: the user's hand.", enum: Hand.allCases.map(\.rawValue)),
+            "call": Schema.string("coin: what the user called for one coin, if they did.", enum: ["heads", "tails"]),
         ], required: ["kind"]),
         risk: .low, capabilities: [.system], category: .system, mutates: false)
 
@@ -187,7 +197,8 @@ struct CompanionTossTool: Tool {
             guard (1...Toss.maxCoins).contains(count) else {
                 throw ToolError.invalidInput(String(localized: "Flip between 1 and \(Toss.maxCoins) coins at a time."))
             }
-            toss = .coins((0..<count).map { _ in random(0...1) == 1 })
+            let call = count == 1 ? input.string("call").flatMap { ["heads": true, "tails": false][$0.lowercased()] } : nil
+            toss = .coins((0..<count).map { _ in random(0...1) == 1 }, call: call)
             subtitle = count == 1 ? String(localized: "A coin flip") : String(localized: "\(count) coins")
         case "dice":
             let sides = input["sides"]?.intValue ?? 6, modifier = input["modifier"]?.intValue ?? 0

@@ -28,6 +28,10 @@ enum UISnapshots {
             }
             ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
         }
+        // Boards a game wrote (Playtime's `writeSampleBoards`), drawn as `play-<game>-<moment>`.
+        if let i = args.firstIndex(of: "--game-boards"), i + 1 < args.count {
+            gameBoards = URL(fileURLWithPath: args[i + 1], isDirectory: true)
+        }
         // Only the shots whose names contain one of these words: a page under review in seconds, not minutes.
         if let i = args.firstIndex(of: "--only"), i + 1 < args.count {
             only = args[i + 1].split(separator: ",").map(String.init)
@@ -380,8 +384,18 @@ enum UISnapshots {
                 try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
             }
             try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
-            for (name, caption) in sampleTosses() {
-                try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 280)
+            for (name, caption) in sampleTosses(face: portrait) {
+                try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 300)
+            }
+            // The Play panel in each state, and the moment a clash is halfway (D75).
+            for (name, model, at) in await SamplePlayBoards.models(portrait: portrait) where wantedName("game-\(name)") {
+                try await page("game-\(name)", PlayView(model: model).environment(\.revealProgress, at), width: PlayView.width)
+            }
+            // Playtime's real boards, every game and moment, when a folder of them is given (`--game-boards`).
+            if let boards = gameBoards {
+                for (name, model) in await SamplePlayBoards.real(from: boards, portrait: portrait) where wantedName("play-\(name)") {
+                    try await page("play-\(name)", PlayView(model: model).environment(\.revealProgress, 1), width: PlayView.width)
+                }
             }
 
             // Sheets.
@@ -721,21 +735,32 @@ enum UISnapshots {
         return ask
     }
 
-    /// What the companion flipped, rolled and played (D44, amended): landed, and one coin halfway up.
-    private static func sampleTosses() -> [(String, CaptionModel)] {
-        func caption(_ toss: Toss, landed: Bool = true, text: String? = nil) -> CaptionModel {
+    /// What the companion flipped, rolled and played (D44, amended; D75): landed with the result under it and Again, one coin
+    /// halfway up, a called coin, a natural 20 and the shapes of dice, and two hands meeting.
+    private static func sampleTosses(face: NSImage?) -> [(String, CaptionModel)] {
+        func caption(_ toss: Toss, landed: Bool = true, text: String? = nil, at: Double = 0.5, again: Bool = true) -> CaptionModel {
             let model = CaptionModel()
-            model.text = text ?? toss.result
+            model.text = text ?? ""
             model.companionName = "Mochi"
-            model.stage = TossShow(toss: toss, start: Date().addingTimeInterval(landed ? -2 : -0.5), flight: 1.04, still: false, landed: landed)
+            model.face = face
+            let flight = 1.2
+            model.stage = TossShow(toss: toss, start: Date().addingTimeInterval(landed ? -3 : -at * flight - 0.3), flight: flight, still: false, landed: landed)
+            if landed, again, !{ if case .hands = toss { true } else { false } }() { model.again = {} }
             return model
         }
         return [
-            ("coin-flying", caption(.coins([false]), landed: false, text: String(localized: "Heads or tails…"))),
+            ("coin-flying", caption(.coins([false]), landed: false, text: String(localized: "Heads or tails…"), at: 0.45)),
+            ("coin-heads", caption(.coins([true]))),
+            ("coin-called", caption(.coins([false], call: false), text: String(localized: "You called it!", comment: "The companion: the person called the coin right"))),
             ("coins", caption(.coins([true, false, true]))),
+            ("dice-rolling", caption(.dice(sides: 6, rolls: [5, 3], modifier: 0), landed: false, text: String(localized: "Rolling…"), at: 0.4)),
             ("dice", caption(.dice(sides: 6, rolls: [5, 3], modifier: 1))),
-            ("d20", caption(.dice(sides: 20, rolls: [17, 4, 20], modifier: 0))),
+            ("doubles", caption(.dice(sides: 6, rolls: [4, 4], modifier: 0), text: String(localized: "Doubles!", comment: "The companion: two dice landed on the same face"))),
+            ("d20", caption(.dice(sides: 20, rolls: [20], modifier: 0), text: String(localized: "Natural 20!", comment: "The companion: a d20 landed on 20"))),
+            ("polyhedra", caption(.dice(sides: 8, rolls: [3, 7], modifier: 0))),
+            ("d12", caption(.dice(sides: 12, rolls: [11, 4, 9], modifier: 2))),
             ("many-dice", caption(.dice(sides: 6, rolls: [1, 2, 3, 4, 5, 6, 6], modifier: 0))),
+            ("hands-clash", caption(.hands(person: .scissors, companion: .paper), landed: false, at: 1.25)),
             ("hands-you-win", caption(.hands(person: .rock, companion: .scissors))),
             ("hands-i-win", caption(.hands(person: .rock, companion: .paper))),
             ("hands-draw", caption(.hands(person: .scissors, companion: .scissors))),
@@ -908,6 +933,7 @@ enum UISnapshots {
     }
 
     private static var only: [String] = []
+    private static var gameBoards: URL?
 
     /// The narrowest page where every row of the theme's Today stays side by side (ColumnsLayout's rule, with
     /// NowView's least widths): where its columns are at their slimmest.
@@ -920,6 +946,8 @@ enum UISnapshots {
         }.max() ?? 0
         return (max(content, 420) + 2 * Theme.Space.xxl + 2).rounded(.up)
     }
+
+    private static func wantedName(_ name: String) -> Bool { only.isEmpty || only.contains { name.contains($0) } }
 
     private static func wanted(_ url: URL) -> Bool {
         only.isEmpty || only.contains { url.lastPathComponent.contains($0) }

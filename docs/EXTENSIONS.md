@@ -34,14 +34,15 @@ Claude Code or Codex. You can also add any existing MCP server (see
 7. [Answering without the AI: commands](#answering-without-the-ai-commands)
 8. [Watchers](#watchers)
 9. [Pages](#pages)
-10. [Speaking the person's language](#speaking-the-persons-language)
-11. [Testing locally](#testing-locally)
-12. [Installing, updating, removing](#installing-updating-removing)
-13. [Built-in extensions](#built-in-extensions)
-14. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
-15. [Plain MCP servers](#plain-mcp-servers)
-16. [Troubleshooting](#troubleshooting)
-17. [Limits](#limits)
+10. [Games](#games)
+11. [Speaking the person's language](#speaking-the-persons-language)
+12. [Testing locally](#testing-locally)
+13. [Installing, updating, removing](#installing-updating-removing)
+14. [Built-in extensions](#built-in-extensions)
+15. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+16. [Plain MCP servers](#plain-mcp-servers)
+17. [Troubleshooting](#troubleshooting)
+18. [Limits](#limits)
 
 ## Quick start
 
@@ -668,6 +669,88 @@ where it is, which resets macOS's idle time (what chat and meeting apps watch) w
 Only with `permissions.power`, at most one every 20 seconds whatever you send, and only once the person allowed
 Accessibility. (macOS's own "user is active" call doesn't reset the idle time those apps read.)
 
+## Games
+
+An extension can add games played in Sidefolk's **Play panel** beside the companion (D75). As for pages, you say what
+is on the board and Sidefolk draws it, keeps the time, plays the companion's reactions and the sounds, and writes one
+Activity row when the game ends.
+
+```json
+"games": {
+  "trivia": { "title": "Trivia", "symbol": "questionmark.bubble.fill", "levels": ["easy", "fair", "hard"],
+              "say": ["let's play trivia", "quiz me"], "ai": true }
+}
+```
+
+- `say`: whole sentences that open the game at once, without the AI (the command rules, no slots). Every game is also
+  in the companion's Play menu and in `games.open`, the tool Sidefolk's AI uses to offer a round (`"ai": false` keeps
+  it from the AI). Up to 24 sentences, so a game can be opened in each of Sidefolk's ten languages ("let's play
+  tic-tac-toe", "jouons au morpion", "来玩井字棋"); the game's title is translated in `strings/` (`games.<name>.title`).
+  `levels`: up to five names, easiest first.
+- **The channel:** `sidefolk/game.start {game, level, language, options}` answers `{session, board}`;
+  `sidefolk/game.move {game, session, move}` answers `{board}`; `sidefolk/game.end {game, session, reason}` (`closed`,
+  `timeout`, `finished`) needs no answer. `options` holds `tone` (gentle, cheeky, competitive), `sneaky` and
+  `companion` (its name). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
+  for a part the board on screen offered, at most 20 a second: `{answer: i}`, `{cell: [r, c]}`, `{button: "next"}`,
+  `{choice: {name, value}}`, `{timeout: true}`, `{letter: "e"}`, `{word: "crane"}`, `{number: 42}`, `{pad: 2}`,
+  `{press: {ms: 243}}`, `{early: true}`, `{text: {name, value}}` and `{next: true}` (a board's `after_ms` passed). Moves
+  are not tool calls: a game changes only its own state. Anything that acts on the world stays a tool behind Guard.
+- **Board parts:** `prompt` (text, `eyebrow`, `chip`), `answers` (2–4 `items` with `label`, `state` none, picked,
+  right, wrong or faded, `companion` for its pick, `art` rock, paper or scissors; `layout` grid, row or column;
+  `locked`), `board` (rows × columns ≤ 8 × 8 of `cells` with `mark`, `value`, `companion`, `state`, `label`, `animate`),
+  `score` (`you`, `companion`, `streak`, `best`, `rounds` to win, `companion_picked` for its sealed card), `result`
+  (`figure`, `line`, `ribbon`, `tone` good, bad or neutral, `facts`, up to three `actions`), `timer` (`id`, `seconds`:
+  Sidefolk counts and sends `{timeout: true}`), `reveal` (`kind` coin, dice or hands), `note`, `facts`, `button`
+  (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board), `choice`
+  (`name`, `style` cards or segmented, `options`, `selected`). Unknown parts are skipped; `"over": true` ends the game.
+  A tile may carry its own `key` (a letter, a digit or `?`); a 3 × 3 `board` with `"keys": "numpad"` takes the digits
+  as a number pad does.
+- **Parts for the later games** (Sidefolk draws, times and takes the input; the Kit's `.play(...)`, GameParts.swift):
+  `pads` (2–5 `items` of `shape`, `color`, `label`, the companion's `move`; `play` a sequence of up to 64 that Sidefolk
+  shows first at `step_ms` 250–2000, a pad lit with its note and the companion's move, then `{pad: i}`), `cups` (2–5:
+  the gem under `hide`, then `swaps` of positions, up to 40, at `swap_ms`; a pick is `{cell: [0, i]}`; `gem` (or `null`
+  for none) lifts them), `reflex` (`wait`, `go`, `early` words, `after_ms` 300–10000, `window_ms`; Sidefolk shows the
+  signal and times the press from the key's own timestamp; `shows` once played), `meter` (0–1, `label`, `low`, `high`),
+  `number` (`min`, `max`, `history` of `{value, mark}` higher, lower or right; Sidefolk's digit pad), `letters` (`rows` of
+  tiles `{text, mark, group}` marked right, elsewhere, absent or hidden; `style` rows or slots; `flip` the row just
+  played; `draft` shows what is typed in the next row), `keys` (`pages` of rows of single letters with marks; `mode`
+  letter or spell with `length`; `script` latin, kana, hangul or arabic, so Korean jamo typed group into syllables),
+  `entry` (a text field, so the input method types Chinese idioms; `kind` word or text, `max` up to 120), `sticks`
+  (`total`, `left`, `take`, `groups`, `hint`, the last `taken` and `taken_by`), `lives` (`total`, `left`, `symbol`
+  balloon or heart). **`after_ms`** (100–6000) on a board: Sidefolk shows it that long, then asks for the next with
+  `{next: true}`: the companion thinking before its move, two cards left face up. The game never keeps time.
+- **The companion's cue** (`"companion"` on a board), every value from a fixed list, anything else dropped: `move`
+  (think, cheer, celebrate, sulk, bow, nod, shrug, giggle, wince, gasp, tease, sweat, dizzy, ready, shuffle, hop, spin,
+  wave, dance, accent:wave/hop/spin/bow), `effect` (confetti, sparkles, hearts, question, exclaim, sweat, stars, frost,
+  flame), `prop` (balloons(1–9), hat, crown, magnifier, cards, sealed_card, gem, none), `line` (a **key**: hello,
+  your_turn, my_turn, thinking, close_one, you_win, i_win, draw, record, streak, encourage, tease, caught_cheating,
+  hint_intro, bye; Sidefolk says its own words for it), `sound` (tap, flip, rattle, pop, ding, boop, tick, whoosh,
+  stamp, shuffle, snap, cork, fanfare, trombone), `look` (panel, you, away, `[row, column]`). One cue a board; moves
+  0.8 s apart, a line every 2 s, four sounds a second.
+- **Suspense and colour are Sidefolk's:** send the board with its verdict in it (judged tiles, the companion's pick,
+  the new score, a cue); when it would give a result away Sidefolk shows a build-up first (the reveal playing, or the
+  pick pressed beside the sealed card) and the verdict after. Right is drawn in success green, wrong as a calm loss
+  tone, a draw neutral, each with its symbol: don't encode a result in your own words' colour.
+
+In the Kit, `ext.game(name, start:, move:, end:)` with `Board`, `BoardPart`, `Tile`, `Cell`, `GameButton`,
+`ChoiceOption`, `Reveal`, `Cue` and `Move` (extensions/Kit/Game.swift):
+
+```swift
+ext.game("coin", start: { request in
+    GameReply(session: UUID().uuidString, board: Board([.prompt("Heads or tails?"), .answers([Tile("Heads"), Tile("Tails")])]))
+}, move: { request in
+    let heads = Bool.random(), right = request.move == .answer(heads ? 0 : 1)
+    return Board([.reveal(.coin(heads: heads)), .answers([Tile("Heads", state: heads ? .right : .wrong),
+                                                           Tile("Tails", state: heads ? .wrong : .right)], locked: true)],
+                 companion: Cue(move: right ? "sulk" : "tease", line: right ? "you_win" : "tease"), over: true)
+})
+```
+
+Playtime (sidefolk-addons `extensions/playtime`) is the example: its rules are pure engines (`Sources/GameKit`:
+`GameEngine` for the rules over a Codable state, `GameScreen` for the boards, `GameTable` keeping each session's state
+in the data folder so a game survives the program stopping while idle). A 0.1.0 snapshot from before games refuses a
+manifest with `games` at install (an unknown key), as with pages.
+
 ## Speaking the person's language
 
 Sidefolk speaks ten languages (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`), and so can your
@@ -686,6 +769,7 @@ sidebar, heads-ups): put each language's words in `strings/<language>.json` besi
   "watchers": { "ended": { "title": "Wach halten beendet", "description": "…" } },
   "pages": { "awake": { "title": "Wach halten" } },
   "palettes": { "history": { "title": "Zwischenablage", "placeholder": "Kopiertes durchsuchen" } },
+  "games": { "trivia": { "title": "Quiz" } },
   "text": { "Keep awake": "Wach halten", "{count} apps": { "one": "{count} App", "other": "{count} Apps" } }
 }
 ```
@@ -729,8 +813,12 @@ Language.with("ar", strings: "extensions/x/strings") { … }      // a test in o
 ```
 
 The Kit reads `strings/` beside its program (`<folder>/bin/<program>`), keeps each request's `language` for that
-request (and for background work after it), and falls back to English, then to the key. It also carries
-`Localized(language, tables)` (D75) for words kept in code, as Playtime does; `L` looks plain words up through it.
+request (and for background work after it), and falls back to English, then to the key. Underneath, `L` reads plain
+words through the Kit's `Localized(language, tables)` (D75), the lower layer: one normalization for both (`pt` is
+`pt-BR`, any Chinese, `zh-Hant` included, is `zh-Hans`, the nearest Sidefolk speaks, as for the manifest's words; an
+unknown language is English) and one English fallback. Reach for `Localized` yourself only for a table that isn't your
+extension's words; numbers go through `Format` (grouped as the language groups them), placeholders are named. Playtime's
+words, the games' phrases included, live in its `strings/`, a game's title under `games`.
 From Python or Node, read the same files: `params.get("language")`, then `json.load(open("strings/%s.json" % lang))`.
 
 `scripts/extension-strings.py sync <folder>` writes `strings/en.json` from your `L("…")` calls (and drops texts no

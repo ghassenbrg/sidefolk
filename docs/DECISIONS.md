@@ -1945,6 +1945,72 @@ so an older file still reads); no new tool and no manifest change. Window stills
 own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
 
+### D75 — Games beside the companion: the Play panel, a game channel, companion cues; trivia without AI; the four redesigned (2026-10-31)
+**Decision:** games are played in a **Play panel** beside the companion, drawn by Sidefolk from data, with the companion
+as the opponent next to it (the approved plan, phase 1):
+- **`games` in the manifest** (`title`, `symbol`, `say`, `levels`, `ai`): `say` sentences follow the command rules
+  (whole sentences, no slots) and open the game without the AI; every game is in the companion's Play menu and in the
+  core tool **`games.open`** (low risk; it only shows a panel), whose description lists them for the AI. The panel takes
+  the keyboard when the person opened it and waits for a click when the AI did.
+- **The game channel, not tool calls:** `sidefolk/game.start {game, level, language, options}` → `{session, board}`,
+  `sidefolk/game.move {game, session, move}` → `{board}`, `sidefolk/game.end {game, session, reason}`. A move is small
+  and typed (`answer`, `cell`, `button`, `choice`, `timeout`, …) and sent only when the board on screen offered it,
+  only for the one game open, at most 20 a second; an answer later than 2 s or over 64 KB ends the game ("Playtime
+  didn't answer"). One Activity row per game, written when it ends ("Played Trivia with Playtime · You 7 · Mochi 6").
+  Options are `tone`, `sneaky` and the companion's name, nothing else about the person.
+- **Board parts, game-only:** `prompt`, `answers` (2–4 tiles, states, the companion's pick with its face, Sidefolk's
+  own pictures for hands), `board` (up to 8 × 8), `score` (pills, round pips, a streak, the companion's sealed pick),
+  `result`, `timer` (Sidefolk keeps time and sends `timeout`), `reveal` (coin, dice, hands), `note`, `facts`, `button`
+  (a move, never a tool; one primary), `choice` (cards or segments). Unknown parts are skipped. Text is cleaned and
+  clipped as on pages and never reaches a model.
+- **Companion cues (a new, narrow reach):** a board may carry one cue, every value from a fixed list (`GameCue`): a
+  move (mapped to moments and states every 2D and 3D companion has), an effect and a prop (drawn above it in code),
+  a **line key** for which Sidefolk says one of its own lines in the person's language and the chosen tone, a sound
+  and where to look. Moves 0.8 s apart (a newer one replaces one waiting), a line every 2 s, four sounds a second,
+  only while the panel shows that game. A cue never moves the window, opens a bubble, takes focus or says the game's
+  words. This amends D44's "extensions can't animate the companion": a game names a mood, it never drives the rig.
+- **Suspense and meaning (the founder's rules):** nothing gives a result away before its reveal ends: the panel
+  first shows a build-up (`GameSuspense`: the hands pumping sealed, the pick pressed beside the sealed card) and the
+  verdict a beat after (colours, score, words, the cue, sounds, VoiceOver); the Ask panel's card, its spoken line and
+  the AI's reply after a toss wait until it lands. One colour per meaning (`GameVerdict`): the person's win is the
+  theme's success green, a loss (the companion's win included) a calm sand tone (`GameColors.lost`), never the danger
+  red, a draw neutral ink; always with a symbol (✓, ✕, =, a crown). Selections use the theme's accent.
+- **Sidefolk's own game on the same path:** rock, paper, scissors as a best of three (`HandsMatch`): the companion's
+  hand is drawn with the system's generator when each round begins, sealed before the person picks and never read
+  from it; now and then a bluff ("I'm going rock…"). A hand alone ("rock") is still a quick throw on the desktop.
+- **Coin, dice and hands redesigned (D44 stays):** a 48-pt coin with the companion's own face on heads, flicked
+  150 pt and wobbling to rest, called or not ("flip a coin, I call tails", Play › Flip a Coin › Call Heads); dice
+  thrown onto a felt tray, d6 tumbling in 3D, other dice as their real shapes; hands that meet and act on each other;
+  the result as a chip under the objects with an Again pill (the only click the layer takes, never during catch-me);
+  the companion reacts (a call right or wrong, a natural 20 or 1, doubles, snake eyes).
+- **Settings › Companion › Games:** "When it wins" gentle, cheeky (the default) or competitive; game sounds, off by
+  default, with a speaker button per game (sounds are made in code, follow Quiet, a fullscreen app and macOS's
+  interface-sounds setting). Lines are spoken only for someone who hears every reply (Settings › Voice) with the
+  game's sound on. Sneaky is a setting passed to games (off), shown when a game offers it.
+- **Playtime 2.0** plays trivia in the panel with no AI: a topic, 5, 10 or endless questions, relaxed or 15 s each,
+  the companion's sealed pick (right as often as it knows the question: by difficulty, its favourite and weak
+  topics, the level), "Ask Mochi" once a round (unsure in a weak topic, it can fade the right one), a fact after
+  each answer, an end card with a new best, records in its data folder, and a page in Home. Its words come in all ten
+  languages from tables chosen by the `language` Sidefolk passes (the Kit's new `Localized`). The `trivia` tool stays
+  for chat and voice. The rules are pure engines under `Sources/GameKit`'s protocols, so the new games and the 400
+  questions per language drop in.
+
+**Why:** the founder approved the games plan: today's games were things you read, trivia cost a model call per answer,
+and the companion barely played. Founder's answers: all ten games, cheeky by default as a setting, sounds off with
+a speaker per game, Sneaky off, one extension, lines spoken only with spoken replies, coin/dice/hands in core, and
+every official extension in all ten languages. Trying it, he found the result shown before the animation, red used
+for draws and wins, and the companion seeming to mirror rock; these rules come from that.
+
+**Alternatives:** moves as tool calls (an Activity row and Guard per click); a web view per game (could imitate
+Sidefolk's cards, ignores themes); extension text spoken by the companion (an extension could make it say anything);
+modelling props per companion (twelve companions); shipping sound files (synthesized ones cost nothing to bundle).
+
+**Implications:** a 0.1.0 snapshot from before games refuses Playtime 2.0 at install (an unknown `games` key), as with
+pages (D62); accepted for snapshots. New companion moves (sulk, shrug, tease, ready and the short accents) borrow the
+nearest existing moment until each is made and filmed for every 3D companion; trivia's questions stay the 52 English
+ones until the content packs land (`TriviaPack`). **Not built:** the `pads`, `shuffle`, `reflex`, `meter`, `number`,
+`letters` and `keys` parts (phase 2–3), Sneaky's switch in Settings, a tail on the panel.
+
 ### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
 **Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.
 - **What the manifest shows people** (name, tagline, description, tool, watcher, page and palette titles, watcher
@@ -1998,8 +2064,8 @@ and only the app's copy of them).
 build.py copy `strings/`; tests `ExtensionStringsTests`, `BidiTextTests`, `ExtensionLanguagesTests` (every official
 extension, every key, every language), add-ons `LanguagesTests`. An extension's English output changed where Foundation
 now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
-Commands and `ask` sentences stay English (GLOSSARY rule 1). Not done: `zh-Hant` falls back to the manifest in Sidefolk
-but to `zh-Hans` in `Localized` (D75 normalizes any Chinese), a difference to settle when merging.
+Commands and `ask` sentences stay English (GLOSSARY rule 1), except a sentence that only opens a game (D79). `zh-Hant`
+reads `zh-Hans` in both layers since D79.
 
 ### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
 **Decision:** *amends D43, D55, D56 and D60 for companions.* Settings › Companion has two pages at the top, outside the
@@ -2094,6 +2160,52 @@ convention); a separate "late" or "changed" token (warning and the accent alread
 (a theme mapping success to red would mislead every screen).
 
 **Implications:** the install sheet's tones (D71) and Full access's red chip and orange menu bar icon (D37) stay. The
-games' own verdicts (toss, rock-paper-scissors, dice, trivia) are fixed on their own branch; Play's folk colour is red,
-so it must never mark a win or a draw. Community themes made before this get Harbor's amber and a warning naming the
+games' verdicts come from `GameVerdict` (D79); Play's folk colour is red, so it marks only the panel's icon, never a
+win or a draw. Community themes made before this get Harbor's amber and a warning naming the
 roles; gallery themes pass as they are.
+
+### D79 — Games, phases 2 and 3: the ten new games in the Play panel, their parts, one trivia, one way to speak (2026-10-31)
+**Decision:** *amends D75 and D76.* All ten approved games are played in the Play panel from Playtime, on the engines written for them, with
+no AI: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower (both ways), Guess My Animal, Balloon Words, Last
+Stick, Memory Pairs and Daily Word, beside trivia.
+- **New board parts, drawn, timed and fed by Sidefolk** (`GameBoardParts`): `pads` (Sidefolk plays the sequence: each
+  pad lit with its note and the companion's short move, then takes presses), `cups` (the gem shown, the game's swaps
+  animated, a pick after), `reflex` (Sidefolk shows the signal and times the press from the key's own timestamp; an
+  early press says "Too soon!" at once), `meter`, `number` (with a digit pad and the guesses so far), `letters` (rows
+  that flip, or slots), `keys` (a keyboard per script, letter by letter or spelling a word; Korean jamo drawn as the
+  syllables they make), `entry` (a text field, for input methods: Chinese idioms, an animal's name), `sticks`, `lives`;
+  a tile's own key cap (Y, N, ?) and a number-pad grid. Each value is checked and capped (64 steps, 40 swaps, 8 × 24
+  tiles, 120 characters), every move only for a part on the board.
+- **The companion's turn is the game's, the clock Sidefolk's:** a board's `after_ms` (0.1–6 s) has Sidefolk wait
+  (the companion thinking, two cards left up) and ask for the next board with `{next: true}`; nothing else is taken
+  meanwhile. The engines' `think(ms)` becomes that wait.
+- **No verdict before its build-up, for every game** (`GameSuspense`): besides a reveal and a judged answer, a board
+  that scores a point, draws a winning line, lifts the cups, times a reflex, judges a guess, turns a card with a
+  reaction or shows the end card comes after a beat with the previous score, words, keyboard and lives, the cups down
+  and the pick pressed; a Daily Word row flips tile by tile before its keys, cue and card. Colours stay GameVerdict's:
+  letters right in success green with ●, elsewhere yellow with ◐, absent faded; a missed key the calm loss tone, struck
+  through; the thermometer cold blue to warm orange, never red.
+- **Fairness:** every chance is `Games.Random.fresh()` in play (seeded in tests), and what the companion hides is drawn
+  before the person moves: the gem's cup with the shuffle, the reflex time with the round, the number at the start,
+  trivia's pick with the question; tested to be the same whatever the person does.
+- **One event table:** the engines' `Games.Event` becomes the companion's reaction through `EventCues` (the weightiest
+  event first: an ended match before a point, a point before a turn); a screen only adds its own props (balloons held,
+  a magnifier, the gem). Records in Playtime's folder: tallies and bests, the last ten games, Daily Word's day, streak
+  and Today tile (the page's summary, `widget`), what it learned about animals (per language, capped), Last Stick's
+  lesson after three losses.
+- **One trivia:** phase 1's round (set-up, pace, levels, records, Home) is kept, with the engines' 400 questions in all
+  ten languages as one `TriviaPack` per language and the Quiz engine's idea folded in: each companion has its own
+  strong and weak topics, drawn from its name. The Quiz engine is gone. The bank has no "Did you know?" lines, so none
+  shows.
+- **One way to speak (D76 over D75):** Playtime's words and the engines' phrases are its `strings/<language>.json`,
+  read with `L()`; `Localized` is the layer `L` reads through. `zh-Hant` is `zh-Hans` in both layers (the nearest
+  language Sidefolk speaks); numbers through `Format`; placeholders named. A game's title is translated in `strings/`
+  (`games.<name>.title`), and a game's `say` holds up to 24 sentences so each opens in all ten languages (an exception to
+  D76's "commands stay English", only for a sentence that just opens a game).
+
+**Why:** the founder approved all ten games; phase 1 built the platform and left these parts and games to come.
+**Alternatives:** a timer in the extension for the companion's turn (stdin can't keep time, and it would hold a process
+awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
+**Implications:** older Playtime boards still open (unknown parts are skipped); a 0.1.0 snapshot still refuses Playtime
+2.0's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
+clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.

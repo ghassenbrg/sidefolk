@@ -754,6 +754,31 @@ prompt: it lists Sidefolk, off, in Screen & System Audio Recording, and the exte
 words. The TCC grant isn't per extension. In Auto and Full access, an injected instruction can show the screen on the
 person's own paired TV (D72).
 
+**T37 Games in the Play panel and companion cues (L/M), D75.** A game is an extension's program answering
+`sidefolk/game.*`; its boards show inside Sidefolk's panel and its cues reach the companion, a reach extensions didn't
+have (D44). Mitigations:
+- *Not a side door:* a move is typed and sent only when the board on screen offered it (`GameMove.offered`), only to
+  the one game open, at most 20 a second; a board's buttons send moves, never tools, so anything that acts on the
+  world stays a tool behind Guard. The program runs in the same sandbox with the permissions its sheet named
+  (Playtime: none). Options carry the tone, Sneaky and the companion's name, nothing about the person.
+- *Its words stay its own:* board text is cleaned (bidi, zero-width, control characters) and clipped, drawn under the
+  extension's badge in a panel that can't pass for an approval card, and never reaches a model. A late (2 s) or large
+  (64 KB) answer ends the game.
+- *Cues are names from fixed lists* (`GameCue`): a move, an effect, a prop, a line key, a sound, a look. The companion
+  only ever says Sidefolk's own lines for a key, in the person's language, so a game can't make it say "type your
+  password here". Moves every 0.8 s, a line every 2 s, four sounds a second, only while the panel shows that game. A
+  cue can't move the companion's window, open a bubble or a notification, take focus or speak free text.
+- *Fair play:* the companion's throw in Sidefolk's own match is drawn by core with the system's generator before the
+  person picks and never reads their hand (tested for independence and distribution).
+- *The later parts (D79):* Sidefolk keeps every clock (a board's `after_ms` at most 6 s, a reflex window
+  at most 5 s, a sequence at most 64 steps of at least 0.25 s, at most 40 swaps), so a game can't hold the panel or the
+  companion busy; Copy Me's playback moves the companion with each pad (Sidefolk's own choreography of a bounded
+  sequence, like a reveal). A typed `text` move is cleaned (bidi, control characters), one line, at most 120 characters,
+  sent only to the game's own entry and never to a model; the panel's keys go to that field only while it is being
+  typed in.
+*Residual:* a game decides its own outcomes and could make the companion react unkindly within the fixed moods;
+the panel can take the keyboard when the person opened it, like the Ask panel, so keys typed meanwhile go to the game.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person

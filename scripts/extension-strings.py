@@ -8,7 +8,7 @@
 `sync` reads the sources (Sources/**/*.swift with the Kit's `L("…")` and `L(one: "…", other: "…", count:)`, or
 *.py / *.js calling `L("…")`) and rewrites `text` in strings/en.json: new keys added, keys no longer used dropped from
 every language. `check` wants, in each of the nine other languages, every `text` key, and a translation of each word
-the manifest shows people (name, tagline, description, tool, watcher, page and palette titles, the network's purpose).
+the manifest shows people (name, tagline, description, tool, watcher, page, palette and game titles, the network's purpose).
 Sidefolk's validator (`sidefolk ext validate`) checks the rest: placeholders kept, plural forms, limits.
 """
 import json
@@ -62,6 +62,7 @@ def manifest_words(folder):
     for w, meta in m.get("watchers", {}).items():
         paths += [("watchers", w, "title")] + ([("watchers", w, "description")] if meta.get("description") else [])
     paths += [("pages", p, "title") for p in m.get("pages", {})]
+    paths += [("games", g, "title") for g in m.get("games", {})]
     for p, meta in m.get("palettes", {}).items():
         paths += [("palettes", p, "title")] + ([("palettes", p, "placeholder")] if meta.get("placeholder") else [])
     return paths
